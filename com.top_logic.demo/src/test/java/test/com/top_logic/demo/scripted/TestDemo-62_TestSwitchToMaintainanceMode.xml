@@ -38,6 +38,32 @@
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Gruppe/Action-Gruppe-Anlegen.xml"
+					template-name-comment="Gruppe Anlegen"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="testGroup1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Gruppe/Action-Gruppe-Zuordnen.xml"
+					template-name-comment="Gruppe Zuordnen"
+				>
+					<parameters>
+						<parameter name="Login"
+							value="testMaintenance1"
+						/>
+						<parameter name="Gruppe1"
+							value="Benutzer"
+						/>
+						<parameter name="Gruppe2"
+							value="testGroup1"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
 					template="script:Nutzer/Action-Nutzer-Anlegen.xml"
 					template-name-comment="Nutzer Anlegen"
 				>
@@ -64,6 +90,32 @@
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Gruppe/Action-Gruppe-Anlegen.xml"
+					template-name-comment="Gruppe Anlegen"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="testGroup2"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Gruppe/Action-Gruppe-Zuordnen.xml"
+					template-name-comment="Gruppe Zuordnen"
+				>
+					<parameters>
+						<parameter name="Login"
+							value="testMaintenance2"
+						/>
+						<parameter name="Gruppe1"
+							value="Benutzer"
+						/>
+						<parameter name="Gruppe2"
+							value="testGroup2"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
 					template="script:Nutzer/Action-Nutzer-Anlegen.xml"
 					template-name-comment="Nutzer Anlegen"
 				>
@@ -86,13 +138,29 @@
 					<parameters>
 						<parameter name="Loginname"
 							value="testMaintenance3"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Gruppe/Action-Gruppe-Zuordnen.xml"
+					template-name-comment="Gruppe Zuordnen"
+				>
+					<parameters>
+						<parameter name="Login"
+							value="testMaintenance3"
+						/>
+						<parameter name="Gruppe1"
+							value="Benutzer"
+						/>
+						<parameter name="Gruppe2"
+							value="Maintenance-Mode-Nutzer"
 						/>
 					</parameters>
 				</action>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Rolle SecurityStructure.maintenanceMode erstellen"
+			comment="Rollen erstellen"
 			failure-message=""
 			user-id="root"
 		>
@@ -104,40 +172,11 @@
 				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						name=""
-						tab-path="Administration > Berechtigungen"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Berechtigungsstruktur"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-							tab-path="Administration > Berechtigungen"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="Zentrale Berechtigungen"
-							/>
-						</values>
-					</value>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
 						tab-path="Administration > Berechtigungen > Rollen"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="SecurityStructure.maintenanceMode"
+					comment="maintenanceMode"
 					failure-message=""
 					user-id="root"
 				>
@@ -147,7 +186,7 @@
 							command-label="Neu..."
 							command-name="displayDialog_newRoleDialog"
 							comment=""
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 							failure-message=""
 							user-id="root"
@@ -194,7 +233,7 @@
 							command-label="Speichern"
 							command-name="defaultSave"
 							comment=""
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 							failure-message=""
 							user-id="root"
@@ -204,7 +243,7 @@
 					</actions>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="SecurityStructure.maintenanceActivate"
+					comment="maintenanceActivate"
 					failure-message=""
 					user-id="root"
 				>
@@ -214,7 +253,7 @@
 							command-label="Neu..."
 							command-name="displayDialog_newRoleDialog"
 							comment=""
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 							failure-message=""
 							user-id="root"
@@ -261,7 +300,7 @@
 							command-label="Speichern"
 							command-name="defaultSave"
 							comment=""
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 							failure-message=""
 							user-id="root"
@@ -271,6 +310,7 @@
 					</actions>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="MaintenanceView"
 					failure-message=""
 					user-id="root"
 				>
@@ -280,7 +320,7 @@
 							command-label="Neu..."
 							command-name="displayDialog_newRoleDialog"
 							comment=""
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 							failure-message=""
 							user-id="root"
@@ -327,7 +367,7 @@
 							command-label="Speichern"
 							command-name="defaultSave"
 							comment=""
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 							failure-message=""
 							user-id="root"
@@ -339,7 +379,493 @@
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Berechtigungen für Rolle SecurityStructure.maintenanceMode"
+			comment="Rolle maintenanceMode an Gruppe testGroup1 vergeben"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Service Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Zugriffssteuerung"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Module"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+						/>
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="add"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.element.boundsec.manager.rule.config.SingletonRuleConfig"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Ziel"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="SecurityStructure#ROOT"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Rolle"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="maintenanceMode"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<labeled-member label="Pfad"/>
+							<named-member name="add"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.element.boundsec.manager.rule.GroupWithName"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="testGroup1"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.admin.component.RestartAndReload"
+					command-label="Zugriffssteuerung neu starten und Rollenregeln neu laden"
+					command-name="restartAndReload"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Rolle maintenanceActivate an Gruppe testGroup2 vergeben"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Service Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Zugriffssteuerung"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Module"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+						/>
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="add"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.element.boundsec.manager.rule.config.SingletonRuleConfig"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="27"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Ziel"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="SecurityStructure#ROOT"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Rolle"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="maintenanceActivate"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<labeled-member label="Pfad"/>
+							<named-member name="add"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.element.boundsec.manager.rule.GroupWithName"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="testGroup2"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.admin.component.RestartAndReload"
+					command-label="Zugriffssteuerung neu starten und Rollenregeln neu laden"
+					command-name="restartAndReload"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Rolle MaintenanceView an Gruppe maintenanceMode vergeben"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Service Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Zugriffssteuerung"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Module"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+						/>
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="add"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.element.boundsec.manager.rule.config.SingletonRuleConfig"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="28"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Ziel"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="SecurityStructure#ROOT"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Rolle"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="MaintenanceView"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<labeled-member label="Pfad"/>
+							<named-member name="add"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.element.boundsec.manager.rule.GroupWithName"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="Maintenance-Mode-Nutzer"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.admin.component.RestartAndReload"
+					command-label="Zugriffssteuerung neu starten und Rollenregeln neu laden"
+					command-name="restartAndReload"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Berechtigungen für Rolle maintenanceMode"
 			failure-message=""
 			user-id="root"
 		>
@@ -350,25 +876,6 @@
 					user-id="root"
 				>
 					<actions>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="Berechtigungsstruktur"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-									tab-path="Administration > Berechtigungen"
-								/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="Zentrale Berechtigungen"
-									/>
-								</values>
-							</value>
-						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 							comment=""
 							failure-message=""
@@ -380,7 +887,7 @@
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="SecurityStructure.maintenanceMode"
+							comment="maintenanceMode"
 							failure-message=""
 							user-id="root"
 						>
@@ -551,7 +1058,7 @@
 							</actions>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="SecurityStructure.maintenanceActivate"
+							comment="maintenanceActivate"
 							failure-message=""
 							user-id="root"
 						>
@@ -639,7 +1146,7 @@
 							</actions>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="SecurityStructure.MaintenanceView"
+							comment="MaintenanceView"
 							failure-message=""
 							user-id="root"
 						>
@@ -706,491 +1213,6 @@
 							</actions>
 						</action>
 					</actions>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="Berechtigungen auf DemoTypes, damit überhaut eine Tab-Umschaltung nach dem Login notwendig ist"
-					failure-message=""
-					user-id="root"
-				>
-					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-								tab-path="Administration > Berechtigungen"
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Berechtigungsstruktur"
-											field-name="structure"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-										<list>
-											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-												label="DemoTypes"
-											/>
-										</list>
-									</value>
-								</value>
-							</field-values>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-							command-label="Bearbeiten"
-							command-name="switchToAJAXEdit"
-							component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
-							component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-							failure-message=""
-							user-id="root"
-						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Typendemo (Lesen)"
-										/>
-									</object>
-									<named-member name="Administrator"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-								value="true"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Typendemo (Ändern)"
-										/>
-									</object>
-									<named-member name="Administrator"/>
-								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-								value="true"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-							command-label="Speichern"
-							command-name="defaultSave"
-							comment=""
-							component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
-							component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-							failure-message=""
-							user-id="root"
-						>
-							<arguments/>
-						</action>
-					</actions>
-				</action>
-			</actions>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Rolle SecurityStructure.maintenanceMode an Nutzer testMaintenance1 vergeben"
-			failure-message=""
-			user-id="root"
-		>
-			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment="Rolle maintainenceMode an Nutzer testMaintenance1 vergeben"
-					failure-message=""
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Berechtigungen > Benutzerrechte"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-						tab-path="Administration > Berechtigungen"
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Berechtigungsstruktur"
-									field-name="structure"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-								<list>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="Zentrale Berechtigungen"
-									/>
-								</list>
-							</value>
-						</value>
-					</field-values>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-							table-name="Person"
-						>
-							<key-values>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance1"
-									/>
-								</attribute>
-							</key-values>
-						</selectee>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#RolesPersonTable"
-						tab-path="Administration > Berechtigungen > Benutzerrechte"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					comment=""
-					component-implementation-comment="com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent"
-					component-name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#EditPersonRoles"
-					failure-message=""
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="SecurityRoot"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="maintenanceMode"
-							/>
-						</values>
-					</value>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-					command-label="Speichern"
-					command-name="defaultSave"
-					comment=""
-					component-implementation-comment="com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent"
-					component-name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#EditPersonRoles"
-					failure-message=""
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-			</actions>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Rolle SecurityStructure.maintenanceActivate an Nutzer testMaintenance2 vergeben"
-			failure-message=""
-			user-id="root"
-		>
-			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Berechtigungen > Benutzerrechte"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-						tab-path="Administration > Berechtigungen"
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Berechtigungsstruktur"
-									field-name="structure"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-								<list>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="Zentrale Berechtigungen"
-									/>
-								</list>
-							</value>
-						</value>
-					</field-values>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-							table-name="Person"
-						>
-							<key-values>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testMaintenance2"
-									/>
-								</attribute>
-							</key-values>
-						</selectee>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#RolesPersonTable"
-							tab-path="Administration > Berechtigungen > Benutzerrechte"
-						/>
-					</selection-model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					comment=""
-					component-implementation-comment="com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent"
-					component-name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#EditPersonRoles"
-					failure-message=""
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="SecurityRoot"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="maintenanceActivate"
-							/>
-						</values>
-					</value>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-					command-label="Speichern"
-					command-name="defaultSave"
-					comment=""
-					component-implementation-comment="com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent"
-					component-name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#EditPersonRoles"
-					failure-message=""
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-			</actions>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Rolle MaintenanceView an Gruppe maintenanceMode vergeben"
-		>
-			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Berechtigungen > Gruppenrechte"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="Maintenance-Mode-Nutzer"
-						/>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/security/groupRoles/adminGroupRolesView.layout.xml#rolesGroup_Table"
-							tab-path="Administration > Berechtigungen > Gruppenrechte"
-						/>
-					</selection-model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent"
-					component-name="com.top_logic.element/admin/security/groupRoles/adminGroupRolesView.layout.xml#EditGroupRoles"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="SecurityRoot"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Gruppenrechte > Gruppenrechte auf Strukturen pflegen"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="MaintenanceView"
-							/>
-						</values>
-					</value>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-					command-label="Speichern"
-					command-name="defaultSave"
-					component-implementation-comment="com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent"
-					component-name="com.top_logic.element/admin/security/groupRoles/adminGroupRolesView.layout.xml#EditGroupRoles"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-			</actions>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Nutzer testMaintenance3 der Gruppe maintenanceMode zuweisen"
-			failure-message=""
-			user-id="root"
-		>
-			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Administration > Berechtigungen > Gruppen"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-							table-name="Group"
-						>
-							<key-values>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="maintenanceMode"
-									/>
-								</attribute>
-							</key-values>
-						</selectee>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/groups/adminGroupsView.layout.xml#adminEditGroup_Table"
-						tab-path="Administration > Berechtigungen > Gruppen"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					comment=""
-					component-implementation-comment="com.top_logic.layout.admin.component.EditGroupComponent"
-					component-name="com.top_logic/admin/security/groups/adminGroupsView.layout.xml#adminEditGroup"
-					failure-message=""
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/groups/adminGroupsView.layout.xml#adminEditGroup"
-						tab-path="Administration > Berechtigungen > Gruppen"
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Mitglieder"
-									field-name="members"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-								<list>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="testMaintenance3, testMaintenance3"
-									/>
-								</list>
-							</value>
-						</value>
-					</field-values>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-					command-label="Speichern"
-					command-name="defaultSave"
-					comment=""
-					component-implementation-comment="com.top_logic.layout.admin.component.EditGroupComponent"
-					component-name="com.top_logic/admin/security/groups/adminGroupsView.layout.xml#adminEditGroup"
-					failure-message=""
-					user-id="root"
-				>
-					<arguments/>
 				</action>
 			</actions>
 		</action>
@@ -1668,6 +1690,60 @@
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Rollenregeln"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Service Editor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="Zugriffssteuerung"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Service Editor > Module"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.admin.component.TLResetServiceConfigHandler"
+							command-label="Konfiguration zurücksetzen"
+							command-name="resetServiceConfig"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ja"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.admin.component.RestartAndReload"
+							command-label="Zugriffssteuerung neu starten und Rollenregeln neu laden"
+							command-name="restartAndReload"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 					comment="Rollen"
 					failure-message=""
 					user-id="root"
@@ -1701,7 +1777,7 @@
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 									<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
-										name="SecurityStructure.maintenanceMode"
+										name="maintenanceMode"
 									/>
 								</selectee>
 								<selection-state boolean="true"/>
@@ -1716,7 +1792,7 @@
 							command-label="Löschen..."
 							command-name="deleteRole"
 							comment=""
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 							failure-message=""
 							user-id="root"
@@ -1731,7 +1807,7 @@
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 									<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
-										name="SecurityStructure.maintenanceActivate"
+										name="maintenanceActivate"
 									/>
 								</selectee>
 								<selection-state boolean="true"/>
@@ -1746,7 +1822,7 @@
 							command-label="Löschen..."
 							command-name="deleteRole"
 							comment=""
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 							failure-message=""
 							user-id="root"
@@ -1761,7 +1837,7 @@
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 									<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
-										name="SecurityStructure.MaintenanceView"
+										name="MaintenanceView"
 									/>
 								</selectee>
 								<selection-state boolean="true"/>
@@ -1776,7 +1852,7 @@
 							command-label="Löschen..."
 							command-name="deleteRole"
 							comment=""
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 							failure-message=""
 							user-id="root"
@@ -1792,12 +1868,32 @@
 				>
 					<actions>
 						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:Gruppe/Action-Gruppe-loeschen byName.xml"
+							template-name-comment="Gruppe loeschen byName"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="testGroup1"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
 							template="script:Nutzer/Nutzer-loeschen-byName.xml"
 							template-name-comment="Nutzer loeschen byName"
 						>
 							<parameters>
 								<parameter name="userName"
 									value="testMaintenance1"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:Gruppe/Action-Gruppe-loeschen byName.xml"
+							template-name-comment="Gruppe loeschen byName"
+						>
+							<parameters>
+								<parameter name="Name"
+									value="testGroup2"
 								/>
 							</parameters>
 						</action>

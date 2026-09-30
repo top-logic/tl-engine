@@ -267,8 +267,8 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 
 		TLObject object = update.getOverlay();
 
-		new FieldModeObserver(member, updateContainer, modeSelector, object, attribute).valueChanged(null,
-				null, null);
+		new FieldModeObserver(member, updateContainer, modeSelector, object, attribute, !update.isDisabled())
+			.valueChanged(null, null, null);
 	}
 
 	private Constraint toFormConstraint(AttributeUpdate update, final AttributeUpdateContainer updateContainer,
@@ -337,7 +337,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 					if (otherMember instanceof FormField && otherMember != field) {
 						dependencies.add((FormField) otherMember);
 					}
-				}, formContext);
+				}, updateContainer);
 				return dependencies;
 			}
 		};

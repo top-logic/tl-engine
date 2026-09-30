@@ -22,6 +22,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
@@ -30,12 +31,13 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.element.meta.form.EditContext;
 
 /**
- * Get Filter for Wrapper based MetaAttributed.
- * 
+ * Provides the configured attribute value filters by name.
+ *
  * @author    <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
  */
 @Deprecated
 @ServiceDependencies({ ApplicationConfig.Module.class })
+@Label("Attribute filters")
 public class FilterFactory extends ManagedClass implements Reloadable {
     
 	private ConcurrentMap<String, AttributedValueFilter> _filterByName = new ConcurrentHashMap<>();

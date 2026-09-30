@@ -26,6 +26,7 @@ import com.top_logic.element.model.PersistentModuleSingletons;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.model.TLModule;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.BranchIdType;
 import com.top_logic.model.migration.data.MigrationException;
@@ -82,6 +83,32 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 		 */
 		void setSingleton(CreateTLObjectProcessor.Config value);
 
+		/**
+		 * Whether to update the saved module configuration.
+		 * 
+		 * <p>
+		 * When creating a new singleton, the annotation of the corresponding {@link TLModule}
+		 * object usually needs to be updated. This should be done using "add annotation". For
+		 * example:
+		 * 
+		 * <pre>
+		 * &lt;add-annotations name="my.module">
+		 *  &lt;annotations>
+		 *   &lt;singletons> 
+		 *    &lt;singleton name="MY_OBJECT"
+		 *     type="MyObject"
+		 *    />
+		 *   &lt;/singletons>
+		 *  &lt;/annotations>
+		 * &lt;/add-annotations>
+		 * </pre>
+		 * 
+		 * The "add annotation" migration processor also updates the saved module configuration, so
+		 * this processor should only be used to create the actual singleton object.
+		 * </p>
+		 */
+		boolean isUpdateStoredModule();
+
 	}
 
 
@@ -129,10 +156,10 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 					BasicTypes.REV_MAX_DB_NAME,
 					BasicTypes.REV_MIN_DB_NAME,
 					BasicTypes.REV_CREATE_DB_NAME,
-					_util.refID(PersistentModuleSingletons.SOURCE_ATTR),
+					Util.refID(PersistentModuleSingletons.SOURCE_ATTR),
 					SQLH.mangleDBName(PersistentModuleSingletons.NAME_ATTR),
-					_util.refType(PersistentModuleSingletons.DEST_ATTR),
-					_util.refID(PersistentModuleSingletons.DEST_ATTR)),
+					Util.refType(PersistentModuleSingletons.DEST_ATTR),
+					Util.refID(PersistentModuleSingletons.DEST_ATTR)),
 				Util.listWithoutNull(
 					_util.branchParamOrNull(),
 					parameter(DBType.ID, "identifier"),
@@ -149,7 +176,10 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 			newSingleton.getID());
 		log.info("Created singleton '" + getConfig().getName() + "' for module " + _util.toString(module));
 
-		MigrationUtils.modifyTLModel(log, connection, tlModel -> addSingletonDefintion(log, tlModel));
+		if (getConfig().isUpdateStoredModule()) {
+			MigrationUtils.modifyTLModel(log, connection, tlModel -> addSingletonDefintion(log, tlModel));
+			log.info("Added singleton definition to module " + _util.toString(module));
+		}
 	}
 
 	private boolean addSingletonDefintion(Log log, Document tlModel) {

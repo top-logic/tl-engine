@@ -1,0 +1,361 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.view;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ErrorSink;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.DirtyChannel;
+import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.navigation.DisplayTargetNavigator;
+import com.top_logic.layout.view.navigation.RevealRegistry;
+import com.top_logic.layout.view.slot.SlotPath;
+import com.top_logic.layout.view.slot.SlotRegistry;
+
+/**
+ * Default implementation of {@link ViewContext}.
+ *
+ * <p>
+ * Provides the standard hierarchical context for UIElement control creation. Container elements may
+ * create derived contexts that add scoped information for their children via
+ * {@link #childContext(String)} and {@link #withScope(Class, Object)}.
+ * </p>
+ */
+public class DefaultViewContext implements ViewContext {
+
+	private final ReactContext _reactContext;
+
+	private final String _personalizationPath;
+
+	private final Map<String, ViewChannel> _channels;
+
+	private final ErrorSink _errorSink;
+
+	private FormModel _formModel;
+
+	private final List<ViewReloadListener> _reloadListeners;
+
+	private DirtyChannel _dirtyChannel;
+
+	private final ContextMenuOpener _contextMenuOpener;
+
+	private final SlotPath _slotPath;
+
+	private final SlotRegistry _slotRegistry;
+
+	private final RevealRegistry _revealRegistry;
+
+	private final Map<Class<?>, Object> _scopes;
+
+	/**
+	 * Creates a root {@link DefaultViewContext}.
+	 *
+	 * @param reactContext
+	 *        The view display context providing ID allocation, SSE queue and other rendering
+	 *        infrastructure.
+	 */
+	public DefaultViewContext(ReactContext reactContext) {
+		this(reactContext, (String) null);
+	}
+
+	/**
+	 * Creates the root {@link DefaultViewContext} of a window displaying the given view file.
+	 *
+	 * @param reactContext
+	 *        The view display context providing ID allocation, SSE queue and other rendering
+	 *        infrastructure.
+	 * @param rootView
+	 *        Path of the view file the window displays, either relative to
+	 *        {@link ViewLoader#VIEW_BASE_PATH} or full. Names what the window shows, so that
+	 *        displaying an object knows which places are reachable from here.
+	 *
+	 * @implNote Only a context that opens a window of its own carries a root view: a context
+	 *           created within a window shares the window's
+	 *           {@link #getRevealRegistry() reveal registry} and leaves the name it already holds
+	 *           untouched.
+	 *
+	 *           <p>
+	 *           Every root context is a dirty-tracked scope of its own, see
+	 *           {@link #getDirtyChannel()}. The context of a window starts the chain of dirty
+	 *           channels all forms of that window report to. A context created within a window - a
+	 *           dialog, the frame of a tile stack - lies within the scope of the context it was
+	 *           created from, so its channel forwards there and reaches the channel of the window.
+	 *           </p>
+	 */
+	public DefaultViewContext(ReactContext reactContext, String rootView) {
+		this(reactContext, "view", new HashMap<>(), null, null, resolveDirtyChannel(reactContext),
+			resolveReloadListeners(reactContext), null,
+			SlotPath.ROOT, resolveSlotRegistry(reactContext), resolveRevealRegistry(reactContext, rootView),
+			Map.of());
+	}
+
+	private static DirtyChannel resolveDirtyChannel(ReactContext reactContext) {
+		if (reactContext instanceof ViewContext enclosing) {
+			return new DirtyChannel(enclosing.getDirtyChannel());
+		}
+		return new DirtyChannel();
+	}
+
+	private static List<ViewReloadListener> resolveReloadListeners(ReactContext reactContext) {
+		if (reactContext instanceof DefaultViewContext dvc) {
+			return dvc._reloadListeners;
+		}
+		return new ArrayList<>();
+	}
+
+	private static SlotRegistry resolveSlotRegistry(ReactContext reactContext) {
+		if (reactContext instanceof DefaultViewContext dvc) {
+			return dvc._slotRegistry;
+		}
+		return new SlotRegistry();
+	}
+
+	private static RevealRegistry resolveRevealRegistry(ReactContext reactContext, String rootView) {
+		if (reactContext instanceof DefaultViewContext dvc) {
+			return dvc._revealRegistry;
+		}
+		return new RevealRegistry(rootView == null ? null : ViewLoader.viewRef(rootView));
+	}
+
+	private DefaultViewContext(ReactContext reactContext, String personalizationPath,
+			Map<String, ViewChannel> channels, FormModel formModel, ErrorSink errorSink,
+			DirtyChannel dirtyChannel, List<ViewReloadListener> reloadListeners,
+			ContextMenuOpener contextMenuOpener, SlotPath slotPath, SlotRegistry slotRegistry,
+			RevealRegistry revealRegistry, Map<Class<?>, Object> scopes) {
+		_reactContext = reactContext;
+		_personalizationPath = personalizationPath;
+		_channels = channels;
+		_formModel = formModel;
+		_errorSink = errorSink;
+		_dirtyChannel = dirtyChannel;
+		_reloadListeners = reloadListeners;
+		_contextMenuOpener = contextMenuOpener;
+		_slotPath = slotPath;
+		_slotRegistry = slotRegistry;
+		_revealRegistry = revealRegistry;
+		_scopes = scopes;
+	}
+
+	@Override
+	public ViewContext childContext(String segment) {
+		return new DefaultViewContext(_reactContext, _personalizationPath + "." + segment, _channels,
+			_formModel, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener,
+			_slotPath, _slotRegistry, _revealRegistry, _scopes);
+	}
+
+	@Override
+	public SlotPath getSlotPath() {
+		return _slotPath;
+	}
+
+	@Override
+	public SlotRegistry getSlotRegistry() {
+		return _slotRegistry;
+	}
+
+	@Override
+	public RevealRegistry getRevealRegistry() {
+		return _revealRegistry;
+	}
+
+	@Override
+	public ViewContext withChildSlotPath(String segment) {
+		return new DefaultViewContext(_reactContext, _personalizationPath, _channels,
+			_formModel, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener,
+			_slotPath.append(segment), _slotRegistry, _revealRegistry, _scopes);
+	}
+
+	@Override
+	public String getPersonalizationKey() {
+		return _personalizationPath;
+	}
+
+	@Override
+	public FormModel getFormModel() {
+		return _formModel;
+	}
+
+	@Override
+	public void setFormModel(FormModel formModel) {
+		_formModel = formModel;
+	}
+
+	@Override
+	public DirtyChannel getDirtyChannel() {
+		return _dirtyChannel;
+	}
+
+	@Override
+	public void setDirtyChannel(DirtyChannel dirtyChannel) {
+		_dirtyChannel = dirtyChannel;
+	}
+
+	@Override
+	public ViewContext withErrorSink(ErrorSink errorSink) {
+		return new DefaultViewContext(_reactContext, _personalizationPath, _channels,
+			_formModel, errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener,
+			_slotPath, _slotRegistry, _revealRegistry, _scopes);
+	}
+
+	@Override
+	public ContextMenuOpener getContextMenuOpener() {
+		if (_contextMenuOpener != null) {
+			return _contextMenuOpener;
+		}
+		return _reactContext == null ? null : _reactContext.getContextMenuOpener();
+	}
+
+	@Override
+	public ViewContext withContextMenuOpener(ContextMenuOpener opener) {
+		return new DefaultViewContext(_reactContext, _personalizationPath, _channels,
+			_formModel, _errorSink, _dirtyChannel, _reloadListeners, opener,
+			_slotPath, _slotRegistry, _revealRegistry, _scopes);
+	}
+
+	@Override
+	public ErrorSink getErrorSink() {
+		if (_errorSink != null) {
+			return _errorSink;
+		}
+		return _reactContext == null ? null : _reactContext.getErrorSink();
+	}
+
+	@Override
+	public void registerChannel(String name, ViewChannel channel) {
+		ViewChannel existing = _channels.put(name, channel);
+		if (existing != null) {
+			_channels.put(name, existing);
+			throw new IllegalArgumentException("Duplicate channel name: '" + name + "'");
+		}
+	}
+
+	@Override
+	public void unregisterChannel(String name, ViewChannel channel) {
+		_channels.remove(name, channel);
+	}
+
+	@Override
+	public boolean hasChannel(String name) {
+		return _channels.containsKey(name);
+	}
+
+	@Override
+	public ViewContext withLocalChannel(String name, ViewChannel channel) {
+		Map<String, ViewChannel> channels = new HashMap<>(_channels);
+		channels.put(name, channel);
+		return new DefaultViewContext(_reactContext, _personalizationPath, channels,
+			_formModel, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener,
+			_slotPath, _slotRegistry, _revealRegistry, _scopes);
+	}
+
+	@Override
+	public ViewContext withIsolatedChannels() {
+		return new DefaultViewContext(_reactContext, _personalizationPath, new HashMap<>(),
+			null, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener,
+			_slotPath, _slotRegistry, _revealRegistry, _scopes);
+	}
+
+	@Override
+	public <S> ViewContext withScope(Class<S> type, S scope) {
+		Map<Class<?>, Object> scopes = new HashMap<>(_scopes);
+		scopes.put(type, scope);
+		return new DefaultViewContext(_reactContext, _personalizationPath, _channels,
+			_formModel, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener,
+			_slotPath, _slotRegistry, _revealRegistry, scopes);
+	}
+
+	@Override
+	public <S> S getScope(Class<S> type) {
+		return type.cast(_scopes.get(type));
+	}
+
+	@Override
+	public ViewChannel resolveChannel(ChannelRef ref) {
+		ViewChannel channel = _channels.get(ref.getChannelName());
+		if (channel == null) {
+			throw new IllegalArgumentException(
+				"Unknown channel: '" + ref.getChannelName() + "'. "
+					+ "Available channels: " + _channels.keySet());
+		}
+		return channel;
+	}
+
+	@Override
+	public String allocateId() {
+		return _reactContext.allocateId();
+	}
+
+	@Override
+	public String getWindowName() {
+		return _reactContext.getWindowName();
+	}
+
+	@Override
+	public String getContextPath() {
+		return _reactContext.getContextPath();
+	}
+
+	@Override
+	public SSEUpdateQueue getSSEQueue() {
+		return _reactContext.getSSEQueue();
+	}
+
+	@Override
+	public ReactWindowRegistry getWindowRegistry() {
+		return _reactContext.getWindowRegistry();
+	}
+
+	@Override
+	public com.top_logic.model.listen.ModelScope getModelScope() {
+		return _reactContext.getModelScope();
+	}
+
+	@Override
+	public com.top_logic.layout.react.routing.RouteManager getRouteManager() {
+		return _reactContext.getRouteManager();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Answered here rather than delegated: a view displays the application's business objects, so
+	 * every context derived from a view context leads to them, whatever plain
+	 * {@link ReactContext} it was built on.
+	 * </p>
+	 */
+	@Override
+	public com.top_logic.layout.react.navigation.ObjectNavigator getObjectNavigator() {
+		return DisplayTargetNavigator.INSTANCE;
+	}
+
+	@Override
+	public void addViewReloadListener(ViewReloadListener listener) {
+		_reloadListeners.add(listener);
+	}
+
+	@Override
+	public void removeViewReloadListener(ViewReloadListener listener) {
+		_reloadListeners.remove(listener);
+	}
+
+	@Override
+	public void fireViewChanged(Set<String> changedPaths) {
+		for (ViewReloadListener listener : List.copyOf(_reloadListeners)) {
+			listener.viewChanged(changedPaths);
+		}
+	}
+}

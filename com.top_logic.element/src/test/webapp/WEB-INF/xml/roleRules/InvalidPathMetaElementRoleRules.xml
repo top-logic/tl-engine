@@ -5,17 +5,14 @@
 >
 	<rules>
 		<rule
+			id="unknownPathMetaElement"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.unknownPathMetaElement"
 			role="testRole"
 		>
 			<path>
-				<step
-					attribute="Mitarbeiter"
-					inverse="false"
-					meta-element="unknown"
-				/>
+				<step attribute="unknown#Mitarbeiter"/>
 			</path>
 		</rule>
 	</rules>

@@ -28,6 +28,28 @@ services.form = {
 		});
 	},
 	
+	/**
+	 * Displays the message of an upload that the server refused.
+	 *
+	 * The body of such a response is a rendered info service item. It is shown in the info area of
+	 * the top level window, in the same way as a message produced during a command.
+	 *
+	 * @param response
+	 *            The response of the upload request.
+	 * @returns A promise that is resolved after a potential message has been displayed, so that the
+	 *          command following the upload can be chained.
+	 */
+	handleUploadResponse: function(response) {
+		if (response.ok) {
+			return Promise.resolve();
+		}
+		return response.text().then(function(message) {
+			if (message != "") {
+				showInfoArea(message);
+			}
+		});
+	},
+	
 	callback: function(ctrlId, ...parameters) {
 		services.ajax.execute("dispatchControlCommand", {
 			controlCommand: "callback",
@@ -1976,6 +1998,21 @@ services.form = {
 			controlElement.enableTimer = null;
 		},
 
+		/**
+		 * Activates an anchor-based button with the space key like a native button.
+		 *
+		 * The synthesized click event triggers the element's onclick attribute and
+		 * activates the button through the regular handleClick() path.
+		 */
+		handleKeyDown : function(event, element) {
+			event = BAL.getEvent(event);
+			if (BAL.getKeyCode(event) == 32) {
+				element.click();
+				return false;
+			}
+			return true;
+		},
+
 		handleClick : function(event, controlID, progressDivID) {
 			BAL.eventStopPropagation(BAL.getEvent(event));
 			var delay = services.ajax.progressBarDelay;
@@ -3362,7 +3399,7 @@ services.form = {
 		
 		controlElement: function(element) {
             while (element != null) {
-            	if (BAL.DOM.containsClass(element, "cPopupSelect")) {
+            	if (BAL.DOM.containsClass(element, "tl-popup-select")) {
             		return element;
             	}
 
@@ -4165,7 +4202,8 @@ services.form = {
 			fetch(uploadUrl, {
 			  method: "POST", 
 			  body: formData
-			}).then((response) => self.uploadPerformed(controlID));
+			}).then((response) => services.form.handleUploadResponse(response))
+			  .then(() => self.uploadPerformed(controlID));
 		},
 		
 		uploadPerformed: function(controlID) {
@@ -4236,7 +4274,8 @@ services.form = {
 			fetch(uploadUrl, {
 				method: "POST", 
 				body: formData
-			}).then((response) => self.uploadPerformed(controlID));
+			}).then((response) => services.form.handleUploadResponse(response))
+			  .then(() => self.uploadPerformed(controlID));
 		},
 		
 		uploadPerformed: function(controlID) {
@@ -5149,11 +5188,11 @@ services.form = {
 	},
 	
 	LogoutTimerControl: {
-		init: function(controlID, timeoutSeconds, countingSeconds, logoutUrl) {
+		init: function(controlID, timeoutSeconds, countingSeconds, loginUrl) {
 			var element = document.getElementById(controlID);
 			element.timeoutSeconds = timeoutSeconds;
 			element.countingSeconds = countingSeconds;
-			element.logoutUrl = logoutUrl;
+			element.loginUrl = loginUrl;
 			
 			this.resetTimer(controlID);
 			
@@ -5218,7 +5257,7 @@ services.form = {
 				var secondsLeft = Math.floor(millisLeft / 1000);
 				
 				if (secondsLeft < 0) {
-					services.ajax.showSessionTimeout(element.logoutUrl);
+					services.ajax.showSessionTimeout(element.loginUrl);
 				} else {
 					var minutesLeft = Math.floor(secondsLeft / 60);
 					var secondsRest = secondsLeft % 60;

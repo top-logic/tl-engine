@@ -1,0 +1,2662 @@
+# React Integration for TopLogic Applications
+
+## Specification: `com.top_logic.layout.react`
+
+**Status**: Draft
+**Target**: TopLogic 7.10.x
+
+---
+
+## 1. Overview
+
+This specification defines how React-based UI controls can replace or augment existing
+TopLogic Controls. A `ReactControl` is a fine-grained, interactive UI element -- the same
+abstraction level as `TextInputControl`, `SelectControl`, or `BPMNDisplay`. It renders a
+DOM subtree managed by React, while participating fully in TopLogic's control lifecycle
+(attachment, detachment, revalidation, command dispatch).
+
+A central part of this specification is the introduction of **Server-Sent Events (SSE)**
+as a server-push mechanism for TopLogic. Today, all client updates are piggybacked on
+command responses (request-response only). The SSE event stream introduced here is the
+**universal delivery channel for all control updates** -- both React controls (which
+receive JSON state patches) and traditional controls (whose `ClientAction`s are
+JSON-wrapped and delivered through the same stream). When a React command triggers a
+server-side model change that affects both React and non-React controls, all updates are
+collected via the standard `RevalidationVisitor` and delivered uniformly through SSE.
+
+### Design Rationale
+
+TopLogic separates concerns into two layers:
+
+- **LayoutComponent** (coarse-grained): Manages persistent data access (model builders),
+  navigation state (component channels), security, and page structure. A LayoutComponent
+  does not directly produce HTML. Transactions are a LayoutComponent-level concern.
+- **Control** (fine-grained): Handles display and user interaction. Controls render HTML,
+  process user input via `ControlCommand`s, and translate between persistent objects and
+  UI presentation through `LabelProvider`, `ResourceProvider`, etc. Controls do not manage
+  transactions.
+
+A React-based UI element is fundamentally a **Control** -- it renders interactive HTML and
+handles user events. It should not be a LayoutComponent, because it does not own data
+access, navigation, or transaction boundaries. This positioning allows React controls to
+be used anywhere a traditional TopLogic Control is used today, enabling incremental
+migration: a `TextInputControl` could be replaced by a React-based text input, a chart
+control by a React chart, etc.
+
+### Goals
+
+- A `ReactControl` can be used wherever a TopLogic `Control` is used: inside form groups,
+  component views, dialogs, table cell renderers, etc.
+- React controls participate in the standard `Control` lifecycle: `attach()`, `detach()`,
+  `requestRepaint()`, `revalidate()`.
+- User interactions in React are dispatched to the server via `ControlCommand`s through
+  a **JSON-based servlet** (`ReactServlet`).
+- Server-to-client updates are delivered through a **dedicated SSE event stream**,
+  separate from the existing XML/SOAP revalidation pipeline. Updates are
+  **incremental** (partial state patches), not full state replacements.
+- All labels and display text are **resolved server-side** and included in the control
+  state, so React controls do not need their own I18N infrastructure.
+- React controls can adopt the TopLogic theme's visual appearance through **CSS custom
+  properties** exported by the theme system, while remaining compatible with third-party
+  React component libraries that bring their own styling.
+- React assets are built with standard tooling (Vite/npm) and packaged into the Maven
+  module for deployment.
+
+### Non-Goals (for this iteration)
+
+- Replacing the entire TopLogic UI with React.
+- Server-side rendering (SSR) of React components.
+- A complete React equivalent of every existing TopLogic form control.
+- Transaction management in controls (transactions are a LayoutComponent concern).
+
+---
+
+## 2. Architecture
+
+```
++----------------------------------------------------------------------+
+|  Browser                                                              |
+|                                                                       |
+|  +------------------------------+  +------------------------------+   |
+|  | TopLogic-rendered Controls   |  | React-rendered Controls      |   |
+|  | (server HTML + AJAX updates) |  | (client-rendered via React)  |   |
+|  |                              |  |                              |   |
+|  | TextInputControl             |  | ReactControl                 |   |
+|  | SelectControl                |  |  +-----------------------+   |   |
+|  | TableControl                 |  |  | React Component Tree  |   |   |
+|  | ...                          |  |  | (MyChart, MyEditor..) |   |   |
+|  |                              |  |  +-----------------------+   |   |
+|  +--------+---------------------+  +------+----------------------+   |
+|           |                               |                          |
+|   dispatchControlCommand           POST command                      |
+|   (XML/SOAP, existing)            (JSON, new)                       |
+|           |                               |                          |
+|           |    SSE event stream (JSON) -- delivers ALL updates       |
+|           |    <----------------------------------------------------+|
+|           |    DOM actions for traditional controls (JSON-wrapped)   ||
+|           |    State patches for React controls                     ||
+|           |                               |                          |
++-----------+-------------------------------+--------------------------+
+            |                               |
+            v                               v
++----------------------------------------------------------------------+
+|  TopLogic Server (Servlet Container)                                  |
+|                                                                       |
+|  +-----------------+  +------------------+  +---------------------+   |
+|  | AJAXServlet     |  | ReactServlet     |  | SSEServlet          |   |
+|  | /ajax           |  | /react-api/*     |  | /react-api/events   |   |
+|  |                 |  |                  |  |                     |   |
+|  | XML/SOAP        |  | JSON commands +  |  | Persistent push     |   |
+|  | DOM actions     |  | revalidation     |  | connection          |   |
+|  +---------+-------+  +--------+---------+  +----------+----------+   |
+|            |                   |                       ^              |
+|            |                   |   +-------------------+              |
+|            |                   |   |                                  |
+|            |              +----+---+-------+                         |
+|            |              | Revalidation   |                         |
+|            |              | Visitor        |                         |
+|            |              | (collects ALL  |                         |
+|            |              |  control       |                         |
+|            |              |  updates)      |                         |
+|            |              +----+-----------+                         |
+|            |                   |                                     |
+|            |              +----+----------+                          |
+|            |              | SSEUpdateQueue|                          |
+|            |              | - per session |                          |
+|            |              | - JSON-wraps  |                          |
+|            |              |   all actions |                          |
+|            |              +---------------+                          |
+|            |                                                         |
+|            +--------------------+                                    |
+|                                 |                                    |
+|         +----------+----------+ |                                    |
+|         | AbstractControlBase +-+                                    |
+|         +---------------------+                                      |
+|                    |                                                  |
+|     +--------------+--------------+                                  |
+|     |                             |                                  |
+|  +--+---------------+  +----------+---------+                        |
+|  | TextInputControl |  | ReactControl       |                        |
+|  | (HTML updates)   |  | (JSON state)       |                        |
+|  +------------------+  +--------------------+                        |
++----------------------------------------------------------------------+
+```
+
+### Key Principles
+
+1. **A `ReactControl` is a Control.** It extends `AbstractControl` (or
+   `AbstractFormFieldControl`), registers `ControlCommand`s, and lives within a
+   `ControlScope`.
+
+2. **SSE is the universal update delivery channel.** After command execution, the
+   `ReactServlet` runs the standard `RevalidationVisitor` to collect updates from *all*
+   controls -- React and traditional. React control updates are delivered as JSON state
+   patches. Traditional control updates (`ContentReplacement`, `PropertyUpdate`,
+   `JSSnipplet`, etc.) are JSON-wrapped and delivered through the same SSE stream. The
+   client-side SSE handler dispatches each event type to the appropriate processor.
+
+3. **The ReactServlet is a full peer of the AJAXServlet.** Both servlets execute commands
+   and trigger revalidation. The difference is the transport: the AJAXServlet delivers
+   updates in the XML/SOAP response; the ReactServlet delegates delivery to the SSE
+   stream. When a React command causes traditional controls to update, those updates
+   reach the client immediately via SSE -- no secondary AJAX round-trip needed.
+
+4. **Controls do not manage transactions.** Transaction boundaries are established by
+   `LayoutComponent`-level `CommandHandler`s. `ControlCommand`s execute within whatever
+   transaction context (if any) the calling `CommandHandler` has established.
+
+---
+
+## 3. Module Structure
+
+```
+com.top_logic.layout.react/
++-- pom.xml
++-- package.json                          # npm project for React build tooling
++-- vite.config.ts                        # Vite bundler configuration
++-- tsconfig.json
++-- src/
+|   +-- main/
+|   |   +-- java/
+|   |   |   +-- com/top_logic/layout/react/
+|   |   |       +-- ReactControl.java             # Base control for React islands
+|   |   |       +-- ReactFormFieldControl.java     # FormField-bound React control
+|   |   |       +-- ReactServlet.java              # JSON API servlet for commands
+|   |   |       +-- SSEServlet.java                # Server-Sent Events endpoint
+|   |   |       +-- SSEUpdateQueue.java            # Per-session SSE event queue
+|   |   |       +-- ClientActionConverter.java     # Converts ClientActions to SSEEvents
+|   |   |       +-- ReactControlRenderer.java      # Renders the mount <div> + bootstrap
+|   |   |       +-- ReactComponentRegistry.java   # TLType -> React module name mapping
+|   |   |       +-- I18NConstants.java
+|   |   |       +-- package-info.java
+|   |   |       +-- protocol/
+|   |   |           +-- sse.proto                  # msgbuf protocol definition
+|   |   |           +-- SSEEvent.java              # Generated by msgbuf
+|   |   |           +-- StateEvent.java            # Generated
+|   |   |           +-- PatchEvent.java            # Generated
+|   |   |           +-- ContentReplacement.java    # Generated
+|   |   |           +-- ...                        # Other generated event types
+|   |   +-- webapp/
+|   |   |   +-- WEB-INF/
+|   |   |   |   +-- web-fragment.xml               # Servlet registrations
+|   |   |   |   +-- conf/react.conf.xml
+|   |   |   |   +-- themes/core/theme.xml          # CSS registration
+|   |   |   +-- react/                             # Built React assets (output of Vite)
+|   |   |       +-- tl-react-bridge.js             # TL<->React bridge library
+|   |   |       +-- vendor.js                      # React runtime (bundled)
+|   |   +-- resources/
+|   |       +-- META-INF/
+|   |           +-- messages_en.properties
+|   +-- test/
+|       +-- java/
+|           +-- test/com/top_logic/layout/react/
+|               +-- ...
++-- react-src/                             # React application source (TypeScript)
+|   +-- bridge/
+|   |   +-- tl-react-bridge.ts             # Client-side bridge API
+|   |   +-- sse-client.ts                  # SSE connection manager
+|   |   +-- registry.ts                    # Component registry
+|   |   +-- types.ts                       # Shared type definitions
+|   +-- controls/
+|   |   +-- TLTextInput.tsx                # Text input (tl.core:String)
+|   |   +-- TLNumberInput.tsx              # Number input (tl.core:Integer, etc.)
+|   |   +-- TLDatePicker.tsx               # Date picker (tl.core:Date)
+|   |   +-- TLSelect.tsx                   # Select box (references)
+|   |   +-- TLCheckbox.tsx                 # Checkbox (tl.core:Boolean)
+|   |   +-- TLTable.tsx                    # Model-driven table (composite)
+|   +-- index.ts                           # Registers all built-in controls
++-- README.md
+```
+
+### Maven Integration
+
+The `pom.xml` uses `frontend-maven-plugin` to run npm/Vite during the Maven build:
+
+```xml
+<plugin>
+    <groupId>com.github.eirslett</groupId>
+    <artifactId>frontend-maven-plugin</artifactId>
+    <configuration>
+        <nodeVersion>v20.11.0</nodeVersion>
+        <workingDirectory>${project.basedir}</workingDirectory>
+    </configuration>
+    <executions>
+        <execution>
+            <id>install-node-and-npm</id>
+            <goals><goal>install-node-and-npm</goal></goals>
+        </execution>
+        <execution>
+            <id>npm-install</id>
+            <goals><goal>npm</goal></goals>
+            <configuration>
+                <arguments>ci</arguments>
+            </configuration>
+        </execution>
+        <execution>
+            <id>vite-build</id>
+            <goals><goal>npm</goal></goals>
+            <configuration>
+                <arguments>run build</arguments>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+
+Vite outputs into `src/main/webapp/react/`, which is then packaged into the WAR overlay.
+
+---
+
+## 4. Server-Side: The `ReactControl` Hierarchy
+
+### 4.1 `ReactControl` -- Base Class
+
+Extends `AbstractControl` for controls that display an arbitrary model object via React.
+
+```java
+/**
+ * A {@link Control} that delegates rendering and interaction to a client-side
+ * React component.
+ *
+ * <p>
+ * Instead of writing HTML via {@link TagWriter}, this control writes a mount
+ * point {@code <div>} and bootstraps a named React component into it.
+ * Model changes are delivered to the client as incremental JSON state patches
+ * via the SSE event stream.
+ * </p>
+ */
+public class ReactControl extends AbstractControl {
+
+    private final String _reactModule;
+
+    /** Full state -- the union of all patches applied so far. */
+    private Map<String, Object> _reactState;
+
+    public ReactControl(Object model, String reactModule,
+            Map<String, ControlCommand> commands) {
+        super(model, commands);
+        _reactModule = reactModule;
+        _reactState = new LinkedHashMap<>();
+    }
+
+    /**
+     * Replace the entire React state.
+     * Enqueues a full state event on the SSE stream.
+     */
+    protected void setReactState(Map<String, Object> state) {
+        _reactState = new LinkedHashMap<>(state);
+        enqueueSSE(StateEvent.create()
+            .setControlId(getID())
+            .setState(toJsonString(state)));
+    }
+
+    /**
+     * Apply an incremental patch to the React state.
+     * Only the changed keys are sent to the client via SSE.
+     *
+     * <p>Keys present in {@code patch} overwrite existing keys.
+     * Keys mapped to {@code null} are removed from the state.</p>
+     */
+    protected void patchReactState(Map<String, Object> patch) {
+        for (Map.Entry<String, Object> entry : patch.entrySet()) {
+            if (entry.getValue() == null) {
+                _reactState.remove(entry.getKey());
+            } else {
+                _reactState.put(entry.getKey(), entry.getValue());
+            }
+        }
+        enqueueSSE(PatchEvent.create()
+            .setControlId(getID())
+            .setPatch(toJsonString(patch)));
+    }
+
+    /** Full current state (for initial mount and state-fetch requests). */
+    public Map<String, Object> getReactState() {
+        return Collections.unmodifiableMap(_reactState);
+    }
+
+    public String getReactModule() {
+        return _reactModule;
+    }
+
+    @Override
+    protected void internalWrite(DisplayContext context, TagWriter out)
+            throws IOException {
+        out.beginBeginTag(DIV);
+        writeControlAttributes(context, out);
+        out.writeAttribute("data-react-module", _reactModule);
+        out.endBeginTag();
+        out.endTag(DIV);
+
+        HTMLUtil.beginScriptAfterRendering(out);
+        out.append("TLReact.mount(");
+        out.writeJsString(getID());
+        out.append(", ");
+        out.writeJsString(_reactModule);
+        out.append(", ");
+        writeJsonLiteral(out, _reactState);
+        out.append(");");
+        HTMLUtil.endScriptAfterRendering(out);
+    }
+
+    @Override
+    protected void internalRevalidate(DisplayContext context,
+            UpdateQueue actions) {
+        // Updates are delivered via SSE, not via the SOAP UpdateQueue.
+        // Nothing to add to the XML action stream.
+    }
+
+    /** Serialize a state map to a JSON string for the msgbuf event payload. */
+    private static String toJsonString(Map<String, Object> map) {
+        StringWriter sw = new StringWriter();
+        try (JsonWriter jw = new JsonWriter(sw)) {
+            JsonUtilities.writeMap(jw, map);
+        }
+        return sw.toString();
+    }
+
+    /** Enqueue an event on the session's SSE stream. */
+    private void enqueueSSE(SSEEvent event) {
+        if (isAttached()) {
+            SSEUpdateQueue.forCurrentSession().enqueue(event);
+        }
+    }
+}
+```
+
+### 4.2 `ReactFormFieldControl` -- FormField-Bound Variant
+
+Extends `AbstractFormFieldControl` for React controls bound to a `FormField`. Listens
+to value, disabled, immutable, mandatory, and error state changes and pushes **incremental
+patches** (only the changed properties) to the React component via SSE.
+
+```java
+public class ReactFormFieldControl extends AbstractFormFieldControl {
+
+    private final String _reactModule;
+
+    public ReactFormFieldControl(FormField model, String reactModule) {
+        this(model, reactModule, COMMANDS);
+    }
+
+    protected ReactFormFieldControl(FormField model, String reactModule,
+            Map<String, ControlCommand> commands) {
+        super(model, commands);
+        _reactModule = reactModule;
+    }
+
+    // --- Rendering ---
+
+    @Override
+    protected void writeEditable(DisplayContext context, TagWriter out)
+            throws IOException {
+        writeReactMount(context, out, true);
+    }
+
+    @Override
+    protected void writeImmutable(DisplayContext context, TagWriter out)
+            throws IOException {
+        writeReactMount(context, out, false);
+    }
+
+    private void writeReactMount(DisplayContext context, TagWriter out,
+            boolean editable) throws IOException {
+        out.beginBeginTag(DIV);
+        writeControlAttributes(context, out);
+        out.writeAttribute("data-react-module", _reactModule);
+        out.endBeginTag();
+        out.endTag(DIV);
+
+        HTMLUtil.beginScriptAfterRendering(out);
+        out.append("TLReact.mountField(");
+        out.writeJsString(getID());
+        out.append(", ");
+        out.writeJsString(_reactModule);
+        out.append(", ");
+        writeJsonLiteral(out, buildFullFieldState(editable));
+        out.append(");");
+        HTMLUtil.endScriptAfterRendering(out);
+    }
+
+    // --- Full state (for initial mount) ---
+
+    protected Map<String, Object> buildFullFieldState(boolean editable) {
+        FormField field = getFieldModel();
+        Map<String, Object> state = new LinkedHashMap<>();
+        state.put("value", field.getRawValue());
+        state.put("editable", editable);
+        state.put("disabled", field.isDisabled());
+        state.put("mandatory", field.isMandatory());
+        state.put("hasError", field.hasError());
+        if (field.hasError()) {
+            state.put("errorMessage", field.getError());
+        }
+        state.put("label", getLabel(field));
+        state.put("tooltip", getTooltip(field));
+        return state;
+    }
+
+    // --- Incremental change handlers ---
+
+    @Override
+    protected void internalHandleValueChanged(FormField field,
+            Object oldValue, Object newValue) {
+        pushPatch(Map.of("value", newValue));
+    }
+
+    @Override
+    public Bubble handleDisabledChanged(FormMember sender,
+            Boolean oldValue, Boolean newValue) {
+        pushPatch(Map.of("disabled", newValue));
+        return super.handleDisabledChanged(sender, oldValue, newValue);
+    }
+
+    @Override
+    public Bubble handleMandatoryChanged(FormField sender,
+            Boolean oldValue, Boolean newValue) {
+        pushPatch(Map.of("mandatory", newValue));
+        return super.handleMandatoryChanged(sender, oldValue, newValue);
+    }
+
+    @Override
+    public Bubble handleImmutableChanged(FormMember sender,
+            Boolean oldValue, Boolean newValue) {
+        requestRepaint();  // Switches between writeEditable/writeImmutable
+        return super.handleImmutableChanged(sender, oldValue, newValue);
+    }
+
+    /**
+     * Push error state update. Called when validation state changes.
+     */
+    protected void pushErrorState() {
+        FormField field = getFieldModel();
+        if (field.hasError()) {
+            pushPatch(Map.of(
+                "hasError", true,
+                "errorMessage", field.getError()
+            ));
+        } else {
+            pushPatch(Map.of(
+                "hasError", false,
+                "errorMessage", null  // null = remove key
+            ));
+        }
+    }
+
+    private void pushPatch(Map<String, Object> patch) {
+        if (isAttached()) {
+            SSEUpdateQueue.forCurrentSession()
+                .enqueue(PatchEvent.create()
+                    .setControlId(getID())
+                    .setPatch(toJsonString(patch)));
+        }
+    }
+
+    @Override
+    protected void internalRevalidate(DisplayContext context,
+            UpdateQueue actions) {
+        // Updates are delivered via SSE, not the SOAP UpdateQueue.
+    }
+
+    // --- Commands ---
+
+    protected static final Map<String, ControlCommand> COMMANDS =
+        createCommandMap(AbstractFormFieldControl.COMMANDS,
+            new ControlCommand[] {
+                ValueChanged.INSTANCE
+            });
+
+    protected static class ValueChanged extends ControlCommand {
+        public static final ValueChanged INSTANCE = new ValueChanged();
+
+        protected ValueChanged() {
+            super("reactValueChanged");
+        }
+
+        @Override
+        protected HandlerResult execute(DisplayContext context,
+                Control control, Map<String, Object> arguments) {
+            ReactFormFieldControl reactControl =
+                (ReactFormFieldControl) control;
+            Object newValue = arguments.get("value");
+            FormField field = reactControl.getFieldModel();
+            try {
+                FormFieldInternals.updateFieldNoClientUpdate(
+                    field, newValue);
+            } catch (VetoException ex) {
+                ex.process(reactControl.getWindowScope());
+            }
+            return HandlerResult.DEFAULT_RESULT;
+        }
+
+        @Override
+        public ResKey getI18NKey() {
+            return I18NConstants.REACT_VALUE_CHANGED;
+        }
+    }
+}
+```
+
+---
+
+## 5. Server-Sent Events (SSE) -- The Update Delivery Channel
+
+### 5.1 Motivation
+
+Today, TopLogic delivers all client updates by piggybacking them on AJAX command
+responses. A model change caused by one user action is only delivered to the client when
+*the next* user action triggers a request. This creates subtle staleness: a channel update
+from navigation may not be visible until the user interacts again.
+
+SSE solves this by providing a persistent, server-initiated push channel. When any control
+enqueues an update, it is delivered immediately -- no user interaction required.
+
+While this spec focuses on React controls, the SSE infrastructure is intentionally
+**control-type-agnostic**. Any control can enqueue a `SSEEvent`. This opens a migration
+path for traditional controls: a `PropertyUpdate` or `ContentReplacement` could be
+JSON-wrapped and pushed via SSE instead of waiting for the next SOAP response.
+
+### 5.2 `SSEServlet`
+
+```xml
+<!-- web-fragment.xml (alongside ReactServlet) -->
+<servlet>
+    <servlet-name>SSEServlet</servlet-name>
+    <servlet-class>com.top_logic.layout.react.SSEServlet</servlet-class>
+    <async-supported>true</async-supported>
+</servlet>
+<servlet-mapping>
+    <servlet-name>SSEServlet</servlet-name>
+    <url-pattern>/react-api/events</url-pattern>
+</servlet-mapping>
+```
+
+The SSE servlet uses the Servlet 3.1 async API (`AsyncContext`) to hold the HTTP
+connection open and stream events.
+
+```java
+public class SSEServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req,
+            HttpServletResponse resp) throws IOException {
+        // 1. Validate session
+        HttpSession session = req.getSession(false);
+        if (session == null) {
+            resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+
+        // 2. Set SSE headers
+        resp.setContentType("text/event-stream");
+        resp.setCharacterEncoding("UTF-8");
+        resp.setHeader("Cache-Control", "no-cache");
+        resp.setHeader("Connection", "keep-alive");
+        resp.setHeader("X-Accel-Buffering", "no");  // Disable proxy buffering
+
+        // 3. Start async context
+        AsyncContext async = req.startAsync();
+        async.setTimeout(0);  // No timeout (reconnect handled by client)
+
+        // 4. Register this connection with the session's SSEUpdateQueue
+        SSEUpdateQueue queue = SSEUpdateQueue.forSession(session);
+        queue.addConnection(async);
+
+        // 5. Send initial keepalive
+        resp.getWriter().write(": connected\n\n");
+        resp.getWriter().flush();
+    }
+}
+```
+
+### 5.3 `SSEUpdateQueue`
+
+A per-session queue that buffers events and writes them to all active SSE connections
+for that session.
+
+```java
+public class SSEUpdateQueue {
+
+    /** Retrieve the queue for the current thread's session. */
+    public static SSEUpdateQueue forCurrentSession() { ... }
+
+    /** Retrieve the queue for a specific HTTP session. */
+    public static SSEUpdateQueue forSession(HttpSession session) { ... }
+
+    /**
+     * Enqueue an event for delivery to the client.
+     * Thread-safe: can be called from any thread
+     * (command processing, model listeners, etc.).
+     */
+    public void enqueue(SSEEvent event) {
+        // Add to concurrent queue, notify writer thread / flush
+    }
+
+    /** Register a new SSE connection (from SSEServlet). */
+    public void addConnection(AsyncContext async) { ... }
+
+    /** Remove a closed connection. */
+    public void removeConnection(AsyncContext async) { ... }
+}
+```
+
+### 5.4 Protocol Definition (msgbuf)
+
+The SSE wire protocol is defined using **msgbuf** (`de.haumacher.msgbuf`), the type-safe
+protocol buffer library already used in TopLogic (e.g., for the xref model, diagram data,
+DeepL protocol). msgbuf generates:
+
+- Java interfaces + implementations with built-in JSON serialization
+- A **Visitor** interface for type-safe polymorphic dispatch (no `instanceof` chains)
+- Compact JSON encoding with `@Name` abbreviations
+
+The protocol is defined in a `.proto` file:
+
+```proto
+// src/main/java/com/top_logic/layout/react/protocol/sse.proto
+
+package com.top_logic.layout.react.protocol;
+
+option NoReflection;
+option NoBinary;
+option NoXml;
+
+/**
+ * A single event delivered via the SSE stream.
+ *
+ * <p>Each concrete subtype represents a different kind of update that
+ * the server can push to the client.</p>
+ */
+abstract message SSEEvent {
+}
+
+// --- React control events ---
+
+/** Full state replacement for a React control (on mount, reconnect). */
+@Name("S")
+message StateEvent extends SSEEvent {
+    /** Control ID. */
+    @Name("c")
+    string controlId;
+
+    /** Full state as a JSON object string (opaque to the protocol). */
+    @Name("s")
+    string state;
+}
+
+/** Incremental state patch for a React control (only changed keys). */
+@Name("P")
+message PatchEvent extends SSEEvent {
+    /** Control ID. */
+    @Name("c")
+    string controlId;
+
+    /**
+     * Patch as a JSON object string (keys to merge; null-valued keys are removed).
+     * Opaque to the protocol -- interpreted by the React bridge.
+     */
+    @Name("p")
+    string patch;
+}
+
+// --- Traditional DOM actions (JSON-wrapped ClientActions) ---
+
+/** Replace the inner content of a DOM element. */
+@Name("CR")
+message ContentReplacement extends SSEEvent {
+    /** Target element ID. */
+    @Name("e")
+    string elementId;
+
+    /** HTML fragment to set as innerHTML. */
+    @Name("f")
+    string fragment;
+}
+
+/** Replace an entire DOM element (outerHTML). */
+@Name("ER")
+message ElementReplacement extends SSEEvent {
+    /** Target element ID. */
+    @Name("e")
+    string elementId;
+
+    /** HTML fragment to replace the element with. */
+    @Name("f")
+    string fragment;
+}
+
+/** Update one or more JavaScript properties on a DOM element. */
+@Name("PU")
+message PropertyUpdate extends SSEEvent {
+    /** Target element ID. */
+    @Name("e")
+    string elementId;
+
+    /** Properties to set. */
+    @Name("p")
+    repeated Property properties;
+}
+
+/** A single name/value property. */
+message Property {
+    @Name("n")
+    string name;
+
+    @Name("v")
+    string value;
+}
+
+/** Update the CSS class attribute of a DOM element. */
+@Name("CU")
+message CssClassUpdate extends SSEEvent {
+    /** Target element ID. */
+    @Name("e")
+    string elementId;
+
+    /** New CSS class string. */
+    @Name("c")
+    string cssClass;
+}
+
+/** Insert an HTML fragment adjacent to a DOM element. */
+@Name("FI")
+message FragmentInsertion extends SSEEvent {
+    /** Reference element ID. */
+    @Name("e")
+    string elementId;
+
+    /** Insertion position: "beforebegin", "afterbegin", "beforeend", "afterend". */
+    @Name("o")
+    string position;
+
+    /** HTML fragment to insert. */
+    @Name("f")
+    string fragment;
+}
+
+/** Replace a range of sibling DOM elements. */
+@Name("RR")
+message RangeReplacement extends SSEEvent {
+    /** Start element ID (inclusive). */
+    @Name("a")
+    string startId;
+
+    /** Stop element ID (inclusive). */
+    @Name("b")
+    string stopId;
+
+    /** HTML fragment to replace the range with. */
+    @Name("f")
+    string fragment;
+}
+
+/** Execute a JavaScript code snippet. */
+@Name("JS")
+message JSSnipplet extends SSEEvent {
+    /** JavaScript code to evaluate. */
+    @Name("c")
+    string code;
+}
+
+/** Call a JavaScript function on a DOM element. */
+@Name("FC")
+message FunctionCall extends SSEEvent {
+    /** Target element ID. */
+    @Name("e")
+    string elementId;
+
+    /** Object reference (e.g., "BAL", "services.ajax"). */
+    @Name("r")
+    string functionRef;
+
+    /** Function name on the object. */
+    @Name("n")
+    string functionName;
+
+    /** Arguments as a JSON array string (opaque to the protocol). */
+    @Name("a")
+    string arguments;
+}
+```
+
+This generates the following type hierarchy with a visitor:
+
+```java
+// Generated by msgbuf
+public abstract class SSEEvent {
+
+    public enum TypeKind {
+        STATE_EVENT, PATCH_EVENT,
+        CONTENT_REPLACEMENT, ELEMENT_REPLACEMENT,
+        PROPERTY_UPDATE, CSS_CLASS_UPDATE,
+        FRAGMENT_INSERTION, RANGE_REPLACEMENT,
+        JS_SNIPPLET, FUNCTION_CALL
+    }
+
+    public interface Visitor<R, A> {
+        R visit(StateEvent self, A arg);
+        R visit(PatchEvent self, A arg);
+        R visit(ContentReplacement self, A arg);
+        R visit(ElementReplacement self, A arg);
+        R visit(PropertyUpdate self, A arg);
+        R visit(CssClassUpdate self, A arg);
+        R visit(FragmentInsertion self, A arg);
+        R visit(RangeReplacement self, A arg);
+        R visit(JSSnipplet self, A arg);
+        R visit(FunctionCall self, A arg);
+    }
+
+    public abstract TypeKind kind();
+    public abstract <R, A> R visit(Visitor<R, A> v, A arg);
+
+    /** Polymorphic deserialization. */
+    public static SSEEvent readSSEEvent(JsonReader in) throws IOException;
+
+    /** Serialization. */
+    public void writeTo(JsonWriter out) throws IOException;
+}
+```
+
+### 5.5 Converting Traditional ClientActions to SSEEvents
+
+After the `ReactServlet` runs the `RevalidationVisitor`, it collects all `ClientAction`s
+from the `UpdateQueue`. Each action is converted to a msgbuf `SSEEvent` object, which
+handles its own JSON serialization.
+
+```java
+/**
+ * Converts traditional ClientActions (which would normally be serialized as
+ * XML in the SOAP response) into msgbuf SSEEvent objects for delivery via
+ * the SSE stream.
+ */
+public class ClientActionConverter {
+
+    private final DisplayContext _context;
+
+    public SSEEvent convert(ClientAction action) {
+        if (action instanceof com.top_logic.base.services.simpleajax
+                .ContentReplacement cr) {
+            return ContentReplacement.create()
+                .setElementId(cr.getElementId())
+                .setFragment(renderFragment(cr));
+        }
+        if (action instanceof com.top_logic.base.services.simpleajax
+                .ElementReplacement er) {
+            return ElementReplacement.create()
+                .setElementId(er.getElementId())
+                .setFragment(renderFragment(er));
+        }
+        if (action instanceof com.top_logic.base.services.simpleajax
+                .PropertyUpdate pu) {
+            PropertyUpdate event = PropertyUpdate.create()
+                .setElementId(pu.getElementId());
+            for (var prop : pu.getProperties()) {
+                event.addProperty(Property.create()
+                    .setName(prop.getName())
+                    .setValue(prop.getValue()));
+            }
+            return event;
+        }
+        if (action instanceof com.top_logic.base.services.simpleajax
+                .JSSnipplet js) {
+            return JSSnipplet.create()
+                .setCode(js.getCode());
+        }
+        // ... other action types follow the same pattern
+        throw new UnsupportedOperationException(
+            "Cannot convert: " + action.getClass().getName());
+    }
+
+    private String renderFragment(DOMModification mod) {
+        StringWriter sw = new StringWriter();
+        TagWriter tw = new TagWriter(sw);
+        mod.getFragment().write(_context, tw);
+        return sw.toString();
+    }
+}
+```
+
+The converted `SSEEvent` objects serialize themselves to compact JSON via
+`event.writeTo(jsonWriter)` -- no manual JSON construction needed. Traditional controls
+require **zero changes**; they continue producing their normal `ClientAction`s.
+
+### 5.6 SSE Wire Format
+
+Each SSE frame carries a single `SSEEvent` serialized by msgbuf. msgbuf encodes
+polymorphic types as a JSON array `["TypeCode", {fields}]`, where the type code is
+the `@Name` abbreviation from the `.proto` definition. All events use the default
+`message` event type -- the type discriminator is embedded in the msgbuf encoding,
+eliminating the need for separate SSE `event:` types.
+
+**React state patch** (incremental, only changed keys):
+
+```
+data: ["P", {"c":"ctrl-123","p":"{\"value\":\"new text\",\"hasError\":false}"}]
+
+```
+
+**React full state** (on mount, reconnect, or explicit reset):
+
+```
+data: ["S", {"c":"ctrl-123","s":"{\"value\":\"x\",\"editable\":true,\"disabled\":false}"}]
+
+```
+
+**DOM action -- ContentReplacement:**
+
+```
+data: ["CR", {"e":"ctrl-456","f":"<span>new content</span>"}]
+
+```
+
+**DOM action -- ElementReplacement:**
+
+```
+data: ["ER", {"e":"ctrl-456","f":"<div id='ctrl-456'>replaced</div>"}]
+
+```
+
+**DOM action -- PropertyUpdate:**
+
+```
+data: ["PU", {"e":"input-789","p":[{"n":"value","v":"hello"},{"n":"disabled","v":"false"}]}]
+
+```
+
+**DOM action -- CssClassUpdate:**
+
+```
+data: ["CU", {"e":"ctrl-456","c":"tlControl active selected"}]
+
+```
+
+**DOM action -- FragmentInsertion:**
+
+```
+data: ["FI", {"e":"list-1","o":"beforeend","f":"<li>new item</li>"}]
+
+```
+
+**DOM action -- RangeReplacement:**
+
+```
+data: ["RR", {"a":"row-1","b":"row-5","f":"<tr>...</tr>"}]
+
+```
+
+**DOM action -- JSSnipplet:**
+
+```
+data: ["JS", {"c":"services.form.TableControl.init('tbl-1');"}]
+
+```
+
+**DOM action -- FunctionCall:**
+
+```
+data: ["FC", {"e":"ctrl-1","r":"BAL","n":"setStyle","a":"[\"color: red;\"]"}]
+
+```
+
+**Keepalive** (prevents proxy/connection timeout):
+
+```
+: keepalive
+
+```
+
+Note: The abbreviated field names (`c`, `s`, `p`, `e`, `f`, etc.) keep the wire
+format compact while remaining fully type-safe on the Java side via the generated
+msgbuf code. On the client side, a TypeScript type map provides the same safety
+(see Section 7.2).
+
+### 5.7 Reconnection
+
+The `EventSource` API in the browser handles reconnection automatically. On reconnect:
+
+1. The client sends a `Last-Event-ID` header (if the server set `id:` on events).
+2. The server can replay missed events from a short buffer, or:
+3. The client re-fetches full state for all mounted React controls via
+   `POST /react-api/state`.
+
+For the initial implementation, option (3) is sufficient -- no server-side event buffering
+is needed. The client re-fetches state for mounted React controls on reconnect. For
+traditional controls, the server can trigger a full repaint of the visible component
+tree on reconnect to ensure consistency.
+
+---
+
+## 6. The React Servlet (`ReactServlet`)
+
+### 6.1 Purpose
+
+The `ReactServlet` provides a **JSON-based command endpoint** for React controls. It
+handles two operations:
+
+- **Command dispatch**: Execute a `ControlCommand` on a `ReactControl`, then run the
+  `RevalidationVisitor` to collect updates from *all* controls (React and traditional),
+  convert them to `SSEEvent`s, and enqueue them on the SSE stream.
+- **State fetch**: Retrieve the current full state of a `ReactControl` (used on mount and
+  reconnect).
+
+**Server-to-client updates are NOT part of command responses.** The command response only
+indicates success or error. All side effects -- including updates to the command's own
+control, other React controls, and traditional controls -- are delivered via the SSE
+stream. This clean separation means the React client never needs to parse update payloads
+from command responses.
+
+### 6.2 Registration
+
+```xml
+<!-- web-fragment.xml -->
+<servlet>
+    <servlet-name>ReactServlet</servlet-name>
+    <servlet-class>com.top_logic.layout.react.ReactServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+    <servlet-name>ReactServlet</servlet-name>
+    <url-pattern>/react-api/*</url-pattern>
+</servlet-mapping>
+```
+
+### 6.3 URL Scheme
+
+```
+POST /react-api/command     Execute a ControlCommand on a ReactControl
+POST /react-api/state       Fetch the current full state of a ReactControl
+GET  /react-api/events      SSE event stream (handled by SSEServlet)
+```
+
+### 6.4 Protocol
+
+**Content-Type**: `application/json; charset=utf-8`
+
+#### Command Request/Response
+
+```json
+// Request
+{
+    "controlId": "ctrl-123",
+    "command": "reactValueChanged",
+    "arguments": {
+        "value": "new text value"
+    }
+}
+
+// Response (success)
+{
+    "success": true
+}
+
+// Response (error)
+{
+    "success": false,
+    "error": {
+        "code": "VALIDATION",
+        "message": "Localized error text from ResKey"
+    }
+}
+```
+
+The response contains only the command result. Any state updates caused by the command
+(including updates to the control itself and to other controls affected by side effects)
+are delivered via the SSE stream.
+
+#### State Request/Response
+
+```json
+// Request
+{
+    "controlId": "ctrl-123"
+}
+
+// Response
+{
+    "success": true,
+    "state": {
+        "value": "current value",
+        "editable": true,
+        "disabled": false,
+        "mandatory": true,
+        "hasError": false,
+        "label": "Name",
+        "tooltip": "Enter the item name"
+    }
+}
+```
+
+### 6.5 Request Lifecycle
+
+```
+For /react-api/command:
+
+  1. Parse JSON request body
+  2. Extract HTTP session (same session cookie as main TopLogic app)
+  3. Validate session is active, user is authenticated
+  4. Acquire the session's RequestLock (writer lock)
+  5. Resolve the FrameScope from the session's MainLayout
+  6. Look up the target control by controlId in the FrameScope's CommandListener registry
+  7. Verify the control is a ReactControl (reject otherwise)
+  8. Execute: control.executeCommand(context, commandName, arguments)
+  9. Run RevalidationVisitor on the MainLayout
+     - Visits ALL components/controls, not just the targeted one
+     - Collects ClientActions from all invalid controls
+     - React controls: produce ReactUpdate events (already on SSE queue)
+     - Traditional controls: produce ContentReplacement, PropertyUpdate, etc.
+ 10. Convert traditional ClientActions to SSEEvents via ClientActionConverter
+ 11. Enqueue all SSEEvents on the session's SSEUpdateQueue
+ 12. Release the RequestLock
+ 13. Return JSON response: {"success": true} or {"success": false, "error": {...}}
+     (updates are delivered asynchronously via SSE, not in this response)
+
+For /react-api/state:
+
+  1. Parse JSON request body
+  2. Validate session
+  3. Resolve control by controlId
+  4. Return: {"success": true, "state": control.getReactState()}
+```
+
+The critical step is **9**: by running the `RevalidationVisitor`, the `ReactServlet`
+ensures that all controls affected by the command -- regardless of type -- have their
+updates collected and delivered. This is the same visitor that the `AJAXServlet` runs
+after command execution (see `AJAXServlet.validate()`), ensuring identical semantics.
+
+### 6.6 Session and Security
+
+The `ReactServlet` participates in the same HTTP session as the main application. Since
+the React control is rendered inside a TopLogic page, the browser already has the session
+cookie. No separate authentication is needed.
+
+Security is enforced at two levels:
+
+- **Session**: The servlet rejects requests without a valid session (HTTP 401).
+- **Control scope**: The control is only accessible if the hosting LayoutComponent is
+  visible and the user has the appropriate `BoundCommandGroup` access.
+
+### 6.7 Concurrency
+
+- **State requests** are read-only and can execute concurrently.
+- **Command requests** acquire the existing `RequestLock` on the session (same as the
+  AJAXServlet), ensuring sequential processing with other commands from the same session.
+  This prevents race conditions between React commands and traditional AJAX commands
+  operating on the same component tree.
+
+---
+
+## 7. Client-Side Bridge (`TLReact`)
+
+### 7.1 Overview
+
+`TLReact` is a TypeScript library (bundled by Vite) that:
+
+- Mounts/unmounts React component trees into TopLogic-rendered DOM elements.
+- Manages a single SSE connection per page, dispatching incoming events to the
+  appropriate React control instances.
+- Provides React hooks for reading state and dispatching commands.
+
+### 7.2 SSE Connection Manager
+
+The bridge establishes a single `EventSource` connection on page load. All events
+use the default `message` event type. Each message contains a msgbuf-encoded
+`SSEEvent` as a JSON array `["TypeCode", {fields}]`. The client dispatches on the
+type code to route React state events to their `ControlStateStore` and DOM action
+events to the `DOMActionProcessor`.
+
+```typescript
+// --- msgbuf SSEEvent type codes (from @Name abbreviations in sse.proto) ---
+
+const TYPE_STATE_EVENT = 'S';
+const TYPE_PATCH_EVENT = 'P';
+const TYPE_CONTENT_REPLACEMENT = 'CR';
+const TYPE_ELEMENT_REPLACEMENT = 'ER';
+const TYPE_PROPERTY_UPDATE = 'PU';
+const TYPE_CSS_CLASS_UPDATE = 'CU';
+const TYPE_FRAGMENT_INSERTION = 'FI';
+const TYPE_RANGE_REPLACEMENT = 'RR';
+const TYPE_JS_SNIPPLET = 'JS';
+const TYPE_FUNCTION_CALL = 'FC';
+
+// --- TypeScript interfaces matching msgbuf field names ---
+
+interface StateEventData { c: string; s: string; }
+interface PatchEventData { c: string; p: string; }
+interface ContentReplacementData { e: string; f: string; }
+interface ElementReplacementData { e: string; f: string; }
+interface PropertyUpdateData { e: string; p: Array<{ n: string; v: string }>; }
+interface CssClassUpdateData { e: string; c: string; }
+interface FragmentInsertionData { e: string; o: InsertPosition; f: string; }
+interface RangeReplacementData { a: string; b: string; f: string; }
+interface JSSnippletData { c: string; }
+interface FunctionCallData { e: string; r: string; n: string; a: string; }
+
+class SSEClient {
+    private _source: EventSource;
+    private _stateListeners: Map<string, (patch: Record<string, unknown>,
+                                          full: boolean) => void>;
+
+    connect(url: string): void {
+        this._source = new EventSource(url);
+        this._stateListeners = new Map();
+
+        // All events arrive as default 'message' events.
+        // The type discriminator is the first element of the msgbuf array.
+        this._source.onmessage = (e: MessageEvent) => {
+            const [typeCode, data] = JSON.parse(e.data);
+            this.dispatch(typeCode, data);
+        };
+
+        this._source.onerror = () => {
+            // EventSource reconnects automatically.
+            // On reconnect, re-fetch state for all mounted React controls.
+            this.refetchAll();
+        };
+    }
+
+    private dispatch(typeCode: string, data: unknown): void {
+        switch (typeCode) {
+            // --- React control events ---
+            case TYPE_STATE_EVENT: {
+                const d = data as StateEventData;
+                const listener = this._stateListeners.get(d.c);
+                if (listener) listener(JSON.parse(d.s), true);
+                break;
+            }
+            case TYPE_PATCH_EVENT: {
+                const d = data as PatchEventData;
+                const listener = this._stateListeners.get(d.c);
+                if (listener) listener(JSON.parse(d.p), false);
+                break;
+            }
+            // --- DOM action events ---
+            case TYPE_CONTENT_REPLACEMENT:
+                DOMActionProcessor.contentReplacement(
+                    data as ContentReplacementData);
+                break;
+            case TYPE_ELEMENT_REPLACEMENT:
+                DOMActionProcessor.elementReplacement(
+                    data as ElementReplacementData);
+                break;
+            case TYPE_PROPERTY_UPDATE:
+                DOMActionProcessor.propertyUpdate(
+                    data as PropertyUpdateData);
+                break;
+            case TYPE_CSS_CLASS_UPDATE:
+                DOMActionProcessor.cssClassUpdate(
+                    data as CssClassUpdateData);
+                break;
+            case TYPE_FRAGMENT_INSERTION:
+                DOMActionProcessor.fragmentInsertion(
+                    data as FragmentInsertionData);
+                break;
+            case TYPE_RANGE_REPLACEMENT:
+                DOMActionProcessor.rangeReplacement(
+                    data as RangeReplacementData);
+                break;
+            case TYPE_JS_SNIPPLET:
+                DOMActionProcessor.jsSnipplet(data as JSSnippletData);
+                break;
+            case TYPE_FUNCTION_CALL:
+                DOMActionProcessor.functionCall(data as FunctionCallData);
+                break;
+            default:
+                console.warn('Unknown SSE event type:', typeCode);
+        }
+    }
+
+    subscribe(controlId: string,
+              callback: (patch: Record<string, unknown>,
+                         full: boolean) => void): void {
+        this._stateListeners.set(controlId, callback);
+    }
+
+    unsubscribe(controlId: string): void {
+        this._stateListeners.delete(controlId);
+    }
+}
+
+/**
+ * Applies JSON-wrapped DOM actions to the page.
+ * This is the JSON equivalent of what simpleajax.js does for XML actions.
+ * Methods accept msgbuf-encoded data objects with abbreviated field names.
+ */
+class DOMActionProcessor {
+
+    static contentReplacement(d: ContentReplacementData): void {
+        const el = document.getElementById(d.e);
+        if (el) el.innerHTML = d.f;
+    }
+
+    static elementReplacement(d: ElementReplacementData): void {
+        const el = document.getElementById(d.e);
+        if (el) el.outerHTML = d.f;
+    }
+
+    static propertyUpdate(d: PropertyUpdateData): void {
+        const el = document.getElementById(d.e);
+        if (el) {
+            for (const prop of d.p) {
+                (el as any)[prop.n] = coerceValue(prop.v);
+            }
+        }
+    }
+
+    static cssClassUpdate(d: CssClassUpdateData): void {
+        const el = document.getElementById(d.e);
+        if (el) el.className = d.c;
+    }
+
+    static fragmentInsertion(d: FragmentInsertionData): void {
+        const el = document.getElementById(d.e);
+        if (el) el.insertAdjacentHTML(d.o, d.f);
+    }
+
+    static rangeReplacement(d: RangeReplacementData): void {
+        const start = document.getElementById(d.a);
+        const stop = document.getElementById(d.b);
+        if (start && stop) {
+            start.insertAdjacentHTML('beforebegin', d.f);
+            let node: Element | null = start;
+            while (node && node !== stop) {
+                const next = node.nextElementSibling;
+                node.remove();
+                node = next;
+            }
+            stop.remove();
+        }
+    }
+
+    static jsSnipplet(d: JSSnippletData): void {
+        eval(d.c);
+    }
+
+    static functionCall(d: FunctionCallData): void {
+        const el = document.getElementById(d.e);
+        const obj = resolveRef(d.r);
+        const args = JSON.parse(d.a);
+        obj[d.n].apply(obj, [el, ...args]);
+    }
+}
+```
+
+This means that when a React button click triggers a server command that causes a
+traditional `SelectControl` to update its options, the `PropertyUpdate` or
+`ContentReplacement` for that `SelectControl` arrives via SSE and is applied to the DOM
+immediately -- the user sees both the React control and the traditional control update
+together, without any additional user interaction.
+
+### 7.3 Bridge API
+
+```typescript
+// --- Component Registry ---
+
+/**
+ * Register a React component under a module name.
+ * Called at load time by each control bundle's entry point.
+ *
+ * The module name is the key used by the server to reference
+ * this component (in ReactControl's reactModule parameter,
+ * in table column cellModule, etc.).
+ */
+function register(
+    moduleName: string,
+    component: React.ComponentType<any>
+): void;
+
+/**
+ * Look up a registered component by module name.
+ * Used by composite controls (e.g., TLTable) to resolve
+ * server-declared component names to React component types.
+ *
+ * Throws if the module name is not registered.
+ */
+function getComponent(moduleName: string): React.ComponentType<any>;
+
+// --- Mount/Unmount ---
+
+/**
+ * Mount a React component into the control's DOM element.
+ * Called from server-rendered inline script.
+ * Resolves reactModule via the component registry.
+ */
+function mount(
+    controlId: string,
+    reactModule: string,
+    initialState: Record<string, unknown>
+): void;
+
+/**
+ * Mount a form-field-bound React component.
+ * Resolves reactModule via the component registry.
+ */
+function mountField(
+    controlId: string,
+    reactModule: string,
+    initialState: Record<string, unknown>
+): void;
+
+/**
+ * Unmount a React component and clean up.
+ */
+function unmount(controlId: string): void;
+
+// --- React Hooks ---
+
+/**
+ * Access the current server-provided state.
+ * Re-renders when SSE delivers a patch or full state update.
+ */
+function useTLState<T = Record<string, unknown>>(): T;
+
+/**
+ * Execute a ControlCommand on the server via ReactServlet.
+ */
+function useTLCommand(): {
+    execute: (command: string, args?: Record<string, unknown>) => Promise<void>;
+    loading: boolean;
+    error: string | null;
+};
+
+/**
+ * Convenience hook for form-field controls.
+ */
+function useTLFieldValue<T>(): {
+    value: T;
+    setValue: (newValue: T) => void;
+    editable: boolean;
+    disabled: boolean;
+    mandatory: boolean;
+    hasError: boolean;
+    errorMessage: string | null;
+};
+```
+
+### 7.4 State Management with Incremental Patches
+
+Each mounted React control maintains a state store that applies patches incrementally:
+
+```typescript
+class ControlStateStore {
+    private _state: Record<string, unknown>;
+    private _subscribers: Set<() => void>;  // React setState triggers
+
+    constructor(initialState: Record<string, unknown>) {
+        this._state = { ...initialState };
+        this._subscribers = new Set();
+    }
+
+    /** Apply an incremental patch (merge keys, remove null-valued keys). */
+    applyPatch(patch: Record<string, unknown>): void {
+        for (const [key, value] of Object.entries(patch)) {
+            if (value === null) {
+                delete this._state[key];
+            } else {
+                this._state[key] = value;
+            }
+        }
+        this.notify();
+    }
+
+    /** Replace the entire state (on reconnect or full state event). */
+    replaceState(state: Record<string, unknown>): void {
+        this._state = { ...state };
+        this.notify();
+    }
+
+    getState(): Record<string, unknown> {
+        return this._state;
+    }
+
+    subscribe(callback: () => void): () => void {
+        this._subscribers.add(callback);
+        return () => this._subscribers.delete(callback);
+    }
+
+    private notify(): void {
+        for (const cb of this._subscribers) cb();
+    }
+}
+```
+
+The `useTLState()` hook subscribes to the store via `useSyncExternalStore` (React 18+),
+ensuring efficient re-renders only when state actually changes.
+
+### 7.5 Mounting Lifecycle
+
+```
+ Server renders <div id="ctrl-123" .../>
+ Server renders <script>TLReact.mount("ctrl-123", "controls/TLChart", {...})</script>
+     |
+     v
+ TLReact.mount():
+   1. Create ControlStateStore with initialState
+   2. Subscribe to SSE events for "ctrl-123"
+   3. Dynamic import: import("/react/controls/TLChart.js")
+   4. ReactDOM.createRoot(document.getElementById("ctrl-123"))
+   5. Render <TLControlContext.Provider><TLChart /></TLControlContext.Provider>
+     |
+     v
+ SSE event arrives: ["P", {"c":"ctrl-123","p":"{\"value\":\"x\"}"}]
+   1. SSEClient parses msgbuf array, dispatches on type code "P" (PatchEvent)
+   2. Looks up ControlStateStore for control "ctrl-123"
+   3. Store applies patch (JSON.parse of "p" field), notifies subscribers
+   4. React re-renders TLChart with updated state
+     |
+     v
+ Control detached (navigation, tab switch):
+   1. Server replaces/removes the <div> via ContentReplacement
+   2. MutationObserver detects removal
+   3. TLReact.unmount("ctrl-123"): root.unmount(), unsubscribe from SSE, dispose store
+```
+
+---
+
+## 8. Model-Driven Composition
+
+### 8.1 Principle
+
+TopLogic is a model-based framework: the UI is derived from the data model. A table
+displaying objects of type `MyContact` automatically shows columns for each attribute,
+and each column's editor is determined by the attribute's type -- `tl.core:String`
+produces a text input, `tl.core:Date` a date picker, a reference type a select box. The
+developer configures the **model**; the framework assembles the UI.
+
+This principle must carry over to React. A React table must not hardcode which React
+component renders in each cell. Instead:
+
+1. The **server** determines the React module name per column, based on the property
+   type, through a configurable registry (`ReactComponentRegistry`).
+2. The server sends module names **as part of the control state** alongside the data.
+3. The **client** resolves module names to React component types via the
+   **Component Registry** (`TLReact.getComponent()`).
+
+This means adding a new property type with a custom React editor requires only:
+- Registering a new React component under a module name.
+- Mapping the property type to that module name in the server-side registry.
+
+No existing composite controls (table, form, detail view) need modification.
+
+### 8.2 Client-Side Component Registry
+
+The registry is a simple name-to-component map populated at load time:
+
+```typescript
+// registry.ts
+
+const _components = new Map<string, React.ComponentType<any>>();
+
+/**
+ * Register a React component under a module name.
+ * Called at load time by each bundle's entry point.
+ */
+export function register(
+    moduleName: string,
+    component: React.ComponentType<any>
+): void {
+    if (_components.has(moduleName)) {
+        console.warn(`Overriding existing component: ${moduleName}`);
+    }
+    _components.set(moduleName, component);
+}
+
+/**
+ * Resolve a module name to a React component type.
+ * Used by mount() and by composite controls (table, form).
+ */
+export function getComponent(
+    moduleName: string
+): React.ComponentType<any> {
+    const component = _components.get(moduleName);
+    if (!component) {
+        throw new Error(
+            `Unknown React module: "${moduleName}". ` +
+            `Registered: [${[..._components.keys()].join(', ')}]`);
+    }
+    return component;
+}
+```
+
+Each module's entry point registers its components:
+
+```typescript
+// index.ts (com.top_logic.layout.react built-in controls)
+
+import { register } from './bridge/registry';
+import TLTextInput from './controls/TLTextInput';
+import TLNumberInput from './controls/TLNumberInput';
+import TLDatePicker from './controls/TLDatePicker';
+import TLSelect from './controls/TLSelect';
+import TLCheckbox from './controls/TLCheckbox';
+import TLTable from './controls/TLTable';
+
+register('controls/TLTextInput', TLTextInput);
+register('controls/TLNumberInput', TLNumberInput);
+register('controls/TLDatePicker', TLDatePicker);
+register('controls/TLSelect', TLSelect);
+register('controls/TLCheckbox', TLCheckbox);
+register('controls/TLTable', TLTable);
+```
+
+### 8.3 Server-Side: `ReactComponentRegistry`
+
+The server-side counterpart maps model property types to React module names. This is
+analogous to how `ControlProvider` determines which Java `Control` to create for a
+given `FormField` type.
+
+```java
+/**
+ * Maps {@link TLType}s to React component module names.
+ *
+ * <p>Used by composite {@link ReactControl}s (tables, forms) to determine
+ * which React component should render a cell or field for a given model
+ * property. This is the React equivalent of the {@link ControlProvider}
+ * mechanism.</p>
+ */
+public class ReactComponentRegistry
+        extends ConfiguredManagedClass<ReactComponentRegistry.Config<?>> {
+
+    /**
+     * Configuration for {@link ReactComponentRegistry}.
+     */
+    public interface Config<I extends ReactComponentRegistry>
+            extends ConfiguredManagedClass.Config<I> {
+
+        /** Default mappings from type names to React module names. */
+        @Key(TypeMapping.TYPE)
+        Map<String, TypeMapping> getTypeMappings();
+    }
+
+    /**
+     * Maps a single {@link TLType} to a React module and optional
+     * component-specific configuration.
+     */
+    public interface TypeMapping extends ConfigurationItem {
+        /** Configuration name for {@link #getType()}. */
+        String TYPE = "type";
+
+        /** Qualified type name (e.g., "tl.core:String"). */
+        @Name(TYPE)
+        String getType();
+
+        /** React module name (e.g., "controls/TLTextInput"). */
+        @Mandatory
+        String getModule();
+
+        /**
+         * Optional type-specific configuration passed to the React
+         * component as {@code cellConfig}.
+         */
+        Map<String, Object> getConfig();
+    }
+
+    /**
+     * Look up the React module name for rendering a property.
+     *
+     * @param property the model property to render
+     * @return the React module name, or {@code null} if no mapping exists
+     */
+    public String getCellModule(TLStructuredTypePart property) {
+        TypeMapping mapping = config().getTypeMappings()
+            .get(property.getType().toString());
+        return mapping != null ? mapping.getModule() : null;
+    }
+
+    /**
+     * Get type-specific configuration for the cell component.
+     */
+    public Map<String, Object> getCellConfig(
+            TLStructuredTypePart property) {
+        TypeMapping mapping = config().getTypeMappings()
+            .get(property.getType().toString());
+        return mapping != null ? mapping.getConfig()
+            : Collections.emptyMap();
+    }
+}
+```
+
+Default configuration (in `react.conf.xml`):
+
+```xml
+<react-component-registry
+    class="com.top_logic.layout.react.ReactComponentRegistry">
+  <type-mappings>
+    <type-mapping type="tl.core:String"  module="controls/TLTextInput"/>
+    <type-mapping type="tl.core:Integer" module="controls/TLNumberInput"/>
+    <type-mapping type="tl.core:Float"   module="controls/TLNumberInput">
+      <config><entry key="decimal" value="true"/></config>
+    </type-mapping>
+    <type-mapping type="tl.core:Date"    module="controls/TLDatePicker"/>
+    <type-mapping type="tl.core:Boolean" module="controls/TLCheckbox"/>
+    <!-- Reference types use TLSelect by default -->
+  </type-mappings>
+</react-component-registry>
+```
+
+Application modules can override or extend this configuration to map custom types
+to custom React components.
+
+### 8.4 Composite Controls: The Model-Driven Table
+
+A `ReactTableControl` uses the `ReactComponentRegistry` to build column metadata.
+The server does not decide *how* each cell looks (that's the React component's job) --
+it decides *which* React component renders each cell, based on the model.
+
+```java
+public class ReactTableControl extends ReactControl {
+
+    private final ReactComponentRegistry _registry;
+    private final List<TLStructuredTypePart> _columns;
+
+    public ReactTableControl(Object model,
+            List<TLStructuredTypePart> columns,
+            ReactComponentRegistry registry) {
+        super(model, "controls/TLTable", COMMANDS);
+        _columns = columns;
+        _registry = registry;
+    }
+
+    /** Build the full table state from the model. */
+    protected Map<String, Object> buildTableState(
+            Collection<? extends TLObject> rows) {
+        return Map.of(
+            "columns", buildColumnDescriptors(),
+            "rows", buildRowData(rows),
+            "page", 0,
+            "pageSize", 20
+        );
+    }
+
+    private List<Map<String, Object>> buildColumnDescriptors() {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (TLStructuredTypePart part : _columns) {
+            Map<String, Object> col = new LinkedHashMap<>();
+            col.put("key", part.getName());
+            col.put("label",
+                MetaLabelProvider.INSTANCE.getLabel(part));
+            col.put("cellModule",
+                _registry.getCellModule(part));
+            col.put("cellConfig",
+                _registry.getCellConfig(part));
+            col.put("editable", isEditable(part));
+            col.put("sortable", isSortable(part));
+            result.add(col);
+        }
+        return result;
+    }
+
+    private List<Map<String, Object>> buildRowData(
+            Collection<? extends TLObject> rows) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (TLObject obj : rows) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", obj.tId().toString());
+            for (TLStructuredTypePart part : _columns) {
+                Object value = obj.tValueByName(part.getName());
+                row.put(part.getName(), toJsonValue(value));
+            }
+            result.add(row);
+        }
+        return result;
+    }
+}
+```
+
+The resulting state looks like:
+
+```json
+{
+  "columns": [
+    {"key": "name", "label": "Name",
+     "cellModule": "controls/TLTextInput",
+     "cellConfig": {}, "editable": true, "sortable": true},
+    {"key": "birthday", "label": "Birthday",
+     "cellModule": "controls/TLDatePicker",
+     "cellConfig": {"format": "dd.MM.yyyy"}, "editable": true, "sortable": true},
+    {"key": "department", "label": "Department",
+     "cellModule": "controls/TLSelect",
+     "cellConfig": {"options": [
+       {"value": "eng", "label": "Engineering"},
+       {"value": "sales", "label": "Sales"}
+     ]}, "editable": true, "sortable": false}
+  ],
+  "rows": [
+    {"id": "obj-42", "name": "Alice", "birthday": "1990-03-15",
+     "department": "eng"},
+    {"id": "obj-43", "name": "Bob", "birthday": "1985-11-02",
+     "department": "sales"}
+  ],
+  "page": 0, "pageSize": 20
+}
+```
+
+The React `TLTable` component resolves `cellModule` via the registry:
+
+```tsx
+// TLTable.tsx — model-driven, no hardcoded cell types
+
+import { useTLState, useTLCommand } from '../bridge/tl-react-bridge';
+import { getComponent } from '../bridge/registry';
+
+interface Column {
+    key: string;
+    label: string;
+    cellModule: string;
+    cellConfig: Record<string, unknown>;
+    editable: boolean;
+    sortable: boolean;
+}
+
+interface TableState {
+    columns: Column[];
+    rows: Record<string, unknown>[];
+    page: number;
+    pageSize: number;
+}
+
+export default function TLTable() {
+    const state = useTLState<TableState>();
+    const { execute } = useTLCommand();
+
+    return (
+        <table className="tl-react-table">
+            <thead>
+                <tr>
+                    {state.columns.map(col => (
+                        <th key={col.key}>{col.label}</th>
+                    ))}
+                </tr>
+            </thead>
+            <tbody>
+                {state.rows.map(row => (
+                    <tr key={row.id as string}>
+                        {state.columns.map(col => (
+                            <td key={col.key}>
+                                <TLTableCell
+                                    column={col}
+                                    row={row}
+                                    onCellChange={(value) =>
+                                        execute('cellValueChanged', {
+                                            rowId: row.id,
+                                            column: col.key,
+                                            value
+                                        })
+                                    }
+                                />
+                            </td>
+                        ))}
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    );
+}
+
+/**
+ * Renders a single cell by resolving the column's cellModule
+ * from the component registry.
+ *
+ * The resolved component receives a standardized props interface:
+ * value, config, editable, and onChange.
+ */
+function TLTableCell({ column, row, onCellChange }: {
+    column: Column;
+    row: Record<string, unknown>;
+    onCellChange: (value: unknown) => void;
+}) {
+    const CellComponent = getComponent(column.cellModule);
+    return (
+        <CellComponent
+            value={row[column.key]}
+            config={column.cellConfig}
+            editable={column.editable}
+            onChange={onCellChange}
+        />
+    );
+}
+```
+
+Note that `TLTable` itself never imports `TLTextInput`, `TLDatePicker`, or `TLSelect`.
+It resolves them at runtime from the registry based on server-provided module names.
+Adding a new property type with a new React cell renderer requires **zero changes** to
+`TLTable`.
+
+### 8.5 Cell Component Contract
+
+All cell components used inside composite controls follow a common props interface:
+
+```typescript
+/**
+ * Standard props for cell/field components used inside composite
+ * controls like TLTable or TLForm.
+ *
+ * Components that want to be usable as table cells or form fields
+ * must accept these props. They may accept additional props via
+ * the config object.
+ */
+interface TLCellProps {
+    /** Current value (type depends on the component). */
+    value: unknown;
+    /** Type-specific configuration from the server. */
+    config: Record<string, unknown>;
+    /** Whether the cell is editable. */
+    editable: boolean;
+    /** Callback when the user changes the value. */
+    onChange: (newValue: unknown) => void;
+}
+```
+
+A cell component that conforms to this contract can be used in any composite context --
+tables, forms, detail views -- without modification. Example:
+
+```tsx
+// TLTextInput.tsx — works both as standalone (via useTLFieldValue)
+// and as a table cell (via TLCellProps)
+
+function TLTextInput(props: TLCellProps) {
+    return (
+        <input
+            type="text"
+            value={(props.value as string) ?? ''}
+            onChange={e => props.onChange(e.target.value)}
+            disabled={!props.editable}
+            maxLength={props.config.maxLength as number | undefined}
+        />
+    );
+}
+```
+
+When the same component is used as a standalone `ReactFormFieldControl`, the bridge
+wraps it with an adapter that maps `useTLFieldValue()` state to `TLCellProps`.
+
+### 8.6 Application Module Contributions
+
+Application modules can contribute additional React components without modifying
+`com.top_logic.layout.react`. The pattern mirrors how TopLogic Java modules
+contribute `ControlProvider`s today:
+
+**1. React source and build:**
+
+The application module includes its own `react-src/` directory and Vite build:
+
+```
+com.top_logic.my_app/
++-- react-src/
+|   +-- controls/
+|   |   +-- RichTextEditor.tsx          # Custom editor component
+|   +-- index.ts                        # Registers custom components
++-- src/main/webapp/react/
+|   +-- my-app-controls.js              # Vite build output
+```
+
+**2. Component registration:**
+
+```typescript
+// my-app index.ts
+import { register } from '@toplogic/react-bridge';
+import RichTextEditor from './controls/RichTextEditor';
+
+register('my-app/RichTextEditor', RichTextEditor);
+```
+
+**3. Server-side type mapping:**
+
+The application module extends the `ReactComponentRegistry` configuration:
+
+```xml
+<!-- my-app react.conf.xml (merged with base configuration) -->
+<react-component-registry>
+  <type-mappings>
+    <type-mapping type="my.module:RichText"
+                  module="my-app/RichTextEditor"/>
+  </type-mappings>
+</react-component-registry>
+```
+
+**4. Script loading:**
+
+The application module's React bundle is declared in its theme configuration
+so that it is loaded alongside the base bridge:
+
+```xml
+<!-- theme.xml -->
+<theme>
+  <styles>
+    <js path="/react/my-app-controls.js"/>
+  </styles>
+</theme>
+```
+
+With this in place, any table displaying a `my.module:RichText` property
+automatically renders the `RichTextEditor` component in that column -- no
+changes to the table, the bridge, or the base module.
+
+---
+
+## 9. Theme Integration
+
+### 9.1 CSS Custom Properties
+
+The TopLogic theme system exports its design tokens as CSS custom properties on the
+`:root` element. React controls can use these for a consistent look:
+
+```css
+/* Generated by TopLogic theme system (theme.xml + buildStyles) */
+:root {
+    --tl-color-primary: #1a73e8;
+    --tl-color-error: #d93025;
+    --tl-color-bg: #ffffff;
+    --tl-color-text: #202124;
+    --tl-color-border: #dadce0;
+    --tl-font-family: 'Roboto', sans-serif;
+    --tl-font-size-base: 14px;
+    --tl-spacing-sm: 4px;
+    --tl-spacing-md: 8px;
+    --tl-border-radius: 4px;
+    /* ... */
+}
+```
+
+React controls use these in their CSS:
+
+```css
+.tl-react-field input {
+    font-family: var(--tl-font-family);
+    font-size: var(--tl-font-size-base);
+    border: 1px solid var(--tl-color-border);
+    border-radius: var(--tl-border-radius);
+    padding: var(--tl-spacing-sm) var(--tl-spacing-md);
+}
+
+.tl-react-field input:focus {
+    border-color: var(--tl-color-primary);
+}
+
+.tl-react-field.has-error input {
+    border-color: var(--tl-color-error);
+}
+```
+
+### 9.2 Third-Party React Libraries
+
+Third-party React components (e.g., Recharts, React Select, MUI) bring their own
+styling. This is explicitly supported -- the theme CSS custom properties are available
+but not mandatory. Developers can:
+
+- **Use them directly** in custom CSS for hand-built React controls.
+- **Map them to library-specific themes** (e.g., pass `--tl-color-primary` as MUI's
+  primary color via a theme provider).
+- **Ignore them** and use the library's default styling, accepting a visual mismatch.
+
+The bridge provides a helper to read theme tokens programmatically:
+
+```typescript
+/**
+ * Read TopLogic theme tokens as a JavaScript object.
+ * Useful for configuring third-party component library themes.
+ */
+function useTLTheme(): {
+    colorPrimary: string;
+    colorError: string;
+    colorBg: string;
+    colorText: string;
+    fontFamily: string;
+    fontSizeBase: string;
+    /* ... */
+};
+```
+
+---
+
+## 10. Usage Patterns
+
+### 10.1 Replacing a Form Field Control
+
+```java
+// Java: ControlProvider returns a ReactFormFieldControl
+public class ReactTextInputProvider implements ControlProvider {
+    @Override
+    public Control createControl(Object model, String style) {
+        return new ReactFormFieldControl((FormField) model,
+            "controls/TLTextInput");
+    }
+}
+```
+
+```tsx
+// React: TLTextInput.tsx
+import { useTLFieldValue } from '../bridge/tl-react-bridge';
+
+export default function TLTextInput() {
+    const { value, setValue, editable, disabled, mandatory,
+            hasError, errorMessage } = useTLFieldValue<string>();
+
+    return (
+        <div className={`tl-react-field ${hasError ? 'has-error' : ''}`}>
+            <input
+                type="text"
+                value={value ?? ''}
+                onChange={e => setValue(e.target.value)}
+                disabled={disabled || !editable}
+                required={mandatory}
+            />
+            {hasError && <span className="error">{errorMessage}</span>}
+        </div>
+    );
+}
+```
+
+### 10.2 Model-Driven Table
+
+A table displaying model objects, where cell renderers are determined by property types
+through the `ReactComponentRegistry` (see Section 8.4).
+
+```java
+// Java: ControlProvider creates a model-driven ReactTableControl
+public class ReactTableControlProvider implements ControlProvider {
+
+    @Override
+    public Control createControl(Object model, String style) {
+        TableData tableData = (TableData) model;
+        TLType rowType = tableData.getTableModel().getRowType();
+        List<TLStructuredTypePart> columns =
+            rowType.getAllParts().stream()
+                .filter(part -> isDisplayed(part))
+                .collect(Collectors.toList());
+
+        ReactComponentRegistry registry =
+            ReactComponentRegistry.Module.INSTANCE.getImplementationInstance();
+
+        ReactTableControl table = new ReactTableControl(
+            model, columns, registry);
+        table.setReactState(
+            table.buildTableState(tableData.getDisplayedRows()));
+        return table;
+    }
+}
+```
+
+The server sends column metadata with `cellModule` names resolved from the model.
+The React `TLTable` component (shown in Section 8.4) resolves these module names
+via the component registry -- it never hardcodes which component renders which cell.
+
+Adding a custom property type with a custom editor (e.g., a color picker for a
+`my.module:Color` type) requires only:
+1. A React component (`ColorPicker.tsx`) registered under a module name.
+2. A server-side type mapping in `react.conf.xml`.
+
+No changes to `TLTable` or any other composite control.
+
+### 10.3 Interactive Control with Custom Commands
+
+```java
+// Java: custom ControlCommands for save/delete
+public class ItemEditorControl extends ReactControl {
+
+    protected static final Map<String, ControlCommand> COMMANDS =
+        createCommandMap(ReactControl.COMMANDS, new ControlCommand[] {
+            SaveCommand.INSTANCE
+        });
+
+    public ItemEditorControl(TLObject item) {
+        super(item, "controls/ItemEditor", COMMANDS);
+        setReactState(Map.of(
+            "id", item.tId().toString(),
+            "name", item.tValueByName("name"),
+            "status", item.tValueByName("status")
+        ));
+    }
+
+    protected static class SaveCommand extends ControlCommand {
+        public static final SaveCommand INSTANCE = new SaveCommand();
+        protected SaveCommand() { super("save"); }
+
+        @Override
+        protected HandlerResult execute(DisplayContext context,
+                Control control, Map<String, Object> arguments) {
+            ItemEditorControl editor = (ItemEditorControl) control;
+            TLObject item = (TLObject) editor.getModel();
+            // Note: transaction is managed by the LayoutComponent's
+            // CommandHandler, not here.
+            item.tUpdateByName("name", arguments.get("name"));
+            editor.patchReactState(Map.of(
+                "name", arguments.get("name")
+            ));
+            return HandlerResult.DEFAULT_RESULT;
+        }
+
+        @Override
+        public ResKey getI18NKey() {
+            return I18NConstants.SAVE_ITEM;
+        }
+    }
+}
+```
+
+```tsx
+// React: ItemEditor.tsx
+import { useState, useEffect } from 'react';
+import { useTLState, useTLCommand } from '../bridge/tl-react-bridge';
+
+interface ItemState { id: string; name: string; status: string; }
+
+export default function ItemEditor() {
+    const state = useTLState<ItemState>();
+    const { execute, loading } = useTLCommand();
+    const [name, setName] = useState(state.name);
+
+    useEffect(() => setName(state.name), [state.name]);
+
+    return (
+        <form onSubmit={async e => {
+            e.preventDefault();
+            await execute('save', { name });
+        }}>
+            <input value={name} onChange={e => setName(e.target.value)} />
+            <button type="submit" disabled={loading}>Save</button>
+        </form>
+    );
+}
+```
+
+---
+
+## 11. JSON Serialization
+
+The `ReactServlet` uses TopLogic's JSON utilities
+(`com.top_logic.common.json.gstream.JsonWriter`) for request/response handling.
+The SSE wire protocol uses **msgbuf's built-in JSON serialization** -- each
+`SSEEvent` subtype serializes itself via `event.writeTo(jsonWriter)`, producing
+the compact `["TypeCode", {fields}]` format described in Section 5.6.
+
+| Java Type | JSON Type |
+|---|---|
+| `String` | string |
+| `Number` (int, long, double) | number |
+| `Boolean` | boolean |
+| `null` | null (or key removal in patches) |
+| `Map<String, ?>` | object |
+| `List<?>` / `Collection<?>` | array |
+| `ConfigurationItem` with `@JsonBinding` | per binding |
+
+Controls project their model into JSON-serializable maps via `buildState()` /
+`buildFullFieldState()`. There is no automatic serialization of persistent objects --
+controls explicitly decide what data to expose.
+
+---
+
+## 12. Error Handling
+
+### Server-Side
+
+- `ControlCommand` implementations can throw `TopLogicException` for user-facing errors.
+  The `ReactServlet` catches these and returns:
+
+```json
+{
+    "success": false,
+    "error": { "code": "VALIDATION", "message": "Localized error text" }
+}
+```
+
+- Unexpected exceptions: `"code": "INTERNAL"` (details logged server-side only).
+- For `ReactFormFieldControl`, field validation errors are part of the state (`hasError`,
+  `errorMessage`) and delivered via SSE patches. The command response itself only indicates
+  success/failure of the command, not the resulting validation state.
+
+### Client-Side
+
+- `useTLCommand` exposes `error` state for React components to render.
+- HTTP 401 from `ReactServlet` triggers a redirect to the login page.
+- SSE disconnection: `EventSource` auto-reconnects; on reconnect, the bridge refetches
+  state for all mounted controls.
+
+---
+
+## 13. Lifecycle Summary
+
+```
+ Server                                Client
+ ------                                ------
+
+ 1. LayoutComponent renders
+    -> ControlProvider creates
+       ReactControl
+    -> control.write() produces:        <div id="ctrl-123"
+                                             data-react-module="..."/>
+                                        <script>
+                                          TLReact.mount("ctrl-123",
+                                            "controls/TLChart",
+                                            {initial state JSON});
+                                        </script>
+
+                                        2. TLReact.mount():
+                                           - Create ControlStateStore
+                                           - Subscribe to SSE for "ctrl-123"
+                                           - import("/react/controls/TLChart.js")
+                                           - ReactDOM.createRoot(div).render(...)
+
+                                        3. User clicks React button
+                                           -> useTLCommand().execute("save", {...})
+
+ 4. ReactServlet receives               <-- POST /react-api/command
+    -> acquires RequestLock
+    -> resolves control by ID
+    -> dispatches ControlCommand
+    -> command modifies model
+       (affects React AND traditional
+        controls)
+
+ 5. ReactServlet runs
+    RevalidationVisitor
+    -> visits entire component tree
+    -> ReactControl: patchReactState()
+       -> SSEEvent.patch("ctrl-123",...)
+    -> TextInputControl: addUpdate(
+         PropertyUpdate("input-456",...))
+       -> ClientActionConverter converts
+          to SSEEvent.propertyUpdate(...)
+    -> SelectControl: requestRepaint()
+       -> renders HTML, creates
+          ContentReplacement
+       -> ClientActionConverter converts
+          to SSEEvent.contentReplacement()
+    -> all events enqueued on
+       SSEUpdateQueue
+
+ 6. ReactServlet returns                 --> {"success": true}
+    (updates NOT in response)
+
+ 7. SSEUpdateQueue flushes               --> SSE (msgbuf JSON arrays):
+    (immediate, all events)
+                                             data: ["P", {"c":"ctrl-123",
+                                               "p":"{\"name\":\"New\"}"}]
+
+                                             data: ["PU", {"e":"input-456",
+                                               "p":[{"n":"value","v":"x"}]}]
+
+                                             data: ["CR", {"e":"select-789",
+                                               "f":"<select>...</select>"}]
+
+                                        8. SSEClient parses each msgbuf array,
+                                           dispatches on type code:
+                                           - "P" -> ControlStateStore.applyPatch()
+                                             -> React re-renders ctrl-123
+                                           - "PU" -> DOMActionProcessor.propertyUpdate()
+                                             -> DOM updates input-456
+                                           - "CR" -> DOMActionProcessor.contentReplacement()
+                                             -> DOM updates select-789
+
+                                        Result: ALL controls update together,
+                                        both React and traditional, from a
+                                        single React button click.
+```
+
+---
+
+## 14. Future Extensions
+
+Considered in the architecture but out of scope for the initial implementation:
+
+- **SSE as delivery channel for AJAXServlet commands**: Currently, only commands routed
+  through the `ReactServlet` deliver updates via SSE. A future step could have the
+  `AJAXServlet` also enqueue updates on the SSE stream, unifying the delivery path
+  entirely and eliminating the XML/SOAP response for updates.
+- **TypeScript type generation** from TopLogic model definitions (`*.model.xml`),
+  producing TypeScript interfaces for row types and property value types. This would
+  provide compile-time safety for React components that display model data.
+- **Model-driven React form**: A composite `ReactFormControl` analogous to
+  `ReactTableControl` that renders an entire form from model metadata. The server sends
+  field descriptors with module names per field type, and a generic `TLForm` React
+  component resolves cell components from the registry -- the same pattern as the
+  model-driven table (Section 8.4) applied to form layout.
+- **Hot module replacement**: Vite dev server proxied through TopLogic for instant React
+  reload during development.
+- **Nested patch depth / JSON Patch (RFC 6902)**: Support for structured patch
+  operations (e.g., `{"op":"replace","path":"/rows/3/status","value":"done"}`) to
+  enable fine-grained updates within deeply nested state. The current flat key-value
+  patch model works well for top-level keys; for large tables, a row-keyed naming
+  convention (see Section 8.4) provides an interim solution.
+- **SSE event buffering and replay**: Server-side event log enabling replay on reconnect
+  instead of full state refetch.
+- **Lazy component loading**: Extend the component registry to support asynchronous
+  loading (`React.lazy()` / dynamic `import()`) for application modules with many
+  components, avoiding loading all component bundles upfront.
+
+---
+
+## 15. Architectural Trajectory: From Islands to Server-Driven UI
+
+### 15.1 The Separation That Matters
+
+The TopLogic server today performs two fundamentally different tasks in a single pass:
+
+1. **UI logic**: Decides *what* to show -- which components are visible, which columns a
+   table has, which fields are editable, what labels to display, which buttons are enabled.
+   This is driven by the data model, security, navigation state, and application
+   configuration.
+
+2. **HTML rendering**: Decides *how* to show it -- writes `<div>`, `<table>`, `<input>`,
+   CSS classes, inline scripts. This is the mechanical translation of UI decisions into
+   browser-consumable markup.
+
+These two tasks are interleaved throughout the current codebase: a `Control` both decides
+what its state is *and* writes the HTML for it. The React integration introduced in this
+spec begins to separate them. A `ReactControl` still participates in (1) but delegates
+(2) entirely to the client.
+
+### 15.2 Three Levels of React Adoption
+
+The architecture in this spec naturally supports three levels of adoption. Each level
+is a strict superset of the previous one -- no rewriting, only expanding scope.
+
+**Level 1: React Islands (this spec)**
+
+Individual controls are replaced by React equivalents. The server renders the page
+structure (layout splits, tab bars, component frames) as HTML. React controls appear
+as islands within that structure, each with its own mount point and state.
+
+```
+Server renders HTML page structure
+  └── <div id="ctrl-1"/>  → React island (table)
+  └── <div id="ctrl-2"/>  → React island (form field)
+  └── Traditional controls (server-rendered HTML)
+```
+
+The `ReactServlet`, SSE, component registry, and model-driven composition (Section 8)
+are all introduced at this level. Traditional and React controls coexist on the same
+page, updates for both are delivered through SSE.
+
+**Level 2: Composite React Views**
+
+Entire component views are rendered by React. A `LayoutComponent`'s view is a single
+`ReactControl` whose state describes a composite UI -- a form with fields, a table
+with toolbar, a master-detail split. The server no longer writes HTML for these views;
+it produces a **UI descriptor** that the client renders.
+
+The server sends component descriptors with module names:
+
+```json
+{
+  "module": "views/MasterDetail",
+  "children": {
+    "master": {
+      "module": "controls/TLTable",
+      "props": { "columns": [...], "rows": [...] }
+    },
+    "detail": {
+      "module": "views/TLForm",
+      "props": { "fields": [
+        { "module": "controls/TLTextInput",
+          "props": { "label": "Name", "value": "Alice", "editable": true }},
+        { "module": "controls/TLDatePicker",
+          "props": { "label": "Birthday", "value": "1990-03-15" }}
+      ]}
+    }
+  }
+}
+```
+
+The React client recursively resolves module names from the registry and renders the
+tree. The same component registry, the same SSE channel, the same `ReactServlet` --
+the infrastructure from Level 1 carries over unchanged. What changes is the
+**granularity**: the mount point moves from individual controls to entire views.
+
+At this level, the page still has a server-rendered frame (navigation bar, layout
+splits between components), but each component's *content* is fully React-rendered.
+Traditional components and React components can coexist at the `LayoutComponent` level.
+
+**Level 3: Server-Driven UI**
+
+The entire visible page is described by a single recursive JSON state. The server
+produces a **UI model** -- a tree of component descriptors -- and the client is a
+**generic renderer** that interprets it. The server decides what to show; the client
+decides how to render it into the DOM.
+
+```json
+{
+  "module": "layout/Application",
+  "props": { "title": "My App" },
+  "children": {
+    "navigation": {
+      "module": "layout/Sidebar",
+      "props": { "items": [...], "selected": "contacts" }
+    },
+    "content": {
+      "module": "layout/VSplit",
+      "props": { "ratio": 0.3 },
+      "children": {
+        "left": {
+          "module": "controls/TLTree",
+          "props": { "nodes": [...], "selected": "node-5" }
+        },
+        "right": {
+          "module": "layout/Tabbar",
+          "props": { "tabs": ["Table", "Form"], "activeTab": 0 },
+          "children": [
+            { "module": "controls/TLTable",
+              "props": { "columns": [...], "rows": [...] } },
+            { "module": "views/TLForm",
+              "props": { "fields": [...] } }
+          ]
+        }
+      }
+    }
+  }
+}
+```
+
+At this level, the server is a **UI model server**. It no longer produces HTML at all.
+The `AJAXServlet` and its XML/SOAP protocol become unnecessary. All communication flows
+through the `ReactServlet` (commands) and SSE (state updates). The server-side
+`LayoutComponent` tree still exists -- it manages model access, security, navigation
+channels, and transaction boundaries -- but its output is a JSON UI descriptor, not
+HTML.
+
+### 15.3 What Changes at Each Level
+
+| Concern | Level 1 (Islands) | Level 2 (Composite Views) | Level 3 (Server-Driven UI) |
+|---|---|---|---|
+| Page structure | Server HTML | Server HTML | Client-rendered from JSON |
+| Component content | Mixed (React islands + server HTML) | React-rendered from JSON descriptor | React-rendered from JSON descriptor |
+| Layout splits, tabs | Server-rendered `LayoutControl`s | Server-rendered frames, React content | React-rendered from layout descriptors |
+| Navigation | Server-side (page reload / AJAX) | Server-side, React views swap | Client-side routing, server state swap |
+| AJAXServlet | Active (traditional controls) | Active (page structure) | Retired |
+| HTML generation on server | Most controls | Page frame only | None |
+
+### 15.4 The Path Is Incremental
+
+The critical insight is that each level is **reached incrementally**, not through a
+rewrite:
+
+- Level 1 → Level 2: Replace individual `ControlProvider`s that return server-rendered
+  controls with ones that return composite `ReactControl`s. Each component view can be
+  migrated independently. The `ReactComponentRegistry` and component descriptors are
+  already in place from Level 1.
+
+- Level 2 → Level 3: Replace the server-side `LayoutControlProvider` for page structure
+  (splits, tabs, navigation) with React layout components. Add layout modules
+  (`layout/VSplit`, `layout/Tabbar`, `layout/Sidebar`) to the registry. The
+  `LayoutComponent` tree on the server shifts from producing HTML to producing JSON
+  descriptors -- its responsibility for model access, security, and channels is
+  unchanged.
+
+At no point is a "big bang" migration required. A Level 2 application can have some
+component views still server-rendered (Level 1) while others are fully React-rendered.
+A Level 3 application can fall back to server-rendered HTML for specific components
+that have not yet been migrated.
+
+### 15.5 What the Server Becomes
+
+At Level 3, the TopLogic server's role is:
+
+- **Model access**: Knowledge Base queries, type system, model builders.
+- **Security**: Authentication, authorization, `BoundChecker` enforcement.
+- **Navigation state**: Component channels, component visibility, selection propagation.
+- **Transaction management**: Begin/commit/rollback around command execution.
+- **UI model generation**: Translate the above into a JSON component descriptor tree.
+- **Incremental updates**: Detect what changed, produce patches, deliver via SSE.
+
+This is precisely what TopLogic already does -- minus the HTML generation. The framework's
+strengths (model-driven configuration, security model, type system, declarative layout)
+remain fully in play. What migrates to the client is solely the DOM rendering, which is
+the part that benefits most from React's component model, ecosystem, and developer
+tooling.
+
+### 15.6 Implications for This Spec
+
+This spec (Level 1) is designed so that every decision made here remains valid at
+Levels 2 and 3:
+
+- The **component registry** scales from resolving cell renderers to resolving entire
+  page layouts.
+- The **SSE channel** already delivers updates for the full page.
+- The **`ReactServlet`** already runs full-page revalidation.
+- The **msgbuf protocol** already supports all update types (state, patches, DOM actions).
+- The **`TLCellProps` contract** (Section 8.5) generalizes to a universal component
+  props interface for server-driven descriptors.
+
+The only additions needed for Level 2/3 are:
+- A recursive component descriptor format (the `module` + `props` + `children` pattern
+  shown above).
+- React layout components (`VSplit`, `Tabbar`, `Sidebar`) in the registry.
+- A server-side `LayoutComponent` rendering path that produces JSON instead of HTML.
+
+None of these require changes to the Level 1 infrastructure. The foundation built here
+is the foundation for the full trajectory.
+
+---
+
+## 16. Resolved Design Decisions
+
+| Decision | Resolution | Rationale |
+|---|---|---|
+| Update delivery path | SSE stream delivers ALL updates (React + traditional) | ReactServlet runs RevalidationVisitor, JSON-wraps traditional ClientActions; no stranded updates |
+| Control ID stability | Use generated IDs (from `FrameScope.createNewID()`) | Stable while control is displayed; on detach, control is not reused |
+| Transaction scope | Controls do not manage transactions | Transactions are a LayoutComponent concern, out of scope for Controls |
+| I18N | Server resolves all labels, included in state | Simplest approach; no client-side resource bundles needed |
+| Theme integration | CSS custom properties + programmatic access via `useTLTheme()` | Consistent look when desired, third-party libs work unchanged |
+| State update granularity | Incremental patches (only changed keys) | Required for large state (tables); `patchReactState()` + `setReactState()` |
+| SSE scope | Universal: delivers React patches AND JSON-wrapped DOM actions | Mixed React/traditional views work correctly from day one |
+| Revalidation in ReactServlet | Full RevalidationVisitor run after each command | Same semantics as AJAXServlet; traditional controls get updates immediately |
+| SSE wire protocol | msgbuf (`de.haumacher.msgbuf`) with `.proto` schema | Type-safe generated code, Visitor pattern for dispatch, compact JSON with `@Name` abbreviations, already used in TopLogic |
+| Component composition | Model-driven via `ReactComponentRegistry` + client-side Component Registry | Server determines which React component renders per property type; same principle as `ControlProvider`; composite controls (table, form) resolve at runtime, not compile time |

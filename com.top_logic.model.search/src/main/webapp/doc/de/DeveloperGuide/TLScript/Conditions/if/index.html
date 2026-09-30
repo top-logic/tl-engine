@@ -7,7 +7,7 @@ $test ? $then : $else
 <h2>Beschreibung</h2>
 <p>Liefert abhängig von der Auswertung von <code class="hljs inlineCode">test</code> das Ergebnis der Auswertung von <code class="hljs inlineCode">then</code> oder <code class="hljs inlineCode">else</code>. Falls die Auswertung von <code class="hljs inlineCode">test</code> <code class="hljs inlineCode">true</code> ist, dann wird <code class="hljs inlineCode">then</code> ausgewertet und das Ergebnis zurückgegeben, andernfalls <code class="hljs inlineCode">else</code>.</p>
 <p>Alle oben aufgeführten Schreibweisen sind äquivalent. Alternative Schreibweise: <a class="tlObject" data-custom="false" href="?page=ifElse&amp;uuid=bbcba58e-d9b6-4da4-88af-03f6ca7f9c70">ifElse</a>.</p>
-<p>Für Fallunterscheidungen, bei denen mehrere Bedinungen aufgewertet werden müssen, gibt es die alternative <a class="tlObject" data-custom="true" href="?page=switch&amp;uuid=5887a3b1-3e57-4227-bbab-5581a3023d53">switch</a> Syntax. Diese vermeidet das Ineinanderschachteln von Bedingungen und führt in diesem Fall zu einer deutlich besseren Lesbarkeit.</p>
+<p>Für Fallunterscheidungen, bei denen mehrere Bedingungen aufgewertet werden müssen, gibt es die alternative <a class="tlObject" data-custom="true" href="?page=switch&amp;uuid=5887a3b1-3e57-4227-bbab-5581a3023d53">switch</a> Syntax. Diese vermeidet das Ineinanderschachteln von Bedingungen und führt in diesem Fall zu einer deutlich besseren Lesbarkeit.</p>
 <h2>Parameter</h2>
 <table class="tlDocTable">
  <thead>
@@ -45,7 +45,7 @@ $test ? $then : $else
 </table>
 <h2>Rückgabewert</h2>
 <p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
-<p><span style="background-color:rgba(255, 255, 255, 0)">Das Ergebnis der Auswertung von <code class="hljs inlineCode">then</code> oder <code class="hljs inlineCode">else</code>, abhägig vom Ergebnis von <code class="hljs inlineCode">test</code>.</span></p>
+<p><span style="background-color:rgba(255, 255, 255, 0)">Das Ergebnis der Auswertung von <code class="hljs inlineCode">then</code> oder <code class="hljs inlineCode">else</code>, abhängig vom Ergebnis von <code class="hljs inlineCode">test</code>.</span></p>
 <h2>Beispiele</h2>
 <h3>Schreibweise mit "if"</h3>
 <pre>	<code>{
@@ -55,7 +55,7 @@ $test ? $then : $else
 }</code>
 </pre>
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Nachmittag</p>
-<p>Die Stunde 13 ist größer als 12, daher wir der Ausdruck von "then" ausgegeben (Zeitzone beachten!)</p>
+<p>Die Stunde 13 ist größer als 12, daher wird der Ausdruck von "then" ausgegeben (Zeitzone beachten!)</p>
 <h3>Verkürzte Schreibweise</h3>
 <pre>	<code>{
   x = 16;

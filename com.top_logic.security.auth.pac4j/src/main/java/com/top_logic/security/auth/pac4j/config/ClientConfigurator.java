@@ -18,7 +18,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.basic.ThemeImage;
 
 /**
  * Configurable factory for authentication {@link Client} from the pac4j library.
@@ -53,6 +55,19 @@ public interface ClientConfigurator {
 		public String getName();
 
 		/**
+		 * User-visible label for this login method, shown on a login UI's SSO button (e.g.
+		 * "Login with Google"). Defaults to the {@link #getName() client name} if not set.
+		 */
+		@Name("label")
+		ResKey getLabel();
+
+		/**
+		 * Optional icon for this login method's button, or none.
+		 */
+		@Name("icon")
+		ThemeImage getIcon();
+
+		/**
 		 * Strategy for extracting a local user name from the authentication result.
 		 */
 		@InstanceFormat
@@ -74,5 +89,24 @@ public interface ClientConfigurator {
 	 * Creates the pac4j {@link Client} from application configuration.
 	 */
 	Client createClient(ServletContext context);
+
+	/**
+	 * Creates the pac4j {@link Client} authenticating the user of an established session again.
+	 *
+	 * <p>
+	 * The client carries the same settings as the one {@link #createClient(ServletContext)} builds,
+	 * but demands a fresh authentication instead of accepting the single-sign-on session the user
+	 * already has with the identity provider. It is registered under
+	 * {@link Pac4jConfigFactory#getReauthenticationName(String) a name of its own} and shares the
+	 * callback URL with the client it is derived from, which pac4j tells apart by the client name it
+	 * appends to that URL.
+	 * </p>
+	 *
+	 * @return The client, or <code>null</code> if this authentication mechanism cannot authenticate
+	 *         the user of an established session again.
+	 */
+	default Client createReauthenticationClient(ServletContext context) {
+		return null;
+	}
 
 }

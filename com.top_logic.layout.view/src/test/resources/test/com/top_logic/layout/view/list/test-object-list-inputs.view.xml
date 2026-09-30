@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="catalogue"/>
+		<channel name="season"/>
+	</channels>
+
+	<object-list items="catalogue -> season -> [$catalogue, $season]">
+		<inputs>
+			<input channel="catalogue"/>
+			<input channel="season"/>
+		</inputs>
+		<item>
+			<text input="element"/>
+		</item>
+	</object-list>
+</view>

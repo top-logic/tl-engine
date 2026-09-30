@@ -114,5 +114,14 @@
 			<layout-reference resource="admin/security/accounts/changePassword/dialog.layout.xml"/>
 			<layout-reference resource="admin/security/accounts/newAccount2/dialog.layout.xml"/>
 		</dialogs>
+		<editExecutability>
+			<anonymous-account-disabled>
+				<account expression="contact -> $contact.get(`Contacts:PersonContact#account`)"/>
+				<message key="dynamic.3b5115de-b1a6-4529-9f74-ee51069286ee">
+					<en>The anonymous account cannot be edited.</en>
+					<de>Der anonyme Zugang kann nicht bearbeitet werden.</de>
+				</message>
+			</anonymous-account-disabled>
+		</editExecutability>
 	</arguments>
 </config:template-call>

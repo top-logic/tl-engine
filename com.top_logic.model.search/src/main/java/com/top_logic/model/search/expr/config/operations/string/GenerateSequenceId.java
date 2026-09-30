@@ -39,18 +39,17 @@ import com.top_logic.model.util.TLModelUtil;
  * 
  * Each sequence maintains its own counter. If no sequence exists for the given identifier and
  * context combination, a new sequence will be automatically created starting from 0.
- * 
+ *
+ * The physical sequence name is built by {@link com.top_logic.element.structured.util.SequenceIdGenerator},
+ * so that passing the base name and creation context of an object-annotated
+ * {@link com.top_logic.element.structured.util.SequenceDefaultProvider} sequence addresses the very
+ * same counter.
+ *
  * Note: This method modifies the database and should not be used in read-only queries.
- * 
+ *
  * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
  */
 public class GenerateSequenceId extends GenericMethod {
-
-	/**
-	 * Technical suffix for the sequence actually used in sequence table to ensure that no clash is
-	 * produced with internal sequences.
-	 */
-	public static final String SEQUENCE_SUFFIX = "_SequenceId";
 
 	private static final SequenceManager SEQUENCE_MANAGER = new RowLevelLockingSequenceManager();
 
@@ -87,18 +86,9 @@ public class GenerateSequenceId extends GenericMethod {
 			return null;
 		}
 
-		StringBuilder sequenceIdentifierBuilder = new StringBuilder(sequenceId);
-
-		// extract the context from the arguments
-		Object contextArg = arguments[1];
-
-		// add the optional Context to the sequence Identifier
-		if (contextArg != null) {
-			SequenceIdGenerator.addNames(sequenceIdentifierBuilder, contextArg);
-		}
-
-		// append the technical suffix after all context has been added
-		sequenceIdentifierBuilder.append(SEQUENCE_SUFFIX);
+		// Build the physical sequence name the same way as SequenceDefaultProvider, so that this
+		// function addresses the same counter as an object-annotated sequence.
+		String sequenceName = SequenceIdGenerator.sequenceName(sequenceId, arguments[1]);
 
 		// get the next number
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
@@ -106,7 +96,7 @@ public class GenerateSequenceId extends GenericMethod {
 		long nextId;
 		try {
 			nextId = SEQUENCE_MANAGER.nextSequenceNumber(
-				connection.getSQLDialect(), connection, RETRY_COUNT, sequenceIdentifierBuilder.toString());
+				connection.getSQLDialect(), connection, RETRY_COUNT, sequenceName);
 		} catch (SQLException ex) {
 			return null;
 		}

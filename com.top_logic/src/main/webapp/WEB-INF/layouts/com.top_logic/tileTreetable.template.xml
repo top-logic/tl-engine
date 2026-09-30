@@ -15,7 +15,7 @@
 					<property name="rootVisible"/>
 					<property name="expandRoot"/>
 					<property name="expandSelected"/>
-					<property name="securityDomain"/>
+
 					<property name="securityObject"/>
 					<property name="helpID"/>
 					<property name="configurationProviders"/>
@@ -80,7 +80,6 @@
 
 	<securityLayout name="ContextTreeTable"
 		helpID="${helpID}"
-		securityDomain="${securityDomain}"
 		titleKey="${name}"
 	>
 		<component class="com.top_logic.mig.html.layout.tiles.ContextTileComponent"

@@ -37,6 +37,7 @@
 				class="com.top_logic.layout.form.component.InvalidateCommand"
 			/>
 			<button id="undoRedo_undo"
+				all-users="true"
 				class="com.top_logic.element.changelog.UndoCommandHandler"
 				group="Write"
 				image="css:fa-solid fa-rotate-left"
@@ -48,6 +49,7 @@
 				</resourceKey>
 			</button>
 			<button id="undoRedo_redo"
+				all-users="true"
 				class="com.top_logic.element.changelog.RedoCommandHandler"
 				group="Write"
 				image="css:fa-solid fa-rotate-right"

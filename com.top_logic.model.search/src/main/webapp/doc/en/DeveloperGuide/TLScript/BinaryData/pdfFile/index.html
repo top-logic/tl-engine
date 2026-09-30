@@ -16,7 +16,7 @@
 <p>This function accepts four types of input:</p>
 <ul>
 	<li><strong>String:</strong> Plain HTML as a multi-line string literal (with triple quotes <code>"""..."""</code>)</li>
-	<li><strong>HTML:</strong> HTML with embedded TLScript expressions (with HTML literal syntax with triple curly braces <code>{{{...}}}</code>)</li>
+	<li><strong>HTML:</strong> HTML with embedded TL-Script expressions (with HTML literal syntax with triple curly braces <code>{{{...}}}</code>)</li>
 	<li><strong>Structured text:</strong> Rich text content from WYSIWYG editor fields with embedded images. Images are automatically converted to BASE64 data URIs for PDF rendering</li>
 	<li><strong>Binary data:</strong> Binary data with content type <code>text/html</code> or <code>text/plain</code> containing HTML markup</li>
 </ul>
@@ -39,7 +39,7 @@
 		<tr>
 			<td>html</td>
 			<td>String, HTMLFragment, StructuredText or binary data</td>
-			<td>The HTML content to be converted to PDF. Can be a simple string (with triple quotes <code>"""..."""</code>), an HTMLFragment (with triple curly braces <code>{{{...}}}</code> syntax with embedded TLScript expressions), a StructuredText from WYSIWYG editor fields (with automatically embedded BASE64 images) or a binary data with content type <code>text/html</code> or <code>text/plain</code>. Must be well-formed XHTML with all tags properly closed.</td>
+			<td>The HTML content to be converted to PDF. Can be a simple string (with triple quotes <code>"""..."""</code>), an HTMLFragment (with triple curly braces <code>{{{...}}}</code> syntax with embedded TL-Script expressions), a StructuredText from WYSIWYG editor fields (with automatically embedded BASE64 images) or a binary data with content type <code>text/html</code> or <code>text/plain</code>. Must be well-formed XHTML with all tags properly closed.</td>
 			<td>yes</td>
 			<td> </td>
 		</tr>
@@ -164,7 +164,7 @@
 }}}, "rechnung-" + $invoice.get(`my.module:Invoice#number`))</code>
 </pre>
 
-<p><strong>Output:</strong> A PDF with dynamically generated content. The <code>{{{...}}}</code> syntax enables the embedding of TLScript expressions directly in the HTML, which are evaluated and securely HTML-encoded before the PDF is generated.</p>
+<p><strong>Output:</strong> A PDF with dynamically generated content. The <code>{{{...}}}</code> syntax enables the embedding of TL-Script expressions directly in the HTML, which are evaluated and securely HTML-encoded before the PDF is generated.</p>
 
 <h3>PDF with user-defined file name</h3>
 

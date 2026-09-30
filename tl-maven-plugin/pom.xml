@@ -84,7 +84,7 @@
 		<dependency>
 			<groupId>org.apache.maven.plugin-tools</groupId>
 			<artifactId>maven-plugin-annotations</artifactId>
-			<version>3.15.2</version>
+			<version>3.16.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -132,17 +132,17 @@
 		<dependency>
 			<groupId>org.codehaus.plexus</groupId>
 			<artifactId>plexus-archiver</artifactId>
-			<version>4.11.0</version>
+			<version>4.14.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.codehaus.plexus</groupId>
 			<artifactId>plexus-utils</artifactId>
-			<version>4.0.3</version>
+			<version>4.1.0</version>
 		</dependency>
 		<dependency>
 		    <groupId>com.github.javaparser</groupId>
 		    <artifactId>javaparser-core</artifactId>
-		    <version>3.28.1</version>
+		    <version>3.28.2</version>
 		</dependency>
 		<dependency>
 		    <groupId>org.ow2.asm</groupId>

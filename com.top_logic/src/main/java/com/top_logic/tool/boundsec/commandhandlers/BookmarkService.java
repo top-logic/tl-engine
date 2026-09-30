@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -34,6 +35,7 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ServiceDependencies(ModelService.Module.class)
+@Label("Bookmark handlers")
 public class BookmarkService extends KBBasedManagedClass<BookmarkService.Config> {
 
 	/**

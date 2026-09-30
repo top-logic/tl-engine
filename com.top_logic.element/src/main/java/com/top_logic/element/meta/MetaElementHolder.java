@@ -8,7 +8,6 @@ package com.top_logic.element.meta;
 import java.util.Set;
 
 import com.top_logic.model.TLClass;
-import com.top_logic.model.TLObject;
 import com.top_logic.model.TLScope;
 
 /**
@@ -20,7 +19,7 @@ import com.top_logic.model.TLScope;
  * 
  * @author <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */
-public interface MetaElementHolder extends TLScope, TLObject {
+public interface MetaElementHolder extends TLScope {
 	/**
 	 * Add a type to this holder.
 	 * 

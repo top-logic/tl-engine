@@ -27,6 +27,7 @@ import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.model.DynamicModelService;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.annotate.util.AttributeSettings;
@@ -138,6 +139,37 @@ public class TestXmlImporter extends TestCase {
 			result.tValueByName("label"));
 	}
 
+	public void testImportWithContext() throws XMLStreamException, IOException {
+		Protocol log = new AssertProtocol();
+		I18NBundle logResources = Resources.getLogInstance();
+		XmlImporter importer =
+			XmlImporter.newInstance(log.asI18NLog(logResources), resource("testXmlImporter6-context.importer.xml"));
+		TLModel model = new TLModelImpl();
+		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
+			FileManager.getInstance().getData("/WEB-INF/model/tl.core.model.xml"));
+		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
+			FileManager.getInstance().getData("/WEB-INF/model/tl.model.i18n.model.xml"));
+		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
+			resource("testXmlImporter6-context.model.xml"));
+
+		TLClass containerType =
+			(TLClass) model.getModule("test.com.top_logic.xio.importer.context").getType("Container");
+		TLObject container = TransientObjectFactory.INSTANCE.createObject(containerType, null, null, null);
+
+		ModelBinding binding = new TransientModelBinding(model, false);
+
+		// The import declaration does not create a root object but links the imported items into the
+		// scope. The scope is supplied through the context argument.
+		importer.importModel(binding,
+			new StreamSource(resource("testXmlImporter6-context.data.xml").getStream()), container);
+
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(3, elements.size());
+		assertEquals("x", elements.get(0).tValueByName("name"));
+		assertEquals("y", elements.get(1).tValueByName("name"));
+		assertEquals("z", elements.get(2).tValueByName("name"));
+	}
+
 	@SuppressWarnings("unchecked")
 	private Collection<? extends TLObject> collection(Object v) {
 		return v == null ? Collections.emptyList() : (Collection<TLObject>) v;
@@ -160,7 +192,7 @@ public class TestXmlImporter extends TestCase {
 		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
 			FileManager.getInstance().getData("/WEB-INF/model/tl.model.i18n.model.xml"));
 		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE, resource(modelResource));
-		ModelBinding binding = new TransientModelBinding(model);
+		ModelBinding binding = new TransientModelBinding(model, false);
 		return (TLObject) importer.importModel(binding, new StreamSource(resource(xmlResource).getStream()));
 	}
 

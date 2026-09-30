@@ -5,37 +5,59 @@
  */
 package com.top_logic.element.boundsec.manager.rule;
 
+import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.CollectionUtil;
-import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * The IdentityPathElement is used for rules with no path elements to map some roles to
+ * The {@link IdentityPathElement} is used for rules with no path elements to map some roles to
  * other roles.
- * 
- * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
-public class IdentityPathElement extends PathElement {
+public class IdentityPathElement implements PathElement {
 
+	/**
+	 * Creates an {@link IdentityPathElement}.
+	 */
     public IdentityPathElement() {
-		super(null, false);
     }
 
-    @Override
-	public Collection getSources(Wrapper aDestination) {
-        return CollectionUtil.intoList(aDestination);
-    }
+	/**
+	 * Returns a singleton collection containing {@code destination} itself, since the identity
+	 * path element does not traverse any reference.
+	 */
+	@Override
+	public BaseObjects<? extends Collection<? extends TLObject>> getSources(TLObject destination) {
+		return BaseObjects.of(CollectionUtil.intoList(destination));
+	}
 
-    @Override
-	public Collection getValues(Wrapper aBase) {
-        return CollectionUtil.intoList(aBase);
-    }
+	/**
+	 * Returns a singleton collection containing {@code base} itself, since the identity path
+	 * element does not traverse any reference.
+	 */
+	@Override
+	public Collection<? extends TLObject> getValues(TLObject base) {
+		return CollectionUtil.intoList(base);
+	}
 
 	@Override
-	public TLStructuredTypePart getMetaAttribute() {
-		throw new NullPointerException("No MetaAttribute.");
+	public Collection<TLStructuredTypePart> getRelevantParts() {
+		return Collections.emptySet();
+	}
+
+	@Override
+	public BaseObjects<? extends Collection<? extends TLObject>> getPathBase(TLObject element,
+			TLStructuredTypePart part, Supplier<?> partValue) {
+		return BaseObjects.of(CollectionUtil.intoList(element));
+	}
+
+	@Override
+	public void appendForTooltip(Appendable out) throws IOException {
+		// No tooltip for technical path element.
 	}
 
 }

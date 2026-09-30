@@ -441,7 +441,7 @@
   // Execute transpose without function
   result = $testLists.transpose();
   
-  $result
+  $result.flatten();
 }]]></value>
 			</value>
 		</action>
@@ -1727,22 +1727,18 @@
 				/>
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value=""
+				value="null"
 			/>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
 			user-id="root"
 		>
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Administration > Development > Modell Editor"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-			user-id="root"
-		>
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Strukturen"
-			/>
+			<arguments/>
 		</action>
 	</actions>
 </action>

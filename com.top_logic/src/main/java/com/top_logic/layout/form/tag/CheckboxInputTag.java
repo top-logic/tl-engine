@@ -54,6 +54,8 @@ public class CheckboxInputTag extends AbstractFormFieldControlTag {
 		BooleanField field = (BooleanField) member;
 		AbstractFormFieldControl control;
 		switch (_display) {
+			// A switch is a check box in another shape, and this tag draws the box.
+			case SWITCH:
 			case CHECKBOX: {
 				if (field.isMandatory() || _resetable) {
 					IconSelectControl checkbox =

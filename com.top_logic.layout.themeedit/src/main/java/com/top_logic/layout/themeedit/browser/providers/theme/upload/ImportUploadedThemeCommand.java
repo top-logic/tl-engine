@@ -50,13 +50,6 @@ public class ImportUploadedThemeCommand extends ImportZipDataCommand {
 	}
 
 	@Override
-	protected void uploadPostProcess(BinaryData data) {
-		super.uploadPostProcess(data);
-
-		_themeTable.invalidate();
-	}
-
-	@Override
 	protected ZipImporter createImporter(BinaryData data) {
 		TableComponent themeTable = _themeTable;
 

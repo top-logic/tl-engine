@@ -4,10 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TopLogic is an open-source, model-based, no-code web application development platform. It combines declarative configuration (UML/BPMN modeling, WYSIWYG UI configuration) with extensible Java components. The platform enables both no-code application development and traditional Java/Maven development workflows.
-
-**Build System**: Maven
-**License**: Dual-licensed (AGPL-3.0 / BOS-TopLogic-1.0)
+TopLogic is an open-source, model-based, no-code web application platform (declarative UML/BPMN modeling + WYSIWYG UI, extensible with Java components). Maven build; dual-licensed AGPL-3.0 / BOS-TopLogic-1.0.
 
 ## Build Commands
 
@@ -27,14 +24,14 @@ Tests are skipped by default (`skipTests=true` in tl-parent-all), so `-DskipTest
 
 ### Refreshing the Workspace After a Branch Switch
 
-Switching branches can leave stale jars in the local Maven repo (installed artifacts older than the current sources). A full rebuild is expensive. Use:
+Switching branches or pulling can leave stale jars in the local Maven repo (installed artifacts older than — or built from a different branch than — the current sources). A full rebuild is expensive; detect and rebuild only the stale modules:
 
 ```bash
 .claude/scripts/rebuild-stale.sh            # detect + rebuild stale modules
 .claude/scripts/rebuild-stale.sh --dry-run  # only list them
 ```
 
-The script enumerates all reactor modules via one `mvn exec:exec` run, compares the newest mtime under each module's `pom.xml` + `src/` against the installed jar in the local Maven repo, and rebuilds only the stale ones in the correct order (`mvn -B install -pl <list>`).
+**Run it after every pull or branch switch, not just when something looks broken** — it is the cheap step that reconciles the local repo with the working tree, including newly registered modules (flagged `[no jar]`). The one case it cannot catch is a module present in the source tree but not yet registered in any aggregator's `<modules>` list. The script's header comment documents the staleness rules (source-, dependency-, and branch-state-stale) and why each is needed.
 
 ### Running Tests
 
@@ -60,7 +57,7 @@ The `-Dtest` value **must be the fully qualified class name** — a simple class
 - **Piping Maven output**: Always use `mvn -B` (batch mode) when piping output to `grep`, `tail`, etc. Without `-B`, Maven emits ANSI color codes that prevent text matching (e.g. `grep 'BUILD'` fails because the actual string is `[1;32mBUILD SUCCESS[m`).
 - **Always preserve full build output**: Use `tee` to save output to a log file while still seeing it live: `mvn -B install -pl com.top_logic.basic 2>&1 | tee com.top_logic.basic/target/mvn-build.log`. This way you can search the full output afterwards without having to re-run the build.
 - **GWT client → server WAR dependency**: `tl-react-flow-server` packages the GWT JavaScript from `tl-react-flow-client` as a WAR overlay. The Jetty server serves GWT files from the server's web-fragment.war, NOT from the client's. **Always rebuild `com.top_logic.react.flow.server` after changing `com.top_logic.react.flow.client`**, otherwise the app serves stale JavaScript. Full rebuild command: `mvn install -pl com.top_logic.react.flow.common,com.top_logic.react.flow.client,com.top_logic.react.flow.server,com.top_logic.demo`.
-- **Never call `javac` directly** — always build through Maven (`mvn compile` / `mvn install`), which handles the classpath, dependency resolution, and ISO-8859-1 source encoding.
+- **Never call `javac` directly** — always build through Maven (`mvn compile` / `mvn install`), which handles the classpath, dependency resolution, and source encoding.
 - **Do not use the `-am` (also-make) flag** when verifying your own changes. List every module you modified explicitly on `-pl` (comma-separated, in dependency order). `-am` drags in the whole upstream dependency closure, hides which modules you actually touched, and slows every iteration down.
 
 ### Other Useful Commands
@@ -82,103 +79,28 @@ mvn dependency-check:check
 mvn javadoc:javadoc
 ```
 
-## Architecture Overview
+## Architecture & Module Layout
 
-TopLogic uses a **layered, modular architecture** with approximately 110+ Maven modules organized into distinct layers:
+TopLogic is a layered Maven reactor of 110+ modules. Name prefixes:
 
-### Module Naming Conventions
+- **`com.top_logic.*`** — framework and feature modules
+- **`tl-*`** — build tooling, parent POMs, infrastructure
+- **`ext.*`** — repackaged external libraries (CKEditor, Font Awesome, BPMN.js, …)
+- **`test.*`** — test-only modules
 
-- **`com.top_logic.*`** - Core framework modules (reverse DNS)
-- **`tl-*`** - Build tooling and infrastructure
-- **`ext.*`** - Packaged external libraries (Bootstrap Icons, CKEditor, Font Awesome, BPMN.js, Ace Editor, etc.)
-- **`test.*`** - Test-only modules
+Most modules are library-JAR *fragments* composed into applications: fragments use parent `tl-parent-core`, runnable apps use `tl-parent-app`.
 
-### Core Layers
+**Dependency direction is strictly bottom-up and must stay acyclic:** `com.top_logic.basic` (utilities, no other TL deps) → `basic.db` → `dob` / `dsa` (data access) → `com.top_logic` (knowledge base, model, layout) → feature modules → application modules. In particular, `basic.*` must never depend on a higher layer.
 
-1. **Build Infrastructure** (`tl-parent-*`, `tl-build-*`, `tl-maven-plugin`)
-   - Parent POMs define versioning, dependencies, and plugin configuration
-   - Custom Maven plugins for TopLogic-specific build tasks
-   - Build processors for code generation
-
-2. **Foundation Layer** (`com.top_logic.basic*`)
-   - Low-level utilities with no UI dependencies
-   - Configuration framework (`basic.config`) - declarative typed configuration system
-   - Data structures, I18N, reflection, XML/JSON processing
-   - Database abstraction layer (`basic.db`, `basic.db.schema`)
-   - Logging facades (Log4j, Logback)
-
-3. **Core Engine** (`com.top_logic` / tl-core)
-   - **Knowledge Base** (`knowledge.*`) - Object persistence, versioning, event journal
-   - **Type System** (`model.*`) - Dynamic type definitions, forms, data binding
-   - **Layout System** (`layout.*`) - Component-based declarative UI framework
-   - **Security** - Authentication, authorization, access control
-
-4. **Feature Modules** (various `com.top_logic.*`)
-   - **BPE**: Business Process Engine (`bpe`, `bpe.modeler`, `bpe.app`)
-   - **Reporting**: Report generation (`reporting`, `reporting.office`, `reporting.flex`)
-   - **Search**: Full-text search (`search.base`, `search.lucene`)
-   - **Graph/Diagrams**: UML, BPMN support (`graph.*`, `umljs`, `graph.diagramjs.*`)
-   - **Office Integration**: Word/Excel/PowerPoint (`office`, `doc`, `template`)
-   - **Messaging**: Kafka, JMS integration (`kafka*`, `tl-service-jms*`)
-   - **OpenAPI**: REST API support (`service.openapi.*`)
-
-5. **Client Layer** (GWT-compiled JavaScript)
-   - `*.ajax.client`, `*.client.diagramjs`, `*.graphic.blocks.client`
-   - Compiled from Java to JavaScript for browser execution
-
-### Key Architectural Patterns
-
-- **Fragment Modules**: Most modules are library JARs that compose into applications
-- **Parent POMs**: `tl-parent-core` for fragment modules, `tl-parent-app` for runnable applications
-- **Configuration-Driven**: Heavy use of XML configuration files in `src/main/webapp/WEB-INF/`
-- **Declarative Layouts**: UI defined in `.layout.xml` files under `WEB-INF/layouts/`
-- **Type System**: Dynamic type definitions enable model-driven development
-- **Knowledge Base**: Custom ORM layer above SQL databases with versioning and auditing
-
-## Module Dependencies
-
-**Typical dependency flow** (bottom-up):
-
-```
-com.top_logic.basic (utilities, no dependencies on other TL modules)
-  ↓
-com.top_logic.basic.db (database layer)
-  ↓
-com.top_logic.dob, .dsa (data access layer)
-  ↓
-com.top_logic (core: knowledge base, model system, layout engine)
-  ↓
-Feature modules (bpe, reporting, search, etc.)
-  ↓
-Application modules (compose features)
-```
-
-**Important**: The `basic.*` layer must remain dependency-free from higher layers to prevent circular dependencies.
+To find the module that owns a class or feature, use the `tl-mcp` tools (`module_of`) or the "Repository Structure" section below.
 
 ## File Locations
 
-### Source Structure
+Standard Maven layout, plus these TopLogic conventions:
 
-- **Java source**: `src/main/java/com/top_logic/...`
-- **Resources**: `src/main/resources/`
-- **Webapp files**: `src/main/webapp/` (for web modules)
-  - Layouts: `WEB-INF/layouts/`
-  - Configuration: `WEB-INF/conf/`
-  - Kbase definitions: `WEB-INF/kbase/`
-  - Model definitions: `WEB-INF/model/`
-
-### Test Structure
-
-- **Test source**: `src/test/java/test/com/top_logic/...`
-  - Note the `test.` prefix in package names
-- **Test resources**: `src/test/resources/`
-
-### Configuration Files
-
-- **Module POM**: `pom.xml` (defines dependencies, build configuration)
-- **Parent POM reference**: Most modules extend `tl-parent-core-internal`
-- **Webapp descriptor**: `WEB-INF/web.xml` (for web modules)
-- **TypeDoc**: `*.type.xml` files define model types
+- **Tests** live under `src/test/java/test/com/top_logic/...` — note the extra `test.` package prefix.
+- **Webapp config** (web modules) under `src/main/webapp/WEB-INF/`: `layouts/` (layout XML), `model/` (model XML), `conf/` (app config), `kbase/` (kbase definitions).
+- Model types are also declared in `*.type.xml`.
 
 ## Development Patterns
 
@@ -206,17 +128,7 @@ public class MyClass {
 
 ### Configuration Framework
 
-TopLogic uses a sophisticated typed configuration system. Configuration classes use annotations:
-
-```java
-public interface MyConfig extends ConfigurationItem {
-    @Name("my-property")
-    @Mandatory
-    String getMyProperty();
-}
-```
-
-Configuration is typically loaded from XML files using `InstantiationContext`.
+TopLogic uses a typed configuration system: config classes are annotated `ConfigurationItem` / `PolymorphicConfiguration` interfaces (properties declared via `@Name`, `@Mandatory`, …), loaded from XML via `InstantiationContext`.
 
 **TypedConfiguration pitfalls:**
 - `@ClassDefault(MyClass.class)` is REQUIRED on Config interfaces extending `PolymorphicConfiguration<T>` — otherwise the framework tries to instantiate the base interface.
@@ -226,137 +138,67 @@ Configuration is typically loaded from XML files using `InstantiationContext`.
 
 ### Knowledge Base Access
 
-Objects are accessed through the Knowledge Base API:
-
-```java
-KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-Transaction tx = kb.beginTransaction();
-try {
-    // Perform operations
-    tx.commit();
-} finally {
-    tx.rollback();
-}
-```
+Objects are read/written through `PersistencyLayer.getKnowledgeBase()`. Wrap every mutation in a transaction: `kb.beginTransaction()`, perform the changes, `tx.commit()`, with `tx.rollback()` in a `finally` (a no-op after a successful commit).
 
 ### Layout Components
 
-UI components extend `LayoutComponent` and are configured declaratively:
-
-```xml
-<layout>
-    <component class="com.top_logic.layout.form.component.FormComponent">
-        <!-- Configuration -->
-    </component>
-</layout>
-```
+UI is assembled declaratively in `*.layout.xml` files under `WEB-INF/layouts/`. See the `tl-layout` skill for the template-call pattern, channel binding, and the component catalog.
 
 ### React Controls (`com.top_logic.layout.react`)
 
-React controls use a bridge library (`tl-react-bridge`) that provides a single shared React instance.
-
-**Critical**: Controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly. Importing from `'react'` bundles a duplicate React copy, causing "useState is null" errors at runtime.
-
-```typescript
-// Correct:
-import { React, useTLState } from 'tl-react-bridge';
-
-// Wrong — causes runtime errors:
-import React, { useState } from 'react';
-```
-
-The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`. Do NOT run `npx vite build` directly.
+React controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly — importing from `'react'` bundles a duplicate React copy, causing "useState is null" runtime errors. The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`; do not run `npx vite build` directly. The bundles it writes to `src/main/webapp/script/` are build products ignored by git, so a fresh checkout or branch switch needs a `mvn compile` of the React modules (Eclipse runs the build through m2e) before an app serves current client code. For setting up a React control module (vite / tsconfig / shims / wiring), see [docs/faq/new-react-module.md](docs/faq/new-react-module.md). For the `.view.xml` composition layer and the `TableViewControl` React table, see [docs/faq/react-view-layer.md](docs/faq/react-view-layer.md). For adding a `UIElement` (with a client component of its own), see [docs/faq/new-ui-element.md](docs/faq/new-ui-element.md). For the theme tokens the stylesheets consume — the two radius tiers, the elevation scale, and the audit test enforcing them — see [docs/faq/react-theme-tokens.md](docs/faq/react-theme-tokens.md). For rendering the React UI with a customer's own React component library (theme, root wrappers, `replace`-based adapter components, the `state.proto` state contract) — see [docs/faq/customer-component-library.md](docs/faq/customer-component-library.md).
 
 ### Model Definitions
 
-Types are defined in XML files (`*.model.xml`):
-
-```xml
-<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
-    <module name="my.module">
-        <class name="MyType">
-            <attributes>
-                <property name="myAttribute" type="tl.core:String"/>
-            </attributes>
-        </class>
-    </module>
-</model>
-```
+Application data types are defined in `*.model.xml` files under `WEB-INF/model/`. See the `tl-model` skill for types, attributes, references, derived attributes, and wrapper generation.
 
 ### UI Labels and I18N
 
-TopLogic generates UI labels from configuration interface properties. The English `messages_en.properties` files in `src/main/java/META-INF/` are **generated during `mvn install`** from JavaDoc comments — **do NOT edit them directly**, changes are overwritten on the next build.
+- English `messages_en.properties` (in `src/main/java/META-INF/`) are **generated during `mvn install`** from config-property names and JavaDoc — **never edit them by hand**; the next build overwrites them.
+- German `messages_de.properties` are **hand-maintained**: the build seeds new keys via DeepL but never overwrites existing entries, so correcting a translation directly is the normal workflow.
+- **Never pass `-Dmaven.javadoc.skip=true` when adding or renaming `I18NConstants`** — the `TLDoclet` runs in the javadoc lifecycle, so skipping it leaves the `messages_*.properties` stale.
+- To change a label, add a `@Label` annotation (tooltip = getter JavaDoc), run `mvn install`, and commit both the Java change and the regenerated `messages_*.properties`.
 
-The German `messages_de.properties` files are **maintained by hand**. The build seeds new keys (via DeepL auto-translation) but never overwrites existing entries, so correcting an awkward or wrong German translation directly in `messages_de.properties` is the normal workflow.
-
-Message generation runs as part of the `maven-javadoc-plugin` lifecycle (the `TLDoclet`). **Never pass `-Dmaven.javadoc.skip=true` when adding or renaming `I18NConstants`** — the doclet is skipped along with Javadoc, leaving the `messages_*.properties` files outdated.
-
-**To change a UI label:**
-
-1. **Add a `@Label` annotation** to the configuration property:
-
-```java
-@Name("cssClassOverride")
-@Label("CSS class override")  // Overrides auto-generated label
-boolean getCssClassOverride();
-```
-
-2. **Run `mvn install`** on the module to regenerate the properties files
-
-3. **Commit both** the Java source change AND the regenerated `messages_*.properties` files
-
-**How labels are generated:**
-- Default label is derived from the property name (e.g., `cssClassOverride` → "Css class override")
-- `@Label` annotation overrides the auto-generated label
-- Tooltips are generated from JavaDoc comments on the getter method
-
-**Example regeneration workflow:**
-```bash
-cd com.top_logic
-mvn install
-git diff src/main/java/META-INF/messages_en.properties  # Verify changes
-git add src/main/java/META-INF/messages_*.properties
-git commit -m "Ticket #XXXXX: Regenerate messages with label fixes."
-```
+See [docs/faq/i18n.md](docs/faq/i18n.md) for the full workflow and examples.
 
 ### Exception Handling
 
-TopLogic uses **`TopLogicException`** for user-visible errors that should be displayed with internationalized messages:
+Throw `com.top_logic.util.error.TopLogicException` for user-visible errors that need an internationalized message; use a plain `RuntimeException` for internal programming errors users cannot act on. User-facing messages are `ResKey` constants declared in an `I18NConstants` class with an `@en` JavaDoc default, named `ERROR_<DESCRIPTION>__<PARAM1>_<PARAM2>` (`ResKey`, `ResKey1`, … chosen by parameter count).
 
-```java
-import com.top_logic.util.error.TopLogicException;
+See [docs/faq/i18n.md](docs/faq/i18n.md) for the `I18NConstants` pattern and a full example.
 
-// Define I18N constants in I18NConstants.java
-public class I18NConstants extends I18NConstantsBase {
-    /**
-     * @en Failed to generate PDF: {0}
-     */
-    public static ResKey1 ERROR_PDF_GENERATION_FAILED__MSG;
+### TL-Script Builtin Functions
 
-    static {
-        initConstants(I18NConstants.class);
-    }
-}
+Adding a builtin function (expression) to TL-Script is described in the in-app Developer Guide page `com.top_logic.model.search/src/main/webapp/doc/{en,de}/DeveloperGuide/TLScript/TLScriptExtensions/`. There are **two** mechanisms — pick the simplest one that fits.
 
-// Use TopLogicException with I18N constants
-throw new TopLogicException(I18NConstants.ERROR_PDF_GENERATION_FAILED__MSG.fill(ex.getMessage()), ex);
-```
+**Mechanism 1 — `MethodBuilder` (full control).** Implement a `GenericMethod` plus a `MethodBuilder`, register it as `<method>` in `SearchBuilder` configuration, name the arguments with a constant `ArgumentDescriptor`, keep the expression factory `getId()` unique when one class serves several `<method>` registrations, and **always** ship a documentation page (`index.html` + `page.properties`) under `.../doc/{en,de}/DeveloperGuide/TLScript/...` — a `MethodBuilder`-style expression without a help page is incomplete. Use this when you need custom argument evaluation, a computed/derived result type, lazy or context-dependent evaluation, or anything a plain static method signature cannot express.
 
-**When to use TopLogicException:**
-- User-visible errors that should be displayed in the UI
-- Errors that need internationalization support
-- Validation failures that users need to understand
+**Mechanism 2 — subclass `TLScriptFunctions` (the easy path for plain functions).** Extend `com.top_logic.model.search.expr.config.operations.TLScriptFunctions` and add `public static` methods — **every** public static method automatically becomes a TL-Script function. No `MethodBuilder`, no `<method>` registration, no `ArgumentDescriptor`: the single `TLScriptMethodResolver` (already wired as a `<method-resolver>` in `modelSearchConf.config.xml`) discovers all subclasses at startup via the `TypeIndex` (`getSpecializations(TLScriptFunctions.class, …)`). A subclass placed in any module that depends on `com.top_logic.model.search` is picked up automatically. Rules:
 
-**When to use RuntimeException:**
-- Internal programming errors that should not occur in production
-- Errors that indicate bugs rather than user mistakes
-- Low-level technical failures that users cannot act upon
+- **Function name** = prefix + capitalized method name, joined with **no separator**. The prefix defaults to the class's simple name; override it with `@ScriptPrefix("…")` on the class. Override the per-method suffix with `@Name(…)`. Example: `@ScriptPrefix("math")` + `random()` → `mathRandom()`. **Always give the class a `@ScriptPrefix`** — a prefix namespaces the functions (e.g. `math…`), keeps names globally unique, and makes them discoverable by prefix in the editor's autocompletion; relying on the raw class simple name as the implicit prefix is discouraged.
+- **Parameters** map to script parameters positionally. Mark required ones with `@Mandatory`; give a primitive default via the matching annotation (`@StringDefault`, `@LongDefault`, …); for a type TL-Script cannot convert natively, annotate the parameter with `@ScriptConversion(<ValueConverter>)`.
+- **Docs/UI**: the method JavaDoc becomes the description and `@Label` overrides the generated UI label (auto-generated like other config labels — no separate HTML help page is required). Add `@SideEffectFree` to declare a pure function.
+- Names must be globally unique across all subclasses; a clash is reported as a config error at startup.
+- Canonical example: `com.top_logic.model.search/.../operations/MathFunctions.java` (`@ScriptPrefix("math")`); further real examples in `com.top_logic.react.flow.server` / `com.top_logic.graphic.blocks.server` (`FlowFactory`).
 
-**I18N Constant Naming Convention:**
-- Format: `ERROR_<DESCRIPTION>__<PARAM1>_<PARAM2>`
-- Example: `ERROR_INVALID_PAGE_SIZE__VALUE_VALID` (takes value and valid options as parameters)
-- Use `ResKey` (no params), `ResKey1` (1 param), `ResKey2` (2 params), etc.
-- JavaDoc comment must start with `@en` for English default text
+### JavaDoc Conventions
+
+**Reference members, methods, and types with `{@link}`, not `{@code}`.** A `{@link #getScrollX()}`
+is checked by the compiler/doclet, so a later rename breaks the build instead of silently leaving
+stale documentation (`{@code scrollX}` would rot unnoticed). Reserve `{@code ...}` for things that
+are not resolvable symbols: literals (`{@code null}`, `{@code true}`), expressions
+(`{@code end >= start}`), method parameter names (JavaDoc has no link syntax for parameters), and
+external/JS identifiers.
+
+- In `*.proto` files, reference a field by its **proto field name**, not the generated getter:
+  `{@link #strokeColor}` (same message) or `{@link OtherMessage#fieldName}` (another message). The
+  msgbuf generator rewrites field links to the correct getter — do NOT guess `getStrokeColor()`.
+- The `TLDoclet` "Invalid camel case word" warning flags bare `camelCase` words in JavaDoc — wrap
+  them in a `{@link}` (preferred) or, only for non-symbols, `{@code}`.
+- **Never downgrade a `{@link}` to `{@code}` to silence a doclet warning** — relocate the link (e.g.
+  into `@implNote`, or link the class instead of the member) so it stays a checked reference. See
+  [docs/faq/javadoc-warnings.md](docs/faq/javadoc-warnings.md) for the full set of TLDoclet warnings
+  and their fixes.
 
 ## Testing Conventions
 
@@ -365,28 +207,22 @@ throw new TopLogicException(I18NConstants.ERROR_PDF_GENERATION_FAILED__MSG.fill(
 - Tests requiring a knowledge base extend `AbstractDBKnowledgeBaseTest`
 - Tests are JUnit 4 based
 
+**A green local `mvn install` is not a green CI build** (tests are skipped locally). Before pushing a branch that adds or edits source or layouts: every new `.java` needs an SPDX header + class doc comment, every new/edited `*.xml` layout must be `XMLPrettyPrinter`-normalized, and `-DskipTests=true` even skips test *compilation* so broken test code can pass a local build. See [docs/faq/build-conformance.md](docs/faq/build-conformance.md).
+
 ### Manual Verification with Playwright
 
-After implementing a UI feature or fix, always verify it manually in a running application using Playwright before reporting the work as done. This means:
+After implementing a UI feature or fix, always verify it manually in a running application using Playwright before reporting the work as done:
 
-1. **Ensure the feature is accessible in `com.top_logic.demo`** — if the feature is not already wired into the demo app, add the necessary configuration (layouts, views, model entries) so it can be reached in the browser.
+1. **Ensure the feature is accessible in `com.top_logic.demo`** — if it is not already wired into the demo app, add the necessary configuration (layouts, views, model entries) so it can be reached in the browser.
 2. **Start the demo app** using the `tl-app` skill.
-3. **Use Playwright** to navigate to the feature, interact with it, and verify that it works as expected.
+3. **Verify the feature** by navigating to it, interacting with it, and checking it behaves as expected. **Delegate the browser interaction loop to a sub-agent** so its hundreds of round-trips don't re-bill the main thread's context on every turn — see the `tl-app` skill's "Verifying in the browser" section for the sub-agent brief and the snapshot-vs-screenshot guidance.
 4. **Only then report the work as complete.**
 
 ## Important Notes
 
 ### Demo App Credentials
 
-The demo application's default developer login is `root` / `root1234`.
-
-### Database Support
-
-The platform supports multiple databases:
-- **H2** (default for development/testing)
-- **Oracle**, **PostgreSQL**, **MySQL**, **MS SQL Server**, **IBM DB2**
-
-Database-specific drivers are included in test scope for internal modules.
+The demo application's default developer login is `root` / `root1234`. For the demo app URLs (the classic `tl-demo` UI is at `/tl-demo/servlet/LayoutServlet`, the React demos at `/view/`) and scripted-test notes, see [docs/faq/demo-apps.md](docs/faq/demo-apps.md).
 
 ### Version Management
 
@@ -404,13 +240,8 @@ When creating a new TopLogic module:
 
 ### Resource File Normalization
 
-`.properties` files under `WEB-INF/conf/resources/` must be normalized:
+`.properties` files under `WEB-INF/conf/resources/` must be normalized. See the `tl-model` skill ("Normalizing resource files") for the command and the mandatory `-N` flag.
 
-```bash
-mvn -N tl:normalize-resource-file -Dresource=<path>
-```
-
-The `-N` flag is essential — without it Maven resolves the full reactor (including GWT modules) and the command fails.
 
 ### Theme / CSS Reloading
 
@@ -419,6 +250,7 @@ To reload CSS changes at runtime: Use sidebar menu "Entwickleroptionen" (Develop
 ### View Configuration Reloading
 
 Changes to `.view.xml` files take effect after a logout/login — no application restart is needed. Views are loaded per session, not cached globally at startup.
+
 
 ### Layout Normalization
 
@@ -431,6 +263,8 @@ mvn exec:java@normalize-layouts
 This runs `com.top_logic.basic.xml.XMLPrettyPrinter` on layout directories.
 
 ### Migration Tools
+
+For upgrading an application from TL 7.11 to 8.0, see [docs/faq/upgrade-7.11-to-8.0.md](docs/faq/upgrade-7.11-to-8.0.md).
 
 For layout migrations after API changes:
 
@@ -446,7 +280,19 @@ mvn exec:java@migrate-ticket28336
 - **com.top_logic/** - Core engine (tl-core artifact)
 - **com.top_logic.basic/** - Foundation utilities
 - **com.top_logic.element/** - Element management
-- **com.top_logic.demo/** - Demo application
+- **com.top_logic.demo/** - Legacy demo application (`tl-demo`). The classic
+  layout UI plus a React view layer mounted at `/view/`. Depends directly on the
+  legacy `graphic.blocks.*` diagram stack, so it also serves those modules'
+  webapp resources (e.g. `/style/tl-flow-core.css`).
+- **com.top_logic.demo.react/** - React-only demo application (`tl-demo-react`),
+  built purely on the `com.top_logic.layout.view` `.view.xml` layer and served at
+  `/view/`. This is the successor test bed for React UI features (see its
+  `TRIAGE.md`). It does **not** depend on the legacy `graphic.blocks.*` modules;
+  the React flow diagram is provided by the copied, self-contained
+  `com.top_logic.react.flow.*` modules. When verifying a React UI feature, run
+  this app, not `tl-demo` — a feature that works under `tl-demo` may still be
+  broken here if it relies on a legacy webapp resource that only `tl-demo`
+  happens to serve.
 - **test-migrate-apps/** - Test applications for migration scenarios
 - **bos-settings/** - Build settings and configuration
 - **tl-doc/** - Documentation and JavaDoc output
@@ -458,7 +304,7 @@ This project uses **Trac** for issue tracking. Tickets are referenced using the 
 
 ### MCP Server Integration
 
-A Trac MCP server is configured in `.mcp.json` to allow Claude Code to interact with tickets at `http://tl/trac/`.
+A Trac MCP server (provided by the `tl-dev` Claude Code plugin, installed once per machine) lets Claude Code interact with tickets at `http://tl/trac/`. See `mcp-servers/README.md` for the one-step setup.
 
 **When discussing "tickets" in this project, always use the Trac MCP server tools to retrieve ticket information.**
 
@@ -469,6 +315,14 @@ Available tools include:
 - `search_tickets` - Search for tickets using Trac query syntax
 - `get_ticket_changelog` - Get ticket change history
 - `create_ticket` / `update_ticket` - Create or update tickets
+- `get_ticket_actions` / `close_ticket` - Inspect the workflow steps of a ticket, or walk it to `closed`
+- `get_milestones` / `get_milestone` / `create_milestone` / `update_milestone` - Milestones
+
+**`update_ticket` silently ignores top-level status/owner fields — nest them under `attributes`.** `{"ticket_id": N, "status": "accepted"}` returns "Updated ticket #N" but changes nothing (the Modified timestamp stays untouched, and a later push is rejected by the ticket-status hook). Use `{"ticket_id": N, "attributes": {"status": "accepted", "owner": "…"}}` and verify with `get_ticket`.
+
+**Releases are not cut from this repository's tooling.** Building a release is the Jenkins job; the Trac bookkeeping around it (closing the release tickets, the milestone, the `relatedmilestones` marking, the migration keywords) is the `tl-release` command and the `tl-release` skill, both provided by the `tl-dev` plugin.
+
+**Migration / upgrade instructions go into the ticket DESCRIPTION, not a comment.** The release changelog is generated from ticket descriptions only — comments, PR bodies, and commit messages do not reach it. Append a `== Migration ==` section to the existing description via `update_ticket` (with the full description text) and flag the ticket with the `RequiresMigration` keyword — that is the keyword the release milestones query, so a section without it never reaches the changelog.
 
 **Important**: Trac uses WikiFormatting syntax (not Markdown) for ticket descriptions and comments. Key syntax:
 - Headings: `= Title =`, `== Subtitle ==`
@@ -487,9 +341,10 @@ Commit messages in this project must follow a specific format:
 
 - **Format**: `Ticket #<number>: <description>`
 - **Example**: `Ticket #28934: Add data URI SVG support to SVGReplacedElementFactory.`
-- **Important**: Do NOT include "Generated with Claude Code", "Co-Authored-By: Claude", or any AI-generation attribution lines
 - **Never amend commits** unless explicitly asked to do so. Always create new commits.
 - Keep the message plain and focused on describing the change.
+- **Commit completed work at the end of each turn** without waiting to be asked, so every step of
+  work lands as its own commit. Group unrelated changes into separate commits.
 
 ### Git PR Conventions
 
@@ -508,42 +363,8 @@ Commit messages in this project must follow a specific format:
 
 ## msgbuf Library
 
-The project uses the [msgbuf](https://github.com/msgbuf/msgbuf) library for type-safe protocol message generation from `.proto` files.
+The project uses the [msgbuf](https://github.com/msgbuf/msgbuf) library for type-safe protocol message generation from `.proto` files. For the `JsonWriter` writer-type pitfall and the generator-plugin invocation, see [docs/faq/msgbuf.md](docs/faq/msgbuf.md).
 
-### Key Pitfall: Writer Types
-
-`de.haumacher.msgbuf.json.JsonWriter` takes `de.haumacher.msgbuf.io.Writer` — **not** `java.io.Writer`. The compiler error "StringWriter cannot be converted to Writer" is misleading because `StringWriter` IS a `java.io.Writer`, but the constructor expects the msgbuf `Writer` interface. The error omits the package, making it look like a standard Java type.
-
-**Correct usage:**
-
-```java
-// For in-memory string serialization:
-import de.haumacher.msgbuf.io.StringW;
-import de.haumacher.msgbuf.json.JsonWriter;
-
-StringW out = new StringW();
-try (JsonWriter writer = new JsonWriter(out)) {
-    myMessage.writeTo(writer);
-}
-String json = out.toString();
-
-// To wrap a java.io.Writer (server-side only):
-import de.haumacher.msgbuf.server.io.WriterAdapter;
-
-try (JsonWriter writer = new JsonWriter(new WriterAdapter(javaIoWriter))) {
-    myMessage.writeTo(writer);
-}
-```
-
-### Generator Plugin
-
-The msgbuf Maven plugin generates Java classes from `.proto` files. Note that its default lifecycle phase is **not** `generate-sources`, so `mvn generate-sources` alone won't trigger it. It runs during `mvn compile`. To run it in isolation, invoke its `generate` goal by plugin prefix, targeting a module that declares the plugin (`com.top_logic.basic`, `com.top_logic.graphic.blocks`, or `tl-tools-resources`):
-
-```bash
-mvn msgbuf-generator:generate -pl com.top_logic.basic
-```
-
-The prefix is `msgbuf-generator` (not `msgbuf`); no version is needed — Maven resolves it from the target module's POM (`${msgbuf.version}`).
 
 ## Additional Resources
 

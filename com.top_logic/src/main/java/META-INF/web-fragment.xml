@@ -24,6 +24,10 @@
 			<param-value>180</param-value>
 		</init-param>
 		<init-param>
+			<param-name>versioned-max-age</param-name>
+			<param-value>31536000</param-value>
+		</init-param>
+		<init-param>
 			<param-name>excludes</param-name>
 			<param-value>/images/tmp</param-value>
 		</init-param>

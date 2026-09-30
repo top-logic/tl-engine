@@ -54,41 +54,26 @@ public class LayoutUpdate {
 
 	private void visitFileCreations(PathUpdate update) {
 		for (Path path : update.getCreations()) {
-			Path layoutDirectory = LayoutUtils.getLayoutDirectory(path);
+			Path layoutDirectory = layoutDirectory(path);
 			if (layoutDirectory == null) {
 				continue;
 			}
 
-			if (path.startsWith(layoutDirectory)) {
-				if (Files.isDirectory(path)) {
-					try {
-						Set<Path> children = Files.walk(path).filter(Files::isRegularFile).collect(Collectors.toSet());
+			if (Files.isDirectory(path)) {
+				try {
+					Set<Path> children = Files.walk(path).filter(Files::isRegularFile).collect(Collectors.toSet());
 
-						for (Path child : children) {
-							visisitFileCreation(layoutDirectory, child);
-						}
-					} catch (IOException exception) {
-						Logger.error("Problen while reading " + path, exception, this);
+					for (Path child : children) {
+						visitFile(layoutDirectory, child);
 					}
-				} else {
-					visisitFileCreation(layoutDirectory, path);
+				} catch (IOException exception) {
+					Logger.error("Problem while reading " + path, exception, this);
 				}
+			} else {
+				visitFile(layoutDirectory, path);
 			}
-		}
-	}
 
-	private void visisitFileCreation(Path layoutDirectory, Path path) {
-		Path filename = path.getFileName();
-
-		if (filename != null) {
-			String name = filename.toString();
-
-			if (LayoutUtils.isLayoutOverlay(name)) {
-				invalidate(getLayoutKeyFromOverlay(layoutDirectory, path));
-			} else if (LayoutUtils.isLayout(name)) {
-				invalidate(getLayoutKeyFromLayout(layoutDirectory, path));
-			} else if (!LayoutUtils.isTemplate(name)) {
-				_canIncrementalUpdate = false;
+			if (!_canIncrementalUpdate) {
 				return;
 			}
 		}
@@ -96,58 +81,101 @@ public class LayoutUpdate {
 
 	private void visitFileDeletions(PathUpdate update) {
 		for (Path path : update.getDeletions()) {
-			Path layoutDirectory = LayoutUtils.getLayoutDirectory(path);
+			Path layoutDirectory = layoutDirectory(path);
 			if (layoutDirectory == null) {
 				continue;
 			}
 
-			if (path.startsWith(layoutDirectory)) {
-				if (!Files.isDirectory(path)) {
-					Path filename = path.getFileName();
+			/* A deleted path can no longer be inspected, so a directory reaches visitFile(Path, Path)
+			 * and is recognized there by its missing file name extension. */
+			visitFile(layoutDirectory, path);
 
-					if (filename != null) {
-						String name = filename.toString();
-
-						if (LayoutUtils.isLayoutOverlay(name)) {
-							invalidate(getLayoutKeyFromOverlay(layoutDirectory, path));
-						} else if (LayoutUtils.isLayout(name)) {
-							invalidate(getLayoutKeyFromLayout(layoutDirectory, path));
-						} else if (!LayoutUtils.isTemplate(name)) {
-							_canIncrementalUpdate = false;
-							return;
-						}
-					}
-				}
+			if (!_canIncrementalUpdate) {
+				return;
 			}
 		}
 	}
 
 	private void visitFileChanges(PathUpdate update) {
 		for (Path path : update.getChanges()) {
-			Path layoutDirectory = LayoutUtils.getLayoutDirectory(path);
+			Path layoutDirectory = layoutDirectory(path);
 			if (layoutDirectory == null) {
 				continue;
 			}
 
-			if (path.startsWith(layoutDirectory)) {
-				if (!Files.isDirectory(path)) {
-					Path filename = path.getFileName();
+			if (!Files.isDirectory(path)) {
+				visitFile(layoutDirectory, path);
+			}
 
-					if (filename != null) {
-						String name = filename.toString();
-
-						if (LayoutUtils.isLayoutOverlay(name)) {
-							invalidate(getLayoutKeyFromOverlay(layoutDirectory, path));
-						} else if (LayoutUtils.isLayout(name)) {
-							invalidate(getLayoutKeyFromLayout(layoutDirectory, path));
-						} else if (!LayoutUtils.isTemplate(name)) {
-							_canIncrementalUpdate = false;
-							return;
-						}
-					}
-				}
+			if (!_canIncrementalUpdate) {
+				return;
 			}
 		}
+	}
+
+	/**
+	 * The layout directory containing the given path, or <code>null</code> if the path is not part of
+	 * a layout directory.
+	 */
+	private static Path layoutDirectory(Path path) {
+		Path layoutDirectory = LayoutUtils.getLayoutDirectory(path);
+
+		if (layoutDirectory == null || !path.startsWith(layoutDirectory)) {
+			return null;
+		}
+
+		return layoutDirectory;
+	}
+
+	/**
+	 * Records what the given path in the given layout directory invalidates.
+	 */
+	private void visitFile(Path layoutDirectory, Path path) {
+		Path filename = path.getFileName();
+
+		if (filename == null) {
+			return;
+		}
+
+		String name = filename.toString();
+
+		if (LayoutUtils.isLayoutOverlay(name)) {
+			invalidate(getLayoutKeyFromOverlay(layoutDirectory, path));
+		} else if (LayoutUtils.isLayout(name)) {
+			invalidate(getLayoutKeyFromLayout(layoutDirectory, path));
+		} else if (!LayoutUtils.isTemplate(name) && canDefineLayouts(name)) {
+			/* Some other resource a layout can be composed of, e.g. the target of a template call, or
+			 * a whole directory of layouts. Which layouts it contributes to is not known here, so all
+			 * of them have to be re-loaded. A template, in contrast, is loaded on its own, see
+			 * DynamicComponentService. */
+			_canIncrementalUpdate = false;
+		}
+	}
+
+	/**
+	 * Whether a resource with the given name can take part in the definition of layouts.
+	 *
+	 * <p>
+	 * Layouts are composed of XML resources exclusively. A name without a file name extension is a
+	 * directory, which may contain such resources.
+	 * </p>
+	 *
+	 * <p>
+	 * Any other file is invisible to the layout loader and must invalidate nothing - in particular a
+	 * temporary or backup copy, whose name may well carry a layout suffix in the middle, as in
+	 * <code>someView.layout.xml12345.tmp</code>. Such a name is neither the layout
+	 * <code>someView.layout.xml</code> nor a reason to re-load every layout.
+	 * </p>
+	 */
+	private static boolean canDefineLayouts(String name) {
+		int extensionStart = name.lastIndexOf('.');
+
+		if (extensionStart <= 0) {
+			// A directory, or a hidden file without extension.
+			return true;
+		}
+
+		return name.endsWith(FileUtilities.XML_FILE_ENDING);
 	}
 
 	private void invalidate(String layoutKey) {

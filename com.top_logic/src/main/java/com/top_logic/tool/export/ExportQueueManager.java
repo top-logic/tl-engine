@@ -17,6 +17,7 @@ import com.top_logic.basic.Reloadable;
 import com.top_logic.basic.ReloadableManager;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -29,12 +30,12 @@ import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 
 /**
- * The ExportQueueManager is responsible for starting and stopping
- * {@link ExportExecutor}s.
- * 
+ * Starts and stops the {@link ExportExecutor}s that process queued export jobs.
+ *
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @ServiceDependencies({ ExportRegistryFactory.Module.class, PersonManager.Module.class })
+@Label("Export queue manager")
 public final class ExportQueueManager extends ConfiguredManagedClass<ExportQueueManager.Config> implements Reloadable {
 
 	private static final String TECHNOLOGY = "technology";

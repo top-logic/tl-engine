@@ -74,18 +74,26 @@ public class TransientTLObjectImpl extends TransientObject {
 		return _context;
 	}
 
+	/**
+	 * A transient object is part of the {@link #tContainer() container} it was created in and
+	 * dies with it: it is valid while that container is valid, or while it has no container at
+	 * all.
+	 * 
+	 * @implNote A transient container that itself was created in a container chains the check up
+	 *           to the first object that has none.
+	 */
+	@Override
+	public boolean tValid() {
+		TLObject container = tContainer();
+		return container == null || container.tValid();
+	}
+
 	@Override
 	public Object tValue(TLStructuredTypePart part) {
 		Object directValue = directValue(part);
 		if (directValue == null) {
-			// Value may not be set yet
-			if (part.isMultiple()) {
-				if (part.isOrdered()) {
-					return Collections.emptyList();
-				} else {
-					return Collections.emptySet();
-				}
-			}
+			// Value may not be set yet.
+			return TLModelUtil.getEmptyValue(part);
 		}
 		return directValue;
 	}
@@ -156,6 +164,16 @@ public class TransientTLObjectImpl extends TransientObject {
 	public void tUpdate(TLStructuredTypePart accessPart, Object newValue) {
 		TLStructuredTypePart resolvedPart = resolvePart(accessPart);
 		checkExists(accessPart, resolvedPart);
+
+		StorageDetail storageImplementation = resolvedPart.getStorageImplementation();
+		if (storageImplementation instanceof StorageWithFallback) {
+			// Symmetric to directValue(): An explicitly set value of a fallback attribute is not
+			// stored in the fallback attribute itself but in its underlying storage attribute, from
+			// where it is read again as explicit value.
+			((StorageWithFallback) storageImplementation).setExplicitValue(this, resolvedPart, newValue);
+			return;
+		}
+
 		checkDerived(resolvedPart);
 		newValue = ensureMultiplicity(resolvedPart, newValue);
 		Object oldValue = directUpdate(resolvedPart, newValue);

@@ -41,12 +41,6 @@ import com.top_logic.model.util.TLModelUtil;
 public class ResetSequence extends GenericMethod {
 
 	/**
-	 * Technical suffix for the sequence actually used in sequence table to ensure that no clash is
-	 * produced with internal sequences.
-	 */
-	public static final String SEQUENCE_SUFFIX = "_SequenceId";
-
-	/**
 	 * Creates a {@link ResetSequence} expression.
 	 */
 	protected ResetSequence(String name, SearchExpression[] arguments) {
@@ -73,18 +67,9 @@ public class ResetSequence extends GenericMethod {
 			return null;
 		}
 
-		StringBuilder sequenceIdentifierBuilder = new StringBuilder(sequenceId);
-
-		// extract the context from the arguments
-		Object contextArg = arguments[1];
-
-		// add the optional Context to the sequence Identifier
-		if (contextArg != null) {
-			SequenceIdGenerator.addNames(sequenceIdentifierBuilder, contextArg);
-		}
-
-		// append the technical suffix after all context has been added
-		sequenceIdentifierBuilder.append(SEQUENCE_SUFFIX);
+		// Build the physical sequence name the same way as SequenceDefaultProvider, so that this
+		// function resets the same counter as an object-annotated sequence.
+		String sequenceName = SequenceIdGenerator.sequenceName(sequenceId, arguments[1]);
 
 		// extract the newValue from the arguments
 		long newValue = arguments[2] != null ? asLong(arguments[2])-1 : 0L;
@@ -94,8 +79,7 @@ public class ResetSequence extends GenericMethod {
 		PooledConnection connection = ((CommitHandler) kb).createCommitContext().getConnection();
 
 		try {
-			return RowLevelLockingSequenceManager.resetSequence(connection, sequenceIdentifierBuilder.toString(),
-				newValue);
+			return RowLevelLockingSequenceManager.resetSequence(connection, sequenceName, newValue);
 		} catch (SQLException ex) {
 			return false;
 		}

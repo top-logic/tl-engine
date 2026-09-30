@@ -70,6 +70,9 @@
 						/>
 					</columns>
 				</table>
+				<buttons>
+					<reference command-id="invalidate"/>
+				</buttons>
 				${subConfiguration}
 			</component>
 		</components>

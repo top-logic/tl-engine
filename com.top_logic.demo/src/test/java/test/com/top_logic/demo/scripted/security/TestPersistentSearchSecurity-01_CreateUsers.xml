@@ -4,56 +4,38 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<actions>
+		<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
+			business-action="Anlegen"
+			business-object="Nutzer"
+		>
+			<parameters>
+				<parameter name="Vorname"
+					value="User_TestPersistentSearchSecurity_1"
+				/>
+				<parameter name="Nachname"
+					value="User_TestPersistentSearchSecurity_1"
+				/>
+				<parameter name="Loginname"
+					value="User_TestPersistentSearchSecurity_1"
+				/>
+				<parameter name="ergebnis"
+					value="User_TestPersistentSearchSecurity_1"
+				/>
+			</parameters>
+		</action>
 		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-			template="script:/Rolle/Action-Rolle-Anlegen.xml"
+			template="script:Gruppe/Action-Gruppe-Zuordnen.xml"
+			template-name-comment="Gruppe Zuordnen"
 		>
 			<parameters>
-				<parameter name="Name"
-					value="publisher"
-				/>
-				<parameter name="Berechtigungsstruktur"
-					value="Zentrale Berechtigungen"
-				/>
-				<parameter name="ergebnis"
-					value="publisher"
-				/>
-			</parameters>
-		</action>
-		<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-			business-action="Anlegen"
-			business-object="Nutzer"
-		>
-			<parameters>
-				<parameter name="Vorname"
+				<parameter name="Login"
 					value="User_TestPersistentSearchSecurity_1"
 				/>
-				<parameter name="Nachname"
-					value="User_TestPersistentSearchSecurity_1"
+				<parameter name="Gruppe1"
+					value="Benutzer"
 				/>
-				<parameter name="Loginname"
-					value="User_TestPersistentSearchSecurity_1"
-				/>
-				<parameter name="ergebnis"
-					value="User_TestPersistentSearchSecurity_1"
-				/>
-			</parameters>
-		</action>
-		<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-			business-action="Rolle zuweisen"
-			business-object="Nutzer"
-		>
-			<parameters>
-				<parameter name="kontext"
-					value="User_TestPersistentSearchSecurity_1"
-				/>
-				<parameter name="Rolle"
-					value="publisher"
-				/>
-				<parameter name="Berechtigungsstruktur"
-					value="Zentrale Berechtigungen"
-				/>
-				<parameter name="Knoten"
-					value="SecurityRoot"
+				<parameter name="Gruppe2"
+					value="Superusers"
 				/>
 			</parameters>
 		</action>
@@ -76,22 +58,19 @@
 				/>
 			</parameters>
 		</action>
-		<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-			business-action="Rolle zuweisen"
-			business-object="Nutzer"
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:Gruppe/Action-Gruppe-Zuordnen.xml"
+			template-name-comment="Gruppe Zuordnen"
 		>
 			<parameters>
-				<parameter name="kontext"
+				<parameter name="Login"
 					value="User_TestPersistentSearchSecurity_2"
 				/>
-				<parameter name="Rolle"
-					value="publisher"
+				<parameter name="Gruppe1"
+					value="Benutzer"
 				/>
-				<parameter name="Berechtigungsstruktur"
-					value="Zentrale Berechtigungen"
-				/>
-				<parameter name="Knoten"
-					value="SecurityRoot"
+				<parameter name="Gruppe2"
+					value="Superusers"
 				/>
 			</parameters>
 		</action>

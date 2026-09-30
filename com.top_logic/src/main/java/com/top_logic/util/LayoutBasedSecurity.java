@@ -11,6 +11,7 @@ import java.util.Objects;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -27,9 +28,8 @@ import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 
 /**
- * {@link KBBasedManagedClass} that initialises the security objects that base on the layout
- * configurations of the application.
- * 
+ * Initializes the persistent security objects derived from the application's layout configuration.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ServiceDependencies({
@@ -37,6 +37,7 @@ import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 	SecurityComponentCache.Module.class,
 	BoundHelper.Module.class,
 })
+@Label("Layout-based security")
 public class LayoutBasedSecurity extends KBBasedManagedClass<LayoutBasedSecurity.Config> {
 
 	/**

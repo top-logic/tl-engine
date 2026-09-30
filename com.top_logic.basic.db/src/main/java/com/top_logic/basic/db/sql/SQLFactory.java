@@ -524,6 +524,15 @@ public class SQLFactory {
 		return function(SQLFun.max, expr);
 	}
 
+	/**
+	 * Counts the rows of the whole result in which the given expression is not <code>null</code>.
+	 * 
+	 * @see SQLFun#count
+	 */
+	public static SQLExpression count(SQLExpression expr) {
+		return function(SQLFun.count, expr);
+	}
+
 	public static SQLExpression function(SQLFun fun, SQLExpression... arguments) {
 		return function(fun, Arrays.asList(arguments));
 	}

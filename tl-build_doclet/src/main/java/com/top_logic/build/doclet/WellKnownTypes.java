@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -36,6 +37,9 @@ public class WellKnownTypes {
 	private static final String TEMPLATE_VARIABLE_ANNOTATION = "com.top_logic.layout.basic.TemplateVariable";
 
 	private static final String CUSTOM_KEY_ANNOTATION = "com.top_logic.basic.i18n.CustomKey";
+
+	private static final String USES_SECURITY_ANNOTATION =
+		"com.top_logic.model.search.expr.config.operations.UsesSecurity";
 
 	TypeMirror _tlScriptFunctionsType;
 
@@ -71,6 +75,8 @@ public class WellKnownTypes {
 
 	ExecutableElement _labelValue;
 
+	ExecutableElement _labelOption;
+
 	TypeMirror _templateVariableAnnotation;
 
 	ExecutableElement _templateVariableName;
@@ -86,6 +92,8 @@ public class WellKnownTypes {
 	private final Types _types;
 
 	TypeMirror _inAppAnnotation;
+
+	TypeMirror _usesSecurityAnnotation;
 
 	/**
 	 * Creates a new {@link WellKnownTypes}.
@@ -114,6 +122,7 @@ public class WellKnownTypes {
 			typeMirror("com.top_logic.basic.util.ResKeyN"));
 		_instantiationContext = typeMirror("com.top_logic.basic.config.InstantiationContext");
 		_inAppAnnotation = typeMirror(IN_APP_ANNOTATION);
+		_usesSecurityAnnotation = typeMirror(USES_SECURITY_ANNOTATION);
 		_abstractAnnotation = typeMirror(ABSTRACT_ANNOTATION);
 		TypeElement name = typeElement(NAME_ANNOTATION);
 		if (name != null) {
@@ -126,6 +135,7 @@ public class WellKnownTypes {
 		if (label != null) {
 			_labelAnnotation = label.asType();
 			_labelValue = methodByName(label, "value");
+			_labelOption = methodByNameOptional(label, "option");
 		} else {
 			// May happen during tests.
 		}
@@ -151,6 +161,14 @@ public class WellKnownTypes {
 			.filter(elem -> elem.getSimpleName().contentEquals(methodName))
 			.map(ExecutableElement.class::cast)
 			.findFirst().get();
+	}
+
+	private ExecutableElement methodByNameOptional(Element type, String methodName) {
+		return type.getEnclosedElements().stream()
+			.filter(elem -> elem.getKind() == ElementKind.METHOD)
+			.filter(elem -> elem.getSimpleName().contentEquals(methodName))
+			.map(ExecutableElement.class::cast)
+			.findFirst().orElse(null);
 	}
 
 	private TypeMirror typeMirror(String className) {
@@ -202,6 +220,29 @@ public class WellKnownTypes {
 	}
 
 	/**
+	 * Determines the {@code option} attribute of the {@value #LABEL_ANNOTATION} annotation: the
+	 * label of the annotated type itself, when its main label is an instance rendering template.
+	 */
+	public Optional<String> getAnnotatedOptionLabel(Element element) {
+		if (_labelOption == null) {
+			return Optional.empty();
+		}
+		AnnotationMirror annotation = getAnnotation(element, _labelAnnotation);
+		if (annotation != null) {
+			// Only explicitly given values are present; the empty default means "no option label".
+			AnnotationValue value = annotation.getElementValues().get(_labelOption);
+			if (value != null) {
+				String label = (String) value.getValue();
+				if (!label.isEmpty()) {
+					return Optional.of(label);
+				}
+			}
+		}
+
+		return Optional.empty();
+	}
+
+	/**
 	 * Determines the {@value #NAME_ANNOTATION} annotation.
 	 */
 	public Optional<String> getAnnotatedName(Element element) {
@@ -232,6 +273,17 @@ public class WellKnownTypes {
 	 */
 	public boolean hasInAppAnnotation(Element elem) {
 		return hasAnnotation(elem, _inAppAnnotation);
+	}
+
+	/**
+	 * Whether the {@value #USES_SECURITY_ANNOTATION} annotation is present.
+	 * 
+	 * <p>
+	 * A TL-Script function parameter with this annotation is not a script argument.
+	 * </p>
+	 */
+	public boolean hasUsesSecurityAnnotation(Element elem) {
+		return hasAnnotation(elem, _usesSecurityAnnotation);
 	}
 
 	/**

@@ -5,8 +5,12 @@
  */
 package com.top_logic.tool.boundsec.securityObjectProvider;
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.model.TLClass;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
@@ -43,5 +47,10 @@ public class NullSecurityObjectProvider implements SecurityObjectProvider {
 	public BoundObject getSecurityObject(BoundChecker aChecker, Object model, BoundCommandGroup aCommandGroup) {
         return null;
     }
+
+	@Override
+	public Set<TLClass> getPossibleSecurityObjectTypes() {
+		return Collections.emptySet();
+	}
 
 }

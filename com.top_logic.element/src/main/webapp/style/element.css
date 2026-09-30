@@ -8,24 +8,24 @@ table td span.urlWithIcon {
 	height: 100%;
 }
 
-table td span.urlWithIcon > .cTextInput,
+table td span.urlWithIcon > .tl-text-input,
 table td span.urlWithIcon > a,
-table td span.urlWithIcon > span.cTextInput span.lFlexible {
+table td span.urlWithIcon > span.tl-text-input span.lFlexible {
 	display: inline;
 }
 
-table.tblFrozen td span.urlWithIcon > .cTextInput.active,
-table.tblFrozen td span.urlWithIcon > .cTextInput.active + a  {
+table.tblFrozen td span.urlWithIcon > .tl-text-input.active,
+table.tblFrozen td span.urlWithIcon > .tl-text-input.active + a  {
 	display: table-cell;
 	position:relative;
 	height: 100%;
 }
 
-table.tblFrozen td span.urlWithIcon > .cTextInput.active {
+table.tblFrozen td span.urlWithIcon > .tl-text-input.active {
 	width: 100%;
 }
 
-table.tblFrozen td span.urlWithIcon > .cTextInput.active + a {
+table.tblFrozen td span.urlWithIcon > .tl-text-input.active + a {
 	width: 0px;
 }
 
@@ -34,8 +34,8 @@ table.tblFrozen td span.urlWithIcon > .cTextInput.active + a {
 	align-items: center;
 }
 
-.rf_cell span.urlWithIcon .cTextInput.active,
-.rf_cell span.urlWithIcon .cTextInput.active .lFlexible {
+.rf_cell span.urlWithIcon .tl-text-input.active,
+.rf_cell span.urlWithIcon .tl-text-input.active .lFlexible {
 	display: contents;
 }
 

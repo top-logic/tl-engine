@@ -155,8 +155,8 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
-					command-label="Neue Eigenschaft..."
-					command-name="displayDialog_createPropertyTypePartDialog"
+					command-label="Neue Referenz..."
+					command-name="displayDialog_createReferenceTypePartDialog"
 					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
 					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
 					user-id="root"
@@ -170,7 +170,7 @@
 						label="ID"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
 							tab-path=""
 						/>
 					</field>
@@ -183,7 +183,7 @@
 				>
 					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
 							tab-path=""
 						/>
 						<path>
@@ -204,7 +204,7 @@
 				>
 					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
 							tab-path=""
 						/>
 						<path>
@@ -227,7 +227,7 @@
 						label="Typ"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
 							tab-path=""
 						/>
 					</field>
@@ -246,7 +246,7 @@
 						label="mehrere Werte"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
 							tab-path=""
 						/>
 					</field>
@@ -259,7 +259,7 @@
 				>
 					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
 							tab-path=""
 						/>
 						<path>
@@ -284,7 +284,7 @@
 				>
 					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
 							tab-path=""
 						/>
 						<path>
@@ -320,7 +320,7 @@
 						label="Wert"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
 							tab-path=""
 						/>
 					</field>
@@ -337,7 +337,7 @@
 					command-label="Erstellen"
 					command-name="createPart"
 					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
-					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
 					user-id="root"
 				>
 					<arguments/>

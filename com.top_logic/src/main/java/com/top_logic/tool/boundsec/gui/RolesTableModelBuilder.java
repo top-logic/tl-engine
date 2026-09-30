@@ -46,11 +46,7 @@ public class RolesTableModelBuilder implements ListModelBuilder {
 
 	@Override
 	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
-		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+		return ElementUpdate.fromDecision(listElement instanceof BoundedRole);
 	}
-
-	private boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
-		return listElement instanceof BoundedRole;
-    }
 
 }

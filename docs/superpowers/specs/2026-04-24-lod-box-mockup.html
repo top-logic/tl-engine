@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>LOD-Box — Mockup</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 24px; color: #222; background: #fafafa; }
+  h1 { margin-top: 0; }
+  h2 { margin-top: 32px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+  .row { display: flex; align-items: center; gap: 16px; margin: 8px 0; }
+  .row-label { width: 160px; font-size: 12px; color: #666; text-align: right; }
+  .lane { background: #f0f0f0; border: 1px solid #d0d0d0; height: 32px; position: relative; flex: 1; }
+  .item { position: absolute; top: 2px; bottom: 2px; border: 1px solid #888; background: #d4e6f9; box-sizing: border-box; display: flex; align-items: center; padding: 0 4px; overflow: hidden; font-size: 12px; white-space: nowrap; }
+  .icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: #4a6ea9; color: white; border-radius: 2px; font-size: 10px; font-weight: bold; margin-right: 4px; flex-shrink: 0; }
+  .progress { position: absolute; left: 0; bottom: 0; height: 3px; background: #4a6ea9; opacity: 0.6; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 11px; color: #555; }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border: 1px solid #888; }
+  .panel { background: white; border: 1px solid #ccc; padding: 16px; margin-bottom: 16px; border-radius: 4px; }
+  code { background: #eee; padding: 1px 4px; border-radius: 2px; font-size: 12px; }
+  .scale { font-size: 11px; color: #888; margin-left: 8px; font-family: monospace; }
+  .note { background: #fffbe6; border-left: 4px solid #f0c000; padding: 8px 12px; font-size: 13px; margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<h1>LOD-Box — Mockup</h1>
+<p>Veranschaulicht die Entscheidung der <code>LOD</code>-Box zwischen vier Varianten
+  eines Gantt-Spans in Abhängigkeit von der effektiven Pixelbreite.
+  Zugehöriger Design-Doc: <code>2026-04-24-lod-box-design.md</code>.</p>
+
+<div class="legend">
+  <span><i style="background:#d4e6f9"></i>Rich (≥ 200 px)</span>
+  <span><i style="background:#c8e6c9"></i>Medium (≥ 60 px)</span>
+  <span><i style="background:#fce4b8"></i>Icon-only (≥ 15 px)</span>
+  <span><i style="background:#f8d7da"></i>Bar (fallback)</span>
+</div>
+
+<h2>1. Ein Span, variabler Zoom</h2>
+<p>Dauer fest = 5 Tage. Zoom variiert. Die Variante wechselt, sobald die Pixelbreite unter den Schwellenwert fällt.</p>
+
+<div class="panel">
+  <div class="row">
+    <div class="row-label">zoom = 50 px/Tag<br><span class="scale">→ 250 px</span></div>
+    <div class="lane">
+      <div class="item" style="left:10px; width:250px; background:#d4e6f9">
+        <span class="icon">B</span>Build release v1.2
+        <div class="progress" style="width:60%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="row-label">zoom = 20 px/Tag<br><span class="scale">→ 100 px</span></div>
+    <div class="lane">
+      <div class="item" style="left:10px; width:100px; background:#c8e6c9">
+        <span class="icon">B</span>Build
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="row-label">zoom = 4 px/Tag<br><span class="scale">→ 20 px</span></div>
+    <div class="lane">
+      <div class="item" style="left:10px; width:20px; background:#fce4b8; padding:0">
+        <span class="icon" style="margin:0 auto">B</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="row-label">zoom = 0.5 px/Tag<br><span class="scale">→ 2.5 px</span></div>
+    <div class="lane">
+      <div class="item" style="left:10px; width:3px; background:#f8d7da; padding:0"></div>
+    </div>
+  </div>
+</div>
+
+<h2>2. Gleicher Zoom, variable Dauer</h2>
+<p>Zoom fest = 10 px/Tag. Dauer variiert. Das ist das typische Szenario in einer Gantt-Zeile mit mehreren Items.</p>
+
+<div class="panel">
+  <div class="row">
+    <div class="row-label">30 Tage<br><span class="scale">→ 300 px</span></div>
+    <div class="lane">
+      <div class="item" style="left:10px; width:300px; background:#d4e6f9">
+        <span class="icon">A</span>Architekturdesign mit Stakeholdern
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="row-label">8 Tage<br><span class="scale">→ 80 px</span></div>
+    <div class="lane">
+      <div class="item" style="left:10px; width:80px; background:#c8e6c9">
+        <span class="icon">R</span>Review
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="row-label">2 Tage<br><span class="scale">→ 20 px</span></div>
+    <div class="lane">
+      <div class="item" style="left:10px; width:20px; background:#fce4b8; padding:0">
+        <span class="icon" style="margin:0 auto">Q</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>3. Nebeneinander-Szene (wie im Demo)</h2>
+<p>Drei Items mit unterschiedlicher Dauer in einer Zeile bei gleichem Zoom = 10 px/Tag.
+  Jede Box entscheidet unabhängig ihre Variante.</p>
+
+<div class="panel">
+  <div class="row">
+    <div class="row-label">Phase: Impl</div>
+    <div class="lane" style="height:40px">
+      <!-- Spec 0..30 → 300px -->
+      <div class="item" style="left:0; width:300px; background:#d4e6f9">
+        <span class="icon">S</span>Specification & initial draft
+      </div>
+      <!-- Build 30..38 → 80px -->
+      <div class="item" style="left:300px; width:80px; background:#c8e6c9">
+        <span class="icon">B</span>Build
+      </div>
+      <!-- QA 38..40 → 20px -->
+      <div class="item" style="left:380px; width:20px; background:#fce4b8; padding:0">
+        <span class="icon" style="margin:0 auto">Q</span>
+      </div>
+      <!-- Ship 40..40.3 → 3px -->
+      <div class="item" style="left:400px; width:3px; background:#f8d7da; padding:0"></div>
+    </div>
+  </div>
+</div>
+
+<h2>4. Variante-abhängige Höhe (offene Designfrage)</h2>
+<p>Wenn <code>LOD.fixedHeight</code> <strong>nicht</strong> gesetzt ist, bestimmt die gewählte Variante
+  die Zeilenhöhe. Bei dichtem Zoom werden Zeilen kompakter. Das kann erwünscht oder irritierend sein.</p>
+
+<div class="panel">
+  <div class="row">
+    <div class="row-label">zoom = 50<br><span class="scale">Rich, 40 px hoch</span></div>
+    <div class="lane" style="height:40px">
+      <div class="item" style="left:10px; width:250px; background:#d4e6f9; height:36px">
+        <span class="icon">B</span>Build release v1.2
+        <div class="progress" style="width:60%"></div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="row-label">zoom = 4<br><span class="scale">Icon-only, 20 px hoch</span></div>
+    <div class="lane" style="height:20px">
+      <div class="item" style="left:10px; width:20px; background:#fce4b8; padding:0; height:16px">
+        <span class="icon" style="margin:0 auto">B</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>Entscheidungsfrage:</strong> Sollen Zeilen beim Zoom "atmen" (kompakter werden)?
+  Oder soll die LOD-Box eine stabile Höhe deklarieren, damit die Zeile optisch ruhig bleibt?
+  Empfehlung: opt-in <code>fixedHeight</code> auf <code>LOD</code>, default "atmen".
+</div>
+
+<h2>5. Nicht-Gantt-Beispiel: GridLayout-Zelle</h2>
+<p>Selbe <code>LOD</code>-Box in einer Tabellenzelle. Spaltenbreite wird vom Parent
+  als <code>availableWidth</code> durchgereicht. Zoom = 1 (Default).</p>
+
+<div class="panel">
+  <div style="display:grid; grid-template-columns: 80px 40px 180px; gap:4px; border:1px solid #ccc; padding:4px; background:white">
+    <div style="padding:4px 8px; background:#c8e6c9; font-size:12px"><span class="icon">B</span>Build</div>
+    <div style="padding:4px 0; background:#fce4b8; font-size:12px; text-align:center"><span class="icon" style="margin:0">B</span></div>
+    <div style="padding:4px 8px; background:#d4e6f9; font-size:12px"><span class="icon">B</span>Build release v1.2</div>
+  </div>
+  <p style="font-size:12px; color:#555; margin-top:8px">
+    Gleiche LOD-Deklaration — drei unterschiedliche Zellenbreiten → drei Varianten.
+  </p>
+</div>
+
+</body>
+</html>

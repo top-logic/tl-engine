@@ -5,9 +5,13 @@
  */
 package com.top_logic.mig.html.layout;
 
+import java.util.ArrayList;
+import java.util.Map;
+
 import com.top_logic.basic.Logger;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LayoutContext;
+import com.top_logic.layout.WindowScope;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.util.DefaultValidationQueue;
 import com.top_logic.util.ToBeValidated;
@@ -43,6 +47,7 @@ public class LegacyModelValidator implements ToBeValidated {
 	public void validate(DisplayContext context) {
 		_validator.init(context);
 		_component.acceptVisitorRecursively(_validator);
+		validateDialogsWithInvisibleParents(context);
 		boolean needsNext = _validator.detectedInvalidModel();
 		LayoutComponent invalidComponent = _validator.getInvalidComponentExample();
 		_validator.reset();
@@ -68,6 +73,35 @@ public class LegacyModelValidator implements ToBeValidated {
 //				LegacyModelValidator.class);
 		}
 
+	}
+
+	/**
+	 * Validates opened dialogs that are not reached by the component tree visit.
+	 *
+	 * <p>
+	 * The tree visit in {@link #validate(DisplayContext)} only descends into visible components. A
+	 * dialog stays open even if its {@link LayoutComponent#getDialogParent() dialog parent} is
+	 * invisible (e.g. when a GOTO opens a dialog of a component on a currently not displayed tab).
+	 * Such a dialog must be validated explicitly. Otherwise, its contents would be validated during
+	 * rendering, where updates can no longer be processed.
+	 * </p>
+	 */
+	private void validateDialogsWithInvisibleParents(DisplayContext context) {
+		WindowScope window = context.getWindowScope();
+		if (window == null) {
+			// Initial validation before the first rendering: No dialogs are open.
+			return;
+		}
+		Map<LayoutComponent, DialogComponent> openedDialogs = window.getDialogSupport().getOpenedDialogs();
+		if (openedDialogs.isEmpty()) {
+			return;
+		}
+		for (LayoutComponent dialog : new ArrayList<>(openedDialogs.keySet())) {
+			LayoutComponent dialogParent = dialog.getDialogParent();
+			if (dialogParent == null || !dialogParent.isVisible()) {
+				dialog.acceptVisitorRecursively(_validator);
+			}
+		}
 	}
 
 }

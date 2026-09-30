@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+	Keycloak client of the React demo, overridable through the environment: the values below
+	name the shared demo realm; a local Keycloak is used by setting tl_pac_keycloak_base_uri,
+	tl_pac_keycloak_realm, tl_pac_client_id and tl_pac_secret.
+-->
+<root>
+	<alias>
+		<entry name="%PAC_CALLBACK_URL%" value="${env:tl_pac_callback_url:/servlet/callback}" />
+		<entry name="%PAC_CALLBACK_ABSOLUTE%" value="${env:tl_pac_callback_absolute:false}" />
+		<entry name="%PAC_DOMAIN%" value="${env:tl_pac_domain:tl-demo-keycloak-users}" />
+		<entry name="%PAC_CLIENT_ID%" value="${env:tl_pac_client_id:tldemo-login}" />
+		<entry name="%PAC_SECRET%" value="${env:tl_pac_secret:unencrypted:mqCuO44REF2Iqy4geiFA5rSkj6ljy1RM}" />
+		<entry name="%PAC_KEYCLOAK_BASE_URI%" value="${env:tl_pac_keycloak_base_uri:https://login.top-logic.com}" />
+		<entry name="%PAC_KEYCLOAK_REALM%" value="${env:tl_pac_keycloak_realm:tl-demo}" />
+	</alias>
+</root>

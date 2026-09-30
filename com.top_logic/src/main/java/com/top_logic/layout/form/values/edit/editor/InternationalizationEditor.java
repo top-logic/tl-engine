@@ -45,7 +45,7 @@ import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
-import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.basic.CommandBuilder;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
@@ -324,7 +324,7 @@ public class InternationalizationEditor implements Editor {
 
 	private void displayDerivedCommand(FormGroup container, List<? extends FormMember> members,
 			ConfigKey configKey, boolean initiallyVisible) {
-		Command command = new Command() {
+		CommandBuilder builder = model -> new Command() {
 
 			boolean _membersVisible = initiallyVisible;
 
@@ -334,16 +334,15 @@ public class InternationalizationEditor implements Editor {
 				for (FormMember derivedMember : members) {
 					derivedMember.setVisible(_membersVisible);
 				}
-				CommandModel button = context.get(Command.EXECUTING_CONTROL).getModel();
 				Resources resources = context.getResources();
 				if (_membersVisible) {
-					button.setImage(Icons.HIDE_DERIVED_RESOURCES);
-					button.setLabel(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES));
-					button.setTooltip(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES.tooltipOptional()));
+					model.setImage(Icons.HIDE_DERIVED_RESOURCES);
+					model.setLabel(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES));
+					model.setTooltip(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES.tooltipOptional()));
 				} else {
-					button.setImage(Icons.DISPLAY_DERIVED_RESOURCES);
-					button.setLabel(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES));
-					button.setTooltip(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltipOptional()));
+					model.setImage(Icons.DISPLAY_DERIVED_RESOURCES);
+					model.setLabel(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES));
+					model.setTooltip(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltipOptional()));
 				}
 				PersonalConfiguration.getPersonalConfiguration().setBooleanValue(configKey.get(), _membersVisible);
 				return HandlerResult.DEFAULT_RESULT;
@@ -353,7 +352,7 @@ public class InternationalizationEditor implements Editor {
 			derivedMember.setVisible(initiallyVisible);
 		}
 		ThemeImage icon = initiallyVisible ? Icons.HIDE_DERIVED_RESOURCES : Icons.DISPLAY_DERIVED_RESOURCES;
-		CommandField button = button(container, DISPLAY_DERIVED_FIELD, icon, command);
+		CommandField button = button(container, DISPLAY_DERIVED_FIELD, icon, builder);
 		/* Let the user display the derived resources, also when they can not be changed. */
 		button.setInheritDeactivation(false);
 		if (initiallyVisible) {

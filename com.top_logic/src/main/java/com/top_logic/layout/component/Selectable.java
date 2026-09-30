@@ -58,8 +58,8 @@ public interface Selectable extends IComponent {
 
 		/**
 		 * Whether the component always tries to select some object.
-		 * 
-		 * @see ListSelectionProvider
+		 *
+		 * @see DefaultSelectionProvider
 		 */
 		@Name(DEFAULT_SELECTION)
 		@BooleanDefault(true)

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="demo.documents">
+			<class name="Document">
+				<annotations>
+					<main-properties properties="name"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="data"
+						mandatory="true"
+						type="tl.core:Binary"
+					/>
+				</attributes>
+			</class>
+		</module>
+	</modules>
+</model>

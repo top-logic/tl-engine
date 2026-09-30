@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Flow diagram demo, laid out as a dashboard of four tiles over two channels: the
+	selected product (selectedProduct) and the selected build step (selectedNode).
+	
+	The Products tile selects the product whose construction plan the diagram draws.
+	The Construction Plan tile spans two grid rows, so the diagram gets twice the height
+	of the tiles beside it; its <createChart> script builds a tree of the product's build
+	instructions, one node per build step, each showing its marker, its name, the parts
+	it consumes and its image.
+	
+	The Build steps tile lists all build steps flat. There are more steps than fit a
+	one-row tile, which is what the tile shows: the dashboard gives its grid a definite
+	row height, so the table resolves its height against the tile and scrolls inside it
+	instead of growing the page with its rows.
+	
+	The diagram, the Build steps table and the Details form share the selectedNode channel:
+	clicking a node in the diagram marks its row in Build steps and shows it in Details, and
+	picking a row in Build steps shows that step in Details and marks its node in the diagram
+	- when the step belongs to the product the diagram draws; a step of another product is
+	shown in Details while the diagram has no node to mark for it.
+-->
+<view>
+	<channels>
+		<channel name="selectedProduct"/>
+		<channel name="selectedNode"/>
+	</channels>
+	<dashboard id="flow-diagram">
+		<tile id="products"
+			width="third"
+		>
+			<panel fill="true">
+				<title>
+					<en>Products</en>
+					<de>Produkte</de>
+				</title>
+				<table
+					selection="selectedProduct"
+					types="test.flowchart:Product"
+				>
+					<columns>
+						<column attribute="name"/>
+					</columns>
+					<rows>all(`test.flowchart:Product`)</rows>
+				</table>
+			</panel>
+		</tile>
+		<tile id="plan"
+			row-span="2"
+			width="two-thirds"
+		>
+			<panel fill="true">
+				<title>
+					<en>Construction Plan</en>
+					<de>Bauplan</de>
+				</title>
+				<flow-diagram selection="selectedNode">
+					<inputs>
+						<input channel="selectedProduct"/>
+					</inputs>
+					<createChart><![CDATA[product -> {
+parts = $product == null ? list() : $product.get(`test.flowchart:Product#buildInstructions`);
+
+nodes = $parts.map(p -> reactFlowSelection(
+    userObject: $p,
+    content: reactFlowBorder(stroke: "#eccf33", thickness: 2, cssClass: "tlSelectionMarker",
+    content: reactFlowFill(fill: "#ffee95", cssClass: "tlSelectionMarker",
+    content: reactFlowPadding(all: 3,
+    content: reactFlowVertical(
+        contents: [
+            $p.get(`test.flowchart:FlowNode#marker`).with(marker ->
+                $marker.isEmpty()
+                    ? reactFlowEmpty()
+                    : reactFlowPadding(bottom: 8, content: reactFlowAlign(
+                        hAlign: "middle",
+                        content:
+                            reactFlowBorder(
+                                stroke: "red",
+                                dashes: [5, 5],
+                                content: reactFlowPadding(
+                                    all: 4,
+                                    content: reactFlowText($marker)))))
+            ),
+
+            reactFlowAlign(
+                hAlign: "middle",
+                content: reactFlowPadding(
+                    all: 4,
+                    content: reactFlowText(
+                        fontWeight: "bold",
+                        text: $p.get(`test.flowchart:FlowNode#name`))
+            )),
+
+            reactFlowAlign(
+                hAlign: "middle", content: reactFlowGrid(
+                gapY: -1,
+                contents: $p.get(`test.flowchart:FlowNode#locations`).map(l -> [
+                    $l.get(`test.flowchart:Location#count`).with(count ->
+                        $count == null
+                        ? reactFlowEmpty()
+                        : reactFlowBorder(
+                            right: false,
+                            content: reactFlowPadding(all: 3, content: reactFlowText($count)))
+                    ),
+                    reactFlowBorder(
+                        content: reactFlowFill(
+                            fill: $l.get(`test.flowchart:Location#part`)
+                                .get(`test.flowchart:Part#color`),
+                            content:
+                                reactFlowPadding(all: 3, content: reactFlowText($l.get(`test.flowchart:Location#part`)))
+                        )
+                    ),
+                    {
+                        usages = $l.get(`test.flowchart:Location#usages`);
+                        $usages.isEmpty()
+                            ? reactFlowEmpty()
+                            : reactFlowAlign(
+                                content: reactFlowBorder(
+                                    left: false,
+                                    content: reactFlowPadding(all: 3, content: reactFlowText($usages))))
+                    }
+                ])
+            )),
+
+            $p.get(`test.flowchart:FlowNode#image`).with(image ->
+                $image == null
+                    ? reactFlowEmpty()
+                    : reactFlowPadding(
+                        top: 8,
+                        content: reactFlowBorder(reactFlowImage($image)))
+            )
+        ]))))
+    )
+);
+
+nodeByPart = $nodes.indexBy(n -> $n["userObject"]);
+
+$parts.isEmpty()
+    ? reactFlowChart()
+    : reactFlowChart(
+        root: reactFlowPadding(all: 16,
+            content: reactFlowTree(
+                nodes: $nodes,
+                connections: $parts
+                    .filter(p -> !$p.get(`test.flowchart:FlowNode#inputs`).isEmpty())
+                    .map(p -> $p
+                        .get(`test.flowchart:FlowNode#inputs`)
+                        .map(c -> reactFlowConnection(
+                            parent: $nodeByPart[$p],
+                            child: $nodeByPart[$c])))
+                    .flatten()
+            )
+        )
+    )
+}]]></createChart>
+				</flow-diagram>
+			</panel>
+		</tile>
+		<tile id="steps"
+			width="third"
+		>
+			<panel fill="true">
+				<title>
+					<en>Build steps</en>
+					<de>Bauschritte</de>
+				</title>
+				<table
+					selection="selectedNode"
+					types="test.flowchart:FlowNode"
+				>
+					<columns>
+						<column attribute="name"/>
+						<column attribute="marker"/>
+					</columns>
+					<rows>all(`test.flowchart:FlowNode`)</rows>
+				</table>
+			</panel>
+		</tile>
+		<tile id="details"
+			width="full"
+		>
+			<panel>
+				<title>
+					<en>Details</en>
+					<de>Details</de>
+				</title>
+				<form
+					input="selectedNode"
+					with-inset="true"
+				>
+					<field attribute="name"/>
+					<field attribute="marker"/>
+					<field attribute="image"/>
+				</form>
+			</panel>
+		</tile>
+	</dashboard>
+</view>

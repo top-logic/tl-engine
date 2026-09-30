@@ -1,0 +1,157 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.view;
+
+import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.I18NConstantsBase;
+
+/**
+ * Internationalization constants for the view system.
+ */
+public class I18NConstants extends I18NConstantsBase {
+
+	/**
+	 * @en Edit
+	 */
+	public static ResKey FORM_EDIT;
+
+	/**
+	 * @en Apply
+	 */
+	public static ResKey FORM_APPLY;
+
+	/**
+	 * @en Save
+	 */
+	public static ResKey FORM_SAVE;
+
+	/**
+	 * @en Cancel
+	 */
+	public static ResKey FORM_CANCEL;
+
+	/**
+	 * @en No object selected.
+	 */
+	public static ResKey FORM_NO_MODEL;
+
+	/**
+	 * @en No configuration to edit.
+	 */
+	public static ResKey CONFIG_FORM_NO_MODEL;
+
+	/**
+	 * @en Detail
+	 */
+	public static ResKey COMPOSITION_TABLE_DETAIL;
+
+	/**
+	 * @en Delete
+	 */
+	public static ResKey COMPOSITION_TABLE_DELETE;
+
+	/**
+	 * @en Add
+	 */
+	public static ResKey COMPOSITION_TABLE_ADD;
+
+	/**
+	 * @en {0} / {1}
+	 */
+	public static ResKey2 EMBEDDED_COLUMN_LABEL__PREFIX_COLUMN;
+
+	/**
+	 * @en Cannot save view "{0}": no writable IDE file found.
+	 */
+	public static ResKey1 ERROR_SAVE_VIEW_NO_IDE_FILE__PATH;
+
+	/**
+	 * @en Failed to save view "{0}".
+	 */
+	public static ResKey1 ERROR_SAVE_VIEW_FAILED__PATH;
+
+	/**
+	 * @en View "{0}" was not saved, because it could not be loaded again afterwards. Correct the
+	 *     reported settings and save again. {1}
+	 */
+	public static ResKey2 ERROR_SAVE_VIEW_NOT_LOADABLE__PATH_DETAILS;
+
+	/**
+	 * @en This view could not be loaded.
+	 */
+	public static ResKey ERROR_VIEW_NOT_LOADED;
+
+	/**
+	 * @en Add element...
+	 */
+	public static ResKey DESIGNER_ADD_CHILD;
+
+	/**
+	 * @en Remove
+	 */
+	public static ResKey DESIGNER_REMOVE;
+
+	/**
+	 * @en Move up
+	 */
+	public static ResKey DESIGNER_MOVE_UP;
+
+	/**
+	 * @en Move down
+	 */
+	public static ResKey DESIGNER_MOVE_DOWN;
+
+	/**
+	 * @en Add element
+	 */
+	public static ResKey DESIGNER_ADD_DIALOG_TITLE;
+
+	/**
+	 * @en Element type
+	 */
+	public static ResKey DESIGNER_ADD_DIALOG_TYPE;
+
+	/**
+	 * @en Edit Layout
+	 */
+	public static ResKey DASHBOARD_EDIT;
+
+	/**
+	 * @en Done
+	 */
+	public static ResKey DASHBOARD_DONE;
+
+	/**
+	 * @en A value of type "{0}" cannot be displayed as HTML.
+	 */
+	public static ResKey1 ERROR_HTML_UNSUPPORTED_VALUE__TYPE;
+
+	/**
+	 * @en The document "{0}" is of content type "{1}" and therefore not HTML.
+	 */
+	public static ResKey2 ERROR_HTML_UNSUPPORTED_CONTENT_TYPE__NAME_TYPE;
+
+	/**
+	 * @en The document "{0}" cannot be read.
+	 */
+	public static ResKey1 ERROR_HTML_NOT_READABLE__NAME;
+
+	/**
+	 * @en The HTML content cannot be rendered.
+	 */
+	public static ResKey ERROR_HTML_NOT_RENDERABLE;
+
+	/**
+	 * @en This target does not accept the dragged objects.
+	 */
+	public static ResKey ERROR_DROP_REFUSED;
+
+	static {
+		initConstants(I18NConstants.class);
+	}
+}

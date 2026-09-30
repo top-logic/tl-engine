@@ -90,10 +90,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_WRONG_TARGET__ISCOMPATIBLEVALUE;
 
 	/**
+	 * @en There is no operation (command group) with name "{0}" in: {1}
+	 */
+	public static ResKey2 ERROR_UNKNOWN_OPERATION__NAME_EXPR;
+
+	/**
 	 * @en The wrong argument was passed to parameter "{1}" of function "{0}". A value of type "{2}"
 	 *     was expected, but the value was: {3}
 	 */
 	public static ResKey4 ERROR_WRONG_ARGUMENT__FUN_ARG_EXPECTED_VAL;
+
+	/**
+	 * @en The value {0} is no object that can be removed from the database. Expected is an object
+	 *     or an object identifier.
+	 */
+	public static ResKey1 ERROR_NOT_AN_OBJECT_TO_REMOVE__VALUE;
 
 	static {
 		initConstants(I18NConstants.class);

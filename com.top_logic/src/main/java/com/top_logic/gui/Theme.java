@@ -120,6 +120,9 @@ public class Theme {
 	/** Merge of this.cssNames and parent.getCssNames() */
 	private String[] _cssNames;
 
+	/** Style sheets served as separate {@code <link>} tags (not concatenated into the theme CSS). */
+	private String[] _separateCssNames;
+
 	private Map<String, String> knownSheets;
 
 	private List<Theme> _parentThemes;
@@ -224,8 +227,10 @@ public class Theme {
 		}
 		_expander.resolveRecursion();
 
-		Collection<String> mergedCssNames = getMergedCssNames(log);
+		Collection<String> mergedCssNames = getMergedCssNames(log, false);
 		_cssNames = mergedCssNames.toArray(new String[mergedCssNames.size()]);
+		Collection<String> separateCssNames = getMergedCssNames(log, true);
+		_separateCssNames = separateCssNames.toArray(new String[separateCssNames.size()]);
 
 		// Note: Style sheets must be generated also for "abstract" themes, since those can be
 		// chosen for PDF export.
@@ -240,9 +245,12 @@ public class Theme {
 		_valid = true;
 	}
 
-	private Collection<String> getMergedCssNames(Log log) {
+	private Collection<String> getMergedCssNames(Log log, boolean separate) {
 		List<String> localCssNames = new ArrayList<>();
 		for (ThemeConfig.StyleSheetRef cssConfig : _config.getStyles()) {
+			if (cssConfig.isSeparate() != separate) {
+				continue;
+			}
 			localCssNames.add(FileCompiler.resolveResourcePath(log, cssConfig.getName()));
 		}
 
@@ -260,7 +268,8 @@ public class Theme {
 			Collections.reverse(parent);
 
 			for (Theme parentId : parent) {
-				parentStyles = Arrays.asList(parentId.getCSSNames());
+				parentStyles = Arrays.asList(
+					separate ? parentId.getSeparateCSSNames() : parentId.getCSSNames());
 				mergedCssNames.addAll(parentStyles);
 			}
 
@@ -583,8 +592,11 @@ public class Theme {
 	 * @throws IOException
 	 *         If writing fails.
 	 */
-    public void writeStyles(String context, TagWriter out) throws IOException { 
+    public void writeStyles(String context, TagWriter out) throws IOException {
 		HTMLUtil.writeStylesheetRef(out, context, getStyleSheet());
+		for (String separateCss : _separateCssNames) {
+			HTMLUtil.writeStylesheetRef(out, context, separateCss);
+		}
     }
 
     /**
@@ -724,6 +736,13 @@ public class Theme {
      */
     protected String[] getCSSNames() {
 		return _cssNames;
+    }
+
+    /**
+     * Style sheets that are served as separate {@code <link>} tags.
+     */
+    protected String[] getSeparateCSSNames() {
+		return _separateCssNames;
     }
 
     private String getThemeGlobalStylesheetName() {

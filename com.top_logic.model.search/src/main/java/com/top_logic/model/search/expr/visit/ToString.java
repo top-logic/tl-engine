@@ -9,6 +9,7 @@ import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
 
 import java.util.Collection;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.All;
 import com.top_logic.model.search.expr.And;
@@ -481,10 +482,34 @@ public class ToString implements Visitor<Void, StringBuilder> {
 	public Void visitHtml(HtmlMacro expr, StringBuilder arg) {
 		arg.append("{{{");
 		for (SearchExpression content : expr.getContents()) {
-			content.visit(this, arg);
+			if (isHtmlNative(content)) {
+				content.visit(this, arg);
+			} else {
+				// An embedded expression, e.g. a variable reference: must be wrapped in "{...}"
+				// to be distinguishable from literal HTML content.
+				arg.append('{');
+				content.visit(this, arg);
+				arg.append('}');
+			}
 		}
 		arg.append("}}}");
 		return none();
+	}
+
+	/**
+	 * Whether the given {@link HtmlMacro} content is literal HTML (a tag, a piece of text, or an
+	 * end tag) as opposed to an embedded expression.
+	 */
+	private static boolean isHtmlNative(SearchExpression content) {
+		if (content instanceof TagMacro) {
+			return true;
+		}
+		if (content instanceof Literal) {
+			// Literal HTML text and end tags are compiled to a literal HTMLFragment, see
+			// SearchExpressions.text(String) and SearchExpressions.endTag(String).
+			return ((Literal) content).getValue() instanceof HTMLFragment;
+		}
+		return false;
 	}
 
 	@Override

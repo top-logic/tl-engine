@@ -1,0 +1,63 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react.control.overlay;
+
+import com.top_logic.layout.react.control.ReactControl;
+
+/**
+ * Service for opening and managing a stack of modal dialogs.
+ *
+ * <p>
+ * Dialogs are stacked: opening a new dialog while one is already open places the new dialog on top.
+ * Closing a dialog cascades to close all dialogs above it. A dialog that its opener marked as not
+ * {@link DialogHandle#isClosable() closable} is not closed, and neither is any dialog below it.
+ * </p>
+ *
+ * @see ReactDialogManagerControl
+ */
+public interface DialogManager {
+
+	/**
+	 * Opens a new dialog with the given child content.
+	 *
+	 * @param closeOnBackdrop
+	 *        Whether clicking the backdrop dismisses the dialog.
+	 * @param child
+	 *        The content control to display inside the dialog overlay.
+	 * @param handler
+	 *        Called when the dialog is closed with a result.
+	 * @return A handle that can be used to close this specific dialog.
+	 */
+	DialogHandle openDialog(boolean closeOnBackdrop, ReactControl child, DialogResultHandler<Void> handler);
+
+	/**
+	 * Closes the topmost dialog with the given result.
+	 *
+	 * <p>
+	 * Closing nothing while that dialog is not {@link DialogHandle#isClosable() closable}.
+	 * </p>
+	 *
+	 * @param result
+	 *        The result to pass to the dialog's handler.
+	 */
+	void closeTopDialog(DialogResult<Void> result);
+
+	/**
+	 * Brings the given dialog to the front by closing every dialog stacked on top of it.
+	 *
+	 * <p>
+	 * The dialogs above are closed with {@link DialogResult#cancelled()}, the given dialog stays
+	 * open. Closing nothing when the dialog is already the topmost one, or when it is no longer
+	 * open. Closing stops at the first dialog that is not {@link DialogHandle#isClosable()
+	 * closable}, so the given dialog is displayed only if nothing above it must stay open.
+	 * </p>
+	 *
+	 * @param dialog
+	 *        Handle of the dialog to display.
+	 */
+	void closeDialogsAbove(DialogHandle dialog);
+
+}

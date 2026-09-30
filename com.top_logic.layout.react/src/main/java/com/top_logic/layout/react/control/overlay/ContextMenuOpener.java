@@ -1,0 +1,218 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react.control.overlay;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
+import com.top_logic.tool.boundsec.HandlerResult;
+
+/**
+ * Composes a single context menu from multiple {@link ContextMenuContribution}s and dispatches
+ * selections back to the contributing {@link CommandModel}.
+ *
+ * <p>
+ * For each {@link Targeted} contribution the target value is published via the contribution's
+ * {@link ContextMenuContribution#setTarget() setter} before reading the resulting
+ * {@link ContextMenuContribution#visibleCommands()}. Items are ordered by contribution index,
+ * separated by a {@link MenuEntry#separator() separator} between contributions and between cliques
+ * within a contribution; a contribution carrying a {@link ContextMenuContribution#label() label}
+ * opens with a {@link MenuEntry#header(String) header} naming its entries. Wire item IDs are
+ * {@code "<contributionIndex>:<commandName>"} so names may collide across contributions. A command
+ * that is {@link CommandModel#isActive() active} yields an entry marked as the alternative in
+ * force.
+ * </p>
+ *
+ * <p>
+ * A selection runs the command through {@link CommandModel#executeCommand(ReactContext)}, and
+ * its result - the refusal of a command that is not executable included - is the result of the
+ * selection.
+ * </p>
+ *
+ * <p>
+ * The opener uses a {@link MenuRenderer} abstraction over {@code ReactMenuControl} so that it can
+ * be unit-tested without a real control.
+ * </p>
+ */
+public class ContextMenuOpener {
+
+	/**
+	 * Abstraction over {@link com.top_logic.layout.react.control.overlay.ReactMenuControl} so the
+	 * opener is unit-testable.
+	 */
+	public interface MenuRenderer {
+		/**
+		 * Show a menu at the given pixel coordinates with the given items.
+		 *
+		 * @param selectHandler
+		 *        Called with the ID of the selected item, returning the result of the selection,
+		 *        see {@link ReactMenuControl#setSelectHandler(Function)}.
+		 */
+		void show(int x, int y, List<MenuEntry> items, Function<String, HandlerResult> selectHandler,
+				Runnable closeHandler);
+
+		/**
+		 * Hide the currently displayed menu.
+		 */
+		void hide();
+	}
+
+	/**
+	 * Pairing of a {@link ContextMenuContribution} with the concrete target value to publish into
+	 * the contribution's target sink.
+	 *
+	 * @param contribution
+	 *        The contribution that produces the context menu.
+	 * @param target
+	 *        The concrete target value to publish into the contribution's target sink.
+	 */
+	public record Targeted(ContextMenuContribution contribution, Object target) {
+		// record
+	}
+
+	private final MenuRenderer _renderer;
+
+	private List<Targeted> _active = List.of();
+
+	private List<List<CommandModel>> _activeCommands = List.of();
+
+	private Supplier<ReactContext> _contextSupplier;
+
+	/**
+	 * Creates a {@link ContextMenuOpener} backed by the given {@link MenuRenderer}.
+	 */
+	public ContextMenuOpener(MenuRenderer renderer) {
+		_renderer = renderer;
+	}
+
+	/**
+	 * Installs a supplier for the {@link ReactContext} used when dispatching commands.
+	 */
+	public void bindReactContext(Supplier<ReactContext> supplier) {
+		_contextSupplier = supplier;
+	}
+
+	/**
+	 * Opens a composed context menu at the given coordinates.
+	 *
+	 * <p>
+	 * Publishes each target through the corresponding contribution's setter, then assembles a flat
+	 * menu from the visible commands. Does nothing if all contributions produce no visible
+	 * commands.
+	 * </p>
+	 */
+	public void open(int x, int y, List<Targeted> contributions) {
+		for (Targeted t : contributions) {
+			t.contribution().setTarget().accept(t.target());
+		}
+
+		List<MenuEntry> items = new ArrayList<>();
+		List<List<CommandModel>> perContributionCommands = new ArrayList<>();
+		boolean anything = false;
+		for (int i = 0; i < contributions.size(); i++) {
+			ContextMenuContribution contribution = contributions.get(i).contribution();
+			List<CommandModel> visible = contribution.visibleCommands();
+			List<CommandModel> sorted;
+			if (visible.isEmpty()) {
+				sorted = List.of();
+			} else {
+				sorted = new ArrayList<>(visible);
+				sorted.sort(Comparator.comparing(cmd -> nullSafe(cmd.getClique())));
+				if (anything) {
+					items.add(MenuEntry.separator());
+				}
+				String label = contribution.label();
+				if (label != null && !label.isEmpty()) {
+					items.add(MenuEntry.header(label));
+				}
+				appendCliqued(items, i, sorted);
+				anything = true;
+			}
+			perContributionCommands.add(sorted);
+		}
+		if (!anything) {
+			return;
+		}
+
+		_active = List.copyOf(contributions);
+		_activeCommands = perContributionCommands;
+		_renderer.show(x, y, items, this::handleSelect, this::handleClose);
+	}
+
+	private static void appendCliqued(List<MenuEntry> out, int contributionIndex, List<CommandModel> sorted) {
+		String currentClique = null;
+		boolean first = true;
+		for (int j = 0; j < sorted.size(); j++) {
+			CommandModel cmd = sorted.get(j);
+			String clique = nullSafe(cmd.getClique());
+			if (!first && !clique.equals(currentClique)) {
+				out.add(MenuEntry.separator());
+			}
+			out.add(MenuEntry.item(
+				contributionIndex + ":" + j,
+				cmd.getLabel(),
+				encodeIcon(cmd.getImage()),
+				cmd.getExecutableState(),
+				cmd.getCssClasses(),
+				cmd.isActive()));
+			currentClique = clique;
+			first = false;
+		}
+	}
+
+	private static String encodeIcon(ThemeImage image) {
+		if (image == null) {
+			return null;
+		}
+		return image.resolve().toEncodedForm();
+	}
+
+	private static String nullSafe(String s) {
+		return s == null ? "" : s;
+	}
+
+	private HandlerResult handleSelect(String itemId) {
+		int colon = itemId.indexOf(':');
+		int contributionIdx = Integer.parseInt(itemId.substring(0, colon));
+		int commandIdx = Integer.parseInt(itemId.substring(colon + 1));
+		List<CommandModel> commands = _activeCommands.get(contributionIdx);
+		CommandModel cmd = commandIdx < commands.size() ? commands.get(commandIdx) : null;
+
+		// Closing the menu is part of dispatching the selection, so it happens before the command
+		// runs. Otherwise a command that itself opens a menu (e.g. to choose among element types)
+		// would have that menu closed again right after opening it.
+		_renderer.hide();
+		_active = List.of();
+		_activeCommands = List.of();
+
+		if (cmd == null) {
+			// A selection from a menu that has been replaced in the meantime.
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return cmd.executeCommand(currentReactContext());
+	}
+
+	private void handleClose() {
+		_active = List.of();
+		_activeCommands = List.of();
+	}
+
+	/**
+	 * Returns the {@link ReactContext} to use for command execution, or {@code null} if none is
+	 * bound.
+	 */
+	protected ReactContext currentReactContext() {
+		return _contextSupplier == null ? null : _contextSupplier.get();
+	}
+
+}

@@ -61,8 +61,14 @@ public class RedoCommandHandler extends AbstractCommandHandler implements WithPo
 
 	/**
 	 * Configuration for {@link RedoCommandHandler}.
+	 *
+	 * <p>
+	 * The inherited {@link ChangeLogOptions} restrict which changes are considered for redo. With
+	 * settings equal to those of a change overview table, the command only re-applies undos that
+	 * the overview displays.
+	 * </p>
 	 */
-	public interface Config extends AbstractCommandHandler.Config, WithPostCreateActions.Config {
+	public interface Config extends AbstractCommandHandler.Config, WithPostCreateActions.Config, ChangeLogOptions {
 
 		/** @see #isCheckConflicts() */
 		String CHECK_CONFLICTS = "check-conflicts";
@@ -123,7 +129,8 @@ public class RedoCommandHandler extends AbstractCommandHandler implements WithPo
 		TLObject root = model instanceof TLObject tlModel ? tlModel : null;
 		Config cfg = config();
 
-		ChangeSet target = ChangeSetReverter.findRedoCandidate(root, cfg.getWindowSize(), cfg.getIncludeSubtree());
+		ChangeSet target =
+			ChangeSetReverter.findRedoCandidate(root, cfg, cfg.getWindowSize(), cfg.getIncludeSubtree());
 		if (target == null) {
 			return HandlerResult.DEFAULT_RESULT;
 		}

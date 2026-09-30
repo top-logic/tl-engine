@@ -401,8 +401,18 @@ public class BinaryDataFactory {
 
 	/**
 	 * Wraps upload data as a {@link BinaryData}.
+	 *
+	 * <p>
+	 * The content of the given part is read exactly once, since the servlet API does not guarantee
+	 * that a {@link Part} can be read more than once. A {@link BinaryDataPart} already serves its
+	 * content from a {@link BinaryData} and delivers it directly.
+	 * </p>
 	 */
 	public static BinaryData createUploadData(Part part) throws IOException {
+		if (part instanceof BinaryDataPart uploadPart) {
+			return uploadPart.getData();
+		}
+
 		File tempDir = Settings.getInstance().getTempDir();
 		File tempFile = File.createTempFile("upload", ".data", tempDir);
 		part.write(tempFile.getAbsolutePath());

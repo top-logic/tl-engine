@@ -3,10 +3,12 @@
 		<attribute name="name" value="A4"/>
 		<attribute name="int" value="15"/>
 		<attribute name="double" value="16"/>
+		<attribute name="long" value="100"/>
 	</object>
 	<object id="a5" type="TestSearchExpression:WithDatabaseColumns">
 		<attribute name="name" value="A4"/>
 		<attribute name="int" value="16"/>
 		<attribute name="double" value="18"/>
+		<attribute name="long" value="200"/>
 	</object>
 </objects>

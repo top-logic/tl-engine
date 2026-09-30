@@ -7,12 +7,21 @@ package com.top_logic.basic;
 
 import java.io.IOException;
 
+import com.top_logic.basic.annotation.FrameworkInternal;
+
 /**
  * Internal object identifier.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public final class LongID extends TLID {
+
+	/**
+	 * Constant to have a non <code>null</code> {@link TLID} to use in database queries when a
+	 * transient object is given.
+	 */
+	@FrameworkInternal
+	public static final LongID TRANSIENT_OBJECT_ID_REPLACEMENT = new LongID(0);
 
 	private final long _id;
 

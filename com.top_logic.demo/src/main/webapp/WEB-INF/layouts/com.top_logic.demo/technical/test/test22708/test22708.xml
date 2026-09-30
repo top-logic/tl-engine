@@ -4,7 +4,7 @@
 	columns="name"
 	createButton=""
 	createType=""
-	model="provider(com.top_logic.element.layout.table.WrapperStructureModelBuilder$WrapperStructureModelProvider)"
+	model="provider(com.top_logic.layout.component.model.SecurityRootModelProvider)"
 	namePrefix="plainStructure"
 	types="DemoPlain:A,DemoPlain:B"
 >

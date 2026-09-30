@@ -7,6 +7,9 @@ package com.top_logic.model.search.expr;
 
 import static com.top_logic.knowledge.search.ExpressionFactory.*;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.top_logic.basic.util.Utils;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.search.RevisionQuery;
@@ -17,15 +20,17 @@ import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
+import com.top_logic.model.security.ModelAccessRights;
 
 /**
  * Navigate a {@link TLAssociation}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class AssociationNavigation extends SearchExpression {
+public class AssociationNavigation extends SearchExpressionWithSecurity {
 
 	private SearchExpression _source;
 
@@ -43,7 +48,8 @@ public class AssociationNavigation extends SearchExpression {
 	 * @param destinationEnd
 	 *        See {@link #getDestinationEnd()}.
 	 */
-	AssociationNavigation(SearchExpression source, TLAssociationEnd sourceEnd, TLAssociationEnd destinationEnd) {
+	AssociationNavigation(SearchExpression source, TLAssociationEnd sourceEnd, TLAssociationEnd destinationEnd, boolean usesSecurity) {
+		super(usesSecurity);
 		_source = source;
 		_sourceEnd = sourceEnd;
 		_destinationEnd = destinationEnd;
@@ -100,10 +106,28 @@ public class AssociationNavigation extends SearchExpression {
 		if (source == null) {
 			return null;
 		}
+		boolean withSecurity = usesSecurity();
+		if (withSecurity) {
+			ModelAccessRights accessRights = ModelAccessRights.getInstance();
+			TLReference reference = getSourceEnd().getReference();
+			if (reference != null) {
+				if (!accessRights.isReadAllowed(source, reference)) {
+					return Collections.emptyList();
+				}
+			} else {
+				// No implementation for the end, therefore no attribute check
+				if (!accessRights.isReadAllowed(source)) {
+					return Collections.emptyList();
+				}
+			}
+		}
+		// Note: The navigation result is returned unfiltered. Security is enforced on the base
+		// object above (navigation is denied if the user must not read the source reference); the
+		// final result of a script must be secured by the caller.
 		return evalInternal(source);
 	}
 
-	private Object evalInternal(TLObject source) {
+	private List<TLObject> evalInternal(TLObject source) {
 		KnowledgeBase knowledgeBase = WrapperUtil.getKnowledgeBase(source);
 		RevisionQuery<TLObject> query = createQuery(source);
 		return knowledgeBase.search(query);

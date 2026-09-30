@@ -318,6 +318,11 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 	}
 
 	@Override
+	public void setExplicitValue(TLObject object, TLStructuredTypePart attribute, Object value) {
+		object.tUpdate(_storageAttr, value);
+	}
+
+	@Override
 	public Object getFormValue(TLFormObjectBase object, TLStructuredTypePart attribute) {
 		Object explicitValue = object.getFieldValue(attribute);
 		if (!Utils.isEmpty(explicitValue)) {

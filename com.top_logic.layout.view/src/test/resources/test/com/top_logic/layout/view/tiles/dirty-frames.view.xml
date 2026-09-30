@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="navPath"/>
+	</channels>
+	<tile-stack
+		initial="dirty-frames-initial.view.xml"
+		path="navPath"
+	/>
+</view>

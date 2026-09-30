@@ -1,0 +1,271 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.view.element;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
+import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.layout.ReactDashboardControl;
+import com.top_logic.layout.react.control.layout.ReactDashboardControl.Tile;
+import com.top_logic.layout.view.ChildGroup;
+import com.top_logic.layout.view.UIElement;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.util.TLContext;
+
+/**
+ * A UI element that renders a responsive dashboard grid of {@link TileElement
+ * tiles}.
+ *
+ * <p>
+ * Tile order is personalized per user via {@link PersonalConfiguration}, keyed
+ * by {@link Config#getId() this element's id}. Unknown ids in the persisted
+ * order are ignored; tiles not mentioned are appended in their configured
+ * order.
+ * </p>
+ *
+ * <p>
+ * An anonymous session is offered neither the layout edit commands nor tile
+ * reordering: all anonymous visitors share one account, so there is no personal
+ * order to store for any of them.
+ * </p>
+ */
+@InApp
+public class DashboardElement implements UIElement {
+
+	private static final String PC_KEY_PREFIX = "dashboard.tileOrder.";
+
+	/**
+	 * Configuration for {@link DashboardElement}.
+	 */
+	@TagName("dashboard")
+	public interface Config extends UIElement.Config {
+
+		/** Config property name for {@link #getId()}. */
+		String ID = "id";
+
+		/** Config property name for {@link #getMinColWidth()}. */
+		String MIN_COL_WIDTH = "min-col-width";
+
+		/** Config property name for {@link #getRowHeight()}. */
+		String ROW_HEIGHT = "row-height";
+
+		/** Config property name for {@link #getTiles()}. */
+		String TILES = "tiles";
+
+		@Override
+		@ClassDefault(DashboardElement.class)
+		Class<? extends UIElement> getImplementationClass();
+
+		/**
+		 * Stable id used as persistence key for personal tile ordering.
+		 */
+		@Name(ID)
+		@Mandatory
+		String getId();
+
+		/**
+		 * CSS length hint used by the client to decide the column count.
+		 * Defaults to {@code 16rem}.
+		 */
+		@Name(MIN_COL_WIDTH)
+		@StringDefault("16rem")
+		String getMinColWidth();
+
+		/**
+		 * The height of one grid row, as a CSS length.
+		 *
+		 * <p>
+		 * A tile is as many rows tall as the row span of its
+		 * {@link TileElement}, plus the gaps between those rows. Content that
+		 * fills the available height, a panel configured to fill or a table,
+		 * resolves its height against the tile and scrolls inside it; content
+		 * that does not fill and is taller than the tile scrolls inside the
+		 * tile as well.
+		 * </p>
+		 */
+		@Name(ROW_HEIGHT)
+		@StringDefault("16rem")
+		String getRowHeight();
+
+		/**
+		 * The tiles. Represented as polymorphic configurations so that the
+		 * default container (child elements) can hold {@code <tile>} entries.
+		 */
+		@Name(TILES)
+		@com.top_logic.basic.config.annotation.DefaultContainer
+		List<PolymorphicConfiguration<? extends TileElement>> getTiles();
+	}
+
+	private final String _id;
+
+	private final String _minColWidth;
+
+	private final String _rowHeight;
+
+	private final List<TileElement> _tiles;
+
+	private final String _cssClass;
+
+	/**
+	 * Creates a new {@link DashboardElement} from configuration.
+	 */
+	@CalledByReflection
+	public DashboardElement(InstantiationContext context, Config config) {
+		_id = config.getId();
+		_minColWidth = config.getMinColWidth();
+		_rowHeight = config.getRowHeight();
+		_tiles = new ArrayList<>();
+		for (PolymorphicConfiguration<? extends TileElement> tc : config.getTiles()) {
+			TileElement tile = context.getInstance(tc);
+			if (tile != null) {
+				_tiles.add(tile);
+			}
+		}
+		_cssClass = config.getCssClass();
+	}
+
+	@Override
+	public List<ChildGroup> getChildGroups() {
+		return List.of(ChildGroup.elements(List.<UIElement> copyOf(_tiles)));
+	}
+
+	@Override
+	public IReactControl createControl(ViewContext context) {
+		List<TileElement> ordered = applyPersonalOrder(_tiles);
+		List<Tile> reactTiles = new ArrayList<>(ordered.size());
+		List<ViewCommandModel> actions = new ArrayList<>();
+		for (TileElement t : ordered) {
+			if (!t.isAccessible()) {
+				// Access denied for the current user: omit the tile entirely.
+				continue;
+			}
+			ViewCommandModel action = t.createActionModel(context);
+			if (action != null) {
+				actions.add(action);
+			}
+			reactTiles.add(new Tile(t.getId(), t.getWidth(), t.getRowSpan(), t.createContentControl(context),
+				t.toAction(action)));
+		}
+		// The shared anonymous account has no personal order of its own, so an anonymous session
+		// gets a dashboard that offers no rearranging at all.
+		boolean personalizable = !TLContext.isAnonymous();
+		ReactDashboardControl control = new ReactDashboardControl(context, _minColWidth, _rowHeight, reactTiles,
+			personalizable ? this::storePersonalOrder : null);
+
+		control.setCssClass(_cssClass);
+		followTileActions(context, control, actions);
+		if (personalizable) {
+			contributeEditCommands(context, control);
+		}
+
+		return control;
+	}
+
+	/**
+	 * Lets the models of the tile actions follow their input for as long as the dashboard is
+	 * displayed, so that a tile is offered, refused or hidden according to what its command says
+	 * about the current input.
+	 */
+	private static void followTileActions(ViewContext context, ReactDashboardControl control,
+			List<ViewCommandModel> actions) {
+		if (actions.isEmpty()) {
+			return;
+		}
+		control.addAttachListener(() -> actions.forEach(action -> action.attach(context.getModelScope())));
+		control.addDetachListener(() -> actions.forEach(ViewCommandModel::detach));
+	}
+
+	private void contributeEditCommands(ViewContext context, ReactDashboardControl control) {
+		CommandScope scope = context.getScope(CommandScope.class);
+		if (scope == null) {
+			return;
+		}
+		DashboardCommandModel edit = DashboardCommandModel.editCommand(control);
+		DashboardCommandModel done = DashboardCommandModel.doneCommand(control);
+
+		control.addAttachListener(() -> {
+			edit.attach();
+			done.attach();
+			scope.addCommand(edit);
+			scope.addCommand(done);
+		});
+		control.addDetachListener(() -> {
+			scope.removeCommand(edit);
+			scope.removeCommand(done);
+			edit.detach();
+			done.detach();
+		});
+	}
+
+	private List<TileElement> applyPersonalOrder(List<TileElement> tiles) {
+		List<String> personal = readPersonalOrder();
+		if (personal == null || personal.isEmpty()) {
+			return tiles;
+		}
+		Map<String, TileElement> byId = new LinkedHashMap<>();
+		for (TileElement t : tiles) {
+			byId.put(t.getId(), t);
+		}
+		List<TileElement> result = new ArrayList<>(tiles.size());
+		for (String id : personal) {
+			TileElement t = byId.remove(id);
+			if (t != null) {
+				result.add(t);
+			}
+		}
+		result.addAll(byId.values());
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<String> readPersonalOrder() {
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		if (pc == null) {
+			return null;
+		}
+		Object value = pc.getJSONValue(PC_KEY_PREFIX + _id);
+		if (value instanceof List) {
+			List<?> raw = (List<?>) value;
+			List<String> result = new ArrayList<>(raw.size());
+			for (Object o : raw) {
+				if (o instanceof String) {
+					result.add((String) o);
+				}
+			}
+			return result;
+		}
+		return null;
+	}
+
+	private void storePersonalOrder(List<String> order) {
+		try {
+			PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+			if (pc == null) {
+				return;
+			}
+			pc.setJSONValue(PC_KEY_PREFIX + _id, order);
+			PersonalConfiguration.storePersonalConfiguration();
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to persist dashboard tile order for '" + _id + "'.", ex, DashboardElement.class);
+		}
+	}
+}

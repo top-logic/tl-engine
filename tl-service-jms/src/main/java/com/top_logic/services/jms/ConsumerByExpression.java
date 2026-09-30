@@ -61,6 +61,11 @@ public class ConsumerByExpression extends Consumer<ConsumerByExpression.Config> 
 	public ConsumerByExpression(InstantiationContext instContext, Config config) {
 		super(instContext, config);
 		_processing = QueryExecutor.compile(config.getProcessing());
+
+		// Messages are processed in a JMS listener thread without a logged-in user. The processing
+		// is backend logic that must operate on all data and must not be subject to a user's access
+		// rights; with security enabled it would even be denied, as there is no current user.
+		_processing.disableSecurity();
 	}
 
 	/**

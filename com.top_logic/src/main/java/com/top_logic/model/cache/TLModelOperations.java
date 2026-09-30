@@ -40,10 +40,12 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.InstancePresentation;
 import com.top_logic.model.annotate.TLSortOrder;
 import com.top_logic.model.annotate.persistency.LinkTables;
+import com.top_logic.model.annotate.ui.TLDynamicColor;
 import com.top_logic.model.annotate.ui.TLDynamicIcon;
 import com.top_logic.model.annotate.ui.TLIDColumn;
 import com.top_logic.model.annotate.ui.TLLabel;
 import com.top_logic.model.annotate.ui.TLTooltip;
+import com.top_logic.model.annotate.ui.ValueColorProvider;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.composite.ContainerStorage;
@@ -227,6 +229,58 @@ public class TLModelOperations {
 	}
 
 	/**
+	 * Computes the parts that override the given part, i.e. the {@link TLStructuredTypePart} that
+	 * have the same {@link TLStructuredTypePart#getDefinition()} and whose owner is a
+	 * specialisation of the owner of the given part.
+	 */
+	public Set<TLStructuredTypePart> getOverrides(TLStructuredTypePart part) {
+		TLStructuredType owner = part.getOwner();
+		if (owner.getModelKind() != ModelKind.CLASS) {
+			return Collections.emptySet();
+		}
+
+		return computeOverrides((TLClass) owner, part);
+	}
+
+	/**
+	 * Computes the result for {@link #getOverrides(TLStructuredTypePart)} in case the owner of the
+	 * part is a {@link TLClass}.
+	 */
+	protected Set<TLStructuredTypePart> computeOverrides(TLClass owner, TLStructuredTypePart part) {
+		String partName = part.getName();
+		Set<TLStructuredTypePart> allParts = Collections.emptySet();
+
+		Set<TLClass> specializations = getSubClasses(owner);
+		for (TLClass specialization : specializations) {
+			if (specialization == owner) {
+				// part
+				continue;
+			}
+			for (TLStructuredTypePart localPart : specialization.getLocalParts()) {
+				if (localPart.getName().equals(partName)) {
+					switch (allParts.size()) {
+						case 0: {
+							allParts = Collections.singleton(localPart);
+							break;
+						}
+						case 1: {
+							allParts = new HashSet<>(allParts);
+							allParts.add(localPart);
+							break;
+						}
+						default: {
+							allParts.add(localPart);
+							break;
+						}
+					}
+					break;
+				}
+			}
+		}
+		return allParts;
+	}
+
+	/**
 	 * The global {@link TLClass}es in the given {@link TLModel}.
 	 * <p>
 	 * "Global" means, it is either defined directly in the scope of a {@link TLModule} or
@@ -290,6 +344,29 @@ public class TLModelOperations {
 			type = TLModelUtil.getPrimaryGeneralization(type);
 		}
 		return null;
+	}
+
+	/**
+	 * Retrieves the {@link ValueColorProvider} for a given {@link TLType}.
+	 * 
+	 * @see TLDynamicColor#getColorProvider()
+	 */
+	public ValueColorProvider getColorProvider(TLType type) {
+		return computeColorProvider(type);
+	}
+
+	/**
+	 * Builds the {@link ValueColorProvider} the {@link TLDynamicColor} annotation of the given type
+	 * configures, {@link ValueColorProvider#NONE} for a type without that annotation.
+	 * 
+	 * @see #getColorProvider(TLType)
+	 */
+	protected ValueColorProvider computeColorProvider(TLType type) {
+		TLDynamicColor annotation = type.getAnnotation(TLDynamicColor.class);
+		if (annotation == null) {
+			return ValueColorProvider.NONE;
+		}
+		return TypedConfigUtil.createInstance(annotation.getColorProvider());
 	}
 
 	/**

@@ -58,6 +58,7 @@
 			<command id="toggleCompareMode"
 				class="com.top_logic.layout.compare.ToggleCompareModeHandler"
 				deactivateImage="theme:MISC_COMPARE_COMPARE_MODE_ACTIVE"
+				group="System"
 				image="theme:MISC_COMPARE_COMPARE_MODE_INACTIVE"
 			/>
 			<command id="refresh"

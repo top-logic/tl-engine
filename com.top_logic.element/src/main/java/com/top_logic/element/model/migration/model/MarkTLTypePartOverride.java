@@ -212,10 +212,10 @@ public class MarkTLTypePartOverride extends TLModelBaseLineMigrationProcessor<Ma
 				aggregate = endValues.getBoolean(5);
 				composite = endValues.getBoolean(6);
 				navigate = endValues.getBoolean(7);
-				if (withHistoryColumn) {
+				if (historyIndex > 0) {
 					historyType = endValues.getString(historyIndex);
 				}
-				if (withDeletionColumn) {
+				if (deletionIndex > 0) {
 					deletionPolicy = endValues.getString(deletionIndex);
 				}
 			} else {

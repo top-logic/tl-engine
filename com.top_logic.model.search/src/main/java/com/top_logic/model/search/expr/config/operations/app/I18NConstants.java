@@ -19,7 +19,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Either the <code>service</code> or the <code>config</code> argument must be given, not
 	 *     both.
 	 */
-	public static ResKey ERROR_EITHER_SEVICE_OR_CONFIG;
+	public static ResKey ERROR_EITHER_SERVICE_OR_CONFIG;
 
 	/**
 	 * @en The given configuration type ''{0}'' does not exist.

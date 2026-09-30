@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Application configuration layer on top of TestTLScriptSecurity-test.config.xml: it adds roles
+	and access rules to the rules declared there, without repeating any of them.
+-->
+<application>
+	<services>
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="TestTLScriptSecurity.ProjectAuditor"/>
+					<role name="TestTLScriptSecurity.ProjectViewer"/>
+				</roles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="TestTLScriptSecurity:Project">
+						<!--
+							Appended to the rules of the layer below: the auditor may read a project
+							(specializations included), the viewer only the exact type.
+						-->
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestTLScriptSecurity.ProjectAuditor"
+						/>
+						<grant
+							inherit="false"
+							operation="Read"
+							roles="TestTLScriptSecurity.ProjectViewer"
+						/>
+					</class>
+					<class name="TestTLScriptSecurity:SpecialProject">
+						<!--
+							The reader loses the read right that Project passes on, while the
+							responsible keeps it.
+						-->
+						<revoke
+							operation="Read"
+							roles="TestTLScriptSecurity.ProjectReader"
+						/>
+						<!--
+							Nothing grants the write right again, so a special project is not
+							writable at all.
+						-->
+						<revoke
+							operation="Write"
+							roles="TestTLScriptSecurity.ProjectResponsible"
+						/>
+						<!-- The following grant restores the delete right of the responsible. -->
+						<revoke
+							operation="Delete"
+							roles="TestTLScriptSecurity.ProjectResponsible"
+						/>
+						<grant
+							operation="Delete"
+							roles="TestTLScriptSecurity.ProjectResponsible"
+						/>
+					</class>
+					<part name="TestTLScriptSecurity:Project#secret">
+						<!--
+							Drops the (role-less) read entry of the layer below, so that reading the
+							attribute is decided by the class alone. The write entry stays.
+						-->
+						<revoke operation="Read"/>
+					</part>
+				</security-config>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<rules>
+						<rule id="09e1309e-0276-4b31-8efd-fb2b27f1419d"
+							inherit="true"
+							meta-element="TestTLScriptSecurity:Project"
+							role="TestTLScriptSecurity.ProjectResponsible"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:Project#responsibleAccount"/>
+							</path>
+						</rule>
+						<rule id="804e3c17-ec09-4896-8b91-64f67381cd77"
+							inherit="true"
+							meta-element="TestTLScriptSecurity:Project"
+							role="TestTLScriptSecurity.ProjectReader"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:Project#readerAccount"/>
+							</path>
+						</rule>
+						<rule id="9ccead48-ed2e-4ebc-90e6-edc6d92a8d7a"
+							inherit="true"
+							meta-element="TestTLScriptSecurity:Project"
+							role="TestTLScriptSecurity.ProjectAuditor"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:Project#auditorAccount"/>
+							</path>
+						</rule>
+						<rule id="fe72eecc-2716-4b1e-bc4c-72baa94e80a9"
+							inherit="true"
+							meta-element="TestTLScriptSecurity:Project"
+							role="TestTLScriptSecurity.ProjectViewer"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:Project#viewerAccount"/>
+							</path>
+						</rule>
+					</rules>
+				</role-rules>
+			</instance>
+		</config>
+	</services>
+</application>

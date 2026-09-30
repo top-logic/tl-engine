@@ -1,10 +1,12 @@
 <h2>Syntax</h2>
 <pre>	<code>log($message)
 
-log($message, $arguments)</code>
+log($message, $arguments)
+
+log($message, $arguments, level: $level)</code>
 </pre>
 <h2>Beschreibung</h2>
-<p>Schreibt einen Eintrag in das Anwendungslog.</p>
+<p>Schreibt einen Eintrag in das Anwendungslog. Über <code class="hljs inlineCode">level</code> wird die Dringlichkeit des Log-Eintrags festgelegt.</p>
 <h2>Parameter</h2>
 <table class="tlDocTable">
  <thead>
@@ -20,7 +22,7 @@ log($message, $arguments)</code>
   <tr>
    <td>message</td>
    <td>Zeichenkette</td>
-   <td>Die Message, die ins Log geschrieben werden soll. Falls auch <code class="hljs inlineCode">arguments</code> angegeben werden, können in der Message Platzhalte im Form von {0}...{n} definiert werden. Enthält die Message einen Platzhalter, aber es gibt kein Argument, um es zu füllen, wird im Klartext {n} in die Nachricht geschrieben.</td>
+   <td>Die Message, die ins Log geschrieben werden soll. Falls auch <code class="hljs inlineCode">arguments</code> angegeben werden, können in der Message Platzhalter im Form von {0}...{n} definiert werden. Enthält die Message einen Platzhalter, aber es gibt kein Argument, um es zu füllen, wird im Klartext {n} in die Nachricht geschrieben.</td>
    <td>ja</td>
    <td></td>
   </tr>
@@ -30,6 +32,13 @@ log($message, $arguments)</code>
    <td>Argumente, die in der angegebenen Reihenfolge in die Platzhalter von <code class="hljs inlineCode">message</code> eingefügt werden. Werden keine oder zu wenige Platzhalter angegeben, dann werden nicht alle Argumente verwendet.</td>
    <td>nein</td>
    <td></td>
+  </tr>
+  <tr>
+   <td>level</td>
+   <td>Zeichenkette</td>
+   <td>Die Dringlichkeit des Log-Eintrags, einer der Werte <code class="hljs inlineCode">debug</code>, <code class="hljs inlineCode">info</code>, <code class="hljs inlineCode">warn</code>, <code class="hljs inlineCode">error</code> oder <code class="hljs inlineCode">fatal</code> (Groß-/Kleinschreibung wird ignoriert). Da der Message beliebig viele <code class="hljs inlineCode">arguments</code> folgen können, kann der Level nur als benanntes Argument übergeben werden.</td>
+   <td>nein</td>
+   <td><code class="hljs inlineCode">info</code></td>
   </tr>
  </tbody>
 </table>
@@ -50,3 +59,6 @@ log($message, $arguments)</code>
 <pre><code>log('Current date: {0}', today(), today().toUserCalendar().dayOfWeek())</code></pre>
 <p><span style="color:#3498db"><strong>Ausgabe</strong></span> (im Log): Current date: 14.02.22 16:00</p>
 <p>Es gibt mehr Argumente als Platzhalter, daher wird das zweite Argument ignoriert.</p>
+<h3>Log Message mit Level</h3>
+<pre><code>log('Speicher fast voll: {0}%', $prozent, level: 'warn')</code></pre>
+<p><span style="color:#3498db"><strong>Ausgabe</strong></span> (im Log, als Warnung): Speicher fast voll: 95%</p>

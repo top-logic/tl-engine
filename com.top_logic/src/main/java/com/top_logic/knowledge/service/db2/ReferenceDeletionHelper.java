@@ -45,6 +45,14 @@ import com.top_logic.model.TLObject;
  */
 public class ReferenceDeletionHelper {
 
+	/**
+	 * Only current objects can be deleted. Therefore all target objects of the referee queries
+	 * issued here are current ones.
+	 *
+	 * @see DBKnowledgeBase#anyRefereesQuery(MetaObject, DeletionPolicy, Boolean, boolean, Class)
+	 */
+	private static final boolean CURRENT_TARGETS = true;
+
 	private HashMap<MetaObject, Set<DBKnowledgeItem>> allDeletions = new HashMap<>();
 
 	private HashMap<Pair<DBKnowledgeItem, MOReference>, Object> toBeUpdated =
@@ -225,7 +233,8 @@ public class ReferenceDeletionHelper {
 	private void deleteReferenceSources(Map<MetaObject, List<DBKnowledgeItem>> itemsToProcess, MetaObject type,
 			DBKnowledgeItem item) {
 		Map<MetaObject, CompiledQuery<DBKnowledgeItem>> queries =
-			_kb.anyRefereesQuery(type, DeletionPolicy.DELETE_REFERER, Boolean.FALSE, DBKnowledgeItem.class);
+			_kb.anyRefereesQuery(type, DeletionPolicy.DELETE_REFERER, Boolean.FALSE, CURRENT_TARGETS,
+				DBKnowledgeItem.class);
 		if (queries.isEmpty()) {
 			return;
 		}
@@ -236,7 +245,8 @@ public class ReferenceDeletionHelper {
 	private void deleteReferenceSources(Map<MetaObject, List<DBKnowledgeItem>> itemsToProcess, MetaObject type,
 			List<DBKnowledgeItem> items) {
 		Map<MetaObject, CompiledQuery<DBKnowledgeItem>> queries =
-			_kb.anyRefereesQuery(type, DeletionPolicy.DELETE_REFERER, Boolean.TRUE, DBKnowledgeItem.class);
+			_kb.anyRefereesQuery(type, DeletionPolicy.DELETE_REFERER, Boolean.TRUE, CURRENT_TARGETS,
+				DBKnowledgeItem.class);
 		if (queries.isEmpty()) {
 			return;
 		}

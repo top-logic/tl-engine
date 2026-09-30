@@ -142,6 +142,20 @@
 				>
 					<arguments/>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<named-member name="modelBox0"/>
+							<named-member name="modelContent0"/>
+							<labeled-member label="Name"/>
+							<labeled-member label="Abgeleitete Resourcen anzeigen"/>
+						</path>
+					</model-name>
+				</action>
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
@@ -157,6 +171,16 @@
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 						value="TestButtonCreationForExisitingDialogTable"
 					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Abgeleitete Resourcen ausblenden"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"

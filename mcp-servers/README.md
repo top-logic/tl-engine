@@ -1,75 +1,55 @@
 # MCP Servers for Claude Code
 
-MCP server integrations for Trac (tickets), Jenkins (CI/CD), and Gitea (git hosting).
+The Trac (tickets), Jenkins (CI/CD), and Gitea (git hosting) MCP integrations
+are provided by the **`tl-dev` Claude Code plugin**, installed once per machine.
+Every checkout and worktree picks them up automatically.
 
-## Setup
+- Plugin repository: **https://git.top-logic.com/TopLogic/tl-dev-mcp.git**
 
-Prerequisites: Python 3.7+ with venv, curl or wget, OS keyring (GNOME Keyring, KWallet, macOS Keychain).
-
-```bash
-# Set up all servers (interactive)
-./mcp-servers/scripts/setup-mcp.sh
-
-# Or set up a specific server
-./mcp-servers/scripts/setup-mcp.sh trac
-./mcp-servers/scripts/setup-mcp.sh jenkins
-./mcp-servers/scripts/setup-mcp.sh gitea
-```
-
-The script creates a Python venv (`.venv`), installs tools, and stores credentials in your OS keyring.
-
-Credentials are stored system-wide in the OS keyring, so you only need to enter them once. When setting up a new workspace, the script detects existing credentials and skips the prompts. To re-enter credentials (e.g., after a password change), use `--force`:
+## One-time setup (per machine)
 
 ```bash
-./mcp-servers/scripts/setup-mcp.sh --force trac
+bash <(curl -fsSL https://git.top-logic.com/TopLogic/tl-dev-mcp/raw/branch/main/install.sh)
 ```
 
-After setup, restart Claude Code and run `/mcp` to verify. You can also check with `claude mcp list`.
+The prerequisites are the `claude` CLI and `curl` (or `wget`); `uv` is installed
+automatically if missing. This single step:
 
-### Credentials
+1. registers the plugin's marketplace and installs the plugin at **user** scope,
+   making the three servers available in **every** project and worktree on this
+   machine, and
+2. prompts for your Trac / Jenkins / Gitea credentials (stored in the OS
+   keyring, with a file fallback).
 
-- **Trac**: username + password
-- **Jenkins**: username + API token (generate in Jenkins: User > Configure > API Token)
-- **Gitea**: access token (generate in Gitea: Settings > Applications > Generate New Token)
+Then restart Claude Code and run `/mcp` (or `claude mcp list`) to verify the
+connections.
 
-To update credentials, re-run the setup script for that service.
+The equivalent manual form:
 
-### Service URLs
+```bash
+claude plugin marketplace add https://git.top-logic.com/TopLogic/tl-dev-mcp.git
+claude plugin install tl-dev@toplogic-internal
+uvx --from git+https://git.top-logic.com/TopLogic/tl-dev-mcp.git tl-mcp-setup all
+```
 
-Override defaults via environment variables:
+## Updating
 
-| Variable | Default |
-|----------|---------|
-| `TRAC_URL` | `http://tl/trac/login/xmlrpc` |
-| `JENKINS_URL` | `http://jenkins:8090/` |
-| `GITEA_HOST` | `https://git.top-logic.com` |
+```bash
+claude plugin update tl-dev
+```
 
-## Usage Examples
+Restart Claude Code to apply it. The plugin carries the servers, the release
+tooling and the skills, so they update together — and a single installation
+serves every checkout and worktree.
 
-Once connected, ask Claude Code things like:
+## Release tooling
 
-- "Show me ticket #29053" (Trac: `get_ticket`)
-- "Find open tickets in milestone 7.10.0" (Trac: `search_tickets`)
-- "Show the build status of the last CI run" (Jenkins)
-- "List open pull requests" (Gitea)
+The plugin also provides the `tl-release` command and the `tl-release` skill,
+which perform the Trac bookkeeping of a TopLogic release (closing the release
+tickets, the milestone and its changelog queries, the `relatedmilestones`
+marking, the migration keywords). Run them from the engine checkout that is
+being released.
 
-**Note**: Trac uses WikiFormatting (not Markdown) for descriptions/comments: headings `= Title =`, bold `'''text'''`, code blocks `{{{ }}}`.
-
-## Troubleshooting
-
-| Error | Fix |
-|-------|-----|
-| "Virtual environment not found" | Run `./mcp-servers/scripts/setup-mcp.sh all` |
-| "Missing credentials in OS keyring" | Re-run `./mcp-servers/scripts/setup-mcp.sh --force <service>` |
-| "gitea-mcp: command not found" | Ensure `~/.local/bin` is in your PATH: `export PATH="$PATH:$HOME/.local/bin"` |
-| Server not showing in Claude Code | Check `claude mcp list`, verify `.mcp.json` exists, restart Claude Code |
-
-## File Locations
-
-| File | Purpose |
-|------|---------|
-| `.mcp.json` | Server configuration (shared via git) |
-| `mcp-servers/trac-mcp-server.py` | Trac server implementation |
-| `mcp-servers/scripts/setup-mcp.sh` | Setup script |
-| `mcp-servers/scripts/mcp-*-wrapper.sh` | Credential wrapper scripts |
-| `.venv/` | Python venv (local, not in git) |
+See the plugin repository's `README.md` for full documentation (credential
+resolution order, service URLs, migrating from the earlier package-based
+installation, troubleshooting, and development setup).

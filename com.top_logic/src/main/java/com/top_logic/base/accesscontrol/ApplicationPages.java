@@ -57,6 +57,22 @@ public class ApplicationPages {
 
 		/**
 		 * Configuration option that determines the suffix to the applications context path to which
+		 * a user is redirected, whose identity an external authentication system has verified, but
+		 * for whom this application has no account.
+		 * 
+		 * <p>
+		 * The page receives the name under which the external authentication system has
+		 * authenticated the user in a request parameter, see {@link ExternalAuthenticationServlet}.
+		 * </p>
+		 * 
+		 * @implNote The parameter is named {@link ExternalAuthenticationServlet#LOGIN_NAME_PARAM}.
+		 */
+		@Name("unknownAccountPage")
+		@Mandatory
+		String getUnknownAccountPage();
+
+		/**
+		 * Configuration option that determines the suffix to the applications context path to which
 		 * should be redirected for requesting authentication.
 		 */
 		@Name("loginPage")

@@ -87,6 +87,9 @@ public class KBQuery extends SearchExpression {
 			}
 		}
 
+		// The result is not filtered for security: access to the individual objects' data is secured
+		// when their attributes are accessed, and the final result of a script is secured by the
+		// caller. The deferred filter parts below are the query's own (non-security) predicates.
 		List<TLObject> result = new ArrayList<>();
 		try (CloseableIterator<TLObject> dbResult =
 			kb.searchStream(ExpressionFactory.queryResolved(query, TLObject.class))) {

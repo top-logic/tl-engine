@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Application status: registered monitors and their messages, JVM heap usage, Java VM identity and
+	basic system facts as a single sortable, filterable table. The table is an app-specific admin
+	widget, so it is referenced by class= rather than a reusable <tag>. A <full-page> hosts it: the
+	enclosing tab already labels the view, so no panel title is rendered and the table fills the area.
+-->
+<view>
+	<full-page>
+		<child class="com.top_logic.layout.view.admin.monitor.ApplicationMonitorTable"/>
+	</full-page>
+</view>

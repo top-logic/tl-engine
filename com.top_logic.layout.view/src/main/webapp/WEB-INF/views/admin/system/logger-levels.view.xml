@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Logger levels: the configured loggers and their levels, each level editable inline. The
+	LoggerLevelTable lists one row per logger (name plus a level dropdown) read from the LogConfigurator
+	facade and writes the selected logger name to the selection channel; choosing a level applies it at
+	runtime immediately. Add opens a dialog to configure a new logger (it starts at the default level and
+	is then adjusted inline); Remove drops the selected logger's explicit level so it inherits from its
+	parent again (shown only for a non-root selection); Refresh re-reads the loggers. Each command runs the
+	LoggerLevelAction and writes the refreshed logger list to the loggers channel, which rebuilds the table.
+	A titled <panel> is used (not the chrome-less <full-page>) because the view carries toolbar commands.
+-->
+<view>
+	<channels>
+		<channel name="loggers"/>
+		<channel name="selection"/>
+	</channels>
+	<panel fill="true">
+		<title>
+			<en>Log levels</en>
+			<de>Protokollebenen</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-plus-lg"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Add logger</en>
+					<de>Logger hinzufügen</de>
+				</label>
+				<execute-script function="x -> new(`tl.admin:NewLogger`, transient: true)"/>
+				<open-dialog
+					bind-input-to="model"
+					dialog-view="admin/system/add-logger.view.xml"
+				>
+					<bind
+						channel="loggers"
+						to="loggers"
+					/>
+				</open-dialog>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-trash"
+				input="selection"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Remove</en>
+					<de>Entfernen</de>
+				</label>
+				<executability>
+					<visible-if expr="selected -> $selected != null &amp;&amp; $selected != ''"/>
+				</executability>
+				<confirm expr="x -> #('Remove the explicit level of the selected logger so it inherits again?'@en, 'Die explizite Ebene des ausgewählten Loggers entfernen, sodass er wieder erbt?'@de)"/>
+				<action class="com.top_logic.layout.view.admin.system.LoggerLevelAction"
+					mode="REMOVE"
+					selection="selection"
+				/>
+				<write-channel name="loggers"/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<action class="com.top_logic.layout.view.admin.system.LoggerLevelAction"
+					mode="REFRESH"
+				/>
+				<write-channel name="loggers"/>
+			</generic-command>
+		</commands>
+		<child class="com.top_logic.layout.view.admin.system.LoggerLevelTable"
+			input="loggers"
+			selection="selection"
+		/>
+	</panel>
+</view>

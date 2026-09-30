@@ -160,6 +160,20 @@ public interface ThemeConfig extends ConfigurationItem {
 	 * Name of a style sheet to load in a certain {@link Theme}.
 	 */
 	interface StyleSheetRef extends NamedConfigMandatory {
-		// Pure marker interface.
+
+		/** Configuration name for {@link #isSeparate()}. */
+		String SEPARATE_ATTRIBUTE = "separate";
+
+		/**
+		 * Whether this style sheet should be served as a separate {@code <link>} tag instead of
+		 * being concatenated into the compiled theme CSS.
+		 *
+		 * <p>
+		 * Use this for style sheets with relative {@code url()} references (e.g. font files in
+		 * webjars) that would break when inlined into the theme CSS served from {@code /style/}.
+		 * </p>
+		 */
+		@Name(SEPARATE_ATTRIBUTE)
+		boolean isSeparate();
 	}
 }

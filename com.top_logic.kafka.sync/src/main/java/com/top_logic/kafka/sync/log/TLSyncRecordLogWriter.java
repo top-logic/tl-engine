@@ -57,6 +57,11 @@ public class TLSyncRecordLogWriter implements KafkaLogWriter<TLSyncRecord<Change
 
 	@Override
 	public void writeMetaData(TagWriter output, TLSyncRecord<ChangeSet> message) {
+		if (message == null) {
+			output.emptyTag(TL_SYNC_RECORD);
+			return;
+		}
+
 		output.beginTag(TL_SYNC_RECORD);
 		{
 			KafkaLogUtil.writeTextTag(output, SYSTEM_ID, message.getSystemId());
@@ -90,6 +95,11 @@ public class TLSyncRecordLogWriter implements KafkaLogWriter<TLSyncRecord<Change
 
 	@Override
 	public void writeAllData(TagWriter output, TLSyncRecord<ChangeSet> message) {
+		if (message == null) {
+			output.emptyTag(TL_SYNC_RECORD);
+			return;
+		}
+
 		output.beginTag(TL_SYNC_RECORD);
 		{
 			KafkaLogUtil.writeTextTag(output, SYSTEM_ID, message.getSystemId());

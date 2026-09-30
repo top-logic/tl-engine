@@ -32,6 +32,7 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.NamedConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.json.JSON;
@@ -50,10 +51,11 @@ import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Configuration Service for the StructuredText.
+ * Manages the editor configurations available for structured (WYSIWYG) text fields.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
+@Label("Structured text editor configuration")
 public class StructuredTextConfigService extends ManagedClass {
 	
 	/** Path of the ckeditor in webapp */
@@ -313,13 +315,13 @@ public class StructuredTextConfigService extends ManagedClass {
 
 		try {
 			_features = getFeatures(config.getFeatures(), instance);
-			_defaultEditorConfigProperties = JSON.fromString(JSON.toString(instance, config.getDefaultEditorConfig()));
+			_defaultEditorConfig = JSON.toString(instance, config.getDefaultEditorConfig());
+			_defaultEditorConfigProperties = JSON.fromString(_defaultEditorConfig);
 		} catch (ParseException ex) {
 			throw new TopLogicException(I18NConstants.JSON_PARSING_ERROR, ex);
 		}
 		_editorConfigs.put(BASE_TEMPLATE_PATH, getEditorConfigs(context, config));
 
-		_defaultEditorConfig = getEditorConfig(Collections.emptyList(), null, null);
 		_editorConfigs.get(BASE_TEMPLATE_PATH).put(FEATURE_SET_DEFAULT, _defaultEditorConfig);
 
 		_htmlConfig.put(BASE_TEMPLATE_PATH, resolveFeatureSet(BASE_TEMPLATE_PATH, FEATURE_SET_HTML));
@@ -445,6 +447,8 @@ public class StructuredTextConfigService extends ManagedClass {
 	 * @return Editor configuration for the given feature set name with the defined templates.
 	 */
 	public String getEditorConfig(String featureSetName, String language, List<String> templateFiles, String templates) {
+		language = (language == null) ? getTemplateLanguage() : language;
+
 		String config = resolveFeatureSet(language, featureSetName);
 		if (config == null) {
 			Logger.warn("No HTML editor feature set '" + featureSetName + "' defined.",
@@ -475,7 +479,6 @@ public class StructuredTextConfigService extends ManagedClass {
 	}
 
 	private String resolveFeatureSet(String language, String featureSetName) {
-		language = (language == null) ? getTemplateLanguage() : language;
 		Map<String, String> languageConfig = _editorConfigs.get(language);
 		if(languageConfig == null) {
 			return addEditorsConfigLang(language).get(featureSetName);
@@ -529,6 +532,8 @@ public class StructuredTextConfigService extends ManagedClass {
 	 * @return Editor Configuration with all desired features and templates.
 	 */
 	public String getEditorConfig(List<String> featureNames, String language, List<String> templateFiles, String templates) {
+		language = (language == null) ? getTemplateLanguage() : language;
+
 		Map<?, ?> config = (Map<?, ?>) deepCopy(_defaultEditorConfigProperties);
 
 		mergeFeatures(config, featureNames);

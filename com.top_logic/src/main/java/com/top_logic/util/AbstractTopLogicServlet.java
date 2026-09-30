@@ -45,12 +45,11 @@ public class AbstractTopLogicServlet extends HttpServlet {
 	public static final String PARAM_START_PAGE = "startPage";
 
 	/**
-	 * The incoming request has a parameter called {@link #PARAM_START_PAGE} to indicate to where
-	 * the request should be forwarded after successful login.
+	 * Redirects the request to the page it continues with, now that a session for it exists.
 	 * 
 	 * <p>
-	 * This method forwards the request to the given target page or to the login page if no target
-	 * was given.
+	 * A request that names its target in the {@link #PARAM_START_PAGE} parameter is sent there,
+	 * every other one to {@link #getEntryPage(HttpServletRequest)}.
 	 * </p>
 	 * 
 	 * @throws ServletException
@@ -59,9 +58,33 @@ public class AbstractTopLogicServlet extends HttpServlet {
 	protected void redirectToStartPage(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String startPage  = request.getParameter(PARAM_START_PAGE);
 		if (startPage == null) {
-			startPage = ApplicationPages.getInstance().getStartPage();
+			startPage = getEntryPage(request);
 		}
 		response.sendRedirect(createRedirectURL(startPage, request).toString());
+	}
+
+	/**
+	 * The page a request that arrives without a session is sent to, once the session exists.
+	 * 
+	 * <p>
+	 * The check whether the browser keeps cookies navigates there, and so does the redirect that
+	 * follows the establishment of the session. The application's start page is the answer of a
+	 * servlet whose pages are reached from there; a servlet whose URLs name a page of their own
+	 * answers with the one the request asked for.
+	 * </p>
+	 * 
+	 * <p>
+	 * The result is relative to the context and carries no query string:
+	 * {@link #createRedirectURL(String, HttpServletRequest)} prepends the context path and appends
+	 * the parameters of the request.
+	 * </p>
+	 * 
+	 * @param request
+	 *        The request being served.
+	 * @return The page to navigate to, relative to the context.
+	 */
+	protected String getEntryPage(HttpServletRequest request) {
+		return ApplicationPages.getInstance().getStartPage();
 	}
 
 	/**

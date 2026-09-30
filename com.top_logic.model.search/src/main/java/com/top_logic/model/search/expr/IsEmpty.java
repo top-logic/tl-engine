@@ -8,6 +8,7 @@ package com.top_logic.model.search.expr;
 import java.util.Collection;
 import java.util.Map;
 
+import com.top_logic.basic.util.WithEmptiness;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
 
@@ -16,7 +17,9 @@ import com.top_logic.model.search.expr.visit.Visitor;
  * 
  * <p>
  * The {@link #getArgument()} is considered to be of any type. The result is {@link Boolean}. A
- * value is considered empty, if it is <code>null</code>, the empty collection, or the empty string.
+ * value is considered empty, if it is <code>null</code>, the empty collection, the empty map, the
+ * empty string, or a {@link WithEmptiness} value that {@link WithEmptiness#isEmpty() reports itself
+ * empty}.
  * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -54,6 +57,9 @@ public class IsEmpty extends UnaryOperation implements BooleanExpression {
 		}
 		if (value instanceof String str) {
 			return str.isEmpty();
+		}
+		if (value instanceof WithEmptiness emptiness) {
+			return emptiness.isEmpty();
 		}
 		return false;
 	}

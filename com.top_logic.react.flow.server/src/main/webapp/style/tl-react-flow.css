@@ -1,0 +1,44 @@
+/*
+ * Stylesheet for the React flow diagram, also inlined when a diagram is exported to PDF.
+ *
+ * Rules in this stylesheet must use CSS2 features only, since the the Apache Batik rendering engine
+ * does only support CSS2.
+ */
+/*
+ * Font a text is measured with when it carries no explicit font of its own. The layout reserves
+ * space for a text using these values, so they must stay in sync with RenderContext.
+ */
+
+.tlSelectionMarker {
+	display: none;
+}
+
+/* Pointer cursor on selectable elements. */
+.tlCanSelect { cursor: pointer; }
+
+/* Color-change selection for graph nodes and edges. CSS overrides SVG presentation attributes. */
+.tlSelected .tlSelectionStroke { stroke: var(--focus); stroke-width: 2; }
+.tlSelected .tlSelectionFill { fill: var(--layer-selected); }
+/* Edge selection: highlight the visible edge stroke (not the transparent click target). */
+g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--focus); stroke-width: 2; }
+/* Marking a chart draws for its own selection: shown on the selected element, hidden elsewhere. */
+.tlSelected .tlSelectionMarker { display: initial; }
+
+/*
+ * The zoom indicator the diagram control shows while zooming. An HTML element overlaying the
+ * diagram, not part of the SVG.
+ */
+.zoomDisplay {
+	position: absolute;
+	top: 0;
+	right: 0;
+	padding: var(--spacing-02);
+	background-color: var(--background-inverse);
+	color: var(--text-inverse);
+	border-bottom-left-radius: var(--border-radius-02);
+}
+
+/* The indicator hides itself once the zoom level has been shown for a moment. */
+.zoomDisplay.invisible {
+	display: none;
+}

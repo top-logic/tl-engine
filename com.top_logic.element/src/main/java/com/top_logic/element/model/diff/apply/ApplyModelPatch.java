@@ -45,12 +45,10 @@ import com.top_logic.element.model.diff.config.AddAnnotations;
 import com.top_logic.element.model.diff.config.AddGeneralization;
 import com.top_logic.element.model.diff.config.CreateClassifier;
 import com.top_logic.element.model.diff.config.CreateModule;
-import com.top_logic.element.model.diff.config.CreateRole;
 import com.top_logic.element.model.diff.config.CreateSingleton;
 import com.top_logic.element.model.diff.config.CreateStructuredTypePart;
 import com.top_logic.element.model.diff.config.CreateType;
 import com.top_logic.element.model.diff.config.Delete;
-import com.top_logic.element.model.diff.config.DeleteRole;
 import com.top_logic.element.model.diff.config.DiffElement;
 import com.top_logic.element.model.diff.config.MakeAbstract;
 import com.top_logic.element.model.diff.config.MakeConcrete;
@@ -63,6 +61,8 @@ import com.top_logic.element.model.diff.config.RenamePart;
 import com.top_logic.element.model.diff.config.SetAnnotations;
 import com.top_logic.element.model.diff.config.UpdateAbstract;
 import com.top_logic.element.model.diff.config.UpdateBag;
+import com.top_logic.element.model.diff.config.UpdateDeletionPolicy;
+import com.top_logic.element.model.diff.config.UpdateHistoryType;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
 import com.top_logic.element.model.diff.config.UpdateMultiplicity;
 import com.top_logic.element.model.diff.config.UpdateOrdered;
@@ -129,7 +129,6 @@ import com.top_logic.model.TLTypePart;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
-import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.model.config.EnumConfig;
@@ -139,7 +138,6 @@ import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -178,11 +176,6 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		@Override
 		public Priority visit(CreateSingleton diff, Void arg) throws RuntimeException {
 			return Priority.CREATE_SINGLETONS;
-		}
-
-		@Override
-		public Priority visit(CreateRole diff, Void arg) throws RuntimeException {
-			return Priority.CREATE_ROLE;
 		}
 
 		@Override
@@ -243,11 +236,6 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			}
 
 			throw new UnreachableAssertion("No such kind: " + diff.getKind());
-		}
-
-		@Override
-		public Priority visit(DeleteRole diff, Void arg) throws RuntimeException {
-			return Priority.DELETE_ROLE;
 		}
 
 		@Override
@@ -313,6 +301,16 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		@Override
 		public Priority visit(UpdateBag diff, Void arg) throws RuntimeException {
 			return Priority.CHANGE_TYPE_PART_BAG;
+		}
+
+		@Override
+		public Priority visit(UpdateDeletionPolicy diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_REFERENCE_DELETION_POLICY;
+		}
+
+		@Override
+		public Priority visit(UpdateHistoryType diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_REFERENCE_HISTORY_TYPE;
 		}
 
 		@Override
@@ -657,25 +655,6 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		singletonConf.setTable(TLAnnotations.getTable((TLType) resolvePart(qTypeSpec.getName())));
 		config.setSingleton(singletonConf);
 		addProcessor(config);
-	}
-
-	@Override
-	public Void visit(CreateRole diff, Void arg) throws RuntimeException {
-		TLModule module;
-		RoleConfig config = diff.getRole();
-		try {
-			module = TLModelUtil.findModule(getModel(), diff.getModule());
-		} catch (TopLogicException ex) {
-			log().info(
-				"Merge conflict: Adding role '" + config.getName() + "' to module '"
-						+ diff.getModule() + "': " + ex.getMessage(),
-				Log.WARN);
-			return null;
-		}
-
-		log().info("Creating role '" + diff.getRole().getName() + " in module '" + diff.getModule() + "'.");
-		createRole(module, config);
-		return null;
 	}
 
 	@Override
@@ -1268,38 +1247,6 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	}
 
 	@Override
-	public Void visit(DeleteRole diff, Void arg) throws RuntimeException {
-		schedule().cleanup(() -> processDelete(diff));
-		return null;
-	}
-
-	private void processDelete(DeleteRole diff) {
-		TLModule module;
-		try {
-			module = TLModelUtil.findModule(diff.getModule());
-		} catch (TopLogicException ex) {
-			log().info(
-				"Merge conflict: Deleting role '" + diff.getRole() + "' in module '" + diff.getModule()
-						+ "': " + ex.getMessage(),
-				Log.INFO);
-			return;
-		}
-
-		BoundedRole role = BoundedRole.getDefinedRole(module, diff.getRole());
-		if (role == null) {
-			log().info(
-				"Merge conflict: Deleting role '" + diff.getRole() + "' in module '" + diff.getModule()
-					+ "', but role does not exist.",
-				Log.INFO);
-			return;
-		}
-
-		log().info("Deleting role '" + diff.getRole() + "' in module '" + diff.getModule() + "'.");
-		role.tDelete();
-		return;
-	}
-
-	@Override
 	public Void visit(UpdateMandatory diff, Void arg) throws RuntimeException {
 		TLStructuredTypePart part;
 		try {
@@ -1531,6 +1478,54 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
 						+ part.getClass().getName() + "' possible.");
 			}
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(UpdateHistoryType diff, Void arg) throws RuntimeException {
+		TLReference part;
+		try {
+			part = (TLReference) resolveQName(diff.getPart());
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Updating history type of '" + diff.getPart() + "' to '" + diff.getHistoryType()
+						+ "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		log().info("Updating history type of '" + diff.getPart() + "' to '" + diff.getHistoryType() + "'.");
+		part.setHistoryType(diff.getHistoryType());
+
+		if (createProcessors()) {
+			UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+			config.setName(qTypePartName(diff.getPart()));
+			config.setHistoryType(diff.getHistoryType());
+			addProcessor(config);
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(UpdateDeletionPolicy diff, Void arg) throws RuntimeException {
+		TLReference part;
+		try {
+			part = (TLReference) resolveQName(diff.getPart());
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Updating deletion policy of '" + diff.getPart() + "' to '" + diff.getDeletionPolicy()
+						+ "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		log().info("Updating deletion policy of '" + diff.getPart() + "' to '" + diff.getDeletionPolicy() + "'.");
+		part.setDeletionPolicy(diff.getDeletionPolicy());
+
+		if (createProcessors()) {
+			UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+			config.setName(qTypePartName(diff.getPart()));
+			config.setDeletionPolicy(diff.getDeletionPolicy());
+			addProcessor(config);
 		}
 		return null;
 	}

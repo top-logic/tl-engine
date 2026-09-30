@@ -94,15 +94,18 @@
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
-					template-name-comment="Nutzer Anlegen"
+					template="script:Gruppe/Action-Gruppe-Zuordnen.xml"
+					template-name-comment="Gruppe Zuordnen"
 				>
 					<parameters>
-						<parameter name="Loginname"
-							value="LockTest2"
+						<parameter name="Login"
+							value="LockTest1"
 						/>
-						<parameter name="ergebnis"
-							value="LockTest2"
+						<parameter name="Gruppe1"
+							value="Benutzer"
+						/>
+						<parameter name="Gruppe2"
+							value="Demo-Administratoren"
 						/>
 					</parameters>
 				</action>
@@ -113,90 +116,6 @@
 					<parameters>
 						<parameter name="Loginname"
 							value="LockTest1"
-						/>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-					template="script:/Nutzer/Passwort setzen.xml"
-					template-name-comment="Passwort setzen"
-				>
-					<parameters>
-						<parameter name="Loginname"
-							value="LockTest2"
-						/>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-					template="script:/Rolle/Action-Rolle-Alle Rechte geben.xml"
-					template-name-comment="Rolle Alle Rechte geben"
-				>
-					<parameters>
-						<parameter name="Name"
-							value="Responsible"
-						/>
-						<parameter name="Berechtigungsstruktur"
-							value="DemoTypes"
-						/>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Berechtigungen > Benutzerrechte"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
-					expand="true"
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
-						/>
-						<path>
-							<named-member name="tree"/>
-						</path>
-					</model-name>
-					<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-						label-path="ROOT"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-					template="script:/Nutzer/Rolle zuweisen.xml"
-					template-name-comment="Rolle zuweisen"
-				>
-					<parameters>
-						<parameter name="Nutzer"
-							value="LockTest1"
-						/>
-						<parameter name="Struktur"
-							value="DemoTypes"
-						/>
-						<parameter name="Rolle"
-							value="Responsible"
-						/>
-						<parameter name="Knoten"
-							value="TestLocking"
-						/>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-					template="script:/Nutzer/Rolle zuweisen.xml"
-					template-name-comment="Rolle zuweisen"
-				>
-					<parameters>
-						<parameter name="Nutzer"
-							value="LockTest2"
-						/>
-						<parameter name="Struktur"
-							value="DemoTypes"
-						/>
-						<parameter name="Rolle"
-							value="Responsible"
-						/>
-						<parameter name="Knoten"
-							value="TestLocking"
 						/>
 					</parameters>
 				</action>
@@ -888,16 +807,6 @@
 					<parameters>
 						<parameter name="userName"
 							value="LockTest1"
-						/>
-					</parameters>
-				</action>
-				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-					template="script:Nutzer/Nutzer-loeschen-byName.xml"
-					template-name-comment="Nutzer loeschen byName"
-				>
-					<parameters>
-						<parameter name="userName"
-							value="LockTest2"
 						/>
 					</parameters>
 				</action>

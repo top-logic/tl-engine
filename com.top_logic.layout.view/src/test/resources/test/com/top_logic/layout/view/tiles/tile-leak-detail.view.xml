@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="item"/>
+		<channel name="navPath"/>
+		<derived-channel name="depth"
+			expr="p -> $p.size()"
+			inputs="navPath"
+		/>
+	</channels>
+	<panel title="Detail">
+		<commands>
+			<generic-command name="back"
+				input="depth"
+			>
+				<executability>
+					<visible-if expr="d -> $d > 0"/>
+				</executability>
+				<navigate-pop/>
+			</generic-command>
+		</commands>
+		<form input="item">
+			<field attribute="name"/>
+			<visible-if
+				expr="d -> $d == 1"
+				input="depth"
+			>
+				<field
+					attribute="name"
+					readonly="true"
+				/>
+			</visible-if>
+		</form>
+	</panel>
+</view>

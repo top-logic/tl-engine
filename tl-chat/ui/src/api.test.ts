@@ -66,4 +66,34 @@ describe('a persisted turn', () => {
 
     expect(messages.some((m) => m.type === 'notice')).toBe(false)
   })
+
+  /**
+   * A failed call read back says why it failed. The server writes an absent field as an empty
+   * string, so the result of a failed call is "" - and the error behind it was never shown.
+   */
+  it('restores why a call failed', () => {
+    const messages = turnsJsonToMessages(
+      transcript([
+        {
+          id: 'c1',
+          type: 'tool_call',
+          timestamp: 1100,
+          toolCallData: {
+            toolName: 'askUser',
+            argsJson: '{}',
+            status: 'FAILED',
+            result: '',
+            errorMessage: 'The server stopped while this call was running. Its result is unknown.',
+            denyReason: '',
+          },
+        },
+      ]),
+    )
+
+    const result = messages.find((m) => m.type === 'tool_result')
+    expect(result).toMatchObject({
+      isError: true,
+      output: 'The server stopped while this call was running. Its result is unknown.',
+    })
+  })
 })

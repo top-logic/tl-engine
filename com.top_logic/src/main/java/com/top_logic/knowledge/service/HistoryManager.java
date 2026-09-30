@@ -45,6 +45,22 @@ public interface HistoryManager {
     public long getLastRevision();
 
 	/**
+	 * The oldest revision that is still available in this {@link HistoryManager}.
+	 *
+	 * <p>
+	 * This is {@link Revision#FIRST_REV} unless the history has been compacted: Compacting the
+	 * history deletes all revisions before the compaction revision, so that the compaction
+	 * revision becomes the first one. Commit numbers below the result can no longer be resolved
+	 * with {@link #getRevision(long)}.
+	 * </p>
+	 *
+	 * @return The oldest committed revision, {@link Revision#INITIAL} if no revision has been
+	 *         committed yet, or {@link Revision#CURRENT} if this {@link HistoryManager} has no
+	 *         {@link #hasHistory() history}.
+	 */
+	public Revision getFirstRevision();
+
+	/**
 	 * Returns the revision of the current session in this {@link HistoryManager}.
 	 */
 	long getSessionRevision();

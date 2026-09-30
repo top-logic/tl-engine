@@ -28,8 +28,9 @@
 		<!--
 			The roles of this application: the administrator role that may open the administration
 			area, granted in security.xml, the account reader role that makes accounts and groups
-			visible, and the project reader role that makes the projects and the tickets visible.
-			The latter two are granted by the role rules below.
+			visible, the project reader role that makes the projects and the tickets visible, and
+			the chart reader role that makes the sales and purchases of the chart demo visible to a
+			visitor without an account; the latter three are granted by the role rules below.
 		-->
 		<config service-class="com.top_logic.base.services.InitialRolesManager">
 			<instance>
@@ -37,6 +38,7 @@
 					<role name="demo.react.Administrator"/>
 					<role name="demo.react.AccountReader"/>
 					<role name="demo.react.ProjectReader"/>
+					<role name="demo.react.ChartReader"/>
 				</roles>
 			</instance>
 		</config>
@@ -76,6 +78,11 @@
 			the ticket module. The role rules below grant the role on the two root types; the
 			contained objects inherit it through the security parents that the coverage analysis
 			generated.
+			
+			The anonymous account, which every visitor without an account shares, reads the sales and
+			purchases of the chart demo, so that such a visitor sees them on the page written for them
+			(browse.view.xml). The rule assigns the role to the representative group of that account,
+			which is named after it and contains nothing else, so no other account gains a right.
 		-->
 		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
 			<instance>
@@ -118,6 +125,13 @@
 							roles="demo.react.ProjectReader"
 						/>
 					</module>
+					<class name="demo.charts:Transaktion">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.ChartReader"
+						/>
+					</class>
 				</security-config>
 			</instance>
 		</config>
@@ -162,6 +176,13 @@
 							role="demo.react.ProjectReader"
 						>
 							<group-with-name name="users"/>
+						</rule>
+						<rule id="ChartsReadableByAnonymous"
+							inherit="true"
+							meta-element="demo.charts:Transaktion"
+							role="demo.react.ChartReader"
+						>
+							<group-with-name name="anonymous"/>
 						</rule>
 					</rules>
 				</role-rules>
@@ -381,13 +402,13 @@
 		/>
 		<!--
 			What a session that belongs to no account sees in place of the application: the
-			framework's login page, whatever the URL asks for. This demo shows its objects to
-			accounts only, like a business application, and the requested URL is held while the
-			login page is displayed, so a deep link leads to the page it names as soon as the
-			visitor is logged in.
+			framework's login page, whatever the URL asks for, with a link to the one page such a
+			visitor may browse. Apart from that page, this demo shows its objects to accounts only,
+			like a business application, and the requested URL is held while the login page is
+			displayed, so a deep link leads to the page it names as soon as the visitor is logged in.
 		-->
 		<config config:interface="com.top_logic.layout.view.ViewConfig"
-			login-view="login-page.view.xml"
+			login-view="demo-login-page.view.xml"
 		>
 			<!--
 				A second view a URL may load top-level, besides the default view: the document viewer
@@ -396,6 +417,14 @@
 			-->
 			<entry-points>
 				<entry-point view="demo/pdf-demo.view.xml"/>
+				<!--
+					The page a visitor without an account may browse, linked from the login page:
+					shown to such a session instead of the login page.
+				-->
+				<entry-point
+					anonymous="true"
+					view="browse.view.xml"
+				/>
 			</entry-points>
 		</config>
 	</configs>

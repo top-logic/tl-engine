@@ -134,11 +134,25 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 		_personalConfig = null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * For the {@link #isAnonymousUser() anonymous user}, nothing is stored: all visitors that did
+	 * not log in share the anonymous account, so the settings of one visitor must not reach the
+	 * others. The transient personal configuration is kept instead, so that the settings made in
+	 * this session stay in effect until the session ends.
+	 * </p>
+	 */
 	@Override
 	public void storePersonalConfiguration() {
 		TransientPersonalConfiguration config = _personalConfig;
 
 		if (config == null) {
+			return;
+		}
+
+		if (isAnonymousUser()) {
 			return;
 		}
 

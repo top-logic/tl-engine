@@ -32,6 +32,7 @@ import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
@@ -322,12 +323,12 @@ public class TestReactValueListControl extends TestCase {
 
 		/** The value the control at the given position holds. */
 		Object valueOf(int index) {
-			return elements().get(index).scriptingScalarState().get(VALUE);
+			return elements().get(index).scriptingScalarState().get(FieldState.VALUE__PROP);
 		}
 
 		/** Whether the control at the given position can be changed. */
 		Object editableOf(int index) {
-			return elements().get(index).scriptingScalarState().get(EDITABLE);
+			return elements().get(index).scriptingScalarState().get(FieldState.EDITABLE__PROP);
 		}
 
 		/** Enters the given text into the control at the given position, as its client does. */

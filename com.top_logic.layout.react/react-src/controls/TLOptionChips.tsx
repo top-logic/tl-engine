@@ -1,5 +1,5 @@
-import { React, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import { ARG_OPTION, CMD_GOTO, OptionImage, ReadonlyValue, withPill } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
 
@@ -17,7 +17,8 @@ const { useCallback, useMemo, useRef } = React;
  * The server hands this control the complete option list as soon as it is displayed - there is no
  * moment at which it could ask for it.
  */
-const TLOptionChips: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<Partial<DropdownSelectStateJson>>();
   const labelProps = useFieldLabelProps(controlId, controlId);
   const sendCommand = useTLCommand();
 
@@ -25,7 +26,6 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId, state }) => {
   const options = (state.options ?? []) as OptionDescriptor[];
   const multiSelect = state.multiSelect === true;
   const mandatory = state.mandatory === true;
-  const disabled = state.disabled === true;
   const editable = state.editable !== false;
   const hasError = state.hasError === true;
   const hasWarnings = state.hasWarnings === true;
@@ -47,7 +47,6 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const toggle = useCallback(
     (option: OptionDescriptor) => {
-      if (disabled) return;
       const selection = valueRef.current;
       const selected = selection.some((v) => v.value === option.value);
       if (multiSelect) {
@@ -61,7 +60,7 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId, state }) => {
         send([]);
       }
     },
-    [disabled, multiSelect, mandatory, send]
+    [multiSelect, mandatory, send]
   );
 
   /** Leads to the place the given option is displayed at. */
@@ -90,7 +89,6 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId, state }) => {
       className={rootClassName(
         state,
         'tlOptionChips',
-        disabled && 'tlOptionChips--disabled',
         hasError && 'tlOptionChips--error',
         !hasError && hasWarnings && 'tlOptionChips--warning'
       )}
@@ -105,7 +103,6 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId, state }) => {
               'tlOptionChips__chip' + (selected ? ' tlOptionChips__chip--selected' : '')
             }
             aria-pressed={selected}
-            disabled={disabled}
             onClick={() => toggle(option)}
           >
             {withPill(option.colorRole, (

@@ -9,6 +9,8 @@
 			<ignore>
 				<entry value="com.top_logic.layout.react.protocol" />
 				<entry value="com.top_logic.layout.react.protocol.impl" />
+				<entry value="com.top_logic.layout.react.state" />
+				<entry value="com.top_logic.layout.react.state.impl" />
 			</ignore>
 		</config>
 

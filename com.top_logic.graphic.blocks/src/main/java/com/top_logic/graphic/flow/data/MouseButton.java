@@ -58,24 +58,4 @@ public enum MouseButton implements de.haumacher.msgbuf.data.ProtocolEnum {
 	public static MouseButton readMouseButton(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		return valueOfProtocol(in.nextString());
 	}
-
-	/** Writes this instance to the given binary output. */
-	public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		switch (this) {
-			case LEFT: out.value(1); break;
-			case RIGHT: out.value(2); break;
-			case MIDDLE: out.value(3); break;
-			default: out.value(0);
-		}
-	}
-
-	/** Reads a new instance from the given binary reader. */
-	public static MouseButton readMouseButton(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		switch (in.nextInt()) {
-			case 1: return LEFT;
-			case 2: return RIGHT;
-			case 3: return MIDDLE;
-			default: return LEFT;
-		}
-	}
 }

@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, TLChild, rootClassName, tooltipProps, useFieldLabelProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, TLChild, rootClassName, tooltipProps, useFieldLabelProps, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
 
 const I18N_KEYS = {
   'js.valueList.add': 'Add a value',

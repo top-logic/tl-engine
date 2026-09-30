@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.toggle;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.state.ToggleButtonState;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -20,12 +21,6 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </p>
  */
 public class ReactToggleButtonControl extends ReactControl {
-
-	/** State key for the button label. */
-	private static final String LABEL = "label";
-
-	/** State key for the active/inactive toggle state. */
-	private static final String ACTIVE = "active";
 
 	private final ToggleAction _action;
 
@@ -56,7 +51,7 @@ public class ReactToggleButtonControl extends ReactControl {
 	 *        The new label text.
 	 */
 	public void setLabel(String label) {
-		putState(LABEL, label);
+		putState(ToggleButtonState.LABEL__PROP, label);
 	}
 
 	/**
@@ -67,7 +62,7 @@ public class ReactToggleButtonControl extends ReactControl {
 	 */
 	public void setActive(boolean active) {
 		_active = active;
-		putState(ACTIVE, Boolean.valueOf(active));
+		putState(ToggleButtonState.ACTIVE__PROP, Boolean.valueOf(active));
 	}
 
 	/**

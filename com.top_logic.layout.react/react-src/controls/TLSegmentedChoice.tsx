@@ -1,5 +1,5 @@
-import { React, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import { ARG_OPTION, CMD_GOTO, OptionImage, ReadonlyValue, withPill } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
 
@@ -23,7 +23,8 @@ interface MarkerPosition {
  * The server hands this control the complete option list as soon as it is displayed - there is no
  * moment at which it could ask for it.
  */
-const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<Partial<DropdownSelectStateJson>>();
   const labelProps = useFieldLabelProps(controlId, controlId);
   const sendCommand = useTLCommand();
 
@@ -31,7 +32,6 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
   const options = (state.options ?? []) as OptionDescriptor[];
   const multiSelect = state.multiSelect === true;
   const mandatory = state.mandatory === true;
-  const disabled = state.disabled === true;
   const editable = state.editable !== false;
   const hasError = state.hasError === true;
   const hasWarnings = state.hasWarnings === true;
@@ -91,7 +91,6 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const choose = useCallback(
     (option: OptionDescriptor) => {
-      if (disabled) return;
       const selection = valueRef.current;
       const selected = selection.some((v) => v.value === option.value);
       if (multiSelect) {
@@ -105,7 +104,7 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
         send([]);
       }
     },
-    [disabled, multiSelect, mandatory, send]
+    [multiSelect, mandatory, send]
   );
 
   /** Leads to the place the given option is displayed at. */
@@ -119,7 +118,7 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
   // The radio pattern: the arrows move the selection, so the bar is operated without the pointer.
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (multiSelect || disabled || options.length === 0) return;
+      if (multiSelect || options.length === 0) return;
       let step = 0;
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
         step = 1;
@@ -135,7 +134,7 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
       segmentRefs.current[next]?.focus();
       send([options[next]]);
     },
-    [multiSelect, disabled, options, selectedIndex, send]
+    [multiSelect, options, selectedIndex, send]
   );
 
   if (!editable) {
@@ -164,7 +163,6 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
       className={rootClassName(
         state,
         'tlSegmentedChoice',
-        disabled && 'tlSegmentedChoice--disabled',
         hasError && 'tlSegmentedChoice--error',
         !hasError && hasWarnings && 'tlSegmentedChoice--warning'
       )}
@@ -194,7 +192,6 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
               'tlSegmentedChoice__segment' +
               (selected ? ' tlSegmentedChoice__segment--selected' : '')
             }
-            disabled={disabled}
             onClick={() => choose(option)}
           >
             {withPill(option.colorRole, (

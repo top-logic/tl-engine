@@ -1,10 +1,10 @@
-import { React, useTLFieldValue, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
+import type { TLCellProps, CheckboxStateJson } from 'tl-react-bridge';
 
 const { useCallback, useRef, useEffect } = React;
 
 /** The `display` a switch is drawn for; any other value is drawn as a box that is ticked. */
-const DISPLAY_SWITCH = 'switch';
+const DISPLAY_SWITCH: CheckboxStateJson.Display = 'switch';
 
 /**
  * A boolean field rendered via React: a box that is ticked, or — with `display` set to
@@ -13,7 +13,8 @@ const DISPLAY_SWITCH = 'switch';
  * With `triState` the field has a third state for "no value": it renders as indeterminate, and a
  * click cycles through checked, unchecked and unset.
  */
-const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLCheckbox: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<Partial<CheckboxStateJson>>();
   const labelProps = useFieldLabelProps(controlId, controlId);
   const [value, setValue] = useTLFieldValue();
   const triState = state.triState === true;
@@ -77,7 +78,6 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
       role={asSwitch ? 'switch' : undefined}
       checked={value === true}
       onChange={handleChange}
-      disabled={state.disabled === true}
       className={rootClassName(state, cls)}
       aria-invalid={hasError || undefined}
       aria-checked={triState && value !== true && value !== false ? 'mixed' : value === true}

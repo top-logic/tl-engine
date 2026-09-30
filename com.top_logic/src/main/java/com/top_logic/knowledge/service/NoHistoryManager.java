@@ -138,8 +138,8 @@ public class NoHistoryManager implements HistoryManager {
 	}
 
 	@Override
-	public Revision getFirstRevision() {
-		return Revision.CURRENT;
+	public long getFirstRevision() {
+		return Revision.CURRENT_REV;
 	}
 
 	@Override

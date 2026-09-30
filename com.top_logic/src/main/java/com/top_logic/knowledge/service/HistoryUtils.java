@@ -206,7 +206,7 @@ public class HistoryUtils {
 	 * @see HistoryManager#getFirstRevision()
 	 */
 	public static Revision getInitialRevision(HistoryManager hm) {
-		return hm.getFirstRevision();
+		return hm.getRevision(hm.getFirstRevision());
 	}
 
 	/**

@@ -52,6 +52,7 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.meta.DefaultMOFactory;
 import com.top_logic.knowledge.search.RevisionQuery;
 import com.top_logic.knowledge.service.BasicTypes;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.ReaderConfigBuilder;
@@ -193,7 +194,7 @@ public class KnowledgeBaseDumper {
 		out.beginChangeSets();
 
 		ReaderConfigBuilder readerConfig =
-			ReaderConfigBuilder.createConfig(_kb.getHistoryManager().getFirstRevision(), Revision.CURRENT);
+			ReaderConfigBuilder.createConfig(HistoryUtils.getInitialRevision(_kb.getHistoryManager()), Revision.CURRENT);
 		Set<String> ignoreTypes = getIgnoreTypes();
 		if (!ignoreTypes.isEmpty()) {
 			Set<String> allMetaObjects = new HashSet<>(_kb.getMORepository().getMetaObjectNames());

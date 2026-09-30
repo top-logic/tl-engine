@@ -45,7 +45,8 @@ public interface HistoryManager {
     public long getLastRevision();
 
 	/**
-	 * The oldest revision that is still available in this {@link HistoryManager}.
+	 * The commit number of the oldest revision that is still available in this
+	 * {@link HistoryManager}.
 	 *
 	 * <p>
 	 * This is {@link Revision#FIRST_REV} unless the history has been compacted: Compacting the
@@ -54,11 +55,12 @@ public interface HistoryManager {
 	 * with {@link #getRevision(long)}.
 	 * </p>
 	 *
-	 * @return The oldest committed revision, {@link Revision#INITIAL} if no revision has been
-	 *         committed yet, or {@link Revision#CURRENT} if this {@link HistoryManager} has no
+	 * @return The commit number of the oldest committed revision, <code>0</code> (the commit
+	 *         number of {@link Revision#INITIAL}) if no revision has been committed yet, or
+	 *         {@link Revision#CURRENT_REV} if this {@link HistoryManager} has no
 	 *         {@link #hasHistory() history}.
 	 */
-	public Revision getFirstRevision();
+	public long getFirstRevision();
 
 	/**
 	 * Returns the revision of the current session in this {@link HistoryManager}.

@@ -1142,11 +1142,6 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		return getLastLocalRevision();
     }
 
-	@Override
-	public Revision getFirstRevision() {
-		return getRevision(getFirstRevisionId());
-	}
-
 	/**
 	 * The smallest commit number in the revision table, <code>0</code> if the table is empty.
 	 *
@@ -1154,7 +1149,8 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * The value is not cached, because compacting the history changes it in the database.
 	 * </p>
 	 */
-	private long getFirstRevisionId() {
+	@Override
+	public long getFirstRevision() {
 		MOKnowledgeItemImpl revisionType = getRevisionType();
 		String getMinRevStatement =
 			"SELECT min(" + dbHelper.columnRef(RevisionType.getRevisionAttribute(revisionType).getDBName()) + ") "

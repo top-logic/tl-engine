@@ -45,6 +45,7 @@ import com.top_logic.knowledge.event.ChangeSetReader;
 import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
@@ -109,7 +110,7 @@ public class ChangeLogBuilder {
 		_model = model;
 		_hm = kb.getHistoryManager();
 
-		_startRev = _hm.getRevision(1);
+		_startRev = toRevision(_hm.getFirstRevision());
 		_stopRev = toRevision(_hm.getLastRevision());
 	}
 
@@ -134,8 +135,9 @@ public class ChangeLogBuilder {
 		if (maxTime > 0) {
 			long startTime = System.currentTimeMillis() - maxTime;
 			Revision startRev = _hm.getRevisionAt(startTime);
-			if (startRev.getCommitNumber() < 1) {
-				startRev = _hm.getRevision(1);
+			long firstRev = _hm.getFirstRevision();
+			if (startRev.getCommitNumber() < firstRev) {
+				startRev = toRevision(firstRev);
 			}
 			setStartRev(startRev);
 		}
@@ -430,7 +432,7 @@ public class ChangeLogBuilder {
 					new TransientChangeSet(analyzer::applyChanges, TransientChangeSet.CHANGES_ATTR);
 				entry.setDate(new Date(revision.getDate()));
 				entry.setRevision(revision);
-				entry.setParentRev(_hm.getRevision(changeSet.getRevision() - 1));
+				entry.setParentRev(HistoryUtils.getPreviousRevision(_hm, changeSet.getRevision()));
 				entry.setMessage(revision.getLog());
 				entry.setAuthor(author);
 

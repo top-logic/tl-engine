@@ -75,7 +75,9 @@ public class HistoryModelBuilder implements ListModelBuilder {
 			versions.add(version);
 	
 			Wrapper beforeLastUpdate =
-				WrapperHistoryUtils.getWrapper(HistoryUtils.getRevision(versionRevision.getCommitNumber() - 1), version);
+				WrapperHistoryUtils.getWrapper(
+					HistoryUtils.getPreviousRevision(HistoryUtils.getHistoryManager(), versionRevision.getCommitNumber()),
+					version);
 			if (beforeLastUpdate == null) {
 				// No predecessor version.
 				break;

@@ -80,6 +80,12 @@
 						<generalization type="B"/>
 					</generalizations>
 					<attributes>
+						<!-- Overridden attribute for checking copy to base class. -->
+						<property name="name" type="tl.core:String" mandatory="true" override="true"/>
+						
+						<!-- Overridden reference for checking copy to base class. -->
+						<reference name="other" type="B" mandatory="true" override="true"/>
+						
 						<reference name="special" type="BSpecial" />
 					</attributes>
 				</class>
@@ -185,6 +191,28 @@
 					</attributes>
 				</class>
 				
+				<class name="WithDatabaseColumns">
+					<annotations>
+						<table name="WithDatabaseColumns" />
+					</annotations>
+					<attributes>
+						<property name="name" type="tl.core:String"></property>
+						<property name="int" type="tl.core:Integer"></property>
+						<property name="double" type="tl.core:Double"></property>
+						<property name="long" type="tl.core:Long"></property>
+						<reference name="other" type="WithDatabaseColumns">
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="other"
+										storage-type="WithDatabaseColumns"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+				</class>
+				
 				<enum name="MyEnum">
 					<classifiers>
 						<classifier name="A"/>
@@ -192,6 +220,27 @@
 						<classifier name="C"/>
 					</classifiers>
 				</enum>
+
+				<!-- Test type for ticket #29069: Derived attribute returning a closure -->
+				<class name="E">
+					<annotations>
+						<table name="StructuredElement" />
+					</annotations>
+					<attributes>
+						<property name="name" type="tl.core:String" />
+						<property name="factor" type="tl.core:Integer" />
+
+						<!-- Derived attribute of type Expr that returns a closure with bound values.
+						     The closure captures the 'factor' attribute value. -->
+						<property name="multiplier" type="tl.model.search:Expr">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> { f = $self.get(`TestSearchExpression:E#factor`); x -> $x * $f; }"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
 			</types>
 		</module>
 	</modules>

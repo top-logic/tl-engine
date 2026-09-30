@@ -292,9 +292,21 @@ public class ResKeyEncoding {
 
 	static final String QUOTED_SPECIAL = "\\\\'|\\\\\"|\\\\\\\\";
 
+	/**
+	 * A quoted translation value, either single-quoted or double-quoted.
+	 *
+	 * <p>
+	 * The alternation of both quote styles is enclosed in a non-capturing group, so that whatever
+	 * follows the literal in an embedding pattern (such as {@link #LANGTAG}) applies to both quote
+	 * styles. The literal contributes exactly two capture groups: the contents of the single-quoted
+	 * form and the contents of the double-quoted form.
+	 * </p>
+	 */
 	static final String LITERAL =
-		"'" + "(" + "(?:" + "[^\\']*" + "|" + QUOTED_SPECIAL + ")*" + ")" + "'" + "|" +
-		"\"" + "(" + "(?:" + "[^\\\"]*" + "|" + QUOTED_SPECIAL + ")*" + ")" + "\"";
+		"(?:" +
+			"'" + "(" + "(?:" + "[^\\']*" + "|" + QUOTED_SPECIAL + ")*" + ")" + "'" + "|" +
+			"\"" + "(" + "(?:" + "[^\\\"]*" + "|" + QUOTED_SPECIAL + ")*" + ")" + "\"" +
+			")";
 
 	private static final String NAME = "[a-zA-Z][a-zA-Z0-9]*(?:-[a-zA-Z][a-zA-Z0-9]*)*";
 
@@ -322,6 +334,16 @@ public class ResKeyEncoding {
 			keyLength = parseTranslations(translations, matcher, part, keyLength);
 
 			plain = translations.build();
+			if (plain == null) {
+				// No translation at all was parsed, e.g. a bare `#(` or `#()`. Checked here rather
+				// than below the "input fully consumed" return, which a bare `#(` reaches: its two
+				// characters are its whole input, so it would be handed back as a null key and only
+				// blow up wherever the caller stores or dereferences it. A null cannot be treated as
+				// malformed further down either, because it is how the literal-string path below
+				// legitimately arrives there - `ResKey.internalCreate("")` is itself null.
+				throw new IllegalArgumentException(
+					"Cannot parse resource key from '" + part + "': no translation.");
+			}
 		} else {
 			String key = decodeKey(part);
 			keyLength = key.length();
@@ -332,6 +354,15 @@ public class ResKeyEncoding {
 			return plain;
 		}
 
+		if (part.charAt(keyLength) != '/') {
+			// The key (or tagged translation) parsed above did not consume the whole input and did
+			// not stop right before an argument list either, e.g. an unterminated `#(...` tagged
+			// translation. The remainder cannot be an argument list, since every argument is
+			// prefixed with '/' by the encoder.
+			throw new IllegalArgumentException(
+				"Cannot parse resource key from '" + part + "': unexpected content at position " + keyLength + ".");
+		}
+
 		List<Object> arguments = decodeArguments(part, keyLength);
 
 		if (keyLength == 0) {
@@ -340,7 +371,13 @@ public class ResKeyEncoding {
 				return ResKey.text((String) arguments.get(0));
 			}
 		}
-	
+
+		if (plain == null) {
+			// Arguments without a key that do not encode a plain literal string - the literal path
+			// above arrives here with a null plain (see the tagged branch's own guard).
+			throw new IllegalArgumentException("Cannot parse resource key from '" + part + "'.");
+		}
+
 		return ResKey.message(plain, arguments.toArray());
 	}
 

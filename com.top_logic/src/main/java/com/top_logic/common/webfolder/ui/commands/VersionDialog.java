@@ -41,7 +41,7 @@ import com.top_logic.layout.table.model.TableConfiguration;
 /**
  * Clipboard dialog providing the {@link TableField} for adding objects to the folder.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class VersionDialog extends AbstractFormPageDialog {
 

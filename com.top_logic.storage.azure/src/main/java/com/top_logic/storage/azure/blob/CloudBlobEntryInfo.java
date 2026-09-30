@@ -18,7 +18,7 @@ import com.top_logic.dsa.repos.RepositoryException;
 /**
  * Information for a cloud based entry.
  * 
- * @author Michael Gänsler
+ * @author Michael GÃ¤nsler
  */
 public class CloudBlobEntryInfo extends BaseEntryInfo {
 

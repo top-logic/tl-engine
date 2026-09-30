@@ -67,15 +67,6 @@ public class TopicMessagesTableModelBuilder extends AbstractConfiguredInstance<T
 	}
 
 	@Override
-	public boolean supportsListElement(final LayoutComponent component, final Object element) {
-		if (element instanceof KafkaMessage) {
-			return ((KafkaMessage) element).getTopic() == getTopic();
-		}
-
-		return false;
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(final LayoutComponent component, final Object element) {
 		return null;
 	}

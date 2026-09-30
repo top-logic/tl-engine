@@ -34,7 +34,7 @@ import com.top_logic.knowledge.wrap.currency.Currency;
  */
 public class XLSVolumeImporter extends POIExcelImporter {
 
-	protected String COLUMNS[] = {"Lieferant", "Umsatz", "Währung"};
+	protected String COLUMNS[] = {"Lieferant", "Umsatz", "WÃ¤hrung"};
 	protected String COLUMNS_EN[] = {"Supplier", "Volume", "Currency"};
 	
 	/**

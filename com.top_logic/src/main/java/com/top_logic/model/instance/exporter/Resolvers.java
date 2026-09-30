@@ -17,9 +17,11 @@ import javax.xml.stream.XMLStreamWriter;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueBinding;
+import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Binding;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.xml.XMLStreamUtil;
@@ -245,6 +247,31 @@ public class Resolvers {
 		ConfigurationValueBinding<?> newBinding = lookupBinding(attribute);
 		_bindings.put(attribute, newBinding);
 		return newBinding;
+	}
+
+	/**
+	 * Looks up the {@link ConfigurationValueProvider} declared as {@link Format} of the application
+	 * type of the given type's {@link StorageMapping}.
+	 * 
+	 * <p>
+	 * The result is the format a plain value of the given type is written in.
+	 * </p>
+	 * 
+	 * @param type
+	 *        The type to look up the plain value format for.
+	 * @return The format of plain values of the given type, or <code>null</code>, if the
+	 *         application type declares no {@link Format}.
+	 * 
+	 * @throws ConfigurationException
+	 *         If the annotated format cannot be instantiated.
+	 */
+	public static ConfigurationValueProvider<?> format(TLPrimitive type) throws ConfigurationException {
+		Class<?> applicationType = type.getStorageMapping().getApplicationType();
+		Format annotation = applicationType.getAnnotation(Format.class);
+		if (annotation == null) {
+			return null;
+		}
+		return ConfigUtil.getInstance(annotation.value());
 	}
 
 	private ConfigurationValueBinding<?> lookupBinding(TLStructuredTypePart attribute) {

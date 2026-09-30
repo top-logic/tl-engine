@@ -49,7 +49,7 @@ public class TestExternalContacts extends BasicTestCase {
 		super.setUp();
 
 		c1 = new PlainExternalContact("u0001", "Otto", "Maier", "dpx", "o.maier@xtl.com", "+49-751-35676-351", "test");
-		c2 = new PlainExternalContact("u0042", "Hermine", "Müller", "dpc", "h.mueller@xtl.com", "+49-751-35676-315", "test");
+		c2 = new PlainExternalContact("u0042", "Hermine", "MÃ¼ller", "dpc", "h.mueller@xtl.com", "+49-751-35676-315", "test");
 		c3 = new PlainExternalContact("u0013", "Mathilde", "Bauer", "tpd", "m.bauer@xtl.com", "+49-324-45332-242", "test");
 
 		_sqlDialect = getSQLDialect();

@@ -103,7 +103,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
- * @author Dieter Rothb‰cher
+ * @author Dieter Rothb√§cher
  */
 public class FormComponent extends BuilderComponent implements FormHandler, FormFieldConstants,
 		TableFieldConfigurator {
@@ -414,20 +414,6 @@ public class FormComponent extends BuilderComponent implements FormHandler, Form
         }
         */
     }
-
-	@Override
-    public boolean receiveDialogEvent(Object aDialog, Object anOwner, boolean dialogOpened) {
-		if (!this.isVisible()) {
-			return false;
-		}
-		if (this.getDialogParent() == anOwner) {
-			// This component is the being opened as dialog. Do not mangle its
-			// immutable state.
-			return false;
-		}
-
-		return super.receiveDialogEvent(aDialog, anOwner, dialogOpened);
-	}
 
 	@Override
 	protected void afterModelSet(Object oldModel, Object newModel) {

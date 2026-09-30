@@ -129,13 +129,13 @@ public class DOCXTableReplacer implements TokenReplacer {
 		// rows
 		List<Tr> tableRows = getRows(table);
 
-		// Step 1: Tabellenspalten und Zeilen gemäß Konfig anpassen
-		// Step 1a: Annahme: Erste Zeile definiert die Spaltenanzahl => Prüfung ob Anzahl Spalten
-		// aus Template und Anzahl Werte übereinstimmt, Anpassung gemäß Konfig, auch für alle
-		// folgenden Zeilen (hier dann ohne Prüfung).
-		// Step 2b: Hinzufügen oder Entfernen von Zeilen gemäß Konfig.
+		// Step 1: Tabellenspalten und Zeilen gemÃ¤ÃŸ Konfig anpassen
+		// Step 1a: Annahme: Erste Zeile definiert die Spaltenanzahl => PrÃ¼fung ob Anzahl Spalten
+		// aus Template und Anzahl Werte Ã¼bereinstimmt, Anpassung gemÃ¤ÃŸ Konfig, auch fÃ¼r alle
+		// folgenden Zeilen (hier dann ohne PrÃ¼fung).
+		// Step 2b: HinzufÃ¼gen oder Entfernen von Zeilen gemÃ¤ÃŸ Konfig.
 		// => Ergebnis: Tabelle die der Konfig und der Anzahl der Spalten/Zeilen mit den Werten
-		// übereinstimmt oder ConfigurationError!
+		// Ã¼bereinstimmt oder ConfigurationError!
 
 		// Step 3: Wertersetzung
 

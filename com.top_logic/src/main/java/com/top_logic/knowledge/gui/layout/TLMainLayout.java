@@ -139,7 +139,7 @@ public class TLMainLayout extends BoundMainLayout {
     /**
      * Processor for model events to be send to other components. 
      * 
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class EventHandler {
 

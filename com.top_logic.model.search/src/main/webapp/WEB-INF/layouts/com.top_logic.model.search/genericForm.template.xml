@@ -49,6 +49,7 @@
 		>
 			<mandatory/>
 			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
+			<implementation-class-default value="com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression"/>
 		</property>
 
 		<property name="buttons"

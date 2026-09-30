@@ -1,0 +1,284 @@
+# FAQ: New React Control Module
+
+## When to use
+
+When you need React controls in a separate module (not in `com.top_logic.layout.react` itself). Typical reasons:
+- Third-party npm library integration (Chart.js, CodeMirror, etc.)
+- Domain-specific controls that don't belong in the core React module
+
+## Required files
+
+All files from the [general module checklist](new-module-checklist.md) plus the following.
+
+### 1. `package.json`
+
+```json
+{
+  "name": "tl-my-module",
+  "version": "7.11.0",
+  "private": true,
+  "scripts": {
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0"
+  }
+}
+```
+
+Add third-party React libraries (e.g. `react-chartjs-2`) under `dependencies`, **not** `devDependencies`.
+
+Do **not** add `react` or `react-dom` as dependencies — they come from `tl-react-bridge`.
+
+### 2. `tsconfig.json`
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "outDir": "dist",
+    "paths": {
+      "tl-react-bridge": ["../com.top_logic.layout.react/react-src/bridge-entry.ts"]
+    }
+  },
+  "include": ["react-src"]
+}
+```
+
+The `paths` mapping enables TypeScript to resolve `tl-react-bridge` types during development.
+
+### 3. `vite.config.ts`
+
+#### Simple case (no third-party React libraries)
+
+If your controls only import from `tl-react-bridge` (like `tl-demo`):
+
+```typescript
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react({ jsxRuntime: 'classic' })],
+  define: {
+    'process.env.NODE_ENV': JSON.stringify('production'),
+  },
+  build: {
+    lib: {
+      entry: 'react-src/my-module-entry.ts',
+      fileName: () => 'tl-my-module.js',
+      formats: ['es'],
+    },
+    outDir: 'src/main/webapp/script',
+    emptyOutDir: false,
+    rollupOptions: {
+      external: ['tl-react-bridge'],
+    },
+  },
+});
+```
+
+#### With third-party React libraries
+
+If your module uses npm packages that `import from 'react'` internally (e.g. `react-chartjs-2`, `react-select`), you **must** add `resolve.alias` to redirect these imports to `tl-react-bridge`. Without this, the library bundles its own React copy, causing **"useState is null"** errors at runtime.
+
+```typescript
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+export default defineConfig({
+  plugins: [react({ jsxRuntime: 'classic' })],
+  define: {
+    'process.env.NODE_ENV': JSON.stringify('production'),
+  },
+  resolve: {
+    alias: {
+      // Order matters: more specific paths first.
+      'react/jsx-runtime': path.resolve(__dirname, 'react-src/react-jsx-runtime-shim.ts'),
+      'react-dom': path.resolve(__dirname, 'react-src/react-dom-shim.ts'),
+      'react': path.resolve(__dirname, 'react-src/react-shim.ts'),
+    },
+  },
+  build: {
+    lib: {
+      entry: 'react-src/my-module-entry.ts',
+      fileName: () => 'tl-my-module.js',
+      formats: ['es'],
+    },
+    outDir: 'src/main/webapp/script',
+    emptyOutDir: false,
+    rollupOptions: {
+      external: ['tl-react-bridge'],
+    },
+  },
+});
+```
+
+The three shim files:
+
+**`react-src/react-shim.ts`**
+```typescript
+import { React } from 'tl-react-bridge';
+export default React;
+export const {
+  useState, useRef, useEffect, useCallback, useMemo,
+  forwardRef, createRef, createElement, createContext,
+  useContext, useReducer, useImperativeHandle, useLayoutEffect,
+  memo, Fragment, Children, isValidElement, cloneElement
+} = React;
+```
+
+**`react-src/react-dom-shim.ts`**
+```typescript
+import { ReactDOM } from 'tl-react-bridge';
+export default ReactDOM;
+```
+
+**`react-src/react-jsx-runtime-shim.ts`**
+```typescript
+import { React } from 'tl-react-bridge';
+export const jsx = React.createElement;
+export const jsxs = React.createElement;
+export const Fragment = React.Fragment;
+```
+
+### 4. Entry file
+
+Name it after the bundle, as the existing modules do (`chartjs-entry.ts`, `code-editor-entry.ts`,
+`wysiwyg-entry.ts`); the plain name `controls-entry.ts` belongs to the framework module
+`com.top_logic.layout.react` itself.
+
+```typescript
+// react-src/my-module-entry.ts
+//
+// IMPORTANT: All components MUST import React from 'tl-react-bridge' (not 'react').
+
+import { register } from 'tl-react-bridge';
+import MyControl from './controls/MyControl';
+
+register('MyControl', MyControl);
+```
+
+### 5. `pom.xml` — frontend-maven-plugin
+
+Add to `<build><plugins>`:
+
+```xml
+<plugin>
+  <groupId>com.github.eirslett</groupId>
+  <artifactId>frontend-maven-plugin</artifactId>
+  <version>1.15.4</version>
+  <executions>
+    <execution>
+      <id>install-node</id>
+      <goals><goal>install-node-and-npm</goal></goals>
+      <configuration>
+        <nodeVersion>v20.10.0</nodeVersion>
+      </configuration>
+    </execution>
+    <execution>
+      <id>npm-install</id>
+      <goals><goal>npm</goal></goals>
+      <configuration><arguments>install</arguments></configuration>
+    </execution>
+    <execution>
+      <id>npm-build</id>
+      <phase>generate-resources</phase>
+      <goals><goal>npm</goal></goals>
+      <configuration><arguments>run build</arguments></configuration>
+    </execution>
+  </executions>
+</plugin>
+```
+
+### 6. `metaConf.txt` + client resource registration
+
+**`src/main/webapp/WEB-INF/conf/metaConf.txt`:**
+```
+tl-my-module.conf.config.xml
+```
+
+**`src/main/webapp/WEB-INF/conf/tl-my-module.conf.config.xml`:** the bundle (and any stylesheet of
+its own) is announced through the `ClientResources` service, the way every React module in this
+repository does it. `requires` orders the bundle after the bridge that owns the React instance.
+
+```xml
+<?xml version="1.0" encoding="utf-8" ?>
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+  <services>
+    <config service-class="com.top_logic.layout.react.resource.ClientResources">
+      <instance class="com.top_logic.layout.react.resource.ClientResources">
+        <resources>
+          <module-script name="tl-my-module"
+            requires="tl-react-bridge"
+            resource="/script/tl-my-module.js"
+            specifier="tl-my-module"
+          />
+          <stylesheet name="tl-my-module-css"
+            resource="/style/tlMyModule.css"
+          />
+        </resources>
+      </instance>
+    </config>
+  </services>
+</application>
+```
+
+### 7. Control component pattern
+
+```typescript
+import { React, useTLCommand } from 'tl-react-bridge';
+import type { TLCellProps } from 'tl-react-bridge';
+
+const MyControl: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const sendCommand = useTLCommand();
+  // Use React.useState, React.useRef, etc. (from tl-react-bridge)
+  return <div id={controlId}>...</div>;
+};
+
+export default MyControl;
+```
+
+### 8. Java UIElement + ReactControl
+
+Step by step in [new-ui-element.md](new-ui-element.md). For a full pattern see `ChartElement.java`
+and `ReactChartJsControl.java` in `com.top_logic.layout.react.chartjs`.
+
+## Build
+
+Always from project root:
+```bash
+mvn install -DskipTests=true -pl my.new.module
+```
+
+Never `cd` into the module. Never run `npx vite build` directly.
+
+The bundle the build writes to `src/main/webapp/script/` is a build product and is listed in the
+module's `.gitignore`, so it is absent from a fresh checkout and stale after a branch switch until the
+module is built again: run `mvn compile` on the React modules, or let Eclipse do it — the
+`frontend-maven-plugin` ships an m2e lifecycle mapping that runs the `npm` build on a project build.
+
+**After changing `react-src/*.ts(x)` in `com.top_logic.layout.react`, rebuild the *app* module too** (e.g. `mvn install -pl com.top_logic.demo.react`), not just `layout.react`. The running app serves `script/tl-react-bridge.js` from the app's exploded overlay (`target/<app>-app/script/`), which stays a stale copy until the app module is rebuilt — Java jars, by contrast, resolve fresh from the local m2 repo on restart. Symptom: server-side changes take effect but client-side changes silently don't. Verify with `grep -rl "<new string>" com.top_logic.demo.react/target`.
+
+## Common errors
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| "Component not registered: X" | Bundle not announced as a client resource, or the registered name differs from the one the control mounts | Add the `ClientResources` section (step 6), compare the names |
+| "useState is null" / "useRef is null" | Duplicate React instance from third-party lib | Add `resolve.alias` shims in `vite.config.ts` |
+| Script not in HTML page | `metaConf.txt` missing | Create `metaConf.txt` listing the `.conf.config.xml` |
+| CSS not applied | Stylesheet not announced | Add a `<stylesheet>` resource (step 6); a theme-level stylesheet needs `WEB-INF/themes/core/theme.xml` |
+| Build fails with "Cannot find module 'tl-react-bridge'" | `tsconfig.json` paths missing | Add `paths` mapping to `tsconfig.json` |

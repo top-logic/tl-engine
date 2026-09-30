@@ -109,11 +109,6 @@ public class SearchResultTable extends TableComponent {
 		}
 
 		@Override
-		public boolean supportsListElement(LayoutComponent component, Object candidate) {
-			return true;
-		}
-
-		@Override
 		public Object retrieveModelFromListElement(LayoutComponent component, Object candidate) {
 			return component.getModel();
 		}

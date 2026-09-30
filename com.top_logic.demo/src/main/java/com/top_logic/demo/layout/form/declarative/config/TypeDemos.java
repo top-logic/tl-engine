@@ -6,6 +6,7 @@
 package com.top_logic.demo.layout.form.declarative.config;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
@@ -45,6 +46,9 @@ public interface TypeDemos extends ConfigurationItem {
 
 	/** Configuration name for the value of {@link #getObjectTypesWholeLine()}. */
 	String OBJECT_TYPES_WHOLE_LINE = "object-types-whole-line";
+
+	/** Configuration name for the value of {@link #getSpecialEditors()}. */
+	String SPECIAL_EDITORS = "special-editors";
 
 	@NonNullable
 	@ItemDefault
@@ -120,5 +124,14 @@ public interface TypeDemos extends ConfigurationItem {
 	@Name(OBJECT_TYPES_WHOLE_LINE)
 	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
 	ObjectTypesWholeLine getObjectTypesWholeLine();
+
+	/**
+	 * {@link TypeDemos} part to demonstrate special editors.
+	 */
+	@NonNullable
+	@ItemDefault
+	@Name(SPECIAL_EDITORS)
+	@Label("Properties with special GUI representations")
+	SpecialEditors getSpecialEditors();
 
 }

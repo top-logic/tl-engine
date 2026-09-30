@@ -68,13 +68,17 @@ public class FormDefinitionFieldProvider extends AbstractFieldProvider {
 				// setting of a FormDefinition is recorded as block
 				ScriptingRecorder.annotateAsDontRecord(guiEditorDialog.getDialogModel());
 				guiEditorDialog.setFormDefinitionCopy(formDefinitionOrigin);
-				guiEditorDialog.setOpenInEditMode(!editContext.isDisabled());
+				boolean inEditMode = field.getParent().isActive();
+				guiEditorDialog.setOpenInEditMode(inEditMode);
 				guiEditorDialog.setTemplateProvider(templateProvider);
 				guiEditorDialog.setType(guiType);
 				guiEditorDialog.setAcceptCommand(newAcceptCommand(guiEditorDialog));
-				FormDefinition formDefinitionGui = guiEditorDialog.getFormDefinition();
-				guiEditorDialog.addAdditionalCommand(newDiscardChangesCommand(formDefinitionOrigin, formDefinitionGui));
-				guiEditorDialog.addAdditionalCommand(newClearFormCommand(formDefinitionGui));
+				if (inEditMode) {
+					FormDefinition formDefinitionGui = guiEditorDialog.getFormDefinition();
+					guiEditorDialog
+						.addAdditionalCommand(newDiscardChangesCommand(formDefinitionOrigin, formDefinitionGui));
+					guiEditorDialog.addAdditionalCommand(newClearFormCommand(formDefinitionGui));
+				}
 				return guiEditorDialog.open(context);
 			}
 
@@ -147,6 +151,9 @@ public class FormDefinitionFieldProvider extends AbstractFieldProvider {
 				return new ButtonControl(command);
 			}
 		});
+		/* Ensure that the command can be executed, also when the owner group is in view mode to
+		 * allow the user to view the actual form definition. */
+		field.setInheritDeactivation(false);
 		return field;
 	}
 

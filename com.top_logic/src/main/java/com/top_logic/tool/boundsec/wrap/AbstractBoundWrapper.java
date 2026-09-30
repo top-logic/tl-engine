@@ -14,9 +14,9 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 
 /**
  * Persistent {@link com.top_logic.tool.boundsec.BoundObject}.
@@ -75,16 +75,23 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
     }
 
     @Override
-	public BoundObject getSecurityParent() {
-		BoundHelper boundHelper = BoundHelper.getInstance();
-		if (boundHelper.useDefaultObject()) {
-			BoundObject securityRoot = boundHelper.getDefaultObject();
-			if (securityRoot != this) {
-				return securityRoot;
-			}
-        }
+	public final BoundObject getSecurityParent() {
+		throw new UnsupportedOperationException("Call getSecurityParents()");
+	}
 
-        return null;
-    }
+	/**
+	 * The security parents configured for the type of this object.
+	 * 
+	 * <p>
+	 * The security-parent rules of the {@link AccessManager} define the parent set. An object
+	 * whose type has no security-parent rules has no security parent. The global security root
+	 * is a parent only if a rule names it explicitly (the "singleton" security-parent path
+	 * element).
+	 * </p>
+	 */
+	@Override
+	public Collection<? extends BoundObject> getSecurityParents() {
+		return AccessManager.getInstance().getSecurityParents(this);
+	}
 
 }

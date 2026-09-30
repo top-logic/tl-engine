@@ -19,7 +19,7 @@ import com.top_logic.model.search.expr.interpreter.TypeResolver;
 /**
  * Utilities for the TL-Script search.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class SearchUtil {
 

@@ -33,10 +33,85 @@ import org.junit.Assert;
 import com.top_logic.layout.wysiwyg.ui.excel.RichTextBuilder;
 
 /**
- * Test case fir für {@link RichTextBuilder}
+ * Test case for {@link RichTextBuilder}
  */
 @SuppressWarnings("javadoc")
 public class TestRichTextBuilder extends TestCase {
+
+	/**
+	 * Tests that at most 80 chars are contained in a text line.
+	 */
+	public void testLinebreak() throws IOException, InvalidFormatException {
+		Workbook workbook = createWorkbook();
+		RichTextBuilder builder = new RichTextBuilder(workbook);
+		Node document = Jsoup.parse(""
+			+ "<p>This is some text with more than 80 chars. <b>This</b> is the maximum number of characters in one row.</p>"
+			+ "<p>Multi      spaces   ar collapsed to one.</p>"
+			+ "<p><b>Text with exactly 80 char so the line is full: Some dummy text to ensure size AA</b> Text starting with space.</p>"
+		);
+		builder.append(document);
+		RichTextString text = builder.getText();
+
+		String expected = "This is some text with more than 80 chars. This is the maximum number of\n"
+			+ "characters in one row.\n"
+			+ "\n"
+			+ "Multi spaces ar collapsed to one.\n"
+			+ "\n"
+			+ "Text with exactly 80 char so the line is full: Some dummy text to ensure size AA\n"
+			+ "Text starting with space."
+		;
+		assertEquals(expected, text.toString());
+
+		save(workbook, text, "target/TestRichTextBuilder-linebreak.xlsx", builder.getWidth());
+
+		try (XSSFWorkbook checkWorkbook = new XSSFWorkbook(new File("target/TestRichTextBuilder-linebreak.xlsx"))) {
+			XSSFCell cell = checkWorkbook.getSheetAt(0).getRow(0).getCell(0);
+			Assert.assertEquals(CellType.STRING, cell.getCellType());
+			XSSFRichTextString value = cell.getRichStringCellValue();
+			Assert.assertEquals(expected, value.getString());
+		}
+	}
+
+	public void testWidthLastRowLargest() {
+		Workbook workbook = createWorkbook();
+		RichTextBuilder builder = new RichTextBuilder(workbook);
+		Node document = Jsoup.parse(""
+			+ "<p>Row 1</p>"
+			+ "<p>Larger Row</p>"
+			+ "<p>largest Row</p>");
+		builder.append(document);
+		assertEquals(11, builder.getWidth());
+	}
+
+	public void testWidthMiddleRowLargest() {
+		Workbook workbook = createWorkbook();
+		RichTextBuilder builder = new RichTextBuilder(workbook);
+		Node document = Jsoup.parse(""
+			+ "<p>Row 1</p>"
+			+ "<p>largest Row</p>"
+			+ "<p>small Row</p>");
+		builder.append(document);
+		assertEquals(11, builder.getWidth());
+	}
+
+	public void testWidthLinebreakRowLargest() {
+		Workbook workbook = createWorkbook();
+		RichTextBuilder builder = new RichTextBuilder(workbook);
+		Node document = Jsoup.parse(""
+			+ "<p>Row 1</p>"
+			+ "<p>This is some text with more than 80 chars. <b>This</b> is the maximum number of characters in one row.</p>"
+			+ "<p>small Row</p>");
+		builder.append(document);
+		RichTextString text = builder.getText();
+		String expected = "Row 1\n"
+			+ "\n"
+			+ "This is some text with more than 80 chars. This is the maximum number of\n"
+			+ "characters in one row.\n"
+			+ "\n"
+			+ "small Row";
+		assertEquals(expected, text.toString());
+		assertEquals(72, builder.getWidth());
+	}
 
 	public void testConvert() throws IOException, InvalidFormatException {
 		Workbook workbook = createWorkbook();

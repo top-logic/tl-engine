@@ -34,7 +34,7 @@
   .sort(comparator(x -&gt; $x.get(`my.module:MyType#name`)))</code>
 </pre>
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Liste aller Instanzen des Typs <code class="hljs inlineCode">my.module:MyType</code> sortiert nach den Werten des Attributs <code class="hljs inlineCode">name</code>.</p>
-<p>Die <code class="hljs inlineCode">comparator()</code>-Funktion macht hier aus der Zugriffsfunktion <code class="hljs inlineCode">x -&gt; $x.get(`my.module:MyType#name`</code>, die für ein LIstenelement den Wert der Eigenschaft <code class="hljs inlineCode">name</code> liefert, eine Vergleichsfunktion.</p>
+<p>Die <code class="hljs inlineCode">comparator()</code>-Funktion macht hier aus der Zugriffsfunktion <code class="hljs inlineCode">x -&gt; $x.get(`my.module:MyType#name`</code>, die für ein Listenelement den Wert der Eigenschaft <code class="hljs inlineCode">name</code> liefert, eine Vergleichsfunktion.</p>
 <h3>Äquivalent zum vorherigen Beispiel ohne comparator</h3>
 <pre>	<code>all(`my.module:MyType`)
   .sort(x -&gt; y -&gt; {

@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * An empty region.
  */
-public interface Empty extends Box, com.top_logic.graphic.flow.operations.EmptyOperations {
+public interface Empty extends com.top_logic.graphic.flow.data.Box, com.top_logic.graphic.flow.operations.EmptyOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Empty} instance.

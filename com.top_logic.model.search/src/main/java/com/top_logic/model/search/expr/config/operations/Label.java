@@ -54,6 +54,15 @@ public class Label extends GenericMethod {
 		return MetaLabelProvider.INSTANCE.getLabel(object);
 	}
 
+	/**
+	 * A {@link Label} depends on the locale of the current session and on the current state of the
+	 * labeled object, so it cannot be evaluated at compile time.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
+	}
+
 	/** {@link MethodBuilder} creating {@link Label}. */
 	public static final class Builder extends AbstractSimpleMethodBuilder<Label> {
 

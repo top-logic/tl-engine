@@ -54,7 +54,7 @@ public class RevisionUpgrade implements EventRewriter {
 			commit.setAuthor(DefaultSessionContext.PERSON_ID_PREFIX + IdentifierUtil.toExternalForm(authorId));
 		}
 
-		if (PRE_57_LOG_MESSAGE.equals(commit.getLog())) {
+		if (PRE_57_LOG_MESSAGE.equals(ResKey.encode(commit.getLog()))) {
 			commit.setLog(_noCommitMessage);
 		}
 

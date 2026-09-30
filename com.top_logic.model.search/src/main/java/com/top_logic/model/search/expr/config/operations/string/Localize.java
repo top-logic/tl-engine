@@ -60,6 +60,15 @@ public class Localize extends GenericMethod implements WithFlatMapSemantics<Loca
 	}
 
 	/**
+	 * {@link Localize} resolves a {@link ResKey} in the locale of the current session, so it cannot
+	 * be evaluated at compile time.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
+	}
+
+	/**
 	 * {@link AbstractSimpleMethodBuilder} creating an {@link Localize} function.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<Localize> {

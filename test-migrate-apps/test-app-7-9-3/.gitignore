@@ -1,8 +1,9 @@
-.apt_generated
-.apt_generated_tests
-target
-TEST-*.xml
-test-time.txt
-jacoco.exec
-dist
-report
+/.apt_generated
+/.apt_generated_tests
+/target
+/tmp
+/war
+/src/main/webapp/script/top-logic.js
+/src/main/webapp/style/_*.css
+/.settings/com.gwtplugins.gwt.eclipse.core.prefs
+/**/*~

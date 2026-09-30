@@ -88,7 +88,7 @@ public abstract class StringServices extends StringServicesShared {
     public static final String KONSONANTS = "bcdfghjklmnpqrstvwxyz";
     public static final String NUMERALS = "0123456789";
 
-    public static final String GERMAN_CHARS = "äöüß";
+    public static final String GERMAN_CHARS = "Ã¤Ã¶Ã¼ÃŸ";
     public static final String SPECIAL_CHARS = "+-*/_=.";
 
     public static final String LITERALS = VOCALS + KONSONANTS;

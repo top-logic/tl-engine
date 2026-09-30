@@ -1,0 +1,40 @@
+<h2>Syntax</h2>
+
+<pre><code>$object.canReadAttribute($attribute)
+
+canReadAttribute($object, $attribute)
+</code></pre>
+
+<h2>Description</h2>
+
+<p>Checks whether the currently logged-in user is allowed to read the given attribute of the given object and returns a boolean.</p>
+
+<p>This is the attribute-level counterpart of <code class="hljs inlineCode">canRead</code>. The user needs both read access to the object and (if configured) the attribute-specific role. The function never fails and never filters.</p>
+
+<p>The check is evaluated for the currently logged-in user and follows the same rules as the implicit permission enforcement: deny-by-default, role inheritance along the security hierarchy, and full access for administrators or executions in a system context.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr><th>Name</th><th>Type</th><th>Type Description</th><th>Mandatory</th><th>Default</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>object</td><td>Business object</td><td>The object to check.</td><td>yes</td><td> </td></tr>
+		<tr><td>attribute</td><td>Attribute</td><td>The attribute (<code class="hljs inlineCode">TLStructuredTypePart</code>) whose read access is checked.</td><td>yes</td><td> </td></tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p>
+
+<p><code class="hljs inlineCode">true</code> if the current user may read the attribute on the object, <code class="hljs inlineCode">false</code> otherwise.</p>
+
+<h2>Examples</h2>
+
+<h3>Example 1</h3>
+
+<pre><code>if($contract.canReadAttribute(`my.module:Contract#volume`), $contract.get(`my.module:Contract#volume`), null)</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> The contract volume if the logged-in user may read that attribute, otherwise <code class="hljs inlineCode">null</code>.</p>

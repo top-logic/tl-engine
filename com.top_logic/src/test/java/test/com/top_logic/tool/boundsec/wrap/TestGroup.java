@@ -13,6 +13,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 
+import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -206,7 +207,7 @@ public class TestGroup extends BasicTestCase {
 	private Person mkPerson() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		String name = mkName();
-		return Person.create(kb, name, "dbSecurity");
+		return Person.create(kb, name, TLSecurityDeviceManager.getInstance().getAuthenticationDevice("dbSecurity"));
 	}
 	
 	private String mkName() {

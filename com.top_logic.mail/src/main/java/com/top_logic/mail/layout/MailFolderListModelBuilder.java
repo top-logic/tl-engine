@@ -50,11 +50,6 @@ public class MailFolderListModelBuilder implements ListModelBuilder {
     }
 
     @Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-		return (anObject instanceof Mail) || (anObject instanceof MailFolder);
-    }
-
-    @Override
 	public Collection<?> getModel(Object businessModel, LayoutComponent aComponent) {
         try {
 			MailFolder theModel = getMailFolder(businessModel);

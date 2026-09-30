@@ -55,6 +55,7 @@ public class InstanceImport extends GenericMethod {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		BinaryContent xmlData = (BinaryContent) arguments[0];
 		boolean allocateTransient = asBoolean(arguments[1]);
+		Object context = arguments[2];
 
 		try {
 			ObjectsConf objects = XMLInstanceImporter.loadConfig(xmlData);
@@ -62,6 +63,7 @@ public class InstanceImport extends GenericMethod {
 			XMLInstanceImporter importer =
 				new XMLInstanceImporter(ModelService.getInstance().getModel(),
 					allocateTransient ? TransientObjectFactory.INSTANCE : ModelService.getInstance().getFactory());
+			importer.setContext(context);
 
 			BufferingI18NLog log = new BufferingI18NLog();
 			importer.setLog(log);
@@ -89,6 +91,7 @@ public class InstanceImport extends GenericMethod {
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("xml")
 			.optional("transient", false)
+			.optional("context")
 			.build();
 
 		/**

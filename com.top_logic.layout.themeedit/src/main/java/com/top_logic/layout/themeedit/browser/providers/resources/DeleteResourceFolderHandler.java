@@ -29,7 +29,7 @@ import com.top_logic.tool.execution.ExecutableState;
 /**
  * Handler to delete a resource folder.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DeleteResourceFolderHandler extends AbstractCommandHandler {
 

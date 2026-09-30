@@ -36,7 +36,7 @@ public class DateInputControl extends TextInputControl {
 	
 	@Override
 	protected String getTypeCssClass() {
-		return "cDateInput";
+		return "tl-date-input";
 	}
 		
 	@Override

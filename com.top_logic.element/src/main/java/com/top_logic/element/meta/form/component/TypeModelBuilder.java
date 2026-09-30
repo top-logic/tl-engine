@@ -15,6 +15,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
@@ -73,8 +74,12 @@ public class TypeModelBuilder extends AbstractConfiguredInstance<TypeModelBuilde
         return null;
     }
 
-    @Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object aObject) {
+	@Override
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent contextComponent, Object aObject) {
         try {
 			return aObject instanceof TLObject
 				&& ((TLObject) aObject).tTable().getName().equals(this.koType);

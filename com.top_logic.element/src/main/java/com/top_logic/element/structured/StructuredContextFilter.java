@@ -11,7 +11,7 @@ import com.top_logic.basic.col.Filter;
  * Filter accepts only instances of {@link StructuredElement} which are the structure 
  * context (where {@link StructuredElement#isStructureContext()} returns true).
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class StructuredContextFilter implements Filter {
 

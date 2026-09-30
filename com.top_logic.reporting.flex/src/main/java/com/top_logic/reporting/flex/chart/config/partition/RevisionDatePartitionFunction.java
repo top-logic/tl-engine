@@ -19,14 +19,14 @@ import com.top_logic.knowledge.service.Revision;
 /**
  * Create revision partitions for different (configured) dates.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class RevisionDatePartitionFunction<C extends RevisionDatePartitionFunction.Config> extends AbstractRevisionPartitionFunction<C> {
 
 	/**
 	 * Supported date types for the partition function. 
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     @SuppressWarnings("javadoc")
     public enum DateType {
@@ -36,7 +36,7 @@ public class RevisionDatePartitionFunction<C extends RevisionDatePartitionFuncti
 	/**
 	 * Configuration of the revision date partition. 
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config extends AbstractRevisionPartitionFunction.Config {
 

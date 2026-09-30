@@ -35,6 +35,7 @@ import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
 import com.top_logic.model.config.annotation.SystemEnum;
 import com.top_logic.model.impl.generated.TlModelFactory;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -215,7 +216,8 @@ public class TestTLMetaModel extends TestWithModelExtension {
 	}
 
 	private void testDerivedTypePart(DerivedTLTypePart derivedPart) {
-		assertEquals(derivedPart.isDerived(), toBoolean(derivedPart.tValueByName(DerivedTLTypePart.DERIVED_ATTR)));
+		assertEquals("Derived info mismatch: " + TLModelUtil.qualifiedName(derivedPart), derivedPart.isDerived(),
+			toBoolean(derivedPart.tValueByName(DerivedTLTypePart.DERIVED_ATTR)));
 	}
 
 	private void testTypePart(TLTypePart typePart) {

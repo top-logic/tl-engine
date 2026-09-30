@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * An embedded image.
  */
-public interface Image extends Box, com.top_logic.graphic.flow.operations.ImageOperations {
+public interface Image extends com.top_logic.graphic.flow.data.Box, com.top_logic.graphic.flow.operations.ImageOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Image} instance.

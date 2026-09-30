@@ -46,7 +46,7 @@ import com.top_logic.util.error.TopLogicException;
  * The standard method to get the currently valid theme for a user is to lookup the information
  * stored in the user context.
  * 
- * @author    <a href=mailto:jco@top-logic.com>Jörg Conotte</a>
+ * @author    <a href=mailto:jco@top-logic.com>JÃ¶rg Conotte</a>
  */
 public class MultiThemeFactory extends ThemeFactory {
 

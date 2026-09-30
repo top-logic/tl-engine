@@ -1672,11 +1672,11 @@ public class TestControlsForm extends FormComponent {
 		addSelectionPartControlFieldsSingle(context);
 		addSelectionPartControlFieldsMultiple(context);
 
-		final Command onOk = createAlertCommand("Es wurde OK gedrückt.");
-		final Command onCancel = createAlertCommand("Es wurde Cancel gedrückt.");
-		final Command onYes = createAlertCommand("Es wurde Yes gedrückt.");
-		final Command onNo = createAlertCommand("Es wurde No gedrückt.");
-		final Command onContinue = createAlertCommand("Es wurde Continue gedrückt.");
+		final Command onOk = createAlertCommand("Es wurde OK gedrÃ¼ckt.");
+		final Command onCancel = createAlertCommand("Es wurde Cancel gedrÃ¼ckt.");
+		final Command onYes = createAlertCommand("Es wurde Yes gedrÃ¼ckt.");
+		final Command onNo = createAlertCommand("Es wurde No gedrÃ¼ckt.");
+		final Command onContinue = createAlertCommand("Es wurde Continue gedrÃ¼ckt.");
 		
 		FormGroup messagesGroup = new FormGroup("messages", I18NConstants.MESSAGES);
 		messagesGroup.setResources(PlainKeyResources.INSTANCE);
@@ -1994,7 +1994,7 @@ public class TestControlsForm extends FormComponent {
 			com.top_logic.layout.table.component.Icons.EXPORT_GRID_DISABLED);
 		exportModel.setNotExecutable(com.top_logic.tool.execution.I18NConstants.ERROR_DISABLED);
 		commands.add(exportModel);
-		commands.add(simpleCommandModel("Löschen", null, null));
+		commands.add(simpleCommandModel("LÃ¶schen", null, null));
 		PopupMenuField popupMenuField = DefaultPopupMenuField.newField("openPopupMenu", commands);
 		popupMenuField.setLabel("Open command menu");
 		controlsGroup.addMember(popupMenuField);
@@ -2021,7 +2021,7 @@ public class TestControlsForm extends FormComponent {
 			@Override
 			protected HandlerResult internalExecuteCommand(DisplayContext context) {
 				MessageBox.confirm(getWindowScope(), MessageType.CONFIRM, "Kommando '" + label
-					+ "' wird ausgeführt.", MessageBox.button(ButtonType.OK));
+					+ "' wird ausgefÃ¼hrt.", MessageBox.button(ButtonType.OK));
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		};
@@ -2048,7 +2048,7 @@ public class TestControlsForm extends FormComponent {
 	private void addOpenCalendarControl(FormGroup controlsGroup) {
 		Date initialDate = null;
 		ComplexField displayField = FormFactory.newDateField("displayDate", initialDate, FormFactory.IMMUTABLE);
-		displayField.setLabel(Resources.getInstance().getString(I18NConstants.DISPLAY_SELECTED_DATE));
+		displayField.setLabel(I18NConstants.DISPLAY_SELECTED_DATE);
 		displayField.setControlProvider(ValueDisplay.INSTANCE);
 		ComplexField editField = FormFactory.newDateField("openCalendar", initialDate, !FormFactory.IMMUTABLE);
 		editField.setControlProvider(OpenCalendar.INSTANCE);
@@ -3533,7 +3533,7 @@ public class TestControlsForm extends FormComponent {
 	}
 
 	private void addTestSelectionControlMultiTreeUnordered(FormGroup controlsGroup) {
-		// See Ticket #3546: Automatische Sortierung in SelectField lässt sich nicht ausschalten.
+		// See Ticket #3546: Automatische Sortierung in SelectField lÃ¤sst sich nicht ausschalten.
 		controlsGroup.addMember(FormFactory.newSelectField("selectionControlMultiTreeUnordered", createOptionTree(), true, false));
 	}
 
@@ -3602,7 +3602,7 @@ public class TestControlsForm extends FormComponent {
 	}
 
 	private void addTestSelectionControlTree(FormGroup controlsGroup) {
-		// See Ticket #3959: Baum-Selektion für SelectField mit Einfachselektion.
+		// See Ticket #3959: Baum-Selektion fÃ¼r SelectField mit Einfachselektion.
 		SelectField selection = createSingleSelectField("selectionControlTree", null);
 		controlsGroup.addMember(selection);
 	}
@@ -3631,7 +3631,7 @@ public class TestControlsForm extends FormComponent {
 	}
 
 	private void addTestSelectionControlTreeCustomLabel(FormGroup controlsGroup) {
-		// See Ticket #3959: Baum-Selektion für SelectField mit Einfachselektion.
+		// See Ticket #3959: Baum-Selektion fÃ¼r SelectField mit Einfachselektion.
 		SelectField selection = createSingleSelectField("selectionControlTreeCustomLabel", new LabelProvider() {
 
 			@Override

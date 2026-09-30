@@ -5,18 +5,11 @@
  */
 package com.top_logic.element.boundsec;
 
-import java.util.List;
-
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.model.ModelFactory;
-import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
-import com.top_logic.model.TLObject;
-import com.top_logic.model.TLScope;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
@@ -44,55 +37,6 @@ public class ElementBoundHelper extends BoundHelper {
 		return securityRoot();
 	}
 
-	@Override
-    protected final String getCheckerTypeForType(Object type) {
-		// Method declared final to prevent introducing even more type abstractions
-		// outside the framework.
-        if (type instanceof TLClass) {
-			TLClass tlClass = (TLClass) type;
-			TLScope scope = tlClass.getScope();
-			if (scope instanceof TLModule) {
-				return TLModelUtil.qualifiedName(tlClass);
-			} else {
-				/* Can not use full qualified name for local classes, because it contains id of the
-				 * concrete scope element. Better use the checker type of the scope as "scope". */
-				return TLModelUtil.qualifiedName(tlClass.getModule().getName(), getCheckerType(scope),
-					tlClass.getName());
-			}
-        } else {
-        	return super.getCheckerTypeForType(type);
-        }
-    }
-
-    @Override
-    protected final Object getObjectType(Object anObject) {
-		// Method declared final to prevent introducing even more type abstractions
-		// outside the framework.
-		if (anObject instanceof TLObject) {
-			TLStructuredType tType = ((TLObject) anObject).tType();
-			if (tType != null) {
-				return tType;
-			}
-			if (((TLObject) anObject).tTransient()) {
-				// Transient objects have no table. This actually just occur in tests.
-				return super.getObjectType(anObject);
-			}
-			return ApplicationObjectUtil.tableTypeQName(((TLObject) anObject).tTable());
-		}
-		return super.getObjectType(anObject);
-    }
-
-	@Override
-	protected final List<?> getSuperTypes(Object anObject) {
-		// Method declared final to prevent introducing even more type abstractions
-		// outside the framework.
-        if (anObject instanceof TLClass) {
-			return ((TLClass) anObject).getGeneralizations();
-        } else {
-        	return super.getSuperTypes(anObject);
-        }
-    }
-    
     /** 
      * the SecurityStructure root object
      */

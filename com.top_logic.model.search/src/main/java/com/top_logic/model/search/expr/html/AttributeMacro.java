@@ -7,11 +7,7 @@ package com.top_logic.model.search.expr.html;
 
 import java.io.IOException;
 
-import com.top_logic.basic.exception.I18NException;
-import com.top_logic.basic.html.HTMLChecker;
-import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.basic.xml.TagWriter.State;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.LabelRenderer;
@@ -19,7 +15,6 @@ import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link RenderExpression} creating an attribute of a {@link TagMacro}.
@@ -36,14 +31,11 @@ public class AttributeMacro extends RenderExpression {
 
 	private boolean _cssAttribute;
 
-	private boolean _dynamicSafety;
-
 	/**
 	 * Creates a {@link AttributeMacro}.
 	 */
-	public AttributeMacro(boolean cssAttribute, boolean dynamicSafety, String name, SearchExpression value) {
+	public AttributeMacro(boolean cssAttribute, String name, SearchExpression value) {
 		_cssAttribute = cssAttribute;
-		_dynamicSafety = dynamicSafety;
 		_name = name;
 		_value = value;
 	}
@@ -53,15 +45,6 @@ public class AttributeMacro extends RenderExpression {
 	 */
 	public boolean isCssAttribute() {
 		return _cssAttribute;
-	}
-
-	/**
-	 * Whether the attribute is written with buffering to dynamically check its contents for safety.
-	 * 
-	 * @see HTMLChecker#checkAttribute(String, String, String)
-	 */
-	public boolean useDynamicSafety() {
-		return _dynamicSafety;
 	}
 
 	/**
@@ -94,45 +77,15 @@ public class AttributeMacro extends RenderExpression {
 
 	@Override
 	protected void write(DisplayContext context, TagWriter out, Args args, EvalContext definitions) throws IOException {
-		if (_dynamicSafety) {
-			TagWriter attrOut = new TagWriter();
-			attrOut.setState(_cssAttribute ? State.CLASS_ATTRIBUTE : State.ATTRIBUTE);
-
-			TagWriter outBefore = definitions.setOut(attrOut);
-			try {
-				writeAttribute(context, definitions, attrOut);
-			} finally {
-				definitions.setOut(outBefore);
-			}
-
-			String bufferedValue = attrOut.toString();
-			try {
-				SafeHTML.getInstance().checkAttributeValue(_name, bufferedValue);
-			} catch (I18NException ex) {
-				throw wrap(ex, _name, bufferedValue);
-			}
-			if (_cssAttribute) {
-				out.beginCssClasses(_name);
-				out.append(bufferedValue.trim());
-				out.endCssClasses();
-			} else {
-				out.writeAttribute(_name, bufferedValue);
-			}
+		if (_cssAttribute) {
+			out.beginCssClasses(_name);
+			writeAttribute(context, definitions, out);
+			out.endCssClasses();
 		} else {
-			if (_cssAttribute) {
-				out.beginCssClasses(_name);
-				writeAttribute(context, definitions, out);
-				out.endCssClasses();
-			} else {
-				out.beginAttribute(_name);
-				writeAttribute(context, definitions, out);
-				out.endAttribute();
-			}
+			out.beginAttribute(_name);
+			writeAttribute(context, definitions, out);
+			out.endAttribute();
 		}
-	}
-
-	private RuntimeException wrap(I18NException ex, String name, String value) {
-		throw new TopLogicException(I18NConstants.ERROR_UNSAFE_HTML__ATTRIBUTE__VALUE.fill(name, value), ex);
 	}
 
 	private void writeAttribute(DisplayContext context, EvalContext definitions, TagWriter out)

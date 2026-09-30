@@ -17,7 +17,7 @@ import com.top_logic.importer.logger.ImportLogger;
 /**
  * Extract the sheet name (when the used context is a {@link WorkbookExcelContext}).
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class SheetNameExtractor<C extends SheetNameExtractor.Config> implements Extractor {
 

@@ -42,7 +42,11 @@ public class DnD {
 	 */
 	public static final String DND_DATA_PREFIX = "dnd://";
 
-	private static final char DND_DATA_SEPARATOR = '/';
+	/**
+	 * @implNote '/' can not be used as separator, because a part of the data string contains the
+	 *           qualified name of a component which already contains '/'.
+	 */
+	private static final char DND_DATA_SEPARATOR = '|';
 
 	/**
 	 * Control command parameter that receives the drag data URL.
@@ -52,7 +56,7 @@ public class DnD {
 	public static final String DATA_PARAM = "data";
 
 	/**
-	 * Looks up the drag data parameter from the arguments map and parses its contens.
+	 * Looks up the drag data parameter from the arguments map and parses its contents.
 	 * 
 	 * @param context
 	 *        The command {@link DisplayContext}.
@@ -79,14 +83,7 @@ public class DnD {
 		String controlId = dataUrl.substring(controlStartIndex, controlEndIndex);
 		String dataId = dataUrl.substring(refStartIndex);
 
-		LayoutComponent scope;
-		try {
-			scope = context.getLayoutContext().getMainLayout()
-				.getComponentByName(ComponentName.newConfiguredName(DATA_PARAM, scopeName));
-		} catch (ConfigurationException ex) {
-			throw new ConfigurationError(ex);
-		}
-		LayoutComponentScope frameScope = scope.getEnclosingFrameScope();
+		LayoutComponentScope frameScope = getScope(context, scopeName).getEnclosingFrameScope();
 		DragSourceSPI source = (DragSourceSPI) frameScope.getCommandListener(controlId);
 		if (source == null) {
 			// Control was removed in the meanwhile.
@@ -95,6 +92,20 @@ public class DnD {
 		Collection<?> data = getDragData(dataId, source);
 		Function<Object, ModelName> naming = getDragDataName(dataId, source);
 		return new DndData(source, data, naming);
+	}
+
+	private static LayoutComponent getScope(DisplayContext context, String scopeName) {
+		ComponentName componentName;
+		try {
+			componentName = ComponentName.newConfiguredName(DATA_PARAM, scopeName);
+		} catch (ConfigurationException ex) {
+			throw new ConfigurationError(ex);
+		}
+		LayoutComponent component = context.getLayoutContext().getMainLayout().getComponentByName(componentName);
+		if (component == null) {
+			throw new ConfigurationError(I18NConstants.UNKNOWN_COMPONENT__NAME.fill(scopeName));
+		}
+		return component;
 	}
 
 	private static Collection<?> getDragData(String dataId, DragSourceSPI source) {

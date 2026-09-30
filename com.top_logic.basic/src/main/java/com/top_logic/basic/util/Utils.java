@@ -222,7 +222,8 @@ public class Utils {
 	}
 
 	/**
-	 * Helper interface for the {@link #fold(Object, Object)} method declaring a folder function.
+	 * Helper interface for the {@link Utils#fold(Object, Iterator, FolderFunction)} method
+	 * declaring a folder function.
 	 */
 	public static interface FolderFunction {
 		public Object fold(Object currentResult, Object aNewObject);
@@ -324,6 +325,8 @@ public class Utils {
 			return ((Map<?, ?>) value).isEmpty();
 		} else if (value.getClass().isArray()) {
 			return Array.getLength(value) == 0;
+		} else if (value instanceof WithEmptiness emptiness) {
+			return emptiness.isEmpty();
 		} else {
 			return false;
 		}

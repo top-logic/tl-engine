@@ -5,8 +5,10 @@
  */
 package com.top_logic.layout.component;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -30,7 +32,8 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey ERROR_SELECTED_OBJECT_DELETED;
 
-	public static ResKey GENERIC_DELETE = legacyKey("tl.command.delete");
+	@CustomKey("tl.command.delete")
+	public static ResKey GENERIC_DELETE;
 
 	/**
 	 * @en The view was newly created. To remove the view use "delete view".
@@ -41,6 +44,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Deleted object: {0}
 	 */
 	public static ResKey1 DELETED_OBJECT__OBJ;
+
+	/**
+	 * @en Deleted {0}: {1}
+	 */
+	public static ResKey2 DELETED_TYPED__TYPE_OBJ;
 
 	/**
 	 * @en No cards visible.

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -129,13 +130,13 @@ public class CommandChain extends AbstractCommandHandler {
 				if (theResult == null) {
 					theResult = new HandlerResult(/* closeDialog */false);
 				}
-				if (!(ex instanceof TopLogicException)) {
+				if (!(ex instanceof I18NRuntimeException)) {
 					ex = new TopLogicException(CommandChain.class, "error.base.attributes", ex);
 				}
 				if (theResult instanceof DefaultHandlerResult) {
 					theResult = new HandlerResult();
 				}
-				theResult.setException((TopLogicException) ex);
+				theResult.setException((I18NRuntimeException) ex);
 			}
 			/**
 			 * TODO SKR/KHA what about this if (theResult.stopProcessing()) {

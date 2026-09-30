@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.mig.html.DefaultSelectionModelFactory$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.element.layout.meta.FormContextModificatorTemplateParameters, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.form.component.edit.CanLock$Config, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.layout.WithChannelConfigs">
+	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.mig.html.DefaultSelectionModelFactory$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.layout.component.DefaultSelectionProviderConfig, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.element.layout.meta.FormContextModificatorTemplateParameters, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.basic.contextmenu.component.config.WithContextMenu, com.top_logic.layout.form.component.edit.CanLock$Config, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.layout.WithChannelConfigs, com.top_logic.layout.table.component.WithCustomConfigKey">
 		<annotations>
 			<display-order>
 				<value>
@@ -21,6 +21,7 @@
 
 					<property name="multiSelection"/>
 					<property name="defaultSelection"/>
+					<property name="defaultSelectionProvider"/>
 					<property name="showDetailOpener"/>
 					<property name="isSecurityMaster"/>
 
@@ -37,10 +38,12 @@
 					<property name="dragSource"/>
 					<property name="dropTargets"/>
 					<property name="buttons"/>
+					<property name="contextMenu"/>
 					<property name="onSelectionChange"/>
 					<property name="lockHandler"/>
 					<property name="goto-targets"/>
 					<property name="additional-channels"/>
+					<property name="custom-config-key"/>
 				</value>
 			</display-order>
 		</annotations>
@@ -126,10 +129,22 @@
 		<property name="onSelectionChange"
 			instance-type="com.top_logic.layout.component.OnSelectionChangeHandler"
 		/>
+		<property name="contextMenu"
+			instance-type="com.top_logic.layout.basic.contextmenu.ContextMenuProvider"
+			type="PolymorphicConfiguration"
+		>
+			<acceptable-classifiers
+				unclassified="false"
+				value="grid, common"
+			/>
+			<item-default value="com.top_logic.element.layout.grid.GridContextMenuProvider"/>
+		</property>
 	</properties>
 
 	<grid name="Grid"
+		custom-config-key="${custom-config-key}"
 		defaultSelection="${defaultSelection}"
+		defaultSelectionProvider="${defaultSelectionProvider}"
 		deleteCommand=""
 		dialogs="${dialogs}"
 		editCommand="customEdit"
@@ -181,6 +196,7 @@
 		<tables>
 			<table
 				configurationProviders="${configurationProviders}"
+				contextMenu="${contextMenu}"
 				defaultColumns="${defaultColumns}"
 				dragSource="${dragSource}"
 				dropTargets="${dropTargets}"

@@ -22,7 +22,7 @@ import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 /**
  * Control to render an icon for an url.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class GotoLinkControl extends AbstractConstantControl implements ValueListener {
 

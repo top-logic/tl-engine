@@ -184,7 +184,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 					if (found) {
 						Logger.warn("Found multiple KAs for value - removing", this);
 					}
-					DBKnowledgeAssociation.clearDestinationAndRemoveLink(theKAs.currentKA());
+					DBKnowledgeAssociation.clearReferencesAndRemoveLink(theKAs.currentKA());
 					found = true;
 				}
 			}
@@ -372,7 +372,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 		while (theKAs.hasNext()) {
 			try {
 				if (theToRem.contains(WrapperFactory.getWrapper(theKAs.nextKO()))) {
-					DBKnowledgeAssociation.clearDestinationAndRemoveLink(theKAs.currentKA());
+					DBKnowledgeAssociation.clearReferencesAndRemoveLink(theKAs.currentKA());
 				}
 			} catch (DataObjectException ex) {
 				throw new KnowledgeBaseRuntimeException(ex);
@@ -409,7 +409,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 			AbstractWrapper.resolveLinks(aMetaAttributed, getOutgoingQuery()).iterator();
 		while (theKAs.hasNext()) {
 			try {
-				DBKnowledgeAssociation.clearDestinationAndRemoveLink(theKAs.next());
+				DBKnowledgeAssociation.clearReferencesAndRemoveLink(theKAs.next());
 			} catch (DataObjectException dox) {
 				Logger.warn("Cannot remove KA fom KB", this);
 			}
@@ -534,10 +534,12 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 	 *        The history type of the value of the reference.
 	 * @param deletionPolicy
 	 *        The deletion policy of the reference.
+	 * @param unversioned
+	 *        Whether reference values must be stored unversioned.
 	 * @return The {@link SetStorage} configuration.
 	 */
-	public static Config<?> setConfig(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy) {
-		return defaultConfig(Config.class, composite, historyType, deletionPolicy);
+	public static Config<?> setConfig(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy, boolean unversioned) {
+		return defaultConfig(Config.class, composite, historyType, deletionPolicy, unversioned);
 	}
 
 	/**
@@ -593,7 +595,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 					// _base.remove() does *not* remove the association itself, but only sets the
 					// source attribute to null.
 					_base.remove();
-					DBKnowledgeAssociation.clearDestinationAndRemoveLink(_last.getValue());
+					DBKnowledgeAssociation.clearReferencesAndRemoveLink(_last.getValue());
 				}
 
 			};
@@ -622,7 +624,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 				return false;
 			}
 			/* Delete link. The magic of the live links automatically "modifies" this set. */
-			DBKnowledgeAssociation.clearDestinationAndRemoveLink(link);
+			DBKnowledgeAssociation.clearReferencesAndRemoveLink(link);
 			return true;
 
 		}

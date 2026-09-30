@@ -17,7 +17,7 @@ import com.top_logic.basic.module.ManagedClass;
 /**
  * Lock strategy for {@link BasicRuntimeModule}s.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLServiceLockStrategy implements LockStrategy<BasicRuntimeModule<? extends ManagedClass>> {
 

@@ -22,7 +22,7 @@ import com.top_logic.dsa.repos.file.FileRepository;
 /**
  * Test case for the {@link com.top_logic.dsa.repos.RepositoryDataSourceAdaptor}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class TestRepositoryDataSourceAdaptor extends AbstractTestRepositoryDataSourceAdaptor {
 

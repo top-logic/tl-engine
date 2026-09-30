@@ -9,6 +9,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 import junit.framework.TestCase;
@@ -26,7 +29,8 @@ public class TestResourceFile extends TestCase {
 		orig.setProperty("xxx", "yyy\naaa");
 
 		File javaFile = File.createTempFile("resources-standard", ".properties");
-		orig.store(new FileOutputStream(javaFile), "Java standard format");
+		orig.store(new OutputStreamWriter(new FileOutputStream(javaFile), StandardCharsets.UTF_8),
+			"Java standard format");
 
 		ResourceFile loadedResourceFile = new ResourceFile(javaFile);
 		assertEquals(orig, loadedResourceFile.toProperties());
@@ -37,7 +41,7 @@ public class TestResourceFile extends TestCase {
 		normalizedResourceFile.saveAs(normalizedFile);
 
 		Properties loaded = new Properties();
-		loaded.load(new FileInputStream(normalizedFile));
+		loaded.load(new InputStreamReader(new FileInputStream(normalizedFile), StandardCharsets.UTF_8));
 
 		assertEquals(orig, loaded);
 

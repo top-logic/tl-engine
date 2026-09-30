@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/layout.template.xml"
+>
+	<arguments>
+		<components>
+			<layout-reference resource="com.top_logic.demo/structure/aspectInheritance/aspectTreeTree.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<titleProvider class="com.top_logic.layout.provider.label.NoLabelProvider"/>
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+				<layoutInfo size="220px"/>
+			</layout-reference>
+			<layout-reference resource="com.top_logic.demo/structure/aspectInheritance/detailsForm.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<titleProvider class="com.top_logic.layout.provider.label.NoLabelProvider"/>
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+				<layoutInfo/>
+			</layout-reference>
+		</components>
+	</arguments>
+</config:template-call>

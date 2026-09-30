@@ -76,6 +76,8 @@ public abstract class ColumnInfo implements ColumnConfigurator {
 
 	private String _staticCss;
 
+	private boolean _cssOverride;
+
 	private CellClassProvider _cellClassProvider;
 
 	/**
@@ -99,6 +101,7 @@ public abstract class ColumnInfo implements ColumnConfigurator {
 			TLCssClass cssAnnotation = typePart.getAnnotation(TLCssClass.class);
 			if (cssAnnotation != null) {
 				_staticCss = cssAnnotation.getValue();
+				_cssOverride = cssAnnotation.getOverride();
 				PolymorphicConfiguration<? extends CssClassProvider> dynamicCss = cssAnnotation.getDynamicCssClass();
 				if (dynamicCss != null) {
 					CssClassProvider provider = TypedConfigUtil.createInstance(dynamicCss);
@@ -230,7 +233,11 @@ public abstract class ColumnInfo implements ColumnConfigurator {
 		if (column.getPDFRenderer() == null) {
 			setPDFRenderer(column);
 		}
-		if (_staticCss != null) {
+		if (_cssOverride) {
+			// When override is set, always replace existing classes, even with null/empty
+			column.setCssClass(_staticCss);
+		} else if (_staticCss != null) {
+			// Only add if there's actually a class to add
 			column.addCssClass(_staticCss);
 		}
 		if (_cellClassProvider != null) {

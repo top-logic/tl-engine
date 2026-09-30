@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model>
+	<module name="test.com.top_logic.element.model.TestTLObjectChangeSet">
+		<class name="Named">
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+		<class name="A">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+			<attributes>
+				<!-- Redeclared to check for correct part in changes. -->
+				<property name="name"
+					override="true"
+					type="tl.core:String"
+				/>
+				<reference name="b"
+					type="B"
+				/>
+			</attributes>
+		</class>
+
+		<class name="B">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+			<attributes/>
+		</class>
+	</module>
+</model>

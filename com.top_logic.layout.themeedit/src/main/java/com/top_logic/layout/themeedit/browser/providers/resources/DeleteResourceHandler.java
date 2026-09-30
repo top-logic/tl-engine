@@ -26,7 +26,7 @@ import com.top_logic.tool.execution.ExecutableState;
 /**
  * Handler to delete a resource.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DeleteResourceHandler extends AbstractCommandHandler {
 

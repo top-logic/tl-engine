@@ -7,6 +7,9 @@ package com.top_logic.graphic.flow.server.script;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -20,15 +23,22 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
+import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.graphic.blocks.server.svg.SvgTagWriter;
 import com.top_logic.graphic.flow.callback.ClickHandler;
+import com.top_logic.graphic.flow.callback.DiagramContextMenuProvider;
 import com.top_logic.graphic.flow.data.Align;
 import com.top_logic.graphic.flow.data.Alignment;
 import com.top_logic.graphic.flow.data.Border;
@@ -37,6 +47,7 @@ import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.ClipBox;
 import com.top_logic.graphic.flow.data.CompassLayout;
 import com.top_logic.graphic.flow.data.ConnectorSymbol;
+import com.top_logic.graphic.flow.data.ContextMenu;
 import com.top_logic.graphic.flow.data.Decoration;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.DiagramDirection;
@@ -66,8 +77,9 @@ import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.TreeLayout;
 import com.top_logic.graphic.flow.data.VerticalLayout;
+import com.top_logic.graphic.flow.server.ui.AWTContext;
 import com.top_logic.graphic.flow.server.ui.handler.ServerDropHandler;
-import com.top_logic.model.search.expr.ToString;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.operations.ScriptConversion;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
@@ -79,6 +91,8 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 @ScriptPrefix("flow")
 public class FlowFactory extends TLScriptFunctions {
 	
+	private static final String FLOW_CORE_CSS = "/style/tl-flow-core.css";
+
 	/**
 	 * Factory for {@link Diagram}s.
 	 * 
@@ -90,7 +104,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new diagram.
 	 * @return The newly created diagram.
 	 */
-	@SideEffectFree
 	@Label("Create chart")
 	public static Diagram chart(
 		Box root,
@@ -185,7 +198,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new aligned box.
 	 * @return The new aligned box.
 	 */
-	@SideEffectFree
 	@Label("Align")
 	public static Decoration align(
 		@Mandatory Box content,
@@ -217,7 +229,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new stacking box.
 	 * @return The new stacking box.
 	 */
-	@SideEffectFree
 	@Label("Stack elements")
 	public static Stack stack(
 			List<Box> contents,
@@ -254,7 +265,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new border box.
 	 * @return The new border box.
 	 */
-	@SideEffectFree
 	@Label("Create borders")
 	public static Decoration border(
 		Box content,
@@ -295,7 +305,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new fill box.
 	 * @return The new fill box.
 	 */
-	@SideEffectFree
 	@Label("Fill")
 	public static Decoration fill(
 			Box content,
@@ -341,7 +350,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new fill box.
 	 * @return The new positioned box.
 	 */
-	@SideEffectFree
 	@Label("Explicit position")
 	public static Box position(
 			@Mandatory Box content,
@@ -415,7 +423,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new padding box.
 	 * @return The new padding box.
 	 */
-	@SideEffectFree
 	@Label("Create padding")
 	public static Box padding(
 		@Mandatory Box content,
@@ -476,7 +483,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new horizontal box.
 	 * @return The new horizontal box.
 	 */
-	@SideEffectFree
 	@Label("Align horizontal")
 	public static Box horizontal(
 		@Mandatory List<Box> contents,
@@ -518,7 +524,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new horizontal box.
 	 * @return The new horizontal box.
 	 */
-	@SideEffectFree
 	@Label("Align vertical")
 	public static Box vertical(
 		@Mandatory List<Box> contents,
@@ -561,7 +566,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create compass")
 	public static CompassLayout compass(
 		@Mandatory Box center,
@@ -598,7 +602,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create Grid")
 	public static Box grid(
 		@Mandatory List<List<Box>> contents,
@@ -651,7 +654,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create positioning box")
 	public static Box floating(
 			@Mandatory List<? extends Box> contents,
@@ -733,7 +735,7 @@ public class FlowFactory extends TLScriptFunctions {
 			href = data instanceof BinaryDataSource c
 				? "data:" + c.getContentType() + ";base64,"
 					+ Base64.getEncoder().encodeToString(StreamUtilities.readStreamContents(c.toData()))
-				: ToString.toString(data);
+				: SearchExpression.asString(data);
 		} catch (IOException ex) {
 			throw new RuntimeException(ex);
 		}
@@ -794,7 +796,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Make selectable")
 	public static Box selection(
 			@Mandatory Box content,
@@ -808,6 +809,33 @@ public class FlowFactory extends TLScriptFunctions {
 	}
 	
 	/**
+	 * Creates a box that displays a custom context menu.
+	 * 
+	 * @param content
+	 *        Actual content of the box.
+	 * @param menu
+	 *        The context menu handler. Pass in the variable implicitly defined for the context menu
+	 *        handler declared next to the diagram builder.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box. Operations in the context menu operate on this object.
+	 * @return The new box.
+	 */
+	@Label("Context menu")
+	public static Box contextMenu(
+			@Mandatory Box content,
+			@Mandatory DiagramContextMenuProvider menu,
+			String cssClass,
+			Object userObject) {
+		return ContextMenu.create()
+			.setContent(nonNull(content))
+			.setMenuProvider(menu)
+			.setCssClass(cssClass)
+			.setUserObject(userObject);
+	}
+
+	/**
 	 * Creates box that responds to mouse click events.
 	 * 
 	 * @param content
@@ -816,18 +844,20 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        The handler to execute when the mouse click event occurs.
 	 * @param buttons
 	 *        The buttons to react on.
+	 * @param doubleClick
+	 *        Whether to only react on double clicks.
 	 * @param cssClass
 	 *        The css class for the new box.
 	 * @param userObject
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("React on click")
 	public static Box clickTarget(
 			@Mandatory Box content,
 			@Mandatory ClickHandler clickHandler,
 			List<MouseButton> buttons,
+			boolean doubleClick,
 			String cssClass,
 			Object userObject
 			) {
@@ -835,6 +865,7 @@ public class FlowFactory extends TLScriptFunctions {
 			.setContent(nonNull(content))
 			.setClickHandler(clickHandler)
 			.setButtons(buttons)
+			.setDoubleClick(doubleClick)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
@@ -852,7 +883,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create drop region")
 	public static Box dropRegion(
 			@Mandatory Box content,
@@ -879,7 +909,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Add tooltip")
 	public static Box tooltip(
 			@Mandatory String text,
@@ -925,31 +954,58 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @param parentOffset
 	 *        Offset to add to the parent Y coordinate after the alignment operation based on parent
 	 *        ratio.
+	 * @param childSplitThreshold
+	 *        Threshold above which a parent's children are split into a 2D sub-grid instead of a
+	 *        single vertical column. The exact layout depends on {@code rowWise}: column-wise
+	 *        splits the children column-major into sub-columns of at most
+	 *        {@code childSplitThreshold} children with a per-column bus and a bottom-bridge,
+	 *        row-wise splits them row-major into exactly {@code childSplitThreshold} sub-columns
+	 *        and routes all subtrees to a single column to the right of the sub-grid behind one
+	 *        shared vertical bus. A value of 0 disables sub-grid mode (single column per parent).
+	 * @param rowWise
+	 *        Selects the row-wise sub-grid algorithm. See {@code childSplitThreshold} for the
+	 *        difference. Only relevant when {@code childSplitThreshold} triggers sub-grid mode.
+	 * @param subGridCols
+	 *        Number of sub-columns of the row-wise sub-grid. Only relevant when {@code rowWise}
+	 *        is true. If {@code 0}, falls back to {@code childSplitThreshold}.
+	 * @param subGridStartCol
+	 *        Sub-column in which the first sub-grid child (child index 0) is placed; child
+	 *        {@code n} lands in column {@code (n + subGridStartCol) mod C}. Only relevant when
+	 *        {@code rowWise} is true. Defaults to {@code 0}.
+	 * @param bridgeGapY
+	 *        Vertical gap between the bottom of the deepest sub-grid column and the bottom-bridge
+	 *        that connects all sub-grid columns. Only relevant in column-wise sub-grid mode (i.e.
+	 *        when {@code childSplitThreshold} triggers sub-grid mode and {@code rowWise} is
+	 *        false).
 	 * @param cssClass
 	 *        The css class for the new box.
 	 * @param userObject
 	 *        An arbitrary object to associate with the graphics element.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create tree")
 	public static Box tree(
-		@Mandatory List<? extends Box> nodes, 
+		@Mandatory List<? extends Box> nodes,
 		@Mandatory List<? extends TreeConnection> connections,
-		@DoubleDefault(40) double gapX, 
+		@DoubleDefault(40) double gapX,
 		Double gapY,
 		Double sibblingGapY,
 		Double subtreeGapY,
 		DiagramDirection direction,
-		@StringDefault("black") String stroke, 
-		@DoubleDefault(1) double strokeWidth, 
+		@StringDefault("black") String stroke,
+		@DoubleDefault(1) double strokeWidth,
 		boolean compact,
 		@DoubleDefault(0.5)
 			double parentAlign,
 		@DoubleDefault(0)
 		double parentOffset,
+		@IntDefault(0) int childSplitThreshold,
+		boolean rowWise,
+		@IntDefault(0) int subGridCols,
+		@IntDefault(0) int subGridStartCol,
+		Double bridgeGapY,
 		String cssClass,
-		Object userObject 
+		Object userObject
 	) {
 		TreeLayout result = TreeLayout.create()
 			.setNodes(nodes.stream().filter(Objects::nonNull).toList())
@@ -961,6 +1017,10 @@ public class FlowFactory extends TLScriptFunctions {
 			.setCompact(compact)
 			.setParentAlign(parentAlign)
 			.setParentOffset(parentOffset)
+			.setChildSplitThreshold(childSplitThreshold)
+			.setRowWise(rowWise)
+			.setSubGridCols(subGridCols)
+			.setSubGridStartCol(subGridStartCol)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 
@@ -973,6 +1033,9 @@ public class FlowFactory extends TLScriptFunctions {
 		}
 		if (subtreeGapY != null) {
 			result.setSubtreeGapY(subtreeGapY);
+		}
+		if (bridgeGapY != null) {
+			result.setBridgeGapY(bridgeGapY);
 		}
 
 		return result;
@@ -997,7 +1060,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 * 
 	 * @return the new connection.
 	 */
-	@SideEffectFree
 	@Label("Create connection")
 	public static TreeConnection connection(
 		@Mandatory Object parent,
@@ -1044,7 +1106,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 * 
 	 * @return The new decoration.
 	 */
-	@SideEffectFree
 	@Label("Create edge decoration")
 	public static EdgeDecoration decoration(
 			Box content,
@@ -1075,7 +1136,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create connector")
 	public static TreeConnector connector(
 		@Mandatory Box anchor,
@@ -1186,7 +1246,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create polygon")
 	public static PolygonalChain polygon(
 			List<Point> points,
@@ -1218,7 +1277,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Create poly line")
 	public static PolygonalChain polyline(
 			List<Point> points,
@@ -1233,7 +1291,7 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * A {@link Box} whose contents are cut off when they become to large.
-	 * 
+	 *
 	 * @param content
 	 *        The contents to clip.
 	 * @param cssClass
@@ -1242,7 +1300,6 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        User object of the new box.
 	 * @return The new box.
 	 */
-	@SideEffectFree
 	@Label("Clip content")
 	public static ClipBox clipbox(
 			@Mandatory Box content,
@@ -1253,6 +1310,116 @@ public class FlowFactory extends TLScriptFunctions {
 			.setUserObject(userObject)
 			.setClientId(cssClass)
 			.setCssClass(cssClass);
+	}
+
+	/**
+	 * Converts a flow chart diagram to SVG binary data.
+	 *
+	 * <p>
+	 * This function renders the diagram to a standalone SVG document. The resulting SVG can be
+	 * saved, displayed, or converted to other formats (e.g., PDF using {@code pdfFile()}).
+	 * </p>
+	 *
+	 * <p>
+	 * Usage examples:
+	 * </p>
+	 *
+	 * <pre>
+	 * <code>
+	 * // Basic usage with default settings
+	 * flowToSvg(flowChart(flowText("Hello")))
+	 *
+	 * // With custom filename and text size
+	 * flowToSvg(
+	 *     flowChart(flowVbox(flowText("Header"), flowText("Content"))),
+	 *     filename: "my-chart.svg",
+	 *     textSize: 14.0
+	 * )
+	 *
+	 * // With fixed dimensions
+	 * flowToSvg($myDiagram, width: 800.0, height: 600.0)
+	 *
+	 * // Combined with PDF generation
+	 * pdfFile(flowToSvg($diagram), "chart.pdf")
+	 * </code>
+	 * </pre>
+	 *
+	 * @param diagram
+	 *        The diagram to render.
+	 * @param filename
+	 *        The filename for the resulting SVG file.
+	 * @param textSize
+	 *        The font size in points used for text measurement during layout.
+	 * @param width
+	 *        The fixed width of the SVG <code>viewBox</code>, or <code>null</code> for auto-sizing
+	 *        based on content.
+	 * @param height
+	 *        The fixed height of the SVG <code>viewBox</code>, or <code>null</code> for auto-sizing
+	 *        based on content.
+	 * @return {@link BinaryData} containing the SVG document with content type
+	 *         <code>"image/svg+xml"</code>.
+	 */
+	@Label("Export as SVG")
+	public static BinaryData toSvg(
+			@Mandatory Diagram diagram,
+			@StringDefault("diagram.svg") String filename,
+			@DoubleDefault(12.0) double textSize,
+			Double width,
+			Double height) {
+		// Ensure .svg extension
+		if (!filename.toLowerCase().endsWith(".svg")) {
+			filename = filename + ".svg";
+		}
+
+		// Create render context for text measurement
+		AWTContext context = new AWTContext((float) textSize);
+
+		// Apply explicit viewBox dimensions before layout so they win over the auto-fit defaults
+		// applied by Diagram.layout() based on the laid-out root size.
+		if (width != null) {
+			diagram.setViewBoxWidth(width);
+		}
+		if (height != null) {
+			diagram.setViewBoxHeight(height);
+		}
+
+		diagram.layout(context);
+
+		// Render to SVG. The font defaults the layout measured with are embedded by
+		// Diagram.draw(SvgWriter, RenderContext, CharSequence).
+		StringWriter buffer = new StringWriter();
+		try (TagWriter tagWriter = new TagWriter(buffer);
+				SvgTagWriter svgWriter = new SvgTagWriter(tagWriter)) {
+			diagram.draw(svgWriter, context, exportStyles());
+		} catch (IOException ex) {
+			throw new RuntimeException("Failed to generate SVG: " + ex.getMessage(), ex);
+		}
+
+		// Convert to binary data
+		byte[] svgBytes = buffer.toString().getBytes(StandardCharsets.UTF_8);
+		return BinaryDataFactory.createBinaryData(svgBytes, "image/svg+xml", filename);
+	}
+
+	/**
+	 * The application's diagram stylesheet, embedded into an exported SVG so that it renders
+	 * outside the application without an external stylesheet.
+	 *
+	 * @return The CSS rules, or {@code null} if the stylesheet cannot be read.
+	 */
+	private static CharSequence exportStyles() {
+		BinaryData styles = FileManager.getInstance().getDataOrNull(FLOW_CORE_CSS);
+		if (styles == null) {
+			Logger.warn("Missing PDF export styles: " + FLOW_CORE_CSS, FlowFactory.class);
+			return null;
+		}
+		StringWriter buffer = new StringWriter();
+		try (InputStream in = styles.getStream()) {
+			StreamUtilities.copyReaderWriterContents(new InputStreamReader(in, StandardCharsets.UTF_8), buffer);
+		} catch (IOException ex) {
+			Logger.error("Failed to copy styles.", ex, FlowFactory.class);
+			return null;
+		}
+		return buffer.toString();
 	}
 
 }

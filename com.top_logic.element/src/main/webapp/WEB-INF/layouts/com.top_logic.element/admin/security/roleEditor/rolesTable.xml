@@ -22,7 +22,7 @@
 			value="true"
 		/>
 		<param name="builderClass"
-			value="com.top_logic.element.layout.role.ScopedRolesTableModelBuilder"
+			value="com.top_logic.tool.boundsec.gui.RolesTableModelBuilder"
 		/>
 		<param name="defaultSortOrder"
 			value="name"
@@ -31,7 +31,6 @@
 
 	<tableView name="${namePrefix}Table"
 		isSecurityMaster="${isSecurityMaster}"
-		model="selection(com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree)"
 		modelBuilder="${builderClass}"
 		objectType="tl.accounts:Role"
 		partnerGroup="RoleTableGroup"

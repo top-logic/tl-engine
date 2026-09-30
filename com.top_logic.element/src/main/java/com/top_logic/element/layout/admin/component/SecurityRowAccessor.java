@@ -8,15 +8,16 @@ package com.top_logic.element.layout.admin.component;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.ReadOnlyAccessor;
+import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class SecurityRowAccessor extends ReadOnlyAccessor<SecurityRow> {
 
@@ -61,7 +62,7 @@ public class SecurityRowAccessor extends ReadOnlyAccessor<SecurityRow> {
 		else if (aKey.equals(SecurityRowAccessor.REASON)) {
 			Object reason = aRow.getReason();
 			if (SecurityStorage.REASON_HAS_ROLE.equals(reason)) {
-				return BoundedRole.HAS_ROLE_ASSOCIATION;
+				return BoundedRole.ROLE_ASSIGNMENT_OBJECT_NAME;
 			}
 			return reason;
 		}
@@ -88,17 +89,14 @@ public class SecurityRowAccessor extends ReadOnlyAccessor<SecurityRow> {
 		else if (aKey.equals(SecurityRowAccessor.SEC_PARENT)) {
 			Object theBO = aRow.getBO();
 
-			return (theBO instanceof BoundObject) ? ((BoundObject) theBO).getSecurityParent() : null;
+			return (theBO instanceof BoundObject) ? ((BoundObject) theBO).getSecurityParents() : null;
 		}
 		else if (aKey.equals(SecurityRowAccessor.SEC_PARENTS)) {
 			List<BoundObject> theList   = new ArrayList<>();
 			Object            theBO     = aRow.getBO();
-			BoundObject       theParent = (theBO instanceof BoundObject) ? ((BoundObject) theBO).getSecurityParent() : null;
-
-            while (theParent != null) {
-                theList.add(theParent);
-                theParent = theParent.getSecurityParent();
-            }
+			if (theBO instanceof BoundObject) {
+				BoundHelper.collectAllSecurityParents((BoundObject) theBO, theList::add);
+			}
 
             return theList;
 		}

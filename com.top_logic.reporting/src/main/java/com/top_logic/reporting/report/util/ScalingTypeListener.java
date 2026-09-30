@@ -13,7 +13,7 @@ import com.top_logic.layout.form.model.SelectField;
  * {@link ValueListener} that sets a given {@link SelectField} enabled if its single selection
  * equals the given {@link String} or disabled else.
  * 
- * @author <a href=mailto:jes@top-logic.com>Jens Sch‰fer</a>
+ * @author <a href=mailto:jes@top-logic.com>Jens Sch√§fer</a>
  */
 public class ScalingTypeListener implements ValueListener {
 	private SelectField _targetField;

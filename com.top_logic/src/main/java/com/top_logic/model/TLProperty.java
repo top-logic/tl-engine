@@ -16,7 +16,7 @@ import com.top_logic.model.impl.generated.TLPropertyBase;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Label("Object property")
-public interface TLProperty extends DerivedTLTypePart, TLPropertyBase {
+public interface TLProperty extends TLPropertyBase {
 
 	@Override
 	default ModelKind getModelKind() {

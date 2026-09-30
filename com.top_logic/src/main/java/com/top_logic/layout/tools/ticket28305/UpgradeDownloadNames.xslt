@@ -53,6 +53,22 @@
 		</xsl:copy>
 	</xsl:template>
 
+	<xsl:template match="exportNameKey[parent::button[@class='com.top_logic.layout.table.export.StreamingExcelExportHandler' and not(@dynamic-download-name) and not(dynamic-download-name)]]">
+		<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName">
+			<downloadName>
+				<xsl:apply-templates select="node()|@*"/>
+			</downloadName>
+		</downloadNameProvider>
+	</xsl:template>
+
+	<xsl:template match="downloadNameKey[parent::button[@class='com.top_logic.layout.table.export.ExcelExportHandler' and not(@dynamic-download-name) and not(dynamic-download-name)]]">
+		<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName">
+			<downloadName>
+				<xsl:apply-templates select="node()|@*"/>
+			</downloadName>
+		</downloadNameProvider>
+	</xsl:template>
+
 	<xsl:template match="button[@downloadNameKey and @dynamic-download-name]">
 		<xsl:copy>
 			<xsl:apply-templates select="node()|@*"/>
@@ -74,23 +90,43 @@
 	</xsl:template>
 
 	<xsl:template match="dynamic-download-name[parent::button]">
-		<xsl:element name="downloadName">
+		<xsl:element name="downloadNameProvider">
 			<xsl:apply-templates select="@*"/>
-			
+
+			<!-- Attribute forms first: attributes must be emitted before any content. -->
 			<xsl:if test="parent::button/@exportNameKey">
 				<xsl:attribute name="downloadNameTemplate">
 					<xsl:value-of select="parent::button/@exportNameKey"/>
 				</xsl:attribute>
 			</xsl:if>
-			
+
 			<xsl:if test="parent::button/@downloadNameKey">
 				<xsl:attribute name="downloadNameTemplate">
 					<xsl:value-of select="parent::button/@downloadNameKey"/>
 				</xsl:attribute>
 			</xsl:if>
-			
+
 			<xsl:apply-templates select="node()"/>
+
+			<!-- Tag forms afterwards: they create child elements, so they must come after the attributes. -->
+			<xsl:if test="parent::button/exportNameKey">
+				<downloadNameTemplate>
+					<xsl:apply-templates select="parent::button/exportNameKey/@*|parent::button/exportNameKey/node()"/>
+				</downloadNameTemplate>
+			</xsl:if>
+
+			<xsl:if test="parent::button/downloadNameKey">
+				<downloadNameTemplate>
+					<xsl:apply-templates select="parent::button/downloadNameKey/@*|parent::button/downloadNameKey/node()"/>
+				</downloadNameTemplate>
+			</xsl:if>
 		</xsl:element>
+	</xsl:template>
+
+	<xsl:template match="exportNameKey[parent::button[dynamic-download-name]]">
+	</xsl:template>
+
+	<xsl:template match="downloadNameKey[parent::button[dynamic-download-name]]">
 	</xsl:template>
 
 	<xsl:template match="configurationProvider[@class='com.top_logic.bpe.app.layout.tiles.ContextTableConfiguration' and @name-of-export-file]">

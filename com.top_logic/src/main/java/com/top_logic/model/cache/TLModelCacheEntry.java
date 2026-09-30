@@ -30,6 +30,8 @@ import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.TooltipProvider;
 import com.top_logic.layout.provider.icon.IconProvider;
 import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLClass;
@@ -40,6 +42,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.ui.ValueColorProvider;
 import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.composite.ContainerStorage;
 import com.top_logic.model.composite.LinkTable;
@@ -67,6 +70,8 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 
 	private final Map<TLClass, ImmutableSet<TLClassPart>> _attributesOfSubClasses = map();
 
+	private final Map<TLStructuredTypePart, ImmutableSet<TLStructuredTypePart>> _overridesOfPart = map();
+
 	private final Map<TLStructuredType, List<TLObjectInitializer>> _initializers = map();
 
 	/**
@@ -90,6 +95,12 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 	private volatile Map<ObjectBranchId, CompositionStorages> _compositionStorages = null;
 
 	private final ConcurrentMap<TLType, IconProvider> _iconProviderByType = new ConcurrentHashMap<>();
+
+	private final ConcurrentMap<TLType, TooltipProvider> _tooltipProviderByType = new ConcurrentHashMap<>();
+
+	private final ConcurrentMap<TLType, LabelProvider> _labelProviderByType = new ConcurrentHashMap<>();
+
+	private final ConcurrentMap<TLType, ValueColorProvider> _colorProviderByType = new ConcurrentHashMap<>();
 
 	private final ConcurrentMap<TLStructuredTypePart, ImmutableSet<TLStructuredTypePart>> _concreteOverridesByPart =
 		new ConcurrentHashMap<>();
@@ -116,12 +127,17 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 
 	private final KnowledgeBase _knowledgeBase;
 
-	TLModelCacheEntry(KnowledgeBase knowledgeBase) {
+	/**
+	 * Creates a new {@link TLModelCacheEntry}.
+	 */
+	protected TLModelCacheEntry(KnowledgeBase knowledgeBase) {
 		_knowledgeBase = knowledgeBase;
 	}
 
-	private TLModelCacheEntry(TLModelCacheEntry otherEntry) {
-		_knowledgeBase = otherEntry._knowledgeBase;
+	/**
+	 * Initializes this {@link TLModelCacheEntry} from the given one.
+	 */
+	protected void initFrom(TLModelCacheEntry otherEntry) {
 		/* The unsynchronized access to the fields of the other entry is correct here, as the caller
 		 * (the copy() method) is synchronized on the otherEntry. And just reusing the Map values of
 		 * the other entry without copying them, too, is correct, as they are immutable and can
@@ -131,7 +147,9 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		_potentialTables.putAll(otherEntry._potentialTables);
 		_allAttributes.putAll(otherEntry._allAttributes);
 		_attributesOfSubClasses.putAll(otherEntry._attributesOfSubClasses);
+		_overridesOfPart.putAll(otherEntry._overridesOfPart);
 		_iconProviderByType.putAll(otherEntry._iconProviderByType);
+		_colorProviderByType.putAll(otherEntry._colorProviderByType);
 		_concreteOverridesByPart.putAll(otherEntry._concreteOverridesByPart);
 
 		Set<TLClass> otherGlobalAppModelClasses = otherEntry._globalAppModelClasses;
@@ -142,7 +160,9 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 
 	@Override
 	public synchronized TLModelCacheEntry copy() {
-		return new TLModelCacheEntry(this);
+		TLModelCacheEntry copy = new TLModelCacheEntry(_knowledgeBase);
+		copy.initFrom(this);
+		return copy;
 	}
 
 	@Override
@@ -215,6 +235,15 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		}
 		return computeIfAbsent(_attributesOfSubClasses, tlClass,
 			key -> immutableCopy(computeAttributesOfSubClasses(key)));
+	}
+
+	@Override
+	protected Set<TLStructuredTypePart> computeOverrides(TLClass owner, TLStructuredTypePart part) {
+		if (!canBeCached(owner)) {
+			return super.computeOverrides(owner, part);
+		}
+		return computeIfAbsent(_overridesOfPart, part,
+			key -> immutableCopy(super.computeOverrides(owner, key)));
 	}
 
 	@Override
@@ -306,6 +335,45 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			return computedResult;
 		}
 		return MapUtil.putIfAbsent(_iconProviderByType, type, computedResult);
+	}
+
+	@Override
+	public ValueColorProvider getColorProvider(TLType type) {
+		ValueColorProvider cachedResult = _colorProviderByType.get(type);
+		if (cachedResult != null) {
+			return cachedResult;
+		}
+		ValueColorProvider computedResult = super.getColorProvider(type);
+		if (!canModelPartBeCached(type)) {
+			return computedResult;
+		}
+		return MapUtil.putIfAbsent(_colorProviderByType, type, computedResult);
+	}
+
+	@Override
+	public TooltipProvider getTooltipProvider(TLType type) {
+		TooltipProvider cachedResult = _tooltipProviderByType.get(type);
+		if (cachedResult != null) {
+			return cachedResult;
+		}
+		TooltipProvider computedResult = super.getTooltipProvider(type);
+		if (!canModelPartBeCached(type)) {
+			return computedResult;
+		}
+		return MapUtil.putIfAbsent(_tooltipProviderByType, type, computedResult);
+	}
+
+	@Override
+	public LabelProvider getLabelProvider(TLType type) {
+		LabelProvider cachedResult = _labelProviderByType.get(type);
+		if (cachedResult != null) {
+			return cachedResult;
+		}
+		LabelProvider computedResult = super.getLabelProvider(type);
+		if (!canModelPartBeCached(type)) {
+			return computedResult;
+		}
+		return MapUtil.putIfAbsent(_labelProviderByType, type, computedResult);
 	}
 
 	@Override
@@ -402,7 +470,10 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		return getKnowledgeBase().equals(modelPart.tKnowledgeBase());
 	}
 
-	private KnowledgeBase getKnowledgeBase() {
+	/**
+	 * The {@link KnowledgeBase} for which this cache is created.
+	 */
+	protected KnowledgeBase getKnowledgeBase() {
 		return _knowledgeBase;
 	}
 
@@ -413,7 +484,9 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		_potentialTables.clear();
 		_allAttributes.clear();
 		_attributesOfSubClasses.clear();
+		_overridesOfPart.clear();
 		_iconProviderByType.clear();
+		_colorProviderByType.clear();
 		_initializers.clear();
 		_globalAppModelClasses = null;
 		_globalClasses = null;
@@ -427,7 +500,9 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			.add("potentialTables", _potentialTables.size())
 			.add("allAttributes", _allAttributes.size())
 			.add("attributesOfSubClasses", _attributesOfSubClasses.size())
+			.add("overridesOfPart", _overridesOfPart.size())
 			.add("iconProviderByType", _iconProviderByType.size())
+			.add("colorProviderByType", _colorProviderByType.size())
 			.add("globalAppModelClasses", _globalAppModelClasses == null ? "null" : _globalAppModelClasses.size())
 			.add("globalClasses", _globalClasses == null ? null : _globalClasses.size())
 			.add("initializers", _initializers.size())

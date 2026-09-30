@@ -254,7 +254,7 @@ class InitialOperation extends CopyOperationImpl {
 				continue;
 			}
 
-			Object value = orig.tValue(part);
+			Object value = readValue(orig, part);
 			if (!_filter.accept(part, value, orig)) {
 				continue;
 			}

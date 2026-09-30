@@ -1,0 +1,35 @@
+<h2>Syntax</h2>
+<pre>	<code>enumName($enum)
+</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Gibt den serialisierten Namen der Java-Enum-Konstante <code class="hljs inlineCode">enum</code> zur&#xFC;ck. Der serialisierte Name ist der Name, der in Konfigurationsdateien (XML, JSON) verwendet wird. Bei normalen Java-Enums entspricht dieser dem Namen der Java-Konstante. Bei Enums, die <code class="hljs inlineCode">ExternallyNamed</code> implementieren oder mit <code class="hljs inlineCode">@Name</code> annotiert sind, kann der serialisierte Name vom Java-Konstantennamen abweichen.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>enum</td>
+   <td>Enum</td>
+   <td>Die Java-Enum-Konstante, deren serialisierter Name bestimmt werden soll.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>R&#xFC;ckgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zeichenkette</p>
+<p>Der serialisierte Name der Enum-Konstante <code class="hljs inlineCode">enum</code>.</p>
+<h2>Beispiele</h2>
+<h3>Serialisierten Namen einer Enum-Konstante ermitteln</h3>
+<pre><code>enumName(resolveEnum("com.top_logic.basic.config.MapOperation", "add"))</code></pre>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">"add"</code></p>
+<p>Der serialisierte Name der Konstante <code class="hljs inlineCode">MapOperation.ADD</code>.</p>

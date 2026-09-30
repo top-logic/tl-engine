@@ -88,11 +88,13 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 	 *        The history type of the value of the reference.
 	 * @param deletionPolicy
 	 *        The deletion policy of the reference.
+	 * @param unversioned
+	 *        Whether reference values must be stored unversioned.
 	 * @return The storage configuration.
 	 */
 	public static Config<?> singletonLinkConfig(boolean composite, HistoryType historyType,
-			DeletionPolicy deletionPolicy) {
-		return LinkStorage.defaultConfig(Config.class, composite, historyType, deletionPolicy);
+			DeletionPolicy deletionPolicy, boolean unversioned) {
+		return LinkStorage.defaultConfig(Config.class, composite, historyType, deletionPolicy, unversioned);
 	}
 
 	@Override
@@ -117,6 +119,11 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 	}
 
 	@Override
+	public String getBaseObjectColumn() {
+		return DBKnowledgeAssociation.REFERENCE_SOURCE_NAME;
+	}
+
+	@Override
 	public String getStorageColumn() {
 		return DBKnowledgeAssociation.REFERENCE_DEST_NAME;
 	}
@@ -124,7 +131,7 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 	@Override
 	public ObjectKey getPartId(Map<String, Object> row) {
 		if (monomophicTable()) {
-			return getAttribute().tId();
+			return getAttribute().getDefinition().tId();
 		} else {
 			return (ObjectKey) row.get(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR);
 		}
@@ -163,7 +170,7 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 
 			// delete it
 			if (link != null) {
-				DBKnowledgeAssociation.clearDestinationAndRemoveLink(link);
+				DBKnowledgeAssociation.clearReferencesAndRemoveLink(link);
 			}
 
 			// create new association

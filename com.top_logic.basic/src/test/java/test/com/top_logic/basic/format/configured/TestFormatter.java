@@ -68,7 +68,7 @@ public class TestFormatter extends BasicTestCase {
 		assertEquals(Double.valueOf(1234.56), fm.parseNumber("1.234,56"));
         assertNull  (fm.parseNumber(null));
         assertNull  (fm.parseNumber(""));
-        assertNull  (fm.parseNumber("Das iss avver Übel"));
+        assertNull  (fm.parseNumber("Das iss avver Ãœbel"));
 
 		assertEquals("1.234", fm.formatNumber(Integer.valueOf(1234)));
 		assertEquals("1.234,56", fm.formatNumber(Double.valueOf(1234.56)));
@@ -187,7 +187,7 @@ public class TestFormatter extends BasicTestCase {
 		assertEquals(Double.valueOf(1234.56), fm.parseNumber("1,234.56"));
         assertNull  (fm.parseNumber(null));
         assertNull  (fm.parseNumber(""));
-        assertNull  (fm.parseNumber("Das iss avver Übel"));
+        assertNull  (fm.parseNumber("Das iss avver Ãœbel"));
         
         assertNotNull(fm.toString());
         
@@ -494,6 +494,25 @@ public class TestFormatter extends BasicTestCase {
 
 		assertEquals("Copy of default format must be modifiable!", expected,
 			dateFormatCopy.isLenient());
+	}
+
+	/**
+	 * The formats handed out by the {@link Formatter} answer for the settings of the format they
+	 * apply, so a caller can ask how a number is written before writing it.
+	 */
+	public void testDefaultNumberFormatSettings() {
+		Formatter htmlFormatter = getHTMLFormatterGerman();
+
+		NumberFormat doubleFormat = htmlFormatter.getDoubleFormat();
+		assertEquals("The double format writes two decimal places.", 2, doubleFormat.getMaximumFractionDigits());
+		assertEquals(2, doubleFormat.getMinimumFractionDigits());
+		assertTrue("The double format groups the digits.", doubleFormat.isGroupingUsed());
+		assertEquals("12.345,68", doubleFormat.format(12345.678d));
+
+		NumberFormat longFormat = htmlFormatter.getLongFormat();
+		assertEquals("The long format writes no decimal places.", 0, longFormat.getMaximumFractionDigits());
+		assertTrue("The long format reads whole numbers only.", longFormat.isParseIntegerOnly());
+		assertEquals(NumberFormat.getIntegerInstance(Locale.GERMAN).isGroupingUsed(), longFormat.isGroupingUsed());
 	}
 
 	public void testFailModifyDefaultNumberFormat() {

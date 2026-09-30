@@ -1,0 +1,721 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react.control.tree;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.top_logic.layout.component.model.SelectionEvent;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.controlprovider.ReactControlProvider;
+import com.top_logic.layout.tree.dnd.TreeDropTarget;
+import com.top_logic.layout.tree.model.TreeUIModel;
+import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.table.SelectionMode;
+import com.top_logic.tool.boundsec.HandlerResult;
+
+/**
+ * Server-side React control that renders a tree with lazy-loaded children.
+ *
+ * <p>
+ * The tree is flattened into a list of visible nodes, each annotated with its depth. Node content
+ * is delegated to child {@link ReactControl}s created by a {@link ReactControlProvider}, which
+ * receives the business object a node stands for
+ * ({@link TreeUIModel#getBusinessObject(Object)}), not the node itself. A node therefore displays
+ * its object exactly as any other place displaying the same object does, down to being a link to
+ * where the application shows it. Expansion, collapse, selection and activation are handled
+ * server-side via commands.
+ * </p>
+ */
+public class ReactTreeControl extends ReactControl {
+
+	// -- Command names --
+
+	/** @see #handleExpand(ExpandNodeArguments) */
+	private static final String EXPAND_COMMAND = "expand";
+
+	/** @see #handleCollapse(CollapseNodeArguments) */
+	private static final String COLLAPSE_COMMAND = "collapse";
+
+	/** Id of the command a click on a node sends, see {@link #handleSelect(SelectNodeArguments)}. */
+	public static final String SELECT_COMMAND = "select";
+
+	/**
+	 * Id of the command opening a node sends, see {@link #handleActivate(ActivateNodeArguments)}.
+	 */
+	public static final String ACTIVATE_COMMAND = "activate";
+
+	/** @see #handleContextMenu(ContextMenuArguments) */
+	private static final String CONTEXT_MENU_COMMAND = "contextMenu";
+
+	/** @see #handleDragOver(DragOverArguments) */
+	private static final String DRAG_OVER_COMMAND = "dragOver";
+
+	/** @see #handleDrop(DropArguments) */
+	private static final String DROP_COMMAND = "drop";
+
+	// -- State keys --
+
+	/** State key of the list of the displayed nodes, in display order. */
+	public static final String NODES = "nodes";
+
+	/** @see #setSelectionMode(SelectionMode) */
+	private static final String SELECTION_MODE = "selectionMode";
+
+	/** @see #setDragEnabled(boolean) */
+	private static final String DRAG_ENABLED = "dragEnabled";
+
+	/** @see #setDropEnabled(boolean) */
+	private static final String DROP_ENABLED = "dropEnabled";
+
+	/** @see #handleDragOver(DragOverArguments) */
+	private static final String DROP_INDICATOR_NODE_ID = "dropIndicatorNodeId";
+
+	/** @see #handleDragOver(DragOverArguments) */
+	private static final String DROP_INDICATOR_POSITION = "dropIndicatorPosition";
+
+	// -- Node state keys (used in {@link #addNodeState}) --
+
+	/** Node state key of the id the client sends back with a gesture on that node. */
+	public static final String NODE_ID = "id";
+
+	/** Nesting depth (0 for top-level visible nodes). */
+	private static final String NODE_DEPTH = "depth";
+
+	/** Whether the node has children and can be expanded. */
+	private static final String NODE_EXPANDABLE = "expandable";
+
+	/** Whether the node is currently expanded. */
+	private static final String NODE_EXPANDED = "expanded";
+
+	/** Whether the node is a leaf (no children). */
+	private static final String NODE_LEAF = "leaf";
+
+	/** Whether the node is currently loading children. */
+	private static final String NODE_LOADING = "loading";
+
+	/** Whether the node is selected. */
+	private static final String NODE_SELECTED = "selected";
+
+	/** The child {@link ReactControl} rendering the node content. */
+	private static final String NODE_CONTENT = "content";
+
+	// -- Nested interfaces --
+
+	/**
+	 * Provider for opening context menus on tree nodes.
+	 */
+	@FunctionalInterface
+	public interface ContextMenuProvider {
+		/**
+		 * Opens a context menu for the given node at the specified coordinates.
+		 *
+		 * @param tree
+		 *        The tree control.
+		 * @param node
+		 *        The node that was right-clicked.
+		 * @param x
+		 *        The client X coordinate.
+		 * @param y
+		 *        The client Y coordinate.
+		 */
+		void openContextMenu(ReactTreeControl tree, Object node, int x, int y);
+	}
+
+	/**
+	 * Notified when a node is activated: opened by a double-click, or by {@code Enter} while it
+	 * carries the keyboard focus.
+	 */
+	@FunctionalInterface
+	public interface ActivationHandler {
+
+		/**
+		 * Called after the activated node became the tree's selection.
+		 *
+		 * @param node
+		 *        The activated node, as the tree model holds it.
+		 * @return The outcome reported to the client (and to a scripted replay).
+		 */
+		HandlerResult nodeActivated(Object node);
+	}
+
+	// -- Fields --
+
+	private TreeUIModel<Object> _treeModel;
+
+	@SuppressWarnings("rawtypes")
+	private SelectionModel _selectionModel;
+
+	private final ReactControlProvider _contentProvider;
+
+	private SelectionMode _selectionMode = SelectionMode.SINGLE;
+
+	private boolean _dragEnabled;
+
+	private boolean _dropEnabled;
+
+	private ContextMenuProvider _contextMenuProvider;
+
+	/** What a node activation runs, {@code null} for a tree whose nodes cannot be opened. */
+	private ActivationHandler _activationHandler;
+
+	private List<TreeDropTarget> _dropTargets = new ArrayList<>();
+
+	/** The node ID currently showing a drop indicator, or null. */
+	private String _dropIndicatorNodeId;
+
+	/** The current drop position indicator. */
+	private String _dropIndicatorPosition;
+
+	/** Index into the flat visible node list of the last anchor-setting click, or -1. */
+	private int _selectionAnchor = -1;
+
+	/** Whether the last anchor-setting action was an add or remove. */
+	private boolean _anchorAdded = true;
+
+	/** Cache of content controls for visible nodes. Keyed by node object. */
+	private final Map<Object, ReactControl> _nodeControlCache = new LinkedHashMap<>();
+
+	/**
+	 * Creates a new {@link ReactTreeControl}.
+	 *
+	 * @param treeModel
+	 *        The tree model providing structure and expansion state.
+	 * @param selectionModel
+	 *        The selection model.
+	 * @param contentProvider
+	 *        Provider for creating node content controls. It is called with the business object a
+	 *        node stands for, see {@link TreeUIModel#getBusinessObject(Object)}.
+	 */
+	@SuppressWarnings("unchecked")
+	public ReactTreeControl(ReactContext context, TreeUIModel<?> treeModel, SelectionModel<?> selectionModel,
+			ReactControlProvider contentProvider) {
+		super(context, null, "TLTreeView");
+		_treeModel = (TreeUIModel<Object>) treeModel;
+		_selectionModel = selectionModel;
+		_contentProvider = contentProvider;
+
+		setSelectionMode(_selectionMode);
+		setDragEnabled(false);
+		setDropEnabled(false);
+		buildFullState();
+	}
+
+	/**
+	 * Sets whether the user may select one node at a time, or any number of them.
+	 *
+	 * @param mode
+	 *        The selection mode, {@link SelectionMode#SINGLE} by default.
+	 */
+	public void setSelectionMode(SelectionMode mode) {
+		_selectionMode = mode;
+		putState(SELECTION_MODE, mode.getExternalName());
+	}
+
+	/**
+	 * Whether more than one node may be selected at a time.
+	 */
+	private boolean multiSelection() {
+		return _selectionMode == SelectionMode.MULTI;
+	}
+
+	/**
+	 * Replaces the tree model and rebuilds the control state.
+	 *
+	 * @param treeModel
+	 *        The new tree model.
+	 */
+	@SuppressWarnings("unchecked")
+	public void setTreeModel(TreeUIModel<?> treeModel) {
+		_treeModel = (TreeUIModel<Object>) treeModel;
+		_nodeControlCache.clear();
+		buildFullState();
+	}
+
+	/**
+	 * Replaces the selection model and rebuilds the control state.
+	 *
+	 * @param selectionModel
+	 *        The new selection model.
+	 */
+	public void setSelectionModel(SelectionModel<?> selectionModel) {
+		_selectionModel = selectionModel;
+		buildFullState();
+	}
+
+	/**
+	 * Enables or disables drag from tree nodes.
+	 */
+	public void setDragEnabled(boolean enabled) {
+		_dragEnabled = enabled;
+		putState(DRAG_ENABLED, Boolean.valueOf(enabled));
+	}
+
+	/**
+	 * Enables or disables drop onto tree nodes.
+	 */
+	public void setDropEnabled(boolean enabled) {
+		_dropEnabled = enabled;
+		putState(DROP_ENABLED, Boolean.valueOf(enabled));
+	}
+
+	/**
+	 * Sets the context menu provider.
+	 */
+	public void setContextMenuProvider(ContextMenuProvider provider) {
+		_contextMenuProvider = provider;
+	}
+
+	/**
+	 * Sets what a node activation runs, replacing any handler set before.
+	 *
+	 * <p>
+	 * The handler is called with the activated node, after that node became the tree's selection.
+	 * Without one, a double-click and {@code Enter} select the node and do nothing further.
+	 * </p>
+	 *
+	 * @param handler
+	 *        The handler to call, {@code null} to make the nodes unopenable again.
+	 */
+	public void setActivationHandler(ActivationHandler handler) {
+		_activationHandler = handler;
+	}
+
+	/**
+	 * Adds a drop target to this tree.
+	 */
+	public void addDropTarget(TreeDropTarget target) {
+		_dropTargets.add(target);
+	}
+
+	/**
+	 * Removes the cached content control for the given node.
+	 *
+	 * <p>
+	 * The next {@link #updateVisibleState()} call will recreate the control with current data.
+	 * All other cached controls remain untouched.
+	 * </p>
+	 *
+	 * @param node
+	 *        The tree node whose content control should be invalidated.
+	 */
+	public void invalidateNodeControl(Object node) {
+		ReactControl control = _nodeControlCache.remove(node);
+		if (control != null) {
+			control.cleanupTree();
+		}
+	}
+
+	/**
+	 * Rebuilds the visible node state from the current tree model.
+	 *
+	 * <p>
+	 * Reuses cached content controls where available. Controls for nodes that are no longer
+	 * visible (e.g. deleted or collapsed) are automatically removed from the cache. Controls
+	 * that were previously invalidated via {@link #invalidateNodeControl(Object)} are recreated.
+	 * </p>
+	 */
+	public void updateVisibleState() {
+		buildFullState();
+	}
+
+	// -- Rendering --
+
+	@Override
+	protected void onBeforeWrite() {
+		super.onBeforeWrite();
+		if (_nodeControlCache.isEmpty()) {
+			// After a detach/reattach cycle, _nodeControlCache was cleared by cleanupNodeControls()
+			// but _reactState still has stale node references. Rebuild the cache and state from the
+			// tree model. State written while rendering is part of the rendered output, so
+			// putState() stores locally without sending a PatchEvent.
+			buildFullState();
+		}
+	}
+
+	// -- State building --
+
+	private void buildFullState() {
+		// Collect the new set of visible nodes and build their state.
+		List<Map<String, Object>> nodeStates = new ArrayList<>();
+		Set<Object> newVisibleNodes = new HashSet<>();
+		Object root = _treeModel.getRoot();
+		if (_treeModel.isRootVisible()) {
+			newVisibleNodes.add(root);
+			addNodeState(nodeStates, root, 0);
+		}
+		if (!_treeModel.isRootVisible() || _treeModel.isExpanded(root)) {
+			addChildStates(nodeStates, root, _treeModel.isRootVisible() ? 1 : 0, newVisibleNodes);
+		}
+
+		// Remove controls for nodes that are no longer visible.
+		List<Object> toRemove = new ArrayList<>();
+		for (Object cachedNode : _nodeControlCache.keySet()) {
+			if (!newVisibleNodes.contains(cachedNode)) {
+				toRemove.add(cachedNode);
+			}
+		}
+		for (Object node : toRemove) {
+			ReactControl control = _nodeControlCache.remove(node);
+			if (control != null) {
+				control.cleanupTree();
+			}
+		}
+
+		putState(NODES, nodeStates);
+	}
+
+	private void addChildStates(List<Map<String, Object>> nodeStates, Object parent, int depth,
+			Set<Object> visibleNodes) {
+		for (Object child : _treeModel.getChildren(parent)) {
+			visibleNodes.add(child);
+			addNodeState(nodeStates, child, depth);
+			if (_treeModel.isExpanded(child)) {
+				addChildStates(nodeStates, child, depth + 1, visibleNodes);
+			}
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private void addNodeState(List<Map<String, Object>> nodeStates, Object node, int depth) {
+		boolean hasChildren = !_treeModel.isLeaf(node);
+		boolean expanded = hasChildren && _treeModel.isExpanded(node);
+
+		ReactControl contentControl = getOrCreateNodeControl(node);
+
+		Map<String, Object> nodeState = new LinkedHashMap<>();
+		nodeState.put(NODE_ID, getNodeId(node));
+		nodeState.put(NODE_DEPTH, Integer.valueOf(depth));
+		nodeState.put(NODE_EXPANDABLE, Boolean.valueOf(hasChildren));
+		nodeState.put(NODE_EXPANDED, Boolean.valueOf(expanded));
+		nodeState.put(NODE_LEAF, Boolean.valueOf(_treeModel.isLeaf(node)));
+		nodeState.put(NODE_LOADING, Boolean.FALSE);
+		nodeState.put(NODE_SELECTED, Boolean.valueOf(_selectionModel.isSelected(node)));
+		nodeState.put(NODE_CONTENT, contentControl);
+
+		nodeStates.add(nodeState);
+	}
+
+	private ReactControl getOrCreateNodeControl(Object node) {
+		ReactControl control = _nodeControlCache.get(node);
+		if (control == null) {
+			control = _contentProvider.createControl(getReactContext(), _treeModel.getBusinessObject(node));
+			_nodeControlCache.put(node, control);
+		}
+		return control;
+	}
+
+	private String getNodeId(Object node) {
+		return String.valueOf(System.identityHashCode(node));
+	}
+
+	private Object findNodeById(String nodeId) {
+		for (Object node : _nodeControlCache.keySet()) {
+			if (getNodeId(node).equals(nodeId)) {
+				return node;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the index of the given node in the current flat visible node list.
+	 */
+	private int findNodeIndex(Object node) {
+		int index = 0;
+		Object root = _treeModel.getRoot();
+		if (_treeModel.isRootVisible()) {
+			if (root == node) {
+				return 0;
+			}
+			index++;
+		}
+		if (!_treeModel.isRootVisible() || _treeModel.isExpanded(root)) {
+			int result = findNodeIndexRecursive(root, node, index);
+			if (result >= 0) {
+				return result;
+			}
+		}
+		return -1;
+	}
+
+	private int findNodeIndexRecursive(Object parent, Object target, int currentIndex) {
+		for (Object child : _treeModel.getChildren(parent)) {
+			if (child == target) {
+				return currentIndex;
+			}
+			currentIndex++;
+			if (_treeModel.isExpanded(child)) {
+				int result = findNodeIndexRecursive(child, target, currentIndex);
+				if (result >= 0) {
+					return result;
+				}
+				currentIndex += countVisibleDescendants(child);
+			}
+		}
+		return -1;
+	}
+
+	private int countVisibleDescendants(Object node) {
+		int count = 0;
+		for (Object child : _treeModel.getChildren(node)) {
+			count++;
+			if (_treeModel.isExpanded(child)) {
+				count += countVisibleDescendants(child);
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Collects the flat list of visible nodes in order.
+	 */
+	private List<Object> collectVisibleNodes() {
+		List<Object> result = new ArrayList<>();
+		Object root = _treeModel.getRoot();
+		if (_treeModel.isRootVisible()) {
+			result.add(root);
+		}
+		if (!_treeModel.isRootVisible() || _treeModel.isExpanded(root)) {
+			collectVisibleNodesRecursive(root, result);
+		}
+		return result;
+	}
+
+	private void collectVisibleNodesRecursive(Object parent, List<Object> result) {
+		for (Object child : _treeModel.getChildren(parent)) {
+			result.add(child);
+			if (_treeModel.isExpanded(child)) {
+				collectVisibleNodesRecursive(child, result);
+			}
+		}
+	}
+
+	private void cleanupNodeControls() {
+		for (ReactControl control : _nodeControlCache.values()) {
+			control.cleanupTree();
+		}
+		_nodeControlCache.clear();
+	}
+
+	/**
+	 * Also disposes the controls of nodes that are currently collapsed or scrolled out: only the
+	 * rendered nodes are part of the state, the others are only reachable through the cache.
+	 */
+	@Override
+	protected void cleanupChildren() {
+		super.cleanupChildren();
+		cleanupNodeControls();
+	}
+
+	// -- Commands --
+
+	/**
+	 * Expands a tree node, loading children and prefetching grandchildren.
+	 */
+	@ReactCommandHandler(EXPAND_COMMAND)
+	void handleExpand(ExpandNodeArguments args) {
+		String nodeId = args.getNodeId();
+		Object node = findNodeById(nodeId);
+		if (node != null && !_treeModel.isLeaf(node) && !_treeModel.isExpanded(node)) {
+			_treeModel.setExpanded(node, true);
+
+			// Prefetch grandchildren: trigger getChildren on each child.
+			for (Object child : _treeModel.getChildren(node)) {
+				if (!_treeModel.isLeaf(child)) {
+					// Access children to trigger lazy loading.
+					_treeModel.getChildren(child);
+				}
+			}
+
+			buildFullState();
+		}
+	}
+
+	/**
+	 * Collapses a tree node, removing its children from the visible list.
+	 */
+	@ReactCommandHandler(COLLAPSE_COMMAND)
+	void handleCollapse(CollapseNodeArguments args) {
+		String nodeId = args.getNodeId();
+		Object node = findNodeById(nodeId);
+		if (node != null && _treeModel.isExpanded(node)) {
+			_treeModel.setExpanded(node, false);
+			buildFullState();
+		}
+	}
+
+	/**
+	 * Selects a tree node. Supports single, toggle (Ctrl), and range (Shift) selection.
+	 */
+	@SuppressWarnings("unchecked")
+	@ReactCommandHandler(SELECT_COMMAND)
+	void handleSelect(SelectNodeArguments args) {
+		String nodeId = args.getNodeId();
+		boolean ctrlKey = args.isCtrlKey();
+		boolean shiftKey = args.isShiftKey();
+
+		Object node = findNodeById(nodeId);
+		if (node == null || !_selectionModel.isSelectable(node)) {
+			return;
+		}
+
+		if (multiSelection()) {
+			if (shiftKey && _selectionAnchor >= 0) {
+				// Range selection.
+				List<Object> visibleNodes = collectVisibleNodes();
+				int clickedIndex = visibleNodes.indexOf(node);
+				if (clickedIndex >= 0) {
+					int from = Math.min(_selectionAnchor, clickedIndex);
+					int to = Math.max(_selectionAnchor, clickedIndex);
+					List<Object> rangeNodes = new ArrayList<>();
+					for (int i = from; i <= to; i++) {
+						Object rangeNode = visibleNodes.get(i);
+						if (_selectionModel.isSelectable(rangeNode)) {
+							rangeNodes.add(rangeNode);
+						}
+					}
+					// The whole range is applied in one step, so that a single SelectionEvent
+					// carries it to everything following the selection.
+					if (_anchorAdded) {
+						_selectionModel.addToSelection(rangeNodes);
+					} else {
+						_selectionModel.removeFromSelection(rangeNodes);
+					}
+				}
+			} else if (ctrlKey) {
+				// Toggle selection.
+				boolean wasSelected = _selectionModel.isSelected(node);
+				_selectionModel.setSelected(node, !wasSelected);
+				_anchorAdded = !wasSelected;
+				List<Object> visibleNodes = collectVisibleNodes();
+				_selectionAnchor = visibleNodes.indexOf(node);
+			} else {
+				// Single click in multi mode: replace selection.
+				selectOnly(node);
+			}
+		} else {
+			// Single select mode.
+			selectOnly(node);
+		}
+
+		buildFullState();
+	}
+
+	/**
+	 * Activates a tree node: the node becomes the selection, and what
+	 * {@link #setActivationHandler(ActivationHandler)} registered runs with it.
+	 *
+	 * <p>
+	 * This is what a double-click on the node and {@code Enter} on the focused node send. An id
+	 * naming no displayed node activates nothing.
+	 * </p>
+	 */
+	@SuppressWarnings("unchecked")
+	@ReactCommandHandler(ACTIVATE_COMMAND)
+	HandlerResult handleActivate(ActivateNodeArguments args) {
+		Object node = findNodeById(args.getNodeId());
+		if (node == null || !_selectionModel.isSelectable(node)) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		selectOnly(node);
+		buildFullState();
+
+		ActivationHandler handler = _activationHandler;
+		if (handler == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return handler.nodeActivated(node);
+	}
+
+	/**
+	 * Makes the given node the sole selection and the range anchor.
+	 *
+	 * <p>
+	 * {@link SelectionModel#setSelection(Set)} replaces the selection in one step, so that a single
+	 * {@link SelectionEvent} carries the new selection. Everything following the selection - a
+	 * display, a command's executability, a channel the selection is written to - therefore moves
+	 * straight from the former selection to this node.
+	 * </p>
+	 */
+	@SuppressWarnings("unchecked")
+	private void selectOnly(Object node) {
+		_selectionModel.setSelection(Set.of(node));
+		_anchorAdded = true;
+		_selectionAnchor = collectVisibleNodes().indexOf(node);
+	}
+
+	/**
+	 * Opens a context menu at the given coordinates for a tree node.
+	 */
+	@ReactCommandHandler(CONTEXT_MENU_COMMAND)
+	void handleContextMenu(ContextMenuArguments args) {
+		String nodeId = args.getNodeId();
+		Object node = findNodeById(nodeId);
+		if (node != null && _contextMenuProvider != null) {
+			int x = args.getX();
+			int y = args.getY();
+			_contextMenuProvider.openContextMenu(this, node, x, y);
+		}
+	}
+
+	/**
+	 * Evaluates whether a drop is allowed at the given position and updates the drop indicator
+	 * state.
+	 */
+	@ReactCommandHandler(DRAG_OVER_COMMAND)
+	void handleDragOver(DragOverArguments args) {
+		String nodeId = args.getNodeId();
+		String position = args.getPosition();
+		Object node = findNodeById(nodeId);
+		if (node != null) {
+			_dropIndicatorNodeId = nodeId;
+			_dropIndicatorPosition = position;
+			putState(DROP_INDICATOR_NODE_ID, nodeId);
+			putState(DROP_INDICATOR_POSITION, position);
+		}
+	}
+
+	/**
+	 * Handles a drop event on a tree node. Clears drop indicators and processes the drop.
+	 */
+	@ReactCommandHandler(DROP_COMMAND)
+	void handleDrop(DropArguments args) {
+		String nodeId = args.getNodeId();
+		String position = args.getPosition();
+		Object node = findNodeById(nodeId);
+
+		// Clear drop indicators.
+		_dropIndicatorNodeId = null;
+		_dropIndicatorPosition = null;
+		putState(DROP_INDICATOR_NODE_ID, null);
+		putState(DROP_INDICATOR_POSITION, null);
+
+		if (node != null) {
+			// TODO: Integrate with full DnD framework (DndData, TreeDropTarget.handleDrop).
+			// For now, the drop event is received but not processed. Full integration
+			// requires a TreeData adapter for the React tree.
+		}
+	}
+
+	/**
+	 * Clears the drop indicator state when a drag operation ends.
+	 */
+	@ReactCommandHandler("dragEnd")
+	void handleDragEnd() {
+		_dropIndicatorNodeId = null;
+		_dropIndicatorPosition = null;
+		putState(DROP_INDICATOR_NODE_ID, null);
+		putState(DROP_INDICATOR_POSITION, null);
+	}
+
+}

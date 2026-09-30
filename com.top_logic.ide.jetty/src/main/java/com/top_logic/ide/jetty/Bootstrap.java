@@ -14,6 +14,7 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.CharBuffer;
@@ -30,8 +31,13 @@ import org.apache.jasper.servlet.TldScanner;
 import org.apache.tomcat.util.scan.StandardJarScanner;
 import org.eclipse.jetty.ee10.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.ee10.webapp.WebAppContext;
+import org.eclipse.jetty.http.UriCompliance;
+import org.eclipse.jetty.http.UriCompliance.Violation;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
@@ -46,7 +52,13 @@ import com.top_logic.basic.core.workspace.Workspace;
 
 /**
  * Starts a <i>TopLogic</i> application module in development mode.
- * 
+ *
+ * <p>
+ * After the server has started, the application is opened in a browser. Which browser, if any, is
+ * chosen by the system property or environment variable {@value #BROWSER_VARIABLE}, see
+ * {@link #openBrowser(String)}.
+ * </p>
+ *
  * @see Shutdown
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -55,11 +67,56 @@ public class Bootstrap {
 
 	private static final String OK_RESULT = "OK";
 
+	/**
+	 * URI handling of the server: the default one, extended by the ambiguous path separator.
+	 *
+	 * <p>
+	 * A URL of the application can carry a value in a path segment - the identifier of an object, a
+	 * business key - which is percent-encoded, so a value containing a slash travels as
+	 * {@code %2F}. Jetty calls such a path ambiguous, because the escape means one thing to the
+	 * application and another to a proxy comparing paths, and answers a request carrying one with
+	 * "400 Ambiguous URI path separator" unless the violation is allowed.
+	 * </p>
+	 *
+	 * @see ServletHandler#setDecodeAmbiguousURIs(boolean)
+	 */
+	private static final UriCompliance URI_COMPLIANCE =
+		UriCompliance.DEFAULT.with("TopLogic", Violation.AMBIGUOUS_PATH_SEPARATOR);
+
 	static final String HOSTNAME = "localhost";
 
 	static final String ADMIN_WEBAPP = "/admin";
 
 	static final String STOP_SERVLET = "/stop";
+
+	/**
+	 * Name of the system property or environment variable with the external URL of the server
+	 * (protocol, host and port, e.g. {@code http://localhost:8080}).
+	 *
+	 * <p>
+	 * When not set, it is set to the local URL of the started server, because the application
+	 * configuration refers to it.
+	 * </p>
+	 */
+	static final String HOST_VARIABLE = "tl_host";
+
+	/**
+	 * Name of the system property or environment variable choosing the browser that is opened
+	 * after the server has started.
+	 *
+	 * @see #openBrowser(String)
+	 */
+	static final String BROWSER_VARIABLE = "tl_browser";
+
+	/**
+	 * Value of {@link #BROWSER_VARIABLE} opening the system's default browser.
+	 */
+	static final String BROWSER_DEFAULT = "default";
+
+	/**
+	 * Value of {@link #BROWSER_VARIABLE} suppressing the browser launch.
+	 */
+	static final String BROWSER_NONE = "none";
 
 	/**
 	 * Main routine.
@@ -101,23 +158,28 @@ public class Bootstrap {
 	}
 
 	private void start() throws Exception {
-		String externalIntf = Environment.getSystemPropertyOrEnvironmentVariable("tl_host", null);
+		String externalIntf = Environment.getSystemPropertyOrEnvironmentVariable(HOST_VARIABLE, null);
 		if (externalIntf == null) {
 			// Set property normally configured to the external interface of the application.
 			externalIntf = "http://" + HOSTNAME + ":" + _port;
-			System.setProperty("tl_host", externalIntf);
+			System.setProperty(HOST_VARIABLE, externalIntf);
 		}
 
 		String stopUrl = externalIntf + ADMIN_WEBAPP + STOP_SERVLET;
 		stopPreviousApp(stopUrl);
 
-		System.setProperty(Environment.DEVELOPER_MODE, "true");
+		// This is an IDE run: mark the installation as a non-deployed developer workspace so that
+		// the modular resource path is used (see Environment.isDeployed()).
+		System.setProperty(Environment.OPERATION_MODE, Environment.OPERATION_MODE_DEVELOPMENT);
 
 		PathInfo paths = Workspace.getAppPaths();
 
 		final Server server = new Server();
 
-		ServerConnector connector = new ServerConnector(server);
+		HttpConfiguration httpConfig = new HttpConfiguration();
+		httpConfig.setUriCompliance(URI_COMPLIANCE);
+
+		ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory(httpConfig));
 		connector.setPort(_port);
 		// open connector to bind port yet.
 		connector.open();
@@ -126,6 +188,10 @@ public class Bootstrap {
 		WebAppContext webapp = new WebAppContext();
 		webapp.setContextPath(_contextPath);
 		webapp.setDefaultsDescriptor("com/top_logic/ide/jetty/webdefault.xml");
+		// The connector accepts a path with an encoded slash; the servlet handler is what decodes it
+		// into the path the servlets are given, and answers "400 Ambiguous URI encoding" for one it
+		// refuses to decode.
+		webapp.getServletHandler().setDecodeAmbiguousURIs(true);
 
 		ResourceFactory resourceFactory = ResourceFactory.of(webapp);
 		List<URL> resourcePath = paths.getResourcePath();
@@ -205,15 +271,48 @@ public class Bootstrap {
 		System.out.println("Server started: " + appUrl);
 		System.out.println("Stop server accessing: " + stopUrl);
 
-		try {
-			if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-				Desktop.getDesktop().browse(new URI(appUrl));
-			}
-		} catch (RuntimeException | Error ex) {
-			System.err.println("Failed to launch browser: " + ex.getMessage());
-		}
+		openBrowser(appUrl);
 
 		server.join();
+	}
+
+	/**
+	 * Opens the started application in the browser chosen by {@link #BROWSER_VARIABLE}.
+	 *
+	 * <p>
+	 * The value {@value #BROWSER_DEFAULT} (or no value at all) opens the system's default browser,
+	 * the value {@value #BROWSER_NONE} opens no browser. Any other value is the command of the
+	 * browser to start: an executable on the {@code PATH} (e.g. {@code firefox}) or the full path to
+	 * one (on Windows e.g.
+	 * {@code C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe}). It is executed without a
+	 * shell and gets the application URL as its only argument.
+	 * </p>
+	 *
+	 * @param appUrl
+	 *        The URL of the started application.
+	 */
+	private static void openBrowser(String appUrl) throws URISyntaxException {
+		String browser =
+			Environment.getSystemPropertyOrEnvironmentVariable(BROWSER_VARIABLE, BROWSER_DEFAULT).trim();
+		if (browser.isEmpty() || browser.equals(BROWSER_DEFAULT)) {
+			try {
+				if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+					Desktop.getDesktop().browse(new URI(appUrl));
+				}
+			} catch (IOException | RuntimeException | Error ex) {
+				System.err.println("Failed to launch browser: " + ex.getMessage());
+			}
+		} else if (!browser.equals(BROWSER_NONE)) {
+			try {
+				// The browser's own console output is noise in the server log.
+				new ProcessBuilder(browser, appUrl)
+					.redirectOutput(ProcessBuilder.Redirect.DISCARD)
+					.redirectError(ProcessBuilder.Redirect.DISCARD)
+					.start();
+			} catch (IOException | RuntimeException ex) {
+				System.err.println("Failed to launch browser '" + browser + "': " + ex.getMessage());
+			}
+		}
 	}
 
 	private void stopPreviousApp(String stopUrl) throws MalformedURLException, InterruptedException {

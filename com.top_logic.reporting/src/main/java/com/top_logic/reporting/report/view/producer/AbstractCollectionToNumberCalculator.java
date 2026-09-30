@@ -12,7 +12,7 @@ import java.util.Collection;
  * and stores additionally the total value. The default to show the total value is 
  * <code>true</code>.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractCollectionToNumberCalculator implements CollectionToNumberCalculator {
 

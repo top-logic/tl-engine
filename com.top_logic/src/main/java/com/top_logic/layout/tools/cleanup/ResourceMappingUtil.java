@@ -10,6 +10,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -42,22 +45,18 @@ public class ResourceMappingUtil {
 	
 		Properties mapping = new Properties();
 		if (file.exists()) {
-			FileInputStream in = new FileInputStream(file);
-			try {
+			try (InputStreamReader in =
+				new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
 				mapping.load(in);
-			} finally {
-				in.close();
 			}
 		} else {
 			file.getParentFile().mkdirs();
 		}
-	
-		FileOutputStream out = new FileOutputStream(file);
-		try {
+
+		try (OutputStreamWriter out =
+			new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
 			ResourceMappingUtil.putMappings(mapping, newMappings);
 			mapping.store(out, null);
-		} finally {
-			out.close();
 		}
 	}
 

@@ -5,6 +5,7 @@
  */
 package com.top_logic.demo.layout.form.demo;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
@@ -34,9 +35,11 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @see I18NConstantsBase */
 	public static ResKey NOT_EXECUTABLE_REASON;
 	
-	public static ResKey NO_VALUE = legacyKey("controls.upload5IndividualNoValueText.noValue");
+	@CustomKey("controls.upload5IndividualNoValueText.noValue")
+	public static ResKey NO_VALUE;
 
-	public static ResKey ONLY = legacyKey("controls.upload.xml.only");
+	@CustomKey("controls.upload.xml.only")
+	public static ResKey ONLY;
 
 	public static ResKey2 ILLEGAL_COLUMN_INDEX__MIN__MAX;
 

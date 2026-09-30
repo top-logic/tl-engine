@@ -35,6 +35,7 @@ import com.top_logic.kafka.sync.knowledge.service.exporter.KafkaExportConfigurat
 import com.top_logic.kafka.sync.knowledge.service.importer.KafkaImportConfiguration;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.HasModelPartChanged;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.UpdateEvent;
@@ -158,7 +159,7 @@ public abstract class AbstractModelBasedKafkaConfiguration implements KafkaSyncC
 	 * {@link TypeSystem} of the {@link #kb()}.
 	 */
 	protected TypeSystem typeSystem() {
-		return (TypeSystem) kb().getMORepository();
+		return KBUtils.typeSystem(kb());
 	}
 
 	/**

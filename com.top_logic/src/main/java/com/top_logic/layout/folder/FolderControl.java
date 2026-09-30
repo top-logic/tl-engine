@@ -43,7 +43,7 @@ import com.top_logic.layout.tree.breadcrumb.BreadcrumbRenderer;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class FolderControl extends TableControl implements FolderListener, ContentHandler {
 

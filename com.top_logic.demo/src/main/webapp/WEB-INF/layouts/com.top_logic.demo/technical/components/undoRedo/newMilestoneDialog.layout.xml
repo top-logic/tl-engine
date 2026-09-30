@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments height="300px">
+		<forms>
+			<form type="tl.demo.projectManagement:Milestone">
+				<formDefinition columns="ONE">
+					<field
+						attribute="name"
+						fullQualifiedName="tl.demo.projectManagement:Milestone#name"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="dueDate"
+						fullQualifiedName="tl.demo.projectManagement:Milestone#dueDate"
+						type="tl.core:Date"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+		<title>
+			<title key="dynamic.undoRedo-newMilestone-title">
+				<en>New milestone</en>
+				<de>Neuer Meilenstein</de>
+			</title>
+		</title>
+		<open-handler id="undoRedo_newMilestone_open"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="theme:ICONS_ADD_BUTTON"
+			targetComponent="com.top_logic.demo/technical/components/undoRedo/newMilestoneDialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.undoRedo-newMilestone-open">
+				<en>New milestone</en>
+				<de>Neuer Meilenstein</de>
+			</resourceKey>
+			<executability>
+				<rule-by-expression decision="model -> $model != null"/>
+			</executability>
+		</open-handler>
+		<typeOptions type="tl.demo.projectManagement:Milestone"/>
+		<create-handler id="undoRedo_newMilestone_create"
+			linkOperation="project -> milestone -> $project.add(`tl.demo.projectManagement:ProjectScope#milestones`, $milestone)"
+		>
+			<postCreateActions>
+				<setModel target="selection(com.top_logic.demo/technical/components/undoRedo/milestonesTable.layout.xml#Table)">
+					<input/>
+				</setModel>
+			</postCreateActions>
+		</create-handler>
+	</arguments>
+</config:template-call>

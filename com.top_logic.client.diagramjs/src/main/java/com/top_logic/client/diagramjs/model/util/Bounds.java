@@ -10,7 +10,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 /**
  * Layout bounds for an object.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class Bounds extends JavaScriptObject {
 

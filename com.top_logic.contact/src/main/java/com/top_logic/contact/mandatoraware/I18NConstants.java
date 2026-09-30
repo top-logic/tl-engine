@@ -5,6 +5,7 @@
  */
 package com.top_logic.contact.mandatoraware;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -19,7 +20,8 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey1 COMPANY_UNKNOWN__SAPNO = legacyKey1("contact.company.get.sap.unknown");
+	@CustomKey("contact.company.get.sap.unknown")
+	public static ResKey1 COMPANY_UNKNOWN__SAPNO;
 
 	static {
 		initConstants(I18NConstants.class);

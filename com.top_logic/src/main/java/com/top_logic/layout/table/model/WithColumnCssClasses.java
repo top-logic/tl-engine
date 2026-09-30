@@ -9,6 +9,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
@@ -45,6 +46,16 @@ public interface WithColumnCssClasses extends ConfigurationItem {
 	 * @see #getCssClassProvider()
 	 */
 	String CSS_CLASS_PROVIDER = "cssClassProvider";
+
+	/**
+	 * @see #getCssClassOverride()
+	 */
+	String CSS_CLASS_OVERRIDE = "cssClassOverride";
+
+	/**
+	 * @see #getCssHeaderClassOverride()
+	 */
+	String CSS_HEADER_CLASS_OVERRIDE = "cssHeaderClassOverride";
 
 
 	/**
@@ -83,6 +94,21 @@ public interface WithColumnCssClasses extends ConfigurationItem {
 	void setCssClass(String value);
 
 	/**
+	 * When true, the specified CSS class replaces any existing classes instead of being added to
+	 * them. This allows overriding default classes like <code>tblRight</code> for numeric columns.
+	 *
+	 * @see #getCssClass()
+	 */
+	@Name(CSS_CLASS_OVERRIDE)
+	@Label("CSS class override")
+	boolean getCssClassOverride();
+
+	/**
+	 * @see #getCssClassOverride()
+	 */
+	void setCssClassOverride(boolean value);
+
+	/**
 	 * The CSS class to add to the column's header.
 	 * 
 	 * <p>
@@ -115,6 +141,21 @@ public interface WithColumnCssClasses extends ConfigurationItem {
 	 * @see #getCssHeaderClass()
 	 */
 	void setCssHeaderClass(String value);
+
+	/**
+	 * When true, the specified CSS header class replaces any existing header classes instead of
+	 * being added to them.
+	 *
+	 * @see #getCssHeaderClass()
+	 */
+	@Name(CSS_HEADER_CLASS_OVERRIDE)
+	@Label("CSS header class override")
+	boolean getCssHeaderClassOverride();
+
+	/**
+	 * @see #getCssHeaderClassOverride()
+	 */
+	void setCssHeaderClassOverride(boolean value);
 
 	/**
 	 * CSS class for this column if it is the first column in a column group.

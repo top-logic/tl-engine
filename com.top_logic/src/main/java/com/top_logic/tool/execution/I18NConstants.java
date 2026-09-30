@@ -5,6 +5,7 @@
  */
 package com.top_logic.tool.execution;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
@@ -24,27 +25,38 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey NO_TEMPLATE_LAYOUT_ERROR;
 
-	public static ResKey ERROR_NO_PERMISSION = legacyKey("tl.executable.not.allowed");
+	@CustomKey("tl.executable.not.allowed")
+	public static ResKey ERROR_NO_PERMISSION;
 
-	public static ResKey ERROR_DISABLED = legacyKey("tl.executable.disabled");
+	@CustomKey("tl.executable.disabled")
+	public static ResKey ERROR_DISABLED;
 
-	public static ResKey ERROR_HIDDEN = legacyKey("tl.executable.hidden");
+	@CustomKey("tl.executable.hidden")
+	public static ResKey ERROR_HIDDEN;
 
-	public static ResKey ERROR_HISTORIC_DATA = legacyKey("tl.executable.disabled.historicData");
+	@CustomKey("tl.executable.disabled.historicData")
+	public static ResKey ERROR_HISTORIC_DATA;
 
-	public static ResKey ERROR_CURRENT_DATA = legacyKey("tl.executable.disabled.currentData");
+	@CustomKey("tl.executable.disabled.currentData")
+	public static ResKey ERROR_CURRENT_DATA;
 
-	public static ResKey ERROR_NO_CURRENT_DATA = legacyKey("tl.executable.noExecNoCurrentRevision");
+	@CustomKey("tl.executable.noExecNoCurrentRevision")
+	public static ResKey ERROR_NO_CURRENT_DATA;
 
-	public static ResKey ERROR_INVALID_MODEL = legacyKey("tl.executable.noExecInvalid");
+	@CustomKey("tl.executable.noExecInvalid")
+	public static ResKey ERROR_INVALID_MODEL;
 
-	public static ResKey ERROR_LICENCE_EXPIRED = legacyKey("tl.executable.noExecLicenceExpired");
+	@CustomKey("tl.executable.noExecLicenceExpired")
+	public static ResKey ERROR_LICENCE_EXPIRED;
 
-	public static ResKey ERROR_NO_MODEL = legacyKey("tl.executable.noExecNoModel");
+	@CustomKey("tl.executable.noExecNoModel")
+	public static ResKey ERROR_NO_MODEL;
 
-	public static ResKey ERROR_RESTRICTED_USER = legacyKey("tl.executable.noExecRestrictedUser");
+	@CustomKey("tl.executable.noExecRestrictedUser")
+	public static ResKey ERROR_RESTRICTED_USER;
 
-	public static ResKey ERROR_NO_MODEL_2 = legacyKey("tl.executable.disabled.noModel");
+	@CustomKey("tl.executable.disabled.noModel")
+	public static ResKey ERROR_NO_MODEL_2;
 
 	public static ResKey ERROR_TRANSIENT_OBJECT;
 

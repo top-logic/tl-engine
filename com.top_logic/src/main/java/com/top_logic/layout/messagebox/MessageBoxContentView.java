@@ -10,6 +10,7 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 import java.io.IOException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.View;
@@ -24,6 +25,8 @@ public class MessageBoxContentView extends DefaultView {
 
 	private final HTMLFragment content;
 
+	private CharSequence[] _cssClasses = ArrayUtil.EMPTY_STRING_ARRAY;
+
 	/**
 	 * Creates a {@link MessageBoxContentView}.
 	 * 
@@ -34,10 +37,26 @@ public class MessageBoxContentView extends DefaultView {
 		this.content = content;
 	}
 
+	/**
+	 * Sets additional custom CSS classes.
+	 */
+	public void setCustomCSSClasses(CharSequence... cssClasses) {
+		_cssClasses = cssClasses;
+	}
+
 	@Override
 	public void write(DisplayContext context, TagWriter out) throws IOException {
 		out.beginBeginTag(DIV);
-		out.writeAttribute(CLASS_ATTR, MessageBox.CSS_CLASS_MBOX_CONTENT);
+		if (_cssClasses.length == 0) {
+			out.writeAttribute(CLASS_ATTR, MessageBox.CSS_CLASS_MBOX_CONTENT);
+		} else {
+			out.beginCssClasses();
+			out.append(MessageBox.CSS_CLASS_MBOX_CONTENT);
+			for (int i = 0; i < _cssClasses.length; i++) {
+				out.append(_cssClasses[i]);
+			}
+			out.endCssClasses();
+		}
 		out.writeAttribute(TL_COMPLEX_WIDGET_ATTR, "true");
 		out.endBeginTag();
 		{

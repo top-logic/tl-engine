@@ -11,7 +11,7 @@ import com.top_logic.importer.logger.ImportLogger;
 /**
  * Hook when {@link AbstractImportPerformer} has done the import before the commit has been called.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface ImportPerformerFinalizer {
 
@@ -29,7 +29,7 @@ public interface ImportPerformerFinalizer {
     /**
      * Simple implementation of {@link ImportPerformerFinalizer} doing nothing. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class SimpleImportPerformerFinalizer implements ImportPerformerFinalizer {
 

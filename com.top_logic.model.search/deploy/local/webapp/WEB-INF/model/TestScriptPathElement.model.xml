@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="TestScriptPathElement">
+		<annotations>
+			<package-binding
+				implementation-package="test.com.top_logic.model.search.model.testScriptPathElement.impl"
+				interface-package="test.com.top_logic.model.search.model.testScriptPathElement"
+			/>
+			<singletons>
+				<singleton name="ROOT1"
+					type="Plants"
+				/>
+				<singleton name="ROOT2"
+					type="Plants"
+				/>
+			</singletons>
+		</annotations>
+		<interface name="Named">
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</interface>
+		<class name="Assignment">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+			<attributes>
+				<reference name="readers"
+					multiple="true"
+					type="tl.accounts:Person"
+				/>
+				<reference name="writers"
+					multiple="true"
+					type="tl.accounts:Person"
+				/>
+				<reference name="plant"
+					mandatory="true"
+					type="Plant"
+				/>
+				<reference name="area"
+					mandatory="true"
+					type="ZArea"
+				/>
+			</attributes>
+		</class>
+		<class name="Plant">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+		</class>
+		<class name="Plants">
+			<generalizations>
+				<generalization type="Plant"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					override="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<!-- Singletons must be created without additional input. -->
+						<default-value>
+							<string value="Plant collection"/>
+						</default-value>
+					</annotations>
+				</property>
+				<reference name="plants"
+					multiple="true"
+					type="Plant"
+				/>
+			</attributes>
+		</class>
+		<class name="ZArea">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+		</class>
+		<class name="ZAreaInstance">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+
+			<attributes>
+				<reference name="template"
+					mandatory="true"
+					type="ZArea"
+				/>
+			</attributes>
+		</class>
+		<class name="Assembly">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+			<attributes>
+				<reference name="area"
+					mandatory="true"
+					type="ZAreaInstance"
+				/>
+				<reference name="plant"
+					mandatory="true"
+					type="Plant"
+				/>
+				<reference name="derivedAssignments"
+					multiple="true"
+					type="Assignment"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="assembly -> $assembly.get(`TestScriptPathElement:Assembly#area`).get(`TestScriptPathElement:ZAreaInstance#template`).referers(`TestScriptPathElement:Assignment#area`)"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+	</module>
+</model>

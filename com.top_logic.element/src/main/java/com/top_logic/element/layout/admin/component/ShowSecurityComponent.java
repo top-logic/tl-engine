@@ -70,7 +70,7 @@ import com.top_logic.util.model.ModelService;
 /**
  * Shows security information for the selected elements.
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ShowSecurityComponent extends FormComponent {
 
@@ -487,7 +487,7 @@ public class ShowSecurityComponent extends FormComponent {
     /**
      * Calculates the result table.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
 	public static class RefreshCommand extends AJAXCommandHandler {
 

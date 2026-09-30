@@ -51,11 +51,9 @@ import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
-import com.top_logic.tool.boundsec.wrap.PersBoundChecker;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -257,7 +255,7 @@ public class DocumentTileFormBuilder extends AbstractConfiguredInstance<Document
 			PersBoundComp myPers = SecurityComponentCache.getSecurityComponent(securityID);
 			if (myPers == null) {
 				Logger.error("No PersBoundComp for '" + securityID + "' found.",
-					PersBoundChecker.class);
+					DocumentTileFormBuilder.class);
 			} else {
 				return myPers.rolesForCommandGroup(cmdGroup);
 			}
@@ -288,7 +286,7 @@ public class DocumentTileFormBuilder extends AbstractConfiguredInstance<Document
 	}
 
 	private void setLabel(FormMember field) {
-		field.setLabel(Resources.getInstance().getString(getConfig().getResPrefix().key(field.getName())));
+		field.setLabel(getConfig().getResPrefix().key(field.getName()));
 	}
 
 	private AbstractBoundWrapper getSelectedContext() {

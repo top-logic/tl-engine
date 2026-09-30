@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-core-internal</artifactId>
-		<version>7.10.0-SNAPSHOT</version>
+		<version>8.0.0-SNAPSHOT</version>
 		<relativePath>../tl-parent-core/internal</relativePath>
 	</parent>
 
@@ -38,25 +38,18 @@
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-layout-themeedit</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-doc</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-layout-scripting-template</artifactId>
-		</dependency>
 		
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-layout-scripting-template</artifactId>
+			<artifactId>tl-basic</artifactId>
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
-  		<dependency>
-      		<groupId>com.top-logic</groupId>
-      		<artifactId>tl-themes-core</artifactId>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+			<type>test-jar</type>
 			<scope>test</scope>
-    	</dependency>
+		</dependency>
 	</dependencies>
 </project>

@@ -28,6 +28,7 @@ import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.db2.UpdateChainLink;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.knowledge.wrap.person.PersonalConfigurationWrapper;
 import com.top_logic.knowledge.wrap.person.TransientPersonalConfiguration;
@@ -133,11 +134,25 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 		_personalConfig = null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * For the {@link #isAnonymousUser() anonymous user}, nothing is stored: all visitors that did
+	 * not log in share the anonymous account, so the settings of one visitor must not reach the
+	 * others. The transient personal configuration is kept instead, so that the settings made in
+	 * this session stay in effect until the session ends.
+	 * </p>
+	 */
 	@Override
 	public void storePersonalConfiguration() {
 		TransientPersonalConfiguration config = _personalConfig;
 
 		if (config == null) {
+			return;
+		}
+
+		if (isAnonymousUser()) {
 			return;
 		}
 
@@ -339,6 +354,29 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 			return context.getPerson();
 	    }
 		return null;
+	}
+
+	/**
+	 * Whether no user or the anonymous user is used.
+	 *
+	 * @see PersonManager#isAnonymous(Person) Which account is the anonymous one is decided by the
+	 *      {@link PersonManager}.
+	 */
+	public boolean isAnonymousUser() {
+		Person person = getPerson();
+		return person == null || PersonManager.getManager().isAnonymous(person);
+	}
+
+	/**
+	 * Whether there is no context or no user or the anonymous user is used.
+	 */
+	public static boolean isAnonymous() {
+		TLContext context = getContext();
+
+		if (context != null) {
+			return context.isAnonymousUser();
+		}
+		return true;
 	}
 
 	/**

@@ -12,7 +12,7 @@ import com.top_logic.graph.layouter.model.layer.DefaultAlternatingLayer;
 /**
  * Algorithm to set the vertical coordinates for the given layering.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface VerticalCoordinateAlgorithm {
 	/**

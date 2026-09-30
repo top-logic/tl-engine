@@ -5,7 +5,7 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.10.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-kafka</artifactId>
@@ -49,7 +49,18 @@
 	<dependency>
 	    <groupId>org.apache.kafka</groupId>
 	    <artifactId>kafka-clients</artifactId>
+	    <exclusions>
+            <exclusion>
+                <groupId>org.lz4</groupId>
+                <artifactId>lz4-java</artifactId>
+            </exclusion>
+        </exclusions>
 	</dependency>
+	<dependency>
+        <groupId>at.yawk.lz4</groupId>
+            <artifactId>lz4-java</artifactId>
+            <version>1.12.0</version>
+    </dependency>
 	<dependency>
 	    <groupId>org.apache.kafka</groupId>
 	    <artifactId>connect-api</artifactId>

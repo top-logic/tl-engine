@@ -15,6 +15,7 @@ import com.top_logic.graphic.flow.data.Box.Visitor;
 import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.ClipBox;
 import com.top_logic.graphic.flow.data.CompassLayout;
+import com.top_logic.graphic.flow.data.ContextMenu;
 import com.top_logic.graphic.flow.data.DropRegion;
 import com.top_logic.graphic.flow.data.Empty;
 import com.top_logic.graphic.flow.data.Fill;
@@ -71,6 +72,11 @@ public abstract class DescendingBoxVisitor<R, A> implements Box.Visitor<R, A, Ru
 
 	@Override
 	public R visit(SelectableBox self, A arg) throws RuntimeException {
+		return apply(visitBox(self, arg), self.getContent().visit(this, arg));
+	}
+
+	@Override
+	public R visit(ContextMenu self, A arg) throws RuntimeException {
 		return apply(visitBox(self, arg), self.getContent().visit(this, arg));
 	}
 

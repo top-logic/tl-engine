@@ -5,11 +5,7 @@
  */
 package com.top_logic.element.config;
 
-import java.util.Collection;
-
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.annotation.Hidden;
-import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -19,7 +15,6 @@ import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
-import com.top_logic.model.annotate.security.TLRoleDefinitions;
 import com.top_logic.model.config.AbstractModelPartMapping;
 import com.top_logic.model.config.TypeRef;
 import com.top_logic.model.util.AllClasses;
@@ -34,9 +29,6 @@ public interface SingletonConfig extends TypeRef {
 
 	/** Property name of {@link #getName()}. */
 	String NAME = "name";
-
-	/** Property name of {@link #getRoleAssignments()}. */
-	String ROLE_ASSIGNMENTS = "role-assignments";
 
 	/**
 	 * Name of the singleton object.
@@ -65,19 +57,6 @@ public interface SingletonConfig extends TypeRef {
 	@Options(fun = AllClasses.class, mapping = LocalTypeMapping.class)
 	@Mandatory
 	String getTypeSpec();
-
-	/**
-	 * Roles assigned to group members on this instance.
-	 * 
-	 * @implNote The role assignments are not offered for configuration in the UI, since they are
-	 *           edited in a specialized role assignment UI.
-	 * 
-	 * @see TLRoleDefinitions#getRoles()
-	 */
-	@Hidden
-	@Key(RoleAssignment.GROUP)
-	@Name(ROLE_ASSIGNMENTS)
-	Collection<RoleAssignment> getRoleAssignments();
 
 	/**
 	 * {@link AbstractModelPartMapping} that produces {@link TLModule}-local type names.

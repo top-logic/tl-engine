@@ -28,7 +28,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * {@link FolderColumnDescriptionBuilder} which additionally creates and returns table configuration
  * for WebFolder and for a list of versions of a document.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class WebFolderColumnDescriptionBuilder extends FolderColumnDescriptionBuilder{
 

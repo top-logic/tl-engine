@@ -9,10 +9,11 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
-import com.top_logic.model.search.expr.ToString;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -21,7 +22,8 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-@InApp
+@Label("Labels via TL-Script")
+@InApp(classifiers = "label-provider")
 public class LabelProviderByExpression<C extends LabelProviderByExpression.Config<?>>
 		extends AbstractConfiguredInstance<C> implements LabelProvider {
 
@@ -62,7 +64,7 @@ public class LabelProviderByExpression<C extends LabelProviderByExpression.Confi
 		if (object == null) {
 			return null;
 		}
-		return ToString.toString(_labelExpr.execute(object));
+		return SearchExpression.asString(_labelExpr.execute(object));
 	}
 
 }

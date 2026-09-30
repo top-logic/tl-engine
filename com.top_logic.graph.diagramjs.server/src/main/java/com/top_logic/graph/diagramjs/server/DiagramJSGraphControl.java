@@ -34,7 +34,7 @@ import com.top_logic.model.TLType;
  * Server-side <code>DiagramJS</code> graph control writes a graph init script to execute the
  * UIService init method to create the appropriate client-side graph control.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DiagramJSGraphControl extends AbstractGraphControl
 		implements DiagramHandler, HiddenElementsVisibilityListener {

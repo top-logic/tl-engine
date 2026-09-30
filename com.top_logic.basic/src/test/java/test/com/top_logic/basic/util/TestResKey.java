@@ -405,7 +405,7 @@ public class TestResKey extends TestCase {
 		ResKey literal = ResKey.literal(
 			ResKey.langString(en, "Hello"),
 			ResKey.langString(de, "Guten Tag"),
-			ResKey.langString(de_CH, "Grüzi"));
+			ResKey.langString(de_CH, "GrÃ¼zi"));
 
 		BundleForTest bundle_de =
 			new BundleForTest(Collections.emptyMap(), new Locale("de"));
@@ -417,7 +417,7 @@ public class TestResKey extends TestCase {
 		assertResolve("Guten Tag", bundle_de_DE, literal);
 		BundleForTest bundle_de_CH =
 			new BundleForTest(Collections.emptyMap(), new Locale("de", "CH"), bundle_de);
-		assertResolve("Grüzi", bundle_de_CH, literal);
+		assertResolve("GrÃ¼zi", bundle_de_CH, literal);
 		BundleForTest bundle_de_AT =
 			new BundleForTest(Collections.emptyMap(), new Locale("de", "AT"), bundle_de);
 		assertResolve("Guten Tag", bundle_de_AT, literal);

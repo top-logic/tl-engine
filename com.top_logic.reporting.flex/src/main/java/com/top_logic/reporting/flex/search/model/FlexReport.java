@@ -25,9 +25,9 @@ import com.top_logic.dob.DataObject;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.filt.DOAttributeFilter;
 import com.top_logic.dob.filt.DOTypeNameFilter;
+import com.top_logic.element.meta.kbbased.AttributedWrapper;
 import com.top_logic.element.meta.query.FlexWrapperAdminComparator;
 import com.top_logic.element.meta.query.FlexWrapperUserComparator;
-import com.top_logic.element.meta.query.StoredFlexWrapper;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
@@ -44,7 +44,7 @@ import com.top_logic.util.Utils;
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */
-public class FlexReport extends StoredFlexWrapper {
+public class FlexReport extends AttributedWrapper {
 
 	public static final String KO_TYPE = "FlexReport";
 

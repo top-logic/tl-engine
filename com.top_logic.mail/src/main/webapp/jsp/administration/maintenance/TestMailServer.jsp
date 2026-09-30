@@ -38,16 +38,10 @@
 	LayoutComponent theComp   = MainLayout.getComponent(pageContext);
 	String          theRead   = "INBOX";
 	String          theCreate = "";
-	String          theServer = "";
-	String          theUser   = "";
-	String          thePass   = "";
 	
 	if (!isNew) {
 		theRead   = request.getParameter("folderRead");
 		theCreate = request.getParameter("folderCreate");
-		theServer = request.getParameter("server");
-		theUser   = request.getParameter("user");
-		thePass   = request.getParameter("pass");
 	}
 	%>
 	<layout:body>
@@ -78,7 +72,7 @@
 						<input name="folderRead"
 							size="50"
 							type="text"
-							value="<%=theRead%>"
+							value="<%=TagUtil.encodeXMLAttribute(StringServices.nonNull(theRead))%>"
 						/>
 					</td>
 				</tr>
@@ -90,13 +84,13 @@
 						<input name="folderCreate"
 							size="50"
 							type="text"
-							value="<%=theCreate%>"
+							value="<%=TagUtil.encodeXMLAttribute(StringServices.nonNull(theCreate))%>"
 						/>
 					</td>
 				</tr>
 			</table>
 			<div class="cmdButtons">
-				<button class="tlButton cButton cmdButton" name="submit" type="submit">
+				<button class="tlButton cButton tl-cmd-button" name="submit" type="submit">
 					<h4 class="tlButtonLabel">Make It So</h4>
 				</button>
 			</div>

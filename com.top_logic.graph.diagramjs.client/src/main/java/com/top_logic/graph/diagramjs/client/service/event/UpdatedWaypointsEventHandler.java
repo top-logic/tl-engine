@@ -15,7 +15,7 @@ import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSEdge;
 /**
  * Handler to update connection waypoints.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class UpdatedWaypointsEventHandler implements EventHandler {
 

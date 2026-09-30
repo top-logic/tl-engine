@@ -6,12 +6,20 @@
 package com.top_logic.mig.html;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagUtil;
+import com.top_logic.knowledge.gui.I18NConstants;
+import com.top_logic.knowledge.service.db2.DeletedObjectAccess;
 import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.Flavor;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
+import com.top_logic.layout.TooltipProvider;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.provider.icon.IconProvider;
 import com.top_logic.layout.provider.icon.StaticIconProvider;
+import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
@@ -37,6 +45,48 @@ public class DefaultResourceProvider extends AbstractResourceProvider {
 	 */
 	protected DefaultResourceProvider() {
 		// Singleton constructor that allows sub-classes.
+	}
+
+	/**
+	 * The default implementation is to use {@link String#valueOf(Object)} as textual representation
+	 * for the given object.
+	 *
+	 * @see ResourceProvider#getLabel(Object)
+	 */
+	@Override
+	public String getLabel(Object object) {
+		if (object instanceof TLObject tlObj) {
+			try {
+				TLStructuredType type = getModelType(tlObj);
+
+				// The Java implementation class is not required to implement the TLNamed interface,
+				// but
+				// may provide a name attribute anyway. However, since most implementation classes
+				// extend AbstractWrapper, they implement TLNamed, whether they have a name
+				// attribute or
+				// not.
+				if (type != null) {
+					return getLabelProvider(type).getLabel(tlObj);
+				} else {
+					// Legacy case of untyped persistent object.
+					if (object instanceof TLNamed named) {
+						String name = named.getName();
+						if (name != null) {
+							return name;
+						}
+					}
+				}
+			} catch (DeletedObjectAccess ex) {
+				// Safety for legacy cases.
+				return "Invalid object";
+			}
+		}
+
+		return (object == null) ? "" : object.toString();
+	}
+
+	private static LabelProvider getLabelProvider(TLType type) {
+		return TLModelCacheService.getOperations().getLabelProvider(type);
 	}
 	
 	@Override
@@ -83,6 +133,32 @@ public class DefaultResourceProvider extends AbstractResourceProvider {
 	 */
 	protected ThemeImage defaultImage() {
 		return ThemeImage.none();
+	}
+
+	@Override
+	public String getTooltip(Object object) {
+		if (object instanceof TLObject) {
+			TLStructuredType type = getModelType((TLObject) object);
+			if (type == null) {
+				return null;
+			}
+
+			return getTooltipProvider(type).getTooltip(object);
+		}
+		return null;
+	}
+
+	private static TooltipProvider getTooltipProvider(TLType type) {
+		return TLModelCacheService.getOperations().getTooltipProvider(type);
+	}
+
+	/**
+	 * Implementation of {@link #getTooltip(Object)} for non-<code>null</code> values.
+	 */
+	protected ResKey getTooltipNonNull(Object object) {
+		return I18NConstants.WRAPPER_TOOLTIP.fill(
+			quote(object),
+			quote(TLModelUtil.type(object)));
 	}
 
 	/**
@@ -168,14 +244,26 @@ public class DefaultResourceProvider extends AbstractResourceProvider {
 	}
 
 	/**
-	 * The default implementation is to use {@link String#valueOf(Object)} as textual representation
-	 * for the given object.
+	 * Quotes the given value for insertion into the arguments of a tool-tip {@link ResKey}.
 	 * 
-	 * @see ResourceProvider#getLabel(Object)
+	 * <p>
+	 * Note: A tool-tip is interpreted as HTML. Therefore, all dynamic values inserted into it must
+	 * be explicitly quoted.
+	 * </p>
 	 */
-	@Override
-	public String getLabel(Object object) {
-		return (object == null) ? "" : object.toString();
+	protected static Object quote(Object value) {
+		return quote(MetaResourceProvider.INSTANCE.getLabel(value));
 	}
 
+	/**
+	 * Quotes the given value for insertion into the arguments of a tool-tip {@link ResKey}.
+	 * 
+	 * <p>
+	 * Note: A tool-tip is interpreted as HTML. Therefore, all dynamic values inserted into it must
+	 * be explicitly quoted.
+	 * </p>
+	 */
+	protected static String quote(String value) {
+		return TagUtil.encodeXML(value);
+	}
 }

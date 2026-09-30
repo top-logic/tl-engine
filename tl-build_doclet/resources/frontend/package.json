@@ -1,0 +1,14 @@
+{
+  "name": "nunjucks-template-build",
+  "private": true,
+
+  "scripts": {
+    "compile": "node precompile.js",
+    "minify": "terser ../scripts/javadoc.js -o ../../src/main/java/com/top_logic/build/doclet/javadoc.min.js --compress --mangle"
+  },
+
+  "dependencies": {
+    "nunjucks": "^3.2.4",
+    "terser": "^5.30.0"
+  }
+}

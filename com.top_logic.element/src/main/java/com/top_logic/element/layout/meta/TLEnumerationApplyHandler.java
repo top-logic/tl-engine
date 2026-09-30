@@ -26,7 +26,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * Applies changes to a {@link TLEnumeration} model element.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLEnumerationApplyHandler extends DeclarativeApplyHandler<EditModel, TLEnumeration> {
 

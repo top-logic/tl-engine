@@ -7,8 +7,8 @@ package com.top_logic.bpe.app.layout.tiles;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -16,12 +16,13 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.layout.component.configuration.ComponentContextInstantiationContext;
 import com.top_logic.layout.table.export.DownloadNameProvider;
 import com.top_logic.layout.table.model.ExportConfig;
-import com.top_logic.layout.table.model.NoDefaultColumnAdaption;
 import com.top_logic.layout.table.model.SimpleTableDataExport;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationProvider;
+import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
  * {@link TableConfigurationProvider} for tables to use in tile environment as context table.
@@ -29,8 +30,8 @@ import com.top_logic.layout.table.model.TableConfigurationProvider;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @InApp
-public class ContextTableConfiguration extends NoDefaultColumnAdaption
-		implements ConfiguredInstance<ContextTableConfiguration.Config> {
+public class ContextTableConfiguration extends AbstractConfiguredInstance<ContextTableConfiguration.Config>
+		implements TableConfigurationProvider {
 
 	/**
 	 * Typed configuration interface definition for {@link ContextTableConfiguration}.
@@ -52,7 +53,7 @@ public class ContextTableConfiguration extends NoDefaultColumnAdaption
 
 	}
 
-	private final Config _config;
+	private LayoutComponent _component;
 
 	/**
 	 * Create a {@link ContextTableConfiguration}.
@@ -63,7 +64,8 @@ public class ContextTableConfiguration extends NoDefaultColumnAdaption
 	 *        the configuration object to be used for instantiation
 	 */
 	public ContextTableConfiguration(InstantiationContext context, Config config) {
-		_config = config;
+		super(context, config);
+		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, c -> _component = c);
 	}
 
 	@Override
@@ -86,15 +88,11 @@ public class ContextTableConfiguration extends NoDefaultColumnAdaption
 			} catch (ConfigurationException ex) {
 				throw new ConfigurationError(ex);
 			}
-			exporter.setTemplateName("defaultTemplate.xlsx");
 			exporter.setDownloadNameProvider(downloadName);
-			table.setExporter(TypedConfigUtil.createInstance(exporter));
+			InstantiationContext context =
+				new ComponentContextInstantiationContext(ContextTableConfiguration.class, _component);
+			table.setExporter(context.getInstance(exporter));
 		}
-	}
-
-	@Override
-	public Config getConfig() {
-		return _config;
 	}
 
 }

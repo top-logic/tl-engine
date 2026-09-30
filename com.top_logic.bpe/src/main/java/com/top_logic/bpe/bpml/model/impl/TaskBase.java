@@ -27,15 +27,6 @@ public interface TaskBase extends com.top_logic.bpe.bpml.model.Node, com.top_log
 	String BOUNDARY_EVENTS_ATTR = "boundaryEvents";
 
 	/**
-	 * Part <code>label</code> of <code>Task</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.core:String</code> in configuration.
-	 * </p>
-	 */
-	String LABEL_ATTR = "label";
-
-	/**
 	 * Part <code>titleFunction</code> of <code>Task</code>
 	 * 
 	 * <p>
@@ -68,13 +59,6 @@ public interface TaskBase extends com.top_logic.bpe.bpml.model.Node, com.top_log
 	@SuppressWarnings("unchecked")
 	default java.util.Set<? extends com.top_logic.bpe.bpml.model.BoundaryEvent> getBoundaryEvents() {
 		return (java.util.Set<? extends com.top_logic.bpe.bpml.model.BoundaryEvent>) tValueByName(BOUNDARY_EVENTS_ATTR);
-	}
-
-	/**
-	 * Getter for part {@link #LABEL_ATTR}.
-	 */
-	default String getLabel() {
-		return (String) tValueByName(LABEL_ATTR);
 	}
 
 	/**

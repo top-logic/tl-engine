@@ -5,6 +5,8 @@
  */
 package com.top_logic.tool.boundsec.wrap;
 
+import static com.top_logic.knowledge.search.ExpressionFactory.*;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -15,35 +17,38 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.mutable.MutableBoolean;
+
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
+import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.col.NameValueBuffer;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
+import com.top_logic.basic.func.Function0;
+import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.meta.MOReference;
+import com.top_logic.dob.util.MetaObjectUtils;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.service.AssociationQuery;
+import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.db2.AssociationSetQuery;
-import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
+import com.top_logic.knowledge.service.db2.SimpleQuery;
 import com.top_logic.knowledge.util.ItemByNameCache;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 
@@ -55,7 +60,20 @@ import com.top_logic.tool.boundsec.BoundRole;
 @Label("role")
 public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
     
-    /** The type of KO wrapped by this class. */
+    /**
+	 * {@link Function0} delivering all {@link BoundedRole}s.
+	 * 
+	 * @see BoundedRole#getAll()
+	 */
+	public static class AllRoles extends Function0<List<BoundedRole>> {
+	
+		@Override
+		public List<BoundedRole> apply() {
+			return getAll();
+		}
+	}
+
+	/** The type of KO wrapped by this class. */
     public static final String OBJECT_NAME      = "BoundedRole";
     
 	/** Full qualified name of the {@link TLType} of a {@link BoundedRole}. */
@@ -86,33 +104,42 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
     public static final String ATTRIBUTE_DESCRIPTION      = "description";    
     
 	/**
-	 * Name of the {@link KnowledgeAssociation} assigning a {@link BoundedRole} to {@link Group} in
-	 * a certain context.
+	 * Name of the {@link KnowledgeItem} assigning a {@link BoundedRole} to {@link Group} in a
+	 * certain context.
 	 * 
 	 * <p>
 	 * The source is the context object, the destination is the assigned role and the {@link Group}
 	 * that gets assigned the role is given in the {@link #ATTRIBUTE_OWNER} attribute.
 	 * </p>
+	 * 
+	 * @see #ATTRIBUTE_OBJECT
+	 * @see #ATTRIBUTE_OBJECT
+	 * @see #ATTRIBUTE_ROLE
 	 */
-    public static final String HAS_ROLE_ASSOCIATION = "hasRole";
+    public static final String ROLE_ASSIGNMENT_OBJECT_NAME = "hasRole";
 
 	/**
-	 * Attribute of the {@link #HAS_ROLE_ASSOCIATION} pointing to the {@link Group} that owns the role
-	 * on the source object of the link.
+	 * Name of the {@link TLStructuredType} for objects in the table
+	 * {@link #ROLE_ASSIGNMENT_OBJECT_NAME}.
+	 */
+	public static final String ROLE_ASSIGNMENT_TYPE = "tl.accounts:RoleAssignment";
+
+	/**
+	 * Attribute of the {@link #ROLE_ASSIGNMENT_OBJECT_NAME} pointing to the {@link Group} that owns
+	 * the role on the source object of the link.
 	 */
 	public static final String ATTRIBUTE_OWNER = "owner";
 
 	/**
-	 * Name of the {@link KnowledgeAssociation} binding a {@link BoundedRole} to a scope defining
-	 * that role.
+	 * Attribute of the {@link #ROLE_ASSIGNMENT_OBJECT_NAME} pointing to the context object of the
+	 * link.
 	 */
-    public static final String DEFINES_ROLE_ASSOCIATION = "definesRole";
+	public static final String ATTRIBUTE_OBJECT = "source";
 
-	private static final AssociationSetQuery<KnowledgeAssociation> ROLE_SCOPE =
-		AssociationQuery.createIncomingQuery("roleScope", DEFINES_ROLE_ASSOCIATION);
-
-	private static final AssociationSetQuery<KnowledgeAssociation> ROLES_IN_SCOPE =
-		AssociationQuery.createOutgoingQuery("rolesInScope", DEFINES_ROLE_ASSOCIATION);
+	/**
+	 * Attribute of the {@link #ROLE_ASSIGNMENT_OBJECT_NAME} pointing to the role of the link.
+	 */
+	public static final String ATTRIBUTE_ROLE = "dest";
 
 	private static volatile ItemByNameCache<String> BY_NAME_CACHE;
 
@@ -123,7 +150,73 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
     public BoundedRole(KnowledgeObject ko) {
         super(ko);
     }
-    
+
+	/**
+	 * Determines the {@link #ROLE_ASSIGNMENT_OBJECT_NAME role assignments} for the given context.
+	 */
+	public static CloseableIterator<KnowledgeObject> roleAssignmentsForContext(KnowledgeItem context) {
+		return findRoleAssigmenents(context, ATTRIBUTE_OBJECT);
+	}
+
+	/**
+	 * Determines the {@link #ROLE_ASSIGNMENT_OBJECT_NAME role assignments} for the given role.
+	 */
+	public static CloseableIterator<KnowledgeObject> roleAssignmentsForRole(KnowledgeItem role) {
+		return findRoleAssigmenents(role, ATTRIBUTE_ROLE);
+	}
+
+	private static CloseableIterator<KnowledgeObject> findRoleAssigmenents(KnowledgeItem item, String refAttrName) {
+		KnowledgeBase kb = item.getKnowledgeBase();
+
+		MetaObject roleAssignmentType = kb.getMORepository().getMetaObject(ROLE_ASSIGNMENT_OBJECT_NAME);
+		MOReference referenceAttr = MetaObjectUtils.getReference(roleAssignmentType, refAttrName);
+
+		Expression search = eqBinary(reference(referenceAttr), literal(item));
+		SimpleQuery<KnowledgeObject> query =
+			SimpleQuery.queryUnresolved(KnowledgeObject.class, roleAssignmentType, search);
+		return kb.compileSimpleQuery(query).searchStream();
+	}
+
+	/**
+	 * Determines the {@link #ROLE_ASSIGNMENT_OBJECT_NAME role assignments} which assigns any role
+	 * on the given context object to the given group.
+	 */
+	public static CloseableIterator<KnowledgeObject> roleAssignmentsForContextAndGroup(KnowledgeItem context,
+			KnowledgeItem group) {
+		KnowledgeBase kb = context.getKnowledgeBase();
+
+		MetaObject roleAssignmentType = kb.getMORepository().getMetaObject(ROLE_ASSIGNMENT_OBJECT_NAME);
+		MOReference contextAttr = MetaObjectUtils.getReference(roleAssignmentType, ATTRIBUTE_OBJECT);
+		MOReference groupAttr = MetaObjectUtils.getReference(roleAssignmentType, ATTRIBUTE_OWNER);
+
+		Expression search = and(
+			eqBinary(reference(contextAttr), literal(context)),
+			eqBinary(reference(groupAttr), literal(group)));
+		SimpleQuery<KnowledgeObject> query =
+			SimpleQuery.queryUnresolved(KnowledgeObject.class, roleAssignmentType, search);
+		return kb.compileSimpleQuery(query).searchStream();
+	}
+
+	/**
+	 * Determines the {@link #ROLE_ASSIGNMENT_OBJECT_NAME role assignments} which assigns the given
+	 * role on the given context object to any group.
+	 */
+	public static CloseableIterator<KnowledgeObject> roleAssignmentsForContextAndRole(KnowledgeItem context,
+			KnowledgeItem role) {
+		KnowledgeBase kb = context.getKnowledgeBase();
+
+		MetaObject roleAssignmentType = kb.getMORepository().getMetaObject(ROLE_ASSIGNMENT_OBJECT_NAME);
+		MOReference contextAttr = MetaObjectUtils.getReference(roleAssignmentType, ATTRIBUTE_OBJECT);
+		MOReference roleAttr = MetaObjectUtils.getReference(roleAssignmentType, ATTRIBUTE_ROLE);
+
+		Expression search = and(
+			eqBinary(reference(contextAttr), literal(context)),
+			eqBinary(reference(roleAttr), literal(role)));
+		SimpleQuery<KnowledgeObject> query =
+			SimpleQuery.queryUnresolved(KnowledgeObject.class, roleAssignmentType, search);
+		return kb.compileSimpleQuery(query).searchStream();
+	}
+
     /**
      * Check if this is a system role,
      * i.e. cannot be deleted by users
@@ -289,108 +382,6 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
         return getAll(getDefaultKnowledgeBase());
     }
     
-    /**
-     * Get all global roles
-     * 
-     * @return the list of global BoundedRoles
-     */
-	public static List<BoundedRole> getAllGlobalRoles() {
-		Iterator<BoundedRole> theRoles = getAll(getDefaultKnowledgeBase()).iterator();
-		List<BoundedRole> theList = new ArrayList<>();
-        while (theRoles.hasNext()) {
-			BoundedRole theRole = theRoles.next();
-            if (theRole.isGlobal()) {
-                theList.add(theRole);
-            }
-        }
-        
-        return theList;
-    }
-
-    /**
-     * Get all scoped roles, i.e. the ones which 
-     * don't have a BoundObject.
-     * 
-     * @return the list of global BoundedRoles
-     */
-	public static List<BoundedRole> getAllScopedRoles() {
-		Iterator<BoundedRole> theRoles = getAll(getDefaultKnowledgeBase()).iterator();
-		List<BoundedRole> theList = new ArrayList<>();
-        while (theRoles.hasNext()) {
-			BoundedRole theRole = theRoles.next();
-            if (!theRole.isGlobal()) {
-                theList.add(theRole);
-            }
-        }
-        
-        return theList;
-    }
-    
-    @Override
-	public TLModule getScope() {
-		return CollectionUtil.getSingleValueFromCollection(resolveWrappersTyped(ROLE_SCOPE, TLModule.class));
-    }
-    
-    /**
-     * Check if the role is global, i.e.
-     * does not have a BoundObject
-     * 
-     * @return true if the role is global
-     */
-    public boolean isGlobal() {
-        return this.getScope() == null;
-    }
-    
-    /**
-	 * Get the roles bound to the given {@link TLModule}.
-	 * 
-	 * @param scope
-	 *        The {@link TLModule}. Must not be <code>null</code>.
-	 * @return the roles. May be empty but not <code>null</code>.
-	 */
-	public static Set<BoundedRole> getDefinedRoles(TLModule scope) {
-		return AbstractWrapper.resolveWrappersTyped(scope, ROLES_IN_SCOPE, BoundedRole.class);
-    }
-    
-    /**
-	 * The role with the given name defined in the given scope.
-	 * 
-	 * @param scope
-	 *        The object defining roles.
-	 * @param roleName
-	 *        The role name requested.
-	 * @return The role with the given name defined in the given scope, or <code>null</code> if no
-	 *         such role exists.
-	 */
-	public static BoundedRole getDefinedRole(TLModule scope, String roleName) {
-		Collection<BoundedRole> roles = BoundedRole.getDefinedRoles(scope);
-		for (BoundedRole role : roles) {
-			if (roleName.equals(role.getName())) {
-				return role;
-            }
-        }
-		return null;
-    }
-    
-    @Override
-	public void bind(TLModule scope) throws IllegalStateException {
-		TLModule currentScope = getScope();
-		if (currentScope == null) {
-			// Not bound, bind it.
-			KnowledgeItem roleHandle = tHandle();
-			KnowledgeBase kb = roleHandle.getKnowledgeBase();
-			kb.createAssociation(scope.tHandle(), roleHandle, DEFINES_ROLE_ASSOCIATION);
-		} else if (currentScope != scope) {
-			throw new IllegalStateException("Cannot bind role '" + getName() + "' to '" + scope
-				+ "', already bound to '" + currentScope + "'.");
-		}
-    }
-    
-    @Override
-	public void unbind() {
-		tKnowledgeBase().deleteAll(resolveLinks(ROLE_SCOPE));
-	}
-
 	/**
 	 * Removes a direct role association for the given person to the given role.
 	 *
@@ -422,7 +413,6 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	 */
 	public static Set<BoundRole> getLocalAndGlobalRoles(TLObject context, Person person) {
 		Set<BoundRole> result = new HashSet<>();
-		result.addAll(person.getGlobalRoles());
 
 		addRoles(result, context, person.getRepresentativeGroup());
 		return result;
@@ -434,9 +424,6 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	 * @see #getLocalAndGlobalRoles(TLObject, Person)
 	 */
 	public static boolean hasLocalOrGlobalOrGroupRole(TLObject context, Person aPerson) {
-		if (!aPerson.getGlobalRoles().isEmpty()) {
-			return true;
-		}
 
 		for (Group group : Group.getGroups(aPerson, true, true)) {
 			if (hasRole(context, group)) {
@@ -457,7 +444,6 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	 */
 	public static Set<BoundRole> getLocalAndGlobalAndGroupRoles(TLObject context, Person person) {
 		Set<BoundRole> result = new HashSet<>();
-		result.addAll(person.getGlobalRoles());
 
 		// Note: The Group.getGroups() resolution does not deliver the representative group of a
 		// person. It also only resolves group membership of representative groups, not groups in
@@ -491,41 +477,40 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 		}
 		if (context instanceof BoundObject) {
 			BoundObject ancestor = (BoundObject) context;
-			while (ancestor != null) {
-				BoundObject parent = ancestor.getSecurityParent();
-				if (parent != null) {
-					if (BoundedRole.hasLocalRole(parent, owner)) {
-						return true;
-					}
+			MutableBoolean result = new MutableBoolean(false);
+			BoundHelper.visitAllSecurityParents(ancestor, secParent -> {
+				if (BoundedRole.hasLocalRole(secParent, owner)) {
+					result.setTrue();
+					return false;
+				} else {
+					return true;
 				}
-				ancestor = parent;
-			}
+			});
+			return result.booleanValue();
 		}
 		return false;
 	}
 
 	private static boolean hasLocalRole(TLObject context, Group owner) {
-		return queryAssignedRoles(context, owner).hasNext();
+		try (CloseableIterator<KnowledgeObject> it = queryAssignedRoles(context, owner)) {
+			return it.hasNext();
+		}
 	}
 
 	private static void addRoles(Set<BoundRole> result, TLObject context, Group owner) {
 		BoundedRole.addLocalRoles(result, context, owner);
-		if (context instanceof BoundObject) {
-			BoundObject ancestor = (BoundObject) context;
-			while (ancestor != null) {
-				BoundObject parent = ancestor.getSecurityParent();
-				if (parent != null) {
-					BoundedRole.addLocalRoles(result, parent, owner);
-				}
-				ancestor = parent;
-			}
+		if (!(context instanceof BoundObject)) {
+			return;
 		}
+		BoundHelper.collectAllSecurityParents((BoundObject) context,
+			secParent -> BoundedRole.addLocalRoles(result, secParent, owner));
 	}
 
 	private static void addLocalRoles(Collection<BoundRole> result, TLObject context, Group owner) {
-		Iterator<? extends KnowledgeAssociation> it = queryAssignedRoles(context, owner);
-		while (it.hasNext()) {
-			result.add(it.next().getDestinationObject().getWrapper());
+		try (CloseableIterator<KnowledgeObject> it = queryAssignedRoles(context, owner)) {
+			while (it.hasNext()) {
+				result.add(((KnowledgeItem) it.next().getAttributeValue(ATTRIBUTE_ROLE)).getWrapper());
+			}
 		}
 	}
 
@@ -555,14 +540,14 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 			Collection<? extends BoundedRole> filter) {
 		KnowledgeObject fromHandle = (KnowledgeObject) fromContext.tHandle();
 		KnowledgeObject toHandle = (KnowledgeObject) toContext.tHandle();
-		Iterator<KnowledgeAssociation> it = fromHandle.getOutgoingAssociations(HAS_ROLE_ASSOCIATION);
-		KnowledgeBase kb = toHandle.getKnowledgeBase();
-		while (it.hasNext()) {
-			KnowledgeAssociation fromLink = it.next();
-			KnowledgeObject roleHandle = fromLink.getDestinationObject();
-			if (filter == null || filter.contains(roleHandle.getWrapper())) {
-				KnowledgeAssociation toLink = kb.createAssociation(toHandle, roleHandle, HAS_ROLE_ASSOCIATION);
-				toLink.setAttributeValue(ATTRIBUTE_OWNER, fromLink.getAttributeValue(ATTRIBUTE_OWNER));
+		try (CloseableIterator<KnowledgeObject> it = roleAssignmentsForContext(fromHandle)) {
+			while (it.hasNext()) {
+				KnowledgeObject fromLink = it.next();
+				KnowledgeObject roleHandle = (KnowledgeObject) fromLink.getAttributeValue(ATTRIBUTE_ROLE);
+				if (filter == null || filter.contains(roleHandle.getWrapper())) {
+					KnowledgeObject groupHandle = (KnowledgeObject) fromLink.getAttributeValue(ATTRIBUTE_OWNER);
+					internalAssignRole(toHandle, groupHandle, roleHandle);
+				}
 			}
 		}
 	}
@@ -580,23 +565,25 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	 */
 	public static boolean removeRoleAssignments(TLObject context, Group group, BoundedRole role) {
 		KnowledgeObject contextHandle = (KnowledgeObject) context.tHandle();
-		Iterator<? extends KnowledgeAssociation> it;
-		if (role != null) {
-			KnowledgeObject theRoleObj = role.tHandle();
-			it = contextHandle.getOutgoingAssociations(HAS_ROLE_ASSOCIATION, theRoleObj);
-		} else {
-			it = contextHandle.getOutgoingAssociations(HAS_ROLE_ASSOCIATION);
-		}
-		KnowledgeBase kb = contextHandle.getKnowledgeBase();
 		KnowledgeObject groupHandle = group.tHandle();
-		while (it.hasNext()) {
-			KnowledgeAssociation link = it.next();
-			if (groupHandle.equals(link.getAttributeValue(ATTRIBUTE_OWNER))) {
-				kb.delete(link);
-				return true;
+		try (CloseableIterator<KnowledgeObject> it = roleAssignmentsForContextAndGroup(contextHandle, groupHandle)) {
+			if (role != null) {
+				KnowledgeObject theRoleObj = role.tHandle();
+				while (it.hasNext()) {
+					KnowledgeObject link = it.next();
+					if (theRoleObj.equals(link.getAttributeValue(ATTRIBUTE_ROLE))) {
+						link.delete();
+						return true;
+					}
+				}
+				return false;
+			} else {
+				boolean anyAssignmnent = it.hasNext();
+				KBUtils.deleteAllKI(it);
+				return anyAssignmnent;
 			}
 		}
-		return false;
+
 	}
 
 	/**
@@ -608,9 +595,9 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 		{
 			KnowledgeObject contextItem = (KnowledgeObject) context.tHandle();
 			KnowledgeObject roleItem = aRole.tHandle();
-			Iterator<? extends KnowledgeAssociation> iter =
-				contextItem.getOutgoingAssociations(HAS_ROLE_ASSOCIATION, roleItem);
-			return KBUtils.deleteAllKI(iter);
+			try (CloseableIterator<KnowledgeObject> iter = roleAssignmentsForContextAndRole(contextItem, roleItem)) {
+				return KBUtils.deleteAllKI(iter);
+			}
 		}
 	}
 
@@ -625,33 +612,32 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	public static boolean removeRoleAssignments(TLObject context) {
 		{
 			KnowledgeObject item = (KnowledgeObject) context.tHandle();
-			Iterator<? extends KnowledgeAssociation> iter =
-				item.getOutgoingAssociations(HAS_ROLE_ASSOCIATION);
-			return KBUtils.deleteAllKI(iter);
+			try (CloseableIterator<KnowledgeObject> iter = roleAssignmentsForContext(item)) {
+				return KBUtils.deleteAllKI(iter);
+			}
 		}
 	}
 
 	private static boolean hasRoleAssigned(TLObject context, Group owner, BoundedRole role) {
 		KnowledgeObject roleHandle = role.tHandle();
 
-		Iterator<? extends KnowledgeAssociation> it = queryAssignedRoles(context, owner);
-		while (it.hasNext()) {
-			if (it.next().getDestinationObject() == roleHandle) {
-				return true;
+		try (CloseableIterator<KnowledgeObject> it = queryAssignedRoles(context, owner)) {
+			while (it.hasNext()) {
+				if (it.next().getAttributeValue(ATTRIBUTE_ROLE) == roleHandle) {
+					return true;
+				}
 			}
+			return false;
 		}
-		return false;
 	}
 
-	private static Iterator<? extends KnowledgeAssociation> queryAssignedRoles(TLObject context, Group group) {
+	private static CloseableIterator<KnowledgeObject> queryAssignedRoles(TLObject context, Group group) {
 		KnowledgeObject ko = (KnowledgeObject) context.tHandle();
-		Iterator<? extends KnowledgeAssociation> it;
+		CloseableIterator<KnowledgeObject> it;
 		if (group == null) {
-			it = ko.getOutgoingAssociations(HAS_ROLE_ASSOCIATION);
+			it = roleAssignmentsForContext(ko);
 		} else {
-			it = (Iterator)ko.getKnowledgeBase().getObjectsByAttribute(HAS_ROLE_ASSOCIATION,
-				new String[] { DBKnowledgeAssociation.REFERENCE_SOURCE_NAME, ATTRIBUTE_OWNER },
-				new Object[] { ko, group.tHandle() });
+			it = roleAssignmentsForContextAndGroup(ko, group.tHandle());
 		}
 		return it;
 	}
@@ -672,14 +658,18 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 		}
 
 		if (!hasRoleAssigned(context, group, role)) {
-			KnowledgeItem contextHandle = context.tHandle();
-			KnowledgeBase kb = contextHandle.getKnowledgeBase();
-			NameValueBuffer initialValues = new NameValueBuffer(2);
-			initialValues.put(DBKnowledgeAssociation.REFERENCE_SOURCE_NAME, contextHandle);
-			initialValues.put(DBKnowledgeAssociation.REFERENCE_DEST_NAME, role.tHandle());
-			initialValues.put(ATTRIBUTE_OWNER, group.tHandle());
-			kb.createKnowledgeItem(HistoryUtils.getTrunk(), HAS_ROLE_ASSOCIATION, initialValues);
+			internalAssignRole(context.tHandle(), group.tHandle(), role.tHandle());
 		}
+	}
+
+	private static void internalAssignRole(KnowledgeItem contextHandle, KnowledgeObject groupHandle,
+			KnowledgeObject roleHandle) {
+		KnowledgeBase kb = contextHandle.getKnowledgeBase();
+		NameValueBuffer initialValues = new NameValueBuffer(3);
+		initialValues.put(ATTRIBUTE_OBJECT, contextHandle);
+		initialValues.put(ATTRIBUTE_ROLE, roleHandle);
+		initialValues.put(ATTRIBUTE_OWNER, groupHandle);
+		kb.createKnowledgeItem(HistoryUtils.getTrunk(), ROLE_ASSIGNMENT_OBJECT_NAME, initialValues);
 	}
 
 	/**

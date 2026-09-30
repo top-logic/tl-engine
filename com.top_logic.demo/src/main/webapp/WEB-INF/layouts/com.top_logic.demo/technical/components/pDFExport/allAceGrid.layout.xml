@@ -18,7 +18,7 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.pdfExport:A`)"
 			modelForElement="null"
-			supportsElement="element->$element.instanceOf(`test.pdfExport:A`)"
+			supportsElement="true"
 			supportsModel="true"
 		/>
 		<buttons>

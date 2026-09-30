@@ -5,12 +5,14 @@
  */
 package com.top_logic.element.boundsec.manager;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
+import com.top_logic.model.TLClass;
 
 /**
  * Internationalization constants for this package.
@@ -21,57 +23,69 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey1 ABSTRACT_SOURCE_TYPE =
-		legacyKey1("admin.security.import.roleRules.problem.abstractSourceType");
+	/**
+	 * Message key used when the source {@link TLClass} of a rule is abstract.
+	 */
+	@CustomKey("admin.security.import.roleRules.problem.abstractSourceType")
+	public static ResKey1 ABSTRACT_SOURCE_TYPE;
 
-	public static ResKey1 ABSTRACT_TYPE_WITHOUT_INHERITANCE =
-		legacyKey1("admin.security.import.roleRules.problem.abstractTypeWithoutInheritance");
+	/**
+	 * Message key used when the {@link TLClass} of a rule is abstract and the rule is no "inherit"
+	 * rule. In such case the rule is useless.
+	 */
+	@CustomKey("admin.security.import.roleRules.problem.abstractTypeWithoutInheritance")
+	public static ResKey1 ABSTRACT_TYPE_WITHOUT_INHERITANCE;
 
-	public static ResKey2 ATTRIBUTE_AND_ASSOCIATION_GIVEN =
-		legacyKey2("admin.security.import.roleRules.problem.attributeAndAssociationGiven");
-
-	public static ResKey1 AUTHORIZATION_PROBLEM_UNKNOWN_CLASSIFIER =
-		legacyKey1("admin.security.import.authorization.problem.unknownClassifier");
+	@CustomKey("admin.security.import.authorization.problem.unknownClassifier")
+	public static ResKey1 AUTHORIZATION_PROBLEM_UNKNOWN_CLASSIFIER;
 
 	/**
 	 * @en Role {1} for classification {0} not found (available roles: {2}). The rule is not used.
 	 */
 	public static ResKey3 AUTHORIZATION_PROBLEM_UNKNOWN_ROLE;
 
-	public static ResKey3 CLASSIFICATIONS_PROBLEM_UNKNOWN_CLASSIFIER =
-		legacyKey3("admin.security.import.classifications.problem.unknownClassifier");
+	@CustomKey("admin.security.import.classifications.problem.unknownClassifier")
+	public static ResKey3 CLASSIFICATIONS_PROBLEM_UNKNOWN_CLASSIFIER;
 
-	public static ResKey1 DUPLICATE_META_ELEMENT =
-		legacyKey1("admin.security.import.classifications.problem.duplicateMetaElement");
+	@CustomKey("admin.security.import.classifications.problem.duplicateMetaElement")
+	public static ResKey1 DUPLICATE_META_ELEMENT;
 
-	public static ResKey2 DUPLICATE_ROLE = legacyKey2("admin.security.import.authorization.problem.duplicateRole");
-
-	public static ResKey2 ILLEGAL_META_ELEMENT =
-		legacyKey2("admin.security.import.roleRules.problem.illegalMetaElement");
-
-
-	public static ResKey2 META_ELEMENT_AND_META_OBJECT_DECLARED =
-		legacyKey2("admin.security.import.roleRules.problem.metaElementAndMetaObjectDeclared");
-
-	public static ResKey META_ELEMENT_AND_META_OBJECT_NOT_DECLARED = legacyKey("admin.security.import.roleRules.problem.metaElementAndMetaObjectNotDeclared");
-
-	public static ResKey NO_ATTRIBUTE_OR_ASSOCIATION = legacyKey("admin.security.import.roleRules.problem.noAttributeOrAssociation");
+	@CustomKey("admin.security.import.authorization.problem.duplicateRole")
+	public static ResKey2 DUPLICATE_ROLE;
 
 	/**
-	 * @en The role {0} does not exist. Available application roles are {1}, available global roles
-	 *     are {2}. The corresponding rule is ignored.
+	 * @en No type is given.
 	 */
-	public static ResKey3 ROLE_RULES_PROBLEM_UNKNOWN_ROLE;
+	public static ResKey NO_META_ELEMENT_DECLARED;
 
-	public static ResKey2 UNKNOWN_ATTRIBUTE = legacyKey2("admin.security.import.roleRules.problem.unknownAttribute");
+	/**
+	 * @en The role {0} does not exist. Available roles are {1}. The corresponding rule is ignored.
+	 */
+	public static ResKey2 ROLE_RULES_PROBLEM_UNKNOWN_ROLE;
 
-	public static ResKey2 UNKNOWN_META_ATTRIBUTE =
-		legacyKey2("admin.security.import.classifications.problem.unknownMetaAttribute");
+	/**
+	 * @en The part {0} is not a reference.
+	 */
+	public static ResKey1 NOT_A_REFERENCE__PART;
 
-	public static ResKey1 UNKNOWN_META_ELEMENT =
-		legacyKey1("admin.security.import.roleRules.problem.unknownMetaElement");
+	@CustomKey("admin.security.import.classifications.problem.unknownMetaAttribute")
+	public static ResKey2 UNKNOWN_META_ATTRIBUTE;
 
-	public static ResKey1 UNKNOWN_META_OBJECT = legacyKey1("admin.security.import.roleRules.problem.unknownMetaObject");
+	/**
+	 * Message key used when configured {@link TLClass} is unknown.
+	 */
+	@CustomKey("admin.security.import.roleRules.problem.unknownMetaElement")
+	public static ResKey1 UNKNOWN_META_ELEMENT;
+
+	/**
+	 * @en The singleton {0} can not be resolved.
+	 */
+	public static ResKey1 INVALID_SINGLETON__NAME;
+
+	/**
+	 * @en There are two rules with the same id: {0}
+	 */
+	public static ResKey1 ERROR_DUPLICATE_RULE_ID__ID;
 
 	static {
 		initConstants(I18NConstants.class);

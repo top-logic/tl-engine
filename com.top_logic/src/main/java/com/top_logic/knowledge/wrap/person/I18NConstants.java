@@ -39,9 +39,24 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey CREATED_ROOT_ACCOUNT;
 
 	/**
+	 * @en Created anonymous account.
+	 */
+	public static ResKey CREATED_ANONYMOUS_ACCOUNT;
+
+	/**
 	 * @en Resetting password of root account.
 	 */
 	public static ResKey RESETTING_ROOT_PASSWORD;
+
+	/**
+	 * @en An account with the name "{0}" already exists (account names are case-insensitive).
+	 */
+	public static ResKey1 ERROR_DUPLICATE_ACCOUNT_NAME__NAME;
+
+	/**
+	 * @en The account name "{0}" is invalid. Allowed are letters, digits and the characters . @ + ~ - _ (no whitespace).
+	 */
+	public static ResKey1 ERROR_INVALID_ACCOUNT_NAME__NAME;
 
 	static {
 		initConstants(I18NConstants.class);

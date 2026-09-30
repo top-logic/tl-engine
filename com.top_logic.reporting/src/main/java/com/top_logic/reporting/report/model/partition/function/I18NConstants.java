@@ -5,6 +5,7 @@
  */
 package com.top_logic.reporting.report.model.partition.function;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -19,9 +20,11 @@ import com.top_logic.layout.ResPrefix;
 @Deprecated
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey CLASSIFICATION_NOT_SET = legacyKey("reporting.classification.notset");
+	@CustomKey("reporting.classification.notset")
+	public static ResKey CLASSIFICATION_NOT_SET;
 
-	public static ResKey EMPTY_VALUE_LABEL = legacyKey("reporting.chart.valueNotSet");
+	@CustomKey("reporting.chart.valueNotSet")
+	public static ResKey EMPTY_VALUE_LABEL;
 
 	static {
 		initConstants(I18NConstants.class);

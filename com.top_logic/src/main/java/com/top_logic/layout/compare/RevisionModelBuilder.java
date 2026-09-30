@@ -99,11 +99,6 @@ public class RevisionModelBuilder extends AbstractConfiguredInstance<RevisionMod
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-		return listElement instanceof Revision;
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent contextComponent, Object listElement) {
 		return null;
 	}

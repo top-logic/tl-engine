@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The login dialog: the credentials form in a window the user can dismiss.
+	
+	Opened over a display that is showing something already, so there is a Cancel action leading
+	back to it. An application that has nothing to show a visitor uses login-page.view.xml instead.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+	</channels>
+	<window
+		resizable="false"
+		width="380px"
+	>
+		<title>
+			<en>Login</en>
+			<de>Anmeldung</de>
+		</title>
+		<view-ref view="login-form.view.xml">
+			<bind
+				channel="model"
+				to="model"
+			/>
+		</view-ref>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

@@ -61,7 +61,7 @@ import com.top_logic.util.error.TopLogicException;
  *           <li>{@link #updateComponent(LayoutComponent, Object)}</li>
  *           </ul>
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractDeleteCommandHandler extends AbstractCommandHandler implements TransactionHandler {
 

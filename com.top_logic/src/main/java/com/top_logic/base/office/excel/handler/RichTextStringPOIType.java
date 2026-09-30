@@ -18,7 +18,7 @@ import com.top_logic.basic.StringServices;
 /**
  * Set rich text string values to excel cells via POI.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class RichTextStringPOIType implements PoiTypeHandler {
 

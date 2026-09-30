@@ -109,7 +109,7 @@ public class InlinedTileFactory implements TileFactory {
 				} else {
 					Resources resources = Resources.getInstance();
 					Object targetObject = getBusinessObject();
-					Map<String, Object> args = ContextMenuUtil.createArguments(targetObject);
+					Map<String, Object> args = ContextMenuUtil.createSingleObjectArguments(targetObject);
 					modifier = menu -> {
 						for (CommandHandler command : buttons) {
 							menu.add(inlined().createCommandModel(resources, command, args));

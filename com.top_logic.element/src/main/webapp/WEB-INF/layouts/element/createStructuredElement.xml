@@ -47,6 +47,7 @@
 			<component class="${detailComponent}"
 				buttonbar="true"
 				commandGroups="${createCommandGroups}"
+				isSecurityMaster="true"
 				model="${model}"
 				name="${detailComponentName}"
 				newModelAction="${newModelAction}"

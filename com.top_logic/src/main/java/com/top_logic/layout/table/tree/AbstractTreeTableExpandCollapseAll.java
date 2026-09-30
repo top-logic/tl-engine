@@ -26,7 +26,7 @@ import com.top_logic.tool.boundsec.conditional.Success;
  * @implNote Subclasses have to call {@link #prepare(TreeTableData)} in their
  *           {@link #prepare(LayoutComponent, Object, Map)} implementation.
  * 
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class AbstractTreeTableExpandCollapseAll extends AbstractExpandCollapseAll {
 

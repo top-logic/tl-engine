@@ -13,7 +13,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 /**
  * Algorithm to partition a {@link Set} of {@link LayoutEdge}s.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface LayoutEdgePartitioner {
 	/**

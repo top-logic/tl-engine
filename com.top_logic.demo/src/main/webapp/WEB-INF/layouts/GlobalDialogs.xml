@@ -7,7 +7,6 @@
 	<layout-reference resource="admin/security/accounts/userSettings/dialog.layout.xml"/>
 	<layout-reference resource="admin/security/accounts/defaultFor/dialog.layout.xml"/>
 	<securityLayout name="globalDialogDemoTypesTop"
-		securityDomain="DemoTypes"
 		titleKey="demo.globalDialogs.DemoTypes.show.tabber"
 	>
 		<dialogInfo
@@ -24,13 +23,12 @@
 				defaultFor="DemoTypes:DemoTypes.A,DemoTypes:DemoTypes.B,DemoTypes:DemoTypes.C.All,DemoTypes:DemoTypes.L"
 				master=""
 				namePrefix="globalDialog"
-				securityObject="model"
+				securityObject="model(DemoTypes:DemoTypes.All)"
 				structure="DemoTypes"
 			/>
 		</components>
 	</securityLayout>
 	<securityLayout name="globalDialogDemoPlainTop"
-		securityDomain="DemoPlain"
 		titleKey="demo.DemoPlain.edit.dialog.tabber"
 	>
 		<components>
@@ -39,6 +37,7 @@
 				metaElementName="DemoPlain.All"
 				modifier="com.top_logic.demo.edit.DemoFormContextModificator"
 				namePrefix="globalDialogPlain"
+				securityObject="model(DemoPlain:DemoPlain.All)"
 			/>
 		</components>
 		<dialogInfo

@@ -12,6 +12,7 @@ import java.lang.annotation.Target;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.func.GenericFunction;
@@ -59,7 +60,7 @@ public @interface Options {
 
 	/**
 	 * The {@link OptionMapping} to translate an option returned by {@link #fun()} to the actual
-	 * value of the annotated {@link TLProperty}.
+	 * value of the annotated {@link PropertyDescriptor}.
 	 * 
 	 * <p>
 	 * Note: When options and the final selection/value are of different type, a

@@ -5,6 +5,7 @@
  */
 package com.top_logic.tool.dataImport.layout;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,19 +19,26 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey ERRORS = legacyKey("layout.dataimport.assistant.errors");
+	@CustomKey("layout.dataimport.assistant.errors")
+	public static ResKey ERRORS;
 
-	public static ResKey ERROR_IMPORTER_BUSY = legacyKey("layout.dataimport.assistant.importerBusy");
+	@CustomKey("layout.dataimport.assistant.importerBusy")
+	public static ResKey ERROR_IMPORTER_BUSY;
 
-	public static ResKey ERROR_IMPORTER_RUNNING = legacyKey("layout.dataimport.assistant.importerRunning");
+	@CustomKey("layout.dataimport.assistant.importerRunning")
+	public static ResKey ERROR_IMPORTER_RUNNING;
 
-	public static ResKey INFOS = legacyKey("layout.dataimport.assistant.infos");
+	@CustomKey("layout.dataimport.assistant.infos")
+	public static ResKey INFOS;
 
-	public static ResKey START_COMMITTING_DISABLED = legacyKey("layout.dataimport.assistant.startCommittingDisabled");
+	@CustomKey("layout.dataimport.assistant.startCommittingDisabled")
+	public static ResKey START_COMMITTING_DISABLED;
 
-	public static ResKey START_PARSING_DISABLED = legacyKey("layout.dataimport.assistant.startParsingDisabled");
+	@CustomKey("layout.dataimport.assistant.startParsingDisabled")
+	public static ResKey START_PARSING_DISABLED;
 
-	public static ResKey WARNINGS = legacyKey("layout.dataimport.assistant.warnings");
+	@CustomKey("layout.dataimport.assistant.warnings")
+	public static ResKey WARNINGS;
 
 	static {
 		initConstants(I18NConstants.class);

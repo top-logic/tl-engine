@@ -16,7 +16,7 @@ import com.top_logic.model.TLStructuredTypePart;
 /**
  * Compare validity states of attributed objects.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ValidityStateComparator implements Comparator {
 

@@ -16,7 +16,7 @@ import com.top_logic.dsa.DataAccessProxy;
  * An activation DataSource based on an DataAccessProxy objects.
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
- * @author    Andreas Röse
+ * @author    Andreas RÃ¶se
  */
 public class DataAccessProxyDataSource implements DataSource {
 

@@ -581,7 +581,7 @@ public class TestJournal extends BasicTestCase {
 	/**
 	 * {@link JournalManager} for testing.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
     protected static class TestingJournalManager extends JournalManager {
     	

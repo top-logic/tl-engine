@@ -117,8 +117,7 @@ public class MonomorphicCreateFormBuilder extends ConfiguredDynamicFormBuilder {
 		TLFormObject newCreation = formContext.createObject(type, null, container);
 		initializeCreation(component, newCreation, businessModel);
 
-		FormContainer editorGroup = formContext.createFormContainerForOverlay(newCreation);
-		formContext.addMember(editorGroup);
+		FormContainer editorGroup = formContext.addFormContainerForOverlay(newCreation);
 		TypedForm typedForm = TypedForm.lookup(getConfiguredForms(), type);
 		setDisplayedTypedForm(typedForm);
 		FormEditorContext context = new FormEditorContext.Builder()

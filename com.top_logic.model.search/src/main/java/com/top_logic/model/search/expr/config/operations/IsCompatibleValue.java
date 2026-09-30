@@ -38,7 +38,7 @@ import com.top_logic.util.error.TopLogicException;
  * compatible with the target {@link TLType}.
  * </p>
  *
- * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:jhu@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public class IsCompatibleValue extends GenericMethod {
 

@@ -77,7 +77,7 @@ import com.top_logic.util.resource.ResourceMapMapping;
 /**
  * Supporting class for accessing and creating fields in a search component.
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class SearchFieldSupport {
 
@@ -543,7 +543,7 @@ public class SearchFieldSupport {
     }
 
     /**
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class ChangeMetaElementListener implements ValueListener {
 
@@ -571,7 +571,7 @@ public class SearchFieldSupport {
     }
 
     /**
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class ChangeColorListener implements ValueListener {
 
@@ -636,7 +636,7 @@ public class SearchFieldSupport {
     }
 
     /**
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class InputListener implements ValueListener {
 
@@ -721,7 +721,7 @@ public class SearchFieldSupport {
     }
 
     /**
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class GroupInputListener implements ValueListener {
 
@@ -793,7 +793,7 @@ public class SearchFieldSupport {
     /**
      * Change the color of the inputFileds when change and disable the #STORED_QUERY field.
      *
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class InputColorListener implements ValueListener {
 

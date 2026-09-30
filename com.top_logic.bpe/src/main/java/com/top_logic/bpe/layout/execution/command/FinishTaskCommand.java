@@ -34,6 +34,7 @@ import com.top_logic.bpe.layout.execution.SelectTransitionDialog.Decision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.check.CheckScopeProvider;
 import com.top_logic.layout.basic.check.SelfCheckProvider;
@@ -137,8 +138,15 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 		// Handle initial execution without context
 		if (context == null) {
 			// check if there is already a lock otherwise create it
+			Command releaseToken;
 			if (!editComponent.isInEditMode()) {
 				editComponent.getLockHandler().acquireLock(model);
+				releaseToken = dc -> {
+					editComponent.getLockHandler().releaseLock();
+					return HandlerResult.DEFAULT_RESULT;
+				};
+			} else {
+				releaseToken = Command.DO_NOTHING;
 			}
 			// Confirm/decide about how to progress.
 			GuiEngine engine = GuiEngine.getInstance();
@@ -163,22 +171,22 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 					// Show warnings dialog, before showing SelectTransitionDialog
 					WarningsDialog.openWarningsDialogWithoutFormContext(aContext.getWindowScope(),
 						ResKey.legacy("workflow"),
-						warnings, acknowledge, Command.DO_NOTHING);
+						warnings, acknowledge, releaseToken);
 
 					return suspended;
 				}
 				// no warnings or warnings are already acknowledged
-				return confirmFinish(aContext, token, warnings, editComponent);
+				return confirmFinish(aContext, token, warnings, releaseToken);
 			} else {
 				// Check for errors when no decision is needed
 				List<ResKey> errors = engine.checkErrors(token, outgoing);
 				if (!errors.isEmpty()) {
 					return MessageBox.newBuilder(MessageType.CONFIRM)
 						.message(Fragments.messageList(errors))
-						.buttons(MessageBox.button(ButtonType.OK))
+						.buttons(MessageBox.button(ButtonType.OK, releaseToken))
 						.confirm(aContext.getWindowScope());
 				}
-				return confirmFinish(aContext, token, warnings, editComponent);
+				return confirmFinish(aContext, token, warnings, releaseToken);
 			}
 		}
 
@@ -205,7 +213,7 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 	}
 
 	private HandlerResult confirmFinish(DisplayContext context, Token token, List<ResKey> warnings,
-			EditComponent editComponent) {
+			Command releaseToken ) {
 		HandlerResult suspended = HandlerResult.suspended();
 		SelectTransitionDialog selectTransitionDialog = new SelectTransitionDialog(token, suspended);
 		selectTransitionDialog.getDialogModel().addListener(DialogModel.CLOSED_PROPERTY, new DialogClosedListener() {
@@ -213,9 +221,7 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 			@Override
 			public void handleDialogClosed(Object sender, Boolean oldValue, Boolean newValue) {
 				// if transition dialog is closed release lock if not in EditMode
-				if (!editComponent.isInEditMode()) {
-					editComponent.getLockHandler().releaseLock();
-				}
+				releaseToken.executeCommand(DefaultDisplayContext.getDisplayContext());
 			}
 		});
 		selectTransitionDialog.open(context);

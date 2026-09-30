@@ -67,7 +67,7 @@ import com.top_logic.util.Resources;
 /**
  * Control displaying a value with a popup button opening a popup dialog for editing this value.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class PopupEditControl extends AbstractFormFieldControl {
 
@@ -322,7 +322,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 
 	@Override
 	protected String getTypeCssClass() {
-		return isImmutable() ? "cTextPopupView" : "cTextPopup";
+		return isImmutable() ? "tl-text-popup-view" : "tl-text-popup";
 	}
 
 	@Override

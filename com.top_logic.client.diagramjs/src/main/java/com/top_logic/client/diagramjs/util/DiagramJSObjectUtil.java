@@ -23,7 +23,7 @@ import com.top_logic.client.diagramjs.model.util.Waypoint;
 /**
  * Utilities methods for diagramJS objects.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DiagramJSObjectUtil {
 

@@ -11,7 +11,7 @@ import com.google.gwt.core.client.JavaScriptObject;
  * {@link EventBus} is used to communicate across a diagram instance. Other parts of a diagram can
  * use it to listen to and broadcast events.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class EventBus extends JavaScriptObject {
 

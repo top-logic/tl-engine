@@ -32,6 +32,7 @@ import com.top_logic.element.changelog.model.trans.TransientModification;
 import com.top_logic.element.changelog.model.trans.TransientUpdate;
 import com.top_logic.knowledge.objects.identifier.ObjectReference;
 import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.ModelKind;
@@ -55,10 +56,11 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 	default TransientChangeSet revert() {
 		TransientChangeSet undo = new TransientChangeSet();
 		undo.setRevision(getParentRev());
-		undo.setParentRev(getRevision());
+		Revision revision = getRevision();
+		undo.setParentRev(revision);
 		undo.setAuthor(getAuthor());
 		undo.setDate(getDate());
-		undo.setMessage(revert(getMessage()));
+		undo.setMessage(revert(getMessage(), revision));
 
 		for (Change change : getChanges()) {
 			if (change instanceof Creation creation) {
@@ -150,6 +152,13 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 		for (Change change : getChanges()) {
 			if (change instanceof Deletion deletion) {
 				TLObject deleted = deletion.getObject();
+				if (deleted == null || !deleted.tValid()) {
+					/* If the type is unversioned, the current object is stored in the deletion
+					 * instead of the historical object. This may now be invalid because, for
+					 * example, the container was deleted first. In this case, the "deleted" object
+					 * is null or invalid */
+					continue;
+				}
 				TLObject toDelete = WrapperHistoryUtils.getCurrent(deleted);
 				if (toDelete == null) {
 					continue;
@@ -371,19 +380,83 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 		}
 	}
 
-	private ResKey revert(ResKey message) {
-		if (I18NConstants.REDO__MSG.getKey().equals(message.getKey())) {
-			return I18NConstants.REVERTED__MSG.fill(firstArg(message));
-		} else if (I18NConstants.REVERTED__MSG.getKey().equals(message.getKey())) {
-			return I18NConstants.REDO__MSG.fill(firstArg(message));
-		} else {
-			return I18NConstants.REVERTED__MSG.fill(message);
+	@SuppressWarnings("deprecation")
+	private ResKey revert(ResKey message, Revision revision) {
+		long origRevision = revision.getCommitNumber();
+
+		// A literal commit message (e.g. set by an application-specific undo button) has no key. Only
+		// messages with a real key can be the framework's revert/redo messages.
+		if (message.hasKey()) {
+			String origMessage = message.getKey();
+
+			if (I18NConstants.REDO__MSG_REV.getKey().equals(origMessage)
+					|| I18NConstants.REDO__MSG.getKey().equals(origMessage) // Compatibility
+			) {
+				return I18NConstants.REVERTED__MSG_REV.fill(firstArg(message), origRevision);
+			}
+			if (I18NConstants.REVERTED__MSG_REV.getKey().equals(origMessage)
+					|| I18NConstants.REVERTED__MSG.getKey().equals(origMessage) // Compatibility
+			) {
+				return I18NConstants.REDO__MSG_REV.fill(firstArg(message), origRevision);
+			}
 		}
+		return I18NConstants.REVERTED__MSG_REV.fill(message, origRevision);
 	}
 
 	private Object firstArg(ResKey message) {
 		Object[] arguments = message.arguments();
 		return arguments.length > 0 ? arguments[0] : message;
+	}
+
+	/**
+	 * Whether this change the the "undo change set" of another.
+	 * 
+	 * <p>
+	 * In this case {@link #origRevision()} determines the commit number of the original change set.
+	 * </p>
+	 */
+	default boolean isRevert() {
+		ResKey message = getMessage();
+		// A literal commit message has no key and therefore cannot be the framework's revert message.
+		return message.hasKey() && I18NConstants.REVERTED__MSG_REV.getKey().equals(message.getKey());
+	}
+
+	/**
+	 * Whether this change the the "redo change set" of another.
+	 * 
+	 * <p>
+	 * In this case {@link #origRevision()} determines the commit number of the original change set.
+	 * </p>
+	 */
+	default boolean isRedo() {
+		ResKey message = getMessage();
+		// A literal commit message has no key and therefore cannot be the framework's redo message.
+		return message.hasKey() && I18NConstants.REDO__MSG_REV.getKey().equals(message.getKey());
+	}
+
+	/**
+	 * Original revision when this {@link ChangeSet} is {@link #isRevert() a revert} or
+	 * {@link #isRedo() a redo}.
+	 * 
+	 * @return The original revision or <code>-1</code> when the revision could not be determined.
+	 */
+	default long origRevision() {
+		ResKey message = getMessage();
+		// Both key have the revision as second argument.
+		Object[] arguments = message.arguments();
+		if (arguments.length > 1) {
+			Object revision = arguments[1];
+			if (revision instanceof Number rev) {
+				return rev.longValue();
+			} else if (revision instanceof String revString) {
+				try {
+					return Long.parseLong(revString);
+				} catch (NumberFormatException ex) {
+					// ignore.
+				}
+			}
+		}
+		return -1;
 	}
 
 }

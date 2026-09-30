@@ -1,0 +1,19 @@
+{
+	"type": "object",
+	"required": [
+		"$type"
+	],
+	"properties": {
+		"$type": {
+			"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderEnums$ConfigWithExternalEnum"
+		},
+		"external-enum": {
+			"enum": [
+				"option-a",
+				"option-b",
+				"option-c"
+			]
+		}
+	},
+	"additionalProperties": false
+}

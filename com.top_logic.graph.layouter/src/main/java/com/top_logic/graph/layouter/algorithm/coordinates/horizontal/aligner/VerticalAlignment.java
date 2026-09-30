@@ -15,7 +15,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
  * 
  * @see VerticalAlignAlgorithm
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class VerticalAlignment {
 	private Map<LayoutNode, LayoutNode> _roots = new LinkedHashMap<>();

@@ -35,7 +35,9 @@ import com.top_logic.graphic.flow.control.JSDiagramControlCommon;
 import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.DropRegion;
+import com.top_logic.graphic.flow.data.InitialZoom;
 import com.top_logic.graphic.flow.data.MouseButton;
+
 import com.top_logic.graphic.flow.data.Widget;
 
 import de.haumacher.msgbuf.graph.DefaultScope;
@@ -251,7 +253,14 @@ public class JSDiagramControl extends AbstractJSControl
 					newCtrlW = controlW;
 					newCtrlH = controlH;
 					_viewbox = _svg.getViewBox().getBaseVal();
-					calcZoomLevel();
+					if (diagram.isKeepViewBox() && _viewbox.getWidth() > 0) {
+						// The diagram was redrawn for the same model. The server transferred the
+						// current view box, so keep the user's zoom and pan instead of resetting to
+						// the initial zoom. Still refresh the zoom indicator from the kept view box.
+						calcZoomLevel();
+					} else {
+						applyInitialZoom(diagram.getInitialZoom());
+					}
 
 					Element selectedPart = _control.querySelector(".tlSelected");
 					if (selectedPart != null) {
@@ -339,7 +348,7 @@ public class JSDiagramControl extends AbstractJSControl
 					int zL = (direction < 0 ? zoomLevel : zoomLevel - 10);
 					int level = JsMath.trunc(zL / 100);
 
-					// Anteil f�r 10% Zoom: 2^x * -10, wobei x immer das aktuell volle 100% Level
+					// Anteil für 10% Zoom: 2^x * -10, wobei x immer das aktuell volle 100% Level
 					// ist
 					double factor = direction / (JsMath.pow(2, level) * (-10));
 					if (zL < 100) {
@@ -442,6 +451,80 @@ public class JSDiagramControl extends AbstractJSControl
 		double deltaX = left + bbox.getCenterX() - (_viewbox.getCenterX() - _viewbox.getX());
 		double deltaY = top + bbox.getCenterY() - (_viewbox.getCenterY() - _viewbox.getY());
 		panSVG(deltaX, deltaY, true);
+	}
+
+	/**
+	 * Applies the initial zoom policy by resizing the SVG viewbox so that
+	 * {@code zoom factor = controlW / viewBox.width}.
+	 */
+	private void applyInitialZoom(InitialZoom mode) {
+		if (_viewbox == null || controlW == 0 || controlH == 0) {
+			return;
+		}
+		if (mode == null) {
+			mode = InitialZoom.FIXED_100;
+		}
+		double contentW = _diagram.getRoot().getWidth();
+		double contentH = _diagram.getRoot().getHeight();
+		double factor;
+		switch (mode) {
+			case FIXED_50:
+				factor = 0.5;
+				break;
+			case FIXED_75:
+				factor = 0.75;
+				break;
+			case FIXED_150:
+				// The interactive zoom display in calcZoomLevel() uses a non-linear scale above
+				// 100%: each "level" doubles the factor, and zoomLevel = level*100 + fract*100
+				// where viewbox/control = (2 - fract) / 2^level. Solving for "150%"
+				// (level=1, fract=0.5) yields a real factor of (2-0.5)/2 = 0.75 viewbox ratio,
+				// i.e. 4/3 — not 1.5. Using 1.5 here would make the display read "167%".
+				factor = 4.0 / 3.0;
+				break;
+			case FIXED_200:
+				factor = 2.0;
+				break;
+			case FIT_TO_PAGE:
+				factor = JsMath.min(fitFactor(controlW, contentW), fitFactor(controlH, contentH));
+				factor = JsMath.min(factor, 1.0);
+				break;
+			case FIT_TO_WIDTH:
+				factor = JsMath.min(fitFactor(controlW, contentW), 1.0);
+				break;
+			case FIT_TO_HEIGHT:
+				factor = JsMath.min(fitFactor(controlH, contentH), 1.0);
+				break;
+			case FIT_TO_PAGE_ENLARGE:
+				factor = JsMath.min(fitFactor(controlW, contentW), fitFactor(controlH, contentH));
+				break;
+			case FIT_TO_WIDTH_ENLARGE:
+				factor = fitFactor(controlW, contentW);
+				break;
+			case FIT_TO_HEIGHT_ENLARGE:
+				factor = fitFactor(controlH, contentH);
+				break;
+			case FIXED_100:
+			default:
+				factor = 1.0;
+				break;
+		}
+		if (!(factor > 0) || Double.isInfinite(factor)) {
+			factor = 1.0;
+		}
+		_viewbox.setWidth((float) (controlW / factor));
+		_viewbox.setHeight((float) (controlH / factor));
+		_viewbox.setX(0);
+		_viewbox.setY(0);
+		calcZoomLevel();
+		updateServerViewbox();
+	}
+
+	private static double fitFactor(double control, double content) {
+		if (content <= 0) {
+			return 1.0;
+		}
+		return control / content;
 	}
 
 	private void calcZoomLevel() {
@@ -732,9 +815,9 @@ public class JSDiagramControl extends AbstractJSControl
 			var argsSupplier = function() {
 				var patch = patchSupplier();
 				return {
-					controlCommand:"update",
-					controlID:id,
-					patch:patch
+					controlCommand : "update",
+					controlID : id,
+					patch : patch
 				};
 			};
 			$wnd.services.ajax.executeOrUpdateWithLazyData(requestID, "dispatchControlCommand", argsSupplier);
@@ -743,11 +826,18 @@ public class JSDiagramControl extends AbstractJSControl
 
 	private native void sendUpdate(String id, String patch, double requestID) /*-{
 		$wnd.services.ajax.dropLazyRequest(requestID);
+		// Synchronize the update (e.g. a selection change) with the server without raising the
+		// input-blocking wait pane (useWaitPane = false). The change is already applied to the
+		// client-side diagram, so blocking all input for the duration of the round-trip is
+		// unnecessary. A wait pane raised here covers the diagram and swallows a quickly
+		// following click: with a slow connection it is still visible when the second click of a
+		// double click arrives, so that click hits the overlay instead of the SVG and no native
+		// double click is formed.
 		$wnd.services.ajax.execute("dispatchControlCommand", {
-			controlCommand:"update",
-			controlID:id,
-			patch:patch
-		}, true)
+			controlCommand : "update",
+			controlID : id,
+			patch : patch
+		}, false)
 	}-*/;
 
 	private native void logError(String message) /*-{
@@ -804,24 +894,24 @@ public class JSDiagramControl extends AbstractJSControl
 	}
 
 	private native boolean hasWindowTlDnD() /*-{
-		return !($wnd.tlDnD === undefined);
+		return !($wnd.services.ajax.mainLayout.tlDnD === undefined);
 	}-*/;
 
 	private native void dispatchClick(String id, int nodeId, JsArrayString mouseButtons) /*-{
 		$wnd.services.ajax.execute("dispatchControlCommand", {
-			controlCommand:"dispatchClick",
-			controlID:id,
-			nodeId:nodeId,
-			mouseButtons:mouseButtons
+			controlCommand : "dispatchClick",
+			controlID : id,
+			nodeId : nodeId,
+			mouseButtons : mouseButtons
 		}, false)
 	}-*/;
 
 	private native void dispatchDrop(String id, int nodeId) /*-{
 		$wnd.services.ajax.execute("dispatchControlCommand", {
-			controlCommand:"dispatchDrop",
-			controlID:id,
-			nodeId:nodeId,
-			data:$wnd.tlDnD.data
+			controlCommand : "dispatchDrop",
+			controlID : id,
+			nodeId : nodeId,
+			data : $wnd.services.ajax.mainLayout.tlDnD.data
 		}, false)
 	}-*/;
 }

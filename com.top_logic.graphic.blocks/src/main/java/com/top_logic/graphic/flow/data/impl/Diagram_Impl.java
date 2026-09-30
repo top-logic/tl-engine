@@ -38,6 +38,10 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 
 	private double _viewBoxHeight = 0.0d;
 
+	private com.top_logic.graphic.flow.data.InitialZoom _initialZoom = com.top_logic.graphic.flow.data.InitialZoom.FIXED_100;
+
+	private boolean _keepViewBox = false;
+
 	/**
 	 * Creates a {@link Diagram_Impl} instance.
 	 *
@@ -260,6 +264,43 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 	}
 
 	@Override
+	public final com.top_logic.graphic.flow.data.InitialZoom getInitialZoom() {
+		return _initialZoom;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Diagram setInitialZoom(com.top_logic.graphic.flow.data.InitialZoom value) {
+		internalSetInitialZoom(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getInitialZoom()} without chain call utility. */
+	protected final void internalSetInitialZoom(com.top_logic.graphic.flow.data.InitialZoom value) {
+		if (value == null) throw new IllegalArgumentException("Property 'initialZoom' cannot be null.");
+		_listener.beforeSet(this, INITIAL_ZOOM__PROP, value);
+		_initialZoom = value;
+		_listener.afterChanged(this, INITIAL_ZOOM__PROP);
+	}
+
+	@Override
+	public final boolean isKeepViewBox() {
+		return _keepViewBox;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Diagram setKeepViewBox(boolean value) {
+		internalSetKeepViewBox(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isKeepViewBox()} without chain call utility. */
+	protected final void internalSetKeepViewBox(boolean value) {
+		_listener.beforeSet(this, KEEP_VIEW_BOX__PROP, value);
+		_keepViewBox = value;
+		_listener.afterChanged(this, KEEP_VIEW_BOX__PROP);
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Diagram setCssClass(String value) {
 		internalSetCssClass(value);
 		return this;
@@ -300,7 +341,9 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 			VIEW_BOX_X__PROP, 
 			VIEW_BOX_Y__PROP, 
 			VIEW_BOX_WIDTH__PROP, 
-			VIEW_BOX_HEIGHT__PROP);
+			VIEW_BOX_HEIGHT__PROP, 
+			INITIAL_ZOOM__PROP, 
+			KEEP_VIEW_BOX__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
 		tmp.addAll(com.top_logic.graphic.flow.data.impl.Widget_Impl.PROPERTIES);
 		tmp.addAll(local);
@@ -340,6 +383,8 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 			case VIEW_BOX_Y__PROP: return getViewBoxY();
 			case VIEW_BOX_WIDTH__PROP: return getViewBoxWidth();
 			case VIEW_BOX_HEIGHT__PROP: return getViewBoxHeight();
+			case INITIAL_ZOOM__PROP: return getInitialZoom();
+			case KEEP_VIEW_BOX__PROP: return isKeepViewBox();
 			default: return super.get(field);
 		}
 	}
@@ -356,6 +401,8 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 			case VIEW_BOX_Y__PROP: internalSetViewBoxY((double) value); break;
 			case VIEW_BOX_WIDTH__PROP: internalSetViewBoxWidth((double) value); break;
 			case VIEW_BOX_HEIGHT__PROP: internalSetViewBoxHeight((double) value); break;
+			case INITIAL_ZOOM__PROP: internalSetInitialZoom((com.top_logic.graphic.flow.data.InitialZoom) value); break;
+			case KEEP_VIEW_BOX__PROP: internalSetKeepViewBox((boolean) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -383,6 +430,10 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 		out.value(getViewBoxWidth());
 		out.name(VIEW_BOX_HEIGHT__PROP);
 		out.value(getViewBoxHeight());
+		out.name(INITIAL_ZOOM__PROP);
+		getInitialZoom().writeTo(out);
+		out.name(KEEP_VIEW_BOX__PROP);
+		out.value(isKeepViewBox());
 	}
 
 	@Override
@@ -438,6 +489,14 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 				out.value(getViewBoxHeight());
 				break;
 			}
+			case INITIAL_ZOOM__PROP: {
+				getInitialZoom().writeTo(out);
+				break;
+			}
+			case KEEP_VIEW_BOX__PROP: {
+				out.value(isKeepViewBox());
+				break;
+			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -461,6 +520,8 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 			case VIEW_BOX_Y__PROP: setViewBoxY(in.nextDouble()); break;
 			case VIEW_BOX_WIDTH__PROP: setViewBoxWidth(in.nextDouble()); break;
 			case VIEW_BOX_HEIGHT__PROP: setViewBoxHeight(in.nextDouble()); break;
+			case INITIAL_ZOOM__PROP: setInitialZoom(com.top_logic.graphic.flow.data.InitialZoom.readInitialZoom(in)); break;
+			case KEEP_VIEW_BOX__PROP: setKeepViewBox(in.nextBoolean()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

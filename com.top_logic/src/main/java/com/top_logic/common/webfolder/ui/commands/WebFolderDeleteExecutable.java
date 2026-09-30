@@ -31,7 +31,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * this class will only remove an association or delete a document with
  * it's content from the server.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class WebFolderDeleteExecutable extends AbstractFolderDelete {
 

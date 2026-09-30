@@ -11,9 +11,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.layout.form.control.ColorControlProvider;
 import com.top_logic.layout.form.format.ColorConfigFormat;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
 
@@ -34,7 +32,6 @@ public class ColorDefaultProvider extends ConfiguredConstantDefaultProvider {
 
 		@Override
 		@Format(ColorConfigFormat.class)
-		@ControlProvider(ColorControlProvider.class)
 		Color getValue();
 
 	}

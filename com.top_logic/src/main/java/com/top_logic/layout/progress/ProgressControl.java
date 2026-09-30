@@ -22,7 +22,7 @@ import com.top_logic.mig.html.HTMLConstants;
  * 
  * The progress will normally be a value between 0 and 100 and result in a progress bar at the UI.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  * 
  * @deprecated Use {@link com.top_logic.layout.messagebox.ProgressControl} or
  *             {@link ProgressDialog}.

@@ -22,7 +22,7 @@ import com.top_logic.graph.diagramjs.util.DiagramJSGraphControlCommon;
  * Handler that is executed to inform the server that on the clients diagram a collection of diagram
  * parts have changed their visibility.
  * 
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class ElementVisibilityEventHandler implements EventHandler {
 

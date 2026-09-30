@@ -20,6 +20,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.FormField;
@@ -120,6 +121,14 @@ public class MaintenanceWindowComponent extends FormComponent {
         /** Saves the name of the minutes field. */
         public static final String MIN_FIELD = "min_field";
 
+		/**
+		 * Name of the field deciding whether users may still log in while the maintenance mode is
+		 * announced.
+		 * 
+		 * @see MaintenanceWindowManager#enterMaintenanceWindow(long, boolean)
+		 */
+		public static final String ALLOW_LOGIN_FIELD = "allow_login_field";
+
         /** the default value for the minutes field. */
         public static final String DEFAULT_MIN_VALUE = "5";
 
@@ -155,6 +164,8 @@ public class MaintenanceWindowComponent extends FormComponent {
 			theField.initializeField(DEFAULT_MIN_VALUE);
             theField.addConstraint(IsPositiveIntegerConstraint.INSTANCE);
             theContext.addMember(theField);
+			theContext.addMember(
+				FormFactory.newBooleanField(ALLOW_LOGIN_FIELD, Boolean.FALSE, !FormFactory.IMMUTABLE));
             return theContext;
         }
 
@@ -222,7 +233,9 @@ public class MaintenanceWindowComponent extends FormComponent {
                     FormField theField = theContext.getField(EnterMaintenanceWindowDialog.MIN_FIELD);
                     String theValue = (String)theField.getValue();
                     int min = StringServices.isEmpty(theValue) ? 0 : Integer.parseInt(theValue);
-                    MaintenanceWindowManager.getInstance().enterMaintenanceWindow(min*60*1000);
+					boolean allowLogin = Utils.isTrue(
+						(Boolean) theContext.getField(EnterMaintenanceWindowDialog.ALLOW_LOGIN_FIELD).getValue());
+					MaintenanceWindowManager.getInstance().enterMaintenanceWindow(min * 60 * 1000, allowLogin);
                     performCloseDialog(theComp, theResult);
                 }
                 catch (Exception e) {

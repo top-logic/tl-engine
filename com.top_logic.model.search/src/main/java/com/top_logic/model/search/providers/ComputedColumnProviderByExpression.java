@@ -50,7 +50,6 @@ import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.AllTypes;
@@ -78,6 +77,8 @@ public class ComputedColumnProviderByExpression
 		Config.COLUMN_LABEL,
 		Config.DYNAMIC_COLUMN_LABEL,
 		Config.COLUMN_TYPE,
+		Config.COLUMN_MANDATORY,
+		Config.COLUMN_MULTIPLICITY,
 		Config.COLUMN_VISIBILITY,
 		Config.ACCESSOR,
 		Config.UPDATER,
@@ -91,6 +92,16 @@ public class ComputedColumnProviderByExpression
 		 * @see #getColumnType()
 		 */
 		String COLUMN_TYPE = "columnType";
+
+		/**
+		 * @see #getColumnMandatory()
+		 */
+		String COLUMN_MANDATORY = "columnMandatory";
+
+		/**
+		 * @see #getColumnMultiplicity()
+		 */
+		String COLUMN_MULTIPLICITY = "columnMultiplicity";
 
 		/**
 		 * @see #getDynamicColumnLabel()
@@ -124,6 +135,18 @@ public class ComputedColumnProviderByExpression
 		@Mandatory
 		@Options(fun = AllTypes.class, mapping = TLModelPartRef.PartMapping.class)
 		TLModelPartRef getColumnType();
+
+		/**
+		 * Whether the column must contain a value.
+		 */
+		@Name(COLUMN_MANDATORY)
+		boolean getColumnMandatory();
+
+		/**
+		 * Whether the column can contain multiple values.
+		 */
+		@Name(COLUMN_MULTIPLICITY)
+		boolean getColumnMultiplicity();
 
 		/**
 		 * Function retrieving the column's value.
@@ -330,7 +353,7 @@ public class ComputedColumnProviderByExpression
 			if (label instanceof ResKey) {
 				return (ResKey) label;
 			}
-			return ResKey.text(ToString.toString(label));
+			return ResKey.text(SearchExpression.asString(label));
 		}
 		return config.getColumnLabel();
 	}
@@ -344,7 +367,8 @@ public class ComputedColumnProviderByExpression
 	}
 
 	private TLTypeContext createTypeContext(Config<?> config) {
-		TLTypeContext type = new ConcreteTypeContext(_columnType);
+		TLTypeContext type =
+			new ConcreteTypeContext(_columnType, config.getColumnMandatory(), config.getColumnMultiplicity());
 
 		Collection<? extends TLAnnotation> annotations = config.getAnnotations();
 		if (annotations.isEmpty()) {

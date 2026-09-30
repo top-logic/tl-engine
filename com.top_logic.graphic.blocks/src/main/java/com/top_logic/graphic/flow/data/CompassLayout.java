@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A layout that places boxes around some centerd content box.
  */
-public interface CompassLayout extends Box, com.top_logic.graphic.flow.operations.layout.CompassLayoutOperations {
+public interface CompassLayout extends com.top_logic.graphic.flow.data.Box, com.top_logic.graphic.flow.operations.layout.CompassLayoutOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.CompassLayout} instance.

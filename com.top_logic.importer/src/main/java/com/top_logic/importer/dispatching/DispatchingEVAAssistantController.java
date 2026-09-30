@@ -36,14 +36,14 @@ import com.top_logic.util.TLContextManager;
 /**
  * Importer is able to use different importer so we need to handle that selection it in here.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class DispatchingEVAAssistantController extends EVAAssistantController {
 
 	/**
 	 * Configuration for a DispatchingEVAAssistantController.
 	 * 
-	 * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config extends EVAAssistantController.Config {
 
@@ -127,7 +127,7 @@ public class DispatchingEVAAssistantController extends EVAAssistantController {
     /**
      * Dispatching version of the import task. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public class DispatchingImportTask extends ImportTask {
 

@@ -23,7 +23,6 @@ import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.component.edit.CanLock;
 import com.top_logic.layout.form.model.FormContext;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -195,7 +194,9 @@ public abstract class AbstractApplyCommandHandler extends AbstractFormCommandHan
 
 		ResKey customMessage = getCustomCommitMessage(arguments);
 		ResKey message = customMessage == null
-			? I18NConstants.UPDATED__MODEL.fill(MetaLabelProvider.INSTANCE.getLabel(model))
+			? CommitMessages.forObject(
+				I18NConstants.UPDATED_TYPED__TYPE_MODEL,
+				I18NConstants.UPDATED__MODEL, model)
 			: customMessage;
 		try (Transaction tx = beginTransaction(model, message)) {
 			if (storeChanges(component, formContext, model)) {

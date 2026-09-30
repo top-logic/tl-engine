@@ -15,10 +15,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.display.RuleCondition;
 import com.top_logic.bpe.bpml.display.RuleType;
 import com.top_logic.bpe.bpml.display.SequenceFlowRule;
-import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.ExclusiveGateway;
@@ -107,7 +107,7 @@ public class GuiEngine {
 					.map(config -> (RuleCondition) new ConfigurableCondition(null, (ConfigurableCondition.Config<?>) config))
 					.filter(condition -> condition.getRuleType() == RuleType.DEFAULT)
 					.filter(condition -> !condition.getTestCondition(token.getProcessExecution()))
-					.map(RuleCondition::getMessage)
+					.map(condition -> condition.getMessage(token.getProcessExecution()))
 					.forEach(errors::add);
 			}
 		}
@@ -139,7 +139,12 @@ public class GuiEngine {
 																								// false
 																								// (active)
 																								// warnings
-					.map(RuleCondition::getMessage) // Get the message for each failing condition
+					.map(condition -> condition.getMessage(token.getProcessExecution())) // Get the
+																							// message
+																							// for
+																							// each
+																							// failing
+																							// condition
 					.collect(Collectors.toList()); // Collect all messages into a list
 			}
 		}

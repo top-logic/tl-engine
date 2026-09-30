@@ -1,0 +1,39 @@
+{
+	"$defs": {
+		"test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Organization#final": {
+			"type": "object",
+			"required": [
+				"name"
+			],
+			"properties": {
+				"employee-count": {
+					"type": "integer"
+				},
+				"name": {
+					"type": "string"
+				}
+			},
+			"additionalProperties": false
+		}
+	},
+	"type": "object",
+	"required": [
+		"$type"
+	],
+	"properties": {
+		"$type": {
+			"const": "test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$ConfigWithDirectOrganization"
+		},
+		"org": {
+			"anyOf": [
+				{
+					"type": "null"
+				},
+				{
+					"$ref": "#/$defs/test.com.top_logic.basic.config.json.TestJsonConfigSchemaBuilderKeyAnnotation$Organization#final"
+				}
+			]
+		}
+	},
+	"additionalProperties": false
+}

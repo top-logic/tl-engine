@@ -38,7 +38,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+							name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 							tab-path="Administration > Development > Prozess Editor"
 						/>
 					</selection-model-name>
@@ -49,7 +49,7 @@
 					command-label="Neue Version"
 					command-name="displayDialog_tlBpeModelerEditorCopy"
 					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-					component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+					component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
 					user-id="root"
 				>
 					<arguments/>
@@ -61,7 +61,7 @@
 						label="Neuer Name"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorCopyForm"
+							name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorCopyForm"
 							tab-path=""
 						/>
 					</field>
@@ -74,7 +74,7 @@
 					command-label="Neue Version"
 					command-name="copy"
 					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
-					component-name="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml#tlBpeModelerEditorCopyForm"
+					component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorCopyForm"
 					user-id="root"
 				>
 					<arguments/>

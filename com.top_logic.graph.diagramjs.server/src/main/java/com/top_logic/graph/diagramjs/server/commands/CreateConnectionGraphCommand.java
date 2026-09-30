@@ -25,7 +25,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * A {@link ControlCommand} for creating connections.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CreateConnectionGraphCommand extends ControlCommand {
 

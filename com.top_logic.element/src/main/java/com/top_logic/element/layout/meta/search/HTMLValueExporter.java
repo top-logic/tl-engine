@@ -41,7 +41,7 @@ import com.top_logic.util.error.TopLogicException;
  * will be exported to. They will then be presented in a table which CSS classes can be
  * defined in the template itself.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class HTMLValueExporter {
 

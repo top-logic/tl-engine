@@ -18,6 +18,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -32,11 +33,12 @@ import com.top_logic.basic.xml.XMLPrettyPrinter.Config;
 
 /**
  * Describes a single API operation on a path.
- * 
+ *
  * @see OpenapiDocument
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	OperationObject.SUMMARY,
 	OperationObject.DESCRIPTION,

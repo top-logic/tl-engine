@@ -10,9 +10,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -96,7 +98,8 @@ public class ConvertThemeSettings extends XMain {
 			System.err.println("Converting '" + propertiesFile + "'.");
 
 			Properties settingsProperties = new Properties();
-			try (FileInputStream propIn = new FileInputStream(propertiesFile)) {
+			try (InputStreamReader propIn =
+				new InputStreamReader(new FileInputStream(propertiesFile), StandardCharsets.UTF_8)) {
 				settingsProperties.load(propIn);
 			}
 

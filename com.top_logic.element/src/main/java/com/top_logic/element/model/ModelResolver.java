@@ -82,8 +82,6 @@ import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
-import com.top_logic.model.annotate.security.RoleConfig;
-import com.top_logic.model.annotate.security.TLRoleDefinitions;
 import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.model.config.EnumConfig;
 import com.top_logic.model.config.EnumConfig.ClassifierConfig;
@@ -93,8 +91,6 @@ import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -1059,8 +1055,6 @@ public class ModelResolver {
 
 		setupScope(module, module, moduleConf);
 
-		scheduleRoleCreation(module);
-
 		TLSingletons singletons = module.getAnnotation(TLSingletons.class);
 		if (singletons != null) {
 			for (SingletonConfig singleton : singletons.getSingletons()) {
@@ -1076,28 +1070,6 @@ public class ModelResolver {
 	 */
 	protected void autoExtendTLObject(ModuleConfig moduleConf) {
 		DynamicModelService.addTLObjectExtension(moduleConf);
-	}
-
-	private void scheduleRoleCreation(TLModule module) {
-		if (getFactory() == null) {
-			return;
-		}
-
-		_schedule.createRole(() -> {
-			TLRoleDefinitions roleDefinitions = module.getAnnotation(TLRoleDefinitions.class);
-			if (roleDefinitions == null) {
-				return;
-			}
-
-			Collection<RoleConfig> roleConfigs = roleDefinitions.getRoles();
-			if (roleConfigs.isEmpty()) {
-				return;
-			}
-
-			for (RoleConfig roleConfig : roleConfigs) {
-				createRole(module, roleConfig);
-			}
-		});
 	}
 
 	private void scheduleSingletonCreation(TLModule module, SingletonConfig singleton) {
@@ -1135,30 +1107,6 @@ public class ModelResolver {
 
 		root = getFactory().createObject(type);
 		module.addSingleton(name, root);
-	}
-
-	/**
-	 * Creates the {@link BoundedRole} from the given configuration in the given {@link TLModule}.
-	 */
-	public BoundedRole createRole(TLModule scope, RoleConfig role) {
-		if (scope.tTransient()) {
-			return null;
-		}
-		String name = role.getName();
-		BoundedRole existingRole = BoundedRole.getDefinedRole(scope, name);
-		if (existingRole != null) {
-			log().info("Role '" + name + "' already exists in module '" + scope + "'.");
-			return existingRole;
-		}
-
-		BoundedRole newRole = BoundedRole.createBoundedRole(name, scope.tHandle().getKnowledgeBase());
-		newRole.setIsSystem(true);
-
-		newRole.setValue(BoundedRole.ATTRIBUTE_DESCRIPTION,
-			Resources.getInstance().getString(I18NConstants.ROLE_DESCRIPTION.key(name), ""));
-
-		newRole.bind(scope);
-		return newRole;
 	}
 
 	/**

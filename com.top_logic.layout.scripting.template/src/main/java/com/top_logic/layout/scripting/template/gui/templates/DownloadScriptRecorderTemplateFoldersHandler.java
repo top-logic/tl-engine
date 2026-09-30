@@ -21,7 +21,7 @@ import com.top_logic.util.Zipper;
 /**
  * Handler to download the given ScriptRecorder template folders.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class DownloadScriptRecorderTemplateFoldersHandler extends AbstractZipDownloadHandler {
 

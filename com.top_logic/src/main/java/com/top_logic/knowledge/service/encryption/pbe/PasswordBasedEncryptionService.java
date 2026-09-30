@@ -85,7 +85,7 @@ public class PasswordBasedEncryptionService extends EncryptionService {
 	/**
 	 * Configuration for {@link PasswordBasedEncryptionService}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends EncryptionService.Config {
 		/**

@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Build a new sensor out of the configuration.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface SensorBuilder {
 

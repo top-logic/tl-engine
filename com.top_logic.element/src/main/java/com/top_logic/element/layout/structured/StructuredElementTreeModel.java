@@ -25,7 +25,7 @@ import com.top_logic.layout.tree.model.TreeModelEvent;
  * create a subclass, which will include such filter.
  * TODO so what does displayFilter do up to now? (dkh)
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class StructuredElementTreeModel extends AbstractTreeModel<StructuredElement> {
 	

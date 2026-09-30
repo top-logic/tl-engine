@@ -16,11 +16,33 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class ScriptAbort extends TopLogicException {
 
+	private final Object _value;
+
 	/**
 	 * Creates a {@link ScriptAbort}.
 	 */
 	public ScriptAbort(ResKey errorKey) {
+		this(errorKey, null);
+	}
+
+	/**
+	 * Creates a {@link ScriptAbort} with an associated {@link #getValue() value}.
+	 */
+	public ScriptAbort(ResKey errorKey, Object value) {
 		super(errorKey);
+		_value = value;
+	}
+
+	/**
+	 * The value passed to the {@code throw()} call that created this {@link ScriptAbort}, or
+	 * <code>null</code> if none was given.
+	 *
+	 * <p>
+	 * This value is handed to the catch function of a {@link Try} expression.
+	 * </p>
+	 */
+	public Object getValue() {
+		return _value;
 	}
 
 }

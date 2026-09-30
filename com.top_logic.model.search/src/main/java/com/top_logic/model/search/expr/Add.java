@@ -8,6 +8,7 @@ package com.top_logic.model.search.expr;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -23,18 +24,18 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Add extends GenericMethod {
+public class Add extends GenericMethodWithSecurity {
 
 	/**
 	 * Creates a {@link Add}.
 	 */
-	protected Add(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	protected Add(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new Add(getName(), arguments);
+		return new Add(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -47,7 +48,12 @@ public class Add extends GenericMethod {
 		TLObject obj = asTLObjectNonNull(arguments[0]);
 		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
 
-		List<?> oldValue = asList(obj.tValue(part));
+		if (usesSecurity()) {
+			Update.checkWritePermission(obj, part);
+		}
+
+		Object rawValue = obj.tValue(part);
+		List<?> oldValue = asList(rawValue);
 		int oldSize = oldValue.size();
 
 		int index;
@@ -63,10 +69,39 @@ public class Add extends GenericMethod {
 
 		int insertLength = insertion.size();
 		if (insertLength > 0) {
+			Collection<?> effectiveInsertion = insertion;
+
+			if (!part.isBag()) {
+				// Only filter duplicates if the reference does not allow duplicates
+				Set<Object> existingElements = (Set<Object>) asSet(rawValue);
+
+				// Filter out duplicates from insertion collection
+				List<Object> filtered = null;
+				for (Object item : insertion) {
+					// returns true only if item was not already present
+					if (existingElements.add(item)) {
+						if (filtered == null) {
+							filtered = new ArrayList<>();
+						}
+						filtered.add(item);
+					}
+				}
+
+				// Only proceed if there are elements to add
+				if (filtered == null || filtered.isEmpty()) {
+					return null;
+				}
+
+				effectiveInsertion = filtered;
+				insertLength = filtered.size();
+			}
+
+			// Build the new list with the elements to insert
 			List<Object> newValue = new ArrayList<>(oldSize + insertLength);
 			newValue.addAll(oldValue.subList(0, index));
-			newValue.addAll(insertion);
+			newValue.addAll(effectiveInsertion);
 			newValue.addAll(oldValue.subList(index, oldSize));
+
 			obj.tUpdate(part, newValue);
 		}
 
@@ -93,7 +128,7 @@ public class Add extends GenericMethod {
 		public Add build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 3, 4);
-			return new Add(getConfig().getName(), args);
+			return new Add(getConfig().getName(), args, true);
 		}
 
 	}

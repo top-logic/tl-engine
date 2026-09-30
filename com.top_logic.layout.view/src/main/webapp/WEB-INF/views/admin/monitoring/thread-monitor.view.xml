@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Thread monitor: a snapshot of the live JVM threads on the left; selecting one shows its current
+	stack trace on the right. Both tables are app-specific admin widgets referenced by class=; the
+	selected thread is carried between them on the selectedThread channel. Each pane is a <full-page>
+	so its table fills the pane and scrolls internally.
+-->
+<view>
+	<channels>
+		<channel name="selectedThread"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="200"
+				size="55"
+				unit="%"
+			>
+				<full-page>
+					<child class="com.top_logic.layout.view.admin.monitor.ThreadTable"
+						selection="selectedThread"
+					/>
+				</full-page>
+			</pane>
+			<pane
+				size="45"
+				unit="%"
+			>
+				<full-page>
+					<child class="com.top_logic.layout.view.admin.monitor.ThreadStackTable"
+						input="selectedThread"
+					/>
+				</full-page>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

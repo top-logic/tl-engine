@@ -11,7 +11,7 @@ import com.top_logic.basic.config.ConfigurationException;
 /**
  * Format to test generics.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ObjectTestFormat extends AbstractConfigurationValueProvider<Object> {
 

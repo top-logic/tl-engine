@@ -77,7 +77,7 @@ import com.top_logic.util.Utils;
 /**
  * Clipboard dialog providing the {@link TableField} for adding objects to the folder.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ClipboardDialog extends AbstractFormPageDialog {
 
@@ -360,7 +360,7 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 	/**
 	 * Delete the selected objects from the clip board. 
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class DeleteFromClipboardCommand implements Command {
 	
@@ -418,7 +418,7 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 	/**
 	 * Command for adding the selected objects from the clip board to the folder.
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class AddFromClipboardCommand implements Command {
 	    

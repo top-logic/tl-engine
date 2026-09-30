@@ -5,6 +5,7 @@
  */
 package com.top_logic.mig.html.layout;
 
+import com.top_logic.basic.i18n.CustomKey;
 import java.nio.file.WatchService;
 
 import com.top_logic.basic.util.ResKey;
@@ -99,7 +100,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey BOOKMARK_NOT_FOUND;
 	
-	public static ResKey ERROR_NOT_IN_STATE = legacyKey("tl.executable.not.inState");
+	@CustomKey("tl.executable.not.inState")
+	public static ResKey ERROR_NOT_IN_STATE;
 
 	public static ResKey1 ERROR_DUPLICATE_SEPARATOR__SEPARATOR;
 

@@ -12,7 +12,7 @@ import com.top_logic.model.TLClass;
 /**
  * Implementation of {@link TLInheritance}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLInheritanceImpl implements TLInheritance {
 

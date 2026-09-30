@@ -16,7 +16,7 @@ import com.top_logic.layout.scripting.template.excel.ExcelActionOp.ExcelAction;
 /**
  * Action to be executed in a correct context environment.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class CommittingExcelActionOp<C extends ExcelAction> extends ExcelActionOp<C> {
 

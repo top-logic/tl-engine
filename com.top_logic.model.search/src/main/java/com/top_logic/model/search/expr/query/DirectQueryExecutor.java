@@ -9,6 +9,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
 
 /**
  * The default {@link QueryExecutor} implementation that contains a pre-compiled query.
@@ -54,15 +55,13 @@ public final class DirectQueryExecutor extends QueryExecutor {
 		return _search;
 	}
 
-	/**
-	 * Executes the expression with the given arguments.
-	 * 
-	 * @param args
-	 *        The arguments to pass to the expression evaluation.
-	 * @return The result of the expression.
-	 */
 	@Override
-	public Object executeWith(EvalContext definitions, Args args) {
+	protected void internalDisableSecurity() {
+		UpdateSecurityVisitor.disableSecurity(_search);
+	}
+
+	@Override
+	protected Object internalExecuteWith(EvalContext definitions, Args args) {
 		return getSearch().evalWith(definitions, args);
 	}
 

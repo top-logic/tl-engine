@@ -10,12 +10,12 @@ import java.util.Map;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
@@ -152,7 +152,7 @@ public class CommandHandlerByExpression extends AbstractCommandHandler implement
 
 		Expr operation = config.getOperation();
 		_operation = QueryExecutor.compileOptional(operation);
-		_actions = TypedConfigUtil.createInstanceList(config.getPostCreateActions());
+		_actions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 	}
 
 	@Override

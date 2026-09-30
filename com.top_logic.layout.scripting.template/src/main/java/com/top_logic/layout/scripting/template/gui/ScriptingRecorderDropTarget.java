@@ -29,7 +29,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * Drop handling for the {@link ScriptRecorderTree}.
  *
- * @author <a href=mailto:Jens.Schaefer@top-logic.com>Jens Sch‰fer</a>
+ * @author <a href=mailto:Jens.Schaefer@top-logic.com>Jens Sch√§fer</a>
  */
 public class ScriptingRecorderDropTarget implements TreeDropTarget {
 

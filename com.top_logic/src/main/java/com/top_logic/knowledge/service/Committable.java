@@ -15,7 +15,7 @@ import com.top_logic.basic.sql.CommitContext;
  * 
  * TODO KHA In TL 5.x use XATransactions, this is what we should do.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface Committable {
 

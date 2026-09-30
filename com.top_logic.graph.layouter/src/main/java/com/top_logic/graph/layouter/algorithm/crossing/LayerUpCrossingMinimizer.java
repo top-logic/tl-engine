@@ -14,8 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.basic.col.TupleFactory.Pair;
-import com.top_logic.basic.col.filter.FilterFactory;
+import com.top_logic.graph.layouter.model.util.Pair;
 import com.top_logic.graph.layouter.LayoutDirection;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
@@ -30,7 +29,7 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
  * {@link LayerCrossingMinimizer} which sweeps up, i.e. from the lowermost layer to the topmost
  * layer.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class LayerUpCrossingMinimizer extends LayerCrossingMinimizer {
 
@@ -60,7 +59,7 @@ public class LayerUpCrossingMinimizer extends LayerCrossingMinimizer {
 
 	@Override
 	List<LayoutNode> getNonTargetDummyNodes(List<LayoutNode> nodes) {
-		return LayoutGraphUtil.getFilteredNodes(FilterFactory.not(new FilterSegmentSourceNode()), nodes);
+		return LayoutGraphUtil.getFilteredNodes(new FilterSegmentSourceNode().negate(), nodes);
 	}
 
 	@Override

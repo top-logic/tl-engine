@@ -41,7 +41,7 @@ import com.top_logic.util.Resources;
 /**
  * Abstract producer for matrix charts.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractMatrixChartProducer implements ExtendedChartProducer, ChartProducer, CategoryToolTipGenerator {
 
@@ -340,7 +340,7 @@ public abstract class AbstractMatrixChartProducer implements ExtendedChartProduc
     /**
      * A matrix representation which can be accessed via integer and return a list of objects in every position. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     protected class CategoryMatrix<T> {
 
@@ -418,7 +418,7 @@ public abstract class AbstractMatrixChartProducer implements ExtendedChartProduc
     /**
      * Standard template renderer for matrix charts. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     protected class MatrixTemplateRenderer extends TemplateRenderer {
 

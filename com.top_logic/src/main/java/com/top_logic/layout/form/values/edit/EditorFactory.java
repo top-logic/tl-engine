@@ -42,6 +42,7 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
@@ -175,7 +176,7 @@ public class EditorFactory implements AnnotationCustomizations {
 
 	final DescendingInitializer _initializer;
 
-	private final LabelProvider _groupLabels = new ConfigLabelProvider("@option");
+	private final LabelProvider _groupLabels = new ConfigLabelProvider(Label.OPTION_SUFFIX);
 
 	private boolean _compact;
 

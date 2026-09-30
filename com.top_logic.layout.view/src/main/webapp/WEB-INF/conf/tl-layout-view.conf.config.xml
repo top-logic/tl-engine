@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+					<module key="com.top_logic.layout.view.form.FieldControlService$Module"
+						value="true"
+					/>
+					<module key="com.top_logic.layout.view.table.ColumnProviderService$Module"
+						value="true"
+					/>
+					<module key="com.top_logic.layout.view.security.SecurityScopeService$Module"
+						value="true"
+					/>
+					<module key="com.top_logic.layout.view.navigation.DisplayTargetService$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.view.table.ColumnProviderService">
+			<instance class="com.top_logic.layout.view.table.ColumnProviderService">
+				<providers>
+					<!--
+						Built-in defaults (enumeration / number / date / boolean / string / label)
+						are derived from the attribute type; register app-specific type providers here.
+					-->
+				</providers>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.view.form.FieldControlService">
+			<instance class="com.top_logic.layout.view.form.FieldControlService">
+				<providers>
+					<provider type="tl.model:TLAnnotation">
+						<impl class="com.top_logic.layout.view.form.AnnotationsFieldControlProvider"/>
+					</provider>
+					<provider type="tl.core:Icon">
+						<impl class="com.top_logic.layout.view.form.IconSelectControlProvider"/>
+					</provider>
+					<provider type="tl.model.i18n:I18NString">
+						<impl class="com.top_logic.layout.view.form.I18NStringControlProvider"/>
+					</provider>
+					<provider type="tl.util:Color">
+						<impl class="com.top_logic.layout.view.form.ColorInputControlProvider"/>
+					</provider>
+					<provider type="tl.util:Country">
+						<impl class="com.top_logic.layout.view.form.SelectControlProvider">
+							<option-provider class="com.top_logic.element.meta.complex.CountryOptionProvider"/>
+						</impl>
+					</provider>
+					<provider type="tl.util:Language">
+						<impl class="com.top_logic.layout.view.form.SelectControlProvider">
+							<option-provider class="com.top_logic.element.meta.complex.LanguageOptionProvider"/>
+						</impl>
+					</provider>
+					<provider type="tl.util:TimeZone">
+						<impl class="com.top_logic.layout.view.form.SelectControlProvider">
+							<option-provider class="com.top_logic.element.meta.complex.TimeZoneOptionProvider"/>
+						</impl>
+					</provider>
+					<provider type="tl.util:URL">
+						<impl class="com.top_logic.layout.view.form.TextInputControlProvider"
+							input-type="URL"
+						/>
+					</provider>
+					<provider type="tl.util:EMail">
+						<impl class="com.top_logic.layout.view.form.TextInputControlProvider"
+							input-type="EMAIL"
+						/>
+					</provider>
+					<provider type="tl.util:Phone">
+						<impl class="com.top_logic.layout.view.form.TextInputControlProvider"
+							input-type="TEL"
+						/>
+					</provider>
+				</providers>
+			</instance>
+		</config>
+
+		<!--
+			Security scope for the reusable account / group / role administration views
+			(WEB-INF/views/admin/admin.view.xml). Defined here in the framework so any app
+			that includes this module inherits it and can gate an Administration entry with
+			<access-control scope="administration"/> out of the box. With no roles assigned,
+			the scope is visible only to the technical super user (root); other users are
+			granted via the security administration UI. Apps may add further scopes by
+			extending this service's <scopes> list.
+		-->
+		<config service-class="com.top_logic.layout.view.security.SecurityScopeService">
+			<instance class="com.top_logic.layout.view.security.SecurityScopeService">
+				<scopes>
+					<scope id="administration">
+						<label>
+							<en>Administration</en>
+							<de>Administration</de>
+						</label>
+					</scope>
+				</scopes>
+			</instance>
+		</config>
+
+		<!--
+			The application's security.xml grants roles on view security scopes. A scope is
+			available as a security object only after the SecurityScopeService has materialized
+			it, therefore the access configuration import runs after that service.
+		-->
+		<config service-class="com.top_logic.tool.boundsec.config.AccessConfigurationSetupService">
+			<instance class="com.top_logic.tool.boundsec.config.AccessConfigurationSetupService">
+				<dependencies>
+					<dependency key="com.top_logic.layout.view.security.SecurityScopeService$Module"
+						value="true"
+					/>
+				</dependencies>
+			</instance>
+		</config>
+
+		<!--
+			Where the application displays its business objects: per model type, the views to
+			show and the values their channels receive. An application declares its own targets
+			by extending this service's <targets> list; a type without a target is not offered
+			as a link.
+		-->
+		<config service-class="com.top_logic.layout.view.navigation.DisplayTargetService">
+			<instance class="com.top_logic.layout.view.navigation.DisplayTargetService">
+				<targets/>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
+			<startPage>/view/</startPage>
+			<loginPage>/view/</loginPage>
+			<loginRetrySSO>/view/</loginRetrySSO>
+			<logoutPage>/view/</logoutPage>
+			<!--
+				The page explaining to an externally authenticated visitor that this application
+				has no account for them: a view of this UI instead of the stand-alone JSP the
+				core delivers, so an application built on the view layer answers with a page of
+				its own design.
+			-->
+			<unknownAccountPage>/view/unknown-account.view.xml</unknownAccountPage>
+		</config>
+
+		<!--
+			The views a URL may name as the contents of a browser tab, contributed by this module.
+			The list is keyed by the view, so the entry points of an application merge with these.
+		-->
+		<config config:interface="com.top_logic.layout.view.ViewConfig">
+			<entry-points>
+				<!--
+					Shown to a visitor although an application with a login view answers every
+					other URL of a session without an account with that login view: the page is
+					written for exactly such a visitor.
+				-->
+				<entry-point
+					anonymous="true"
+					view="unknown-account.view.xml"
+				/>
+			</entry-points>
+		</config>
+	</configs>
+</application>

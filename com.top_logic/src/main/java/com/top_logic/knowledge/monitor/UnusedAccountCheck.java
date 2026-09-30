@@ -171,7 +171,7 @@ public class UnusedAccountCheck extends AbstractConfiguredInstance<UnusedAccount
 		try {
 			return latestLoginFromDatabase();
 		} catch (Exception e) {
-			Logger.error("Unable to query last logins for users.", e, UserMonitor.class);
+			Logger.error("Unable to query last logins for users.", e, UnusedAccountCheck.class);
 			return Collections.emptyMap();
 		}
 	}
@@ -207,7 +207,7 @@ public class UnusedAccountCheck extends AbstractConfiguredInstance<UnusedAccount
 
 	/**
 	 * Informs the given user because of no usage of his account. Here, only a log message is
-	 * created. Subclasses may extend this behavior.
+	 * created. Subclasses may extend this behaviour.
 	 * 
 	 * @param person
 	 *        the person to inform
@@ -223,7 +223,7 @@ public class UnusedAccountCheck extends AbstractConfiguredInstance<UnusedAccount
 		msg.append(" days. The account will get deleted after no usage of ");
 		msg.append(getConfig().getDeleteDayCount());
 		msg.append(" days.");
-		Logger.info(msg.toString(), UserMonitor.class);
+		Logger.info(msg.toString(), UnusedAccountCheck.class);
 	}
 
 	/**
@@ -241,7 +241,7 @@ public class UnusedAccountCheck extends AbstractConfiguredInstance<UnusedAccount
 		msg.append("' has not logged in for ");
 		msg.append(dayDiff);
 		msg.append(" days. The account gets now deleted because it isn't used.");
-		Logger.info(msg.toString(), UserMonitor.class);
+		Logger.info(msg.toString(), UnusedAccountCheck.class);
 		person.tDelete();
 	}
 

@@ -20,7 +20,7 @@ import java.util.Collection;
  *            2001.02.15    fma    changed new methods after discussion with kbu
  *            2001-12-10    kha    Redesign after respecification.
  *
- * @author     Klaus Halfmann / Michael Gänsler
+ * @author     Klaus Halfmann / Michael GÃ¤nsler
  */
 public interface Repository {
 

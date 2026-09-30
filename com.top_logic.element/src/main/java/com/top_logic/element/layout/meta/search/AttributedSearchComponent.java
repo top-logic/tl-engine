@@ -94,7 +94,7 @@ import com.top_logic.util.error.TopLogicException;
  * This component provides mechanism to search in a defined set of attributed objects, which will be
  * provided by the {@link AttributedSearchComponent.Config#getModelBuilder()}.
  *
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class AttributedSearchComponent extends FormComponent {
 

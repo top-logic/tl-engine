@@ -40,6 +40,9 @@
 		<dependency name="Ticket_26966_Set_date2_storage_mapping"
 			module="tl-demo"
 		/>
+		<dependency name="Ticket_25210_Model_references_in_form_definitions"
+			module="tl-bpe"
+		/>
 	</dependencies>
 	<processors>
 		<delete-reference name="DemoTypes:DemoTypes.A#person"/>

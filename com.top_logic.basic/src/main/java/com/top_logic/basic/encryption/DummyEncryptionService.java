@@ -22,7 +22,7 @@ public class DummyEncryptionService extends EncryptionService {
 	/**
 	 * Configuration for {@link DummyEncryptionService}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends EncryptionService.Config {
 		/**

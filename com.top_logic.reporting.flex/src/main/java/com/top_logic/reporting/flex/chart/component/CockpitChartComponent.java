@@ -77,14 +77,14 @@ import com.top_logic.util.model.ModelService;
 /**
  * Chart display in the cockpits.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CockpitChartComponent extends AbstractChartComponent {
 
 	/**
 	 * Cockpit chart needs to know the meta elements for finding the correct flexible reports.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config extends AbstractChartComponent.Config {
 
@@ -401,7 +401,7 @@ public class CockpitChartComponent extends AbstractChartComponent {
 	/**
 	 * Description of the chart (external file or direct description of a chart).
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class ChartDescription {
 
@@ -499,7 +499,7 @@ public class CockpitChartComponent extends AbstractChartComponent {
 	/**
 	 * {@link LabelProvider} for a {@link ChartDescription}.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class ChartDescriptionLabelProvider implements LabelProvider {
 
@@ -519,7 +519,7 @@ public class CockpitChartComponent extends AbstractChartComponent {
 	/**
 	 * Dialog for selecting a chart type of the held {@link CockpitChartComponent}.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class SelectChartTypeDialog extends SimpleFormDialog {
 
@@ -633,7 +633,7 @@ public class CockpitChartComponent extends AbstractChartComponent {
 	/**
 	 * Open a {@link SelectChartTypeDialog} for selecting the chart to be displayed now.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class SelectChartTypeCommandHandler extends AbstractCommandHandler {
 

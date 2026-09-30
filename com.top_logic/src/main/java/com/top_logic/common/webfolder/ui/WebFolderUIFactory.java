@@ -18,6 +18,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
@@ -68,14 +69,13 @@ import com.top_logic.layout.tree.breadcrumb.BreadcrumbRenderer;
 import com.top_logic.layout.tree.breadcrumb.DefaultBreadcrumbRenderer;
 import com.top_logic.layout.tree.model.TreeBuilder;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 
 /**
- * The WebFolderUIFactory provides methods to create stuff for displaying a WebFolder
- * {@link WebFolder}.
- * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * Creates the controls and fields used to display a {@link WebFolder}.
+ *
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
+@Label("Web folder UI")
 public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactory.Config> {
 
 	/** {@link ConfigurationItem} for the {@link WebFolderUIFactory}. */
@@ -323,7 +323,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 		ZipDownloadExecutable executable = new ZipDownloadExecutable(selectionModel);
 		CommandField field =
 			WebFolderFieldProvider.createField(fieldName, executable, executableImage, disabledImage);
-		field.setTooltip(Resources.getInstance().getString(I18NConstants.ZIP_DOWNLOAD_FOLDER_TOOLTIP));
+		field.setTooltip(I18NConstants.ZIP_DOWNLOAD_FOLDER_TOOLTIP);
 
 		// When the corresponding form context is immutable it would be not
 		// possible to execute the command. As download is essentially the

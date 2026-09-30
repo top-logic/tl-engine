@@ -25,7 +25,7 @@ import com.top_logic.util.error.TopLogicException;
  * configuration ID.
  *
  *
- * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:Jonathan.HÃ¼sing@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public class ConfiguredFormat extends GenericMethod {
 

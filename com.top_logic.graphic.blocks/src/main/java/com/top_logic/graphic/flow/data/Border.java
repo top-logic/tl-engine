@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A border drawn around some content.
  */
-public interface Border extends Decoration, com.top_logic.graphic.flow.operations.BorderOperations {
+public interface Border extends com.top_logic.graphic.flow.data.Decoration, com.top_logic.graphic.flow.operations.BorderOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Border} instance.
@@ -69,12 +69,12 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.operation
 	/**
 	 * Adds a value to the {@link #getDashes()} list.
 	 */
-	com.top_logic.graphic.flow.data.Border addDashe(double value);
+	com.top_logic.graphic.flow.data.Border addDash(double value);
 
 	/**
 	 * Removes a value from the {@link #getDashes()} list.
 	 */
-	void removeDashe(double value);
+	void removeDash(double value);
 
 	/**
 	 * Whether the border is drawn above the content.

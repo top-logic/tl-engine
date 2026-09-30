@@ -10,6 +10,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import com.top_logic.basic.InteractionContext;
+import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.ThreadSafeSubSessionContext;
 import com.top_logic.basic.module.BasicRuntimeModule;
@@ -135,7 +136,32 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 		ThreadContext context = getThreadContext();
 		return context != null && context.isAdminContext();
  	}
-	
+
+	/**
+	 * Whether the current thread runs in a system context.
+	 *
+	 * <p>
+	 * A system context is established by {@link #inSystemContext(Class, InContext)} (and its
+	 * variants) when no user interaction is currently active. Code that deliberately enters a system
+	 * context has explicitly opted out of a user identity; it acts on behalf of the system and is
+	 * therefore not subject to user-based access checks.
+	 * </p>
+	 *
+	 * <p>
+	 * Note: When the system-context utilities are invoked while a user interaction is already
+	 * active, no new context is created and this method reports the surrounding context (typically a
+	 * user context). Such code remains subject to the regular access checks.
+	 * </p>
+	 */
+	public static boolean isSystemContext() {
+		ThreadContext context = getThreadContext();
+		if (context == null) {
+			return false;
+		}
+		String contextId = context.getContextId();
+		return contextId != null && contextId.startsWith(SessionContext.SYSTEM_ID_PREFIX);
+	}
+
 	/**
 	 * Evaluate the given {@link ComputationEx2} in a system context identified by the given caller
 	 * class.

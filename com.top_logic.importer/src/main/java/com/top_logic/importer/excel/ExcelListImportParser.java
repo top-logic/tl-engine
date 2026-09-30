@@ -22,14 +22,14 @@ import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 /**
  * Parse excel files in XLSX, XLS or CSV format and provide a list of read data.
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ExcelListImportParser<C extends ExcelListImportParser.Config> extends AbstractExcelFileImportParser<C> {
 
     /**
      * Configuration for parsing the excel file. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface Config extends AbstractExcelFileImportParser.Config {
 		// Nothing in here

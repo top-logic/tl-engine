@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28710_Added_TLSearch"
+		module="tl-model-search"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_28710_RoleAssignment_TLSearch"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28298_add_group_member_options"
+			module="tl-model-search"
+		/>
+	</dependencies>
+	<processors>
+		<!-- There is no size limitation for the expression -->
+		<add-annotations name="SearchExpressionStructure:SearchExpression#expression">
+			<annotations>
+				<size-constraint/>
+			</annotations>
+		</add-annotations>
+
+		<remove-class-generalizations name="SearchExpressionStructure:SearchExpression">
+			<generalization type="tl.model:TLObject"/>
+		</remove-class-generalizations>
+		<create-module name="tl.reporting"/>
+		<create-class name="tl.reporting:FlexReport"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		>
+			<annotations>
+				<table name="FlexReport"/>
+			</annotations>
+		</create-class>
+		<add-class-generalizations name="SearchExpressionStructure:SearchExpression">
+			<generalizations>
+				<generalization type="tl.accounts:WithOwner"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="SearchExpressionStructure:SearchExpression">
+			<generalizations>
+				<generalization type="tl.search:IsPublished"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.reporting:FlexReport">
+			<generalizations>
+				<generalization type="tl.accounts:WithOwner"/>
+				<generalization type="tl.search:IsPublished"/>
+			</generalizations>
+		</add-class-generalizations>
+		<create-property name="tl.reporting:FlexReport#name"
+			mandatory="true"
+			type="tl.core:String"
+		/>
+		<create-property name="tl.reporting:FlexReport#types"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<storage-algorithm>
+					<primitive-storage storage-attribute="bo_type"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.reporting:FlexReport#version"
+			mandatory="true"
+			type="tl.core:Double"
+		/>
+		<create-property name="tl.reporting:FlexReport#report"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<size-constraint/>
+			</annotations>
+		</create-property>
+
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-model-search/Ticket_28710_Added_TLSearch.transform.xslt"
+		/>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

@@ -91,11 +91,6 @@ public class StorageUsageListModelBuilder implements ListModelBuilder {
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-		return true;
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent contextComponent, Object listElement) {
 		return null;
 	}

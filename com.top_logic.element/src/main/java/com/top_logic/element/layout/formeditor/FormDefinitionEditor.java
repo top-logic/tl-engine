@@ -48,7 +48,6 @@ import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * {@link Editor} for a {@link FormDefinition} property of a typed configuration item.
@@ -99,7 +98,7 @@ public class FormDefinitionEditor implements Editor {
 			setNotExecutableImage(Icons.OPEN_GUI_EDITOR_DISABLED);
 			// Reason key when whole form is not editable.
 			setNotExecutableReasonKey(com.top_logic.common.webfolder.ui.I18NConstants.FIELD_DISABLED);
-			setTooltip(Resources.getInstance().getString(I18NConstants.OPEN_FORM_EDITOR_DIALOG));
+			setTooltip(I18NConstants.OPEN_FORM_EDITOR_DIALOG);
 			/* Ensure that the command can be executed, also when the owner group is in view mode to
 			 * allow the user to view the actual form definition. */
 			setInheritDeactivation(false);
@@ -213,11 +212,18 @@ public class FormDefinitionEditor implements Editor {
 			}
 
 			// Try to resolve from edit context.
-			EditContext editContext =
-				ConfigurationFieldProvider.editContext(_editorFactory.getInitializerProvider());
+			EditContext editContext = editContext();
 
-			TLFormType typeAnnotation = editContext.getAnnotation(TLFormType.class);
-			return TLFormType.resolve(typeAnnotation, editContext.getObject(), editContext.getDescriptionKey());
+			if (editContext != null) {
+				TLFormType typeAnnotation = editContext.getAnnotation(TLFormType.class);
+				return TLFormType.resolve(typeAnnotation, editContext.getObject(), editContext.getDescriptionKey());
+			}
+
+			return null;
+		}
+
+		private EditContext editContext() {
+			return ConfigurationFieldProvider.editContext(_editorFactory.getInitializerProvider());
 		}
 
 		private void initTemplates(GUIEditorDialog guiEditorDialog) {
@@ -236,18 +242,20 @@ public class FormDefinitionEditor implements Editor {
 				}
 			}
 
-			EditContext editContext =
-				ConfigurationFieldProvider.editContext(_editorFactory.getInitializerProvider());
+			// Try to init from edit context.
+			EditContext editContext = editContext();
+			if (editContext != null) {
+				TLFormType typeAnnotation = editContext.getAnnotation(TLFormType.class);
+				TLFormTemplates templatesAnnotation = editContext.getAnnotation(TLFormTemplates.class);
 
-			TLFormType typeAnnotation = editContext.getAnnotation(TLFormType.class);
-			TLFormTemplates templatesAnnotation = editContext.getAnnotation(TLFormTemplates.class);
+				TLStructuredType type =
+					TLFormType.resolve(typeAnnotation, editContext.getObject(), editContext.getDescriptionKey());
+				templateProvider = TLFormTemplates.resolve(templatesAnnotation, editContext.getObject());
 
-			TLStructuredType type =
-				TLFormType.resolve(typeAnnotation, editContext.getObject(), editContext.getDescriptionKey());
-			templateProvider = TLFormTemplates.resolve(templatesAnnotation, editContext.getObject());
-
-			guiEditorDialog.setType(type);
-			guiEditorDialog.setTemplateProvider(templateProvider);
+				guiEditorDialog.setType(type);
+				guiEditorDialog.setTemplateProvider(templateProvider);
+				return;
+			}
 		}
 
 		private TLStructuredType contextType(FormContextDefinition contextDef) {

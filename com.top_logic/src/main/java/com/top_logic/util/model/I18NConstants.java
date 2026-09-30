@@ -19,6 +19,11 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Created global classifications. */
 	public static ResKey CREATING_CLASSIFICATIONS;
 
+	/**
+	 * @en Cannot store, constraints violated.
+	 */
+	public static ResKey CONSTRAINTS_VIOLATED;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

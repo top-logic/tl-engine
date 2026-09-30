@@ -161,7 +161,11 @@
 							<column name="name"
 								mandatory="true"
 							>
-								<additionalHeaders/>
+								<additionalHeaders>
+									<byExpression useRowObjects="true">
+										<label>rows -&gt; #("Anzahl Cs: {0}"@de, "Number Cs: {0}"@en).fill($rows.filter(row -&gt; $row.instanceOf(`DemoTypes:DemoTypes.C.All`)).size())</label>
+									</byExpression>
+								</additionalHeaders>
 							</column>
 							<column name="float"
 								columnWidth="80px"

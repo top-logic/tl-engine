@@ -14,7 +14,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.util.PropertyKey;
 
 /**
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class TestPropertyKey extends TestCase {
 

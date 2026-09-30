@@ -18,14 +18,14 @@ import com.top_logic.kafka.services.sensors.Sensor.AbstractSensor;
 /**
  * Build dummy sensors which will generate random values.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class DummySensorBuilder implements SensorBuilder {
 
     /**
      * Configuration of this dummy sensor builder 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface Config extends PolymorphicConfiguration<DummySensorBuilder> {
 
@@ -61,7 +61,7 @@ public class DummySensorBuilder implements SensorBuilder {
     /**
      * Dummy implementation of a sensor to providing some randomized sensor data. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
 	public static class DummySensor<A extends Object, R extends Object> extends AbstractSensor<A, R> {
 

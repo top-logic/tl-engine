@@ -2,17 +2,20 @@
 
 <template>
 	<params>
+		<param name="namePrefix"
+			value=""
+		/>
 		<param name="n"/>
 	</params>
 
-	<layout name="dialog${n}"
+	<layout name="${namePrefix}dialog${n}"
 		resPrefix="layouts.layoutdemo.dialog.dialogn.dialog${n}."
 	>
 		<components>
 			<component class="com.top_logic.demo.layout.demo.dialog.DemoDialog"
 				buttonbar="true"
 				closeHandlerName="closeModalDialog"
-				name="infoDialog${n}"
+				name="${namePrefix}infoDialog${n}"
 				page="/jsp/test/layout/dialog/DemoDialogContent.jsp"
 				resPrefix="layouts.layoutdemo.dialog.dialogn.infoDialog."
 				securityObject="ref:dialogParent"

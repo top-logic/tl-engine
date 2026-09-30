@@ -61,6 +61,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.ResourceDeclaration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -74,7 +75,6 @@ import com.top_logic.basic.db.schema.setup.config.ApplicationTypes;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.encryption.SymmetricEncryption;
 import com.top_logic.basic.module.ConfiguredManagedClass;
-import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -109,8 +109,8 @@ import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.util.model.CompatibilityService;
 
 /**
- * {@link ManagedClass} that automatically migrates the application to the newest version.
- * 
+ * Automatically migrates the application data to the newest version on startup.
+ *
  * <p>
  * Migrations to perform are described in XML configurations corresponding to the
  * {@link MigrationConfig} schema located in the directory
@@ -132,6 +132,7 @@ import com.top_logic.util.model.CompatibilityService;
 	CompatibilityService.Module.class,
 })
 @ServiceExtensionPoint(InitialTableSetup.Module.class)
+@Label("Data migration")
 public class MigrationService extends ConfiguredManagedClass<MigrationService.Config> {
 
 	/**

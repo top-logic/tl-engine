@@ -13,7 +13,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * Say hidden if the model of a component is a wrapper that is not in the revision.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class HistoricDataExecRule implements ExecutabilityRule {
 

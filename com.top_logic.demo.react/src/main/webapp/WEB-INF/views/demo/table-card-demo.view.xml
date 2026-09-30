@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<!--
+		A table and a card sharing a column: the panel body holds a column <stack> with a <table>
+		above a <card>. The card keeps the height of its content (a progress bar and a line of text),
+		and the table fills the rest of the panel body, scrolling the rows that do not fit.
+	-->
+	<panel>
+		<title>
+			<en>Table and card</en>
+			<de>Tabelle und Karte</de>
+		</title>
+		<stack
+			direction="column"
+			gap="default"
+		>
+			<table
+				observed-types="demo.react:Demo"
+				types="demo.react:Demo"
+			>
+				<columns>
+					<column
+						attribute="name"
+						sort="ASC"
+					/>
+					<column attribute="priority"/>
+				</columns>
+				<rows>all(`demo.react:Demo`)</rows>
+			</table>
+			<card
+				padding="compact"
+				variant="outlined"
+			>
+				<title>
+					<en>Progress</en>
+					<de>Fortschritt</de>
+				</title>
+				<progress
+					done="x -> 42"
+					label="x -> #('42 of 100 done'@en, '42 von 100 erledigt'@de)"
+					total="x -> 100"
+				/>
+				<text>
+					<label>
+						<en>The card keeps the height of its content; the table above takes the rest of the panel.</en>
+						<de>Die Karte behält die Höhe ihres Inhalts; die Tabelle darüber nimmt den Rest des Panels ein.</de>
+					</label>
+				</text>
+			</card>
+		</stack>
+	</panel>
+</view>

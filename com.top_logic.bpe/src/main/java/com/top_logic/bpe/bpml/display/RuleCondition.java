@@ -11,7 +11,7 @@ import com.top_logic.bpe.execution.model.ProcessExecution;
 /**
  * Defines conditions that govern sequence flow transitions.
  *
- * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:Jonathan.HÃ¼sing@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public interface RuleCondition {
 
@@ -22,12 +22,18 @@ public interface RuleCondition {
 	 *        Current {@link ProcessExecution} object representing the state of the workflow to test
 	 *        the condition on.
 	 */
-	boolean getTestCondition(ProcessExecution process);
+	default boolean getTestCondition(ProcessExecution process) {
+		return getMessage(process) == null;
+	}
 
 	/**
 	 * The error or warning message to show, if this condition is not satisfied.
+	 * 
+	 * @param process
+	 *        Current {@link ProcessExecution} object representing the state of the workflow to test
+	 *        the condition on.
 	 */
-	ResKey getMessage();
+	ResKey getMessage(ProcessExecution process);
 
 	/**
 	 * Specifies the UI behavior to show, when this condition is not satisfied.

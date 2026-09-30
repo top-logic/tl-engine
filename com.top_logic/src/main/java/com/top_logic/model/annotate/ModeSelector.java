@@ -6,9 +6,9 @@
 package com.top_logic.model.annotate;
 
 import com.top_logic.basic.col.Sink;
-import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.util.Pointer;
 
@@ -26,9 +26,13 @@ public interface ModeSelector {
 	 *        The object instance that is displayed.
 	 * @param attribute
 	 *        The model attribute that is represented by a form field.
+	 * @param editMode
+	 *        Whether the form displaying the attribute is in edit mode. Allows mode-dependent
+	 *        visibility such as hiding an empty value in view mode while keeping it visible for
+	 *        editing.
 	 * @return The field mode of the field.
 	 */
-	FormVisibility getMode(TLObject object, TLStructuredTypePart attribute);
+	FormVisibility getMode(TLObject object, TLStructuredTypePart attribute, boolean editMode);
 
 	/**
 	 * Reports dependencies the computed field mode depends on.
@@ -39,10 +43,10 @@ public interface ModeSelector {
 	 *        The model attribute that is represented by a form field.
 	 * @param trace
 	 *        Callback for reporting all values, the field mode depends on.
-	 * @param formContext
-	 *        The form context, or <code>null</code> if not available.
+	 * @param overlays
+	 *        The overlay lookup, or <code>null</code> if not available.
 	 */
 	void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
-			FormContext formContext);
+			OverlayLookup overlays);
 
 }

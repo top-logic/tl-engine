@@ -5,6 +5,7 @@
  */
 package com.top_logic.contact.layout.company;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,7 +19,8 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey ERROR_COMPANY_STILL_REFERENCED = legacyKey("contact.company.edit.form.companyContactDelete.disabled.stillReferenced");
+	@CustomKey("contact.company.edit.form.companyContactDelete.disabled.stillReferenced")
+	public static ResKey ERROR_COMPANY_STILL_REFERENCED;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -1,0 +1,355 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.view.tiles;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.navigation.RevealPath;
+
+/**
+ * Ambient handle to the surrounding {@link TileStackElement &lt;tile-stack&gt;}.
+ *
+ * <p>
+ * Installed by the stack into its frame's child {@link com.top_logic.layout.view.ViewContext} via
+ * {@link com.top_logic.layout.view.ViewContext#withScope(Class, Object)}. Commands and actions
+ * inside a frame ({@link NavigatePushCommand &lt;navigate-push&gt;},
+ * {@link NavigatePopCommand &lt;navigate-pop&gt;} / {@link NavigatePopAction the same as a chain
+ * action}, {@link NavigatePopToCommand &lt;navigate-pop-to&gt;} / {@link NavigatePopToAction the
+ * same as a chain action}) look it up via {@link #lookup(ReactContext, String)} and call
+ * {@link #push(String, ResKey, Map)} / {@link #pop()} / {@link #popTo(int)} on it. A navigation
+ * that replaces the upper part of the path by other frames, such as displaying an object in a frame
+ * drilled down to, calls {@link #replaceFrom(int, List)}.
+ * </p>
+ *
+ * <p>
+ * The scope is a thin facade over the stack's path {@link ViewChannel}: all mutators read the
+ * channel's current value, compute the new list and write it back. The channel is the sole source
+ * of truth.
+ * </p>
+ *
+ * <p>
+ * A mutator that would drop a frame holding unsaved changes - {@link #pop()}, {@link #popTo(int)},
+ * {@link #replaceFrom(int, List)} or a {@link #restore(int, String, Map, long) restore} replacing
+ * frames - is vetoed by the {@link ReactTileStackControl} displaying the stack: it throws a
+ * {@link com.top_logic.layout.view.channel.ChannelVetoException} naming the forms of the dropped
+ * frames and leaves the path unchanged. The exception's continuation performs the write once the
+ * user has saved or discarded.
+ * </p>
+ *
+ * <p>
+ * The scope also carries the {@link #frameRoutes() routes} the stack declares for its frame views:
+ * they name a frame that is pushed without a label of its own, and they are what
+ * {@link TileFrameRouteParticipant} reflects the path in the URL with and restores it from.
+ * </p>
+ *
+ * <p>
+ * Together with the place of its stack in the display, the scope answers the
+ * {@link #framePlace(int) place of a frame} of the path, so that what a frame contains can be
+ * located and revealed like any other part of the display.
+ * </p>
+ */
+public class TileStackScope {
+
+	/**
+	 * The {@link TileStackScope} enclosing the given context.
+	 *
+	 * @param context
+	 *        The context in which the requesting command or action executes.
+	 * @param tag
+	 *        Configuration tag of the requesting command or action, quoted in the failure message.
+	 * @return The scope of the innermost enclosing {@link TileStackElement &lt;tile-stack&gt;}.
+	 * @throws IllegalStateException
+	 *         if the context is no {@link ViewContext}, or no tile stack encloses it.
+	 */
+	public static TileStackScope lookup(ReactContext context, String tag) {
+		if (!(context instanceof ViewContext viewContext)) {
+			throw new IllegalStateException(
+				"<" + tag + "> requires a ViewContext, got " + context.getClass().getName());
+		}
+		TileStackScope scope = viewContext.getScope(TileStackScope.class);
+		if (scope == null) {
+			throw new IllegalStateException(
+				"<" + tag + "> executed outside of any enclosing <tile-stack>.");
+		}
+		return scope;
+	}
+
+	private final ViewChannel _pathChannel;
+
+	private final List<FrameRoute> _frameRoutes;
+
+	/** The place of the stack in the display, {@code null} for a scope created without it. */
+	private final RevealPath _place;
+
+	/** The element a frame of the stack is addressed through, {@code null} without a place. */
+	private final TileStackElement _element;
+
+	private long _restoredAdoption;
+
+	private List<TileFrame> _restoredPath = List.of();
+
+	/**
+	 * Creates a {@link TileStackScope} whose stack declares no frame routes and whose place in the
+	 * display is unknown, so that {@link #framePlace(int)} answers {@code null}.
+	 *
+	 * @param pathChannel
+	 *        The channel holding the {@code List<TileFrame>} path. Must not be {@code null}.
+	 */
+	public TileStackScope(ViewChannel pathChannel) {
+		this(pathChannel, List.of());
+	}
+
+	/**
+	 * Creates a {@link TileStackScope} backed by the given path channel, whose place in the display
+	 * is unknown, so that {@link #framePlace(int)} answers {@code null}.
+	 *
+	 * @param pathChannel
+	 *        The channel holding the {@code List<TileFrame>} path. Must not be {@code null}.
+	 * @param frameRoutes
+	 *        The routes the stack declares for its frame views, in declaration order.
+	 */
+	public TileStackScope(ViewChannel pathChannel, List<FrameRoute> frameRoutes) {
+		this(pathChannel, frameRoutes, null, null);
+	}
+
+	/**
+	 * Creates a {@link TileStackScope} that also knows where its stack sits in the display.
+	 *
+	 * @param pathChannel
+	 *        The channel holding the {@code List<TileFrame>} path. Must not be {@code null}.
+	 * @param frameRoutes
+	 *        The routes the stack declares for its frame views, in declaration order.
+	 * @param place
+	 *        The place of the stack in the display, or {@code null} to leave
+	 *        {@link #framePlace(int)} unanswered.
+	 * @param element
+	 *        The element a frame of the stack is addressed through, the stack itself.
+	 */
+	public TileStackScope(ViewChannel pathChannel, List<FrameRoute> frameRoutes, RevealPath place,
+			TileStackElement element) {
+		_pathChannel = pathChannel;
+		_frameRoutes = List.copyOf(frameRoutes);
+		_place = place;
+		_element = element;
+	}
+
+	/**
+	 * Current path (immutable snapshot).
+	 */
+	public List<TileFrame> getPath() {
+		return readPath();
+	}
+
+	/**
+	 * The place the frame at the given position of the path is displayed at.
+	 *
+	 * @param position
+	 *        Index of the frame in the path, counted as {@link #getPath()} holds it.
+	 * @return The place of that frame in the display, or {@code null} for a scope created without
+	 *         the place of its stack.
+	 */
+	public RevealPath framePlace(int position) {
+		if (_place == null) {
+			return null;
+		}
+		return _place.append(_element, ReactTileStackControl.frameKey(position));
+	}
+
+	/**
+	 * The channel holding the path, the stack's single source of truth.
+	 *
+	 * <p>
+	 * Every navigation of the stack is a write to this channel, so watching it is how something
+	 * outside the stack learns of one - the {@link TileFrameRouteParticipant} keeping the address bar
+	 * on the displayed path, for instance.
+	 * </p>
+	 */
+	public ViewChannel pathChannel() {
+		return _pathChannel;
+	}
+
+	/**
+	 * The routes the stack declares for its frame views, in declaration order.
+	 */
+	public List<FrameRoute> frameRoutes() {
+		return _frameRoutes;
+	}
+
+	/**
+	 * The route the stack declares for the given frame view, or {@code null} if it declares none.
+	 *
+	 * @param viewRef
+	 *        Path of a frame view, as {@link TileFrame#getViewRef()} holds it.
+	 */
+	public FrameRoute frameRoute(String viewRef) {
+		return FrameRoute.byView(_frameRoutes, viewRef);
+	}
+
+	/**
+	 * Appends a frame to the path.
+	 *
+	 * @param viewRef
+	 *        Path of the view file to mount.
+	 * @param label
+	 *        Breadcrumb label, or {@code null} to use the one the stack declares for the view.
+	 * @param params
+	 *        Bound parameter values captured at push time.
+	 */
+	public void push(String viewRef, ResKey label, Map<String, Object> params) {
+		List<TileFrame> next = new ArrayList<>(readPath());
+		next.add(frame(viewRef, label, params));
+		_pathChannel.set(Collections.unmodifiableList(next));
+	}
+
+	/**
+	 * Drops the topmost frame, if any.
+	 */
+	public void pop() {
+		List<TileFrame> current = readPath();
+		if (current.isEmpty()) {
+			return;
+		}
+		_pathChannel.set(Collections.unmodifiableList(new ArrayList<>(current.subList(0, current.size() - 1))));
+	}
+
+	/**
+	 * Truncates the path so that exactly the frames at positions {@code 0..size-1} remain. After
+	 * the call, the new top frame is at index {@code size-1}; for {@code size == 0}, the stack
+	 * shows its {@link TileStackElement.Config#getInitial() initial} view again.
+	 *
+	 * @param size
+	 *        Number of frames to keep. Negative values clamp to 0, values larger than the current
+	 *        size are no-ops.
+	 */
+	public void popTo(int size) {
+		List<TileFrame> current = readPath();
+		int target = Math.max(0, Math.min(size, current.size()));
+		if (target == current.size()) {
+			return;
+		}
+		_pathChannel.set(Collections.unmodifiableList(new ArrayList<>(current.subList(0, target))));
+	}
+
+	/**
+	 * Keeps the frames of the path up to the given position and puts the given frames above them.
+	 *
+	 * <p>
+	 * The path is written in one step, so that the display goes to the resulting path directly
+	 * instead of passing through the shortened one, and a veto asks about all dropped frames at once.
+	 * Its continuation performs that same write.
+	 * </p>
+	 *
+	 * <p>
+	 * A given frame {@link TileFrame#equals(Object) equal} to the one the path holds at its position
+	 * stays displayed as the user left it. A given frame without a label is named by the label the
+	 * stack declares for its view, as {@link #push(String, ResKey, Map)} names it.
+	 * </p>
+	 *
+	 * @param position
+	 *        Number of frames of the current path to keep. Negative values clamp to 0, values larger
+	 *        than the current size keep the whole path.
+	 * @param frames
+	 *        The frames to put above the kept ones, lowest first.
+	 */
+	public void replaceFrom(int position, List<TileFrame> frames) {
+		_pathChannel.set(pathFrom(position, frames));
+	}
+
+	/**
+	 * Puts the frame a URL names at the given position of the path, dropping whatever the path held
+	 * from there on.
+	 *
+	 * <p>
+	 * The path is written in one step, so that the frame the URL names replaces the one displayed
+	 * instead of the display passing through the shortened path on its way there.
+	 * </p>
+	 *
+	 * @param base
+	 *        Number of frames the URL has already established, and therefore the position of the
+	 *        frame it names now.
+	 * @param viewRef
+	 *        Path of the view file to mount.
+	 * @param params
+	 *        The parameter values the URL carries for the frame.
+	 * @param adoptionId
+	 *        Identifies the URL adoption this restore belongs to, so that
+	 *        {@link #restoreBase(long)} can tell the frames it establishes from those of the
+	 *        adoption before.
+	 */
+	public void restore(int base, String viewRef, Map<String, Object> params, long adoptionId) {
+		List<TileFrame> path = pathFrom(base, List.of(new TileFrame(viewRef, null, params)));
+
+		// Recorded before the write: writing the path mounts the frame, and the participant of that
+		// frame asks for its base while the write is still in progress.
+		_restoredAdoption = adoptionId;
+		_restoredPath = path;
+
+		_pathChannel.set(path);
+	}
+
+	/**
+	 * The number of frames of the current path that the given URL adoption has established, and
+	 * therefore the position at which the frame it names next belongs.
+	 *
+	 * <p>
+	 * Zero for a path the adoption has not touched: the URL describes the path from its first frame,
+	 * so what the display holds from an earlier navigation is replaced rather than extended.
+	 * </p>
+	 *
+	 * @param adoptionId
+	 *        Identifies the URL adoption in progress, see
+	 *        {@link com.top_logic.layout.react.routing.RouteManager#adoptionId()}.
+	 */
+	public int restoreBase(long adoptionId) {
+		List<TileFrame> current = readPath();
+		if (_restoredAdoption != adoptionId || !_restoredPath.equals(current)) {
+			return 0;
+		}
+		return current.size();
+	}
+
+	/**
+	 * The frames of the current path up to the given position, followed by the given ones - each
+	 * named by the label the stack declares for its view where it carries none of its own.
+	 */
+	private List<TileFrame> pathFrom(int position, List<TileFrame> frames) {
+		List<TileFrame> current = readPath();
+		List<TileFrame> next =
+			new ArrayList<>(current.subList(0, Math.max(0, Math.min(position, current.size()))));
+		for (TileFrame frame : frames) {
+			next.add(frame.getLabel() != null ? frame : frame(frame.getViewRef(), null, frame.getParams()));
+		}
+		return Collections.unmodifiableList(next);
+	}
+
+	/**
+	 * The frame for the given view, named by the given label or, without one, by the label the stack
+	 * declares for the view.
+	 */
+	private TileFrame frame(String viewRef, ResKey label, Map<String, Object> params) {
+		if (label != null) {
+			return new TileFrame(viewRef, label, params);
+		}
+		FrameRoute route = frameRoute(viewRef);
+		return new TileFrame(viewRef, route == null ? null : route.computeLabel(params), params);
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<TileFrame> readPath() {
+		Object value = _pathChannel.get();
+		if (value instanceof List<?> list) {
+			return (List<TileFrame>) list;
+		}
+		return Collections.emptyList();
+	}
+}

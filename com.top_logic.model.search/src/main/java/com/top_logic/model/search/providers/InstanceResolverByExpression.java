@@ -17,7 +17,6 @@ import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -54,7 +53,9 @@ public class InstanceResolverByExpression extends AbstractConfiguredInstance<Ins
 		 * Function resolving an object from its ID.
 		 * 
 		 * <p>
-		 * The function expects the object's ID as single argument and returns the resolved object.
+		 * The function expects the object's ID as first argument and an optional import context as
+		 * second argument. The function must return the resolved object. If the function returns
+		 * <code>null</code>, this is treated as resolve failure.
 		 * </p>
 		 */
 		@Mandatory
@@ -79,13 +80,13 @@ public class InstanceResolverByExpression extends AbstractConfiguredInstance<Ins
 	}
 
 	@Override
-	public TLObject resolve(I18NLog log, String kind, String id) {
-		return SearchExpression.asTLObject(_resolver.getSearch(), _resolver.execute(id));
+	public TLObject resolve(I18NLog log, Object context, String kind, String id) {
+		return SearchExpression.asTLObject(_resolver.getSearch(), _resolver.execute(id, context));
 	}
 
 	@Override
 	public String buildId(TLObject obj) {
-		return ToString.toString(_identity.execute(obj));
+		return SearchExpression.asString(_identity.execute(obj));
 	}
 
 }

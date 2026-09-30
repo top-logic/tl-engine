@@ -30,7 +30,7 @@ import com.top_logic.layout.scripting.template.gui.ScriptContainer.PersistableSc
 public class TestScriptContainer extends BasicTestCase {
 
 	public void testCorrectPersistEncoding() throws IOException {
-		String comment = "öäüßµ€";
+		String comment = "Ã¶Ã¤Ã¼ÃŸÂµÂ€";
 		ApplicationAction action = ActionFactory.actionChain();
 		action.setComment(comment);
 		File file = File.createTempFile(TestScriptContainer.class.getSimpleName(), ActionReader.FILE_ENDING);

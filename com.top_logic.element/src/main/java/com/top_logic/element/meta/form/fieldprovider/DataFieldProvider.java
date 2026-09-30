@@ -30,7 +30,7 @@ import com.top_logic.model.annotate.util.TLAnnotations;
 /**
  * {@link FieldProvider} for {@link TLStructuredTypePart}s of type {@link File}.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  *
  *         Updated 2025 by
  * @author <a href="mailto:sha@top-logic.com">Simon Haneke</a>

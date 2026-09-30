@@ -16,7 +16,7 @@ import com.top_logic.tool.boundsec.BoundComponent;
  * informations are the startElement on which the slave should work and a map of
  * {@link FilterProperty}s identified by their names.
  * 
- * @author <a href=mailto:jes@top-logic.com>Jens Sch‰fer</a>
+ * @author <a href=mailto:jes@top-logic.com>Jens Sch√§fer</a>
  */
 public class GanttChartSettings extends FilteringFilterVO<Object> implements GanttChartConstants {
 

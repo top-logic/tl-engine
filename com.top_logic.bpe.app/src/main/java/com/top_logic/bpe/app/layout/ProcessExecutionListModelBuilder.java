@@ -90,11 +90,6 @@ public class ProcessExecutionListModelBuilder<C extends ProcessExecutionListMode
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-		return listElement instanceof ProcessExecution;
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent aComponent, Object anElement) {
 		/* The list does not depend on the model. So any model is correct. For stability return
 		 * current model. */

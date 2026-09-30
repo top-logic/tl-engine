@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29019_Removed_log_entries"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_28604_Upgrade_commit_messages"
+			module="tl"
+		/>
+	</dependencies>
+	<pre-processors>
+		<!-- Remove references to removed implementation classes. -->
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl/Ticket_29019_Removed_log_entries.db.xslt"
+		/>
+	</pre-processors>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.migration.processors.RemoveApplicationTypesProcessor">
+			<application-tables>
+				<application-table name="LogEntry"
+					db-name="LOGENTRY"
+				/>
+				<application-table name="ArchiveUserDayEntry"
+					db-name="DAYUSERENTRY"
+				/>
+				<application-table name="hasLogEntry"
+					db-name="HAS_LOG_ENTRY"
+				/>
+			</application-tables>
+		</processor>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

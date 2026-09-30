@@ -23,7 +23,7 @@ import com.top_logic.basic.Logger;
 /**
  * Debugging class for simulating a broken communication to the mail server ({@link #checkConnect(String)}.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class TLStore extends Store {
 

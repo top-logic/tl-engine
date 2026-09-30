@@ -630,7 +630,7 @@ public class AJAXDemo extends BoundComponent implements HTMLConstants {
 		HTMLUtil.endBeginForm(out);
 
 		out.beginTag(H2);
-		out.writeText("Testf‰lle");
+		out.writeText("Testf√§lle");
 		out.endTag(H2);
 
 		TracLinks.writeWikiLink(out, "Testfallkatalog/AJAXKommunikation");

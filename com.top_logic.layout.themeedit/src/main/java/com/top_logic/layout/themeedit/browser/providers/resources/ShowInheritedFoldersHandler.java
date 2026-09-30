@@ -14,7 +14,7 @@ import com.top_logic.tool.boundsec.commandhandlers.ToggleCommandHandler;
 /**
  * Show inherited folders.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ShowInheritedFoldersHandler extends ToggleCommandHandler {
 

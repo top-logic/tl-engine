@@ -19,7 +19,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
  * 
  * For instance: {a,b,c} is partitioned into {{a}, {b}, {c}}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class SimpleLayoutEdgePartitioner implements LayoutEdgePartitioner {
 

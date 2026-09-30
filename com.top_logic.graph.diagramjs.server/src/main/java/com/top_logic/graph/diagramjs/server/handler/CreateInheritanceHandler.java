@@ -10,7 +10,7 @@ import com.top_logic.model.TLClass;
 /**
  * Handler to create an inheritance.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface CreateInheritanceHandler {
 

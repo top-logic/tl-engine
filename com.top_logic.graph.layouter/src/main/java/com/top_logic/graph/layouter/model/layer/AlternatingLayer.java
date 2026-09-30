@@ -7,13 +7,13 @@ package com.top_logic.graph.layouter.model.layer;
 
 import java.util.List;
 
-import com.top_logic.basic.col.TupleFactory.Pair;
+import com.top_logic.graph.layouter.model.util.Pair;
 
 /**
  * General layer with alternating items. The type switches between each adjacent item forth and
  * back.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class AlternatingLayer<F, S> extends OrderedLayer<Pair<F, S>> {
 

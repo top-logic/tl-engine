@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import com.top_logic.graph.layouter.LayoutContext;
 import com.top_logic.graph.layouter.algorithm.node.port.assigner.NodePortAssignAlgorithm;
-import com.top_logic.graph.layouter.model.LayoutGraph;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
 import com.top_logic.graph.layouter.model.NodePort;
@@ -21,7 +20,7 @@ import com.top_logic.graph.layouter.model.edge.LayoutEdgePartitioner;
 /**
  * Assign {@link NodePort} using the given {@link LayoutEdgePartitioner}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class NodePortEdgesAssigner implements NodePortAssignAlgorithm {
 
@@ -46,15 +45,6 @@ public class NodePortEdgesAssigner implements NodePortAssignAlgorithm {
 	public void assignNodePorts(LayoutContext context, LayoutNode node) {
 		assignIncomingNodePorts(node);
 		assignOutgoingNodePorts(node);
-	}
-
-	/**
-	 * Assign all {@link NodePort}s of the given graph.
-	 */
-	public void assignNodePorts(LayoutContext context, LayoutGraph graph) {
-		for (LayoutNode node : graph.nodes()) {
-			assignNodePorts(context, node);
-		}
 	}
 
 	private void assignOutgoingNodePorts(LayoutNode node) {

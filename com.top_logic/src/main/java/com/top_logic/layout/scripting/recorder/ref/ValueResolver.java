@@ -571,9 +571,9 @@ public class ValueResolver implements ValueRefVisitor<Object, ActionContext> {
 	}
 
 	private String fuzzyNormalize(String attributeLabel) {
-		return attributeLabel.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue")
-			.replace("Ä", "Ae").replace("Ö", "Oe").replace("Ü", "Ue")
-			.replace("ß", "ss").replaceAll("[^A-Za-z0-9]+", "");
+		return attributeLabel.replace("Ã¤", "ae").replace("Ã¶", "oe").replace("Ã¼", "ue")
+			.replace("Ã„", "Ae").replace("Ã–", "Oe").replace("Ãœ", "Ue")
+			.replace("ÃŸ", "ss").replaceAll("[^A-Za-z0-9]+", "");
 	}
 
 	@Override

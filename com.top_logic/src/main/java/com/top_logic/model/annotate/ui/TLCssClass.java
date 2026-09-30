@@ -31,6 +31,9 @@ public interface TLCssClass extends TLAttributeAnnotation, TLTypeAnnotation {
 	/** @see #getValue() */
 	String VALUE = "value";
 
+	/** @see #getOverride() */
+	String OVERRIDE = "override";
+
 	/**
 	 * The CSS class to set on input elements for the annotated attribute.
 	 * 
@@ -63,6 +66,22 @@ public interface TLCssClass extends TLAttributeAnnotation, TLTypeAnnotation {
 	 * @see #getValue()
 	 */
 	void setValue(String value);
+
+	/**
+	 * When true, the specified CSS class replaces any existing classes instead of being added to
+	 * them. This allows overriding default classes like <code>tblRight</code> for numeric
+	 * attributes.
+	 *
+	 * @see #getValue()
+	 */
+	@Name(OVERRIDE)
+	@Label("CSS class override")
+	boolean getOverride();
+
+	/**
+	 * @see #getOverride()
+	 */
+	void setOverride(boolean value);
 
 	/**
 	 * Algorithm to compute a CSS class for some value of the annotated attribute.

@@ -51,7 +51,7 @@ public interface MSXDiffSchema {
 	 * <p>
 	 * This is the tag that shows up in a .xml configuration file, just below the
 	 * <code>&lt;components></code> tag. For example, in search.xml, the tag that shows up is
-	 * “search”. If this component does not exist, an error occurs.
+	 * Â“searchÂ”. If this component does not exist, an error occurs.
 	 * </p>
 	 * 
 	 * <p>
@@ -96,7 +96,7 @@ public interface MSXDiffSchema {
 	 * <p>
 	 * This is the tag that shows up in a .xml configuration file, just below the
 	 * <code>&lt;components></code> tag. For example, in search.xml, the tag that shows up is
-	 * “search”. If this component does not exist, an error occurs.
+	 * Â“searchÂ”. If this component does not exist, an error occurs.
 	 * </p>
 	 * 
 	 * <p>
@@ -127,7 +127,7 @@ public interface MSXDiffSchema {
 	 * 
 	 * <p>
 	 * For example, to add a new root certificate in authenticator.xml, specify
-	 * “rootCertificateSubjectKeyIdentifier”. If NodeName is not specified, the body of the NodeAdd
+	 * Â“rootCertificateSubjectKeyIdentifierÂ”. If NodeName is not specified, the body of the NodeAdd
 	 * element is added as a raw node, enabling you to add a complex node. If NodeName is specified
 	 * with a body, the body is ignored.
 	 * </p>
@@ -141,12 +141,12 @@ public interface MSXDiffSchema {
 	String NODE_ADD__NODE_NAME_ATTRIBUTE = "NodeName";
 
 	/**
-	 * Specifies the node’s text, if any, such as between its open tag and close tag.
+	 * Specifies the nodeÂ’s text, if any, such as between its open tag and close tag.
 	 * 
 	 * <p>
-	 * In the case of rootCertificateSubjectKeyIndentifier, for example, the node’s text would be
-	 * the actual subject key identifier (SKID). In most cases, if a node doesn’t have text, it does
-	 * have attributes. For example, “Sessions” in the TServer.xml configuration file has only
+	 * In the case of rootCertificateSubjectKeyIndentifier, for example, the nodeÂ’s text would be
+	 * the actual subject key identifier (SKID). In most cases, if a node doesnÂ’t have text, it does
+	 * have attributes. For example, Â“SessionsÂ” in the TServer.xml configuration file has only
 	 * attributes.
 	 * </p>
 	 * 
@@ -167,7 +167,7 @@ public interface MSXDiffSchema {
 	 * </p>
 	 * 
 	 * <p>
-	 * In the following example, if “BeforeXPath” is empty, the new node is added after
+	 * In the following example, if Â“BeforeXPathÂ” is empty, the new node is added after
 	 * <code>&lt;secondNode></code> if <code>&lt;SomeNode></code> is specified as the parent. If
 	 * BeforeXPath points to <code>&lt;firstNode></code>, the new node is inserted before
 	 * <code>&lt;firstNode></code>. If BeforeXPath does not refer to a valid child of
@@ -185,7 +185,7 @@ public interface MSXDiffSchema {
 	String NODE_ADD__BEFORE_XPATH_ATTRIBUTE = "BeforeXPath";
 
 	/**
-	 * Changes a node’s text value. The following parameters are supported.
+	 * Changes a nodeÂ’s text value. The following parameters are supported.
 	 * 
 	 * <p>
 	 * Required: yes
@@ -199,7 +199,7 @@ public interface MSXDiffSchema {
 	 * <p>
 	 * This is the tag that shows up in a .xml configuration file, just below the
 	 * <code>&lt;components></code> tag. For example, in search.xml, the tag that shows up is
-	 * “search”. If this component does not exist, an error occurs.
+	 * Â“searchÂ”. If this component does not exist, an error occurs.
 	 * </p>
 	 * 
 	 * <p>
@@ -241,7 +241,7 @@ public interface MSXDiffSchema {
 	String NODE_VALUE__VALUE_ATTRIBUTE = "Value";
 
 	/**
-	 * Adds or modifies a node’s attributes.
+	 * Adds or modifies a nodeÂ’s attributes.
 	 * 
 	 * <p>
 	 * The following parameters are supported.
@@ -259,7 +259,7 @@ public interface MSXDiffSchema {
 	 * <p>
 	 * This is the tag that shows up in a .xml configuration file, just below the
 	 * <code>&lt;components></code> tag. For example, in search.xml, the tag that shows up is
-	 * “search”. If this component does not exist, an error occurs.
+	 * Â“searchÂ”. If this component does not exist, an error occurs.
 	 * </p>
 	 * 
 	 * <p>

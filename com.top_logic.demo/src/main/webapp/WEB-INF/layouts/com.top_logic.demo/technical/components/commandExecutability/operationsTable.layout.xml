@@ -16,7 +16,7 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.commandApproval:StatefulElement`)"
 			modelForElement="null"
-			supportsElement="element->$element.instanceOf(`test.commandApproval:StatefulElement`)"
+			supportsElement="true"
 			supportsModel="true"
 		/>
 		<buttons>

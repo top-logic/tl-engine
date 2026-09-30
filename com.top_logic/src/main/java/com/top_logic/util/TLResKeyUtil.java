@@ -28,13 +28,13 @@ public class TLResKeyUtil extends ResKeyUtil {
 	 *        Is not allowed to be null.
 	 * @param locale
 	 *        Is not allowed to be null.
-	 * @param newTranlation
+	 * @param newTranslation
 	 *        Is allowed to be null and empty: The value is passed to
 	 *        {@link Builder#add(Locale, String)} without changes.
 	 */
-	public static void updateTranslation(TLObject tlObject, String attribute, Locale locale, String newTranlation) {
+	public static void updateTranslation(TLObject tlObject, String attribute, Locale locale, String newTranslation) {
 		ResKey oldResKey = (ResKey) tlObject.tValueByName(attribute);
-		ResKey newResKey = updateTranslation(oldResKey, locale, newTranlation);
+		ResKey newResKey = updateTranslation(oldResKey, locale, newTranslation);
 		tlObject.tUpdateByName(attribute, newResKey);
 	}
 

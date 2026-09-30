@@ -38,7 +38,7 @@ import com.top_logic.util.Resources;
 /**
  * Handler to create a new theme variable.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CreateThemeVariableHandler extends AbstractCommandHandler {
 

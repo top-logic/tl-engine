@@ -6,9 +6,11 @@
 package com.top_logic.element.meta.form.overlay;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.PersistentObject;
@@ -79,6 +81,30 @@ public class ObjectCreation extends FormObjectOverlay {
 	@Override
 	public TLObject getEditedObject() {
 		return _created != null && _created.tValid() ? _created : null;
+	}
+
+	/**
+	 * As long as the object has not yet been allocated, this overlay has no identity. After
+	 * {@link #create()}, identity queries are answered by the created object, exactly as
+	 * {@link ObjectEditing} answers them with the edited object.
+	 *
+	 * <p>
+	 * This ensures that code receiving this overlay as creation context (e.g. a
+	 * {@link DefaultProvider} deriving a context-dependent sequence identifier) observes the
+	 * identity of the created object, when objects are created together with their container in a
+	 * single transaction.
+	 * </p>
+	 */
+	@Override
+	public ObjectKey tId() {
+		TLObject created = getEditedObject();
+		return created == null ? null : created.tId();
+	}
+
+	@Override
+	public KnowledgeItem tHandle() {
+		TLObject created = getEditedObject();
+		return created == null ? super.tHandle() : created.tHandle();
 	}
 
 	@Override

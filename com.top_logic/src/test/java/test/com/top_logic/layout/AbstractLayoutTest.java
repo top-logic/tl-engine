@@ -23,6 +23,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.html.SafeHTML;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.layout.ContentHandlersRegistry;
@@ -34,7 +35,7 @@ import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.layout.basic.component.ControlSupport;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.internal.WindowId;
-import com.top_logic.layout.structure.LayoutControl;
+import com.top_logic.layout.structure.BrowserWindowControl;
 import com.top_logic.layout.table.model.TableConfigurationFactory;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
@@ -53,6 +54,8 @@ import com.top_logic.util.ValidationQueue;
 public abstract class AbstractLayoutTest extends BasicTestCase {
 
 	private AbstractDisplayContext _displayContext;
+
+	private BrowserWindowControl _windowControl;
 
 	/**
 	 * Creates a {@link AbstractLayoutTest}.
@@ -78,6 +81,7 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 		ml.addComponent(component);
 		
 		TLSubSessionContext subSession = ComponentTestUtils.newSubSession();
+		subSession.setContextId(ThreadContextManager.systemContextId(getClass()));
 		
 		ContentHandlersRegistry urlContext = new ContentHandlersRegistry();
 		WindowId windowId = new WindowId("test");
@@ -92,8 +96,8 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 		// Simulate initial rendering to set up URL contexts.
 		ml.getEnclosingFrameScope().setUrlContext(layoutContext);
 		AbstractDisplayContext initialDisplayContext = createDisplayContext(subSession, ml);
-		LayoutControl windowControl = ml.getLayoutFactory().createLayout(ml);
-		windowControl.write(initialDisplayContext, new TagWriter());
+		_windowControl = (BrowserWindowControl) ml.getLayoutFactory().createLayout(ml);
+		_windowControl.write(initialDisplayContext, new TagWriter());
 		DefaultDisplayContext.teardownDisplayContext(null);
 		
 		_displayContext  = createDisplayContext(subSession, component);
@@ -154,7 +158,15 @@ public abstract class AbstractLayoutTest extends BasicTestCase {
 
 		DefaultDisplayContext.teardownDisplayContext(null);
 		_displayContext = null;
+		_windowControl = null;
 		super.tearDown();
+	}
+
+	/**
+	 * The {@link BrowserWindowControl} displaying the test layout.
+	 */
+	protected final BrowserWindowControl windowControl() {
+		return _windowControl;
 	}
 
 	/**

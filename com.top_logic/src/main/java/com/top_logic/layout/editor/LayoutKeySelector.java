@@ -15,7 +15,6 @@ import com.top_logic.layout.form.component.AbstractSelectorComponent;
 import com.top_logic.layout.provider.DefaultLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutConstants;
-import com.top_logic.mig.html.layout.LayoutUtils;
 
 /**
  * {@link LayoutComponent} displaying a single select field with valid layout keys as options.
@@ -39,11 +38,6 @@ public class LayoutKeySelector extends AbstractSelectorComponent {
 	@Override
 	protected LabelProvider getOptionLabelProvider() {
 		return DefaultLabelProvider.INSTANCE;
-	}
-
-	@Override
-	protected boolean supportsOption(Object value) {
-		return value instanceof String && LayoutUtils.isLayout((String) value);
 	}
 
 	@Override

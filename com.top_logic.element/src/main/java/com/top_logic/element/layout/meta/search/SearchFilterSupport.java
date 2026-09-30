@@ -32,7 +32,7 @@ import com.top_logic.model.TLStructuredTypePart;
 /**
  * Support class for search filters.
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class SearchFilterSupport {
 

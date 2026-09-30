@@ -97,7 +97,7 @@ public class ButtonVariable extends AbstractVariableDefinition<ButtonVariable.Co
 
 	@Override
 	public Object eval(LayoutComponent component, FormEditorContext editorContext, Object model) {
-		Map<String, Object> args = ContextMenuUtil.createArguments(model);
+		Map<String, Object> args = ContextMenuUtil.createSingleObjectArguments(model);
 		CommandModel commandModel = CommandModelFactory.commandModel(_command, component, args);
 		return new ButtonControl(commandModel, renderer());
 	}

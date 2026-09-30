@@ -13,6 +13,7 @@ import com.top_logic.graphic.flow.data.EdgeDecoration;
 import com.top_logic.graphic.flow.data.OffsetPosition;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
+import com.top_logic.graphic.flow.data.TreeLayout;
 import com.top_logic.graphic.flow.operations.util.DiagramUtil;
 
 /**
@@ -52,16 +53,23 @@ public interface TreeConnectionOperations extends Drawable {
 	@Override
 	default void draw(SvgWriter out) {
 		TreeConnector parent = self().getParent();
+		TreeConnector child = self().getChild();
 
 		double fromX = parent.getX();
 		double fromY = parent.getY();
-
 		double barX = self().getBarPosition();
 		double scale = actualThickness() / 2;
-
-		TreeConnector child = self().getChild();
 		double childX = child.getX() - inset(child.getSymbol()) * scale;
 		double childY = child.getY();
+
+		// Determine whether the parent is in grid mode. In grid mode the central bus structure
+		// (parent → primary bus, primary bus, bottom bridge, follow-up sub-column buses) is drawn
+		// once per parent by TreeLayoutOperations.drawGridBuses; the per-connection draw then only
+		// adds the horizontal stub from the relevant sub-column bus into the child's left edge.
+		TreeLayout owner = self().getOwner();
+		TreeRenderInfo info = owner.treeInfo();
+		TreeNode parentNode = info.getNodeForAnchor(parent.getAnchor());
+		boolean grid = info.getGridInfo(parentNode) != null;
 
 		out.beginPath();
 		setStroke(out);
@@ -74,27 +82,36 @@ public interface TreeConnectionOperations extends Drawable {
 		{
 			out.moveToAbs(childX, childY);
 			out.lineToHorizontalAbs(barX);
-			out.lineToVerticalAbs(fromY);
-			out.lineToHorizontalAbs(fromX + inset(parent.getSymbol()) * scale);
+			if (!grid) {
+				out.lineToVerticalAbs(fromY);
+				out.lineToHorizontalAbs(fromX + inset(parent.getSymbol()) * scale);
+			}
 		}
 		out.endData();
 		out.endPath();
 
 		drawSymbol(out, child.getX(), child.getY(), 1, child.getSymbol(), scale);
-		drawSymbol(out, fromX, fromY, -1, parent.getSymbol(), scale);
+		if (!grid) {
+			drawSymbol(out, fromX, fromY, -1, parent.getSymbol(), scale);
+		}
 
+		// Edge decorations are drawn above the horizontal entry stub (bar → child). The stub Y is
+		// the child connector Y; the decoration is centered horizontally on the stub midpoint and
+		// sits with its bottom edge at the stub line. Multiple decorations stack upward.
+		double stubMidX = (barX + childX) / 2;
+		double stackBottom = childY;
 		for (EdgeDecoration decoration : self().getDecorations()) {
-			// Note: The line position is not used/supported for tree layouts.
-			OffsetPosition offsetPosition = decoration.getOffsetPosition();
-			double x = childX + offsetX(offsetPosition, decoration.getContent().getWidth());
-			double y = childY + offsetY(offsetPosition, decoration.getContent().getHeight());
-
+			double dw = decoration.getContent().getWidth();
+			double dh = decoration.getContent().getHeight();
+			double dx = stubMidX - dw / 2;
+			double dy = stackBottom - dh;
 			out.beginGroup();
-			out.translate(x, y);
+			out.translate(dx, dy);
 			{
 				decoration.draw(out);
 			}
 			out.endGroup();
+			stackBottom = dy;
 		}
 	}
 

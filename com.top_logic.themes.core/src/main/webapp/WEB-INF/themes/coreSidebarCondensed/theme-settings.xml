@@ -19,6 +19,12 @@
 	<string name="FROZEN_TABLE_ROW_SMALL_STYLE"
 		value="height: 24px;"
 	/>
+	<size name="com.top_logic.layout.component.configuration.Icons.LOGIN_DIALOG_WIDTH"
+		value="390px"
+	/>
+	<size name="com.top_logic.layout.component.configuration.Icons.LOGIN_DIALOG_HEIGHT"
+		value="390px"
+	/>
 	<size name="com.top_logic.layout.Icons.FROZEN_TABLE_FOOTER_HEIGHT"
 		expr="%com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT%"
 	/>

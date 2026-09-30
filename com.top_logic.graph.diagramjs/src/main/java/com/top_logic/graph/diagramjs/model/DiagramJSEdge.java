@@ -14,7 +14,7 @@ import com.top_logic.graph.common.model.GraphModel;
 /**
  * An diagramjs edge between two {@link DiagramJSClassNode}s in a {@link GraphModel}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface DiagramJSEdge extends Edge {
 

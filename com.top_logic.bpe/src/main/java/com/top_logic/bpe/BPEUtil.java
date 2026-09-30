@@ -5,6 +5,7 @@
  */
 package com.top_logic.bpe;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.col.CloseableIterator;
+import com.top_logic.basic.col.map.MultiMaps;
 import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.display.RuleCondition;
 import com.top_logic.bpe.bpml.display.RuleType;
@@ -28,11 +31,13 @@ import com.top_logic.bpe.bpml.model.Participant;
 import com.top_logic.bpe.bpml.model.Process;
 import com.top_logic.bpe.bpml.model.SequenceFlow;
 import com.top_logic.bpe.bpml.model.TextAnnotation;
+import com.top_logic.bpe.bpml.model.TlBpeBpmlFactory;
 import com.top_logic.bpe.bpml.model.impl.LaneSetBase;
 import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.execution.model.Token;
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.model.TLClass;
 
 /**
@@ -236,6 +241,20 @@ public class BPEUtil {
 		Token token = createToken(execution, node);
 		token.setPrevious(asSet(previousToken));
 		return token;
+	}
+
+	/**
+	 * Determines all collaborations indexed by its {@link Collaboration#getName() name}.
+	 */
+	public static Map<String, List<Collaboration>> collaborationsByName() {
+		TLClass collaborationType = TlBpeBpmlFactory.getCollaborationType();
+		Map<String, List<Collaboration>> collaborationsByName = new HashMap<>();
+		try (CloseableIterator<Collaboration> instances =
+			MetaElementUtil.iterateDirectInstances(collaborationType, Collaboration.class)) {
+			instances.forEachRemaining(
+				instance -> MultiMaps.add(collaborationsByName, instance.getName(), instance, ArrayList::new));
+		}
+		return collaborationsByName;
 	}
 
 }

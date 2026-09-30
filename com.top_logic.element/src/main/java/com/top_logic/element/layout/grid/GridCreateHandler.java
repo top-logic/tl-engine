@@ -43,7 +43,7 @@ import com.top_logic.tool.boundsec.conditional.Hide;
 /**
  * Button to create a new {@link Wrapper} in the {@link GridComponent}.
  *
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class GridCreateHandler extends AbstractGridCreateHandler {
 

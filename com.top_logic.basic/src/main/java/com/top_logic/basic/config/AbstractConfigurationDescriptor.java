@@ -58,6 +58,9 @@ abstract class AbstractConfigurationDescriptor implements ConfigurationDescripto
 	/** @see #isAbstract() */
 	private boolean _abstract;
 
+	/** @see #isFinal() */
+	private boolean _final;
+
 	/** Additional {@link ResolverPart}s. */
 	private List<ResolverPart> _resolverParts = new ArrayList<>();
 
@@ -78,6 +81,8 @@ abstract class AbstractConfigurationDescriptor implements ConfigurationDescripto
 
 	private Constructor<?> _itemConstructor;
 
+	private Class<?> _instanceType;
+
 	/**
 	 * Creates a new {@link AbstractConfigurationDescriptor}.
 	 * 
@@ -86,11 +91,19 @@ abstract class AbstractConfigurationDescriptor implements ConfigurationDescripto
 	 */
 	public AbstractConfigurationDescriptor(Class<?> configInterface) {
 		_configInterface = configInterface;
+		_instanceType = PolymorphicConfiguration.class.isAssignableFrom(configInterface)
+			? ConfigurationDescriptorImpl.resolveImplementationClass(configInterface)
+			: null;
 	}
 
 	@Override
 	public Class<?> getConfigurationInterface() {
 		return _configInterface;
+	}
+
+	@Override
+	public Class<?> getInstanceType() {
+		return _instanceType;
 	}
 
 	@Override
@@ -116,6 +129,18 @@ abstract class AbstractConfigurationDescriptor implements ConfigurationDescripto
 	 */
 	public void setAbstract() {
 		_abstract = true;
+	}
+
+	@Override
+	public boolean isFinal() {
+		return _final;
+	}
+
+	/**
+	 * Marks this {@link ConfigurationDescriptor} as {@link #isFinal() final}.
+	 */
+	public void setFinal() {
+		_final = true;
 	}
 
 	/**
@@ -301,7 +326,7 @@ abstract class AbstractConfigurationDescriptor implements ConfigurationDescripto
 				} else {
 					Class<?> scope = idAnnotation.value();
 					Class<?> implClass =
-						MethodBasedPropertyDescriptor
+						ConfigurationDescriptorImpl
 							.resolveImplementationClass(configDescriptor.getConfigurationInterface());
 
 					if (scope == Void.class) {

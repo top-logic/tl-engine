@@ -45,7 +45,7 @@ import com.top_logic.util.Resources;
 /**
  * Upload dialog providing the {@link DataField} for identifying the file to be uploaded.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class UploadDialog extends AbstractFormPageDialog {
 
@@ -293,10 +293,9 @@ public abstract class UploadDialog extends AbstractFormPageDialog {
 		SimpleFileNameStrategy fileNamesStrategy =
 			createFileNameStrategy(blackList, whiteList);
 		DataField dataField = FormFactory.newDataField(SimpleFormDialog.INPUT_FIELD, true, fileNamesStrategy);
-		dataField.setLabel(StringServices.EMPTY_STRING);
 
-		dataField.setLabel(Resources.getInstance().getString(I18NConstants.UPLOAD_DIALOG_FILES));
-		dataField.setTooltip(Resources.getInstance().getString(I18NConstants.UPLOAD_DIALOG_FILES.tooltip()));
+		dataField.setLabel(I18NConstants.UPLOAD_DIALOG_FILES);
+		dataField.setTooltip(I18NConstants.UPLOAD_DIALOG_FILES.tooltip());
 
 		dataField.setDownload(false);
 		dataField.setMaxUploadSize(_maxUploadSize);

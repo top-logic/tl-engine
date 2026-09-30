@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the Development admin section (the TL-Script console) into the admin view
+	defined by tl-layout-view (WEB-INF/views/admin/admin.view.xml). This is a same-path overlay: the
+	ViewLoader merges it onto the base in dependency order. The Development tab is appended to the end
+	of the admin tab bar purely through the typed-configuration list merge (config:position), so no
+	rank is needed and tl-layout-view needs no knowledge of this module.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar>
+		<tabs>
+			<tab id="development"
+				config:operation="add"
+				config:position="end"
+			>
+				<label>
+					<en>Development</en>
+					<de>Entwicklung</de>
+				</label>
+				<view-ref view="admin/development/section.view.xml"/>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

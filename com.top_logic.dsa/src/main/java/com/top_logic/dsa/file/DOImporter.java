@@ -491,7 +491,7 @@ public class DOImporter extends DispatchingHandler {
      * 
      * The created object will be an instance of {@link GenericDataObject}.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     private class DataObjectHandler extends StandardHandler {
         
@@ -556,7 +556,7 @@ public class DOImporter extends DispatchingHandler {
      * This handler will create a {@link DOCollection} filled with {@link MOPrimitive} 
      * objects. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     private class StringListHandler extends ElementHandler {
         
@@ -617,7 +617,7 @@ public class DOImporter extends DispatchingHandler {
      * This handler will create a {@link DOCollection} filled with {@link MOPrimitive} 
      * objects. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     private class InnerDataObjectHandler extends ElementHandler {
         
@@ -671,7 +671,7 @@ public class DOImporter extends DispatchingHandler {
     /**
      * Simple handler for the content between two tags.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     private class ContentHandler extends ElementHandler {
 

@@ -40,7 +40,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Handler to download the given theme.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DownloadThemeHandler extends AbstractDownloadHandler {
 

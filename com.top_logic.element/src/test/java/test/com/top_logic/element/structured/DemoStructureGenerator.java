@@ -37,7 +37,7 @@ public class DemoStructureGenerator {
         "Tango",  "<i>TopLogic</i>", "Tunny",
         "Universe",  
         "Victor", "Virtual Spaces", "Viridian",
-        "Walküre", "Whiskey", "Web 2.0",  "X-Ray", "Yankee", "Zephir", "Zulu"
+        "WalkÃ¼re", "Whiskey", "Web 2.0",  "X-Ray", "Yankee", "Zephir", "Zulu"
     };
     
     protected StructuredElement root;

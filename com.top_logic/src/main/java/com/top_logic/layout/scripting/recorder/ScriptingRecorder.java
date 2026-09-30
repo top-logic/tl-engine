@@ -18,6 +18,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.io.binary.BinaryDataSource;
@@ -57,6 +58,7 @@ import com.top_logic.util.TLContextManager;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Scripting recorder")
 public abstract class ScriptingRecorder extends ConfiguredManagedClass<ScriptingRecorder.Config> {
 
 	/**

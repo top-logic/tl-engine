@@ -20,6 +20,7 @@ import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.impl.generated.TlModelFactory;
+import com.top_logic.util.model.ModelService;
 
 /**
  * {@link TLModelVisitor} determining the {@link TLObject#tType()} of a {@link TLModelPart}.
@@ -91,6 +92,25 @@ public class TTypeVisitor implements TLModelVisitor<TLStructuredType, TLModule> 
 	@Override
 	public TLStructuredType visitModule(TLModule model, TLModule arg) {
 		return (TLStructuredType) arg.getType(TLModule.TL_MODULE_TYPE);
+	}
+
+	/**
+	 * Determines the {@link TLModelPart#tType() type} for the given {@link TLModelPart}.
+	 */
+	public static TLStructuredType getTType(TLModelPart self) {
+		TLModel applicationModel = ModelService.getApplicationModel();
+		if (applicationModel == null) {
+			// Bootstrap...
+			return null;
+		}
+		TLModule module = applicationModel.getModule(TlModelFactory.TL_MODEL_STRUCTURE);
+		if (module == null) {
+			/* May occur when the application does not include the "tl.model" structure. This should
+			 * actually not happen in almost all cases but is possible for tests in
+			 * com.top_logic. */
+			return null;
+		}
+		return self.visit(INSTANCE, module);
 	}
 
 }

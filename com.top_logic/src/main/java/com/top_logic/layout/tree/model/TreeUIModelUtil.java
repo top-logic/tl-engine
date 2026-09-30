@@ -183,6 +183,13 @@ public class TreeUIModelUtil {
 		if (maxDepth <= 0) {
 			return;
 		}
+		if (aNode instanceof AbstractMutableTLTreeNode<?> mutableNode && !mutableNode.isInitialized()) {
+			/* A node can only be expanded after its children have been loaded, so an
+			 * unmaterialized subtree cannot contain any expanded node. Skipping it avoids
+			 * lazily (re-)creating child lists, which would fail for stale/deleted business
+			 * objects when the expansion state is captured while the tree is being dropped. */
+			return;
+		}
 		for (Iterator<?> it = aNode.getChildren().iterator(); it.hasNext();) {
 			getExpansionUserModelRecursively(aExpansionModel, aTreeUIModel, (TLTreeNode<?>) it.next(),
 				userObjectMapping, maxDepth - 1);

@@ -15,7 +15,7 @@ import com.top_logic.mail.proxy.AbstractMailServerMessage;
 /**
  * Representation of a mail from an exchange server (supports delete).
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ExchangeMail extends AbstractMailServerMessage {
 

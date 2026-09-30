@@ -593,8 +593,10 @@ public class DynamicComponentDefinition {
 							inlineArguments.put(propertyName,
 								RangeValue.createArgumentValue(propertyName, parse(cache)));
 						} else {
-							// Mark as non-mandatory.
-							param.appendChild(doc.createComment("Empty value"));
+							// Mark as non-mandatory so that template constructs containing only
+							// the parameter reference are dropped via NO_NODE_EXPANSION instead of
+							// surviving with empty content.
+							addAttribute(param, LayoutModelConstants.PARAM_OPTIONAL, "true");
 						}
 					} catch (SAXException | XMLStreamException ex) {
 						log.error("Unable to write parameters.", ex);

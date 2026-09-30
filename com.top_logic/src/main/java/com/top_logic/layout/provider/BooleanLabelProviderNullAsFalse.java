@@ -10,7 +10,7 @@ import com.top_logic.layout.form.I18NConstants;
 import com.top_logic.util.Resources;
 
 /**
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class BooleanLabelProviderNullAsFalse implements LabelProvider {
 

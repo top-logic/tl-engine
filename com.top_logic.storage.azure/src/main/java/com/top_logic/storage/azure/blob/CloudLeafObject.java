@@ -26,7 +26,7 @@ import com.top_logic.dsa.repos.RepositoryException;
 /**
  * Cloud based leaf. 
  * 
- * @author    <a href="mailto:Michael Gänsler@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:Michael GÃ¤nsler@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CloudLeafObject implements LeafObject {
 

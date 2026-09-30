@@ -20,6 +20,7 @@
 				<mo_attribute
 					att_name="layoutKey"
 					att_type="String"
+					db_size="300"
 					mandatory="true"
 				/>
 				<mo_attribute

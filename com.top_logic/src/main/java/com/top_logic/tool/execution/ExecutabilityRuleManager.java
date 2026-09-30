@@ -21,6 +21,7 @@ import com.top_logic.basic.config.Location;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
@@ -39,6 +40,7 @@ import com.top_logic.tool.boundsec.CommandHandler.ExecutabilityConfig;
 	// Cached rules may have references to model elements and therefore to the persistency layer.
 	PersistencyLayer.Module.class,
 })
+@Label("Executability rules")
 public final class ExecutabilityRuleManager extends ManagedClass {
 
 	/**

@@ -15,6 +15,7 @@ import test.com.top_logic.TLTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
 
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.form.AddedListener;
 import com.top_logic.layout.form.FormContainer;
@@ -120,14 +121,14 @@ public class TestFormMember extends BasicTestCase {
 		assertTrue("Name of age member is internationalised in TestMessages.", formMemberAge.hasLabel());
 		formMemberAge.setLabel("Age");
 		assertTrue("Label is set direct.", formMemberAge.hasLabel());
-		formMemberAge.setLabel(null);
+		formMemberAge.setLabel((ResKey) null);
 		assertTrue("deleting direct set label re-installs default which is internationalisation.",
 			formMemberAge.hasLabel());
 
 		assertFalse("Name of married member is not internationalised in TestMessages.", formMemberMarried.hasLabel());
 		formMemberMarried.setLabel("Married");
 		assertTrue("Label is set direct.", formMemberMarried.hasLabel());
-		formMemberMarried.setLabel(null);
+		formMemberMarried.setLabel((ResKey) null);
 		assertFalse("Label is deleted.", formMemberMarried.hasLabel());
 	}
 

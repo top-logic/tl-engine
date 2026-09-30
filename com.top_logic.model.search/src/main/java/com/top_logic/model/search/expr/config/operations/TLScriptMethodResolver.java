@@ -6,9 +6,9 @@
 
 package com.top_logic.model.search.expr.config.operations;
 
-import java.io.IOError;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
@@ -190,7 +190,7 @@ public class TLScriptMethodResolver extends AbstractConfiguredInstance<TLScriptM
 		try (TagWriter out = new TagWriter(sw)) {
 			documentation.write(context, out);
 		} catch (IOException ex) {
-			throw new IOError(ex);
+			throw new UncheckedIOException(ex);
 		}
 		return Optional.of(sw.toString());
 	}

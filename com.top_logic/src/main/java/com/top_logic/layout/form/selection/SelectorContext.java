@@ -25,6 +25,7 @@ import javax.swing.event.ListSelectionListener;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.filter.FilterFactory;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.KeyCode;
 import com.top_logic.layout.KeyEvent;
@@ -54,7 +55,6 @@ import com.top_logic.layout.provider.LowerCaseLabelProvider;
 import com.top_logic.layout.scripting.recorder.DynamicRecordable;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
@@ -167,8 +167,7 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 			this.pageLabels = this.optionLabels;
 		}
 		this.pattern = FormFactory.newStringField(PATTERN_FIELD_NAME);
-		Resources resources = Resources.getInstance();
-		pattern.setLabel(resources.getString(I18NConstants.POPUP_SELECT_FILTER__FIELD.fill(targetFieldLabel)));
+		pattern.setLabel(I18NConstants.POPUP_SELECT_FILTER__FIELD.fill(targetFieldLabel));
 		addMember(pattern);
 
 		init(targetSelectField, optionsPerPage);
@@ -178,26 +177,26 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 		if (multiSelect) {
 			assert SELECTION_FIELD_NAME.equals(selectionList.getName());
 			addMember(selectionList);
-			selectionList.setLabel(resources.getString(I18NConstants.POPUP_SELECT_SELECTED__FIELD.fill(targetFieldLabel)));
+			selectionList.setLabel(I18NConstants.POPUP_SELECT_SELECTED__FIELD.fill(targetFieldLabel));
 		}
 		assert PAGE_FIELD_NAME.equals(optionPages.getName());
 		addMember(optionPages);
 
 		assert OPTIONS_FIELD_NAME.equals(optionList.getName());
 		addMember(optionList);
-		optionList.setLabel(resources.getString(I18NConstants.POPUP_SELECT_OPTIONS__FIELD.fill(targetFieldLabel)));
+		optionList.setLabel(I18NConstants.POPUP_SELECT_OPTIONS__FIELD.fill(targetFieldLabel));
 		
 		if (multiSelect) {
-			String rightArrowLabel = resources.getString(I18NConstants.SELECT_ARROW_RIGHT, HTMLConstants.RIGHT_ARROW);
-			String rightArrowDoubleLabel =
-				resources.getString(I18NConstants.SELECT_ARROW_DOUBLE_RIGHT, HTMLConstants.RIGHT_ARROW
-					+ HTMLConstants.RIGHT_ARROW);
-			String leftArrowLabel = resources.getString(I18NConstants.SELECT_ARROW_LEFT, HTMLConstants.LEFT_ARROW);
-			String leftArrowDoubleLabel =
-				resources.getString(I18NConstants.SELECT_ARROW_DOUBLE_LEFT, HTMLConstants.LEFT_ARROW
-					+ HTMLConstants.LEFT_ARROW);
+			ResKey rightArrowLabel = I18NConstants.SELECT_ARROW_RIGHT
+				.fallback(ResKey.text(HTMLConstants.RIGHT_ARROW));
+			ResKey rightArrowDoubleLabel = I18NConstants.SELECT_ARROW_DOUBLE_RIGHT
+					.fallback(ResKey.text(HTMLConstants.RIGHT_ARROW + HTMLConstants.RIGHT_ARROW));
+			ResKey leftArrowLabel = I18NConstants.SELECT_ARROW_LEFT
+				.fallback(ResKey.text(HTMLConstants.LEFT_ARROW));
+			ResKey leftArrowDoubleLabel = I18NConstants.SELECT_ARROW_DOUBLE_LEFT
+				.fallback(ResKey.text(HTMLConstants.LEFT_ARROW + HTMLConstants.LEFT_ARROW));
 
-			String addLabel, addAllLabel, removeLabel, removeAllLabel;
+			ResKey addLabel, addAllLabel, removeLabel, removeAllLabel;
 			if (isLeftToRight) {
 				addLabel = rightArrowLabel;
 				addAllLabel = rightArrowDoubleLabel;
@@ -216,8 +215,8 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 			removeAll = addButton(REMOVE_ALL_FROM_SELECTION, removeAllLabel, ModifyMode.REMOVE_ALL);
 
 			if (targetSelectField.hasCustomOrder()) {
-				moveUp = addButton(MOVE_UP, HTMLConstants.UP_ARROW, ModifyMode.UP);
-				moveDown = addButton(MOVE_DOWN, HTMLConstants.DOWN_ARROW, ModifyMode.DOWN);
+				moveUp = addButton(MOVE_UP, ResKey.text(HTMLConstants.UP_ARROW), ModifyMode.UP);
+				moveDown = addButton(MOVE_DOWN, ResKey.text(HTMLConstants.DOWN_ARROW), ModifyMode.DOWN);
 			}
 
 			_selectButtonUpdater = new ListSelectionListener() {
@@ -248,7 +247,7 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 				return v.visitFormMember(this, arg);
 			}
 		};
-		title.setLabel(resources.getString(I18NConstants.POPUP_SELECT_TITLE__FIELD.fill(targetFieldLabel)));
+		title.setLabel(I18NConstants.POPUP_SELECT_TITLE__FIELD.fill(targetFieldLabel));
 		addMember(title);
 
 		pattern.addKeyListener(new KeyEventListener(PATTERN_KEYS) {
@@ -439,7 +438,7 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 		}
 	}
 
-	private CommandField addButton(String name, String label, ModifyMode mode) {
+	private CommandField addButton(String name, ResKey label, ModifyMode mode) {
 		CommandField field = FormFactory.newCommandField(name, new ListModifySelection(this, mode));
 		field.setLabel(label);
 		field.setCssClasses(MOVE_OPTION_CSS_CLASS);

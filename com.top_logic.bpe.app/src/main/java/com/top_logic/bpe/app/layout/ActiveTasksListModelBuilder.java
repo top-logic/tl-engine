@@ -20,6 +20,7 @@ import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.TLContext;
 
@@ -63,7 +64,11 @@ public class ActiveTasksListModelBuilder
 		}
 
 		@Override
-		public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+			return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+		}
+
+		private boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
 			return listElement instanceof Token && ((Token) listElement).getUserRelevant()
 				&& new ActorFilter().accept((Token) listElement);
 		}

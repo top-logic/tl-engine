@@ -10,7 +10,6 @@ import java.util.Collection;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.sched.MemoryObserverThread;
-import com.top_logic.util.sched.MemoryObserverThread.MemoryUsageEntry;
 
 /**
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
@@ -29,11 +28,6 @@ public class MemoryObserverListModelBuilder implements ListModelBuilder {
 	@Override
 	public Object retrieveModelFromListElement(LayoutComponent aComponent, Object anObject) {
 		return null;
-    }
-
-	@Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-        return anObject instanceof MemoryUsageEntry;
     }
 
     @Override

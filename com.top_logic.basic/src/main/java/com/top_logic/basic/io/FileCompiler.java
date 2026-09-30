@@ -15,6 +15,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -287,7 +288,7 @@ public abstract class FileCompiler extends ConfiguredManagedClass<FileCompiler.C
 			String propertiesPath = "/META-INF/maven/" + props + "/pom.properties";
 			try (InputStream in = FileCompiler.class.getResourceAsStream(propertiesPath)) {
 				Properties properties = new Properties();
-				properties.load(in);
+				properties.load(new InputStreamReader(in, StandardCharsets.UTF_8));
 
 				String version = properties.getProperty("version");
 				resourcePath = path + "/" + version + "/" + name;

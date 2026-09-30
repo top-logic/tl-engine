@@ -75,7 +75,7 @@ public class TestXMLValueEncoding extends BasicTestCase {
         Object os[] = new Object[] {
                 Character.valueOf('\uFEFE'),
                 null,
-                "TestXMLValueEncoder.testSimpleEncodingsÄöüß §3",
+                "TestXMLValueEncoder.testSimpleEncodingsÃ„Ã¶Ã¼ÃŸ Â§3",
                 Boolean.TRUE,
                 Byte.valueOf((byte) 0xFF),
                 Short.valueOf((short) -17),
@@ -95,7 +95,7 @@ public class TestXMLValueEncoding extends BasicTestCase {
         Object results[] = new Object[] { // Some Object "loose type" while encoding
                 "\uFEFE",
                 null,
-                "TestXMLValueEncoder.testSimpleEncodingsÄöüß §3",
+                "TestXMLValueEncoder.testSimpleEncodingsÃ„Ã¶Ã¼ÃŸ Â§3",
                 Boolean.TRUE,
 				Integer.valueOf((byte) 0xFF),
 				Integer.valueOf(-17),
@@ -116,7 +116,7 @@ public class TestXMLValueEncoding extends BasicTestCase {
         }
 		/* String found = out.toString(); String expected =
 		 * "<null xmlns=\"http://top-logic.com/ns/xml-value\" />" +
-		 * "<string xmlns=\"http://top-logic.com/ns/xml-value\">TestXMLValueEncoder.testSimpleEncodingsÄöüß §3</string>"
+		 * "<string xmlns=\"http://top-logic.com/ns/xml-value\">TestXMLValueEncoder.testSimpleEncodingsÃ„Ã¶Ã¼ÃŸ Â§3</string>"
 		 * + "<boolean xmlns=\"http://top-logic.com/ns/xml-value\">true</boolean>" +
 		 * "<string xmlns=\"http://top-logic.com/ns/xml-value\">\uFEFE</string>" +
 		 * "<int xmlns=\"http://top-logic.com/ns/xml-value\">-1</int>" +

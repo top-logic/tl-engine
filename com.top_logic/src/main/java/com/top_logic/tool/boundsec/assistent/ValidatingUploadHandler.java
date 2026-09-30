@@ -29,7 +29,7 @@ import com.top_logic.util.Resources;
  * (returned list is empty or <code>null</code>), the 
  * assistant can go further.
  * 
- * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+ * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
  */
 public abstract class ValidatingUploadHandler extends UploadHandler {
 
@@ -98,7 +98,7 @@ public abstract class ValidatingUploadHandler extends UploadHandler {
      * Message containing one information snippet generated during the 
      * import process.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class ImportMessage {
 

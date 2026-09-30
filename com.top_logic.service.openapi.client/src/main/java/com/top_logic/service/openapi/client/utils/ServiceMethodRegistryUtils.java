@@ -14,7 +14,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.json.JSON;
-import com.top_logic.model.search.expr.ToString;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 
 /**
@@ -69,7 +69,7 @@ public class ServiceMethodRegistryUtils {
 		} else if (value instanceof Boolean) {
 			stringValue = ((Boolean) value).toString();
 		} else {
-			stringValue = ToString.toString(value);
+			stringValue = SearchExpression.asString(value);
 		}
 		return stringValue;
 	}

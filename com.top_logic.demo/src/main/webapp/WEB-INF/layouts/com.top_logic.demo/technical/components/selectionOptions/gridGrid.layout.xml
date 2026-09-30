@@ -22,7 +22,7 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.optionprovider:WithOptions`)"
 			modelForElement="null"
-			supportsElement="element->$element.instanceOf(`test.optionprovider:WithOptions`)"
+			supportsElement="true"
 			supportsModel="true"
 		/>
 		<buttons>

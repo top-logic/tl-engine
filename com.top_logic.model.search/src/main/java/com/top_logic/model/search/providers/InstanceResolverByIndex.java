@@ -62,7 +62,7 @@ public class InstanceResolverByIndex implements InstanceResolver {
 	}
 
 	@Override
-	public TLObject resolve(I18NLog log, String kind, String id) {
+	public TLObject resolve(I18NLog log, Object context, String kind, String id) {
 		Object value = XMLInstanceImporter.parse(log, _idType, id);
 
 		if (_index == null) {

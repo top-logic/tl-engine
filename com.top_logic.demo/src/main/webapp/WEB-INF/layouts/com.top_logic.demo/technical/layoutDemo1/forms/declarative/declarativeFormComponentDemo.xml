@@ -34,6 +34,7 @@
 							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#OBJECT_TYPES_READ_ONLY"/>
 							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#OBJECT_TYPES_OPTIONS"/>
 							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#OBJECT_TYPES_WHOLE_LINE"/>
+							<property name="com.top_logic.demo.layout.form.declarative.config.TypeDemos#SPECIAL_EDITORS"/>
 						</value>
 					</annotation>
 				</annotations>

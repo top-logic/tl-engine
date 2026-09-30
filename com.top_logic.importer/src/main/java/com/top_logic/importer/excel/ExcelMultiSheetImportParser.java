@@ -25,14 +25,14 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Parse several spreadsheets in excel files in XLSX, XLS or CSV format and provide the data read.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ExcelMultiSheetImportParser<C extends ExcelMultiSheetImportParser.MultiSheetConfig> extends AbstractExcelFileImportParser<C> {
 
     /**
      * Configuration for parsing multiple sheets within the excel file. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface MultiSheetConfig extends AbstractExcelFileImportParser.Config {
 

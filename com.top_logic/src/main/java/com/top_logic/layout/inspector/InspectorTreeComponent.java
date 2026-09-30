@@ -25,7 +25,7 @@ import com.top_logic.layout.tree.model.TreeBuilder;
 /**
  * Component displaying the inspected tree.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class InspectorTreeComponent extends TreeTableComponent {
 

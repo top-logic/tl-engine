@@ -46,15 +46,65 @@
 ]]></parents>
 		</modelBuilder>
 		<dropTargets>
-			<dropTarget class="com.top_logic.model.search.providers.OrderedTreeDropByExpression"
-				canDrop="draggedObjects->parent->reference-> true"
-				handleDrop="draggedObjects->parent->reference-> list($draggedObjects, $parent, $reference)"
-			>
+			<dropTarget class="com.top_logic.model.search.providers.OrderedTreeDropByExpression">
+				<canDrop><![CDATA[draggedObjects -> parent -> reference -> {
+  getType = dragged -> $dragged.recursion(x->$x.container()).lastElement();
+  $draggedObjects.map(x -> $getType($x)).toSet() == `test.dnd#LIBRARY`.toSet();
+}]]></canDrop>
+				<handleDrop><![CDATA[draggedObjects -> parent -> reference -> {
+  draggedTypes = $draggedObjects.map(x->$x.type()).toSet();
+  $draggedTypes.size() != 1 ? throw(#("Nur Objekte vom gleiche Typ können hier fallengelassen werden: {0}"@de, "Only objects of the same type can be dropped here: {0}"@en).fill($draggedTypes)) : {
+    draggedType = $draggedTypes[0];
+    parentType = $parent.type();
+    switch($parent.type()) {
+      `test.dnd:Root`: $draggedType != `test.dnd:Factory` ? throw(#("Top Level sind nur Objekte vom Typ {0} erlaubt."@de, "Only objects of type {0} are allowed at the top level."@en).fill(`test.dnd:Factory`)) : "";
+      `test.dnd:Factory`: $draggedType != `test.dnd:Floor` ? throw(#("Unterhalb von {0} sind nur Objekte vom Typ {1} erlaubt."@de, "Only objects of type {1} are allowed under {0}."@en).fill(`test.dnd:Factory`, `test.dnd:Floor`)) : "";
+      `test.dnd:Floor`: $draggedType != `test.dnd:Location` ? throw(#("Unterhalb von {0} sind nur Objekte vom Typ {1} erlaubt."@de, "Only objects of type {1} are allowed under {0}."@en).fill(`test.dnd:Floor`, `test.dnd:Location`)) : "";
+      `test.dnd:Location`: $draggedType != `test.dnd:Entry` ? throw(#("Unterhalb von {0} sind nur Objekte vom Typ {1} erlaubt."@de, "Only objects of type {1} are allowed under {0}."@en).fill(`test.dnd:Location`, `test.dnd:Entry`)) : "";
+      `test.dnd:Entry`: throw(#("Es können keine Objekte unterhalb von {0} fallengelassen werden."@de, "No objects can be dropped under {0}."@en).fill(`test.dnd:Entry`));
+    };
+    l = list($draggedObjects, $parent, $reference); 
+    $l;}
+  }]]></handleDrop>
 				<postCreateActions>
 					<showComponent>
 						<global-target name="com.top_logic.demo/technical/components/dragAndDrop/createCopy/dialog.layout.xml#Form"/>
 					</showComponent>
 				</postCreateActions>
+			</dropTarget>
+			<dropTarget class="com.top_logic.model.search.providers.OrderedTreeDropByExpression">
+				<canDrop><![CDATA[draggedObjects -> parent -> reference -> $draggedObjects.size() != 1 ? false : {
+  dragged = $draggedObjects[0];
+  root = $draggedObjects[0].recursion(x->$x.container()).lastElement();
+  $root != `test.dnd#ROOT` ? false : {
+    $dragged.container().type() == $parent.type();
+  };
+}]]></canDrop>
+				<handleDrop><![CDATA[draggedObjects -> parent -> reference -> $draggedObjects.size() != 1 ? throw("Only one element can be dropped") : {
+  source = $draggedObjects[0];
+
+  ref = switch($parent.type()) {
+    `test.dnd:Root`: `test.dnd:Root#factories`;
+	`test.dnd:Factory`: `test.dnd:Factory#floors`;
+	`test.dnd:Floor`: `test.dnd:Floor#locations`;
+	`test.dnd:Location`: `test.dnd:Location#entry`;
+  };
+  if ($parent.type() == `test.dnd:Location`, $parent.set($ref, $source), {
+    if ($source != $reference, {
+	  // Never try to insert an element before itself, because it is first 
+	  // removed and then re-inserted. When inserting an element before itself, 
+	  // Re-insertion fails, because the reference was removed in first operation. 
+	  oldParent = $source.referers($ref);
+	  oldChildren = $oldParent.get($ref);
+	  $oldParent.set($ref, $oldChildren.filter(x -> $x != $source));
+	  
+	  children = $parent.get($ref);
+	  referenceIndex = $reference == null ? $children.size() : $children.elementIndex($reference);
+	  $parent.add($ref, $referenceIndex, $source);
+	  $source;
+	})
+  });
+}]]></handleDrop>
 			</dropTarget>
 		</dropTargets>
 		<buttons>

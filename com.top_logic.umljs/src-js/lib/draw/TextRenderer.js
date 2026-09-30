@@ -18,12 +18,11 @@ export default function TextRenderer() {
 
 TextRenderer.prototype.createText = function(text, options) {
   var svgText = svgCreate('text');
+  svgText.textContent = text;
 
   var options = assign(options, this._style);
 
   svgAttr(svgText, options);
-
-  innerSVG(svgText, text);
 
   return svgText;
 };

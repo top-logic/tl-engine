@@ -9,6 +9,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.component.ContextMenuFactory;
@@ -35,6 +36,7 @@ public interface WithContextMenuFactory extends ConfigurationItem {
 	 */
 	@Name(CONTEXT_MENU_FACTORY)
 	@ItemDefault(ComponentContextMenuFactory.class)
+	@NonNullable
 	PolymorphicConfiguration<? extends ContextMenuFactory> getContextMenuFactory();
 
 }

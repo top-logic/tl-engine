@@ -28,6 +28,9 @@
 		<dependency name="Ticket_25881_Removed_legacy_types"
 			module="tl-demo"
 		/>
+		<dependency name="Ticket_25210_Model_references_in_form_definitions"
+			module="tl-bpe"
+		/>
 	</dependencies>
 	<processors>
 		<change-part-type
@@ -63,6 +66,19 @@
 		<change-part-type
 			part="DemoTypes:DemoTypes.X#untypedWrapper"
 			target="tl.model:TLObject"
+		/>
+
+		<change-part-type
+			part="DemoPlain:DemoPlain.A#createdBy"
+			target="tl.accounts:Person"
+		/>
+		<change-part-type
+			part="DemoPlain:DemoPlain.A#modifiedBy"
+			target="tl.accounts:Person"
+		/>
+		<change-part-type
+			part="DemoTypes:DemoTypes.X#historicWrapper"
+			target="DemoTypes:DemoTypes.All"
 		/>
 	</processors>
 	<migration/>

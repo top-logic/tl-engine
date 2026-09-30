@@ -47,11 +47,6 @@ public class ThemeResourcesListBuilder implements ListModelBuilder {
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-		return listElement instanceof ThemeResource && (!((ThemeResource) listElement).isDirectory());
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent contextComponent, Object listElement) {
 		return ((ThemeResource) listElement).getParent();
 	}

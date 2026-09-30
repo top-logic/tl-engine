@@ -27,7 +27,7 @@ import com.top_logic.graph.layouter.algorithm.rendering.lines.Line1D.Orientation
  * <li>a is left (right) and b is right (left) orientated: a < (>) b</li>
  * </ol>
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class LineEndTopBottomComparator implements Comparator<Line1D> {
 

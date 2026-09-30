@@ -6,6 +6,7 @@
 package com.top_logic.model.wysiwyg.i18n;
 
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
+import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextUtil;
 import com.top_logic.model.access.StorageMapping;
 
 /**
@@ -31,17 +32,25 @@ public class I18NStructuredTextAttributeStorageMapping implements StorageMapping
 		if (storageObject instanceof I18NStructuredText) {
 			return (I18NStructuredText) storageObject;
 		}
+		if (storageObject instanceof CharSequence text) {
+			return I18NStructuredTextUtil.fromCommonMark(text);
+		}
 		return null;
 	}
 
 	@Override
 	public Object getStorageObject(Object businessObject) {
+		if (businessObject instanceof CharSequence text) {
+			return I18NStructuredTextUtil.fromCommonMark(text);
+		}
 		return businessObject;
 	}
 
 	@Override
 	public boolean isCompatible(Object businessObject) {
-		return businessObject == null || businessObject instanceof I18NStructuredText;
+		return businessObject == null
+			|| businessObject instanceof I18NStructuredText
+			|| businessObject instanceof CharSequence;
 	}
 
 }

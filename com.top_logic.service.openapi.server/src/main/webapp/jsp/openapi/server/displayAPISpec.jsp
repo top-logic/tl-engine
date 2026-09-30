@@ -2,6 +2,7 @@
 %><%@page import="com.top_logic.basic.io.FileCompiler"
 %><%@page import="com.top_logic.basic.NoProtocol"
 %><%@page import="com.top_logic.basic.Protocol"
+%><%@page import="com.top_logic.basic.xml.TagUtil"
 %><%@taglib uri="basic" prefix="basic"
 %><%@taglib uri="layout" prefix="layout"
 %><%@page extends="com.top_logic.util.NoContextJspBase"
@@ -33,7 +34,7 @@ private String swaggerResource(String ressource) {
 		<basic:script>
   window.onload = () => {
     window.ui = SwaggerUIBundle({
-      url: '<%=request.getContextPath() + request.getParameter(OpenApiServer.API_URL_PARAM)%>',
+      url: '<%TagUtil.writeDirectJsStringContent(out, request.getContextPath() + request.getParameter(OpenApiServer.API_URL_PARAM));%>',
       dom_id: '#swagger-ui',
     });
   };

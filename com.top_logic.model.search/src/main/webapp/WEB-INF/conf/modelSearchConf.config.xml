@@ -341,6 +341,9 @@
 					<method name="subString" class="com.top_logic.model.search.expr.config.operations.string.SubString$Builder"/>
 					<method name="toLowerCase" class="com.top_logic.model.search.expr.config.operations.string.ToLowerCase$Builder"/>
 					<method name="toUpperCase" class="com.top_logic.model.search.expr.config.operations.string.ToUpperCase$Builder"/>
+					<method name="trim" class="com.top_logic.model.search.expr.config.operations.string.Trim$Builder"/>
+					<method name="trimStart" class="com.top_logic.model.search.expr.config.operations.string.Trim$Builder" side="START"/>
+					<method name="trimEnd" class="com.top_logic.model.search.expr.config.operations.string.Trim$Builder" side="END"/>
 
 					<method name="toString" class="com.top_logic.model.search.expr.ToString$Builder"/>
 					<method name="base64Encode" class="com.top_logic.model.search.expr.config.operations.binary.Base64Encode$Builder"/>
@@ -369,7 +372,10 @@
 					<method name="zipArchive" class="com.top_logic.model.search.expr.config.operations.binary.ZipArchive$Builder"/>
 					<method name="zipEntry" class="com.top_logic.model.search.expr.config.operations.binary.ZipEntry$Builder"/>
 					<method name="unzip" class="com.top_logic.model.search.expr.config.operations.binary.Unzip$Builder"/>
+					<method name="gzip" class="com.top_logic.model.search.expr.config.operations.binary.Gzip$Builder"/>
+					<method name="gunzip" class="com.top_logic.model.search.expr.config.operations.binary.Gunzip$Builder"/>
 					<method name="pdf2txt" class="com.top_logic.model.search.expr.config.operations.binary.Pdf2Txt$Builder"/>
+					<method name="pdfFile" class="com.top_logic.model.search.expr.config.operations.binary.PdfFile$Builder"/>
 					<method name="parseCSV" class="com.top_logic.model.search.expr.config.operations.binary.ParseCSV$Builder"/>
 					<method name="parseExcel" class="com.top_logic.model.search.expr.config.operations.binary.ParseExcel$Builder"/>
 					<method name="parseJson" class="com.top_logic.model.search.expr.config.operations.binary.ParseJson$Builder"/>
@@ -377,7 +383,12 @@
 					<method name="instanceImport" class="com.top_logic.model.search.expr.config.operations.binary.InstanceImport$Builder"/>
 					<method name="toConfig" class="com.top_logic.model.search.expr.config.operations.struct.ToConfig$Builder"/>
 					<method name="toJson" class="com.top_logic.model.search.expr.config.operations.binary.ToJson$Builder"/>
-					
+					<method name="excelFile" class="com.top_logic.model.search.expr.config.operations.binary.ExcelFile$Builder"/>
+					<method name="excelSheet" class="com.top_logic.model.search.expr.config.operations.binary.ExcelSheet$Builder"/>
+					<method name="excelCell" class="com.top_logic.model.search.expr.config.operations.binary.ExcelCell$Builder"/>
+					<method name="excelFormula" class="com.top_logic.model.search.expr.config.operations.binary.ExcelFormula$Builder"/>
+					<method name="excelStyle" class="com.top_logic.model.search.expr.config.operations.binary.ExcelStyle$Builder"/>
+				
 					<method name="regex" class="com.top_logic.model.search.expr.config.operations.regex.Regex$Builder"/>
 					<method name="regexSearch" class="com.top_logic.model.search.expr.config.operations.regex.RegexSearch$Builder"/>
 					<method name="regexReplace" class="com.top_logic.model.search.expr.config.operations.regex.RegexReplace$Builder"/>
@@ -407,6 +418,7 @@
 					<method name="set" class="com.top_logic.model.search.expr.config.operations.SetBuilder"/>
 					<method name="transient" class="com.top_logic.model.search.expr.config.operations.IsTransient$Builder"/>
 					<method name="add" class="com.top_logic.model.search.expr.Add$Builder"/>
+					<method name="remove" class="com.top_logic.model.search.expr.Remove$Builder"/>
 					<method name="loadFromSession" class="com.top_logic.model.search.expr.config.operations.session.LoadFromSession$Builder"/>
 					<method name="storeInSession" class="com.top_logic.model.search.expr.config.operations.session.StoreInSession$Builder"/>
 					<method name="type" class="com.top_logic.model.search.expr.config.operations.Type$Builder"/>
@@ -421,6 +433,13 @@
 					<method name="isCompatibleValue" class="com.top_logic.model.search.expr.config.operations.IsCompatibleValue$Builder"/>
 					<method name="singleElement" class="com.top_logic.model.search.expr.config.operations.SingleElementBuilder"/>
 					<method name="singleton" class="com.top_logic.model.search.expr.config.operations.SingletonBuilder"/>
+					<method name="canRead" class="com.top_logic.model.search.expr.config.operations.CanAccess$Builder" command-group="Read"/>
+					<method name="canWrite" class="com.top_logic.model.search.expr.config.operations.CanAccess$Builder" command-group="Write"/>
+					<method name="canDelete" class="com.top_logic.model.search.expr.config.operations.CanAccess$Builder" command-group="Delete"/>
+					<method name="canReadAttribute" class="com.top_logic.model.search.expr.config.operations.CanAccessAttribute$Builder" command-group="Read"/>
+					<method name="canWriteAttribute" class="com.top_logic.model.search.expr.config.operations.CanAccessAttribute$Builder" command-group="Write"/>
+					<method name="canCreate" class="com.top_logic.model.search.expr.config.operations.CanCreate$Builder"/>
+					<method name="canExecute" class="com.top_logic.model.search.expr.config.operations.CanExecute$Builder"/>
 					<method name="fill" class="com.top_logic.model.search.expr.Fill$Builder"/>
 					<method name="associationNavigation" class="com.top_logic.model.search.expr.config.operations.AssociationNavigationBuilder"/>
 					<method name="all" class="com.top_logic.model.search.expr.config.operations.AllBuilder"/>
@@ -532,7 +551,8 @@
 					<method name="dstOffset" class="com.top_logic.model.search.expr.CalendarField$Builder"
 						field="DST_OFFSET"
 					/>
-					
+					<method name="timeZone" class="com.top_logic.model.search.expr.CalendarTimeZone$Builder"/>
+
 					<method name="withEra" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
 						op="SET" field="ERA"
 					/>
@@ -656,6 +676,11 @@
 					<method name="appConfig" class="com.top_logic.model.search.expr.config.operations.app.GetAppConfig$Builder"/>
 					<method name="flatMap" class="com.top_logic.model.search.expr.config.operations.FlatMap$Builder"/>
 					<method name="sessionRevision" class="com.top_logic.model.search.expr.config.operations.revision.SessionRevision$Builder"/>
+					<method name="changeLog" class="com.top_logic.model.search.expr.config.operations.changelog.ChangeLog$Builder"/>
+					<method name="revertChanges" class="com.top_logic.model.search.expr.config.operations.changelog.RevertChanges$Builder"/>
+					<method name="enumName" class="com.top_logic.model.search.expr.config.operations.EnumName$Builder"/>
+					<method name="resolveEnum" class="com.top_logic.model.search.expr.config.operations.ResolveEnum$Builder"/>
+					<method name="filterSecurity" class="com.top_logic.model.search.expr.FilterSecurity$Builder"/>
 				</methods>
 				<method-resolvers>
 					<method-resolver class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions$Module"/>
@@ -680,7 +705,7 @@
 					<handler id="resetModelSearch" class="com.top_logic.model.search.ui.selector.ResetSearchCommand"
 						clique="reset"/>
 					<handler id="saveModelSearch" class="com.top_logic.model.search.ui.selector.SaveSearchCommand"
-						clique="save" group="System">
+						clique="save">
 						<executability>
 							<rule class="com.top_logic.tool.execution.NullSelectionDisabled"/>
 						</executability>

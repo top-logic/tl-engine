@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A decoration placed on an edge.
  */
-public interface EdgeDecoration extends Widget, com.top_logic.graphic.flow.operations.tree.EdgeDecorationOperations {
+public interface EdgeDecoration extends com.top_logic.graphic.flow.data.Widget, com.top_logic.graphic.flow.operations.tree.EdgeDecorationOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.EdgeDecoration} instance.

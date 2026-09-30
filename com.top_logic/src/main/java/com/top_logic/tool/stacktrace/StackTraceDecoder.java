@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -124,7 +125,7 @@ public class StackTraceDecoder {
 		while (resources.hasMoreElements()) {
 			URL url = resources.nextElement();
 			try (InputStream in = url.openStream()) {
-				properties.load(in);
+				properties.load(new InputStreamReader(in, StandardCharsets.UTF_8));
 			}
 		}
 		return properties;

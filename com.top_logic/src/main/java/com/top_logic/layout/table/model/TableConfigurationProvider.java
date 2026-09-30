@@ -10,7 +10,7 @@ import com.top_logic.basic.config.annotation.Label;
 /**
  * Plug-in for dynamically changing a {@link TableConfiguration}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 @Label("Table configuration plug-in")
 public interface TableConfigurationProvider {

@@ -41,6 +41,7 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.factory.CollectionFactory;
@@ -57,6 +58,8 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.func.IFunction2;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.GenericPropertyListener;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
@@ -77,7 +80,6 @@ import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Clipboard;
@@ -113,6 +115,7 @@ import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.compare.CompareAlgorithm;
 import com.top_logic.layout.compare.CompareAlgorithmHolder;
 import com.top_logic.layout.component.InAppSelectable;
+import com.top_logic.layout.component.DefaultSelectionProvider;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.NoSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
@@ -162,7 +165,9 @@ import com.top_logic.layout.table.component.BuilderComponent;
 import com.top_logic.layout.table.component.ColumnsChannel;
 import com.top_logic.layout.table.component.ComponentRowSource;
 import com.top_logic.layout.table.component.ComponentTableConfigProvider;
+import com.top_logic.layout.table.component.CorrectTypeFilter;
 import com.top_logic.layout.table.component.TableComponent;
+import com.top_logic.layout.table.component.WithCustomConfigKey;
 import com.top_logic.layout.table.control.SelectionVetoListener;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.control.TableControl.SelectionType;
@@ -187,6 +192,7 @@ import com.top_logic.layout.tree.component.TreeModelBuilder;
 import com.top_logic.layout.tree.component.WithSelectionPath;
 import com.top_logic.layout.tree.model.TreeViewConfig;
 import com.top_logic.mig.html.AbstractRestrainedSelectionModel;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.SelectionModel;
@@ -217,7 +223,6 @@ import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.InEditModeExecutable;
-import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.TL5Types;
@@ -227,7 +232,7 @@ import com.top_logic.util.model.TL5Types;
  * 
  * @see GridComponent.Config
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class GridComponent extends EditComponent implements
 		SelectableWithSelectionModel, InAppSelectable,
@@ -238,7 +243,8 @@ public class GridComponent extends EditComponent implements
 	 * Configuration options for {@link GridComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends EditComponent.Config, ColumnsChannel.Config, TreeViewConfig, SelectionModelConfig, InAppSelectableConfig {
+	public interface Config extends EditComponent.Config, ColumnsChannel.Config, TreeViewConfig,
+			SelectionModelConfig, InAppSelectableConfig, WithCustomConfigKey {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -526,6 +532,17 @@ public class GridComponent extends EditComponent implements
 
 	private CommandHandler _onSelectionChange;
 
+	private final DefaultSelectionProvider _defaultSelectionProvider;
+
+	private IFunction2<String, Object, String> _configKeyBuilder;
+
+	/**
+	 * Filter that checks whether a potential list element has the correct {@link TLType}. If no
+	 * {@link Config#getElementTypes() types} are configured, all elements are potentially part of
+	 * the list.
+	 */
+	private Filter<Object> _rowTypeFilter;
+
 	/**
 	 * Create a new GridComponent from XML.
 	 */
@@ -547,6 +564,15 @@ public class GridComponent extends EditComponent implements
 		_componentTableConfigProvider = config.getComponentTableConfigProvider();
 		_addTechnicalColumn = config.getAddTechnicalColumn();
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_defaultSelectionProvider = context.getInstance(config.getDefaultSelectionProvider());
+		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
+		_rowTypeFilter = CorrectTypeFilter.newTypeFilter(getConfiguredTypes());
+
+	}
+
+	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
 	}
 
 	@Override
@@ -583,6 +609,7 @@ public class GridComponent extends EditComponent implements
 		gridBuilder.setRootVisible(config.isRootVisible());
 		gridBuilder.setExpandRoot(config.getExpandRoot());
 		gridBuilder.setExpandSelected(config.getExpandSelected());
+		gridBuilder.setRevealSelection(config.getRevealSelection());
 		gridBuilder.adjustSelectionWhenCollapsing(config.adjustSelectionWhenCollapsing());
 	}
 
@@ -745,9 +772,27 @@ public class GridComponent extends EditComponent implements
 	 * </p>
 	 */
 	public Object getDefaultSelection() {
-		if (((Config) getConfig()).getDefaultSelection()) {
-			TableViewModel tableViewModel = getViewModel();
+		if (getConfig().getDefaultSelection()) {
 			TableModel tableModel = getTableField(getFormContext()).getTableModel();
+
+			if (_defaultSelectionProvider != null) {
+				for (Object businessObject : _defaultSelectionProvider.computeDefaultSelection(getModel(),
+						getSelected())) {
+					FormGroup group = getRowGroup(businessObject);
+					if (group == null) {
+						continue;
+					}
+
+					Object internalRow = _handler.getFirstTableRow(group);
+					if (_selectionModel.isSelectable(internalRow) && tableModel.containsRowObject(internalRow)) {
+						return businessObject;
+					}
+				}
+
+				return null;
+			}
+
+			TableViewModel tableViewModel = getViewModel();
 
 			for (int rowIndex = 0; rowIndex < tableViewModel.getRowCount(); rowIndex++) {
 				FormGroup group = getFormGroup(tableViewModel, rowIndex);
@@ -760,7 +805,7 @@ public class GridComponent extends EditComponent implements
 				}
 			}
 		}
-		
+
 		return null;
 	}
 
@@ -915,7 +960,7 @@ public class GridComponent extends EditComponent implements
 			return Collections.emptySet();
 		}
 		Set<TLClass> nodeClasses = CollectionUtil.newSet(count);
-		String structureName = ((Config) getConfig()).getStructureName();
+		String structureName = getConfig().getStructureName();
 		if (!StringServices.isEmpty(structureName)) {
 			for (String elementName : elementNames) {
 				String typeSpec = TL5Types.nodeTypeSpec(structureName, elementName);
@@ -959,12 +1004,23 @@ public class GridComponent extends EditComponent implements
 		}
 		gridBuilder().receiveModelChangedEvent(this, aModel);
 		invalidateSelection();
-		if (!supportsRow(aModel)) {
+
+		if (!_rowTypeFilter.accept(aModel)) {
+			// model has an unsupported item type.
 			return false;
 		}
 
+		ElementUpdate decision = supportsRow(aModel);
+		if (decision == ElementUpdate.NO_CHANGE) {
+			return false;
+		}
+		if (decision == ElementUpdate.UNKNOWN) {
+			invalidate();
+			return true;
+		}
+
 		FormGroup formGroup = getRowGroup(aModel);
-		if (formGroup == null && this.isRelevant(aModel, someChangedBy) && isVisible()) {
+		if (formGroup == null && decision.shouldAdd() && isVisible()) {
 			this.invalidate();
 			formGroup = getRowGroup(aModel);
 		}
@@ -1018,8 +1074,8 @@ public class GridComponent extends EditComponent implements
     }
 
 	@Override
-	public boolean receiveDialogEvent(Object aDialog, Object anOwner, boolean isOpen) {
-		boolean receiveDialogEvent = super.receiveDialogEvent(aDialog, anOwner, isOpen);
+	public void receiveDialogEvent(Object aDialog, Object anOwner, boolean isOpen) {
+		super.receiveDialogEvent(aDialog, anOwner, isOpen);
 		if (isOpen) {
 			dropRowFields(getSelectedCollection());
 		} else {
@@ -1047,7 +1103,6 @@ public class GridComponent extends EditComponent implements
 				}
 			}
 		}
-		return receiveDialogEvent;
 	}
 
     /**
@@ -1088,7 +1143,7 @@ public class GridComponent extends EditComponent implements
      * Shall marker fields be created.
      */
     public boolean showMarkerFields() {
-		return ((Config) getConfig()).getShowMarkerFields();
+		return getConfig().getShowMarkerFields();
     }
 
     /**
@@ -1240,14 +1295,14 @@ public class GridComponent extends EditComponent implements
 
 	}
 
-    /** 
-     * Return the names of the elements supported by this grid.
-     * 
-     * This information can be used in the {@link ListModelBuilder} for a generic
-     * {@link ListModelBuilder#getModel(Object, LayoutComponent)} approach.
-     * 
-     * @return   The requested names of the supported elements, be <code>null</code>.
-     */
+    /**
+	 * Return the names of the elements supported by this grid.
+	 * 
+	 * This information can be used in the {@link ListModelBuilder} for a generic
+	 * {@link ListModelBuilder#getModel(Object, LayoutComponent)} approach.
+	 * 
+	 * @return The names of the supported elements, not <code>null</code>.
+	 */
     public String[] getElementNames() {
         return this.nodeTypes;
     }
@@ -1598,7 +1653,7 @@ public class GridComponent extends EditComponent implements
 
 	private HandlerResult error(Throwable ex) {
 		HandlerResult error = new HandlerResult();
-		error.setException(ex instanceof TopLogicException ? (TopLogicException) ex
+		error.setException(ex instanceof I18NRuntimeException i18nEx ? i18nEx
 			: new TopLogicException(com.top_logic.util.I18NConstants.INTERNAL_ERROR, ex));
 		return error;
 	}
@@ -1690,20 +1745,6 @@ public class GridComponent extends EditComponent implements
             }
 			createFields();
         }
-    }
-
-    /**
-     * Check, if the given model is relevant for this component.
-     *
-     * Currently this will only be asked in {@link #receiveModelChangedEvent(Object, Object)}
-     * if the model is supported but cannot be found in the form group.
-     *
-     * @param    aModel       The model to be inspected, must not be <code>null</code>.
-     * @param    changedBy    The changing component (may be MainLayout).
-     * @return   <code>true</code> if it has to be displayed in this grid.
-     */
-    protected boolean isRelevant(Object aModel, Object changedBy) {
-        return false;
     }
 
     /**
@@ -2259,7 +2300,7 @@ public class GridComponent extends EditComponent implements
 			if (isTransient(rowObject)) {
 				HiddenField changeMarker = FormFactory.newHiddenField(NEW_OBJECT_MARKER_FIELD, 1);
 				changeMarker.setDefaultValue(0);
-				changeMarker.setLabel(Resources.getInstance().getString(I18NConstants.NEW_OBJECT_MARKER));
+				changeMarker.setLabel(I18NConstants.NEW_OBJECT_MARKER);
 				row.addMember(changeMarker);
 			}
             
@@ -2561,7 +2602,7 @@ public class GridComponent extends EditComponent implements
 	}
 
     public ConfigKey getConfigKey() {
-		return ConfigKey.part(this, FIELD_TABLE);
+		return WithCustomConfigKey.resolveObjectKey(this, _configKeyBuilder, ConfigKey.part(this, FIELD_TABLE));
 	}
 
     /**
@@ -2843,7 +2884,7 @@ public class GridComponent extends EditComponent implements
 	public void linkChannels(Log log) {
 		super.linkChannels(log);
 
-		ChannelLinking channelLinking = getChannelLinking(((Config) getConfig()).getColumns());
+		ChannelLinking channelLinking = getChannelLinking(getConfig().getColumns());
 		columnsChannel().linkChannel(log, this, channelLinking);
 		columnsChannel().addListener(COLUMNS_LISTENER);
 
@@ -3113,7 +3154,7 @@ public class GridComponent extends EditComponent implements
 					// Last node may be the transient.
 					return false;
 				}
-				if (!gridBuilder.supportsRow(grid, lastNode)) {
+				if (gridBuilder.supportsRow(grid, lastNode).shouldRemove()) {
 					return false;
 				}
 			} else {
@@ -3249,7 +3290,7 @@ public class GridComponent extends EditComponent implements
      * {@link GridComponent#PROP_ATTRIBUTED} (which is an {@link TLObject}) will be asked
      * for the value.
      *
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
 	public class GridAccessor implements Accessor<Object> {
 
@@ -3489,7 +3530,7 @@ public class GridComponent extends EditComponent implements
     /**
      * Handler to store the data of the currently selected row.
      *
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
 	public static class GridApplyCommandHandler extends AbstractApplyCommandHandler {
 
@@ -3562,7 +3603,7 @@ public class GridComponent extends EditComponent implements
 	/**
 	 * Allow execution only, when at least one row in {@link GridComponent} has been marked.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	protected static class HasMarkedGroupsRule implements ExecutabilityRule {
 
@@ -3680,7 +3721,7 @@ public class GridComponent extends EditComponent implements
     /**
      * Allow execution only, when {@link GridComponent} owns the token context. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
 	public static class HasTokenContextRule implements ExecutabilityRule {
 
@@ -3729,7 +3770,7 @@ public class GridComponent extends EditComponent implements
 	/**
 	 * Simple handler for adding all rows marked to the clipboard.
 	 *
-	 * @author <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+	 * @author <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
 	 */
     public static class AddSelectedToClipboard extends AJAXCommandHandler {
 
@@ -3766,14 +3807,7 @@ public class GridComponent extends EditComponent implements
                 }
 
                 if (isAdded) {
-                    try {
-                        theTX.commit();
-                    }
-                    catch (KnowledgeBaseException ex) {
-                        HandlerResult theResult = new HandlerResult();
-						theResult.addErrorMessage(aComponent.getResPrefix().key("clipboard.failed"), ex.getLocalizedMessage());
-                        return theResult;
-                    }
+					theTX.commit();
                     // if everything did go well clear the check boxes
                     theComp.clearAllMarkedCheckboxes();
                 }
@@ -3794,7 +3828,7 @@ public class GridComponent extends EditComponent implements
 	 * 
 	 * @see SelectAllCheckboxes
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     public static class ClearSelectedCheckboxes extends AJAXCommandHandler {
 
@@ -3892,7 +3926,7 @@ public class GridComponent extends EditComponent implements
      * If the given value is a {@link FormMember}, this class will use the
      * configured {@link ControlProvider}, otherwise the configured inner {@link Renderer}.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
 	public static class GridContentRenderer implements Renderer<Object> {
 
@@ -3940,7 +3974,7 @@ public class GridComponent extends EditComponent implements
 				if (value instanceof FormField field) {
 					out.beginBeginTag(DIV);
 					out.beginCssClasses();
-					out.append("cDecoratedCell");
+					out.append("tl-decorated-cell");
 					out.append(FormConstants.FLEXIBLE_CSS_CLASS);
 					out.endCssClasses();
 					out.endBeginTag();
@@ -3991,7 +4025,7 @@ public class GridComponent extends EditComponent implements
 		return ((TLObject) rowObject).tValid();
 	}
 
-	private boolean supportsRow(Object element) {
+	private ElementUpdate supportsRow(Object element) {
 		return gridBuilder().supportsRow(this, element);
 	}
 

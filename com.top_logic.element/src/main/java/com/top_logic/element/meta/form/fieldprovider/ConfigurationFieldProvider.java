@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
@@ -62,9 +63,13 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 	 * feature, the {@link ConfigurationItem} type edited must extend {@link ConfigPart} and declare
 	 * {@link ConfigEditContext} as its {@link Container} property type.
 	 * </p>
+	 * 
+	 * @deprecated Only required for ease of migration, see
+	 *             "com.top_logic.bpe.bpml.display.DisplayDescription".
 	 *
 	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 	 */
+	@Deprecated
 	public interface ConfigEditContext extends ConfigurationItem {
 
 		/**
@@ -120,6 +125,11 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 
 	/**
 	 * Retrieves the {@link EditContext}.
+	 * 
+	 * <p>
+	 * May be <code>null</code> when this method is not called in context of a field created by a
+	 * {@link ConfigurationFieldProvider}.
+	 * </p>
 	 */
 	public static EditContext editContext(TypedAnnotatable options) {
 		return options.get(EDIT_CONTEXT);
@@ -155,13 +165,14 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 			_configType = configType;
 
 			_valueField = FormFactory.newHiddenField("model");
+			_valueField.setLabel(editContext.getLabelKey().fallback(ResKey.text("model")));
 			addMember(getValueField());
 
 			OnValueChange listener = new OnValueChange();
 			getValueField().addValueListener(listener);
 
 			// Initialize value.
-			listener.valueChanged(null, null, null);
+			listener.handleNewValue(null);
 
 			Templates.template(this, Templates.div(Templates.member("config")));
 		}
@@ -169,6 +180,10 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 		class OnValueChange implements ValueListener {
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
+				handleNewValue(newValue);
+			}
+
+			void handleNewValue(Object newValue) {
 				if (_configGroup != null && newValue == EditorFactory.getModel(_configGroup)) {
 					return;
 				}
@@ -178,11 +193,6 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 				_configGroup = new FormGroup("config", ResPrefix.NONE);
 				addMember(_configGroup);
 				ConfigurationItem model = TypedConfiguration.newConfigItem(_configType);
-
-				ConfigEditContext context = TypedConfiguration.newConfigItem(ConfigEditContext.class);
-				context.setBaseModel(_editContext.getObject());
-				context.setEditContext(_editContext);
-				context.setValue(model);
 
 				if (newValue != null) {
 					ConfigCopier.copyContent(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,

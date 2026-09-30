@@ -53,7 +53,6 @@ import com.top_logic.basic.TLID;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.CloseableIterator;
-import com.top_logic.basic.col.CloseableIteratorAdapter;
 import com.top_logic.basic.col.ComparatorChain;
 import com.top_logic.basic.col.InlineList;
 import com.top_logic.basic.col.LongRange;
@@ -63,6 +62,7 @@ import com.top_logic.basic.col.NameValueBuffer;
 import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
@@ -102,6 +102,7 @@ import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.dob.meta.TypeSystem;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.dob.util.MetaObjectUtils;
 import com.top_logic.knowledge.event.BranchEvent;
@@ -501,6 +502,8 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 
 	private SchemaSetup _schemaSetup;
 
+	private DBContextFactory _dbContextFactory;
+
     /**
      * Empty constructor for {@link KnowledgeBaseFactory}.
      */
@@ -612,6 +615,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 			this.commitWarnTime = configuration.getCommitWarnTime();
     		this.disableVersioning = configuration.getDisableVersioning();
     		this.chunkSize = configuration.getReaderChunkSize();
+			_dbContextFactory = ConfigUtil.getInstance(configuration.getContextFactory());
 			this.connectionPool = ConnectionPoolRegistry.getConnectionPool(configuration.getConnectionPool());
 			InstantiationContext context = InstantiationContext.toContext(protocol);
 			if (_schemaSetup == null) {
@@ -1138,6 +1142,27 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		return getLastLocalRevision();
     }
 
+	/**
+	 * The smallest commit number in the revision table, <code>0</code> if the table is empty.
+	 *
+	 * <p>
+	 * The value is not cached, because compacting the history changes it in the database.
+	 * </p>
+	 */
+	@Override
+	public long getFirstRevision() {
+		MOKnowledgeItemImpl revisionType = getRevisionType();
+		String getMinRevStatement =
+			"SELECT min(" + dbHelper.columnRef(RevisionType.getRevisionAttribute(revisionType).getDBName()) + ") "
+				+ "FROM " + dbHelper.tableRef(revisionType.getDBName());
+		PooledConnection readConnection = connectionPool.borrowReadConnection();
+		try {
+			return fetchCommitNumber(readConnection, getMinRevStatement);
+		} finally {
+			connectionPool.releaseReadConnection(readConnection);
+		}
+	}
+
 	private long getLastRevisionId() {
 		MOKnowledgeItemImpl revisionType = getRevisionType();
 		String getMaxRevStatement = 
@@ -1146,7 +1171,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		
     	PooledConnection readConnection = connectionPool.borrowReadConnection();
     	try {
-    		return fetchLongValue(readConnection, getMaxRevStatement);
+    		return fetchCommitNumber(readConnection, getMaxRevStatement);
 		} finally {
 			connectionPool.releaseReadConnection(readConnection);
 		}
@@ -1807,11 +1832,6 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	}
 
 	@Override
-	public Map<?, List<LongRange>> search(HistoryQuery query) {
-		return search(query, ExpressionFactory.historyArgs());
-	}
-	
-	@Override
 	public Map<?, List<LongRange>> search(HistoryQuery query, HistoryQueryArguments queryArguments) {
 		Object[] arguments = queryArguments.getArguments();
 		BranchParam branchParam = query.getBranchParam();
@@ -1938,65 +1958,12 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	}
 
 	@Override
-	public <E> List<E> search(RevisionQuery<E> query) {
-		return search(query, ExpressionFactory.revisionArgs());
-	}
-	
-	@Override
-	public <E> List<E> search(RevisionQuery<E> query, RevisionQueryArguments queryArguments) {
-		try (CloseableIterator<E> stream = searchStream(query, queryArguments)) {
-			return toList(stream);
-		}
-	}
-
-	/**
-	 * Adds all elements of the iterator to a list and closes it.
-	 * <p>
-	 * Should be called directly after creating stream
-	 * </p>
-	 */
-	private static <E> List<E> toList(CloseableIterator<E> stream) {
-		ArrayList<E> result = new ArrayList<>();
-		while (stream.hasNext()) {
-			result.add(stream.next());
-		}
-		return result;
-	}
-
-	@Override
-	public <E> CloseableIterator<E> searchStream(RevisionQuery<E> query) {
-		return searchStream(query, ExpressionFactory.revisionArgs());
-	}
-
-	@Override
 	public <E> CloseableIterator<E> searchStream(final RevisionQuery<E> query,
 			RevisionQueryArguments queryArguments) {
 		checkQuery(query, queryArguments.getArguments());
 		
 		CompiledQuery<E> compiledQuery = compileQuery(query);
-		final ConnectionPool pool = getConnectionPool();
-		boolean statementReturned = false;
-		final PooledConnection readConnection = pool.borrowReadConnection();
-		try {
-			final CloseableIterator<E> searchResult = compiledQuery.searchStream(readConnection, queryArguments);
-			CloseableIteratorAdapter<E> adaptedResult = new CloseableIteratorAdapter<>(searchResult) {
-
-				@Override
-				protected void internalClose() {
-					try {
-						searchResult.close();
-					} finally {
-						pool.releaseReadConnection(readConnection);
-					}
-				}
-			};
-			statementReturned = true;
-			return adaptedResult;
-		} finally {
-			if (!statementReturned) {
-				pool.releaseReadConnection(readConnection);
-			}
-		}
+		return compiledQuery.searchStream(queryArguments);
 	}
 
 	@Override
@@ -2789,6 +2756,16 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
         return moRepository;
     }
 
+	/**
+	 * Casts {@link #getMORepository()} to {@link TypeSystem}.
+	 * 
+	 * @see KBUtils#typeSystem(KnowledgeBase)
+	 */
+	@FrameworkInternal
+	public TypeSystem getTypeSystem() {
+		return moRepository;
+	}
+
     @Override
 	public Transaction beginTransaction(ResKey commitMessage) {
     	return internalCreateDBContext().begin(false, commitMessage);
@@ -3096,7 +3073,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		String contextId = subsession.getContextId();
 		
 		if (contextId != null)  {
-			DBContext newDbContext = new DefaultDBContext(this, contextId);
+			DBContext newDbContext = _dbContextFactory.createContext(this, contextId);
 			installContext(newDbContext);
 		    
 			subsession.getSessionContext().addHttpSessionBindingListener(this);
@@ -3285,7 +3262,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	public <T extends KnowledgeItem> List<T> getAnyReferer(Revision requestedRevision, KnowledgeItem any,
 			DeletionPolicy policy, Class<T> expectedType) {
 		Map<MetaObject, CompiledQuery<T>> completeQuery =
-			anyRefereesQuery(any.tTable(), policy, Boolean.FALSE, expectedType);
+			anyRefereesQuery(any.tTable(), policy, Boolean.FALSE, HistoryUtils.isCurrent(any), expectedType);
 		if (completeQuery.isEmpty()) {
 			return Collections.emptyList();
 		}
@@ -3322,7 +3299,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 				return getAnyReferer(requestedRevision, item, policy, expectedType);
 			default:
 				Map<MetaObject, CompiledQuery<T>> completeQuery =
-					anyRefereesQuery(targetType, policy, Boolean.TRUE, expectedType);
+					anyRefereesQuery(targetType, policy, Boolean.TRUE, allCurrent(items), expectedType);
 				if (completeQuery.isEmpty()) {
 					return Collections.emptyList();
 				}
@@ -3362,6 +3339,11 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 *        If <code>null</code> then each reference is used.
 	 * @param multipleTargets
 	 *        Whether the target is a single object or a sequence of objects.
+	 * @param currentTargets
+	 *        Whether all target objects later filled into the query are current objects. In that
+	 *        case, references with {@link HistoryType#HISTORIC} are not searched at all, because
+	 *        their value is stabilized to a concrete revision and can therefore never be a current
+	 *        object.
 	 * @param expectedType
 	 *        The implementation class of the searched items.
 	 * 
@@ -3369,14 +3351,35 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * @see #anyRefereesArguments(Revision, Iterable)
 	 */
 	public <T extends KnowledgeItem> Map<MetaObject, CompiledQuery<T>> anyRefereesQuery(MetaObject targetType,
-			DeletionPolicy policy, Boolean multipleTargets, Class<T> expectedType) {
-		return _expressions.anyRefereeQuery(targetType, policy, multipleTargets, expectedType);
+			DeletionPolicy policy, Boolean multipleTargets, boolean currentTargets, Class<T> expectedType) {
+		return _expressions.anyRefereeQuery(targetType, policy, multipleTargets, currentTargets, expectedType);
+	}
+
+	/**
+	 * Whether all given items are current objects.
+	 *
+	 * @see #anyRefereesQuery(MetaObject, DeletionPolicy, Boolean, boolean, Class)
+	 */
+	private static boolean allCurrent(Collection<? extends KnowledgeItem> items) {
+		for (KnowledgeItem item : items) {
+			if (!HistoryUtils.isCurrent(item)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
 	 * Creates a {@link RevisionQueryArguments} for the queries contained in the result of
-	 * {@link #anyRefereesQuery(MetaObject, DeletionPolicy, Boolean, Class)} where multipleTargets
+	 * {@link #anyRefereesQuery(MetaObject, DeletionPolicy, Boolean, boolean, Class)} where multipleTargets
 	 * is <code>true</code>.
+	 *
+	 * @param items
+	 *        The target objects to search referers for. They must match the
+	 *        <code>currentTargets</code> argument the query was created with: If the query was
+	 *        created with <code>currentTargets</code>, all given items must be current objects.
+	 *        Otherwise the query does not find the referers of a historic item, because references
+	 *        with {@link HistoryType#HISTORIC} were excluded from it.
 	 */
 	public RevisionQueryArguments anyRefereesArguments(Revision requestedRevision,
 			Iterable<? extends KnowledgeItem> items) {
@@ -3385,8 +3388,15 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 
 	/**
 	 * Creates a {@link RevisionQueryArguments} for the queries contained in the result of
-	 * {@link #anyRefereesQuery(MetaObject, DeletionPolicy, Boolean, Class)} where multipleTargets
+	 * {@link #anyRefereesQuery(MetaObject, DeletionPolicy, Boolean, boolean, Class)} where multipleTargets
 	 * is <code>false</code>.
+	 *
+	 * @param item
+	 *        The target object to search referers for. It must match the
+	 *        <code>currentTargets</code> argument the query was created with: If the query was
+	 *        created with <code>currentTargets</code>, the given item must be a current object.
+	 *        Otherwise the query does not find the referers of a historic item, because references
+	 *        with {@link HistoryType#HISTORIC} were excluded from it.
 	 */
 	public RevisionQueryArguments anyRefereesArguments(Revision requestedRevision, KnowledgeItem item) {
 		return _expressions.anyRefereeArguments(requestedRevision, item);
@@ -4053,21 +4063,37 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
         
 	}
 
-	/*package protected*/ long fetchLongValue(PooledConnection connection, String fetchSource) {
+	/**
+	 * Fetches a single commit number with the given query.
+	 * 
+	 * <p>
+	 * A failed query is retried, if the database reports a transient failure.
+	 * </p>
+	 * 
+	 * @param connection
+	 *        The connection to execute the query on.
+	 * @param fetchSource
+	 *        An SQL query without parameters, whose result consists of a single row with a single
+	 *        column holding a commit number, e.g. the minimum or maximum commit number of the
+	 *        revision table.
+	 * @return The commit number in the first column of the first result row, <code>0</code> if the
+	 *         query has no result or the value is SQL <code>NULL</code> (e.g. an aggregate over an
+	 *         empty revision table).
+	 */
+	/*package protected*/ long fetchCommitNumber(PooledConnection connection, String fetchSource) {
 		int retry = dbHelper.retryCount();
 		while (true) {
 			try {
-				long maxRevision;
-				// Lookup the maximum commit number from the revision table.
+				long commitNumber;
 				try (PreparedStatement getStmt = connection.prepareStatement(fetchSource);
 						ResultSet result = getStmt.executeQuery()) {
 					if (result.next()) {
-						maxRevision = result.getLong(1);
+						commitNumber = result.getLong(1);
 					} else {
-						maxRevision = 0;
+						commitNumber = 0;
 					}
 				}
-				return maxRevision;
+				return commitNumber;
 			} catch (SQLException ex) {
 				if (dbHelper.canRetry(ex)) {
 					connection.closeConnection(ex);
@@ -4077,7 +4103,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 				}
 				
 				throw (KnowledgeBaseRuntimeException) 
-					new KnowledgeBaseRuntimeException("Could not determine the commit number maximum.").initCause(ex);
+					new KnowledgeBaseRuntimeException("Could not determine the commit number.").initCause(ex);
 			}
 		}
 	}

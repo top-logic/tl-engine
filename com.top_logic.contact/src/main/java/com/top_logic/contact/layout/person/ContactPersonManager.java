@@ -14,17 +14,16 @@ import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.knowledge.wrap.person.TLPersonManager;
 
 /**
  * {@link PersonManager} that initializes new accounts with contact information.
  */
-public class ContactPersonManager extends TLPersonManager {
+public class ContactPersonManager extends PersonManager {
 
 	/**
 	 * Configuration options for {@link ContactPersonManager}.
 	 */
-	public interface Config<I extends ContactPersonManager> extends TLPersonManager.Config {
+	public interface Config extends PersonManager.Config {
 		/**
 		 * Whether a contact that was assigned to an account is re-used for a newly created account,
 		 * if the login names match.
@@ -34,15 +33,16 @@ public class ContactPersonManager extends TLPersonManager {
 		boolean reuseContacts();
 	}
 
-	private final boolean _reuseContacts;
-
 	/**
 	 * Creates a {@link ContactPersonManager}.
 	 */
 	public ContactPersonManager(InstantiationContext context, Config config) {
 		super(context, config);
+	}
 
-		_reuseContacts = config.reuseContacts();
+	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
 	}
 
 	@Override
@@ -50,7 +50,7 @@ public class ContactPersonManager extends TLPersonManager {
 		String loginName = account.getName();
 
 		PersonContact user = null;
-		if (_reuseContacts) {
+		if (getConfig().reuseContacts()) {
 			for (Object existing : ContactFactory.getInstance().getAllContactsWithAttribute(ContactFactory.PERSON_TYPE,
 				AbstractContact.FKEY_ATTRIBUTE, loginName, false)) {
 				if (existing instanceof PersonContact existingContact) {

@@ -374,6 +374,39 @@ public class RootTileBreadcrumbControlProvider extends
 		return _renderer;
 	}
 
+	/**
+	 * The label that the tile breadcrumb displays for the given layout component.
+	 *
+	 * <p>
+	 * If the component is the content of a {@link ContextTileComponent}, the label is derived from
+	 * the current context selection, formatted into the content's title key. If the component
+	 * contains an {@link InlinedTileComponent}, the label of its current selection is used.
+	 * Otherwise the component's default label is returned.
+	 * </p>
+	 *
+	 * @param component
+	 *        The layout component (typically a tile in the
+	 *        {@link RootTileComponent#displayedPath() displayed path}).
+	 * @return The breadcrumb label for the given component.
+	 */
+	public static String tileBreadcrumbLabel(LayoutComponent component) {
+		LayoutComponent parent = component.getParent();
+		if (parent instanceof ContextTileComponent contextTile && contextTile.getContent() == component) {
+			Object selection = contextTile.getContextSelection().getSelected();
+			String contextSelection = MetaLabelProvider.INSTANCE.getLabel(selection);
+			return Resources.getInstance().getString(ResKey.message(component.getTitleKey(), contextSelection),
+				contextSelection);
+		}
+		InlinedTileComponent inlined = TileComponentFinder.getFirstOfType(InlinedTileComponent.class, component);
+		if (inlined != null) {
+			Object selected = inlined.getSelected();
+			if (selected != null) {
+				return MetaLabelProvider.INSTANCE.getLabel(selected);
+			}
+		}
+		return MetaLabelProvider.INSTANCE.getLabel(component);
+	}
+
 	private static class BCTreeBuilder extends AbstractTLTreeNodeBuilder {
 
 		BCTreeBuilder() {
@@ -416,18 +449,8 @@ public class RootTileBreadcrumbControlProvider extends
 				return Collections.emptyList();
 			}
 			DefaultMutableTLTreeNode contentNode = createNode(parent.getModel(), parent, content);
-			contentNode.set(BreadcrumbNodeResourceProvider.CUSTOM_LABEL, new LabelProvider() {
-
-				@Override
-				public String getLabel(Object object) {
-					/* Ignore the business object of the displayed node (the detail component) value
-					 * and display the actual context selection. */
-					Object selection = contextTile.getContextSelection().getSelected();
-					String contextSelection = MetaLabelProvider.INSTANCE.getLabel(selection);
-					return Resources.getInstance().getString(ResKey.message(content.getTitleKey(), contextSelection),
-						contextSelection);
-				}
-			});
+			contentNode.set(BreadcrumbNodeResourceProvider.CUSTOM_LABEL,
+				object -> tileBreadcrumbLabel((LayoutComponent) object));
 			contentNode.set(BreadcrumbNodeResourceProvider.CUSTOM_ICON, new ImageProvider() {
 
 				@Override
@@ -457,17 +480,8 @@ public class RootTileBreadcrumbControlProvider extends
 			InlinedTileComponent inlinedComp =
 				TileComponentFinder.getFirstOfType(InlinedTileComponent.class, comp);
 			if (inlinedComp != null) {
-				node.set(BreadcrumbNodeResourceProvider.CUSTOM_LABEL, new LabelProvider() {
-
-					@Override
-					public String getLabel(Object object) {
-						Object selected = inlinedComp.getSelected();
-						if (selected != null) {
-							return MetaLabelProvider.INSTANCE.getLabel(selected);
-						}
-						return MetaLabelProvider.INSTANCE.getLabel(object);
-					}
-				});
+				node.set(BreadcrumbNodeResourceProvider.CUSTOM_LABEL,
+					object -> tileBreadcrumbLabel((LayoutComponent) object));
 				node.set(BreadcrumbNodeResourceProvider.CUSTOM_ICON, new ImageProvider() {
 
 					@Override

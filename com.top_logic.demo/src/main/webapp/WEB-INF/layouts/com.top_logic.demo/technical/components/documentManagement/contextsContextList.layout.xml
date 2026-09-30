@@ -4,14 +4,14 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	template="com.top_logic/tileList.template.xml"
 >
-	<arguments>
+	<arguments types="test.webfolder:Context">
 		<name key="dynamic.cda3a696-3f02-4304-ad76-1e60059bb988">
 			<en>Contexts</en>
 			<de>Kontexte</de>
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.webfolder:Context`)"
-			supportsElement="element->$element.instanceOf(`test.webfolder:Context`)"
+			supportsElement="true"
 		/>
 		<noCardKey key="dynamic.7487af92-889b-4108-bac9-41b6bced0590">
 			<en>There are no context objects yet. Create a new context object with the plus button in the title bar.</en>

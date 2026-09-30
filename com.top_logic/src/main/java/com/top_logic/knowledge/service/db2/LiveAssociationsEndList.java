@@ -129,13 +129,7 @@ public class LiveAssociationsEndList<T extends TLObject> extends MutableList<T> 
 
 	private void removeLink(KnowledgeAssociation link) {
 		/* Delete association. The magic of information of caches will update list. */
-		{
-			if (_outgoingQuery) {
-				DBKnowledgeAssociation.clearDestinationAndRemoveLink(link);
-			} else {
-				DBKnowledgeAssociation.clearSourceAndRemoveLink(link);
-			}
-		}
+		DBKnowledgeAssociation.clearReferencesAndRemoveLink(link);
 	}
 
 	private void createLink(int index, T element, Object order) {

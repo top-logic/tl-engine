@@ -39,7 +39,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * New folder dialog providing the {@link StringField} for identifying the name of the new folder.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class NewFolderDialog extends AbstractFormPageDialog {
 
@@ -60,7 +60,7 @@ public class NewFolderDialog extends AbstractFormPageDialog {
 	 * 
 	 * When creating a new {@link WebFolder} will be created in the folder defined in this instance.
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class NewFolderCommand implements Command {
 	    

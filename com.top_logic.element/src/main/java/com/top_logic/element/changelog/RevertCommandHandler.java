@@ -73,6 +73,10 @@ public class RevertCommandHandler extends AbstractCommandHandler {
 			Map<String, Object> someArguments) {
 
 		ChangeSet change = (ChangeSet) model;
+		ChangeSet revertedBy = change.getRevertedBy();
+		if (revertedBy != null) {
+			change = revertedBy;
+		}
 
 		TransientChangeSet undo = change.revert();
 

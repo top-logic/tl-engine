@@ -81,6 +81,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey5 NON_UNIQUE_KEY__TYPE_ATTR_KEY_OBJ1_OBJ2;
 
+	/**
+	 * @en Invalid update value in function "{0}": {1}
+	 */
+	public static ResKey2 INVALID_UPDATE_TYPE__FUN_EX;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

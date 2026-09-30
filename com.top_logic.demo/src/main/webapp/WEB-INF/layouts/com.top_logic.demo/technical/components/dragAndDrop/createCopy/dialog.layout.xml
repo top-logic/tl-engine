@@ -40,9 +40,6 @@
 				<en>Create copy</en>
 				<de>Kopie erstellen</de>
 			</resourceKey>
-			<postCreateActions>
-				<setModel target="selection(com.top_logic.demo/technical/components/dragAndDrop/factoryLayoutTree.layout.xml#Tree)"/>
-			</postCreateActions>
 			<operation><![CDATA[formObject -> contextModel -> {
   draggedObjects = $contextModel[0];
   parent = $contextModel[1];
@@ -57,9 +54,7 @@
 	};
 	
 	root = $source.recursion(x -> $x.container()).lastElement();
-					    
-	switch ($root.type()) {
-	  `test.dnd:Library`: {
+	$root.type() != `test.dnd:Library` ? throw ("Just for instantiation from library.") : {
 	    copy = $source.copy();
 	    newName = $formObject.get(`test.dnd:NamedPlanElement#name`);
 	    $copy.set(`test.dnd:NamedPlanElement#name`, $newName);
@@ -70,30 +65,16 @@
 		  $parent.add($ref, $referenceIndex, $copy);
 		  $copy;
 	    });
-	  };
-	  `test.dnd:Root`: {
-	    if($parent.type() == `test.dnd:Location`, $parent.set($ref, $source), {
-	      // Move in plan
-		  if ($source != $reference, {
-		    // Never try to insert an element before itself, because it is first 
-			// removed and then re-inserted. When inserting an element before itself, 
-			// Re-insertion fails, because the reference was removed in first operation. 
-			oldParent = $source.referers($ref);
-			oldChildren = $oldParent.get($ref);
-			$oldParent.set($ref, $oldChildren.filter(x -> $x != $source));
-					        
-			children = $parent.get($ref);
-			referenceIndex = $reference == null ? $children.size() : $children.elementIndex($reference);
-			$parent.add($ref, $referenceIndex, $source);
-			$source;
-		  })
-		});
-	  };
-	}
+    };
   };
 	
   $draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject, $parent, $reference));
 }]]></operation>
+			<postCreateActions>
+				<setModel target="selection(com.top_logic.demo/technical/components/dragAndDrop/factoryLayoutTree.layout.xml#Tree)">
+					<input/>
+				</setModel>
+			</postCreateActions>
 		</transactionHandler>
 	</arguments>
 </config:template-call>

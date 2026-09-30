@@ -160,7 +160,7 @@ public class TestComparableComparator extends TestCase{
 		BasicTestCase.executeInDefaultLocale(Locale.GERMAN, () -> {
 			assertTrue(cC.compare("alpha", "Zulu") < 0);
 			assertTrue(cC.compare("alpha", "Alpha") < 0);
-			assertTrue(cC.compare("a", "ä") < 0);
+			assertTrue(cC.compare("a", "Ã¤") < 0);
 
 			assertTrue(cC.compare(new NamedImpl("alpha"), new NamedImpl("Zulu")) < 0);
 			assertTrue(cC.compare(new NamedImpl("alpha"), new NamedImpl("Alpha")) < 0);

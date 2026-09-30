@@ -5,7 +5,7 @@
  */
 package com.top_logic.model.search.expr.compile.eval;
 
-import com.top_logic.knowledge.search.Expression;
+import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
 
@@ -29,18 +29,8 @@ public class InterpretedExpression extends AbstractValue {
 	}
 
 	@Override
-	public boolean hasCompiledPart() {
-		return false;
-	}
-
-	@Override
-	public boolean hasInterpretedPart() {
-		return true;
-	}
-
-	@Override
-	public Expression compiled() {
-		throw new UnsupportedOperationException();
+	public CompiledValue compiled() {
+		return null;
 	}
 
 	@Override
@@ -49,17 +39,20 @@ public class InterpretedExpression extends AbstractValue {
 	}
 
 	@Override
-	public Value processAnd(SearchExpression orig, Value other) {
-		if (other.hasCompiledPart()) {
-			SearchExpression interpreted;
-			if (other.hasInterpretedPart()) {
-				interpreted = SearchExpressionFactory.and(_orig, other.interpreted());
-			} else {
-				interpreted = _orig;
-			}
-			return new CombinedAndValue(other.compiled(), interpreted);
+	public Value processAnd(And orig, Value other) {
+		SearchExpression interpretedAnd;
+		if (other.hasInterpretedPart()) {
+			interpretedAnd = SearchExpressionFactory.and(interpreted(), other.interpreted());
+		} else {
+			interpretedAnd = interpreted();
 		}
-		return super.processAnd(orig, other);
+
+		CompiledValue otherCompiled = other.compiled();
+		if (otherCompiled != null) {
+			return new CombinedAndValue(otherCompiled, interpretedAnd);
+		} else {
+			return new InterpretedExpression(interpretedAnd);
+		}
 	}
 
 }

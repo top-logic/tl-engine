@@ -32,7 +32,7 @@ public class ArgumentDescriptorBuilderImpl implements ArgumentDescriptorBuilder 
 	public ArgumentDescriptor build() {
 		return new ArgumentDescriptorImpl(_argCnt) {
 			@Override
-			protected int getArgumentIndex(String argumentName) {
+			public int getArgumentIndex(String argumentName) {
 				Integer result = _argIndex.get(argumentName);
 				if (result != null) {
 					return result.intValue();
@@ -41,12 +41,12 @@ public class ArgumentDescriptorBuilderImpl implements ArgumentDescriptorBuilder 
 			}
 
 			@Override
-			protected Collection<String> getArgumentNames() {
+			public Collection<String> getArgumentNames() {
 				return _argIndex.keySet();
 			}
 
 			@Override
-			protected SearchExpression getDefaultValue(int argumentIndex) {
+			public SearchExpression getDefaultValue(int argumentIndex) {
 				Provider<SearchExpression> provider = _defaultProvider.get(argumentIndex);
 				if (provider == null) {
 					return null;
@@ -55,7 +55,7 @@ public class ArgumentDescriptorBuilderImpl implements ArgumentDescriptorBuilder 
 			}
 
 			@Override
-			protected String getArgumentName(int n) {
+			public String getArgumentName(int n) {
 				String result = _names.get(n);
 				if (result != null) {
 					return result;

@@ -22,7 +22,7 @@ import com.top_logic.util.Resources;
  * This string plus ".image" will then be taken to get the matching image using the {@link Theme}.
  * Moreover the image will become a tool tip which is the translation of the resource key.
  *
- * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+ * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
  */
 public class ThemeBasedResourceImageRenderer implements Renderer<ResKey> {
 

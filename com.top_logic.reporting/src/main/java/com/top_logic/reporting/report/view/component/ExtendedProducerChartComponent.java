@@ -63,7 +63,7 @@ import com.top_logic.util.Resources;
 /**
  * Chart component providing a handling of held business objects to the {@link JFreeChart} via the {@link ChartData}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ExtendedProducerChartComponent extends DefaultProducerChartComponent implements CategoryURLGenerator, PieURLGenerator, XYURLGenerator, ChartChoice {
 
@@ -365,7 +365,7 @@ public class ExtendedProducerChartComponent extends DefaultProducerChartComponen
 	 * result contains more objects the configured table will be opened in a dialog.
 	 * </p>
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     public static class ChartDisplayDetailCommandHandler extends OpenModalDialogCommandHandler {
 
@@ -429,7 +429,7 @@ public class ExtendedProducerChartComponent extends DefaultProducerChartComponen
      * Special model builder for returning the components model in
      * {@link ExtendedProducerChartModelBuilder#getModel(Object, LayoutComponent)}.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class ExtendedProducerChartModelBuilder implements ListModelBuilder {
 
@@ -450,11 +450,6 @@ public class ExtendedProducerChartComponent extends DefaultProducerChartComponen
         @Override
 		public boolean supportsModel(Object aModel, LayoutComponent aComponent) {
 			return aModel == null || aModel instanceof Collection;
-        }
-
-        @Override
-		public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-            return true;
         }
 
         @Override

@@ -38,7 +38,7 @@ import com.top_logic.graph.diagramjs.util.GraphLayoutConstants;
 /**
  * Handles creation for display graph parts.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DisplayGraphPartCreator {
 

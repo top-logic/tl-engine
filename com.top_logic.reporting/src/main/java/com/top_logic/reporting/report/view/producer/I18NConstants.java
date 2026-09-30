@@ -5,6 +5,7 @@
  */
 package com.top_logic.reporting.report.view.producer;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -20,7 +21,8 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey COLLECTION_SIZE_CALCULATOR;
 
-	public static ResKey MATRIX_GRAPHICS_CHART_TOOLTIP = legacyKey("reporting.matrix.graphics.chart.tooltip");
+	@CustomKey("reporting.matrix.graphics.chart.tooltip")
+	public static ResKey MATRIX_GRAPHICS_CHART_TOOLTIP;
 
 	public static ResKey CLASSIFICATION_NOT_SET_LABEL;
 

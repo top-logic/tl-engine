@@ -34,7 +34,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Code editor to create TL-Script based {@link SearchExpression}s.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class ExpertSearchExpressionEditor extends FormComponent implements SearchExpressionEditor {
 
@@ -76,7 +76,7 @@ public class ExpertSearchExpressionEditor extends FormComponent implements Searc
 	}
 
 	@Override
-	public HandlerResult search(BiFunction<SearchExpression, Provider<String>, HandlerResult> algorithm) {
+	public HandlerResult search(BiFunction<QueryExecutor, Provider<String>, HandlerResult> algorithm) {
 		FormContext formContext = getFormContext();
 		if (!formContext.checkAll()) {
 			HandlerResult result = new HandlerResult();
@@ -84,7 +84,7 @@ public class ExpertSearchExpressionEditor extends FormComponent implements Searc
 			return result;
 		}
 		Expr expr = getFormModel().getSearchExpression();
-		return algorithm.apply(QueryExecutor.compileExprOptional(expr), () -> ExprPrinter.toString(expr));
+		return algorithm.apply(QueryExecutor.compileOptional(expr), () -> ExprPrinter.toString(expr));
 	}
 
 	/**

@@ -17,7 +17,7 @@ import com.top_logic.layout.wysiwyg.ui.StructuredText;
 /**
  * {@link ModelNamingScheme} of {@link StructuredText} values.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class StructuredTextNamingScheme
 		extends ModelNamingScheme<FormField, StructuredText, StructuredTextNamingScheme.Name> {

@@ -5,6 +5,7 @@
  */
 package com.top_logic.reporting.layout.flexreporting.producer.tooltips;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,15 +19,20 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey AMOUNT_TOOLTIP = legacyKey("reporting.chart.tooltip.amount");
+	@CustomKey("reporting.chart.tooltip.amount")
+	public static ResKey AMOUNT_TOOLTIP;
 
-	public static ResKey ATTRIBUTE_TOOLTIP = legacyKey("reporting.chart.tooltip.attribute");
+	@CustomKey("reporting.chart.tooltip.attribute")
+	public static ResKey ATTRIBUTE_TOOLTIP;
 
-	public static ResKey COUNT_FUNCTION = legacyKey("CountFunction");
+	@CustomKey("CountFunction")
+	public static ResKey COUNT_FUNCTION;
 
-	public static ResKey FUNCTION_TOOLTIP = legacyKey("reporting.chart.tooltip.function");
+	@CustomKey("reporting.chart.tooltip.function")
+	public static ResKey FUNCTION_TOOLTIP;
 
-	public static ResKey RANGE_TOOLTIP = legacyKey("reporting.chart.tooltip.range");
+	@CustomKey("reporting.chart.tooltip.range")
+	public static ResKey RANGE_TOOLTIP;
 
 	static {
 		initConstants(I18NConstants.class);

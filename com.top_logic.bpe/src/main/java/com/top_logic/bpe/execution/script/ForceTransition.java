@@ -38,7 +38,7 @@ import com.top_logic.util.TLContext;
  * regular transition paths.
  * </p>
  *
- * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:Jonathan.HÃ¼sing@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public class ForceTransition extends GenericMethod {
 

@@ -311,7 +311,7 @@ public class ResourceViewerServlet extends TopLogicServlet {
 //    The view of documents will not work, when the next line is active!
 //
 //        super.setCachePolicy(aRes);
-        this.forwardPage(aURL, aReq, aRes);
+        this.forwardToPage(aURL, aReq, aRes);
     }
 
     /**

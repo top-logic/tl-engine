@@ -30,11 +30,13 @@ import com.top_logic.graphic.flow.callback.ClickHandler;
 import com.top_logic.graphic.flow.callback.DropHandler;
 import com.top_logic.graphic.flow.control.JSDiagramControlCommon;
 import com.top_logic.graphic.flow.data.ClickTarget;
+import com.top_logic.graphic.flow.data.ContextMenu;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.DropRegion;
 import com.top_logic.graphic.flow.data.MouseButton;
 import com.top_logic.graphic.flow.data.SelectableBox;
 import com.top_logic.graphic.flow.data.Widget;
+import com.top_logic.graphic.flow.server.ui.handler.DiagramContextMenuProviderSPI;
 import com.top_logic.graphic.flow.server.ui.handler.ServerDropHandler;
 import com.top_logic.layout.ContentHandler;
 import com.top_logic.layout.Control;
@@ -162,6 +164,18 @@ public class DiagramControl extends AbstractControlBase
 	@Override
 	public Menu createContextMenu(String contextInfo) {
 		Widget node = (Widget) _graphScope.resolveOrFail(Integer.parseInt(contextInfo));
+
+		if (node instanceof ContextMenu contextMenu) {
+			Object userObject = node.getUserObject();
+
+			DiagramContextMenuProviderSPI menuProvider = (DiagramContextMenuProviderSPI) contextMenu.getMenuProvider();
+
+			if (!menuProvider.hasContextMenu(userObject)) {
+				return null;
+			}
+
+			return menuProvider.getContextMenu(userObject, userObject);
+		}
 
 		Object userObject;
 		if (_diagram.getSelection().contains(node)) {

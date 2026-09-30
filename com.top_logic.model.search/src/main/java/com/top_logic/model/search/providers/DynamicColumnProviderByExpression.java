@@ -19,8 +19,10 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.ValueInitializer;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function1;
@@ -80,6 +82,8 @@ public class DynamicColumnProviderByExpression
 		Config.COLUMNS,
 		Config.COLUMN_LABEL,
 		Config.COLUMN_TYPE,
+		Config.COLUMN_MANDATORY,
+		Config.COLUMN_MULTIPLICITY,
 		Config.COLUMN_VISIBILITY,
 		Config.ACCESSOR,
 		Config.UPDATER,
@@ -109,6 +113,16 @@ public class DynamicColumnProviderByExpression
 		 * @see #getColumnType()
 		 */
 		String COLUMN_TYPE = "columnType";
+
+		/**
+		 * @see #getColumnMandatory()
+		 */
+		String COLUMN_MANDATORY = "columnMandatory";
+
+		/**
+		 * @see #getColumnMultiplicity()
+		 */
+		String COLUMN_MULTIPLICITY = "columnMultiplicity";
 
 		/**
 		 * @see #getColumnVisibility()
@@ -179,13 +193,13 @@ public class DynamicColumnProviderByExpression
 		 * Optional function computing the column label.
 		 * 
 		 * <p>
-		 * The function expects two arguments. The first argument is one of the column objects as
-		 * returned by the {@link #getColumns()} function. The second argument is the component's
-		 * model.
+		 * The function expects two arguments. The first argument is the column object of the
+		 * current column as returned by the {@link #getColumns()} function. The second argument is
+		 * the component's model.
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>column -> model -> ...</code>
+		 * <code>column -> model -> $column.label()</code>
 		 * </pre>
 		 * 
 		 * <p>
@@ -207,28 +221,65 @@ public class DynamicColumnProviderByExpression
 		 * 
 		 * <p>
 		 * If all columns have the same value type, a model type literal can be given, e.g.
-		 * `tl.core:Integer`. If columns have different types, a function can be specified that
-		 * computes the column type.
+		 * <code>`tl.core:Integer`</code>. If columns have different types, a function can be
+		 * specified that computes the column type.
 		 * </p>
 		 * 
 		 * <p>
-		 * The type function expects two arguments. The first argument is one of the column objects
-		 * as returned by the {@link #getColumns()} function. The second argument is the component's
-		 * model.
+		 * The function expects two arguments. The first argument is the column object of the
+		 * current column as returned by the {@link #getColumns()} function. The second argument is
+		 * the component's model.
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>column -> model -> ...</code>
+		 * <code>column -> model -> `tl.core:Integer`</code>
 		 * </pre>
 		 * 
 		 * <p>
-		 * The result of the type function must be reference to a <i>TopLogic</i> type (a primitive
-		 * type such as `tl.core:Integer`, an enumeration or any other class type.
+		 * The result of the type function must be a reference to a <i>TopLogic</i> type (a
+		 * primitive type such as <code>`tl.core:Integer`</code>, an enumeration or any other class
+		 * type.
 		 * </p>
 		 */
 		@Name(COLUMN_TYPE)
 		@Mandatory
 		Expr getColumnType();
+
+		/**
+		 * Whether the column must contain a value.
+		 * 
+		 * <p>
+		 * The function expects two arguments. The first argument is the column object of the
+		 * current column as returned from the {@link #getColumns()} function. The second argument
+		 * is the component's model.
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>column -> model -> false</code>
+		 * </pre>
+		 */
+		@Name(COLUMN_MANDATORY)
+		@FormattedDefault("false")
+		@NonNullable
+		Expr getColumnMandatory();
+
+		/**
+		 * Whether the column can contain multiple values.
+		 * 
+		 * <p>
+		 * The function expects two arguments. The first argument is the column object of the
+		 * current column as returned by the {@link #getColumns()} function. The second argument is
+		 * the component's model.
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>column -> model -> false</code>
+		 * </pre>
+		 */
+		@Name(COLUMN_MULTIPLICITY)
+		@FormattedDefault("false")
+		@NonNullable
+		Expr getColumnMultiplicity();
 
 		/**
 		 * Function retrieving the column's value.
@@ -240,7 +291,7 @@ public class DynamicColumnProviderByExpression
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>row -> column -> model -> ...</code>
+		 * <code>row -> column -> model -> $row.get($column)</code>
 		 * </pre>
 		 * 
 		 * <p>
@@ -266,7 +317,7 @@ public class DynamicColumnProviderByExpression
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>row -> column -> value -> model -> ...</code>
+		 * <code>row -> column -> value -> model -> $row.set($column, $value)</code>
 		 * </pre>
 		 * 
 		 * <p>
@@ -283,8 +334,11 @@ public class DynamicColumnProviderByExpression
 		 * <p>
 		 * The function takes the row object as first argument, the column object as second
 		 * argument, and optionally the component's model as third argument:
-		 * <code>row -> column -> model -> ...</code>
 		 * </p>
+		 * 
+		 * <pre>
+		 * <code>row -> column -> model -> false</code>
+		 * </pre>
 		 * 
 		 * <p>
 		 * The function must return a boolean value indicating whether a field should be created for
@@ -350,6 +404,10 @@ public class DynamicColumnProviderByExpression
 
 	private final QueryExecutor _canUpdate;
 
+	private final QueryExecutor _columnMandatory;
+
+	private final QueryExecutor _columnMultiplicity;
+
 	/**
 	 * Creates a {@link DynamicColumnProviderByExpression} from configuration.
 	 * 
@@ -369,6 +427,8 @@ public class DynamicColumnProviderByExpression
 		_updater = config.getUpdater() == null ? null : QueryExecutor.compile(config.getUpdater());
 		_canUpdate = QueryExecutor.compileOptional(config.getCanUpdate());
 		_columnType = QueryExecutor.compile(config.getColumnType());
+		_columnMandatory = QueryExecutor.compile(config.getColumnMandatory());
+		_columnMultiplicity = QueryExecutor.compile(config.getColumnMultiplicity());
 	}
 
 	@Override
@@ -411,7 +471,10 @@ public class DynamicColumnProviderByExpression
 				labelKey = ResKey.text(MetaLabelProvider.INSTANCE.getLabel(label));
 			}
 
-			TLTypeContext baseType = new ConcreteTypeContext((TLType) _columnType.execute(columnModel, model));
+			boolean mandatory = SearchExpression.asBoolean(_columnMandatory.execute(columnModel, model));
+			boolean multiple = SearchExpression.asBoolean(_columnMultiplicity.execute(columnModel, model));
+			TLTypeContext baseType =
+				new ConcreteTypeContext((TLType) _columnType.execute(columnModel, model), mandatory, multiple);
 			if (!getConfig().getAnnotations().isEmpty()) {
 				baseType = new AnnotatedTypeContext(baseType, getConfig());
 			}

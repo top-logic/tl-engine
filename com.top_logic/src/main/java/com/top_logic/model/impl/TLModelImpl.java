@@ -254,4 +254,14 @@ public class TLModelImpl extends AbstractTLModelPart implements TLModel {
 		throw new IllegalArgumentException(error.toString());
 	}
 
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case MODULES_ATTR:
+				return getModules();
+			default:
+				return super.tValue(part);
+		}
+	}
+
 }

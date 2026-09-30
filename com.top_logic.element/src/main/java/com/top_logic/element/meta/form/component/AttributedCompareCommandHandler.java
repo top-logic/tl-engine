@@ -18,7 +18,7 @@ import com.top_logic.layout.form.decorator.AbstractRevisionCompareHandler;
 /**
  * Show a compare view for {@link Wrapper}s in an {@link EditAttributedComponent}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class AttributedCompareCommandHandler<C extends EditAttributedComponent> extends
 		AbstractRevisionCompareHandler<C> {

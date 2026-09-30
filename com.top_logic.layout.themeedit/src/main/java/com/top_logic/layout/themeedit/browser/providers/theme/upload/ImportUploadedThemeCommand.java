@@ -33,7 +33,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Command executes the import of the uploaded {@link Theme}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ImportUploadedThemeCommand extends ImportZipDataCommand {
 
@@ -47,13 +47,6 @@ public class ImportUploadedThemeCommand extends ImportZipDataCommand {
 		super(uploadDataDialog);
 
 		_themeTable = Objects.requireNonNull(themeTable);
-	}
-
-	@Override
-	protected void uploadPostProcess(BinaryData data) {
-		super.uploadPostProcess(data);
-
-		_themeTable.invalidate();
 	}
 
 	@Override

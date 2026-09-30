@@ -4,10 +4,7 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	template="com.top_logic/tab.template.xml"
 >
-	<arguments
-		securityDomain=""
-		tabIcon="theme:ICON_CHART_JS"
-	>
+	<arguments tabIcon="theme:ICON_CHART_JS">
 		<tabLabel key="dynamic.9520df82-0419-4d4f-9fd5-9d31e3668cef">
 			<en>ChartJS</en>
 			<de>ChartJS</de>

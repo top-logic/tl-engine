@@ -18,7 +18,7 @@ import com.top_logic.tool.dataImport.UploadDataDialog;
 /**
  * A {@link SimpleFormDialog} to upload a scripting template.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ImportScriptRecorderTemplateDialog extends UploadDataDialog {
 

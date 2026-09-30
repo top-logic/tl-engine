@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.process">
+		<class name="Document">
+			<generalizations>
+				<generalization type="tl.bpe.execution:ProcessExecution"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<group>
+							<field
+								attribute="name"
+								fullQualifiedName="test.process:Document#name"
+								type="tl.core:String"
+								visibility="mandatory"
+							/>
+							<field
+								attribute="description"
+								fullQualifiedName="test.process:Document#description"
+								type="tl.core:String"
+								visibility="mandatory"
+							/>
+							<label key="dynamic.c3b9b623-6620-43c7-ad9e-3c9dd20838ea">
+								<en>Basic</en>
+								<de>Basic</de>
+							</label>
+						</group>
+						<group>
+							<field
+								attribute="automaticUpdate1"
+								fullQualifiedName="test.process:Document#automaticUpdate1"
+								type="tl.core:Boolean"
+								visibility="read-only"
+							/>
+							<field
+								attribute="automaticUpdate2"
+								fullQualifiedName="test.process:Document#automaticUpdate2"
+								type="tl.core:Boolean"
+								visibility="read-only"
+							/>
+							<field
+								attribute="reviewUpdate"
+								fullQualifiedName="test.process:Document#reviewUpdate"
+								type="tl.core:Boolean"
+								visibility="read-only"
+							/>
+							<label key="dynamic.22491652-98f1-4466-b7c5-0a7d8b2911a2">
+								<en>Updates</en>
+								<de>Updates</de>
+							</label>
+						</group>
+						<group>
+							<field
+								attribute="reviewComment"
+								fullQualifiedName="test.process:Document#reviewComment"
+								type="tl.core:String"
+								visibility="read-only"
+							/>
+							<field
+								attribute="reviseComment"
+								fullQualifiedName="test.process:Document#reviseComment"
+								type="tl.core:String"
+								visibility="read-only"
+							/>
+							<label key="dynamic.98ecc0af-8308-4196-8e16-0e532d927945">
+								<en>comments</en>
+								<de>comments</de>
+							</label>
+						</group>
+						<group>
+							<field
+								attribute="standardProcess"
+								fullQualifiedName="test.process:Document#standardProcess"
+								type="tl.core:Boolean"
+								visibility="read-only"
+							/>
+							<field
+								attribute="edgeProcess"
+								fullQualifiedName="test.process:Document#edgeProcess"
+								type="tl.core:Boolean"
+								visibility="read-only"
+							/>
+							<label key="dynamic.e445c0e9-43e7-42a0-866c-97405cb50377">
+								<de>Automatic Process</de>
+							</label>
+						</group>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<property name="description"
+					type="tl.core:String"
+				/>
+				<property name="automaticUpdate1"
+					type="tl.core:Boolean"
+				/>
+				<property name="automaticUpdate2"
+					type="tl.core:Boolean"
+				/>
+				<property name="reviewComment"
+					type="tl.core:String"
+				/>
+				<property name="reviseComment"
+					type="tl.core:String"
+				/>
+				<property name="reviewUpdate"
+					type="tl.core:Boolean"
+				/>
+				<property name="standardProcess"
+					type="tl.core:Boolean"
+				/>
+				<property name="edgeProcess"
+					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

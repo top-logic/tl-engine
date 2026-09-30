@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.util.RunnableEx2;
+import com.top_logic.util.AbstractTopLogicServlet;
 import com.top_logic.util.TopLogicServlet;
 
 /**
@@ -22,7 +23,7 @@ import com.top_logic.util.TopLogicServlet;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class OpenApiServlet extends HttpServlet {
+public class OpenApiServlet extends AbstractTopLogicServlet {
 
 	@Override
 	protected final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

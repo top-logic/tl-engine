@@ -17,21 +17,22 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.StringServices;
+import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.Location;
-import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.MOClass;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -41,23 +42,25 @@ import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLScope;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundObject;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
-import com.top_logic.tool.boundsec.wrap.PersBoundChecker;
 import com.top_logic.util.TLContext;
 
 /**
- * Common, configurable functions used by the Bound hierarchy.
+ * Common, configurable helper functions for the security framework.
  * <p>
  * This class can easily be overridden to modify aspects of the BoundSecurity
  * as needed by applications.
  * </p>
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
+@Label("Security helper functions")
 public class BoundHelper extends ManagedClass {
 
     /** When asking for groups this will merge in the groups of the SuperObject */
@@ -86,24 +89,11 @@ public class BoundHelper extends ManagedClass {
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	public static interface Config extends ServiceConfiguration<BoundHelper> {
-
-		/**
-		 * Whether to use the {@link BoundHelper#getDefaultObject() global default object} as
-		 * {@link AbstractBoundWrapper#getSecurityParent() security parent} by default.
-		 * 
-		 * @see BoundHelper#getDefaultObject()
-		 * @see AbstractBoundWrapper#getSecurityParent()
-		 * @see BoundHelper#useDefaultObject()
-		 */
-		@Name("use-default-security-parent")
-		boolean getUseDefaultSecurityParent();
-
+		// No additional properties.
 	}
 
     /** The default {@link com.top_logic.tool.boundsec.BoundObject} */
 	private BoundObject defaultObject;
-
-	private Map<Location, Map<String, Collection<PersBoundChecker>>> defaultPersBoundCheckers;
 
 	private Map<Location, Map<String, Collection<ComponentName>>> boundCheckerCache;
     
@@ -119,9 +109,6 @@ public class BoundHelper extends ManagedClass {
      */
     boolean allowExecuteDisabledButtons = false;
 
-	/** @see Config#getUseDefaultSecurityParent() */
-	private final boolean _useDefaultSecurityParent;
-
 	/**
 	 * Creates a new {@link BoundHelper} from the given configuration.
 	 * 
@@ -133,41 +120,8 @@ public class BoundHelper extends ManagedClass {
 	public BoundHelper(InstantiationContext context, Config config) {
 		super(context, config);
         // for getInstance
-		defaultPersBoundCheckers =
-			Collections.synchronizedMap(new HashMap<>());
 		boundCheckerCache =
 			Collections.synchronizedMap(new HashMap<>());
-
-		_useDefaultSecurityParent = config.getUseDefaultSecurityParent();
-    }
-
-	public final boolean registerPersBoundCheckerFor(Location rootLocation, ComponentName aPersBoundID, String aType) {
-		Map<String, Collection<PersBoundChecker>> checkerForType = defaultPersBoundCheckers.get(rootLocation);
-		if (checkerForType == null) {
-			checkerForType = Collections.synchronizedMap(new HashMap<>());
-			defaultPersBoundCheckers.put(rootLocation, checkerForType);
-		}
-		Collection<PersBoundChecker> theCheckers = checkerForType.get(aType);
-        if (theCheckers == null) {
-			theCheckers = CollectionUtil.newSet(1);
-        }
-
-        theCheckers.add(new PersBoundChecker(aPersBoundID));
-		checkerForType.put(aType, theCheckers);
-
-        if (theCheckers.size() > 1) {
-            String theIDs = StringServices.toString(asIDs(theCheckers), ",");
-			Logger.warn("Multiple PersBoundComp are default for type '" + aType + "': " + theIDs, BoundHelper.class);
-        }
-        return true;
-    }
-
-	private Collection<ComponentName> asIDs(Collection<? extends PersBoundChecker> someCheckers) {
-		ArrayList<ComponentName> theIds = new ArrayList<>(someCheckers.size());
-		for (BoundChecker theChecker : someCheckers) {
-			theIds.add(theChecker.getSecurityId());
-        }
-        return theIds;
     }
 
     /**
@@ -259,7 +213,7 @@ public class BoundHelper extends ManagedClass {
 	 * @see #getDefaultCheckersForType(TLClass, BoundCommandGroup)
 	 */
 	public final Collection<? extends BoundChecker> getDefaultCheckersForType(TLClass type) {
-		return getDefaultCheckers(getCheckerTypeForType(type), SimpleBoundCommandGroup.READ);
+		return getDefaultCheckersForType(type, SimpleBoundCommandGroup.READ);
 	}
 
 	/**
@@ -285,21 +239,7 @@ public class BoundHelper extends ManagedClass {
     	}
     	// no context, get cached PersBoundCheckers
 		else {
-			switch (defaultPersBoundCheckers.size()) {
-				case 0: {
-					return Collections.emptyList();
-				}
-				case 1: {
-					return getDefaultFromMap(this.defaultPersBoundCheckers.values().iterator().next(), aType);
-				}
-				default: {
-					Collection<BoundChecker> allChecker = new ArrayList<>();
-					defaultPersBoundCheckers.values().forEach(m -> {
-						allChecker.addAll(getDefaultFromMap(m, aType));
-					});
-					return allChecker;
-				}
-			}
+			return Collections.emptyList();
 		}
     	
     }
@@ -389,16 +329,18 @@ public class BoundHelper extends ManagedClass {
 			return Collections.emptyList();
         }
 
-		Iterator<String> theCheckerTypes = this.getBoundCheckerDefaultTypes(anObject).iterator();
+		List<String> checkerTypes = this.getBoundCheckerDefaultTypes(anObject);
 
         // Get the components from the MainLayout that are default for the type
 		Collection<BoundChecker> theCheckers = new HashSet<>();
 
         // search for the most specific type for which bound checkers are registered.
         // Only the checkers registered for that type are returned
-        while (theCheckers.isEmpty() && theCheckerTypes.hasNext()) {
-			String theCheckerType = theCheckerTypes.next();
-            theCheckers.addAll(getBoundHandlers(theCheckerType, aChecker, aBCG));
+		for (String checkerType : checkerTypes) {
+			theCheckers.addAll(getBoundHandlers(checkerType, aChecker, aBCG));
+			if (!theCheckers.isEmpty()) {
+				break;
+			}
         }
 		if (Logger.isDebugEnabled(BoundHelper.class)) {
 			Object typeName = (anObject != null) ? TLModelUtil.qualifiedName(anObject.tType()) : anObject;
@@ -425,7 +367,7 @@ public class BoundHelper extends ManagedClass {
 				boundCheckerCache.put(boundCheckerCacheKey(main), storedCache);
 				cachedCheckerNames = null;
 			} else {
-				cachedCheckerNames = getDefaultFromMap(storedCache, aType);
+				cachedCheckerNames = storedCache.get(aType);
 			}
 			if (cachedCheckerNames != null) {
 				checkerNames = cachedCheckerNames;
@@ -609,12 +551,22 @@ public class BoundHelper extends ManagedClass {
 	 * </p>
 	 * 
 	 * @param type
-	 *        The object type representation. In <i>TopLogic</i> either {@link MetaObject} or
-	 *        {@link Class}.
+	 *        The object type representation.
 	 * @return a checker type name.
 	 */
-    protected String getCheckerTypeForType(Object type) {
-        if (type instanceof MetaObject) {
+	protected final String getCheckerTypeForType(Object type) {
+		if (type instanceof TLClass) {
+			TLClass tlClass = (TLClass) type;
+			TLScope scope = tlClass.getScope();
+			if (scope instanceof TLModule) {
+				return TLModelUtil.qualifiedName(tlClass);
+			} else {
+				/* Can not use full qualified name for local classes, because it contains id of the
+				 * concrete scope element. Better use the checker type of the scope as "scope". */
+				return TLModelUtil.qualifiedName(tlClass.getModule().getName(), getCheckerType(scope),
+					tlClass.getName());
+			}
+		} else if (type instanceof MetaObject) {
             return ((MetaObject) type).getName();
         } else if (type instanceof Class<?>) {
             return ((Class<?>) type).getName();
@@ -632,10 +584,20 @@ public class BoundHelper extends ManagedClass {
 	 * 
 	 * @param anObject
 	 *        The object to find its type for.
-	 * @return In <i>TopLogic</i> either {@link MetaObject} or {@link Class}.
+	 * @return A type for {@link #getCheckerTypeForType(Object)}.
 	 */
-	protected Object getObjectType(Object anObject) {
-        if (anObject instanceof Wrapper) {
+	protected final Object getObjectType(Object anObject) {
+		if (anObject instanceof TLObject) {
+			TLStructuredType tType = ((TLObject) anObject).tType();
+			if (tType != null) {
+				return tType;
+			}
+			if (((TLObject) anObject).tTransient()) {
+				// Transient objects have no table. This actually just occur in tests.
+				return anObject.getClass();
+			}
+			return ((TLObject) anObject).tTable();
+		} else if (anObject instanceof Wrapper) {
             return ((Wrapper) anObject).tTable();
         }
         else if (anObject instanceof KnowledgeObject) {
@@ -662,8 +624,12 @@ public class BoundHelper extends ManagedClass {
 	 * 
 	 * @see #getObjectType(Object) Finding types for implementations.
 	 */
-	protected List<?> getSuperTypes(Object type) {
-        if (type instanceof MOClass) {
+	protected final List<?> getSuperTypes(Object type) {
+		// Method declared final to prevent introducing even more type abstractions
+		// outside the framework.
+		if (type instanceof TLClass) {
+			return ((TLClass) type).getGeneralizations();
+		} else if (type instanceof MOClass) {
 			MOClass superclass = ((MOClass) type).getSuperclass();
 			return CollectionUtilShared.singletonOrEmptyList(superclass);
         } else if (type instanceof Class<?>) {
@@ -842,17 +808,6 @@ public class BoundHelper extends ManagedClass {
 		return !AccessManager.getInstance().getRoles(aPerson, anObject).isEmpty(); // anObject.hasAnyRole(aPerson);
     }
 
-	/**
-	 * All {@link BoundedRole}s defined for the given {@link TLModule}
-	 */
-	public Set<? extends BoundedRole> getPossibleRoles(TLModule securityModule) {
-		if (securityModule != null) {
-			return BoundedRole.getDefinedRoles(securityModule);
-		} else {
-			return Collections.emptySet();
-        }
-    }
-
     /**
      * Make aDest have all the same Roles as aSource.
      *
@@ -884,12 +839,12 @@ public class BoundHelper extends ManagedClass {
     public boolean isRoleInUse(BoundedRole aRole) {
         try {
             boolean inUse = false;
-			Iterator<KnowledgeAssociation> theRoleKAs =
-				aRole.tHandle().getIncomingAssociations(BoundedRole.HAS_ROLE_ASSOCIATION);
-            while (theRoleKAs.hasNext() && !inUse) {
-				KnowledgeAssociation theKA = theRoleKAs.next();
-                inUse = theKA.getAttributeValue(BoundedRole.ATTRIBUTE_OWNER) != null;
-            }
+			try (CloseableIterator<KnowledgeObject> theRoleKAs = BoundedRole.roleAssignmentsForRole(aRole.tHandle())) {
+				while (theRoleKAs.hasNext() && !inUse) {
+					KnowledgeObject theKA = theRoleKAs.next();
+					inUse = theKA.getAttributeValue(BoundedRole.ATTRIBUTE_OWNER) != null;
+				}
+			}
 
             return inUse;
         }
@@ -933,21 +888,6 @@ public class BoundHelper extends ManagedClass {
 		BoundedRole.copyRoleAssignments(aDest, aSource);
     }
     
-	private static <T> Collection<T> getDefaultFromMap(Map<String, Collection<T>> defaultsByType, String type) {
-		return defaultsByType.get(type);
-    }
-
-    /**
-     * Flag if using default object as security parent
-     * for all AbstractBoundWrappers that don't define
-     * one themselves.
-     *
-     * @return the flag
-     */
-    public boolean useDefaultObject() {
-		return _useDefaultSecurityParent;
-    }
-
     /**
      * This method sets the {@link #allowChangeDeleteProtection} flag.
      */
@@ -975,6 +915,63 @@ public class BoundHelper extends ManagedClass {
     public boolean isAllowExecuteDisabledButtons() {
         return this.allowExecuteDisabledButtons;
     }
+
+	/**
+	 * Visits all all security parents (recursively) of the given object and consumes them. No
+	 * parent is visited twice. The parents are visited in breadth first order.
+	 * 
+	 * @param object
+	 *        The object whose security parents must be visited.
+	 * @param consumer
+	 *        {@link Consumer} to apply to the security parent.
+	 * 
+	 * @see #visitAllSecurityParents(BoundObject, Function)
+	 */
+	public static void collectAllSecurityParents(BoundObject object, Consumer<BoundObject> consumer) {
+		visitAllSecurityParents(object, secParent -> {
+			consumer.accept(secParent);
+			return true;
+		});
+	}
+
+	/**
+	 * Visits all all security parents (recursively) of the given object and applies the given
+	 * function. No parent is visited twice. The parents are visited in breadth first order.
+	 * 
+	 * @param object
+	 *        The object whose security parents must be visited.
+	 * @param fun
+	 *        {@link Function} to apply to the security parent. The return value decides whether
+	 *        traversing is continued. If <code>true</code> then the function is applied to the next
+	 *        parent, <code>false</code> ends the traversing.
+	 * 
+	 * @see #collectAllSecurityParents(BoundObject, Consumer)
+	 */
+	public static void visitAllSecurityParents(BoundObject object, Function<BoundObject, Boolean> fun) {
+		Collection<? extends BoundObject> securityParents = object.getSecurityParents();
+		if (securityParents.isEmpty()) {
+			return;
+		}
+		HashSet<BoundObject> seen = new HashSet<>();
+		List<BoundObject> toProcess = new ArrayList<>(securityParents);
+		List<BoundObject> parents = new ArrayList<>();
+		mainLoop:
+		while (!toProcess.isEmpty()) {
+			for (BoundObject parent : toProcess) {
+				boolean isNew = seen.add(parent);
+				if (isNew) {
+					if (!fun.apply(parent)) {
+						break mainLoop;
+					}
+					parents.addAll(parent.getSecurityParents());
+				}
+			}
+			List<BoundObject> l = toProcess;
+			toProcess = parents;
+			parents = l;
+			parents.clear();
+		}
+	}
 
 	public static final class Module extends TypedRuntimeModule<BoundHelper> {
 

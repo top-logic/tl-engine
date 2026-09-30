@@ -14,23 +14,26 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
+import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.BidiHashMap;
-import com.top_logic.basic.col.Filter;
-import com.top_logic.basic.col.FilteredIterable;
+import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.TupleFactory;
+import com.top_logic.basic.col.map.MultiMaps;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfiguration;
@@ -46,26 +49,23 @@ import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.dob.MetaObject;
 import com.top_logic.element.boundsec.ElementBoundHelper;
-import com.top_logic.element.boundsec.manager.rule.ExternalRoleProvider;
+import com.top_logic.element.boundsec.manager.rule.NavigationRule;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
-import com.top_logic.element.boundsec.manager.rule.SecurityStorageCommitObserver;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig;
+import com.top_logic.element.boundsec.manager.rule.config.SecurityParentsConfig;
 import com.top_logic.element.meta.MetaElementFactory;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.service.CommitHandler;
-import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -92,6 +92,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 	MetaElementFactory.Module.class,
 	BoundHelper.Module.class,
+	InitialRolesManager.Module.class,
 })
 public class ElementAccessManager extends AccessManager {
 
@@ -106,11 +107,8 @@ public class ElementAccessManager extends AccessManager {
 		/** Property name of {@link #getMetaElements()}. */
 		String META_ELEMENTS = "meta-elements";
 
-		/** Property name of {@link #getRoleProvider()}. */
-		String ROLE_PROVIDER = "role-provider";
-
-		/** Property name of {@link #getCommitObserver()}. */
-		String COMMIT_OBSERVER = "commit-observer";
+		/** Property name of {@link #getSecurityParents()}. */
+		String SECURITY_PARENTS = "security-parents";
 
 		@Name(GROUP_MAPPER)
 		@InstanceFormat
@@ -120,17 +118,6 @@ public class ElementAccessManager extends AccessManager {
 		@Name(META_ELEMENTS)
 		@Key(MEConfig.NAME_ATTRIBUTE)
 		List<MEConfig> getMetaElements();
-
-		@Name(ROLE_PROVIDER)
-		@Key(ExternalRoleProvider.Config.RULE_NAME)
-		List<ExternalRoleProvider> getRoleProvider();
-
-		/**
-		 * @see ElementAccessManager#commitObservers
-		 */
-		@Name(COMMIT_OBSERVER)
-		@Key(SecurityStorageCommitObserver.Config.NAME_ATTRIBUTE)
-		List<SecurityStorageCommitObserver> getCommitObserver();
 
 		/**
 		 * The role rule definition for the access manager.
@@ -143,6 +130,18 @@ public class ElementAccessManager extends AccessManager {
 		 * Setter for {@link #getRoleRules()}.
 		 */
 		void setRoleRules(RoleRulesConfig roleRules);
+
+		/**
+		 * The security parent rule definitions for the access manager.
+		 */
+		@ItemDefault
+		@Name(SECURITY_PARENTS)
+		SecurityParentsConfig getSecurityParents();
+
+		/**
+		 * Setter for {@link #getSecurityParents()}.
+		 */
+		void setSecurityParents(SecurityParentsConfig roleRules);
 
 	}
 
@@ -165,6 +164,9 @@ public class ElementAccessManager extends AccessManager {
 	/** Key to store the current version of the role rule definition in the database. */
 	private static final String ROLE_RULES_CONFIG_VERSION_PROPERTY = "roleRules.version";
 
+	/** Key to store the current version of the security parents definition in the database. */
+	private static final String SECURITY_PARENTS_CONFIG_VERSION_PROPERTY = "security-parents.version";
+
 	/**
 	 * Called by the {@link TypedConfiguration} for creating a {@link ElementAccessManager}.
 	 * <p>
@@ -183,21 +185,6 @@ public class ElementAccessManager extends AccessManager {
 		_boundHelper = (ElementBoundHelper) BoundHelper.getInstance();
 
 		groupMapper = getConfig().getGroupMapper();
-
-		externalRoleProviders = new HashMap<>();
-		externalRoleProvidersByTypes = new HashMap<>();
-		for (ExternalRoleProvider roleProvider : getConfig().getRoleProvider()) {
-			this.externalRoleProviders.put(roleProvider.getConfig().getRuleName(), roleProvider);
-			for (String theType : roleProvider.getAffectingTypes()) {
-				Set<ExternalRoleProvider> theSet = this.externalRoleProvidersByTypes.get(theType);
-				if (theSet == null) {
-					theSet = new HashSet<>();
-					this.externalRoleProvidersByTypes.put(theType, theSet);
-				}
-				theSet.add(roleProvider);
-			}
-		}
-		commitObservers = Collections.unmodifiableList(getConfig().getCommitObserver());
 	}
 
 	@Override
@@ -205,7 +192,7 @@ public class ElementAccessManager extends AccessManager {
 		super.startUp();
 		init();
 		_securityModuleByClass = loadRoleRootForMetaElements();
-		loadInitialRoleRules();
+		loadInitialRules();
 	}
 
 	private Map<TLClass, TLModule> loadRoleRootForMetaElements() {
@@ -242,42 +229,15 @@ public class ElementAccessManager extends AccessManager {
 		return (Config) super.getConfig();
 	}
 
-	private final class ExternalRoleProviderFilter implements Filter<RoleProvider> {
-		private final BoundObject theBO;
-
-		/*package protected*/ ExternalRoleProviderFilter(BoundObject theBO) {
-			this.theBO = theBO;
-		}
-
-		@Override
-		public boolean accept(RoleProvider anObject) {
-			return anObject.matches(theBO);
-		}
-	}
-
     /**
-     * The rules declared for the access manager
-     *
-     * Key is either a {@link TLClass} or a {@link MetaObject}
-     */
-    private Map<Object, Collection<RoleProvider>> rules;
+	 * The rules declared for the access manager.
+	 */
+	private Map<TLClass, Collection<RoleProvider>> rules;
 
     private Map<String, RoleProvider> ruleIds;
 
 	private BidiHashMap/* <String, Integer> */ruleNumbers;
     
-    /**
-     * external role provides by id ( {@link RoleProvider#getId()}
-     */
-	private final Map<String, ExternalRoleProvider> externalRoleProviders;
-    
-    /**
-     * maps {@link KnowledgeItem} types ({@link ExternalRoleProvider#getAffectingTypes()})
-     * to the {@link ExternalRoleProvider}s affected by changes of objects of such types.
-     */
-	private final Map<String, Set<ExternalRoleProvider>> externalRoleProvidersByTypes;
-
-
     /**
      * MetaAttributes that participate in a rule path.
      *
@@ -285,24 +245,21 @@ public class ElementAccessManager extends AccessManager {
      */
     private Map<TLStructuredTypePart, Set<RoleProvider> > pathAttributes;
 
-    /**
-     * Association types that participate in a rule path
-     *
-     * Updates to such associations must trigger recalculation of access rights
-     */
-    private Map<String, Set <RoleProvider>> pathAssociations;
+	private Map<TLClass, Collection<RoleProvider>> _resolvedMERules;
 
-    /**
-     * The resolved rules declared for the access manager (respecting the inherit flag)
-     */
-    private Map<TLClass, Collection<RoleProvider>> resolvedMERules;
+	private Map<TLClass, Set<BoundedRole>> _potentialRolesForType;
 
-    /**
-     * The resolved rules declared for the access manager
-     *
-     * Map < MetaObjects, Map < BoundRole, Collection<Rule> > >
-     */
-    private Map<MetaObject, Collection<RoleProvider>> resolvedMORules;
+	/**
+	 * Resolved security-parent rules per type.
+	 *
+	 * <p>
+	 * Initialized to an empty map so that a failed rule load (an exception, or reported problems in
+	 * {@link #loadSecurityParentRules()}) does not leave it <code>null</code>: {@link #getSecurityParents(BoundObject)}
+	 * is consulted on every access check and must not fail with a {@link NullPointerException}. On a
+	 * failed reload the previously resolved rules are retained; only a successful load replaces them.
+	 * </p>
+	 */
+	private Map<TLClass, Collection<NavigationRule>> _resolvedSecurityParents = Collections.emptyMap();
 
 	private Map<TLClass, TLModule> _securityModuleByClass;
 
@@ -326,12 +283,6 @@ public class ElementAccessManager extends AccessManager {
 
 	private Map<Object, Collection<Group>> getGroupsCache = new HashMap<>();
     
-    /**
-     * Observers, that determine additional objects to the sets of
-     * new and removed objects in the context of a commit
-     */
-	private final Collection<SecurityStorageCommitObserver> commitObservers;
-
 	private final ElementBoundHelper _boundHelper;
 
 
@@ -402,10 +353,9 @@ public class ElementAccessManager extends AccessManager {
         this.rules            = new HashMap< >();
         this.ruleIds          = new HashMap<>();
         this.ruleNumbers      = new BidiHashMap();
-        this.resolvedMERules  = new HashMap<>();
-        this.resolvedMORules  = new HashMap<>();
+		_resolvedMERules = new HashMap<>();
+		_potentialRolesForType = new HashMap<>();
         this.pathAttributes   = new HashMap< >();
-        this.pathAssociations = new HashMap< >();
     }
 
 	private TLModule getSecurityModule(MEConfig meConfig, Log log) {
@@ -432,7 +382,49 @@ public class ElementAccessManager extends AccessManager {
     @Override
 	public boolean reload() {
 		this.init();
-		return loadInitialRoleRules();
+		return loadInitialRules();
+	}
+
+	private boolean loadInitialRules() {
+		boolean securityParentsresult = loadSecurityParentRules();
+		boolean roleRuleResult = loadInitialRoleRules();
+		return roleRuleResult && securityParentsresult;
+	}
+
+	/**
+	 * Loads the security parent rules file if necessary.
+	 */
+	private boolean loadSecurityParentRules() {
+		try {
+			SecurityParentsConfig securityParents = getConfig().getSecurityParents();
+			NavigationRulesImporter rulesImporter = NavigationRulesImporter.loadRules(securityParents.getRules());
+			if (!rulesImporter.getProblems().isEmpty()) {
+				/* Use english resources, because messages are written to log. */
+				Resources resource = Resources.getLogInstance();
+				for (ResKey theProblem : rulesImporter.getProblems()) {
+					Logger.error("Problem while reloading security parents: " + resource.getString(theProblem), this);
+				}
+				return false;
+			}
+			storeConfigVersion(securityParents, SecurityParentsConfig.class, Config.SECURITY_PARENTS,
+				SECURITY_PARENTS_CONFIG_VERSION_PROPERTY);
+
+			HashMap<TLClass, Collection<NavigationRule>> resolved = new HashMap<>();
+			for (Entry<TLClass, Collection<NavigationRule>> entry : rulesImporter.getRules().entrySet()) {
+				TLClass theME = entry.getKey();
+				Collection<NavigationRule> theRules = entry.getValue();
+				for (NavigationRule rule : theRules) {
+					boolean inherit = rule.isInherit();
+					addRuleToSubElements(theME, rule, inherit, resolved);
+				}
+			}
+
+			_resolvedSecurityParents = resolved;
+			return true;
+		} catch (Exception e) {
+			Logger.error("Unable to reload security.", e, this);
+			return false;
+		}
 	}
 
 	/**
@@ -441,7 +433,7 @@ public class ElementAccessManager extends AccessManager {
 	private boolean loadInitialRoleRules() {
 		try {
 			RoleRulesConfig roleRules = getConfig().getRoleRules();
-			RoleRulesImporter roleRulesImporter = RoleRulesImporter.loadRules(this, roleRules);
+			RoleRulesImporter roleRulesImporter = RoleRulesImporter.loadRules(roleRules);
 			if (!roleRulesImporter.getProblems().isEmpty()) {
 				/* Use english resources, because messages are written to log. */
 				Resources resource = Resources.getLogInstance();
@@ -450,7 +442,7 @@ public class ElementAccessManager extends AccessManager {
 				}
 				return false;
             }
-			storeConfigVersion(roleRules);
+			storeConfigVersion(roleRules, RoleRulesConfig.class, "roleRules", ROLE_RULES_CONFIG_VERSION_PROPERTY);
 			this.setRulesInternal(roleRulesImporter.getRules());
             return true;
         }
@@ -460,22 +452,22 @@ public class ElementAccessManager extends AccessManager {
         }
     }
 
-	private void storeConfigVersion(RoleRulesConfig roleRules) {
-		String configVersion = configHash(roleRules);
+	private <T extends ConfigurationItem> void storeConfigVersion(T item, Class<T> staticType, String rootTag,
+			String propertyName) {
+		String configVersion = configHash(item, staticType, rootTag);
 		DBProperties dbProperties = new DBProperties(ConnectionPoolRegistry.getDefaultConnectionPool());
-		boolean versionChanged =
-			dbProperties.setProperty(DBProperties.GLOBAL_PROPERTY, ROLE_RULES_CONFIG_VERSION_PROPERTY, configVersion);
+		boolean versionChanged = dbProperties.setProperty(DBProperties.GLOBAL_PROPERTY, propertyName, configVersion);
 		if (versionChanged) {
 			dirty = true;
 		}
 	}
 
-	private String configHash(RoleRulesConfig roleRules) {
+	private <T extends ConfigurationItem> String configHash(T item, Class<T> staticType, String rootTag) {
 		String configVersion;
 		try {
 			StringWriter out = new StringWriter();
 			try (ConfigurationWriter w = new ConfigurationWriter(out)) {
-				w.write("roleRules", RoleRulesConfig.class, roleRules);
+				w.write(rootTag, staticType, item);
 			}
 			configVersion = String.valueOf(out.toString().hashCode());
 		} catch (XMLStreamException ex) {
@@ -494,25 +486,12 @@ public class ElementAccessManager extends AccessManager {
 		super.shutDown();
 	}
 
-	protected Collection<SecurityStorageCommitObserver> getCommitObservers() {
-		return (commitObservers);
-	}
-
-	public Map<Object, Collection<RoleProvider>> getRules() {
+	public Map<TLClass, Collection<RoleProvider>> getRules() {
         return (rules);
     }
 
     public Collection<RoleProvider> getRules(TLClass aME) {
-        return getFromCollectionMap(aME, this.resolvedMERules);
-    }
-
-    public Collection<RoleProvider> getRules(MetaObject aMO) {
-        return getFromCollectionMap(aMO, this.resolvedMORules);
-    }
-
-    private <U, V> Collection<V> getFromCollectionMap(U aKey, Map<U, Collection<V>> aMap) {
-        Collection<V> theRules = aMap.get(aKey);
-        return theRules != null ? theRules : Collections.<V>emptyList();
+		return getResolvedMERules().getOrDefault(aME, Collections.emptyList());
     }
 
     /**
@@ -521,13 +500,13 @@ public class ElementAccessManager extends AccessManager {
 	 * @param someRules
 	 *        the rules mapped by the meta element / meta object they are declared on.
 	 */
-    private void setRulesInternal(Map <Object, Collection<RoleProvider> > someRules) {
-    	Map <Object, Collection<RoleProvider> > theRules = someRules == null 
-    	    ? Collections.<Object, Collection<RoleProvider> >emptyMap() 
+	private void setRulesInternal(Map<TLClass, Collection<RoleProvider>> someRules) {
+		Map<TLClass, Collection<RoleProvider>> theRules = someRules == null
+			? Collections.emptyMap()
     	    : someRules;
-        resolveRules(theRules, this.resolvedMERules, this.resolvedMORules);
-        this.pathAttributes   = resolveMataAttributes(theRules);
-        this.pathAssociations = resolveAssociations(theRules);
+		_resolvedMERules = resolveRules(theRules);
+		_potentialRolesForType = resolvePotentialRoles(_resolvedMERules);
+        this.pathAttributes   = resolveMetaAttributes(theRules);
         this.rules            = theRules;
         this.ruleIds          = new HashMap<>();
         this.ruleNumbers      = new BidiHashMap();
@@ -535,7 +514,7 @@ public class ElementAccessManager extends AccessManager {
 			for (RoleProvider theRule : theRuleColl) {
                 String   theId   = theRule.getId();
                 if (this.ruleIds.containsKey(theId)) {
-                    throw new TopLogicException(this.getClass(), "duplicateKeyId", new String[] { theId });
+					throw new TopLogicException(I18NConstants.ERROR_DUPLICATE_RULE_ID__ID.fill(theId));
                 }
                 this.ruleIds.put(theId, theRule);
             }
@@ -558,45 +537,60 @@ public class ElementAccessManager extends AccessManager {
         return this.ruleIds.get(theID);
     }
 
+	/**
+	 * Determines the rules which uses the given part.
+	 */
     public Set<RoleProvider> getRules(TLStructuredTypePart aMA) {
-        Set<RoleProvider> theResult = this.pathAttributes.get(aMA);
-        return theResult == null ? Collections.<RoleProvider>emptySet() : theResult;
+		return pathAttributes.getOrDefault(aMA, Collections.emptySet());
     }
 
-    public Set<RoleProvider> getRules(String anAssociationType) {
-        Set<RoleProvider> theResult = this.pathAssociations.get(anAssociationType);
-        return theResult == null ? Collections.<RoleProvider>emptySet() : theResult;
+	private Map<TLClass, Set<BoundedRole>> resolvePotentialRoles(
+			Map<TLClass, Collection<RoleProvider>> resolvedMERules) {
+		Map<TLClass, Set<BoundedRole>> result = new HashMap<>();
+		for (Entry<TLClass, Collection<RoleProvider>> e : resolvedMERules.entrySet()) {
+			Set<BoundedRole> roles = e.getValue()
+				.stream()
+				.filter(RoleRule.class::isInstance)
+				.map(RoleRule.class::cast)
+				.map(RoleRule::getRole)
+				.map(BoundedRole.class::cast)
+				.collect(Collectors.toSet());
+			addRolesRecursive(result, e.getKey(), roles, new HashSet<>());
+		}
+		return result;
+	}
+
+	private void addRolesRecursive(Map<TLClass, Set<BoundedRole>> result, TLClass key, Set<BoundedRole> roles,
+			Set<TLClass> seen) {
+		if (!seen.add(key)) {
+			// Already visited along this propagation; guard against diamond hierarchies and cycles.
+			return;
+		}
+		result.computeIfAbsent(key, unused -> new HashSet<>()).addAll(roles);
+		for (TLClass generalization : key.getGeneralizations()) {
+			addRolesRecursive(result, generalization, roles, seen);
+		}
+	}
+
+	private Map<TLClass, Collection<RoleProvider>> resolveRules(Map<TLClass, Collection<RoleProvider>> someRules) {
+		HashMap<TLClass, Collection<RoleProvider>> resolved = new HashMap<>();
+		for (Entry<TLClass, Collection<RoleProvider>> entry : someRules.entrySet()) {
+			TLClass theME = entry.getKey();
+			Collection<RoleProvider> theRules = entry.getValue();
+			for (RoleProvider theRule : theRules) {
+				if (theRule instanceof RoleRule rule) {
+					boolean inherit = rule.isInherit();
+					addRuleToSubElements(theME, theRule, inherit, resolved);
+				}
+			}
+		}
+		return resolved;
     }
 
-    public Set<ExternalRoleProvider> getAffectedRoleRuleFactories(String aType) {
-        Set<ExternalRoleProvider> theResult = this.externalRoleProvidersByTypes.get(aType);
-        return theResult != null ? theResult : Collections.<ExternalRoleProvider>emptySet();
-    }
-
-    private void resolveRules(Map <Object, Collection<RoleProvider> > someRules, Map <TLClass, Collection<RoleProvider> > aMEMap, Map <MetaObject, Collection<RoleProvider> > aMOMap) {
-        for (Map.Entry<Object, Collection<RoleProvider>> theEntry : someRules.entrySet()) {
-        	Object      theKey = theEntry.getKey();
-        	if (theKey instanceof MetaObject) {
-        		aMOMap.put((MetaObject) theKey, theEntry.getValue());
-			} else {
-        		TLClass theME    = (TLClass) theKey;
-				Collection<RoleProvider> theRules = theEntry.getValue();
-				for (RoleProvider theRule : theRules) {
-        			if (theRule instanceof RoleRule) {
-						boolean inherit = ((RoleRule) theRule).isInherit();
-						this.addRuleToSubElements(theME, theRule, inherit, aMEMap);
-        			}
-        		}
-        	}
-        	
-        }
-    }
-
-    public Set getRulesWithSourceRole(BoundRole aRole, Type aType) {
+	public Set<RoleProvider> getRulesWithSourceRole(BoundRole aRole, Type aType) {
         Set<RoleProvider> theResult = new HashSet<>();
 
 		addMatchingProvides(aRole, aType, theResult, this.ruleIds.values());
-		addMatchingProvides(aRole, aType, theResult, this.externalRoleProviders.values());
 
         return theResult;
     }
@@ -617,54 +611,27 @@ public class ElementAccessManager extends AccessManager {
     }
 
 
-	private Map<TLStructuredTypePart, Set<RoleProvider>> resolveMataAttributes(Map<Object, Collection<RoleProvider>> someRules) {
+	private Map<TLStructuredTypePart, Set<RoleProvider>> resolveMetaAttributes(
+			Map<TLClass, Collection<RoleProvider>> someRules) {
         Map<TLStructuredTypePart, Set<RoleProvider>> theResult = new HashMap<>();
-		for (Map.Entry<Object, Collection<RoleProvider>> theEntry : someRules.entrySet()) {
+		for (Map.Entry<TLClass, Collection<RoleProvider>> theEntry : someRules.entrySet()) {
 			Collection<RoleProvider> theRules = theEntry.getValue();
 			for (Iterator<RoleProvider> theRIt = theRules.iterator(); theRIt.hasNext();) {
                 RoleRule theRule = (RoleRule) theRIt.next();
 
 				for (PathElement thePathElement : theRule.getPath()) {
-                    TLStructuredTypePart theMA          = thePathElement.getMetaAttribute();
-                    if (theMA != null) {
-                        this.addRuleToMap(theResult, theMA, theRule);
-                    }
+					Collection<TLStructuredTypePart> parts = thePathElement.getRelevantParts();
+					parts.forEach(part -> MultiMaps.add(theResult, part, theRule));
                 }
             }
         }
         return theResult;
     }
 
-	private Map<String, Set<RoleProvider>> resolveAssociations(Map<Object, Collection<RoleProvider>> someRules) {
-        Map<String, Set <RoleProvider>> theResult = new HashMap<>();
-		for (Map.Entry<Object, Collection<RoleProvider>> theEntry : someRules.entrySet()) {
-			Collection<RoleProvider> theRules = theEntry.getValue();
-			for (Iterator<RoleProvider> theRIt = theRules.iterator(); theRIt.hasNext();) {
-                RoleRule theRule = (RoleRule) theRIt.next();
-
-				for (PathElement thePathElement : theRule.getPath()) {
-                    String      theAssociation = thePathElement.getAssociation();
-                    if (theAssociation != null) {
-                        this.addRuleToMap(theResult, theAssociation, theRule);
-                    }
-                }
-            }
-        }
-        return theResult;
-    }
-
-    private <V> void addRuleToMap(Map<V, Set <RoleProvider>> someCurrent, V aKey, RoleProvider aRule) {
-        Set<RoleProvider> theRules = someCurrent.get(aKey);
-        if (theRules == null) {
-            theRules = new HashSet<>();
-            someCurrent.put(aKey, theRules);
-        }
-        theRules.add(aRule);
-    }
-
-    private void addRuleToSubElements(TLClass aME, RoleProvider aRule, boolean isInherit, Map <TLClass, Collection<RoleProvider> > aResult) {
+	private <T> void addRuleToSubElements(TLClass aME, T aRule, boolean isInherit,
+			Map<TLClass, Collection<T>> aResult) {
 		if (!aME.isAbstract()) {
-			addToCollectionMap(aME, aRule, aResult);
+			MultiMaps.add(aResult, aME, aRule, ArrayList::new);
 		}
         if (isInherit) {
 			for (TLClass theSubME : aME.getSpecializations()) {
@@ -673,14 +640,17 @@ public class ElementAccessManager extends AccessManager {
         }
     }
 
-    private void addToCollectionMap(TLClass aKey, RoleProvider aRule, Map <TLClass, Collection<RoleProvider> > aResult) {
-    	Collection<RoleProvider> theRules = aResult.get(aKey);
-        if (theRules == null) {
-            theRules = new ArrayList<>();
-            aResult.put(aKey, theRules);
-        }
-        theRules.add(aRule);
-    }
+	@Override
+	public Collection<? extends BoundObject> getSecurityParents(BoundObject object) {
+		Set<TLObject> out = new HashSet<>();
+		_resolvedSecurityParents
+			.getOrDefault(object.tType(), Collections.emptyList())
+			.forEach(rule -> rule.getContent(object, out));
+		return out.stream()
+			.filter(BoundObject.class::isInstance)
+			.map(BoundObject.class::cast)
+			.toList();
+	}
 
     /**
      * Get all meta elements to be presented in the classification administration
@@ -689,33 +659,21 @@ public class ElementAccessManager extends AccessManager {
 		return _securityModuleByClass.keySet();
     }
 
-    /**
-     * Get the roles that can be given on the meta element
-     */
-	public Collection<? extends BoundRole> getRolesForMetaElement(TLClass aME) {
-		TLModule theBO = _securityModuleByClass.get(aME);
-        return BoundHelper.getInstance().getPossibleRoles(theBO);
-    }
-
     @Override
 	public Set<? extends BoundRole> getRoles(Person aPerson, BoundObject context) {
 		Set<BoundRole> result = new HashSet<>(super.getRoles(aPerson, context));
         Collection<Group> theGroups = getGroups(aPerson);
-		while (context != null) {
-			addRoleProviderRoles(getRules((TLClass) context.tType()), theGroups, context, result);
-			addRoleProviderRoles(getRules(context.tTable()), theGroups, context, result);
-            
-            // handle external role providers
-			addRoleProviderRoles(
-				new FilteredIterable<>(
-					new ExternalRoleProviderFilter(context),
-					this.externalRoleProviders.values()),
-				theGroups, context, result);
-
-			context = context.getSecurityParent();
-        }
+		if (context != null) {
+			addRoleProviderRoles(theGroups, context, result);
+			BoundHelper.collectAllSecurityParents(context,
+				secParent -> addRoleProviderRoles(theGroups, secParent, result));
+		}
 		return result;
     }
+
+	private void addRoleProviderRoles(Collection<Group> groups, BoundObject context, Set<BoundRole> result) {
+		addRoleProviderRoles(getRules((TLClass) context.tType()), groups, context, result);
+	}
 
     public Collection<Group> getGroups(BoundObject aBO, BoundRole aRole) {
 		Object getGroupCacheKey;
@@ -748,12 +706,6 @@ public class ElementAccessManager extends AccessManager {
 	            Logger.error("Failed to get direct hasRole associations.", e, this);
 	        }
         }
-        // handle extenal rules
-        for (ExternalRoleProvider theFactory : this.externalRoleProviders.values()) {
-			if (theFactory.matches(aBO) && aRole.equals(theFactory.getRole())) {
-				theResult.addAll(theFactory.getGroups(aBO));
-			}
-		}
         if (isInCacheMode()) {
 			getGroupsCache.put(getGroupCacheKey, ElementAccessHelper.shrink(theResult));
         }
@@ -764,16 +716,18 @@ public class ElementAccessManager extends AccessManager {
 	 * Checks the direct has role associations.
 	 */
 	protected void handleDirectHasRole(BoundRole role, Set<Group> result, Wrapper wrapper) throws Exception {
-		for (Iterator<KnowledgeAssociation> theIt =
-			wrapper.tHandle().getOutgoingAssociations(BoundedRole.HAS_ROLE_ASSOCIATION); theIt.hasNext();) {
-			KnowledgeAssociation theKA = theIt.next();
-			Wrapper theDestination = WrapperFactory.getWrapper(theKA.getDestinationObject());
-			if (!theDestination.equals(role)) {
-		        continue;
-		    }
-		    KnowledgeObject owner = (KnowledgeObject) theKA.getAttributeValue(BoundedRole.ATTRIBUTE_OWNER);
-		    Group theGroup = (Group) WrapperFactory.getWrapper(owner);
-		    result.add(theGroup);
+		try (CloseableIterator<KnowledgeObject> theIt = BoundedRole.roleAssignmentsForContext(wrapper.tHandle())) {
+			while (theIt.hasNext()) {
+				KnowledgeObject theKA = theIt.next();
+				Wrapper theDestination =
+					WrapperFactory.getWrapper((KnowledgeItem) theKA.getAttributeValue(BoundedRole.ATTRIBUTE_ROLE));
+				if (!theDestination.equals(role)) {
+					continue;
+				}
+				KnowledgeObject owner = (KnowledgeObject) theKA.getAttributeValue(BoundedRole.ATTRIBUTE_OWNER);
+				Group theGroup = (Group) WrapperFactory.getWrapper(owner);
+				result.add(theGroup);
+			}
 		}
 	}
 
@@ -808,27 +762,17 @@ public class ElementAccessManager extends AccessManager {
         }
     }
 
+	/**
+	 * The resolved rules declared for the access manager (respecting the inherit flag)
+	 */
     public Map<TLClass, Collection<RoleProvider>> getResolvedMERules() {
-        return this.resolvedMERules;
+		return _resolvedMERules;
     }
 
-    public Map<MetaObject, Collection<RoleProvider>> getResolvedMORules() {
-        return this.resolvedMORules;
-    }
-
-    public Map<String, ExternalRoleProvider> getExternalRules() {
-        return this.externalRoleProviders;
-    }
-    
-    @Override
-	public void handleSecurityUpdate(KnowledgeBase kb, Map<TLID, Object> someChanged,
-			Map<TLID, Object> someNew, Map<TLID, Object> someRemoved, CommitHandler aHandler) {
-        for(SecurityStorageCommitObserver theObserver : this.getCommitObservers()) {
-            someNew    .putAll(theObserver.getAdded  (someChanged, someNew, someRemoved, aHandler));
-            someRemoved.putAll(theObserver.getRemoved(someChanged, someNew, someRemoved, aHandler));
-        }
-        super.handleSecurityUpdate(kb, someChanged, someNew, someRemoved, aHandler);
-    }
+	@Override
+	public boolean canHaveRole(TLClass type, BoundedRole role) {
+		return _potentialRolesForType.getOrDefault(type, Collections.emptySet()).contains(role);
+	}
 
 	final BoundObject getSecurityRoot() {
 		return _boundHelper.securityRoot();

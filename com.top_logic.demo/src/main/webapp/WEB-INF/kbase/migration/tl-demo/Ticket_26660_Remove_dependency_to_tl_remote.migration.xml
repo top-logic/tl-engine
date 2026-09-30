@@ -28,6 +28,9 @@
 		<dependency name="Ticket_26398_remove_table_interfaces"
 			module="tl-demo"
 		/>
+		<dependency name="Ticket_25210_Model_references_in_form_definitions"
+			module="tl-bpe"
+		/>
 	</dependencies>
 	
 	<pre-processors>
@@ -38,9 +41,13 @@
 			</tables>
 		</processor>
 		
-		<delete-class name="tl.legacy.tabletypes:ExternalReferenceTable">
-		</delete-class>
-
+		<delete-class name="tl.legacy.tabletypes:ExternalReferenceTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:ExternalReferenceTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		
 		<!-- Remove implementation class annotations that prevents the object from being loaded, which is required for deleting it. -->
 		<update-annotations name="DemoRemote:Root">
 			<annotations>
@@ -51,8 +58,11 @@
 			transform="/WEB-INF/kbase/migration/tl-demo/Ticket_26660_Remove_dependency_to_tl_remote.migration.xslt"
 		/>
 		
-		<delete-module name="DemoRemote"/>
 	</pre-processors>
+	<processors>
+		<delete-module name="DemoRemote"/>
+		<delete-module name="Ticket"/>
+	</processors>
 	<migration>
 		<type-mapping class=""/>
 	</migration>

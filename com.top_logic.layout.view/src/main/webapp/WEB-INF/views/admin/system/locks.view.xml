@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Lock management: show the cluster locks currently held and force-release a selected one. The
+	LockTable shows a live snapshot when opened and rebuilds from the locks channel after a command.
+	Refresh re-reads the held locks; Release runs the LockListAction on the selected lock (read from
+	the selection channel) and is shown only while a lock is selected. A titled <panel> is used (not
+	the chrome-less <full-page>) because the view carries toolbar commands.
+-->
+<view>
+	<channels>
+		<channel name="locks"/>
+		<channel name="selection"/>
+	</channels>
+	<panel fill="true">
+		<title>
+			<en>Locks</en>
+			<de>Sperren</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-unlock"
+				input="selection"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Release</en>
+					<de>Freigeben</de>
+				</label>
+				<executability>
+					<visible-if expr="selected -> $selected != null"/>
+				</executability>
+				<action class="com.top_logic.layout.view.admin.system.LockListAction"
+					mode="RELEASE"
+				/>
+				<write-channel name="locks"/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<action class="com.top_logic.layout.view.admin.system.LockListAction"
+					mode="REFRESH"
+				/>
+				<write-channel name="locks"/>
+			</generic-command>
+		</commands>
+		<child class="com.top_logic.layout.view.admin.system.LockTable"
+			input="locks"
+			selection="selection"
+		/>
+	</panel>
+</view>

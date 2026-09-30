@@ -1,0 +1,40 @@
+<h2>Syntax</h2>
+
+<pre><code>$object.canReadAttribute($attribute)
+
+canReadAttribute($object, $attribute)
+</code></pre>
+
+<h2>Beschreibung</h2>
+
+<p>Pr&uuml;ft, ob der aktuell angemeldete Nutzer das angegebene Attribut des angegebenen Objekts lesen darf, und liefert einen Wahrheitswert.</p>
+
+<p>Dies ist das attributbezogene Gegenst&uuml;ck zu <code class="hljs inlineCode">canRead</code>. Der Nutzer ben&ouml;tigt sowohl Lesezugriff auf das Objekt als auch (falls konfiguriert) die attributspezifische Rolle. Die Funktion schl&auml;gt nie fehl und filtert nicht.</p>
+
+<p>Die Pr&uuml;fung erfolgt f&uuml;r den aktuell angemeldeten Nutzer und folgt denselben Regeln wie die implizite Berechtigungspr&uuml;fung: standardm&auml;&szlig;ige Verweigerung, Rollenvererbung entlang der Sicherheitshierarchie sowie Vollzugriff f&uuml;r Administratoren oder Ausf&uuml;hrungen im Systemkontext.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr><th>Name</th><th>Typ</th><th>Typbeschreibung</th><th>Pflicht</th><th>Standardwert</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>object</td><td>Fachobjekt</td><td>Das zu pr&uuml;fende Objekt.</td><td>ja</td><td> </td></tr>
+		<tr><td>attribute</td><td>Attribut</td><td>Das Attribut (<code class="hljs inlineCode">TLStructuredTypePart</code>), dessen Lesezugriff gepr&uuml;ft wird.</td><td>ja</td><td> </td></tr>
+	</tbody>
+</table>
+
+<h2>R&uuml;ckgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Wahrheitswert</p>
+
+<p><code class="hljs inlineCode">true</code>, wenn der aktuelle Nutzer das Attribut am Objekt lesen darf, sonst <code class="hljs inlineCode">false</code>.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Beispiel 1</h3>
+
+<pre><code>if($contract.canReadAttribute(`my.module:Contract#volume`), $contract.get(`my.module:Contract#volume`), null)</code></pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Das Vertragsvolumen, falls der angemeldete Nutzer dieses Attribut lesen darf, sonst <code class="hljs inlineCode">null</code>.</p>

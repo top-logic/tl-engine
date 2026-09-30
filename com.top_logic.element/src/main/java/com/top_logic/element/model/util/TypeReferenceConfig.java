@@ -24,7 +24,7 @@ import com.top_logic.model.util.TLModelUtil;
  * "type" (which is the new way).
  * </p>
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface TypeReferenceConfig extends ConfigurationItem {
 
@@ -47,7 +47,7 @@ public interface TypeReferenceConfig extends ConfigurationItem {
 	/**
 	 * Resolve a meta element out of a {@link TypeReferenceConfig}. 
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class Resolver {
 

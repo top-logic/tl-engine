@@ -57,14 +57,13 @@ import com.top_logic.layout.provider.SelectControlProvider;
 import com.top_logic.layout.structure.ContentLayouting;
 import com.top_logic.layout.structure.LayoutControlProvider.Layouting;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponentUIOptions;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.model.util.TLModelPartRefsFormat;
 import com.top_logic.tool.boundsec.CommandHandler;
-import com.top_logic.util.Resources;
 
 /**
  * Base class for components presenting a single {@link SelectField} providing options to be used as
@@ -118,7 +117,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		@Name(TYPES)
 		@DynamicMode(fun = VisibleIfTable.class, args = @Ref(PRESENTATION))
 		@DynamicMandatory(fun = IfTable.class, args = @Ref(PRESENTATION))
-		@Format(TLModelPartRefsFormat.class)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
 		List<TLModelPartRef> getTypes();
 
 		/**
@@ -188,13 +187,13 @@ public abstract class AbstractSelectorComponent extends FormComponent
 
 			if (newValue instanceof Collection) {
 				for (Object element : ((Collection<?>) newValue)) {
-					if (!selector.supportsOption(element)) {
+					if (selector.supportsOption(element).shouldRemove()) {
 						return false;
 					}
 				}
 				return true;
 			} else {
-				return selector.supportsOption(newValue);
+				return !selector.supportsOption(newValue).shouldRemove();
 			}
 		}
 	};
@@ -257,7 +256,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		SelectField selectField =
 			FormFactory.newSelectField(getSelectFieldName(), options, multiple(), null, false);
 		selectField.setTransient(true);
-		selectField.setLabel(Resources.getInstance().getString(getTitleKey()));
+		selectField.setLabel(getTitleKey());
 		selectField.setControlProvider(getSelectControlProvider());
 		selectField.setOptionComparator(Equality.INSTANCE);
 		selectField.setOptionLabelProvider(getOptionLabelProvider());
@@ -395,7 +394,9 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	/**
 	 * Whether a value is supported as select option.
 	 */
-	protected abstract boolean supportsOption(Object value);
+	protected ElementUpdate supportsOption(Object value) {
+		return ElementUpdate.NO_CHANGE;
+	}
 
 	/**
 	 * The objects to select from in the order to present to the user.

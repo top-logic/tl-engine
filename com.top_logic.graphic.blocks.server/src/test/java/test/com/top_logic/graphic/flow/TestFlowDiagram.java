@@ -17,6 +17,7 @@ import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.Align;
 import com.top_logic.graphic.flow.data.Alignment;
 import com.top_logic.graphic.flow.data.Border;
+import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.GridLayout;
 import com.top_logic.graphic.flow.data.HorizontalLayout;
@@ -107,6 +108,13 @@ public class TestFlowDiagram extends TestCase {
 
 		diagram.layout(new TestingRenderContext());
 
+		// Real callers (FlowFactory.toSvg, JSDiagramControl) set viewBox dimensions from the
+		// laid-out root before drawing. Replicate that here, otherwise diagram.draw() writes a
+		// degenerate viewBox of "0.0 0.0 0.0 0.0".
+		Box root = diagram.getRoot();
+		diagram.setViewBoxWidth(root.getWidth());
+		diagram.setViewBoxHeight(root.getHeight());
+
 		TagWriter out = new TagWriter();
 		SvgWriter svgOut = new SvgTagWriter(out);
 		diagram.draw(svgOut);
@@ -117,13 +125,13 @@ public class TestFlowDiagram extends TestCase {
 		assertEquals(
 			"""
 			<?xml version="1.0" encoding="utf-8" ?>
-			
+
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
-				height="168.0"
+				height="100%"
 				version="1.1"
 				viewBox="0.0 0.0 339.0 168.0"
-				width="339.0"
+				width="100%"
 			>
 				<text
 					x="1.0"

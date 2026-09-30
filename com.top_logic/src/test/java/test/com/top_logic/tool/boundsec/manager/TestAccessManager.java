@@ -15,6 +15,7 @@ import test.com.top_logic.basic.TestFactory;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -43,7 +44,7 @@ public class TestAccessManager  extends BasicTestCase {
      */
     public void testBoundSecurity() throws Exception {
         TLSecurityDeviceManager   sdm = TLSecurityDeviceManager.getInstance();
-        String authenticationDeviceID = sdm.getDefaultAuthenticationDevice().getDeviceID();
+		AuthenticationDevice authenticationDevice = sdm.getDefaultAuthenticationDevice();
 
         Person personA = null;
         Person personB = null;
@@ -56,15 +57,15 @@ public class TestAccessManager  extends BasicTestCase {
             // create three different persons
             personA = Person.byName("AA"); 
             if (personA == null) 
-                personA = Person.create(PersistencyLayer.getKnowledgeBase(), "AA", authenticationDeviceID);
+				personA = Person.create(PersistencyLayer.getKnowledgeBase(), "AA", authenticationDevice);
             assertTrue(KBSetup.getKnowledgeBase().commit());
 
             personB = Person.byName("BB");
             if (personB == null) 
-				personB = Person.create(PersistencyLayer.getKnowledgeBase(), "BB", authenticationDeviceID);
+				personB = Person.create(PersistencyLayer.getKnowledgeBase(), "BB", authenticationDevice);
             personC = Person.byName("CC");
             if (personC == null)  
-				personC = Person.create(PersistencyLayer.getKnowledgeBase(), "CC", authenticationDeviceID);
+				personC = Person.create(PersistencyLayer.getKnowledgeBase(), "CC", authenticationDevice);
 
             assertTrue(KBSetup.getKnowledgeBase().commit());
 			TLContext context = TLContext.getContext();

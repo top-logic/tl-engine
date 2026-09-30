@@ -315,8 +315,8 @@ public class TestFileDiffGenerator extends TestCase {
 		//		String randomtext1 = StringServices.getRandomWords(new Random(123), 64*1000000);
 		//		String randomtext2 = StringServices.getRandomWords(new Random(321), 64*1000000);
 
-		String source = "meier\nmüller\n";
-		String dest = "meier\nmüller\n";
+		String source = "meier\nmÃ¼ller\n";
+		String dest = "meier\nmÃ¼ller\n";
 
 		for(int j=0;j<10;j++){
 			int n1 = Double.valueOf(Math.random() * 12).intValue();
@@ -329,8 +329,8 @@ public class TestFileDiffGenerator extends TestCase {
 				dest = dest + StringServices.getRandomWords(new Random(321), Double.valueOf(Math.random() * 100).intValue())
 					+ "\n";
 			}		
-			source = source+"meier\nmüller\n";
-			dest = dest+"meier\nmüller\n";
+			source = source+"meier\nmÃ¼ller\n";
+			dest = dest+"meier\nmÃ¼ller\n";
 		}
 		//		assertNotNull(getFileDiffGenerator().generate(randomtext1, randomtext2));
 		FileDiff resultDiff = getFileDiffGenerator().generate(source, dest);
@@ -342,8 +342,8 @@ public class TestFileDiffGenerator extends TestCase {
 	public void testfma() {
 
 		for(int k=0;k<1;k++){
-			String source = "meier\nmüller\n";
-			String dest = "meier\nmüller\n";
+			String source = "meier\nmÃ¼ller\n";
+			String dest = "meier\nmÃ¼ller\n";
 
 			for(int j=0;j<10;j++){		
 				for(int i=0;i<10;i++){
@@ -354,8 +354,8 @@ public class TestFileDiffGenerator extends TestCase {
 					}
 					dest=dest+hlp+"\n";
 				}		
-				source = source+"meier\nmüller\n";
-				dest = dest+"meier\nmüller\n";
+				source = source+"meier\nmÃ¼ller\n";
+				dest = dest+"meier\nmÃ¼ller\n";
 			}
 			List<LinePart> normalization = getFileDiffGenerator().getNormalization(source, dest);
 

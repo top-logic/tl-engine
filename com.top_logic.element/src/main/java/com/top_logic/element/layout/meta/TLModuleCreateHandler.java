@@ -25,7 +25,7 @@ import com.top_logic.util.model.ModelService;
 /**
  * The {@link TLModuleCreateHandler} handles the creation of a new {@link TLModule}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLModuleCreateHandler extends AbstractCreateCommandHandler {
 

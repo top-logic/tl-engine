@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	A page of weighted columns: <columns> places its <column> children next to each other, each one
+	taking a share of the width in proportion to its weight. The main column is written with
+	weight="2" and the side column without a weight of its own, so they share the width two thirds
+	to one third.
+	
+	The breakpoint is compared against the width this element is granted, not against the width of
+	the browser window: narrow the window (or the area the view is shown in) below 48rem and the
+	columns stack, the main column first, the side column below it.
+	
+	A column is as tall as its own content and is not stretched to the height of its neighbour, so
+	the long main column reaches further down the page than the three short cards beside it. The
+	demo needs no model objects.
+-->
+<view>
+	<panel>
+		<title>
+			<en>Columns Demo</en>
+			<de>Spalten-Demo</de>
+		</title>
+
+		<text>
+			<label>
+				<en>Above 48rem the columns share the width 2:1, below it they stack.</en>
+				<de>Oberhalb von 48rem teilen sich die Spalten die Breite 2:1, darunter stehen sie untereinander.</de>
+			</label>
+		</text>
+
+		<columns
+			breakpoint="48rem"
+			gap="default"
+		>
+			<column weight="2">
+				<card
+					padding="compact"
+					variant="outlined"
+				>
+					<title>
+						<en>The wide column</en>
+						<de>Die breite Spalte</de>
+					</title>
+					<text>
+						<label>
+							<en>This column carries the reading matter of the page. It is written first, so it is the left column while the columns stand next to each other and the upper one once they stack. Its weight of 2 gives it twice the width of the column beside it.</en>
+							<de>Diese Spalte trägt den Lesestoff der Seite. Sie steht zuerst und ist daher die linke Spalte, solange die Spalten nebeneinander stehen, und die obere, sobald sie untereinander stehen. Ihr Gewicht 2 gibt ihr die doppelte Breite der Spalte daneben.</de>
+						</label>
+					</text>
+					<text>
+						<label>
+							<en>The share of the width is all the weight decides. It says nothing about the height: a column is as tall as its own content, and the layout is as tall as its tallest column. Nothing scrolls inside a column, the page scrolls as a whole.</en>
+							<de>Das Gewicht entscheidet allein über den Anteil an der Breite. Über die Höhe sagt es nichts: Eine Spalte ist so hoch wie ihr eigener Inhalt, und das Layout ist so hoch wie seine höchste Spalte. In einer Spalte scrollt nichts, die Seite scrollt als Ganzes.</de>
+						</label>
+					</text>
+					<text>
+						<label>
+							<en>Make the window narrower than 48rem and this card moves above the three cards on the right instead of beside them. What is compared is the width this element is granted, so the same page folds inside a narrow pane of a wide window as well.</en>
+							<de>Wird das Fenster schmaler als 48rem, rückt diese Karte über die drei Karten rechts statt neben sie. Verglichen wird die Breite, die diesem Element zugestanden wird; dieselbe Seite bricht deshalb auch in einem schmalen Bereich eines breiten Fensters um.</de>
+						</label>
+					</text>
+				</card>
+				<card
+					padding="compact"
+					variant="outlined"
+				>
+					<title>
+						<en>Below it in the same column</en>
+						<de>Darunter in derselben Spalte</de>
+					</title>
+					<text>
+						<label>
+							<en>The content of a column stands below each other in the order it is written, each element over the full width of the column.</en>
+							<de>Der Inhalt einer Spalte steht in der geschriebenen Reihenfolge untereinander, jedes Element über die volle Breite der Spalte.</de>
+						</label>
+					</text>
+					<text>
+						<label>
+							<en>A column takes any element: cards as here, but equally a table, a form or a diagram.</en>
+							<de>Eine Spalte nimmt jedes Element auf: Karten wie hier, ebenso aber eine Tabelle, ein Formular oder ein Diagramm.</de>
+						</label>
+					</text>
+				</card>
+			</column>
+			<column>
+				<card
+					padding="compact"
+					variant="outlined"
+				>
+					<title>
+						<en>Status</en>
+						<de>Status</de>
+					</title>
+					<text>
+						<label>
+							<en>Weight 1, the default.</en>
+							<de>Gewicht 1, der Standard.</de>
+						</label>
+					</text>
+					<text>
+						<label>
+							<en>Half as wide as the main column.</en>
+							<de>Halb so breit wie die Hauptspalte.</de>
+						</label>
+					</text>
+				</card>
+				<card
+					padding="compact"
+					variant="outlined"
+				>
+					<title>
+						<en>Links</en>
+						<de>Verweise</de>
+					</title>
+					<text>
+						<label>
+							<en>A side column holds what accompanies the page.</en>
+							<de>Eine Seitenspalte trägt, was die Seite begleitet.</de>
+						</label>
+					</text>
+				</card>
+				<card
+					padding="compact"
+					variant="outlined"
+				>
+					<title>
+						<en>Note</en>
+						<de>Hinweis</de>
+					</title>
+					<text>
+						<label>
+							<en>This column ends here, the main column reaches further down.</en>
+							<de>Diese Spalte endet hier, die Hauptspalte reicht weiter nach unten.</de>
+						</label>
+					</text>
+				</card>
+			</column>
+		</columns>
+	</panel>
+</view>

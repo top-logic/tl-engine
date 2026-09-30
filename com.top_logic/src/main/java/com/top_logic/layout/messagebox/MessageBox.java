@@ -7,6 +7,7 @@ package com.top_logic.layout.messagebox;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -346,6 +347,11 @@ public class MessageBox extends MessageBoxShortcuts {
 		protected Boolean _resizable;
 
 		/**
+		 * Whether executing any {@link #_buttons} implicitly closes the dialog.
+		 */
+		protected boolean _withImplicitClose = true;
+
+		/**
 		 * Creates a new {@link Builder} for the given {@link MessageType}.
 		 * 
 		 * @param type
@@ -462,6 +468,18 @@ public class MessageBox extends MessageBoxShortcuts {
 		}
 
 		/**
+		 * Defines whether buttons of the confirm dialog should close the dialog implicitly.
+		 * 
+		 * @see #buttons(CommandModel...)
+		 * 
+		 * @return This {@link Builder}.
+		 */
+		public Builder implicitClose(boolean implicitClose) {
+			_withImplicitClose = implicitClose;
+			return this;
+		}
+
+		/**
 		 * Opens a confirm dialog displaying the informations given in this {@link Builder}.
 		 * 
 		 * @param context
@@ -502,7 +520,7 @@ public class MessageBox extends MessageBoxShortcuts {
 					content.write(context, out);
 				}
 			};
-			return MessageBox.confirmDialog(layout, resizable, title, message, _buttons);
+			return MessageBox.confirmDialog(layout, resizable, title, message, _withImplicitClose, _buttons);
 		}
 
 	}
@@ -608,6 +626,30 @@ public class MessageBox extends MessageBoxShortcuts {
 		result.setImage(image);
 		result.setNotExecutableImage(disabledImage);
 		return result;
+	}
+
+	/**
+	 * Opens a confirm dialog that displays the given message and buttons.
+	 * 
+	 * @param windowScope
+	 *        The window to open the message box in.
+	 * @param type
+	 *        The {@link MessageType} of the confirm dialog.
+	 * @param message
+	 *        The {@link ResKey} displayed in the dialog.
+	 * @param buttons
+	 *        The buttons to be shown. Must not be empty. All buttons implicitly close the
+	 *        {@link MessageBox} no matter what the inner {@link Command} does. The first button is
+	 *        used as the {@link DialogModel#getDefaultCommand()}.
+	 * @return The result that must be immediately returned from the invoking command handler that
+	 *         opens the {@link MessageBox}.
+	 * 
+	 * @see #button(ButtonType, Command) Creating simple buttons with predefined type.
+	 */
+	public static HandlerResult confirm(WindowScope windowScope,
+			final MessageType type, final ResKey message,
+			final CommandModel... buttons) {
+		return newBuilder(type).message(message).buttons(buttons).confirm(windowScope);
 	}
 
 	/**
@@ -757,14 +799,45 @@ public class MessageBox extends MessageBoxShortcuts {
 	 */
 	public static DialogWindowControl confirmDialog(LayoutData layout, boolean resizable, HTMLFragment title,
 			HTMLFragment message, CommandModel... buttons) {
+		return confirmDialog(layout, resizable, title, message, true, buttons);
+	}
+
+	/**
+	 * Creates a confirm dialog that displays the given message and buttons.
+	 * 
+	 * @param layout
+	 *        A custom size of the dialog.
+	 * @param resizable
+	 *        Whether the dialog should be resizable.
+	 * @param title
+	 *        The dialog title value.
+	 * @param message
+	 *        The structured text message displayed in the dialog.
+	 * @param buttons
+	 *        The buttons to be shown. Must not be empty. All buttons implicitly close the
+	 *        {@link MessageBox} no matter what the inner {@link Command} does. The first button is
+	 *        taken as the {@link DialogModel#getDefaultCommand() default command}.
+	 * 
+	 * @return The dialog that can be opened.
+	 * 
+	 * @see #button(ButtonType, Command) Creating simple buttons with predefined type.
+	 * @see #confirm(WindowScope, LayoutData, boolean, MessageType, String, String, CommandModel...)
+	 */
+	public static DialogWindowControl confirmDialog(LayoutData layout, boolean resizable, HTMLFragment title,
+			HTMLFragment message, boolean withImplicitClose, CommandModel... buttons) {
 		assert buttons != null && buttons.length > 0 : "No buttons given.";
-		
+
 		final DialogModel dialogModel = new DefaultDialogModel(layout, title, resizable, true, null);
 		dialogModel.setDefaultCommand(buttons[0]);
-		// Wrap actions so that the dialog is closed after each action. 
-		final List<CommandModel> wrappedButtons = new ArrayList<>(buttons.length);
-		for (CommandModel button : buttons) {
-			wrappedButtons.add(new ClosingCommand(dialogModel, button));
+		final List<CommandModel> wrappedButtons;
+		if (withImplicitClose) {
+			// Wrap actions so that the dialog is closed after each action.
+			wrappedButtons = new ArrayList<>(buttons.length);
+			for (CommandModel button : buttons) {
+				wrappedButtons.add(new ClosingCommand(dialogModel, button));
+			}
+		} else {
+			wrappedButtons = Arrays.asList(buttons);
 		}
 		DialogWindowControl dialog = createDialog(dialogModel, new MessageBoxContentView(message), wrappedButtons);
 		return dialog;

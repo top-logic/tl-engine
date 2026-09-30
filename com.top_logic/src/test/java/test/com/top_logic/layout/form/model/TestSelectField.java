@@ -248,17 +248,17 @@ public class TestSelectField extends BasicTestCase {
 	public void testNoOptionLabel() {
 		selectField.setAsSelection(Collections.EMPTY_LIST);
 		selectField.setEmptyLabel("--");
-		selectField.setEmptyLabelImmutable("nicht ausgew‰hlt");
+		selectField.setEmptyLabelImmutable("nicht ausgew√§hlt");
 		
 		selectField.setImmutable(true);
-		assertEquals("nicht ausgew‰hlt", getSelectionAsText(selectField));
-		assertEquals("nicht ausgew‰hlt", selectField.getOptionLabel(SelectField.NO_OPTION));
+		assertEquals("nicht ausgew√§hlt", getSelectionAsText(selectField));
+		assertEquals("nicht ausgew√§hlt", selectField.getOptionLabel(SelectField.NO_OPTION));
 		assertEquals("", getSelectionAsTextPlain(selectField));
 		
 		selectField.setImmutable(false);
 		// Note: For the construction of the selection text, only the immutable
 		// label for the empty selection is used.
-		assertEquals("nicht ausgew‰hlt", getSelectionAsText(selectField));
+		assertEquals("nicht ausgew√§hlt", getSelectionAsText(selectField));
 		assertEquals("--", selectField.getOptionLabel(SelectField.NO_OPTION));
 		assertEquals("", getSelectionAsTextPlain(selectField));
 	}

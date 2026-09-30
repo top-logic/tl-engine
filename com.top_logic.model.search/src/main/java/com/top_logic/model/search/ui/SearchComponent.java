@@ -18,7 +18,7 @@ import com.top_logic.model.search.ui.selector.SearchSelectorComponent;
 /**
  * {@link LayoutComponent} for {@link TLModel}-based search.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class SearchComponent extends ScriptComponent {
 

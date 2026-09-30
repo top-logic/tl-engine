@@ -34,7 +34,6 @@ import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.Utils;
 
@@ -76,6 +75,10 @@ public class ChangePasswordComponent extends FormComponent {
 		return anObject instanceof Person;
 	}
 
+	private Person getCurrentPerson() {
+		return (Person) getModel();
+	}
+
 	@Override
 	protected void becomingInvisible() {
 		super.becomingInvisible();
@@ -88,75 +91,92 @@ public class ChangePasswordComponent extends FormComponent {
 	public FormContext createFormContext() {
 		FormContext formContext = new FormContext(this);
 
-		boolean changingOwnPassword = changingOwnPassword();
-		if (changingOwnPassword) {
-			// Require authentication for changing the own password.
-			formContext.addMember(createPasswordField(OLD_PASSWORD, false));
-		}
-		formContext.addMember(createNewPasswordField());
-		formContext.addMember(createPasswordField(NEW_PASSWORD_2, false));
-
-		BooleanField requireChange = FormFactory.newBooleanField(REQUIRE_CHANGE);
-		formContext.addMember(requireChange);
-
-		PasswordValidator validator = getPasswordValidator();
-		if (changingOwnPassword || validator.isExcluded(getCurrentPerson())) {
-			requireChange.setVisible(false);
-		}
+		Person currentPerson = getCurrentPerson();
+		boolean changingOwnPassword = currentPerson == TLContext.getContext().getCurrentPersonWrapper();
+		addChangePasswordFields(formContext, currentPerson, changingOwnPassword);
 
 		return formContext;
 	}
 
 	/**
-	 * Whether a user is currently changing his own password.
+	 * Adds fields to set the password for the given person.
+	 * 
+	 * @param validator
+	 *        The {@link PasswordValidator} of the {@link AuthenticationDevice} to create password
+	 *        for.
+	 * 
+	 * @see ApplyPasswordCommand#applyPasswordChange(FormContext, Person)
 	 */
-	private boolean changingOwnPassword() {
-		return getModel() == TLContext.getContext().getCurrentPersonWrapper();
+	public static void addPasswordFields(FormContext formContext, PasswordValidator validator) {
+		addChangePasswordFields(formContext, false, validator, true);
 	}
 
-	private StringField createNewPasswordField() {
-		StringField newPasswordField = createPasswordField(NEW_PASSWORD_1, isPasswordValidationEnabled());
-		if (isPasswordValidationEnabled()) {
-			newPasswordField.setTooltip(getPasswordFieldTooltip());
+	/**
+	 * Adds fields to change the password for the given person.
+	 * 
+	 * @param changingOwnPassword
+	 *        Whether the person adds its own password. In this case the "old password" field is
+	 *        displayed.
+	 * 
+	 * @see ApplyPasswordCommand#applyPasswordChange(FormContext, Person)
+	 */
+	public static void addChangePasswordFields(FormContext formContext, Person person, boolean changingOwnPassword) {
+		PasswordValidator validator = getPasswordValidator(person);
+		boolean validationEnabled = isPasswordValiationEnabled(validator, person);
+		addChangePasswordFields(formContext, changingOwnPassword, validator, validationEnabled);
+	}
+
+	private static void addChangePasswordFields(FormContext formContext, boolean changingOwnPassword,
+			PasswordValidator validator, boolean validationEnabled) {
+		if (changingOwnPassword) {
+			// Require authentication for changing the own password.
+			formContext.addMember(createPasswordField(OLD_PASSWORD, null));
 		}
-		return newPasswordField;
+
+		StringField newPasswordField;
+		if (validationEnabled) {
+			newPasswordField = createPasswordField(NEW_PASSWORD_1, validator);
+			newPasswordField.setTooltip(getPasswordFieldTooltip(validator));
+		} else {
+			newPasswordField = createPasswordField(NEW_PASSWORD_1, null);
+		}
+		formContext.addMember(newPasswordField);
+		formContext.addMember(createPasswordField(NEW_PASSWORD_2, null));
+
+		BooleanField requireChange = FormFactory.newBooleanField(REQUIRE_CHANGE);
+		formContext.addMember(requireChange);
+
+		if (changingOwnPassword || !validationEnabled) {
+			requireChange.setVisible(false);
+		}
 	}
 
-	private StringField createPasswordField(String name, boolean withValidation) {
+	private static StringField createPasswordField(String name, PasswordValidator validator) {
 		StringField result =
 			FormFactory.newStringField(name, true, false, CONSTRAINT_LENGTH_0_64);
-		result.setControlProvider(getPasswordFieldControlProvider(withValidation));
+		result.setControlProvider(getPasswordFieldControlProvider(validator));
 		return result;
 	}
 
-	private ControlProvider getPasswordFieldControlProvider(boolean validation) {
-		if (validation) {
-			PasswordValidator passwordValidator = getPasswordValidator();
-			return new PasswordInputControlProvider(DEFAULT_COLUMNS, passwordValidator.getMinPwdLength(),
-				passwordValidator.getNumberContentCrit());
+	private static ControlProvider getPasswordFieldControlProvider(PasswordValidator validator) {
+		if (validator != null) {
+			return new PasswordInputControlProvider(DEFAULT_COLUMNS, validator.getMinPwdLength(),
+				validator.getNumberContentCrit());
 		} else {
 			return new PasswordInputControlProvider(DEFAULT_COLUMNS, 0, 0);
 		}
 	}
 
-	private String getPasswordFieldTooltip() {
-		PasswordValidator validator = getPasswordValidator();
-		return Resources.getInstance().getMessage(I18NConstants.PASSWORD_FIELD_TOOLTIP, validator.getMinPwdLength(),
-			validator.getNumberContentCrit());
+	private static ResKey getPasswordFieldTooltip(PasswordValidator validator) {
+		return I18NConstants.PASSWORD_FIELD_TOOLTIP.fill(validator.getMinPwdLength(), validator.getNumberContentCrit());
 	}
 
-	private boolean isPasswordValidationEnabled() {
-		PasswordValidator validator = getPasswordValidator();
-		Person currentPerson = getCurrentPerson();
-		return !validator.isExcluded(currentPerson);
+	private static boolean isPasswordValiationEnabled(PasswordValidator validator, Person person) {
+		return !validator.isExcluded(person);
 	}
 
-	private PasswordValidator getPasswordValidator() {
-		return getCurrentPerson().getAuthenticationDevice().getPasswordValidator();
-	}
-
-	private Person getCurrentPerson() {
-		return (Person) getModel();
+	private static PasswordValidator getPasswordValidator(Person person) {
+		return person.getAuthenticationDevice().getPasswordValidator();
 	}
 
 	/**
@@ -177,20 +197,41 @@ public class ChangePasswordComponent extends FormComponent {
 		public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent,
 				Object model, Map<String, Object> someArguments) {
 
+			FormComponent form = (FormComponent) aComponent;
 			Person account = (Person) model;
 
-			FormComponent form = (FormComponent) aComponent;
-			FormContext formContext = form.getFormContext();
+			HandlerResult changeResult = applyPasswordChange(form.getFormContext(), account);
+			if (!changeResult.isSuccess()) {
+				return changeResult;
+			}
 
+			// Make sure to drop sensitive data.
+			form.removeFormContext();
+
+			HandlerResult result = new HandlerResult();
+			result.setCloseDialog(true);
+			return result;
+		}
+
+		/**
+		 * Applies the password change made in the given {@link FormContext} for the given
+		 * {@link Person}.
+		 * 
+		 * @see ChangePasswordComponent#addChangePasswordFields(FormContext, Person, boolean)
+		 */
+		public static HandlerResult applyPasswordChange(FormContext formContext, Person account) {
 			AuthenticationDevice device = account.getAuthenticationDevice();
 			if (formContext.hasMember(OLD_PASSWORD)) {
 				char[] oldPassword = ((String) formContext.getField(OLD_PASSWORD).getValue()).toCharArray();
 
-				try (LoginCredentials login = LoginCredentials.fromUserAndPassword(account, oldPassword)) {
+				LoginCredentials login = LoginCredentials.fromUserAndPassword(account, oldPassword);
+				try {
 					boolean oldPasswordValid = device.authentify(login);
 					if (!oldPasswordValid) {
 						return error(I18NConstants.WRONG_OLD_PASSWORD);
 					}
+				} finally {
+					login.clearPassword();
 				}
 			}
 
@@ -204,7 +245,8 @@ public class ChangePasswordComponent extends FormComponent {
 			if (StringServices.isEmpty(newPassword1)) {
 				return error(I18NConstants.EMPTY_PASSWORD_DISALLOWED);
 			}
-			try (LoginCredentials newLogin = LoginCredentials.fromUserAndPassword(account, newPassword1.toCharArray())) {
+			LoginCredentials newLogin = LoginCredentials.fromUserAndPassword(account, newPassword1.toCharArray());
+			try {
 				Transaction tx =
 					PersistencyLayer.getKnowledgeBase()
 						.beginTransaction(I18NConstants.CHANGED_PASSWORD__USER.fill(account.getName()));
@@ -219,21 +261,17 @@ public class ChangePasswordComponent extends FormComponent {
 					tx.commit();
 				} catch (KnowledgeBaseException ex) {
 					Logger.error("Transaction failed.", ex, ChangePasswordComponent.class);
-					error(I18NConstants.PASSWORD_CHANGE_FAILED);
+					return error(I18NConstants.PASSWORD_CHANGE_FAILED);
 				} finally {
 					tx.rollback();
 				}
+			} finally {
+				newLogin.clearPassword();
 			}
-
-			// Make sure to drop sensitive data.
-			form.removeFormContext();
-
-			HandlerResult result = new HandlerResult();
-			result.setCloseDialog(true);
-			return result;
+			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		private HandlerResult error(ResKey key) {
+		private static HandlerResult error(ResKey key) {
 			return HandlerResult.error(key);
 		}
 	}

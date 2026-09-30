@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.scripting.util;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -14,7 +15,8 @@ import com.top_logic.layout.I18NConstantsBase;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey NO_ACTION = legacyKey("tl.scripting.noAction");
+	@CustomKey("tl.scripting.noAction")
+	public static ResKey NO_ACTION;
 
 	static {
 		initConstants(I18NConstants.class);

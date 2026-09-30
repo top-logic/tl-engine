@@ -249,16 +249,6 @@
 						tab-path="Strukturen > Aspektvererbung"
 					/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					comment=""
-					failure-message=""
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name=""
-						tab-path="Strukturen > Organisation"
-					/>
-				</action>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -3064,26 +3054,6 @@
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name=""
-								tab-path="Administration > Berechtigungen > Gruppenrechte"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
-								tab-path="Administration > Berechtigungen > Benutzerrechte"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
 								tab-path="Administration > Berechtigungen > Attributkategorisierung"
 							/>
 						</action>
@@ -3747,16 +3717,6 @@
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
-								tab-path="Administration > Monitor > BusEvent Monitor"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
@@ -3837,16 +3797,6 @@
 					user-id="root"
 				>
 					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
-								tab-path="Administration > Demo Administration > Ereignisse"
-							/>
-						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 							comment=""
 							failure-message=""

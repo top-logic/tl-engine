@@ -158,17 +158,27 @@ public class ApplicationObjectUtil {
 	 */
 	public static final String STRUCTURE_CHILD_ASSOCIATION = "hasStructureChild";
 
+	/** Unversioned variant of {@link #STRUCTURE_CHILD_ASSOCIATION}. */
+	public static final String STRUCTURE_CHILD_ASSOCIATION_UNVERSIONED = "hasStructureChildUnversioned";
+
 	/**
 	 * Generic association for storing compositions that are also marked with
 	 * {@link DeletionPolicy#DELETE_REFERER}.
 	 */
 	public static final String STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION = "hasChildDeleteReferer";
 
+	/** Unversioned variant of {@link #STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION}. */
+	public static final String STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION_UNVERSIONED =
+		"hasChildDeleteRefererUnversioned";
+
 	/**
 	 * Generic association for storing compositions that are also marked with
 	 * {@link DeletionPolicy#VETO}.
 	 */
 	public static final String STRUCTURE_CHILD_VETO_ASSOCIATION = "hasStructureChildVeto";
+
+	/** Unversioned variant of {@link #STRUCTURE_CHILD_VETO_ASSOCIATION}. */
+	public static final String STRUCTURE_CHILD_VETO_ASSOCIATION_UNVERSIONED = "hasStructureChildVetoUnversioned";
 
 	/**
 	 * Abstract KA being the root of all such derived wrapper attribute associations.
@@ -184,17 +194,26 @@ public class ApplicationObjectUtil {
 	 */
 	public static final String WRAPPER_ATTRIBUTE_ASSOCIATION = "hasWrapperAttValue";
 
+	/** Unversioned variant of {@link #WRAPPER_ATTRIBUTE_ASSOCIATION}. */
+	public static final String WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED = "hasWrapperAttValueUnversioned";
+
 	/**
 	 * Generic association to store links for references marked with deletion policy
 	 * {@link DeletionPolicy#DELETE_REFERER}.
 	 */
 	public static final String WRAPPER_DELETE_REFERER_ASSOCIATION = "hasWrapperDeleteReferer";
 
+	/** Unversioned variant of {@link #WRAPPER_DELETE_REFERER_ASSOCIATION}. */
+	public static final String WRAPPER_DELETE_REFERER_ASSOCIATION_UNVERSIONED = "hasWrapperDeleteRefererUnversioned";
+
 	/**
 	 * Generic association to store links for references marked with deletion policy
 	 * {@link DeletionPolicy#VETO}.
 	 */
 	public static final String WRAPPER_VETO_ASSOCIATION = "hasWrapperVeto";
+
+	/** Unversioned variant of {@link #WRAPPER_VETO_ASSOCIATION}. */
+	public static final String WRAPPER_VETO_ASSOCIATION_UNVERSIONED = "hasWrapperVetoUnversioned";
 
 	/**
 	 * Name of the table in which references to historic items are stored.
@@ -203,12 +222,18 @@ public class ApplicationObjectUtil {
 	 */
 	public static final String HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION = "hasHistoricValue";
 
+	/** Unversioned variant of {@link #HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION}. */
+	public static final String HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED = "hasHistoricValueUnversioned";
+
 	/**
 	 * Name of the table in which references to both historical and current items can be stored.
 	 * 
 	 * @see HistoryType#MIXED
 	 */
 	public static final String MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION = "hasMixedValue";
+
+	/** Unversioned variant of {@link #MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION}. */
+	public static final String MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED = "hasMixedValueUnversioned";
 
 	/**
 	 * KA attribute used to store {@link TLStructuredTypePart}.

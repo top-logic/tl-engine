@@ -26,6 +26,8 @@ public class Icons extends IconsBase {
 
 	public static ThemeImage HIDE_DERIVED_RESOURCES;
 
+	public static ThemeImage UPDATE_TOKEN;
+
 	/**
 	 * Template for a field set box.
 	 * 

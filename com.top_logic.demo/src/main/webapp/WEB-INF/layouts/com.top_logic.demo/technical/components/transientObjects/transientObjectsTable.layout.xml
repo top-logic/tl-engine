@@ -21,9 +21,7 @@
 			<en>Persistent lines</en>
 			<de>Persistente Zeilen</de>
 		</name>
-		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
-			supportsElement="element->$element.instanceOf(`test.transient:Row`)"
-		>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
 			<elements><![CDATA[model->{
    from = $model.get(`test.transient:SettingsForm#von`);
    to = $model.get(`test.transient:SettingsForm#bis`);

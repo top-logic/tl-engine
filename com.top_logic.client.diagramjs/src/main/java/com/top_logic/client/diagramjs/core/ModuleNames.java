@@ -11,7 +11,7 @@ import com.top_logic.client.diagramjs.event.EventBus;
 /**
  * Names for diagramJS and umlJS modules.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface ModuleNames {
 

@@ -29,7 +29,7 @@ import com.top_logic.importer.text.TextFileImportParser;
 /**
  * Create the unique {@link NodeInfo} for building up a structure in {@link ExcelStructureImportParser}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractExcelStructureExtractor<C extends AbstractExcelStructureExtractor.ColumnConfig>
 		implements Extractor {
@@ -181,7 +181,7 @@ public abstract class AbstractExcelStructureExtractor<C extends AbstractExcelStr
     /**
      * ID describing the node and all relevant things needed to create a {@link GenericDataObjectWithChildren} later on. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class NodeInfo {
 

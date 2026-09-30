@@ -194,7 +194,12 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 				return;
 			}
 		}
-		member.addCssClass(staticCssClass);
+		boolean override = annotation.getOverride();
+		if (override) {
+			member.setCssClasses(staticCssClass);
+		} else {
+			member.addCssClass(staticCssClass);
+		}
 	}
 
 	protected FormMember createFormMember(
@@ -262,8 +267,8 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 
 		TLObject object = update.getOverlay();
 
-		new FieldModeObserver(member, updateContainer, modeSelector, object, attribute).valueChanged(null,
-				null, null);
+		new FieldModeObserver(member, updateContainer, modeSelector, object, attribute, !update.isDisabled())
+			.valueChanged(null, null, null);
 	}
 
 	private Constraint toFormConstraint(AttributeUpdate update, final AttributeUpdateContainer updateContainer,
@@ -332,7 +337,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 					if (otherMember instanceof FormField && otherMember != field) {
 						dependencies.add((FormField) otherMember);
 					}
-				}, formContext);
+				}, updateContainer);
 				return dependencies;
 			}
 		};
@@ -433,10 +438,9 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 	 */
 	public static void initLabel(FormMember result, EditContext editContext) {
 		ResKey resKey = editContext.getLabelKey();
-		Resources resources = Resources.getInstance();
-		result.setLabel(resources.getString(resKey));
-		result.setTooltip(resources.getString(resKey.tooltipOptional()));
-		result.setTooltipCaption(resources.getString(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX), null));
+		result.setLabel(resKey);
+		result.setTooltip(resKey.tooltipOptional());
+		result.setTooltipCaption(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX).optional());
 	}
 
 	protected Object createExampleValue(AttributeUpdate aAttributeUpdate) {

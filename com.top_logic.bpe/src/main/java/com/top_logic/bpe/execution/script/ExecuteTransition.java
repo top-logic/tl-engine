@@ -29,7 +29,7 @@ import com.top_logic.model.util.TLModelUtil;
  * A {@link GenericMethod} implementation that executes a transition from a given {@link Token} to a
  * specified {@link Node}.
  * 
- * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:Jonathan.HÃ¼sing@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public class ExecuteTransition extends GenericMethod {
 

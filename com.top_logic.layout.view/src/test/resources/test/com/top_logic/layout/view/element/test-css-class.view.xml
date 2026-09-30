@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<stack css-class="tlDemoStack">
+		<text label="Plain"/>
+		<text
+			css-class="tlDemoText"
+			label="Styled"
+		/>
+		<text
+			css-class="tlDemoEllipsis"
+			label="Truncated"
+			overflow="ellipsis"
+		/>
+		<image
+			css-class="tlDemoImage"
+			resource="/logo.svg"
+		/>
+		<panel
+			css-class="tlDemoPanel"
+			title="Panel"
+		/>
+		<card
+			css-class="tlDemoCard"
+			title="Card"
+		/>
+		<grid css-class="tlDemoGrid"/>
+		<button css-class="tlDemoButton"/>
+		<avatar
+			css-class="tlDemoAvatar"
+			input="account"
+		/>
+		<tab-bar css-class="tlDemoTabs">
+			<tab id="first"
+				label="First"
+			>
+				<text label="Content"/>
+			</tab>
+		</tab-bar>
+	</stack>
+</view>

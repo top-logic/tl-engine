@@ -43,7 +43,7 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
  * They are used for Security reasons
  * only and carry <em>no</em> Layout/HTML/User specific information
  *
- * @see com.top_logic.tool.boundsec.BoundMainLayout#initBoundComponents(KnowledgeBase)
+ * @see com.top_logic.tool.boundsec.BoundMainLayout#initPersBoundComps(KnowledgeBase, List)
  * @see SecurityComponentCache
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>

@@ -25,19 +25,12 @@
 					type="projElement:Sideproject"
 				>
 					<annotations>
-						<create-scope
-							create-type="Sideproject"
-							scope-ref="ProjectRoot"
-						/>
 						<visibility value="hidden"/>
 					</annotations>
 				</reference>
 			</attributes>
 			<generalizations>
-				<generalization
-					scope="ProjectRoot"
-					type="projElement.All"
-				/>
+				<generalization type="projElement.All"/>
 			</generalizations>
 		</class>
 	</module>

@@ -16,7 +16,7 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`DemoTypes:A`)"
 			modelForElement="null"
-			supportsElement="element->$element.instanceOf(`DemoTypes:A`)"
+			supportsElement="true"
 			supportsModel="true"
 		/>
 		<buttons>

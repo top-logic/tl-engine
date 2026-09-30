@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.wrap;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -20,7 +21,8 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResPrefix DOCUMENT_EVENT_TYPES = legacyPrefix("document.");
 
-	public static ResKey DOCUMENT_VERSION = legacyKey("document.version");
+	@CustomKey("document.version")
+	public static ResKey DOCUMENT_VERSION;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -31,6 +31,8 @@ import com.top_logic.basic.xml.XmlTextWriter;
 /**
  * {@link ConfigurationValueBinding} including {@link StructuredText} values in typed
  * configurations.
+ *
+ * @see StructuredTextJsonBinding
  */
 public class StructuredTextValueBinding extends AbstractConfigurationValueBinding<StructuredText> {
 

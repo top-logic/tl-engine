@@ -8,7 +8,6 @@ package com.top_logic.knowledge.search;
 import java.util.Collections;
 import java.util.Set;
 
-import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
 
@@ -92,14 +91,7 @@ public abstract class QueryArguments<T extends QueryArguments<T>> {
 	public T setArguments(Object... arguments) {
 		this.arguments = arguments;
 		for (int index = 0, length = arguments.length; index < length; index++) {
-			Object argument = arguments[index];
-			if (argument == null) {
-				// null-Literals are not allowed #9479
-				throw new IllegalArgumentException("Arguments can not be 'null'.");
-			}
-			if (argument instanceof KnowledgeItem) {
-				arguments[index] = ((KnowledgeItem) argument).tId();
-			}
+			arguments[index] = ExpressionFactory.replaceKIbyObjectKey(arguments[index]);
 		}
 		return chain();
 	}

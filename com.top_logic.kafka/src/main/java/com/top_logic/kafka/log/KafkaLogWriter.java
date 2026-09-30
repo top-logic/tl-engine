@@ -33,6 +33,9 @@ public interface KafkaLogWriter<M> {
 	 * "Meta data" means: The amount of data written should be fixed and not grow for large
 	 * messages.
 	 * </p>
+	 * 
+	 * @param message
+	 *        The message to get meta date from. May be <code>null</code>.
 	 */
 	void writeMetaData(TagWriter output, M message);
 
@@ -42,6 +45,9 @@ public interface KafkaLogWriter<M> {
 	 * "All data" means: The data should be detailed enough to fully reconstruct the message from
 	 * the written data.
 	 * </p>
+	 * 
+	 * @param message
+	 *        The message to write. May be <code>null</code>.
 	 */
 	void writeAllData(TagWriter output, M message);
 

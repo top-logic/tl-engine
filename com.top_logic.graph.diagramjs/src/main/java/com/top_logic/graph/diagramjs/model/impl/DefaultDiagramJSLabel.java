@@ -14,7 +14,7 @@ import com.top_logic.graph.diagramjs.model.DiagramJSLabel;
 /**
  * {@link DefaultSharedObject} {@link DefaultDiagramJSLabel} implementation.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DefaultDiagramJSLabel extends DefaultLabel implements DiagramJSLabel {
 

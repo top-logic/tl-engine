@@ -21,24 +21,30 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.graphic.flow.data.Diagram;
+import com.top_logic.graphic.flow.data.InitialZoom;
 import com.top_logic.graphic.flow.data.SelectableBox;
 import com.top_logic.graphic.flow.data.Widget;
 import com.top_logic.graphic.flow.server.control.DiagramControl;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.DirtyHandling;
 import com.top_logic.layout.basic.check.ChangeHandler;
 import com.top_logic.layout.basic.check.MasterSlaveCheckProvider;
 import com.top_logic.layout.basic.contextmenu.component.ContextMenuFactory;
 import com.top_logic.layout.basic.contextmenu.component.factory.SelectableContextMenuFactory;
+import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
+import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
@@ -64,6 +70,14 @@ import de.haumacher.msgbuf.observer.Observable;
 public class FlowChartComponent extends BuilderComponent
 		implements SelectableWithSelectionModel, ControlRepresentable {
 
+	/**
+	 * Channels provided by {@link FlowChartComponent}.
+	 */
+	public static final Map<String, ChannelSPI> FLOWCHART_CHANNELS =
+		LayoutComponent.channels(
+			Selectable.MODEL_AND_SELECTION_CHANNEL,
+			DiagramChannel.INSTANCE);
+
 	private DiagramControl _control = new DiagramControl();
 
 	/**
@@ -75,6 +89,18 @@ public class FlowChartComponent extends BuilderComponent
 	private Map<Object, List<Widget>> _observedIndex = Collections.emptyMap();
 
 	private final SelectionModel _selectionModel;
+
+	private final InitialZoom _initialZoom;
+
+	/**
+	 * The model for which the {@link #_control diagram} was last built.
+	 *
+	 * <p>
+	 * Used to tell a model switch (display the {@link #_initialZoom}) from an internal update of the
+	 * same model (keep the current zoom).
+	 * </p>
+	 */
+	private Object _lastModel;
 
 	boolean _uiSelectionProcessed = false;
 
@@ -241,6 +267,9 @@ public class FlowChartComponent extends BuilderComponent
 	@TagName("flowChart")
 	public interface Config extends BuilderComponent.Config, Selectable.SelectableConfig, SelectionModelConfig {
 
+		/** Configuration name for the diagram channel. */
+		String DIAGRAM = "diagram";
+
 		@Override
 		PolymorphicConfiguration<? extends FlowChartBuilder> getModelBuilder();
 
@@ -250,6 +279,20 @@ public class FlowChartComponent extends BuilderComponent
 		@ItemDefault(SelectableContextMenuFactory.class)
 		@ImplementationClassDefault(SelectableContextMenuFactory.class)
 		PolymorphicConfiguration<? extends ContextMenuFactory> getContextMenuFactory();
+
+		/**
+		 * Channel containing the {@link Diagram} description.
+		 */
+		@Name(DIAGRAM)
+		ModelSpec getDiagram();
+
+		/**
+		 * The zoom level applied when a model is first displayed in the diagram. The user can still
+		 * adjust the zoom interactively afterwards; an interactively chosen zoom is kept when the
+		 * diagram is redrawn for the same model and is only reset when switching to another model.
+		 */
+		@Name("initialZoom")
+		InitialZoom getInitialZoom();
 
 		@Override
 		@ClassDefault(FlowChartComponent.class)
@@ -263,6 +306,7 @@ public class FlowChartComponent extends BuilderComponent
 		super(context, config);
 
 		_selectionModel = createSelectionModel(config);
+		_initialZoom = config.getInitialZoom();
 
 		ContextMenuFactory contextMenuFactory = context.getInstance(config.getContextMenuFactory());
 		_control.setContextMenuProvider(contextMenuFactory.createContextMenuProvider(this));
@@ -307,9 +351,24 @@ public class FlowChartComponent extends BuilderComponent
 			before.unregisterListener(_processUISelection);
 		}
 
+		boolean sameModel = before != null && Utils.equals(newModel, _lastModel);
+		_lastModel = newModel;
+
 		Diagram diagram = (Diagram) getBuilder().getModel(getModel(), this);
 		if (diagram != null) {
 			diagram.setMultiSelect(_selectionModel.isMultiSelectionSupported());
+			diagram.setInitialZoom(_initialZoom);
+
+			if (sameModel) {
+				// The diagram is rebuilt for the same model (an internal update). Transfer the
+				// current view box so that the client keeps the user's zoom and pan instead of
+				// resetting to the initial zoom.
+				diagram.setViewBoxX(before.getViewBoxX());
+				diagram.setViewBoxY(before.getViewBoxY());
+				diagram.setViewBoxWidth(before.getViewBoxWidth());
+				diagram.setViewBoxHeight(before.getViewBoxHeight());
+				diagram.setKeepViewBox(true);
+			}
 		}
 
 		if (diagram != null) {
@@ -352,6 +411,9 @@ public class FlowChartComponent extends BuilderComponent
 		}
 
 		_control.setModel(diagram);
+
+		// Update the diagram channel
+		diagramChannel().set(diagram);
 	}
 
 	@Override
@@ -359,13 +421,38 @@ public class FlowChartComponent extends BuilderComponent
 		return _control;
 	}
 
+	/**
+	 * The {@link ComponentChannel} that contains the {@link Diagram} description.
+	 */
+	public ComponentChannel diagramChannel() {
+		return getChannel(DiagramChannel.NAME);
+	}
+
+	@Override
+	protected Map<String, ChannelSPI> programmaticChannels() {
+		return FLOWCHART_CHANNELS;
+	}
+
 	@Override
 	public void linkChannels(Log log) {
 		super.linkChannels(log);
 
 		linkSelectionChannel(log);
+		linkDiagramChannel(log);
 
 		selectionChannel().addListener(_processChannelSelection);
+	}
+
+	/**
+	 * Links the {@link #diagramChannel()} to configured sources.
+	 */
+	protected void linkDiagramChannel(Log log) {
+		Config config = (Config) getConfig();
+		ModelSpec diagram = config.getDiagram();
+		if (diagram != null) {
+			ChannelLinking channelLinking = getChannelLinking(diagram);
+			diagramChannel().linkChannel(log, this, channelLinking);
+		}
 	}
 
 	@Override

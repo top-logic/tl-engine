@@ -14,7 +14,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * Model builder for a {@link WebFolderComponent} using a {@link WebFolderAware} as business model.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class WebFolderAwareModelBuilder implements ModelBuilder {
 

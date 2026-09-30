@@ -91,6 +91,8 @@ import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.model.v5.transform.ModelLayout;
+import com.top_logic.util.model.TL5Types;
 
 /**
  * Utilities for migration.
@@ -314,6 +316,11 @@ public class MigrationUtils {
 	 *         When no such module exists.
 	 */
 	public static Element getTLModuleOrFail(Document model, String name) throws MigrationException {
+		if (TL5Types.ENUM_PROTOCOL.equals(name)) {
+			/* In old XML files the legacy notation "enum:..." instead of "tl5.enum:..." is used.
+			 * Such a module does not exist. */
+			name = ModelLayout.TL5_ENUM_MODULE;
+		}
 		NodeList nodes = model.getElementsByTagName(ModelConfig.MODULE);
 		for (int i = 0; i < nodes.getLength(); i++) {
 			Element module = (Element) nodes.item(i);
@@ -1734,7 +1741,7 @@ public class MigrationUtils {
 			QualifiedPartName newName, QualifiedTypeName newType,
 			Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered,
 			Boolean isAbstract, Boolean canNavigate, HistoryType historyType,
-			AnnotatedConfig<TLAttributeAnnotation> annotations)
+			DeletionPolicy deletionPolicy, AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws MigrationException {
 
 		Element module = getTLModuleOrFail(tlModel, endName.getModuleName());
@@ -1742,7 +1749,7 @@ public class MigrationUtils {
 		Element part = getTLTypePartOrFail(log, type, endName.getPartName());
 
 		internalUpdateEndAspect(log, tlModel, endName, newName, newType, mandatory, composite, aggregate,
-			multiple, bag, ordered, isAbstract, canNavigate, historyType, annotations, part);
+			multiple, bag, ordered, isAbstract, canNavigate, historyType, deletionPolicy, annotations, part);
 	}
 
 	/**
@@ -1751,9 +1758,8 @@ public class MigrationUtils {
 	public static void updateReference(Log log, Document tlModel, QualifiedPartName referenceName,
 			QualifiedPartName newName, QualifiedTypeName newType,
 			Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered,
-			Boolean isAbstract, Boolean canNavigate, HistoryType historyType,
-			AnnotatedConfig<TLAttributeAnnotation> annotations,
-			QualifiedPartName newEnd)
+			Boolean isAbstract, Boolean canNavigate, HistoryType historyType, DeletionPolicy deletionPolicy,
+			AnnotatedConfig<TLAttributeAnnotation> annotations, QualifiedPartName newEnd)
 			throws MigrationException {
 
 		Element module = getTLModuleOrFail(tlModel, referenceName.getModuleName());
@@ -1765,7 +1771,7 @@ public class MigrationUtils {
 		}
 
 		internalUpdateEndAspect(log, tlModel, referenceName, newName, newType, mandatory, composite, aggregate,
-			multiple, bag, ordered, isAbstract, canNavigate, historyType, annotations, part);
+			multiple, bag, ordered, isAbstract, canNavigate, historyType, deletionPolicy, annotations, part);
 	}
 
 	/**
@@ -1774,16 +1780,15 @@ public class MigrationUtils {
 	public static void updateInverseReference(Log log, Document tlModel, QualifiedPartName referenceName,
 			String newReferenceName,
 			Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered,
-			Boolean isAbstract, Boolean canNavigate, HistoryType historyType,
-			AnnotatedConfig<TLAttributeAnnotation> annotations,
-			QualifiedPartName newEnd) throws MigrationException {
+			Boolean isAbstract, Boolean canNavigate, HistoryType historyType, DeletionPolicy deletionPolicy,
+			AnnotatedConfig<TLAttributeAnnotation> annotations, QualifiedPartName newEnd) throws MigrationException {
 
 		Element module = getTLModuleOrFail(tlModel, referenceName.getModuleName());
 		Element type = getTLTypeOrFail(log, module, referenceName.getTypeName());
 		Element part = getTLTypePartOrFail(log, type, referenceName.getPartName());
 
 		internalUpdateEndAspect(log, tlModel, referenceName, null, null, mandatory, composite, aggregate,
-			multiple, bag, ordered, isAbstract, canNavigate, historyType, annotations, part);
+			multiple, bag, ordered, isAbstract, canNavigate, historyType, deletionPolicy, annotations, part);
 
 		if (newReferenceName != null) {
 			part.setAttribute(ReferenceConfig.NAME, newReferenceName);
@@ -1877,7 +1882,7 @@ public class MigrationUtils {
 	private static void internalUpdateEndAspect(Log log, Document tlModel, QualifiedPartName origName,
 			QualifiedPartName newName, QualifiedTypeName newType, Boolean mandatory, Boolean composite,
 			Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered, Boolean isAbstract, Boolean canNavigate,
-			HistoryType historyType, AnnotatedConfig<TLAttributeAnnotation> annotations, Element part)
+			HistoryType historyType, DeletionPolicy deletionPolicy, AnnotatedConfig<TLAttributeAnnotation> annotations, Element part)
 			throws MigrationException {
 		internalUpdatePart(log, tlModel, part, origName, newName, newType, mandatory, multiple, bag,
 			ordered, isAbstract, annotations);
@@ -1892,6 +1897,9 @@ public class MigrationUtils {
 		}
 		if (historyType != null) {
 			part.setAttribute(EndAspect.HISTORY_TYPE_PROPERTY, historyType.getExternalName());
+		}
+		if (deletionPolicy != null) {
+			part.setAttribute(EndAspect.DELETION_POLICY_PROPERTY, deletionPolicy.getExternalName());
 		}
 	}
 
@@ -1941,9 +1949,16 @@ public class MigrationUtils {
 
 	private static void moveStructuredTypePart(Log log, Document tlModel, Element part, QualifiedPartName origName,
 			QualifiedPartName newName) throws MigrationException {
-		if (!newName.getModuleName().equals(origName.getModuleName())) {
+		boolean sameModule = newName.getModuleName().equals(origName.getModuleName());
+		if (!sameModule) {
 			// Part was moved to different module.
 			qualifyTypes(part, origName.getModuleName());
+		} else {
+			if (newName.getTypeName().equals(origName.getTypeName())) {
+				// Move is just a rename
+				part.setAttribute(PartConfig.NAME, newName.getPartName());
+				return;
+			}
 		}
 		Element newModule = getTLModuleOrFail(tlModel, newName.getModuleName());
 		Element newOwner = getTLTypeOrFail(log, newModule, newName.getTypeName());

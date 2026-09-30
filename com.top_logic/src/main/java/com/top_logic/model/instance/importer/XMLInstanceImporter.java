@@ -21,13 +21,17 @@ import com.top_logic.basic.LongID;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
+import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.Content;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataURI;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.model.ModelKind;
@@ -41,8 +45,10 @@ import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.instance.exporter.Resolvers;
+import com.top_logic.model.instance.exporter.XMLInstanceExporter;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 import com.top_logic.model.instance.importer.resolver.NoInstanceResolver;
 import com.top_logic.model.instance.importer.resolver.ValueResolver;
@@ -91,6 +97,8 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	 */
 	private List<Runnable> _delayed = new ArrayList<>();
 
+	private Object _context;
+
 	/**
 	 * Creates a {@link XMLInstanceImporter}.
 	 *
@@ -102,6 +110,21 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	public XMLInstanceImporter(TLModel model, TLFactory factory) {
 		_model = model;
 		_factory = factory;
+	}
+
+	/**
+	 * Arbitrary context object that can be used from {@link InstanceResolver}s to find an object by
+	 * a local ID.
+	 */
+	public Object getContext() {
+		return _context;
+	}
+
+	/**
+	 * @see #getContext()
+	 */
+	public void setContext(Object context) {
+		_context = context;
 	}
 
 	/**
@@ -123,7 +146,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	 * 
 	 * @param kind
 	 *        The type kind to register the given resolver for. See
-	 *        {@link InstanceResolver#resolve(I18NLog, String, String)}.
+	 *        {@link InstanceResolver#resolve(I18NLog, Object, String, String)}.
 	 * 
 	 * @see #addResolver(String, InstanceResolver)
 	 */
@@ -418,7 +441,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 			if (globalId != null) {
 				// Check, whether the object is already present in the target system.
 				String kind = ref.getType();
-				TLObject existing = resolver(kind).resolve(_log, kind, globalId);
+				TLObject existing = resolver(kind).resolve(_log, _context, kind, globalId);
 				if (existing != null) {
 					addObject(ref.getId(), existing);
 					return existing;
@@ -436,7 +459,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	public TLObject visit(GlobalRefConf ref, TLStructuredTypePart arg) {
 		try {
 			String kind = ref.getKind();
-			TLObject result = resolver(kind).resolve(_log, kind, ref.getId());
+			TLObject result = resolver(kind).resolve(_log, _context, kind, ref.getId());
 			if (result == null) {
 				_log.error(
 					I18NConstants.FAILED_TO_RESOLVE_OBJECT__TYPE_ID.fill(ref.getKind(), ref.getId()));
@@ -579,10 +602,38 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	}
 
 	/**
-	 * Parses a serialized primitive type value.
+	 * Parses a primitive type value given in its plain textual form.
+	 *
+	 * <p>
+	 * If the application type of the given type's {@link StorageMapping} declares a {@link Format},
+	 * the value is read with that format. Otherwise, the value is the serialized form of the value
+	 * stored in the database and is converted to a business object by the {@link StorageMapping} of
+	 * the given type.
+	 * </p>
+	 *
+	 * <p>
+	 * A binary value is either a data URI keeping content type and file name, see
+	 * {@link BinaryDataURI#decode(String)}, or a bare base64 string, which is read as
+	 * {@link BinaryData} with content type {@link BinaryData#CONTENT_TYPE_OCTET_STREAM} and no name.
+	 * </p>
+	 *
+	 * @return The parsed value, or <code>null</code>, if the value cannot be parsed. A parse
+	 *         failure is reported to the given log.
+	 *
+	 * @see XMLInstanceExporter#serialize(TLPrimitive, Object)
 	 */
 	public static Object parse(I18NLog log, TLPrimitive type, String value) {
 		if (value == null || value.trim().isEmpty()) {
+			return null;
+		}
+		try {
+			ConfigurationValueProvider<?> format = Resolvers.format(type);
+			if (format != null) {
+				return format.getValue(AttributeValueConf.VALUE, value);
+			}
+		} catch (ConfigurationException ex) {
+			log.error(I18NConstants.INVALID_VALUE_FORMAT__VAL_TYPE_MSG
+				.fill(value, TLModelUtil.qualifiedName(type), ex.getMessage()), ex);
 			return null;
 		}
 		return type.getStorageMapping().getBusinessObject(parseStorageValue(log, type.getDBType(), value));
@@ -592,6 +643,9 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 		switch (dbType) {
 			case BLOB: {
 				try {
+					if (BinaryDataURI.isDataURI(value)) {
+						return BinaryDataURI.decode(value);
+					}
 					byte[] result = Base64.decodeBase64(value);
 					return BinaryDataFactory.createBinaryData(result);
 				} catch (Exception ex) {

@@ -9,11 +9,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.TimeZone;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
+import com.top_logic.base.security.util.Password;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ConfigurationError;
@@ -21,23 +21,19 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.Filter;
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.time.TimeZones;
-import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.NamedValues;
 import com.top_logic.dsa.DataAccessProxy;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.HistoryUtils;
-import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
-import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.util.ItemByNameCache;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
@@ -49,13 +45,12 @@ import com.top_logic.model.provider.DefaultCountryDefault;
 import com.top_logic.model.provider.DefaultLocaleDefault;
 import com.top_logic.model.provider.UserTimeZoneDefault;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.tool.boundsec.wrap.GroupMember;
 import com.top_logic.util.Country;
 import com.top_logic.util.Utils;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Wrapper for {@link com.top_logic.knowledge.objects.KnowledgeObject KnowledgeObjects} of
@@ -66,7 +61,7 @@ import com.top_logic.util.Utils;
 @Label("account")
 public class Person extends AbstractBoundWrapper implements Author, GroupMember {
 
-    /**
+	/**
      * Type of KO as defined by KBMeta.xml
      */
     public static final String OBJECT_NAME = "Person";
@@ -90,6 +85,23 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 
 	/** The attribute "country". */
 	public static final String COUNTRY_ATTR = "country";
+
+	/** The attribute "admin" of type {@link #PERSON_TYPE}. */
+	public static final String ADMIN_ATTR = "admin";
+
+	/**
+	 * The attribute "mfaSecret" of type {@link #PERSON_TYPE}.
+	 * 
+	 * <p>
+	 * The value is a secret that is used to enable multi-factor-authentication for the user.
+	 * </p>
+	 */
+	public static final String MFA_SECRET_ATTR = "mfaSecret";
+
+	/**
+	 * The attribute "mfaRequirement" of type {@link #PERSON_TYPE}.
+	 */
+	public static final String MFA_REQUIREMENT_ATTR = "mfaRequirement";
 
 	/** Full qualified name of the {@link TLType} of a {@link Person}. */
 	public static final String PERSON_TYPE = "tl.accounts:Person";
@@ -115,11 +127,6 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
     /** Attribute indicating whether the person has been notified about his unused account. */
     public static final String ATTR_UNUSED_NOTIFIED = "unusedNotified";
 
-    protected static final String GLOBAL_ROLE_KA = "hasGlobalRole";
-    
-	private static final AssociationSetQuery<KnowledgeAssociation> GLOBAL_ROLES_ATTR = AssociationQuery
-		.createOutgoingQuery("globalRoles", Person.GLOBAL_ROLE_KA);
-    
     /**
      * Caches the representative group for this person.
      * 
@@ -290,6 +297,50 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 		}
 	}
 
+	/**
+	 * Type-safe access to the value of {@link #MFA_SECRET_ATTR}.
+	 */
+	public Password getMFASecret() {
+		String mfaSecret = tGetDataString(MFA_SECRET_ATTR);
+		if (StringServices.isEmpty(mfaSecret)) {
+			return null;
+		}
+		return new Password(mfaSecret);
+	}
+
+	/**
+	 * Setter for {@link #getMFASecret()}.
+	 */
+	public void setMFASecret(Password secret) {
+		if (secret == null) {
+			tSetData(MFA_SECRET_ATTR, null);
+		} else {
+			tSetData(MFA_REQUIREMENT_ATTR, secret.getCryptedValue());
+		}
+	}
+
+	/**
+	 * Type-safe access to the value of {@link #MFA_REQUIREMENT_ATTR}.
+	 */
+	public MfaRequirement getMFARequirement() {
+		String mfaRequirement = tGetDataString(MFA_REQUIREMENT_ATTR);
+		if (StringServices.isEmpty(mfaRequirement)) {
+			return null;
+		}
+		return ConfigUtil.getEnumConstant(MfaRequirement.class, mfaRequirement);
+	}
+
+	/**
+	 * Setter for {@link #getMFARequirement()}.
+	 */
+	public void setMFARequirement(MfaRequirement value) {
+		if (value == null) {
+			tSetData(MFA_REQUIREMENT_ATTR, null);
+		} else {
+			tSetData(MFA_REQUIREMENT_ATTR, ConfigUtil.getEnumExternalName(value));
+		}
+	}
+
     /**
      * returns a PersonalConfiguration for this Person
      * 
@@ -408,47 +459,6 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 		throw new UnsupportedOperationException("No contact module available.");
 	}
 
-    /**
-     * Get the global roles as a Collection of BoundedRoles
-     * 
-     * @return the global roles. May be empty but not <code>null</code>.
-     */
-	public Set<? extends BoundRole> getGlobalRoles() {
-		@SuppressWarnings("unchecked")
-		Set<? extends BoundRole> result = (Set<? extends BoundRole>) resolveWrappers(GLOBAL_ROLES_ATTR);
-		return result;
-    }
-    
-    /**
-     * Add a global role to the Person
-     * 
-     * @param aGlobalRole    the global role. May be <code>null</code> (code has no effect then).
-     * @throws DataObjectException if creation of the KA fails
-     */
-	public void addGlobalRole(BoundRole aGlobalRole) throws DataObjectException {
-        if (aGlobalRole == null) {
-            return;
-        }
-        
-        KnowledgeObject      theSource = this.tHandle();
-		KnowledgeObject theDest = ((BoundedRole) aGlobalRole).tHandle();
-		theSource.getKnowledgeBase().createAssociation(theSource, theDest, Person.GLOBAL_ROLE_KA);
-    }
-    
-    /**
-     * Remove a global role from the Person
-     * 
-     * @param aGlobalRole    the global role. May be <code>null</code> (code has no effect then).
-     * @throws DataObjectException if removal of the KA fails
-     */
-	public void removeGlobalRole(BoundRole aGlobalRole) throws DataObjectException {
-        if (aGlobalRole == null) {
-            return;
-        }
-		KBUtils.deleteAllKI(
-			tHandle().getOutgoingAssociations(Person.GLOBAL_ROLE_KA, ((BoundedRole) aGlobalRole).tHandle()));
-    }
-    
     /**
      * Return the full name of the person -
      * a formatted String for Username, should be "Title FirstName LastName".
@@ -575,32 +585,46 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 			return false;
 		}
 
-		return tGetDataBooleanValue("admin");
+		return tGetDataBooleanValue(ADMIN_ATTR);
 	}
 
 	/**
 	 * @see #isAdmin()
 	 */
 	public void setAdmin(boolean value) {
-		tSetDataBoolean("admin", value);
+		tSetDataBoolean(ADMIN_ATTR, value);
 	}
 
 	/**
-	 * Create a new {@link Person} in given {@link KnowledgeBase}. Does NOT check if such a person
-	 * already exists! Note: No user object will be created by this method
+	 * Create a new {@link Person} in given {@link KnowledgeBase}. This method does <b>NOT</b> check
+	 * if such a person already exists! Note: No user object will be created by this method
 	 * 
 	 * @param kb
-	 *        the {@link KnowledgeBase} in which the person is created.
+	 *        The {@link KnowledgeBase} in which the person is created.
 	 * @param userName
-	 *        the person (login) name
+	 *        The person (login) name.
+	 * @param authenticationDevice
+	 *        The device that is used to identify the new person. May be <code>null</code>.
 	 * 
-	 * @return the created person
+	 * @return The created person.
 	 */
-	public static Person create(KnowledgeBase kb, String userName, String authenticationDeviceID) {
+	public static Person create(KnowledgeBase kb, String userName, AuthenticationDevice authenticationDevice) {
+		String name = normalizeName(userName);
+		// Account names must match the configured pattern and length (Ticket #29423).
+		if (!PersonManager.getManager().validatePersonName(name)) {
+			throw new TopLogicException(I18NConstants.ERROR_INVALID_ACCOUNT_NAME__NAME.fill(name));
+		}
+		// Account names are unique case-insensitively (Ticket #29423).
+		if (byName(kb, name) != null) {
+			throw new TopLogicException(I18NConstants.ERROR_DUPLICATE_ACCOUNT_NAME__NAME.fill(name));
+		}
 		KnowledgeObject handle = kb.createKnowledgeObject(OBJECT_NAME);
-		handle.setAttributeValue(AbstractWrapper.NAME_ATTRIBUTE, userName);
+		handle.setAttributeValue(AbstractWrapper.NAME_ATTRIBUTE, name);
 		Person result = handle.getWrapper();
-		result.setAuthenticationDeviceID(authenticationDeviceID);
+		if (authenticationDevice != null) {
+			result.setAuthenticationDeviceID(authenticationDevice.getDeviceID());
+			result.setMFARequirement(authenticationDevice.getMFARequirement());
+		}
 		result.setCountry(DefaultCountryDefault.INSTANCE.defaultCountry());
 		result.setLanguage(DefaultLocaleDefault.INSTANCE.defaultLocale());
 		result.setTimeZone(UserTimeZoneDefault.INSTANCE.defaultUserTimeZone());
@@ -641,19 +665,20 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	 * @return The requested account or <code>null</code> if not such account exists.
 	 */
 	public static Person byName(KnowledgeBase kb, String name) {
+		String normalized = normalizeName(name);
 		if (kb == getDefaultKnowledgeBase()) {
-			return fromCache(kb, name);
+			return fromCache(kb, normalized);
 		}
-		if (StringServices.isEmpty(name)) {
+		if (StringServices.isEmpty(normalized)) {
 			return null;
 		}
-	
+
 		KnowledgeObject result =
-			(KnowledgeObject) kb.getObjectByAttribute(OBJECT_NAME, AbstractWrapper.NAME_ATTRIBUTE, name);
+			(KnowledgeObject) kb.getObjectByAttribute(OBJECT_NAME, AbstractWrapper.NAME_ATTRIBUTE, normalized);
 		if (result == null) {
 			return null;
 		}
-	
+
 		return result.getWrapper();
 	}
 
@@ -668,12 +693,25 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 		return fromCache(getDefaultKnowledgeBase(), name);
 	}
 
+	/**
+	 * Normalizes an account (login) name for storage and lookup: strips leading and trailing
+	 * whitespace while preserving the case (Ticket #29423). {@code null} is passed through.
+	 *
+	 * @param name
+	 *        The raw name, may be {@code null}.
+	 * @return The trimmed name, or {@code null} if the argument was {@code null}.
+	 */
+	public static String normalizeName(String name) {
+		return name == null ? null : name.strip();
+	}
+
 	private static Person fromCache(KnowledgeBase defaultKB, String name) {
-		if (StringServices.isEmpty(name)) {
+		String normalized = normalizeName(name);
+		if (StringServices.isEmpty(normalized)) {
 			return null;
 		}
 
-		KnowledgeItem cachedPerson = getOrInstallByNameCache(defaultKB).getValue().get(name);
+		KnowledgeItem cachedPerson = getOrInstallByNameCache(defaultKB).lookup(normalized);
 		if (cachedPerson == null) {
 			return null;
 		}
@@ -685,7 +723,10 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 		if (byNameCache == null || byNameCache.kb() != defaultKB) {
 			// First access to cache or default KB has changed (PersistencyLayer may have been
 			// restarted).
-			byNameCache = new ItemByNameCache<>((DBKnowledgeBase) defaultKB, OBJECT_NAME, NAME_ATTRIBUTE, String.class);
+			// Account names are matched case-insensitively (Ticket #29423): the cache is keyed by
+			// the lower-cased name, while the stored name keeps its original spelling.
+			byNameCache = new ItemByNameCache<>((DBKnowledgeBase) defaultKB, OBJECT_NAME, NAME_ATTRIBUTE,
+				String.class, name -> name.toLowerCase(Locale.ROOT));
 			BY_NAME_CACHE = byNameCache;
 		}
 		return byNameCache;

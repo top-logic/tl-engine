@@ -16,7 +16,7 @@ import com.top_logic.graphic.flow.control.JSDiagramControlCommon;
 /**
  * {@link EntryPoint} that initializes this client-side graphics module.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ModuleEntry implements EntryPoint {
 

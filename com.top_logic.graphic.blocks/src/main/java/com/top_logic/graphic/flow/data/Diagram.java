@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * Top-level diagram element that can be layouted and rendered.
  */
-public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.DiagramOperations {
+public interface Diagram extends com.top_logic.graphic.flow.data.Widget, com.top_logic.graphic.flow.operations.DiagramOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Diagram} instance.
@@ -41,6 +41,12 @@ public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.D
 
 	/** @see #getViewBoxHeight() */
 	String VIEW_BOX_HEIGHT__PROP = "viewBoxHeight";
+
+	/** @see #getInitialZoom() */
+	String INITIAL_ZOOM__PROP = "initialZoom";
+
+	/** @see #isKeepViewBox() */
+	String KEEP_VIEW_BOX__PROP = "keepViewBox";
 
 	/**
 	 * The top-level diagram element.
@@ -156,6 +162,34 @@ public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.D
 	 * @see #getViewBoxHeight()
 	 */
 	com.top_logic.graphic.flow.data.Diagram setViewBoxHeight(double value);
+
+	/**
+	 * The zoom level to apply when the diagram is first displayed for a model. The user can still
+	 * adjust the zoom interactively afterwards.
+	 */
+	com.top_logic.graphic.flow.data.InitialZoom getInitialZoom();
+
+	/**
+	 * @see #getInitialZoom()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setInitialZoom(com.top_logic.graphic.flow.data.InitialZoom value);
+
+	/**
+	 * Whether the client must keep its current view box (zoom and pan) instead of applying the
+	 * {@link #getInitialZoom()}.
+	 *
+	 * <p>
+	 * Set by the server when the diagram is rebuilt for the same model (an internal update), so that
+	 * a redraw does not reset the zoom the user has chosen. On a switch to another model the flag
+	 * stays {@code false} and the {@link #getInitialZoom()} is applied to the transferred view box.
+	 * </p>
+	 */
+	boolean isKeepViewBox();
+
+	/**
+	 * @see #isKeepViewBox()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setKeepViewBox(boolean value);
 
 	@Override
 	com.top_logic.graphic.flow.data.Diagram setCssClass(String value);

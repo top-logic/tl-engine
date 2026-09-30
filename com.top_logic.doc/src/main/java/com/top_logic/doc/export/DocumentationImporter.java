@@ -10,6 +10,8 @@ import static com.top_logic.basic.StringServices.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
@@ -322,10 +324,10 @@ public class DocumentationImporter {
 				contents = getFileContents(contentResourcePath, StringServices.UTF8);
 			} catch (IOException ex) {
 				log.error("Failed to read contents of: '" + contentResourcePath + "'", ex);
-				contents = null;
+				contents = StringServices.EMPTY_STRING;
 			}
 		} else {
-			contents = null;
+			contents = StringServices.EMPTY_STRING;
 		}
 
 		Map<String, BinaryData> images = getImages(log, resourcePath);
@@ -358,7 +360,7 @@ public class DocumentationImporter {
 	public static Properties loadProperties(String propertiesResource) throws IOException {
 		Properties result = new Properties();
 		try (InputStream in = FileManager.getInstance().getData(propertiesResource).getStream()) {
-			result.load(in);
+			result.load(new InputStreamReader(in, StandardCharsets.UTF_8));
 		}
 		return result;
 	}
@@ -425,9 +427,9 @@ public class DocumentationImporter {
 	 *        UUID of the new {@link Page}. If <code>null</code> a random ID will be generated
 	 *        automatically.
 	 * @param contents
-	 *        Source code of the new {@link Page}.
+	 *        Source code of the new {@link Page}. Never null.
 	 * @param images
-	 *        {@link Map} of images of the HTML page.
+	 *        {@link Map} of images of the HTML page. Never null.
 	 * @param position
 	 *        The relative position of the {@link Page} within its siblings.
 	 * @param source
@@ -439,7 +441,7 @@ public class DocumentationImporter {
 		String idStripped = id.strip(); // The id is not allowed to be null.
 		String titleStripped = stripNullsafe(title);
 		String uuidStripped = stripNullsafe(uuid);
-		String contentsStripped = stripNullsafe(contents);
+		String contentsStripped = contents.strip();
 		String sourceStripped = stripNullsafe(source);
 		KnowledgeBase kb = parent.tKnowledgeBase();
 		KnowledgeItem existingPage = findExistingPage(kb, uuidStripped, idStripped);

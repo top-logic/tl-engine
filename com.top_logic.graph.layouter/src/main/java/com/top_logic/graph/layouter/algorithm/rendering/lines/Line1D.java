@@ -10,7 +10,7 @@ import java.util.Collection;
 /**
  * General structure of an one dimensional line.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class Line1D {
 
@@ -25,7 +25,7 @@ public class Line1D {
 	/**
 	 * Orientation of this line.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public enum Orientation {
 		/**

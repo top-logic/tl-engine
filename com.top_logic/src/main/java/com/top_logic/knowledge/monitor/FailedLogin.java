@@ -50,10 +50,11 @@ public class FailedLogin extends AbstractWrapper {
     public static final String REASON_AUTH_DEVICE_NOT_FOUND = "authDeviceNotFound";
     public static final String REASON_PWD_VALIDATION_FAILED = "pwdValidationFailed";
 
-	/** Message in case of number of users exceed the license specification. */
-	public static final String REASON_MAX_USERS_EXCEEDED = "maxUsersExceeded";
     public static final String REASON_USER_NOT_VALID = "userNotValid";
     public static final String REASON_MAINTENANCE_MODE = "maintenanceMode";
+
+	/** Message in case the configured hook has rejected the login. */
+	public static final String REASON_CONFIGURED_HOOK = "configuredHook";
 
 	public static final String NO_CLIENT_IP = "noClientIP";
 

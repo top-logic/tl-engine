@@ -274,7 +274,6 @@
 				/>
 
 				<component class="com.top_logic.layout.task.EditTaskWrapperComponent"
-					defaultFor="tl.legacy.tabletypes:TaskImplTable"
 					maximizeRoot="sysEditTask"
 					model="selection(sysSchedulerTable)"
 					name="sysEditTask"

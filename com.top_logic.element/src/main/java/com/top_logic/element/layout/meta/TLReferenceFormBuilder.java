@@ -52,7 +52,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * Editor for {@link TLReference}s
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 
@@ -284,7 +284,7 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 	/**
 	 * @see TLStructuredTypePartFormBuilder.EditModel
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface EditModel extends TLStructuredTypePartFormBuilder.EditModel {
 
@@ -331,6 +331,7 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 		referenceModel.setNavigate(reference.getEnd().canNavigate());
 		referenceModel.setKind(TLMetaModelUtil.getReferenceKind(reference));
 		referenceModel.setHistoryType(reference.getHistoryType());
+		referenceModel.setDeletionPolicy(reference.getDeletionPolicy());
 
 		TLReference inverse = TLModelUtil.getOtherEnd(reference.getEnd()).getReference();
 		if (inverse != null) {

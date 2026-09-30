@@ -13,7 +13,7 @@ import com.top_logic.graph.diagramjs.client.service.DiagramJSGraphControl;
 /**
  * Dispatches to the graph control which handle the drop event.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DropEventListener implements EventListener {
 

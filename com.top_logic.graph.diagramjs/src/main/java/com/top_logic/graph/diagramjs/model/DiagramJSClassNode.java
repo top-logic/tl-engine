@@ -15,7 +15,7 @@ import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSLabel;
 /**
  * A diagramjs class node in a {@link GraphModel}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface DiagramJSClassNode extends Node {
 

@@ -8,10 +8,10 @@ package com.top_logic.tool.boundsec;
 import java.util.List;
 
 import com.top_logic.basic.exception.ErrorSeverity;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * An immutable default HandlerResult indicating success. Can be used if
@@ -104,7 +104,7 @@ public class DefaultHandlerResult extends HandlerResult {
 	 */
     @Override
 	@Deprecated
-	public void setException(TopLogicException anEx) {
+	public void setException(I18NRuntimeException anEx) {
 		throw errorUnmodifyable();
     }
 

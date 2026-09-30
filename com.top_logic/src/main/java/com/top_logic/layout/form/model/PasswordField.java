@@ -62,6 +62,19 @@ public class PasswordField extends AbstractFormField {
 		return Password.PASSWORD_REPLACEMENT;
 	}
 
+	/**
+	 * Determines the decrypted password.
+	 * 
+	 * @return The decrypted password or <code>null</code>, when no password is set.
+	 */
+	public String getDecryptedPassword() {
+		Object value = getValue();
+		if (value == null) {
+			return null;
+		}
+		return ((Password) value).decrypt();
+	}
+
 	@Override
 	protected boolean canRecordRawValue() {
 		return true;

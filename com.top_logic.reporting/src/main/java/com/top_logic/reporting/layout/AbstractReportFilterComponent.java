@@ -27,7 +27,7 @@ import com.top_logic.mig.html.layout.ModelEventListener;
  * {@link AbstractRefreshReportHandler} command is called. The {@link AbstractReportTableComponent}
  * is requesting the result via {@link #getResultList()} and display that.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractReportFilterComponent extends FormComponent {
 

@@ -15,7 +15,7 @@ import com.top_logic.graph.common.model.GraphPart;
 /**
  * The arguments for a {@link GraphPart}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class GraphPartCommandArguments extends AJAXArguments {
 

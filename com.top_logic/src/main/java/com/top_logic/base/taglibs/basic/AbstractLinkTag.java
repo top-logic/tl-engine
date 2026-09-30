@@ -16,7 +16,7 @@ import jakarta.servlet.jsp.tagext.TagSupport;
 /**
  * Base class for {@link Tag}s writing HTML <code>link</code>s.
  * 
- * @author <a href=mailto:jco@top-logic.com>Jörg Connotte</a>
+ * @author <a href=mailto:jco@top-logic.com>JÃ¶rg Connotte</a>
  */
 public abstract class AbstractLinkTag extends TagSupport {
 

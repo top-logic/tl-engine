@@ -22,6 +22,8 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.col.ObjectFlag;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.db.schema.properties.DBPropertiesSchema;
 import com.top_logic.basic.io.FileUtilities;
@@ -29,17 +31,19 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.doc.export.DocumentationImporter;
 import com.top_logic.doc.export.TLDocExportImportConstants;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.commandhandlers.BookmarkService;
 import com.top_logic.util.model.ModelService;
 
 /**
- * {@link KBBasedManagedClass} importing the documentation of the application during the start up.
- * 
+ * Imports the application's documentation during startup.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ServiceDependencies({
@@ -47,6 +51,7 @@ import com.top_logic.util.model.ModelService;
 	BookmarkService.Module.class,
 	CommandHandlerFactory.Module.class,
 })
+@Label("Documentation import")
 public class ImportDocumentationModule extends KBBasedManagedClass<ImportDocumentationModule.Config> {
 
 	/**
@@ -96,7 +101,12 @@ public class ImportDocumentationModule extends KBBasedManagedClass<ImportDocumen
 		}
 		Date lastImport = readImportDate(log);
 		if (lastImport == null || lastImport.before(lastDocModification)) {
-			importDocumentation(log, rootPath);
+			ResKey commitMessage = I18NConstants.UPDATE_DOCUMENTATION_FROM_FS__DATE
+				.fill(XmlDateTimeFormat.formatTimeStamp(lastDocModification.getTime()));
+			try (Transaction tx = kb().beginTransaction(commitMessage)) {
+				importDocumentation(log, rootPath);
+				tx.commit();
+			}
 			storeImportDate(log, lastDocModification);
 		} else {
 			log.info(

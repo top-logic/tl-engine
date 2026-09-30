@@ -11,6 +11,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -72,6 +74,8 @@ public class Ticket26529TransferVariantsToDynamicStorage implements MigrationPro
 
 						try {
 							try (InputStream in = new FileInputStream(file)) {
+								// Legacy resources were written as ISO-8859-1 by the old
+								// Properties.store; keep that decoding here.
 								properties.load(in);
 							}
 						} catch (IOException ex) {
@@ -87,8 +91,9 @@ public class Ticket26529TransferVariantsToDynamicStorage implements MigrationPro
 						oldFiles.remove(newFile);
 
 						try {
-							try (OutputStream out = new FileOutputStream(newFile)) {
-								entry.getValue().store(out, null);
+							try (OutputStream out = new FileOutputStream(newFile);
+								OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
+								entry.getValue().store(writer, null);
 							}
 						} catch (IOException ex) {
 							log.info("Cannot write new dynamic resources '" + newFile + "': " + ex.getMessage(),

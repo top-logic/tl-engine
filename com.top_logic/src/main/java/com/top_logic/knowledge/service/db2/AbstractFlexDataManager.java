@@ -1437,46 +1437,41 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			int retry = sqlDialect.retryCount();
 			while (true) {
 				PooledConnection readConnection = this.connectionPool.borrowReadConnection();
-				try {
-					GetBulkAttributesStatement.BulkAttributeResult res =
-						this.getBulkAttributesStatement.query(connectionPool, readConnection, branch, typeName,
-							bulkIds, dataRevision);
-					try {
-						Iterator<T> baseIt = bulkObjects.iterator();
+				try (GetBulkAttributesStatement.BulkAttributeResult res =
+					this.getBulkAttributesStatement.query(connectionPool, readConnection, branch, typeName,
+						bulkIds, dataRevision)) {
+					Iterator<T> baseIt = bulkObjects.iterator();
 
-						ImmutableFlexData flexData = null;
-						TLID currentId = null;
-						while (res.next()) {
-							TLID nextId = res.getObjectName();
-							if (!nextId.equals(currentId)) {
-								if (currentId != null) {
-									// Flush current data.
-									flushData(dataRevision, callback, keyMapping, baseIt, flexData, currentId);
-								}
-
-								// Construct new data.
-								currentId = nextId;
-								flexData = new ImmutableFlexData();
+					ImmutableFlexData flexData = null;
+					TLID currentId = null;
+					while (res.next()) {
+						TLID nextId = res.getObjectName();
+						if (!nextId.equals(currentId)) {
+							if (currentId != null) {
+								// Flush current data.
+								flushData(dataRevision, callback, keyMapping, baseIt, flexData, currentId);
 							}
 
-							assert flexData != null;
-							String name = res.getAttributeName();
-							long revMin = res.getRevMin();
-							Object value = fetchValue(res);
-
-							flexData.initAttributeValue(name, value, revMin);
+							// Construct new data.
+							currentId = nextId;
+							flexData = new ImmutableFlexData();
 						}
 
-						// flush last data
-						flushData(dataRevision, callback, keyMapping, baseIt, flexData, currentId);
+						assert flexData != null;
+						String name = res.getAttributeName();
+						long revMin = res.getRevMin();
+						Object value = fetchValue(res);
 
-						// skip objects without attributes
-						while (baseIt.hasNext()) {
-							T baseObject = baseIt.next();
-							callback.loadEmpty(dataRevision, baseObject);
-						}
-					} finally {
-						res.close();
+						flexData.initAttributeValue(name, value, revMin);
+					}
+
+					// flush last data
+					flushData(dataRevision, callback, keyMapping, baseIt, flexData, currentId);
+
+					// skip objects without attributes
+					while (baseIt.hasNext()) {
+						T baseObject = baseIt.next();
+						callback.loadEmpty(dataRevision, baseObject);
 					}
 					break;
 				} catch (SQLException sqx) {
@@ -1579,35 +1574,32 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				PooledConnection commitConnection = context.getConnection();
 				readConnection = commitConnection;
 			}
-			try {
-				AttributeResult res =
-					getHistoricAttributesStatement.query(connectionPool, readConnection, branch, type, id,
-						dataRevision);
-				try {
-					if (res.next()) {
-						AbstractFlexData flexData;
-						if (mutable) {
-							flexData = new MutableFlexData();
-						} else {
-							flexData = new ImmutableFlexData();
-						}
-						do {
-							String name = res.getAttributeName();
-							long revMin = res.getRevMin();
-							Object value = fetchValue(res);
-							flexData.initAttributeValue(name, value, revMin);
-						} while (res.next());
-						return flexData;
+			try (AttributeResult res =
+				getHistoricAttributesStatement.query(connectionPool, readConnection, branch, type, id,
+					dataRevision)) {
+				FlexData data;
+				if (res.next()) {
+					AbstractFlexData flexData;
+					if (mutable) {
+						flexData = new MutableFlexData();
 					} else {
-						if (mutable) {
-							return new MutableFlexData();
-						} else {
-							return NoFlexData.INSTANCE;
-						}
+						flexData = new ImmutableFlexData();
 					}
-				} finally {
-					res.close();
+					do {
+						String name = res.getAttributeName();
+						long revMin = res.getRevMin();
+						Object value = fetchValue(res);
+						flexData.initAttributeValue(name, value, revMin);
+					} while (res.next());
+					data = flexData;
+				} else {
+					if (mutable) {
+						data = new MutableFlexData();
+					} else {
+						data = NoFlexData.INSTANCE;
+					}
 				}
+				return data;
 			} catch (SQLException sqx) {
 				retry--;
 				readConnection.closeConnection(sqx);

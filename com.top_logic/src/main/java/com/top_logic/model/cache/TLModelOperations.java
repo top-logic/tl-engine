@@ -20,15 +20,19 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import com.google.common.collect.ImmutableSet;
 
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.TooltipProvider;
 import com.top_logic.layout.provider.icon.IconProvider;
 import com.top_logic.layout.provider.icon.ProxyIconProvider;
 import com.top_logic.layout.provider.icon.StaticIconProvider;
+import com.top_logic.mig.html.SimpleTooltipProvider;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -36,7 +40,12 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.InstancePresentation;
 import com.top_logic.model.annotate.TLSortOrder;
 import com.top_logic.model.annotate.persistency.LinkTables;
+import com.top_logic.model.annotate.ui.TLDynamicColor;
 import com.top_logic.model.annotate.ui.TLDynamicIcon;
+import com.top_logic.model.annotate.ui.TLIDColumn;
+import com.top_logic.model.annotate.ui.TLLabel;
+import com.top_logic.model.annotate.ui.TLTooltip;
+import com.top_logic.model.annotate.ui.ValueColorProvider;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.composite.ContainerStorage;
@@ -220,6 +229,58 @@ public class TLModelOperations {
 	}
 
 	/**
+	 * Computes the parts that override the given part, i.e. the {@link TLStructuredTypePart} that
+	 * have the same {@link TLStructuredTypePart#getDefinition()} and whose owner is a
+	 * specialisation of the owner of the given part.
+	 */
+	public Set<TLStructuredTypePart> getOverrides(TLStructuredTypePart part) {
+		TLStructuredType owner = part.getOwner();
+		if (owner.getModelKind() != ModelKind.CLASS) {
+			return Collections.emptySet();
+		}
+
+		return computeOverrides((TLClass) owner, part);
+	}
+
+	/**
+	 * Computes the result for {@link #getOverrides(TLStructuredTypePart)} in case the owner of the
+	 * part is a {@link TLClass}.
+	 */
+	protected Set<TLStructuredTypePart> computeOverrides(TLClass owner, TLStructuredTypePart part) {
+		String partName = part.getName();
+		Set<TLStructuredTypePart> allParts = Collections.emptySet();
+
+		Set<TLClass> specializations = getSubClasses(owner);
+		for (TLClass specialization : specializations) {
+			if (specialization == owner) {
+				// part
+				continue;
+			}
+			for (TLStructuredTypePart localPart : specialization.getLocalParts()) {
+				if (localPart.getName().equals(partName)) {
+					switch (allParts.size()) {
+						case 0: {
+							allParts = Collections.singleton(localPart);
+							break;
+						}
+						case 1: {
+							allParts = new HashSet<>(allParts);
+							allParts.add(localPart);
+							break;
+						}
+						default: {
+							allParts.add(localPart);
+							break;
+						}
+					}
+					break;
+				}
+			}
+		}
+		return allParts;
+	}
+
+	/**
 	 * The global {@link TLClass}es in the given {@link TLModel}.
 	 * <p>
 	 * "Global" means, it is either defined directly in the scope of a {@link TLModule} or
@@ -283,6 +344,98 @@ public class TLModelOperations {
 			type = TLModelUtil.getPrimaryGeneralization(type);
 		}
 		return null;
+	}
+
+	/**
+	 * Retrieves the {@link ValueColorProvider} for a given {@link TLType}.
+	 * 
+	 * @see TLDynamicColor#getColorProvider()
+	 */
+	public ValueColorProvider getColorProvider(TLType type) {
+		return computeColorProvider(type);
+	}
+
+	/**
+	 * Builds the {@link ValueColorProvider} the {@link TLDynamicColor} annotation of the given type
+	 * configures, {@link ValueColorProvider#NONE} for a type without that annotation.
+	 * 
+	 * @see #getColorProvider(TLType)
+	 */
+	protected ValueColorProvider computeColorProvider(TLType type) {
+		TLDynamicColor annotation = type.getAnnotation(TLDynamicColor.class);
+		if (annotation == null) {
+			return ValueColorProvider.NONE;
+		}
+		return TypedConfigUtil.createInstance(annotation.getColorProvider());
+	}
+
+	/**
+	 * Retrieves the {@link TooltipProvider} for a given {@link TLType}.
+	 */
+	public TooltipProvider getTooltipProvider(TLType type) {
+		return computeTooltipProvider(type);
+	}
+
+	/**
+	 * Looks up the first {@link TLTooltip} annotation in the primary generalization hierarchy and
+	 * builds an {@link TooltipProvider} for the given type.
+	 */
+	protected TooltipProvider computeTooltipProvider(TLType type) {
+		while (type != null) {
+			TLTooltip annotation = type.getAnnotation(TLTooltip.class);
+			if (annotation != null) {
+				TooltipProvider provider = TypedConfigUtil.createInstance(annotation.getTooltipProvider());
+				return provider;
+			}
+
+			type = TLModelUtil.getPrimaryGeneralization(type);
+		}
+
+		return SimpleTooltipProvider.INSTANCE;
+	}
+
+	/**
+	 * Retrieves the {@link LabelProvider} for a given {@link TLType}.
+	 */
+	public LabelProvider getLabelProvider(TLType type) {
+		return computeLabelProvider(type);
+	}
+
+	/**
+	 * Looks up the first {@link TLLabel} annotation in the primary generalization hierarchy and
+	 * builds an {@link LabelProvider} for the given type.
+	 */
+	protected LabelProvider computeLabelProvider(final TLType type) {
+		TLType anchestorType = type;
+		while (anchestorType != null) {
+			TLLabel annotation = anchestorType.getAnnotation(TLLabel.class);
+			if (annotation != null) {
+				LabelProvider provider = TypedConfigUtil.createInstance(annotation.getLabelProvider());
+				return provider;
+			}
+
+			if (anchestorType instanceof TLStructuredType structuredType) {
+				TLIDColumn idColumn = structuredType.getAnnotation(TLIDColumn.class);
+				if (idColumn != null) {
+					TLStructuredTypePart idColumnPart = structuredType.getPart(idColumn.getValue());
+
+					if (idColumnPart != null) {
+						return new IDColumnLabelProvider(idColumnPart);
+					}
+				}
+			}
+
+			anchestorType = TLModelUtil.getPrimaryGeneralization(anchestorType);
+		}
+
+		if (type instanceof TLStructuredType structuredType) {
+			TLStructuredTypePart namePart = structuredType.getPart(TLNamed.NAME_ATTRIBUTE);
+			if (namePart != null) {
+				return new IDColumnLabelProvider(namePart);
+			}
+		}
+
+		return new SimpleLabelProvider(type);
 	}
 
 	/**

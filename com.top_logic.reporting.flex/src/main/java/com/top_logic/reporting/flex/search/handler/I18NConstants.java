@@ -5,6 +5,7 @@
  */
 package com.top_logic.reporting.flex.search.handler;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -14,13 +15,17 @@ import com.top_logic.layout.I18NConstantsBase;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey FAILED = legacyKey("reporting.create.failed");
+	@CustomKey("reporting.create.failed")
+	public static ResKey FAILED;
 
-	public static ResKey DELETE = legacyKey("reporting.report.delete");
+	@CustomKey("reporting.report.delete")
+	public static ResKey DELETE;
 
-	public static ResKey NO_REPORT = legacyKey("tl.executable.disabled.noReport");
+	@CustomKey("tl.executable.disabled.noReport")
+	public static ResKey NO_REPORT;
 
-	public static ResKey OPEN_CHART_DETAIL = legacyKey("reporting.matrix.chart.openChartDetails");
+	@CustomKey("reporting.matrix.chart.openChartDetails")
+	public static ResKey OPEN_CHART_DETAIL;
 
 	/**
 	 * @en Created search report.

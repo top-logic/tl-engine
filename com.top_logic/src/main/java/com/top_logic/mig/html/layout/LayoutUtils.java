@@ -583,7 +583,7 @@ public class LayoutUtils {
 
 	/**
 	 * Appends the full URL of the host of the application to the given output, e.g.
-	 * https://aps.top-logic.com:8080.
+	 * https://apps.top-logic.com:8080.
 	 * 
 	 * <p>
 	 * When a value for the alias {@link AliasManager#HOST} is present, it is used.

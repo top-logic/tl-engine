@@ -15,6 +15,7 @@ import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLScope;
+import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * Default implementation of {@link TLAssociation}.
@@ -70,6 +71,20 @@ public class TLAssociationImpl extends AbstractTLStructuredType<TLAssociationPar
 	@Override
 	public List<TLAssociationPart> getAssociationParts() {
 		return getLocalParts();
+	}
+
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case ENDS_ATTR:
+				return getEnds();
+			case SUBSETS_ATTR:
+				return getSubsets();
+			case UNION_ATTR:
+				return getUnions();
+			default:
+				return super.tValue(part);
+		}
 	}
 
 }

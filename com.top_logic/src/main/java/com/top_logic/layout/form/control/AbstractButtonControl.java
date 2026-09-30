@@ -420,7 +420,7 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 	public void writeCommandImage(TagWriter out) throws IOException {
 		ThemeImage img = getCommandImage();
 		if (img != null) {
-			img.writeWithCss(DefaultDisplayContext.getDisplayContext(), out, "cmdImg");
+			img.writeWithCss(DefaultDisplayContext.getDisplayContext(), out, "tl-cmd-button__img");
 		}
 	}
 
@@ -596,9 +596,15 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 		return null;
 	}
 	
-	private static class HandleClickInvokeExpressionProvider implements InvokeExpressionProvider {
+	/**
+	 * {@link InvokeExpressionProvider} issuing a server call.
+	 */
+	public static class HandleClickInvokeExpressionProvider implements InvokeExpressionProvider {
 
-		private static final HandleClickInvokeExpressionProvider INSTANCE = new HandleClickInvokeExpressionProvider();
+		/**
+		 * Singleton instance.
+		 */
+		public static final HandleClickInvokeExpressionProvider INSTANCE = new HandleClickInvokeExpressionProvider();
 
 		@Override
 		public void writeInvokeExpression(DisplayContext context, Appendable out, AbstractButtonControl<?> buttonControl)

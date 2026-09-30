@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="transactions"/>
+	</channels>
+	<window width="600px">
+		<title>
+			<en>Transactions</en>
+			<de>Transaktionen</de>
+		</title>
+		<table types="demo.charts:Transaktion">
+			<inputs>
+				<input channel="transactions"/>
+			</inputs>
+			<rows>txs -&gt; $txs</rows>
+		</table>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Close</en>
+						<de>Schließen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

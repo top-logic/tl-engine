@@ -109,7 +109,7 @@ public class DOList extends AbstractDOCollection implements List {
 	public boolean addAll (int index, Collection c) {
         for (Iterator iter = c.iterator (); iter.hasNext (); ) {
             if (! canContain(iter.next())) {
-                throw new IllegalArgumentException ("The object doesn´t have the right type.");
+                throw new IllegalArgumentException ("The object doesnÂ´t have the right type.");
             }
         }
 
@@ -125,7 +125,7 @@ public class DOList extends AbstractDOCollection implements List {
             this.getList ().add (index, element);
         } else {
             throw new IllegalArgumentException (
-            "The object doesn´t have the right type.");
+            "The object doesnÂ´t have the right type.");
         }
     }
 
@@ -331,7 +331,7 @@ public class DOList extends AbstractDOCollection implements List {
 
     /**
      * Sets the identifier you specified for this object. Once the 
-     * identifier is set you can´t override the existing one.
+     * identifier is set you canÂ´t override the existing one.
      *
 	 * Replaced for reimporting of xml saved Objects (by JCO)
      */

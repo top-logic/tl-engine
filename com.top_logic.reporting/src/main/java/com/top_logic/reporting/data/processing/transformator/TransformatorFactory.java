@@ -39,13 +39,13 @@ public class TransformatorFactory implements Reloadable {
 	/**
 	 * Configuration for the {@link TransformatorFactory}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ConfigurationItem {
 		/**
 		 * Configuration for a specific transformator.
 		 * 
-		 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+		 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 		 */
 		interface Transformator extends NamedConfigMandatory, PolymorphicConfiguration<EntryExtractor> {
 			String getDisplayKey();

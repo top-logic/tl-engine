@@ -7,7 +7,9 @@ package com.top_logic.graphic.flow.server.ui;
 
 import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -39,8 +41,10 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ModelReferenceChecker;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -73,6 +77,7 @@ public class ScriptFlowChartBuilder extends AbstractConfiguredInstance<ScriptFlo
 		@FormattedDefault("model -> flowChart()")
 		@PropertyEditor(PlainEditor.class)
 		@Constraint(value = SyntaxCheck.class, args = @Ref(HANDLERS))
+		@ScriptContextVariables(ChartHandlerVariables.class)
 		Expr getCreateChart();
 
 		/**
@@ -183,9 +188,9 @@ public class ScriptFlowChartBuilder extends AbstractConfiguredInstance<ScriptFlo
 
 	private final QueryExecutor _createChart;
 
-	private final Map<String, DiagramHandler> _handlers;
-
 	private final QueryExecutor _getObserved;
+
+	private final List<DiagramHandler> _handlers;
 
 	/**
 	 * Creates a {@link ScriptFlowChartBuilder} from configuration.
@@ -198,15 +203,17 @@ public class ScriptFlowChartBuilder extends AbstractConfiguredInstance<ScriptFlo
 	@CalledByReflection
 	public ScriptFlowChartBuilder(InstantiationContext context, Config<?> config) {
 		super(context, config);
-		_handlers = TypedConfiguration.getInstanceMap(context, config.getHandlers());
+		Map<String, DiagramHandler> handlerMap = TypedConfiguration.getInstanceMap(context, config.getHandlers());
 		_supportModel = QueryExecutor.compile(config.getSupportsModel());
 
 		SearchExpression createChart =
 			SearchBuilder.toSearchExpression(ModelService.getApplicationModel(), config.getCreateChart());
 
 		// Inject implicit variables.
-		for (Entry<String, DiagramHandler> handler : _handlers.entrySet()) {
-			createChart = call(lambda(handler.getKey(), createChart), literal(handler.getValue()));
+		_handlers = new ArrayList<>();
+		for (Entry<String, DiagramHandler> handler : handlerMap.entrySet()) {
+			createChart = lambda(handler.getKey(), createChart);
+			_handlers.add(handler.getValue());
 		}
 
 		_createChart = QueryExecutor.compile(createChart);
@@ -220,7 +227,12 @@ public class ScriptFlowChartBuilder extends AbstractConfiguredInstance<ScriptFlo
 
 	@Override
 	public Diagram getModel(Object businessModel, LayoutComponent aComponent) {
-		return (Diagram) _createChart.execute(businessModel);
+		Args args = Args.some(businessModel);
+		for (DiagramHandler handler : _handlers) {
+			args = Args.cons(handler, args);
+		}
+
+		return (Diagram) _createChart.executeWith(args);
 	}
 
 	@Override

@@ -18,13 +18,35 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en Reverted change: {0}
+	 * 
+	 * @deprecated Use {@link #REVERTED__MSG_REV}. This key still exists for compatibility with old
+	 *             commits.
 	 */
+	@Deprecated
 	public static ResKey1 REVERTED__MSG;
 
 	/**
+	 * {@link ResKey2} used to state that the change set with the given revision was reverted.
+	 * 
+	 * @en Reverted change: {0}
+	 */
+	public static ResKey2 REVERTED__MSG_REV;
+
+	/**
+	 * @en Performed again: {0}
+	 * 
+	 * @deprecated Use {@link #REDO__MSG_REV}. This key still exists for compatibility with old
+	 *             commits.
+	 */
+	@Deprecated
+	public static ResKey1 REDO__MSG;
+
+	/**
+	 * {@link ResKey2} used to state that the change set with the given revision was re-done.
+	 * 
 	 * @en Performed again: {0}
 	 */
-	public static ResKey1 REDO__MSG;
+	public static ResKey2 REDO__MSG_REV;
 
 	/**
 	 * @en The object "{0}" can not created because its type "{1}" is no longer available.

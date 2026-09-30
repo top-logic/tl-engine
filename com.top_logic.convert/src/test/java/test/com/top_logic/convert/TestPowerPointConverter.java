@@ -40,7 +40,7 @@ public class TestPowerPointConverter extends AbstractFormatConverterTest {
     	FormatConverter converter = FormatConverterFactory.getInstance().getFormatConverter(PPT_MIMETYPE);
     	checkFormatConverterBasics(converter, PowerPointFormatConverter.class);
     	String text1 = "Ganz wichtiges Text-Dokument";
-    	String text2 = "Dies ist bloß ein simpler Test-Text, anhand dem man die Funktionalität des PowerPoint Konverters testen kann. Ansonsten wurde nicht weiter über den Inhalt dieses Textes nachgedacht. Das Wort Text, sollte in diesem Text jedoch am häufigsten vorkommen, weil Text öfters als andere Wörter verwendet wurde.";
+    	String text2 = "Dies ist bloÃŸ ein simpler Test-Text, anhand dem man die FunktionalitÃ¤t des PowerPoint Konverters testen kann. Ansonsten wurde nicht weiter Ã¼ber den Inhalt dieses Textes nachgedacht. Das Wort Text, sollte in diesem Text jedoch am hÃ¤ufigsten vorkommen, weil Text Ã¶fters als andere WÃ¶rter verwendet wurde.";
     	FileInputStream input = new FileInputStream(new File(TEMPLATES_DOC_PATH + "complexTest.ppt"));
     	try {
     		Reader convert = converter.convert(input, PPT_MIMETYPE);

@@ -301,28 +301,8 @@ public class DummyKnowledgeBase extends AbstractKnowledgeBase {
 	}
 
 	@Override
-	public Map<?, List<LongRange>> search(HistoryQuery query) {
-		return new HashMap<>();
-	}
-
-	@Override
 	public Map<?, List<LongRange>> search(HistoryQuery query, HistoryQueryArguments queryArguments) {
 		return new HashMap<>();
-	}
-
-	@Override
-	public <E> List<E> search(RevisionQuery<E> query) {
-		return new ArrayList<>();
-	}
-
-	@Override
-	public <E> List<E> search(RevisionQuery<E> query, RevisionQueryArguments queryArguments) {
-		return new ArrayList<>();
-	}
-
-	@Override
-	public <E> CloseableIterator<E> searchStream(RevisionQuery<E> query) {
-		return EmptyClosableIterator.getInstance();
 	}
 
 	@Override

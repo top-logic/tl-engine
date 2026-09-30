@@ -8,8 +8,7 @@ package com.top_logic.graph.layouter.algorithm.layering;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import com.top_logic.basic.col.Filter;
-import com.top_logic.basic.col.filter.FilterFactory;
+import java.util.function.Predicate;
 import com.top_logic.graph.layouter.model.LayoutGraph;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
@@ -21,7 +20,7 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
  * {@link LongestPathLayeringFinder} for a given {@link LayoutGraph}. The source {@link LayoutNode}s
  * are on top and the sinks on the bottom.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class LongestPathFromSourceLayeringFinder extends LongestPathLayeringFinder {
 
@@ -93,7 +92,7 @@ public class LongestPathFromSourceLayeringFinder extends LongestPathLayeringFind
 
 	@Override
 	Set<LayoutNode> getNotAssignedSourceNodes(LayoutNode node) {
-		Filter<? super LayoutNode> filterNotMarkedNodes = FilterFactory.not(new FilterMarkedNode(_allAssignedVertices));
+		Predicate<LayoutNode> filterNotMarkedNodes = new FilterMarkedNode(_allAssignedVertices).negate();
 
 		return LayoutGraphUtil.getFilteredNodes(filterNotMarkedNodes, node.outgoing());
 	}

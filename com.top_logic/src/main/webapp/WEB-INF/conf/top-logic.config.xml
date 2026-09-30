@@ -8,6 +8,7 @@
 				<modules>
 				   <module key="com.top_logic.layout.scripting.recorder.ref.ValueNamingSchemeRegistry$Module" value="true"/>
 				   <module key="com.top_logic.base.time.TimeRangeService$Module" value="true"/>
+				   <module key="com.top_logic.base.operation.OperationModeService$Module" value="true"/>
 				   <module key="com.top_logic.basic.io.BasicFileLog$Module" value="true"/>
 				   <module key="com.top_logic.util.CachePolicy$Module" value="true"/>
 				   <module key="com.top_logic.layout.scripting.recorder.ScriptingRecorder$Module" value="true"/>
@@ -35,7 +36,6 @@
 			       <module key="com.top_logic.base.services.CurrencySystem$Module" value="true"/>
 			       <module key="com.top_logic.gui.JSFileCompiler$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.journal.JournalManager$Module" value="true"/>
-			       <module key="com.top_logic.event.logEntry.LogEntryConfiguration$Module" value="true"/>
 			       <module key="com.top_logic.base.administration.LoggerAdminBean$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.wrap.person.PersonManager$Module" value="true"/>
 			       <module key="com.top_logic.util.sched.Scheduler$Module" value="true"/>
@@ -43,11 +43,10 @@
 			       <module key="com.top_logic.tool.export.ExportQueueManager$Module" value="true"/>
 			       <module key="com.top_logic.tool.export.ExportRegistryFactory$Module" value="true"/>
 			       <module key="com.top_logic.base.services.InitialGroupManager$Module" value="true" />
+			       <module key="com.top_logic.base.services.InitialRolesManager$Module" value="true" />
 			       <module key="com.top_logic.tool.boundsec.config.AccessConfigurationSetupService$Module" value="true" />
 			       <module key="com.top_logic.base.administration.MaintenanceWindowManager$Module" value="true"/>
-			       <module key="com.top_logic.event.bus.Bus$Module" value="true" />
 			       <module key="com.top_logic.base.accesscontrol.SessionService$Module" value="true"/>
-			       <module key="com.top_logic.event.ModelTrackingService$Module" value="true" />
 			       <module key="com.top_logic.layout.admin.component.PerformanceMonitor$Module" value="true" />
 			       <module key="com.top_logic.util.error.ErrorHandlingHelper$Module" value="true" />
 			       <module key="com.top_logic.layout.form.boxes.reactive_tag.BoxLayoutTag$ConfigService$Module" value="true" />
@@ -58,9 +57,7 @@
 			       <module key="com.top_logic.layout.scripting.recorder.ref.ModelResolver$Module" value="true" />
 			       <module key="com.top_logic.util.sched.MemoryObserverThread$Module" value="true"/>
 			       <module key="com.top_logic.util.maintenance.MemoryObserver$Module" value="true"/>
-			       <module key="com.top_logic.base.monitor.bus.EventMonitor$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.monitor.UserMonitor$Module" value="true"/>
-		           <module key="com.top_logic.base.monitor.bus.DocumentMonitor$Module" value="false" />
 			       <module key="com.top_logic.knowledge.service.InitialTableSetup$Module" value="true" />
 			       <module key="com.top_logic.tool.boundsec.wrap.SecurityComponentCache$Module" value="true" />
 			       <module key="com.top_logic.knowledge.service.ExtIDFactory$Module" value="true" />
@@ -70,8 +67,14 @@
 			       <module key="com.top_logic.util.LayoutBasedSecurity$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.service.db2.InitialDataSetupService$Module" value="true"/>
 			       <module key="com.top_logic.base.office.excel.handler.POITypeProvider$Module" value="true"/>
+			       <module key="com.top_logic.base.accesscontrol.LoginFailuresModule$Module" value="true"/>
+			       <module key="com.top_logic.model.security.SecurityConfigurationService$Module" value="true"/>
 				</modules>
 			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance class="com.top_logic.model.security.SecurityConfigurationService"/>
 		</config>
 		
 		<config service-class="com.top_logic.tool.boundsec.commandhandlers.BookmarkService">
@@ -89,12 +92,18 @@
 		
 		<config service-class="com.top_logic.base.accesscontrol.SessionService">
 			<instance class="com.top_logic.base.accesscontrol.SessionService"
-				onlyOneSession="false"
-				excludeUIDs=""
 				secureSessionCookie="true"
-			/>
+			>
+				<listeners>
+					<listener name="storeEvent">
+						<impl class="com.top_logic.knowledge.monitor.StoreUserEventListener"
+							excludeUIDs=""
+						/>
+					</listener>
+				</listeners>
+			</instance>
 		</config>
-		
+
 		<config service-class="com.top_logic.util.CachePolicy">
 			<instance class="com.top_logic.util.CachePolicy">
 				<headers>
@@ -111,6 +120,12 @@
 				basicPath="%LOG_PATH%"/>
 		</config>
 		
+		<config service-class="com.top_logic.base.operation.OperationModeService">
+			<instance class="com.top_logic.base.operation.OperationModeService"
+				mode="%OPERATION_MODE%"
+			/>
+		</config>
+
 		<config service-class="com.top_logic.base.time.TimeRangeService">
 			<instance class="com.top_logic.base.time.TimeRangeService">
 				<ranges>
@@ -240,13 +255,13 @@
 		            <provider kind="CODE" type="java.lang.Double" implementation="com.top_logic.layout.provider.LocalizedNumberLabelProvider" />
 		            <provider kind="CODE" type="java.util.Collection" implementation="com.top_logic.layout.provider.CollectionLabelProvider" />
 		            <provider kind="CODE" type="java.util.Date" implementation="com.top_logic.layout.provider.LocalizedDateLabelProvider" />
+		            <provider kind="CODE" type="com.top_logic.util.Country" implementation="com.top_logic.util.CountryResourceProvider" />
 		            <provider kind="CODE" type="java.lang.Enum" implementation="com.top_logic.layout.provider.EnumResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.basic.util.ResKey" implementation="com.top_logic.layout.provider.ResKeyResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.basic.io.binary.BinaryDataSource" implementation="com.top_logic.layout.provider.BinaryDataResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.knowledge.service.Revision" implementation="com.top_logic.layout.provider.label.RevisionResourceProvider" />
 		            
 		            <provider kind="CODE" type="java.util.Locale" implementation="com.top_logic.layout.provider.LocaleLabelProvider" />
-		            <provider kind="CODE" type="com.top_logic.event.bus.Channel" implementation="com.top_logic.event.layout.ChannelResourceProvider"/>
 		            <provider kind="CODE" type="com.top_logic.knowledge.wrap.currency.Amount" implementation="com.top_logic.knowledge.wrap.currency.AmountLabelProvider" />
 		
 		            <provider kind="CODE" type="com.top_logic.model.TLObject" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider"/>
@@ -386,30 +401,6 @@
 			</instance>
 		</config>
 		
-		<config service-class="com.top_logic.event.logEntry.LogEntryReceiver">
-			<instance class="com.top_logic.event.logEntry.LogEntryReceiver" />
-		</config>
-		
-		<config service-class="com.top_logic.base.monitor.bus.EventMonitor">
-			<instance class="com.top_logic.base.monitor.bus.EventMonitor"
-				buffer-size="1000"
-			/>
-		</config>
-	
-		<config service-class="com.top_logic.base.monitor.bus.DocumentMonitor">
-			<instance class="com.top_logic.base.monitor.bus.DocumentMonitor"
-				number-events-to-store="50"
-				output-file="logs/document_monitor.log"
-			/>
-		</config>
-	
-		<config service-class="com.top_logic.base.monitor.bus.WebContentMonitor">
-			<instance class="com.top_logic.base.monitor.bus.WebContentMonitor"
-				number-events-to-store="50"
-				output-file="logs/webcontent_monitor.log"
-			/>
-		</config>
-	
         <config service-class="com.top_logic.basic.mime.MimeTypesModule">
         	<instance class="com.top_logic.util.WebMimeTypes" />
         </config>
@@ -437,9 +428,7 @@
 		</config>
 	
 		<config service-class="com.top_logic.knowledge.monitor.UserMonitor">
-			<instance class="com.top_logic.knowledge.monitor.UserMonitor" 
-				excludeUIDs=""
-			/>
+			<instance class="com.top_logic.knowledge.monitor.UserMonitor" />
 		</config>
 	
 		<config service-class="com.top_logic.knowledge.wrap.WebFolderFactory">
@@ -469,12 +458,6 @@
 					<dependency key="com.top_logic.gui.ThemeFactory$Module" value="true"/>
 				</dependencies>
 			</instance>
-		</config>
-	
-		<config service-class="com.top_logic.knowledge.service.listener.ContentChangeEventListener">
-			<instance class="com.top_logic.knowledge.service.listener.ContentChangeEventListener"
-				types="Document"
-			/>
 		</config>
 	
 		<config service-class="com.top_logic.base.services.CurrencySystem">
@@ -593,7 +576,6 @@
 					<provider name="null" impl="com.top_logic.tool.boundsec.securityObjectProvider.NullSecurityObjectProvider" />
 					<provider name="securityRoot" impl="com.top_logic.tool.boundsec.securityObjectProvider.SecurityRootObjectProvider" />
 					<provider name="selection" impl="path:selection" />
-					<provider name="slave" impl="com.top_logic.tool.boundsec.securityObjectProvider.FirstSlaveSecurityObjectProvider" />
 					<provider name="windowParent" impl="path:window.opener.currentobject" />
 					<provider name="windowParentModel" impl="path:window.opener.model" />
 					<provider name="windowParentSelection" impl="path:window.opener.selection" />
@@ -624,6 +606,7 @@
 					<security-device 
 						id="dbSecurity"
 						class="com.top_logic.base.security.device.db.DBAuthenticationAccessDevice"
+						mfa-requirement="optional"
 					>
 						<password-validator>
 							<enabled>true</enabled>
@@ -649,17 +632,6 @@
 				<allowed-groups></allowed-groups>
 				<!-- In cluster mode maintenance mode cannot be entered immediately. This is the minimum waiting intervall in miliseconds. -->
 				<min-intervall-in-cluster>20000</min-intervall-in-cluster>
-			</instance>
-		</config>
-
-		<config service-class="com.top_logic.event.logEntry.LogEntryConfiguration">
-			<instance class="com.top_logic.event.logEntry.LogEntryConfiguration">
-				<object-types>
-					<object-type
-						name="Person"
-						display-group="Person"
-						event-types="%DEFAULT_EVENT_TYPES%" />
-				</object-types>
 			</instance>
 		</config>
 
@@ -820,6 +792,15 @@
 		
 		<config service-class="com.top_logic.base.services.InitialGroupManager">
 			<instance class="com.top_logic.base.services.InitialGroupManager">
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance class="com.top_logic.base.services.InitialRolesManager">
+				<roles>
+					<role name="navigation"/>
+					<role name="selection"/>
+				</roles>
 			</instance>
 		</config>
 
@@ -1115,12 +1096,6 @@
 		            <handler id="applyRoleRights" class="com.top_logic.tool.boundsec.gui.profile.ApplyRolesCommandHandler"
 		            	clique="apply" group="System"
 		            />
-		            <handler id="AllOn" class="com.top_logic.event.layout.ToggleAllCommand"
-		            	value="true" 
-		            />
-		            <handler id="AllOff" class="com.top_logic.event.layout.ToggleAllCommand"
-		            	value="false" 
-		            />
 					<handler id="expandAll" class="com.top_logic.layout.tree.component.ExpandCollapseAll"
 						clique="expand"
 						disabledImage="theme:ICONS_EXPAND_ALL_DISABLED" 
@@ -1226,7 +1201,7 @@
 					<handler id="logout" class="com.top_logic.layout.component.configuration.LogoutCommandHandler"
 						group="System"
 						image="theme:IMAGE_BUTTONS_LOGOUT22"
-						resourceKey="tl.logout"
+						resourceKey="class.com.top_logic.layout.component.configuration.I18NConstants.LOGOUT"
 					/>
 					<handler id="exportPowerpoint" class="com.top_logic.tool.export.PowerpointExportHandler"
 						clique="exportButtons"/>
@@ -1339,11 +1314,6 @@
 					<handler id="sortConfigOpenForControlRepresentable" class="com.top_logic.layout.table.control.SortConfigDialog$OpenForControlRepresentable"/>
 					<handler id="sortConfigOpenForTableComponent" class="com.top_logic.layout.table.control.SortConfigDialog$OpenForTableComponent"/>
 					
-					<handler id="updateLogEntries" class="com.top_logic.event.layout.LogEntryFilterComponent$UpdateLogEntriesCommandHandler"
-						clique="refresh"/>
-					<handler id="configureLogEntries" class="com.top_logic.event.layout.ConfigureLogEntriesCommandHandler"
-						clique="save" group="System"/>
-					
 					<handler id="ChoiceChartCommand" class="com.top_logic.base.chart.component.ChoiceJFreeChartComponent$ChoiceChartCommand"/>
 					<handler id="refreshFilters" class="com.top_logic.base.chart.flex.control.FilterRefreshCommandHandler"
 						clique="refresh"/>
@@ -1372,15 +1342,6 @@
 						image="theme:ICONS_BUTTON_CLEAR"
 						target="selection(self())"
 					/>
-					
-					<handler id="applyCheckerRoles" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$ApplyRolesProfile"
-						clique="apply" group="System"/>
-					<handler id="expandRoleProfileTree" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$ExpandAllCommandHandler"
-						clique="expand" image="theme:ICONS_EXPAND_ALL" disabledImage="theme:ICONS_EXPAND_ALL_DISABLED" />
-					<handler id="collapseRoleProfileTree" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$CollapseAllCommandHandler"
-						clique="collapse" image="theme:ICONS_COLLAPSE_ALL" disabledImage="theme:ICONS_COLLAPSE_ALL_DISABLED" />
-					<handler id="setAllRoleProfileTree" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$SetAllCommandHandler"/>
-					<handler id="unSetAllRoleProfileTree" class="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$UnSetAllCommandHandler"/>
 					
 					<handler id="newUnit" class="com.top_logic.layout.unit.NewUnitCommandHandler"
 						clique="create"/>
@@ -1421,13 +1382,13 @@
 					<handler id="reloadI18N"
 						class="com.top_logic.layout.debug.ReloadI18NCommand"
 						clique="debugButtons"
-						executability="DebugOnly"
+						executability="DebugOnly, RootOnly"
 						image="theme:IMAGE_BUTTONS_I18N_RELOAD22"
 					/>
 					<handler id="reloadTheme"
 						class="com.top_logic.layout.debug.ReloadThemeCommand"
 						clique="debugButtons"
-						executability="DebugOnly"
+						executability="DebugOnly, RootOnly"
 						image="theme:IMAGE_BUTTONS_THEME_RELOAD22"
 						resourceKey="debug.button.reloadTheme"
 					/>
@@ -1436,7 +1397,7 @@
 						activeImage="theme:IMAGE_BUTTONS_I18N_DEBUG_ACTIVE22"
 						class="com.top_logic.layout.debug.ToggleShowKeyCommand"
 						clique="debugButtons"
-						executability="DebugOnly"
+						executability="DebugOnly, RootOnly"
 						image="theme:IMAGE_BUTTONS_I18N_DEBUG22"
 						resourceKey="debug.button.toggleAlwaysShowKeys"
 					/>
@@ -1445,7 +1406,7 @@
 						activeImage="theme:IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS_ACTIVE"
 						class="com.top_logic.layout.debug.ToggleShowAllCommands"
 						clique="debugButtons"
-						executability="DebugOnly"
+						executability="DebugOnly, RootOnly"
 						image="theme:IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS"
 						resourceKey="debug.button.toggleShowAllCommands"
 					/>
@@ -1479,7 +1440,7 @@
 					<handler id="exportLayout" class="com.top_logic.layout.editor.commands.ExportLayoutCommandHandler"
 						image="theme:layouts.themes.default.toolrow.ExportLayout"
 						clique="layout-editor-reset"
-						executability="IDEOnly"
+						executability="IDEOnly, RootOnly"
 					/>
 					<handler id="resetLayoutConfig" class="com.top_logic.layout.editor.commands.ResetLayoutConfiguration"
 						group="System"
@@ -1552,9 +1513,9 @@
 		</config>
 		
 		<config service-class="com.top_logic.knowledge.wrap.person.PersonManager">
-			<instance class="com.top_logic.knowledge.wrap.person.TLPersonManager"
+			<instance class="com.top_logic.knowledge.wrap.person.PersonManager"
 					  super-user-name="root"
-					  person-name-pattern="[-_a-zA-Z0-9@\.]+"
+					  person-name-pattern="[-_\p{L}\p{N}.@+~]+"
 					  >
 			</instance>
 		</config>
@@ -1583,8 +1544,6 @@
 					<dependency key="com.top_logic.basic.Settings$Module" value="true" />
 					<!-- Needed by multiple tasks
 						com.top_logic.util.sched.CleanUpTask
-						com.top_logic.event.logEntry.DayEntryArchiverTask
-						com.top_logic.event.logEntry.DayEntryCleanupTask 
 					 -->
 					<dependency key="com.top_logic.util.monitor.ApplicationMonitor$Module" value="true" />
 				</dependencies>
@@ -1617,14 +1576,6 @@
 								stop-time="23:30" />
 						</schedules>
 					</task>
-				<!-- Run at 04:04 in the morning -->
-					<task class="com.top_logic.event.logEntry.DayEntryArchiverTask" 
-						name="DayEntryArchiverTask"
-						run-on-startup="false">
-						<schedules>
-							<daily time-of-day="04:04" />
-						</schedules>
-					</task>
 					<task class="com.top_logic.knowledge.monitor.CheckUnusedAccountsTask"
 						name="CheckUnusedAccountsTask"
 						run-on-startup="false" >
@@ -1635,16 +1586,6 @@
 						<schedules>
 							<daily
 								time-of-day="01:00" />
-						</schedules>
-					</task>
-					<!-- Run at 04:34 in the morning -->
-					<task class="com.top_logic.event.logEntry.DayEntryCleanupTask"
-						name="DayEntryCleanUpTask"
-						run-on-startup="false"
-						archive-period="0M" >
-						<schedules>
-							<daily
-								time-of-day="04:34" />
 						</schedules>
 					</task>
 					<task class="com.top_logic.util.sched.SchedulerClusterCleanupTask"
@@ -1877,10 +1818,6 @@
 			beginDay="1"
 		/>
 		
-		<config config:interface="com.top_logic.event.logEntry.UserDayEntryManager$Config"
-			duplicateInterval="600"
-		/>
-		
 		<config config:interface="com.top_logic.tool.export.ExcelExportSupport$Config"
 			className="com.top_logic.tool.export.ExcelExportSupport"
 		/>
@@ -1927,6 +1864,9 @@
 				path="/xml/dtd/"
 				publicID="-//W3C//DTD XHTML 1.0 Transitional//EN"
 			/>
+			<login-hooks>
+				<login-hook class="com.top_logic.layout.component.configuration.OpenLoginDialogHook"/>
+			</login-hooks>
 		</config>
 		
 		<config config:interface="com.top_logic.dsa.file.DOImporter$Config">
@@ -1951,18 +1891,15 @@
 		</config>
 		
 		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
-			<login>/servlet/login</login>
-			<loginPage>/login.jsp</loginPage>
-			<loginRetryPage>/login.jsp</loginRetryPage>
-			<loginRetrySSO>/login.jsp</loginRetrySSO>
-			<loginErrorPage>/jsp/main/loginError.jsp</loginErrorPage>
+			<loginPage>/servlet/LayoutServlet</loginPage>
+			<loginRetrySSO>/servlet/LayoutServlet</loginRetrySSO>
 			<triggerLogoutPage>/jsp/main/LogoutPage.jsp</triggerLogoutPage>
-			<logoutPage>/login.jsp</logoutPage>
+			<logoutPage>/servlet/LayoutServlet</logoutPage>
 			<buzzyPage>/jsp/main/buzzyPage.jsp</buzzyPage>
 			<noCookiePage>/jsp/main/LoginErrorPage_noCookies.jsp</noCookiePage>
+			<unknownAccountPage>/jsp/main/LoginErrorPage_unknownAccount.jsp</unknownAccountPage>
 			<startPage>/servlet/LayoutServlet</startPage>
 			<layout>/servlet/LayoutServlet</layout>
-			<changePassword>/jsp/util/administration/changePwd.jsp</changePassword>
 		</config>
 		
 		<config config:interface="com.top_logic.mig.html.layout.GlobalModelEventForwarder$Config">
@@ -2019,7 +1956,6 @@
 			            <declaration resource="webinf://kbase/ModelMeta.xml" />
 			            <declaration resource="webinf://kbase/ListMeta.xml" />
 			            <declaration resource="webinf://kbase/UnitMeta.xml" />
-			            <declaration resource="webinf://kbase/LogEntryMeta.xml" /> 
 			            <declaration resource="webinf://kbase/LayoutMeta.xml" /> 
 			            <declaration resource="webinf://kbase/TemplateLayoutMeta.xml" /> 
 					</declarations>
@@ -2332,17 +2268,26 @@
 			</customizations>
 		</config>
 		
-		<config config:interface="com.top_logic.layout.editor.config.LayoutEditorConfig">
-			<excluded-layouts>
-				<layout path="com.top_logic.element/admin/security/indexLegacy.layout.xml" />
-			</excluded-layouts>
-		</config>
-		
 		<config config:interface="com.top_logic.util.monitor.SystemEnvironmentBuilder$GlobalConfig">
 			<protected-alias pattern="(?i)(_PASS|_CRED|_PWD|_API_KEY|_SECRET)[^_]*$" />
 			<!-- Attention: Do not use %TRANSLATION_API_KEY%, because this will be replaced by the value! -->
 			<protected-alias pattern="TRANSLATION_API_KEY" />
 		</config>
+
+		<config config:interface="com.top_logic.layout.admin.component.TLServicesCommandProvider$Config">
+			<commands-by-service-class service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+				<command id="restartAndReload"
+					class="com.top_logic.layout.admin.component.RestartAndReload"
+					image="theme:ICON_RELOAD_ACCESSMANAGER"
+					resourceKey="class.com.top_logic.tool.boundsec.manager.I18NConstants.RESTART_AND_RELOAD_ACCESS_MANAGER"
+				>
+					<executability>
+						<reference rule-id="InViewMode"/>
+					</executability>
+				</command>
+			</commands-by-service-class>
+		</config>
+
 	</configs>
 	
 	<defaults>

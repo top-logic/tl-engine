@@ -49,6 +49,18 @@ public interface SvgWriter extends AutoCloseable {
 	void endSvg();
 
 	/**
+	 * Writes a <code>style</code> element with the given CSS rules.
+	 *
+	 * <p>
+	 * Only meaningful for writers producing a standalone SVG document. Writers targeting the live
+	 * DOM discard the rules, because there the surrounding page stylesheet applies.
+	 * </p>
+	 */
+	default void style(CharSequence css) {
+		// Ignored: the surrounding document supplies the stylesheet.
+	}
+
+	/**
 	 * Starts a <code>g</code> tag.
 	 */
 	void beginGroup(Object model);
@@ -460,6 +472,27 @@ public interface SvgWriter extends AutoCloseable {
 	 *        {@link SVGClickEvent#getSender()}.
 	 */
 	default Registration attachOnClick(SVGClickHandler handler, Object sender) {
+		// Ignore by default. This is only supported in specialized writers that build interactive
+		// DOM trees.
+		return Registration.NONE;
+	}
+
+	/**
+	 * Attaches a callback to the created SVG document that is called, if the user double clicks on
+	 * the currently created element.
+	 * 
+	 * <p>
+	 * This is an optional method that is only supported, for special writers that construct
+	 * interactive documents. In all other cases, calls to this method are ignored.
+	 * </p>
+	 *
+	 * @param handler
+	 *        The callback that is invoked upon click.
+	 * @param sender
+	 *        The user object to pass to the invoked callback. See
+	 *        {@link SVGClickEvent#getSender()}.
+	 */
+	default Registration attachOnDoubleClick(SVGClickHandler handler, Object sender) {
 		// Ignore by default. This is only supported in specialized writers that build interactive
 		// DOM trees.
 		return Registration.NONE;

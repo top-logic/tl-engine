@@ -19,6 +19,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.QualifiedNameable;
+import javax.lang.model.element.RecordComponentElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.ElementFilter;
@@ -75,6 +76,33 @@ public class TypeUtils {
 	}
 
 	/**
+	 * Whether the given method is a synthesised {@link Record} method.
+	 */
+	public static boolean isRecordSynthesized(Element element) {
+		if (element.getKind() != ElementKind.METHOD) {
+			return false;
+		}
+		Element enclosingElement = element.getEnclosingElement();
+		if (enclosingElement.getKind() == ElementKind.RECORD) {
+			TypeElement recordElt = (TypeElement) enclosingElement;
+			String elementString = asString(element);
+			// Check general methods.
+			if ("equals".equals(elementString)
+				|| "hashCode".equals(elementString)
+				|| "toString".equals(elementString)) {
+				return true;
+			}
+			// Check getter fields.
+			for (RecordComponentElement rc : recordElt.getRecordComponents()) {
+				if (elementString.equals(asString(rc.getSimpleName()))) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Cast to {@link TypeElement}
 	 */
 	public static TypeElement asTypeElement(Element element) {
@@ -100,6 +128,9 @@ public class TypeUtils {
 			return true;
 		}
 		if (isEnumSynthesized(element)) {
+			return true;
+		}
+		if (isRecordSynthesized(element)) {
 			return true;
 		}
 
@@ -203,6 +234,15 @@ public class TypeUtils {
 	public static List<VariableElement> enumConstantsIn(TypeElement element) {
 		return element.getEnclosedElements().stream()
 			.filter(inner -> ElementKind.ENUM_CONSTANT == inner.getKind())
+			.map(VariableElement.class::cast)
+			.collect(Collectors.toList());
+	}
+
+	/**
+	 * Determines the record components in the given type.
+	 */
+	public static List<VariableElement> recordComponentsIn(TypeElement element) {
+		return element.getRecordComponents().stream()
 			.map(VariableElement.class::cast)
 			.collect(Collectors.toList());
 	}

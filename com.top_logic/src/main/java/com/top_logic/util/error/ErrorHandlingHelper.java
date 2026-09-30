@@ -15,6 +15,7 @@ import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.exception.I18NRuntimeException;
@@ -37,10 +38,11 @@ import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Provides helper methods for displaying problems..
- * 
+ * Displays application errors to the user in dialogs and info messages.
+ *
  * @author <a href="mailto:dkh@top-logic.com">Dirk K&ouml;hlhoff</a>
  */
+@Label("Error handling")
 public class ErrorHandlingHelper extends ManagedClass {
 
 	private static final int DIALOG_HEIGHT = 250;
@@ -227,9 +229,7 @@ public class ErrorHandlingHelper extends ManagedClass {
 		}
 
 		if (problem instanceof I18NRuntimeException ex) {
-			if (ex.getSeverity().ordinal() >= ErrorSeverity.ERROR.ordinal()) {
-				return true;
-			}
+			return ex.getSeverity().ordinal() >= ErrorSeverity.SYSTEM_FAILURE.ordinal();
 		}
 
 		Throwable cause = problem.getCause();

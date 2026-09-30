@@ -131,7 +131,7 @@ public class ExportRun /*implements Runnable*/ {
      */
     private String createDocumentID(String aFileextension) {
 		String theID = IdentifierUtil.toExternalForm(StringID.createRandomID());
-        theID = theID.replaceAll("[-:^$&%?ง]", StringServices.EMPTY_STRING);
+        theID = theID.replaceAll("[-:^$&%?ยง]", StringServices.EMPTY_STRING);
         return theID + Export.EXTENSION_SEPARATOR + aFileextension;
     }
 

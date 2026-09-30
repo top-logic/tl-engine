@@ -35,7 +35,7 @@ import com.top_logic.util.css.CssUtil;
  * The TextInputEditControl extends {@link TextInputControl} by adding a single button to
  * toggle from a single and multiline version of the input field.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ExpandableTextInputControl extends TextInputControl implements CollapsedListener {
 
@@ -92,7 +92,13 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cExpandableTextInput";
+		return "tl-expandable-text-input";
+	}
+
+	@Override
+	@TemplateVariable("inputButtonCssClass")
+	public void getInputButtonCssClass(Appendable out) throws IOException {
+		out.append("tl-expandable-button");
 	}
 
 	@Override
@@ -258,7 +264,7 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 	}
 
     /**
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class ToggleFieldMode extends ControlCommand {
     

@@ -62,6 +62,14 @@ public class SvgTagWriter implements SvgWriter {
 	}
 
 	@Override
+	public void style(CharSequence css) {
+		endBeginTag();
+		_out.beginTag(STYLE);
+		_out.writeText(css);
+		_out.endTag(STYLE);
+	}
+
+	@Override
 	public void beginGroup(Object model) {
 		beginBeginTag(G);
 	}
@@ -358,7 +366,11 @@ public class SvgTagWriter implements SvgWriter {
 		_tagOpen = true;
 	}
 
-	private void endBeginTag() {
+	/**
+	 * Called when a begin tag is implicitly closed, because an inner tag is started (or the element
+	 * is closed).
+	 */
+	protected void endBeginTag() {
 		if (_tagOpen) {
 			_out.endBeginTag();
 			_tagOpen = false;

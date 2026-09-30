@@ -29,6 +29,8 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.fallback.StorageWithFallback;
+import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Transient {@link TLObject} implementation.
@@ -72,52 +74,66 @@ public class TransientTLObjectImpl extends TransientObject {
 		return _context;
 	}
 
+	/**
+	 * A transient object is part of the {@link #tContainer() container} it was created in and
+	 * dies with it: it is valid while that container is valid, or while it has no container at
+	 * all.
+	 * 
+	 * @implNote A transient container that itself was created in a container chains the check up
+	 *           to the first object that has none.
+	 */
+	@Override
+	public boolean tValid() {
+		TLObject container = tContainer();
+		return container == null || container.tValid();
+	}
+
 	@Override
 	public Object tValue(TLStructuredTypePart part) {
 		Object directValue = directValue(part);
 		if (directValue == null) {
-			// Value may not be set yet
-			if (part.isMultiple()) {
-				if (part.isOrdered()) {
-					return Collections.emptyList();
-				} else {
-					return Collections.emptySet();
-				}
-			}
+			// Value may not be set yet.
+			return TLModelUtil.getEmptyValue(part);
 		}
 		return directValue;
 	}
 
-	private Object directValue(TLStructuredTypePart part) {
-		StorageDetail storageImplementation = part.getStorageImplementation();
-		if (storageImplementation instanceof StorageWithFallback) {
-			return storageImplementation.getAttributeValue(this, part);
+	private Object directValue(TLStructuredTypePart accessPart) {
+		TLStructuredTypePart resolvedPart = resolvePart(accessPart);
+		if (resolvedPart == null) {
+			// Do not require type check for access.
+			return null;
 		}
-		if (part.isDerived()) {
-			if (part.getModelKind() == ModelKind.REFERENCE && ((TLReference) part).isBackwards()) {
+		StorageDetail storageImplementation = resolvedPart.getStorageImplementation();
+		if (storageImplementation instanceof StorageWithFallback) {
+			return storageImplementation.getAttributeValue(this, resolvedPart);
+		}
+		if (resolvedPart.isDerived()) {
+			if (resolvedPart.getModelKind() == ModelKind.REFERENCE && ((TLReference) resolvedPart).isBackwards()) {
 				// Find forwards reference.
-				TLReference backwards = (TLReference) part;
+				TLReference backwards = (TLReference) resolvedPart;
 				TLReference forwards = backwards.getOppositeEnd().getReference();
 				return tReferers(forwards);
 			} else {
-				if (part.getName().equals(PersistentObject.T_TYPE_ATTR)) {
+				if (resolvedPart.getName().equals(PersistentObject.T_TYPE_ATTR)) {
 					return tType();
 				} else {
-					return storageImplementation.getAttributeValue(this, part);
+					return storageImplementation.getAttributeValue(this, resolvedPart);
 				}
 			}
 		}
 
-		Object storedValue = _values.get(part.getDefinition());
+		TLStructuredTypePart storagePart = resolvedPart.getDefinition();
+		Object storedValue = _values.get(storagePart);
 		if (storedValue instanceof Collection<?> coll) {
 			if (containsInvalid(coll)) {
 				storedValue = removeInvalids(coll);
-				_values.put(part, storedValue);
+				_values.put(storagePart, storedValue);
 			}
 		} else {
 			if (!ComponentUtil.isValid(storedValue)) {
 				storedValue = null;
-				_values.put(part, storedValue);
+				_values.put(storagePart, storedValue);
 			}
 		}
 
@@ -145,12 +161,24 @@ public class TransientTLObjectImpl extends TransientObject {
 	}
 
 	@Override
-	public void tUpdate(TLStructuredTypePart part, Object newValue) {
-		checkDerived(part);
-		newValue = ensureMultiplicity(part, newValue);
-		Object oldValue = directUpdate(part, newValue);
-		if (part.getModelKind() == ModelKind.REFERENCE) {
-			TLReference forwards = (TLReference) part;
+	public void tUpdate(TLStructuredTypePart accessPart, Object newValue) {
+		TLStructuredTypePart resolvedPart = resolvePart(accessPart);
+		checkExists(accessPart, resolvedPart);
+
+		StorageDetail storageImplementation = resolvedPart.getStorageImplementation();
+		if (storageImplementation instanceof StorageWithFallback) {
+			// Symmetric to directValue(): An explicitly set value of a fallback attribute is not
+			// stored in the fallback attribute itself but in its underlying storage attribute, from
+			// where it is read again as explicit value.
+			((StorageWithFallback) storageImplementation).setExplicitValue(this, resolvedPart, newValue);
+			return;
+		}
+
+		checkDerived(resolvedPart);
+		newValue = ensureMultiplicity(resolvedPart, newValue);
+		Object oldValue = directUpdate(resolvedPart, newValue);
+		if (resolvedPart.getModelKind() == ModelKind.REFERENCE) {
+			TLReference forwards = (TLReference) resolvedPart;
 			for (Object oldTarget : collection(oldValue)) {
 				// Note: Non-transient objects may have been assigned to transient ones (the
 				// other way around is not possible).
@@ -245,38 +273,42 @@ public class TransientTLObjectImpl extends TransientObject {
 	}
 
 	@Override
-	public void tAdd(TLStructuredTypePart part, Object value) {
-		checkDerived(part);
-		if (part.getModelKind() == ModelKind.REFERENCE) {
+	public void tAdd(TLStructuredTypePart accessPart, Object value) {
+		TLStructuredTypePart resolvedPart = resolvePart(accessPart);
+		checkExists(accessPart, resolvedPart);
+		checkDerived(resolvedPart);
+		if (resolvedPart.getModelKind() == ModelKind.REFERENCE) {
 			checkNonNull(value);
-			mkCollection(part).add(value);
+			mkCollection(resolvedPart).add(value);
 
 			// Note: Non-transient objects may have been assigned to transient ones (the
 			// other way around is not possible).
 			if (value instanceof TransientTLObjectImpl) {
-				TLReference forwards = (TLReference) part;
+				TLReference forwards = (TLReference) resolvedPart;
 				((TransientTLObjectImpl) value).addReferer(forwards, this);
 			}
 		} else {
-			super.tAdd(part, value);
+			super.tAdd(resolvedPart, value);
 		}
 	}
 
 	@Override
-	public void tRemove(TLStructuredTypePart part, Object value) {
-		checkDerived(part);
-		if (part.getModelKind() == ModelKind.REFERENCE) {
+	public void tRemove(TLStructuredTypePart accessPart, Object value) {
+		TLStructuredTypePart resolvedPart = resolvePart(accessPart);
+		checkExists(accessPart, resolvedPart);
+		checkDerived(resolvedPart);
+		if (resolvedPart.getModelKind() == ModelKind.REFERENCE) {
 			checkNonNull(value);
-			mkCollection(part).remove(value);
+			mkCollection(resolvedPart).remove(value);
 
 			// Note: Non-transient objects may have been assigned to transient ones (the
 			// other way around is not possible).
 			if (value instanceof TransientTLObjectImpl) {
-				TLReference forwards = (TLReference) part;
+				TLReference forwards = (TLReference) resolvedPart;
 				((TransientTLObjectImpl) value).removeReferer(forwards, this);
 			}
 		} else {
-			super.tRemove(part, value);
+			super.tRemove(resolvedPart, value);
 		}
 	}
 
@@ -320,7 +352,49 @@ public class TransientTLObjectImpl extends TransientObject {
 	
 	private static void checkDerived(TLStructuredTypePart part) {
 		if (part.isDerived()) {
-			throw new UnsupportedOperationException("Cannot modify derived attribute: " + part);
+			throw new TopLogicException(
+				I18NConstants.ERROR_CANNOT_MODIFY_DERIVED_ATTRIBUTE__ATTR.fill(TLModelUtil.qualifiedName(part)));
+		}
+	}
+
+	/**
+	 * Resolves the given part to this object's concrete type.
+	 *
+	 * <p>
+	 * This is required when a part from a supertype is passed (e.g., an abstract attribute from a
+	 * base class), but this object is of a subtype that provides a concrete override.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note: Write methods should call
+	 * {@link #checkExists(TLStructuredTypePart, TLStructuredTypePart)} with the result of this
+	 * methods, while read methods should return <code>null</code>, if no attribute is found.
+	 * </p>
+	 * 
+	 * @return The attribute visible from this type, or <code>null</code>, if the given attribute is
+	 *         not part of this type.
+	 */
+	private TLStructuredTypePart resolvePart(TLStructuredTypePart part) {
+		TLStructuredTypePart resolvedPart = tType().getPart(part.getName());
+		if (resolvedPart != null && resolvedPart.getDefinition().equals(part.getDefinition())) {
+			return resolvedPart;
+		}
+		return null;
+	}
+
+	/**
+	 * Check to be called after {@link #resolvePart(TLStructuredTypePart)}
+	 *
+	 * @param accessPart
+	 *        The original part, with which the method was called.
+	 * @param resolvedPart
+	 *        The result of the resolution.
+	 */
+	private void checkExists(TLStructuredTypePart accessPart, TLStructuredTypePart resolvedPart) {
+		if (resolvedPart == null) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_HAS_NO_PART__TYPE_PART.fill(TLModelUtil.qualifiedName(tType()),
+					TLModelUtil.qualifiedName(accessPart)));
 		}
 	}
 

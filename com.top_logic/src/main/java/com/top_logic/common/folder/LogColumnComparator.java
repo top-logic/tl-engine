@@ -15,7 +15,7 @@ import com.top_logic.common.folder.model.FolderNode;
 /**
  * Comparator for comparing log columns by name.
  * 
- * @author <a href=mailto:jes@top-logic.com>Jens Sch‰fer</a>
+ * @author <a href=mailto:jes@top-logic.com>Jens Sch√§fer</a>
  */
 public class LogColumnComparator implements Comparator<Object> {
 

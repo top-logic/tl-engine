@@ -14,6 +14,7 @@ import java.util.Locale;
 import junit.framework.Test;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.util.Country;
 
@@ -77,9 +78,9 @@ public class CreateDefaultTestPersons extends CreateTestPersons {
 		return Person.create(kb(), "test-user1", defaultAuthenticationDevice());
 	}
 
-	private String defaultAuthenticationDevice() {
+	private AuthenticationDevice defaultAuthenticationDevice() {
 		TLSecurityDeviceManager sdm = TLSecurityDeviceManager.getInstance();
-		return sdm.getDefaultAuthenticationDevice().getDeviceID();
+		return sdm.getDefaultAuthenticationDevice();
 	}
 
 }

@@ -34,9 +34,13 @@
 
 	<configs>
 	
-		<config config:interface="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout$GlobalConfig"
-			showLoginMessages="true"
-		/>
+		<config config:interface="com.top_logic.mig.html.layout.MainLayout$GlobalConfig">
+			<login-hooks>
+				<login-hook class="com.top_logic.addons.loginmessages.layout.LoginMessagesHook"
+					showLoginMessages="true"
+				/>
+			</login-hooks>
+		</config>
 		
 		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
 			<type-systems>

@@ -150,7 +150,7 @@ public class DispatchingAssistentFileUploadComponent extends AssistentFileUpload
     /**
      * Dispatcher for an import upload handler. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class DispatchingUploadHandler extends ValidatingUploadHandler {
 
@@ -182,7 +182,8 @@ public class DispatchingAssistentFileUploadComponent extends AssistentFileUpload
                     FormField theField = theIt.next();
 
                     if (theField.hasError()) {
-                        theResult.addErrorMessage(ResKey.text(theField.getLabel()), theField.getError());
+						theResult.addErrorMessage(
+							I18NConstants.FIELD_HAS_ERROR__FIELD_ERROR.fill(theField.getLabel(), theField.getError()));
                     }
                 }
 

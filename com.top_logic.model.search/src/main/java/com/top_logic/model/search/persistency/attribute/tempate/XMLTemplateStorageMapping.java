@@ -5,8 +5,6 @@
  */
 package com.top_logic.model.search.persistency.attribute.tempate;
 
-import com.top_logic.model.search.expr.parser.SearchExpressionParser;
-
 /**
  * {@link AbstractTemplateStorageMapping} for general XML content.
  * 
@@ -23,8 +21,4 @@ public class XMLTemplateStorageMapping extends AbstractTemplateStorageMapping {
 		// Singleton constructor.
 	}
 
-	@Override
-	protected void configureParser(SearchExpressionParser parser) {
-		parser.setCheckHtml(false);
-	}
 }

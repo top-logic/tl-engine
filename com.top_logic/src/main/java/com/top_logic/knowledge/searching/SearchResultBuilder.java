@@ -22,7 +22,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * Therefore this class will take all objects from {@link SearchResultSet#getSearchResults()}
  * and take the {@link SearchResult#getResult() values} as list elements.
  * 
- * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+ * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
  */
 public class SearchResultBuilder implements ListModelBuilder {
 
@@ -66,11 +66,6 @@ public class SearchResultBuilder implements ListModelBuilder {
 	@Override
 	public Object retrieveModelFromListElement(LayoutComponent component, Object anObject) {
 	    return anObject;
-    }
-
-	@Override
-	public boolean supportsListElement(LayoutComponent component, Object anObject) {
-	    return anObject instanceof SearchResultSet;
     }
 
 }

@@ -21,7 +21,7 @@ import com.top_logic.importer.text.TextFileImportParser.TextLine;
 /**
  * Convert a text line to the defined type of object.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class TextImportExtractor<T> implements Mapping<TextLine, T> {
 
@@ -37,14 +37,14 @@ public abstract class TextImportExtractor<T> implements Mapping<TextLine, T> {
     /**
      * Merge the named column values into one string. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Merge extends TextImportExtractor<String> {
 
         /**
          * Configuration of the merge extractor. 
          * 
-         * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+         * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
          */
         public interface Config extends PolymorphicConfiguration<Merge> {
 

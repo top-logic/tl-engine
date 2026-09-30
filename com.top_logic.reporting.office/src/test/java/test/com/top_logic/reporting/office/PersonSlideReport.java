@@ -26,7 +26,7 @@ import com.top_logic.util.error.TopLogicException;
  * A relativly simple report which creates a PPT report consists of one slide with some data about a
  * {@link Person}.
  * 
- * @author <a href=mailto:jco@top-logic.com>Jörg Connotte</a>
+ * @author <a href=mailto:jco@top-logic.com>JÃ¶rg Connotte</a>
  */
 public class PersonSlideReport extends AbstractReport {
 

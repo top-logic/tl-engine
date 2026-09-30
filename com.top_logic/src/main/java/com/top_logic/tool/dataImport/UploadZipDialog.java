@@ -17,7 +17,7 @@ import com.top_logic.layout.messagebox.SimpleFormDialog;
 /**
  * A {@link SimpleFormDialog} to upload a zip file.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class UploadZipDialog extends UploadDataDialog {
 

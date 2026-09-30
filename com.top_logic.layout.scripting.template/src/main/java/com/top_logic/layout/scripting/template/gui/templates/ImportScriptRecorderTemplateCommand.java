@@ -28,7 +28,7 @@ import com.top_logic.tool.dataImport.ZipImporter;
 /**
  * Command executes the import of ScriptRecorder templates.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ImportScriptRecorderTemplateCommand extends ImportZipDataCommand {
 

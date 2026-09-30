@@ -32,12 +32,10 @@ import com.top_logic.element.model.diff.config.AddAnnotations;
 import com.top_logic.element.model.diff.config.AddGeneralization;
 import com.top_logic.element.model.diff.config.CreateClassifier;
 import com.top_logic.element.model.diff.config.CreateModule;
-import com.top_logic.element.model.diff.config.CreateRole;
 import com.top_logic.element.model.diff.config.CreateSingleton;
 import com.top_logic.element.model.diff.config.CreateStructuredTypePart;
 import com.top_logic.element.model.diff.config.CreateType;
 import com.top_logic.element.model.diff.config.Delete;
-import com.top_logic.element.model.diff.config.DeleteRole;
 import com.top_logic.element.model.diff.config.DiffElement;
 import com.top_logic.element.model.diff.config.MakeAbstract;
 import com.top_logic.element.model.diff.config.MakeConcrete;
@@ -46,9 +44,11 @@ import com.top_logic.element.model.diff.config.MoveGeneralization;
 import com.top_logic.element.model.diff.config.MoveStructuredTypePart;
 import com.top_logic.element.model.diff.config.RemoveAnnotation;
 import com.top_logic.element.model.diff.config.RemoveGeneralization;
-import com.top_logic.element.model.diff.config.UpdateAbstract;
 import com.top_logic.element.model.diff.config.RenamePart;
+import com.top_logic.element.model.diff.config.UpdateAbstract;
 import com.top_logic.element.model.diff.config.UpdateBag;
+import com.top_logic.element.model.diff.config.UpdateDeletionPolicy;
+import com.top_logic.element.model.diff.config.UpdateHistoryType;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
 import com.top_logic.element.model.diff.config.UpdateMultiplicity;
 import com.top_logic.element.model.diff.config.UpdateOrdered;
@@ -76,8 +76,6 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypeVisitor;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.TLAnnotation;
-import com.top_logic.model.annotate.security.RoleConfig;
-import com.top_logic.model.annotate.security.TLRoleDefinitions;
 import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -359,10 +357,9 @@ public class CreateModelPatch {
 		processTypeDiff(noAssociations(left.getTypes()), noAssociations(right.getTypes()));
 
 		addSingletonsPatch(right, left.getAnnotation(TLSingletons.class), right.getAnnotation(TLSingletons.class));
-		addRolesPatch(right, left.getAnnotation(TLRoleDefinitions.class), right.getAnnotation(TLRoleDefinitions.class));
 	}
 
-	private Collection<? extends TLType> noAssociations(Collection<TLType> types) {
+	private Collection<? extends TLType> noAssociations(Collection<? extends TLType> types) {
 		return types.stream().filter(t -> t.getModelKind() != ModelKind.ASSOCIATION).toList();
 	}
 
@@ -416,41 +413,6 @@ public class CreateModelPatch {
 
 	private Collection<SingletonConfig> getSingletons(TLSingletons annotation) {
 		return annotation == null ? Collections.emptyList() : annotation.getSingletons();
-	}
-
-	/**
-	 * Creates a patch for a singleton change in a {@link TLModule}.
-	 */
-	public void addRolesPatch(TLModule module, TLRoleDefinitions left, TLRoleDefinitions right) {
-		Collection<RoleConfig> leftValues = getRoles(left);
-		Collection<RoleConfig> rightValues = getRoles(right);
-
-		SetDiff<RoleConfig> diff =
-			CollectionDiff.diffSet(RoleConfig::getName, leftValues, rightValues);
-		for (RoleConfig config : diff.getDeleted()) {
-			addDelete(module, config);
-		}
-		for (RoleConfig config : diff.getCreated()) {
-			addCreate(module, config);
-		}
-	}
-
-	private void addCreate(TLModule module, RoleConfig config) {
-		CreateRole create = TypedConfiguration.newConfigItem(CreateRole.class);
-		create.setModule(module.getName());
-		create.setRole(TypedConfiguration.copy(config));
-		addDiff(create);
-	}
-
-	private void addDelete(TLModule module, RoleConfig config) {
-		DeleteRole delete = TypedConfiguration.newConfigItem(DeleteRole.class);
-		delete.setModule(module.getName());
-		delete.setRole(config.getName());
-		addDiff(delete);
-	}
-
-	private Collection<RoleConfig> getRoles(TLRoleDefinitions annotation) {
-		return annotation == null ? Collections.emptyList() : annotation.getRoles();
 	}
 
 	/**
@@ -655,21 +617,33 @@ public class CreateModelPatch {
 			addDiff(update);
 		}
 
-		boolean oldMandatory = left.isMandatory();
-		boolean newMandatory = right.isMandatory();
-		if (oldMandatory != newMandatory) {
+		if (left.isMandatory() != right.isMandatory()) {
 			UpdateMandatory update = TypedConfiguration.newConfigItem(UpdateMandatory.class);
 			update.setPart(TLModelUtil.qualifiedName(left));
-			update.setMandatory(newMandatory);
+			update.setMandatory(right.isMandatory());
 			addDiff(update);
 		}
-		boolean oldAbstract = left.isAbstract();
-		boolean newAbstract = right.isAbstract();
-		if (oldAbstract != newAbstract) {
+
+		if (left.isAbstract() != right.isAbstract()) {
 			UpdateAbstract update = TypedConfiguration.newConfigItem(UpdateAbstract.class);
 			update.setPart(TLModelUtil.qualifiedName(left));
-			update.setAbstract(newAbstract);
+			update.setAbstract(right.isAbstract());
 			addDiff(update);
+		}
+
+		if (left instanceof TLReference leftRef && right instanceof TLReference rightRef) {
+			if (leftRef.getDeletionPolicy() != rightRef.getDeletionPolicy()) {
+				UpdateDeletionPolicy update = TypedConfiguration.newConfigItem(UpdateDeletionPolicy.class);
+				update.setPart(TLModelUtil.qualifiedName(leftRef));
+				update.setDeletionPolicy(rightRef.getDeletionPolicy());
+				addDiff(update);
+			}
+			if (leftRef.getHistoryType() != rightRef.getHistoryType()) {
+				UpdateHistoryType update = TypedConfiguration.newConfigItem(UpdateHistoryType.class);
+				update.setPart(TLModelUtil.qualifiedName(leftRef));
+				update.setHistoryType(rightRef.getHistoryType());
+				addDiff(update);
+			}
 		}
 	}
 

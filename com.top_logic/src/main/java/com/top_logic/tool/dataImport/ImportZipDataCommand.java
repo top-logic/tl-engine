@@ -10,7 +10,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 /**
  * Abstract command to import an uploaded ZIP file.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class ImportZipDataCommand extends UploadDataCommand {
 

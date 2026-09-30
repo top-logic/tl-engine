@@ -20,6 +20,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 import junit.framework.Test;
@@ -75,7 +76,7 @@ public class TestStreamUtilities extends BasicTestCase {
             // It will NOT work when using \n\r or \r I know 
             largeBuf.append("This is a dummy Text to fill this file with some Data\n");
             largeBuf.append("0123456789 the quick brown fox jumps over the lazy dogs back.\n");
-                          // ƒ     ÷     ‹     ‰     ˆ     ¸     ﬂ     Í      ¡     “ 
+                          // √Ñ     √ñ     √ú     √§     √∂     √º     √ü     √™      √Å     √í 
             largeBuf.append("\u00c4\u00d6\u00dc\u00e5\u00f6\u00fc\u00df\u00ea\u00cA\u00d2 ");
             largeBuf.append("THE QUICK BROWN FOX JUMPS OVER THE LAZY DOGS BACK:\n");
         }
@@ -278,7 +279,7 @@ public class TestStreamUtilities extends BasicTestCase {
     public void testStrings () throws IOException 
     {
         File strFile = BasicTestCase.createNamedTestFile("testStringMethods.txt");
-        String str   = "Blah\nBlubber\nMBA Pˆrsˆn\nBlurks";
+        String str   = "Blah\nBlubber\nMBA P√∂rs√∂n\nBlurks";
         FileUtilities.writeStringToFile(str, strFile);
 
         // Will not work outside Windoof ...
@@ -322,28 +323,29 @@ public class TestStreamUtilities extends BasicTestCase {
 	public void testStoreNormalized() throws IOException {
 		Properties props = new Properties();
 		props.put("b", "b");
-		props.put("a1", "¸");
-		props.put("c", "‰");
-		props.put("A", "ﬂ");
+		props.put("a1", "√º");
+		props.put("c", "√§");
+		props.put("A", "√ü");
 		ByteArrayOutputStream actual = new ByteArrayOutputStream();
 		StreamUtilities.storeNormalized(actual, props);
 
 		Properties loaded = new Properties();
-		loaded.load(new ByteArrayInputStream(actual.toByteArray()));
+		loaded.load(new InputStreamReader(new ByteArrayInputStream(actual.toByteArray()), StandardCharsets.UTF_8));
 		assertEquals("Serialized must semantically be equal.", props, loaded);
 
 		StringWriter expected = new StringWriter();
 		try (BufferedWriter bw = new BufferedWriter(expected)) {
-			bw.write("A=\\u00DF");
+			bw.write("A=√ü");
 			bw.newLine();
-			bw.write("a1=\\u00FC");
+			bw.write("a1=√º");
 			bw.newLine();
 			bw.write("b=b");
 			bw.newLine();
-			bw.write("c=\\u00E4");
+			bw.write("c=√§");
 			bw.newLine();
 		}
-		assertEquals("Unexpected content.", expected.toString(), new String(actual.toByteArray(), "ISO-8859-1"));
+		assertEquals("Unexpected content.", expected.toString(),
+			new String(actual.toByteArray(), StandardCharsets.UTF_8));
 	}
 
 	/**

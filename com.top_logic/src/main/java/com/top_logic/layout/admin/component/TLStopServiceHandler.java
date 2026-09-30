@@ -20,7 +20,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Stops the given and all dependent TL services.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLStopServiceHandler extends AbstractStopServiceHandler {
 

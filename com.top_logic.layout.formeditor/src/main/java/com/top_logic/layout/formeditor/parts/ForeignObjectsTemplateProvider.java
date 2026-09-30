@@ -107,6 +107,8 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		QueryExecutor itemsExpr = QueryExecutor.compile(getConfig().getItems());
 		QueryExecutor readOnlyExpr = QueryExecutor.compileOptional(getConfig().getReadOnly());
 		TLObject model = context.getModel();
+		// Note: The displayed objects contain only those the current user is allowed to read, the
+		// executor secures them, see QueryExecutor#executeWith(EvalContext, Args).
 		Collection<?> objects = SearchExpression.asCollection(itemsExpr.execute(model));
 		QueryExecutor labelExpr = QueryExecutor.compileOptional(getConfig().getLabel());
 		HTMLTemplateFragment[] templates = new HTMLTemplateFragment[objects.size()];
@@ -172,7 +174,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 		LayoutComponent component = MainLayout.getComponent(displayContext);
 
-		Map<String, Object> args = ContextMenuUtil.createArguments(targetModel);
+		Map<String, Object> args = ContextMenuUtil.createSingleObjectArguments(targetModel);
 		Stream<CommandModel> buttonsStream = ContextMenuUtil.toButtonsStream(component, args, buttons);
 		Menu menu;
 		if (designMode) {

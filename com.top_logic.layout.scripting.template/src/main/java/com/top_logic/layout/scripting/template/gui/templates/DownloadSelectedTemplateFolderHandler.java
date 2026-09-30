@@ -17,7 +17,7 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 /**
  * Handler to download the selected template folder.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DownloadSelectedTemplateFolderHandler extends DownloadScriptRecorderTemplateFoldersHandler {
 

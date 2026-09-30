@@ -15,9 +15,8 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.element.meta.form.AttributeFormContext;
-import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.ModeSelector;
@@ -50,16 +49,23 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 
 		/**
 		 * Function computing the form field mode for an attribute.
-		 * 
+		 *
 		 * <p>
-		 * The function expects the object defining the displayed attribute as single argument:
+		 * The function expects the object defining the displayed attribute as first argument and
+		 * optionally takes whether the form is in edit mode as second argument:
 		 * </p>
-		 * 
-		 * <code>object -> [one of <code>"editable"</code>, <code>"disabled"</code>,
+		 *
+		 * <code>object -> editMode -> [one of <code>"editable"</code>, <code>"disabled"</code>,
 		 * <code>"read-only"</code>, <code>"mandatory"</code>, <code>"hidden"</code> | for
 		 * fieldsets: one of <code>"default"</code>, <code>"hidden"</code> | all other visibilities
 		 * are interpreted as <code>"default"</code>.]</code>
-		 * 
+		 *
+		 * <p>
+		 * The edit mode argument allows mode-dependent visibility, e.g. hiding an attribute
+		 * without value in view mode while keeping it visible for editing:
+		 * <code>object -> editMode -> $editMode || $object.get(`my:Type#attr`) != null</code>
+		 * </p>
+		 *
 		 * @see FormVisibility
 		 */
 		Expr getFunction();
@@ -87,15 +93,14 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 	}
 
 	@Override
-	public FormVisibility getMode(TLObject object, TLStructuredTypePart attribute) {
-		return toFieldMode(_selector.execute(object));
+	public FormVisibility getMode(TLObject object, TLStructuredTypePart attribute, boolean editMode) {
+		return toFieldMode(_selector.execute(object, Boolean.valueOf(editMode)));
 	}
 
 	@Override
 	public void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
-			FormContext formContext) {
-		AttributeFormContext attributeFormContext = (AttributeFormContext) formContext;
-		_selectorAnalyzer.execute(trace, attributeFormContext.getAttributeUpdateContainer(), object);
+			OverlayLookup overlays) {
+		_selectorAnalyzer.execute(trace, overlays, object);
 	}
 
 	private static FormVisibility toFieldMode(Object result) {

@@ -61,7 +61,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * Editor for backwards {@link TLReference}s
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 
@@ -248,11 +248,21 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 				while (objectsByAttribute.hasNext()) {
 					KnowledgeItem next = objectsByAttribute.next();
 					TLObject wrapper = next.getWrapper();
-					if (wrapper instanceof TLAssociationEnd) {
-						TLReference reference = ((TLAssociationEnd) wrapper).getReference();
-						if (reference != null) {
-							references.add(reference);
+					if (wrapper instanceof TLAssociationEnd end) {
+						TLReference reference = end.getReference();
+						if (reference == null) {
+							// No implementation for the end
+							continue;
 						}
+						if (reference.isBackwards()) {
+							// No Back reference for a back reference!
+							continue;
+						}
+						if (reference.getOpposite() != null) {
+							// There is already a back reference for the reference.
+							continue;
+						}
+						references.add(reference);
 					}
 				}
 
@@ -273,7 +283,7 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 	/**
 	 * @see TLStructuredTypePartFormBuilder.EditModel
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface EditModel extends TLReferenceFormBuilder.EditModel {
 

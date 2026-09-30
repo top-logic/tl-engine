@@ -31,6 +31,8 @@ public abstract class AbstractModelBinding implements ModelBinding {
 
 	final TLModel _model;
 
+	private final boolean _usesSecurity;
+
 	private Map<String, Object> _objects = new HashMap<>();
 
 	/**
@@ -38,9 +40,36 @@ public abstract class AbstractModelBinding implements ModelBinding {
 	 *
 	 * @param model
 	 *        The context model.
+	 * @param usesSecurity
+	 *        See {@link #usesSecurity()}.
 	 */
-	public AbstractModelBinding(TLModel model) {
+	public AbstractModelBinding(TLModel model, boolean usesSecurity) {
 		_model = model;
+		_usesSecurity = usesSecurity;
+	}
+
+	/**
+	 * Whether the expressions of the import definition are evaluated with the current user's access
+	 * rights.
+	 *
+	 * <p>
+	 * An import definition is application configuration, not user input, and it maps an external
+	 * document onto the model. An import therefore normally runs with <em>definer's rights</em>
+	 * ({@code false}): the expressions resolve and write objects regardless of what the importing
+	 * user may read or write, and whether that user may import at all is decided by the execution
+	 * right of the enclosing command. Evaluating an import with the user's rights instead would
+	 * corrupt data rather than protect it - a lookup for an existing object the user must not read
+	 * silently yields nothing, so the import creates a duplicate.
+	 * </p>
+	 *
+	 * <p>
+	 * The flag is {@code true} only where the import is triggered from a context that is itself
+	 * subject to the user's rights and must not become a bypass: the <i>TL-Script</i> function
+	 * {@code parseXml} passes the security setting of the calling script here.
+	 * </p>
+	 */
+	public final boolean usesSecurity() {
+		return _usesSecurity;
 	}
 
 	@Override

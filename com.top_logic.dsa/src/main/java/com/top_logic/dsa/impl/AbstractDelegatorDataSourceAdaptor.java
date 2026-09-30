@@ -19,7 +19,7 @@ import com.top_logic.dsa.ex.NotSupportedException;
 /**
  * General delegator data source adaptor, which is doing nothing but delegation.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractDelegatorDataSourceAdaptor implements DataSourceAdaptor {
 

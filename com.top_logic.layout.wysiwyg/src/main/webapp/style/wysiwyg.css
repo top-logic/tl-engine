@@ -35,7 +35,6 @@
 
 .structuredTextFullHeight,
 .cke_editable {
-	position: absolute;
 	width: 100%;
 	box-sizing: border-box;
 }

@@ -12,6 +12,7 @@ import java.util.Random;
 import test.com.top_logic.basic.DemoPersonNames;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
@@ -58,11 +59,11 @@ public class DemoContactGenerator implements DemoPersonNames {
         
         personContacts = new ArrayList(numContacts);
         PersonManager pmgr = null;
-		String authID = null;
+		AuthenticationDevice auth = null;
         if (createPersons) {
             persons   = new ArrayList(numContacts);
             pmgr      = PersonManager.getManager();
-            authID    = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice().getDeviceID();
+			auth = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
         }
 
         for (int i=0; i < numContacts; i++) {
@@ -70,7 +71,7 @@ public class DemoContactGenerator implements DemoPersonNames {
             String lastName  = LASTNAMES [aRand.nextInt(LASTNAMES.length)];
             Person p = null;
             if (createPersons ) {
-				p = createPerson(aRand, pmgr, authID, firstName, lastName, i);
+				p = createPerson(aRand, pmgr, auth, firstName, lastName, i);
                 persons.add(p);
                 personContacts.add(cf.getContactForPerson(p));
             } else {
@@ -84,10 +85,10 @@ public class DemoContactGenerator implements DemoPersonNames {
     /** 
      * Create a new Person via the given PersonManager.
      */
-	private Person createPerson(Random aRand, PersonManager pmgr, String authID, String firstName,
+	private Person createPerson(Random aRand, PersonManager pmgr, AuthenticationDevice auth, String firstName,
 			String lastName, int i) {
          String name = "" + lastName.charAt(0) + firstName.charAt(0) + Integer.toString(i);
-			Person p = Person.create(PersistencyLayer.getKnowledgeBase(), name, authID);
+			Person p = Person.create(PersistencyLayer.getKnowledgeBase(), name, auth);
          UserInterface user =  p.getUser();
 			user.setName(lastName);
 			user.setFirstName(firstName);

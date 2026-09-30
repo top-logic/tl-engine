@@ -23,7 +23,7 @@ import com.top_logic.importer.text.TextFileImportParser.TextLine;
 /**
  * Base filter class providing the configuration and the reading of a value from a {@link TextLine}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class TextImportFilter extends AbstractConfigurableFilter<TextLine, TextImportFilter.Config> {
 
@@ -145,7 +145,7 @@ public abstract class TextImportFilter extends AbstractConfigurableFilter<TextLi
     /**
      * Check if the found string value is equal to the expected one. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Equals extends TextImportFilter {
 
@@ -165,7 +165,7 @@ public abstract class TextImportFilter extends AbstractConfigurableFilter<TextLi
     /**
      * Check if the found string value is larger than the expected one. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Larger extends TextImportFilter {
 
@@ -194,7 +194,7 @@ public abstract class TextImportFilter extends AbstractConfigurableFilter<TextLi
     /**
      * Check if the found string value is smaller than the expected one. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Smaller extends TextImportFilter {
 
@@ -223,7 +223,7 @@ public abstract class TextImportFilter extends AbstractConfigurableFilter<TextLi
     /**
      * Check if the found string value is empty. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Empty extends TextImportFilter {
 
@@ -245,7 +245,7 @@ public abstract class TextImportFilter extends AbstractConfigurableFilter<TextLi
     /**
      * Check if the found string has an expected length. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Length extends TextImportFilter {
 

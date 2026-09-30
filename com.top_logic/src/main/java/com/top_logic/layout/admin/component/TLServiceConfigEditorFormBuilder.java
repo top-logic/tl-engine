@@ -20,7 +20,7 @@ import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
 /**
  * Builds a form for the configuration of the given TL service.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLServiceConfigEditorFormBuilder
 		extends

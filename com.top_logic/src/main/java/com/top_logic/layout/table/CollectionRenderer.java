@@ -14,7 +14,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 
 /**
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CollectionRenderer<T> implements Renderer<Collection<? extends T>> {
 

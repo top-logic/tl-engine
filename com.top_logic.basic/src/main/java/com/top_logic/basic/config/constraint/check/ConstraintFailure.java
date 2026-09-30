@@ -29,7 +29,7 @@ public class ConstraintFailure {
 	/**
 	 * Creates a {@link ConstraintFailure}.
 	 * 
-	 * @param checkedItem
+	 * @param item
 	 *        See {@link #getItem()}.
 	 * @param warning
 	 *        See {@link #isWarning()}.
@@ -38,12 +38,12 @@ public class ConstraintFailure {
 	 * @param constraintName
 	 *        See {@link #getMessage()}.
 	 */
-	public ConstraintFailure(ConfigurationItem checkedItem, boolean warning, PropertyDescriptor contextProperty,
+	public ConstraintFailure(ConfigurationItem item, boolean warning, PropertyDescriptor contextProperty,
 			ResKey constraintName) {
 		_warning = warning;
 		_contextProperty = contextProperty;
 		_constraintName = constraintName;
-		_item = checkedItem;
+		_item = item;
 	}
 
 	/**
@@ -84,7 +84,16 @@ public class ConstraintFailure {
 	}
 
 	/**
-	 * The checked item.
+	 * The item that owns {@link #getContextProperty()}.
+	 * 
+	 * <p>
+	 * Not necessarily the item whose constraint fired: a constraint argument declared with a
+	 * multi-step {@link com.top_logic.basic.config.annotation.Ref} resolves to a property of a
+	 * different item, and a problem reported on that argument belongs to that item. The pair
+	 * {@link #getItem()}/{@link #getContextProperty()} therefore always describes one and the same
+	 * place - which is what lets {@link #getMessage()} read the offending value, and what lets a
+	 * caller resolve the pair to the form field showing it.
+	 * </p>
 	 */
 	public ConfigurationItem getItem() {
 		return _item;

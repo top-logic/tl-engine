@@ -5,6 +5,7 @@
  */
 package com.top_logic.util.monitor;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
@@ -18,46 +19,66 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResPrefix PERSON = legacyPrefix("tl.admin.person.");
 
-	public static ResKey SYSTEM_SERVER = legacyKey("admin.sys.monitor.server");
+	@CustomKey("admin.sys.monitor.server")
+	public static ResKey SYSTEM_SERVER;
 
-	public static ResKey SYSTEM_TIME = legacyKey("admin.sys.monitor.time");
+	@CustomKey("admin.sys.monitor.time")
+	public static ResKey SYSTEM_TIME;
 
-	public static ResKey SYSTEM_STARTUP = legacyKey("admin.sys.monitor.startup");
+	@CustomKey("admin.sys.monitor.startup")
+	public static ResKey SYSTEM_STARTUP;
 
-	public static ResKey2 SYSTEM_STARTUP__STARTUP__UPTIME = legacyKey2("admin.sys.monitor.startup__STARTUP__UPTIME");
+	@CustomKey("admin.sys.monitor.startup__STARTUP__UPTIME")
+	public static ResKey2 SYSTEM_STARTUP__STARTUP__UPTIME;
 
-	public static ResKey SYSTEM_TIME_ZONE = legacyKey("admin.sys.monitor.timeZoneSystem");
+	@CustomKey("admin.sys.monitor.timeZoneSystem")
+	public static ResKey SYSTEM_TIME_ZONE;
 
-	public static ResKey USER_TIME_ZONE = legacyKey("admin.sys.monitor.timeZoneUser");
+	@CustomKey("admin.sys.monitor.timeZoneUser")
+	public static ResKey USER_TIME_ZONE;
 
-	public static ResKey SYSTEM_APPLICATION_VERSION = legacyKey("admin.sys.monitor.application");
+	@CustomKey("admin.sys.monitor.application")
+	public static ResKey SYSTEM_APPLICATION_VERSION;
 
-	public static ResKey STATE_MESSAGE_FATAL = legacyKey("admin.sys.monitor.message.fatal");
+	@CustomKey("admin.sys.monitor.message.fatal")
+	public static ResKey STATE_MESSAGE_FATAL;
 
-	public static ResKey STATE_MESSAGE_FATAL1 = legacyKey("admin.sys.monitor.message.fatal1");
+	@CustomKey("admin.sys.monitor.message.fatal1")
+	public static ResKey STATE_MESSAGE_FATAL1;
 
-	public static ResKey STATE_DOWN = legacyKey("admin.sys.monitor.down");
+	@CustomKey("admin.sys.monitor.down")
+	public static ResKey STATE_DOWN;
 
-	public static ResKey STATE_MESSAGE_ALIVE = legacyKey("admin.sys.monitor.message.alive");
+	@CustomKey("admin.sys.monitor.message.alive")
+	public static ResKey STATE_MESSAGE_ALIVE;
 
-	public static ResKey STATE_MESSAGE_ALIVE1 = legacyKey("admin.sys.monitor.message.alive1");
+	@CustomKey("admin.sys.monitor.message.alive1")
+	public static ResKey STATE_MESSAGE_ALIVE1;
 
-	public static ResKey STATE_MESSAGE_OK = legacyKey("admin.sys.monitor.message.ok");
+	@CustomKey("admin.sys.monitor.message.ok")
+	public static ResKey STATE_MESSAGE_OK;
 
-	public static ResKey STATE_ALIVE = legacyKey("admin.sys.monitor.alive");
+	@CustomKey("admin.sys.monitor.alive")
+	public static ResKey STATE_ALIVE;
 
-	public static ResKey STATE_OK = legacyKey("admin.sys.monitor.ok");
+	@CustomKey("admin.sys.monitor.ok")
+	public static ResKey STATE_OK;
 
 
-	public static ResKey MEMORY_FREE = legacyKey("util.maintenance.vm.free");
+	@CustomKey("util.maintenance.vm.free")
+	public static ResKey MEMORY_FREE;
 
-	public static ResKey MEMORY_USED = legacyKey("util.maintenance.vm.used");
+	@CustomKey("util.maintenance.vm.used")
+	public static ResKey MEMORY_USED;
 
-	public static ResKey MEMORY_AVAILABLE = legacyKey("util.maintenance.vm.available");
+	@CustomKey("util.maintenance.vm.available")
+	public static ResKey MEMORY_AVAILABLE;
 
-	public static ResKey MEMORY_TOTAL = legacyKey("util.maintenance.vm.size");
+	@CustomKey("util.maintenance.vm.size")
+	public static ResKey MEMORY_TOTAL;
 
-	public static ResKey MEMORY_MAX = legacyKey("util.maintenance.vm.max");
+	@CustomKey("util.maintenance.vm.max")
+	public static ResKey MEMORY_MAX;
 
 	/**
 	 * @en Vendor
@@ -119,31 +140,44 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey NO_EXPIRY;
 
-	public static ResKey ALIVE1 = legacyKey("admin.sys.monitor.message.alive1");
+	@CustomKey("admin.sys.monitor.message.alive1")
+	public static ResKey ALIVE1;
 
-	public static ResKey APPLICATION = legacyKey("admin.sys.monitor.application");
+	@CustomKey("admin.sys.monitor.application")
+	public static ResKey APPLICATION;
 
-	public static ResKey AVAILABLE = legacyKey("util.maintenance.vm.available");
+	@CustomKey("util.maintenance.vm.available")
+	public static ResKey AVAILABLE;
 
-	public static ResKey DOWN = legacyKey("admin.sys.monitor.down");
+	@CustomKey("admin.sys.monitor.down")
+	public static ResKey DOWN;
 
-	public static ResKey FATAL = legacyKey("admin.sys.monitor.message.fatal");
+	@CustomKey("admin.sys.monitor.message.fatal")
+	public static ResKey FATAL;
 
-	public static ResKey FATAL1 = legacyKey("admin.sys.monitor.message.fatal1");
+	@CustomKey("admin.sys.monitor.message.fatal1")
+	public static ResKey FATAL1;
 
-	public static ResKey FREE = legacyKey("util.maintenance.vm.free");
+	@CustomKey("util.maintenance.vm.free")
+	public static ResKey FREE;
 
-	public static ResKey MAX = legacyKey("util.maintenance.vm.max");
+	@CustomKey("util.maintenance.vm.max")
+	public static ResKey MAX;
 
-	public static ResKey MESSAGE_ALIVE = legacyKey("admin.sys.monitor.message.alive");
+	@CustomKey("admin.sys.monitor.message.alive")
+	public static ResKey MESSAGE_ALIVE;
 
-	public static ResKey MONITOR_ALIVE = legacyKey("admin.sys.monitor.alive");
+	@CustomKey("admin.sys.monitor.alive")
+	public static ResKey MONITOR_ALIVE;
 
-	public static ResKey OK = legacyKey("admin.sys.monitor.ok");
+	@CustomKey("admin.sys.monitor.ok")
+	public static ResKey OK;
 
-	public static ResKey SERVER = legacyKey("admin.sys.monitor.server");
+	@CustomKey("admin.sys.monitor.server")
+	public static ResKey SERVER;
 
-	public static ResKey TIME = legacyKey("admin.sys.monitor.time");
+	@CustomKey("admin.sys.monitor.time")
+	public static ResKey TIME;
 
 	/**
 	 * @en Classpath

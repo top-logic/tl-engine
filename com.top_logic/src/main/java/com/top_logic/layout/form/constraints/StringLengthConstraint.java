@@ -20,10 +20,15 @@ import com.top_logic.util.Resources;
  */
 public class StringLengthConstraint extends AbstractStringConstraint {
 
-    /** Minimum length, -1 means don't care */
+	/**
+	 * Value for {@link #minLength} and {@link #maxLength} declaring that the bound is not enforced.
+	 */
+	public static final int NO_LIMIT = -1;
+
+	/** Minimum length, {@link #NO_LIMIT} means don't care */
     int minLength;
 
-    /** Maximum length, -1 means don't care */
+	/** Maximum length, {@link #NO_LIMIT} means don't care */
 	int maxLength;
 
 	private final boolean allowEmpty;
@@ -34,7 +39,7 @@ public class StringLengthConstraint extends AbstractStringConstraint {
 	 * @see #StringLengthConstraint(int, int)
 	 */
 	public StringLengthConstraint(int minLength) {
-		this(minLength, -1, false);
+		this(minLength, NO_LIMIT, false);
 	}
 	
 	/**
@@ -43,10 +48,10 @@ public class StringLengthConstraint extends AbstractStringConstraint {
 	 * 
 	 * @param minLength
 	 *     A lower bound of the length of the entered value, or
-	 *     <code>-1</code>, if a lower bound should not be enforced.
+	 *     {@link #NO_LIMIT}, if a lower bound should not be enforced.
 	 * @param maxLength
 	 *     An upper bound of the length of the entered value, or
-	 *     <code>-1</code>, if an upper bound should not be enforced.
+	 *     {@link #NO_LIMIT}, if an upper bound should not be enforced.
 	 */
 	public StringLengthConstraint(int minLength, int maxLength) {
 		this(minLength, maxLength, false);
@@ -57,17 +62,22 @@ public class StringLengthConstraint extends AbstractStringConstraint {
 	 * {@link FormField#getValue() value} of a {@link StringField}.
 	 * 
 	 * @param minLength
-	 *        A lower bound of the length of the entered value, or <code>-1</code>, if a lower bound
-	 *        should not be enforced.
-	 * @param maxLength
-	 *        An upper bound of the length of the entered value, or <code>-1</code>, if an upper
+	 *        A lower bound of the length of the entered value, or {@link #NO_LIMIT}, if a lower
 	 *        bound should not be enforced.
+	 * @param maxLength
+	 *        An upper bound of the length of the entered value, or {@link #NO_LIMIT}, if an upper
+	 *        bound should not be enforced. {@link Integer#MAX_VALUE} is normalized to
+	 *        {@link #NO_LIMIT}, see {@link #hasMaxLength()}.
 	 * @param allowEmpty
 	 *        Ignore empty strings in the check.
 	 */
 	public StringLengthConstraint(int minLength, int maxLength, boolean allowEmpty) {
 		this.minLength = minLength;
-		this.maxLength = maxLength;
+		// An upper bound of Integer.MAX_VALUE cannot be violated, since String.length() is an int.
+		// Callers deriving the bound from an unbounded source (such as
+		// com.top_logic.model.annotate.TLSize without an upper bound) therefore mean "no limit".
+		// Keeping the value would make hasMaxLength() report a limit that can never be reached.
+		this.maxLength = maxLength == Integer.MAX_VALUE ? NO_LIMIT : maxLength;
 		this.allowEmpty = allowEmpty;
 	}
 	

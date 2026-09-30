@@ -74,7 +74,7 @@ public class SAP_CSVVolumeImporter extends CSVImporter {
     }
     
     /** 
-     * Check for "Liferant" and "Währung" but ignore year 
+     * Check for "Liferant" and "WÃ¤hrung" but ignore year 
      * 
      * @see com.top_logic.contact.business.CSVImporter#checkColumnFormat(com.top_logic.basic.io.SimpleCSVTokenizer)
      */
@@ -87,8 +87,8 @@ public class SAP_CSVVolumeImporter extends CSVImporter {
         }
         String year = aCvsToken.nextToken();
         token = aCvsToken.nextToken();
-        if (!"Währung".equals(token)) {
-            throw new IOException("Expected 'Währung' got '" + token + "' in first line, 3d column");
+        if (!"WÃ¤hrung".equals(token)) {
+            throw new IOException("Expected 'WÃ¤hrung' got '" + token + "' in first line, 3d column");
         }
         Logger.info("Importing year '" + year + "'", this);
         return true;

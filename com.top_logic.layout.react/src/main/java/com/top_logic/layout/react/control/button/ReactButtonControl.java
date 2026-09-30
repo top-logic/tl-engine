@@ -1,0 +1,397 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react.control.button;
+
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.state.ButtonState;
+import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
+
+/**
+ * A {@link ReactControl} that renders a button via the {@code TLButton} React component.
+ *
+ * <p>
+ * When the button is clicked on the client, the {@code "click"} command is dispatched to the
+ * server, which invokes the {@link ButtonAction} provided at construction time.
+ * </p>
+ *
+ * <p>
+ * When constructed with a {@link CommandModel}, the button automatically reads the label, the
+ * disabled state, and the {@link CommandModel#isActive() active} state from the model, listens for
+ * state changes, and removes its listener during cleanup.
+ * </p>
+ */
+public class ReactButtonControl extends ReactControl {
+
+	private final ButtonAction _action;
+
+	private CommandModel _model;
+
+	private Runnable _modelChangeHandler;
+
+	/**
+	 * Creates a new {@link ReactButtonControl} with a simple action.
+	 *
+	 * @param label
+	 *        The button label.
+	 * @param action
+	 *        The {@link ButtonAction} to execute when the button is clicked.
+	 */
+	public ReactButtonControl(ReactContext context, String label, ButtonAction action) {
+		super(context, null, "TLButton");
+		_action = action;
+		setLabel(label);
+	}
+
+	/**
+	 * Creates a new {@link ReactButtonControl} backed by a {@link CommandModel}.
+	 *
+	 * <p>
+	 * The button reads its label and disabled state from the model and automatically updates when
+	 * the model's state changes. The state change listener is removed during
+	 * {@link #onCleanup() cleanup}.
+	 * </p>
+	 *
+	 * @param model
+	 *        The command model providing label, executability, and execution.
+	 */
+	public ReactButtonControl(ReactContext context, CommandModel model) {
+		this(context, model, "TLButton");
+	}
+
+	/**
+	 * Creates a {@link ReactButtonControl} backed by a {@link CommandModel} but rendered by the given
+	 * React component, for subclasses that need a specialized client component (e.g. an upload
+	 * button).
+	 *
+	 * @param reactModule
+	 *        The name of the React component to render this control.
+	 */
+	protected ReactButtonControl(ReactContext context, CommandModel model, String reactModule) {
+		super(context, null, reactModule);
+		_model = model;
+		_action = model::executeCommand;
+		_modelChangeHandler = this::handleModelChange;
+
+		setLabel(model.getLabel());
+		setDisabled(!model.isExecutable());
+		setActive(model.isActive());
+		setHidden(!model.isVisible());
+		setImage(model.getImage());
+		setTooltip(model.getTooltip());
+		setKeyGesture(model.getKeyGesture());
+		setDisplayMode(offered(model, model.getDisplayMode(), true));
+		setCssClasses(model.getCssClasses());
+		model.addStateChangeListener(_modelChangeHandler);
+	}
+
+	/**
+	 * Applies the display mode the rendering container suggests, unless the command asks for one of
+	 * its own.
+	 *
+	 * <p>
+	 * A command's {@link CommandModel#getDisplayMode()} is already in effect from construction, so a
+	 * container contributes only the presentation of the commands that request none - e.g. a toolbar
+	 * showing icon-only buttons throughout.
+	 * </p>
+	 *
+	 * @param containerDefault
+	 *        The mode for a command requesting none; {@code null} leaves it as it is.
+	 */
+	public void setDefaultDisplayMode(ButtonDisplayMode containerDefault) {
+		if (containerDefault == null || _model == null || _model.getDisplayMode() != null) {
+			return;
+		}
+		setDisplayMode(offered(_model, containerDefault, false));
+	}
+
+	/**
+	 * The given display mode, corrected to one the button can actually render.
+	 *
+	 * <p>
+	 * {@link ButtonDisplayMode#ICON_ONLY} is refused for a command without an image, because such a
+	 * button would render nothing at all; a command that carries an image and requests nothing shows
+	 * both icon and label.
+	 * </p>
+	 *
+	 * @param requested
+	 *        Whether the mode is what the command itself asked for, and a correction therefore worth
+	 *        reporting. A container default that does not fit a particular command is normal.
+	 */
+	private static ButtonDisplayMode offered(CommandModel model, ButtonDisplayMode display,
+			boolean requested) {
+		if (display == ButtonDisplayMode.ICON_ONLY && model.getImage() == null) {
+			if (requested) {
+				Logger.warn("Command '" + model.getLabel() + "' requests icon-only display but has no image.",
+					ReactButtonControl.class);
+			}
+			display = null;
+		}
+		if (display == null && model.getImage() != null) {
+			display = ButtonDisplayMode.ICON_LABEL;
+		}
+		return display;
+	}
+
+	/**
+	 * Updates the button label.
+	 *
+	 * @param label
+	 *        The new label text.
+	 */
+	public void setLabel(String label) {
+		putState(ButtonState.LABEL__PROP, label);
+	}
+
+	/**
+	 * Sets the disabled state of the button.
+	 *
+	 * @param disabled
+	 *        Whether the button should be disabled.
+	 */
+	public void setDisabled(boolean disabled) {
+		putState(ButtonState.DISABLED__PROP, disabled);
+	}
+
+	/**
+	 * Marks the button as the alternative currently in force, or as a pressed toggle.
+	 *
+	 * @param active
+	 *        Whether the effect of the button's command is currently in force.
+	 *
+	 * @see CommandModel#isActive()
+	 */
+	public void setActive(boolean active) {
+		putState(ButtonState.ACTIVE__PROP, active ? Boolean.TRUE : null);
+	}
+
+	/**
+	 * Whether the button is currently marked as {@link #setActive(boolean) active}.
+	 */
+	public boolean isActive() {
+		return Boolean.TRUE.equals(getState(ButtonState.ACTIVE__PROP));
+	}
+
+	/**
+	 * Sets the image for this button.
+	 *
+	 * @param image
+	 *        The theme image, or {@code null} to remove.
+	 */
+	public void setImage(ThemeImage image) {
+		putImageState(image);
+	}
+
+	/**
+	 * Sets the button tooltip text. {@code null} or empty clears the tooltip.
+	 */
+	public void setTooltip(String tooltip) {
+		putState(ButtonState.TOOLTIP__PROP, (tooltip == null || tooltip.isEmpty()) ? null : tooltip);
+	}
+
+	/**
+	 * Sets the keyboard gesture that triggers this button (e.g. {@link KeyStroke#ENTER},
+	 * {@code KeyStroke.of(Key.S).ctrl()}). {@code null} removes the binding.
+	 */
+	public void setKeyGesture(KeyStroke keyGesture) {
+		putState(ButtonState.KEY_GESTURE__PROP, keyGesture == null ? null : keyGesture.toString());
+	}
+
+	/**
+	 * Marks this button as the dialog's default action.
+	 *
+	 * <p>
+	 * The default action is both styled as the {@link ButtonAppearance#PRIMARY primary} button and
+	 * bound to {@link KeyStroke#ENTER}, so pressing Enter anywhere in the dialog triggers it. Pairing
+	 * the two here keeps them from drifting apart: a button that reacts to Enter is always also
+	 * visually marked as the primary action (and vice versa).
+	 * </p>
+	 */
+	public void markAsDefault() {
+		setAppearance(ButtonAppearance.PRIMARY);
+		setKeyGesture(KeyStroke.ENTER);
+	}
+
+	/**
+	 * Sets the display mode.
+	 *
+	 * @param displayMode
+	 *        The display mode, or {@code null} to fall back to the React component default.
+	 */
+	public void setDisplayMode(ButtonDisplayMode displayMode) {
+		putState(ButtonState.DISPLAY_MODE__PROP, displayMode == null ? null : displayMode.getExternalName());
+	}
+
+	/**
+	 * Sets additional CSS classes appended to the button's class list, separated by spaces.
+	 * {@code null} or empty removes them.
+	 */
+	public void setCssClasses(String cssClasses) {
+		putState(ButtonState.CSS_CLASSES__PROP, (cssClasses == null || cssClasses.isEmpty()) ? null : cssClasses);
+	}
+
+	/**
+	 * Sets the button {@link ButtonAppearance appearance} (e.g. {@link ButtonAppearance#LINK} to
+	 * render the button as an inline text link).
+	 */
+	public void setAppearance(ButtonAppearance appearance) {
+		putState(ButtonState.APPEARANCE__PROP,
+			appearance == null || appearance == ButtonAppearance.DEFAULT ? null : appearance.getExternalName());
+	}
+
+	/**
+	 * Sets the button {@link ButtonTone tone}; {@link ButtonTone#DEFAULT} leaves the key unset.
+	 */
+	public void setTone(ButtonTone tone) {
+		putState(ButtonState.TONE__PROP, tone == null || tone == ButtonTone.DEFAULT ? null : tone.getExternalName());
+	}
+
+	/**
+	 * Sets the button {@link ButtonSize size}.
+	 */
+	public void setSize(ButtonSize size) {
+		putState(ButtonState.SIZE__PROP, size == null || size == ButtonSize.DEFAULT ? null : size.getExternalName());
+	}
+
+	/**
+	 * Makes the button navigate the browser directly to the given URL on click instead of dispatching
+	 * a server command (e.g. an external SSO redirect). {@code null} clears it.
+	 */
+	public void setNavigateUrl(String url) {
+		putState(ButtonState.NAVIGATE_URL__PROP, url);
+	}
+
+	/**
+	 * Whether the {@link #setNavigateUrl(String) navigation target} is opened in a browser window of
+	 * its own instead of replacing the page the button is on.
+	 *
+	 * <p>
+	 * For a destination the user comes back from - an external authentication, a document to look at
+	 * - where the page that sent them there keeps running and is waiting for them to return. The
+	 * window is opened from the click itself, which is what lets a browser distinguish it from a
+	 * pop-up nobody asked for, and it is a window of the page that opened it, so the page shown in it
+	 * can close it once its work is done.
+	 * </p>
+	 */
+	public void setNavigateNewWindow(boolean newWindow) {
+		putState(ButtonState.NAVIGATE_NEW_WINDOW__PROP, newWindow ? Boolean.TRUE : null);
+	}
+
+	private void putImageState(ThemeImage image) {
+		if (image != null) {
+			putState(ButtonState.IMAGE__PROP, image.resolve().toEncodedForm());
+		} else {
+			putState(ButtonState.IMAGE__PROP, null);
+		}
+	}
+
+	/** The {@link ReactCommandHandler} sent when the button is clicked. */
+	private static final String CMD_CLICK = "click";
+
+	/**
+	 * Handles the click command from the React client.
+	 *
+	 * <p>
+	 * A button that is not offered — hidden or disabled — is not pressed, whatever the client
+	 * sends. That holds for every button, not only for one backed by a {@link CommandModel}: a
+	 * hidden control keeps its React component tree (it is merely styled away), so it stays
+	 * mounted and its {@code click} command stays addressable by anything that can talk to the
+	 * server. A button built from a plain {@link ButtonAction} — the languages button of an
+	 * internationalized field, hidden exactly while the field may not be edited, is the case in
+	 * point — would otherwise still run its action from a view-only form.
+	 * </p>
+	 *
+	 * <p>
+	 * A button backed by a {@link CommandModel} runs the command through
+	 * {@link CommandModel#executeCommand(ReactContext)}, which refuses the command on its own when
+	 * its rules do not grant execution.
+	 * </p>
+	 *
+	 * @return The result of the button's action, or a {@link HandlerResult#notExecutable(ExecutableState)
+	 *         refusal} if the button is not offered.
+	 */
+	@ReactCommandHandler(CMD_CLICK)
+	HandlerResult handleClick(ReactContext context) {
+		ExecutableState offered = getOfferedState();
+		if (!offered.isExecutable()) {
+			return HandlerResult.notExecutable(offered);
+		}
+		return _action.execute(context);
+	}
+
+	/**
+	 * Whether this button is offered to the user, and if not, why.
+	 *
+	 * <p>
+	 * {@link ExecutableState#EXECUTABLE} while the button is displayed and enabled. A hidden or
+	 * disabled button reports the {@link CommandModel#getExecutableState() state} of its
+	 * {@link CommandModel}, if that refuses the command: the button is then hidden or disabled for
+	 * the reason the command's rules gave, which is what the user is told. A button hidden or
+	 * disabled on its own account reports the generic {@link ExecutableState#NOT_EXEC_HIDDEN} or
+	 * {@link ExecutableState#NOT_EXEC_DISABLED}.
+	 * </p>
+	 */
+	protected final ExecutableState getOfferedState() {
+		boolean hidden = isHidden();
+		boolean disabled = Boolean.TRUE.equals(getState(ButtonState.DISABLED__PROP));
+		if (!hidden && !disabled) {
+			return ExecutableState.EXECUTABLE;
+		}
+		if (_model != null) {
+			ExecutableState modelState = _model.getExecutableState();
+			if (!modelState.isExecutable()) {
+				return modelState;
+			}
+		}
+		return hidden ? ExecutableState.NOT_EXEC_HIDDEN : ExecutableState.NOT_EXEC_DISABLED;
+	}
+
+	/**
+	 * Records a click as a {@link ClickCommand}, so it renders as <em>Press button 'Label'</em> (by
+	 * the button's label-derived target name).
+	 */
+	@Override
+	public RecordedCommand recordCommand(String command, java.util.Map<String, Object> arguments) {
+		if (CMD_CLICK.equals(command)) {
+			ClickCommand click = TypedConfiguration.newConfigItem(ClickCommand.class);
+			click.setName(CMD_CLICK);
+			return new RecordedCommand(click);
+		}
+		return super.recordCommand(command, arguments);
+	}
+
+	@Override
+	protected void onCleanup() {
+		if (_model != null) {
+			_model.removeStateChangeListener(_modelChangeHandler);
+		}
+	}
+
+	private void handleModelChange() {
+		setLabel(_model.getLabel());
+		setDisabled(!_model.isExecutable());
+		setActive(_model.isActive());
+		setHidden(!_model.isVisible());
+		setTooltip(_model.getTooltip());
+	}
+
+
+	/**
+	 * Rendering-only state keys, omitted from the headless projection.
+	 */
+	@Override
+	protected java.util.Set<String> scriptingPresentationKeys() {
+		return presentationKeys(super.scriptingPresentationKeys(), ButtonState.APPEARANCE__PROP,
+			ButtonState.TONE__PROP, ButtonState.SIZE__PROP, ButtonState.KEY_GESTURE__PROP, ButtonState.IMAGE__PROP,
+			ButtonState.DISPLAY_MODE__PROP, ButtonState.CSS_CLASSES__PROP);
+	}
+}

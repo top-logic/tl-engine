@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A box that computes the size and position of multiple content boxes.
  */
-public interface Layout extends Box {
+public interface Layout extends com.top_logic.graphic.flow.data.Box {
 
 	/** Visitor interface for the {@link com.top_logic.graphic.flow.data.Layout} hierarchy.*/
 	public interface Visitor<R,A,E extends Throwable> extends com.top_logic.graphic.flow.data.RowLayout.Visitor<R,A,E> {

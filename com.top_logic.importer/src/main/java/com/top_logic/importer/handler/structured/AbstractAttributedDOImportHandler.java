@@ -39,14 +39,14 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Handle data updates of {@link Wrapper} objects.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractAttributedDOImportHandler<C extends AbstractAttributedDOImportHandler.Config, O extends Wrapper> extends AbstractDOImportHandler<C, O> {
  
 	/**
      * Configuration for an attributed based DOImportHandler.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface Config extends XMLFileImportParser.MappingConfig {
 

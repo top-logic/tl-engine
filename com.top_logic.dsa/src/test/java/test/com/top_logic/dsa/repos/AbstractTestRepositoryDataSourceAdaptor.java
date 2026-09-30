@@ -33,14 +33,14 @@ import com.top_logic.dsa.repos.RepositoryDataSourceAdaptor.Config;
 /**
  * Test case for the {@link com.top_logic.dsa.repos.RepositoryDataSourceAdaptor}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael G�nsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public abstract class AbstractTestRepositoryDataSourceAdaptor extends TestCase implements DataChangeListener {
 
 	/**
 	 * Advanced configuration for a {@link RepositoryDataSourceAdaptor} to allow setting some parameters for test issues. 
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael G�nsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
 	 */
 	public interface RepositoryConfig extends RepositoryDataSourceAdaptor.Config {
 
@@ -63,10 +63,10 @@ public abstract class AbstractTestRepositoryDataSourceAdaptor extends TestCase i
             "~$name with Tilde and Dollar~",
             "~name with Tilde~" ,
             /*
-             // This will not work in Solaris °, §, ´ are no ascii characters
-            "_°^!§$%&)(][}{=` ´+~'#,.-_",
+             // This will not work in Solaris Â°, Â§, Â´ are no ascii characters
+            "_Â°^!Â§$%&)(][}{=` Â´+~'#,.-_",
              // This will not work in NT or Unix due to / \ resp. ;
-            " °^!\"§$%&/)(][}{=?\\`´*+~'#,.;:-_|><"
+            " Â°^!\"Â§$%&/)(][}{=?\\`Â´*+~'#,.;:-_|><"
             "Space at End " // NT - just ignore the space at the end
             */
         };

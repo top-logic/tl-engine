@@ -514,7 +514,7 @@ public class TypeFilterRewriter implements EventRewriter {
 	 * This "two-phase removal" is a performance optimization: Removing it directly cannot happen
 	 * with {@link List#remove(int)}, as the index is unknown and changes due to other deletions.
 	 * And {@link List#remove(Object)} has a runtime complexity of O(n). That has lead to a
-	 * complexity of O(n²) for removing all unwanted events from the {@link ChangeSet}. Creating a
+	 * complexity of O(nÂ²) for removing all unwanted events from the {@link ChangeSet}. Creating a
 	 * new list and copying only the wanted events there, is too complex to implement. Therefore,
 	 * this two-phase approach is used: Mark them in the first phase, and then use
 	 * {@link Iterator#remove()} in a second phase.

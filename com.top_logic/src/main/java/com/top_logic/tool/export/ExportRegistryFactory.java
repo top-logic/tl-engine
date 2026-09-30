@@ -9,6 +9,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -24,6 +25,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 @ServiceDependencies({
 	ThreadContextManager.Module.class
 })
+@Label("Export registry")
 public final class ExportRegistryFactory extends ManagedClass {
 
 	/**
@@ -57,6 +59,7 @@ public final class ExportRegistryFactory extends ManagedClass {
 	 *         iff configuration is invalid.
 	 */
 	public ExportRegistryFactory(InstantiationContext context, Config config) throws ConfigurationException {
+		super(context, config);
 		_registry = context.getInstance(config.getExportRegistry());
 	}
 

@@ -42,8 +42,24 @@
 					>
 						<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
-								tab-path="Administration > Development > Modell Editor"
+								tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+							/>
+						</context-model>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="TopLogic"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+						expand="true"
+					>
+						<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
 							/>
 						</context-model>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
@@ -60,8 +76,7 @@
 					>
 						<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
-								tab-path="Administration > Development > Modell Editor"
+								tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
 							/>
 						</context-model>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
@@ -69,39 +84,19 @@
 						/>
 					</model-name>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-					failure-expected="false"
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
 					user-id="root"
 				>
-					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
-						expand="true"
-					>
-						<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
-								tab-path="Administration > Development > Modell Editor"
-							/>
-						</context-model>
-						<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="Named"
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Prozess-Instanz"
 						/>
-					</model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-				  xmlns:config="http://www.top-logic.com/ns/config/6.0"
-				  change-kind="ABSOLUTE"
-				  user-id="root"
-				>
-				  <selection>
-				    <selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-				      name="Prozess-Instanz"
-				    />
-				    <selection-state boolean="true"/>
-				  </selection>
-				  	<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
-							tab-path="Administration > Development > Modell Editor"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
 						/>
 					</selection-model-name>
 				</action>
@@ -175,23 +170,21 @@
 					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-				  xmlns:config="http://www.top-logic.com/ns/config/6.0"
-				  user-id="root"
+					user-id="root"
 				>
-				  <component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				    tab-path="Administration > Development > Modell Editor > Eigenschaften"
-				  />
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Eigenschaften"
+					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-				  xmlns:config="http://www.top-logic.com/ns/config/6.0"
-				  command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-				  command-label="Bearbeiten"
-				  command-name="switchToAJAXEdit"
-				  component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-				  component-name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
-				  user-id="root"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
+					user-id="root"
 				>
-				  <arguments/>
+					<arguments/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"

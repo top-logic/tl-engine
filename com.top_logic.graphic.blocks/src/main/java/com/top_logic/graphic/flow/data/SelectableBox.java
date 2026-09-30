@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A box that can be interactively selected by the user.
  */
-public interface SelectableBox extends Decoration, com.top_logic.graphic.flow.operations.SelectableBoxOperations {
+public interface SelectableBox extends com.top_logic.graphic.flow.data.Decoration, com.top_logic.graphic.flow.operations.SelectableBoxOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.SelectableBox} instance.

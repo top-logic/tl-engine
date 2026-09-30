@@ -41,7 +41,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * This tag lifes in a meta element group.
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class GroupedMetaInputTag extends MetaInputTag {
 

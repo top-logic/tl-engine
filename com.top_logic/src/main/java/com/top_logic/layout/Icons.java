@@ -34,8 +34,6 @@ public class Icons extends IconsBase {
 	@DefaultValue("false")
 	public static ThemeVar<Boolean> HIDE_APP_TITLE_ON_LOGIN_PAGE;
 
-	public static ThemeImage V;
-
 	@DefaultValue("true")
 	public static ThemeVar<Boolean> GROUP_BORDER;
 

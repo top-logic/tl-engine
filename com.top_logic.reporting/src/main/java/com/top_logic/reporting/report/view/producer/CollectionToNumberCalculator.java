@@ -13,7 +13,7 @@ import com.top_logic.reporting.report.view.name.Namable;
  * A {@link CollectionToNumberCalculator} calculates for a collection of objects 
  * one number.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface CollectionToNumberCalculator extends Namable {
 

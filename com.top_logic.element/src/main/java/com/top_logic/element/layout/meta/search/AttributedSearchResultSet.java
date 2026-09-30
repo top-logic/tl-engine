@@ -21,7 +21,7 @@ import com.top_logic.model.TLObject;
 /**
  * Search result set created by an attributed search.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class AttributedSearchResultSet implements SearchResultSet {
 

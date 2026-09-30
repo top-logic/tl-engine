@@ -1,0 +1,111 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.view.command;
+
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
+import com.top_logic.layout.I18NConstantsBase;
+
+/**
+ * Internationalization constants for this package.
+ */
+public class I18NConstants extends I18NConstantsBase {
+
+	/**
+	 * @en Confirmation
+	 */
+	public static ResKey CONFIRM_TITLE;
+
+	/**
+	 * @en Information
+	 */
+	public static ResKey NOTIFY_TITLE_INFO;
+
+	/**
+	 * @en Warning
+	 */
+	public static ResKey NOTIFY_TITLE_WARNING;
+
+	/**
+	 * @en Error
+	 */
+	public static ResKey NOTIFY_TITLE_ERROR;
+
+	/**
+	 * @en Language
+	 */
+	public static ResKey LANGUAGE_GROUP;
+
+	/**
+	 * @en Theme
+	 */
+	public static ResKey THEME_GROUP;
+
+	/**
+	 * @en Changed language of "{0}".
+	 */
+	public static ResKey1 CHANGED_LANGUAGE__USER;
+
+	/**
+	 * @en Reset the personal configuration of "{0}".
+	 */
+	public static ResKey1 RESET_PERSONAL_CONFIGURATION__USER;
+
+	/**
+	 * @en This page is now the one you start on.
+	 */
+	public static ResKey START_PAGE_REMEMBERED;
+
+	/**
+	 * @en You no longer start on a particular page.
+	 */
+	public static ResKey START_PAGE_FORGOTTEN;
+
+	/**
+	 * @en This page has no address of its own, so it cannot be the one you start on.
+	 */
+	public static ResKey START_PAGE_NOT_ADDRESSABLE;
+
+	/**
+	 * @en Action ''{0}'' may not suspend inside a transaction. Place the guard (e.g. a confirmation)
+	 *     before the surrounding &lt;with-transaction&gt;.
+	 */
+	public static ResKey1 ERROR_SUSPEND_NOT_ALLOWED_IN_TRANSACTION__ACTION;
+
+	/**
+	 * @en Unknown command reference: ''{0}''
+	 */
+	public static ResKey1 ERROR_UNKNOWN_COMMAND_REF__NAME;
+
+	/**
+	 * @en System
+	 */
+	public static ResKey THEME_FOLLOW_SYSTEM;
+
+	/**
+	 * @en No command configured for this button.
+	 */
+	public static ResKey ERROR_NO_COMMAND_CONFIGURED;
+
+	/**
+	 * @en Please fix the validation errors before saving.
+	 */
+	public static ResKey ERROR_FORM_HAS_VALIDATION_ERRORS;
+
+	/**
+	 * @en Upload of "{0}" failed.
+	 */
+	public static ResKey1 ERROR_UPLOAD_FAILED__FILE;
+
+	/**
+	 * @en A command of this dialog is still running.
+	 */
+	public static ResKey ERROR_DIALOG_COMMAND_RUNNING;
+
+	static {
+		initConstants(I18NConstants.class);
+	}
+}

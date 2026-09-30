@@ -10,8 +10,9 @@ import static com.top_logic.model.util.TLModelNamingConvention.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -40,8 +41,6 @@ public class MessagesGenerator extends FileGenerator {
 	private static final String MISSING_PREFIX = "[missing:";
 
 	private static final String MISSING_SUFFIX = "]";
-
-	private final CharsetEncoder _encoder = Charset.forName("ISO_8859-1").newEncoder();
 
 	private final String _language;
 
@@ -74,7 +73,7 @@ public class MessagesGenerator extends FileGenerator {
 
 	@Override
 	protected Charset getEncoding() {
-		return Charset.forName("ISO-8859-1");
+		return StandardCharsets.UTF_8;
 	}
 
 	/**
@@ -99,7 +98,7 @@ public class MessagesGenerator extends FileGenerator {
 	private Properties loadValues(File file, Properties target) throws IOException {
 		try {
 			try (FileInputStream in = new FileInputStream(file)) {
-				target.load(in);
+				target.load(new InputStreamReader(in, StandardCharsets.UTF_8));
 				return target;
 			}
 		} catch (IOException e) {
@@ -211,28 +210,7 @@ public class MessagesGenerator extends FileGenerator {
 
 	private void line(String key, String value) {
 		String newValue = replaceLineBreaks(value);
-		line(encodeUnicode(key) + " = " + encodeUnicode(newValue));
-	}
-
-	private String encodeUnicode(String value) {
-		if (!_encoder.canEncode(value)) {
-			StringBuilder buffer = new StringBuilder();
-			for (int n = 0, cnt = value.length(); n < cnt; n++) {
-				char ch = value.charAt(n);
-				if (_encoder.canEncode(ch)) {
-					buffer.append(ch);
-				} else {
-					buffer.append("\\u");
-					String encoding = Integer.toHexString(ch).toUpperCase();
-					for (int k = encoding.length(); k < 4; k++) {
-						buffer.append('0');
-					}
-					buffer.append(encoding);
-				}
-			}
-			value = buffer.toString();
-		}
-		return value;
+		line(key + " = " + newValue);
 	}
 
 	private String replaceLineBreaks(String value) {

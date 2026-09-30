@@ -17,6 +17,7 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.DOMUtil;
@@ -55,7 +56,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * The class {@link DirtyHandling} handles changed made in form contexts before
@@ -474,7 +474,7 @@ public class DirtyHandling {
 						}
 						if (!result.isSuccess()) {
 							encodedErrors = lazyAddAll(encodedErrors, result.getEncodedErrors());
-							TopLogicException problem = result.getException();
+							I18NRuntimeException problem = result.getException();
 							if (problem != null) {
 								encodedErrors = lazyAdd(encodedErrors, problem.getErrorKey());
 							}

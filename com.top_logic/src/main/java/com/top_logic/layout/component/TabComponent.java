@@ -870,7 +870,7 @@ public final class TabComponent extends LayoutList implements LayoutContainerBou
 	/**
 	 * Default {@link TabBarModel} for the {@link TabComponent}.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public class TabComponentTabBarModel extends DefaultTabBarModel {
 

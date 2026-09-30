@@ -23,7 +23,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * {@link DeclarativeFormBuilder} for a {@link TLInheritance}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLInheritanceFormBuilder
 		extends DeclarativeFormBuilder<TLInheritance, TLInheritanceFormBuilder.EditModel> {
@@ -43,7 +43,7 @@ public class TLInheritanceFormBuilder
 	/**
 	 * Base edit properties of all {@link TLInheritance} configurations.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	@DisplayOrder(
 	{ EditModel.GENERALIZATION_NAME, EditModel.SPECIALIZATION_NAME }

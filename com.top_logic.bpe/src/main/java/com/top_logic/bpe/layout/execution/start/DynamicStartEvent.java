@@ -24,7 +24,7 @@ import com.top_logic.tool.boundsec.CommandHandler;
  * {@link StartEventSelector} that calculates a dynamic start event using a function with given
  * context.
  *
- * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:Jonathan.HÃ¼sing@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public class DynamicStartEvent extends AbstractConfiguredInstance<DynamicStartEvent.Config>
 		implements StartEventSelector {

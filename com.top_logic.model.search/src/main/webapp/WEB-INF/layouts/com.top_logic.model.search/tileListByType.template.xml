@@ -22,7 +22,6 @@
 	<config name="${name}">
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`${type}`)"
-			supportsElement="element->$element.instanceOf(`${type}`)"
 		/>
 	</config>
 </config:template>

@@ -47,7 +47,7 @@
 		value="/images/appLogo.svg"
 	/>
 	<icon name="IMAGES_APP_LOGO_MINIMIZED"
-		value="/images/TL_App_icon_blue.svg"
+		value="/images/appLogoMinimized.svg"
 	/>
 	<size name="com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT"
 		value="64px"
@@ -298,6 +298,12 @@
 	<icon name="com.top_logic.layout.compare.Icons.OPEN_COMPARE_VIEW"
 		expr="%ICONS_COMPARE%"
 	/>
+	<size name="com.top_logic.layout.component.configuration.Icons.LOGIN_DIALOG_WIDTH"
+		value="450px"
+	/>
+	<size name="com.top_logic.layout.component.configuration.Icons.LOGIN_DIALOG_HEIGHT"
+		value="450px"
+	/>
 	<icon name="MISC_COMPARE_COMPARE_MODE_ACTIVE"
 		expr="%ICONS_COMPARE% green"
 	/>
@@ -445,6 +451,9 @@
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.HIDE_DERIVED_RESOURCES"
 		expr="%ICONS_MOVE_ROW_TO_TOP%"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.UPDATE_TOKEN"
+		expr="%ICONS_BUTTON_REFRESH%"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.TRANSLATE"
 		expr="%IMAGE_BUTTONS_DOC_TRANSLATE%"
@@ -961,6 +970,9 @@
 	/>
 	<icon name="IMAGE_BUTTONS_LOGOUT22"
 		value="css:fa-solid fa-arrow-right-from-bracket"
+	/>
+	<icon name="IMAGE_BUTTONS_LOGIN"
+		value="css:fa-solid fa-arrow-right-to-bracket"
 	/>
 	<icon name="IMAGE_BUTTONS_DOC"
 		value="css:fa-solid fa-book-open"
@@ -1949,13 +1961,16 @@
 	<icon name="com.top_logic.layout.messagebox.Icons.IN_PROGRESS"
 		value="css:fas fa-running"
 	/>
+	<icon name="ICON_RELOAD_ACCESSMANAGER"
+		value="css:fa-solid fa-arrows-spin"
+	/>
 	<string name="tile-background"
 		expr="url(%tile-background-image%)"
 	/>
 	<icon name="tile-background-image"
 		value=""
 	/>
-
+	
 	<!-- Style Tokens -->
 	<!-- Color Tokens -->
 	<color name="sb-track-color"

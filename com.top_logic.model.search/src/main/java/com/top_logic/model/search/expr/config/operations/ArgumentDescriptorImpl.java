@@ -104,27 +104,18 @@ public class ArgumentDescriptorImpl implements ArgumentDescriptor {
 	 * @param n
 	 *        The index of the argument.
 	 */
-	protected String getArgumentName(int n) {
+	@Override
+	public String getArgumentName(int n) {
 		return Integer.toString(n + 1);
 	}
 
-	/**
-	 * The maximum number of arguments, or <code>-1</code> for an unlimited number of arguments.
-	 */
-	protected int getMaxArgCnt() {
+	@Override
+	public int getMaxArgCnt() {
 		return _max;
 	}
 
-	/**
-	 * The index of the argument with the given name.
-	 * 
-	 * @param name
-	 *        The name of the argument.
-	 * 
-	 * @return The index of the argument with the given name, or <code>-1</code> if no such argument
-	 *         is known.
-	 */
-	protected int getArgumentIndex(String name) {
+	@Override
+	public int getArgumentIndex(String name) {
 		// No named arguments.
 		return -1;
 	}
@@ -136,14 +127,16 @@ public class ArgumentDescriptorImpl implements ArgumentDescriptor {
 	 * @param n
 	 *        The index of the argument.
 	 */
-	protected SearchExpression getDefaultValue(int n) {
+	@Override
+	public SearchExpression getDefaultValue(int n) {
 		return null;
 	}
 
 	/**
 	 * The list of all argument names known.
 	 */
-	protected Collection<String> getArgumentNames() {
+	@Override
+	public Collection<String> getArgumentNames() {
 		return Collections.emptyList();
 	}
 

@@ -19,7 +19,7 @@ import com.top_logic.model.search.annotate.TLNumberOfEditorRows;
  * {@link FieldProvider} that adds editor configuration options, for instance the maximal displayed
  * lines, to the fields properties.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class SearchExpressionFieldProvider extends FormattedFieldProvider<SearchExpressionFieldProvider.Config<?>> {
 

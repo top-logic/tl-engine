@@ -60,7 +60,7 @@ public class COSPersonContactModelBuilder extends PersonContactModelBuilder {
             for (Iterator theIt = theColl.iterator(); theIt.hasNext(); ) {
                 Object theObject = theIt.next();
 
-                if (this.supportsListElement(aComponent, theObject)) {
+				if (shouldDisplay(aComponent, theObject)) {
                     theResult.add(theObject);
                 }
             }
@@ -79,14 +79,6 @@ public class COSPersonContactModelBuilder extends PersonContactModelBuilder {
     @Override
 	public Collection<?> getModel(Object businessModel, LayoutComponent aComponent) {
 		return this.retrieveListFromModel(aComponent, businessModel);
-    }
-    
-    /**
-     * @see com.top_logic.contact.layout.company.CompanyContactModelBuilder#supportsListElement(com.top_logic.mig.html.layout.LayoutComponent, java.lang.Object)
-     */
-    @Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-        return (anObject instanceof PersonContact);
     }
     
     /**

@@ -16,7 +16,7 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
  * Simple vertical coordinate assigner. The vertical coordinate of a node is determined by its
  * layer, layer step size and the max height of all nodes in this layer.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DefaultVerticalCoordinateAssigner implements VerticalCoordinateAlgorithm {
 

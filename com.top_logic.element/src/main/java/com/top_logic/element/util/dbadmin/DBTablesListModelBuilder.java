@@ -8,7 +8,6 @@ package com.top_logic.element.util.dbadmin;
 import java.util.Collection;
 
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
-import com.top_logic.dob.schema.config.MetaObjectName;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -36,11 +35,6 @@ public class DBTablesListModelBuilder implements ListModelBuilder {
 	@Override
 	public boolean supportsModel(Object aModel, LayoutComponent aComponent) {
 		return aModel instanceof SchemaConfiguration;
-	}
-
-	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-		return listElement instanceof MetaObjectName;
 	}
 
 	@Override

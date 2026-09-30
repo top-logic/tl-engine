@@ -39,7 +39,7 @@ public class StructuredDataImportPerformer<C extends StructuredDataImportPerform
 	/**
 	 * Configuration for a StructuredDataImportPerformer.
 	 * 
-	 * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     public interface Config extends AbstractImportPerformer.Config {
 
@@ -167,7 +167,7 @@ public class StructuredDataImportPerformer<C extends StructuredDataImportPerform
     /**
      * Structure importer specific implementation of ImportResult. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class StructureImportResult extends ImportResult {
 

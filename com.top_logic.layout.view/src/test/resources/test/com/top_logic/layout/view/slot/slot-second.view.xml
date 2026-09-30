@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="navPath"/>
+	</channels>
+
+	<stack>
+		<slot-content to="appbar-content">
+			<tile-breadcrumb path="navPath">
+				<home-label>
+					<en>second</en>
+				</home-label>
+			</tile-breadcrumb>
+		</slot-content>
+
+		<tile-stack
+			initial="slot-overview.view.xml"
+			path="navPath"
+		>
+			<frame
+				route="detail"
+				view="slot-detail.view.xml"
+			/>
+		</tile-stack>
+	</stack>
+</view>

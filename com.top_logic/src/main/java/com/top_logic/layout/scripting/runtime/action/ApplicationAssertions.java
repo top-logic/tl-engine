@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
@@ -25,7 +26,6 @@ import com.top_logic.layout.scripting.action.ApplicationAction;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * Helper methods for {@link ApplicationActionOp} implementations that check
@@ -46,7 +46,7 @@ public class ApplicationAssertions {
 		if (result.isSuccess() || result.isSuspended()) {
 			return;
 		}
-		TopLogicException exception = result.getException();
+		I18NRuntimeException exception = result.getException();
 		if (exception != null) {
 			fail(context, "Command failed.", exception);
 		} else {

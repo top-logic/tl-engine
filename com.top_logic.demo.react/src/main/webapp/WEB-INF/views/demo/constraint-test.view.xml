@@ -25,7 +25,7 @@
 								<en>New</en>
 								<de>Neu</de>
 							</label>
-							<execute-script function="x -> new(`test.constraints:ConstraintTestType`, transient: true)"/>
+							<create-transient type="test.constraints:ConstraintTestType"/>
 							<open-dialog
 								bind-input-to="model"
 								dialog-view="demo/create-constraint-test.view.xml"
@@ -49,9 +49,7 @@
 								<null-input-disabled/>
 							</executability>
 							<confirm expr="obj -> if($obj != null, #(&quot;Delete the selected object?&quot;@en, &quot;Das ausgewählte Objekt löschen?&quot;@de), null)"/>
-							<with-transaction>
-								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
-							</with-transaction>
+							<delete-object/>
 							<write-channel name="selectedObject"/>
 						</generic-command>
 					</commands>

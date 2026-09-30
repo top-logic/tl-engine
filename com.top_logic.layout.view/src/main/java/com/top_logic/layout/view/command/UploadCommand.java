@@ -109,6 +109,15 @@ public class UploadCommand implements ViewCommand {
 	}
 
 	/**
+	 * The rules the actions run per uploaded file {@link ViewAction#getIntrinsicRule() bring of
+	 * their own}, combined.
+	 */
+	@Override
+	public ViewExecutabilityRule getIntrinsicRule() {
+		return ViewActions.intrinsicRule(_actions);
+	}
+
+	/**
 	 * The {@code accept} filter for the native file input.
 	 */
 	public String getAccept() {

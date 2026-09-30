@@ -52,6 +52,7 @@
 						<field attribute="name"/>
 						<field attribute="description"/>
 						<field attribute="members"/>
+						<field attribute="admins"/>
 					</form>
 				</panel>
 			</tile>

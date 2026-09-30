@@ -27,6 +27,7 @@
 			<field attribute="name"/>
 			<field attribute="description"/>
 			<field attribute="members"/>
+			<field attribute="admins"/>
 			<commands>
 				<generic-command
 					image="css:bi bi-check-lg"

@@ -138,6 +138,10 @@
 					multiple="true"
 					type="tl.accounts:Person"
 				/>
+				<reference name="admins"
+					multiple="true"
+					type="tl.accounts:Person"
+				/>
 				<reference name="milestones"
 					composite="true"
 					kind="forwards"

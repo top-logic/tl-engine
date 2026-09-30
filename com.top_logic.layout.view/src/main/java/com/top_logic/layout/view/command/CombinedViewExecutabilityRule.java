@@ -8,6 +8,7 @@ package com.top_logic.layout.view.command;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -19,7 +20,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * {@link ExecutableState#EXECUTABLE}.
  * </p>
  */
-public class CombinedViewExecutabilityRule implements ViewExecutabilityRule, ObservableRule {
+public class CombinedViewExecutabilityRule implements ViewExecutabilityRule, ContextDependentRule, ObservableRule {
 
 	private final List<ViewExecutabilityRule> _rules;
 
@@ -53,6 +54,23 @@ public class CombinedViewExecutabilityRule implements ViewExecutabilityRule, Obs
 			return rules.get(0);
 		}
 		return new CombinedViewExecutabilityRule(rules);
+	}
+
+	/**
+	 * Binds every combined rule that depends on the context of the command.
+	 *
+	 * <p>
+	 * A combination built from rules that are bound already, as
+	 * {@link ViewExecutabilityRules#build(List, ViewContext)} does, is not bound again.
+	 * </p>
+	 */
+	@Override
+	public void bind(ViewContext context) {
+		for (ViewExecutabilityRule rule : _rules) {
+			if (rule instanceof ContextDependentRule contextDependent) {
+				contextDependent.bind(context);
+			}
+		}
 	}
 
 	/**

@@ -5,10 +5,7 @@
  */
 package com.top_logic.layout.view.command;
 
-import java.util.List;
-
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -21,9 +18,6 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.button.KeyStrokeFormat;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
-import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -40,7 +34,7 @@ public interface ViewCommand {
 	/**
 	 * Configuration for {@link ViewCommand}.
 	 */
-	interface Config extends PolymorphicConfiguration<ViewCommand> {
+	interface Config extends PolymorphicConfiguration<ViewCommand>, ExecutabilityConfig {
 
 		/** Configuration name for {@link #getName()}. */
 		String NAME = "name";
@@ -65,15 +59,6 @@ public interface ViewCommand {
 
 		/** Configuration name for {@link #getClique()}. */
 		String CLIQUE = "clique";
-
-		/** Configuration name for {@link #getInput()}. */
-		String INPUT = "input";
-
-		/** Configuration name for {@link #getExecutability()}. */
-		String EXECUTABILITY = "executability";
-
-		/** Configuration name for {@link #getObservedTypes()}. */
-		String OBSERVED_TYPES = "observed-types";
 
 		/** Configuration name for {@link #getCheckDirty()}. */
 		String CHECK_DIRTY = "check-dirty";
@@ -149,36 +134,6 @@ public interface ViewCommand {
 		@Name(CLIQUE)
 		@Nullable
 		String getClique();
-
-		/**
-		 * Reference to a channel whose value is passed as input to the command.
-		 */
-		@Name(INPUT)
-		@Nullable
-		@Format(ChannelRefFormat.class)
-		ChannelRef getInput();
-
-		/**
-		 * Rules that determine when this command is executable.
-		 */
-		@Name(EXECUTABILITY)
-		@EntryTag("rule")
-		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getExecutability();
-
-		/**
-		 * Types whose object changes (create / update / delete) trigger a re-evaluation of the
-		 * {@link #getExecutability() executability}, in addition to the {@link #getInput() input}
-		 * object, which is always observed.
-		 *
-		 * <p>
-		 * Configure this only for a rule that navigates beyond the input object, e.g. one deciding
-		 * by an attribute of the input's container: a change of that other object is invisible to
-		 * the input's own observation. Empty (default) observes just the input object.
-		 * </p>
-		 */
-		@Name(OBSERVED_TYPES)
-		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
-		List<TLModelPartRef> getObservedTypes();
 
 		/**
 		 * Which unsaved changes this command asks about before it runs.

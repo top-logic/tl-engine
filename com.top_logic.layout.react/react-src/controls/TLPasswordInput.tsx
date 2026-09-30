@@ -1,6 +1,6 @@
 import { React, useTLState, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps, PasswordInputStateJson } from 'tl-react-bridge';
-import { fieldStateAttrs } from './form/fieldState';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
@@ -11,6 +11,9 @@ const { useCallback } = React;
  * Mirrors {@link TLTextInput} but renders an {@code <input type="password">}: typing updates the
  * local value immediately while the server `valueChanged` is debounced and flushed on blur.
  * state.debounceMs names the span the value is held back, defaulting to VALUE_DEBOUNCE_MS.
+ *
+ * A read-only field shows a mask in place of the value (tl-field-value); a disabled field renders
+ * the input as an inactive one (native `disabled`, see showsValueOnly).
  */
 const TLPasswordInput: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<PasswordInputStateJson>>();
@@ -29,7 +32,7 @@ const TLPasswordInput: React.FC<TLCellProps> = ({ controlId }) => {
 
   const handleBlur = useCallback(() => { void flushValue(); }, [flushValue]);
 
-  if (state.editable === false) {
+  if (showsValueOnly(state)) {
     return <FieldValue id={controlId} className={rootClassName(state)} text="••••••••" />;
   }
 

@@ -25,3 +25,20 @@ export function fieldStateAttrs(
   if (roleAllowsAria && state.mandatory === true) attrs['aria-required'] = 'true';
   return attrs;
 }
+
+/**
+ * Whether a form field displays its value only instead of an input: it is not editable and not
+ * disabled.
+ *
+ * <p>A field that is not editable is either read-only or disabled. A read-only field shows its
+ * value as text (see FieldValue). A disabled field renders the input it has while editable, as an
+ * inactive input: natively `disabled` where the element supports it, `aria-disabled` and out of the
+ * tab order otherwise, with every affordance that changes the value (clear button, popup, drag,
+ * file picker) left out. The server never sends a disabled field as editable and ignores value
+ * changes to it.</p>
+ *
+ * @param state the control state with the keys of ReactFormFieldControl
+ */
+export function showsValueOnly(state: { editable?: unknown; disabled?: unknown }): boolean {
+  return state.editable === false && state.disabled !== true;
+}

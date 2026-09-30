@@ -1,5 +1,6 @@
 import { React, useTLState, useTLCommand, useI18N, useListReorder, TLChild, rootClassName, tooltipProps, useFieldLabelProps, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { showsValueOnly } from './form/fieldState';
 
 const I18N_KEYS = {
   'js.valueList.add': 'Add a value',
@@ -40,6 +41,7 @@ const SEPARATOR = ', ';
  * - elements: ChildDescriptor[] - one control per value, in value order
  * - layout: 'inline' | 'block' - values read as one text, or one value per line
  * - editable: boolean - whether the values can be changed
+ * - disabled: boolean - whether the field that is not editable shows its rows as while edited, inactive
  * - ordered: boolean - whether the order of the values is part of the value, so the user arranges it
  *
  * While the field is only displayed, the values follow each other with a separator between them
@@ -52,6 +54,9 @@ const SEPARATOR = ', ';
  * Where the order is part of the value, each row starts with a handle that moves the value: by
  * dragging the row by that handle to where the value belongs, or with the arrow keys while the handle
  * has the focus.
+ *
+ * A disabled field shows the rows of an edited one, with the buttons that remove and append a value
+ * natively `disabled` and without the handles (see showsValueOnly).
  */
 const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
   const labelProps = useFieldLabelProps(controlId, controlId);
@@ -62,6 +67,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
   const elements = (state.elements as unknown[]) ?? [];
   const block = state.layout === 'block';
   const editable = state.editable !== false;
+  const disabled = state.disabled === true;
   // A single value has nowhere to move to.
   const arrangeable = editable && state.ordered === true && elements.length > 1;
   const cls = 'tlValueList ' + (block ? 'tlValueList--block' : 'tlValueList--inline');
@@ -96,7 +102,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
     handles.current[targetIndex]?.focus();
   };
 
-  if (!editable) {
+  if (showsValueOnly(state)) {
     return (
       <span id={controlId} className={rootClassName(state, cls)}>
         {elements.map((element, index) => (
@@ -151,6 +157,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
               className="tlValueList__remove"
               aria-label={t['js.valueList.remove']}
               {...tooltipProps(t['js.valueList.remove'])}
+              disabled={disabled}
               onClick={() => sendCommand(CMD_REMOVE_ELEMENT, { [ARG_INDEX]: index })}
             >
               <ThemeIcon encoded={REMOVE_ICON} />
@@ -163,6 +170,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
         className="tlValueList__add"
         aria-label={t['js.valueList.add']}
         {...tooltipProps(t['js.valueList.add'])}
+        disabled={disabled}
         onClick={() => sendCommand(CMD_ADD_ELEMENT)}
       >
         <ThemeIcon encoded={ADD_ICON} />

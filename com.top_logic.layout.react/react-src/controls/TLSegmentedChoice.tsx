@@ -2,7 +2,7 @@ import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useF
 import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import { ARG_OPTION, CMD_GOTO, OptionContent, ReadonlyValues } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
-import { fieldStateAttrs } from './form/fieldState';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 
 const { useCallback, useMemo, useRef } = React;
 
@@ -17,8 +17,9 @@ const { useCallback, useMemo, useRef } = React;
  * Design system: `tl-segmented` with `tl-segmented__segment` buttons. Selected is an attribute -
  * `aria-checked` in a radio group, `aria-pressed` in a group of several - and so is the field's
  * state (see fieldStateAttrs). The label stands in a `tl-segmented__label`, which ends in an ellipsis
- * where the segment is too narrow. A field that is not editable shows its values in `tl-select__values`,
- * as the dropdown does.
+ * where the segment is too narrow. A read-only field shows its values in `tl-select__values`, as the
+ * dropdown does; a disabled field renders the bar with every segment an inactive button (native
+ * `disabled`, see showsValueOnly).
  *
  * The server hands this control the complete option list as soon as it is displayed - there is no
  * moment at which it could ask for it.
@@ -33,7 +34,6 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
   const multiSelect = state.multiSelect === true;
   const mandatory = state.mandatory === true;
   const disabled = state.disabled === true;
-  const editable = state.editable !== false;
 
   // Tracks the latest selection so that a second click lands on what the first one produced, even
   // while the echo of the first has not arrived yet.
@@ -107,7 +107,7 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
     [multiSelect, disabled, options, selectedIndex, send]
   );
 
-  if (!editable) {
+  if (showsValueOnly(state)) {
     return (
       <ReadonlyValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />
     );

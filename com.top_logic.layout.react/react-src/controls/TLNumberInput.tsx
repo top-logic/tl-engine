@@ -10,7 +10,7 @@ import {
   fieldInputId,
 } from 'tl-react-bridge';
 import type { TLCellProps, NumberInputStateJson } from 'tl-react-bridge';
-import { fieldStateAttrs } from './form/fieldState';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
@@ -40,6 +40,9 @@ const { useCallback } = React;
  * where no label does. state.debounceMs names the span a typed value is held back before it is
  * sent, defaulting to VALUE_DEBOUNCE_MS; state.sendValueOnBlur overrides it, and this field sets
  * it, so the span matters here only where the server turns the blur behaviour off.
+ *
+ * A read-only field shows the text as a tl-field-value; a disabled field renders the input as an
+ * inactive one (native `disabled`, see showsValueOnly).
  */
 const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<NumberInputStateJson>>();
@@ -64,7 +67,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
 
   const text = value == null ? '' : String(value);
 
-  if (state.editable === false) {
+  if (showsValueOnly(state)) {
     return <FieldValue id={controlId} className={rootClassName(state)} text={text} />;
   }
 

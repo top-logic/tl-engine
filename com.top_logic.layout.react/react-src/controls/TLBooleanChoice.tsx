@@ -1,6 +1,6 @@
 import { React, useTLFieldValue, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { fieldStateAttrs } from './form/fieldState';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
@@ -21,8 +21,9 @@ interface BooleanOption {
  * the select, or the radio group (see FieldLabelContext).
  *
  * Design system: radios are `tl-radio` in `tl-choice` labels within a `tl-choice-group`, the select
- * is a `tl-field`; the state is an attribute (see fieldStateAttrs). A field that is not editable
- * shows the label of its value as a `tl-field-value`.
+ * is a `tl-field`; the state is an attribute (see fieldStateAttrs). A read-only field shows the
+ * label of its value as a `tl-field-value`; a disabled field renders the select, or every radio, as
+ * an inactive input (native `disabled`, see showsValueOnly).
  */
 const TLBooleanChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
   const labelProps = useFieldLabelProps(controlId, controlId);
@@ -43,7 +44,7 @@ const TLBooleanChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const current = options.findIndex((option) => option.value === (value ?? null));
 
-  if (state.editable === false) {
+  if (showsValueOnly(state)) {
     return (
       <FieldValue id={controlId} className={rootClassName(state)} text={current >= 0 ? options[current].label : ''} />
     );

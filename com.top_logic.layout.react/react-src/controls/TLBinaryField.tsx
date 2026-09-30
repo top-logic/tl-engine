@@ -1,6 +1,7 @@
 import { React, useTLState, useTLUpload, useTLDataUrl, useI18N, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, useFieldLabelProps, fieldInputId, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { buttonClassName } from './button/ButtonDefaults';
+import { showsValueOnly } from './form/fieldState';
 
 const I18N_KEYS = {
   'js.fileUpload.choose': 'Choose file',
@@ -18,6 +19,10 @@ const UPLOAD_ICON = 'css:fa-solid fa-upload';
  * Form-field control for a binary ({@code tl.core:Binary}) attribute. Renders a file upload
  * (drag-and-drop + button) in edit mode and a download link in view mode. The actual bytes are
  * fetched from / sent to the server control via the data and upload endpoints.
+ *
+ * A disabled field renders the upload of edit mode as an inactive one: the upload and download
+ * buttons are natively `disabled`, and the field neither opens the file picker nor takes a dropped
+ * file (see showsValueOnly).
  */
 const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) => {
   const inputId = fieldInputId(controlId);
@@ -28,7 +33,7 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
   const dataUrl = useTLDataUrl();
   const t = useI18N(I18N_KEYS);
 
-  const editable = state.editable !== false;
+  const disabled = state.disabled === true;
   const hasData = !!state.hasData;
   const fileName = (state.fileName as string) ?? 'download';
   const dataRevision = (state.dataRevision as number) ?? 0;
@@ -129,7 +134,7 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
         type="button"
         className={'tlDownload__downloadBtn' + (downloading ? ' tlDownload__downloadBtn--downloading' : '')}
         onClick={doDownload}
-        disabled={downloading}
+        disabled={downloading || disabled}
         aria-label={downloadLabel}
         {...tooltipProps(downloadLabel)}
       >
@@ -142,7 +147,7 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
   );
 
   // View (read-only) mode: just the download link, or a "no file" hint.
-  if (!editable) {
+  if (showsValueOnly(state)) {
     if (!hasData) {
       return (
         <div id={controlId} className={rootClassName(state, 'tlBinaryField tlDownload tlDownload--empty')}>
@@ -158,7 +163,7 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
   }
 
   // Edit mode: drag-and-drop upload + button, plus a download link for the current file.
-  const isDisabled = isUploading;
+  const isDisabled = isUploading || disabled;
   const buttonLabel = isUploading ? t['js.uploading'] : t['js.fileUpload.choose'];
 
   return (
@@ -166,23 +171,25 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
       id={controlId}
       className={rootClassName(state, 'tlBinaryField tl-file-upload')}
       data-tl-state={isDragOver ? 'dragover' : undefined}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      onDragOver={disabled ? undefined : handleDragOver}
+      onDragLeave={disabled ? undefined : handleDragLeave}
+      onDrop={disabled ? undefined : handleDrop}
     >
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={accept || undefined}
-        onChange={handleFileChange}
-        style={{ display: 'none' }}
-      />
+      {!disabled && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={accept || undefined}
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+        />
+      )}
       <button
         type="button"
         className={buttonClassName({ appearance: 'secondary' })}
         onClick={handleButtonClick}
         disabled={isDisabled}
-        aria-busy={isDisabled ? true : undefined}
+        aria-busy={isUploading ? true : undefined}
         aria-label={buttonLabel}
         {...tooltipProps(buttonLabel)}
         id={inputId}

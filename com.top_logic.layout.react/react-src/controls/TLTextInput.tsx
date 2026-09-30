@@ -13,7 +13,7 @@ import {
   ThemeIcon,
 } from 'tl-react-bridge';
 import type { TLCellProps, TextInputStateJson } from 'tl-react-bridge';
-import { fieldStateAttrs } from './form/fieldState';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
 
 const { useCallback, useRef } = React;
@@ -104,6 +104,8 @@ const normalizeUrl = (value: string): string => {
  * The state is carried as attributes (fieldStateAttrs): aria-invalid for an error,
  * data-tl-state="warning" for a warning, aria-required for a mandatory field. A read-only field
  * renders no input but the value as text (tl-field-value), one line per line of a multi-line text.
+ * A disabled field renders the input as an inactive one (native `disabled`), without the clear
+ * button and without the link (see showsValueOnly).
  */
 const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<TextInputStateJson>>();
@@ -177,9 +179,10 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
 
   const multiline = state.multiline === true;
   const hasError = state.hasError === true;
+  const disabled = state.disabled === true;
   const href = hasError || multiline ? null : linkHref(inputType, text);
 
-  if (state.editable === false) {
+  if (showsValueOnly(state)) {
     return (
       <FieldValue id={controlId} className={rootClassName(state)} text={text} href={href} multiline={multiline} />
     );
@@ -188,7 +191,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
   const errorMessage = state.errorMessage;
   const icon = state.icon;
   const hasIcon = !multiline && !!icon && icon !== 'none';
-  const clearable = !multiline && state.clearable === true && text !== '';
+  const clearable = !multiline && !disabled && state.clearable === true && text !== '';
 
   if (multiline) {
     return (
@@ -199,7 +202,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
           placeholder={state.placeholder}
           onChange={handleChange}
           onBlur={handleBlur}
-          disabled={state.disabled === true}
+          disabled={disabled}
           className={rootClassName(state, 'tl-field tl-field--multiline tl-type-body')}
           {...fieldStateAttrs(state)}
           {...tooltipProps(hasError ? errorMessage : undefined)}
@@ -219,7 +222,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
       onChange={handleChange}
       onBlur={handleBlur}
       onKeyDown={submitKey === undefined ? undefined : handleSubmitKey}
-      disabled={state.disabled === true}
+      disabled={disabled}
       className={rootClassName(state, 'tl-field tl-type-body')}
       {...fieldStateAttrs(state)}
       {...tooltipProps(hasError ? errorMessage : undefined)}
@@ -229,8 +232,8 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
   );
 
   // The group has room for one action at its end: the clear button while it is shown, otherwise the
-  // link.
-  const openHref = clearable ? null : href;
+  // link. An inactive input offers neither.
+  const openHref = clearable || disabled ? null : href;
   const grouped = hasIcon || clearable || openHref !== null;
 
   // The root element becomes the group rather than wrapping the input in one, so that the input
@@ -248,7 +251,6 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
           type="button"
           className="tl-field-group__action"
           onClick={handleClear}
-          disabled={state.disabled === true}
           aria-label={t['js.textInput.clear']}
           title={t['js.textInput.clear']}
         >

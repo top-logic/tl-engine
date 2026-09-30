@@ -10,7 +10,7 @@ import {
 import type { OptionDescriptor } from './selectOptions';
 import { pillClassName } from './pill/TLPill';
 import { ProgressBar } from './TLProgress';
-import { fieldStateAttrs } from './form/fieldState';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
 
@@ -151,7 +151,9 @@ function OptionRow({
  * chips. The list floats in `tl-select__popup`, positioned from the field, its layer the design
  * system's. The focus stays on the field or the search field; the keyboard highlight is
  * `data-tl-state="highlighted"` on the option and `aria-activedescendant` on the search field. A
- * field that is not editable shows its values in `tl-select__values`.
+ * read-only field shows its values in `tl-select__values`. A disabled field renders the field as
+ * an inactive one (`aria-disabled`, out of the tab order) that opens no list and offers neither the
+ * clear button nor the removal and reordering of chips (see showsValueOnly).
  */
 const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<DropdownSelectStateJson>>();
@@ -532,14 +534,14 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [highlightedIndex, controlId]);
 
-  // -- Immutable (read-only) rendering: an empty selection renders nothing (the "empty option"
-  // label is an edit affordance and would mislead in a read-only display) --
+  // -- Read-only rendering: an empty selection renders nothing (the "empty option" label is an edit
+  // affordance and would mislead in a read-only display) --
 
-  if (!editable) {
+  if (showsValueOnly(state)) {
     return <ReadonlyValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />;
   }
 
-  // -- Editable rendering --
+  // -- Editable or disabled rendering --
 
   const showClearButton = !mandatory && value.length > 0 && !disabled;
   const listboxId = `${controlId}-listbox`;

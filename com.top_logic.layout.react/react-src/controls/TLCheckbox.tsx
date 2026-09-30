@@ -1,6 +1,6 @@
 import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps, CheckboxStateJson } from 'tl-react-bridge';
-import { fieldStateAttrs } from './form/fieldState';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 
 const { useCallback, useRef, useEffect } = React;
 
@@ -16,10 +16,10 @@ const DISPLAY_SWITCH: CheckboxStateJson.Display = 'switch';
  *
  * Design system: `tl-checkbox`, with `tl-checkbox--switch` and `role="switch"` for the switch. The
  * state is an attribute (see fieldStateAttrs), never a class. A field that is not editable keeps
- * the same box, read-only rather than disabled: it carries `aria-readonly="true"`, and its change
- * and click handlers block any change, so the native state cannot flip. Unlike a disabled box, a
- * read-only one keeps the brand fill when checked, and with it the contrast of its value.
- * `disabled` stays the inactive state, read from `state.disabled`.
+ * the same box, and its change and click handlers block any change, so the native state cannot
+ * flip. A read-only box carries `aria-readonly="true"` and keeps the brand fill when checked, and
+ * with it the contrast of its value. A disabled box is a natively `disabled` one, drawn inactive
+ * (see showsValueOnly).
  */
 const TLCheckbox: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<CheckboxStateJson>>();
@@ -28,6 +28,7 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId }) => {
   const triState = state.triState === true;
   const asSwitch = state.display === DISPLAY_SWITCH;
   const editable = state.editable !== false;
+  const readOnly = showsValueOnly(state);
   const boxRef = useRef<HTMLInputElement | null>(null);
 
   // "No value" has no checked attribute of its own; the DOM property is the only way to show it.
@@ -71,9 +72,9 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId }) => {
       onChange={handleChange}
       onClick={handleClick}
       disabled={state.disabled === true}
-      aria-readonly={editable ? undefined : true}
+      aria-readonly={readOnly || undefined}
       className={rootClassName(state, cls)}
-      {...(editable ? fieldStateAttrs(state) : {})}
+      {...(readOnly ? {} : fieldStateAttrs(state))}
       aria-checked={triState && value !== true && value !== false ? 'mixed' : value === true}
     />
   );

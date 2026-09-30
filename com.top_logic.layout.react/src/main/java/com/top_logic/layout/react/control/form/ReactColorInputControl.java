@@ -19,6 +19,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.state.FieldState;
 
 /**
  * React color input control with palette management.
@@ -54,7 +55,7 @@ public class ReactColorInputControl extends ReactFormFieldControl {
 		super(context, model, "TLColorInput");
 
 		// Override initial value with hex string representation.
-		putState(VALUE, colorToHex(model.getValue()));
+		putState(FieldState.VALUE__PROP, colorToHex(model.getValue()));
 
 		initPalette();
 	}
@@ -73,7 +74,7 @@ public class ReactColorInputControl extends ReactFormFieldControl {
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
 		// Convert Color to hex string for the React component.
-		putState(VALUE, colorToHex(newValue));
+		putState(FieldState.VALUE__PROP, colorToHex(newValue));
 	}
 
 	@Override

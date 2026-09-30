@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, useFill, FillBarrier, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, useFill, FillBarrier, rootClassName, tooltipProps, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import FontIcon from './FontIcon';
 import { ButtonDefaults } from './button/ButtonDefaults';
 
 const { useCallback } = React;
@@ -195,7 +194,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
       )}
       {!isMinimized && errorMessage && (
         <div className="tlFormField__error tlPanel__error" role="alert">
-          <FontIcon image={state.errorIcon as string | undefined} className="tlFormField__errorIcon" />
+          <ThemeIcon encoded={state.errorIcon as string | undefined} className="tlFormField__errorIcon" />
           <span>{errorMessage}</span>
         </div>
       )}

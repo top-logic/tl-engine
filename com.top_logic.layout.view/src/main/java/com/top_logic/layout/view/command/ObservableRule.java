@@ -9,10 +9,11 @@ package com.top_logic.layout.view.command;
  * Optional mix-in for a {@link ViewExecutabilityRule} that can say when its answer may have changed.
  *
  * <p>
- * A command follows its own input and the object that input holds, which covers every rule deciding
- * by those. A rule deciding by something else - the validation state of the form it sits in, say -
- * announces that state changing here, and the command's {@link ViewCommandModel} re-evaluates its
- * rules for as long as it is attached.
+ * A {@link LiveExecutability} follows the input of its rule and the object that input holds, which
+ * covers every rule deciding by those. A rule deciding by something else - the validation state of
+ * the form it sits in, say - announces that state changing here, and the rule is re-evaluated for as
+ * long as the {@link LiveExecutability} - the one of a command's {@link ViewCommandModel}, for
+ * instance - is attached.
  * </p>
  *
  * <p>

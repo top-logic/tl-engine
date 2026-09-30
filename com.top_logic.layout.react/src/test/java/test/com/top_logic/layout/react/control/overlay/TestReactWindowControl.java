@@ -20,6 +20,7 @@ import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
 import com.top_logic.layout.react.control.layout.ToolbarOverflow;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.WindowState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
@@ -41,7 +42,7 @@ public class TestReactWindowControl extends TestCase {
 
 	/** A window given neither actions nor a button bar has no footer. */
 	public void testAWindowWithoutCommandsHasNoFooter() {
-		assertNull("Nothing to show in the footer.", state(window()).get(ReactWindowControl.FOOTER));
+		assertNull("Nothing to show in the footer.", state(window()).get(WindowState.FOOTER__PROP));
 	}
 
 	/** Actions alone are shown in a footer toolbar the window builds, collapsing from its leading end. */
@@ -91,7 +92,7 @@ public class TestReactWindowControl extends TestCase {
 
 	/** The client state of the window's footer toolbar. */
 	private Map<?, ?> footer(ReactWindowControl window) {
-		Object footer = state(window).get(ReactWindowControl.FOOTER);
+		Object footer = state(window).get(WindowState.FOOTER__PROP);
 		assertNotNull("The window shows a footer.", footer);
 		return (Map<?, ?>) ((Map<?, ?>) footer).get(STATE);
 	}

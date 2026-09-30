@@ -1,9 +1,9 @@
 import {
   React, useTLState, useTLCommand, TLChild, useFillHost, FillProvider, rootClassName,
   useKeyedTransition,
+  ThemeIcon,
 } from 'tl-react-bridge';
 import type { TLCellProps, ChildDescriptor } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
 
 const { useCallback, useEffect, useRef } = React;
 

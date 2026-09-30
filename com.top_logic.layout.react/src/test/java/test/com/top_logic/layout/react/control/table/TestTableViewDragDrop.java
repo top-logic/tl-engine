@@ -6,8 +6,10 @@
 package test.com.top_logic.layout.react.control.table;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -15,13 +17,17 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.exception.ErrorSeverity;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropEvent;
 import com.top_logic.layout.react.control.dnd.DropPosition;
+import com.top_logic.layout.react.control.dnd.DropProbeArguments;
 import com.top_logic.layout.react.control.dnd.DropTarget;
+import com.top_logic.layout.react.control.dnd.DropVerdict;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -43,6 +49,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * asked - the client-side check that precedes a drop narrows the gesture for the user, it does not
  * decide it.
  * </p>
+ *
+ * <p>
+ * The {@link DropTarget#check(DropEvent) verdict} of the target is asked both by a drop, which it can
+ * refuse, and by the {@code dropProbe} command a client sends while a drag hovers, which answers it
+ * in the client state without applying anything.
+ * </p>
  */
 public class TestTableViewDragDrop extends TestCase {
 
@@ -51,18 +63,63 @@ public class TestTableViewDragDrop extends TestCase {
 
 	private static final String DROP = "drop";
 
+	private static final String DROP_PROBE = "dropProbe";
+
+	/** State key of the verdicts answered to drop probes. */
+	private static final String DROP_VERDICTS = "dropVerdicts";
+
+	/** Entry of a verdict telling whether the drop is accepted. */
+	private static final String VERDICT_ACCEPTED = "accepted";
+
+	/** Entry of a refusing verdict holding the reason. */
+	private static final String VERDICT_REASON = "reason";
+
+	/** State key of the accepted type tags. */
+	private static final String DROP_ACCEPTS = "dropAccepts";
+
+	/** State key of the client's row list. */
+	private static final String ROWS = "rows";
+
+	/** Row entry telling whether the row may be dragged. */
+	private static final String ROW_DRAGGABLE = "draggable";
+
+	/** The reason the tests' drop target refuses a drop with. */
+	private static final String REFUSAL_TEXT = "Not onto alice.";
+
+	private static final ResKey REFUSAL = ResKey.text(REFUSAL_TEXT);
+
 	private record Person(String name) {
 		// Test fixture.
 	}
 
-	/** A {@link DropTarget} that only remembers what it was announced. */
+	/** A {@link TableViewControl} whose client state the test reads. */
+	private static final class Table extends TableViewControl<Person> {
+
+		Table(ReactContext context, TableView<Person> view) {
+			super(context, view, false);
+		}
+
+		Object clientState(String key) {
+			return getState(key);
+		}
+
+	}
+
+	/**
+	 * A {@link DropTarget} that remembers what it was announced and asked, and gives the verdict its
+	 * {@link #_check} says.
+	 */
 	private static final class Announced implements DropTarget {
 
-		private final Collection<String> _acceptedTypes;
+		private Collection<String> _acceptedTypes;
 
 		private final boolean _dropOnRows;
 
 		DropEvent _event;
+
+		DropEvent _checked;
+
+		Function<DropEvent, DropVerdict> _check = event -> DropVerdict.ACCEPTED;
 
 		Announced(Collection<String> acceptedTypes, boolean dropOnRows) {
 			_acceptedTypes = acceptedTypes;
@@ -80,6 +137,12 @@ public class TestTableViewDragDrop extends TestCase {
 		}
 
 		@Override
+		public DropVerdict check(DropEvent event) {
+			_checked = event;
+			return _check.apply(event);
+		}
+
+		@Override
 		public void onDrop(DropEvent event) {
 			_event = event;
 		}
@@ -89,9 +152,9 @@ public class TestTableViewDragDrop extends TestCase {
 
 	private ReactContext _context;
 
-	private TableViewControl<Person> _source;
+	private Table _source;
 
-	private TableViewControl<Person> _target;
+	private Table _target;
 
 	private Announced _announced;
 
@@ -112,10 +175,10 @@ public class TestTableViewDragDrop extends TestCase {
 		_target.attach();
 	}
 
-	private TableViewControl<Person> newTable() {
+	private Table newTable() {
 		List<Column<Person, ?>> columns = List.of(DefaultColumn.<Person, String> builder("name", Person::name).build());
 		TableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(PEOPLE, columns));
-		return new TableViewControl<>(_context, view, false);
+		return new Table(_context, view);
 	}
 
 	/** The client-side key of the row at the given index, as the table puts it into its row state. */
@@ -125,6 +188,15 @@ public class TestTableViewDragDrop extends TestCase {
 
 	private HandlerResult drop(TableViewControl<Person> target, Map<String, Object> arguments) {
 		return target.executeClientCommand(DROP, arguments);
+	}
+
+	/**
+	 * Asserts that the drop was refused, and reported as the warning of a refusal rather than as an
+	 * error.
+	 */
+	private static void assertRefused(String message, HandlerResult result) {
+		assertFalse(message, result.isSuccess());
+		assertEquals(message + " A refused drop is a warning.", ErrorSeverity.WARNING, result.getErrorSeverity());
 	}
 
 	/** Asserts that the drop was applied, naming why it was not if it was refused. */
@@ -232,7 +304,7 @@ public class TestTableViewDragDrop extends TestCase {
 			DropArguments.TARGET_KEY, rowKey(0),
 			DropArguments.POSITION, DropPosition.ONTO.wireName()));
 
-		assertFalse("A drop of an unaccepted type must be refused.", result.isSuccess());
+		assertRefused("A drop of an unaccepted type must be refused.", result);
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
 	}
 
@@ -245,7 +317,7 @@ public class TestTableViewDragDrop extends TestCase {
 			DropArguments.TARGET_KEY, rowKey(0),
 			DropArguments.POSITION, DropPosition.ONTO.wireName()));
 
-		assertFalse("A drop of rows that resolve to nothing must be refused.", result.isSuccess());
+		assertRefused("A drop of rows that resolve to nothing must be refused.", result);
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
 	}
 
@@ -258,7 +330,7 @@ public class TestTableViewDragDrop extends TestCase {
 			DropArguments.TARGET_KEY, rowKey(99),
 			DropArguments.POSITION, DropPosition.ONTO.wireName()));
 
-		assertFalse("A drop on a row that resolves to nothing must be refused.", result.isSuccess());
+		assertRefused("A drop on a row that resolves to nothing must be refused.", result);
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
 	}
 
@@ -272,7 +344,7 @@ public class TestTableViewDragDrop extends TestCase {
 			DropArguments.SELECTION, Boolean.FALSE,
 			DropArguments.POSITION, DropPosition.NONE.wireName()));
 
-		assertFalse("A table accepting no drop must refuse one.", result.isSuccess());
+		assertRefused("A table accepting no drop must refuse one.", result);
 	}
 
 	/** A drop whose source control is not a drag source at all is refused. */
@@ -285,8 +357,149 @@ public class TestTableViewDragDrop extends TestCase {
 			DropArguments.SELECTION, Boolean.FALSE,
 			DropArguments.POSITION, DropPosition.NONE.wireName()));
 
-		assertFalse("A drop from a table whose rows are not draggable must be refused.", result.isSuccess());
+		assertRefused("A drop from a table whose rows are not draggable must be refused.", result);
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
+	}
+
+	/**
+	 * A drop the target's check refuses is answered with the check's reason, and the target is not
+	 * asked to apply it.
+	 */
+	public void testRefusedVerdictBlocksTheDrop() {
+		_announced._check = event -> PEOPLE.get(0).equals(event.target()) ? DropVerdict.refused(REFUSAL)
+			: DropVerdict.ACCEPTED;
+
+		HandlerResult result = drop(_target, dropOn(rowKey(1), rowKey(0)));
+
+		assertRefused("A drop the check refuses must be refused.", result);
+		assertEquals("The refusal names the check's reason.", List.of(REFUSAL), result.getEncodedErrors());
+		assertEquals("The reason is the message of the warning.", REFUSAL, result.getErrorMessage());
+		assertNotNull("The check was asked.", _announced._checked);
+		assertEquals(List.of(PEOPLE.get(1)), _announced._checked.objects());
+		assertNull("The drop target must not be asked to apply it.", _announced._event);
+
+		assertApplied("A drop the check accepts is applied.", drop(_target, dropOn(rowKey(1), rowKey(2))));
+		assertEquals(PEOPLE.get(2), _announced._event.target());
+	}
+
+	/**
+	 * A probe answers the verdict under its identifier, the reason of a refusal in the user's
+	 * language, and applies nothing.
+	 */
+	public void testProbeAnswersTheVerdictWithoutApplyingTheDrop() {
+		_announced._check = event -> PEOPLE.get(0).equals(event.target()) ? DropVerdict.refused(REFUSAL)
+			: DropVerdict.ACCEPTED;
+
+		assertApplied("A probe never fails.", probe("drag1", "p1", rowKey(1), rowKey(0)));
+		assertApplied("A probe never fails.", probe("drag1", "p2", rowKey(1), rowKey(2)));
+
+		Map<String, Map<String, Object>> verdicts = verdicts(_target);
+		assertEquals(Boolean.FALSE, verdicts.get("p1").get(VERDICT_ACCEPTED));
+		assertEquals(REFUSAL_TEXT, verdicts.get("p1").get(VERDICT_REASON));
+		assertEquals(Boolean.TRUE, verdicts.get("p2").get(VERDICT_ACCEPTED));
+		assertFalse(verdicts.get("p2").containsKey(VERDICT_REASON));
+		assertNull("A probe must not apply the drop.", _announced._event);
+	}
+
+	/** A drop the resolution refuses already is answered as refused by a probe, too. */
+	public void testProbeOfAnUnacceptedTypeIsRefused() {
+		_source.setDragSource("milestone");
+
+		assertApplied("A probe never fails.", probe("drag1", "p1", rowKey(1), rowKey(0)));
+
+		Map<String, Object> verdict = verdicts(_target).get("p1");
+		assertEquals(Boolean.FALSE, verdict.get(VERDICT_ACCEPTED));
+		assertNotNull("A refusal names its reason.", verdict.get(VERDICT_REASON));
+		assertNull("The check is not asked for a drop the resolution refuses.", _announced._checked);
+	}
+
+	/** The verdicts of one drag accumulate; a probe of the next drag discards them. */
+	public void testProbeOfTheNextDragDiscardsTheVerdicts() {
+		probe("drag1", "p1", rowKey(1), rowKey(0));
+		probe("drag1", "p2", rowKey(1), rowKey(2));
+		assertEquals(2, verdicts(_target).size());
+
+		probe("drag2", "p3", rowKey(1), rowKey(2));
+		assertEquals("Only the verdicts of the running drag are kept.", List.of("p3"),
+			List.copyOf(verdicts(_target).keySet()));
+	}
+
+	/** The probe is technical: it is never recorded. */
+	public void testProbeIsNotRecorded() {
+		assertFalse(_target.isRecordable(DROP_PROBE));
+		assertTrue(_target.isRecordable(DROP));
+	}
+
+	/**
+	 * A row the drag source's predicate refuses is announced as not draggable, and a drag including
+	 * it is refused as a whole.
+	 */
+	public void testARefusedRowIsNotDraggable() {
+		_source.setDragSource(PERSON, person -> !person.name().equals("bob"));
+
+		assertEquals(Boolean.TRUE, rowState(_source, 0).get(ROW_DRAGGABLE));
+		assertEquals(Boolean.FALSE, rowState(_source, 1).get(ROW_DRAGGABLE));
+
+		HandlerResult result = drop(_target, dropOn(rowKey(1), rowKey(0)));
+		assertRefused("A drag of a refused row must be refused.", result);
+		assertNull("The drop target must not be asked to apply it.", _announced._event);
+
+		_source.selectRow(PEOPLE.get(1));
+		Map<String, Object> ofSelection = new HashMap<>(dropOn(rowKey(0), rowKey(2)));
+		ofSelection.put(DropArguments.SELECTION, Boolean.TRUE);
+		assertRefused("A selection including a refused row is refused as a whole.",
+			drop(_target, ofSelection));
+		assertNull(_announced._event);
+
+		assertApplied("A draggable row is still dropped.", drop(_target, dropOn(rowKey(2), rowKey(0))));
+	}
+
+	/** Refreshing the drag source asks the predicate again. */
+	public void testRefreshDragSourceReevaluatesTheRows() {
+		boolean[] bobDraggable = { false };
+		_source.setDragSource(PERSON, person -> bobDraggable[0] || !person.name().equals("bob"));
+		assertEquals(Boolean.FALSE, rowState(_source, 1).get(ROW_DRAGGABLE));
+
+		bobDraggable[0] = true;
+		_source.refreshDragSource();
+		assertEquals(Boolean.TRUE, rowState(_source, 1).get(ROW_DRAGGABLE));
+	}
+
+	/** Refreshing the drop target announces its changed accepted types. */
+	public void testRefreshDropTargetAnnouncesTheAcceptedTypes() {
+		assertEquals(List.of(PERSON), _target.clientState(DROP_ACCEPTS));
+
+		_announced._acceptedTypes = List.of(PERSON, "milestone");
+		_target.refreshDropTarget();
+
+		assertEquals(List.of(PERSON, "milestone"), _target.clientState(DROP_ACCEPTS));
+	}
+
+	/** The arguments of a drop of the given source row on the given target row. */
+	private Map<String, Object> dropOn(String key, String targetKey) {
+		return Map.of(
+			DropArguments.SOURCE, _source.getID(),
+			DropArguments.KEYS, key,
+			DropArguments.SELECTION, Boolean.FALSE,
+			DropArguments.TARGET_KEY, targetKey,
+			DropArguments.POSITION, DropPosition.ONTO.wireName());
+	}
+
+	private HandlerResult probe(String drag, String probe, String key, String targetKey) {
+		Map<String, Object> arguments = new HashMap<>(dropOn(key, targetKey));
+		arguments.put(DropProbeArguments.DRAG, drag);
+		arguments.put(DropProbeArguments.PROBE, probe);
+		return _target.executeClientCommand(DROP_PROBE, arguments);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, Map<String, Object>> verdicts(Table table) {
+		return (Map<String, Map<String, Object>>) table.clientState(DROP_VERDICTS);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, Object> rowState(Table table, int index) {
+		return ((List<Map<String, Object>>) table.clientState(ROWS)).get(index);
 	}
 
 	/**

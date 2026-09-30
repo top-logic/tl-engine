@@ -43,7 +43,7 @@ interface IconSelectPopupProps {
 }
 
 // Re-export ThemeIcon as IconPreview for backwards compatibility.
-import { ThemeIcon as IconPreview } from './ThemeIcon';
+import { ThemeIcon as IconPreview } from 'tl-react-bridge';
 export { IconPreview };
 
 const IconSelectPopup: React.FC<IconSelectPopupProps> = ({

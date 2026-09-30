@@ -107,6 +107,10 @@ the one mark when the other is set, and the access rights dialog refuses to save
 - **`without-security="true"`** — the type is not access controlled: every user may access its
   objects and attribute values and may create such objects; only a restricted user stays excluded.
   Specializations inherit the mark; on a module it covers every class of the module.
+  **Warning:** the mark is dangerous — every user may read, modify, create and delete such objects,
+  whatever roles they hold. Use it only as a temporary measure (e.g. right after an upgrade) until
+  the type's grants and roles are configured properly; a type only the application code touches is
+  `internal`, not `without-security`.
 - **`internal="true"`** — the type is used by the application code alone and never accessed on
   behalf of a user. The access check is *not* changed (a user asking for such an object is denied,
   since no role is granted), but the coverage check does not report the missing definition.

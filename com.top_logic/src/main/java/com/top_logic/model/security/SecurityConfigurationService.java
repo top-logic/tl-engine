@@ -138,6 +138,14 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		 * </p>
 		 *
 		 * <p>
+		 * <b>Warning:</b> This option is dangerous: whoever has an object of such a type in reach may
+		 * read, modify, create and delete it, no matter which roles the user holds. It is meant as a
+		 * temporary measure only, e.g. to keep an application usable after an upgrade, until the
+		 * access rights of the type are configured properly. A type that is used by the application
+		 * code alone is {@link #isInternal() internal}, not without security.
+		 * </p>
+		 *
+		 * <p>
 		 * A specialization of a type without security is without security, too. Declaring a
 		 * {@link TLModule} without security therefore excludes every class of that module and all
 		 * their specializations from access control.

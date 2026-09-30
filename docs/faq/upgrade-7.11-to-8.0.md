@@ -264,7 +264,7 @@ Add a config file (registered in the app's `metaConf.txt`):
 			<part name="myapp:Customer#salary">      <!-- attribute grants restrict -->
 				<grant operation="Read" roles="Manager"/>
 			</part>
-			<class name="myapp:TechnicalLog" without-security="true"/>
+			<class name="myapp:TechnicalLog" internal="true"/>        <!-- used by code only -->
 		</security-config>
 	</instance>
 </config>
@@ -277,6 +277,12 @@ remove a framework role and `config:override="true"` on `<class>` to replace the
 point for the values: the existing role profile (`security.xml`) of the views showing each type.
 Full example: `com.top_logic.demo/.../conf/com.top_logic.model.security.SecurityConfigurationService.config.xml`;
 concept: `specs/model-based-access-rights.md`.
+
+**`without-security="true"` is a stopgap, not a solution.** It exempts a type (on `<module>`: every
+class of the module) from access control, so every user may read, modify, create and delete its
+objects, whatever roles they hold. It can keep an application usable while its grants are not yet
+written, but it must be removed again once they are. A type that only the application code touches
+is marked `internal="true"` instead (see [access-configuration.md](access-configuration.md)).
 
 Not checked: derived attributes, constraints, system context, administrators. `all()` and
 `kbQuery()` return unfiltered results (`filterSecurity()` if needed). **A script executed without a

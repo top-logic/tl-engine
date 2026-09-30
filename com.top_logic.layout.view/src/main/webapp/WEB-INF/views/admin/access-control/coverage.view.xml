@@ -316,15 +316,15 @@
 											<de>Ohne Zugriffskontrolle</de>
 										</label>
 										<tooltip>
-											<en>Excludes the selected type from access control: every user may access its objects, no matter which roles the user holds on them, and the type is exempt from the check. An internal mark is dropped. The exclusion is stored in the application configuration and takes effect with "Apply configuration".</en>
-											<de>Nimmt den ausgewählten Typ von der Zugriffskontrolle aus: Jeder Benutzer darf auf seine Objekte zugreifen, unabhängig von seinen Rollen darauf, und der Typ ist von der Prüfung ausgenommen. Eine Kennzeichnung als intern wird aufgehoben. Die Ausnahme wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+											<en>Excludes the selected type from access control: every user may access its objects, no matter which roles the user holds on them, and the type is exempt from the check. An internal mark is dropped. The exclusion is stored in the application configuration and takes effect with "Apply configuration". Use it only as a temporary measure until the access rights of the type are configured.</en>
+											<de>Nimmt den ausgewählten Typ von der Zugriffskontrolle aus: Jeder Benutzer darf auf seine Objekte zugreifen, unabhängig von seinen Rollen darauf, und der Typ ist von der Prüfung ausgenommen. Eine Kennzeichnung als intern wird aufgehoben. Die Ausnahme wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam. Nur als Übergangslösung verwenden, bis die Zugriffsrechte des Typs konfiguriert sind.</de>
 										</tooltip>
 										<executability>
 											<null-input-disabled/>
 											<visible-if expr="withoutSecurity -> $withoutSecurity != true"/>
 										</executability>
 										<confirm
-											expr="type -> x -> #('Exclude {0} from access control? Every user may then access its objects, no matter which roles the user holds on them. The exclusion is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} von der Zugriffskontrolle ausnehmen? Jeder Benutzer darf dann auf seine Objekte zugreifen, gleich welche Rollen er auf ihnen hat. Die Ausnahme wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($type))"
+											expr="type -> x -> #('Exclude {0} from access control? Every user may then access its objects, no matter which roles the user holds on them. This is meant as a temporary measure only, until the access rights of the type are configured. The exclusion is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} von der Zugriffskontrolle ausnehmen? Jeder Benutzer darf dann auf seine Objekte zugreifen, gleich welche Rollen er auf ihnen hat. Das ist nur als Übergangslösung gedacht, bis die Zugriffsrechte des Typs konfiguriert sind. Die Ausnahme wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($type))"
 											inputs="selectedType"
 										/>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"

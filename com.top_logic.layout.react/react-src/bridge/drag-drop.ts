@@ -44,6 +44,20 @@ export interface TLRunningDrag {
   id: string;
   /** What the drag carries. */
   payload: TLDragPayload;
+  /**
+   * Vertical extent of the drag image around the pointer, in pixels relative to the pointer: the
+   * browser draws the source element so that the point it was grabbed at stays under the pointer.
+   * `top` is at most 0, `bottom` at least 0.
+   */
+  image: { top: number; bottom: number };
+}
+
+/** What {@link writeDragPayload} reads from a `dragstart` event. */
+export interface TLDragStart {
+  dataTransfer: DataTransfer;
+  /** The element the drag starts on. */
+  currentTarget: EventTarget;
+  clientY: number;
 }
 
 /** The drag running in this document, `null` while none does. */
@@ -108,19 +122,29 @@ export function onDragEnd(listener: () => void): () => void {
  * tag entry {@link DRAG_TAG_TYPE_PREFIX a `dragover` handler} can read, and registers it as the
  * {@link runningDrag running drag}.
  *
- * @param source The element the drag starts on, which receives the drag's `dragend` even when it
- *        is removed from the document before the drag ends.
+ * The element the drag starts on is also listened to for the drag's `dragend`, which it receives
+ * even when it is removed from the document before the drag ends.
+ *
  * @returns The running drag the payload now describes.
  */
-export function writeDragPayload(dataTransfer: DataTransfer, payload: TLDragPayload,
-    source?: EventTarget): TLRunningDrag {
+export function writeDragPayload(event: TLDragStart, payload: TLDragPayload): TLRunningDrag {
+  const dataTransfer = event.dataTransfer;
   dataTransfer.effectAllowed = 'move';
   dataTransfer.setData(DRAG_PAYLOAD_TYPE, JSON.stringify(payload));
   dataTransfer.setData(DRAG_TAG_TYPE_PREFIX + payload.type.toLowerCase(), '');
   installEndListeners();
-  source?.addEventListener('dragend', endDrag, { once: true });
+  const source = event.currentTarget;
+  source.addEventListener('dragend', endDrag, { once: true });
+  let image = { top: 0, bottom: 0 };
+  if (source instanceof Element) {
+    const rect = source.getBoundingClientRect();
+    image = {
+      top: Math.min(0, rect.top - event.clientY),
+      bottom: Math.max(0, rect.bottom - event.clientY),
+    };
+  }
   _dragCount++;
-  _runningDrag = { id: 'drag' + _dragCount, payload };
+  _runningDrag = { id: 'drag' + _dragCount, payload, image };
   return _runningDrag;
 }
 

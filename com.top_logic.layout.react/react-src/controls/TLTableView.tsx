@@ -1,5 +1,5 @@
 import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
-import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
+import type { TLCellProps, TLDropPosition, TLRunningDrag } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 
 /**
@@ -139,27 +139,33 @@ interface DropState {
   probe: string | null;
 }
 
-/** Distance in pixels between the pointer and the hint on a refused drop target. */
-const DROP_HINT_OFFSET = 16;
+/** Distance in pixels between the hint on a refused drop target and the pointer or drag image. */
+const DROP_HINT_GAP = 8;
 
 /**
- * Places the hint on a refused drop target below and right of the pointer at viewport position
- * (`x`, `y`), or on the pointer's other side where the viewport has no room for it there.
+ * Places the hint on a refused drop target right of the pointer at viewport position (`x`, `y`)
+ * and below the drag image, or on the other side where the viewport has no room for it there.
+ *
+ * @param image Vertical extent of the drag image relative to the pointer, see
+ *        {@link TLRunningDrag.image}.
  */
-function placeDropHint(hint: HTMLElement, x: number, y: number): void {
+function placeDropHint(hint: HTMLElement, x: number, y: number, image: TLRunningDrag['image']): void {
   const width = hint.offsetWidth;
   const height = hint.offsetHeight;
-  let left = x + DROP_HINT_OFFSET;
+  let left = x + DROP_HINT_GAP;
   if (left + width > window.innerWidth) {
-    left = x - DROP_HINT_OFFSET - width;
+    left = x - DROP_HINT_GAP - width;
   }
-  let top = y + DROP_HINT_OFFSET;
+  let top = y + image.bottom + DROP_HINT_GAP;
   if (top + height > window.innerHeight) {
-    top = y - DROP_HINT_OFFSET - height;
+    top = y + image.top - DROP_HINT_GAP - height;
   }
   hint.style.left = Math.max(0, left) + 'px';
   hint.style.top = Math.max(0, top) + 'px';
 }
+
+/** Drag image extent for a drag of unknown origin: none. */
+const NO_DRAG_IMAGE: TLRunningDrag['image'] = { top: 0, bottom: 0 };
 
 const MIN_COL_WIDTH = 50;
 
@@ -382,7 +388,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const attachDropHint = React.useCallback((hint: HTMLDivElement | null) => {
     dropHintRef.current = hint;
     if (hint) {
-      placeDropHint(hint, dragPointerRef.current.x, dragPointerRef.current.y);
+      placeDropHint(hint, dragPointerRef.current.x, dragPointerRef.current.y,
+        runningDrag()?.image ?? NO_DRAG_IMAGE);
     }
   }, []);
 
@@ -693,12 +700,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       event.preventDefault();
       return;
     }
-    writeDragPayload(event.dataTransfer, {
+    writeDragPayload(event, {
       source: controlId,
       keys: [row.id],
       selection: row.selected,
       type: dragType,
-    }, event.currentTarget);
+    });
   }, [controlId, dragType]);
 
   /** Which row an event points at, and where within it, or the table itself. */
@@ -739,12 +746,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       return;
     }
     dragPointerRef.current = { x: event.clientX, y: event.clientY };
+    const drag = runningDrag();
     const hint = dropHintRef.current;
     if (hint) {
-      placeDropHint(hint, event.clientX, event.clientY);
+      placeDropHint(hint, event.clientX, event.clientY, drag?.image ?? NO_DRAG_IMAGE);
     }
     const target = dropTargetAt(event);
-    const drag = runningDrag();
     let probe: string | null = null;
     if (drag) {
       // The payload is unreadable here, but a drag started in this document is known: ask the

@@ -520,6 +520,8 @@ function mapApprovalDecision(decision: string | undefined): ApprovalOutcome {
       return 'REJECTED'
     case 'TIMED_OUT':
       return 'TIMED_OUT'
+    case 'INTERRUPTED':
+      return 'INTERRUPTED'
     default:
       return 'pending'
   }
@@ -621,7 +623,9 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
               type: 'tool_result',
               id: `${part.id}-result`,
               toolUseId: part.id,
-              output: d.result ?? d.errorMessage ?? d.denyReason ?? '',
+              // `||`, not `??`: the server writes an absent field as "" (never null), so a failed
+              // call has `result: ""` and its error behind it would never be reached.
+              output: d.result || d.errorMessage || d.denyReason || '',
               isError,
               timestamp: part.timestamp,
             })
@@ -706,6 +710,10 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
             // The server's details are an English line for the operator; the reader gets the
             // renderer's sentence in their language, exactly as the live cancel draws it (#549).
             msgs.push({ type: 'notice', id: part.id, kind: 'cancelled', detail: '', timestamp: part.timestamp })
+          } else if (part.systemData?.eventType === 'INTERRUPTED') {
+            // Written by the server's startup sweep onto a run the restart cut off (#598). There is
+            // no live counterpart: the window that watched the run lost its stream with the server.
+            msgs.push({ type: 'notice', id: part.id, kind: 'interrupted', detail: '', timestamp: part.timestamp })
           }
           break
       }

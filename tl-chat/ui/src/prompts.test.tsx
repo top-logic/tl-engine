@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { React } from 'tl-react-bridge'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createRoot } from 'react-dom/client'
-import { PromptStack } from './prompts'
+import { approvalOutcomeText, PromptStack } from './prompts'
 import { bundle, type Language } from './i18n'
 import type { ApprovalRequest } from './types'
 
@@ -189,5 +189,19 @@ describe('the approval card', () => {
   it('says why it is asking, in the language of the reader', () => {
     expect(card(approval())).toContain('Ändert gemeinsame Anwendungsdaten.')
     expect(card(approval(), 'en')).toContain('Changes shared application data.')
+  })
+})
+
+describe('a recorded approval', () => {
+  /**
+   * An approval the server restart left open (#598) says so, in the reader's language, and does
+   * not fall back to "waiting" - nobody can answer it any more.
+   */
+  it('names an approval the restart left open', () => {
+    for (const language of ['de', 'en'] as const) {
+      const labels = bundle(language)
+      expect(approvalOutcomeText('INTERRUPTED', labels)).toBe(labels.approvalOutcomeInterrupted)
+      expect(approvalOutcomeText('INTERRUPTED', labels)).not.toBe(labels.waiting)
+    }
   })
 })

@@ -116,7 +116,7 @@ function runMetaOf(events: ChatMessage[]): RunMeta | null {
  *
  * A model switch explains the answer that follows it, and a rollback corrects it - the answer may
  * well say "done" over writes that were thrown away - so both stand above the answer, under the
- * turn's steps; a cancel says why the answer stops where it does, so it stands under it.
+ * turn's steps; a cancel or a restart says why the answer stops where it does, so it stands under it.
  */
 function notices(events: ChatMessage[], kind: NoticeKind): NoticeMessage[] {
   return events.filter((item): item is NoticeMessage => item.type === 'notice' && item.kind === kind)
@@ -813,19 +813,23 @@ function DetailedTrace({
  * The run's own activity, collapsed to one line above the answer.
  *
  * A finished run says how many steps it took and nothing else; expanding shows them. The line is
- * quiet on purpose - what the agent did is available, not announced.
+ * quiet on purpose - what the agent did is available, not announced. A run that was stopped before
+ * it finished - by the user, or by a server restart (#598) - does not claim to be done: the notice
+ * under its answer says why it stopped, this line only that it did.
  */
 function RunSummary({
   events,
   results,
   labels,
   busy,
+  stopped = false,
   startOpen = false,
 }: {
   events: ChatMessage[]
   results: Map<string, ToolResult>
   labels: Labels
   busy: boolean
+  stopped?: boolean
   startOpen?: boolean
 }) {
   const [open, setOpen] = useState(startOpen)
@@ -835,7 +839,7 @@ function RunSummary({
     <div className={`run-summary${open ? ' is-open' : ''}`}>
       <button type="button" className="run-summary-head" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         <span className={busy ? 'is-live' : undefined}>
-          {busy ? labels.working : labels.runSteps(steps)}
+          {busy ? labels.working : stopped ? labels.runStepsStopped(steps) : labels.runSteps(steps)}
         </span>
         <span className={`run-summary-caret${open ? ' is-open' : ''}`} aria-hidden="true" />
       </button>
@@ -899,7 +903,7 @@ function NoticeLine({ item, language }: { item: NoticeMessage; language: Languag
   return (
     <div className={`notice-line${warning ? ' is-warning' : ''}`} role={warning ? 'status' : undefined}>
       <div>
-        {warning ? labels.transactionRolledBack : item.kind === 'cancelled' ? labels.cancelled : labels.modelSwitched}
+        {noticeText(item.kind, labels)}
       </div>
       {detail ? (
         <div className="notice-line-detail">{warning ? `${labels.reason}: ${shown}` : shown}</div>
@@ -911,6 +915,20 @@ function NoticeLine({ item, language }: { item: NoticeMessage; language: Languag
       ) : null}
     </div>
   )
+}
+
+/** The sentence a notice of the given kind reads, in the reader's language. */
+function noticeText(kind: NoticeKind, labels: Labels): string {
+  switch (kind) {
+    case 'transaction_rolled_back':
+      return labels.transactionRolledBack
+    case 'cancelled':
+      return labels.cancelled
+    case 'interrupted':
+      return labels.interrupted
+    case 'model_switched':
+      return labels.modelSwitched
+  }
 }
 
 /** The chat's own dots, for a transcript whose element configures no `working-indicator`. */
@@ -1032,7 +1050,13 @@ function AgentRun({
   return (
     <div className="agent-run">
       {traceMode === 'summary' && steps.length > 0 ? (
-        <RunSummary events={steps} results={results} labels={labels} busy={busy} />
+        <RunSummary
+          events={steps}
+          results={results}
+          labels={labels}
+          busy={busy}
+          stopped={notices(turn.events, 'cancelled').length + notices(turn.events, 'interrupted').length > 0}
+        />
       ) : (
         <RunMetaLine meta={meta} summary={summaryLine} busy={busy} labels={labels} />
       )}
@@ -1071,6 +1095,9 @@ function AgentRun({
         />
       ) : null}
       {notices(turn.events, 'cancelled').map((item) => (
+        <NoticeLine key={item.id} item={item} language={language} />
+      ))}
+      {notices(turn.events, 'interrupted').map((item) => (
         <NoticeLine key={item.id} item={item} language={language} />
       ))}
       {traceMode !== 'detailed'

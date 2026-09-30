@@ -15,8 +15,8 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
-import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.tools.memory.MemoryConsentBinding;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
@@ -129,7 +129,7 @@ public class AskUserTool {
 			+ ", header: " + header + ")", AskUserTool.class);
 
 		String interactionId = InteractionRecorder.begin(
-			currentExecution(context),
+			currentHandle(context),
 			"choice".equals(type) ? AgentExecutionStore.InteractionType.CHOICE
 				: AgentExecutionStore.InteractionType.QUESTION,
 			request.getId(), header, question, options);
@@ -194,8 +194,8 @@ public class AskUserTool {
 	 * The recorded execution of the current run, or <code>null</code> when the run is not
 	 * recorded (interaction persistence is then skipped).
 	 */
-	private static AgentExecution currentExecution(ToolExecutionContext context) {
-		return context instanceof ToolContext toolContext ? toolContext.executionHandle().get() : null;
+	private static ExecutionHandle currentHandle(ToolExecutionContext context) {
+		return context instanceof ToolContext toolContext ? toolContext.executionHandle() : null;
 	}
 
 	/**

@@ -48,6 +48,8 @@ public final class ExecutionHandle {
 
 	private volatile RunInfo _info;
 
+	private volatile Runnable _checkpoint;
+
 	/** Creates a handle for a top-level run. */
 	public ExecutionHandle() {
 		this(null, 0);
@@ -103,6 +105,49 @@ public final class ExecutionHandle {
 	public void set(AgentExecution execution) {
 		_execution = execution;
 		setExecutionId(idOf(execution));
+	}
+
+	/**
+	 * Writes down what the run has recorded so far, before it waits for a person (#598).
+	 *
+	 * <p>
+	 * Called where a run parks its thread on somebody's answer - an approval, an {@code askUser}
+	 * question - which can take the rest of the day, and so is where a restart most likely finds
+	 * it. Does not wait for the write, and does nothing when the run is not recorded or keeps no
+	 * transcript.
+	 * </p>
+	 *
+	 * @see ExecutionRecorder
+	 */
+	public void checkpoint() {
+		Runnable checkpoint = _checkpoint;
+		if (checkpoint != null) {
+			checkpoint.run();
+		}
+	}
+
+	/**
+	 * Installs what {@link #checkpoint()} does; set by the {@link ExecutionRecorder} of the run.
+	 */
+	void setCheckpoint(Runnable checkpoint) {
+		_checkpoint = checkpoint;
+	}
+
+	/**
+	 * Makes {@link #checkpoint()} write the transcript of the run that delegated this one, as long
+	 * as this run does not record a transcript of its own.
+	 *
+	 * <p>
+	 * For a delegation the delegating run waits for: what the user is looking at while the child
+	 * asks for an approval is the parent's turn, and it is the parent's row that has to hold it
+	 * when the process ends during that wait.
+	 * </p>
+	 *
+	 * @param parent
+	 *        The handle of the delegating run.
+	 */
+	public void checkpointThrough(ExecutionHandle parent) {
+		_checkpoint = parent::checkpoint;
 	}
 
 	/**

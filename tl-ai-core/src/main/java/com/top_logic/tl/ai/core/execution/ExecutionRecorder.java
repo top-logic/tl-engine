@@ -5,6 +5,9 @@
  */
 package com.top_logic.tl.ai.core.execution;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
+
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.tl.ai.core.agent.AgentResult;
@@ -31,6 +34,20 @@ import com.top_logic.tl.ai.tool.api.RunInfo;
  * </p>
  *
  * <p>
+ * Given the run's transcript as a supplier, it also writes that transcript while the run is still
+ * going (#598): when the run starts, so that the user's message is on record, and whenever the run
+ * is about to wait for a person - see {@link ExecutionHandle#checkpoint()}, which it installs. A
+ * process that ends while the run waits then leaves the turn behind as far as the user saw it,
+ * and the startup sweep closes it as interrupted. See
+ * {@link AgentExecutionStore#checkpointTranscript(AgentExecution, Supplier)}.
+ * </p>
+ *
+ * <p>
+ * Deliberately not at every step: every write of the row keeps a version of it, transcript
+ * included, and a run that is not waiting is minutes from writing its final transcript anyway.
+ * </p>
+ *
+ * <p>
  * Recording is best-effort: persistence failures are logged and never disturb the run. All
  * events are forwarded to the wrapped listener unchanged.
  * </p>
@@ -46,6 +63,18 @@ public final class ExecutionRecorder implements AgentEventListener {
 	private final AgentExecution _parent;
 
 	private final ExecutionHandle _handle;
+
+	private final Supplier<String> _transcript;
+
+	/**
+	 * Whether a checkpoint is queued and has not yet taken the transcript.
+	 *
+	 * <p>
+	 * A boundary reached meanwhile queues nothing: the queued checkpoint writes the state as of when
+	 * it is carried out, which includes that boundary.
+	 * </p>
+	 */
+	private final AtomicBoolean _checkpointQueued = new AtomicBoolean();
 
 	private volatile AgentExecution _execution;
 
@@ -74,11 +103,32 @@ public final class ExecutionRecorder implements AgentEventListener {
 	 */
 	public ExecutionRecorder(AgentSession session, String agentName, AgentExecution parent,
 			ExecutionHandle handle, AgentEventListener delegate) {
+		this(session, agentName, parent, handle, delegate, null);
+	}
+
+	/**
+	 * Creates an {@link ExecutionRecorder} that also checkpoints the run's transcript while it runs.
+	 *
+	 * @param transcript
+	 *        The run's transcript as it stands, the same text {@link #complete(String, Throwable)}
+	 *        is given at the end; <code>null</code> for a run without one, which then is written only
+	 *        when it ends. Asked on the store's writer thread, so it must be safe to call while the
+	 *        run goes on.
+	 *
+	 * @see #ExecutionRecorder(AgentSession, String, AgentExecution, ExecutionHandle,
+	 *      AgentEventListener)
+	 */
+	public ExecutionRecorder(AgentSession session, String agentName, AgentExecution parent,
+			ExecutionHandle handle, AgentEventListener delegate, Supplier<String> transcript) {
 		_session = session;
 		_agentName = agentName;
 		_parent = parent;
 		_handle = handle;
 		_delegate = delegate;
+		_transcript = transcript;
+		if (handle != null && transcript != null) {
+			handle.setCheckpoint(this::checkpoint);
+		}
 
 		// Publish a stable conversation id on the handle at run setup, so per-conversation resources
 		// (the interactive browser session) are reused across all runs/messages of one conversation.
@@ -143,6 +193,35 @@ public final class ExecutionRecorder implements AgentEventListener {
 				failed ? _lastErrorKind : null, failed ? _lastErrorMessage : null);
 		}
 		_delegate.onEvent(event);
+		if (event instanceof AgentEvent.RunStarted) {
+			// After the delegate: the conversation log is one of the listeners behind it, and the
+			// turn it holds now carries the user's message and the run's model.
+			checkpoint();
+		}
+	}
+
+	/**
+	 * Queues a checkpoint of the run's transcript, unless one is queued already.
+	 *
+	 * <p>
+	 * A queued checkpoint takes the transcript when the writer carries it out, so a second request
+	 * meanwhile would write the same state again.
+	 * </p>
+	 */
+	private void checkpoint() {
+		AgentExecution execution = _execution;
+		if (execution == null || _transcript == null || !_checkpointQueued.compareAndSet(false, true)) {
+			return;
+		}
+		boolean queued = AgentExecutionStore.getInstance().checkpointTranscript(execution, () -> {
+			// Cleared before the transcript is taken: a boundary reached from here on is not in it,
+			// and must queue a checkpoint of its own.
+			_checkpointQueued.set(false);
+			return _transcript.get();
+		});
+		if (!queued) {
+			_checkpointQueued.set(false);
+		}
 	}
 
 	private void beginRecording(AgentEvent.RunStarted e) {

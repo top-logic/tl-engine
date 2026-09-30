@@ -204,6 +204,7 @@ const EN = {
   approvalOutcomeSession: 'approved for this chat',
   approvalOutcomeRejected: 'denied',
   approvalOutcomeTimedOut: 'timed out',
+  approvalOutcomeInterrupted: 'lapsed at restart',
   showLess: 'Show less',
   showMore: (chars: number) => `Show ${chars} more characters`,
 
@@ -233,6 +234,8 @@ const EN = {
   applicationError: 'The application could not complete this request. That is not the model’s doing, so sending the same message again will not help.',
   errorDetails: 'Technical details',
   cancelled: 'Stopped.',
+  /** A run the server restart cut off (#598): it ended without anybody stopping it. */
+  interrupted: 'The server was restarted before this reply was finished. Send your message again to continue.',
 
   sideRail: 'Rail',
   sideRailBadge: (count: number) => `${count} new`,
@@ -264,6 +267,8 @@ const EN = {
   goToAnswer: (marker: number) => `Go to marker ${marker}`,
   citationMarker: (n: number) => `Source ${n}`,
   runSteps: (count: number) => (count === 1 ? 'Done in 1 step' : `Done in ${count} steps`),
+  /** A run that ended before it finished - cancelled, or cut off by a restart (#598). */
+  runStepsStopped: (count: number) => (count === 1 ? 'Stopped after 1 step' : `Stopped after ${count} steps`),
   paneClose: 'Close',
 }
 
@@ -442,6 +447,7 @@ const DE: Bundle = {
   approvalOutcomeSession: 'für diesen Chat freigegeben',
   approvalOutcomeRejected: 'abgelehnt',
   approvalOutcomeTimedOut: 'Zeit abgelaufen',
+  approvalOutcomeInterrupted: 'beim Neustart verfallen',
   showLess: 'Weniger anzeigen',
   showMore: (chars: number) => `${chars} weitere Zeichen anzeigen`,
 
@@ -471,6 +477,7 @@ const DE: Bundle = {
   applicationError: 'Die Anwendung konnte diese Anfrage nicht abschließen. Das lag nicht am Modell, ein erneutes Senden derselben Nachricht hilft also nicht.',
   errorDetails: 'Technische Details',
   cancelled: 'Abgebrochen.',
+  interrupted: 'Der Server wurde neu gestartet, bevor diese Antwort fertig war. Sende deine Nachricht noch einmal, um weiterzumachen.',
 
   sideRail: 'Leiste',
   sideRailBadge: (count: number) => `${count} neu`,
@@ -499,6 +506,7 @@ const DE: Bundle = {
   goToAnswer: (marker: number) => `Zu Markierung ${marker} springen`,
   citationMarker: (n: number) => `Quelle ${n}`,
   runSteps: (count: number) => (count === 1 ? 'In 1 Schritt erledigt' : `In ${count} Schritten erledigt`),
+  runStepsStopped: (count: number) => (count === 1 ? 'Nach 1 Schritt beendet' : `Nach ${count} Schritten beendet`),
   paneClose: 'Schließen',
 }
 

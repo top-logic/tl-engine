@@ -3145,6 +3145,8 @@
         const transactions = [];
         let thinkingText = "";
         let wasCancelled = false;
+        // The server restarted while the run was going (#598): the run ended, but nobody stopped it.
+        let wasInterrupted = false;
 
         let lastToolIndex = -1;
         for (let i = assistantParts.length - 1; i >= 0; i--) {
@@ -3191,6 +3193,11 @@
                 part.systemData.eventType === "CANCELLED"
               ) {
                 wasCancelled = true;
+              } else if (
+                part.systemData &&
+                part.systemData.eventType === "INTERRUPTED"
+              ) {
+                wasInterrupted = true;
               }
               break;
             case "error":
@@ -3235,12 +3242,16 @@
           });
         }
 
-        if (wasCancelled) {
+        if (wasCancelled || wasInterrupted) {
           const cancelDiv = document.createElement("div");
           cancelDiv.className = "chat-message chat-message-agent";
           cancelDiv.innerHTML =
             '<div class="chat-bubble chat-bubble-agent">' +
-            '<div class="chat-agent-text"><em>Processing was cancelled</em></div></div>';
+            '<div class="chat-agent-text"><em>' +
+            (wasCancelled
+              ? "Processing was cancelled"
+              : "Processing was interrupted by a server restart") +
+            "</em></div></div>";
           const cancelTarget = Render._appendTarget();
           if (cancelTarget) {
             cancelTarget.appendChild(cancelDiv);
@@ -3596,6 +3607,10 @@
           icon = "\u23F1";
           label = "Timed out";
           break;
+        case "INTERRUPTED":
+          icon = "\u23F1";
+          label = "Interrupted by a server restart";
+          break;
         default:
           icon = "?";
           label = "Pending";
@@ -3604,7 +3619,7 @@
       const statusClass =
         decision === "DENIED"
           ? "error"
-          : decision === "TIMED_OUT"
+          : decision === "TIMED_OUT" || decision === "INTERRUPTED"
             ? "warning"
             : "success";
 

@@ -210,6 +210,65 @@ describe('a running turn', () => {
   })
 
   /**
+   * A turn the server restart cut off while it waited for an approval (#598), as the startup sweep
+   * leaves it: the user's message and what the agent said stay, the approval is closed rather than
+   * offered again, and one notice under the answer says why it stops there - in the reader's
+   * language, not the server's English details.
+   */
+  it('shows a turn the restart cut off, with its approval closed', () => {
+    const turns = [
+      {
+        id: 't1',
+        turnNumber: 1,
+        timestamp: 1000,
+        userParts: [{ id: 'u', type: 'text', timestamp: 1000, textData: { text: 'Leg den Beleg an.' } }],
+        assistantParts: [
+          { id: 'a', type: 'text', timestamp: 2000, textData: { text: 'Ich lege ihn jetzt an.' } },
+          {
+            id: 'ap',
+            type: 'approval',
+            timestamp: 2500,
+            approvalData: {
+              toolCallId: 'call-1',
+              toolName: 'executeTLScript',
+              argsJson: '{"script":"new()"}',
+              displayReason: 'Changes shared data.',
+              mode: 'DATA_WRITE',
+              decision: 'INTERRUPTED',
+            },
+          },
+          {
+            id: 'i',
+            type: 'system',
+            timestamp: 2500,
+            systemData: { eventType: 'INTERRUPTED', details: 'The server stopped before this run finished.' },
+          },
+        ],
+      },
+    ]
+    const messages = turnsJsonToMessages(JSON.stringify(turns))
+    const approval = messages.find((m) => m.type === 'approval_request')
+    expect(approval).toMatchObject({ outcome: 'INTERRUPTED' })
+    // Not offered again: the composer asks only what is still pending.
+    expect(messages.some((m) => m.type === 'approval_request' && m.outcome === 'pending')).toBe(false)
+
+    const de = bundle('de')
+    const html = render(messages, false, 'detailed', 'de')
+    expect(html).toContain('Leg den Beleg an.')
+    expect(html).toContain('Ich lege ihn jetzt an.')
+    expect(html).toContain(de.interrupted)
+    expect(html.indexOf(de.interrupted)).toBeGreaterThan(html.indexOf('Ich lege ihn jetzt an.'))
+    expect(html).not.toContain('The server stopped before this run finished.')
+    expect(html).not.toContain(de.cancelled)
+    expect(html).not.toContain('error-card')
+
+    // Not "done in 1 step": the turn stopped, it did not finish.
+    const summary = render(messages, false, 'summary', 'de')
+    expect(summary).toContain(de.runStepsStopped(1))
+    expect(summary).not.toContain(de.runSteps(1))
+  })
+
+  /**
    * The defect of this change: the guard rolled the turn back, the model answered anyway, and the
    * thread showed the answer alone. The notice belongs in the turn, under its steps, so the reader
    * sees it while reading what the agent claims to have done.

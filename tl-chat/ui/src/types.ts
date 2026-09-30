@@ -8,6 +8,8 @@ export type ApprovalOutcome =
   | 'APPROVED_FOR_SESSION'
   | 'REJECTED'
   | 'TIMED_OUT'
+  /** The server restarted while the approval was open; nobody can answer it any more (#598). */
+  | 'INTERRUPTED'
 
 export interface UserMessage {
   type: 'user'
@@ -103,8 +105,9 @@ export interface ErrorMessage {
  * `model_switched` - the run lost the model it was configured with and continued on another one.
  * `transaction_rolled_back` - the data changes this turn made were discarded instead of saved.
  * `cancelled` - the user stopped the run.
+ * `interrupted` - the server restarted before the run finished, and nobody can continue it (#598).
  */
-export type NoticeKind = 'model_switched' | 'transaction_rolled_back' | 'cancelled'
+export type NoticeKind = 'model_switched' | 'transaction_rolled_back' | 'cancelled' | 'interrupted'
 
 /**
  * Something that happened around the conversation rather than in it.

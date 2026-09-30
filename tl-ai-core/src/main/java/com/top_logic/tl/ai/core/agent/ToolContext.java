@@ -557,7 +557,18 @@ public class ToolContext implements ToolExecutionContext {
 	public ToolContext forDelegation(TransactionScope childTransaction) {
 		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
 			_delegationDepth + 1, null, _cancellationToken, ProgressReporter.NOOP,
-			childExecutionHandle(), new CitationMarkers(), _model, _attended, _tokenAllowance);
+			waitedForExecutionHandle(), new CitationMarkers(), _model, _attended, _tokenAllowance);
+	}
+
+	/**
+	 * A {@link #childExecutionHandle() child handle} for a delegation this run waits for, whose
+	 * {@link ExecutionHandle#checkpoint() checkpoint} before an approval writes this run's transcript
+	 * - the turn on the user's screen (#598).
+	 */
+	private ExecutionHandle waitedForExecutionHandle() {
+		ExecutionHandle child = childExecutionHandle();
+		child.checkpointThrough(_executionHandle);
+		return child;
 	}
 
 	/**

@@ -178,6 +178,8 @@ export function approvalOutcomeText(outcome: ApprovalOutcome, labels: Labels): s
       return labels.approvalOutcomeRejected
     case 'TIMED_OUT':
       return labels.approvalOutcomeTimedOut
+    case 'INTERRUPTED':
+      return labels.approvalOutcomeInterrupted
     default:
       return labels.waiting
   }

@@ -179,7 +179,7 @@ public final class ConversationLogSerializer {
 		return dto;
 	}
 
-	private static PersistedPart toPartDto(Part part) {
+	static PersistedPart toPartDto(Part part) {
 		PersistedPart dto = PersistedPart.create();
 		dto.setId(part.id());
 		dto.setTimestamp(part.timestamp().toEpochMilli());
@@ -293,7 +293,7 @@ public final class ConversationLogSerializer {
 		return dto;
 	}
 
-	private static Part fromPartDto(PersistedPart dto) {
+	static Part fromPartDto(PersistedPart dto) {
 		String id = dto.getId();
 		Instant timestamp = Instant.ofEpochMilli(dto.getTimestamp());
 		String type = dto.getType();

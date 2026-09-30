@@ -1392,7 +1392,7 @@ public class AgentLoop {
 					// Durable record of the pending approval, carrying the tool call's actual
 					// argument JSON (not the possibly-empty parsed copy shown above).
 					String interactionId = InteractionRecorder.begin(
-						context.executionHandle().get(),
+						context.executionHandle(),
 						AgentExecutionStore.InteractionType.APPROVAL, approvalRequestId,
 						tool.name(), needsApproval.displayReason(), toolCall.arguments());
 					ApprovalResult approvalResult = context.approval().requestApproval(request);

@@ -106,6 +106,27 @@ public class TestOrphanedRunReaper extends BasicTestCase {
 	}
 
 	/**
+	 * A checkpoint that reaches the writer after the run ended does not replace the final
+	 * transcript (#598): the checkpoint is what a running run leaves behind, the final transcript
+	 * what it said.
+	 */
+	public void testCheckpointNeverOverwritesTheFinalTranscript() {
+		AgentExecutionStore store = AgentExecutionStore.getInstance();
+		AgentSession session = store.createSession(SessionKind.CHAT, null, "reaper-checkpoint");
+		store.beginExecution(session, "run-checkpoint", "orchestrator", "test-model", null, null);
+
+		AgentExecution row = reread("run-checkpoint");
+		assertTrue(store.checkpointTranscript(row, () -> "{\"turns\":[]}"));
+		store.finishExecution(row, ExecutionStatus.COMPLETE, StopReason.COMPLETE, null, null, "final");
+		assertEquals("final", reread("run-checkpoint").getTranscript());
+
+		assertTrue(store.checkpointTranscript(row, () -> "late"));
+		// Any write waits for the writer, which carries out the queued checkpoint first.
+		store.failOrphanedRunningExecutions(new Date(0));
+		assertEquals("final", reread("run-checkpoint").getTranscript());
+	}
+
+	/**
 	 * The row of the given run, read at a revision that includes the writer thread's commits.
 	 */
 	private static AgentExecution reread(String runId) {

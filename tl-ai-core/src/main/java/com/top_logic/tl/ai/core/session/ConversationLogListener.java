@@ -375,9 +375,21 @@ public class ConversationLogListener implements AgentEventListener {
 
 	// ---- Approvals ----
 
+	/**
+	 * Records the approval the run now waits for.
+	 *
+	 * <p>
+	 * What the turn streamed before is flushed first, as at a tool call: the approval comes before
+	 * the call it is about, and the run may wait here for the rest of the day. The text above the
+	 * card is what the user reads to decide, and it has to be in the log the run's checkpoint
+	 * writes - otherwise a restart during the wait loses exactly that (#598).
+	 * </p>
+	 */
 	private void handleApprovalRequired(AgentEvent.ApprovalRequired e) {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
+			flushTextBuffer(turn);
+			flushThinkingBuffer(turn);
 			Part.ApprovalPart part = Part.ApprovalPart.pending(
 				e.approvalRequestId(), e.timestamp(), e.toolCallId(),
 				e.toolName(), e.argsJson(), e.displayReason(), e.toolMode());

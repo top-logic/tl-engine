@@ -144,17 +144,26 @@
   cursor: progress;
 }
 
-.tl-button:disabled {
+/* Deaktiviert bleibt die Schaltfläche für den Zeiger erreichbar: ihr Tooltip nennt den Grund, warum
+   sie nicht ausführbar ist. Den Klick verschluckt der native disabled-Zustand; Zeigen und Drücken
+   ändern ihr Aussehen nicht, auch nicht bei Tönung oder Link. */
+.tl-button:disabled,
+.tl-button:disabled:hover,
+.tl-button:disabled:active {
   background: var(--tl-surface-disabled);
   border-color: var(--tl-border-disabled);
   color: var(--tl-text-disabled);
+  text-decoration: none;
   cursor: default;
-  pointer-events: none;
 }
 
 /* Ghost und Link haben in Ruhe keine Fläche — auch deaktiviert nicht; sonst wird eine Menüspalte zu grauen Kästen. */
 .tl-button--ghost:disabled,
-.tl-button--link:disabled {
+.tl-button--ghost:disabled:hover,
+.tl-button--ghost:disabled:active,
+.tl-button--link:disabled,
+.tl-button--link:disabled:hover,
+.tl-button--link:disabled:active {
   background: transparent;
   border-color: transparent;
 }

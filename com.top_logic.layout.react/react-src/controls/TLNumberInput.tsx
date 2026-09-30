@@ -9,6 +9,7 @@ import {
   fieldInputId,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { fieldStateAttrs } from './form/fieldState';
 
 const { useCallback } = React;
 
@@ -62,20 +63,14 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   if (state.editable === false) {
     return (
-      <span id={controlId} className={rootClassName(state, 'tlReactNumberInput tlReactNumberInput--immutable')}>
-        {text}
+      <span id={controlId} className={rootClassName(state, 'tl-field-value tl-type-body')}>
+        <span className="tl-field-value__text">{text}</span>
       </span>
     );
   }
 
   const hasError = state.hasError === true;
-  const hasWarnings = state.hasWarnings === true;
   const errorMessage = state.errorMessage as string | undefined;
-  const cls = [
-    'tlReactNumberInput',
-    hasError ? 'tlReactNumberInput--error' : '',
-    !hasError && hasWarnings ? 'tlReactNumberInput--warning' : '',
-  ].filter(Boolean).join(' ');
 
   return (
     <span id={controlId}>
@@ -86,10 +81,9 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         onChange={handleChange}
         onBlur={handleBlur}
         onKeyDown={handleSubmitKey}
-        disabled={state.disabled === true}
         placeholder={(state.placeholder as string) ?? undefined}
-        className={rootClassName(state, cls)}
-        aria-invalid={hasError || undefined}
+        className={rootClassName(state, 'tl-field tl-type-body')}
+        {...fieldStateAttrs(state)}
         {...tooltipProps(hasError ? errorMessage : undefined)}
         id={inputId}
         {...labelProps}

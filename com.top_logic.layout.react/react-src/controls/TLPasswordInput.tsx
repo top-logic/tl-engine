@@ -1,5 +1,6 @@
 import { React, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { fieldStateAttrs } from './form/fieldState';
 
 const { useCallback } = React;
 
@@ -27,17 +28,15 @@ const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const handleBlur = useCallback(() => { void flushValue(); }, [flushValue]);
 
   if (state.editable === false) {
-    return <span id={controlId} className={rootClassName(state, 'tlReactTextInput tlReactTextInput--immutable')}>••••••••</span>;
+    return (
+      <span id={controlId} className={rootClassName(state, 'tl-field-value tl-type-body')}>
+        <span className="tl-field-value__text">••••••••</span>
+      </span>
+    );
   }
 
   const hasError = state.hasError === true;
-  const hasWarnings = state.hasWarnings === true;
   const errorMessage = state.errorMessage as string | undefined;
-  const cls = [
-    'tlReactTextInput',
-    hasError ? 'tlReactTextInput--error' : '',
-    !hasError && hasWarnings ? 'tlReactTextInput--warning' : '',
-  ].filter(Boolean).join(' ');
 
   return (
     <span id={controlId}>
@@ -46,9 +45,8 @@ const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         value={(value as string) ?? ''}
         onChange={handleChange}
         onBlur={handleBlur}
-        disabled={state.disabled === true}
-        className={rootClassName(state, cls)}
-        aria-invalid={hasError || undefined}
+        className={rootClassName(state, 'tl-field tl-type-body')}
+        {...fieldStateAttrs(state)}
         {...tooltipProps(hasError ? errorMessage : undefined)}
         id={inputId}
         {...labelProps}

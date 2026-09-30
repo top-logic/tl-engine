@@ -12,6 +12,7 @@ import {
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
+import { fieldStateAttrs } from './form/fieldState';
 
 const { useCallback, useRef } = React;
 
@@ -77,9 +78,10 @@ const normalizeUrl = (value: string): string => {
  * at the address itself, 'email' at a `mailto:` address, 'tel' at a `tel:` number without its
  * spaces - is offered as a link: as the displayed text while the field is read-only, and as an
  * icon beside the input while it is edited, so that what is being typed can be opened. There is no
- * link while the field is empty or holds a value the server rejected; the icon comes and goes
- * inside a wrapper the single-line input always has, so that gaining or losing the link leaves the
- * input itself in place and typing keeps the focus.
+ * link while the field is empty or holds a value the server rejected. The link comes and goes
+ * beside an input that keeps its place: the control's root element carries the tl-field-group class
+ * while the input has an icon or an action, so that gaining or losing the link leaves the input
+ * itself in place and typing keeps the focus.
  *
  * A 'url' is completed to an `https` address when the field is left and when it is submitted with
  * Enter, so that a typed bare host is stored as an address a browser can follow; a value naming its
@@ -93,8 +95,13 @@ const normalizeUrl = (value: string): string => {
  * holds something, which writes the empty value at once instead of after the debounce and hands
  * the focus back to the input. state.debounceMs names the span a typed value is held back,
  * defaulting to VALUE_DEBOUNCE_MS and overridden by state.sendValueOnBlur, which holds a value
- * back entirely. Icon and clear button live in the same row as the link that opens what the field
- * holds, in the order [icon] input [clear] [link].
+ * back entirely. Icon and clear button live in the same group as the link that opens what the
+ * field holds, in the order [icon] input [action]; the group has room for one action, so the clear
+ * button, while it is shown, takes the place of the link.
+ *
+ * The state is carried as attributes (fieldStateAttrs): aria-invalid for an error,
+ * data-tl-state="warning" for a warning, aria-required for a mandatory field. A read-only field
+ * renders no input but the value as text (tl-field-value), one line per line of a multi-line text.
  */
 const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const inputId = fieldInputId(controlId);
@@ -170,42 +177,36 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const href = hasError || multiline ? null : linkHref(inputType, text);
 
   if (state.editable === false) {
-    const immutableCls =
-      'tlReactTextInput tlReactTextInput--immutable' +
-      (multiline ? ' tlReactTextInput--multiline' : '');
+    const valueCls = rootClassName(state, 'tl-field-value tl-type-body');
     if (href !== null) {
       return (
-        <a
-          id={controlId}
-          className={rootClassName(state, immutableCls + ' tlReactTextInput--link')}
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {text}
+        <a id={controlId} className={valueCls} href={href} target="_blank" rel="noopener noreferrer">
+          <span className="tl-field-value__text">{text}</span>
         </a>
       );
     }
+    if (multiline) {
+      // One text element per line: the value shows its line breaks without a white-space rule, and
+      // each line ends with an ellipsis where it is too long.
+      return (
+        <div id={controlId} className={valueCls}>
+          {text.split('\n').map((line, index) => (
+            <span key={index} className="tl-field-value__text">{line}</span>
+          ))}
+        </div>
+      );
+    }
     return (
-      <span id={controlId} className={rootClassName(state, immutableCls)}>
-        {text}
+      <span id={controlId} className={valueCls}>
+        <span className="tl-field-value__text">{text}</span>
       </span>
     );
   }
 
-  const hasWarnings = state.hasWarnings === true;
   const errorMessage = state.errorMessage as string | undefined;
   const icon = state.icon as string | undefined;
   const hasIcon = !multiline && !!icon && icon !== 'none';
   const clearable = !multiline && state.clearable === true && text !== '';
-  const cls = [
-    'tlReactTextInput',
-    multiline ? 'tlReactTextInput--multiline' : '',
-    hasIcon ? 'tlReactTextInput--withIcon' : '',
-    clearable ? 'tlReactTextInput--clearable' : '',
-    hasError ? 'tlReactTextInput--error' : '',
-    !hasError && hasWarnings ? 'tlReactTextInput--warning' : '',
-  ].filter(Boolean).join(' ');
 
   if (multiline) {
     return (
@@ -216,9 +217,8 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
           placeholder={(state.placeholder as string) ?? undefined}
           onChange={handleChange}
           onBlur={handleBlur}
-          disabled={state.disabled === true}
-          className={rootClassName(state, cls)}
-          aria-invalid={hasError || undefined}
+          className={rootClassName(state, 'tl-field tl-field--multiline tl-type-body')}
+          {...fieldStateAttrs(state)}
           {...tooltipProps(hasError ? errorMessage : undefined)}
           id={inputId}
           {...labelProps}
@@ -236,45 +236,52 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       onChange={handleChange}
       onBlur={handleBlur}
       onKeyDown={submitKey === undefined ? undefined : handleSubmitKey}
-      disabled={state.disabled === true}
-      className={rootClassName(state, cls)}
-      aria-invalid={hasError || undefined}
+      className={rootClassName(state, 'tl-field tl-type-body')}
+      {...fieldStateAttrs(state)}
       {...tooltipProps(hasError ? errorMessage : undefined)}
       id={inputId}
       {...labelProps}
     />
   );
 
+  // The group has room for one action at its end: the clear button while it is shown, otherwise the
+  // link.
+  const openHref = clearable ? null : href;
+  const grouped = hasIcon || clearable || openHref !== null;
+
+  // The root element becomes the group rather than wrapping the input in one, so that the input
+  // keeps its place in the tree - and with it the focus - while icon and action come and go.
   return (
-    <span id={controlId}>
-      <span className="tlReactTextInput__row">
-        {hasIcon && <ThemeIcon encoded={icon} className="tlReactTextInput__icon" />}
-        {input}
-        {clearable && (
-          <button
-            type="button"
-            className="tlReactTextInput__clear"
-            onClick={handleClear}
-            disabled={state.disabled === true}
-            aria-label={t['js.textInput.clear']}
-            title={t['js.textInput.clear']}
-          >
-            <ThemeIcon encoded={CLEAR_ICON} />
-          </button>
-        )}
-        {href !== null && (
-          <a
-            className="tlReactTextInput__open"
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={t['js.textInput.open']}
-            {...tooltipProps(text)}
-          >
-            <ThemeIcon encoded={OPEN_ICON} />
-          </a>
-        )}
-      </span>
+    <span id={controlId} className={grouped ? 'tl-field-group' : undefined}>
+      {hasIcon && (
+        <span className="tl-field-group__icon">
+          <ThemeIcon encoded={icon} className="tl-icon-sm" />
+        </span>
+      )}
+      {input}
+      {clearable && (
+        <button
+          type="button"
+          className="tl-field-group__action"
+          onClick={handleClear}
+          aria-label={t['js.textInput.clear']}
+          title={t['js.textInput.clear']}
+        >
+          <ThemeIcon encoded={CLEAR_ICON} className="tl-icon-sm" />
+        </button>
+      )}
+      {openHref !== null && (
+        <a
+          className="tl-field-group__action"
+          href={openHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t['js.textInput.open']}
+          {...tooltipProps(text)}
+        >
+          <ThemeIcon encoded={OPEN_ICON} className="tl-icon-sm" />
+        </a>
+      )}
     </span>
   );
 };

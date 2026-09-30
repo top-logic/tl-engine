@@ -1,5 +1,6 @@
 import { React, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { fieldStateAttrs } from './form/fieldState';
 
 const { useCallback } = React;
 
@@ -28,28 +29,19 @@ const TLSelect: React.FC<TLCellProps> = ({ controlId, state, config }) => {
   if (state.editable === false) {
     const selectedLabel = options.find((opt) => opt.value === value)?.label ?? '';
     return (
-      <span id={controlId} className={rootClassName(state, 'tlReactSelect tlReactSelect--immutable')}>
-        {selectedLabel}
+      <span id={controlId} className={rootClassName(state, 'tl-field-value tl-type-body')}>
+        <span className="tl-field-value__text">{selectedLabel}</span>
       </span>
     );
   }
-
-  const hasError = state.hasError === true;
-  const hasWarnings = state.hasWarnings === true;
-  const cls = [
-    'tlReactSelect',
-    hasError ? 'tlReactSelect--error' : '',
-    !hasError && hasWarnings ? 'tlReactSelect--warning' : '',
-  ].filter(Boolean).join(' ');
 
   return (
     <span id={controlId}>
       <select
         value={(value as string) ?? ''}
         onChange={handleChange}
-        disabled={state.disabled === true}
-        className={rootClassName(state, cls)}
-        aria-invalid={hasError || undefined}
+        className={rootClassName(state, 'tl-field tl-type-body')}
+        {...fieldStateAttrs(state)}
         id={inputId}
         {...labelProps}
       >

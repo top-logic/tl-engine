@@ -1,5 +1,6 @@
 import { React, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { fieldStateAttrs } from './form/fieldState';
 
 const { useCallback } = React;
 
@@ -26,19 +27,11 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
     // back to the ISO value if no localized form was emitted.
     const display = (state.displayValue as string) ?? (value as string) ?? '';
     return (
-      <span id={controlId} className={rootClassName(state, 'tlReactDatePicker tlReactDatePicker--immutable')}>
-        {display}
+      <span id={controlId} className={rootClassName(state, 'tl-field-value tl-type-body')}>
+        <span className="tl-field-value__text">{display}</span>
       </span>
     );
   }
-
-  const hasError = state.hasError === true;
-  const hasWarnings = state.hasWarnings === true;
-  const cls = [
-    'tlReactDatePicker',
-    hasError ? 'tlReactDatePicker--error' : '',
-    !hasError && hasWarnings ? 'tlReactDatePicker--warning' : '',
-  ].filter(Boolean).join(' ');
 
   return (
     <span id={controlId}>
@@ -46,9 +39,8 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
         type={(state.inputType as string) ?? 'date'}
         value={(value as string) ?? ''}
         onChange={handleChange}
-        disabled={state.disabled === true}
-        className={rootClassName(state, cls)}
-        aria-invalid={hasError || undefined}
+        className={rootClassName(state, 'tl-field tl-type-body')}
+        {...fieldStateAttrs(state)}
         id={inputId}
         {...labelProps}
       />

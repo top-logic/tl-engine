@@ -332,7 +332,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
         onDoubleClick={resizable ? handleToggleMaximize : undefined}
       >
         <span className="tlWindow__title" id={titleId}>{title}</span>
-        {toolbar && (
+        {!!toolbar && (
           <div className="tlWindow__toolbar">
             <TLChild control={toolbar} />
           </div>
@@ -381,7 +381,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           <TLChild control={child} />
         </FillBarrier>
       </div>
-      {footer && (
+      {!!footer && (
         <ButtonDefaults appearance="secondary">
           <div className="tlWindow__footer">
             <TLChild control={footer} />

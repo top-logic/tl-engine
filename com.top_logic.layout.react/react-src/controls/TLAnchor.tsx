@@ -16,7 +16,7 @@ const TLAnchor: React.FC<TLCellProps> = ({ controlId }) => {
   const anchor = (state.anchor as string | null) ?? undefined;
   return (
     <div id={controlId} className={rootClassName(state, 'tlAnchor')} data-tl-anchor={anchor}>
-      {state.child && <TLChild control={state.child} />}
+      {!!state.child && <TLChild control={state.child} />}
     </div>
   );
 };

@@ -69,7 +69,7 @@ const TLMenuRegion: React.FC<TLCellProps> = ({ controlId }) => {
       aria-haspopup={isClick ? 'menu' : undefined}
       onKeyDown={isClick ? handleKeyDown : undefined}
     >
-      {child && <TLChild control={child} />}
+      {!!child && <TLChild control={child} />}
     </div>
   );
 };

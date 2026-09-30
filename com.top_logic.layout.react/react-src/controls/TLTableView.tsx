@@ -1543,14 +1543,14 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                         {/* A row that predates the current columns has no control for a newly shown
                             column yet \u2014 leave that cell empty rather than tearing down the table. */}
                         <span className="tlTableView__treeValue" {...cellTooltipProps}>
-                          {row.cells[col.name] && <TLChild control={row.cells[col.name]} />}
+                          {!!row.cells[col.name] && <TLChild control={row.cells[col.name]} />}
                         </span>
                         {row.groupCount != null && (
                           <span className="tlTableView__groupCount">({row.groupCount})</span>
                         )}
                       </div>
                     ) : (
-                      row.cells[col.name] && <TLChild control={row.cells[col.name]} />
+                      !!row.cells[col.name] && <TLChild control={row.cells[col.name]} />
                     )}
                   </div>
                 );

@@ -80,16 +80,15 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   };
 
   const className = [
-    'tlFormLayout',
-    readOnly ? 'tlFormLayout--readonly' : '',
-    fillClass ? 'tlFormLayout--fill' : '',
+    'tl-form-layout',
+    fillClass ? 'tl-form-layout--fill' : '',
     fillClass,
   ].filter(Boolean).join(' ');
 
   if (noModelMessage) {
     return (
-      <div id={controlId} className={rootClassName(state, 'tlFormLayout tlFormLayout--empty')} ref={containerRef}>
-        <p className="tlFormLayout__noModel">{noModelMessage}</p>
+      <div id={controlId} className={rootClassName(state, 'tl-form-layout')} ref={containerRef}>
+        <p className="tl-form-layout__empty tl-type-body">{noModelMessage}</p>
       </div>
     );
   }

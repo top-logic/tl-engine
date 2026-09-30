@@ -1,5 +1,7 @@
 import { React, useTLState, useTLUpload, useTLDataUrl, useI18N, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { ThemeIcon } from './icon/ThemeIcon';
+import { buttonClassName } from './button/ButtonDefaults';
 
 const I18N_KEYS = {
   'js.fileUpload.choose': 'Choose file',
@@ -10,6 +12,8 @@ const I18N_KEYS = {
 };
 
 type LocalStatus = 'idle' | 'uploading';
+
+const UPLOAD_ICON = 'css:fa-solid fa-upload';
 
 /**
  * Form-field control for a binary ({@code tl.core:Binary}) attribute. Renders a file upload
@@ -161,7 +165,8 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
   return (
     <div
       id={controlId}
-      className={rootClassName(state, `tlBinaryField tlFileUpload${isDragOver ? ' tlFileUpload--dragover' : ''}`)}
+      className={rootClassName(state, 'tlBinaryField tl-file-upload')}
+      data-tl-state={isDragOver ? 'dragover' : undefined}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -175,21 +180,20 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
       />
       <button
         type="button"
-        className={'tlFileUpload__button' + (isDisabled ? ' tlFileUpload__button--uploading' : '')}
+        className={buttonClassName({ appearance: 'secondary' })}
         onClick={handleButtonClick}
         disabled={isDisabled}
+        aria-busy={isDisabled ? true : undefined}
         aria-label={buttonLabel}
         {...tooltipProps(buttonLabel)}
         id={inputId}
         {...labelProps}
       >
-        <svg className="tlFileUpload__icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-          <path d="M8 10V1m0 0L4.5 4.5M8 1l3.5 3.5M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        </svg>
+        <ThemeIcon encoded={UPLOAD_ICON} className="tl-button__icon tl-icon-md" />
       </button>
       {hasData && downloadLink}
       {serverError && (
-        <span className="tlFileUpload__status tlFileUpload__status--error">{serverError}</span>
+        <span className="tl-file-upload__status tl-type-label" role="alert">{serverError}</span>
       )}
     </div>
   );

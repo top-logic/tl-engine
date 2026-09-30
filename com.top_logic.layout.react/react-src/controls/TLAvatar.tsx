@@ -14,22 +14,44 @@ function initials(name: string): string {
   return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }
 
-/** Maps a name to a stable background hue. */
-function hue(name: string): number {
+/**
+ * Maps a name to one of the eight category roles of the design system, 1 to 8. The same name gives
+ * the same category everywhere; the category, not a color value, is what reaches the stylesheet.
+ */
+export function categoryOf(name: string): number {
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = (hash * 31 + name.charCodeAt(i)) | 0;
   }
-  return Math.abs(hash) % 360;
+  return 1 + (Math.abs(hash) % 8);
 }
 
 /**
- * Circular avatar for a person or object. It shows the picture of the one it represents; where
- * there is none, initials and a stable background color derived from the display name.
+ * The scale abbreviation of an external size name, which the CSS classes of the design system carry.
+ * `medium` - and a missing size - is the step without a modifier.
+ */
+const SIZE_CLASS: Record<string, string> = {
+  small: 'sm',
+  large: 'lg',
+  'x-large': 'xl',
+};
+
+/** The type class the initials of a size read in - set from outside, as the design system asks. */
+const TYPE_CLASS: Record<string, string> = {
+  small: 'tl-type-label-strong',
+  medium: 'tl-type-body-strong',
+  large: 'tl-type-heading-md',
+  'x-large': 'tl-type-heading-lg',
+};
+
+/**
+ * Circular avatar for a person or object, `tl-avatar` of the design system. It shows the picture
+ * of the one it represents; where there is none, initials on the category the display name maps
+ * to; without a name, the neutral circle.
  *
  * State:
  * - name: string | null
- * - size: "small" | "default" | "large" | "x-large"
+ * - size: "small" | "medium" | "large" | "x-large" - medium when absent
  * - url / hasData / dataRevision: the picture, see useImageSrc
  */
 const TLAvatar: React.FC<TLCellProps> = ({ controlId }) => {
@@ -37,30 +59,42 @@ const TLAvatar: React.FC<TLCellProps> = ({ controlId }) => {
   const src = useImageSrc();
 
   const name = state.name as string | null;
-  const size = (state.size as string) ?? 'default';
-  const sizeClass = size === 'default' ? '' : `tlAvatar--${size}`;
+  const size = (state.size as string) ?? 'medium';
+  const abbreviation = SIZE_CLASS[size];
+  const sizeClass = abbreviation ? `tl-avatar--${abbreviation}` : '';
 
   if (src) {
     return (
       <span
         id={controlId}
-        className={rootClassName(state, ['tlAvatar', sizeClass].filter(Boolean).join(' '))}
+        className={rootClassName(state, ['tl-avatar', sizeClass].filter(Boolean).join(' '))}
         {...tooltipProps(name)}
       >
-        <img className="tlAvatar__image" src={src} alt={name ?? ''} />
+        <img className="tl-avatar__image" src={src} alt={name ?? ''} />
       </span>
     );
   }
 
   if (!name) {
-    return <span id={controlId} className={rootClassName(state, ['tlAvatar', 'tlAvatar--empty', sizeClass].filter(Boolean).join(' '))} />;
+    return (
+      <span
+        id={controlId}
+        className={rootClassName(state, ['tl-avatar', sizeClass].filter(Boolean).join(' '))}
+        aria-hidden="true"
+      />
+    );
   }
 
   return (
     <span
       id={controlId}
-      className={rootClassName(state, ['tlAvatar', sizeClass].filter(Boolean).join(' '))}
-      style={{ backgroundColor: `hsl(${hue(name)}, 45%, 45%)` }}
+      className={rootClassName(
+        state,
+        ['tl-avatar', sizeClass, `tl-avatar--category-${categoryOf(name)}`, TYPE_CLASS[size] ?? TYPE_CLASS.medium]
+          .filter(Boolean)
+          .join(' ')
+      )}
+      role="img"
       aria-label={name}
       {...tooltipProps(name)}
     >

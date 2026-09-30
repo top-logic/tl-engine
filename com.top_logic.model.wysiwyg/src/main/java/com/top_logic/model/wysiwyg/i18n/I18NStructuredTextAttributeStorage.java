@@ -160,18 +160,11 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 		} else {
 			newI18nStructuredTexts = (I18NStructuredText) newValue;
 		}
-		boolean sourceCodeChanged = setSourceCodes(owner, attribute, newI18nStructuredTexts);
-		boolean imagesChanged = setImages(owner, attribute, newI18nStructuredTexts);
-		if (sourceCodeChanged || imagesChanged) {
-			/* As an updated attribute does not affect the TLObject itself, Lucene will not create a
-			 * new index. Thats why the owner has to be touched. */
-			owner.tTouch();
-		}
+		setSourceCodes(owner, attribute, newI18nStructuredTexts);
+		setImages(owner, attribute, newI18nStructuredTexts);
 	}
 
-	private boolean setSourceCodes(TLObject owner, TLStructuredTypePart attribute, I18NStructuredText newValue) {
-		boolean changed = false;
-
+	private void setSourceCodes(TLObject owner, TLStructuredTypePart attribute, I18NStructuredText newValue) {
 		/* Don't iterator over the locales in the I18NStructuredText. That would write one entry per
 		 * fallback locale, which is multiple times more than necessary. Writing just one entry per
 		 * "supported locale" is correct, as that means effectively one entry is written per
@@ -183,15 +176,8 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 			String newSourceCode = getSourceCodeNullSafe(getEntryNullsafe(newValue, language));
 			if (StringServices.isEmpty(newSourceCode)) {
 				oldSourceCode.delete();
-				changed = true;
 			} else {
-				if (changed) {
-					/* It is not necessary to check for change of source code, because only the
-					 * accumulated change state is required. */
-					setSourceCode(oldSourceCode, newSourceCode);
-				} else {
-					changed |= updateSourceCode(oldSourceCode, newSourceCode);
-				}
+				updateSourceCode(oldSourceCode, newSourceCode);
 			}
 			supportedLocales.remove(language);
 		}
@@ -200,10 +186,8 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 			String newSourceCode = getSourceCodeNullSafe(getEntryNullsafe(newValue, language));
 			if (!StringServices.isEmpty(newSourceCode)) {
 				createSourceCodeTLObject(owner, attribute, language, newSourceCode);
-				changed = true;
 			}
 		}
-		return changed;
 	}
 
 	private void createSourceCodeTLObject(TLObject owner, TLStructuredTypePart attribute, Locale language,
@@ -224,8 +208,7 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 		setSourceCode(sourceCode, text);
 	}
 
-	private boolean setImages(TLObject owner, TLStructuredTypePart attribute, I18NStructuredText newValue) {
-		boolean someImageChanged = false;
+	private void setImages(TLObject owner, TLStructuredTypePart attribute, I18NStructuredText newValue) {
 		Map<Locale, Set<KnowledgeItem>> oldImagesByLocale = getImagesByLocale(owner);
 		/* Don't iterator over the locales in the I18NStructuredText. That would write one entry per
 		 * fallback locale, which is multiple times more than necessary. Writing just one entry per
@@ -236,11 +219,10 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 			Map<String, BinaryData> newImages = getImagesNullSafe(newLocalizedValue);
 			Set<String> newFileNames = newImages.keySet();
 			Set<KnowledgeItem> oldImages = CollectionUtil.nonNull(oldImagesByLocale.get(locale));
-			someImageChanged |= updateImages(oldImages, newImages);
-			someImageChanged |= addImages(owner, attribute, locale, oldImages, newLocalizedValue, newFileNames);
-			someImageChanged |= removeImages(oldImages, newFileNames);
+			updateImages(oldImages, newImages);
+			addImages(owner, attribute, locale, oldImages, newLocalizedValue, newFileNames);
+			removeImages(oldImages, newFileNames);
 		}
-		return someImageChanged;
 	}
 
 	private Map<Locale, Set<KnowledgeItem>> getImagesByLocale(TLObject owner) {
@@ -260,13 +242,12 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 		return newI18nStructuredTexts.getEntries().get(locale);
 	}
 
-	private boolean addImages(TLObject owner, TLStructuredTypePart attribute, Locale locale,
+	private void addImages(TLObject owner, TLStructuredTypePart attribute, Locale locale,
 			Set<KnowledgeItem> oldImages, StructuredText newStructuredText, Set<String> newFileNames) {
 		Set<String> possibleToBeAdded = set(newFileNames);
 		Set<String> oldFileNames = getFileNames(oldImages);
 		possibleToBeAdded.removeAll(oldFileNames);
 		addImages(owner, attribute, newStructuredText, locale, possibleToBeAdded);
-		return !possibleToBeAdded.isEmpty();
 	}
 
 	private void addImages(TLObject owner, TLStructuredTypePart attribute, StructuredText structuredText,
@@ -308,17 +289,11 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 	}
 
 	/**
-	 * Updates the source code of the given object.
-	 * 
-	 * @return Whether source code changed.
+	 * Updates the source code of the given object, if it differs from the given one.
 	 */
-	private boolean updateSourceCode(KnowledgeItem sourceCodeObject, String newSourceCode) {
-		String sourceCode = getSourceCode(sourceCodeObject);
-		if (!Utils.equals(sourceCode, newSourceCode)) {
+	private void updateSourceCode(KnowledgeItem sourceCodeObject, String newSourceCode) {
+		if (!Utils.equals(getSourceCode(sourceCodeObject), newSourceCode)) {
 			setSourceCode(sourceCodeObject, newSourceCode);
-			return true;
-		} else {
-			return false;
 		}
 	}
 

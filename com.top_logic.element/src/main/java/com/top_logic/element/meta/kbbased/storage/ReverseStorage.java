@@ -104,6 +104,11 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 	}
 
 	@Override
+	public String getBaseObjectColumn() {
+		throw new UnsupportedOperationException("Derived attribute.");
+	}
+
+	@Override
 	public String getStorageColumn() {
 		throw new UnsupportedOperationException("Derived attribute.");
 	}

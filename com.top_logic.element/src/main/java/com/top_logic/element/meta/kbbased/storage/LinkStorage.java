@@ -294,6 +294,11 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 	}
 
 	@Override
+	public String getBaseObjectColumn() {
+		return DBKnowledgeAssociation.REFERENCE_SOURCE_NAME;
+	}
+
+	@Override
 	public String getStorageColumn() {
 		return DBKnowledgeAssociation.REFERENCE_DEST_NAME;
 	}

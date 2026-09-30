@@ -25,7 +25,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.meta.AssociationStorageDescriptor;
 import com.top_logic.element.meta.DefaultAssociationStorageDescriptor;
@@ -137,18 +136,11 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 
 		Map<String, BinaryData> images = getImagesNullSafe(structuredText);
 		Set<String> filenames = images.keySet();
-		boolean imagesUpdated = updateImages(cachedImages, images);
-		boolean imagesAdded = addImages(object, attribute, cachedImages, structuredText, filenames);
-		boolean imagesRemoved = removeImages(cachedImages, filenames);
+		updateImages(cachedImages, images);
+		addImages(object, attribute, cachedImages, structuredText, filenames);
+		removeImages(cachedImages, filenames);
 
-		boolean imagesChanged = imagesAdded || imagesUpdated || imagesRemoved;
-		boolean sourceCodeChanged = updateSourceCode(object, attribute, getSourceCodeNullSafe(structuredText));
-
-		if (imagesChanged || sourceCodeChanged) {
-			/* As an updated attribute does not affect the TLObject itself, Lucene will not create a
-			 * new index. Thats why the owner has to be touched. */
-			object.tTouch();
-		}
+		updateSourceCode(object, getSourceCodeNullSafe(structuredText));
 	}
 
 	private StructuredText toStructuredText(HTMLFragment fragment) {
@@ -176,24 +168,18 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 		return (String) owner.tGetData(_storageAttribute);
 	}
 
-	private boolean updateSourceCode(TLObject owner, TLStructuredTypePart attribute, String sourceCode) {
+	private void updateSourceCode(TLObject owner, String sourceCode) {
 		// Do not store empty value.
-		sourceCode = StringServices.nonEmpty(sourceCode);
-		Object formerValue = owner.tSetData(_storageAttribute, sourceCode);
-		return Utils.equals(formerValue, sourceCode);
+		owner.tSetData(_storageAttribute, StringServices.nonEmpty(sourceCode));
 	}
 
-	private boolean addImages(TLObject self, TLStructuredTypePart attribute, Set<KnowledgeItem> cachedImages,
+	private void addImages(TLObject self, TLStructuredTypePart attribute, Set<KnowledgeItem> cachedImages,
 			StructuredText structuredText, Set<String> filenames) {
 		Set<String> possibleToBeAdded = new HashSet<>(filenames);
 		Set<String> cachedFilenames = getFileNames(cachedImages);
 
 		possibleToBeAdded.removeAll(cachedFilenames);
-		if (possibleToBeAdded.isEmpty()) {
-			return false;
-		}
 		addImages(self, attribute, structuredText, possibleToBeAdded);
-		return true;
 	}
 
 

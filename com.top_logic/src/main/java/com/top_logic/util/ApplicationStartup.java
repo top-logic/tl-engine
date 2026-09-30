@@ -15,12 +15,18 @@ import com.top_logic.basic.Logger;
  * Notification about the completion of the application startup on this node.
  *
  * <p>
- * The {@link AbstractStartStopListener} marks the startup as {@link #begin() in progress}, before it
- * starts the module system, and {@link #complete() completes} it, when this node has become
- * {@link NodeState#RUNNING}. A service that must not become active while the application is still
- * booting registers an action with {@link #whenStarted(Runnable)}. The action runs immediately, if
- * no startup is in progress, e.g. when the service is restarted in a running application, or when a
- * test starts services without booting an application.
+ * The application has started, when the {@link AbstractStartStopListener} {@link #complete()
+ * completes} the startup, i.e. when this node has become {@link NodeState#RUNNING}. A service that
+ * must not become active before registers an action with {@link #whenStarted(Runnable)}: The action
+ * runs, when the startup completes, or immediately, if the application has already started, e.g.
+ * when the service is restarted in a running application.
+ * </p>
+ *
+ * <p>
+ * Without an application boot, e.g. when a test or a tool starts services, the startup never
+ * completes, and actions registered with {@link #whenStarted(Runnable)} do not run. When the
+ * application boots again in the same JVM, the {@link AbstractStartStopListener} resets the startup
+ * with {@link #begin()}, before it starts the module system.
  * </p>
  */
 public final class ApplicationStartup {
@@ -28,13 +34,13 @@ public final class ApplicationStartup {
 	private static final ApplicationStartup INSTANCE = new ApplicationStartup();
 
 	/**
-	 * Whether the application startup is in progress.
+	 * Whether the application startup has completed.
 	 *
 	 * <p>
 	 * Guarded by <code>this</code>.
 	 * </p>
 	 */
-	private boolean _inProgress;
+	private boolean _started;
 
 	/**
 	 * Actions waiting for the completion of the startup.
@@ -57,10 +63,11 @@ public final class ApplicationStartup {
 	}
 
 	/**
-	 * Whether the application has started, i.e. no application startup is in progress.
+	 * Whether the application startup has {@link #complete() completed}, and no further startup has
+	 * {@link #begin() begun} since.
 	 */
 	public synchronized boolean isStarted() {
-		return !_inProgress;
+		return _started;
 	}
 
 	/**
@@ -69,7 +76,8 @@ public final class ApplicationStartup {
 	 * <p>
 	 * If the application {@link #isStarted() has started}, the action runs immediately in the
 	 * calling thread. Otherwise, it runs once in the thread that {@link #complete() completes} the
-	 * startup, unless it is {@link #cancel(Runnable) cancelled} before.
+	 * startup, unless it is {@link #cancel(Runnable) cancelled} before. As long as the startup does
+	 * not complete, the action does not run.
 	 * </p>
 	 *
 	 * @param action
@@ -77,7 +85,7 @@ public final class ApplicationStartup {
 	 */
 	public void whenStarted(Runnable action) {
 		synchronized (this) {
-			if (_inProgress) {
+			if (!_started) {
 				_pending.add(action);
 				return;
 			}
@@ -96,7 +104,7 @@ public final class ApplicationStartup {
 	}
 
 	/**
-	 * Marks the application startup as in progress.
+	 * Marks the application as not started, when the application boots.
 	 *
 	 * <p>
 	 * Actions registered with {@link #whenStarted(Runnable)} wait from now on until the startup is
@@ -104,7 +112,7 @@ public final class ApplicationStartup {
 	 * </p>
 	 */
 	synchronized void begin() {
-		_inProgress = true;
+		_started = false;
 	}
 
 	/**
@@ -113,7 +121,7 @@ public final class ApplicationStartup {
 	void complete() {
 		List<Runnable> actions;
 		synchronized (this) {
-			_inProgress = false;
+			_started = true;
 			actions = new ArrayList<>(_pending);
 			_pending.clear();
 		}

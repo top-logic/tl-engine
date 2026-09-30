@@ -1902,7 +1902,8 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * <p>
 	 * {@link Task}s are not dispatched while the application is still booting: The dispatch thread
 	 * starts, when the {@link ApplicationStartup} completes, or immediately, if the application
-	 * has already started.
+	 * has already started. Without an application boot, e.g. when a test starts services, no task is
+	 * dispatched.
 	 * </p>
 	 */
     @Override

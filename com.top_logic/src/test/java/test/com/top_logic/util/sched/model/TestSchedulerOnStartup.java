@@ -11,9 +11,9 @@ import java.util.function.BooleanSupplier;
 import junit.framework.Test;
 
 import test.com.top_logic.basic.BasicTestCase;
-import test.com.top_logic.basic.ReflectionUtils;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.util.ApplicationStartedSetup;
 import test.com.top_logic.util.sched.TestingScheduler;
 
 import com.top_logic.basic.CalledByReflection;
@@ -29,7 +29,6 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.merge.MergeConflictException;
-import com.top_logic.util.ApplicationStartup;
 import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.task.TaskCommon;
 import com.top_logic.util.sched.task.TaskState;
@@ -84,14 +83,13 @@ public class TestSchedulerOnStartup extends BasicTestCase {
 	}
 
 	/**
-	 * The {@link Scheduler} does not dispatch while the application startup is in progress, but
-	 * when it completes. A {@link Scheduler} shut down before does not start dispatching.
+	 * The {@link Scheduler} does not dispatch while the application has not started, but when the
+	 * startup completes. A {@link Scheduler} shut down before does not start dispatching.
 	 */
 	public void testDispatchStartsWhenApplicationHasStarted() throws RestartException {
-		ApplicationStartup startup = ApplicationStartup.getInstance();
 		Scheduler stopped;
 		Scheduler waiting;
-		invoke(startup, "begin");
+		ApplicationStartedSetup.resetStartup();
 		try {
 			ModuleUtil.INSTANCE.restart(Scheduler.Module.INSTANCE, null);
 			stopped = scheduler();
@@ -104,7 +102,7 @@ public class TestSchedulerOnStartup extends BasicTestCase {
 			assertEquals(SchedulingAlgorithm.NO_SCHEDULE, waiting.getDispatchStart());
 			assertNull(TestingScheduler.getThread(waiting));
 		} finally {
-			invoke(startup, "complete");
+			ApplicationStartedSetup.completeStartup();
 		}
 		assertTrue(waiting.getDispatchStart() != SchedulingAlgorithm.NO_SCHEDULE);
 		assertTrue(TestingScheduler.getThread(waiting).isAlive());
@@ -163,10 +161,6 @@ public class TestSchedulerOnStartup extends BasicTestCase {
 
 	private static void inSystemContext(Runnable action) {
 		ThreadContext.inSystemContext(TestSchedulerOnStartup.class, action::run);
-	}
-
-	private static void invoke(ApplicationStartup startup, String method) {
-		ReflectionUtils.executeMethod(startup, method, new Class<?>[0], new Object[0]);
 	}
 
 	private static Scheduler scheduler() {
@@ -261,7 +255,8 @@ public class TestSchedulerOnStartup extends BasicTestCase {
 
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(
-			ServiceTestSetup.createSetup(TestSchedulerOnStartup.class, Scheduler.Module.INSTANCE));
+			ServiceTestSetup.createSetup(ApplicationStartedSetup.setup(TestSchedulerOnStartup.class),
+				Scheduler.Module.INSTANCE));
 	}
 
 }

@@ -549,7 +549,7 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 	 * {@link NodeState#STARTUP}.
 	 * 
 	 * <p>
-	 * Marks the {@link ApplicationStartup} as in progress.
+	 * Marks the {@link ApplicationStartup} as not started.
 	 * </p>
 	 */
 	protected final void startTokenSystem(ClusterManager cMgr) throws Exception {

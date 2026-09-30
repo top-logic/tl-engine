@@ -542,6 +542,7 @@
 .tl-chip[aria-pressed="true"]:where(:not(:disabled)):hover {
   border-color: var(--tl-surface-brand-hover);
   background: var(--tl-surface-brand-hover);
+  color: var(--tl-text-on-brand-hover);
 }
 
 /* Warnung vor Fehler: der Fehler steht später und gewinnt. Den Prüfzustand zeigen nur ungewählte,
@@ -839,6 +840,13 @@ a.tl-field-value:hover {
    bearbeitbar zu schreibgeschützt wechselt. */
 .tl-form-field__input > .tl-field-value {
   min-height: var(--tl-size-control);
+}
+
+/* Ebenso die Lesewert-Liste von Dropdown, Segmenten und Chips: ihre Pillen sind size-control-sm hoch,
+   die Zeile bleibt size-control. */
+.tl-form-field__input > .tl-select__values {
+  min-height: var(--tl-size-control);
+  align-items: center;
 }
 
 .tl-form-field__message {
@@ -1213,6 +1221,13 @@ a.tl-field-value:hover {
   background: transparent;
   color: var(--tl-icon-secondary);
   cursor: pointer;
+}
+
+/* Der Entfernen-Knopf sitzt in der Pille (size-control-sm, mit Rand). Er ragt um die Randbreite über
+   ihren Inhalt: die Trefferfläche bleibt size-control-sm, die Pille wächst nicht — und mit ihr nicht
+   das Feld über size-control. */
+.tl-select__chip-remove {
+  margin-block: calc(-1 * var(--tl-border-width-sm));
 }
 
 .tl-select__chip-remove:hover,

@@ -210,6 +210,33 @@ public class HistoryUtils {
 	}
 
 	/**
+	 * The revision that directly precedes the revision with the given commit number.
+	 *
+	 * <p>
+	 * Compacting the history deletes all revisions before the compaction revision. The compaction
+	 * revision therefore has no predecessor in the database any more. Since no data is valid
+	 * before the compaction revision, its predecessor state is the empty {@link Revision#INITIAL}
+	 * state, like the predecessor of {@link Revision#FIRST_REV} in a history that was never
+	 * compacted.
+	 * </p>
+	 *
+	 * @param hm
+	 *        The {@link HistoryManager} to resolve the revision in.
+	 * @param commitNumber
+	 *        The commit number of the revision whose predecessor is requested.
+	 * @return The revision with the commit number <code>commitNumber - 1</code>, or
+	 *         {@link Revision#INITIAL}, if that revision is no longer available.
+	 */
+	public static Revision getPreviousRevision(HistoryManager hm, long commitNumber) {
+		Revision result = hm.getRevision(commitNumber - 1);
+		if (result == null) {
+			// The revision was deleted by compacting the history.
+			return Revision.INITIAL;
+		}
+		return result;
+	}
+
+	/**
 	 * Switches the given object to the given branch.
 	 * 
 	 * <p>

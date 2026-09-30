@@ -602,7 +602,7 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 					_login.checkAllowedGroups(theUser);
 				} catch (InMaintenanceModeException ex) {
 					// person can not login, therefore log out person.
-					sessions.invalidateSession(sessionID);
+					sessions.terminateSession(sessionID);
                 }
             } catch (Exception e) {
 				StringBuilder logoutFailed = new StringBuilder();

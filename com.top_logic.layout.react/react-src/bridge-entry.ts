@@ -26,7 +26,7 @@ export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, 
 export { CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
 export { FieldLabelContext, fieldLabel, fieldInputId, useFieldLabelProps, focusFieldInput } from './bridge/field-label';
 export type { FieldLabel, FieldLabelProps } from './bridge/field-label';
-export { writeDragPayload, runningDrag, readDragPayload, dragTypeAccepted, dropPositionAt } from './bridge/drag-drop';
+export { writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropPosition, TLRunningDrag } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
 export type { PointerDragOptions } from './bridge/pointer-drag';

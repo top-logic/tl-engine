@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, runningDrag, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 
@@ -364,6 +364,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const dropVerdict: DropVerdict | undefined = dropState?.probe ? dropVerdicts[dropState.probe] : undefined;
   const dropRefused = dropVerdict !== undefined && !dropVerdict.accepted;
 
+  // A drag hovering this table may end without any event reaching it: a refused drop is not
+  // dispatched here, and the source's dragend reaches the source's control only.
+  const dragHovers = dropState !== null;
+  React.useEffect(() => {
+    if (!dragHovers) {
+      return undefined;
+    }
+    return onDragEnd(() => setDropState(null));
+  }, [dragHovers]);
+
   // -- The pointer of the running drag over the table, in viewport coordinates, and the hint that
   //    follows it. Moved directly in the DOM: dragover fires continuously, and re-rendering the
   //    table for each pointer move is not needed to move one element. --
@@ -688,7 +698,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       keys: [row.id],
       selection: row.selected,
       type: dragType,
-    });
+    }, event.currentTarget);
   }, [controlId, dragType]);
 
   /** Which row an event points at, and where within it, or the table itself. */

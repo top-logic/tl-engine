@@ -55,26 +55,52 @@ let _dragCount = 0;
 /** Whether the document-wide listeners ending {@link _runningDrag} are installed. */
 let _endListenersInstalled = false;
 
+/** Listeners registered by {@link onDragEnd}. */
+const _endListeners = new Set<() => void>();
+
+/** Ends the running drag, if one runs, and tells the {@link onDragEnd} listeners. */
+function endDrag(): void {
+  if (_runningDrag === null) {
+    return;
+  }
+  _runningDrag = null;
+  for (const listener of Array.from(_endListeners)) {
+    listener();
+  }
+}
+
 /**
- * Forgets the running drag once it ends, wherever it ends.
+ * Ends the running drag once it ends, wherever it ends.
  *
  * `dragend` is dispatched at the element the drag started on, which may have been removed from the
  * document meanwhile (a virtualized list re-rendering its rows), so its event never reaches a
- * document listener; `drop` is dispatched at the target, in whatever control. Listening to both in
- * the capture phase on the window ends the drag in either case. A drag that ends without either
- * (cancelled over a detached source) leaves a stale entry, which the next drag replaces and which
- * nothing reads before: only a `dragover` of a drag carrying a payload of this document reads it.
+ * window listener; {@link writeDragPayload} therefore also listens on that element itself. `drop`
+ * is dispatched at the target, in whatever control. Listening to both in the capture phase on the
+ * window ends the drag in either case.
  */
 function installEndListeners(): void {
   if (_endListenersInstalled) {
     return;
   }
   _endListenersInstalled = true;
-  const end = () => {
-    _runningDrag = null;
+  window.addEventListener('dragend', endDrag, true);
+  window.addEventListener('drop', endDrag, true);
+}
+
+/**
+ * Registers a listener called when the {@link runningDrag running drag} ends, by a drop anywhere,
+ * by a drop refused, or by a cancel.
+ *
+ * A drop target showing feedback for the drag above it clears it here: a refused drop is not
+ * dispatched to the target, and the source's `dragend` reaches only the source's control.
+ *
+ * @returns Removes the listener again.
+ */
+export function onDragEnd(listener: () => void): () => void {
+  _endListeners.add(listener);
+  return () => {
+    _endListeners.delete(listener);
   };
-  window.addEventListener('dragend', end, true);
-  window.addEventListener('drop', end, true);
 }
 
 /**
@@ -82,13 +108,17 @@ function installEndListeners(): void {
  * tag entry {@link DRAG_TAG_TYPE_PREFIX a `dragover` handler} can read, and registers it as the
  * {@link runningDrag running drag}.
  *
+ * @param source The element the drag starts on, which receives the drag's `dragend` even when it
+ *        is removed from the document before the drag ends.
  * @returns The running drag the payload now describes.
  */
-export function writeDragPayload(dataTransfer: DataTransfer, payload: TLDragPayload): TLRunningDrag {
+export function writeDragPayload(dataTransfer: DataTransfer, payload: TLDragPayload,
+    source?: EventTarget): TLRunningDrag {
   dataTransfer.effectAllowed = 'move';
   dataTransfer.setData(DRAG_PAYLOAD_TYPE, JSON.stringify(payload));
   dataTransfer.setData(DRAG_TAG_TYPE_PREFIX + payload.type.toLowerCase(), '');
   installEndListeners();
+  source?.addEventListener('dragend', endDrag, { once: true });
   _dragCount++;
   _runningDrag = { id: 'drag' + _dragCount, payload };
   return _runningDrag;

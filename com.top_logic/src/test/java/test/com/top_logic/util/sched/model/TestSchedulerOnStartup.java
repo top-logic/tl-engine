@@ -26,18 +26,23 @@ import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.RestartException;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.merge.MergeConflictException;
 import com.top_logic.util.ApplicationStartup;
 import com.top_logic.util.sched.Scheduler;
+import com.top_logic.util.sched.task.TaskCommon;
+import com.top_logic.util.sched.task.TaskState;
 import com.top_logic.util.sched.task.impl.TaskImpl;
+import com.top_logic.util.sched.task.log.TaskLogWrapper;
 import com.top_logic.util.sched.task.result.TaskResult;
 import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 import com.top_logic.util.sched.task.schedule.OnStartup;
 import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
 
 /**
- * Test for the start of the {@link Scheduler} dispatch and for {@link OnStartup} tasks that run only
- * on one node in the cluster.
+ * Test for the start of the {@link Scheduler} dispatch, for {@link OnStartup} tasks that run only
+ * on one node in the cluster, and for the startup cleanup of their cluster locks.
  */
 @SuppressWarnings("javadoc")
 public class TestSchedulerOnStartup extends BasicTestCase {
@@ -108,6 +113,58 @@ public class TestSchedulerOnStartup extends BasicTestCase {
 		assertNull(TestingScheduler.getThread(stopped));
 	}
 
+	/**
+	 * The startup cleanup of a cluster-wide task releases a cluster lock that an earlier start of
+	 * this node has left behind, although the node id of that lock is outdated.
+	 */
+	public void testStartupReleasesLockOfEarlierNodeStart() throws Exception {
+		ClusterTask task = createTask(TASK_NAME + "EarlierStart");
+		TaskLogWrapper log = logWithLock(task, TaskCommon.getCurrentClusterNodeName());
+		assertFalse("Lock of an earlier start is not the lock of the current start.", log.hasClusterLock());
+
+		inSystemContext(() -> assertTrue(log.tryStartupNodeClean(task).isSuccess()));
+
+		assertFalse("Lock of an earlier start of this node must be released.", log.isClusterLockSet());
+		assertEquals(TaskState.INACTIVE, log.getState());
+	}
+
+	/**
+	 * The startup cleanup of a cluster-wide task keeps the cluster lock of another node.
+	 */
+	public void testStartupKeepsLockOfOtherNode() throws Exception {
+		ClusterTask task = createTask(TASK_NAME + "OtherNode");
+		TaskLogWrapper log = logWithLock(task, TaskCommon.getCurrentClusterNodeName() + "-other");
+
+		inSystemContext(() -> assertTrue(log.tryStartupNodeClean(task).isSuccess()));
+
+		assertTrue("Lock of another node must be kept.", log.isClusterLockSet());
+		assertEquals(TaskState.RUNNING, log.getState());
+	}
+
+	/**
+	 * The log of the given task, marked as running and locked by the given node name with a node id
+	 * other than the one of this node.
+	 */
+	private static TaskLogWrapper logWithLock(ClusterTask task, String nodeName) {
+		TaskLogWrapper[] result = new TaskLogWrapper[1];
+		inSystemContext(() -> {
+			TaskLogWrapper log = TaskLogWrapper.getLogForTask(task);
+			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+				log.tHandle().setAttributeValue(TaskLogWrapper.PROPERTY_CLUSTER_NAME, nodeName);
+				log.tHandle().setAttributeValue(TaskLogWrapper.PROPERTY_CLUSTER_ID,
+					TaskCommon.getCurrentClusterNodeId() + 1);
+				log.markAsRunning();
+				tx.commit();
+			}
+			result[0] = log;
+		});
+		return result[0];
+	}
+
+	private static void inSystemContext(Runnable action) {
+		ThreadContext.inSystemContext(TestSchedulerOnStartup.class, action::run);
+	}
+
 	private static void invoke(ApplicationStartup startup, String method) {
 		ReflectionUtils.executeMethod(startup, method, new Class<?>[0], new Object[0]);
 	}
@@ -128,12 +185,16 @@ public class TestSchedulerOnStartup extends BasicTestCase {
 	}
 
 	private static ClusterTask addTask(Scheduler scheduler) throws ConfigurationException {
-		ClusterTask.Config<?> config = TypedConfiguration.newConfigItem(ClusterTask.Config.class);
-		config.setName(TASK_NAME);
-		config.getSchedules().add(TypedConfiguration.createConfigItemForImplementationClass(OnStartup.class));
-		ClusterTask task = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+		ClusterTask task = createTask(TASK_NAME);
 		ThreadContext.inSystemContext(TestSchedulerOnStartup.class, () -> scheduler.addTask(task));
 		return task;
+	}
+
+	private static ClusterTask createTask(String name) throws ConfigurationException {
+		ClusterTask.Config<?> config = TypedConfiguration.newConfigItem(ClusterTask.Config.class);
+		config.setName(name);
+		config.getSchedules().add(TypedConfiguration.createConfigItemForImplementationClass(OnStartup.class));
+		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
 	}
 
 	private static void waitFor(String message, BooleanSupplier condition) {

@@ -39,8 +39,10 @@ public class BPETimeoutTask extends TaskImpl {
 
 	@Override
 	public boolean isNodeLocal() {
-		// Modifies persistent process data; must run only once in the cluster.
-		return false;
+		/* Runs every few seconds: A cluster lock would cost several commits per run. Concurrent
+		 * runs on different nodes are harmless, since both update the same process data and
+		 * the commit of all but one of them fails with a conflict. */
+		return true;
 	}
 
 }

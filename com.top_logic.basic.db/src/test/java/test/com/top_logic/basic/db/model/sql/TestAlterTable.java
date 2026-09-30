@@ -86,9 +86,8 @@ public class TestAlterTable extends BasicTestCase {
 	public void testDropColumn() throws SQLException {
 		PooledConnection connection = _pool.borrowWriteConnection();
 		try {
-			executeUpdate(connection, alterTable(
-				table(_table.getDBName()),
-				dropColumn("a")));
+			executeUpdate(connection,
+				dropColumn(table(_table.getDBName()), "a"));
 			connection.commit();
 		} finally {
 			_pool.releaseWriteConnection(connection);
@@ -103,14 +102,35 @@ public class TestAlterTable extends BasicTestCase {
 	/**
 	 * Tests {@link SQLModifyColumn}.
 	 */
+	public void testRenameColumn() throws SQLException {
+		PooledConnection connection;
+
+		connection = _pool.borrowWriteConnection();
+		try {
+			executeUpdate(connection,
+				modifyColumnName(table(_table.getDBName()), "b", DBType.LONG, "xxx"));
+			connection.commit();
+		} finally {
+			_pool.releaseWriteConnection(connection);
+		}
+
+		DBSchema analyzedSchema = DBSchemaUtils.extractTable(_pool, _table.getDBName());
+		DBTable alteredTable = analyzedSchema.getTable(_table.getDBName());
+		DBColumn newColumn = alteredTable.getColumn("xxx");
+		assertNotNull(newColumn);
+		assertEquals(DBType.LONG, newColumn.getType());
+	}
+
+	/**
+	 * Tests {@link SQLModifyColumn}.
+	 */
 	public void testModifyColumnType() throws SQLException {
 		PooledConnection connection;
 
 		connection = _pool.borrowWriteConnection();
 		try {
-			executeUpdate(connection, alterTable(
-				table(_table.getDBName()),
-				modifyColumnType("b", DBType.STRING).setSize(60)));
+			executeUpdate(connection,
+				modifyColumnType(table(_table.getDBName()), "b", DBType.STRING).setSize(60));
 			connection.commit();
 		} finally {
 			_pool.releaseWriteConnection(connection);
@@ -129,9 +149,8 @@ public class TestAlterTable extends BasicTestCase {
 
 		connection = _pool.borrowWriteConnection();
 		try {
-			executeUpdate(connection, alterTable(
-				table(_table.getDBName()),
-				modifyColumnMandatory("b", DBType.LONG, true)));
+			executeUpdate(connection,
+				modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, true));
 			connection.commit();
 		} finally {
 			_pool.releaseWriteConnection(connection);
@@ -178,10 +197,9 @@ public class TestAlterTable extends BasicTestCase {
 
 		connection = _pool.borrowWriteConnection();
 		try {
-			executeUpdate(connection, alterTable(
-				table(_table.getDBName()),
-				addColumn("c", DBType.STRING).setSize(100).setMandatory(true).setBinary(true)
-					.setDefaultValue("cDefault")));
+			executeUpdate(connection,
+				addColumn(table(_table.getDBName()), "c", DBType.STRING).setSize(100).setMandatory(true).setBinary(true)
+					.setDefaultValue("cDefault"));
 			connection.commit();
 		} finally {
 			_pool.releaseWriteConnection(connection);

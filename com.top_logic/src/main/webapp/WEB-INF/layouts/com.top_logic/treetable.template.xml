@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
+	<properties extends="com.top_logic.layout.tree.component.WithTreeModelBuilder, com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.mig.html.DefaultSelectionModelFactory$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.basic.contextmenu.component.config.WithContextMenu, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.layout.WithChannelConfigs, com.top_logic.layout.table.component.WithCustomConfigKey">
 		<annotations>
 			<display-order>
 				<value>
@@ -15,15 +15,19 @@
 					<property name="fixedColumns"/>
 					<property name="partnerGroup"/>
 					<property name="configurationProviders"/>
+					<property name="selectionFilter"/>
 
 					<property name="rootVisible"/>
 					<property name="expandRoot"/>
 					<property name="defaultSelection"/>
+					<property name="defaultSelectionProvider"/>
 					<property name="expandSelected"/>
+					<property name="revealSelection"/>
 					<property name="multiSelection"/>
 					<property name="adjustSelectionWhenCollapsing"/>
 					<property name="isSecurityMaster"/>
 
+					<property name="toolbar"/>
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
 					<property name="showPopOut"/>
@@ -33,6 +37,11 @@
 					<property name="dragSource"/>
 					<property name="dropTargets"/>
 					<property name="buttons"/>
+					<property name="contextMenu"/>
+					<property name="onSelectionChange"/>
+					<property name="goto-targets"/>
+					<property name="additional-channels"/>
+					<property name="custom-config-key"/>
 				</value>
 			</display-order>
 		</annotations>
@@ -48,29 +57,13 @@
 			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
 			type="com.top_logic.layout.ModelSpec"
 		/>
-		<property name="modelBuilder"
-			instance-type="com.top_logic.layout.tree.component.TreeModelBuilder"
-			type="PolymorphicConfiguration"
-		>
-			<mandatory/>
-			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
-		</property>
-		<property name="multiSelection"
-			type="boolean"
-		/>
 		<property name="adjustSelectionWhenCollapsing"
 			default="false"
 			type="boolean"
 		/>
-		<property name="securityProviderClass"
-			default="securityRoot"
-			type="String"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
-			<hidden/>
-		</property>
 		<property name="buttons"
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			instance-type="com.top_logic.tool.boundsec.CommandHandler"
 			type="List"
 		>
 			<acceptable-classifiers value="treetable, commons"/>
@@ -101,33 +94,55 @@
 			default="1"
 			type="Integer"
 		/>
+		<property name="onSelectionChange"
+			instance-type="com.top_logic.layout.component.OnSelectionChangeHandler"
+		/>
+		<property name="contextMenu"
+			instance-type="com.top_logic.layout.basic.contextmenu.ContextMenuProvider"
+			type="PolymorphicConfiguration"
+		>
+			<acceptable-classifiers
+				unclassified="false"
+				value="treetable, common"
+			/>
+			<item-default value="com.top_logic.layout.table.tree.TreeTableContextMenuProvider"/>
+		</property>
 	</properties>
 
 	<tree-table name="TreeTable"
 		adjustSelectionWhenCollapsing="${adjustSelectionWhenCollapsing}"
+		custom-config-key="${custom-config-key}"
 		defaultSelection="${defaultSelection}"
+		defaultSelectionProvider="${defaultSelectionProvider}"
 		dialogs="${dialogs}"
 		expandRoot="${expandRoot}"
 		expandSelected="${expandSelected}"
 		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"
 		objectType="${type}"
+		onSelectionChange="${onSelectionChange}"
 		partnerGroup="${partnerGroup}"
+		revealSelection="${revealSelection}"
 		rootVisible="${rootVisible}"
 		securityObject="${securityObject}"
-		securityProviderClass="${securityProviderClass}"
 		selection="${selection}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"
 		titleKey="${name}"
+		toolbar="${toolbar}"
 	>
-		<selectionModelFactory multiple="${multiSelection}"/>
+		<selectionModelFactory class="com.top_logic.mig.html.TreeSelectionModelFactory"
+			filter="${selectionFilter}"
+			multiple="${multiSelection}"
+			treeSemantics="${tree-semantics-supported}"
+		/>
 		<treeBuilder class="com.top_logic.layout.table.tree.TreeBuilderAdaptor"
 			treeModelBuilder="${modelBuilder}"
 		/>
 		<table
 			configurationProviders="${configurationProviders}"
+			contextMenu="${contextMenu}"
 			defaultColumns="${defaultColumns}"
 			dragSource="${dragSource}"
 			dropTargets="${dropTargets}"
@@ -137,5 +152,7 @@
 			${buttons}
 			<include name="templates/editComponentCommands.xml"/>
 		</buttons>
+		<goto-targets>${goto-targets}</goto-targets>
+		<additional-channels>${additional-channels}</additional-channels>
 	</tree-table>
 </config:template>

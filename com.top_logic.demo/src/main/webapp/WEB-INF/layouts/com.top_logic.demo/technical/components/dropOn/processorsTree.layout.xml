@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="false"
 	template="com.top_logic/tree.template.xml"
 >
 	<arguments
@@ -21,17 +20,20 @@
 		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
 			finite="true"
 			leafPredicate="false"
-			modelPredicate="true"
-			modelQuery="null"
-			nodePredicate="node->$node.instanceOf(`test.dnd.dropon:Processor`)"
+			modelPredicate="x -> $x == `test.dnd.dropon#ROOT`"
+			modelQuery="`test.dnd.dropon#ROOT`"
+			nodePredicate="node->$node.instanceOf(`test.dnd.dropon:Processor`) || $node == `test.dnd.dropon:Root`"
 			nodesToUpdate="null"
-			parents="node->$node.referers(`test.dnd.dropon:Processor#subprocessors`)"
 			rootNode="x -> $x"
 		>
 			<children><![CDATA[node-> switch($node.type()) {
     `test.dnd.dropon:Root`: $node.get(`test.dnd.dropon:Root#processors`);
     default: $node.get(`test.dnd.dropon:Processor#subprocessors`);
 }]]></children>
+			<parents><![CDATA[node-> {
+  superProcessors = $node.referers(`test.dnd.dropon:Processor#subprocessors`);
+  $superProcessors.isEmpty() ? [`test.dnd.dropon#ROOT`] : $superProcessors;
+}]]></parents>
 		</modelBuilder>
 		<dropTargets>
 			<dropTarget class="com.top_logic.model.search.providers.OntoTreeDropByExpression"

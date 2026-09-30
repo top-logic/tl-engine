@@ -86,16 +86,11 @@ public class CommandContextDescription implements ContextDescription {
 
 	@Override
 	public void logError() {
-		String commandId = getCommandId();
-		String logMessage = "Command '" + commandId + "' failed.";
-		final Throwable problem = getException();
 		if (isInternalError()) {
+			String commandId = getCommandId();
+			String logMessage = "Command '" + commandId + "' failed.";
+			Throwable problem = getException();
 			Logger.error(logMessage, problem, ErrorHandlingHelper.class);
-		} else {
-			// For compatibility, even log non-fatal problems.
-			if (problem != null) {
-				Logger.info(logMessage, problem, ErrorHandlingHelper.class);
-			}
 		}
 	}
 

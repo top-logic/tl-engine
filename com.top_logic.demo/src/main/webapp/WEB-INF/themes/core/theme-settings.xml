@@ -49,6 +49,12 @@
 	<icon name="DEMO_NEW_CS_CHILD"
 		value="/demo/new-cs-child.png"
 	/>
+	<icon name="DEMO_DIALOG_ICON"
+		value="/demo/dialog-icon.png"
+	/>
+	<icon name="ICONS_ALERT"
+		value="css:fa-solid fa-triangle-exclamation"
+	/>
 	<icon name="ICON_BRIEFCASE"
 		value="css:fas fa-briefcase"
 	/>
@@ -76,26 +82,17 @@
 	<icon name="ICON_GLOBE"
 		value="css:fas fa-globe"
 	/>
-	<icon name="ICON_HANDSHAKE_DEMO_BLUE"
-		value="css:fas fa-handshake demo-blue"
-	/>
 	<icon name="ICON_LEAVE_DEMO_GREEN"
 		value="css:fas fa-leave demo-green"
 	/>
-	<icon name="ICON_LOCK_DEMO_FUCHSIA"
-		value="css:fas fa-lock demo-fuchsia"
-	/>
 	<icon name="ICON_PARACHUTE_BOX_DEMO_FUCHSIA"
-		value="css:fas fa-parachute-box demo-fuchsia"
+		value="css:fas fa-parachute-box tl-accent-1"
 	/>
 	<icon name="ICON_PEN_FANCY"
-		value="css:bi bi-pencil-fill"
+		value="css:fa-solid fa-pen"
 	/>
 	<icon name="ICON_PIGGY_BANK_DEMO_FUCHSIA"
-		value="css:fas fa-piggy-bank demo-fuchsia"
-	/>
-	<icon name="ICON_PLUS"
-		value="css:bi bi-plus-lg"
+		value="css:fas fa-piggy-bank tl-accent-1"
 	/>
 	<icon name="ICON_PROJECT_DIAGRAM"
 		value="css:fas fa-project-diagram"
@@ -109,26 +106,23 @@
 	<icon name="ICON_SEEDLING_DEMO_GREEN"
 		value="css:fas fa-seedling demo-green"
 	/>
-	<icon name="ICON_TABLE"
-		value="css:bi bi-table"
-	/>
 	<icon name="ICON_USER_SECRET"
-		value="css:bi bi-people-fill"
+		value="css:fa-solid fa-shield-halved"
 	/>
 	<icon name="ICONS_DIALOG_INFORMATION"
-		value="css:bi bi-info-circle-fill"
+		value="css:fa-solid fa-circle-info"
 	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_QUESTION"
-		value="css:bi bi-info-square"
+		value="css:fa-solid fa-circle-info"
 	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_INFORMATION"
-		value="css:bi bi-info-circle-fill"
+		value="css:fa-solid fa-circle-info"
 	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_WARNING"
-		value="css:bi bi-exclamation-triangle-fill"
+		value="css:fa-solid fa-triangle-exclamation"
 	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_ERROR"
-		value="css:bi bi-x-octagon-fill"
+		value="css:fa-solid fa-triangle-exclamation"
 	/>
 	<icon name="com.top_logic.demo.layout.gantt.Icons.MILESTONE"
 		value="/demo/Milestone.png"
@@ -137,16 +131,13 @@
 		value="/demo/TL_Logo_blue.svg"
 	/>
 	<icon name="layouts.demo.tlHome"
-		value="css:bi bi-house-fill"
-	/>
-	<icon name="model.DemoTypes.A"
-		value="css:bi bi-alarm-fill"
+		value="css:fa-solid fa-house"
 	/>
 	<icon name="ICON_CHART_JS"
-		value="css:bi bi-pie-chart-fill"
+		value="css:fa-solid fa-chart-pie"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER"
-		value="css:bi bi-funnel-fill"
+		value="css:fa-solid fa-filter"
 	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.USER_ICON"
 		value="css:fas fa-users"
@@ -159,7 +150,7 @@
 	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.USER_CONFIG"
 		value="css:fas fa-users-cog"
-	/>	
+	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.TOOLS"
 		value="css:fas fa-tools"
 	/>
@@ -168,5 +159,8 @@
 	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.FILE_CODE"
 		value="css:fas fa-file-code"
+	/>
+	<int name="com.top_logic.layout.basic.Icons.FORM_TABLE_HEIGHT"
+		value="600"
 	/>
 </settings>

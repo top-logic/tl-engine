@@ -13,7 +13,7 @@ import com.top_logic.client.diagramjs.util.DiagramJSObjectUtil;
 /**
  * Options for a {@link Connection}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class ConnectionOptions extends GraphPartOptions {
 

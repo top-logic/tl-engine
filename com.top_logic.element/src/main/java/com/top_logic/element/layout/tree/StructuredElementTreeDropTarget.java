@@ -54,7 +54,8 @@ public class StructuredElementTreeDropTarget extends BusinessObjectTreeDrop {
 		Object destinationObject = TLTreeModelUtil.getInnerBusinessObject(event.getRefNode());
 
 		if (destinationObject instanceof StructuredElement) {
-			try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			try (Transaction transaction =
+				PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.DROP_OPERATION)) {
 				droppedObjects
 					.forEach(droppedObject -> handleDropInternal(dropPosition, destinationObject, droppedObject));
 				transaction.commit();

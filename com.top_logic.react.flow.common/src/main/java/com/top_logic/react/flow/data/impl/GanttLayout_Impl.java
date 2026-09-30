@@ -1,0 +1,1034 @@
+package com.top_logic.react.flow.data.impl;
+
+/**
+ * Implementation of {@link com.top_logic.react.flow.data.GanttLayout}.
+ */
+public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_Impl implements com.top_logic.react.flow.data.GanttLayout {
+
+	private final java.util.List<com.top_logic.react.flow.data.GanttRow> _rootRows = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.react.flow.data.GanttRow>() {
+		@Override
+		protected void beforeAdd(int index, com.top_logic.react.flow.data.GanttRow element) {
+			_listener.beforeAdd(GanttLayout_Impl.this, ROOT_ROWS__PROP, index, element);
+		}
+
+		@Override
+		protected void afterRemove(int index, com.top_logic.react.flow.data.GanttRow element) {
+			_listener.afterRemove(GanttLayout_Impl.this, ROOT_ROWS__PROP, index, element);
+		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(GanttLayout_Impl.this, ROOT_ROWS__PROP);
+		}
+	};
+
+	private final java.util.List<com.top_logic.react.flow.data.GanttItem> _items = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.react.flow.data.GanttItem>() {
+		@Override
+		protected void beforeAdd(int index, com.top_logic.react.flow.data.GanttItem element) {
+			_listener.beforeAdd(GanttLayout_Impl.this, ITEMS__PROP, index, element);
+		}
+
+		@Override
+		protected void afterRemove(int index, com.top_logic.react.flow.data.GanttItem element) {
+			_listener.afterRemove(GanttLayout_Impl.this, ITEMS__PROP, index, element);
+		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(GanttLayout_Impl.this, ITEMS__PROP);
+		}
+	};
+
+	private final java.util.List<com.top_logic.react.flow.data.GanttEdge> _edges = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.react.flow.data.GanttEdge>() {
+		@Override
+		protected void beforeAdd(int index, com.top_logic.react.flow.data.GanttEdge element) {
+			_listener.beforeAdd(GanttLayout_Impl.this, EDGES__PROP, index, element);
+		}
+
+		@Override
+		protected void afterRemove(int index, com.top_logic.react.flow.data.GanttEdge element) {
+			_listener.afterRemove(GanttLayout_Impl.this, EDGES__PROP, index, element);
+		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(GanttLayout_Impl.this, EDGES__PROP);
+		}
+	};
+
+	private final java.util.List<com.top_logic.react.flow.data.GanttDecoration> _decorations = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.react.flow.data.GanttDecoration>() {
+		@Override
+		protected void beforeAdd(int index, com.top_logic.react.flow.data.GanttDecoration element) {
+			_listener.beforeAdd(GanttLayout_Impl.this, DECORATIONS__PROP, index, element);
+		}
+
+		@Override
+		protected void afterRemove(int index, com.top_logic.react.flow.data.GanttDecoration element) {
+			_listener.afterRemove(GanttLayout_Impl.this, DECORATIONS__PROP, index, element);
+		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(GanttLayout_Impl.this, DECORATIONS__PROP);
+		}
+	};
+
+	private double _rangeMin = 0.0d;
+
+	private double _rangeMax = 0.0d;
+
+	private double _initialZoom = 1.0;
+
+	private double _zoom = 1.0;
+
+	private double _snapTo = 1.0;
+
+	private double _indentWidth = 16.0;
+
+	private double _rowLabelMinWidth = 200.0;
+
+	private double _rowLabelPadding = 4.0;
+
+	private transient double _columnWidth = 0.0d;
+
+	private double _scrollX = 0.0d;
+
+	private double _scrollY = 0.0d;
+
+	private int _frozenRows = 0;
+
+	private transient double _headerHeight = 0.0d;
+
+	private transient double _dataHeight = 0.0d;
+
+	private transient double _panStartX = 0.0d;
+
+	private transient double _panStartY = 0.0d;
+
+	private transient double _panStartScrollX = 0.0d;
+
+	private transient double _panStartScrollY = 0.0d;
+
+	/**
+	 * Creates a {@link GanttLayout_Impl} instance.
+	 *
+	 * @see com.top_logic.react.flow.data.GanttLayout#create()
+	 */
+	public GanttLayout_Impl() {
+		super();
+	}
+
+	@Override
+	public TypeKind kind() {
+		return TypeKind.GANTT_LAYOUT;
+	}
+
+	@Override
+	public final java.util.List<com.top_logic.react.flow.data.GanttRow> getRootRows() {
+		return _rootRows;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setRootRows(java.util.List<? extends com.top_logic.react.flow.data.GanttRow> value) {
+		internalSetRootRows(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRootRows()} without chain call utility. */
+	protected final void internalSetRootRows(java.util.List<? extends com.top_logic.react.flow.data.GanttRow> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'rootRows' cannot be null.");
+		_rootRows.clear();
+		_rootRows.addAll(value);
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout addRootRow(com.top_logic.react.flow.data.GanttRow value) {
+		internalAddRootRow(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addRootRow(com.top_logic.react.flow.data.GanttRow)} without chain call utility. */
+	protected final void internalAddRootRow(com.top_logic.react.flow.data.GanttRow value) {
+		_rootRows.add(value);
+	}
+
+	@Override
+	public final void removeRootRow(com.top_logic.react.flow.data.GanttRow value) {
+		_rootRows.remove(value);
+	}
+
+	@Override
+	public final java.util.List<com.top_logic.react.flow.data.GanttItem> getItems() {
+		return _items;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setItems(java.util.List<? extends com.top_logic.react.flow.data.GanttItem> value) {
+		internalSetItems(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getItems()} without chain call utility. */
+	protected final void internalSetItems(java.util.List<? extends com.top_logic.react.flow.data.GanttItem> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'items' cannot be null.");
+		_items.clear();
+		_items.addAll(value);
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout addItem(com.top_logic.react.flow.data.GanttItem value) {
+		internalAddItem(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addItem(com.top_logic.react.flow.data.GanttItem)} without chain call utility. */
+	protected final void internalAddItem(com.top_logic.react.flow.data.GanttItem value) {
+		_items.add(value);
+	}
+
+	@Override
+	public final void removeItem(com.top_logic.react.flow.data.GanttItem value) {
+		_items.remove(value);
+	}
+
+	@Override
+	public final java.util.List<com.top_logic.react.flow.data.GanttEdge> getEdges() {
+		return _edges;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setEdges(java.util.List<? extends com.top_logic.react.flow.data.GanttEdge> value) {
+		internalSetEdges(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getEdges()} without chain call utility. */
+	protected final void internalSetEdges(java.util.List<? extends com.top_logic.react.flow.data.GanttEdge> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'edges' cannot be null.");
+		_edges.clear();
+		_edges.addAll(value);
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout addEdge(com.top_logic.react.flow.data.GanttEdge value) {
+		internalAddEdge(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addEdge(com.top_logic.react.flow.data.GanttEdge)} without chain call utility. */
+	protected final void internalAddEdge(com.top_logic.react.flow.data.GanttEdge value) {
+		_edges.add(value);
+	}
+
+	@Override
+	public final void removeEdge(com.top_logic.react.flow.data.GanttEdge value) {
+		_edges.remove(value);
+	}
+
+	@Override
+	public final java.util.List<com.top_logic.react.flow.data.GanttDecoration> getDecorations() {
+		return _decorations;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setDecorations(java.util.List<? extends com.top_logic.react.flow.data.GanttDecoration> value) {
+		internalSetDecorations(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDecorations()} without chain call utility. */
+	protected final void internalSetDecorations(java.util.List<? extends com.top_logic.react.flow.data.GanttDecoration> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'decorations' cannot be null.");
+		_decorations.clear();
+		_decorations.addAll(value);
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout addDecoration(com.top_logic.react.flow.data.GanttDecoration value) {
+		internalAddDecoration(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addDecoration(com.top_logic.react.flow.data.GanttDecoration)} without chain call utility. */
+	protected final void internalAddDecoration(com.top_logic.react.flow.data.GanttDecoration value) {
+		_decorations.add(value);
+	}
+
+	@Override
+	public final void removeDecoration(com.top_logic.react.flow.data.GanttDecoration value) {
+		_decorations.remove(value);
+	}
+
+	@Override
+	public final double getRangeMin() {
+		return _rangeMin;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setRangeMin(double value) {
+		internalSetRangeMin(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRangeMin()} without chain call utility. */
+	protected final void internalSetRangeMin(double value) {
+		_listener.beforeSet(this, RANGE_MIN__PROP, value);
+		_rangeMin = value;
+		_listener.afterChanged(this, RANGE_MIN__PROP);
+	}
+
+	@Override
+	public final double getRangeMax() {
+		return _rangeMax;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setRangeMax(double value) {
+		internalSetRangeMax(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRangeMax()} without chain call utility. */
+	protected final void internalSetRangeMax(double value) {
+		_listener.beforeSet(this, RANGE_MAX__PROP, value);
+		_rangeMax = value;
+		_listener.afterChanged(this, RANGE_MAX__PROP);
+	}
+
+	@Override
+	public final double getInitialZoom() {
+		return _initialZoom;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setInitialZoom(double value) {
+		internalSetInitialZoom(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getInitialZoom()} without chain call utility. */
+	protected final void internalSetInitialZoom(double value) {
+		_listener.beforeSet(this, INITIAL_ZOOM__PROP, value);
+		_initialZoom = value;
+		_listener.afterChanged(this, INITIAL_ZOOM__PROP);
+	}
+
+	@Override
+	public final double getZoom() {
+		return _zoom;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setZoom(double value) {
+		internalSetZoom(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getZoom()} without chain call utility. */
+	protected final void internalSetZoom(double value) {
+		_listener.beforeSet(this, ZOOM__PROP, value);
+		_zoom = value;
+		_listener.afterChanged(this, ZOOM__PROP);
+	}
+
+	@Override
+	public final double getSnapTo() {
+		return _snapTo;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setSnapTo(double value) {
+		internalSetSnapTo(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSnapTo()} without chain call utility. */
+	protected final void internalSetSnapTo(double value) {
+		_listener.beforeSet(this, SNAP_TO__PROP, value);
+		_snapTo = value;
+		_listener.afterChanged(this, SNAP_TO__PROP);
+	}
+
+	@Override
+	public final double getIndentWidth() {
+		return _indentWidth;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setIndentWidth(double value) {
+		internalSetIndentWidth(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getIndentWidth()} without chain call utility. */
+	protected final void internalSetIndentWidth(double value) {
+		_listener.beforeSet(this, INDENT_WIDTH__PROP, value);
+		_indentWidth = value;
+		_listener.afterChanged(this, INDENT_WIDTH__PROP);
+	}
+
+	@Override
+	public final double getRowLabelMinWidth() {
+		return _rowLabelMinWidth;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setRowLabelMinWidth(double value) {
+		internalSetRowLabelMinWidth(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRowLabelMinWidth()} without chain call utility. */
+	protected final void internalSetRowLabelMinWidth(double value) {
+		_listener.beforeSet(this, ROW_LABEL_MIN_WIDTH__PROP, value);
+		_rowLabelMinWidth = value;
+		_listener.afterChanged(this, ROW_LABEL_MIN_WIDTH__PROP);
+	}
+
+	@Override
+	public final double getRowLabelPadding() {
+		return _rowLabelPadding;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setRowLabelPadding(double value) {
+		internalSetRowLabelPadding(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRowLabelPadding()} without chain call utility. */
+	protected final void internalSetRowLabelPadding(double value) {
+		_listener.beforeSet(this, ROW_LABEL_PADDING__PROP, value);
+		_rowLabelPadding = value;
+		_listener.afterChanged(this, ROW_LABEL_PADDING__PROP);
+	}
+
+	@Override
+	public final double getColumnWidth() {
+		return _columnWidth;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setColumnWidth(double value) {
+		internalSetColumnWidth(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getColumnWidth()} without chain call utility. */
+	protected final void internalSetColumnWidth(double value) {
+		_listener.beforeSet(this, COLUMN_WIDTH__PROP, value);
+		_columnWidth = value;
+		_listener.afterChanged(this, COLUMN_WIDTH__PROP);
+	}
+
+	@Override
+	public final double getScrollX() {
+		return _scrollX;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setScrollX(double value) {
+		internalSetScrollX(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getScrollX()} without chain call utility. */
+	protected final void internalSetScrollX(double value) {
+		_listener.beforeSet(this, SCROLL_X__PROP, value);
+		_scrollX = value;
+		_listener.afterChanged(this, SCROLL_X__PROP);
+	}
+
+	@Override
+	public final double getScrollY() {
+		return _scrollY;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setScrollY(double value) {
+		internalSetScrollY(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getScrollY()} without chain call utility. */
+	protected final void internalSetScrollY(double value) {
+		_listener.beforeSet(this, SCROLL_Y__PROP, value);
+		_scrollY = value;
+		_listener.afterChanged(this, SCROLL_Y__PROP);
+	}
+
+	@Override
+	public final int getFrozenRows() {
+		return _frozenRows;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setFrozenRows(int value) {
+		internalSetFrozenRows(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getFrozenRows()} without chain call utility. */
+	protected final void internalSetFrozenRows(int value) {
+		_listener.beforeSet(this, FROZEN_ROWS__PROP, value);
+		_frozenRows = value;
+		_listener.afterChanged(this, FROZEN_ROWS__PROP);
+	}
+
+	@Override
+	public final double getHeaderHeight() {
+		return _headerHeight;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setHeaderHeight(double value) {
+		internalSetHeaderHeight(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getHeaderHeight()} without chain call utility. */
+	protected final void internalSetHeaderHeight(double value) {
+		_listener.beforeSet(this, HEADER_HEIGHT__PROP, value);
+		_headerHeight = value;
+		_listener.afterChanged(this, HEADER_HEIGHT__PROP);
+	}
+
+	@Override
+	public final double getDataHeight() {
+		return _dataHeight;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setDataHeight(double value) {
+		internalSetDataHeight(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDataHeight()} without chain call utility. */
+	protected final void internalSetDataHeight(double value) {
+		_listener.beforeSet(this, DATA_HEIGHT__PROP, value);
+		_dataHeight = value;
+		_listener.afterChanged(this, DATA_HEIGHT__PROP);
+	}
+
+	@Override
+	public final double getPanStartX() {
+		return _panStartX;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setPanStartX(double value) {
+		internalSetPanStartX(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getPanStartX()} without chain call utility. */
+	protected final void internalSetPanStartX(double value) {
+		_listener.beforeSet(this, PAN_START_X__PROP, value);
+		_panStartX = value;
+		_listener.afterChanged(this, PAN_START_X__PROP);
+	}
+
+	@Override
+	public final double getPanStartY() {
+		return _panStartY;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setPanStartY(double value) {
+		internalSetPanStartY(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getPanStartY()} without chain call utility. */
+	protected final void internalSetPanStartY(double value) {
+		_listener.beforeSet(this, PAN_START_Y__PROP, value);
+		_panStartY = value;
+		_listener.afterChanged(this, PAN_START_Y__PROP);
+	}
+
+	@Override
+	public final double getPanStartScrollX() {
+		return _panStartScrollX;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setPanStartScrollX(double value) {
+		internalSetPanStartScrollX(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getPanStartScrollX()} without chain call utility. */
+	protected final void internalSetPanStartScrollX(double value) {
+		_listener.beforeSet(this, PAN_START_SCROLL_X__PROP, value);
+		_panStartScrollX = value;
+		_listener.afterChanged(this, PAN_START_SCROLL_X__PROP);
+	}
+
+	@Override
+	public final double getPanStartScrollY() {
+		return _panStartScrollY;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setPanStartScrollY(double value) {
+		internalSetPanStartScrollY(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getPanStartScrollY()} without chain call utility. */
+	protected final void internalSetPanStartScrollY(double value) {
+		_listener.beforeSet(this, PAN_START_SCROLL_Y__PROP, value);
+		_panStartScrollY = value;
+		_listener.afterChanged(this, PAN_START_SCROLL_Y__PROP);
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setContents(java.util.List<? extends com.top_logic.react.flow.data.Box> value) {
+		internalSetContents(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout addContent(com.top_logic.react.flow.data.Box value) {
+		internalAddContent(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setX(double value) {
+		internalSetX(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setY(double value) {
+		internalSetY(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setWidth(double value) {
+		internalSetWidth(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setHeight(double value) {
+		internalSetHeight(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
+	@Override
+	public String jsonType() {
+		return GANTT_LAYOUT__TYPE;
+	}
+
+	@SuppressWarnings("hiding")
+	static final java.util.List<String> PROPERTIES;
+	static {
+		java.util.List<String> local = java.util.Arrays.asList(
+			ROOT_ROWS__PROP, 
+			ITEMS__PROP, 
+			EDGES__PROP, 
+			DECORATIONS__PROP, 
+			RANGE_MIN__PROP, 
+			RANGE_MAX__PROP, 
+			INITIAL_ZOOM__PROP, 
+			ZOOM__PROP, 
+			SNAP_TO__PROP, 
+			INDENT_WIDTH__PROP, 
+			ROW_LABEL_MIN_WIDTH__PROP, 
+			ROW_LABEL_PADDING__PROP, 
+			COLUMN_WIDTH__PROP, 
+			SCROLL_X__PROP, 
+			SCROLL_Y__PROP, 
+			FROZEN_ROWS__PROP, 
+			HEADER_HEIGHT__PROP, 
+			DATA_HEIGHT__PROP, 
+			PAN_START_X__PROP, 
+			PAN_START_Y__PROP, 
+			PAN_START_SCROLL_X__PROP, 
+			PAN_START_SCROLL_Y__PROP);
+		java.util.List<String> tmp = new java.util.ArrayList<>();
+		tmp.addAll(com.top_logic.react.flow.data.impl.Layout_Impl.PROPERTIES);
+		tmp.addAll(local);
+		PROPERTIES = java.util.Collections.unmodifiableList(tmp);
+	}
+
+	@SuppressWarnings("hiding")
+	static final java.util.Set<String> TRANSIENT_PROPERTIES;
+	static {
+		java.util.HashSet<String> tmp = new java.util.HashSet<>();
+		tmp.addAll(com.top_logic.react.flow.data.impl.Layout_Impl.TRANSIENT_PROPERTIES);
+		tmp.addAll(java.util.Arrays.asList(
+				COLUMN_WIDTH__PROP, 
+				HEADER_HEIGHT__PROP, 
+				DATA_HEIGHT__PROP, 
+				PAN_START_X__PROP, 
+				PAN_START_Y__PROP, 
+				PAN_START_SCROLL_X__PROP, 
+				PAN_START_SCROLL_Y__PROP));
+		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
+	}
+
+	@Override
+	public java.util.List<String> properties() {
+		return PROPERTIES;
+	}
+
+	@Override
+	public java.util.Set<String> transientProperties() {
+		return TRANSIENT_PROPERTIES;
+	}
+
+	@Override
+	public Object get(String field) {
+		switch (field) {
+			case ROOT_ROWS__PROP: return getRootRows();
+			case ITEMS__PROP: return getItems();
+			case EDGES__PROP: return getEdges();
+			case DECORATIONS__PROP: return getDecorations();
+			case RANGE_MIN__PROP: return getRangeMin();
+			case RANGE_MAX__PROP: return getRangeMax();
+			case INITIAL_ZOOM__PROP: return getInitialZoom();
+			case ZOOM__PROP: return getZoom();
+			case SNAP_TO__PROP: return getSnapTo();
+			case INDENT_WIDTH__PROP: return getIndentWidth();
+			case ROW_LABEL_MIN_WIDTH__PROP: return getRowLabelMinWidth();
+			case ROW_LABEL_PADDING__PROP: return getRowLabelPadding();
+			case COLUMN_WIDTH__PROP: return getColumnWidth();
+			case SCROLL_X__PROP: return getScrollX();
+			case SCROLL_Y__PROP: return getScrollY();
+			case FROZEN_ROWS__PROP: return getFrozenRows();
+			case HEADER_HEIGHT__PROP: return getHeaderHeight();
+			case DATA_HEIGHT__PROP: return getDataHeight();
+			case PAN_START_X__PROP: return getPanStartX();
+			case PAN_START_Y__PROP: return getPanStartY();
+			case PAN_START_SCROLL_X__PROP: return getPanStartScrollX();
+			case PAN_START_SCROLL_Y__PROP: return getPanStartScrollY();
+			default: return super.get(field);
+		}
+	}
+
+	@Override
+	public void set(String field, Object value) {
+		switch (field) {
+			case ROOT_ROWS__PROP: internalSetRootRows(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttRow.class, value)); break;
+			case ITEMS__PROP: internalSetItems(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttItem.class, value)); break;
+			case EDGES__PROP: internalSetEdges(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttEdge.class, value)); break;
+			case DECORATIONS__PROP: internalSetDecorations(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttDecoration.class, value)); break;
+			case RANGE_MIN__PROP: internalSetRangeMin((double) value); break;
+			case RANGE_MAX__PROP: internalSetRangeMax((double) value); break;
+			case INITIAL_ZOOM__PROP: internalSetInitialZoom((double) value); break;
+			case ZOOM__PROP: internalSetZoom((double) value); break;
+			case SNAP_TO__PROP: internalSetSnapTo((double) value); break;
+			case INDENT_WIDTH__PROP: internalSetIndentWidth((double) value); break;
+			case ROW_LABEL_MIN_WIDTH__PROP: internalSetRowLabelMinWidth((double) value); break;
+			case ROW_LABEL_PADDING__PROP: internalSetRowLabelPadding((double) value); break;
+			case COLUMN_WIDTH__PROP: internalSetColumnWidth((double) value); break;
+			case SCROLL_X__PROP: internalSetScrollX((double) value); break;
+			case SCROLL_Y__PROP: internalSetScrollY((double) value); break;
+			case FROZEN_ROWS__PROP: internalSetFrozenRows((int) value); break;
+			case HEADER_HEIGHT__PROP: internalSetHeaderHeight((double) value); break;
+			case DATA_HEIGHT__PROP: internalSetDataHeight((double) value); break;
+			case PAN_START_X__PROP: internalSetPanStartX((double) value); break;
+			case PAN_START_Y__PROP: internalSetPanStartY((double) value); break;
+			case PAN_START_SCROLL_X__PROP: internalSetPanStartScrollX((double) value); break;
+			case PAN_START_SCROLL_Y__PROP: internalSetPanStartScrollY((double) value); break;
+			default: super.set(field, value); break;
+		}
+	}
+
+	@Override
+	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+		super.writeFields(scope, out);
+		out.name(ROOT_ROWS__PROP);
+		out.beginArray();
+		for (com.top_logic.react.flow.data.GanttRow x : getRootRows()) {
+			x.writeTo(scope, out);
+		}
+		out.endArray();
+		out.name(ITEMS__PROP);
+		out.beginArray();
+		for (com.top_logic.react.flow.data.GanttItem x : getItems()) {
+			x.writeTo(scope, out);
+		}
+		out.endArray();
+		out.name(EDGES__PROP);
+		out.beginArray();
+		for (com.top_logic.react.flow.data.GanttEdge x : getEdges()) {
+			x.writeTo(scope, out);
+		}
+		out.endArray();
+		out.name(DECORATIONS__PROP);
+		out.beginArray();
+		for (com.top_logic.react.flow.data.GanttDecoration x : getDecorations()) {
+			x.writeTo(scope, out);
+		}
+		out.endArray();
+		out.name(RANGE_MIN__PROP);
+		out.value(getRangeMin());
+		out.name(RANGE_MAX__PROP);
+		out.value(getRangeMax());
+		out.name(INITIAL_ZOOM__PROP);
+		out.value(getInitialZoom());
+		out.name(ZOOM__PROP);
+		out.value(getZoom());
+		out.name(SNAP_TO__PROP);
+		out.value(getSnapTo());
+		out.name(INDENT_WIDTH__PROP);
+		out.value(getIndentWidth());
+		out.name(ROW_LABEL_MIN_WIDTH__PROP);
+		out.value(getRowLabelMinWidth());
+		out.name(ROW_LABEL_PADDING__PROP);
+		out.value(getRowLabelPadding());
+		out.name(SCROLL_X__PROP);
+		out.value(getScrollX());
+		out.name(SCROLL_Y__PROP);
+		out.value(getScrollY());
+		out.name(FROZEN_ROWS__PROP);
+		out.value(getFrozenRows());
+	}
+
+	@Override
+	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
+		switch (field) {
+			case ROOT_ROWS__PROP: {
+				out.beginArray();
+				for (com.top_logic.react.flow.data.GanttRow x : getRootRows()) {
+					x.writeTo(scope, out);
+				}
+				out.endArray();
+				break;
+			}
+			case ITEMS__PROP: {
+				out.beginArray();
+				for (com.top_logic.react.flow.data.GanttItem x : getItems()) {
+					x.writeTo(scope, out);
+				}
+				out.endArray();
+				break;
+			}
+			case EDGES__PROP: {
+				out.beginArray();
+				for (com.top_logic.react.flow.data.GanttEdge x : getEdges()) {
+					x.writeTo(scope, out);
+				}
+				out.endArray();
+				break;
+			}
+			case DECORATIONS__PROP: {
+				out.beginArray();
+				for (com.top_logic.react.flow.data.GanttDecoration x : getDecorations()) {
+					x.writeTo(scope, out);
+				}
+				out.endArray();
+				break;
+			}
+			case RANGE_MIN__PROP: {
+				out.value(getRangeMin());
+				break;
+			}
+			case RANGE_MAX__PROP: {
+				out.value(getRangeMax());
+				break;
+			}
+			case INITIAL_ZOOM__PROP: {
+				out.value(getInitialZoom());
+				break;
+			}
+			case ZOOM__PROP: {
+				out.value(getZoom());
+				break;
+			}
+			case SNAP_TO__PROP: {
+				out.value(getSnapTo());
+				break;
+			}
+			case INDENT_WIDTH__PROP: {
+				out.value(getIndentWidth());
+				break;
+			}
+			case ROW_LABEL_MIN_WIDTH__PROP: {
+				out.value(getRowLabelMinWidth());
+				break;
+			}
+			case ROW_LABEL_PADDING__PROP: {
+				out.value(getRowLabelPadding());
+				break;
+			}
+			case COLUMN_WIDTH__PROP: {
+				out.value(getColumnWidth());
+				break;
+			}
+			case SCROLL_X__PROP: {
+				out.value(getScrollX());
+				break;
+			}
+			case SCROLL_Y__PROP: {
+				out.value(getScrollY());
+				break;
+			}
+			case FROZEN_ROWS__PROP: {
+				out.value(getFrozenRows());
+				break;
+			}
+			case HEADER_HEIGHT__PROP: {
+				out.value(getHeaderHeight());
+				break;
+			}
+			case DATA_HEIGHT__PROP: {
+				out.value(getDataHeight());
+				break;
+			}
+			case PAN_START_X__PROP: {
+				out.value(getPanStartX());
+				break;
+			}
+			case PAN_START_Y__PROP: {
+				out.value(getPanStartY());
+				break;
+			}
+			case PAN_START_SCROLL_X__PROP: {
+				out.value(getPanStartScrollX());
+				break;
+			}
+			case PAN_START_SCROLL_Y__PROP: {
+				out.value(getPanStartScrollY());
+				break;
+			}
+			default: super.writeFieldValue(scope, out, field);
+		}
+	}
+
+	@Override
+	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+		switch (field) {
+			case ROOT_ROWS__PROP: {
+				java.util.List<com.top_logic.react.flow.data.GanttRow> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.react.flow.data.GanttRow.readGanttRow(scope, in));
+				}
+				in.endArray();
+				setRootRows(newValue);
+			}
+			break;
+			case ITEMS__PROP: {
+				java.util.List<com.top_logic.react.flow.data.GanttItem> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.react.flow.data.GanttItem.readGanttItem(scope, in));
+				}
+				in.endArray();
+				setItems(newValue);
+			}
+			break;
+			case EDGES__PROP: {
+				java.util.List<com.top_logic.react.flow.data.GanttEdge> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.react.flow.data.GanttEdge.readGanttEdge(scope, in));
+				}
+				in.endArray();
+				setEdges(newValue);
+			}
+			break;
+			case DECORATIONS__PROP: {
+				java.util.List<com.top_logic.react.flow.data.GanttDecoration> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.react.flow.data.GanttDecoration.readGanttDecoration(scope, in));
+				}
+				in.endArray();
+				setDecorations(newValue);
+			}
+			break;
+			case RANGE_MIN__PROP: setRangeMin(in.nextDouble()); break;
+			case RANGE_MAX__PROP: setRangeMax(in.nextDouble()); break;
+			case INITIAL_ZOOM__PROP: setInitialZoom(in.nextDouble()); break;
+			case ZOOM__PROP: setZoom(in.nextDouble()); break;
+			case SNAP_TO__PROP: setSnapTo(in.nextDouble()); break;
+			case INDENT_WIDTH__PROP: setIndentWidth(in.nextDouble()); break;
+			case ROW_LABEL_MIN_WIDTH__PROP: setRowLabelMinWidth(in.nextDouble()); break;
+			case ROW_LABEL_PADDING__PROP: setRowLabelPadding(in.nextDouble()); break;
+			case SCROLL_X__PROP: setScrollX(in.nextDouble()); break;
+			case SCROLL_Y__PROP: setScrollY(in.nextDouble()); break;
+			case FROZEN_ROWS__PROP: setFrozenRows(in.nextInt()); break;
+			default: super.readField(scope, in, field);
+		}
+	}
+
+	@Override
+	public void writeElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field, Object element) throws java.io.IOException {
+		switch (field) {
+			case ROOT_ROWS__PROP: {
+				((com.top_logic.react.flow.data.GanttRow) element).writeTo(scope, out);
+				break;
+			}
+			case ITEMS__PROP: {
+				((com.top_logic.react.flow.data.GanttItem) element).writeTo(scope, out);
+				break;
+			}
+			case EDGES__PROP: {
+				((com.top_logic.react.flow.data.GanttEdge) element).writeTo(scope, out);
+				break;
+			}
+			case DECORATIONS__PROP: {
+				((com.top_logic.react.flow.data.GanttDecoration) element).writeTo(scope, out);
+				break;
+			}
+			default: super.writeElement(scope, out, field, element);
+		}
+	}
+
+	@Override
+	public Object readElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+		switch (field) {
+			case ROOT_ROWS__PROP: {
+				return com.top_logic.react.flow.data.GanttRow.readGanttRow(scope, in);
+			}
+			case ITEMS__PROP: {
+				return com.top_logic.react.flow.data.GanttItem.readGanttItem(scope, in);
+			}
+			case EDGES__PROP: {
+				return com.top_logic.react.flow.data.GanttEdge.readGanttEdge(scope, in);
+			}
+			case DECORATIONS__PROP: {
+				return com.top_logic.react.flow.data.GanttDecoration.readGanttDecoration(scope, in);
+			}
+			default: return super.readElement(scope, in, field);
+		}
+	}
+
+	@Override
+	public <R,A,E extends Throwable> R visit(com.top_logic.react.flow.data.Layout.Visitor<R,A,E> v, A arg) throws E {
+		return v.visit(this, arg);
+	}
+
+}

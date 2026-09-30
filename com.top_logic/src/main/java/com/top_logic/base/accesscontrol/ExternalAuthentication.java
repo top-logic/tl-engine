@@ -11,7 +11,7 @@ import com.top_logic.basic.config.annotation.Name;
 /**
  * Configuration for the external authentication.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface ExternalAuthentication extends ConfigurationItem {
 	String XML_KEY_EXTAUTH_ACTIVATE = "isEnabled";

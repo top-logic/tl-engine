@@ -27,6 +27,7 @@ import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -58,6 +59,7 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
+@Label("Lucene search index")
 @ServiceDependencies({
 	FormatConverterFactory.Module.class,
 	MimeTypes.Module.class,
@@ -630,8 +632,8 @@ public final class LuceneIndex extends ConfiguredManagedClass<LuceneIndex.Lucene
     public void resetIndex() {
 		shutDown();
 		deleteIndex(); // Cleanup
-		createIndex();
 		init(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY);
+		createIndex();
     }
     
     /**

@@ -17,6 +17,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.storage.GenericMandatoryCheck;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.export.EmptyPreloadContribution;
@@ -31,6 +32,8 @@ import com.top_logic.util.model.check.InstanceCheck;
  */
 public abstract class AbstractStorageBase<C extends AbstractStorageBase.Config<?>> extends AbstractConfiguredInstance<C>
 		implements StorageImplementation {
+
+	private TLStructuredTypePart _attribute;
 
 	/**
 	 * Base configuration interface for {@link AbstractStorageBase}.
@@ -59,7 +62,14 @@ public abstract class AbstractStorageBase<C extends AbstractStorageBase.Config<?
 
 	@Override
 	public void init(TLStructuredTypePart attribute) {
-		// No initialization by default.
+		_attribute = attribute;
+	}
+
+	/**
+	 * The attribute, this storage stores values for.
+	 */
+	public TLStructuredTypePart getAttribute() {
+		return _attribute;
 	}
 
 	@Override
@@ -100,10 +110,17 @@ public abstract class AbstractStorageBase<C extends AbstractStorageBase.Config<?
 	}
 
 	private static Object toPersistentObject(Object value) {
-		if (value instanceof TLFormObject) {
-			TLObject result = ((TLFormObject) value).getEditedObject();
+		if (value instanceof TLFormObject overlay) {
+			TLObject result = overlay.getEditedObject();
 			if (result == null) {
-				throw new IllegalStateException("Object creation not performed before updating persistent values.");
+				/* This can only be the case when the overlay is an ObjectCreation. This can happen,
+				 * for example, in the following case: An element with a composite reference is
+				 * edited and two new elements (A1, A2) are scheduled. If A1 is edited in a dialog,
+				 * then A1 is copied (to allow cancel changes). If an attribute of A1 is changed to
+				 * point to A2 and the changes are applied, then A2 (the object creation without a
+				 * base object) is set as value which leads to an error. */
+//				throw new IllegalStateException("Object creation not performed before updating persistent values.");
+				return overlay;
 			}
 			return result;
 		} else {
@@ -116,6 +133,13 @@ public abstract class AbstractStorageBase<C extends AbstractStorageBase.Config<?
 	 */
 	protected abstract void internalSetAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValues)
 			throws NoSuchAttributeException, IllegalArgumentException, AttributeException;
+
+	@Override
+	public Object getFormValue(TLFormObjectBase formObject, TLStructuredTypePart part) {
+		// By default, the value of an attribute that is displayed in form is the value of the form
+		// field being shown.
+		return formObject.getFieldValue(part);
+	}
 
 	@Override
 	public PreloadContribution getPreload() {

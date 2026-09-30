@@ -6,7 +6,7 @@
 package com.top_logic.layout.basic.contextmenu.component.factory;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +30,13 @@ import com.top_logic.tool.boundsec.CommandHandlerUtil;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class ContextMenuUtil {
+
+	/**
+	 * Command argument that provides the object on which a context menu was opened, even if the
+	 * context menu was opened on a multi-selection where the target model of the command would
+	 * normally be the whole set of selected objects.
+	 */
+	public static String DIRECT_TARGET = "_directTarget";
 
 	/**
 	 * Creates a context menu from a collection of {@link CommandModel}s by grouping them by their
@@ -72,7 +79,7 @@ public class ContextMenuUtil {
 	 * @param component
 	 *        The component the context of which the commands are executed.
 	 * @param arguments
-	 *        The encoded target model, see {@link #createArguments(Object)}.
+	 *        The encoded target model, see {@link #createArguments(Object, Object)}.
 	 * @param commands
 	 *        The commands to wrap.
 	 */
@@ -88,7 +95,7 @@ public class ContextMenuUtil {
 	 * @param component
 	 *        The component the context of which the commands are executed.
 	 * @param arguments
-	 *        The encoded target model, see {@link #createArguments(Object)}.
+	 *        The encoded target model, see {@link #createArguments(Object, Object)}.
 	 * @param commands
 	 *        The commands to wrap.
 	 */
@@ -110,9 +117,39 @@ public class ContextMenuUtil {
 	/**
 	 * Wraps the given command target model into an arguments map for
 	 * {@link #toButtons(LayoutComponent, Map, Collection)}.
+	 * 
+	 * <p>
+	 * Only for cases, where a context menu is opened on a single object.
+	 * </p>
+	 * 
+	 * @param model
+	 *        The target model, on which a regular command would be invoked.
+	 * 
+	 * @see #createArguments(Object, Object) The command arguments to be used, when a context menu
+	 *      is opened on a multi-selection.
 	 */
-	public static Map<String, Object> createArguments(Object model) {
-		return Collections.singletonMap(CommandHandlerUtil.TARGET_MODEL_ARGUMENT, model);
+	public static Map<String, Object> createSingleObjectArguments(Object model) {
+		return createArguments(model, model);
+	}
+
+	/**
+	 * Wraps the given command target model into an arguments map for
+	 * {@link #toButtons(LayoutComponent, Map, Collection)}.
+	 * 
+	 * @param directTarget
+	 *        The object on which the context menu was opened (even if the context menu was opened
+	 *        on a multi-selection).
+	 * @param model
+	 *        The target model, on which a regular command would be invoked.
+	 * 
+	 * @see #createSingleObjectArguments(Object) To be used in cases, where a context menu is opened
+	 *      on a single object.
+	 */
+	public static Map<String, Object> createArguments(Object directTarget, Object model) {
+		HashMap<String, Object> result = new HashMap<>();
+		result.put(DIRECT_TARGET, directTarget);
+		result.put(CommandHandlerUtil.TARGET_MODEL_ARGUMENT, model);
+		return result;
 	}
 
 	/**

@@ -11,7 +11,7 @@ import java.util.LinkedHashSet;
 /**
  * Container for a collection of one dimensional lines.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class Line1DContainer {
 

@@ -5,8 +5,6 @@
  */
 package com.top_logic.knowledge.service.migration;
 
-import static com.top_logic.knowledge.service.migration.MigrationUtil.*;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -47,12 +45,14 @@ import com.top_logic.basic.Environment;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.equal.EqualityRedirect;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationWriter;
@@ -60,6 +60,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.ResourceDeclaration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -73,7 +75,6 @@ import com.top_logic.basic.db.schema.setup.config.ApplicationTypes;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.encryption.SymmetricEncryption;
 import com.top_logic.basic.module.ConfiguredManagedClass;
-import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -108,8 +109,8 @@ import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.util.model.CompatibilityService;
 
 /**
- * {@link ManagedClass} that automatically migrates the application to the newest version.
- * 
+ * Automatically migrates the application data to the newest version on startup.
+ *
  * <p>
  * Migrations to perform are described in XML configurations corresponding to the
  * {@link MigrationConfig} schema located in the directory
@@ -131,6 +132,7 @@ import com.top_logic.util.model.CompatibilityService;
 	CompatibilityService.Module.class,
 })
 @ServiceExtensionPoint(InitialTableSetup.Module.class)
+@Label("Data migration")
 public class MigrationService extends ConfiguredManagedClass<MigrationService.Config> {
 
 	/**
@@ -142,6 +144,11 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 
 		/** Configuration name of the value of {@link #getModules()}. */
 		String MODULES_NAME = "modules";
+
+		/**
+		 * @see #getMinimumModules()
+		 */
+		String MINIMUM_MODULES = "minimum-modules";
 
 		/**
 		 * Option to configure the encryption algorithm to use.
@@ -170,6 +177,19 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		@Name(MODULES_NAME)
 		@ListBinding(attribute = "name")
 		List<String> getModules();
+
+		/**
+		 * Assume at least the initial version of the given modules is present in the base version
+		 * stored in the database.
+		 * 
+		 * <p>
+		 * The setting is required for upgrading systems from a version before the introduction of
+		 * initial versions.
+		 * </p>
+		 */
+		@Format(CommaSeparatedStrings.class)
+		@Name(MINIMUM_MODULES)
+		List<String> getMinimumModules();
 
 		/**
 		 * The algorithm that is used to encrypt temporary files.
@@ -276,15 +296,39 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		}
 
 		Config config = getConfig();
-		String[] migrationModules = getMigrationModules(config);
-		return MigrationUtil.relevantMigrations(context, connection, migrationModules, config.getAllowDowngrade());
+		List<String> migrationModules = config.getModules();
+		return relevantMigrations(context, connection, migrationModules, config.getAllowDowngrade());
 	}
 
 	/**
-	 * All migration relevant modules listed in the given configuration.
+	 * Determines the correct {@link MigrationConfig}s for the given migration modules.
+	 * 
+	 * @param connection
+	 *        {@link PooledConnection} to connect to database to read current version.
+	 * @param migrationModules
+	 *        All known database modules. The order of the module is the dependency order, i.e. when
+	 *        <code>module1</code> depends on <code>module2</code>, <code>module2</code> appears
+	 *        before <code>module1</code> in the array.
+	 * @param allowDowngrade
+	 *        Whether to ignore missing version descriptors found in the database.
+	 * @return {@link MigrationConfig}s to apply in that order to update to correct database
+	 *         version.
+	 * 
+	 * @throws SQLException
+	 *         when reading versions from database failed for some reason.
 	 */
-	public static String[] getMigrationModules(Config config) {
-		return toModuleNames(config.getModules());
+	private MigrationInfo relevantMigrations(Log log, PooledConnection connection,
+			List<String> migrationModules, boolean allowDowngrade) throws SQLException {
+		Map<String, Version> storedVersions = MigrationUtil.readStoredVersions(connection, migrationModules);
+
+		for (String module : getConfig().getMinimumModules()) {
+			storedVersions.computeIfAbsent(module, MigrationUtil::initialVersion);
+		}
+
+		log.info("Migration modules: " + migrationModules);
+		log.info("Current data version: " + storedVersions.values().stream()
+			.map(v -> v.getModule() + ": " + v.getName()).collect(Collectors.joining(", ")));
+		return MigrationUtil.relevantMigrations(log, migrationModules, allowDowngrade, storedVersions);
 	}
 
 	/**
@@ -317,6 +361,12 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 				addConfig.getSchema().getTypes().put(newTypeName, newType);
 			}
 
+			MigrationConfig migration = TypedConfiguration.newConfigItem(MigrationConfig.class);
+			migration.getProcessors().add(addConfig);
+
+			Logger.info("Updating database schema according to the following migration: \n" + migration,
+				MigrationService.class);
+
 			execute(context, log, connection, addConfig);
 			return true;
 		}
@@ -338,18 +388,21 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			for (var typeName : oldTypeNames) {
 				inappSchema.getTypes().put(typeName, persistentTypes.get(typeName));
 			}
+			File schemaFile = null;
+			File configFile = null;
 			try {
 				int id = 1;
-				File confFile;
 				String resourceName;
 				String baseName;
+				File newFile;
 				do {
 					baseName = "inapp-schema-" + id;
 					resourceName = ModuleLayoutConstants.AUTOCONF_FOLDER_RESOURCE + baseName + ".meta.xml";
-					confFile = FileManager.getInstance().getIDEFile(resourceName);
+					newFile = FileManager.getInstance().getIDEFile(resourceName);
 					id++;
-				} while (confFile.exists());
-				storeResource(inappSchema, confFile);
+				} while (newFile.exists());
+				schemaFile = newFile;
+				storeResource(inappSchema, schemaFile);
 
 				// Create a configuration fragment that loads the synthesized schema definition.
 				ApplicationConfig.Config configFragment =
@@ -372,16 +425,25 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 					}
 					configFragment.getConfigs().put(ApplicationTypes.class, typesConfig);
 				}
+				configFile = FileManager.getInstance().getIDEFile(
+					ModuleLayoutConstants.AUTOCONF_FOLDER_RESOURCE + baseName + ".config.xml");
 				storeResource(configFragment,
-					FileManager.getInstance().getIDEFile(
-						ModuleLayoutConstants.AUTOCONF_FOLDER_RESOURCE + baseName + ".config.xml"));
+					configFile);
 
-				log.info("Created schema configuration with recovered types: " + confFile.getAbsolutePath());
+				log.info("Created schema configuration with recovered types: " + schemaFile.getAbsolutePath());
 
 				// Re-load configuration to make sure, the updated config is found later on.
 				TLServiceUtils.reloadConfigurations();
 			} catch (IOException | XMLStreamException | SAXException ex) {
-				log.error("Cannot create schema add-on configuration: " + ex.getMessage(), ex);
+				log.info("Cannot create schema add-on configuration: " + ex.getMessage(), Log.WARN);
+
+				// Clean up to avoid an inconsistent state.
+				if (schemaFile != null) {
+					schemaFile.delete();
+				}
+				if (configFile != null) {
+					configFile.delete();
+				}
 			}
 		}
 	}
@@ -391,10 +453,12 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 */
 	private void storeResource(ConfigurationItem conf, File file)
 			throws XMLStreamException, IOException, FileNotFoundException, SAXException {
+		file.getParentFile().mkdirs();
 		try (var out = new FileOutputStream(file)) {
 			try (OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
-				new ConfigurationWriter(writer)
-					.write(MORepositoryBuilder.ROOT_TAG, MetaObjectsConfig.class, conf);
+				try (ConfigurationWriter w = new ConfigurationWriter(writer)) {
+					w.write(MORepositoryBuilder.ROOT_TAG, MetaObjectsConfig.class, conf);
+				}
 			}
 		}
 		XMLPrettyPrinter.normalizeFile(file);
@@ -421,10 +485,34 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		migrate(log);
 	}
 
+	/**
+	 * Callback invoked, after all modules are up and running.
+	 */
+	public void applicationStarted() {
+		List<MigrationConfig> migrationsWithActions =
+			_migrationInfo.getMigrations().stream().filter(m -> !m.getStartupActions().isEmpty()).toList();
+		if (!migrationsWithActions.isEmpty()) {
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			for (var m : migrationsWithActions) {
+				Logger.info("Performing startup actions from: " + m.getVersion().getModule() + ": "
+						+ m.getVersion().getName(), MigrationService.class);
+				for (var actionConfig : m.getStartupActions()) {
+					StartupAction action = TypedConfigUtil.createInstance(actionConfig);
+					try (Transaction tx =
+						kb.beginTransaction(I18NConstants.PERFORMED_STARTUP_ACTION__NAME
+							.fill(actionConfig.getImplementationClass().getSimpleName()))) {
+						action.perform();
+						tx.commit();
+					}
+				}
+			}
+		}
+	}
+
 	private void migrate(Protocol log) {
 		PooledConnection connection = _connectionPool.borrowWriteConnection();
 		try {
-			MigrationContext context = new MigrationContext(connection);
+			MigrationContext context = new MigrationContext(log, connection);
 
 			if (_migrationInfo.nothingToDo()) {
 				log.info("No configured migrations.");
@@ -476,7 +564,9 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 
 						if (kb == null) {
 							kb = createKB(log);
-							tx = kb.beginTransaction();
+							tx = kb.beginTransaction(
+								I18NConstants.PERFORMED_MIGRATION__NAME.fill(migration.getVersion().getModule() + ": "
+									+ migration.getVersion().getName()));
 						}
 
 						processor.afterMigration(log, kb);

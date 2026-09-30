@@ -49,7 +49,7 @@ public class ClearClipboardHandler extends AbstractCommandHandler implements Com
 		HandlerResult theResult = HandlerResult.DEFAULT_RESULT;
 		try {
 			Clipboard theBoard = Clipboard.getInstance();
-			Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
+			Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.CLEARED_CLIPBOARD);
 			theBoard.clear();
 			tx.commit();
 		} catch (KnowledgeBaseException ex) {

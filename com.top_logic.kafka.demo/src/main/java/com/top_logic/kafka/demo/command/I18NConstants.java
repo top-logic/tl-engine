@@ -5,6 +5,7 @@
  */
 package com.top_logic.kafka.demo.command;
 
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -17,6 +18,11 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey2 CREATED_MANY_OBJECTS__COUNT__TIME;
+
+	/**
+	 * @en Created many demo objects: {0}
+	 */
+	public static ResKey1 KAFKA_DEMO_CREATE_MANY_OBJECTS__COUNT;
 
 	static {
 		initConstants(I18NConstants.class);

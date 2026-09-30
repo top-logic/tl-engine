@@ -22,9 +22,9 @@ package com.meterware.servletunit;
 import com.meterware.httpunit.WebResponse;
 import com.meterware.httpunit.FrameSelector;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.*;
 
 import java.io.IOException;
 
@@ -118,11 +118,11 @@ public interface InvocationContext {
 
     /**
      * Pushes the current filter onto the execution stack and switches to the next filter or the selected servlet.
-     * This can be used to simulate the effect of the {@link javax.servlet.FilterChain#doFilter doFilter} call.
+     * This can be used to simulate the effect of the {@link jakarta.servlet.FilterChain#doFilter doFilter} call.
      * <br><b>Note:</b> this method specifies {@link ServletRequest} and {@link ServletResponse} because those are the
      * types passed to {@link Filter#doFilter}; however, HttpUnit requires the objects to implement
      * {@link HttpServletRequest} and {@link HttpServletResponse} because they will eventually be passed to an
-     * {@link javax.servlet.http.HttpServlet}.
+     * {@link jakarta.servlet.http.HttpServlet}.
      *
      * @param request the request to pass to the next filter. May be a wrapper.
      * @param response the response object to pass to the next filter. May be a wrapper.

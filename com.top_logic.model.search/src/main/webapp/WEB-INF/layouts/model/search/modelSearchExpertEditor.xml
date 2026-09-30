@@ -10,7 +10,7 @@
 		buttons="${buttons}"
 		name="ExpertModelSearchEditor"
 		resPrefix="layouts.model.search.modelSearch.expert.editor."
-		securityProviderClass="securityRoot"
+		securityObject="securityRoot"
 		titleKey="model.search.expert.title"
 		toolbar="false"
 	>

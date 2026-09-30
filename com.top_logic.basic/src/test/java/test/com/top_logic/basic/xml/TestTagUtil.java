@@ -27,7 +27,7 @@ public class TestTagUtil extends TestCase {
         		TagUtil.encodeXML("So<script>alert('&Evil')</script>"));
 
         assertEquals("This needs no Encoding", TagUtil.encodeXML("This needs no Encoding"));
-        assertEquals("ÄÖÜ äöüß ^ô°áà~µ@|", TagUtil.encodeXML("ÄÖÜ äöüß ^ô°áà~µ@|"));
+        assertEquals("Ã„Ã–Ãœ Ã¤Ã¶Ã¼ÃŸ ^Ã´Â°Ã¡Ã ~Âµ@|", TagUtil.encodeXML("Ã„Ã–Ãœ Ã¤Ã¶Ã¼ÃŸ ^Ã´Â°Ã¡Ã ~Âµ@|"));
         assertEquals("&lt; This &amp; That &gt; \"will\" need encoding", 
         		TagUtil.encodeXML("< This & That > \"will\" need encoding"));
     }

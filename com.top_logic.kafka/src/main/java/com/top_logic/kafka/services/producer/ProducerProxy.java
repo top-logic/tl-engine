@@ -7,14 +7,15 @@ package com.top_logic.kafka.services.producer;
 
 import static java.util.Objects.*;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import org.apache.kafka.clients.consumer.ConsumerGroupMetadata;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.Callback;
@@ -25,6 +26,7 @@ import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.errors.ProducerFencedException;
 
 import com.top_logic.basic.Logger;
@@ -62,11 +64,11 @@ public abstract class ProducerProxy<K, V> implements Producer<K, V>, KafkaHeader
 
 	private Instant _lastSendTimestamp;
 
-	private final KafkaLogWriter<V> _logWriter;
+	private final KafkaLogWriter<? super V> _logWriter;
 
 	/** Creates a {@link ProducerProxy}. */
-	public ProducerProxy(KafkaLogWriter<V> logWriter) {
-		_logWriter = requireNonNull(logWriter);
+	public ProducerProxy(KafkaLogWriter<? super V> kafkaLogWriter) {
+		_logWriter = requireNonNull(kafkaLogWriter);
 	}
 
 	/**
@@ -80,8 +82,8 @@ public abstract class ProducerProxy<K, V> implements Producer<K, V>, KafkaHeader
 	}
 
 	@Override
-	public void close(long timeout, TimeUnit timeUnit) {
-		withLogMarkAndStateLogging("Closing " + toString() + ".", () -> getImpl().close(timeout, timeUnit));
+	public void close(Duration timeout) {
+		withLogMarkAndStateLogging("Closing " + toString() + ".", () -> getImpl().close(timeout));
 	}
 
 	@Override
@@ -255,6 +257,16 @@ public abstract class ProducerProxy<K, V> implements Producer<K, V>, KafkaHeader
 	}
 
 	@Override
+	public void sendOffsetsToTransaction(Map<TopicPartition, OffsetAndMetadata> offsets,
+			ConsumerGroupMetadata groupMetadata) throws ProducerFencedException {
+		String description = "Sending offset to transaction. Offsets: '"
+			+ offsets + "'. Group metadata: " + groupMetadata + ".";
+		withLogMarkAndStateLogging(description, () -> getImpl().sendOffsetsToTransaction(offsets, groupMetadata));
+	}
+
+	@Override
+	@Deprecated
+	@SuppressWarnings("deprecation")
 	public void sendOffsetsToTransaction(Map<TopicPartition, OffsetAndMetadata> offsets, String consumerGroupId)
 			throws ProducerFencedException {
 		String description = "Sending offset to transaction. CunsumerGroupId: '"
@@ -328,6 +340,11 @@ public abstract class ProducerProxy<K, V> implements Producer<K, V>, KafkaHeader
 	 */
 	public Instant getLastSendTimestamp() {
 		return _lastSendTimestamp;
+	}
+
+	@Override
+	public Uuid clientInstanceId(Duration timeout) {
+		return getImpl().clientInstanceId(timeout);
 	}
 
 	/** A name for this producer, suitable for log messages. */

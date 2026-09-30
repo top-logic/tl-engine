@@ -26,7 +26,7 @@ import com.top_logic.model.form.implementation.FormEditorContext;
 public class StaticHTMLTemplateProvider extends AbstractFormElementProvider<StaticHTML> {
 
 	private static final ImageProvider IMAGE_PROVIDER =
-		ImageProvider.constantImageProvider(Icons.STATIC_HTML_CONTENT);
+		(any, flavor) -> Icons.STATIC_HTML_CONTENT;
 
 	/**
 	 * Creates a new {@link StaticHTMLTemplateProvider}.
@@ -62,7 +62,7 @@ public class StaticHTMLTemplateProvider extends AbstractFormElementProvider<Stat
 
 	@Override
 	protected DisplayDimension getDialogHeight() {
-		return DisplayDimension.dim(470, DisplayUnit.PIXEL);
+		return DisplayDimension.dim(520, DisplayUnit.PIXEL);
 	}
 
 	@Override

@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.top_logic.basic.col.TupleFactory.Pair;
+import com.top_logic.graph.layouter.model.util.Pair;
 import com.top_logic.graph.layouter.Sugiyama;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
@@ -18,7 +18,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
  * {@link AlternatingLayer} used by this implementation of {@link Sugiyama}. Alternated between
  * {@link LayoutNode}s and {@link SegmentContainer}s.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DefaultAlternatingLayer extends AlternatingLayer<LayoutNode, SegmentContainer> {
 

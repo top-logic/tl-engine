@@ -7,6 +7,8 @@ package com.top_logic.model.search.ui.help;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -17,6 +19,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -28,6 +31,7 @@ import com.top_logic.basic.util.ResourcesModule;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("TL-Script editor help index")
 @ServiceDependencies(SchedulerService.Module.class)
 public class HelpPageIndex extends ConfiguredManagedClass<ConfiguredManagedClass.Config<HelpPageIndex>> {
 
@@ -198,7 +202,7 @@ public class HelpPageIndex extends ConfiguredManagedClass<ConfiguredManagedClass
 			}
 			Properties properties = new Properties();
 			try (InputStream in = Files.newInputStream(path)) {
-				properties.load(in);
+				properties.load(new InputStreamReader(in, StandardCharsets.UTF_8));
 			}
 			String name = path.getName(path.getNameCount() - 2).toString();
 			add(new PageImpl(properties.getProperty("uuid"), name, properties.getProperty("title"), content));

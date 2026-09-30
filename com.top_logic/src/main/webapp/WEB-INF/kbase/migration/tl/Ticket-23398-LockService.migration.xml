@@ -10,5 +10,12 @@
 		/>
 	</dependencies>
 	<processors>
+		<create-tables>
+			<schemas>
+				<schema name="lock" resource="schema://lock.schema.xml"/>
+			</schemas>
+		</create-tables>
+		
+		<drop-tables tables="TOKEN" />
 	</processors>
 </migration>

@@ -1,0 +1,697 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react.control.select;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import com.top_logic.basic.Logger;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.Flavor;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.ResourceProvider;
+import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.SelectFieldModel;
+import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.layout.react.control.ScriptingModelKey;
+import com.top_logic.layout.react.control.form.FieldValueArguments;
+import com.top_logic.layout.react.scripting.ReactActionContext;
+import com.top_logic.layout.react.scripting.ReactOptionScope;
+import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.control.ReactValueColor;
+import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.navigation.ObjectNavigator;
+import com.top_logic.layout.react.state.DropdownSelectState;
+import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
+import com.top_logic.layout.scripting.recorder.ref.ModelName;
+import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
+import com.top_logic.layout.scripting.runtime.ActionContext;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.listen.ObservedObjects;
+import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
+
+/**
+ * A {@link ReactFormFieldControl} editing a value that is picked from a set of options.
+ *
+ * <p>
+ * One control serves every {@link SelectDisplay shape} the options are offered in - a list that
+ * opens on demand and filters as the user types, a cloud of toggles, or a bar of segments. All
+ * three hold the same option index, exchange the same value, and present an option by the same
+ * descriptor; they differ in the React component drawing them and in when they are handed the
+ * option list: a list that opens on demand fetches it on first open through the
+ * {@link #CMD_LOAD_OPTIONS} command, while a shape {@link SelectDisplay#showsAllOptions() showing
+ * every option} is handed it right away.
+ * </p>
+ *
+ * <p>
+ * Supports single and multi-selection, chip/tag display for selected values, and image-rich option
+ * rendering.
+ * </p>
+ *
+ * <p>
+ * Extends {@link ReactFormFieldControl} to automatically observe model changes (value, editability,
+ * mandatory, visibility, errors) and push incremental patches to the client via SSE.
+ * </p>
+ *
+ * <p>
+ * A field that only displays its value offers each selected object as a link to the place the
+ * application displays it at, so a reference read in a form or a table cell leads to what it refers
+ * to.
+ * </p>
+ */
+public class ReactDropdownSelectControl extends ReactFormFieldControl {
+
+	/** The React component drawing a list that opens on demand. */
+	private static final String MODULE_DROPDOWN = "TLDropdownSelect";
+
+	/** The React component drawing every option as a toggle of its own. */
+	private static final String MODULE_CHIPS = "TLOptionChips";
+
+	/** The React component drawing the options as the segments of one bar. */
+	private static final String MODULE_SEGMENTED = "TLSegmentedChoice";
+
+	// Command names.
+	private static final String CMD_LOAD_OPTIONS = "loadOptions";
+
+	private static final String CMD_SELECT_BY_KEY = "selectByKey";
+
+	/** Command sent when the user follows the link of a displayed option. */
+	private static final String CMD_GOTO = "goto";
+
+	/**
+	 * Argument of {@link #CMD_GOTO}: the {@link DropdownSelectState.Option#VALUE__PROP} of the option
+	 * to display.
+	 */
+	private static final String ARG_OPTION = "option";
+
+	private final SelectFieldModel _selectModel;
+
+	private final LabelProvider _labelProvider;
+
+	private final Comparator<?> _optionComparator;
+
+	private final boolean _customOrder;
+
+	private final SelectDisplay _display;
+
+	/**
+	 * Maps option ID strings to the original option objects. Used by
+	 * {@link #handleValueChanged(Map)} to resolve client-sent IDs back to model objects. Populated
+	 * by {@link #loadOptions()} and incrementally by {@link #toOptionDescriptors(List)} when
+	 * fresh IDs are allocated before the full option list has been loaded.
+	 */
+	private Map<String, Object> _optionIndex = new HashMap<>();
+
+	/**
+	 * Maps option objects to their allocated IDs. Built alongside {@link #_optionIndex} so that
+	 * {@link #toOptionDescriptors(List)} produces IDs consistent with the option index.
+	 */
+	private Map<Object, String> _optionIdByObject = new IdentityHashMap<>();
+
+	/**
+	 * Guard flag to suppress the value changed listener when the change originates from the client
+	 * via {@link #handleValueChanged(Map)}.
+	 */
+	private boolean _updatingFromClient;
+
+	/**
+	 * The objects the field displays as its value, observed while the field is displayed.
+	 *
+	 * <p>
+	 * A selected object is displayed by its label, so editing that object elsewhere must reach the
+	 * field: the observation follows the value and refreshes the descriptors the client shows.
+	 * </p>
+	 */
+	private final ObservedObjects _displayedObjects = new ObservedObjects(event -> refreshDisplay());
+
+	/**
+	 * Creates a new {@link ReactDropdownSelectControl}.
+	 *
+	 * @param context
+	 *        The {@link ReactContext} for ID allocation and SSE registration.
+	 * @param model
+	 *        The {@link SelectFieldModel} providing value, options, editability, and validation.
+	 * @param labelProvider
+	 *        Provider for option labels. If the provider also implements
+	 *        {@link ResourceProvider}, option images are included.
+	 * @param optionComparator
+	 *        Comparator for sorting options in the dropdown. Pass {@code null} for natural order.
+	 * @param customOrder
+	 *        Whether the user can reorder selected values (drag chips to reorder).
+	 * @see #ReactDropdownSelectControl(ReactContext, SelectFieldModel, LabelProvider, Comparator,
+	 *      boolean, SelectDisplay)
+	 */
+	public ReactDropdownSelectControl(ReactContext context, SelectFieldModel model,
+			LabelProvider labelProvider, Comparator<?> optionComparator, boolean customOrder) {
+		this(context, model, labelProvider, optionComparator, customOrder, SelectDisplay.DROPDOWN);
+	}
+
+	/**
+	 * Creates a {@link ReactDropdownSelectControl} offering its options in the given shape.
+	 *
+	 * @param display
+	 *        The shape the options are offered in, see {@link #getDisplay()}.
+	 * @see #ReactDropdownSelectControl(ReactContext, SelectFieldModel, LabelProvider, Comparator,
+	 *      boolean)
+	 */
+	public ReactDropdownSelectControl(ReactContext context, SelectFieldModel model,
+			LabelProvider labelProvider, Comparator<?> optionComparator, boolean customOrder,
+			SelectDisplay display) {
+		super(context, model, module(display));
+		_selectModel = model;
+		_labelProvider = labelProvider;
+		_optionComparator = optionComparator;
+		_customOrder = customOrder;
+		_display = display;
+		initSelectState();
+		_displayedObjects.observeValue(model.getValue());
+		addAttachListener(() -> _displayedObjects.attach(modelScope()));
+		addDetachListener(_displayedObjects::detach);
+	}
+
+	/**
+	 * The React component drawing the given shape.
+	 */
+	private static String module(SelectDisplay display) {
+		switch (display) {
+			case CHIPS:
+				return MODULE_CHIPS;
+			case SEGMENTED:
+				return MODULE_SEGMENTED;
+			default:
+				return MODULE_DROPDOWN;
+		}
+	}
+
+	/**
+	 * The shape the options are offered in.
+	 */
+	public SelectDisplay getDisplay() {
+		return _display;
+	}
+
+	/**
+	 * Re-describes the displayed value after one of the objects it consists of has changed.
+	 *
+	 * <p>
+	 * The option list carries the labels of those objects as well, so it goes stale with them, see
+	 * {@link #invalidateOptions()}.
+	 * </p>
+	 *
+	 * <p>
+	 * While one of the displayed objects is deleted, the display is left alone: a deleted object has
+	 * no type any more, so neither its label nor the color of its value can be resolved from it. The
+	 * deletion is delivered before the value of the field is replaced, so the field keeps what it
+	 * shows until it receives its next value or is removed from the display.
+	 * </p>
+	 */
+	private void refreshDisplay() {
+		for (TLObject displayed : _displayedObjects.observedObjects()) {
+			if (!displayed.tValid()) {
+				return;
+			}
+		}
+		Object tx = beginUpdate();
+		updateValueState();
+		invalidateOptions();
+		commitUpdate(tx);
+	}
+
+	/**
+	 * Initializes select-specific state that is not covered by
+	 * {@link ReactFormFieldControl#ReactFormFieldControl(ReactContext, FieldModel, String)}.
+	 */
+	private void initSelectState() {
+		Resources resources = Resources.getInstance();
+
+		updateValueState();
+		putState(DropdownSelectState.MULTI_SELECT__PROP, _selectModel.isMultiple());
+		putState(DropdownSelectState.CUSTOM_ORDER__PROP, _customOrder);
+		putState(DropdownSelectState.EMPTY_OPTION_LABEL__PROP,
+			resources.getString(I18NConstants.JS_DROPDOWN_SELECT_EMPTY));
+		if (_display != SelectDisplay.DROPDOWN) {
+			putState(DropdownSelectState.DISPLAY__PROP, _display.getExternalName());
+		}
+		invalidateOptions();
+	}
+
+	/**
+	 * Brings the option list the client holds up to date.
+	 *
+	 * <p>
+	 * A display {@link SelectDisplay#showsAllOptions() showing every option} is handed the current
+	 * list, having nothing to open at which it could ask for it. A list that opens on demand is
+	 * told that what it holds is outdated and asks for the list again the next time it is opened,
+	 * so an option list that is expensive to build is built only where it is read.
+	 * </p>
+	 */
+	private void invalidateOptions() {
+		if (_display.showsAllOptions()) {
+			publishOptions();
+		} else {
+			setOptionsLoaded(false);
+		}
+	}
+
+	/**
+	 * Sends the current option list to the client, reporting a failure to build it rather than
+	 * throwing.
+	 *
+	 * @return Whether the list could be built.
+	 */
+	private boolean publishOptions() {
+		try {
+			loadOptions();
+			return true;
+		} catch (Exception ex) {
+			Logger.error("Failed to load the options of a select field.", ex, this);
+			setOptionsLoaded(false);
+			return false;
+		}
+	}
+
+	/**
+	 * Builds the option list, indexes it, and sends it to the client together with the value
+	 * expressed in the ids of that list.
+	 */
+	private void loadOptions() {
+		List<?> options = sortedOptions();
+		Map<String, Object> newIndex = new HashMap<>();
+		Map<Object, String> newReverse = new IdentityHashMap<>();
+		List<Map<String, Object>> descriptors = buildOptionDescriptors(options, newIndex, newReverse);
+		_optionIndex = newIndex;
+		_optionIdByObject = newReverse;
+
+		Object tx = beginUpdate();
+		putState(DropdownSelectState.OPTIONS__PROP, descriptors);
+		setOptionsLoaded(true);
+		// Re-send value with IDs consistent with the new option index.
+		updateValueState();
+		commitUpdate(tx);
+	}
+
+	private void updateValueState() {
+		putState(FieldState.VALUE__PROP, toOptionDescriptors(getSelectionSorted()));
+	}
+
+	/**
+	 * Augments the agent projection of the loaded options with a stable {@code key} (the option
+	 * object's {@link ScriptingModelKey ModelName}), so an agent can select a member by business object
+	 * rather than by the session-allocated option id.
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Map<String, Object> scriptingScalarState() {
+		Map<String, Object> result = super.scriptingScalarState();
+		Object options = result.get(DropdownSelectState.OPTIONS__PROP);
+		if (options instanceof List<?> list && !list.isEmpty()) {
+			ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_optionIndex.values()), _labelProvider);
+			List<Object> withKeys = new ArrayList<>(list.size());
+			for (Object entry : list) {
+				if (entry instanceof Map<?, ?> descriptor) {
+					Map<String, Object> augmented = new LinkedHashMap<>((Map<String, Object>) descriptor);
+					Object key = ScriptingModelKey.toKey(scope,
+						_optionIndex.get(descriptor.get(DropdownSelectState.Option.VALUE__PROP)));
+					if (key != null) {
+						augmented.put("key", key);
+					}
+					withKeys.add(augmented);
+				} else {
+					withKeys.add(entry);
+				}
+			}
+			result.put(DropdownSelectState.OPTIONS__PROP, withKeys);
+		}
+		return result;
+	}
+
+	/**
+	 * The shape the options are offered in is how the field looks, not what it says: every shape
+	 * reports the same options and the same value.
+	 */
+	@Override
+	protected Set<String> scriptingPresentationKeys() {
+		return presentationKeys(super.scriptingPresentationKeys(), DropdownSelectState.DISPLAY__PROP);
+	}
+
+	private void setOptionsLoaded(boolean loaded) {
+		putState(DropdownSelectState.OPTIONS_LOADED__PROP, loaded);
+	}
+
+	/**
+	 * Overrides the default value change handling from {@link ReactFormFieldControl} to send full
+	 * option descriptors (with label and image) instead of raw field values.
+	 */
+	@Override
+	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
+		// The objects displayed are the ones the value now names, whoever set it.
+		_displayedObjects.observeValue(newValue);
+		if (!_updatingFromClient) {
+			updateValueState();
+			// The option list carries the labels of the value as well, so it goes stale with it.
+			invalidateOptions();
+		}
+	}
+
+	/**
+	 * Handles the {@link #CMD_LOAD_OPTIONS} command from the React client.
+	 *
+	 * <p>
+	 * Sends the full option list as a state patch via SSE. Builds an internal index mapping
+	 * allocated IDs to model objects for later resolution.
+	 * </p>
+	 */
+	@ReactCommandHandler(CMD_LOAD_OPTIONS)
+	HandlerResult handleLoadOptions() {
+		if (!publishOptions()) {
+			return HandlerResult.error(I18NConstants.JS_DROPDOWN_SELECT_ERROR);
+		}
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Handles the {@link #CMD_VALUE_CHANGED} command from the React client.
+	 *
+	 * @param arguments
+	 *        Must contain a {@link FieldValueArguments#VALUE} entry with a list of option value IDs.
+	 */
+	// Argument is a string array (selected option value ids). The config-JSON binding does not
+	// support a List of primitives (the reader expects list elements to be objects), so this command
+	// keeps a raw Map with a lightweight @ReactParam schema rather than a typed ConfigurationItem.
+	@SuppressWarnings("unchecked")
+	@ReactCommandHandler(value = CMD_VALUE_CHANGED, params = @ReactParam(name = FieldValueArguments.VALUE, type = "string[]",
+		required = true, description = "List of selected option value ids (from the options descriptors)."))
+	HandlerResult handleValueChanged(Map<String, Object> arguments) {
+		List<String> selectedIds = (List<String>) arguments.get(FieldValueArguments.VALUE);
+		if (selectedIds == null) {
+			selectedIds = Collections.emptyList();
+		}
+
+		List<Object> newSelection = resolveOptions(selectedIds);
+		_updatingFromClient = true;
+		try {
+			_selectModel.setValue(newSelection);
+		} finally {
+			_updatingFromClient = false;
+		}
+
+		// Update value state with full descriptors for chip display.
+		updateValueState();
+
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private List<Object> resolveOptions(List<String> ids) {
+		List<Object> resolved = new ArrayList<>(ids.size());
+		for (String id : ids) {
+			Object option = _optionIndex.get(id);
+			if (option != null) {
+				resolved.add(option);
+			}
+		}
+		return resolved;
+	}
+
+	/**
+	 * Handles the {@link #CMD_SELECT_BY_KEY} command: sets the selection to the options designated by
+	 * their stable business {@link ScriptingModelKey key}s — the round-trip inverse of the {@code key} that
+	 * {@link #scriptingScalarState()} projects onto each option.
+	 *
+	 * <p>
+	 * This lets a headless interface select members by business object identity (e.g. the group labeled
+	 * {@code securityOwner} within this control) instead of session-allocated option ids that do not
+	 * survive a reload or replay. Each {@link ModelName} is resolved against this control's
+	 * {@link ReactOptionScope option scope} (for context-relative names) or globally.
+	 * </p>
+	 */
+	@ReactCommandHandler(CMD_SELECT_BY_KEY)
+	HandlerResult handleSelectByKey(SelectByKeysArguments arguments) {
+		List<ModelName> keys = arguments.getKeys();
+
+		List<ModelName> unresolved = new ArrayList<>();
+		List<Object> newSelection = resolveByKeys(keys, unresolved);
+		if (!unresolved.isEmpty()) {
+			// Drift contract: a recorded key that no longer designates an option in this session is an
+			// explicit failure, never a silent partial/empty selection. Replay then reports
+			// success:false (a real regression); an agent, which re-observes each step, re-plans.
+			return HandlerResult.error(I18NConstants.ERROR_OPTION_KEYS_UNRESOLVED__KEYS.fill(unresolved));
+		}
+		_updatingFromClient = true;
+		try {
+			_selectModel.setValue(newSelection);
+		} finally {
+			_updatingFromClient = false;
+		}
+		updateValueState();
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Records a value change in replay-stable form: the live {@link #CMD_VALUE_CHANGED} carries
+	 * session-allocated option ids, so it is recorded as a {@link #CMD_SELECT_BY_KEY} of the selected
+	 * options' business {@link ModelName identities}, which resolve again in a later session.
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
+		if (CMD_VALUE_CHANGED.equals(command) && arguments != null) {
+			List<String> ids = (List<String>) arguments.get(FieldValueArguments.VALUE);
+			if (ids != null) {
+				ReactOptionScope scope =
+					new ReactOptionScope(new ArrayList<>(_selectModel.getOptions()), _labelProvider);
+				SelectByKeysArguments recorded = TypedConfiguration.newConfigItem(SelectByKeysArguments.class);
+				recorded.setName(CMD_SELECT_BY_KEY);
+				for (String id : ids) {
+					Object option = _optionIndex.get(id);
+					ModelName key = option == null ? null : ScriptingModelKey.name(scope, option);
+					if (key != null) {
+						recorded.getKeys().add(key);
+					}
+				}
+				return new RecordedCommand(recorded);
+			}
+		}
+		return super.recordCommand(command, arguments);
+	}
+
+	/**
+	 * Resolves each key to its option, collecting the keys that no longer resolve in
+	 * {@code unresolvedOut}.
+	 *
+	 * <p>
+	 * Resolution is against the model's authoritative option list, not only the options already
+	 * streamed to the client ({@code _optionIndex}). This lets a recorded {@link #CMD_SELECT_BY_KEY}
+	 * replay without first opening the dropdown ({@link #CMD_LOAD_OPTIONS}), and matches the full set
+	 * the keys were built against. A key that throws or resolves to nothing is reported as unresolved
+	 * rather than skipped.
+	 * </p>
+	 */
+	private List<Object> resolveByKeys(List<ModelName> keys, List<ModelName> unresolvedOut) {
+		ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_selectModel.getOptions()), _labelProvider);
+		ActionContext actionContext = newActionContext();
+		List<Object> resolved = new ArrayList<>(keys.size());
+		for (ModelName name : keys) {
+			Object option = null;
+			// Context-relative names (ContextDependent) resolve within this control's option scope;
+			// globally-named options (e.g. a person) resolve without a value context.
+			Object valueContext = name instanceof ContextDependent ? scope : null;
+			try {
+				option = ModelResolver.locateModel(actionContext, valueContext, name);
+			} catch (RuntimeException ex) {
+				Logger.warn("Cannot resolve option for key: " + name, ex, this);
+			}
+			if (option != null) {
+				resolved.add(option);
+			} else {
+				unresolvedOut.add(name);
+			}
+		}
+		return resolved;
+	}
+
+	private static ActionContext newActionContext() {
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+		return new ReactActionContext(displayContext, displayContext.asRequest().getSession());
+	}
+
+	/**
+	 * Builds option descriptors and populates the given index and reverse maps. Each option
+	 * receives a unique ID from the {@link ReactContext}.
+	 */
+	private List<Map<String, Object>> buildOptionDescriptors(List<?> options,
+			Map<String, Object> index, Map<Object, String> reverse) {
+		List<Map<String, Object>> descriptors = new ArrayList<>(options.size());
+		ResourceProvider resourceProvider = toResourceProvider(_labelProvider);
+
+		for (Object option : options) {
+			String id = getReactContext().allocateId();
+			index.put(id, option);
+			reverse.put(option, id);
+
+			descriptors.add(describe(id, option, resourceProvider));
+		}
+		return descriptors;
+	}
+
+	/**
+	 * Converts a list of selected options to descriptors. Uses the existing
+	 * {@link #_optionIdByObject} map for IDs when available (after {@code loadOptions}), falling
+	 * back to freshly allocated IDs for the initial render.
+	 *
+	 * <p>
+	 * These are the options the field displays as its value, so they are the ones that carry
+	 * {@link DropdownSelectState.Option#LINK__PROP}.
+	 * </p>
+	 */
+	private List<Map<String, Object>> toOptionDescriptors(List<?> options) {
+		List<Map<String, Object>> descriptors = new ArrayList<>(options.size());
+		ResourceProvider resourceProvider = toResourceProvider(_labelProvider);
+		ObjectNavigator navigator = _selectModel.isEditable() ? null : navigator();
+
+		for (Object option : options) {
+			String id = _optionIdByObject.get(option);
+			if (id == null) {
+				id = getReactContext().allocateId();
+				_optionIndex.put(id, option);
+				_optionIdByObject.put(option, id);
+			}
+
+			Map<String, Object> descriptor = describe(id, option, resourceProvider);
+			if (navigator != null && navigator.canShow(option)) {
+				descriptor.put(DropdownSelectState.Option.LINK__PROP, Boolean.TRUE);
+			}
+			descriptors.add(descriptor);
+		}
+		return descriptors;
+	}
+
+	/**
+	 * The descriptor telling the client what one option looks like: its id, its label, the image it
+	 * is presented with, and the color it is displayed in.
+	 *
+	 * <p>
+	 * Every option and every selected value reaches the client through here - the option list, the
+	 * chips of the selection while editing, and the read-only display - so the presentation of an
+	 * option is decided in one place.
+	 * </p>
+	 *
+	 * @param id
+	 *        The id the option is addressed by, from {@link #_optionIndex}.
+	 * @param option
+	 *        The option to describe.
+	 * @param resourceProvider
+	 *        The provider answering the option's image, or <code>null</code> if the label provider
+	 *        answers no images.
+	 * @return The descriptor sent to the client.
+	 */
+	private Map<String, Object> describe(String id, Object option, ResourceProvider resourceProvider) {
+		Map<String, Object> descriptor = new HashMap<>();
+		descriptor.put(DropdownSelectState.Option.VALUE__PROP, id);
+		descriptor.put(DropdownSelectState.Option.LABEL__PROP, _labelProvider.getLabel(option));
+
+		if (resourceProvider != null) {
+			putImage(descriptor, resourceProvider.getImage(option, Flavor.DEFAULT));
+		}
+		ReactValueColor.putRole(descriptor, option);
+
+		return descriptor;
+	}
+
+	private ObjectNavigator navigator() {
+		ReactContext context = getReactContext();
+		return context == null ? null : context.getObjectNavigator();
+	}
+
+	/**
+	 * Displays the option the user followed the link of, where the application displays objects of
+	 * its type.
+	 */
+	@ReactCommandHandler(value = CMD_GOTO, params = @ReactParam(name = ARG_OPTION, required = true,
+		description = "Id of the displayed option to lead to (from the value descriptors)."))
+	HandlerResult handleGoto(ReactContext context, Map<String, Object> arguments) {
+		Object option = _optionIndex.get(arguments.get(ARG_OPTION));
+		ObjectNavigator navigator = navigator();
+		if (option != null && navigator != null && navigator.canShow(option)) {
+			navigator.show(context, option);
+		}
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Returns the current selection as a sorted list. If {@link #_customOrder} is enabled, the
+	 * selection order is preserved. Otherwise it is sorted by {@link #_optionComparator}.
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private List<?> getSelectionSorted() {
+		Object value = _selectModel.getValue();
+		if (!(value instanceof List)) {
+			return value != null ? Collections.singletonList(value) : Collections.emptyList();
+		}
+		List<?> selection = (List<?>) value;
+		if (_customOrder || selection.size() <= 1 || _optionComparator == null) {
+			return selection;
+		}
+		Object[] array = selection.toArray();
+		Arrays.sort(array, (Comparator) _optionComparator);
+		return Arrays.asList(array);
+	}
+
+	/**
+	 * Returns the option list sorted by the comparator. Custom order only affects selection order,
+	 * not option display order.
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private List<?> sortedOptions() {
+		List<?> options = _selectModel.getOptions();
+		if (options.size() <= 1 || _optionComparator == null) {
+			return options;
+		}
+		Object[] array = options.toArray();
+		Arrays.sort(array, (Comparator) _optionComparator);
+		return Arrays.asList(array);
+	}
+
+	/**
+	 * Names the image of an option in its descriptor, unless the option has none.
+	 *
+	 * <p>
+	 * The image is resolved first, so a reference - the icon a theme configures for a type, say -
+	 * reaches the client as the image it stands for rather than as the reference, which the client
+	 * has no theme to look up. An invisible image is left out altogether: an option with no icon is
+	 * one whose descriptor names none, not one naming an icon that draws nothing but still takes
+	 * the width of one.
+	 * </p>
+	 */
+	private static void putImage(Map<String, Object> descriptor, ThemeImage image) {
+		if (image == null || image == ThemeImage.none()) {
+			return;
+		}
+		descriptor.put(DropdownSelectState.Option.IMAGE__PROP, image.resolve().toEncodedForm());
+	}
+
+	private ResourceProvider toResourceProvider(LabelProvider labelProvider) {
+		if (labelProvider instanceof ResourceProvider) {
+			return (ResourceProvider) labelProvider;
+		}
+		return null;
+	}
+}

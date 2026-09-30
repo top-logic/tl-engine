@@ -16,7 +16,6 @@ import com.top_logic.element.config.algorithm.GenericAlgorithmConfig;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.MetaAttributeAlgorithm;
 import com.top_logic.element.meta.expr.ExpressionEvaluationAlgorithm;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 
@@ -77,7 +76,7 @@ public class DerivedStorage<C extends DerivedStorage.Config<?>> extends Abstract
 	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute)
 			throws AttributeException {
 		if (_algorithm != null) {
-			return _algorithm.calculate((Wrapper) object);
+			return _algorithm.calculate(object);
 		}
 		throw new AttributeException("No algorithm defined for calculating attribute '" + attribute + "'.");
 	}

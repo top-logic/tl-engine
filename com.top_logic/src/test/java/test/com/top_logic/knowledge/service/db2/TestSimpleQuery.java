@@ -41,7 +41,7 @@ public class TestSimpleQuery extends AbstractDBKnowledgeBaseTest {
 
 		CompiledQuery<KnowledgeObject> compiledQuery = kb().compileSimpleQuery(simpleAttributeMatch);
 
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		RevisionQueryArguments revisionArgs = revisionArgs();
 		KnowledgeObject e1 = newE("notFoundReferenceNotSet");
 		{
@@ -69,7 +69,7 @@ public class TestSimpleQuery extends AbstractDBKnowledgeBaseTest {
 			assertEquals(set(e1, e3), searchResult);
 		}
 
-		Transaction openTX = kb().beginTransaction();
+		Transaction openTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e4 = newE("found");
 		e4.setAttributeValue(REFERENCE_POLY_CUR_GLOBAL_NAME, newE("reference"));
 		KnowledgeObject e5 = newE("notFoundReferenceNotSet");
@@ -98,7 +98,7 @@ public class TestSimpleQuery extends AbstractDBKnowledgeBaseTest {
 
 
 		ConnectionPool connectionPool = kb().getConnectionPool();
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject reference = newE("reference");
 		RevisionQueryArguments revisionArgs = revisionArgs();
 		revisionArgs.setArguments(reference);
@@ -124,7 +124,7 @@ public class TestSimpleQuery extends AbstractDBKnowledgeBaseTest {
 			assertEquals(set(e1, e3), toSet(result));
 		}
 
-		Transaction openTX = kb().beginTransaction();
+		Transaction openTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e4 = newE("found");
 		e4.setAttributeValue(REFERENCE_POLY_CUR_GLOBAL_NAME, reference);
 		KnowledgeObject e5 = newE("notFoundReferenceNotSet");
@@ -144,7 +144,7 @@ public class TestSimpleQuery extends AbstractDBKnowledgeBaseTest {
 
 		CompiledQuery<KnowledgeObject> compiledQuery = kb().compileSimpleQuery(simpleAttributeMatch);
 
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e1 = newE("found");
 		KnowledgeObject e2 = newE("notFound");
 		KnowledgeObject e3 = newE("found");
@@ -163,7 +163,7 @@ public class TestSimpleQuery extends AbstractDBKnowledgeBaseTest {
 			assertEquals(set(e2), toSet(result));
 		}
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e4 = newE("found");
 		KnowledgeObject e5 = newE("notFound");
 		{
@@ -198,7 +198,7 @@ public class TestSimpleQuery extends AbstractDBKnowledgeBaseTest {
 		KnowledgeObject e1;
 		KnowledgeObject e2;
 		KnowledgeObject e3;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			e1 = newE("found");
 			e2 = newE("notFound");
 			e3 = newE("found");
@@ -208,7 +208,7 @@ public class TestSimpleQuery extends AbstractDBKnowledgeBaseTest {
 		List<E> result = compiledQuery.search(revisionArgs());
 		assertEquals(set(resolve(e1, r), resolve(e3, r)), toSet(result));
 
-		try (Transaction tx2 = kb().beginTransaction()) {
+		try (Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			KnowledgeObject e4 = newE("found");
 			KnowledgeObject e5 = newE("notFound");
 			List<E> resultInTX = compiledQuery.search(revisionArgs());

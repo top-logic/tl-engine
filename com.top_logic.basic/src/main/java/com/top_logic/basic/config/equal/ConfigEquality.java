@@ -314,7 +314,7 @@ public class ConfigEquality extends EqualitySpecification<ConfigurationItem> {
 	}
 
 	/**
-	 * The current implementation needs O(left*right/4) comparisons, which is O(n²). <br/>
+	 * The current implementation needs O(left*right/4) comparisons, which is O(nÂ²). <br/>
 	 * A more efficient implementation would be pre-compute a hash code for each entry in both
 	 * collections and use those to prevent most of the comparisons. That should reduce the number
 	 * of comparisons to O(n).

@@ -15,8 +15,21 @@
 			<view name="admin/monitor/index.layout.xml#adminMonitorView">
 				<commandGroup name="Read"/>
 			</view>
-			<view name="admin/persons/index.layout.xml#adminPersonsView">
+			<view name="admin/myLatestChanges/dialog.layout.xml#Dialog">
+				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="admin/security/accounts/defaultFor/dialog.layout.xml#Dialog">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="admin/security/accounts/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
 			</view>
 			<view name="admin/security/index.layout.xml#adminRolesView">
 				<commandGroup name="Read"/>
@@ -24,22 +37,35 @@
 			<view name="admin/studio/index.layout.xml#studioView">
 				<commandGroup name="Read"/>
 			</view>
+			<view name="admin/studio/layoutEditor/legacyLayout/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="admin/studio/layoutEditor/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="admin/studio/layoutEditor/templateLayout/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
 			<view name="admin/technical/index.layout.xml#adminTechnicalView">
 				<commandGroup name="Read"/>
 			</view>
 			<view name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#companyContactView">
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>
-				<commandGroup name="Read"/>
-				<commandGroup name="Write"/>
-			</view>
-			<view name="com.top_logic.contact/admin/personContacts/personContactView.layout.xml#personContactView">
-				<commandGroup name="Create"/>
-				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
 			<view name="com.top_logic.doc/tl.doc.layout.xml#view">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.element/admin/base/currencies/adminCurrencies.layout.xml#adminCurrencies">
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>
 				<commandGroup name="Export"/>
@@ -82,32 +108,33 @@
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
-			<view name="com.top_logic.element/admin/security/groupRoles/adminGroupRolesView.layout.xml#adminGroupRolesView">
-				<commandGroup name="Read"/>
-				<commandGroup name="Write"/>
-			</view>
-			<view name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#adminPersonsRolesView">
-				<commandGroup name="Read"/>
-				<commandGroup name="Write"/>
-			</view>
 			<view name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#adminRolesAdminView">
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
 			<view name="com.top_logic.element/admin/security/roleInspector/showSecurity.layout.xml#showSecurity">
 				<commandGroup name="Read"/>
 			</view>
+			<view name="com.top_logic.model.search/admin/scriptConsole.layout.xml#view">
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.model.search/search/modelSearch.layout.xml#modelSearch">
+				<commandGroup name="Create"/>
+				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="ownerWrite"/>
+				<commandGroup name="publish"/>
+			</view>
 			<view name="com.top_logic.monitoring/admin/monitor/history/revisionMonitor.layout.xml#adminRevisionMonitor">
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
 			<view name="com.top_logic.monitoring/admin/monitor/memory/memoryMonitorChart.layout.xml#adminMemoryReport">
-				<commandGroup name="Export"/>
-				<commandGroup name="Read"/>
-			</view>
-			<view name="com.top_logic.monitoring/admin/monitor/performanceChart/performanceChart.layout.xml#adminConfigViewsPerformance">
 				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 			</view>
@@ -118,10 +145,6 @@
 			<view name="com.top_logic.monitoring/admin/monitor/session/userMonitorWithFailedLogin.layout.xml#adminTechnicalUserHistoryView">
 				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
-			</view>
-			<view name="com.top_logic/admin/model/currencies/adminCurrencies.layout.xml#adminCurrencies">
-				<commandGroup name="Read"/>
-				<commandGroup name="Write"/>
 			</view>
 			<view name="com.top_logic/admin/model/lists/adminLists.layout.xml#adminLists">
 				<commandGroup name="Create"/>
@@ -139,20 +162,13 @@
 				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
-				<commandGroup name="restrictedWrite"/>
 			</view>
 			<view name="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml#adminMonitorDB">
 				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 			</view>
-			<view name="com.top_logic/admin/monitor/event/eventMonitor.layout.xml#adminEventMonitor">
-				<commandGroup name="Read"/>
-			</view>
 			<view name="com.top_logic/admin/monitor/memory/memoryMonitor.layout.xml#adminMemory">
 				<commandGroup name="Export"/>
-				<commandGroup name="Read"/>
-			</view>
-			<view name="com.top_logic/admin/monitor/performance/performanceMonitor.layout.xml#adminPerformanceMonitor">
 				<commandGroup name="Read"/>
 			</view>
 			<view name="com.top_logic/admin/monitor/systemEnvironment.layout.xml#view">
@@ -161,19 +177,10 @@
 			<view name="com.top_logic/admin/monitor/thread/threadMonitor.layout.xml#adminMonitorThread">
 				<commandGroup name="Read"/>
 			</view>
-			<view name="com.top_logic/admin/security/accounts/adminPersonsView.layout.xml#adminPersonEditView">
-				<commandGroup name="Create"/>
-				<commandGroup name="Delete"/>
-				<commandGroup name="Read"/>
-				<commandGroup name="Write"/>
-			</view>
-			<view name="com.top_logic/admin/security/groupAssignment/adminPersonGroupsView.layout.xml#adminPersonGroupsView">
-				<commandGroup name="Read"/>
-				<commandGroup name="Write"/>
-			</view>
 			<view name="com.top_logic/admin/security/groups/adminGroupsView.layout.xml#adminGroupEditView">
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
@@ -182,15 +189,13 @@
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
-			<view name="com.top_logic/admin/technical/layoutInspector/applicationViews.layout.xml#adminViewConfigView">
-				<commandGroup name="Read"/>
-			</view>
 			<view name="com.top_logic/admin/technical/locks/locksView.layout.xml#adminTechnicalDeleteLocksView">
 				<commandGroup name="Read"/>
 			</view>
 			<view name="com.top_logic/admin/technical/logs/logView.layout.xml#adminTechnicalViewLogsView">
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>

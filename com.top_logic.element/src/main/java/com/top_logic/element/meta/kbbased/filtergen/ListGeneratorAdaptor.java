@@ -7,9 +7,8 @@ package com.top_logic.element.meta.kbbased.filtergen;
 
 import java.util.List;
 
-import com.top_logic.basic.col.LazyListUnmodifyable;
 import com.top_logic.element.meta.form.EditContext;
-import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
+import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 
@@ -22,19 +21,7 @@ public abstract class ListGeneratorAdaptor implements Generator {
 
 	@Override
 	public OptionModel<?> generate(EditContext editContext) {
-		return new DefaultListOptionModel<>(generateLazyList(editContext));
-	}
-
-	@SuppressWarnings("rawtypes")
-	private List<?> generateLazyList(EditContext editContext) {
-		return new LazyListUnmodifyable() {
-
-			@Override
-			protected List<?> initInstance() {
-				return generateList(editContext);
-			}
-
-		};
+		return new LazyListOptionModel<>(() -> generateList(editContext));
 	}
 
 	/**

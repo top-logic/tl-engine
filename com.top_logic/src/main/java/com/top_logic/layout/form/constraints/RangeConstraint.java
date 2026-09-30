@@ -18,7 +18,7 @@ import com.top_logic.util.Resources;
  * 
  * @author     <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
-public class RangeConstraint extends AbstractConstraint {
+public class RangeConstraint extends AbstractConstraint implements IRangeConstraint {
 
 	private Mapping<Object, Object> _conversion = Mappings.identity();
 	
@@ -182,6 +182,7 @@ public class RangeConstraint extends AbstractConstraint {
 	 * 
 	 * @see #isLowerInclusive()
 	 */
+	@Override
 	public final Comparable getLower() {
 		return this.lower;
 	}
@@ -191,6 +192,7 @@ public class RangeConstraint extends AbstractConstraint {
 	 * 
 	 * @see #isUpperInclusive()
 	 */
+	@Override
 	public final Comparable getUpper() {
 		return this.upper;
 	}
@@ -221,6 +223,7 @@ public class RangeConstraint extends AbstractConstraint {
 	/**
 	 * Whether the {@link #getLower()} bound is inclusive.
 	 */
+	@Override
 	public final boolean isLowerInclusive() {
 		return _lowerInclusive;
 	}
@@ -235,6 +238,7 @@ public class RangeConstraint extends AbstractConstraint {
 	/**
 	 * Whether the {@link #getUpper()} bound is inclusive.
 	 */
+	@Override
 	public final boolean isUpperInclusive() {
 		return _upperInclusive;
 	}

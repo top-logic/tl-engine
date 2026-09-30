@@ -19,7 +19,7 @@ import java.io.Reader;
  *
  * Minor comment changes.
  *
- * @author    Michael Gänsler
+ * @author    Michael GÃ¤nsler
  */
 public class Tail {
 

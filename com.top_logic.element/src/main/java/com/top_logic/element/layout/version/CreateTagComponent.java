@@ -25,7 +25,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * General create component for a {@link Tag}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CreateTagComponent extends CreateAttributedComponent {
 
@@ -70,7 +70,7 @@ public class CreateTagComponent extends CreateAttributedComponent {
     /**
      * General create command handler for the {@link Tag}.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class CreateTagCommandHandler extends AbstractCreateAttributedCommandHandler {
 

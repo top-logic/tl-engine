@@ -27,9 +27,7 @@ public interface TextDefinition extends ConfigurationItem {
 	String LABEL = "label";
 
 	/**
-	 * Returns the label (title) of the group.
-	 * 
-	 * @return The label of the group.
+	 * Label (title) of the group.
 	 */
 	@Name(LABEL)
 	@ItemDisplay(ItemDisplayType.MONOMORPHIC)

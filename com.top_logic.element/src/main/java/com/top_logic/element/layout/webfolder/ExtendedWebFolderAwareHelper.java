@@ -73,7 +73,8 @@ public class ExtendedWebFolderAwareHelper {
 	            				(BoundObject) theWrapper)).contains(aBCG);
 					}
 					else {
-						hasAccess = ((BoundCheckerComponent) aComponent).allow(aBCG);
+						BoundCheckerComponent r = ((BoundCheckerComponent) aComponent);
+						hasAccess = BoundChecker.allowCommand(r, aBCG, r.getModel());
 					}
 				}
 	

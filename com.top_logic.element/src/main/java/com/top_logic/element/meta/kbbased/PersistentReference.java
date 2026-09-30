@@ -5,7 +5,6 @@
  */
 package com.top_logic.element.meta.kbbased;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -21,6 +20,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Persistent implementation of {@link TLReference}.
@@ -53,6 +53,13 @@ public class PersistentReference extends ConfiguredAttributeImpl implements TLRe
 	 * @see PersistentEnd#getHistoryType()
 	 */
 	public static final String HISTORY_TYPE_ATTR = "historyType";
+
+	/**
+	 * Name of the database attribute in which the deletion policy is stored.
+	 * 
+	 * @see #getDeletionPolicy()
+	 */
+	public static final String DELETION_POLICY_ATTR = "deletionPolicy";
 
 	/** @see TLAssociationEnd#isOrdered() */
 	public static final String ORDERED_ATTR = "ordered";
@@ -113,7 +120,7 @@ public class PersistentReference extends ConfiguredAttributeImpl implements TLRe
 		StorageImplementation storageImplementation = getStorageImplementation();
 		if (!(storageImplementation instanceof ReferenceStorage)) {
 			// Cannot navigate backwards.
-			return Collections.emptySet();
+			throw new TopLogicException(I18NConstants.ERROR_NO_REFERERS_AVAILABLE__REFERENCE.fill(this));
 		}
 		ReferenceStorage refStorage = (ReferenceStorage) storageImplementation;
 		return refStorage.getReferers(element, this);

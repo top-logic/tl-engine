@@ -100,7 +100,7 @@ public class TestSQLMigrationProcessor extends BasicTestCase {
 			configItem.setFileNamePrefix(prefix);
 			SQLMigrationProcessor processor =
 				SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(configItem);
-			MigrationContext context = new MigrationContext(_writeConnection);
+			MigrationContext context = new MigrationContext(new AssertProtocol(), _writeConnection);
 			processor.doMigration(context, new AssertProtocol(TestSQLMigrationProcessor.class.getName()), _writeConnection);
 
 			insert.executeUpdate(_writeConnection);

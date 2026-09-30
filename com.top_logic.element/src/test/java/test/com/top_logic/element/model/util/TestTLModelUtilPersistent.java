@@ -54,7 +54,7 @@ public class TestTLModelUtilPersistent extends AbstractTestTLModelUtil {
 	@Override
 	protected void extendModel(BinaryContent modelXml) {
 		_preSetUpRevision = HistoryUtils.getSessionRevision();
-		try (Transaction transaction = getKnowledgeBase().beginTransaction()) {
+		try (Transaction transaction = getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			super.extendModel(modelXml);
 			transaction.commit();
 		}
@@ -88,7 +88,7 @@ public class TestTLModelUtilPersistent extends AbstractTestTLModelUtil {
 		assertNull("Must be null to ensure consistency after cleanup.", typeB.getAnnotation(TLCssClass.class));
 		assertNull("Must be null to ensure consistency after cleanup.", typeC.getAnnotation(TLCssClass.class));
 
-		Transaction tx1 = getKnowledgeBase().beginTransaction();
+		Transaction tx1 = getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TLCssClass cssAnnotation = TypedConfiguration.newConfigItem(TLCssClass.class);
 		cssAnnotation.setValue("testCssClass");
 		typeA.setAnnotation(cssAnnotation);
@@ -96,7 +96,7 @@ public class TestTLModelUtilPersistent extends AbstractTestTLModelUtil {
 		typeC.setAnnotation(cssAnnotation);
 		tx1.commit();
 
-		Transaction tx2 = getKnowledgeBase().beginTransaction();
+		Transaction tx2 = getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		typeA.removeAnnotation(TLCssClass.class);
 		typeB.removeAnnotation(TLCssClass.class);
 		typeC.removeAnnotation(TLCssClass.class);
@@ -145,7 +145,7 @@ public class TestTLModelUtilPersistent extends AbstractTestTLModelUtil {
 		TLClass firstSuperType = type("test1:Y");
 		TLClass secondSuperType = type("test1:Z");
 
-		try (Transaction transaction = getKnowledgeBase().beginTransaction()) {
+		try (Transaction transaction = getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			List<TLClass> generalizations = baseType.getGeneralizations();
 
 			assertTrue(generalizations.isEmpty());
@@ -285,7 +285,7 @@ public class TestTLModelUtilPersistent extends AbstractTestTLModelUtil {
 			/* The cache might already have been initialized. Undo that. */
 			((TLModelCacheEntry) cache()).clear();
 		}
-		try (Transaction transaction = getKnowledgeBase().beginTransaction()) {
+		try (Transaction transaction = getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			if (initBeforeChange) {
 				assertEquals("The cache value is wrong after beginning a transaction.",
 					originalSubClasses, cache().getSubClasses(superClass));

@@ -18,6 +18,11 @@
 						<field attribute="name"/>
 						<field attribute="description"/>
 						<field attribute="image"/>
+						<field
+							attribute="pdf"
+							fullQualifiedName="test.tiles:Product#pdf"
+							type="tl.core:Binary"
+						/>
 					</form>
 				</form-definition>
 				<instance-presentation icon="css:fas fa-car"/>
@@ -53,6 +58,13 @@
 					navigate="true"
 					type="Ticket"
 				/>
+				<property name="pdf"
+					type="tl.core:Binary"
+				>
+					<annotations>
+						<accepted-types value="*.pdf"/>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="Release">

@@ -58,14 +58,6 @@ public class MemoryObserverTableComponent extends TableComponent {
         super(context, aAtts);
     }
 
-    @Override
-	public boolean validateModel(DisplayContext context) {
-		if (getModel() == null) {
-			setModel(MemoryObserverThread.getInstance());
-		}
-		return super.validateModel(context);
-    }
-
 	public static class RunGarbargeCollectionCommand extends InvalidateCommand {
         
         public static final String COMMAND_ID = "runGarbageCollection";
@@ -97,7 +89,6 @@ public class MemoryObserverTableComponent extends TableComponent {
             MemoryObserverThread.getInstance().startLogging();
             
             aComponent.invalidate();
-            aComponent.invalidateButtons();
             
             return HandlerResult.DEFAULT_RESULT;
         }
@@ -123,7 +114,6 @@ public class MemoryObserverTableComponent extends TableComponent {
             MemoryObserverThread.getInstance().stopLogging();
             
             aComponent.invalidate();
-            aComponent.invalidateButtons();
             
             return HandlerResult.DEFAULT_RESULT;
         }

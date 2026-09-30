@@ -7,6 +7,53 @@
 	<module name="tl.accounts">
 		<class name="Person">
 			<attributes>
+				<property name="firstName">
+					<annotations>
+						<storage-algorithm>
+							<query expr="account -> $account.get(`tl.accounts:Person#contact`).get(`Contacts:PersonContact#firstname`)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="lastName">
+					<annotations>
+						<storage-algorithm>
+							<query expr="account -> $account.get(`tl.accounts:Person#contact`).get(`Contacts:PersonContact#name`)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="restrictedUser">
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check>value -&gt; object -&gt; if ($value &amp;&amp; $object.get(`tl.accounts:Person#admin`) == true, #("Ein Nutzer kann nicht gleichzeitig Administrator und eingeschränkt sein."@de, "A user cannot be an administrator and restricted at the same time."@en))</check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+				<property name="admin">
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check>value -&gt; object -&gt; if ($value &amp;&amp; $object.get(`tl.accounts:Person#restrictedUser`) == true, #("Ein Nutzer kann nicht gleichzeitig Administrator und eingeschränkt sein."@de, "A user cannot be an administrator and restricted at the same time."@en))</check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+				<reference name="deputyFor">
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[account -> $account
+    .referers(`tl.accounts:Group#members`)
+    .filter(group -> $group.referers(`tl.accounts:Person#representativeGroup`) != null)
+    .map(group -> $group
+        .referers(`tl.accounts:Person#representativeGroup`)
+        .singleElement() 
+        || $group)]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</reference>
 				<reference name="contact"
 					config:position="before"
 					config:reference="groups"
@@ -23,6 +70,46 @@
 							/>
 						</storage-algorithm>
 						<delete-protected/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="Group">
+			<attributes>
+				<reference name="members">
+					<annotations>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[g -> all(`tl.accounts:Group`)
+    // Not the group itself
+    .filter(x -> $x != $g)
+    // No representative groups
+    .filter(x -> !$x.instanceOf(`tl.accounts:RepresentativeGroup`))
+    // Combined with all accounts
+    .union(all(`tl.accounts:Person`))]]></function>
+							</options-by-expression>
+						</options>
+						<constraints>
+							<constraint class="com.top_logic.model.util.NoAttributeCycle"/>
+						</constraints>
+					</annotations>
+				</reference>
+			</attributes>		
+		</class>
+		<class name="RepresentativeGroup">
+			<attributes>
+				<reference name="members">
+					<annotations>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[// All accounts
+g -> all(`tl.accounts:Person`)
+    // Excluding the one that is the owner of this representative group.
+    .filter(p -> !$g
+        .referers(`tl.accounts:Person#representativeGroup`)
+        .containsElement($p))]]></function>
+							</options-by-expression>
+						</options>
 					</annotations>
 				</reference>
 			</attributes>

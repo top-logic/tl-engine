@@ -1,0 +1,3 @@
+#!/bin/bash
+
+a2dissite "[[tl.deb.contextName]].conf"

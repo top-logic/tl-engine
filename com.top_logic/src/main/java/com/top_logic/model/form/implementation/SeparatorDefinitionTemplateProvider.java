@@ -53,7 +53,7 @@ public class SeparatorDefinitionTemplateProvider extends AbstractFormElementProv
 
 	@Override
 	public ImageProvider getImageProvider() {
-		return ImageProvider.constantImageProvider(Icons.FORM_EDITOR__SEPARATOR);
+		return (any, flavor) -> Icons.FORM_EDITOR__SEPARATOR;
 	}
 
 	@Override
@@ -66,7 +66,8 @@ public class SeparatorDefinitionTemplateProvider extends AbstractFormElementProv
 		boolean visible = getConfig() != null ? getConfig().getVisible().booleanValue() : true;
 		String visibleCss = visible ? " visible" : "";
 
-		return contentBox(div(css("rf_hr " + ReactiveFormCSS.RF_LINE + visibleCss)));
+		return contentBox(
+			div(css("rf_hr " + ReactiveFormCSS.RF_LINE + visibleCss)));
 	}
 
 	@Override

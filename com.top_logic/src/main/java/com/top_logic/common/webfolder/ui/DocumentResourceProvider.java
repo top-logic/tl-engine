@@ -14,7 +14,7 @@ import com.top_logic.knowledge.wrap.Document;
 /**
  * Providing the correct type definitions and tool tips for documents.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class DocumentResourceProvider extends WrapperResourceProvider {
 

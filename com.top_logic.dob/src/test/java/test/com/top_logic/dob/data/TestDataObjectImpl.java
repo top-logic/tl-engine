@@ -80,7 +80,7 @@ public class TestDataObjectImpl extends TestCase {
 		MOStructureImpl result = new MOStructureImpl("Dummy");
 		result.addAttribute(new MOAttributeImpl("a" , MOPrimitive.STRING));
 		result.addAttribute(new MOAttributeImpl("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbb" , MOPrimitive.INTEGER));
-		result.addAttribute(new MOAttributeImpl("<>&ß Blub" , MOPrimitive.BOOLEAN));
+		result.addAttribute(new MOAttributeImpl("<>&ÃŸ Blub" , MOPrimitive.BOOLEAN));
 		result.addAttribute(new MOAttributeImpl(DUMMY_MANDATORY_ATTR, MOPrimitive.FLOAT, MOAttribute.MANDATORY));
 		result.addAttribute(new MOAttributeImpl(DUMMY_OPTIONAL_ATTR, MOPrimitive.FLOAT, !MOAttribute.MANDATORY));
 		result.addAttribute(new MOAttributeImpl(DUMMY_IMMUTABLE_ATTR, MOPrimitive.STRING, !MOAttribute.MANDATORY, MOAttribute.IMMUTABLE));

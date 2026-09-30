@@ -12,17 +12,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.fileupload.FileItem;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
 
-import com.top_logic.base.multipart.MultipartRequest;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.common.folder.FolderDefinition;
 import com.top_logic.common.folder.model.FolderNode;
 import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
-import com.top_logic.knowledge.service.binary.FileItemBinaryData;
 import com.top_logic.layout.ContentHandler;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -42,7 +43,7 @@ import com.top_logic.layout.tree.breadcrumb.BreadcrumbRenderer;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class FolderControl extends TableControl implements FolderListener, ContentHandler {
 
@@ -229,24 +230,31 @@ public class FolderControl extends TableControl implements FolderListener, Conte
 		DnDFileUtilities.handleContent(context, this::performUpload);
 	}
 
-	private void performUpload(MultipartRequest request) {
+	private void performUpload(HttpServletRequest request) {
 		clearUploadedItems();
-		final List<FileItem> receivedFiles = request.getFiles();
-		if (receivedFiles != null) {
-			for (int i = 0; i < receivedFiles.size(); i++) {
-				final FileItem fileItem = receivedFiles.get(i);
-				String fileName = DnDFileUtilities.getFileName(fileItem);
-				int splitNameIndex = fileItem.getName().lastIndexOf(':');
-				String filePath = fileItem.getName().substring(0, splitNameIndex + 1);
+		try {
+			var receivedFiles = request.getParts();
+			if (receivedFiles != null) {
+				for (Part fileItem : receivedFiles) {
+					String fileName = DnDFileUtilities.getFileName(fileItem);
+					String name = fileItem.getSubmittedFileName();
+					if (name == null) {
+						name = fileItem.getName();
+					}
+					int splitNameIndex = name.lastIndexOf(':');
+					String filePath = name.substring(0, splitNameIndex + 1);
 
-				if (Logger.isDebugEnabled(FolderControl.class)) {
-					Logger.debug("Upload file named '" + fileName + "'", FolderControl.class);
+					if (Logger.isDebugEnabled(FolderControl.class)) {
+						Logger.debug("Upload file named '" + fileName + "'", FolderControl.class);
+					}
+
+					BinaryData data = BinaryDataFactory.createUploadData(fileItem);
+					String contentType = DnDFileUtilities.getContentType(fileItem, fileName);
+					addUploadedItem(new DefaultDataItem(filePath + fileName, data, contentType));
 				}
-
-				BinaryData data = new FileItemBinaryData(fileItem);
-				String contentType = DnDFileUtilities.getContentType(fileItem, fileName);
-				addUploadedItem(new DefaultDataItem(filePath + fileName, data, contentType));
 			}
+		} catch (IOException | ServletException ex) {
+			throw new RuntimeException("Upload failed.", ex);
 		}
 	}
 

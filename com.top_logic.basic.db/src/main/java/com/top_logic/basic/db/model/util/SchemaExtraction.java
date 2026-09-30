@@ -159,7 +159,7 @@ public class SchemaExtraction {
 				table.getColumns().add(column);
 			}
 		}
-		assert table.getColumns().size() > 0 : "No columns in table.";
+		assert table.getColumns().size() > 0 : "No columns found for table: " + tableName;
 		
 		String pkName = null;
 		List<DBColumn> keyColumns = new ArrayList<>(); 

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.defaultValue">
+		<class name="ReferringObject">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="test.defaultValue:ReferringObject#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="rowObjects"
+							fullQualifiedName="test.defaultValue:ReferringObject#rowObjects"
+							type="test.defaultValue:RowObject"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<reference name="rowObjects"
+					composite="true"
+					inverse-reference="referringObject"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="RowObject"
+				/>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr>"Demoobjekt_" + numberFormat("#00").format(all(`test.defaultValue:ReferringObject`).size())</expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="RowObject">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="integerField"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<default-value>
+							<default-by-expression>
+								<value><![CDATA[declaringObject -> {
+ rows = $declaringObject.get(`test.defaultValue:ReferringObject#rowObjects`);
+ $rows.size()
+}]]></value>
+							</default-by-expression>
+						</default-value>
+					</annotations>
+				</property>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[model-> {
+ refObject = $model.get(`test.defaultValue:RowObject#referringObject`);
+ refName = $refObject.get(`test.defaultValue:ReferringObject#name`);
+ rows = $refObject.get(`test.defaultValue:ReferringObject#rowObjects`);
+ $refName + "_" + $model.get(`test.defaultValue:RowObject#integerField`); 
+}]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<reference name="referringObject"
+					aggregate="true"
+					inverse-reference="rowObjects"
+					kind="backwards"
+					navigate="true"
+					type="ReferringObject"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

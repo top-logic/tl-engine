@@ -26,7 +26,7 @@ import com.top_logic.mig.html.layout.LayoutReference;
  * replaces afterwards the configured template with a {@link LayoutReference} linking to the layout
  * key where the corresponding {@link LayoutTemplate} is stored in the database.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class LayoutTemplateConfigurationVisitor extends DescendingConfigurationItemVisitor {
 

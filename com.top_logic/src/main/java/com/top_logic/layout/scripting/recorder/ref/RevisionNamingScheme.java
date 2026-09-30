@@ -17,7 +17,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class RevisionNamingScheme extends AbstractModelNamingScheme<Revision, RevisionName> {
+public class RevisionNamingScheme extends AbstractGlobalModelNamingScheme<Revision, RevisionName> {
 
 	@Override
 	public Class<RevisionName> getNameClass() {

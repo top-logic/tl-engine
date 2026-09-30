@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,6 +21,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.dob.meta.MOClass;
+import com.top_logic.element.meta.AssociationStorageDescriptor;
+import com.top_logic.element.meta.DefaultAssociationStorageDescriptor;
+import com.top_logic.element.meta.SeparateTableStorage;
 import com.top_logic.element.meta.kbbased.storage.AssociationQueryBasedStorage;
 import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -39,8 +43,8 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public abstract class CommonStructuredTextAttributeStorage<C extends AssociationQueryBasedStorage.Config<?>>
-		extends AssociationQueryBasedStorage<C> {
+public abstract class CommonStructuredTextAttributeStorage<C extends CommonStructuredTextAttributeStorage.Config<?>>
+		extends AssociationQueryBasedStorage<C> implements SeparateTableStorage {
 
 	/**
 	 * Identifier for the SHA-1 algorithm that is used by {@link MessageDigest#getInstance(String)}
@@ -68,10 +72,23 @@ public abstract class CommonStructuredTextAttributeStorage<C extends Association
 		super(context, config);
 	}
 
+	/**
+	 * Creates an {@link DefaultAssociationStorageDescriptor} for the given image table.
+	 * 
+	 * @param imageTable
+	 *        Value for {@link DefaultAssociationStorageDescriptor#getTable()}.
+	 */
+	protected static DefaultAssociationStorageDescriptor newImageDescriptor(String imageTable) {
+		return new DefaultAssociationStorageDescriptor(imageTable,
+			CommonStructuredTextAttributeStorage.OBJECT_ATTRIBUTE_NAME,
+			CommonStructuredTextAttributeStorage.META_ATTRIBUTE_ATTRIBUTE_NAME,
+			CommonStructuredTextAttributeStorage.DATA_ATTRIBUTE_NAME);
+	}
+
 	@Override
 	public void init(TLStructuredTypePart attribute) {
 		super.init(attribute);
-		_imagesQuery = createQuery(getImagesTableName(), attribute, StaticItem.class);
+		_imagesQuery = createQuery(getImagesTableName(), attribute.getDefinition(), StaticItem.class);
 		_imagePreload = new AssociationCachePreload(_imagesQuery);
 	}
 
@@ -91,15 +108,14 @@ public abstract class CommonStructuredTextAttributeStorage<C extends Association
 	 * Updates the {@link BinaryData}, hash and content type of those images contained in both
 	 * collections.
 	 */
-	protected boolean updateImages(Set<KnowledgeItem> oldImages, Map<String, BinaryData> newImages) {
+	protected void updateImages(Set<KnowledgeItem> oldImages, Map<String, BinaryData> newImages) {
 		if (oldImages.isEmpty()) {
-			return false;
+			return;
 		}
 		Set<KnowledgeItem> possibleToBeUpdated = set(oldImages);
 
 		possibleToBeUpdated.removeIf(oldImage -> newImages.get(getFileName(oldImage)) == null);
 
-		boolean someImageChanged = false;
 		for (KnowledgeItem oldImage : possibleToBeUpdated) {
 			String oldFilename = getFileName(oldImage);
 			String oldHash = getHash(oldImage);
@@ -111,18 +127,15 @@ public abstract class CommonStructuredTextAttributeStorage<C extends Association
 				setHash(oldImage, newHash);
 				setData(oldImage, newBinaryData);
 				setContentType(oldImage, newBinaryData.getContentType());
-				someImageChanged = true;
 			}
 		}
-		return someImageChanged;
 	}
 
 	/** Removes those old images, whose file names are not in the new file names {@link Set}. */
-	protected boolean removeImages(Set<KnowledgeItem> oldImages, Set<String> newFileNames) {
+	protected void removeImages(Set<KnowledgeItem> oldImages, Set<String> newFileNames) {
 		Set<KnowledgeItem> possibleToBeRemoved = set(oldImages);
 		possibleToBeRemoved.removeIf(oldImage -> newFileNames.contains(getFileName(oldImage)));
 		getKnowledgeBase().deleteAll(possibleToBeRemoved);
-		return !possibleToBeRemoved.isEmpty();
 	}
 
 	/** The file names of the given images. */
@@ -220,9 +233,14 @@ public abstract class CommonStructuredTextAttributeStorage<C extends Association
 		image.setAttributeValue(OBJECT_ATTRIBUTE_NAME, newOwner.tHandle());
 	}
 
-	/** Setter for the attribute in which the given image is stored. */
+	/**
+	 * Setter for the attribute in which the given image is stored.
+	 * <p>
+	 * Note: Not the given attribute itself but its definition is stored.
+	 * </p>
+	 */
 	protected void setAttribute(KnowledgeItem image, TLStructuredTypePart newAttribute) {
-		image.setAttributeValue(META_ATTRIBUTE_ATTRIBUTE_NAME, newAttribute.tHandle());
+		image.setAttributeValue(META_ATTRIBUTE_ATTRIBUTE_NAME, newAttribute.getDefinition().tHandle());
 	}
 
 	/** The file name of the image. */
@@ -271,5 +289,15 @@ public abstract class CommonStructuredTextAttributeStorage<C extends Association
 	protected void setData(KnowledgeItem image, BinaryData newData) {
 		image.setAttributeValue(DATA_ATTRIBUTE_NAME, newData);
 	}
+
+	/**
+	 * This storage stores images in table {@link #getImagesTableName()}. Therefore at least an
+	 * {@link AssociationStorageDescriptor} for this table must be returned.
+	 * 
+	 * @see #newImageDescriptor(String)
+	 * @see com.top_logic.element.meta.SeparateTableStorage#getStorageDescriptors()
+	 */
+	@Override
+	public abstract List<? extends AssociationStorageDescriptor> getStorageDescriptors();
 
 }

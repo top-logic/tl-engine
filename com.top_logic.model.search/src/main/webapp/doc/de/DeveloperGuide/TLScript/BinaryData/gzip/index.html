@@ -1,0 +1,58 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>$input.gzip()</code></pre>
+
+<h2>Beschreibung</h2>
+
+<p>Komprimiert die übergebenen Binärdaten mit dem GZIP-Kompressionsformat. Das Ergebnis ist ein Binärwert mit dem Inhaltstyp <code>application/gzip</code>.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>Binärdaten</td>
+			<td>Die zu komprimierenden Binärdaten.</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>name</td>
+			<td>Zeichenkette</td>
+			<td>Der Name des erzeugten Binärwerts.</td>
+			<td>nein</td>
+			<td>Der Name der Eingabe mit angehängter Endung <code>.gz</code>.</td>
+		</tr>
+		<tr>
+			<td>level</td>
+			<td>Zahl</td>
+			<td>Der Kompressionsgrad (0 für keine Kompression bis 9 für beste Kompression).</td>
+			<td>nein</td>
+			<td>9</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Binärdaten</p>
+
+<p>Der GZIP-komprimierte Inhalt der Eingabe.</p>
+
+<h2>Beispiel</h2>
+
+<pre>
+<code>binary(name: "hello.txt", data: "Hello world!", encoding: "utf-8").gzip()</code></pre>
+
+<p>Liefert einen Binärwert mit dem Namen "hello.txt.gz", der den komprimierten Inhalt der Textdatei enthält.</p>

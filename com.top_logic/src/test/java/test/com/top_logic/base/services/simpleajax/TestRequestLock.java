@@ -864,7 +864,7 @@ public class TestRequestLock extends AbstractLayoutTest {
 			try {
 				internalRunWithDisplayContext();
 			} finally {
-				DefaultDisplayContext.teardownDisplayContext(null, displayContext);
+				DefaultDisplayContext.teardownDisplayContext(null);
 			}
 		}
 		

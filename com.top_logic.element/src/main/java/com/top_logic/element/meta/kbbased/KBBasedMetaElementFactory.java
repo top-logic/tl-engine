@@ -49,8 +49,8 @@ import com.top_logic.knowledge.objects.InvalidLinkException;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.service.db2.AbstractAssociationQuery;
@@ -304,7 +304,7 @@ public abstract class KBBasedMetaElementFactory extends MetaElementFactory imple
      * @return    The requested knowledge base, never <code>null</code>
      */
     protected KnowledgeBase getKnowledgeBase() {
-        return KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        return PersistencyLayer.getKnowledgeBase();
     }
 
 	/**

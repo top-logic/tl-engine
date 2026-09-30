@@ -61,7 +61,7 @@ import com.top_logic.mig.html.layout.TLLayout;
  * All database layouts are cached for every choosable theme.
  * </p>
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DatabaseLayoutCacheEntry {
 
@@ -152,17 +152,22 @@ public class DatabaseLayoutCacheEntry {
 
 			themes:
 			for (Theme theme : themesToCache) {
-				TLLayout newLayout = createLayout(theme, layoutKey, templateName, arguments);
+				try {
+					TLLayout newLayout = createLayout(theme, layoutKey, templateName, arguments);
 
-				for (TLLayout cachedLayout : cachedLayouts) {
-					if (LayoutUtils.hasSameLayoutConfig(layoutKey, cachedLayout, newLayout)) {
-						put(theme, person, layoutKey, cachedLayout);
-						continue themes;
+					for (TLLayout cachedLayout : cachedLayouts) {
+						if (LayoutUtils.hasSameLayoutConfig(layoutKey, cachedLayout, newLayout)) {
+							put(theme, person, layoutKey, cachedLayout);
+							continue themes;
+						}
 					}
-				}
 
-				put(theme, person, layoutKey, newLayout);
-				cachedLayouts.add(newLayout);
+					put(theme, person, layoutKey, newLayout);
+					cachedLayouts.add(newLayout);
+				} catch (RuntimeException ex) {
+					Logger.error("Cannot parse layout '" + layoutKey + "': " + ex.getMessage(), ex,
+						DatabaseLayoutCache.class);
+				}
 			}
 		}
 	}

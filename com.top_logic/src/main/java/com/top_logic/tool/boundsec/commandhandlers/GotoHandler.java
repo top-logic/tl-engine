@@ -14,7 +14,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.Configuration;
@@ -46,6 +46,8 @@ import com.top_logic.mig.html.layout.DialogSupport;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.mig.html.layout.MainLayout;
+import com.top_logic.model.TLFormObjectBase;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundChecker;
@@ -55,7 +57,6 @@ import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.ObjectNotFound;
-import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 import com.top_logic.util.ReferenceManager;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.Utils;
@@ -233,8 +234,6 @@ public class GotoHandler extends AbstractCommandHandler {
 	/**
 	 * Computes the {@link BoundChecker} that is responsible for answering the
 	 * {@link #checkSecurity(LayoutComponent, Object, Map)} question for a potential model.
-	 * 
-	 * @see BoundChecker#allowPotentialModel(com.top_logic.tool.boundsec.BoundCommandGroup, Object)
 	 */
 	protected BoundChecker getBoundChecker(BoundChecker aChecker, BoundObject aBoundObject,
 			Map<String, Object> someArguments) {
@@ -296,7 +295,7 @@ public class GotoHandler extends AbstractCommandHandler {
 		if (gotoObject instanceof BoundObject && component instanceof BoundChecker) {
 			BoundChecker securityChecker =
 				getBoundChecker((BoundChecker) component, (BoundObject) gotoObject, someValues);
-    		return securityChecker.allowPotentialModel(getCommandGroup(), gotoObject);
+    		return BoundChecker.allowCommand(securityChecker, getCommandGroup(), gotoObject);
 		} else {
 			return super.checkSecurity(component, model, someValues);
 		}
@@ -309,15 +308,19 @@ public class GotoHandler extends AbstractCommandHandler {
 	 * @param contextComponent
 	 *        The component to goto, must not be <code>null</code>
 	 * @param targetObject
-	 *        The model to be set to the component, must not be <code>null</code>.
+	 *        The model to be set to the component, may be <code>null</code>.
 	 * @param targetComponentName
 	 *        The name of the component to be used for displaying, may be <code>null</code>.
 	 * @return The LayoutComponent which is used as target for the goto and the goto succeeded;
 	 *         <code>null</code> if the goto does not succeeded.
 	 */
 	public LayoutComponent gotoLayout(LayoutComponent contextComponent, Object targetObject, ComponentName targetComponentName) {
+		targetObject = unwrapOverlay(targetObject);
+		if (targetComponentName == null && targetObject == null) {
+			// Neither a component nor an object is given, nothing to display.
+			return null;
+		}
 		LayoutComponent theResult = null;
-		boolean isProcessed = false;
 		MainLayout theMain = contextComponent.getMainLayout();
 		LayoutComponent layout;
 		if (targetComponentName == null) {
@@ -353,14 +356,7 @@ public class GotoHandler extends AbstractCommandHandler {
 			}
 		}
 
-		if (targetComponentName != null) {
-			if (layout != null) {
-				isProcessed = true;
-				if ((layout instanceof CompoundSecurityLayout) && (targetObject instanceof BoundObject)) {
-					// Compatibility with incomprehensible legacy quirks.
-					((CompoundSecurityLayout) layout).setCurrentObject((BoundObject) targetObject);
-				}
-				{
+		if (targetComponentName != null && layout != null) {
 					if (layout instanceof Selectable) {
 						Selectable selectable = (Selectable) layout;
 						boolean selectionChanged = selectable.setSelected(targetObject);
@@ -395,12 +391,7 @@ public class GotoHandler extends AbstractCommandHandler {
 					} else {
 						Logger.info("gotoLayout() failed: target '" + layout + "' did not acceptModel(" + targetObject + ")", this);
 					}
-
-				}
-			}
-		}
-
-		if (!isProcessed) {
+		} else {
 			theResult = theMain.showDefaultFor(targetObject);
 
 			if (theResult != null) {
@@ -556,7 +547,7 @@ public class GotoHandler extends AbstractCommandHandler {
 			|| (aComp instanceof LayoutComponent && ((LayoutComponent) aComp).supportsModel(aModel));
 		if (aModel instanceof BoundObject) {
 			// Check that user has right to see the given model.
-			return canShow && aComp.allowPotentialModel(aModel);
+			return canShow && BoundChecker.allowShowModel(aComp, aModel);
 		} else {
 			return canShow;
         }
@@ -636,15 +627,33 @@ public class GotoHandler extends AbstractCommandHandler {
 	}
 
 	public static boolean canShow(Object anObject) {
-        if (anObject instanceof BoundObject) {
+		anObject = unwrapOverlay(anObject);
+		if (anObject instanceof TLObject) {
             BoundHelper theHelper = BoundHelper.getInstance();
-            return theHelper.allowView((BoundObject) anObject, theHelper.getRootChecker());
+			return theHelper.allowView((TLObject) anObject, theHelper.getRootChecker());
         }
         else {
             return false;
         }
 	}
     
+	/**
+	 * GOTO to an {@link TLFormObjectBase} makes no sense. Therefore find the "real"
+	 * {@link TLObject}.
+	 * 
+	 * @param object
+	 *        The object to check for being a {@link TLFormObjectBase} and to unwrap. May be
+	 *        <code>null</code>.
+	 */
+	private static Object unwrapOverlay(Object object) {
+		if (object instanceof TLFormObjectBase overlay) {
+			/* The overlay may also be wrapped in another overlay. */
+			return unwrapOverlay(overlay.getEditedObject());
+		} else {
+			return object;
+		}
+	}
+
     /**
      * Writes the end of the goto link.
      * @param aWriter           an TagWriter to generate the needed HTML.

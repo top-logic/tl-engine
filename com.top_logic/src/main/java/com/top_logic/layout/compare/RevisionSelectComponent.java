@@ -7,7 +7,6 @@ package com.top_logic.layout.compare;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -15,6 +14,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.DisplayValue;
 import com.top_logic.layout.basic.ResourceText;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
@@ -109,8 +109,7 @@ public class RevisionSelectComponent extends AbstractRevisionSelectComponent {
 		tableField.getSelectionModel().addSelectionListener(new SelectionListener() {
 
 			@Override
-			public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects,
-					Set<?> selectedObjects) {
+			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 				Revision selectedRevision = RevisionSelectComponent.this.getSelectedRevision();
 				RevisionSelectComponent.this.handleRevisionChanged(selectedRevision);
 				RevisionSelectComponent.this.updateTitle(tableField, selectedRevision);

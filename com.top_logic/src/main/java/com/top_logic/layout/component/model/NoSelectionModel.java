@@ -19,8 +19,11 @@ import com.top_logic.mig.html.SelectionModelOwner;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class NoSelectionModel implements SelectionModel {
+public class NoSelectionModel implements SelectionModel<Object> {
 
+	/**
+	 * Singleton immutable instance.
+	 */
 	public static final NoSelectionModel INSTANCE = new NoSelectionModel();
 	
 	/**
@@ -76,13 +79,13 @@ public class NoSelectionModel implements SelectionModel {
 	}
 
 	@Override
-	public boolean addSelectionListener(SelectionListener listener) {
+	public boolean addSelectionListener(SelectionListener<Object> listener) {
 		// Immutable, no updates, no listener notification required.
 		return true;
 	}
 	
 	@Override
-	public boolean removeSelectionListener(SelectionListener listener) {
+	public boolean removeSelectionListener(SelectionListener<Object> listener) {
 		// Immutable, no updates, no listener notification required.
 		return true;
 	}

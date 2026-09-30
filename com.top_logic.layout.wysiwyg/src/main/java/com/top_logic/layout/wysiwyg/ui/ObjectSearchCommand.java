@@ -36,7 +36,7 @@ import com.top_logic.util.Resources;
 /**
  * Command to perform a full-text object search.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ObjectSearchCommand extends AbstractSearchCommand {
 

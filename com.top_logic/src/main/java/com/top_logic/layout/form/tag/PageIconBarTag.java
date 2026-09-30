@@ -7,7 +7,7 @@ package com.top_logic.layout.form.tag;
 
 import java.io.IOException;
 
-import javax.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspException;
 
 /**
  * Sub tag of {@link PageAreaTag} specifying the icon bar content as JSP content.

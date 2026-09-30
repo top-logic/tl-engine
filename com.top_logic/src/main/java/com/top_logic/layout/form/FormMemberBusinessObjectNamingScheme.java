@@ -6,7 +6,7 @@
 package com.top_logic.layout.form;
 
 import com.top_logic.layout.form.FormMemberBusinessObjectNamingScheme.FormMemberBusinessObjectName;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -20,7 +20,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class FormMemberBusinessObjectNamingScheme extends AbstractModelNamingScheme<Object, FormMemberBusinessObjectName> {
+public class FormMemberBusinessObjectNamingScheme extends AbstractGlobalModelNamingScheme<Object, FormMemberBusinessObjectName> {
 
 	/**
 	 * {@link ModelName} used by {@link FormMemberBusinessObjectNamingScheme}.

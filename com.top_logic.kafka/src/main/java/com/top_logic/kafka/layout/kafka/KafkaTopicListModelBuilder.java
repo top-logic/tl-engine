@@ -22,7 +22,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * Build up the list of topics relevant to the user.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class KafkaTopicListModelBuilder extends AbstractTreeModelBuilder<Object>
 		implements ConfiguredInstance<PolymorphicConfiguration<? extends KafkaTopicListModelBuilder>> {

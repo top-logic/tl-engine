@@ -369,10 +369,13 @@ public class LiveActionExecutor {
 			if (device == null) {
 				throw ApplicationAssertions.fail(action, "No authentication device for account: " + account);
 			}
-			try (LoginCredentials login = LoginCredentials.fromUserAndPassword(account, password.toCharArray())) {
+			LoginCredentials login = LoginCredentials.fromUserAndPassword(account, password.toCharArray());
+			try {
 				if (!device.authentify(login)) {
 					throw ApplicationAssertions.fail(action, "Password of script account does not match.");
 				}
+			} finally {
+				login.clearPassword();
 			}
 		}
 	

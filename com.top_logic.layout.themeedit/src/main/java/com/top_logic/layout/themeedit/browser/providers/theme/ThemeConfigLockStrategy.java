@@ -16,7 +16,7 @@ import com.top_logic.gui.config.ThemeConfig;
 /**
  * {@link LockStrategy} for {@link ThemeConfig}s.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ThemeConfigLockStrategy implements LockStrategy<ThemeConfig> {
 

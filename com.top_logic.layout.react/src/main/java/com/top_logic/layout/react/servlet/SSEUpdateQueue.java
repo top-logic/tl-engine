@@ -1,0 +1,662 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react.servlet;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.http.HttpSession;
+
+import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.sched.SchedulerService;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.layout.react.control.ReactCommandTarget;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.scripting.ScriptRecorder;
+import com.top_logic.layout.react.protocol.PatchEvent;
+import com.top_logic.layout.react.protocol.SSEEvent;
+import com.top_logic.layout.react.protocol.StateEvent;
+import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.routing.RoutingParticipant;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
+
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonWriter;
+
+/**
+ * Queue for delivering SSE events to a connected React client in a single browser window.
+ *
+ * <p>
+ * Each browser window has one {@link SSEUpdateQueue} managed by the
+ * {@link com.top_logic.layout.react.window.ReactWindowRegistry}. A single SSE connection
+ * registers with the queue and receives events as they are enqueued.
+ * </p>
+ *
+ * <p>
+ * A periodic heartbeat is sent to the connection to keep it alive and to detect dead connections
+ * early. Without the heartbeat, intermediaries (proxies, load balancers) may silently drop idle
+ * connections, leaving half-open connections that neither the server nor the client can detect.
+ * </p>
+ */
+public class SSEUpdateQueue {
+
+	private static final String SESSION_ATTRIBUTE_KEY = "tl.react.sseQueue";
+
+	/**
+	 * Heartbeat message sent as a regular SSE data event so the client can track connection
+	 * liveness.
+	 */
+	private static final String HEARTBEAT_MESSAGE = "data: [\"Heartbeat\",{}]\n\n";
+
+	/** Interval between heartbeat messages in seconds. */
+	private static final long HEARTBEAT_INTERVAL_SECONDS = 30;
+
+	private final ConcurrentLinkedQueue<SSEEvent> _pendingEvents = new ConcurrentLinkedQueue<>();
+
+	private final Map<String, ReactCommandTarget> _controls = new ConcurrentHashMap<>();
+
+	private final AtomicInteger _nextId = new AtomicInteger(1);
+
+	private volatile SSEConnection _connection;
+
+	private volatile boolean _shutdown;
+
+	private volatile ScheduledFuture<?> _heartbeatTask;
+
+	private volatile String _windowName;
+
+	private volatile ReactControl _rootControl;
+
+	private volatile TLSessionContext _sessionContext;
+
+	private volatile ReactWindowRegistry _windowRegistry;
+
+	private DialogManager _dialogManager;
+
+	private RouteManager _routeManager;
+
+	private final ScriptRecorder _recorder = new ScriptRecorder();
+
+	/**
+	 * Retrieves or creates the {@link SSEUpdateQueue} for the given session.
+	 *
+	 * <p>
+	 * Synchronizes on the session to prevent a race where two concurrent requests both see
+	 * {@code null}, create independent queues, and the second {@code setAttribute} triggers
+	 * {@code valueUnbound} on the first — clearing its registered controls.
+	 * </p>
+	 */
+	public static SSEUpdateQueue forSession(HttpSession session) {
+		SSEUpdateQueue queue = (SSEUpdateQueue) session.getAttribute(SESSION_ATTRIBUTE_KEY);
+		if (queue == null) {
+			synchronized (session) {
+				queue = (SSEUpdateQueue) session.getAttribute(SESSION_ATTRIBUTE_KEY);
+				if (queue == null) {
+					queue = new SSEUpdateQueue();
+					session.setAttribute(SESSION_ATTRIBUTE_KEY, queue);
+				}
+			}
+		}
+		return queue;
+	}
+
+	/**
+	 * Allocates a unique control ID within this session.
+	 *
+	 * <p>
+	 * IDs are prefixed with "v" to distinguish them from old-world control IDs.
+	 * </p>
+	 */
+	public String allocateId() {
+		return "v" + _nextId.getAndIncrement();
+	}
+
+	/**
+	 * The {@link DialogManager} for the current session, or {@code null} if none is installed.
+	 */
+	public DialogManager getDialogManager() {
+		return _dialogManager;
+	}
+
+	/**
+	 * Sets the {@link DialogManager} for the current session.
+	 *
+	 * @param dialogManager
+	 *        The dialog manager to install.
+	 */
+	public void setDialogManager(DialogManager dialogManager) {
+		_dialogManager = dialogManager;
+	}
+
+	/**
+	 * The {@link RouteManager} for the current window, or {@code null} if none is installed.
+	 */
+	public RouteManager getRouteManager() {
+		return _routeManager;
+	}
+
+	/**
+	 * Sets the {@link RouteManager} for the current window.
+	 *
+	 * @param routeManager
+	 *        The route manager to install.
+	 */
+	public void setRouteManager(RouteManager routeManager) {
+		_routeManager = routeManager;
+		if (routeManager != null) {
+			routeManager.setDisplayedParticipants(this::displayedParticipants);
+		}
+	}
+
+	/**
+	 * The {@link RoutingParticipant}s the displayed control tree contains, in display order.
+	 *
+	 * <p>
+	 * The walk follows the {@link ReactControl#visibleChildren() visible children}, so a control that
+	 * is rendered but hidden - a covered frame of a tile stack - contributes nothing.
+	 * </p>
+	 *
+	 * @see RouteManager#setDisplayedParticipants(java.util.function.Supplier)
+	 */
+	private List<RoutingParticipant> displayedParticipants() {
+		List<RoutingParticipant> result = new ArrayList<>();
+		ReactControl root = _rootControl;
+		if (root != null) {
+			collectParticipants(root, result);
+		}
+		return result;
+	}
+
+	private static void collectParticipants(ReactControl control, List<RoutingParticipant> result) {
+		if (control instanceof RoutingParticipant participant) {
+			result.add(participant);
+		}
+		result.addAll(control.routeParticipants());
+		for (ReactControl child : control.visibleChildren()) {
+			collectParticipants(child, result);
+		}
+	}
+
+	/**
+	 * Registers a {@link ReactCommandTarget} so that it can be looked up by ID for command dispatch.
+	 *
+	 * <p>
+	 * A {@link ReactControl} is registered exactly while it is {@link ReactControl#isAttached()
+	 * attached}: {@link ReactControl#attach()} registers it and {@link ReactControl#detach()}
+	 * unregisters it. The queue therefore holds the controls the window displays, and no control that
+	 * left the display is kept alive by it.
+	 * </p>
+	 */
+	public void registerControl(ReactCommandTarget control) {
+		_controls.put(control.getID(), control);
+	}
+
+	/**
+	 * Unregisters a previously registered control.
+	 *
+	 * @see #registerControl(ReactCommandTarget)
+	 */
+	public void unregisterControl(ReactCommandTarget control) {
+		_controls.remove(control.getID(), control);
+	}
+
+	/**
+	 * Whether any control is registered with this queue.
+	 *
+	 * <p>
+	 * Rendering a page attaches its root control, which stays registered as long as the page is
+	 * displayed. A queue without any controls therefore did not render a page in this session - it
+	 * was typically created empty by an SSE reconnect after the session was replaced underneath an
+	 * open page.
+	 * Commands arriving for such a window target the control tree of a discarded session.
+	 * </p>
+	 */
+	public boolean hasControls() {
+		return !_controls.isEmpty();
+	}
+
+	/**
+	 * Looks up a previously registered control by its ID.
+	 *
+	 * <p>
+	 * Only {@link #registerControl(ReactCommandTarget) registered}, i.e. displayed, controls are
+	 * found. A request that was sent for a control before the client unmounted it may arrive after
+	 * the server has detached it; missing such a control is expected and therefore logged at debug
+	 * level only.
+	 * </p>
+	 *
+	 * @return The control, or {@code null} if not found.
+	 */
+	public ReactCommandTarget getControl(String controlId) {
+		ReactCommandTarget control = _controls.get(controlId);
+		if (control == null) {
+			Logger.debug("Control '" + controlId + "' is not displayed in window '" + _windowName
+				+ "' (queue@" + System.identityHashCode(this) + ", " + _controls.size()
+				+ " controls registered).", SSEUpdateQueue.class);
+		}
+		return control;
+	}
+
+	/**
+	 * Records the authoritative root control of this window's displayed tree.
+	 *
+	 * <p>
+	 * Set when the window's page is rendered. This is the single root the headless interface projects
+	 * from, following the displayed tree in display order.
+	 * </p>
+	 *
+	 * @param rootControl
+	 *        The window's root control.
+	 */
+	public void setRootControl(ReactControl rootControl) {
+		_rootControl = rootControl;
+	}
+
+	/**
+	 * Records the window name this queue serves, so diagnostics can identify the window.
+	 *
+	 * @param windowName
+	 *        The window name.
+	 */
+	public void setWindowName(String windowName) {
+		_windowName = windowName;
+	}
+
+	/**
+	 * The authoritative root control of this window's displayed tree, or {@code null} if not set.
+	 *
+	 * @see #setRootControl(ReactControl)
+	 */
+	public ReactControl getRootControl() {
+		return _rootControl;
+	}
+
+	/**
+	 * The per-window {@link ScriptRecorder} that captures dispatched commands as replayable steps.
+	 */
+	public ScriptRecorder getRecorder() {
+		return _recorder;
+	}
+
+	/**
+	 * Sets the SSE connection for this queue, replacing any existing one.
+	 */
+	public void setConnection(AsyncContext asyncContext) {
+		SSEConnection old = _connection;
+		SSEConnection newConn = new SSEConnection(asyncContext);
+		_connection = newConn;
+		if (old != null) {
+			// Diagnostic for "controls don't react": a second event stream for the SAME window
+			// replaces the first, so the previously connected browser tab stops receiving state
+			// patches (its clicks still POST, but updates never arrive). Expected on reconnect of a
+			// single tab; suspicious if two live tabs share a window.
+			Logger.warn("SSE connection REPLACED for window '" + _windowName + "' (queue@"
+				+ System.identityHashCode(this) + "); the previous browser event stream is now closed.",
+				SSEUpdateQueue.class);
+			try {
+				old.getContext().complete();
+			} catch (Exception ex) {
+				// Old connection already closed, ignore.
+			}
+		} else {
+			Logger.info("SSE connection set for window '" + _windowName + "' (queue@"
+				+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
+		}
+		sendFullState(newConn);
+		// Flush any events that were enqueued before the SSE connection was
+		// established (e.g. RouteChangeEvent from initial RoutingParticipant
+		// registration during control tree construction).
+		flush();
+		ensureHeartbeat();
+	}
+
+	/**
+	 * Clears the SSE connection if it matches the given async context.
+	 */
+	public void clearConnection(AsyncContext asyncContext) {
+		SSEConnection current = _connection;
+		if (current != null && current.getContext() == asyncContext) {
+			_connection = null;
+			Logger.info("SSE connection cleared for queue@" + System.identityHashCode(this),
+				SSEUpdateQueue.class);
+		}
+		cancelHeartbeatIfEmpty();
+	}
+
+	/**
+	 * Sends the full state of all registered {@link ReactControl}s to the given connection.
+	 *
+	 * <p>
+	 * This is called when a new SSE connection is established (including reconnects) to ensure the
+	 * client has the current state of all controls, recovering any state that may have been lost
+	 * while the connection was down.
+	 * </p>
+	 *
+	 * <p>
+	 * Since a control is registered exactly while it is displayed, this sends the state of the
+	 * controls the window displays.
+	 * </p>
+	 */
+	private void sendFullState(SSEConnection connection) {
+		for (ReactCommandTarget control : _controls.values()) {
+			if (control instanceof ReactControl rc) {
+				StateEvent event = StateEvent.create()
+					.setControlId(rc.getID())
+					.setState(rc.stateAsJSON());
+				String message = toDataMessage(toJson(event));
+				if (message != null) {
+					writeOrDisconnect(connection, message);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Drops all events that are still waiting for a client.
+	 *
+	 * <p>
+	 * Called when a page is (re)rendered from scratch: the rendered output carries the full state of
+	 * every control, so a queued update from before that rendering is at best redundant and at worst
+	 * describes a state the fresh page has already passed. Unlike a
+	 * {@link #setConnection(jakarta.servlet.AsyncContext) reconnect} - which deliberately keeps
+	 * pending events, because one-off events such as the logout reload are not part of any control
+	 * state - a full page render replaces what the events would have delivered.
+	 * </p>
+	 */
+	public void discardPendingEvents() {
+		_pendingEvents.clear();
+	}
+
+	/**
+	 * The number of events waiting for a client: enqueued, but not yet written to a connection.
+	 *
+	 * <p>
+	 * An {@link #enqueue(SSEEvent) enqueued} event is removed only once it has been written, so
+	 * without a {@link #setConnection(AsyncContext) connection} this counts everything the queue has
+	 * been handed. That makes it the seam for observing what a control sends: a count that does not
+	 * move across an interaction is the proof that no event was produced.
+	 * </p>
+	 */
+	public int pendingEventCount() {
+		return _pendingEvents.size();
+	}
+
+	/**
+	 * Enqueues an event for delivery to the connected SSE client.
+	 *
+	 * <p>
+	 * Outside an interaction the event is flushed immediately: an SSE (re)connection, the model
+	 * events synthesized on the heartbeat and background activity deliver state that nothing is
+	 * about to revise. Within an open {@link DeliveryScope} the event only queues and this queue is
+	 * noted as touched, so that delivery is {@link #settle() settled} once the interaction has
+	 * completed.
+	 * </p>
+	 */
+	public void enqueue(SSEEvent event) {
+		if (_shutdown) {
+			Logger.info("enqueue REJECTED (shutdown) on queue@" + System.identityHashCode(this),
+				SSEUpdateQueue.class);
+			return;
+		}
+		_pendingEvents.add(event);
+		DeliveryScope scope = DeliveryScope.current();
+		if (scope == null) {
+			flush();
+		} else {
+			scope.collect(this);
+		}
+	}
+
+	/**
+	 * Delivers what an interaction produced for this window, dropping the updates that address
+	 * controls the interaction stopped displaying.
+	 *
+	 * <p>
+	 * An interaction both updates controls and decides which of them stay displayed: a control is
+	 * patched by the listener chain of the channel a command wrote, while the container that
+	 * replaces it is notified later in the same chain. An update addressed to a control the client
+	 * is about to unmount would send the browser looking for data the server no longer serves, so it
+	 * is dropped here, where it is known which controls the interaction leaves displayed. Nothing is
+	 * lost: a control that becomes displayed again is serialized with its full state.
+	 * </p>
+	 *
+	 * <p>
+	 * Only the events that address a control - a {@link StateEvent} or a {@link PatchEvent} - can be
+	 * dropped. Everything else is delivered as enqueued.
+	 * </p>
+	 *
+	 * @see DeliveryScope
+	 */
+	void settle() {
+		_pendingEvents.removeIf(this::addressesRetiredControl);
+		flush();
+	}
+
+	/**
+	 * Whether the given event addresses a control that this window no longer displays, i.e. one
+	 * that is not {@link #registerControl(ReactCommandTarget) registered}: a container detached or
+	 * disposed it.
+	 */
+	private boolean addressesRetiredControl(SSEEvent event) {
+		String controlId;
+		if (event instanceof StateEvent state) {
+			controlId = state.getControlId();
+		} else if (event instanceof PatchEvent patch) {
+			controlId = patch.getControlId();
+		} else {
+			return false;
+		}
+		return !_controls.containsKey(controlId);
+	}
+
+	/**
+	 * Flushes all pending events to the connected SSE client.
+	 *
+	 * <p>
+	 * An event is removed from the queue only after it has been written successfully. If the write
+	 * fails (a dead or half-open connection), the event stays queued and is retried on the next
+	 * {@link #setConnection(jakarta.servlet.AsyncContext) (re)connection}. This matters for one-off
+	 * events such as the login/logout {@code window.location.reload()}: dropping such an event on a
+	 * silently-broken connection would leave the action half-applied (e.g. a logout that never
+	 * reloads the page), since reconnects only replay control state via {@link #sendFullState}, not
+	 * one-off events.
+	 * </p>
+	 *
+	 * <p>
+	 * Synchronized so that concurrent callers (enqueue, heartbeat, (re)connect) cannot interleave
+	 * writes to the same connection or poll the same event twice.
+	 * </p>
+	 */
+	public synchronized void flush() {
+		SSEConnection conn = _connection;
+		if (conn == null) {
+			return;
+		}
+		SSEEvent event;
+		while ((event = _pendingEvents.peek()) != null) {
+			String message = toDataMessage(toJson(event));
+			if (message == null) {
+				// Unserializable event: discard it, keeping it would block the queue forever.
+				_pendingEvents.poll();
+				continue;
+			}
+			if (!writeOrDisconnect(conn, message)) {
+				// Keep the event queued for retry on the next (re)connection.
+				return;
+			}
+			// Written successfully: now remove it from the queue.
+			_pendingEvents.poll();
+		}
+	}
+
+	/**
+	 * Shuts down this queue, cancelling the heartbeat, closing the connection, and clearing all
+	 * state.
+	 */
+	public void shutdown() {
+		_shutdown = true;
+		synchronized (this) {
+			if (_heartbeatTask != null) {
+				_heartbeatTask.cancel(false);
+				_heartbeatTask = null;
+			}
+		}
+		SSEConnection conn = _connection;
+		_connection = null;
+		if (conn != null) {
+			try {
+				conn.getContext().complete();
+			} catch (Exception ex) {
+				// Connection already closed, ignore.
+			}
+		}
+		_pendingEvents.clear();
+		_controls.clear();
+	}
+
+	/**
+	 * Sets the window context for model event synthesis during heartbeat.
+	 *
+	 * @param windowName
+	 *        The window name this queue serves.
+	 * @param sessionContext
+	 *        The session context for subsession lookup.
+	 * @param registry
+	 *        The window registry for event synthesis.
+	 */
+	public void setWindowContext(String windowName, TLSessionContext sessionContext,
+			ReactWindowRegistry registry) {
+		_windowName = windowName;
+		_sessionContext = sessionContext;
+		_windowRegistry = registry;
+	}
+
+	private synchronized void ensureHeartbeat() {
+		if (_heartbeatTask == null || _heartbeatTask.isDone()) {
+			_heartbeatTask = SchedulerService.getInstance().scheduleAtFixedRate(
+				this::sendHeartbeat, HEARTBEAT_INTERVAL_SECONDS, HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS);
+		}
+	}
+
+	private synchronized void cancelHeartbeatIfEmpty() {
+		if (_connection == null && _heartbeatTask != null) {
+			_heartbeatTask.cancel(false);
+			_heartbeatTask = null;
+		}
+	}
+
+	private void sendHeartbeat() {
+		SSEConnection conn = _connection;
+		if (conn != null) {
+			synthesizeModelEventsIfPossible();
+			writeOrDisconnect(conn, HEARTBEAT_MESSAGE);
+			flush();
+		}
+		cancelHeartbeatIfEmpty();
+	}
+
+	private void synthesizeModelEventsIfPossible() {
+		ReactWindowRegistry registry = _windowRegistry;
+		TLSessionContext sessionCtx = _sessionContext;
+		String windowName = _windowName;
+		if (registry == null || sessionCtx == null || windowName == null) {
+			return;
+		}
+		TLSubSessionContext subSession = sessionCtx.getSubSession(windowName);
+		if (subSession == null) {
+			return;
+		}
+		ThreadContextManager.inContext(subSession, () -> {
+			registry.synthesizeModelEvents(windowName);
+		});
+	}
+
+	/**
+	 * Writes a message to the given connection, clearing it if the write fails.
+	 */
+	private boolean writeOrDisconnect(SSEConnection connection, String message) {
+		try {
+			writeToConnection(connection.getContext(), message);
+			return true;
+		} catch (IOException ex) {
+			Logger.info("SSE connection lost for queue@" + System.identityHashCode(this),
+				SSEUpdateQueue.class);
+			_connection = null;
+			return false;
+		}
+	}
+
+	/**
+	 * Writes a complete SSE message to a connection.
+	 *
+	 * <p>
+	 * Synchronizes on the {@link AsyncContext} to prevent interleaving between heartbeat writes and
+	 * event writes from different threads.
+	 * </p>
+	 *
+	 * @throws IOException
+	 *         If the write fails, indicating a dead connection.
+	 */
+	private static void writeToConnection(AsyncContext ctx, String message) throws IOException {
+		synchronized (ctx) {
+			PrintWriter writer = ctx.getResponse().getWriter();
+			writer.write(message);
+			writer.flush();
+			if (writer.checkError()) {
+				throw new IOException("SSE write failed (PrintWriter error flag set).");
+			}
+		}
+	}
+
+	private static String toDataMessage(String json) {
+		if (json == null) {
+			return null;
+		}
+		return "data: " + json + "\n\n";
+	}
+
+	private static String toJson(SSEEvent event) {
+		try {
+			StringW sw = new StringW();
+			try (JsonWriter jsonWriter = new JsonWriter(sw)) {
+				event.writeTo(jsonWriter);
+			}
+			return sw.toString();
+		} catch (IOException ex) {
+			Logger.error("Failed to serialize SSE event to JSON.", ex, SSEUpdateQueue.class);
+			return null;
+		}
+	}
+
+	/**
+	 * Wraps an {@link AsyncContext} for an SSE connection.
+	 */
+	static final class SSEConnection {
+
+		private final AsyncContext _context;
+
+		SSEConnection(AsyncContext context) {
+			_context = context;
+		}
+
+		AsyncContext getContext() {
+			return _context;
+		}
+	}
+
+}

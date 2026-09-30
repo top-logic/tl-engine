@@ -31,6 +31,9 @@ public interface PartConfig extends AttributeConfigBase, PartAspect, TypeRef {
 	/** @see #isMultiple() */
 	String MULTIPLE_PROPERTY = TLReference.MULTIPLE_ATTR;
 
+	/** @see #isAbstract() */
+	String ABSTRACT_PROPERTY = TLStructuredTypePart.ABSTRACT_ATTR;
+
 	/** @see #isOrdered() */
 	String ORDERED_PROPERTY = TLReference.ORDERED_ATTR;
 
@@ -64,6 +67,17 @@ public interface PartConfig extends AttributeConfigBase, PartAspect, TypeRef {
 
 	/** @see #isMultiple() */
 	void setMultiple(boolean value);
+
+	/**
+	 * Whether this attribute must be overridden in concrete classes.
+	 * 
+	 * @see TLStructuredTypePart#isAbstract()
+	 */
+	@Name(ABSTRACT_PROPERTY)
+	boolean isAbstract();
+
+	/** @see #isAbstract() */
+	void setAbstract(boolean value);
 
 	/**
 	 * If {@link #isMultiple()}, whether the order of values of this attribute is significant (list

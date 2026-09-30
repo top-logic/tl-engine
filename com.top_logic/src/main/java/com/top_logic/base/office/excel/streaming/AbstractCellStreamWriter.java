@@ -62,6 +62,20 @@ public abstract class AbstractCellStreamWriter implements CellStreamWriter {
 		return currentTable;
 	}
 
+	/**
+	 * Increments the column index.
+	 */
+	public void newColumn() {
+		incColumn(1);
+	}
+
+	/**
+	 * Increments the column index by the given value.
+	 */
+	public void incColumn(int cnt) {
+		currentColumnIndex += cnt;
+	}
+
 	private void checkReady() throws IOException {
 		if (currentTable == null) {
 			throw new IllegalStateException("Writer is not ready for write access yet! No current table given.");

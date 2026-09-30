@@ -24,6 +24,7 @@
 			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/declarative/declarativeFormConfiguredType.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/testDeFactoMonomorphicProperties/testDeFactoMonomorphicPropertiesLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/demoTablePopupSelectCustomization/demoTablePopupSelectCustomization.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/reactiveForms/tabLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

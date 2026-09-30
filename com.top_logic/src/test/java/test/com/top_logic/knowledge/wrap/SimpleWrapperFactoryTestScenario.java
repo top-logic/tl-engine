@@ -23,7 +23,6 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
@@ -355,7 +354,7 @@ public abstract class SimpleWrapperFactoryTestScenario implements KnowledgeBaseT
 		}
 		
 		public static SimpleWrapperFactoryTestScenario.CObj newCObj(String a1) {
-			KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			return newCObj(kb, a1);
 		}
 
@@ -436,7 +435,7 @@ public abstract class SimpleWrapperFactoryTestScenario implements KnowledgeBaseT
 		}
 
 		public static DObj newDObj(String a1) {
-			KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			return newDObj(kb, a1);
 		}
 
@@ -687,7 +686,7 @@ public abstract class SimpleWrapperFactoryTestScenario implements KnowledgeBaseT
 		}
 		
 		public static SA newSAObj(String s1) {
-			KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			return newSAObj(kb, s1);
 		}
 		
@@ -727,7 +726,7 @@ public abstract class SimpleWrapperFactoryTestScenario implements KnowledgeBaseT
 		}
 		
 		public static SB newSBObj(String s1) {
-			KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			return newSBObj(kb, s1);
 		}
 		
@@ -771,7 +770,7 @@ public abstract class SimpleWrapperFactoryTestScenario implements KnowledgeBaseT
 		}
 		
 		public static SC newSCObj(String s1, KnowledgeItem sRef) {
-			KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			return newSCObj(kb, s1, sRef);
 		}
 		

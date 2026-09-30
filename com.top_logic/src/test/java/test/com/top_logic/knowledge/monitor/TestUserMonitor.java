@@ -23,7 +23,8 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.base.bus.UserEvent;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.Mappings;
-import com.top_logic.event.bus.Sender;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.knowledge.monitor.StoreUserEventListener;
 import com.top_logic.knowledge.monitor.UserMonitor;
 import com.top_logic.knowledge.monitor.UserSession;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -68,7 +69,7 @@ public class TestUserMonitor extends BasicTestCase {
     
     @Override
     protected void tearDown() throws Exception {
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		for (KnowledgeObject userSession : getAllUserSessions()) {
 			if (sessionsBefore.contains(KBUtils.getObjectKeyString(userSession))) {
 				continue;
@@ -89,12 +90,11 @@ public class TestUserMonitor extends BasicTestCase {
         Date              start  = new Date(1083575486623L);    // 03.05.2004 11:11:26 
         Date              end    = new Date(1083576548662L);    // 03.05.2004 11:29:08
         String            server = UserSession.getServerName();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		UserSession us = UserSession.startSession(kb, "TestUserSession", "xxxxx", "127.0.0.1", start);
 		tx.commit();
         
-		assertEquals(us, um.findUserSession(kb, "TestUserSession", "xxxxx", server));
-		assertEquals(us, findSessionOnServer(kb, "TestUserSession", "xxxxx"));
+		assertEquals(us, UserSession.findUserSession(kb, "TestUserSession", "xxxxx", server));
 		// Wont work since it depends on current Date ...
 		// assertInIterator(us, um.getOpenSessionsIterated(kb));
 		List<?> theSessions = getUserSessions(kb, start, null);
@@ -109,37 +109,37 @@ public class TestUserMonitor extends BasicTestCase {
 	}
 
 	private void endSession(UserSession us, Date end) throws KnowledgeBaseException {
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		us.endSession(end);
 		tx.commit();
 	}
     
 	/** Testcases using some "current" dates. */
 	public void testNowDates() throws Exception {
+
+		StoreUserEventListener listener = TypedConfigUtil.createInstance(StoreUserEventListener.Config.class);
     
         long              now    = System.currentTimeMillis();
         Date              start  = new Date(now - 1000*60*60*10);
         Date              end    = new Date(now - 1000*60*60* 5);
         String            server = UserSession.getServerName();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
         UserSession       us     = UserSession.startSession(kb, 
             "TestUserSession", "xxxxx",  "127.0.0.1", start); 
 		String testUserName = TestPersonSetup.USER_ID;
 		Person dummy = Person.byName(testUserName);
 		assertNotNull("Unable to get user for name " + testUserName, us);
-        Sender            sender = new Sender("Testing", "TestUserMonitor");
-        UserEvent         login  = new UserEvent(sender, dummy, "yyyyy", server, UserEvent.LOGGED_IN);
-        UserEvent         logout = new UserEvent(sender, dummy, "yyyyy", server, UserEvent.LOGGED_OUT);
+		UserEvent login = new UserEvent(dummy, dummy, "yyyyy", server, UserEvent.EventType.LOGGED_IN);
+		UserEvent logout = new UserEvent(dummy, dummy, "yyyyy", server, UserEvent.EventType.LOGGED_OUT);
 		tx.commit();
 
-		um.receive(login);
+		listener.notifyUserEvent(login);
 
         Thread.sleep(1000);
 		// Wait a second due to implementation hack for Oracle evil for MSSQL
 		// See UserMonitor.java:324
 
-		assertEquals(us, um.findUserSession("TestUserSession", "xxxxx", server));
-		assertEquals(us, findSessionOnServer("TestUserSession", "xxxxx"));
+		assertEquals(us, UserSession.findUserSession(kb, "TestUserSession", "xxxxx", server));
 		assertInIterator(us, um.getOpenSessionsIterated());
 
 		Collection sessions = um.getUserSessions();
@@ -148,7 +148,7 @@ public class TestUserMonitor extends BasicTestCase {
 
 		endSession(us, end);
 
-		um.receive(logout);
+		listener.notifyUserEvent(logout);
 
         assertNotInIterator(us, um.getOpenSessionsIterated());
 		assertTrue(um.getUserSessions().contains(us));
@@ -174,14 +174,13 @@ public class TestUserMonitor extends BasicTestCase {
 		for (int i = 0; i < COUNT; i++) {
 			start = new Date(now);
 			end = new Date(now + rand.nextInt(delta1));
-			Transaction tx = kb.beginTransaction();
+			Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			String session = "S" + i;
 			UserSession us = UserSession.startSession(kb,
 				"TestUserSession", session, "127.0.0.1", start);
 			tx.commit();
 
-			assertEquals(us, um.findUserSession(kb, "TestUserSession", session, server));
-			assertEquals(us, findSessionOnServer(kb, "TestUserSession", session));
+			assertEquals(us, UserSession.findUserSession(kb, "TestUserSession", session, server));
 			assertTrue(getUserSessions(kb, start, null).contains(us));
 			assertTrue(getUserSessions(kb, start, UserSession.LOGOUT).contains(us));
 			endSession(us, end);
@@ -222,18 +221,5 @@ public class TestUserMonitor extends BasicTestCase {
 		Object[] args = new Object[] {aBase,aStartDate, anEndDate ,aSort};
 		return ReflectionUtils.executeMethod(um, "getUserSessions", signature, args, List.class);
 	}
-
-	private UserSession findSessionOnServer(KnowledgeBase aBase, String aUser, String anID) {
-		Class<?>[] signature = new Class<?>[]{KnowledgeBase.class,String.class, String.class};
-		Object[] args = new Object[] {aBase,aUser ,anID};
-		return ReflectionUtils.executeMethod(um, "findSessionOnServer", signature, args, UserSession.class);
-	}
-
-	private UserSession findSessionOnServer(String aUser, String anID) {
-		Class<?>[] signature = new Class<?>[]{String.class, String.class};
-		Object[] args = new Object[] {aUser ,anID};
-		return ReflectionUtils.executeMethod(um, "findSessionOnServer", signature, args, UserSession.class);
-	}
-
 
 }

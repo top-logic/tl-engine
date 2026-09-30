@@ -31,12 +31,14 @@ import com.top_logic.layout.messagebox.ProgressDialog;
 import com.top_logic.layout.structure.ControlRepresentable;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.control.TableControl;
+import com.top_logic.layout.table.model.ExportConfig;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.Resources;
 
 /**
  * Base class for {@link TableData} exports.
@@ -46,7 +48,8 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 	/**
 	 * Configuration options for {@link AbstractTableExportHandler}.
 	 */
-	public interface Config extends AbstractCommandHandler.Config {
+	public interface Config extends AbstractCommandHandler.Config, ExportConfig {
+
 		@Override
 		@ComplexDefault(DefaultLabel.class)
 		ResKey getResourceKey();
@@ -81,8 +84,9 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 				return com.top_logic.layout.table.renderer.I18NConstants.EXPORT_EXCEL;
 			}
 		}
-
 	}
+
+	private final DownloadNameProvider _downloadNameProvider;
 
 	/**
 	 * Creates a {@link AbstractTableExportHandler} from configuration.
@@ -95,16 +99,17 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 	@CalledByReflection
 	public AbstractTableExportHandler(InstantiationContext context, Config config) {
 		super(context, config);
+		_downloadNameProvider = context.getInstance(config.getDownloadNameProvider());
 	}
 
 	@Override
 	public HandlerResult handleCommand(DisplayContext displayContext, final LayoutComponent aComponent, Object model,
 			Map<String, Object> someArguments) {
-		return createProgressDialog(aComponent).open(displayContext);
+		return createProgressDialog(aComponent, model).open(displayContext);
 	}
 
-	private ProgressDialog createProgressDialog(final LayoutComponent aComponent) {
-		return new ProgressDialog(I18NConstants.PERFORMING_EXPORT, DisplayDimension.px(500), DisplayDimension.px(250)) {
+	private ProgressDialog createProgressDialog(final LayoutComponent aComponent, Object model) {
+		return new ProgressDialog(I18NConstants.PERFORMING_EXPORT, DisplayDimension.px(500), DisplayDimension.px(350)) {
 
 			private final int _rowCount = extractTableData(aComponent).getViewModel().getRowCount();
 
@@ -112,7 +117,7 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 
 			@Override
 			protected void run(I18NLog log) throws AbortExecutionException {
-				_download = createDownloadData(this::incProgress, log, aComponent);
+				_download = createDownloadData(this::incProgress, log, aComponent, model);
 			}
 
 			@Override
@@ -136,7 +141,7 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 				return _rowCount;
 			}
 
-			protected void incProgress() {
+			private void incProgress() {
 				incProgress(1);
 			}
 
@@ -148,18 +153,33 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 	 * 
 	 * @param log
 	 *        The export log.
-	 * 
 	 * @param component
 	 *        the model fetched from the underlying component.
+	 * @param model
+	 *        The base model for which the export is created.
+	 * 
 	 * @return {@link BinaryData} to be streamed to the client.
 	 */
-	protected abstract BinaryData createDownloadData(Runnable progressIncrementer, I18NLog log, LayoutComponent component);
+	protected abstract BinaryData createDownloadData(Runnable progressIncrementer, I18NLog log, LayoutComponent component, Object model);
 
 	/**
 	 * Retrieves the {@link TableData} from the component.
 	 */
 	protected TableData extractTableData(LayoutComponent component) {
 		return ((TableControl) ((ControlRepresentable) component).getRenderingControl()).getTableData();
+	}
+
+	/**
+	 * Creates a dynamic filename if configured, otherwise the translated download-key is provided.
+	 * @param model
+	 *        The model object, for which the download was produced. Typically the model of the
+	 *        context component.
+	 * 
+	 * @return the filename for the download using the {@link DownloadNameProvider} if configured.
+	 */
+	protected String getFilename(LayoutComponent component, Object model) {
+		ResKey downloadName = _downloadNameProvider.createDownloadName(component, model);
+		return Resources.getInstance().getString(downloadName);
 	}
 
 }

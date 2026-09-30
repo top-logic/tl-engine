@@ -5,7 +5,7 @@
  */
 package com.top_logic.mail.base;
 
-import javax.mail.event.MessageCountListener;
+import jakarta.mail.event.MessageCountListener;
 
 import com.top_logic.knowledge.wrap.ContainerWrapper;
 import com.top_logic.mail.proxy.MailMessage;
@@ -13,7 +13,7 @@ import com.top_logic.mail.proxy.MailMessage;
 /**
  * A representation of a mail folder.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface MailFolder extends ContainerWrapper {
 

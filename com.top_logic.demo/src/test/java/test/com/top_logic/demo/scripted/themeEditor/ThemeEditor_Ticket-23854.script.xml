@@ -68,7 +68,7 @@
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="modern"
+								value="core"
 							/>
 						</values>
 					</value>
@@ -574,7 +574,7 @@
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="java.awt.Color[r=255,g=0,b=0]"
+						value="#FF0000"
 					/>
 				</action>
 			</actions>
@@ -929,7 +929,7 @@
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="Demo Modern"
+								label="Comfort"
 							/>
 						</values>
 					</value>

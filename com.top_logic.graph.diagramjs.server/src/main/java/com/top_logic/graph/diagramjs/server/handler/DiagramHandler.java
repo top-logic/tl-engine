@@ -8,7 +8,7 @@ package com.top_logic.graph.diagramjs.server.handler;
 /**
  * Handles diagram events.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface DiagramHandler
 		extends CreateClassHandler, CreateClassPropertyHandler, CreateConnectionHandler, CreateEnumerationHandler,

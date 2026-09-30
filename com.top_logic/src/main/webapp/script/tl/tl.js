@@ -120,7 +120,7 @@ BAL.addEventListener(document, "mouseover", function(evt) {
 			if (attributeValue != null && attributeValue.length > 0) {
 
 				if (!target.classList.contains("activeTooltip")) {
-					PlaceDialog.generateTooltip(target, attributeValue);
+					PlaceDialog.generateTooltip(evt, target, attributeValue);
 				}
 
 				// Only interpret innermost tooltip.

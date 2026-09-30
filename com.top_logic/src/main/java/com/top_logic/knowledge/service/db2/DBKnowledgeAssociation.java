@@ -59,17 +59,24 @@ public class DBKnowledgeAssociation extends StaticKnowledgeItem implements Knowl
     	return KnowledgeAssociationImpl.getDestinationObject(this);
     }
 
-	public static void clearDestinationAndRemoveLink(KnowledgeAssociation ka) throws DataObjectException {
-		clearReferenceAndRemoveLink(ka, REFERENCE_DEST_NAME);
+	@Override
+	public String toString() {
+		return super.toString() + "(" + KnowledgeAssociationImpl.getSourceIdentityOrNull(this) + "->"
+				+ KnowledgeAssociationImpl.getDestinationIdentityOrNull(this) + ")";
 	}
 
-	public static void clearSourceAndRemoveLink(KnowledgeAssociation ka) throws DataObjectException {
-		clearReferenceAndRemoveLink(ka, REFERENCE_SOURCE_NAME);
-	}
-
-	private static void clearReferenceAndRemoveLink(KnowledgeAssociation ka, String referenceName)
-			throws DataObjectException {
-		ka.setAttributeValue(referenceName, null);
+	/**
+	 * Clears the references {@link #REFERENCE_SOURCE_NAME} and {@link #REFERENCE_DEST_NAME} and
+	 * deletes the association.
+	 * 
+	 * <p>
+	 * This is done to avoid automatically deleting source or target when a the corresponding
+	 * {@link MOReference} is {@link MOReference#isContainer()}.
+	 * </p>
+	 */
+	public static void clearReferencesAndRemoveLink(KnowledgeAssociation ka) throws DataObjectException {
+		ka.setAttributeValue(REFERENCE_SOURCE_NAME, null);
+		ka.setAttributeValue(REFERENCE_DEST_NAME, null);
 		ka.delete();
 	}
 

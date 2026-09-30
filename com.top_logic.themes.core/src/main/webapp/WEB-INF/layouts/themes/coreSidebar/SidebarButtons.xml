@@ -36,5 +36,8 @@
 			horizontalPosition="TO_THE_RIGHT"
 			renderer="${renderer}"
 		/>
+		<include name="toolrow/logoutButton.xml"
+			entryRenderer="${entryRenderer}"
+		/>
 	</views>
 </template>

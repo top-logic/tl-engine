@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/constructionPlanChart.layout.xml#Chart)">
+		<name key="dynamic.71aae6d5-fb1c-4ca7-a57c-11d1e764f058">
+			<en>Details</en>
+			<de>Details</de>
+		</name>
+		<forms>
+			<form type="test.flowchart:FlowNode">
+				<formDefinition>
+					<field
+						attribute="name"
+						fullQualifiedName="test.flowchart:FlowNode#name"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="marker"
+						fullQualifiedName="test.flowchart:FlowNode#marker"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="image"
+						fullQualifiedName="test.flowchart:FlowNode#image"
+						type="tl.core:Binary"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

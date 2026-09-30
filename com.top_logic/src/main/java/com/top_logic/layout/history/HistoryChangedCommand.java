@@ -139,7 +139,7 @@ class HistoryChangedCommand extends ControlCommand {
 			 * switch back the history frame but also the frame currently visible to a different
 			 * content. In BrowserWindowControl it is ensured that each browser back action displays
 			 * a warn dialog. This code ensures that the client is consistent after showing dialog. */
-			context.getWindowScope().getTopLevelFrameScope().addClientAction(MainLayout.createFullReload());
+			MainLayout.addFullReload(context);
 		}
 	}
 

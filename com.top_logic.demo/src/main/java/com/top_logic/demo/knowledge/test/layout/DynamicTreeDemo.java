@@ -106,7 +106,7 @@ public class DynamicTreeDemo extends FormComponent implements ModelProvider {
             StringField field = FormFactory.newStringField("input");
 			MutableTLTreeNode<?> dtmNode = (MutableTLTreeNode<?>) node;
 			Object uObject = dtmNode.getBusinessObject();
-            field.setValue       (uObject);
+			field.initializeField(uObject);
             field.setDefaultValue(uObject);
             nodeGroup.addMember(field);
 

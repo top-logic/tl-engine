@@ -122,7 +122,7 @@ private static final String RESTART_LINK = "Reload page";
 					out.write("<br/><b>Simulating...</b><br/><br/><br/>\n");
 				}
 				%>
-				<table style="margin: 5px">
+				<table>
 					<tr>
 						<td>
 							<code class="normal">
@@ -149,11 +149,14 @@ private static final String RESTART_LINK = "Reload page";
 							<tr>
 								<td>
 									<p>
-										&#xA0;
-										<input name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
+										<button class="tlButton cButton tl-cmd-button"
+											name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
 											type="submit"
-											value="<%=REFRESH_BUTTON%>"
-										/>
+										>
+											<span class="tlButtonLabel">
+												<%= REFRESH_BUTTON %>
+											</span>
+										</button>
 									</p>
 								</td>
 							</tr>
@@ -164,12 +167,13 @@ private static final String RESTART_LINK = "Reload page";
 				if (RESTART_LINK != null) {
 					%>
 					<p>
-						<a
-							href="javascript:self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
-							style="color:darkblue"
+						<button class="tlButton cButton tl-cmd-button"
+							onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
 						>
-							&#xA0;<%=RESTART_LINK%>
-						</a>
+							<h4 class="tlButtonLabel">
+								<%= RESTART_LINK %>
+							</h4>
+						</button>
 					</p>
 					<%
 				}
@@ -185,20 +189,26 @@ private static final String RESTART_LINK = "Reload page";
 									<%
 									if (RUN_BUTTON != null) {
 										%>
-										&#xA0;
-										<input name="SUBMIT"
+										<button class="tlButton cButton tl-cmd-button"
+											name="SUBMIT"
 											type="submit"
-											value="<%=RUN_BUTTON%>"
-										/>
+										>
+											<h4 class="tlButtonLabel">
+												<%= RUN_BUTTON %>
+											</h4>
+										</button>
 										<%
 									}
 									if (SIMULATE_BUTTON != null) {
 										%>
-										&#xA0;
-										<input name="SIMULATE"
+										<button class="tlButton cButton tl-cmd-button"
+											name="SIMULATE"
 											type="submit"
-											value="<%=SIMULATE_BUTTON%>"
-										/>
+										>
+											<h4 class="tlButtonLabel">
+												<%= SIMULATE_BUTTON %>
+											</h4>
+										</button>
 										<%
 									}
 									%>

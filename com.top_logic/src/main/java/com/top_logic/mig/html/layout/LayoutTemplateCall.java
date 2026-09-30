@@ -18,7 +18,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Layout origins from a template.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class LayoutTemplateCall implements TLLayout {
 
@@ -91,8 +91,8 @@ public class LayoutTemplateCall implements TLLayout {
 	}
 
 	@Override
-	public void writeTo(OutputStream stream, boolean isFinal) throws IOException {
-		LayoutTemplateUtils.writeLayoutTemplateCall(stream, _templateName, _arguments, isFinal);
+	public void writeTo(OutputStream stream, boolean markFinal) throws IOException {
+		LayoutTemplateUtils.writeLayoutTemplateCall(stream, _templateName, _arguments, markFinal);
 	}
 
 	@Override

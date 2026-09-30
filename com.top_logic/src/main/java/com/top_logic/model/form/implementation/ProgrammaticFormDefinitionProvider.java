@@ -11,10 +11,13 @@ import static com.top_logic.layout.form.template.model.Templates.*;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.html.template.HTMLTemplateFragment;
+import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ImageProvider;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLStructuredType;
@@ -30,8 +33,13 @@ import com.top_logic.model.form.definition.FormElement;
 public class ProgrammaticFormDefinitionProvider
 		extends AbstractFormElementProvider<ProgrammaticFormDefinitionProvider.Config> {
 
-	private static final ImageProvider IMAGE_PROVIDER =
-		ImageProvider.constantImageProvider(Icons.FORM_EDITOR_TOOL_CODE_ELEMENT);
+	private static final ImageProvider IMAGE_PROVIDER = new ImageProvider() {
+		@Override
+		public ThemeImage getImage(Object obj, Flavor flavor) {
+			// This must not be accessed in a static block.
+			return Icons.FORM_EDITOR_TOOL_CODE_ELEMENT;
+		}
+	};
 
 	/**
 	 * Configuration for a {@link ProgrammaticFormDefinitionProvider}.
@@ -47,6 +55,7 @@ public class ProgrammaticFormDefinitionProvider
 		 */
 		@Options(fun = AllInAppImplementations.class)
 		@Label("implementation")
+		@DefaultContainer
 		PolymorphicConfiguration<? extends FormElementTemplateProvider> getImpl();
 
 	}
@@ -60,6 +69,13 @@ public class ProgrammaticFormDefinitionProvider
 	public ProgrammaticFormDefinitionProvider(InstantiationContext context, Config config) {
 		super(context, config);
 		_impl = context.getInstance(config.getImpl());
+	}
+
+	/**
+	 * The delegate implementation.
+	 */
+	protected FormElementTemplateProvider getImpl() {
+		return _impl;
 	}
 
 	@Override

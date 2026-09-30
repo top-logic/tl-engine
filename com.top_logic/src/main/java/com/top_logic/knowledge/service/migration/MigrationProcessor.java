@@ -29,18 +29,5 @@ public interface MigrationProcessor {
 	 */
 	void doMigration(MigrationContext context, Log log, PooledConnection connection);
 
-	/**
-	 * Whether the migration of this {@link MigrationProcessor} should be performed "out of band"
-	 * after other migrations.
-	 * 
-	 * <p>
-	 * {@link MigrationProcessor}s must be deferred, if they try to parse configurations stored in
-	 * the database, because code migrations must have been applied to those configurations before.
-	 * </p>
-	 */
-	default boolean isDeferred() {
-		return false;
-	}
-
 }
 

@@ -56,10 +56,14 @@ public class OnExpandedControl extends AbstractConstantControl implements Collap
 		out.beginBeginTag(controlTag());
 		writeControlAttributes(context, out);
 		out.endBeginTag();
-		if (isInverted() ^ !getModel().isCollapsed()) {
+		if (isExpanded()) {
 			_content.write(context, out);
 		}
 		out.endTag(controlTag());
+	}
+
+	private boolean isExpanded() {
+		return isInverted() ^ !getModel().isCollapsed();
 	}
 
 	@Override
@@ -70,6 +74,7 @@ public class OnExpandedControl extends AbstractConstantControl implements Collap
 	@Override
 	protected void writeControlClassesContent(Appendable out) throws IOException {
 		super.writeControlClassesContent(out);
+		out.append(isExpanded() ? "expanded" : "collapsed");
 		HTMLUtil.appendCSSClass(out, additionalCSS());
 	}
 

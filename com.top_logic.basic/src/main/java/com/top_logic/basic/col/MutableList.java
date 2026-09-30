@@ -6,6 +6,7 @@
 package com.top_logic.basic.col;
 
 import java.util.AbstractList;
+import java.util.Comparator;
 
 /**
  * Base class for completely mutable lists.
@@ -28,6 +29,9 @@ public abstract class MutableList<E> extends AbstractList<E> {
 
 	@Override
 	public abstract void add(int index, E element);
+
+	@Override
+	public abstract void sort(Comparator<? super E> c);
 
 }
 

@@ -14,7 +14,7 @@ import com.top_logic.element.meta.kbbased.AttributedWrapper;
 import com.top_logic.knowledge.objects.CreateException;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 
 /**
@@ -41,7 +41,7 @@ public class WrapperCreateHandler extends WrapperUpdateHandler implements
             throw new IllegalArgumentException("Type must not be null");
         }
         
-        kBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        kBase = PersistencyLayer.getKnowledgeBase();
     }
     
     @Override

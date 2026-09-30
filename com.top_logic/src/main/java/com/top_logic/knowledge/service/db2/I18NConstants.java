@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.service.db2;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
@@ -23,9 +24,19 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 DELETE_FAILED_REFERER_HAS_VETO__ITEMS_REFERERS;
 
 	/**
+	 * @en Nested transaction {1} rolled back: {2}
+	 */
+	public static ResKey2 NESTED_TRANSACTION_ROLLED_BACK__COMMIT_REASON;
+
+	/**
 	 * @en Illegal modification access. Currently no changes are allowed. Arguments: {0}
 	 */
 	public static ResKey1 ACCESS_TO_IMMUTABLE_CONTEXT__ARGS;
+
+	/**
+	 * @en History compacted.
+	 */
+	public static ResKey HISTORY_COMPACTED;
 
 	static {
 		initConstants(I18NConstants.class);

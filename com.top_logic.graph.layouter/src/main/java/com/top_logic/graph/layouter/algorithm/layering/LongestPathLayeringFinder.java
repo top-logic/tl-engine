@@ -25,7 +25,7 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
  * If the graph is layered from top (sources) to bottom (sinks) and has many sources then it results
  * in a wide top layer.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class LongestPathLayeringFinder extends LayeringFinder {
 

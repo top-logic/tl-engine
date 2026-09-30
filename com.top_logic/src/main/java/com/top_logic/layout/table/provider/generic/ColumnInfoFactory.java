@@ -82,17 +82,38 @@ public class ColumnInfoFactory implements ColumnInfoProvider {
 	@Override
 	public ColumnInfo createColumnInfo(TLTypeContext contentTypeContext, ResKey headerI18NKey) {
 		TLColumnInfo annotation = contentTypeContext.getAnnotation(TLColumnInfo.class);
-		ColumnInfoProvider provider;
 		if (annotation != null) {
 			InstantiationContext context = ApplicationConfig.getInstance().getServiceStartupContext();
-			provider = new ConfiguredColumnInfoProvider(context, annotation);
+			ConfiguredColumnInfoProvider provider = new ConfiguredColumnInfoProvider(context, annotation);
+
+			if (annotation.isOverrideDefaults()) {
+				// Use annotation settings exclusively, ignoring defaults
+			} else {
+				// Merge annotation settings with default column info
+				ColumnInfo defaultInfo = createDefaultColumnInfo(contentTypeContext, headerI18NKey);
+				provider.setBaseInfo(defaultInfo);
+			}
 			return provider.createColumnInfo(contentTypeContext, headerI18NKey);
 		}
-	
+
+		return createDefaultColumnInfo(contentTypeContext, headerI18NKey);
+	}
+
+	/**
+	 * Creates the default {@link ColumnInfo} based on the content type, without considering
+	 * {@link TLColumnInfo} annotations.
+	 *
+	 * @param contentTypeContext
+	 *        The content type context for the column.
+	 * @param headerI18NKey
+	 *        The internationalization key for the column header.
+	 * @return The default column info for the given type.
+	 */
+	protected ColumnInfo createDefaultColumnInfo(TLTypeContext contentTypeContext, ResKey headerI18NKey) {
 		TLType contentType = contentTypeContext.getType();
 		if (contentType instanceof TLPrimitive) {
 			TLPrimitive primitiveType = (TLPrimitive) contentType;
-	
+
 			return createPrimitiveColumn(contentTypeContext, primitiveType.getKind(), headerI18NKey);
 		} else if (contentType instanceof TLClass) {
 			if (Document.DOCUMENT_TYPE.equals(TLModelUtil.qualifiedName(contentType))) {

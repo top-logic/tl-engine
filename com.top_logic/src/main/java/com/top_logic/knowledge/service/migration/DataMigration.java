@@ -37,6 +37,7 @@ import com.top_logic.knowledge.event.EventWriter;
 import com.top_logic.knowledge.event.ObjectCreation;
 import com.top_logic.knowledge.event.convert.EventRewriter;
 import com.top_logic.knowledge.event.convert.StackedEventWriter;
+import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
 import com.top_logic.knowledge.service.Revision;
@@ -177,6 +178,9 @@ public class DataMigration {
 	public List<PolymorphicConfiguration<? extends MigrationProcessor>> getProcessors() {
 		List<PolymorphicConfiguration<? extends MigrationProcessor>> processors = new ArrayList<>();
 		for (MigrationConfig migration : _migrationInfo.getMigrations()) {
+			processors.addAll(migration.getPreProcessors());
+		}
+		for (MigrationConfig migration : _migrationInfo.getMigrations()) {
 			processors.addAll(migration.getProcessors());
 		}
 		return processors;
@@ -205,47 +209,73 @@ public class DataMigration {
 	 * </p>
 	 */
 	public void executeSQLMigration(MigrationContext context, Log log, PooledConnection connection) {
-		List<MigrationProcessor> deferred = new ArrayList<>();
 		for (MigrationConfig migration : _migrationInfo.getMigrations()) {
-			Version version = migration.getVersion();
-			log.info("Applying SQL migration in '" + version.getModule() + "': " + version.getName());
-
-			List<? extends MigrationProcessor> processors = migration.getProcessors().stream()
-				.map(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY::getInstance)
-				.collect(Collectors.toList());
-
-			for (MigrationProcessor processor : processors) {
-				if (processor.isDeferred()) {
-					log.info("Defering execution of migration processor " + processor);
-					deferred.add(processor);
-					continue;
-				}
-				try {
-					processor.doMigration(context, log, connection);
-				} catch (Exception ex) {
-					log.error("Unable to process migration processor " + processor, ex);
-				}
+			if (migration.getPreProcessors().isEmpty()) {
+				continue;
 			}
 
+			Version version = migration.getVersion();
+			String versionName = version.getName() + "(" + version.getModule() + ")";
+			logHeader(log, "Performing pre-migration: " + versionName);
+
+			processProcessors(context, log, connection, migration.getPreProcessors());
+
 			try {
-				log.info("Done with '" + version.getModule() + "': " + version.getName());
+				log.info("Done with pre-migration: " + versionName);
 				connection.commit();
 			} catch (SQLException ex) {
-				log.error("Failed to commit results. ", ex);
-			}
-		}
-		for (MigrationProcessor processor : deferred) {
-			try {
-				log.info("Applying deferred migration processor " + processor);
-				processor.doMigration(context, log, connection);
-			} catch (Exception ex) {
-				log.error("Unable to process deferred processor " + processor, ex);
+				log.error("Failed to commit preprocessor result of '" + versionName + "'. ", ex);
 			}
 		}
 
-		/* Commit the changes here: The migration processors may introduce data in some table which
-		 * are not read by the dumper because it uses an own connection. */
-		commitConnection(log, connection, "Unable to commit changes of migration processors.");
+		for (MigrationConfig migration : _migrationInfo.getMigrations()) {
+			if (migration.getProcessors().isEmpty()) {
+				continue;
+			}
+
+			Version version = migration.getVersion();
+			String versionName = version.getName() + "(" + version.getModule() + ")";
+			logHeader(log, "Performing SQL migration: " + versionName);
+
+			processProcessors(context, log, connection, migration.getProcessors());
+
+			try {
+				log.info("Done with SQL Migration: " + versionName);
+				connection.commit();
+			} catch (SQLException ex) {
+				log.error("Failed to commit processor result of '" + versionName + "'. ", ex);
+			}
+		}
+
+		try {
+			context.revalidateXRef(log, connection);
+			connection.commit();
+		} catch (SQLException ex) {
+			log.error("Failed to commit xref update. ", ex);
+		}
+	}
+
+	private void logHeader(Log log, String msg) {
+		String border = "=".repeat(msg.length() + 6);
+
+		log.info(border);
+		log.info("== " + msg + " ==");
+		log.info(border);
+	}
+
+	private void processProcessors(MigrationContext context, Log log, PooledConnection connection,
+			List<PolymorphicConfiguration<? extends MigrationProcessor>> processorConfigs) {
+		List<? extends MigrationProcessor> processors = processorConfigs.stream()
+			.map(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY::getInstance)
+			.collect(Collectors.toList());
+
+		for (MigrationProcessor processor : processors) {
+			try {
+				processor.doMigration(context, log, connection);
+			} catch (Exception ex) {
+				log.error("Unable to process migration processor " + processor, ex);
+			}
+		}
 	}
 
 	/**
@@ -352,7 +382,7 @@ public class DataMigration {
 		Iterator<UnversionedCreations> unversioned = reader.getUnversionedObjects(eventRev);
 		ChangeSet cs = new ChangeSet(eventRev);
 		cs.setCommit(new CommitEvent(eventRev, "migration", System.currentTimeMillis(),
-			"Migration for unversioned types"));
+			I18NConstants.SYNTHESIZED_COMMIT_DURING_REPLAY));
 
 		while (unversioned.hasNext()) {
 			UnversionedCreations unversionedType = unversioned.next();
@@ -418,14 +448,6 @@ public class DataMigration {
 			.setAutoCommit(true)
 			.setContinueOnError(true)
 			.executeSQL(in);
-	}
-
-	private void commitConnection(Log log, PooledConnection connection, String failureMessage) {
-		try {
-			connection.commit();
-		} catch (SQLException ex) {
-			log.error(failureMessage, ex);
-		}
 	}
 
 }

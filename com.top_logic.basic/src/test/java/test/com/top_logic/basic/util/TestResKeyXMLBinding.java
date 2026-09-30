@@ -96,7 +96,9 @@ public class TestResKeyXMLBinding extends AbstractTypedConfigurationTestCase {
 	
 	private String write(A item) throws XMLStreamException {
 		StringWriter buffer = new StringWriter();
-		new ConfigurationWriter(buffer).write("a", A.class, item);
+		try (ConfigurationWriter w = new ConfigurationWriter(buffer)) {
+			w.write("a", A.class, item);
+		}
 		return buffer.toString();
 	}
 

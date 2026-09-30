@@ -10,7 +10,7 @@ import java.util.Collection;
 /**
  * Algorithm to partition a collection of items into layers.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface LayerPartitionAlgorithm<T> {
 

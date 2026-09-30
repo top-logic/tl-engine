@@ -5,17 +5,11 @@
  */
 package com.top_logic.contact.mandatoraware.imp;
 
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletRequest;
-
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.structured.wrap.Mandator;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.ProgressComponent;
-import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityProjectLayout;
 
@@ -40,19 +34,7 @@ public class ExcelPersonContactImportProgress extends ProgressComponent {
 
 	static Mandator findMandator(LayoutComponent aComponent) {
 		CompoundSecurityLayout checker = CompoundSecurityProjectLayout.getNearestCompoundLayout(aComponent);
-		return (Mandator) checker.getCurrentObject(checker.getDefaultCommandGroup(), checker.getModel());
+		return (Mandator) checker.getSecurityObject(checker.getDefaultCommandGroup(), checker.getModel());
 	}
 
-    /** 
-     * Hook for subclasses so they are called when the import is finished.
-     */
-    @Override
-	protected void progressFinished(String aContextPath, TagWriter aOut, HttpServletRequest aReq) 
-        throws IOException {
-        if (model != null) {
-            AssistentComponent assi = AssistentComponent.getEnclosingAssistentComponent(this);
-            assi.invalidateButtons(); // so next step is shown
-        }
-    }    
-    
 }

@@ -104,40 +104,16 @@ long startTime = System.currentTimeMillis();
 				</p>
 				<br/>
 				<p>
-					Please select the tests to run:
+					<b>
+						Please select the tests to run:
+					</b>
 				</p>
 				<form method="POST">
 					<table>
 						<tr>
 							<td>
-								<%
-								boolean checked, initial = (request.getParameter("OK") == null);
-								Iterator it = tests.getDescriptionMap().entrySet().iterator();
-								while (it.hasNext()) {
-									Map.Entry theEntry = (Map.Entry)it.next();
-									String theName = (String)theEntry.getKey();
-									String theDescription = (String)theEntry.getValue();
-									checked = (initial || request.getParameter(theName) != null);
-									%>
-									<p>
-										<b>
-											<input name="<%=theName%>"
-												checked="<%=checked ? "checked" : "" %>"
-												type="checkbox"
-												value="<%=theName%>"
-											/>
-											&#xA0;<%=theName%>
-										</b>
-										<br/>
-										&#xA0;<%=theDescription%>
-									</p>
-									<%
-								}
-								%>
 								<p>
-									<br/>
 									<span style="cursor:default;">
-										&#xA0;
 										<b>
 											Select:
 										</b>
@@ -148,9 +124,7 @@ long startTime = System.currentTimeMillis();
 											onmouseover="window.status='Select all tests.';"
 											style="cursor:pointer;"
 										>
-											<u>
-												all
-											</u>
+											all
 										</a>
 										&#xA0;&#xA0;&#xA0;
 										<a
@@ -159,18 +133,54 @@ long startTime = System.currentTimeMillis();
 											onmouseover="window.status='Select no test.';"
 											style="cursor:pointer;"
 										>
-											<u>
-												none
-											</u>
+											none
 										</a>
 									</span>
 								</p>
+								<%
+								boolean checked, initial = (request.getParameter("OK") == null);
+								Iterator it = tests.getDescriptionMap().entrySet().iterator();
+								%>
+								<div class="cChoice cChoice-vertical"
+									style="gap: var(--spacing-03);"
+								>
+									<%
+									while (it.hasNext()) {
+										Map.Entry theEntry = (Map.Entry)it.next();
+										String theName = (String)theEntry.getKey();
+										String theDescription = (String)theEntry.getValue();
+										checked = (initial || request.getParameter(theName) != null);
+										%>
+										<div style="display: flex; flex-direction: column; gap: var(--spacing-02);">
+											<div class="cChoice-option"
+												style="gap: var(--spacing-02)"
+											>
+												<input name="<%=theName%>"
+													checked="<%=checked ? "checked" : "" %>"
+													type="checkbox"
+													value="<%=theName%>"
+												/>
+												<b>
+													<%=theName%>
+												</b>
+											</div>
+											<span>
+												<%=theDescription%>
+											</span>
+										</div>
+										<%
+									}
+									%>
+								</div>
 								<p>
-									&#xA0;
-									<input name="SUBMIT"
+									<button class="tlButton cButton tl-cmd-button"
+										name="SUBMIT"
 										type="submit"
-										value="Run Tests"
-									/>
+									>
+										<h4 class="tlButtonLabel">
+											Run Tests
+										</h4>
+									</button>
 								</p>
 							</td>
 						</tr>

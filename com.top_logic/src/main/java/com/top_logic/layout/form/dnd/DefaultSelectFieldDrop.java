@@ -51,7 +51,7 @@ public class DefaultSelectFieldDrop implements FieldDropTarget {
 		OptionModel<?> optionModel = select.getOptionModel();
 		if (optionModel instanceof ListOptionModel) {
 			List<?> options = ((ListOptionModel<?>) optionModel).getBaseModel();
-			Collection<Object> droppedObjects = data.getDragData();
+			Collection<?> droppedObjects = data.getDragData();
 			droppedObjects.forEach(element -> TLTreeModelUtil.getInnerBusinessObject(element));
 			if (options.containsAll(droppedObjects)) {
 				if (select.isMultiple()) {

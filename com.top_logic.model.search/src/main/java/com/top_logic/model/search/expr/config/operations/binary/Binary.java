@@ -6,21 +6,24 @@
 package com.top_logic.model.search.expr.config.operations.binary;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.List;
 
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
+import jakarta.activation.MimeType;
+import jakarta.activation.MimeTypeParseException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.json.JsonUtilities;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.io.binary.BinaryDataSourceProxy;
+import com.top_logic.basic.io.binary.StreamIOConverter;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.mime.MimeTypesModule;
 import com.top_logic.basic.xml.TagWriter;
@@ -182,7 +185,7 @@ public class Binary extends GenericMethod {
 		};
 	}
 
-	private abstract static class CustomData implements BinaryDataSource {
+	private abstract static class CustomData implements BinaryData {
 		private final String _name;
 
 		private final MimeType _contentType;
@@ -210,6 +213,15 @@ public class Binary extends GenericMethod {
 			return _contentType.toString();
 		}
 
+		@Override
+		public String toString() {
+			return "Binary data: " + getName();
+		}
+
+		@Override
+		public InputStream getStream() throws IOException {
+			return StreamIOConverter.convert(this);
+		}
 	}
 
 	/**

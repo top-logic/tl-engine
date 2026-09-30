@@ -15,6 +15,7 @@ import java.util.List;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.db.model.DBColumn;
 import com.top_logic.basic.db.sql.SQLModifyColumn.ModificationAspect;
 import com.top_logic.basic.db.sql.SQLQuery.Parameter;
 import com.top_logic.basic.db.sql.SQLQuery.SetParameter;
@@ -274,19 +275,6 @@ public class SQLFactory {
 	}
 
 	/**
-	 * Creates a {@link SQLStatement} that alters the given table using the given
-	 * {@link SQLTableModification}.
-	 * 
-	 * @param table
-	 *        The table to modify.
-	 * @param modification
-	 *        The actual modification.
-	 */
-	public static SQLAlterTable alterTable(SQLTable table, SQLTableModification modification) {
-		return new SQLAlterTable(table, modification);
-	}
-
-	/**
 	 * Creates a {@link SQLTableModification} that adds a new column to the given table.
 	 * 
 	 * @param columnName
@@ -294,9 +282,10 @@ public class SQLFactory {
 	 * @param type
 	 *        The database type of the new column.
 	 */
-	public static SQLAddColumn addColumn(String columnName, DBType type, boolean mandatory, boolean binary, long size,
+	public static SQLAddColumn addColumn(SQLTable table, String columnName, DBType type, boolean mandatory,
+			boolean binary, long size,
 			int precision, Object defaultValue) {
-		return SQLFactory.addColumn(columnName, type)
+		return SQLFactory.addColumn(table, columnName, type)
 			.setMandatory(mandatory)
 			.setBinary(binary)
 			.setSize(size)
@@ -307,13 +296,37 @@ public class SQLFactory {
 	/**
 	 * Creates a {@link SQLTableModification} that adds a new column to the given table.
 	 * 
+	 * @param column
+	 *        Name of the new column.
+	 */
+	public static SQLAddColumn addColumn(SQLTable table, DBColumn column, Object defaultValue) {
+		return SQLFactory.addColumn(table, column.getDBName(), column.getType(), column.isMandatory(),
+			column.isBinary(),
+			column.getSize(), column.getPrecision(), defaultValue);
+	}
+
+	/**
+	 * Creates a {@link SQLTableModification} that adds a new column to the given table.
+	 * 
 	 * @param columnName
 	 *        Name of the new column.
 	 * @param type
 	 *        The database type of the new column.
 	 */
-	public static SQLAddColumn addColumn(String columnName, DBType type) {
-		return new SQLAddColumn(columnName, type);
+	public static SQLAddColumn addColumn(SQLTable table, String columnName, DBType type) {
+		return new SQLAddColumn(table, columnName, type);
+	}
+
+	/**
+	 * Creates a {@link SQLTableModification} that modifies the name of a column in the given table.
+	 * 
+	 * @param columnName
+	 *        Name of the column to modify.
+	 * @param newName
+	 *        The new database name of the column.
+	 */
+	public static SQLModifyColumn modifyColumnName(SQLTable table, String columnName, DBType type, String newName) {
+		return new SQLModifyColumn(table, columnName, ModificationAspect.NAME, type).setNewName(newName);
 	}
 
 	/**
@@ -324,8 +337,8 @@ public class SQLFactory {
 	 * @param type
 	 *        The new database type of the column.
 	 */
-	public static SQLModifyColumn modifyColumnType(String columnName, DBType type) {
-		return new SQLModifyColumn(columnName, ModificationAspect.TYPE, type);
+	public static SQLModifyColumn modifyColumnType(SQLTable table, String columnName, DBType type) {
+		return new SQLModifyColumn(table, columnName, ModificationAspect.TYPE, type);
 	}
 
 	/**
@@ -343,8 +356,9 @@ public class SQLFactory {
 	 * @param mandatory
 	 *        The new mandatory state of the column.
 	 */
-	public static SQLModifyColumn modifyColumnMandatory(String columnName, DBType type, boolean mandatory) {
-		return new SQLModifyColumn(columnName, ModificationAspect.MANDATORY, type).setMandatory(mandatory);
+	public static SQLModifyColumn modifyColumnMandatory(SQLTable table, String columnName, DBType type,
+			boolean mandatory) {
+		return new SQLModifyColumn(table, columnName, ModificationAspect.MANDATORY, type).setMandatory(mandatory);
 	}
 
 	/**
@@ -353,8 +367,8 @@ public class SQLFactory {
 	 * @param columnName
 	 *        Name of the column to drop.
 	 */
-	public static SQLDropColumn dropColumn(String columnName) {
-		return new SQLDropColumn(columnName);
+	public static SQLDropColumn dropColumn(SQLTable table, String columnName) {
+		return new SQLDropColumn(table, columnName);
 	}
 
 	public static SQLInsert insert(SQLTable table) {
@@ -471,6 +485,13 @@ public class SQLFactory {
 	}
 
 	/**
+	 * Creates a SQL "like" construct.
+	 */
+	public static SQLExpression like(SQLExpression expr, String pattern) {
+		return new SQLLike(expr, pattern);
+	}
+
+	/**
 	 * Creates a {@link SQLCast} expression.
 	 * 
 	 * @param expr
@@ -501,6 +522,15 @@ public class SQLFactory {
 	 */
 	public static SQLExpression max(SQLExpression expr) {
 		return function(SQLFun.max, expr);
+	}
+
+	/**
+	 * Counts the rows of the whole result in which the given expression is not <code>null</code>.
+	 * 
+	 * @see SQLFun#count
+	 */
+	public static SQLExpression count(SQLExpression expr) {
+		return function(SQLFun.count, expr);
 	}
 
 	public static SQLExpression function(SQLFun fun, SQLExpression... arguments) {
@@ -566,6 +596,13 @@ public class SQLFactory {
 		return new SQLInSet(expr, values);
 	}
 	
+	/**
+	 * Creates an in-set expression with the test set being a sub-select.
+	 */
+	public static SQLExpression inSetSelect(SQLExpression expr, SQLSelect select) {
+		return new SQLInSetSelect(expr, select);
+	}
+
 	public static SQLExpression ge(SQLExpression leftExpr, SQLExpression rightExpr) {
 		if (leftExpr instanceof SQLLiteral) {
 			if (rightExpr instanceof SQLLiteral) {
@@ -857,6 +894,24 @@ public class SQLFactory {
 	
 	public static SQLOrder order(boolean descending, SQLExpression expr) {
 		return order(descending, CollationHint.NONE, expr);
+	}
+
+	/**
+	 * Creates a {@link SQLOrder#isDescending() ascending} order with the given expression.
+	 * 
+	 * @see #orderDescending(SQLExpression)
+	 */
+	public static SQLOrder order(SQLExpression expr) {
+		return order(false, expr);
+	}
+
+	/**
+	 * Creates a {@link SQLOrder#isDescending() descending} order with the given expression.
+	 * 
+	 * @see #order(SQLExpression)
+	 */
+	public static SQLOrder orderDescending(SQLExpression expr) {
+		return order(true, expr);
 	}
 
 	/**

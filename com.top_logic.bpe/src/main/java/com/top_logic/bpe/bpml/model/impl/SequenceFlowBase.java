@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2022 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -18,26 +18,95 @@ public interface SequenceFlowBase extends com.top_logic.bpe.bpml.model.Edge {
 	String SEQUENCE_FLOW_TYPE = "SequenceFlow";
 
 	/**
-	 * Part <code>rule</code> of <code>SequenceFlow</code>
+	 * Part <code>formType</code> of <code>SequenceFlow</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLClass</code> in configuration.
+	 * </p>
+	 */
+	String FORM_TYPE_ATTR = "formType";
+
+	/**
+	 * Part <code>operation</code> of <code>SequenceFlow</code>
 	 * 
 	 * <p>
 	 * Declared as <code>tl.model.search:Expr</code> in configuration.
 	 * </p>
 	 */
+	String OPERATION_ATTR = "operation";
+
+	/**
+	 * Part <code>rule</code> of <code>SequenceFlow</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.bpe.bpml:SequenceFlowRule</code> in configuration.
+	 * </p>
+	 */
 	String RULE_ATTR = "rule";
+
+	/**
+	 * Part <code>skipStandardOperation</code> of <code>SequenceFlow</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String SKIP_STANDARD_OPERATION_ATTR = "skipStandardOperation";
+
+	/**
+	 * Getter for part {@link #FORM_TYPE_ATTR}.
+	 */
+	default com.top_logic.model.TLClass getFormType() {
+		return (com.top_logic.model.TLClass) tValueByName(FORM_TYPE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #FORM_TYPE_ATTR}.
+	 */
+	default void setFormType(com.top_logic.model.TLClass newValue) {
+		tUpdateByName(FORM_TYPE_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #OPERATION_ATTR}.
+	 */
+	default com.top_logic.model.search.expr.SearchExpression getOperation() {
+		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(OPERATION_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #OPERATION_ATTR}.
+	 */
+	default void setOperation(com.top_logic.model.search.expr.SearchExpression newValue) {
+		tUpdateByName(OPERATION_ATTR, newValue);
+	}
 
 	/**
 	 * Getter for part {@link #RULE_ATTR}.
 	 */
-	default com.top_logic.model.search.expr.SearchExpression getRule() {
-		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(RULE_ATTR);
+	default com.top_logic.bpe.bpml.display.SequenceFlowRule getRule() {
+		return (com.top_logic.bpe.bpml.display.SequenceFlowRule) tValueByName(RULE_ATTR);
 	}
 
 	/**
 	 * Setter for part {@link #RULE_ATTR}.
 	 */
-	default void setRule(com.top_logic.model.search.expr.SearchExpression newValue) {
+	default void setRule(com.top_logic.bpe.bpml.display.SequenceFlowRule newValue) {
 		tUpdateByName(RULE_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #SKIP_STANDARD_OPERATION_ATTR}.
+	 */
+	default boolean getSkipStandardOperation() {
+		return (Boolean) tValueByName(SKIP_STANDARD_OPERATION_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #SKIP_STANDARD_OPERATION_ATTR}.
+	 */
+	default void setSkipStandardOperation(boolean newValue) {
+		tUpdateByName(SKIP_STANDARD_OPERATION_ATTR, newValue);
 	}
 
 }

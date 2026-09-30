@@ -21,14 +21,13 @@ import com.top_logic.knowledge.gui.layout.clipboard.FindWebFolderVisitor;
 import com.top_logic.knowledge.gui.layout.webfolder.ClearClipboardHandler;
 import com.top_logic.knowledge.gui.layout.webfolder.WebFolderAware;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Clipboard;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.knowledge.wrap.WrapperAccessor;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.IdentityAccessor;
 import com.top_logic.layout.SimpleAccessor;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
@@ -37,6 +36,7 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.control.IconControl;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormHandler;
@@ -77,7 +77,7 @@ import com.top_logic.util.Utils;
 /**
  * Clipboard dialog providing the {@link TableField} for adding objects to the folder.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ClipboardDialog extends AbstractFormPageDialog {
 
@@ -136,12 +136,13 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 		selection.addSelectionListener(new SelectionListener() {
 
 			@Override
-			public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-				if (formerlySelectedObjects.isEmpty() == selectedObjects.isEmpty()) {
+			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+				boolean cleared = event.getNewSelection().isEmpty();
+				if (event.getOldSelection().isEmpty() == cleared) {
 					// No change.
 					return;
 				}
-				ClipboardDialog.this.setNoRowSelected(selectedObjects.isEmpty());
+				ClipboardDialog.this.setNoRowSelected(cleared);
 			}
 		});
 		return selection;
@@ -287,9 +288,7 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 		{
 			ColumnConfiguration column = tableConfiguration.declareColumn(TLNamed.NAME_ATTRIBUTE);
 			column.setFieldProvider(null);
-			column.setAccessor(IdentityAccessor.INSTANCE);
 			column.setFilterProvider(LabelFilterProvider.INSTANCE);
-			column.setComparator(new ClipboardComparator());
 		}
 		
 		List<? extends TLObject> content = this.getContent();
@@ -361,7 +360,7 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 	/**
 	 * Delete the selected objects from the clip board. 
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class DeleteFromClipboardCommand implements Command {
 	
@@ -379,7 +378,8 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 	
 	        if (theField instanceof TableField) {
 	            FormTableModel theModel = (FormTableModel) ((TableField) theField).getTableModel();
-	            Transaction    theTX    = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+				Transaction theTX =
+					PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.REMOVED_FROM_CLIPBOARD);
 	
 	            try {
 	                Clipboard     theBoard   = Clipboard.getInstance();
@@ -418,7 +418,7 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 	/**
 	 * Command for adding the selected objects from the clip board to the folder.
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class AddFromClipboardCommand implements Command {
 	    
@@ -456,7 +456,8 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 	
 	        if (theField instanceof TableField) {
 	            FormTableModel theModel = (FormTableModel) ((TableField) theField).getTableModel();
-	            Transaction    theTX    = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+				Transaction theTX =
+					PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.ADDED_FROM_CLIPBOARD);
 	
 	            try {
 	                int           theRows    = theModel.getRowCount();

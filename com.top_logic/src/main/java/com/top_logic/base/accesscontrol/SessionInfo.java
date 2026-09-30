@@ -7,7 +7,7 @@ package com.top_logic.base.accesscontrol;
 
 import java.util.HashMap;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;

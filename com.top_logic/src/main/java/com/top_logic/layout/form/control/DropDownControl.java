@@ -19,6 +19,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.IDBuilder;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -77,6 +78,8 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private Renderer<Object> _selectionRenderer;
 
+	private List<?> _selection;
+
 	/**
 	 * @param model
 	 *        given {@link FormField}
@@ -107,6 +110,10 @@ public class DropDownControl extends AbstractSelectControl {
 	protected DropDownControl(FormField model, Map<String, ControlCommand> command, boolean preventClear) {
 		super(model, command);
 		_preventClear = preventClear;
+	}
+
+	private String getButtonID() {
+		return getID() + "-Button";
 	}
 
 	private String getButtonContentID() {
@@ -169,14 +176,16 @@ public class DropDownControl extends AbstractSelectControl {
 				renderTags(context, out);
 			}
 			
-			renderDropDownButton(context, out, dropdown);
+			renderDropDownButton(context, out);
 
 			renderDropDownBox(context, out, dropdown);
 		}
 		out.endTag(SPAN);
 	}
 
-	private void renderDropDownButton(DisplayContext context, TagWriter out, FormField dropdown) throws IOException {
+	private void renderDropDownButton(DisplayContext context, TagWriter out) throws IOException {
+		FormField dropdown = getFieldModel();
+
 		out.beginBeginTag(BUTTON);
 		out.writeAttribute(CLASS_ATTR, "ddwttDropBtn");
 		if (dropdown.isDisabled()) {
@@ -184,7 +193,14 @@ public class DropDownControl extends AbstractSelectControl {
 		}
 		out.writeAttribute(TYPE_ATTR, "button");
 		addButtonEvents(out);
-		out.writeAttribute(ID, getInputId());
+		out.writeAttribute(ID, getButtonID());
+		if (!isMultiple()) {
+			_selection = SelectFieldUtils.getSelectionList(dropdown);
+			if (_selection.size() > 0) {
+				Object item = _selection.get(0);
+				renderTooltip(context, out, dropdown, item);
+			}
+		}
 		out.endBeginTag();
 		{
 			renderButtonContent(context, out);
@@ -198,10 +214,10 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private void addButtonEvents(TagWriter out) throws IOException {
 		out.beginAttribute(ONCLICK_ATTR);
-		addJSFunction(out, "buttonDrop", "this");
+		addJSFunction(out, "buttonDrop", "event", "this");
 		out.endAttribute();
 		out.beginAttribute(ONKEYDOWN_ATTR);
-		addJSFunction(out, "keyPressed", "event, " + isMultiple());
+		addJSFunction(out, "keyPressed", "event", Boolean.toString(isMultiple()));
 		out.endAttribute();
 	}
 
@@ -214,15 +230,19 @@ public class DropDownControl extends AbstractSelectControl {
 		out.endBeginTag();
 		{
 			String label;
-			List<?> selection = SelectFieldUtils.getSelectionListSorted(dropdown);
 			if (isMultiple()) {
 				label = SelectFieldUtils.getEmptySelectionLabel(dropdown, false);
 			} else {
-				if (selection.size() > 0) {
-					label = getItemLabel(dropdown, selection.get(0));
-					renderItemIcon(context, out, dropdown, selection.get(0), Flavor.DEFAULT);
+				if (_selection.size() > 0) {
+					label = getItemLabel(dropdown, _selection.get(0));
+					renderItemIcon(context, out, dropdown, _selection.get(0), Flavor.DEFAULT);
 				} else {
-					label = SelectFieldUtils.getEmptySelectionLabel(dropdown);
+					Object placeholder = dropdown.getPlaceholder();
+					if (Utils.isEmpty(placeholder)) {
+						label = SelectFieldUtils.getEmptySelectionLabel(dropdown);
+					} else {
+						label = getItemLabel(dropdown, placeholder);
+					}
 				}
 			}
 			out.beginBeginTag(SPAN);
@@ -244,10 +264,10 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private void addSearchEvents(TagWriter out) throws IOException {
 		out.beginAttribute(ONFOCUSOUT_ATTR);
-		addJSFunction(out, "lostFocus", null);
+		addJSFunction(out, "lostFocus");
 		out.endAttribute();
 		out.beginAttribute(ONKEYDOWN_ATTR);
-		addJSFunction(out, "keyPressed", "event, " + isMultiple());
+		addJSFunction(out, "keyPressed", "event", Boolean.toString(isMultiple()));
 		out.endAttribute();
 		out.beginAttribute(ONINPUT_ATTR);
 		addJSFunction(out, "search", "this");
@@ -324,13 +344,13 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private void addItemEvents(TagWriter out) throws IOException {
 		out.beginAttribute(ONMOUSEOVER_ATTR);
-		addJSFunction(out, "setItemActive", "this, true, true");
+		addJSFunction(out, "setItemActive", "this", "true", "true");
 		out.endAttribute();
 		out.beginAttribute(ONFOCUSOUT_ATTR);
-		addJSFunction(out, "lostFocus", null);
+		addJSFunction(out, "lostFocus");
 		out.endAttribute();
 		out.beginAttribute(ONKEYDOWN_ATTR);
-		addJSFunction(out, "keyPressed", "event, " + isMultiple());
+		addJSFunction(out, "keyPressed", "event", Boolean.toString(isMultiple()));
 		out.endAttribute();
 		out.beginAttribute(ONCLICK_ATTR);
 		addJSFunction(out, "selectItem", "this");
@@ -367,10 +387,12 @@ public class DropDownControl extends AbstractSelectControl {
 		LabelProvider lprovider = SelectFieldUtils.getOptionLabelProvider(dropdown);
 		ResourceProvider rprovider = LabelResourceProvider.toResourceProvider(lprovider);
 		String tooltip = item == SelectField.NO_OPTION ? null : rprovider.getTooltip(item);
-		if (tooltip == null) {
-			return;
+		if (StringServices.isEmpty(tooltip)) {
+			tooltip = getItemLabel(dropdown, item);
 		}
-		HTMLUtil.writeImageTooltipHtml(context, out, tooltip);
+		if (!StringServices.isEmpty(tooltip)) {
+			HTMLUtil.writeImageTooltipHtml(context, out, tooltip);
+		}
 	}
 
 	private void renderTags(DisplayContext context, TagWriter out) throws IOException {
@@ -388,6 +410,16 @@ public class DropDownControl extends AbstractSelectControl {
 				out.writeAttribute(ID, itemID + "-tag");
 				out.writeAttribute(CLASS_ATTR, "ddwttTag");
 				renderTooltip(context, out, dropdown, selectedItem);
+				out.beginAttribute(ONMOUSEENTER_ATTR);
+				addJSFunction(out, "enterTag", "this");
+				out.endAttribute();
+				out.beginAttribute(ONMOUSELEAVE_ATTR);
+				addJSFunction(out, "leaveTag", "this");
+				out.endAttribute();
+				out.endBeginTag();
+
+				out.beginBeginTag(DIV);
+				out.writeAttribute(CLASS_ATTR, "ddwttTagContent");
 				out.endBeginTag();
 				{
 					renderItemIcon(context, out, dropdown, selectedItem, Flavor.DEFAULT);
@@ -395,6 +427,7 @@ public class DropDownControl extends AbstractSelectControl {
 
 					renderXButton(context, out, itemID);
 				}
+				out.endTag(DIV);
 				out.endTag(SPAN);
 			}
 		}
@@ -410,12 +443,12 @@ public class DropDownControl extends AbstractSelectControl {
 		out.append("ddwttTagX");
 		out.endCssClasses();
 		out.beginAttribute(ONCLICK_ATTR);
-		addJSFunction(out, "removeTag", "this.parentElement, '" + itemID + "'");
+		addJSFunction(out, "removeTag", "this.parentElement", "'" + itemID + "'");
 		out.endAttribute();
 		xButton.endEmptyTag(context, out);
 	}
 
-	private void addJSFunction(TagWriter out, String function, String custom) throws IOException {
+	private void addJSFunction(TagWriter out, String function, String... args) throws IOException {
 		String jsClass = DROPDOWN_CONTROL_CLASS;
 		out.append("return ");
 		out.append(jsClass);
@@ -423,11 +456,19 @@ public class DropDownControl extends AbstractSelectControl {
 		out.append(function);
 		out.append("(");
 
-		if (custom != null) {
+		boolean first = true;
+		for (String custom : args) {
+			if (first) {
+				first = false;
+			} else {
+				out.append(", ");
+			}
 			out.append(custom);
 		}
 		if (showWait(this)) {
-			if (!StringServices.isEmpty(custom)) {
+			if (first) {
+				first = false;
+			} else {
 				out.append(", ");
 			}
 			out.append("true);");
@@ -457,6 +498,11 @@ public class DropDownControl extends AbstractSelectControl {
 	@Override
 	public void valueChanged(FormField field, Object oldValue, Object newValue) {
 		if (!skipEvent(field) && isAttached()) {
+			if (field.isImmutable()) {
+				requestRepaint();
+				return;
+			}
+
 			if (isMultiple()) {
 				addUpdate(new ElementReplacement(getTagLocID(), this::renderTags));
 
@@ -476,7 +522,7 @@ public class DropDownControl extends AbstractSelectControl {
 					}
 				}
 			}
-			addUpdate(new ElementReplacement(getButtonContentID(), this::renderButtonContent));
+			addUpdate(new ElementReplacement(getButtonID(), this::renderDropDownButton));
 		}
 	}
 

@@ -5,11 +5,12 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-model-search</artifactId>
-  <description>TL-Script engine.</description>
+	<name>${project.artifactId}</name>
+	<description>TL-Script engine.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
@@ -31,11 +32,54 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-contact</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-codeedit</artifactId>
     </dependency>
+    <dependency>
+		<groupId>com.fasterxml.jackson.dataformat</groupId>
+		<artifactId>jackson-dataformat-csv</artifactId>
+	</dependency>
+	<dependency>
+	    <groupId>org.apache.poi</groupId>
+	    <artifactId>poi</artifactId>
+	</dependency>
+	<dependency>
+	    <groupId>org.apache.poi</groupId>
+	    <artifactId>poi-ooxml</artifactId>
+	</dependency>
+		<dependency>
+	    <groupId>org.apache.poi</groupId>
+	    <artifactId>poi-ooxml-full</artifactId>
+	</dependency>
+	<dependency>
+	    <groupId>org.apache.poi</groupId>
+	    <artifactId>poi-scratchpad</artifactId>
+	</dependency>
   </dependencies>
+  
+	<build>
+		<plugins>
+			<!-- Call explicitly with: mvn javacc:javacc@generate-javacc -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>javacc-maven-plugin</artifactId>
+				<version>3.2.1</version>
+				
+				<executions>
+					<execution>
+						<id>generate-javacc</id>
+						<goals>
+							<goal>javacc</goal>
+						</goals>
+						<phase>none</phase>
+					</execution>
+				</executions>
+				
+				<configuration>
+					<sourceDirectory>${basedir}/src/main/java</sourceDirectory>
+					<outputDirectory>${basedir}/src/main/java</outputDirectory>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	  
 </project>

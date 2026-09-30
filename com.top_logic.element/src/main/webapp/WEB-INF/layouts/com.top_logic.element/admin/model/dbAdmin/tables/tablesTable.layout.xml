@@ -3,7 +3,7 @@
 <tableView name="Table"
 	isSecurityMaster="true"
 	model="provider(com.top_logic.element.util.dbadmin.DBTablesModelProvider)"
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 >
 	<modelBuilder class="com.top_logic.element.util.dbadmin.DBTablesListModelBuilder"/>
 	<titleKey>

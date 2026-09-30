@@ -120,7 +120,7 @@ public class TestFlexAttributes extends AbstractDBKnowledgeBaseClusterTest {
 	 */
 	public void testInitialFlexValue() throws DataObjectException {
 		{
-			Transaction tx = kb().beginTransaction();
+			Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			Iterable<Entry<String, Object>> initialValues =
 				new NameValueBuffer().put(A1_NAME, "e1").put(FLEX_ATTRIBUTE, null);
 			KnowledgeItem newE = kb().createKnowledgeItem(trunk(), E_NAME, initialValues, KnowledgeItem.class);
@@ -129,7 +129,7 @@ public class TestFlexAttributes extends AbstractDBKnowledgeBaseClusterTest {
 			tx.commit();
 		}
 		{
-			Transaction tx = kb().beginTransaction();
+			Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			Iterable<Entry<String, Object>> initialValues =
 				new NameValueBuffer().put(A1_NAME, "e1").put(FLEX_ATTRIBUTE, 15);
 			KnowledgeItem newE = kb().createKnowledgeItem(trunk(), null, E_NAME, initialValues, KnowledgeItem.class);

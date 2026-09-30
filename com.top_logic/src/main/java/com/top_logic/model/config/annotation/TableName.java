@@ -13,6 +13,8 @@ import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.AnnotationInheritance;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.annotate.persistency.AllTables;
@@ -26,6 +28,8 @@ import com.top_logic.model.config.TLTypeAnnotation;
  */
 @TagName(TableName.TAG_NAME)
 @TargetType(value = { TLTypeKind.REF, TLTypeKind.COMPOSITION })
+// Generalizations are considered explicitly by code using this annotation.
+@AnnotationInheritance(Policy.REDEFINE)
 @InApp
 public interface TableName extends TLTypeAnnotation {
 

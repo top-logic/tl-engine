@@ -11,15 +11,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.col.LongRange;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
-import com.top_logic.basic.message.Message;
 import com.top_logic.basic.sql.ObjectNameSource;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MetaObject;
@@ -41,6 +42,7 @@ import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.search.CompiledQuery;
+import com.top_logic.knowledge.search.ExpressionFactory;
 import com.top_logic.knowledge.search.HistoryQuery;
 import com.top_logic.knowledge.search.HistoryQueryArguments;
 import com.top_logic.knowledge.search.RevisionQuery;
@@ -57,7 +59,7 @@ import com.top_logic.model.TLObject;
  * KnowledgeAssociations. By executing quieries on the KnowledgeBase
  * it is possible to find KnowledgeObjects matching to the request.
  *
- * @author  Jörg Connotte
+ * @author  JÃ¶rg Connotte
  */
 public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 
@@ -234,70 +236,77 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
     public Collection<KnowledgeAssociation> getAllKnowledgeAssociations();
 
     /**
-     * Begin a (potentially nested) transaction in this {@link KnowledgeBase}.
-     * 
-     * @return the new transaction.
-     * 
-     * @see KnowledgeBase#beginTransaction(Message) Starting a named transaction.
-     * @see Transaction#commit() Committing a transaction.
-     * 
-     * @since TL 5.7
-     */
-	public Transaction beginTransaction();
+	 * Begin a (potentially nested) transaction in this {@link KnowledgeBase}.
+	 * 
+	 * @return the new transaction.
+	 * 
+	 * @see KnowledgeBase#beginTransaction(ResKey) Starting a named transaction.
+	 * @see Transaction#commit() Committing a transaction.
+	 * 
+	 * @since TL 5.7
+	 * @deprecated Use {@link #beginTransaction(ResKey)}.
+	 */
+	@Deprecated
+	default Transaction beginTransaction() {
+		return beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+	}
 	
 	/**
 	 * Begin a (potentially nested) transaction in this {@link KnowledgeBase}.
 	 * 
 	 * @param commitMessage
-	 *        The commit message that will be associated with a commit of the
-	 *        new transaction.
+	 *        The commit message that will be associated with a commit of the new transaction.
 	 * 
 	 * @return the new transaction.
 	 * 
 	 * @see Transaction#commit() Committing a transaction.
 	 * 
-	 * @since TL 5.7
+	 * @since TL 7.10
 	 */
-    public Transaction beginTransaction(Message commitMessage);
+	public Transaction beginTransaction(ResKey commitMessage);
     
-    /** 
-     * Explicitly begin a (nested) Transaction in the KnowledgeBase.
-     * <p>
-     * For older KBases this is actually a noop. As of now
-     * only the new DBKnolwedgeBase will actually support this.
-     * </p>
-     * @return true when Transactions are ok.
+    /**
+	 * Explicitly begin a (nested) Transaction in the KnowledgeBase.
+	 * <p>
+	 * For older KBases this is actually a noop. As of now only the new DBKnolwedgeBase will
+	 * actually support this.
+	 * </p>
+	 * 
+	 * @return true when Transactions are ok.
 	 *
-     * TODO #2829: Delete TL 6 deprecation 
-     * @deprecated Use {@link #beginTransaction(Message)}.
-     */
+	 *         TODO #2829: Delete TL 6 deprecation
+	 * @deprecated Use {@link #beginTransaction(ResKey)}.
+	 */
     @Deprecated
     public boolean begin(); 
 
     /**
-     * Permanently saves the changes of the KnowledgeBase.
-     *<p>
-     *  It can be assumed that by this call any changed data
-     *  (for some context) will be saved. Anything else is up to
-     *  the actual implementation. In case the commit fails, 
-     *  this is equivalent to a rollback.
-     *</p>
-     * @return  true if the commit was successful false otherwise.
-     *
-     * TODO #2829: Delete TL 6 deprecation 
-     * @deprecated Use {@link Transaction#commit()}, see {@link #beginTransaction(Message)}.
-     */
+	 * Permanently saves the changes of the KnowledgeBase.
+	 * <p>
+	 * It can be assumed that by this call any changed data (for some context) will be saved.
+	 * Anything else is up to the actual implementation. In case the commit fails, this is
+	 * equivalent to a rollback.
+	 * </p>
+	 * 
+	 * @return true if the commit was successful false otherwise.
+	 *
+	 *         TODO #2829: Delete TL 6 deprecation
+	 * @deprecated Use {@link Transaction#commit()}, see {@link #beginTransaction(ResKey)}.
+	 */
     @Deprecated
     public boolean commit();
 
-    /** Rollback any changes made in the current context.
-     *<p>
-     *  A implementation may choose not to implement this function at all.
-     *</p>
-     * 
-     * TODO #2829: Delete TL 6 deprecation 
-     * @deprecated Use {@link Transaction#rollback(Message, Throwable)}, see {@link #beginTransaction(Message)}.
-     */
+    /**
+	 * Rollback any changes made in the current context.
+	 * <p>
+	 * A implementation may choose not to implement this function at all.
+	 * </p>
+	 * 
+	 * TODO #2829: Delete TL 6 deprecation
+	 * 
+	 * @deprecated Use {@link Transaction#rollback(ResKey, Throwable)}, see
+	 *             {@link #beginTransaction(ResKey)}.
+	 */
     @Deprecated
     public boolean rollback();
 
@@ -1172,7 +1181,9 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	/**
 	 * Short cut for {@link #search(HistoryQuery, HistoryQueryArguments)} with default arguments.
 	 */
-	Map<?, List<LongRange>> search(HistoryQuery query);
+	default Map<?, List<LongRange>> search(HistoryQuery query) {
+		return search(query, ExpressionFactory.historyArgs());
+	}
 
 	/**
 	 * Executes the given {@link HistoryQuery}.
@@ -1188,7 +1199,32 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	/**
 	 * Short cut for {@link #search(RevisionQuery, RevisionQueryArguments)} with default arguments.
 	 */
-	<E> List<E> search(RevisionQuery<E> query);
+	default <E> List<E> search(RevisionQuery<E> query) {
+		return search(query, ExpressionFactory.revisionArgs());
+	}
+
+	/**
+	 * Executes the given {@link RevisionQuery} and returns the results as list.
+	 * 
+	 * @param query
+	 *        The query to execute.
+	 * @param queryArguments
+	 *        The arguments for the given query.
+	 * @return The items that match the given query.
+	 */
+	default <E> List<E> search(RevisionQuery<E> query, RevisionQueryArguments queryArguments) {
+		try (CloseableIterator<E> stream = searchStream(query, queryArguments)) {
+			return CollectionUtil.toList(stream);
+		}
+	}
+
+	/**
+	 * Short cut for {@link #searchStream(RevisionQuery, RevisionQueryArguments)} with default
+	 * arguments.
+	 */
+	default <E> CloseableIterator<E> searchStream(RevisionQuery<E> query) {
+		return searchStream(query, ExpressionFactory.revisionArgs());
+	}
 
 	/**
 	 * Executes the given {@link RevisionQuery}.
@@ -1199,10 +1235,6 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	 *        The arguments for the given query.
 	 * @return The items that match the given query.
 	 */
-	<E> List<E> search(RevisionQuery<E> query, RevisionQueryArguments queryArguments);
-
-	<E> CloseableIterator<E> searchStream(RevisionQuery<E> query);
-
 	<E> CloseableIterator<E> searchStream(RevisionQuery<E> query, RevisionQueryArguments queryArguments);
 
 	/**

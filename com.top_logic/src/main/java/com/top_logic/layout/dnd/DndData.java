@@ -22,7 +22,7 @@ public class DndData {
 
 	private final DragSourceSPI _source;
 
-	private final Collection<Object> _dragData;
+	private final Collection<?> _dragData;
 
 	private final Function<Object, ModelName> _dragDataName;
 
@@ -31,14 +31,14 @@ public class DndData {
 	 *
 	 * @param source
 	 *        See {@link #getSource()}.
-	 * @param dragData
+	 * @param data
 	 *        See {@link #getDragData()}.
 	 * @param dragDataName
 	 *        See {@link #getDragDataName()}.
 	 */
-	public DndData(DragSourceSPI source, Collection<Object> dragData, Function<Object, ModelName> dragDataName) {
+	public DndData(DragSourceSPI source, Collection<?> data, Function<Object, ModelName> dragDataName) {
 		_source = source;
-		_dragData = dragData;
+		_dragData = data;
 		_dragDataName = dragDataName;
 	}
 
@@ -52,7 +52,7 @@ public class DndData {
 	/**
 	 * The objects being dragged.
 	 */
-	public Collection<Object> getDragData() {
+	public Collection<?> getDragData() {
 		return _dragData;
 	}
 

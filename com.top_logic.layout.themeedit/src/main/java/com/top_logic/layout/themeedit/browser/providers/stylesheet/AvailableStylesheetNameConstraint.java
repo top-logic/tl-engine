@@ -17,7 +17,7 @@ import com.top_logic.util.Resources;
 /**
  * Checks if the given stylesheet name is already used.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class AvailableStylesheetNameConstraint extends AbstractStringConstraint {
 

@@ -18,18 +18,17 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.format.RegExpValueProvider;
 import com.top_logic.basic.encryption.SecureRandomService;
-import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.AbstractStartStopListener;
@@ -42,49 +41,67 @@ import com.top_logic.util.license.LicenseTool;
  * @author <a href="mailto:tri@top-logic.com">Thomas Richter </a>
  */
 @ServiceDependencies({
-	PersistencyLayer.Module.class, 
 	ApplicationConfig.Module.class,
 	LockService.Module.class,
 	TLSecurityDeviceManager.Module.class,
 	InitialGroupManager.Module.class,
 	ResourcesModule.Module.class,
 })
-public class PersonManager extends ManagedClass {
+@Label("Account management")
+public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 
-	public interface Config extends ServiceConfiguration<PersonManager> {
+	/**
+	 * Configuration for the account manager.
+	 */
+	public interface Config extends KBBasedManagedClass.Config<PersonManager> {
 
 		/**
-		 * @see #getUserNamePattern()
+		 * Configuration name for {@link #getUserNamePattern()}.
 		 */
-		static final String XML_KEY_PATTERN = "person-name-pattern";
+		String XML_KEY_PATTERN = "person-name-pattern";
 
 		/**
-		 * default of @see #getUserNamePattern()
+		 * Default value for {@link #getUserNamePattern()}: Unicode letters ({@code \p{L}}) and digits
+		 * ({@code \p{N}}), plus {@code _ . @ + ~ -}; no whitespace or control characters; non-empty.
+		 * Using the Unicode letter/digit classes (rather than the ASCII-only {@code \w}) admits
+		 * non-ASCII names such as {@code José}, so directory (LDAP) accounts are not rejected. Admits
+		 * e-mail addresses as account names and the bootstrap names {@code root} / {@code anonymous}
+		 * (Ticket #29423).
 		 */
-		static final String DEFAULT_PATTERN = "[a-zA-Z]\\w*";
+		String DEFAULT_PATTERN = "[\\p{L}\\p{N}_.@+~-]+";
 
 		/**
-		 * @see #getPersonNameMaxLength()
+		 * Configuration name for {@link #getPersonNameMaxLength()}.
 		 */
-		static final String XML_KEY_LENGTH = "person-name-max-length";
+		String XML_KEY_LENGTH = "person-name-max-length";
 
 		/**
-		 * default of @see #getPersonNameMaxLength()
+		 * Default value for {@link #getPersonNameMaxLength()}.
 		 */
-		static final int DEFAULT_MAX_PERSON_NAME_LENGTH = 128;
+		int DEFAULT_MAX_PERSON_NAME_LENGTH = 128;
 
 		/**
-		 * @see #getSuperUserName()
+		 * Configuration name for {@link #getSuperUserName()}.
 		 */
-		static final String XML_KEY_SUPERUSERNAME = "super-user-name";
+		String XML_KEY_SUPERUSERNAME = "super-user-name";
 
 		/**
-		 * default of @see #getSuperUserName()
+		 * Default value for {@link #getSuperUserName()}.
 		 */
-		static final String DEFAULT_SUPER_USER_NAME = "root";
+		String DEFAULT_SUPER_USER_NAME = "root";
 
 		/**
-		 * pattern, which user names must follow
+		 * Configuration name for {@link #getAnonymousUserName()}.
+		 */
+		String ANONYMOUS_USER_NAME = "anonymous-user-name";
+
+		/**
+		 * Default value for {@link #getAnonymousUserName()}.
+		 */
+		String DEFAULT_ANONYMOUS_USER_NAME = "anonymous";
+
+		/**
+		 * Pattern, which user names must follow.
 		 */
 		@FormattedDefault(DEFAULT_PATTERN)
 		@Format(RegExpValueProvider.class)
@@ -92,26 +109,27 @@ public class PersonManager extends ManagedClass {
 		Pattern getUserNamePattern();
 
 		/**
-		 * maximum length of person name
+		 * The maximum length of a person name.
 		 */
 		@IntDefault(DEFAULT_MAX_PERSON_NAME_LENGTH)
 		@Name(XML_KEY_LENGTH)
 		int getPersonNameMaxLength();
 
 		/**
-		 * name of the super user
+		 * The name of the super user.
 		 */
 		@StringDefault(DEFAULT_SUPER_USER_NAME)
 		@Name(XML_KEY_SUPERUSERNAME)
 		String getSuperUserName();
+
+		/**
+		 * The name of the anonymous user.
+		 */
+		@StringDefault(DEFAULT_ANONYMOUS_USER_NAME)
+		@Name(ANONYMOUS_USER_NAME)
+		String getAnonymousUserName();
 	}
 
-	private final Pattern userNamePattern;
-
-	private final int maxPersonNameLength;
-
-	private final String superUserName;
-	
 	/**
 	 * Creates a {@link PersonManager} from configuration.
 	 * 
@@ -122,30 +140,55 @@ public class PersonManager extends ManagedClass {
 	 */
 	@CalledByReflection
 	public PersonManager(InstantiationContext context, Config config) {
-		userNamePattern = config.getUserNamePattern();
-		maxPersonNameLength = config.getPersonNameMaxLength();
-		superUserName = config.getSuperUserName();
+		super(context, config);
 	}
 
 	/**
 	 * The system root. Should always be there so should never return null.
 	 */
 	public Person getRoot() {
-		return Person.byName(superUserName);
+		return Person.byName(kb(), getSuperUserName());
 	}
 
 	/**
 	 * The name of the system root. Should always be there so should never return null.
 	 */
 	public String getSuperUserName() {
-		return superUserName;
+		return getConfig().getSuperUserName();
+	}
+
+	/**
+	 * The anonymous user. This user is used when navigating the application without login.
+	 */
+	public Person getAnonymous() {
+		return Person.byName(kb(), getAnonymousUserName());
+	}
+
+	/**
+	 * Whether the given account is the {@link #getAnonymous() anonymous account}.
+	 *
+	 * <p>
+	 * In contrast to {@link #getAnonymous()}, this check does not look the account up and therefore
+	 * also recognizes the anonymous account while it is being created, see
+	 * {@link #ensureAnonymousAccount()}.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account to check, may be <code>null</code>.
+	 */
+	public boolean isAnonymous(Person account) {
+		return account != null && Person.normalizeName(getAnonymousUserName()).equals(account.getName());
+	}
+
+	private String getAnonymousUserName() {
+		return getConfig().getAnonymousUserName();
 	}
 
 	/**
 	 * true if the given name is valid for usage as TL person name according to the configured pattern
 	 */
 	public boolean validatePersonName(String aPersonName) {
-		if (!StringServices.isEmpty(aPersonName) && aPersonName.length() < this.maxPersonNameLength) {
+		if (!StringServices.isEmpty(aPersonName) && aPersonName.length() < this.getPersonNameMaxLength()) {
 			try {
 				return getPersonNamePattern().matcher(aPersonName).matches();
 			} catch (Exception ex) {
@@ -158,11 +201,11 @@ public class PersonManager extends ManagedClass {
 	}
 
 	public Pattern getPersonNamePattern() {
-		return this.userNamePattern;
+		return this.getConfig().getUserNamePattern();
 	}
 
 	public int getPersonNameMaxLength() {
-		return this.maxPersonNameLength;
+		return this.getConfig().getPersonNameMaxLength();
 	}
 	
 	/**
@@ -178,8 +221,8 @@ public class PersonManager extends ManagedClass {
 	 */
 	public boolean personNameAlreadyUsed(String name) {
 		{
-			Person p = Person.byName(name);
-			Group g = Group.getGroupByName(name);
+			Person p = Person.byName(kb(), name);
+			Group g = Group.getGroupByName(kb(), name);
 			if (p == null && g != null) {
 				return true;
 			} else if (p != null && p.isAlive()) {
@@ -214,18 +257,31 @@ public class PersonManager extends ManagedClass {
 		super.startUp();
 		internalStartUp();
 		ensureRootAccount();
+		ensureAnonymousAccount();
+	}
+
+	private void ensureAnonymousAccount() {
+		String loginName = getAnonymousUserName();
+		Person existingAccount = Person.byName(loginName);
+		if (existingAccount == null) {
+			try (Transaction tx = kb().beginTransaction(I18NConstants.CREATED_ANONYMOUS_ACCOUNT)) {
+				// No login for anonymous user.
+				AuthenticationDevice device = null;
+				Person anonymous = Person.create(kb(), loginName, device);
+				anonymous.setRestrictedUser(true);
+
+				tx.commit();
+			}
+		}
 	}
 
 	private void ensureRootAccount() {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-
 		String loginName = getSuperUserName();
-		Person existingAccount = Person.byName(loginName);
+		Person existingAccount = Person.byName(kb(), loginName);
 		if (existingAccount == null) {
-			try (Transaction tx = kb.beginTransaction()) {
+			try (Transaction tx = kb().beginTransaction(I18NConstants.CREATED_ROOT_ACCOUNT)) {
 				AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
-				String deviceID = device.getDeviceID();
-				Person root = Person.create(kb, loginName, deviceID);
+				Person root = Person.create(kb(), loginName, device);
 				root.setAdmin(true);
 
 				setupRootPassword(root, loginName);
@@ -236,7 +292,7 @@ public class PersonManager extends ManagedClass {
 			boolean passwordReset =
 				Environment.getSystemPropertyOrEnvironmentVariable("tl_reset_password", null) != null;
 			if (passwordReset) {
-				try (Transaction tx = kb.beginTransaction()) {
+				try (Transaction tx = kb().beginTransaction(I18NConstants.RESETTING_ROOT_PASSWORD)) {
 					setupRootPassword(existingAccount, loginName);
 					tx.commit();
 				}

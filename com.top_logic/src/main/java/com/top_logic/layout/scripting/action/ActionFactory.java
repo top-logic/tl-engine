@@ -75,6 +75,7 @@ import com.top_logic.layout.scripting.recorder.ref.value.MapValue;
 import com.top_logic.layout.scripting.recorder.ref.value.MapValue.MapEntryValue;
 import com.top_logic.layout.scripting.recorder.ref.value.RowTableValue;
 import com.top_logic.layout.scripting.recorder.ref.value.TableValue;
+import com.top_logic.layout.scripting.recorder.ref.value.form.FieldPlaceholderNaming;
 import com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming;
 import com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming;
 import com.top_logic.layout.scripting.runtime.GlobalVariableStore;
@@ -261,9 +262,9 @@ public class ActionFactory {
 	/**
 	 * Create an {@link ApplicationAction} that executes the given command.
 	 */
-	public static CommandAction commandAction(ComponentName componentName, String commandName, Map<String, ?> arguments) {
+	public static CommandAction commandAction(LayoutComponent component, String commandName, Map<String, ?> arguments) {
 		CommandAction config = ActionFactory.newApplicationAction(CommandAction.class, CommandActionOp.class);
-		setCommandParameters(config, componentName, commandName, arguments);
+		setCommandParameters(config, component, commandName, arguments);
 		return config;
 	}
 
@@ -297,22 +298,22 @@ public class ActionFactory {
 	/**
 	 * Creates a {@link GotoAction} for the specified jump.
 	 */
-	public static GotoAction gotoAction(ComponentName componentName, String commandName, Map<String, ?> arguments) {
+	public static GotoAction gotoAction(LayoutComponent component, String commandName, Map<String, ?> arguments) {
 		GotoAction config = ActionFactory.newApplicationAction(GotoAction.class, GotoActionOp.class);
-		setCommandParameters(config, componentName, commandName, arguments);
+		setCommandParameters(config, component, commandName, arguments);
 		return config;
 	}
 
 	/**
 	 * Fills given {@link CommandAction} with informations from given arguments.
 	 */
-	public static void setCommandParameters(CommandAction config, ComponentName componentName, String commandName,
+	public static void setCommandParameters(CommandAction config, LayoutComponent component, String commandName,
 			Map<String, ?> arguments) {
-		config.setComponentName(componentName);
+		config.setComponentName(component.getName());
 		if (!UUIDInitializer.ID_PATTERN.matcher(commandName).matches()) {
 			config.setCommandName(commandName);
 		}
-		config.setArguments(ReferenceFactory.attributeValues(arguments));
+		config.setArguments(ReferenceFactory.attributeValues(component, arguments));
 	}
 	
 	/**
@@ -533,12 +534,25 @@ public class ActionFactory {
 	 */
 	public static ValueAssertion fieldValueAssertion(ModelName formMemberName, ModelName expectedValue,
 			boolean rawValue, String comment) {
+		return fieldAssertion(formMemberName, expectedValue, currentFieldValue(formMemberName, rawValue), comment);
+	}
+
+	/**
+	 * Creates a new {@link ValueAssertion} that asserts the placeholder of a form field.
+	 */
+	public static ValueAssertion fieldPlaceholderAssertion(ModelName formMemberName, ModelName expectedValue,
+			String comment) {
+		return fieldAssertion(formMemberName, expectedValue, fieldPlaceholderValue(formMemberName), comment);
+	}
+
+	private static ValueAssertion fieldAssertion(ModelName formMemberName, ModelName expectedValue, Name actualValue,
+			String comment) {
 		if (needsContext(expectedValue)) {
 			ValueInContextName valueInContext = createValueInContext(formMemberName, expectedValue);
 
-			return valueAssertion(valueInContext, currentFieldValue(formMemberName, rawValue), comment);
+			return valueAssertion(valueInContext, actualValue, comment);
 		}
-		return valueAssertion(expectedValue, currentFieldValue(formMemberName, rawValue), comment);
+		return valueAssertion(expectedValue, actualValue, comment);
 	}
 
 	/**
@@ -607,8 +621,7 @@ public class ActionFactory {
 	}
 
 	/**
-	 * Returns either the {@link ModelName} for a {@link FieldRawValueNaming} or
-	 * {@link FieldValueNaming}.
+	 * Either the {@link ModelName} for a {@link FieldRawValueNaming} or {@link FieldValueNaming}.
 	 */
 	public static Name currentFieldValue(ModelName fieldName, boolean rawValue) {
 		AspectNaming.Name currentFieldValue;
@@ -617,6 +630,15 @@ public class ActionFactory {
 		} else {
 			currentFieldValue = TypedConfiguration.newConfigItem(FieldValueNaming.Name.class);
 		}
+		currentFieldValue.setModel(fieldName);
+		return currentFieldValue;
+	}
+
+	/**
+	 * The {@link ModelName} for a {@link FieldPlaceholderNaming}.
+	 */
+	public static Name fieldPlaceholderValue(ModelName fieldName) {
+		AspectNaming.Name currentFieldValue = TypedConfiguration.newConfigItem(FieldPlaceholderNaming.Name.class);
 		currentFieldValue.setModel(fieldName);
 		return currentFieldValue;
 	}

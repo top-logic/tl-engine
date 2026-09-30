@@ -13,7 +13,7 @@ import java.util.Map;
  * 
  * @see MapDefaultValueProvider
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class MapValueProvider implements ValueProvider {
 

@@ -6,29 +6,37 @@
 package com.top_logic.model.search.providers;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.col.Equality;
 import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.InAppClassifierConstants;
 import com.top_logic.element.config.annotation.TLOptions;
 import com.top_logic.element.meta.AttributeUpdate;
+import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
+import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.utility.AbstractOptionModel;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
@@ -58,14 +66,35 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 	/**
 	 * Configuration options for {@link OptionsByExpression}.
 	 */
+	@DisplayOrder({
+		Config.FUNCTION,
+		Config.ALPHABETICAL_ORDER
+	})
 	@TagName("options-by-expression")
 	public interface Config<I extends OptionsByExpression> extends PolymorphicConfiguration<I> {
+
+		/** Configuration name for {@link #getAlphabeticalOrder()}. */
+		String ALPHABETICAL_ORDER = "alphabetic-order";
+
+		/** Configuration name for {@link #getFunction()}. */
+		String FUNCTION = "function";
 
 		/**
 		 * The function that is executed with the object containing the property for which options
 		 * are to be computed as single argument.
 		 */
 		Expr getFunction();
+
+		/**
+		 * Whether to present the options in alphabetical order of their labels.
+		 * 
+		 * <p>
+		 * If not checked, options are displayed in the order created by {@link #getFunction()}.
+		 * </p>
+		 */
+		@Name(ALPHABETICAL_ORDER)
+		@BooleanDefault(true)
+		boolean getAlphabeticalOrder();
 
 	}
 
@@ -85,7 +114,17 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 
 	@Override
 	public OptionModel<?> generate(EditContext editContext) {
-		return new ScriptObservingOptions(editContext.getOverlay(), editContext.getValueType());
+		return new ScriptObservingOptionList(editContext.getOverlay(), editContext.getValueType(),
+			editContext.getOverlay().getScope());
+	}
+
+	@Override
+	public Comparator<?> getOptionOrder() {
+		if (getConfig().getAlphabeticalOrder()) {
+			return LabelComparator.newCachingInstance(MetaLabelProvider.INSTANCE);
+		} else {
+			return Equality.INSTANCE;
+		}
 	}
 
 	@Override
@@ -93,16 +132,12 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 		return _config;
 	}
 
-	private final class ScriptObservingOptions extends AbstractOptionModel<Object>
-			implements ListOptionModel<Object>, Sink<Pointer>, ValueListener {
-	
-		private final TLObject _object;
-
+	private class ScriptObservingOptionList extends ScriptObservingOptions implements ListOptionModel<Object> {
 		private List<?> _list;
 
-		private List<FormField> _observed = new ArrayList<>();
-
 		private Function<Object, Object> _normalizer;
+
+		private AttributeUpdateContainer _updateContainer;
 
 		/**
 		 * Creates a {@link ScriptObservingOptions}.
@@ -111,9 +146,12 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 		 *        The base object that owns the attribute for which options are generated.
 		 * @param valueType
 		 *        The type of option values.
+		 * @param updateContainer
+		 *        The attribute update container.
 		 */
-		private ScriptObservingOptions(TLObject object, TLType valueType) {
-			_object = object;
+		private ScriptObservingOptionList(TLObject object, TLType valueType, AttributeUpdateContainer updateContainer) {
+			super(object);
+			_updateContainer = updateContainer;
 
 			if (valueType.getModelKind() == ModelKind.DATATYPE) {
 				StorageMapping<?> storageMapping = ((TLPrimitive) valueType).getStorageMapping();
@@ -126,7 +164,7 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 				_normalizer = x -> storageMapping.getBusinessObject(storageMapping.getStorageObject(x));
 			}
 		}
-	
+
 		@Override
 		public List<?> getBaseModel() {
 			if (_list == null) {
@@ -136,11 +174,45 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 		}
 	
 		private List<?> createOptions() {
-			List<?> list = SearchExpression.asList(_function.execute(this, _object));
+			List<?> list = SearchExpression
+				.asList(_function.execute(this, _updateContainer, getObject()));
 			if (_normalizer != null) {
 				return list.stream().map(_normalizer).collect(Collectors.toList());
 			}
 			return list;
+		}
+
+		@Override
+		protected void reset() {
+			_list = null;
+		}
+	}
+
+	/**
+	 * Base class for {@link OptionModel}s that observe {@link TLObject}s for change.
+	 */
+	abstract static class ScriptObservingOptions extends AbstractOptionModel<Object>
+			implements Sink<Pointer>, ValueListener {
+
+		private final TLObject _object;
+
+		private List<FormField> _observed = new ArrayList<>();
+
+		/**
+		 * Creates a {@link ScriptObservingOptions}.
+		 * 
+		 * @param object
+		 *        The base object that owns the attribute for which options are generated.
+		 */
+		public ScriptObservingOptions(TLObject object) {
+			_object = object;
+		}
+
+		/**
+		 * The base object that is the context for generating options.
+		 */
+		public TLObject getObject() {
+			return _object;
 		}
 
 		@Override
@@ -167,10 +239,20 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 		@Override
 		public void valueChanged(FormField field, Object oldValue, Object newValue) {
 			// Invalidate.
-			detach();
-			_list = null;
+			resetBaseModel();
 			notifyChanged();
 		}
+
+		@Override
+		public void resetBaseModel() {
+			detach();
+			reset();
+		}
+
+		/**
+		 * Resets the generated options.
+		 */
+		protected abstract void reset();
 
 		private void detach() {
 			for (FormField observed : _observed) {

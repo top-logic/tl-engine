@@ -1,15 +1,14 @@
 <%@page language="java" session="true" extends="com.top_logic.util.TopLogicJspBase"
-%><%@page import="com.top_logic.layout.form.component.Editor"
+%><%@page import="com.top_logic.layout.form.component.edit.EditMode"
 %><%@page import="com.top_logic.mig.html.layout.MainLayout"
 %><%@page import="com.top_logic.doc.model.Page"
-%><%@page import="com.top_logic.element.layout.structured.AdminElementComponent"
 %><%@taglib uri="layout" prefix="layout"
 %><%@taglib uri="meta" prefix="meta"
 %><%@taglib uri="ajaxform" prefix="form"
 %><layout:html>
 	<layout:head>
 		<style>
-			div.fptBodyContent {
+			div.tl-form-page__body-content {
 				padding: 0px;
 			}
 		</style>
@@ -19,10 +18,10 @@
 			<form:subtitle>
 				<meta:group>
 					<meta:attribute name="<%=Page.NAME_ATTR%>"/>
-					<% if (((Editor) MainLayout.getComponent(pageContext)).isInViewMode()) {%>
-						(UUID:
+					<% if (((EditMode) MainLayout.getComponent(pageContext)).isInViewMode()) {%>
+						<span style="padding: 0 var(--spacing-01);">(UUID:</span>
 							<meta:attribute name="<%=Page.UUID_ATTR%>"/>
-						)
+						<span>)</span>
 					<%} %>
 				</meta:group>
 			</form:subtitle>

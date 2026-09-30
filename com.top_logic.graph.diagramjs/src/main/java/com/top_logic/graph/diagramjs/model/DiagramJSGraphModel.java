@@ -12,7 +12,7 @@ import com.top_logic.graph.common.model.impl.SharedGraph;
 /**
  * A diagramJS specific {@link GraphModel} that is a {@link SharedObject} too.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface DiagramJSGraphModel extends SharedGraph {
 

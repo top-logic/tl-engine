@@ -37,6 +37,7 @@ import com.top_logic.basic.func.Not;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.PartConfig;
 import com.top_logic.element.config.TypedPartAspect;
+import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.ResourceRenderer;
@@ -47,6 +48,8 @@ import com.top_logic.layout.form.values.edit.ConfigLabelProvider;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
+import com.top_logic.layout.form.values.edit.mode.ActiveIf;
+import com.top_logic.layout.form.values.edit.mode.HideImmutableIf;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
@@ -154,6 +157,11 @@ public class TLStructuredTypePartFormBuilder extends
 		String EDIT_MODEL = "editModel";
 
 		/**
+		 * @see #getEditing()
+		 */
+		String EDITING = "editing";
+
+		/**
 		 * @see #isNewAttribute()
 		 */
 		String NEW_ATTRIBUTE = "newAttribute";
@@ -199,6 +207,20 @@ public class TLStructuredTypePartFormBuilder extends
 		@Hidden
 		@Name(EDIT_MODEL)
 		EditModel getEditModel();
+
+		/**
+		 * When an existing part is edited, the reference to the existing part, <code>null</code>
+		 * otherwise.
+		 */
+		@Name(EDITING)
+		@Hidden
+		@InstanceFormat
+		TLStructuredTypePart getEditing();
+
+		/**
+		 * @see #getEditing()
+		 */
+		void setEditing(TLStructuredTypePart part);
 
 		@Override
 		@DynamicMode(fun = HideImmutableIf.class, args = @Ref({ EDIT_MODEL, EditModel.CREATING }))
@@ -247,7 +269,11 @@ public class TLStructuredTypePartFormBuilder extends
 
 		@Override
 		@DynamicMode(fun = ActiveIf.class, args = { @Ref({ EDIT_MODEL, EditModel.CREATING }), @Ref(NEW_ATTRIBUTE) })
-		public boolean isMultiple();
+		boolean isAbstract();
+
+		@Override
+		@DynamicMode(fun = ActiveIf.class, args = { @Ref({ EDIT_MODEL, EditModel.CREATING }), @Ref(NEW_ATTRIBUTE) })
+		boolean isMultiple();
 
 		@DynamicMode(fun = ActiveAndEnabledIf.class, args = { @Ref({ EDIT_MODEL, EditModel.CREATING }),
 			@Ref(MULTIPLE_AND_NEW) })
@@ -393,12 +419,7 @@ public class TLStructuredTypePartFormBuilder extends
 		switch (businessModel.getModelKind()) {
 			case REFERENCE:
 				TLReference reference = (TLReference) businessModel;
-
-				if (TLModelUtil.getEndIndex(reference.getEnd()) == 0) {
-					TLBackReferenceFormBuilder.initWithReference(formModel, reference);
-				} else {
-					TLReferenceFormBuilder.initWithReference(formModel, reference);
-				}
+				TLReferenceFormBuilder.initWithReference(formModel, reference);
 
 				break;
 			case PROPERTY:
@@ -419,6 +440,7 @@ public class TLStructuredTypePartFormBuilder extends
 	protected static void initWithPart(EditModel formModel, PartModel partModel, TLStructuredTypePart part) {
 		formModel.setPartModel(partModel);
 
+		partModel.setEditing(part);
 		partModel.setOverride(part.isOverride());
 		partModel.setName(part.getName());
 		partModel.setFullQualifiedName(TLModelUtil.qualifiedName(part));
@@ -426,7 +448,7 @@ public class TLStructuredTypePartFormBuilder extends
 
 		ResKey key = TLModelI18N.getI18NKey(part);
 		partModel.setLabel(key);
-		partModel.setDescription(key.tooltip());
+		partModel.setDescription(new DefaultHtmlResKey(key.tooltip()));
 
 		for (TLAnnotation annotation : part.getAnnotations()) {
 			TLAttributeAnnotation attributeAnnotation = (TLAttributeAnnotation) annotation;
@@ -435,6 +457,7 @@ public class TLStructuredTypePartFormBuilder extends
 		}
 		partModel.setBag(part.isBag());
 		partModel.setMandatory(part.isMandatory());
+		partModel.setAbstract(part.isAbstract());
 		partModel.setMultiple(part.isMultiple());
 		partModel.setOrdered(part.isOrdered());
 

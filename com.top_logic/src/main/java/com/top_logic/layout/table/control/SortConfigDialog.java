@@ -99,6 +99,8 @@ public class SortConfigDialog extends AbstractFormPageDialog {
 
 		/**
 		 * The width of the dialog to sort columns.
+		 * 
+		 * @implNote Default value must remain the same as in top-logic.config.xml.
 		 */
 		@Name(DIALOG_WIDTH)
 		@FormattedDefault("400px")
@@ -106,9 +108,11 @@ public class SortConfigDialog extends AbstractFormPageDialog {
 
 		/**
 		 * The height of the dialog to sort columns.
+		 * 
+		 * @implNote Default value must remain the same as in top-logic.config.xml.
 		 */
 		@Name(DIALOG_HEIGHT)
-		@FormattedDefault("300px")
+		@FormattedDefault("350px")
 		DisplayDimension getHeight();
 
 	}
@@ -307,8 +311,8 @@ public class SortConfigDialog extends AbstractFormPageDialog {
 				SortConfigGroup sortGroup = new SortConfigGroup(resources, n++, sortableColumns, allColumnLabels);
 				columns.addMember(sortGroup);
 				
-				sortGroup.setColumn(header.getColumn(config.getColumnName()));
-				sortGroup.setAscending(config.getAscending());
+				sortGroup.initColumn(header.getColumn(config.getColumnName()));
+				sortGroup.initAscending(config.getAscending());
 				
 				sortGroup.getColumnInput().addValueListener(REMOVE_ON_CLEAR);
 				sortGroup.getColumnInput().addValueListener(ENSURE_UNIQUE_VALUE);
@@ -418,12 +422,12 @@ public class SortConfigDialog extends AbstractFormPageDialog {
 			this.columnInput.setOptionComparator(LabelComparator.newCachingInstance(columnLabels));
 			
 			// Set explicit default value to prevent tristate behavior.
-			this.directionInput.setAsSingleSelection(ASCENDING);
+			this.directionInput.initSelection(Collections.singletonList(ASCENDING));
 			this.directionInput.setOptionLabelProvider(new NamedConstantResourceLabelProvider(resources));
 		}
 
-		public void setColumn(Column name) {
-			columnInput.setAsSingleSelection(name);
+		public void initColumn(Column name) {
+			columnInput.initSelection(Collections.singletonList(name));
 		}
 		
 		public boolean hasColumn() {
@@ -438,8 +442,9 @@ public class SortConfigDialog extends AbstractFormPageDialog {
 			return column.getName();
 		}
 		
-		public void setAscending(boolean ascending) {
-			directionInput.setAsSingleSelection(ascending ? ASCENDING : DESCENDING);
+		public void initAscending(boolean ascending) {
+			directionInput.initSelection(
+				ascending ? Collections.singletonList(ASCENDING) : Collections.singletonList(DESCENDING));
 		}
 		
 		boolean getAscending() {

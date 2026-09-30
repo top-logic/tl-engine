@@ -94,8 +94,6 @@ public class SAPProgressComponent extends AJAXProgressComponent {
         this.taskName    = atts.getTaskname();
         this.create      = atts.getCreate();
         this.createProps = StringServices.nonEmpty(atts.getCreateProperties());
-        
-        this.alwaysReloadButtons = true;
     }
 
 	@Override
@@ -128,10 +126,6 @@ public class SAPProgressComponent extends AJAXProgressComponent {
                 catch (Exception ex) {
                     Logger.error("Failed to create task for " + this.taskName + " class='" + theClazz + "'", ex, this);
                 }
-            }
-
-            if (model != null) {
-                this.invalidateButtons();
             }
 
         return model;
@@ -232,7 +226,7 @@ public class SAPProgressComponent extends AJAXProgressComponent {
      * Handler for displaying the rest of information provided by the internal importer to
      * the UI. 
      * 
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class FinishSAPImportCommandHandler extends AJAXCommandHandler {
         

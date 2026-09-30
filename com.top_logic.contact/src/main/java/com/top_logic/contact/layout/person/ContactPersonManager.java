@@ -5,17 +5,33 @@
  */
 package com.top_logic.contact.layout.person;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.contact.business.AbstractContact;
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.knowledge.wrap.person.TLPersonManager;
 
 /**
  * {@link PersonManager} that initializes new accounts with contact information.
  */
-public class ContactPersonManager extends TLPersonManager {
+public class ContactPersonManager extends PersonManager {
+
+	/**
+	 * Configuration options for {@link ContactPersonManager}.
+	 */
+	public interface Config extends PersonManager.Config {
+		/**
+		 * Whether a contact that was assigned to an account is re-used for a newly created account,
+		 * if the login names match.
+		 */
+		@BooleanDefault(true)
+		@Name("reuse-contacts")
+		boolean reuseContacts();
+	}
 
 	/**
 	 * Creates a {@link ContactPersonManager}.
@@ -25,9 +41,39 @@ public class ContactPersonManager extends TLPersonManager {
 	}
 
 	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
+	}
+
+	@Override
 	public void initUser(Person account) {
 		String loginName = account.getName();
-		PersonContact user = ContactFactory.getInstance().createNewPersonContact(loginName, null);
+
+		PersonContact user = null;
+		if (getConfig().reuseContacts()) {
+			for (Object existing : ContactFactory.getInstance().getAllContactsWithAttribute(ContactFactory.PERSON_TYPE,
+				AbstractContact.FKEY_ATTRIBUTE, loginName, false)) {
+				if (existing instanceof PersonContact existingContact) {
+					if (existingContact.getPerson() == null) {
+						if (user != null) {
+							// Not unique.
+							Logger.info("Contact for new account is not unique: " + loginName,
+								ContactPersonManager.class);
+							user = null;
+							break;
+						}
+						user = existingContact;
+					}
+				}
+			}
+		}
+
+		if (user == null) {
+			user = ContactFactory.getInstance().createNewPersonContact(loginName, null);
+			user.tUpdateByName(ContactFactory.LOGIN_NAME, account.getName());
+		} else {
+			Logger.info("Reusing contact for new account: " + loginName, ContactPersonManager.class);
+		}
 		account.setUser(user);
 	}
 

@@ -39,6 +39,12 @@ public interface SelectAction extends ApplicationAction {
 		INCREMENTAL,
 
 		/**
+		 * If a new object is selected, it is selected together with its whole subtree additionally
+		 * to the already selected objects. It does not replace the old selection.
+		 */
+		SUBTREE,
+
+		/**
 		 * If a new object is selected, it replaces the old selection. If an object is deselected,
 		 * the selection is cleared.
 		 */

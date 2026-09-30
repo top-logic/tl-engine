@@ -54,7 +54,7 @@
 				<mo_attribute att_name="name"         att_type="String"  mandatory="true" />
 				<mo_attribute att_name="mailID"       att_type="String"  mandatory="true" />
 				<mo_attribute att_name="sentDate"     att_type="Date"    mandatory="false" />
-				<mo_attribute att_name="attachements" att_type="Boolean" mandatory="true" />
+				<mo_attribute att_name="attachments" att_type="Boolean" mandatory="true" />
 
 				<mo_attribute att_name="from"       att_type="String"  mandatory="false" />
 			</attributes>

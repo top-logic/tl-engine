@@ -5,9 +5,12 @@
  */
 package com.top_logic.model.factory;
 
+import com.top_logic.basic.TLID;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.knowledge.wrap.ValueProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.provider.DefaultProvider;
@@ -20,8 +23,8 @@ import com.top_logic.model.provider.DefaultProvider;
 public interface TLFactory {
 
 	/**
-	 * Creates a new object in the context of a given object (e.g. its parent object in a
-	 * structure).
+	 * Creates a new object in the context of a given object (e.g. its parent object in a structure)
+	 * and some initial values.
 	 * 
 	 * @param type
 	 *        The type of object to create.
@@ -32,7 +35,9 @@ public interface TLFactory {
 	 * 
 	 * @return The newly created object
 	 */
-	TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues);
+	default TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues) {
+		return createObject(type, context, initialValues, null);
+	}
 
 	/**
 	 * Creates a new object in the context of a given object (e.g. its parent object in a
@@ -45,7 +50,7 @@ public interface TLFactory {
 	 * @return The newly created object
 	 */
 	default TLObject createObject(TLClass type, TLObject context) {
-		return createObject(type, context, null);
+		return createObject(type, context, null, null);
 	}
 
 	/**
@@ -56,8 +61,31 @@ public interface TLFactory {
 	 * @return The newly created object
 	 */
 	default TLObject createObject(TLClass type) {
-		return createObject(type, null);
+		return createObject(type, null, null, null);
 	}
+
+	/**
+	 * Internal implementation of object creation.
+	 * 
+	 * <p>
+	 * Note: Most probably, you want to call {@link #createObject(TLClass)}, or
+	 * {@link #createObject(TLClass, TLObject)}.
+	 * </p>
+	 * 
+	 * @param type
+	 *        The type of object to create.
+	 * @param context
+	 *        The context in which the new object is created.
+	 * @param initialValues
+	 *        A provider for initial values that are required at object creation time.
+	 * @param id
+	 *        A predefined ID for the new object. This argument must only be filled, if a revert of
+	 *        a former deletion is done by reusing the old identifier of the revived object. In all
+	 *        regular cases, this argument should be <code>null</code>.
+	 * @return The newly created object
+	 */
+	@FrameworkInternal
+	TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues, TLID id);
 
 	/**
 	 * Checks that the given type is not {@link TLClass#isAbstract() abstract}. If the given type is
@@ -88,7 +116,13 @@ public interface TLFactory {
 	 *        The type of the wrapper, i.e. value of {@link TLObject#tType()} of the given
 	 *        <code>newWrapper</code>.
 	 */
-	static void setupDefaultValues(Object createContext, TLObject obj, TLClass type) {
+	static void setupDefaultValues(Object createContext, TLObject obj, TLStructuredType type) {
+		// A transient object can never create a default that is allocated lately
+		// during commit, since there is no commit for creating a transient object. When
+		// creating e.g. a transient version of on object that defines an attribute with a
+		// sequence number default, this attribute must not be filled in the transient version
+		// to prevent an auto-rollback of the transaction started when the default is filled.
+		boolean forUI = obj.tTransient();
 		for (TLStructuredTypePart part : type.getAllParts()) {
 			if (part.isDerived()) {
 				// For safety reasons, ignore default value annotations on derived attributes.
@@ -98,7 +132,7 @@ public interface TLFactory {
 			if (defaultProvider == null) {
 				continue;
 			}
-			obj.tUpdate(part, defaultProvider.createDefault(createContext, part, false));
+			obj.tUpdate(part, defaultProvider.createDefault(createContext, part, forUI));
 		}
 	}
 

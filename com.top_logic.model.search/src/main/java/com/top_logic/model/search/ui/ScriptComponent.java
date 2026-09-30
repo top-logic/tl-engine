@@ -6,12 +6,14 @@
 package com.top_logic.model.search.ui;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.col.Provider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.exception.ErrorSeverity;
@@ -26,11 +28,11 @@ import com.top_logic.layout.channel.TypedChannelSPI;
 import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassProperty;
-import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.impl.TransientModelFactory;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundLayout;
@@ -58,7 +60,7 @@ public class ScriptComponent extends BoundLayout {
 	}
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return MODEL_AND_RESULT_CHANNEL;
 	}
 
@@ -70,7 +72,7 @@ public class ScriptComponent extends BoundLayout {
 	}
 
 	/**
-	 * Executes the given {@link SearchExpression} and propagates the result on the
+	 * Executes the given {@link QueryExecutor} and propagates the result on the
 	 * {@link #getResultChannel() result} channel.
 	 * 
 	 * @param expression
@@ -78,12 +80,15 @@ public class ScriptComponent extends BoundLayout {
 	 * @param withCommit
 	 *        Whether data changes made by the expression are allowed. If changes are made, they are
 	 *        stored. Otherwise executing the expression fails.
+	 * @param src
+	 *        The script source code.
 	 */
-	public HandlerResult execute(SearchExpression expression, boolean withCommit) {
+	public HandlerResult execute(QueryExecutor expression, boolean withCommit, Provider<String> src) {
 		Collection<?> results;
 		try {
 			if (withCommit) {
-				try (Transaction tx = kb().beginTransaction()) {
+				try (Transaction tx =
+					kb().beginTransaction(I18NConstants.EXECUTED_CUSTOM_SCRIPT__SCRIPT.fill(src.get()))) {
 					results = getResults(expression);
 					tx.commit();
 				}
@@ -96,53 +101,86 @@ public class ScriptComponent extends BoundLayout {
 			return error;
 		}
 
-		Set<TLClass> searchedTypes = SearchUtil.getSearchedTypes(expression);
+		Set<TLClass> searchedTypes = SearchUtil.getSearchedTypes(expression.getSearch());
 		if (searchedTypes.isEmpty() && !results.isEmpty()) {
 			// Cannot determine static type of query, use typing by example.
 			searchedTypes = new HashSet<>();
 			TLClass resultType = null;
+			TLClass multiResultType = null;
 			TLClassProperty resultPart = null;
+			TLClassProperty resultsPart = null;
 			Collection<Object> resultObjects = new ArrayList<>(results.size());
 			for (Object result : results) {
-				if (result instanceof TLObject) {
-					TLStructuredType type = ((TLObject) result).tType();
+				if (result instanceof TLObject item) {
+					TLStructuredType type = item.tType();
 					if (type instanceof TLClass) {
 						searchedTypes.add((TLClass) type);
 					}
 					resultObjects.add(result);
 				} else {
-					if (resultType == null) {
-						resultType = TransientModelFactory.createTransientClass(ModelService.getApplicationModel(),
-							"SearchResult");
-						resultPart = TransientModelFactory.addClassProperty(resultType, "result",
-							TLModelUtil.findType(TypeSpec.OBJECT_TYPE));
-						searchedTypes.add(resultType);
+					boolean multipleResult = false;
+					if (result != null) {
+						if (result.getClass().isArray()) {
+							result = Arrays.asList((Object[]) result);
+						}
+						if (result instanceof Collection<?> colResult) {
+							result = new ArrayList<>(colResult);
+							multipleResult = true;
+						}
+					}
+					if (multipleResult) {
+						if (multiResultType == null) {
+							multiResultType =
+								TransientModelFactory.createTransientClass(ModelService.getApplicationModel(),
+									"MultiSearchResult");
+							resultsPart = TransientModelFactory.addClassProperty(multiResultType, "results",
+								TLModelUtil.findType(TypeSpec.OBJECT_TYPE));
+							resultsPart.setMultiple(true);
+							searchedTypes.add(multiResultType);
+						}
+						TLObject obj = TransientModelFactory.createTransientObject(multiResultType);
+						obj.tUpdate(resultsPart, result);
+						resultObjects.add(obj);
+					} else {
+						if (resultType == null) {
+							resultType = TransientModelFactory.createTransientClass(ModelService.getApplicationModel(),
+								"SearchResult");
+							resultPart = TransientModelFactory.addClassProperty(resultType, "result",
+								TLModelUtil.findType(TypeSpec.OBJECT_TYPE));
+							searchedTypes.add(resultType);
+						}
+						TLObject obj = TransientModelFactory.createTransientObject(resultType);
+						obj.tUpdate(resultPart, result);
+						resultObjects.add(obj);
 					}
 
-					TLObject obj = TransientModelFactory.createTransientObject(resultType);
-					obj.tUpdate(resultPart, result);
-					resultObjects.add(obj);
 				}
 			}
 			results = resultObjects;
+		} else {
+			results = results.stream()
+				.map(TLObject.class::cast)
+				.toList();
 		}
-		if (!searchedTypes.isEmpty()) {
-			Object resultSet =
-				new AttributedSearchResultSet((Collection<TLObject>) results, (Set<? extends TLClass>) searchedTypes,
-					null,
-					null);
-			getResultChannel().set(resultSet);
-		}
+		Object resultSet = new AttributedSearchResultSet((Collection<TLObject>) results, searchedTypes, null, null);
+		getResultChannel().set(resultSet);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private Collection<?> getResults(SearchExpression expression) {
-		KnowledgeBase defaultKnowledgeBase = kb();
-		TLModel defaultTLModel = ModelService.getApplicationModel();
-		Object result = QueryExecutor.compile(defaultKnowledgeBase, defaultTLModel, expression).execute();
 
-		if (result instanceof Collection) {
-			return (Collection<?>) result;
+	private Collection<?> getResults(QueryExecutor executor) {
+		// Note: The final result contains only objects the current user is allowed to read, the
+		// executor secures it, see QueryExecutor#executeWith(EvalContext, Args).
+		Object result = executor.executeWith(executor.context(true, null, null), Args.none());
+
+		// Note: Do not use SearchExpression.asCollection(result), since this decomposes maps into
+		// entry sets, which makes results hard to interpret.
+		if (result instanceof Collection<?> collection) {
+			return collection;
+		} else if (result == null) {
+			return Collections.emptyList();
+		} else if (result.getClass().isArray()) {
+			return Arrays.asList((Object[]) result);
 		} else {
 			return Collections.singleton(result);
 		}

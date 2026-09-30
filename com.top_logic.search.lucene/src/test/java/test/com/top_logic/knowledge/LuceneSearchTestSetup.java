@@ -18,7 +18,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 /**
  * Setup for search test cases.
  * 
- * @author    Dieter Rothb‰cher
+ * @author    Dieter Rothb√§cher
  */
 public class LuceneSearchTestSetup {
 	

@@ -51,7 +51,10 @@ import com.top_logic.util.Utils;
  */
 public abstract class KnowledgeReferenceStorageImpl extends MOReferenceStorageImpl implements KIReferenceStorage {
 
-	private static final Long NULL_REPLACEMENT = Long.valueOf(0);
+	/**
+	 * Replacement for <code>null</code> values in mandatory revision and branch column.
+	 */
+	public static final Long NULL_REPLACEMENT = Long.valueOf(0);
 
 	/**
 	 * Value that is stored into the revision column of a mixed reference, when a current reference
@@ -60,12 +63,18 @@ public abstract class KnowledgeReferenceStorageImpl extends MOReferenceStorageIm
 	public static final long MIXED_REFERENCE_CURRENT_REPRESENTATION = Revision.CURRENT_REV;
 
 	/**
-	 * Dummy value to insert when actually no branch must be written.
+	 * Marker stored in the branch column of a branch local reference that holds a current object.
+	 * 
+	 * <p>
+	 * Such a reference points to the branch of the row that holds it, which changes when the object
+	 * is branched. The column therefore holds this marker instead of a branch and reading the
+	 * reference answers the branch of its row.
+	 * </p>
 	 * 
 	 * @see #needsDummyValueForBranch(AbstractMOReference, ObjectKey)
 	 */
 	// Not null to allow defining column as not-null
-	private static final long DUMMY_BRANCH_VALUE = Long.MIN_VALUE;
+	public static final long DUMMY_BRANCH_VALUE = Long.MIN_VALUE;
 
 	@Override
 	public void checkAttributeValue(MOAttribute attribute, DataObject data, Object value) throws DataObjectException {
@@ -408,9 +417,9 @@ public abstract class KnowledgeReferenceStorageImpl extends MOReferenceStorageIm
 		final long historyContext;
 		switch (attribute.getHistoryType()) {
 			case CURRENT: {
-				/* If reference is load for an historic object, then the reference points to an
+				/* If reference is loaded for an historic object, then the reference points to an
 				 * object in the same historyContext. In this case no adapting to context is
-				 * necessary for that is object. */
+				 * necessary for that object. */
 				historyContext = context.tId().getHistoryContext();
 				break;
 			}

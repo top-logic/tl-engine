@@ -25,15 +25,13 @@ import com.top_logic.model.form.ReactiveFormCSS;
  */
 public class FormEditorElementControl extends ConstantControl<HTMLFragment> {
 
-	private final String ATTRIBUTE_CSS = "attribute";
+	private static final String ATTRIBUTE_CSS = "attribute";
 
-	private final String FIELD_CSS = "field";
+	private static final String FIELD_CSS = "field";
 
-	private final String HIDDEN_CSS = "hidden";
+	private static final String HIDDEN_CSS = "hidden";
 
-	private final String DRAG_ELEMENT_CSS = "rf_dragElement";
-
-	private final String WHOLE_LINE_CSS = ReactiveFormCSS.RF_LINE;
+	private static final String DRAG_ELEMENT_CSS = "rf_dragElement";
 
 	private ImageProvider _imageProvider;
 
@@ -114,7 +112,7 @@ public class FormEditorElementControl extends ConstantControl<HTMLFragment> {
 			out.append(DRAG_ELEMENT_CSS);
 		}
 		if (getRenderWholeLine()) {
-			out.append(WHOLE_LINE_CSS);
+			out.append(ReactiveFormCSS.RF_LINE);
 		}
 	}
 

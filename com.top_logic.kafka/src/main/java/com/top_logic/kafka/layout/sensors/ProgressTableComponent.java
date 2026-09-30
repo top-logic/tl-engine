@@ -22,7 +22,7 @@ import com.top_logic.layout.table.component.TableComponent;
 /**
  * Table component automatically updating its values via the {@link ProgressTableComponent.Config#getUpdater()}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ProgressTableComponent extends TableComponent implements Runnable {
 
@@ -140,7 +140,7 @@ public class ProgressTableComponent extends TableComponent implements Runnable {
     /**
      * Updater to be asked for changes in the table rows. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static interface TableComponentValueUpdater {
         

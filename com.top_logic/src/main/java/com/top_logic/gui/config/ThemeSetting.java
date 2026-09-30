@@ -40,9 +40,7 @@ import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.ThemeImageConfigFormat;
-import com.top_logic.layout.form.control.ColorControlProvider;
 import com.top_logic.layout.form.format.ColorConfigFormat;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
@@ -552,7 +550,6 @@ public abstract class ThemeSetting extends AbstractConfiguredInstance<ThemeSetti
 		public interface Config extends ThemeSetting.Config<ColorSetting> {
 			@Override
 			@Format(ColorConfigFormat.class)
-			@ControlProvider(ColorControlProvider.class)
 			Color getValue();
 		}
 

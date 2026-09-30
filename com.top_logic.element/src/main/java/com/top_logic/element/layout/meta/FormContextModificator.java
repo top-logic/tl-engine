@@ -20,7 +20,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * {@link GridComponent} will use this instance when creating new input fields
  * for a selected row. This will happen during a row selection. 
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface FormContextModificator {
 

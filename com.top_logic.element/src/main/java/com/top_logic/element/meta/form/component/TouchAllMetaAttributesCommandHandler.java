@@ -26,7 +26,7 @@ import com.top_logic.tool.execution.InEditModeExecutable;
 /**
  * Touches all attributes, which have an active validity check and are not read only.
  *
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class TouchAllMetaAttributesCommandHandler extends AJAXCommandHandler {
 
@@ -48,12 +48,6 @@ public class TouchAllMetaAttributesCommandHandler extends AJAXCommandHandler {
 
     public TouchAllMetaAttributesCommandHandler(InstantiationContext context, Config config) {
 		super(context, config);
-    }
-
-
-    @Override
-	public boolean needsConfirm() {
-        return true;
     }
 
     @Override

@@ -77,7 +77,7 @@ public class TestKBEventHandling extends BasicTestCase {
 		kBase.addCommitChecker(listener1);
 		kBase.addCommitChecker(listener2);
 
-		Transaction setUpTx = kBase.beginTransaction();
+		Transaction setUpTx = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		// create some objects
 		object1 = kBase.createKnowledgeObject(Person.OBJECT_NAME);
 		object2 = kBase.createKnowledgeObject(Person.OBJECT_NAME);
@@ -98,7 +98,7 @@ public class TestKBEventHandling extends BasicTestCase {
 		kBase.removeCommitChecker(listener1);
 		kBase.removeModificationListener(listener2);
 		kBase.removeModificationListener(listener1);
-		Transaction tearDownTx = kBase.beginTransaction();
+		Transaction tearDownTx = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		if (object1.isAlive()) {
 			object1.delete();
 		}
@@ -155,7 +155,7 @@ public class TestKBEventHandling extends BasicTestCase {
 		KnowledgeBase kb = KBSetup.getKnowledgeBase();
 		kb.addModificationListener(l);
 		try {
-			Transaction delTx = kb.beginTransaction();
+			Transaction delTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			try {
 				object1.delete();
 			} catch (StackOverflowError err) {
@@ -204,7 +204,7 @@ public class TestKBEventHandling extends BasicTestCase {
 		kb.addModificationListener(l);
 		try {
 			Object previousValue = object3.getAttributeValue(Person.LOCALE);
-			Transaction delTx = kb.beginTransaction();
+			Transaction delTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			try {
 				try {
 					object1.delete();
@@ -297,7 +297,7 @@ public class TestKBEventHandling extends BasicTestCase {
 		listener1.setVeto(true);
 		listener1.resetCounts();
 
-		final Transaction failingTX = kBase.beginTransaction();
+		final Transaction failingTX = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		object1.setAttributeValue(Person.LOCALE, Utils.formatLocale(LOCALE3));
 		object2.setAttributeValue(Person.LOCALE, Utils.formatLocale(LOCALE3));
 		try {
@@ -314,7 +314,7 @@ public class TestKBEventHandling extends BasicTestCase {
 		listener1.setVeto(false);
 		listener1.resetCounts();
 
-		final Transaction successFullTX = kBase.beginTransaction();
+		final Transaction successFullTX = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		object1.setAttributeValue(Person.LOCALE, Utils.formatLocale(LOCALE3));
 		object2.setAttributeValue(Person.LOCALE, Utils.formatLocale(LOCALE3));
 		successFullTX.commit();
@@ -331,13 +331,13 @@ public class TestKBEventHandling extends BasicTestCase {
     protected void doNewDeleteKO () throws Exception {
         KnowledgeBase kBase = KBSetup.getKnowledgeBase();
         // create an object
-		Transaction tx = kBase.beginTransaction();
+		Transaction tx = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		dummyKO = kBase.createKnowledgeObject(Person.OBJECT_NAME);
         // change KO
 		dummyKO.setAttributeValue(Person.NAME_ATTRIBUTE, "Rabarbara");
 		tx.commit();
         // remove the object
-		Transaction delTx = kBase.beginTransaction();
+		Transaction delTx = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
         kBase.delete(dummyKO);
 		delTx.commit();
     }

@@ -14,8 +14,10 @@ import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.formeditor.definition.TextDefinition;
 import com.top_logic.layout.editor.config.TypeTemplateParameters;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
@@ -37,8 +39,10 @@ import com.top_logic.model.util.TLModelPartRef;
 @TagName("formTable")
 @DisplayOrder({
 	FormTableDefinition.LABEL,
+	FormTableDefinition.DYNAMIC_LABEL,
 	FormTableDefinition.TYPE,
 	FormTableDefinition.ROWS,
+	FormTableDefinition.SELECTABLE,
 	FormTableDefinition.COLUMNS,
 	FormTableDefinition.COMMANDS,
 })
@@ -53,6 +57,12 @@ public interface FormTableDefinition
 
 	/** Configuration name for the value of the {@link #getCommands()}. */
 	String COMMANDS = "commands";
+
+	/** Configuration name for the value of the {@link #getDynamicLabel()}. */
+	String DYNAMIC_LABEL = "dynamicLabel";
+
+	/** Configuration name for the value of the {@link #getSelectable()}. */
+	String SELECTABLE = "selectable";
 
 	/**
 	 * Expression creating a list of objects edited in the displayed table as rows.
@@ -86,6 +96,50 @@ public interface FormTableDefinition
 	 */
 	@Name(COMMANDS)
 	List<TableCommandConfig> getCommands();
+
+	/**
+	 * Title of the table.
+	 */
+	@Override
+	ResKey getLabel();
+
+	/**
+	 * Expression creating a dynamic label for the table based on the model.
+	 *
+	 * <p>
+	 * If this expression is configured, it takes precedence over the static {@link #getLabel()}.
+	 * The expression receives two parameters:
+	 * <ul>
+	 * <li>First parameter: The model object</li>
+	 * <li>Second parameter: The static label as {@link ResKey}</li>
+	 * </ul>
+	 * The returned value can be a {@link ResKey} or a {@link String}, for example.
+	 * </p>
+	 * 
+	 * <p>
+	 * Without a dynamic expression, only the first placeholder {0} in the static label is
+	 * automatically filled with the model: <code>model -> label -> $label.fill($model)</code>. Use
+	 * this dynamic expression for multiple placeholders or custom placeholder handling.
+	 * </p>
+	 *
+	 * @see #getLabel()
+	 */
+	@Name(DYNAMIC_LABEL)
+	@ItemDisplay(ItemDisplayType.VALUE)
+	@Nullable
+	Expr getDynamicLabel();
+
+	/**
+	 * Whether the table allows row selection.
+	 */
+	@Name(SELECTABLE)
+	@BooleanDefault(true)
+	boolean getSelectable();
+
+	/**
+	 * Setter for {@link #getSelectable()}.
+	 */
+	void setSelectable(boolean selectable);
 
 	/**
 	 * {@link ConfigPart} representing a column in a {@link FormTableDefinition}.

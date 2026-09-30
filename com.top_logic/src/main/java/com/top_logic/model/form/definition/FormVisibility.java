@@ -118,6 +118,7 @@ public enum FormVisibility implements ExternallyNamed {
 			case DISABLED:
 				member.setVisible(true);
 				member.setMandatory(false);
+				member.setImmutable(false);
 				member.setDisabled(true);
 				break;
 			case READ_ONLY:

@@ -97,8 +97,8 @@ public class KIReference extends AbstractMOReference implements MOReferenceInter
 	}
 
 	@Override
-	public MOAttribute copy() {
-		KIReference copy = new KIReference(getName(), typeRef(getTargetType()));
+	public MOAttribute copy(String newName, MetaObject newType) {
+		KIReference copy = new KIReference(newName, newType);
 		copy.initFrom(this);
 		copy.setStorage(getStorage());
 		return copy;

@@ -593,8 +593,10 @@ public class DynamicComponentDefinition {
 							inlineArguments.put(propertyName,
 								RangeValue.createArgumentValue(propertyName, parse(cache)));
 						} else {
-							// Mark as non-mandatory.
-							param.appendChild(doc.createComment("Empty value"));
+							// Mark as non-mandatory so that template constructs containing only
+							// the parameter reference are dropped via NO_NODE_EXPANSION instead of
+							// surviving with empty content.
+							addAttribute(param, LayoutModelConstants.PARAM_OPTIONAL, "true");
 						}
 					} catch (SAXException | XMLStreamException ex) {
 						log.error("Unable to write parameters.", ex);
@@ -626,8 +628,7 @@ public class DynamicComponentDefinition {
 			return;
 		}
 		XMLStreamWriter out = XMLStreamUtil.getDefaultOutputFactory().createXMLStreamWriter(outStream, "utf-8");
-		try {
-			ConfigurationWriter configurationWriter = new ConfigurationWriter(out);
+		try (ConfigurationWriter configurationWriter = new ConfigurationWriter(out)) {
 			configurationWriter.write(property.getPropertyName(), ConfigurationItem.class, itemValue);
 		} finally {
 			out.close();
@@ -637,8 +638,7 @@ public class DynamicComponentDefinition {
 	private void serializePropertyValue(OutputStream outStream, ConfigurationItem parameters,
 			PropertyDescriptor property) throws XMLStreamException {
 		XMLStreamWriter out = XMLStreamUtil.getDefaultOutputFactory().createXMLStreamWriter(outStream, "utf-8");
-		try {
-			ConfigurationWriter configurationWriter = new ConfigurationWriter(out);
+		try (ConfigurationWriter configurationWriter = new ConfigurationWriter(out)) {
 			// Write also empty lists, and maps
 			configurationWriter.writeNonPlainProperty(parameters, property, true);
 		} finally {
@@ -712,7 +712,7 @@ public class DynamicComponentDefinition {
 		try {
 			document = DOMUtil.newDocumentBuilderNamespaceAware().parse(in);
 		} catch (SAXException | ParserConfigurationException ex) {
-			log.error("Invalid XML content in '" + templateName + "'.", ex);
+			log.info("Invalid XML content in '" + templateName + "': " + ex.getMessage(), Log.WARN);
 			return null;
 		}
 		Element documentElement = document.getDocumentElement();

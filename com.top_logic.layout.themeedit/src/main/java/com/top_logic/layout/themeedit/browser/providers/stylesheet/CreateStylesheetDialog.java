@@ -26,7 +26,7 @@ import com.top_logic.util.Resources;
 /**
  * A {@link SimpleFormDialog} for creating a new Stylesheet.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CreateStylesheetDialog extends SimpleFormDialog {
 
@@ -38,7 +38,7 @@ public class CreateStylesheetDialog extends SimpleFormDialog {
 	public CreateStylesheetDialog(LayoutComponent component) {
 		super(I18NConstants.CREATE_STYLESHEET_DIALOG_TITLE, null, I18NConstants.CREATE_STYLESHEET_DIALOG_MESSAGE,
 			DisplayDimension.dim(330, DisplayUnit.PIXEL),
-			DisplayDimension.dim(150, DisplayUnit.PIXEL));
+			DisplayDimension.dim(210, DisplayUnit.PIXEL));
 
 		_component = (TableComponent) component;
 	}

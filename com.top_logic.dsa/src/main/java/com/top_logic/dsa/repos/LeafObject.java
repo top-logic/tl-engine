@@ -14,7 +14,7 @@ import java.io.Writer;
 /**
  * Interface for a leaf representation in the repository implementation.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface LeafObject {
 

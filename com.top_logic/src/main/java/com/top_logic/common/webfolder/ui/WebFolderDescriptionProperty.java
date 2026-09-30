@@ -9,14 +9,14 @@ import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.DocumentVersion;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.layout.PropertyAccessor;
-import com.top_logic.layout.ReadOnlyPropertyAccessor;
+import com.top_logic.layout.ValidObjectPropertyAccessor;
 
 /**
  * {@link PropertyAccessor} for the {@link DocumentVersion#getDescription()} property.
  * 
  * @author <a href="mailto:Diana.Pankratz@top-logic.com">Diana Pankratz</a>
  */
-public class WebFolderDescriptionProperty extends ReadOnlyPropertyAccessor<Object> {
+public class WebFolderDescriptionProperty extends ValidObjectPropertyAccessor<Object> {
 	
 	/**
 	 * Singleton {@link WebFolderDescriptionProperty} instance.
@@ -28,7 +28,7 @@ public class WebFolderDescriptionProperty extends ReadOnlyPropertyAccessor<Objec
 	}
 	
 	@Override
-	public Object getValue(Object object) {
+	protected Object getValidValue(Object object) {
 		if (object instanceof Document) {
 			return ((Document) object).getDocumentVersion().getDescription();
 		} else if (object instanceof WebFolder) {

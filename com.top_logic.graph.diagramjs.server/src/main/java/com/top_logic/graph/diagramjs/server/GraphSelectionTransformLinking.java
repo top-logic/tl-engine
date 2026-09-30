@@ -6,7 +6,6 @@
 package com.top_logic.graph.diagramjs.server;
 
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.graph.diagramjs.server.util.model.TLInheritance;
@@ -61,8 +60,8 @@ public class GraphSelectionTransformLinking extends BidirectionalTransformLinkin
 	}
 
 	@Override
-	protected Function<Object, ?> inverseTransformation() {
-		return newValue -> {
+	protected BiFunction<Object, Object, ?> inverseTransformation() {
+		return (newValue, oldValue) -> {
 			return getMetaElementTreeObject(newValue);
 		};
 	}
@@ -75,7 +74,7 @@ public class GraphSelectionTransformLinking extends BidirectionalTransformLinkin
 				return ((TLTypePart) value).getOwner();
 			}
 		} else if (value instanceof TLInheritance) {
-			return ((TLInheritance) value).getSource();
+			return ((TLInheritance) value).getSpecialization();
 		}
 
 		return value;

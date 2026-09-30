@@ -26,9 +26,8 @@
 				name="${namePrefix}LoginMessage_content"
 				page="${jSPpage}"
 				resPrefix="LoginMessage.frame."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 			/>
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

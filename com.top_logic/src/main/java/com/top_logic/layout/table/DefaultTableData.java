@@ -255,6 +255,9 @@ public class DefaultTableData extends PropertyObservableBase implements TableDat
 
 		if (hasTableConfigButtons) {
 			tableConfigGroup().addButton(TableButtons.createResetTableCommand(this));
+			if ((viewModel.getFixedColumnCount() >= 0)) {
+				tableConfigGroup().addButton(TableButtons.createAutofitColumnsCommand(this));
+			}
 		}
 	}
 

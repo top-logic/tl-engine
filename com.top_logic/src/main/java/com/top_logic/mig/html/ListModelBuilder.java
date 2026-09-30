@@ -21,16 +21,40 @@ public interface ListModelBuilder extends ModelBuilder {
 	Collection<?> getModel(Object businessModel, LayoutComponent aComponent);
 
 	/**
-	 * Whether the given element would be within the list created by this builder.
+	 * Whether the given element should be added to or removed from the current view upon change or
+	 * creation.
+	 * 
+	 * <p>
+	 * When an object is created this method decides whether the new object should be added to the
+	 * current view. If an object is changed that is not yet displayed in the current view, this
+	 * method decides, whether it should be added to the current view by returning
+	 * {@link ElementUpdate#ADD}. If an object is changed that is currently displayed, this method
+	 * decides whether to remove it from the current view by returning {@link ElementUpdate#REMOVE}.
+	 * </p>
+	 * 
+	 * <p>
+	 * <b>Important:</b> If you decide to implement this method, you must make absolutely sure, that
+	 * the decision {@link ElementUpdate#ADD} is only returned, if
+	 * {@link #getModel(Object, LayoutComponent)} would return the given object in the result, when
+	 * called now. Otherwise, you may introduce an security issue showing objects that would
+	 * otherwise not be shown.
+	 * </p>
+	 * 
+	 * <p>
+	 * If no incremental updates should happen in the current view, the method must not be
+	 * implemented. This effectively returns the default decision {@link ElementUpdate#NO_CHANGE}
+	 * for every object.
+	 * </p>
 	 * 
 	 * @param component
 	 *        The context component.
 	 * @param candidate
 	 *        The potential list element.
-	 * @return Whether the given element would be contained within
-	 *         {@link #getModel(Object, LayoutComponent)}, if called now.
+	 * @return Whether the given element should be added to or removed from the current view.
 	 */
-	public boolean supportsListElement(LayoutComponent component, Object candidate);
+	default ElementUpdate supportsListElement(LayoutComponent component, Object candidate) {
+		return ElementUpdate.NO_CHANGE;
+	}
 
 	/**
 	 * Find a component model so that {@link #supportsListElement(LayoutComponent, Object)} would be

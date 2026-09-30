@@ -44,6 +44,9 @@
 		<param name="columns"
 			value="name"
 		/>
+		<param name="securityObject"
+			optional="true"
+		/>
 	</params>
 
 	<layout name="${namePrefix}TableSidebarLayout"
@@ -71,15 +74,19 @@
 						modelBuilder="${modelBuilder}"
 						objectType="${type}"
 						resPrefix="${resPrefix}"
+						securityObject="${securityObject}"
 					>
 						<layoutInfo size="40%"/>
 						${table}
 						<buttons>
 							<button id="exportExcel"
 								class="com.top_logic.layout.table.export.ExcelExportHandler"
-								downloadNameKey="${exportNameKey}"
 								templateName="${exportTemplate}"
-							/>
+							>
+								<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+									downloadName="${exportNameKey}"
+								/>
+							</button>
 						</buttons>
 					</tableView>
 
@@ -89,7 +96,7 @@
 						model="rows(${namePrefix}ChartTable)"
 						namePrefix="${namePrefix}ChartTable"
 						resPrefix="layouts.reporting.flex.chart.cockpit."
-						securityProvider="path:component(${namePrefix}ChartTable).currentobject"
+						securityObject="path:component(${namePrefix}ChartTable).currentobject"
 						types="${type}"
 					>
 						<chartDataSource>${chartDataSource}</chartDataSource>

@@ -27,7 +27,7 @@ public class PowerPointFormatConverter extends AbstractStringBasedConverter {
     @Override
 	protected String getContentFromStream(InputStream input) throws FormatConverterException {
         try {
-			try (POITextExtractor powerPointExtractor = new SlideShowExtractor<>(SlideShowFactory.create(input))) {
+			try (POITextExtractor powerPointExtractor = new SlideShowExtractor(SlideShowFactory.create(input))) {
 				String contents = powerPointExtractor.getText();
 //        	System.out.println(contents);
 				return contents;

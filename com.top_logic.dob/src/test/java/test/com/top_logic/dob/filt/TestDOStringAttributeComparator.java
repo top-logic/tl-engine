@@ -78,9 +78,9 @@ public class TestDOStringAttributeComparator extends TestCase {
         ExampleDataObject edo1 = new ExampleDataObject(ex);
         
         ex = new HashMap();
-        ex.put("name"  , "Müller");
+        ex.put("name"  , "MÃ¼ller");
         ex.put("street", "Baumwech");
-        ex.put("city"  , "ÖstrichWinkel");
+        ex.put("city"  , "Ã–strichWinkel");
         ExampleDataObject edo2 = new ExampleDataObject(ex);
         
         ex = new HashMap();
@@ -114,20 +114,20 @@ public class TestDOStringAttributeComparator extends TestCase {
     
         HashMap ex = new HashMap();
         ex.put("name"  , "Mueller");
-        ex.put("street", "Anfangstraße");
+        ex.put("street", "AnfangstraÃŸe");
         ex.put("city"  , "OestrichWinkel");
         ExampleDataObject edo1 = new ExampleDataObject(ex);
         
         ex = new HashMap();
         ex.put("name"  , "Muller");
-        ex.put("street", "Mittelstraße");
+        ex.put("street", "MittelstraÃŸe");
         ex.put("city"  , "OstrichWinkel");
         ExampleDataObject edo2 = new ExampleDataObject(ex);
         
         ex = new HashMap();
-        ex.put("name"  , "Müller");
-        ex.put("street", "Zuendestraße");
-        ex.put("city"  , "ÖstrichWinkel");
+        ex.put("name"  , "MÃ¼ller");
+        ex.put("street", "ZuendestraÃŸe");
+        ex.put("city"  , "Ã–strichWinkel");
         ExampleDataObject edo3 = new ExampleDataObject(ex);
     
         DOStringAttributeComparator comp = 
@@ -148,7 +148,7 @@ public class TestDOStringAttributeComparator extends TestCase {
     }
     
 
-    /** Achive German phoneBooks Sorting (Muller == Müller == Mueller) 
+    /** Achive German phoneBooks Sorting (Muller == MÃ¼ller == Mueller) 
      * 
      * this is actually INCORRECT but fine for these examples.
      */
@@ -157,8 +157,8 @@ public class TestDOStringAttributeComparator extends TestCase {
               // This is not correct but fine for this test       
         	  Collator phoneBook = new RuleBasedCollator(
                 "<0<1<2<3<4<5<6<7<8<9<"
-              + "a;ä=ae=A=Ä=AE=Ae<b=B<c=C<d=D<e=E<f=F<g=G<h=H<i=I<j=J<k=K<l=L<m=M<"
-              + "n=N<o=ö=oe=O=Ö=OE=Oe<p=P<q=Q<r=R<s=S & SS=ß<t=T<u=ü=ue=U=Ü=UE=Ue<v=V<"
+              + "a;Ã¤=ae=A=Ã„=AE=Ae<b=B<c=C<d=D<e=E<f=F<g=G<h=H<i=I<j=J<k=K<l=L<m=M<"
+              + "n=N<o=Ã¶=oe=O=Ã–=OE=Oe<p=P<q=Q<r=R<s=S & SS=ÃŸ<t=T<u=Ã¼=ue=U=Ãœ=UE=Ue<v=V<"
               + "w=W<x=X<y=Y<z=Z");
               phoneBook.setStrength(Collator.PRIMARY);
               return phoneBook;

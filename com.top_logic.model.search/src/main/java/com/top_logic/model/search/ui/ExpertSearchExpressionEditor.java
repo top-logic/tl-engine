@@ -5,8 +5,9 @@
  */
 package com.top_logic.model.search.ui;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
+import com.top_logic.basic.col.Provider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -22,6 +23,7 @@ import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.CssClass;
 import com.top_logic.layout.form.values.edit.annotation.UseTemplate;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.config.ExprPrinter;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.persistency.expressions.SearchExpressionImpl;
@@ -32,7 +34,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Code editor to create TL-Script based {@link SearchExpression}s.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class ExpertSearchExpressionEditor extends FormComponent implements SearchExpressionEditor {
 
@@ -74,14 +76,15 @@ public class ExpertSearchExpressionEditor extends FormComponent implements Searc
 	}
 
 	@Override
-	public HandlerResult search(Function<SearchExpression, HandlerResult> algorithm) {
+	public HandlerResult search(BiFunction<QueryExecutor, Provider<String>, HandlerResult> algorithm) {
 		FormContext formContext = getFormContext();
 		if (!formContext.checkAll()) {
 			HandlerResult result = new HandlerResult();
 			AbstractApplyCommandHandler.fillHandlerResultWithErrors(formContext, result);
 			return result;
 		}
-		return algorithm.apply(QueryExecutor.compileExprOptional(getFormModel().getSearchExpression()));
+		Expr expr = getFormModel().getSearchExpression();
+		return algorithm.apply(QueryExecutor.compileOptional(expr), () -> ExprPrinter.toString(expr));
 	}
 
 	/**

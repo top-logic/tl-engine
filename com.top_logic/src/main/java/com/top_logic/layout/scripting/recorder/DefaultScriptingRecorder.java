@@ -209,17 +209,21 @@ public class DefaultScriptingRecorder extends ScriptingRecorder {
 	}
 
 	@Override
-	protected void pauseImpl() {
+	protected boolean pauseImpl() {
+		boolean isRunning = !isPaused();
 		paused.set(true);
+		return isRunning;
 	}
 
 	@Override
-	protected void resumeImpl() {
+	protected boolean resumeImpl() {
+		boolean isPaused = isPaused();
 		paused.set(false);
+		return isPaused;
 	}
 
 	/**
-	 * Is the ScriptingRecorder temporarily paused?
+	 * Is the {@link ScriptingRecorder} temporarily paused?
 	 */
 	private boolean isPaused() {
 		return Boolean.TRUE.equals(paused.get());
@@ -310,9 +314,9 @@ public class DefaultScriptingRecorder extends ScriptingRecorder {
 			Map<String, Object> arguments) {
 		CommandAction commandAction;
 		if (command instanceof GotoHandler) {
-			commandAction = ActionFactory.gotoAction(component.getName(), command.getID(), arguments);
+			commandAction = ActionFactory.gotoAction(component, command.getID(), arguments);
 		} else {
-			commandAction = ActionFactory.commandAction(component.getName(), command.getID(), arguments);
+			commandAction = ActionFactory.commandAction(component, command.getID(), arguments);
 			commandAction.setCommandLabel(Resources.getInstance().getString(command.getResourceKey(component), null));
 		}
 

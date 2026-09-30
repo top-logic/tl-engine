@@ -10,14 +10,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
+import org.pac4j.core.adapter.FrameworkAdapter;
 import org.pac4j.core.authorization.authorizer.RequireAnyRoleAuthorizer;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.client.Clients;
+import org.pac4j.core.config.ConfigFactory;
 import org.pac4j.core.http.url.DefaultUrlResolver;
 import org.pac4j.core.http.url.UrlResolver;
 import org.pac4j.core.util.Pac4jConstants;
+import org.pac4j.jee.filter.SecurityFilter;
 
 import com.top_logic.base.accesscontrol.DefaultExternalUserMapping;
 import com.top_logic.base.accesscontrol.ExternalUserMapping;
@@ -35,9 +38,9 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.services.ServletContextService;
 
 /**
- * <i>TopLogic</i> module builing the pac4j configuration.
+ * <i>TopLogic</i> module building the pac4j configuration.
  * 
- * @see org.pac4j.core.config.Config#INSTANCE
+ * @see org.pac4j.core.config.Config
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -45,6 +48,14 @@ import com.top_logic.basic.module.services.ServletContextService;
 	ServletContextService.Module.class
 })
 public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends ConfiguredManagedClass<C> {
+
+	/**
+	 * Suffix appended to the {@link ClientConfigurator.Config#getName() name} of a configured client
+	 * to name the re-authentication client derived from it.
+	 *
+	 * @see ClientConfigurator#createReauthenticationClient(ServletContext)
+	 */
+	public static final String REAUTHENTICATION_SUFFIX = "-reauthentication";
 
 	/**
 	 * Configuration options for {@link Pac4jConfigFactory}.
@@ -65,7 +76,27 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 
 	}
 
-	private Collection<ClientConfigurator> _clientConfigurators;
+	/**
+	 * The {@link ConfigFactory} used by Pac4j.
+	 * <p>
+	 * This is used in the <code>web.xml</code> or the <code>web-fragment.xml</code> as value for
+	 * the parameter <code>configFactory</code> of the {@link SecurityFilter}. The
+	 * {@link Pac4jConfigFactory} cannot be used, as every {@link ConfigFactory} needs to have a
+	 * default constructor.
+	 * </p>
+	 */
+	public static class TLPac4jConfigFactory implements ConfigFactory {
+
+		@Override
+		public org.pac4j.core.config.Config build(Object... parameters) {
+			return Pac4jConfigFactory.getInstance().getPac4jConfig();
+		}
+
+	}
+
+	private final Collection<? extends ClientConfigurator> _clientConfigurators;
+
+	private org.pac4j.core.config.Config _pac4jConfig;
 
 	/**
 	 * Creates a {@link Pac4jConfigFactory} from configuration.
@@ -88,9 +119,8 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 	 * @see ClientConfigurator.Config#getName()
 	 */
 	public UserNameExtractor getUserNameExtractor(String clientName) {
-		ClientConfigurator.Config<?> clientConfig = getConfig().getClients().get(clientName);
+		ClientConfigurator.Config<?> clientConfig = getClientConfig(clientName);
 		if (clientConfig == null) {
-			Logger.error("No such client configured: " + clientName, Pac4jConfigFactory.class);
 			return DefaultUserNameExtractor.INSTANCE;
 		}
 		return clientConfig.getUserNameExtractor();
@@ -102,31 +132,57 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 	 * @see ClientConfigurator.Config#getUserMapping()
 	 */
 	public ExternalUserMapping getUserMapping(String clientName) {
-		ClientConfigurator.Config<?> clientConfig = getConfig().getClients().get(clientName);
+		ClientConfigurator.Config<?> clientConfig = getClientConfig(clientName);
 		if (clientConfig == null) {
-			Logger.error("No such client configured: " + clientName, Pac4jConfigFactory.class);
 			return DefaultExternalUserMapping.INSTANCE;
 		}
 		return clientConfig.getUserMapping();
+	}
+
+	/**
+	 * The configuration of the client with the given {@link Client#getName() name}, or
+	 * <code>null</code> if no such client is configured.
+	 *
+	 * <p>
+	 * The single place translating a runtime client name to the configuration it was built from, so
+	 * that a re-authentication client answers with the configuration of the client it is derived
+	 * from and maps the external user name to an account exactly like a login does.
+	 * </p>
+	 *
+	 * @see #getConfiguredName(String)
+	 */
+	public ClientConfigurator.Config<?> getClientConfig(String clientName) {
+		ClientConfigurator.Config<?> result = getConfig().getClients().get(getConfiguredName(clientName));
+		if (result == null) {
+			Logger.error("No such client configured: " + clientName, Pac4jConfigFactory.class);
+		}
+		return result;
 	}
 
 	@Override
 	protected void startUp() {
 		super.startUp();
 
-		org.pac4j.core.config.Config
-			.setConfig(buildPac4jConfig(ServletContextService.getInstance().getServletContext()));
+		_pac4jConfig = buildPac4jConfig(ServletContextService.getInstance().getServletContext());
 	}
 
 	/**
 	 * Creates the pac4j configuration.
 	 * 
-	 * @see org.pac4j.core.config.Config#INSTANCE
+	 * @see org.pac4j.core.config.Config
 	 */
 	protected org.pac4j.core.config.Config buildPac4jConfig(ServletContext context) {
 		List<Client> clientList = new ArrayList<>();
 		for (ClientConfigurator configurator : _clientConfigurators) {
 			Client client = configurator.createClient(context);
+			if (client != null) {
+				clientList.add(client);
+			}
+		}
+		// After the login clients, so that a request that names no client keeps being answered by a
+		// login client.
+		for (ClientConfigurator configurator : _clientConfigurators) {
+			Client client = configurator.createReauthenticationClient(context);
 			if (client != null) {
 				clientList.add(client);
 			}
@@ -137,12 +193,14 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 
 		// Required, if more than one client is registered. Without that setting, pac4j does not use
 		// any client for authentication, even if the request selects a client by setting a request
-		// parameter.
+		// parameter. The setting also limits which clients a request may select by name, so the
+		// re-authentication clients are part of it.
 		clients.setDefaultSecurityClients(clientNames(clients));
 
 		final org.pac4j.core.config.Config config = new org.pac4j.core.config.Config(clients);
 
 		config.addAuthorizer("admin", new RequireAnyRoleAuthorizer("ROLE_ADMIN"));
+		FrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(config);
 		return config;
 	}
 
@@ -164,6 +222,33 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 	}
 
 	/**
+	 * The {@link Client#getName() name} of the re-authentication client derived from the configured
+	 * client with the given name.
+	 *
+	 * @see #REAUTHENTICATION_SUFFIX
+	 */
+	public static String getReauthenticationName(String clientName) {
+		return clientName + REAUTHENTICATION_SUFFIX;
+	}
+
+	/**
+	 * The name of the configured client the given {@link Client#getName() client name} stands for.
+	 *
+	 * <p>
+	 * A re-authentication client answers the name of the client it is derived from, every other
+	 * name answers itself.
+	 * </p>
+	 *
+	 * @see #getReauthenticationName(String)
+	 */
+	public static String getConfiguredName(String clientName) {
+		if (clientName != null && clientName.endsWith(REAUTHENTICATION_SUFFIX)) {
+			return clientName.substring(0, clientName.length() - REAUTHENTICATION_SUFFIX.length());
+		}
+		return clientName;
+	}
+
+	/**
 	 * Creates a callback URL from the given configuration.
 	 */
 	public static String resolveCallbackUrl(ServletContext context, HasCallbackUrl config) {
@@ -175,6 +260,11 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 			callbackUrl = context.getContextPath() + callbackUrl;
 		}
 		return callbackUrl;
+	}
+
+	/** The {@link org.pac4j.core.config.Config} to be used. */
+	public org.pac4j.core.config.Config getPac4jConfig() {
+		return _pac4jConfig;
 	}
 
 	/**

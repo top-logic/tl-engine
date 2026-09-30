@@ -6,6 +6,15 @@
 package com.top_logic.tool.boundsec;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.Set;
+
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.securityObjectProvider.NullSecurityObjectProvider;
+import com.top_logic.util.model.ModelService;
 
 /**
  * The DefaultSecurityObjectProvider provides the object at which the security should be
@@ -32,5 +41,39 @@ public interface SecurityObjectProvider extends Serializable {
 	 * @return the object on which the security should be checked
 	 */
 	BoundObject getSecurityObject(BoundChecker aChecker, Object model, BoundCommandGroup aCommandGroup);
+
+	/**
+	 * Determines the collection of all types of possible security objects.
+	 */
+	default Set<TLClass> getPossibleSecurityObjectTypes() {
+		return Collections.singleton(TLModelUtil.tlObjectType(ModelService.getApplicationModel()));
+	}
+
+	/**
+	 * Instantiates the given {@link SecurityObjectProvider} configuration, never null.
+	 */
+	static SecurityObjectProvider fromConfiguration(InstantiationContext context,
+			PolymorphicConfiguration<? extends SecurityObjectProvider> config) {
+		SecurityObjectProvider result = fromConfigurationOptional(context, config);
+		if (result == null) {
+			return NullSecurityObjectProvider.INSTANCE;
+		}
+		return result;
+	}
+
+	/**
+	 * Instantiates the given {@link SecurityObjectProvider} configuration.
+	 */
+	static SecurityObjectProvider fromConfigurationOptional(InstantiationContext context,
+			PolymorphicConfiguration<? extends SecurityObjectProvider> config) {
+		if (config instanceof ReferencedSecurityObjectProvider.Config ref) {
+			// Short-cut.
+			return SecurityObjectProviderManager.getInstance().getSecurityObjectProvider(ref.getReference());
+		} else if (config != null) {
+			return context.getInstance(config);
+		} else {
+			return null;
+		}
+	}
 
 }

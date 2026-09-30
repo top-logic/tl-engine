@@ -8,6 +8,9 @@
 		<param name="tableComponent"
 			value="com.top_logic.mail.layout.MailFolderTableComponent"
 		/>
+		<param name="securityObject"
+			optional="true"
+		/>
 		<param name="downloadNameKey"
 			value="mails.folder.export.name"
 		/>
@@ -73,6 +76,7 @@
 				name="${namePrefix}Mail_List"
 				objectType="${objectType}"
 				resPrefix="mails.folder.table."
+				securityObject="${securityObject}"
 				selectable="true"
 			>
 				<layoutInfo size="${tableSize}"/>
@@ -83,25 +87,29 @@
 					fixedColumns="${fixedColumns}"
 					rowStyle="%FROZEN_TABLE_ROW_SMALL_STYLE%"
 					showTitle="true"
-				>
-					<exporter class="com.top_logic.layout.table.model.SimpleTableDataExport"
-						downloadNameKey="${downloadNameKey}"
+				>${columns}</table>
+				<buttons>
+					<button id="exportExcel"
+						class="com.top_logic.layout.table.export.ExcelExportHandler"
 						templateName="${templateName}"
-					/>
-					${columns}
-				</table>
+					>
+						<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+							downloadName="${downloadNameKey}"
+						/>
+					</button>
+				</buttons>
 			</component>
 
 			<layout>
 				<components>
 					<component class="${detailComponent}"
+						buttonbar="true"
 						defaultFor="${defaultFor}"
 						model="selection(${namePrefix}Mail_List)"
 						name="${namePrefix}Mail_content"
 						page="/jsp/mail/mailFolder/Mail.jsp"
 						resPrefix="mails.mail.details."
 					/>
-					<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 				</components>
 			</layout>
 		</components>

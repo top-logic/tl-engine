@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.changelog">
+		<class name="Change">
+			<attributes>
+				<reference name="changeType"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="ChangeType"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[self -> switch ($self.type()) {
+    `tl.changelog:Creation`: `tl.changelog:ChangeType#CREATE`;
+    `tl.changelog:Deletion`: `tl.changelog:ChangeType#DELETE`;
+    `tl.changelog:Update`: `tl.changelog:ChangeType#UPDATE`;
+}]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		
+		<class name="ChangeSet">
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[cs -> "{0} ({1})".fill(
+    $cs.get(`tl.changelog:ChangeSet#message`).localize(),
+    $cs.get(`tl.changelog:ChangeSet#date`)
+)]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>		
+	</module>
+</model>

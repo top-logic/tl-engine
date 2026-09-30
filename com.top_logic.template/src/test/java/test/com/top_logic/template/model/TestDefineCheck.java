@@ -296,7 +296,7 @@ public class TestDefineCheck extends TestCase {
                              "  </Person>\n" +
                              "  <Person Value=\"199\" Enabled=\"true\">\n" +
                              "    <Name>Michael</Name>\n" +
-                             "    <Familyname>Gänsler</Familyname>\n" +
+                             "    <Familyname>GÃ¤nsler</Familyname>\n" +
                              "  </Person>\n" +
                              "  <Person Value=\"199\" Enabled=\"true\">\n" +
                              "    <Name>Frank</Name>\n" +

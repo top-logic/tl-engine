@@ -8,7 +8,7 @@ package com.top_logic.graph.layouter.algorithm.coordinates.vertical;
 /**
  * Configuration constants for the vertical coordinate assignment.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface VerticalCoordinatesConstants {
 	/**

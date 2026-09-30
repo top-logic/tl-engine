@@ -9,7 +9,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.KnowledgeBaseName;
 import com.top_logic.knowledge.wrap.util.WrapperUtil;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.NamedModelName;
@@ -23,7 +23,7 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  * 
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */
-public class BoundedRoleNamingScheme extends AbstractModelNamingScheme<BoundedRole, BoundedRoleName> {
+public class BoundedRoleNamingScheme extends AbstractGlobalModelNamingScheme<BoundedRole, BoundedRoleName> {
 
 	/**
 	 * {@link ModelName} of a {@link BoundedRoleNamingScheme}.

@@ -15,7 +15,10 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.util.StopWatch;
 
 /**
  * {@link StringColumnTransformProcessor} that uses a (list of) configured {@link Mapping}s that are
@@ -28,6 +31,7 @@ public class StringReplacementProcessor extends StringColumnTransformProcessor<S
 	/**
 	 * Configuration options for {@link StringReplacementProcessor}.
 	 */
+	@TagName("string-column-transform")
 	public interface Config extends StringColumnTransformProcessor.Config<StringReplacementProcessor> {
 
 		/** Configuration name of {@link #getReplacements()}. */
@@ -36,8 +40,12 @@ public class StringReplacementProcessor extends StringColumnTransformProcessor<S
 		/**
 		 * Replacements the are applied to the value of {@link #getColumn()} in each row of
 		 * {@link #getTable()}.
+		 * 
+		 * @see RegExpReplacement
+		 * @see StringReplacement
 		 */
 		@Name(REPLACEMENTS)
+		@DefaultContainer
 		List<PolymorphicConfiguration<Mapping<? super String, String>>> getReplacements();
 
 	}
@@ -56,6 +64,11 @@ public class StringReplacementProcessor extends StringColumnTransformProcessor<S
 	protected void processRows(Log log, ResultSet rows, String table, String column, List<String> keyColumns)
 			throws SQLException {
 		
+		log.info("Updating values in column '" + column + "' of table '" + table + "'.");
+
+		int cnt = 0;
+		int batch = 0;
+		StopWatch watch = StopWatch.createStartedWatch();
 		while (rows.next()) {
 			String value = rows.getString(1);
 			String original = value;
@@ -66,10 +79,23 @@ public class StringReplacementProcessor extends StringColumnTransformProcessor<S
 				continue;
 			}
 
+			batch++;
 			rows.updateString(1, value);
 			rows.updateRow();
+
+			if (batch >= 1000) {
+				cnt += batch;
+				batch = 0;
+				if (watch.getElapsedMillis() > 5000) {
+					log.info("Updated values in column '" + column + "' of " + cnt + " rows of table '" + table
+						+ "', continuing.");
+					watch.restart();
+				}
+			}
 		}
 
+		cnt += batch;
+		log.info("Updated values in column '" + column + "' of " + cnt + " rows of table '" + table + "'.");
 	}
 
 }

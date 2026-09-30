@@ -10,6 +10,7 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.StorageImplementation;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 
@@ -33,15 +34,13 @@ public abstract class AbstractDerivedStorage<C extends AbstractDerivedStorage.Co
 	}
 
 	@Override
-	public void checkUpdate(AttributeUpdate update) {
-		return;
+	public Object getFormValue(TLFormObjectBase formObject, TLStructuredTypePart part) {
+		return getAttributeValue(formObject, part);
 	}
 
 	@Override
-	public Object getUpdateValue(AttributeUpdate update)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
-		TLStructuredTypePart attribute = update.getAttribute();
-		throw new AttributeException("Calculated attribute '" + attribute + "' can't be updated.");
+	public void checkUpdate(AttributeUpdate update) {
+		return;
 	}
 
 	@Override

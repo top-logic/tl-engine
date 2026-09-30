@@ -31,6 +31,7 @@
 			<layout-reference resource="com.top_logic.demo/technical/test/exports/TestOfficeExports.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/test/renderingRobustness/index.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/test/attributeOverride/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/test/calculatedDefaultValueAsReference/tabLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

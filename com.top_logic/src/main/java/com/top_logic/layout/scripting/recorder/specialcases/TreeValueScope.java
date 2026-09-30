@@ -27,6 +27,7 @@ import com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNam
 import com.top_logic.layout.scripting.recorder.ref.value.object.LabelPath;
 import com.top_logic.layout.scripting.recorder.ref.value.object.ValuePath;
 import com.top_logic.layout.scripting.runtime.ActionContext;
+import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
 import com.top_logic.layout.tree.model.TLTreeModel;
 import com.top_logic.layout.tree.model.TLTreeNode;
 
@@ -55,9 +56,12 @@ class TreeValueScope implements ValueScope {
 		Object result;
 		if ((contextRef instanceof LabelPath) || (contextRef instanceof CompactLabelPath)) {
 			result = ScriptingUtil.findNodeByLabelPath(getLabelPath(contextRef), _treeModel, _labelProvider);
-		} else {
+		} else if (contextRef instanceof ValuePath) {
 			result =
 				ScriptingUtil.findNodeByValuePath((ValuePath) contextRef, _treeModel, _labelProvider, actionContext);
+		} else {
+			throw ApplicationAssertions.fail(contextRef, "Cannot resolve '"
+				+ contextRef.descriptor().getConfigurationInterface().getName() + "' in the context of a tree.");
 		}
 		if (_asBusinessObject) {
 			return _treeModel.getBusinessObject(result);

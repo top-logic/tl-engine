@@ -14,7 +14,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * {@link LayoutControlProvider} for a graph structure.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DiagramJSGraphControlProvider<C extends DiagramJSGraphControlProvider.Config<?>> extends ContentLayoutControlProvider<C> {
 

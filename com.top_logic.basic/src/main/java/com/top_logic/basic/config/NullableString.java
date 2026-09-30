@@ -5,9 +5,16 @@
  */
 package com.top_logic.basic.config;
 
+import com.top_logic.basic.config.annotation.Nullable;
+
 /**
  * {@link ConfigurationValueProvider} for {@link String} properties that are <code>null</code> (not
  * empty).
+ * 
+ * <p>
+ * Note: Do not use this format directly, apply the {@link Nullable} annotation to the string
+ * property that you want to have <code>null</code> instead of empty values.
+ * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

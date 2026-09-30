@@ -5,7 +5,7 @@
 %><%@taglib uri="ajaxform" prefix="form"
 %><layout:html>
 	<layout:head/>
-	
+
 	<layout:body>
 		<form:formPage
 			image="theme:DEMO_DIALOG_ICON"

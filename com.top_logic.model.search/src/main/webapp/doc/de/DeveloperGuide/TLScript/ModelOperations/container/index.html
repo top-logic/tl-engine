@@ -27,12 +27,11 @@
 <p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
 <p>Den Container von <code class="hljs inlineCode">object</code>. Hat <code class="hljs inlineCode">object</code> keinen Container, liefert die Funktion <code class="hljs inlineCode">null</code>.</p>
 <h2>Beispiele</h2>
-<pre>	<code>{
+<pre><code>{
    a = new(`my.module:MyClass`);
    b = new(`my.module:MyClass`);
    $a.add(`my.module:MyClass#children`, $b);
    $b.container();
-}</code>
-</pre>
+}</code></pre>
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Das Objekt <code class="hljs inlineCode">a</code>.</p>
 <p><code class="hljs inlineCode">b</code> wird hier in das Referenzattribut <code class="hljs inlineCode">children</code> von <span style="color:#695d69; font-family:monospace"><span style="background-color:#f7f3f7">a</span></span> eingetragen. <code class="hljs inlineCode">a</code> ist der Container von <code class="hljs inlineCode">b</code>.</p>

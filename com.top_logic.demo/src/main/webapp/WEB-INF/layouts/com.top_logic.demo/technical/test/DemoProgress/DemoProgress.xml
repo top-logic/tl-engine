@@ -3,12 +3,12 @@
 <layout>
 	<components>
 		<component class="com.top_logic.demo.layout.demo.DemoOpenProgressComponent"
-			buttonComponent="demoOpenProgressComponentButtons"
+			buttonbar="true"
 			displayWithoutModel="true"
 			name="demoOpenProgressComponent"
 			page="/jsp/layout/demo/DemoProgressOpenerComponent.jsp"
 			resPrefix="layouts.layoutdemo.DemoProgress.demoOpenProgressComponent."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<buttons>
 				<reference command-id="demoProgressCommand"/>
@@ -18,10 +18,10 @@
 					<dialogInfo
 						createOpenerButtons="false"
 						executability="Always"
-						height="250"
+						height="350"
 						openerCommandGroup="Read"
 						resizable="true"
-						width="500"
+						width="550"
 					/>
 
 					<components>
@@ -29,12 +29,11 @@
 							name="demoProgress"
 							page="/jsp/layout/misc/refreshProgress.jsp"
 							resPrefix="layouts.layoutdemo.DemoProgress.demoProgress."
-							securityProviderClass="securityRoot"
+							securityObject="securityRoot"
 						/>
 					</components>
 				</layout>
 			</dialogs>
 		</component>
-		<buttonbar name="demoOpenProgressComponentButtons"/>
 	</components>
 </layout>

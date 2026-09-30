@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments height="300px">
+		<forms>
+			<form type="test.process:Project">
+				<formDefinition columns="ONE">
+					<field
+						attribute="name"
+						fullQualifiedName="test.process:Project#name"
+						type="tl.core:String"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+		<title title="class.com.top_logic.model.search.providers.I18NConstants.CREATE_OBJECT_DEFAULT_LABEL"/>
+		<open-handler id="addRow"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="theme:ICONS_ADD_BUTTON"
+			resourceKey="class.com.top_logic.model.search.providers.I18NConstants.CREATE_OBJECT_DEFAULT_LABEL"
+		/>
+		<typeOptions type="test.process:Project"/>
+		<create-handler id="createRow">
+			<postCreateActions>
+				<setModel target="selection(com.top_logic.demo/technical/components/workflow/projectsTable.layout.xml#Table)">
+					<input/>
+				</setModel>
+			</postCreateActions>
+		</create-handler>
+	</arguments>
+</config:template-call>

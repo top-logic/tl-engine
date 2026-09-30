@@ -8,8 +8,11 @@ package com.top_logic.element.model.migration.model;
 
 import org.w3c.dom.Document;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -20,15 +23,14 @@ import com.top_logic.model.TLModel;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public interface TLModelBaseLineMigrationProcessor extends MigrationProcessor {
+public abstract class TLModelBaseLineMigrationProcessor<C extends TLModelBaseLineMigrationProcessor.Config<?>>
+		extends AbstractConfiguredInstance<C> implements MigrationProcessor {
 
 	/**
 	 * Configuration for a {@link MigrationProcessor} to skip change of model base line in
 	 * exceptional cases.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface SkipModelBaselineApaption extends ConfigurationItem {
+	public interface Config<I extends TLModelBaseLineMigrationProcessor<?>> extends PolymorphicConfiguration<I> {
 
 		/**
 		 * Whether the model base line in the database must not be changed.
@@ -40,11 +42,34 @@ public interface TLModelBaseLineMigrationProcessor extends MigrationProcessor {
 		 * </p>
 		 */
 		boolean isSkipModelBaselineChange();
+
+		/**
+		 * @see #isSkipModelBaselineChange()
+		 */
+		void setSkipModelBaselineChange(boolean value);
+	}
+
+	/**
+	 * Creates a {@link TLModelBaseLineMigrationProcessor} from configuration.
+	 * 
+	 * @param context
+	 *        The context for instantiating sub configurations.
+	 * @param config
+	 *        The configuration.
+	 */
+	@CalledByReflection
+	public TLModelBaseLineMigrationProcessor(InstantiationContext context, C config) {
+		super(context, config);
 	}
 
 	@Override
-	default void doMigration(MigrationContext context, Log log, PooledConnection connection) {
-		MigrationUtils.modifyTLModel(log, connection, document -> migrateTLModel(context, log, connection, document));
+	public final void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+		if (getConfig().isSkipModelBaselineChange()) {
+			migrateTLModel(context, log, connection, null);
+		} else {
+			MigrationUtils.modifyTLModel(log, connection,
+				document -> migrateTLModel(context, log, connection, document));
+		}
 	}
 
 	/**
@@ -64,7 +89,8 @@ public interface TLModelBaseLineMigrationProcessor extends MigrationProcessor {
 	 * @return Whether the given {@link Document model} has been adapted and needs to be written to
 	 *         the database.
 	 */
-	boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel);
+	protected abstract boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection,
+			Document tlModel);
 
 }
 

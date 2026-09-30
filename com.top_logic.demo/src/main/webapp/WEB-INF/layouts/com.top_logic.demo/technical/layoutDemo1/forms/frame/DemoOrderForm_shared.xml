@@ -11,15 +11,14 @@
 	<layout>
 		<components>
 			<component class="com.top_logic.demo.layout.form.demo.DemoOrderForm"
-				buttonComponent="${componentName}Buttons"
+				buttonbar="true"
 				model="provider(com.top_logic.layout.component.model.SelfModelProvider)"
 				name="${componentName}"
 				page="/jsp/test/layout/DemoOrderForm.jsp"
 				resPrefix="layouts.layoutdemo.DemoOrderForm_shared.main."
 				saveScrollPosition="true"
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 			/>
-			<buttonbar name="${componentName}Buttons"/>
 		</components>
 	</layout>
 </template>

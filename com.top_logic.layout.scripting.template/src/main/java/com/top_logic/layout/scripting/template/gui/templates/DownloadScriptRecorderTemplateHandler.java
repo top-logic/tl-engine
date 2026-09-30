@@ -17,7 +17,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Handler to download the given ScriptRecorder template.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DownloadScriptRecorderTemplateHandler extends DownloadSelectedTemplateFolderHandler {
 

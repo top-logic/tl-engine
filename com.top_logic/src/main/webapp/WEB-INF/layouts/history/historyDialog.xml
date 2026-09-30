@@ -4,6 +4,7 @@
 	<params>
 		<param name="namePrefix"/>
 		<param name="contentView"/>
+		<param name="dialogSecurityComponent"/>
 		<param name="columns"
 			value="name"
 		/>
@@ -37,8 +38,9 @@
 	>
 		<dialogInfo
 			defaultI18n="${defaultI18n}"
-			height="600"
-			width="800"
+			height="700"
+			openButtonSecComp="${dialogSecurityComponent}"
+			width="850"
 		>
 			<open-handler id="displayDialog_${namePrefix}ShowHistoryDialog"
 				clique="additional"

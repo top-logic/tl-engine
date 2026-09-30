@@ -35,6 +35,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.model.ValueVetoListener;
 import com.top_logic.layout.form.treetable.component.SilentVetoException;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -44,6 +45,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * 
  * @author <a href="mailto:tma@top-logic.com">tma</a>
  */
+@SuppressWarnings("javadoc")
 public class TestFormField extends BasicTestCase {
 
 	private static final ResPrefix ADDRESS = ResPrefix.forTest("adress");
@@ -320,6 +322,27 @@ public class TestFormField extends BasicTestCase {
 		}
 	}
 	
+	public void testConstraintsOnInsactiveField() {
+		AbstractFormField field = FormFactory.newStringField("name");
+		field.addConstraint(DigitsOnlyConstraint.INSTANCE);
+
+		// No error until initial check.
+		field.setValue("abc");
+		assertFalse(field.hasError());
+
+		// Show constraint violation error.
+		field.check();
+		assertTrue(field.hasError());
+
+		// Check that non-active fields do not report errors.
+		field.setImmutable(true);
+		assertFalse(field.hasError());
+
+		// Check that error is restored, when field is made active again.
+		field.setImmutable(false);
+		assertTrue(field.hasError());
+	}
+
 	public void testClearConstraints() {
 		AbstractFormField field = new TestField("name");
 
@@ -402,6 +425,20 @@ public class TestFormField extends BasicTestCase {
 		assertTrue("Warning constraints do not prevent checking constraints.", field.checkConstraints());
 		assertFalse("Checking does not produse errors for warning constraints.", field.hasError());
 		assertFalse("Check removes warning, because all constraint were removed.", field.hasWarnings());
+	}
+
+	/**
+	 * Test was introduced with ticket #27750.
+	 */
+	public void testNotChangedAfterInitialization() {
+		StringField stringField = FormFactory.newStringField("name");
+		SelectField selectField = FormFactory.newSelectField("select", list("A", "B", "C"), true, false);
+
+		stringField.initializeField("I am unchanged");
+		selectField.initializeField(list("B", "C"));
+
+		assertFalse("A form field should not be marked as changed after its initialization", stringField.isChanged());
+		assertFalse("A form field should not be marked as changed after its initialization", selectField.isChanged());
 	}
 
 	public void testCorrectRawValue() {

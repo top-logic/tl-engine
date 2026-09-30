@@ -18,6 +18,9 @@
 		<param name="applyCommand"
 			value="storeAttributes"
 		/>
+		<param name="editCommand"
+			value="switchToAJAXEdit"
+		/>
 		<param name="master"
 			value=""
 		/>
@@ -36,8 +39,8 @@
 		<param name="editDialogs">
 			<!-- Empty by default. -->
 		</param>
-		<param name="securityProvider"
-			value="default"
+		<param name="securityObject"
+			value="model"
 		/>
 		<param name="modifier"
 			optional="true"
@@ -61,16 +64,18 @@
 			<!-- component to edit structured elements -->
 			<component class="${componentClass}"
 				applyCommand="${applyCommand}"
+				buttonbar="true"
 				commandGroups="${editCommandGroups}"
 				defaultFor="${defaultFor}"
 				deleteCommand="${deleteCommand}"
+				editCommand="${editCommand}"
 				metaElementName="${metaElementName}"
 				model="${model}"
 				modifier="${modifier}"
 				name="${namePrefix}Edit"
 				page="${page}"
 				resPrefix="${resPrefix}"
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 				title="${title}"
 				toolbar="${toolbar}"
 			>
@@ -78,7 +83,6 @@
 				${subConfiguration}
 			</component>
 			<!-- buttons -->
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

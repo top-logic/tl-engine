@@ -9,7 +9,12 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.dob.identifier.ObjectKey;
 
 /**
- * Object which is uniquely identified by some {@link ObjectKey}.
+ * Object which is uniquely identified by an {@link ObjectKey}.
+ * 
+ * <p>
+ * {@link IdentifiedObject} is a common super-interface for persistent objects and their storage
+ * items in the persistency layer.
+ * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

@@ -8,9 +8,11 @@ package com.top_logic.element.layout.grid;
 import static com.top_logic.element.layout.grid.GridComponent.*;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.layout.basic.contextmenu.component.factory.SelectableContextMenuFactory;
+import com.top_logic.layout.table.tree.TreeTableContextMenuFactory;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -18,8 +20,10 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class GridContextMenuFactory<C extends GridContextMenuFactory.Config<?>>
-		extends SelectableContextMenuFactory<C> {
+@Label("Grid context menu commands")
+@InApp(classifiers = "grid")
+public class GridContextMenuFactory<C extends TreeTableContextMenuFactory.Config<?>>
+		extends TreeTableContextMenuFactory<C> {
 
 	/**
 	 * Creates a {@link GridContextMenuFactory} from configuration.
@@ -35,28 +39,9 @@ public class GridContextMenuFactory<C extends GridContextMenuFactory.Config<?>>
 	}
 
 	@Override
-	public ContextMenuProvider createContextMenuProvider(LayoutComponent component) {
-		return new Provider(component);
-	}
-
-	/**
-	 * {@link ContextMenuProvider} created by {@link GridContextMenuFactory}.
-	 */
-	protected class Provider extends SelectableContextMenuFactory<C>.Provider {
-
-		/**
-		 * Creates a {@link Provider}.
-		 */
-		public Provider(LayoutComponent component) {
-			super(component);
-		}
-
-		@Override
-		protected Object mapContextObject(Object obj) {
-			GridComponent grid = (GridComponent) getComponent();
-			return getRowObject(grid.getHandler().getGridRow(obj));
-		}
-
+	protected Object mapContextObject(LayoutComponent component, Object obj) {
+		GridComponent grid = (GridComponent) component;
+		return getRowObject(grid.getHandler().getGridRow(obj));
 	}
 
 }

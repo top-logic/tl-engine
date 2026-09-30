@@ -38,7 +38,7 @@ import com.top_logic.client.diagramjs.event.GeneralEventNames;
  * <li>{@link CommandExecutionPhase#REVERTED}</li>
  * </ul>
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CommandStack extends JavaScriptObject {
 

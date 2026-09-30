@@ -6,6 +6,7 @@
 package com.top_logic.element.structured.wrap;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,7 +33,7 @@ import com.top_logic.tool.boundsec.BoundObject;
  * caching of parent and children can be deactivated by changing the constant
  * {@link WrapperTLElement#USE_CACHE}. 
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class StructuredElementWrapper extends WrapperTLElement {
 
@@ -60,11 +61,11 @@ public abstract class StructuredElementWrapper extends WrapperTLElement {
     /**
      * Do NOT inherit roles from security parents.
      * 
-     * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParent()
+     * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParents()
      */
     @Override
-	public BoundObject getSecurityParent() {
-        return null;
+	public Collection<? extends BoundObject> getSecurityParents() {
+		return Collections.emptyList();
     }
 
     /**
@@ -72,9 +73,9 @@ public abstract class StructuredElementWrapper extends WrapperTLElement {
      *
      * @return    The factory for wrapper elements. 
      */
-	protected StructuredElementWrapperFactory getFactory() {
+	protected StructuredElementWrapperFactory tGetFactory() {
 		return (StructuredElementWrapperFactory) DynamicModelService.getFactoryFor(getStructureName());
-    }
+	}
 
     /**
      * @param    aVisitor    The visitor to be used for visiting.

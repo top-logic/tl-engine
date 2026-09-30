@@ -118,6 +118,28 @@ public abstract class ScheduleTestsCommon extends TestCase {
 	}
 
 	/**
+	 * Move the {@link Calendar} forward by one month.
+	 * <p>
+	 * Returns the given {@link Calendar} for easier method chaining.
+	 * </p>
+	 */
+	protected Calendar nextMonth(Calendar calendar) {
+		calendar.add(Calendar.MONTH, 1);
+		return calendar;
+	}
+
+	/**
+	 * Move the {@link Calendar} backward by one month.
+	 * <p>
+	 * Returns the given {@link Calendar} for easier method chaining.
+	 * </p>
+	 */
+	protected Calendar previousMonth(Calendar calendar) {
+		calendar.add(Calendar.MONTH, -1);
+		return calendar;
+	}
+
+	/**
 	 * Move the {@link Calendar} forward by one day.
 	 * <p>
 	 * Returns the given {@link Calendar} for easier method chaining.
@@ -156,7 +178,17 @@ public abstract class ScheduleTestsCommon extends TestCase {
 	 * </p>
 	 */
 	protected Calendar calendar(int hour, int minute, int second) {
-		return calendar(2000, Calendar.JANUARY, 1, hour, minute, second);
+		return calendar(1, hour, minute, second);
+	}
+
+	/**
+	 * Creates a {@link Calendar} with the date set to &lt;day&gt;.1.2000.
+	 * <p>
+	 * The millisecond part of the time is set to 0.
+	 * </p>
+	 */
+	protected Calendar calendar(int day, int hour, int minute, int second) {
+		return calendar(2000, Calendar.JANUARY, day, hour, minute, second);
 	}
 
 	/**

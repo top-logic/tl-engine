@@ -27,7 +27,7 @@ import com.top_logic.importer.base.ObjectProvider.SimpleObjectProvider;
 import com.top_logic.importer.logger.ImportLogger;
 import com.top_logic.importer.logger.PlainMessageLogger;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.tool.boundsec.assistent.EVAAssistantController.ProcessFileHandler;
@@ -38,14 +38,14 @@ import com.top_logic.util.Utils;
  * 
  * <p>This class normally uses the data provided by an {@link AbstractImportParser}.</p>
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractImportPerformer<C extends AbstractImportPerformer.Config> implements ProcessFileHandler, ConfiguredInstance<AbstractImportPerformer.Config> {
 
 	/**
 	 * Configuration for a AbstractImportPerformer.
 	 * 
-	 * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     public interface Config extends PolymorphicConfiguration<AbstractImportPerformer<?>> {
 
@@ -172,7 +172,7 @@ public abstract class AbstractImportPerformer<C extends AbstractImportPerformer.
 
         	this.addInfoMessage(I18NConstants.START_IMPORT);
 
-            Transaction theTX = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+			Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.IMPORT_COMMIT);
 
             try {
                 ImportResult theResult = this.doImport(theValues, theTX);
@@ -275,7 +275,7 @@ public abstract class AbstractImportPerformer<C extends AbstractImportPerformer.
     protected Transaction intermediateCommit(Transaction aTX) throws KnowledgeBaseException {
         aTX.commit();
 
-        return KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+        return PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
     }
 
     /**
@@ -351,7 +351,7 @@ public abstract class AbstractImportPerformer<C extends AbstractImportPerformer.
     /**
      * Object performed by the {@link AbstractImportPerformer}. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class ImportResult {
 

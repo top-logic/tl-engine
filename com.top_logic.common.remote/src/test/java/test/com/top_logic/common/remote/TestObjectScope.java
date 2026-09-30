@@ -6,9 +6,11 @@
 package test.com.top_logic.common.remote;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
-import com.top_logic.basic.shared.collection.CollectionUtilShared;
+import com.top_logic.basic.shared.collection.CyclicDependencyException;
 import com.top_logic.common.remote.factory.ReflectionFactory;
 import com.top_logic.common.remote.shared.CustomDataMapping;
 import com.top_logic.common.remote.shared.CustomObjectData;
@@ -106,18 +108,18 @@ public class TestObjectScope extends AbstractObjectScopeTest {
 			transport(src, dest);
 
 			fail("Expected failure.");
-		} catch (IllegalArgumentException exception) {
-			assertCyclicErrorMessage(exception.getMessage());
+		} catch (CyclicDependencyException exception) {
+			assertCyclicErrorMessage(Arrays.asList("1", "2", "1"), exception);
 		}
 	}
 
-	private void assertCyclicErrorMessage(String message) {
+	private void assertCyclicErrorMessage(List<?> expectedCycle, CyclicDependencyException problem) {
 		HashSet<String> dependencyIds = new HashSet<>();
 
 		dependencyIds.add("1");
 		dependencyIds.add("2");
 
-		assertEquals(CollectionUtilShared.CYCLIC_DEPENDENCIES_MESSAGE + dependencyIds, message);
+		assertEquals(expectedCycle, problem.getCycle());
 	}
 
 	public void testSync() throws IOException {

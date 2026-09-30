@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Interface for a container representation in the repository implementation.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface ContainerObject {
 

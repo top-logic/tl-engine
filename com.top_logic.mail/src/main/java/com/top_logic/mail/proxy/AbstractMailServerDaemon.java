@@ -10,20 +10,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.mail.Address;
-import javax.mail.Flags;
-import javax.mail.Flags.Flag;
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.MessageRemovedException;
-import javax.mail.MessagingException;
-import javax.mail.Store;
-import javax.mail.event.ConnectionEvent;
-import javax.mail.event.ConnectionListener;
-import javax.mail.event.MessageCountAdapter;
-import javax.mail.event.MessageCountEvent;
-import javax.mail.event.MessageCountListener;
-import javax.mail.internet.InternetAddress;
+import jakarta.mail.Address;
+import jakarta.mail.Flags;
+import jakarta.mail.Flags.Flag;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.MessageRemovedException;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Store;
+import jakarta.mail.event.ConnectionEvent;
+import jakarta.mail.event.ConnectionListener;
+import jakarta.mail.event.MessageCountAdapter;
+import jakarta.mail.event.MessageCountEvent;
+import jakarta.mail.event.MessageCountListener;
+import jakarta.mail.internet.InternetAddress;
 
 import com.top_logic.base.context.TLInteractionContext;
 import com.top_logic.base.mail.MailSenderService;
@@ -40,7 +40,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.util.TokenBasedTask;
 import com.top_logic.mail.base.MailFolder;
@@ -60,14 +60,14 @@ import com.top_logic.util.Utils;
  * {@link MailServerMessage}s and calls back AbstractMailServerDaemon#processMail(MailMessage)
  * resp.AbstractMailServerDaemon#processMeeting(ExchangeMeeting) to handle these mails.
  *
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemon.Config<?>> extends TokenBasedTask<C> {
 	
 	/**
 	 * Configuration for the mail server daemon.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config<I extends AbstractMailServerDaemon<?>> extends TokenBasedTask.Config<I> {
 
@@ -117,7 +117,7 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
      * Strategy for mails that cannot by identified or mails that triggered an
      * exception during the standard processing.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public enum UnknownMailStrategy implements ExternallyNamed {
 		/** Delete the mail. */
@@ -539,9 +539,9 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 		if (!folder.isOpen()) {
 			return true;
 		}
-		/* Check that store is still connected. com.sun.mail.imap.IMAPStore uses this method to
-		 * verify that the server does not have terminated the connection. After call of this method
-		 * and the result is false, the folder is not longer usable. */
+		/* Check that store is still connected. IMAPStore uses this method to verify that the server
+		 * does not have terminated the connection. After call of this method and the result is
+		 * false, the folder is not longer usable. */
 		Store store = folder.getStore();
 		if (!store.isConnected()) {
 			return true;
@@ -748,7 +748,7 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
     /**
      * Performing class for new mails arrived on the mail server.
      *
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public class MailDaemonCountListener extends MessageCountAdapter implements ConnectionListener {
 
@@ -760,8 +760,8 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 			int theMailFail = 0;
 			int theMeetFail = 0;
 
-            KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
-			try (Transaction theTX = theKB.beginTransaction()) {
+            KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
+			try (Transaction theTX = theKB.beginTransaction(com.top_logic.mail.base.I18NConstants.RECEIVED_MESSAGES)) {
 				for (MailServerMessage theMessage : MailReceiverService.getMailReceiverInstance()
 					.convertMessages(anEvent.getMessages())) {
 					// All processed messages are from the same folder. get it once, to expunge it

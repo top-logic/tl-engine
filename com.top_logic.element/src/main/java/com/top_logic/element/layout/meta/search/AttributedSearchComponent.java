@@ -94,7 +94,7 @@ import com.top_logic.util.error.TopLogicException;
  * This component provides mechanism to search in a defined set of attributed objects, which will be
  * provided by the {@link AttributedSearchComponent.Config#getModelBuilder()}.
  *
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class AttributedSearchComponent extends FormComponent {
 
@@ -491,6 +491,8 @@ public class AttributedSearchComponent extends FormComponent {
     public FormContext createFormContext(StoredQuery aQuery, boolean skipAttributes) {
 		initResultColumns();
         AttributeFormContext theContext = new AttributeFormContext(this.getResPrefix());
+		FormComponent.initFormContext(this, this, theContext);
+
         List theValues  = this.addAttributesFromMetaElement(theContext, this.getSearchMetaElement(), aQuery);
         this.addMoreConstraints(theContext, aQuery, theValues);
 
@@ -1122,7 +1124,7 @@ public class AttributedSearchComponent extends FormComponent {
     }
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return ColumnsChannel.COLUMNS_MODEL_AND_SELECTION_CHANNEL;
 	}
 

@@ -92,6 +92,30 @@ public class IdentifierUtil {
 	}
 
 	/**
+	 * Stores an identifier into an updatable {@link ResultSet} column.
+	 * 
+	 * @param resultSet
+	 *        See {@link ResultSet#updateObject(int, Object)}.
+	 * @param index
+	 *        See {@link ResultSet#updateObject(int, Object)}.
+	 * @param id
+	 *        The identifier to store.
+	 * @throws SQLException
+	 *         See {@link ResultSet#updateObject(int, Object)}.
+	 */
+	public static void setId(ResultSet resultSet, int index, TLID id) throws SQLException {
+		if (id == null) {
+			resultSet.updateNull(index);
+		} else {
+			if (IdentifierUtil.SHORT_IDS) {
+				resultSet.updateLong(index, ((LongID) id).longValue());
+			} else {
+				resultSet.updateString(index, ((StringID) id).stringValue());
+			}
+		}
+	}
+
+	/**
 	 * Retrieves an identifier from a {@link ResultSet}.
 	 * 
 	 * @param result

@@ -15,6 +15,8 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import jakarta.servlet.http.Part;
+
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.io.StreamUtilities;
@@ -30,6 +32,30 @@ public class BinaryDataFactory {
 
 	/** Maximum size of data allowed */
 	public static final int MAX_MEMORY_SIZE = 4096;
+
+	/**
+	 * Creates a {@link BinaryData} from an Base64 encoded string with content-type
+	 * {@link BinaryData#CONTENT_TYPE_OCTET_STREAM} and no name.
+	 */
+	public static BinaryData decodeBase64(String base64) {
+		return decodeBase64(base64, BinaryData.CONTENT_TYPE_OCTET_STREAM);
+	}
+
+	/**
+	 * Creates a {@link BinaryData} from an Base64 encoded string with the given content-type and no
+	 * name.
+	 */
+	public static BinaryData decodeBase64(String base64, String contentType) {
+		return decodeBase64(base64, contentType, BinaryData.NO_NAME);
+	}
+
+	/**
+	 * Creates a {@link BinaryData} from an Base64 encoded string with the given content-type and
+	 * name.
+	 */
+	public static BinaryData decodeBase64(String base64, String contentType, String name) {
+		return new Base64BinaryData(name, base64, contentType);
+	}
 
 	/**
 	 * Creates a {@link BinaryData} from byte array contents with content-type
@@ -371,6 +397,32 @@ public class BinaryDataFactory {
 				return MimeTypesModule.getInstance().getMimeType(filename);
 			}
 		};
+	}
+
+	/**
+	 * Wraps upload data as a {@link BinaryData}.
+	 *
+	 * <p>
+	 * The content of the given part is read exactly once, since the servlet API does not guarantee
+	 * that a {@link Part} can be read more than once. A {@link BinaryDataPart} already serves its
+	 * content from a {@link BinaryData} and delivers it directly.
+	 * </p>
+	 */
+	public static BinaryData createUploadData(Part part) throws IOException {
+		if (part instanceof BinaryDataPart uploadPart) {
+			return uploadPart.getData();
+		}
+
+		File tempDir = Settings.getInstance().getTempDir();
+		File tempFile = File.createTempFile("upload", ".data", tempDir);
+		part.write(tempFile.getAbsolutePath());
+
+		String submittedFileName = part.getSubmittedFileName();
+		String name = submittedFileName != null ? submittedFileName : part.getName();
+	
+		String contentType = AbstractBinaryData.nonNullContentType(part.getContentType());
+	
+		return createBinaryData(tempFile, contentType, name);
 	}
 
 }

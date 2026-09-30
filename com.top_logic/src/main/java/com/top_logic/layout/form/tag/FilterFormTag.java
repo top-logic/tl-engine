@@ -7,7 +7,7 @@ package com.top_logic.layout.form.tag;
 
 import java.io.IOException;
 
-import javax.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspException;
 
 import com.top_logic.base.services.simpleajax.NothingCommand;
 import com.top_logic.basic.CalledFromJSP;
@@ -30,7 +30,7 @@ import com.top_logic.util.Resources;
 /**
  * Form tag for filter components which have a defined refresh command.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class FilterFormTag extends FormTag {
 

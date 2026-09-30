@@ -45,7 +45,15 @@ public class TagTemplate implements Tag {
 		if (_start.isEmpty()) {
 			out.endEmptyTag();
 		} else {
-			_content.write(context, out, properties);
+			int depth = out.getDepth();
+			try {
+				_content.write(context, out, properties);
+			} catch (Throwable exception) {
+				// Element content is expected, therefore the safe-point can be restored
+				// unconditionally.
+				out.endAll(depth);
+				HTMLTemplateUtils.renderError(context, out, exception);
+			}
 			out.endTag(_start.getName());
 		}
 	}

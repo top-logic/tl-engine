@@ -76,6 +76,16 @@ public interface TLStructuredTypePart extends DerivedTLTypePart, TLStructuredTyp
 	void setOrdered(boolean value);
 
 	/**
+	 * Whether this part is abstract, i.e. it must be redeclared in concrete classes.
+	 */
+	boolean isAbstract();
+
+	/**
+	 * Sets the {@link #isAbstract()} property.
+	 */
+	void setAbstract(boolean value);
+
+	/**
 	 * Returns an {@link AccessChecker} for this type part.
 	 * 
 	 * <p>
@@ -107,6 +117,16 @@ public interface TLStructuredTypePart extends DerivedTLTypePart, TLStructuredTyp
 	 * Encapsulation of operational semantics of this attribute.
 	 */
 	StorageDetail getStorageImplementation();
+
+	@Override
+	default boolean isDerived() {
+		StorageDetail storage = getStorageImplementation();
+		if (storage == null) {
+			/* Happens during tests in "com.top_logic". */
+			return false;
+		}
+		return storage.isReadOnly();
+	}
 
 	@Override
 	default <T extends TLAnnotation> T getAnnotation(Class<T> annotationInterface) {

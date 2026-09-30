@@ -22,7 +22,7 @@ import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 /**
  * Control to render an icon for an url.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class GotoLinkControl extends AbstractConstantControl implements ValueListener {
 
@@ -70,10 +70,11 @@ public class GotoLinkControl extends AbstractConstantControl implements ValueLis
 
 	@Override
 	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
+		out.beginBeginTag(SPAN);
+		writeControlAttributes(context, out);
+		out.endBeginTag();
 		if (hasLink()) {
-			out.beginTag(SPAN);
 			out.beginBeginTag(ANCHOR);
-			writeControlAttributes(context, out);
 			out.writeAttribute(HREF_ATTR, (String) _field.getValue());
 			out.writeAttribute(TARGET_ATTR, HTMLConstants.BLANK_VALUE);
 			out.endBeginTag();
@@ -81,8 +82,8 @@ public class GotoLinkControl extends AbstractConstantControl implements ValueLis
 			_icon.writeWithTooltip(context, out, createUrlText());
 
 			out.endTag(ANCHOR);
-			out.endTag(SPAN);
 		}
+		out.endTag(SPAN);
 	}
 
 	private boolean hasLink() {

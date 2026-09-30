@@ -204,8 +204,8 @@ public abstract class ModelEventAdapter implements ModelEventListener, ModelList
 	 * @param changedBy
 	 *        See {@link #handleModelEvent(Object, Object, int)}.
 	 */
-	protected boolean receiveDialogOpenedEvent(Object model, Object changedBy) {
-		return false;
+	protected void receiveDialogOpenedEvent(Object model, Object changedBy) {
+		// Nothing to do here
 	}
 
 	/**
@@ -216,8 +216,8 @@ public abstract class ModelEventAdapter implements ModelEventListener, ModelList
 	 * @param changedBy
 	 *        See {@link #handleModelEvent(Object, Object, int)}.
 	 */
-	protected boolean receiveDialogClosedEvent(Object model, Object changedBy) {
-		return false;
+	protected void receiveDialogClosedEvent(Object model, Object changedBy) {
+		// Nothing to do here
 	}
 
 	@Override

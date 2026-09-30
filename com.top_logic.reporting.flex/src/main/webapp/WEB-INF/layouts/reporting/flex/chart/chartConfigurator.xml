@@ -7,9 +7,6 @@
 		<param name="class"
 			value="com.top_logic.reporting.flex.chart.component.ChartConfigComponent"
 		/>
-		<param name="buttonComponent"
-			value=""
-		/>
 		<param name="isSecurityMaster"
 			value="false"
 		/>
@@ -22,7 +19,7 @@
 		<param name="options">
 			<!-- No options. -->
 		</param>
-		<param name="securityProviderClass"
+		<param name="securityObject"
 			value="securityRoot"
 		/>
 		<param name="toolbar"
@@ -44,14 +41,13 @@
 
 	<component class="${class}"
 		base-config-file="${base-config-file}"
-		buttonComponent="${buttonComponent}"
 		isSecurityMaster="${isSecurityMaster}"
 		maximizeRoot="${maximizeRoot}"
 		model="${model}"
 		name="${componentName}"
 		page="/jsp/reporting/flex/chart/chartConfigBuilder.jsp"
 		resPrefix="${resPrefix}"
-		securityProviderClass="${securityProviderClass}"
+		securityObject="${securityObject}"
 		toolbar="${toolbar}"
 	>
 		<toolbar-groups>

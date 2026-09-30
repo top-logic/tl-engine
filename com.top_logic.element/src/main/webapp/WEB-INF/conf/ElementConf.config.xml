@@ -23,6 +23,10 @@
 			</instance>
 		</config>
 		
+		<config service-class="com.top_logic.model.cache.TLModelCacheService">
+			<instance class="com.top_logic.element.model.cache.ElementModelCacheService"/>
+		</config>
+		
 		<config service-class="com.top_logic.layout.scripting.recorder.ref.ValueNamingSchemeRegistry">
 			<instance class="com.top_logic.layout.scripting.recorder.ref.ValueNamingSchemeRegistry">
 				<schemes>
@@ -65,6 +69,14 @@
 					<provider kind="CODE" type="com.top_logic.element.structured.StructuredElement" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.element.layout.meta.MetaElementTreeModelBuilder$ModuleContainer" implementation="com.top_logic.element.layout.meta.ModuleContainerResourceProvider" />
                 </resource-providers>
+				<excel-renderers>
+					<!-- Note: Excel renderers must be configured with model type, since only this type is known for a column during generic table configuration. -->
+		            <excel-renderer kind="MODEL" type="tl.accounts:Person">
+		            	<implementation class="com.top_logic.tool.export.MappingExcelCellRenderer" 
+		            		excel-mapping="com.top_logic.knowledge.gui.layout.person.PersonExcelMapping"
+		            	/>
+		            </excel-renderer>
+				</excel-renderers>
             </instance>
         </config>
 
@@ -169,8 +181,6 @@
 		<config service-class="com.top_logic.tool.boundsec.SecurityObjectProviderManager">
 			<instance>
 				<providers>
-					<provider name="rootForCreate" impl="com.top_logic.element.boundsec.RootForCreateSecurityObjectProvider" />
-					<provider name="securityStrRoot" impl="com.top_logic.element.boundsec.SecurityStructureRootSecurityObjectProvider" />
 		            <provider name="searchSecurityObjectProvider">
 		             	<impl class="com.top_logic.tool.boundsec.DispatchingSecurityObjectProvider"
 		             		default="model"
@@ -198,10 +208,11 @@
 					<bundle name="model.Tag.messages" />
 					<bundle name="model.tl.element.messages" />
 					<bundle name="model.SecurityStructure.messages" />
+					<bundle name="model.tl.changelog.messages"/>
 				</bundles>
 			</instance>
 		</config>
-
+		
 		<config service-class="com.top_logic.tool.boundsec.BoundHelper">
 			<instance class="com.top_logic.element.boundsec.ElementBoundHelper" />
 		</config>
@@ -258,6 +269,20 @@
 				<attribute-settings>
 					<attribute-setting config-name="STRING">
 						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.StringFieldProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.basic.config.StringValueProvider"
+							/>
+						</export-binding>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.StringTagProvider"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="NAME" legacy-type-code="1">
+						<field-provider>
+							<impl class="com.top_logic.element.meta.form.fieldprovider.StringFieldProvider"
+								trim="true"
+							/>
+						</field-provider>
 						<export-binding>
 							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
 								format="com.top_logic.basic.config.StringValueProvider"
@@ -377,6 +402,22 @@
 						<annotation config:interface="com.top_logic.model.annotate.ui.TLCssClass" value="num"/>
 					</attribute-setting>
 
+					<attribute-setting config-name="DURATION" legacy-type-code="4">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.DurationFieldProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.basic.config.format.LongWrapperFormat"
+							/>
+						</export-binding>
+						<tag-provider>
+							<impl class="com.top_logic.element.meta.form.tag.StringTagProvider" 
+								columns="20"
+							/>
+						</tag-provider>
+						<annotation config:interface="com.top_logic.model.annotate.ui.TLCssClass" value="num"/>
+						<format definition="com.top_logic.layout.form.format.DurationFormat$Factory"/>
+					</attribute-setting>
+
 					<attribute-setting config-name="FLOAT">
 						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.FloatFieldProvider"/>
 						<export-binding>
@@ -431,6 +472,15 @@
 					</attribute-setting>
 
 					<attribute-setting
+						config-name="FORM_DEFINITION"
+						legacy-type-code="1"
+					>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.FormDefinitionFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
+						<export-binding impl="com.top_logic.model.io.bindings.ConfigurationAttributeValueBinding"/>
+					</attribute-setting>
+
+					<attribute-setting
 						config-name="ENUM"
 						legacy-type-code="1"
 					>
@@ -445,7 +495,7 @@
 
 					<attribute-setting
 						config-name="COLOR"
-						legacy-type-code="1"
+						legacy-type-code="17"
 					>
 						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.ColorFieldProvider"/>
 						<tag-provider impl="com.top_logic.element.meta.form.tag.ColorTagProvider"/>
@@ -551,6 +601,7 @@
 					</attribute-setting>
 
 					<attribute-setting config-name="GALLERY">
+						<label-position value="above-value"/>
 						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.GalleryFieldProvider"/>
 						<search-relevant value="false"/>
 						<fulltext-relevant value="false"/>
@@ -577,6 +628,7 @@
 						config-name="WEBFOLDER"
 						legacy-type-code="17"
 					>
+						<label-position value="hide-label"/>
 						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.FolderFieldProvider"/>
 						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
 						<search-relevant value="false"/>
@@ -762,6 +814,7 @@
 					<declaration file="/WEB-INF/model/SecurityStructure.model.xml"/>
 					<declaration file="/WEB-INF/model/Tag.model.xml"/>
 					<declaration file="/WEB-INF/model/tl.comments.model.xml"/>
+					<declaration file="/WEB-INF/model/tl.changelog.model.xml"/>
 				</declarations>
 				<settings>
 					<module name="tl.element" />
@@ -810,7 +863,9 @@
 			
 				<handlers>
 					<handler id="deleteTLModelPart" class="com.top_logic.element.layout.meta.TLModelPartDeleteHandler" 
-						clique="delete" resourceKey="tl.command.delete" group="Delete" confirm="true" />
+						clique="delete" resourceKey="tl.command.delete" group="Delete" 
+						confirmation="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"
+					/>
 					<handler id="createAttributed" class="com.top_logic.element.meta.gui.DefaultCreateAttributedCommandHandler"
 						clique="create"/>
 		            <handler id="createElement" class="com.top_logic.element.layout.structured.CreateAttributedStructuredElementComponent$CreateAttributedStructuredElementCommandHandler"
@@ -851,10 +906,6 @@
 							<reference rule-id="InEditMode"/>
 						</executability>
 					</handler>
-		            <handler id="savePersonOrGroupRoles" class="com.top_logic.element.layout.person.SaveRolesHandler"
-						clique="save" group="System"/>
-		            <handler id="applyPersonOrGroupRoles" class="com.top_logic.element.layout.person.ApplyRolesHandler"
-						clique="apply" group="System"/>
 		            <handler id="newMandator" class="com.top_logic.element.layout.structured.MandatorAdminComponent$NewMandatorCommandHandler"
 						clique="create"/>
 		            <handler id="touchMetaAttribute" class="com.top_logic.element.meta.form.component.TouchMetaAttributeCommandHandler"/>
@@ -888,10 +939,6 @@
 		
 		            <handler id="ElementSwitchEditCommand" class="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
 						clique="edit"/>
-		
-		            <handler id="securityExport" class="com.top_logic.element.layout.security.handler.SecurityExportHandler"
-						clique="exportButtons"
-						image="theme:ICONS_BUTTON_XML_EXPORT" disabledImage="theme:ICONS_BUTTON_XML_EXPORT_DISABLED"/>
 		
 		            <handler id="addSelectedToClipboard" class="com.top_logic.element.layout.grid.GridComponent$AddSelectedToClipboard"
 						clique="clipboard"
@@ -945,18 +992,6 @@
 						clique="create"/>
 					<handler id="editComment" class="com.top_logic.element.comment.layout.CommentDialogComponent$EditCommentHandler"
 						clique="edit"/>
-					<handler id="treeGridExpandAll" class="com.top_logic.element.layout.grid.TreeGridExpandCollapseAll"
-						clique="expand"
-						disabledImage="theme:ICONS_EXPAND_ALL_DISABLED" 
-						expand="true"
-						image="theme:ICONS_EXPAND_ALL"
-					/>
-					<handler id="treeGridCollapseAll" class="com.top_logic.element.layout.grid.TreeGridExpandCollapseAll"
-						clique="expand"
-						disabledImage="theme:ICONS_COLLAPSE_ALL_DISABLED"
-						expand="false"
-						image="theme:ICONS_COLLAPSE_ALL"
-					/>
 					<handler id="configureCreateFormDefinitionCommand" class="com.top_logic.element.layout.formeditor.ConfigureCreateFormDefinitionCommand"
 						image="theme:com.top_logic.layout.Icons.CONFIGURE_FORM_DEFINITION_COMMAND"
 						disabledImage="theme:com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand.disabledImage"
@@ -981,7 +1016,7 @@
 						image="theme:com.top_logic.layout.Icons.DELETE_FORM_DEFINITION_COMMAND"
 						disabledImage="theme:com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand.disabledImage"
 						clique="layout-editor-reset"
-						confirm="true"
+						confirmation="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"
 						group="System"
 						resourceKey="tl.command.deleteFormDefinitionCommand"
 		            >
@@ -994,7 +1029,7 @@
 						image="theme:com.top_logic.layout.Icons.DELETE_FORM_DEFINITION_COMMAND"
 						disabledImage="theme:com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand.disabledImage"
 						clique="layout-editor-reset"
-						confirm="true"
+						confirmation="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"
 						group="System"
 						resourceKey="tl.command.deleteFormDefinitionCommand"
 		            >
@@ -1020,6 +1055,8 @@
 					<scheme class="com.top_logic.element.layout.scripting.MetaAttributeNaming"/>
 					<scheme class="com.top_logic.element.layout.scripting.StructuredElementNaming"/>
 					<scheme class="com.top_logic.element.layout.scripting.CommentNamingScheme"/>
+					<scheme class="com.top_logic.element.layout.scripting.GridNewObjectNaming"/>
+					<scheme class="com.top_logic.element.layout.scripting.SearchResultNamingScheme"/>
 					<!-- Position the TLObjectByLabelNaming at the beginning
 					     to reduce its priority below that of the IndexedObjectNaming. -->
 					<scheme class="com.top_logic.element.layout.scripting.TLObjectByLabelNaming"
@@ -1027,6 +1064,7 @@
 						config:position="begin"/>
 
 					<scheme class="com.top_logic.element.layout.grid.GridBusinessObjectNaming" priority="resolve-only"/>
+					<scheme class="com.top_logic.element.meta.form.fieldprovider.CompositionFieldProvider$OpenDetailsCommand$Naming"/>
 				</schemes>
 			</instance>
 		</config>
@@ -1075,13 +1113,6 @@
 			<show-table-dialog>true</show-table-dialog>
 		</config>
 
-		<config config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$GlobalConfig">
-			<types>
-				<type name="tl.legacy.tabletypes:TagTable" attributes="name"/>
-				<type name="tl.legacy.tabletypes:StoredQueryTable" attributes="name"/>
-			</types>
-		</config>
-
 		<config config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.FieldAnalyzers">
 			<analyzers>
 				<!-- Use label matcher first. -->
@@ -1111,6 +1142,9 @@
 			<property name="discardCommand" value="gridDiscard"/>
 			<property name="cancelCommand" value="gridCancelEdit"/>
 			<property name="deleteCommand" value="dispatchingDelete"/>
+		</config>
+		<config interface="com.top_logic.knowledge.service.KnowledgeBaseConfiguration">
+			<property name="context-factory" value="com.top_logic.element.knowledge.ElementContextFactory"/>
 		</config>
 	</defaults>
 

@@ -22,7 +22,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class ChangeSetNaming extends AbstractModelNamingScheme<ChangeSet, ChangeSetNaming.Name> {
+public class ChangeSetNaming extends AbstractGlobalModelNamingScheme<ChangeSet, ChangeSetNaming.Name> {
 
 	/**
 	 * Name for a {@link ChangeSet}.

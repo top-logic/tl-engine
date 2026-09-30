@@ -34,6 +34,16 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey PROGRESS_TITLE;
 
+	/**
+	 * @en File selection
+	 */
+	public static ResKey UPLOAD_FIELD_LABEL;
+
+	/**
+	 * @en Performing import post-processing actions.
+	 */
+	public static ResKey POST_PROCESSING;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

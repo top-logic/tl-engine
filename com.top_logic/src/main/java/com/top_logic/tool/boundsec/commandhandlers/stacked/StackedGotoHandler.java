@@ -26,7 +26,6 @@ import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.DialogComponent;
 import com.top_logic.mig.html.layout.DialogSupport;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.mig.html.layout.LayoutContainer;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 import com.top_logic.util.TLContext;
@@ -37,7 +36,7 @@ import com.top_logic.util.error.TopLogicException;
  * Override the default GotoHandler to cooperate with the {@link StackHandler}.
  * 
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class StackedGotoHandler extends GotoHandler {
 
@@ -85,24 +84,29 @@ public class StackedGotoHandler extends GotoHandler {
 
 	@Override
 	public LayoutComponent gotoLayout(LayoutComponent contextComponent, Object targetObject, ComponentName targetComponentName) {
-		if (contextComponent instanceof LayoutContainer) {
-			/* No useful goto back to a LayoutContainer possible. Therefore no recording. Such can
-			 * e.g. occur by executing a "stable bookmark". In such case the context component is
-			 * the MainLayout. */
+		if (contextComponent instanceof MainLayout) {
+			/* No useful goto back to the MainLayout possible. Therefore no recording. Such can e.g.
+			 * occur by executing a "stable bookmark". In such case the context component is the
+			 * MainLayout. */
 			clearStack(contextComponent);
 			return super.gotoLayout(contextComponent, targetObject, targetComponentName);
 		}
 
 		// Source and Target of the goto must be configured for a Stacked GOTO
 		if (!this._excludedLayouts.contains(contextComponent.getName())) {
-			Object startModel = getGotoModel(contextComponent);
-			LayoutComponent targetComponent = super.gotoLayout(contextComponent, targetObject, targetComponentName);
-			if (targetComponent != null && !this._excludedLayouts.contains(targetComponent.getName())) {
-				GotoArgument backArgs = newGotoArgument(contextComponent, startModel);
-				GotoArgument forwardArgs = newGotoArgument(targetComponent, targetObject);
-				registerGotoInStack(contextComponent.getMainLayout(), backArgs, forwardArgs);
+			LayoutComponent targetComponent;
+			if (contextComponent.openedAsDialog()) {
+				Object startModel = getGotoModel(contextComponent);
+				targetComponent = super.gotoLayout(contextComponent, targetObject, targetComponentName);
+				if (targetComponent != null && !this._excludedLayouts.contains(targetComponent.getName())) {
+					GotoArgument backArgs = newGotoArgument(contextComponent, startModel);
+					GotoArgument forwardArgs = newGotoArgument(targetComponent, targetObject);
+					registerGotoInStack(contextComponent.getMainLayout(), backArgs, forwardArgs);
+				} else {
+					clearStack(contextComponent);
+				}
 			} else {
-				clearStack(contextComponent);
+				targetComponent = super.gotoLayout(contextComponent, targetObject, targetComponentName);
 			}
 			return targetComponent;
 		} else {
@@ -404,7 +408,7 @@ public class StackedGotoHandler extends GotoHandler {
 	/**
 	 * Handle the stack of open dialogs.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class StackHandler {
 

@@ -1,0 +1,21 @@
+<p>Values of normal attributes are saved in the database and the value saved in the database is displayed on the user interface. The display on the interface can be restricted via the view configuration so that the value is either not displayed at all or cannot be edited.</p>
+
+<p>Attributes with a "fallback value" are a special form of attribute. An attribute with a fallback value can also provide a value if no explicit value has been set for the attribute. In this case, the attribute provides a fallback value that is taken from another attribute of the same object.</p>
+
+<p>Technically, an attribute with a fallback value consists of three attributes (the attribute with a fallback value, a storage attribute in which an explicitly entered value is stored and an attribute that supplies the fallback value). The storage attribute is usually hidden and is only used for internal storage of explicitly entered values. Specialist logic can access the storage attribute to check whether an explicit value has been entered or whether the attribute with replacement value uses its replacement value. When accessing the attribute with replacement value itself, it is not possible to determine whether it is an explicitly entered value or the replacement value. Accessing the attribute always returns a value, either the explicitly entered value or the fallback value if no value has been explicitly entered.</p>
+
+<p>In contrast to a default value, which can be set via an annotation for normal attributes, a fallback value is dynamic. If the value of the replacement attribute changes, the value of the attribute with the replacement value also changes automatically. A default value, on the other hand, is saved in the attribute for which it is configured when the object is created (if it is not entered by the user in a creation screen). A default value set in this way no longer changes, even if the default value annotation is changed.</p>
+
+<h2>Application example</h2>
+
+<p>A planned date and a forecast date are to be maintained in a milestone. As long as the plan and forecast do not differ, there is no need for the user to explicitly enter the forecast date. In this case, the forecast date is the same as the planned date. If the user changes the plan, the forecast automatically adapts to the new plan. It should only be possible to enter an explicit forecast date if the forecast deviates from the plan.</p>
+
+<p>This situation could be realized with an attribute with a fallback value (the planned date). The planned date attribute provides the replacement value here. Another (hidden) attribute for an explicitly set planned date is used to save explicitly assigned planned dates.</p>
+
+<h2>Configuration</h2>
+
+<p>An attribute with a replacement value is created via a special storage rule "Attribute with fallback". The storage and replacement value attribute must be configured in this storage rule. In addition, the color coding of explicitly entered values and replacement values can also be set in the storage rule.</p>
+
+<p> </p>
+
+<p> </p>

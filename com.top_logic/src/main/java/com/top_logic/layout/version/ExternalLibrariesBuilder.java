@@ -41,11 +41,6 @@ public class ExternalLibrariesBuilder implements ListModelBuilder {
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-		return listElement instanceof VersionInfo;
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent contextComponent, Object listElement) {
 		return null;
 	}

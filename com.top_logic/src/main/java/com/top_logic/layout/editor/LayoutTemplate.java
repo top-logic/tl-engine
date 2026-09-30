@@ -32,7 +32,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * template with the given arguments is used.
  * </p>
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 @TagName(LayoutTemplate.TAG_NAME)
 @DisplayOrder(value = { LayoutTemplate.TEMPLATE_ARGUMENTS })

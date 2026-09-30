@@ -15,14 +15,14 @@
 		<param name="sortKeyProvider"
 			value="com.top_logic.layout.LabelMapping"
 		/>
-		<param name="securityProviderClass"
+		<param name="securityObject"
 			value="securityRoot"
 		/>
 		<param name="isSecurityMaster"
 			value="true"
 		/>
 		<param name="builderClass"
-			value="com.top_logic.element.layout.role.ScopedRolesTableModelBuilder"
+			value="com.top_logic.tool.boundsec.gui.RolesTableModelBuilder"
 		/>
 		<param name="defaultSortOrder"
 			value="name"
@@ -31,12 +31,11 @@
 
 	<tableView name="${namePrefix}Table"
 		isSecurityMaster="${isSecurityMaster}"
-		model="selection(com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree)"
 		modelBuilder="${builderClass}"
 		objectType="tl.accounts:Role"
 		partnerGroup="RoleTableGroup"
 		resPrefix="admin.roles.checker.table."
-		securityProviderClass="${securityProviderClass}"
+		securityObject="${securityObject}"
 		selectable="true"
 	>
 		<table
@@ -59,5 +58,10 @@
 				/>
 			</columns>
 		</table>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+		</buttons>
 	</tableView>
 </template>

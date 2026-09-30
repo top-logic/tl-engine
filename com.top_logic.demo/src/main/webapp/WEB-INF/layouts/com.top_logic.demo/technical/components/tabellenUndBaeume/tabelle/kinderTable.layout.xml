@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic/table.template.xml"
 >
 	<arguments
@@ -24,13 +23,67 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="x -> $x[1].inRevision($x[0]).get(`tl.element:StructuredElementContainer#children`)"
 			modelForElement="element -> model -> $model"
-			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.All`)"
 			supportsModel="true"
 		/>
+		<configurationProviders>
+			<column-customizations>
+				<column name="name">
+					<column-width value="500px"/>
+					<column-label>
+						<value key="dynamic.e12fdba5-9113-452c-8ad6-b144baa88fb6">
+							<en>Name (en)</en>
+							<de>Name (de)</de>
+						</value>
+					</column-label>
+					<column-options
+						filter="false"
+						select="false"
+						show-in-sidebar-filter="false"
+						sort="false"
+					/>
+					<css-classes cssHeaderClass="tl-info">
+						<cell-class-by-expression>
+							<css-classes><![CDATA[value -> $value.length() < 3 ? "tl-info" : null]]></css-classes>
+						</cell-class-by-expression>
+					</css-classes>
+				</column>
+			</column-customizations>
+			<configurationProvider class="com.top_logic.model.search.providers.RowClassProviderByExpression">
+				<css-classes><![CDATA[row -> model -> $row.get(`DemoTypes:DemoTypes.All#name`)
+    .stringContains("4")
+    ? "tl-warning" 
+    : null]]></css-classes>
+			</configurationProvider>
+		</configurationProviders>
+		<selectionFilter class="com.top_logic.model.search.providers.ScriptedFilter">
+			<predicate>x -&gt; !$x.get(`DemoTypes:A#name`).stringEndsWith("-final")</predicate>
+		</selectionFilter>
 		<buttons>
 			<button id="exportExcel"
 				class="com.top_logic.layout.table.export.ExcelExportHandler"
-			/>
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
+			</button>
 		</buttons>
+		<contextMenu class="com.top_logic.layout.basic.contextmenu.component.factory.adapter.SelectableContextMenuProvider">
+			<contextMenuFactory>
+				<titleProvider class="com.top_logic.layout.provider.MetaLabelProvider"/>
+				<customCommands class="com.top_logic.layout.basic.contextmenu.config.CustomContextMenuCommands"
+					include-application-configuration="false"
+				>
+					<command id="ID_c5d2bc9a_2d3e_42dd_bf92_e3fedc7a6698"
+						class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+						group="System"
+						image="css:fa-solid fa-computer-mouse"
+					>
+						<resourceKey key="dynamic.732e3263-0214-4faa-a050-99ba25aaa46a">
+							<en>Click me!</en>
+							<de>Click me!</de>
+						</resourceKey>
+						<operation>model -&gt; info("Context menu selected: " + $model.label())</operation>
+					</command>
+				</customCommands>
+			</contextMenuFactory>
+		</contextMenu>
 	</arguments>
 </config:template-call>

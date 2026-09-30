@@ -19,6 +19,8 @@ import com.top_logic.basic.StringServices;
  * Eventually occurrences of ',' in the values are <b>not</b> escaped.
  * </p>
  * 
+ * @see CommaSeparatedListValueProvider
+ * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public abstract class CommaSeparatedSetValueProvider<T> extends SetConfigValueProvider<T> {

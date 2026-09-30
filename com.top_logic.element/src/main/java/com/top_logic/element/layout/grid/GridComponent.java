@@ -6,6 +6,7 @@
 package com.top_logic.element.layout.grid;
 
 import static com.top_logic.basic.shared.collection.CollectionUtilShared.*;
+import static com.top_logic.mig.html.HTMLConstants.*;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -23,13 +24,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.collections4.CollectionUtils;
 
+import com.top_logic.base.locking.handler.LockHandler;
+import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
@@ -38,6 +41,7 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.factory.CollectionFactory;
@@ -54,6 +58,8 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.func.IFunction2;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.GenericPropertyListener;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
@@ -67,7 +73,6 @@ import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.MetaElementUtil;
-import com.top_logic.element.meta.UpdateFactory;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.element.meta.form.DefaultAttributeFormFactory;
@@ -75,11 +80,9 @@ import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Clipboard;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.ContextPosition;
 import com.top_logic.layout.Control;
@@ -111,21 +114,24 @@ import com.top_logic.layout.channel.SelectionChannel;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.compare.CompareAlgorithm;
 import com.top_logic.layout.compare.CompareAlgorithmHolder;
+import com.top_logic.layout.component.InAppSelectable;
+import com.top_logic.layout.component.DefaultSelectionProvider;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.NoSelectionModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.ChangeStateListener;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.AbstractCreateCommandHandler;
 import com.top_logic.layout.form.component.CreateFunction;
 import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.component.WarningsDialog;
-import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ErrorControl;
-import com.top_logic.layout.form.control.ImageButtonRenderer;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
@@ -134,6 +140,7 @@ import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.form.tag.TableTag;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
@@ -142,18 +149,25 @@ import com.top_logic.layout.structure.ControlRepresentable;
 import com.top_logic.layout.structure.ControlRepresentableCP;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.LayoutControlProvider.Layouting;
+import com.top_logic.layout.table.AbstractCellClassProvider;
+import com.top_logic.layout.table.CellAdapter;
+import com.top_logic.layout.table.CellClassProvider;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.table.ITableRenderer;
 import com.top_logic.layout.table.TableData;
+import com.top_logic.layout.table.TableDataOwner;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.TableModelUtils;
 import com.top_logic.layout.table.TableRenderer;
+import com.top_logic.layout.table.TableRenderer.Cell;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.component.BuilderComponent;
 import com.top_logic.layout.table.component.ColumnsChannel;
 import com.top_logic.layout.table.component.ComponentRowSource;
 import com.top_logic.layout.table.component.ComponentTableConfigProvider;
+import com.top_logic.layout.table.component.CorrectTypeFilter;
 import com.top_logic.layout.table.component.TableComponent;
+import com.top_logic.layout.table.component.WithCustomConfigKey;
 import com.top_logic.layout.table.control.SelectionVetoListener;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.control.TableControl.SelectionType;
@@ -178,13 +192,11 @@ import com.top_logic.layout.tree.component.TreeModelBuilder;
 import com.top_logic.layout.tree.component.WithSelectionPath;
 import com.top_logic.layout.tree.model.TreeViewConfig;
 import com.top_logic.mig.html.AbstractRestrainedSelectionModel;
-import com.top_logic.mig.html.DefaultMultiSelectionModel;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelConfig;
-import com.top_logic.mig.html.SelectionModelFactory;
-import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.DialogInfo;
@@ -197,6 +209,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.fallback.EditingCell;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -210,7 +223,6 @@ import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.InEditModeExecutable;
-import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.TL5Types;
@@ -220,18 +232,19 @@ import com.top_logic.util.model.TL5Types;
  * 
  * @see GridComponent.Config
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class GridComponent extends EditComponent implements
-		SelectableWithSelectionModel,
+		SelectableWithSelectionModel, InAppSelectable,
 		ControlRepresentable, SelectionVetoListener, CompareAlgorithmHolder,
-		ComponentRowSource, WithSelectionPath {
+		ComponentRowSource, WithSelectionPath, TableDataOwner {
 
 	/**
 	 * Configuration options for {@link GridComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends EditComponent.Config, ColumnsChannel.Config, TreeViewConfig, SelectionModelConfig {
+	public interface Config extends EditComponent.Config, ColumnsChannel.Config, TreeViewConfig,
+			SelectionModelConfig, InAppSelectableConfig, WithCustomConfigKey {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -282,9 +295,9 @@ public class GridComponent extends EditComponent implements
 		boolean getShowDetailOpener();
 
 		/** flag indicating whether to show clipboard commands or not */
+		@Deprecated
 		@Name(GridComponent.XML_CONFIG_SHOW_CLIPBOARD_COMMANDS)
-		@BooleanDefault(true)
-		Boolean getShowClipboardCommands();
+		boolean getShowClipboardCommands();
 
 		@Name(XML_CONFIG_STRUCTURE_NAME)
 		String getStructureName();
@@ -395,6 +408,7 @@ public class GridComponent extends EditComponent implements
     public static final String XML_CONFIG_EDIT_COMPONENT_NAME = "editComponentName";
     
     /** Configuration flag indicating whether the clipboard buttons should be shown in the grid */
+	@Deprecated
     public static final String XML_CONFIG_SHOW_CLIPBOARD_COMMANDS = "showClipboardCommands";
 
 	/** Configuration flag indicating whether the technical column should be shown in the grid */
@@ -413,7 +427,7 @@ public class GridComponent extends EditComponent implements
     public static final String COLUMN_TECHNICAL = "technical";
 
     /** The row object represented by a row form group. */
-	public static final Property<Object> PROP_ATTRIBUTED = TypedAnnotatable.property(Object.class, "attributed");
+	public static final Property<Object> PROP_ATTRIBUTED = FormMember.BUSINESS_MODEL_PROPERTY;
 
     /** Default value for {@link #XML_CONFIG_OPEN_IN_EDIT}. */
     private static final boolean DEFAULT_OPEN_IN_EDIT = false;
@@ -443,6 +457,8 @@ public class GridComponent extends EditComponent implements
 	};
 
 	private static final String ROW_DOMAIN = null;
+
+	private static final Property<String> DYNAMIC_STYLE = TypedAnnotatable.property(String.class, "dynamicStyle");
 
 	GridHandler<FormGroup> _handler;
 
@@ -514,25 +530,54 @@ public class GridComponent extends EditComponent implements
 
 	private boolean _addTechnicalColumn;
 
+	private CommandHandler _onSelectionChange;
+
+	private final DefaultSelectionProvider _defaultSelectionProvider;
+
+	private IFunction2<String, Object, String> _configKeyBuilder;
+
+	/**
+	 * Filter that checks whether a potential list element has the correct {@link TLType}. If no
+	 * {@link Config#getElementTypes() types} are configured, all elements are potentially part of
+	 * the list.
+	 */
+	private Filter<Object> _rowTypeFilter;
+
 	/**
 	 * Create a new GridComponent from XML.
 	 */
-    public GridComponent(InstantiationContext context, Config someAttrs) throws ConfigurationException {
-		super(context, someAttrs);
-		this.modifier = createModifier(context, someAttrs.getModifier());
-		this.applyHandler = (someAttrs.getGridApplyHandlerClass() == null) ? DefaultGridApplyHandler.INSTANCE
-			: context.getInstance(someAttrs.getGridApplyHandlerClass());
+	public GridComponent(InstantiationContext context, Config config) throws ConfigurationException {
+		super(context, config);
+		this.modifier = createModifier(context, config.getModifier());
+		this.applyHandler = (config.getGridApplyHandlerClass() == null) ? DefaultGridApplyHandler.INSTANCE
+			: context.getInstance(config.getGridApplyHandlerClass());
 		this.rowSecurityProvider =
-			(someAttrs.getRowSecurityProviderClass() == null) ? DefaultGridRowSecurityObjectProvider.INSTANCE
-				: context.getInstance(someAttrs.getRowSecurityProviderClass());
-        this.excludeColumns        = Collections.unmodifiableSet(CollectionUtil.toSet(StringServices.toArray(someAttrs.getExcludeColumns())));
-        this.openInEdit            = someAttrs.getOpenInEdit();
-		this._editComponentName = someAttrs.getEditComponentName();
-		_showDetailOpener = someAttrs.getShowDetailOpener();
-		this.nodeTypes = someAttrs.getElementTypes();
-		_selectionModel = initSelectionModel(someAttrs);
-		_componentTableConfigProvider = someAttrs.getComponentTableConfigProvider();
-		_addTechnicalColumn = someAttrs.getAddTechnicalColumn();
+			(config.getRowSecurityProviderClass() == null) ? DefaultGridRowSecurityObjectProvider.INSTANCE
+				: context.getInstance(config.getRowSecurityProviderClass());
+		this.excludeColumns =
+			Collections.unmodifiableSet(CollectionUtil.toSet(StringServices.toArray(config.getExcludeColumns())));
+		this.openInEdit = config.getOpenInEdit();
+		this._editComponentName = config.getEditComponentName();
+		_showDetailOpener = config.getShowDetailOpener();
+		this.nodeTypes = config.getElementTypes();
+		_selectionModel = initSelectionModel(config);
+		_componentTableConfigProvider = config.getComponentTableConfigProvider();
+		_addTechnicalColumn = config.getAddTechnicalColumn();
+		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_defaultSelectionProvider = context.getInstance(config.getDefaultSelectionProvider());
+		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
+		_rowTypeFilter = CorrectTypeFilter.newTypeFilter(getConfiguredTypes());
+
+	}
+
+	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
+	}
+
+	@Override
+	public CommandHandler getOnSelectionHandler() {
+		return _onSelectionChange;
 	}
 
 	private FormContextModificator createModifier(InstantiationContext context,
@@ -564,6 +609,7 @@ public class GridComponent extends EditComponent implements
 		gridBuilder.setRootVisible(config.isRootVisible());
 		gridBuilder.setExpandRoot(config.getExpandRoot());
 		gridBuilder.setExpandSelected(config.getExpandSelected());
+		gridBuilder.setRevealSelection(config.getRevealSelection());
 		gridBuilder.adjustSelectionWhenCollapsing(config.adjustSelectionWhenCollapsing());
 	}
 
@@ -667,6 +713,7 @@ public class GridComponent extends EditComponent implements
     @Override
     public void invalidate() {
 		invalidateSelection();
+		markRowsInvalid();
 
         super.invalidate();
     }
@@ -725,9 +772,27 @@ public class GridComponent extends EditComponent implements
 	 * </p>
 	 */
 	public Object getDefaultSelection() {
-		if (((Config) getConfig()).getDefaultSelection()) {
-			TableViewModel tableViewModel = getViewModel();
+		if (getConfig().getDefaultSelection()) {
 			TableModel tableModel = getTableField(getFormContext()).getTableModel();
+
+			if (_defaultSelectionProvider != null) {
+				for (Object businessObject : _defaultSelectionProvider.computeDefaultSelection(getModel(),
+						getSelected())) {
+					FormGroup group = getRowGroup(businessObject);
+					if (group == null) {
+						continue;
+					}
+
+					Object internalRow = _handler.getFirstTableRow(group);
+					if (_selectionModel.isSelectable(internalRow) && tableModel.containsRowObject(internalRow)) {
+						return businessObject;
+					}
+				}
+
+				return null;
+			}
+
+			TableViewModel tableViewModel = getViewModel();
 
 			for (int rowIndex = 0; rowIndex < tableViewModel.getRowCount(); rowIndex++) {
 				FormGroup group = getFormGroup(tableViewModel, rowIndex);
@@ -740,7 +805,7 @@ public class GridComponent extends EditComponent implements
 				}
 			}
 		}
-		
+
 		return null;
 	}
 
@@ -757,6 +822,11 @@ public class GridComponent extends EditComponent implements
 		selectionModel
 			.setSelectionFilter(FilterFactory.or(selectionModel.getSelectionFilter(), GridComponent::isTransient));
 		return selectionModel;
+	}
+
+	@Override
+	public TableData getTableData() {
+		return _handler.getTableField();
 	}
 
 	/**
@@ -824,16 +894,6 @@ public class GridComponent extends EditComponent implements
 
 		if (command.equals(this.getApplyCommandHandler())) {
 			this.setButtonImages(theModel, Icons.SAVE_BUTTON_ICON, Icons.SAVE_BUTTON_ICON_DISABLED);
-			/*
-			 * set ImageButtonRenderer explicitly because ButtonRenderer is
-			 * default which replaces the whole DOM element when image changes.
-			 * If such an replacement occurs the command may not be executed,
-			 * e.g. an input field was changed and the button is clicked
-			 * directly (without previously leaving the field). In this case (if
-			 * the server is fast enough) the DOM element of the button is
-			 * replaced before the onClick-event occurs
-			 */
-			theModel.set(ButtonControl.BUTTON_RENDERER, ImageButtonRenderer.INSTANCE);
 			this._applyListener = new ApplyComandImageChange(theModel, Icons.SAVE_BUTTON_MODIFIED, Icons.SAVE_BUTTON_ICON);
             // initially the button looks like not executable
             this._applyListener.updateImage(false);
@@ -900,7 +960,7 @@ public class GridComponent extends EditComponent implements
 			return Collections.emptySet();
 		}
 		Set<TLClass> nodeClasses = CollectionUtil.newSet(count);
-		String structureName = ((Config) getConfig()).getStructureName();
+		String structureName = getConfig().getStructureName();
 		if (!StringServices.isEmpty(structureName)) {
 			for (String elementName : elementNames) {
 				String typeSpec = TL5Types.nodeTypeSpec(structureName, elementName);
@@ -944,12 +1004,23 @@ public class GridComponent extends EditComponent implements
 		}
 		gridBuilder().receiveModelChangedEvent(this, aModel);
 		invalidateSelection();
-		if (!supportsRow(aModel)) {
+
+		if (!_rowTypeFilter.accept(aModel)) {
+			// model has an unsupported item type.
 			return false;
 		}
 
+		ElementUpdate decision = supportsRow(aModel);
+		if (decision == ElementUpdate.NO_CHANGE) {
+			return false;
+		}
+		if (decision == ElementUpdate.UNKNOWN) {
+			invalidate();
+			return true;
+		}
+
 		FormGroup formGroup = getRowGroup(aModel);
-		if (formGroup == null && this.isRelevant(aModel, someChangedBy) && isVisible()) {
+		if (formGroup == null && decision.shouldAdd() && isVisible()) {
 			this.invalidate();
 			formGroup = getRowGroup(aModel);
 		}
@@ -1003,8 +1074,8 @@ public class GridComponent extends EditComponent implements
     }
 
 	@Override
-	public boolean receiveDialogEvent(Object aDialog, Object anOwner, boolean isOpen) {
-		boolean receiveDialogEvent = super.receiveDialogEvent(aDialog, anOwner, isOpen);
+	public void receiveDialogEvent(Object aDialog, Object anOwner, boolean isOpen) {
+		super.receiveDialogEvent(aDialog, anOwner, isOpen);
 		if (isOpen) {
 			dropRowFields(getSelectedCollection());
 		} else {
@@ -1032,7 +1103,6 @@ public class GridComponent extends EditComponent implements
 				}
 			}
 		}
-		return receiveDialogEvent;
 	}
 
     /**
@@ -1073,7 +1143,7 @@ public class GridComponent extends EditComponent implements
      * Shall marker fields be created.
      */
     public boolean showMarkerFields() {
-		return ((Config) getConfig()).getShowMarkerFields();
+		return getConfig().getShowMarkerFields();
     }
 
     /**
@@ -1225,14 +1295,14 @@ public class GridComponent extends EditComponent implements
 
 	}
 
-    /** 
-     * Return the names of the elements supported by this grid.
-     * 
-     * This information can be used in the {@link ListModelBuilder} for a generic
-     * {@link ListModelBuilder#getModel(Object, LayoutComponent)} approach.
-     * 
-     * @return   The requested names of the supported elements, be <code>null</code>.
-     */
+    /**
+	 * Return the names of the elements supported by this grid.
+	 * 
+	 * This information can be used in the {@link ListModelBuilder} for a generic
+	 * {@link ListModelBuilder#getModel(Object, LayoutComponent)} approach.
+	 * 
+	 * @return The names of the supported elements, not <code>null</code>.
+	 */
     public String[] getElementNames() {
         return this.nodeTypes;
     }
@@ -1305,7 +1375,8 @@ public class GridComponent extends EditComponent implements
 			}
 
 			try {
-				boolean needsCommit = theContext.isChanged() || isTransient(object);
+				boolean create = isTransient(object);
+				boolean needsCommit = theContext.isChanged() || create;
 				if (needsCommit) {
 					if (!theContext.checkAll()) {
 						HandlerResult error = new HandlerResult();
@@ -1323,8 +1394,10 @@ public class GridComponent extends EditComponent implements
 						return suspended;
 					}
 
-					try (Transaction tx = getKnowledgeBase(object).beginTransaction()) {
-						if (isTransient(object)) {
+					try (Transaction tx =
+						getKnowledgeBase(object).beginTransaction(create ? I18NConstants.CREATED_GRID_ROW
+							: I18NConstants.EDITED__OBJ.fill(MetaLabelProvider.INSTANCE.getLabel(object)))) {
+						if (create) {
 							Object createdObject = ((NewObject) object).create(this, formGroup);
 							tx.commit();
 
@@ -1580,7 +1653,7 @@ public class GridComponent extends EditComponent implements
 
 	private HandlerResult error(Throwable ex) {
 		HandlerResult error = new HandlerResult();
-		error.setException(ex instanceof TopLogicException ? (TopLogicException) ex
+		error.setException(ex instanceof I18NRuntimeException i18nEx ? i18nEx
 			: new TopLogicException(com.top_logic.util.I18NConstants.INTERNAL_ERROR, ex));
 		return error;
 	}
@@ -1610,7 +1683,7 @@ public class GridComponent extends EditComponent implements
 		TLObject object = toAttributed(rowObject);
 		TLFormObject overlay = updateContainer.getOverlay(object, null);
 		if (overlay != null) {
-			TLClass type = (TLClass) overlay.getType();
+			TLClass type = (TLClass) overlay.tType();
 			modifier.clear(this, type, object, updateContainer, formGroup);
 		}
 		updateContainer.clear();
@@ -1672,20 +1745,6 @@ public class GridComponent extends EditComponent implements
             }
 			createFields();
         }
-    }
-
-    /**
-     * Check, if the given model is relevant for this component.
-     *
-     * Currently this will only be asked in {@link #receiveModelChangedEvent(Object, Object)}
-     * if the model is supported but cannot be found in the form group.
-     *
-     * @param    aModel       The model to be inspected, must not be <code>null</code>.
-     * @param    changedBy    The changing component (may be MainLayout).
-     * @return   <code>true</code> if it has to be displayed in this grid.
-     */
-    protected boolean isRelevant(Object aModel, Object changedBy) {
-        return false;
     }
 
     /**
@@ -2003,14 +2062,14 @@ public class GridComponent extends EditComponent implements
 	}
 
 	@Override
-	public List<Wrapper> getDisplayedRows() {
-		List<Wrapper> rows = new ArrayList<>();
+	public List<Object> getDisplayedRows() {
+		List<Object> rows = new ArrayList<>();
 		for (FormGroup group : getAllVisibleFormGroups()) {
 			Object rowObject = group.get(GridComponent.PROP_ATTRIBUTED);
 
-			// beware: rowObject may be a new, transient object
-			if (rowObject instanceof Wrapper) {
-				rows.add((Wrapper) rowObject);
+			// beware: rowObject may be a "the" new object - no one can do anything with it.
+			if (!(rowObject instanceof NewObject)) {
+				rows.add(rowObject);
 			}
 		}
 		return rows;
@@ -2101,7 +2160,7 @@ public class GridComponent extends EditComponent implements
 
 	private void setRowModel(FormGroup row, Object rowModel) {
 		row.set(PROP_ATTRIBUTED, rowModel);
-        row.setStableIdSpecialCaseMarker(rowModel);
+		row.setStableIdSpecialCaseMarker(rowModel, this);
 	}
 
 	/**
@@ -2175,7 +2234,7 @@ public class GridComponent extends EditComponent implements
 	}
 
 	@Override
-	protected void handleComponentModeChange(boolean editMode) {
+	public void handleComponentModeChange(boolean editMode) {
 		// Do not drop the form context. The existing context is incrementally updated.
 		//
 		// super.handleComponentModeChange(oldMode, newMode);
@@ -2190,7 +2249,9 @@ public class GridComponent extends EditComponent implements
 			if (hasFormContext()) {
 				AttributeFormContext formContext = getFormContext();
 				AttributeUpdateContainer updateContainer = formContext.getAttributeUpdateContainer();
-				for (Object selected : getSelectedCollection()) {
+				for (List<?> selectedPath : getSelectedPathsCollection()) {
+					Object selected = selectedPath.get(selectedPath.size() - 1);
+
 					FormGroup rowGroup = getRowGroup(selected);
 					removeFields(selected, rowGroup, updateContainer);
 					if (isTransient(selected)) {
@@ -2239,7 +2300,7 @@ public class GridComponent extends EditComponent implements
 			if (isTransient(rowObject)) {
 				HiddenField changeMarker = FormFactory.newHiddenField(NEW_OBJECT_MARKER_FIELD, 1);
 				changeMarker.setDefaultValue(0);
-				changeMarker.setLabel(Resources.getInstance().getString(I18NConstants.NEW_OBJECT_MARKER));
+				changeMarker.setLabel(I18NConstants.NEW_OBJECT_MARKER);
 				row.addMember(changeMarker);
 			}
             
@@ -2249,7 +2310,7 @@ public class GridComponent extends EditComponent implements
 
 				KeyEventListener onKeyPress = new OnKeyPress();
 
-				UpdateFactory overlay =
+				TLFormObject overlay =
 					editedObject == null
 						? formContext.createObject(type, ROW_DOMAIN, ((NewObject) rowObject).getContainer())
 						: formContext.editObject(editedObject);
@@ -2294,8 +2355,28 @@ public class GridComponent extends EditComponent implements
 								if (member != null) {
 									row.addMember(member);
 
-									if (member instanceof FormField) {
-										((FormField) member).addKeyListener(onKeyPress);
+									if (member instanceof FormField field) {
+										field.addKeyListener(onKeyPress);
+
+										CellClassProvider cssClassProvider = column.getCssClassProvider();
+										if (cssClassProvider != null) {
+											ValueListener classUpdate = (f, oldValue, newValue) -> {
+												String newClass = cssClassProvider
+													.getCellClass(new EditingGridCell(overlay, columnName, field));
+												String oldClass = f.get(DYNAMIC_STYLE);
+												if (oldClass != null) {
+													f.removeCssClass(oldClass);
+												}
+												if (newClass != null) {
+													f.addCssClass(newClass);
+												}
+												f.set(DYNAMIC_STYLE, newClass);
+											};
+											field.addValueListener(classUpdate);
+
+											// Establish initial style.
+											classUpdate.valueChanged(field, null, field.getValue());
+										}
 									}
 
 									this.modifier.modify(this, columnName, member, attribute, type, editedObject,
@@ -2499,7 +2580,7 @@ public class GridComponent extends EditComponent implements
 		BoundObject securityObject = getRowSecurityProvider().getSecurityObject(this, rowObject);
         if (executable && securityObject != null) {
 			BoundChecker theChecker = BoundHelper.getInstance().getDefaultChecker(getMainLayout(), securityObject);
-            return theChecker != null ? theChecker.allow(SimpleBoundCommandGroup.WRITE, securityObject) : true;
+            return theChecker != null ? BoundChecker.allowCommandOnSecurityObject(theChecker, SimpleBoundCommandGroup.WRITE, securityObject) : true;
         }
         else {
         	return executable;
@@ -2521,7 +2602,7 @@ public class GridComponent extends EditComponent implements
 	}
 
     public ConfigKey getConfigKey() {
-		return ConfigKey.part(this, FIELD_TABLE);
+		return WithCustomConfigKey.resolveObjectKey(this, _configKeyBuilder, ConfigKey.part(this, FIELD_TABLE));
 	}
 
     /**
@@ -2699,6 +2780,11 @@ public class GridComponent extends EditComponent implements
 
 		applyGridCellTester(column);
 
+		CellClassProvider cellClassProvider = column.getCssClassProvider();
+		if (!(cellClassProvider instanceof GridCellClassProvider)) {
+			column.setCssClassProvider(new GridCellClassProvider(cellClassProvider));
+		}
+
 		Renderer<Object> customRenderer = column.finalRenderer();
 		ControlProvider optionalControlProvider = column.getEditControlProvider();
 		column.setRenderer(GridContentRenderer.createContentRenderer(customRenderer, optionalControlProvider));
@@ -2790,7 +2876,7 @@ public class GridComponent extends EditComponent implements
 	}
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return CHANNELS;
 	}
 
@@ -2798,7 +2884,7 @@ public class GridComponent extends EditComponent implements
 	public void linkChannels(Log log) {
 		super.linkChannels(log);
 
-		ChannelLinking channelLinking = getChannelLinking(((Config) getConfig()).getColumns());
+		ChannelLinking channelLinking = getChannelLinking(getConfig().getColumns());
 		columnsChannel().linkChannel(log, this, channelLinking);
 		columnsChannel().addListener(COLUMNS_LISTENER);
 
@@ -3068,7 +3154,7 @@ public class GridComponent extends EditComponent implements
 					// Last node may be the transient.
 					return false;
 				}
-				if (!gridBuilder.supportsRow(grid, lastNode)) {
+				if (gridBuilder.supportsRow(grid, lastNode).shouldRemove()) {
 					return false;
 				}
 			} else {
@@ -3201,10 +3287,10 @@ public class GridComponent extends EditComponent implements
      * A grid row must be represented as form group. This will contain some form members
      * and an {@link GridComponent#PROP_ATTRIBUTED}. When there is a form member named
      * like a column in the table, the accessor will return this, otherwise the
-     * {@link GridComponent#PROP_ATTRIBUTED} (which is an {@link Wrapper}) will be asked
+     * {@link GridComponent#PROP_ATTRIBUTED} (which is an {@link TLObject}) will be asked
      * for the value.
      *
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
 	public class GridAccessor implements Accessor<Object> {
 
@@ -3279,6 +3365,94 @@ public class GridComponent extends EditComponent implements
 	}
 
 	/**
+	 * {@link CellClassProvider} that is wrapped around a custom {@link CellClassProvider} to shield
+	 * it from grid internals.
+	 */
+	private class GridCellClassProvider extends AbstractCellClassProvider {
+
+		private final CellClassProvider _wrappedTester;
+
+		GridCellClassProvider(CellClassProvider wrappedTester) {
+			_wrappedTester = wrappedTester;
+		}
+
+		@Override
+		public String getCellClass(Cell cell) {
+			Object value = cell.getValue();
+			if (value instanceof FormField field) {
+				// Adding dynamic styles to cells containing fields has the problem that the styles
+				// cannot be updated when field values changes. Those dynamic styles must be created
+				// by the field itself.
+				return null;
+			}
+
+			return _wrappedTester.getCellClass(cell instanceof EditingGridCell ? cell : wrap(cell));
+		}
+
+		private Cell wrap(Cell cell) {
+			return new CellAdapter() {
+				@Override
+				public Object getRowObject() {
+					Object gridRowObject = super.getRowObject();
+					FormGroup group = _handler.getGridRow(gridRowObject);
+					return group.get(PROP_ATTRIBUTED);
+				}
+
+				@Override
+				protected Cell impl() {
+					return cell;
+				}
+			};
+		}
+	}
+
+	/**
+	 * {@link com.google.common.collect.Table.Cell} adapter for accessing {@link CellClassProvider}s
+	 * outside a rendering context.
+	 */
+	private static final class EditingGridCell extends CellAdapter implements EditingCell {
+		private final TLFormObject _overlay;
+
+		private final String _columnName;
+
+		private final FormField _field;
+
+		/**
+		 * Creates a {@link EditingGridCell}.
+		 */
+		private EditingGridCell(TLFormObject overlay, String columnName, FormField field) {
+			_field = field;
+			_columnName = columnName;
+			_overlay = overlay;
+		}
+
+		@Override
+		public String getColumnName() {
+			return _columnName;
+		}
+
+		@Override
+		public Object getValue() {
+			return _field.getValue();
+		}
+
+		@Override
+		public Object getRowObject() {
+			return _overlay;
+		}
+
+		@Override
+		public boolean cellExists() {
+			return true;
+		}
+
+		@Override
+		protected Cell impl() {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	/**
 	 * Selection listener to the displayed grid.
 	 *
 	 * This will be called when the user changes a row in the grid.
@@ -3290,12 +3464,13 @@ public class GridComponent extends EditComponent implements
 		private boolean _ignoreChanges = false;
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			if (_ignoreChanges) {
 				return;
 			}
 			focusColumn(getTableField(getFormContext()).getViewModel());
 
+			Set<?> newSelection = event.getNewSelection();
 			Set<List<Object>> newSelectedPaths = getRowObjectPaths(newSelection);
 
 			Collection<?> currentlySelectedPathsCollection = getSelectedPathsCollection();
@@ -3308,11 +3483,12 @@ public class GridComponent extends EditComponent implements
 				Set<Object> newSelectedObjects = getRowObjects(newSelection);
 				if (!CollectionUtil.equals(getSelectedCollection(), newSelectedObjects)) {
 					channelUpdated = false;
-					revertSelection(oldSelection);
+					revertSelection(event.getOldSelection());
 				}
 			}
 
 			if (isInEditMode()) {
+				Set<?> oldSelection = event.getOldSelection();
 				HandlerResult result = storeAttributeValuesAndAddFields(oldSelection, newSelection);
 				if (!result.isSuccess()) {
 					revertSelection(oldSelection);
@@ -3354,7 +3530,7 @@ public class GridComponent extends EditComponent implements
     /**
      * Handler to store the data of the currently selected row.
      *
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
 	public static class GridApplyCommandHandler extends AbstractApplyCommandHandler {
 
@@ -3427,7 +3603,7 @@ public class GridComponent extends EditComponent implements
 	/**
 	 * Allow execution only, when at least one row in {@link GridComponent} has been marked.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	protected static class HasMarkedGroupsRule implements ExecutabilityRule {
 
@@ -3545,7 +3721,7 @@ public class GridComponent extends EditComponent implements
     /**
      * Allow execution only, when {@link GridComponent} owns the token context. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
 	public static class HasTokenContextRule implements ExecutabilityRule {
 
@@ -3577,7 +3753,9 @@ public class GridComponent extends EditComponent implements
                 	return ExecutableState.EXECUTABLE;
                 }
                 
-				return grid.getLockHandler().hasLock() ? ExecutableState.EXECUTABLE : NOT_LOCKED;
+				LockHandler lockHandler = grid.getLockHandler();
+				return lockHandler == NoTokenHandling.INSTANCE || lockHandler.hasLock() ? ExecutableState.EXECUTABLE
+					: NOT_LOCKED;
             }
 
             return ExecutableState.NOT_EXEC_HIDDEN;
@@ -3592,7 +3770,7 @@ public class GridComponent extends EditComponent implements
 	/**
 	 * Simple handler for adding all rows marked to the clipboard.
 	 *
-	 * @author <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+	 * @author <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
 	 */
     public static class AddSelectedToClipboard extends AJAXCommandHandler {
 
@@ -3614,11 +3792,12 @@ public class GridComponent extends EditComponent implements
 			{
                 boolean     isAdded = false;
                 Clipboard   theClip = Clipboard.getInstance();
-				Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction();
+				Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction(
+					com.top_logic.common.webfolder.ui.clipboard.I18NConstants.ADDED_TO_CLIPBOARD);
                 
                 for (Iterator<FormGroup> theIt = theComp.getMarkedFormGroups().iterator(); theIt.hasNext(); ) {
                     FormGroup theGroup   = theIt.next();
-					Wrapper theWrapper = (Wrapper) theGroup.get(PROP_ATTRIBUTED);
+					TLObject theWrapper = (TLObject) theGroup.get(PROP_ATTRIBUTED);
 
                     if (!theWrapper.tValid()) {
                         throw LayoutUtils.createErrorSelectedObjectDeleted();
@@ -3628,14 +3807,7 @@ public class GridComponent extends EditComponent implements
                 }
 
                 if (isAdded) {
-                    try {
-                        theTX.commit();
-                    }
-                    catch (KnowledgeBaseException ex) {
-                        HandlerResult theResult = new HandlerResult();
-						theResult.addErrorMessage(aComponent.getResPrefix().key("clipboard.failed"), ex.getLocalizedMessage());
-                        return theResult;
-                    }
+					theTX.commit();
                     // if everything did go well clear the check boxes
                     theComp.clearAllMarkedCheckboxes();
                 }
@@ -3656,7 +3828,7 @@ public class GridComponent extends EditComponent implements
 	 * 
 	 * @see SelectAllCheckboxes
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     public static class ClearSelectedCheckboxes extends AJAXCommandHandler {
 
@@ -3754,7 +3926,7 @@ public class GridComponent extends EditComponent implements
      * If the given value is a {@link FormMember}, this class will use the
      * configured {@link ControlProvider}, otherwise the configured inner {@link Renderer}.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
 	public static class GridContentRenderer implements Renderer<Object> {
 
@@ -3799,9 +3971,20 @@ public class GridComponent extends EditComponent implements
 		@Override
 		public void write(DisplayContext context, TagWriter out, Object value) throws IOException {
 			if (value instanceof FormMember) {
-				this.controlProvider.createControl(value).write(context, out);
-				if (value instanceof FormField) {
-					new ErrorControl((FormField) value, true).write(context, out);
+				if (value instanceof FormField field) {
+					out.beginBeginTag(DIV);
+					out.beginCssClasses();
+					out.append("tl-decorated-cell");
+					out.append(FormConstants.FLEXIBLE_CSS_CLASS);
+					out.endCssClasses();
+					out.endBeginTag();
+					{
+						this.controlProvider.createControl(value).write(context, out);
+						new ErrorControl(field, true).write(context, out);
+					}
+					out.endTag(DIV);
+				} else {
+					this.controlProvider.createControl(value).write(context, out);
 				}
 			} else {
 				this.defaultRenderer.write(context, out, value);
@@ -3828,23 +4011,6 @@ public class GridComponent extends EditComponent implements
 		}
     }
 
-	/**
-	 * {@link SelectionModelFactory} creating {@link DefaultMultiSelectionModel}.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public static class DefaultMultiSelectionModelFactory extends SelectionModelFactory {
-
-		/** Singleton {@link GridComponent.DefaultMultiSelectionModelFactory} instance. */
-		public static final DefaultMultiSelectionModelFactory INSTANCE = new DefaultMultiSelectionModelFactory();
-
-		@Override
-		public SelectionModel newSelectionModel(SelectionModelOwner owner) {
-			return new DefaultMultiSelectionModel(owner);
-		}
-
-	}
-
     /**
      * Whether the given row model is a (still transient) object being created.
      */
@@ -3859,7 +4025,7 @@ public class GridComponent extends EditComponent implements
 		return ((TLObject) rowObject).tValid();
 	}
 
-	private boolean supportsRow(Object element) {
+	private ElementUpdate supportsRow(Object element) {
 		return gridBuilder().supportsRow(this, element);
 	}
 

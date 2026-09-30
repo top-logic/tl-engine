@@ -10,7 +10,7 @@ import com.top_logic.basic.config.annotation.Label;
 /**
  * Plug-in for dynamically changing a {@link TableConfiguration}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 @Label("Table configuration plug-in")
 public interface TableConfigurationProvider {
@@ -28,8 +28,13 @@ public interface TableConfigurationProvider {
 	/**
 	 * Adjusts the default column of the {@link TableConfiguration}.
 	 * 
+	 * @param defaultColumn
+	 *        The configuration that is used as base for all other column configurations.
+	 * 
 	 * @see #adaptConfigurationTo(TableConfiguration)
 	 */
-	void adaptDefaultColumn(ColumnConfiguration defaultColumn);
+	default void adaptDefaultColumn(ColumnConfiguration defaultColumn) {
+		// Ignore.
+	}
 
 }

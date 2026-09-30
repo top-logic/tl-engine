@@ -5,11 +5,12 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-layout-codeedit</artifactId>
-  <description>In-app code editor based on ace library.</description>
+	<name>${project.artifactId}</name>
+	<description>In-app code editor based on ace library.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

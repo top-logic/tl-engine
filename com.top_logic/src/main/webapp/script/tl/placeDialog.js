@@ -11,10 +11,9 @@
 PlaceDialog = {
 
 	//  ========== Tooltip 2023 by SHA ==========
-	generateTooltip: function(target, content) {
+	generateTooltip: function(evt, target, content) {
 		let openTimeout = setTimeout(() => {
-			let targetZero = (target.offsetHeight == 0) && (target.offsetWidth == 0);
-			if (target.classList.contains("tlPopupOpen") || targetZero) {
+			if (target.classList.contains("tlPopupOpen")) {
 				return;
 			}
 			const outerDocument = document.body.firstElementChild;
@@ -26,7 +25,7 @@ PlaceDialog = {
 			tooltip.id = PlaceDialog.tooltipId;
 			tooltip.innerHTML = content;
 			outerDocument.append(tooltip);
-			this.positionTooltip(target, tooltip);
+			this.positionTooltip(evt, target, tooltip);
 			this.closeTooltip(target, tooltip);
 		}, 400);
 		target.setAttribute("data-ttOpen", openTimeout);
@@ -58,7 +57,7 @@ PlaceDialog = {
 		target.removeAttribute("data-ttOpen");
 	},
 
-	positionTooltip: function(target, tooltip) {
+	positionTooltip: function(evt, target, tooltip) {
 		target.classList.add("activeTooltip");
 
 		tooltip.style.left = 0;
@@ -66,7 +65,7 @@ PlaceDialog = {
 
 		if (tooltip.childElementCount > 0) {
 			let ttPos = tooltip.getBoundingClientRect(),
-				targetPos = target.getBoundingClientRect();
+				targetPos = this.targetBoundingClientRect(evt, target);
 			
 			positioning = "vertical";
 			if (target.closest(".tooltipHorizontal") || target.closest(".popupMenu")) {
@@ -80,12 +79,28 @@ PlaceDialog = {
 		}
 	},
 	
+	targetBoundingClientRect: function(evt, target) {
+		let targetZero = (target.offsetHeight == 0) && (target.offsetWidth == 0);
+		if (targetZero || target.tagName == "AREA") {
+			// Use mouseposition
+			let mouseCoordinates = BAL.mouseCoordinates(evt);
+			return DOMRect.fromRect({
+				x: mouseCoordinates.x,
+				y: mouseCoordinates.y,
+				width: 0,
+				height: 0,
+			});
+		} else {
+			return target.getBoundingClientRect();
+		}
+	},
+	
 	setVerticalPosition: function(tooltip, ttPos, targetPos, positioning) {
 		let topSpace = targetPos.top,
 			bottomSpace = (document.documentElement.clientHeight - targetPos.bottom);
 			
 		let contentStyle = window.getComputedStyle(tooltip.firstElementChild),
-			ttPadding = parseFloat(contentStyle.getPropertyValue("--ttPadding")),
+			ttPadding = BAL.convertRemToPixel(parseFloat(contentStyle.getPropertyValue("--ttPadding"))),
 			lineH = contentStyle.lineHeight;
 
 		let verticalDir, verticalPos;
@@ -135,13 +150,14 @@ PlaceDialog = {
 			
 		let verticalSpace = ttUp ? topSpace : bottomSpace,
 			verticalDir = ttUp ? "top" : "bottom",
-			verticalPos = Math.max(0, (verticalSpace - sumHeight)),
+			verticalPos = Math.max(ttPadding, (verticalSpace - sumHeight)),
 			maxHeight = (verticalSpace - offset);
 			
 		if (maxHeight < ((2 * ttPadding) + lineH)) {
 			tooltip.style.display = "none";
 			return;
 		}
+		maxHeight = maxHeight - ttPadding;
 		tooltip.classList.toggle("ttVerticalArrowBottom", ttUp);
 		tooltip.classList.toggle("ttVerticalArrowTop", !ttUp);
 		tooltip.style.setProperty("max-height", maxHeight + "px");
@@ -155,7 +171,7 @@ PlaceDialog = {
 			arrowStyle = window.getComputedStyle(tooltip, "::after"),
 			arrowDim = parseFloat(arrowStyle.getPropertyValue("--ttArrow-dim")),
 			offset = (arrowDim / 2) - 3,
-			ttPadding = parseFloat(window.getComputedStyle(tooltip.firstElementChild).getPropertyValue("--ttPadding")),
+			ttPadding = BAL.convertRemToPixel(parseFloat(window.getComputedStyle(tooltip.firstElementChild).getPropertyValue("--ttPadding"))),
 			minWidthTt = (2 * ttPadding) + offset;
 
 		let horizontalSpace, horizontalDir, horizontalPos;

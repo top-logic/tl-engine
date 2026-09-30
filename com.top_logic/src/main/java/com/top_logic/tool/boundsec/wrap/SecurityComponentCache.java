@@ -12,6 +12,7 @@ import java.util.Map;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
@@ -20,13 +21,14 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutConstants;
-import com.top_logic.tool.boundsec.BoundChecker;
+import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 
 /**
- * Cache for {@link PersBoundComp} objects.
- * 
+ * Cache for the persistent security components ({@link PersBoundComp}) of the application.
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Security component cache")
 public class SecurityComponentCache extends KBBasedManagedClass<SecurityComponentCache.Config> {
 
 	/**
@@ -102,21 +104,37 @@ public class SecurityComponentCache extends KBBasedManagedClass<SecurityComponen
 	}
 
 	/**
-	 * Searches for the {@link PersBoundComp} for the given {@link BoundChecker}.
+	 * Searches for the {@link PersBoundComp} for the given {@link CompoundSecurityLayout}.
 	 * 
-	 * @param boundChecker
-	 *        The {@link BoundChecker} to {@link PersBoundComp} for.
+	 * @param securityLayout
+	 *        The {@link CompoundSecurityLayout} to get {@link PersBoundComp} for.
 	 * 
 	 * @return May be <code>null</code>, when there is no {@link PersBoundComp} for the given
-	 *         {@link BoundChecker}.
+	 *         {@link CompoundSecurityLayout}.
 	 */
-	public static PersBoundComp lookupPersBoundComp(BoundChecker boundChecker) {
-		ComponentName theSecID = boundChecker.getSecurityId();
+	public static PersBoundComp lookupPersBoundComp(CompoundSecurityLayout securityLayout) {
+		ComponentName theSecID = securityLayout.getSecurityId();
 		if (theSecID != null && !LayoutConstants.isSyntheticName(theSecID)) {
+			PersBoundComp persBoundComp;
 			try {
-				return getSecurityComponent(theSecID);
+				persBoundComp = getSecurityComponent(theSecID);
 			} catch (Exception e) {
 				Logger.error("failed to setupPersBoundComp '" + theSecID + "'", e, SecurityComponentCache.class);
+				return null;
+			}
+			if (persBoundComp != null) {
+				return persBoundComp;
+			}
+			ComponentName delegateID = ((CompoundSecurityLayout.Config) securityLayout.getConfig()).getSecurityId();
+			if (delegateID != null) {
+				/* The component to delegate to may delegate itself to a different component. */
+				LayoutComponent delegateComponent = securityLayout.getMainLayout().getComponentByName(delegateID);
+				if (delegateComponent instanceof CompoundSecurityLayout delegateSecurityLayout) {
+					return lookupPersBoundComp(delegateSecurityLayout);
+				}
+				Logger.error("Component to delegate to is no " + CompoundSecurityLayout.class.getSimpleName() + ": '"
+						+ delegateComponent + "'",
+					SecurityComponentCache.class);
 			}
 		}
 		return null;

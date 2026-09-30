@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28298_update_account"
+		module="tl-layout-formeditor"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28298_update_account"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_28298_update_account"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_27517_fix_legacy_migrations"
+			module="tl-layout-formeditor"
+		/>
+	</dependencies>
+	<processors>
+		<remove-annotations name="tl.accounts:Person">
+			<annotation class="com.top_logic.element.layout.formeditor.definition.TLFormDefinition"/>
+		</remove-annotations>
+		<remove-annotations name="Contacts:PersonContact">
+			<annotation class="com.top_logic.element.layout.formeditor.definition.TLFormDefinition"/>
+		</remove-annotations>
+		<add-annotations name="tl.accounts:Person">
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="tl.accounts:Person#name"
+							type="tl.core:String"
+							visibility="read-only"
+						/>
+						<field
+							attribute="authDeviceID"
+							fullQualifiedName="tl.accounts:Person#authDeviceID"
+							type="tl.core:String"
+							visibility="read-only"
+						/>
+						<code>
+							<impl class="com.top_logic.element.layout.formeditor.implementation.additional.IsAdminProvider"/>
+						</code>
+						<field
+							attribute="restrictedUser"
+							fullQualifiedName="tl.accounts:Person#restrictedUser"
+							type="tl.core:Boolean"
+						/>
+						<field class="com.top_logic.element.layout.formeditor.implementation.additional.GroupsField"
+							attribute="groups"
+							fullQualifiedName="tl.accounts:Person#groups"
+							type="tl.accounts:Group"
+							visibility="editable"
+						/>
+						<attribute-reference class="com.top_logic.layout.formeditor.accounts.RepresentativeField"
+							item="account -> $account.get(`tl.accounts:Person#representativeGroup`)"
+							name="members"
+							type="tl.accounts:Group"
+						/>
+						<field
+							attribute="deputyFor"
+							fullQualifiedName="tl.accounts:Person#deputyFor"
+							type="tl.accounts:GroupMember"
+						/>
+						<field
+							attribute="timezone"
+							fullQualifiedName="tl.accounts:Person#timezone"
+							type="tl.util:TimeZone"
+						/>
+						<field
+							attribute="language"
+							fullQualifiedName="tl.accounts:Person#language"
+							type="tl.util:Language"
+						/>
+						<field
+							attribute="country"
+							fullQualifiedName="tl.accounts:Person#country"
+							type="tl.util:Country"
+						/>
+						<code>
+							<impl class="com.top_logic.model.form.implementation.additional.StartPageAutomatism"/>
+						</code>
+						<code>
+							<impl class="com.top_logic.model.form.implementation.additional.CurrentStartPage"/>
+						</code>
+						<code>
+							<impl class="com.top_logic.model.form.implementation.additional.ThemeSelector"/>
+						</code>
+						<code>
+							<impl class="com.top_logic.model.form.implementation.additional.AutoTranslation"/>
+						</code>
+					</form>
+				</form-definition>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="Contacts:PersonContact">
+			<annotations>
+				<form-definition>
+					<form>
+						<group>
+							<field
+								attribute="firstname"
+								fullQualifiedName="Contacts:Contact.Person#firstname"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="name"
+								fullQualifiedName="Contacts:Contact.all#name"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="title"
+								fullQualifiedName="Contacts:Contact.Person#title"
+								type="tl.core:String"
+							/>
+							<label key="dynamic.1f5a7ca7-6bc0-405d-b2f8-6ebf4e87dbe8">
+								<en>User data</en>
+								<de>Nutzerdaten</de>
+							</label>
+						</group>
+						<foreign-objects
+							items="x -> $x.get(`Contacts:PersonContact#account`)"
+							label="`tl.accounts:Person`.toString()"
+							type="tl.accounts:Person"
+						/>
+						<group>
+							<field
+								attribute="email"
+								fullQualifiedName="Contacts:Contact.all#email"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="phone"
+								fullQualifiedName="Contacts:Contact.all#phone"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="phone_mobile"
+								fullQualifiedName="Contacts:Contact.Person#phone_mobile"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="phone_private"
+								fullQualifiedName="Contacts:Contact.Person#phone_private"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="fax"
+								fullQualifiedName="Contacts:Contact.Person#fax"
+								type="tl.core:String"
+							/>
+							<field
+								attribute="company"
+								fullQualifiedName="Contacts:Contact.Person#company"
+								type="Contacts:Contact.Company"
+							/>
+							<label key="dynamic.10c2421b-b394-4ddc-bad2-d07e2c18b5a3">
+								<en>Contact details</en>
+								<de>Kontaktdaten</de>
+							</label>
+						</group>
+						<group>
+							<field
+								attribute="remarks"
+								fullQualifiedName="Contacts:Contact.all#remarks"
+								type="tl.core:String"
+							>
+								<annotations>
+									<label-position value="hide-label"/>
+								</annotations>
+							</field>
+							<label key="dynamic.ce2445e8-bec3-40e9-b69f-788a7c1cc566">
+								<en>Remarks</en>
+								<de>Bemerkungen</de>
+							</label>
+						</group>
+						<other-attributes/>
+					</form>
+				</form-definition>
+			</annotations>
+		</add-annotations>
+	</processors>
+</migration>

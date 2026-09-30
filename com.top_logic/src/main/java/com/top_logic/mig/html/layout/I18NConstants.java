@@ -5,6 +5,7 @@
  */
 package com.top_logic.mig.html.layout;
 
+import com.top_logic.basic.i18n.CustomKey;
 import java.nio.file.WatchService;
 
 import com.top_logic.basic.util.ResKey;
@@ -48,10 +49,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COMPONENT_REPLACING_AFTER_DELETION_ERROR;
 
 	/**
-	 * Error message if a component deletion could not be executed because of outer component
-	 * references.
+	 * @en Component cannot be deleted because outer components reference it: {0}
 	 */
-	public static ResKey OUTER_REFERENCES_DELETION_ERROR;
+	public static ResKey1 OUTER_REFERENCES_DELETION_ERROR__LAYOUTS;
 
 	/**
 	 * Title key for the dialog to edit an existent component.
@@ -100,7 +100,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey BOOKMARK_NOT_FOUND;
 	
-	public static ResKey ERROR_NOT_IN_STATE = legacyKey("tl.executable.not.inState");
+	@CustomKey("tl.executable.not.inState")
+	public static ResKey ERROR_NOT_IN_STATE;
 
 	public static ResKey1 ERROR_DUPLICATE_SEPARATOR__SEPARATOR;
 
@@ -131,6 +132,26 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Message of the confirmation dialog to delete a component.
 	 */
 	public static ResKey1 DELETE_COMPONENT_CONFIRMATION__NAME;
+
+	/**
+	 * @en There is already a channel with name {0}.
+	 */
+	public static ResKey1 DUPLICATE_CHANNEL_NAME__NAME;
+
+	/**
+	 * @en Configured component "{0}".
+	 */
+	public static ResKey1 CONFIGURED_COMPONENT__NAME;
+
+	/**
+	 * @en Deleted form of "{0}".
+	 */
+	public static ResKey1 DELETED_FORM__COMPONENT;
+
+	/**
+	 * @en Deleted component "{0}".
+	 */
+	public static ResKey1 DELETED_COMPONENT__NAME;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -20,6 +20,8 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Type;
+import com.top_logic.model.migration.data.TypePart;
 
 /**
  * {@link MigrationProcessor} creating a primitive attribute.
@@ -66,7 +68,7 @@ public class CreateTLPropertyProcessor extends AbstractCreateTypePartProcessor<C
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			internalDoMigration(log, connection, tlModel);
 			return true;
 		} catch (Exception ex) {
@@ -77,13 +79,34 @@ public class CreateTLPropertyProcessor extends AbstractCreateTypePartProcessor<C
 
 	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
+
+		Type owner = _util.getTLTypeOrNull(connection, partName.getOwner());
+		if (owner == null) {
+			log.info("Owner type for property does not exists: " + partName.getName(), Log.WARN);
+			return;
+		}
+
+		TypePart existing = _util.getTLTypePart(connection, owner, partName.getPartName());
+		if (existing != null) {
+			log.info("Property already exists: " + partName.getName(), Log.WARN);
+			return;
+		}
+
 		QualifiedTypeName targetType = (getConfig().getType());
+
+		Type target = _util.getTLTypeOrNull(connection, targetType);
+		if (target == null) {
+			log.info("Type of property '" + partName.getName() + "' does not exist: " + targetType.getName(), Log.WARN);
+			return;
+		}
+
 		_util.createTLProperty(log, connection, partName,
-			targetType, getConfig().isMandatory(), getConfig().isMultiple(),
+			targetType, getConfig().isMandatory(), getConfig().isAbstract(), getConfig().isMultiple(),
 			getConfig().isBag(), getConfig().isOrdered(), getConfig());
 		if (tlModel != null) {
 			MigrationUtils.createAttribute(log, tlModel, partName, targetType, nullIfUnset(Config.MANDATORY),
 				nullIfUnset(Config.MULTIPLE), nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED),
+				nullIfUnset(Config.ABSTRACT),
 				getConfig());
 		}
 		log.info("Created part " + _util.qualifiedName(partName));

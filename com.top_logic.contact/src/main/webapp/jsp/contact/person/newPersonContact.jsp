@@ -11,7 +11,6 @@ autoFlush="true"
 %><%@taglib uri="ajaxform" prefix="form"
 %><layout:html>
 	<layout:head>
-		
 		<basic:cssLink/>
 	</layout:head>
 	<layout:body>

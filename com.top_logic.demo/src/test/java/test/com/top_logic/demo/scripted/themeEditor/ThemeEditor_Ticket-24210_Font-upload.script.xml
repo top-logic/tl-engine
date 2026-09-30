@@ -64,7 +64,7 @@
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 				<values>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="modern"
+						value="core"
 					/>
 				</values>
 			</value>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tabbar.template.xml"
+>
+	<arguments>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/ticketsTab.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/milestonesTab.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/notesTab.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/peopleTab.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

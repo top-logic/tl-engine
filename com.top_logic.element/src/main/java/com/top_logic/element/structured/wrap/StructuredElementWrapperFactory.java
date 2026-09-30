@@ -55,7 +55,7 @@ import com.top_logic.model.util.TLModelUtil;
  * 
  * TODO better cache the root element ?
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class StructuredElementWrapperFactory extends StructuredElementFactory {
 
@@ -192,8 +192,8 @@ public class StructuredElementWrapperFactory extends StructuredElementFactory {
 	}
 
 	@Override
-	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues) {
-		TLObject result = super.createObject(type, context, initialValues);
+	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues, TLID id) {
+		TLObject result = super.createObject(type, context, initialValues, id);
 		if (result instanceof TLScope) {
 			setupLocalScope((TLScope) result);
 		}

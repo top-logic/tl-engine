@@ -5,11 +5,12 @@
     <relativePath>../tl-parent-app/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-app-internal</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-demo</artifactId>
-  <description>The technical TopLogic demo "kitchen sink".</description>
+	<name>${project.artifactId}</name>
+	<description>The technical TopLogic demo "kitchen sink".</description>
   <url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
@@ -19,11 +20,7 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-themes-dezent</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-themes-modern</artifactId>
+      <artifactId>tl-bpe-app</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -63,7 +60,7 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-graph-diagramjs-server</artifactId>
+      <artifactId>tl-graphic-blocks-server</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -94,8 +91,8 @@
       <artifactId>tl-xio</artifactId>
     </dependency>
     <dependency>
-	    <groupId>javax.mail</groupId>
-	    <artifactId>javax.mail-api</artifactId>
+	    <groupId>jakarta.mail</groupId>
+	    <artifactId>jakarta.mail-api</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -129,6 +126,14 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-service-jms-ibmmq</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-kafka</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-security-selfservice</artifactId>
+    </dependency>
   </dependencies>
   
 	<build>
@@ -136,8 +141,7 @@
 			<plugin>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-maven-plugin</artifactId>
-				<version>${tl.version}</version>
-	
+
 				<executions>
 					<execution>
 						<id>generate-binding</id>
@@ -202,7 +206,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore />
 									</action>
 								</pluginExecution>
 							</pluginExecutions>

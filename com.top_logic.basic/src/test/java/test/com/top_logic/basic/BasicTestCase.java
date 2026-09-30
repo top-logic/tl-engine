@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -102,7 +103,7 @@ public class BasicTestCase extends TestCase implements InContext {
 
 	private static final Pattern SPECIAL_CHARACTERS = Pattern.compile("[^ _.$a-zA-Z0-9]+");
 
-	private static final String LATIN_CHARS = "öäüÖÄÜßáàéèíìóòúù€";
+	private static final String LATIN_CHARS = "Ã¶Ã¤Ã¼Ã–Ã„ÃœÃŸÃ¡Ã Ã©Ã¨Ã­Ã¬Ã³Ã²ÃºÃ¹Â€";
 
 	/** Use with {@link Assert#assertEquals(double, double, double)} */
     public static final double EPSILON = 1E-20;
@@ -194,8 +195,6 @@ public class BasicTestCase extends TestCase implements InContext {
         if (SHOW_SPACE) {
             Runtime rt = Runtime.getRuntime();
             rt.gc();
-            rt.runFinalization();
-            rt.gc();
             space = rt.freeMemory();
         }
     }
@@ -231,8 +230,6 @@ public class BasicTestCase extends TestCase implements InContext {
             Runtime rt = Runtime.getRuntime();
             long free1 =  rt.freeMemory();
             rt.gc();
-            rt.runFinalization();
-            rt.gc();
             long free2 =  rt.freeMemory();
             long garbage = free2 - free1;
             long lost    = free2 - space; // Cannot be recycled ...
@@ -247,6 +244,35 @@ public class BasicTestCase extends TestCase implements InContext {
     
     public static AssertionFailedError fail(String message, Throwable cause) {
 		throw (AssertionFailedError) new AssertionFailedError(message).initCause(cause);
+	}
+
+	/**
+	 * Polls the given condition until it becomes <code>true</code> or the given timeout elapses.
+	 *
+	 * <p>
+	 * Use this to synchronize with asynchronous processing whose completion time is not
+	 * deterministic (e.g. file-system watch events). The condition is re-evaluated repeatedly with
+	 * a short delay between checks, so the happy path returns within a few milliseconds while a
+	 * slow event is still observed as soon as it arrives.
+	 * </p>
+	 *
+	 * @param timeoutMillis
+	 *        The maximum time to wait in milliseconds.
+	 * @param condition
+	 *        The condition to poll.
+	 * @return Whether the condition became <code>true</code> within the timeout.
+	 */
+	public static boolean awaitUntil(long timeoutMillis, BooleanSupplier condition) throws InterruptedException {
+		long deadline = System.currentTimeMillis() + timeoutMillis;
+		while (true) {
+			if (condition.getAsBoolean()) {
+				return true;
+			}
+			if (System.currentTimeMillis() >= deadline) {
+				return false;
+			}
+			Thread.sleep(5);
+		}
 	}
 
     public static void arrayEquals(String msg, int a[], int b[]) {
@@ -1611,9 +1637,6 @@ public class BasicTestCase extends TestCase implements InContext {
 					elapsed += System.currentTimeMillis();
 					waitTime -= elapsed;
 					if (waitTime <= 0) {
-						// Last resort to free resources.
-						executor.stop();
-						
 						throw new AssertionFailedError(optionalMessagePrefix(message) +
 							"Test execution did not terminate in time.");
 					}
@@ -2373,7 +2396,6 @@ public class BasicTestCase extends TestCase implements InContext {
 	@Deprecated
 	public static void provokeOutOfMemory() {
 		for (int i = 0; i < 3; i++) {
-			System.runFinalization();
 			System.gc();
 			internalProvokeOOM(128 * 1024);
 		}

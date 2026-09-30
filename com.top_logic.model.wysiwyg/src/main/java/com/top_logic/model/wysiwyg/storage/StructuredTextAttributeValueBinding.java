@@ -25,13 +25,15 @@ import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.xml.XMLStreamUtil;
 import com.top_logic.basic.xml.log.XMLStreamLog;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
+import com.top_logic.layout.wysiwyg.ui.StructuredTextValueBinding;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.io.AttributeValueBinding;
 
 /**
  * {@link AttributeValueBinding} for {@link StructuredText} values.
  *
- * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ * @see StructuredTextValueBinding A copy of this code for XML serialization in context of typed
+ *      configuration.
  */
 public class StructuredTextAttributeValueBinding implements AttributeValueBinding<StructuredText> {
 

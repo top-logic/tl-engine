@@ -12,6 +12,7 @@ import java.util.Set;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.layout.SingleSelectionModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.component.model.SingleSelectionListener;
 import com.top_logic.util.Utils;
@@ -21,9 +22,10 @@ import com.top_logic.util.Utils;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionModel implements SingleSelectionModel {
+public class DefaultSingleSelectionModel<T> extends AbstractRestrainedSelectionModel<T>
+		implements SingleSelectionModel<T> {
 
-	private Object _selected;
+	private T _selected;
 
 	/**
 	 * Create a new {@link DefaultSingleSelectionModel}.
@@ -38,7 +40,7 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 	 * @param selectionFilter
 	 *        The {@link Filter filter}, which defines, whether an object is selectable.
 	 */
-	public DefaultSingleSelectionModel(Filter<?> selectionFilter, SelectionModelOwner owner) {
+	public DefaultSingleSelectionModel(Filter<? super T> selectionFilter, SelectionModelOwner owner) {
 		super(owner);
 		setSelectionFilter(selectionFilter);
 	}
@@ -48,13 +50,11 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 		return false;
 	}
 
-	/**
-	 * @see com.top_logic.layout.SingleSelectionModel#isSelectable(java.lang.Object)
-	 */
 	@Override
-	public boolean isSelectable(Object obj) {
-		return getSelectionFilter().accept(obj)
-			&& (_selected != null ? getDeselectionFilter().accept(_selected) : true);
+	public boolean isSelectable(T obj) {
+		return super.isSelectable(obj)
+			// The current selection can be removed.
+			&& (_selected == null || isDeselectable(_selected));
 	}
 	
 	/**
@@ -64,10 +64,10 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 	 * If the filter is null, then every object is selectable.
 	 */
 	@Override
-	public void setSelectionFilter(Filter<?> selectionFilter) {
-		Filter<Object> newFilter = nonNull(selectionFilter);
+	public void setSelectionFilter(Filter<? super T> selectionFilter) {
+		Filter<? super T> newFilter = nonNull(selectionFilter);
 
-		Object currentSelection = _selected;
+		T currentSelection = _selected;
 		if ((currentSelection != null) && (!newFilter.accept(currentSelection))) {
 			internalSetSelected(null);
 		}
@@ -76,23 +76,34 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 	}
 
 	@Override
-	public boolean isSelected(Object obj) {
+	public boolean isSelected(T obj) {
 		return (_selected != null) && _selected.equals(obj);
 	}
 
 	@Override
-	public void setSelected(Object touchedObject, boolean select) {
+	public void setSelected(T touchedObject, boolean select) {
 		if (touchedObject == null) {
 			throw new IllegalArgumentException("Selected object may not be null.");
 		}
 		
-		if (!isSelectable(touchedObject) || isSelectionNotChangable()) {
+		if (isSelectionFixed()) {
 			return;
 		}
+
 		if (select) {
-			if (!touchedObject.equals(_selected)) {
-				internalSetSelected(touchedObject);
-            }
+			if (touchedObject.equals(_selected)) {
+				// touchedObject is already the selected item
+				return;
+			}
+			if (!isSelectable(touchedObject)) {
+				// No valid new selection.
+
+				// Note: Evaluating the selection filter must only happen on objects that are about
+				// to be selected, since de-selection naturally occurs on deleted objects.
+				return;
+			}
+
+			internalSetSelected(touchedObject);
 		} else {
 			if (touchedObject.equals(_selected)) {
 				internalSetSelected(null);
@@ -101,7 +112,7 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 	}
 
 	@Override
-	public void removeFromSelection(Collection<?> objects) {
+	public void removeFromSelection(Collection<? extends T> objects) {
 		if (_selected == null) {
 			// Nothing selected
 			return;
@@ -112,7 +123,7 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 	}
 
 	@Override
-	public void addToSelection(Collection<?> objects) {
+	public void addToSelection(Collection<? extends T> objects) {
 		switch (objects.size()) {
 			case 0:
 				break;
@@ -133,8 +144,8 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 		}
 	}
 
-	private boolean isSelectionNotChangable() {
-		return _selected != null ? !getDeselectionFilter().accept(_selected) : false;
+	private boolean isSelectionFixed() {
+		return _selected != null ? !isDeselectable(_selected) : false;
 	}
 
 	/**
@@ -143,8 +154,8 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 	 * @param newSelection
 	 *        the new selection to set. <code>null</code> means no selection.
 	 */
-	private void internalSetSelected(Object newSelection) {
-		Set<?> formerlySelected = getSelection();
+	private void internalSetSelected(T newSelection) {
+		Set<? extends T> formerlySelected = getSelection();
 		_selected = newSelection;
 		fireSelectionChanged(formerlySelected);
 	}
@@ -153,7 +164,7 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 	 * @see com.top_logic.layout.SingleSelectionModel#setSingleSelection(java.lang.Object)
 	 */
 	@Override
-	public final void setSingleSelection(Object obj) {
+	public final void setSingleSelection(T obj) {
 		if (obj == null) {
 			clear();
 		} else {
@@ -162,7 +173,7 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 	}
 
 	@Override
-	public void setSelection(Set<?> newSelection) {
+	public void setSelection(Set<? extends T> newSelection) {
 		if (newSelection == null) {
 			throw new IllegalArgumentException("The selection set must not be null.");
 		}
@@ -182,7 +193,7 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 
 	@Override
 	public void clear() {
-		if (_selected == null || isSelectionNotChangable()) {
+		if (_selected == null || isSelectionFixed()) {
 			return;
 		}
 		internalSetSelected(null);
@@ -192,17 +203,17 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 	 * @see com.top_logic.layout.SingleSelectionModel#getSingleSelection()
 	 */
 	@Override
-	public Object getSingleSelection() {
+	public T getSingleSelection() {
 		return _selected;
 	}
 
 	@Override
-	public Set<?> getSelection() {
+	public Set<? extends T> getSelection() {
 		if (_selected != null) {
 			return Collections.singleton(_selected);
 		}
 		else {
-			return Collections.EMPTY_SET;
+			return Collections.emptySet();
 		}
 	}
 	
@@ -210,16 +221,16 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 	 * @see com.top_logic.layout.SingleSelectionModel#addSingleSelectionListener(com.top_logic.layout.component.model.SingleSelectionListener)
 	 */
 	@Override
-	public boolean addSingleSelectionListener(SingleSelectionListener listener) {
-		return addSelectionListener(new SelectionListenerAdaptar(listener));
+	public boolean addSingleSelectionListener(SingleSelectionListener<T> listener) {
+		return addSelectionListener(new SelectionListenerAdaptar<>(listener));
 	}
 
 	/**
 	 * @see com.top_logic.layout.SingleSelectionModel#removeSingleSelectionListener(com.top_logic.layout.component.model.SingleSelectionListener)
 	 */
 	@Override
-	public boolean removeSingleSelectionListener(SingleSelectionListener listener) {
-		return removeSelectionListener(new SelectionListenerAdaptar(listener));
+	public boolean removeSingleSelectionListener(SingleSelectionListener<T> listener) {
+		return removeSelectionListener(new SelectionListenerAdaptar<>(listener));
 	}
 	
 	/**
@@ -228,18 +239,19 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 	 * 
 	 * @author <a href=mailto:daniel.busche@top-logic.com>Daniel Busche</a>
 	 */
-	private static final class SelectionListenerAdaptar implements SelectionListener {
+	private static final class SelectionListenerAdaptar<T> implements SelectionListener<T> {
 
-		private final SingleSelectionListener listener;
+		private final SingleSelectionListener<T> listener;
 
-		public SelectionListenerAdaptar(SingleSelectionListener listener) {
+		public SelectionListenerAdaptar(SingleSelectionListener<T> listener) {
 			this.listener = listener;
 		}
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-			listener.notifySelectionChanged((DefaultSingleSelectionModel) model, CollectionUtil.getFirst(formerlySelectedObjects), CollectionUtil
-					.getFirst(selectedObjects));
+		public void notifySelectionChanged(SelectionModel<T> model, SelectionEvent<T> event) {
+			listener.notifySelectionChanged((DefaultSingleSelectionModel<T>) model,
+				CollectionUtil.getFirst(event.getOldSelection()), CollectionUtil
+					.getFirst(event.getNewSelection()));
 		}
 		
 		@Override
@@ -250,7 +262,7 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 			if (!(obj instanceof SelectionListenerAdaptar)) {
 				return false;
 			}
-			return Utils.equals(listener, ((SelectionListenerAdaptar) obj).listener);
+			return Utils.equals(listener, ((SelectionListenerAdaptar<?>) obj).listener);
 		}
 		
 		@Override

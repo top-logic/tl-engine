@@ -95,8 +95,23 @@ public class DBSchemaUtils {
 	 *         If access to the database fails.
 	 */
 	public static boolean exists(PooledConnection db, DBTable table) throws SQLException {
+		return exists(db, table.getDBName());
+	}
+
+	/**
+	 * Test, whether a table with the same name as the given one exists in the given database.
+	 * 
+	 * @param db
+	 *        Connection of the database to test in.
+	 * @param tableName
+	 *        Database table name.
+	 * @return Whether the given table exists.
+	 * @throws SQLException
+	 *         If access to the database fails.
+	 */
+	public static boolean exists(PooledConnection db, String tableName) throws SQLException {
 		DBHelper sqlDialect = db.getSQLDialect();
-		final String checkStatement = "SELECT * FROM " + sqlDialect.tableRef(table.getDBName()) + " WHERE 1=0";
+		final String checkStatement = "SELECT * FROM " + sqlDialect.tableRef(tableName) + " WHERE 1=0";
 		Savepoint savePoint = sqlDialect.setSavepoint(db);
 		try (Statement checkStmt = db.createStatement()) {
 			try {

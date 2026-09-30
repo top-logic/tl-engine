@@ -20,7 +20,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -37,7 +37,7 @@ import com.top_logic.util.sched.task.result.TaskResult.ResultType;
  * its work by calling {@link #perform()}. If the token context cannot be aquired, the task will
  * pause and restart as defined in {@link TaskImpl}.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class TokenBasedTask<C extends TokenBasedTask.Config<?>> extends TaskImpl<C> implements InContext {
 
@@ -165,7 +165,8 @@ public abstract class TokenBasedTask<C extends TokenBasedTask.Config<?>> extends
             Transaction theTX = null;
 
             if (useCommit) {
-            	theTX = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+				theTX = PersistencyLayer.getKnowledgeBase()
+					.beginTransaction(I18NConstants.TASK_STARTED__TASK.fill(getName()));
             }
 
             try {

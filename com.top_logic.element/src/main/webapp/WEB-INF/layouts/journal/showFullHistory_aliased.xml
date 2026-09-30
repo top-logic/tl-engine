@@ -22,13 +22,13 @@
 	>
 		<components>
 			<component class="${componentClass}"
-				buttonComponent="${namePrefix}showFullSupplierHistoryDialogButtons"
+				buttonbar="true"
 				isSecurityMaster="true"
 				model="selection(${master})"
 				name="${namePrefix}showFullSupplierHistoryDialog"
 				page="/jsp/journal/ShowHistoryDialog.jsp"
 				resPrefix="layouts.journal.showFullHistory_aliased.showFullSupplierHistoryDialog."
-				securityProviderClass="master"
+				securityObject="ref:master"
 			>
 				<!-- placeholder which is necessary to enable custumized tables in derived classes. -->
 				<tables>
@@ -37,7 +37,6 @@
 					</table>
 				</tables>
 			</component>
-			<buttonbar name="${namePrefix}showFullSupplierHistoryDialogButtons"/>
 		</components>
 	</securityLayout>
 </template>

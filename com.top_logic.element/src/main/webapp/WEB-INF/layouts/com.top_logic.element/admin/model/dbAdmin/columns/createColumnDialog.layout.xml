@@ -19,7 +19,7 @@
 	</dialogInfo>
 
 	<form name="Form"
-		buttonComponent="Buttons"
+		buttonbar="true"
 	>
 		<titleKey>
 			<de>Neue Spalte</de>
@@ -81,6 +81,4 @@
 			</button>
 		</buttons>
 	</form>
-
-	<buttonbar name="Buttons"/>
 </layout>

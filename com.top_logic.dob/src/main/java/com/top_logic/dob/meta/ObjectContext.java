@@ -18,29 +18,32 @@ import com.top_logic.dob.identifier.ObjectKey;
 public interface ObjectContext extends IdentifiedObject {
 
 	/**
-	 * The repository to resolve {@link MetaObject}s valid for the context in
-	 * which the data are accessed
+	 * The repository to resolve {@link MetaObject}s valid for the context in which the data is
+	 * accessed.
 	 */
 	MORepository getTypeRepository();
 	
 	/**
-	 * Method to resolve the object which has the given <code>objectKey</code>
-	 * as object key
+	 * Resolves the object which the given {@link IdentifiedObject#tId() identifier}.
+	 * 
+	 * @see IdentifiedObject#tId()
 	 */
 	IdentifiedObject resolveObject(ObjectKey objectKey);
 	
 	/**
-	 * Returns an {@link ObjectKey} which represents the same object, but which
-	 * is already known by the system.
+	 * Retrieves an {@link ObjectKey} that is already known by the system and represents the same
+	 * object as the given key.
 	 * 
-	 * This method can be used to get a shared variant of the given key to omit
-	 * duplicate keys for the same object.
+	 * <p>
+	 * This method can be used to get a shared variant of the given key to omit duplicate keys for
+	 * the same object.
+	 * </p>
 	 * 
 	 * @param key
 	 *        the key to replace by a known one
-	 *        
-	 * @return a known key which represents the same object or the given key if
-	 *         no equal key is known.
+	 * 
+	 * @return a known key which represents the same object or the given key if no equal key is
+	 *         known.
 	 */
 	ObjectKey getKnownKey(ObjectKey key);
 

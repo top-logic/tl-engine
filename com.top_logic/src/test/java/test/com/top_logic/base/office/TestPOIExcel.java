@@ -50,6 +50,7 @@ import com.top_logic.base.office.excel.POIColumnWidthDescription;
 import com.top_logic.base.office.excel.POIExcelAccess;
 import com.top_logic.base.office.excel.POIExcelUtil;
 import com.top_logic.base.office.excel.POIRowGroupDescription;
+import com.top_logic.base.office.excel.handler.POITypeProvider;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.col.MapBuilder;
 import com.top_logic.basic.col.MapUtil;
@@ -66,7 +67,7 @@ import com.top_logic.dsa.util.MimeTypes;
 /**
  * Tests for the POI excel classes.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 @SuppressWarnings("javadoc")
 public class TestPOIExcel extends AbstractPOIExcelTest {
@@ -85,10 +86,10 @@ public class TestPOIExcel extends AbstractPOIExcelTest {
 		ModuleLayoutConstants.SRC_TEST_DIR + "/test/com/top_logic/base/office/data/";
 
 	/** Template sheet for formula handling. */
-	private static final String FORMULA_SHEET = "Ausfüllen";
+	private static final String FORMULA_SHEET = "AusfÃ¼llen";
 
 //	/** Template sheet for filling in data. */
-//	private static final String FILL_SHEET = "Befüllen";
+//	private static final String FILL_SHEET = "BefÃ¼llen";
 
 	/** Header text for a merge region. */
 	private static final String TEST_VALUES_HEADER = "Testdaten programmatisch gesetzt";
@@ -634,16 +635,9 @@ public class TestPOIExcel extends AbstractPOIExcelTest {
 		return new File("./test/temp/" + aName + this.dateFormat.format(new Date()) + POIUtil.XLSX_SUFFIX);
     }
 
-	@SuppressWarnings({ "unused" })
     public static Test suite() {
-		Test test;
-		if (true) {
-			test = new TestSuite(TestPOIExcel.class);
-		} else {
-			test = TestSuite.createTest(TestPOIExcel.class, "testColumnAutoFilter");
-		}
-		test = ServiceTestSetup.createSetup(test, MimeTypes.Module.INSTANCE, DataAccessService.Module.INSTANCE);
-		return TLTestSetup.createTLTestSetup(test);
+		return TLTestSetup.createTLTestSetup(ServiceTestSetup.createSetup(new TestSuite(TestPOIExcel.class),
+			MimeTypes.Module.INSTANCE, DataAccessService.Module.INSTANCE, POITypeProvider.Module.INSTANCE));
     }
 
 }

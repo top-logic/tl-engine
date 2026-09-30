@@ -1,45 +1,64 @@
 <h2>Syntax</h2>
-<pre>	<code>$res-key.fill($value1,..., $valueN)
+
+<pre>
+	<code>$input.fill($value1,..., $valueN)
 </code>
 </pre>
-<h2>Description</h2>
-<p>Dynamic values can be embedded in a multilingual text. The syntax for this is defined via the <a href="https://docs.oracle.com/javase/8/docs/api/java/text/MessageFormat.html" target="_blank">Java message format</a>. If a multilingual text contains such placeholders (<code class="hljs inlineCode">{0}</code>, <code class="hljs inlineCode">{1}</code>,...), these can be assigned using the <code class="hljs inlineCode">fill</code> function.</p>
-<p>If not all parameters are occupied by the call of <code class="hljs inlineCode">fill</code>, the result contains still open parameters, which can be occupied in a further call of <code class="hljs inlineCode">fill</code>. This means that the two following expressions are equivalent:</p>
-<pre><code>$res-key.fill($value1, $value2).fill($value3, $value4)
 
-$res-key.fill($value1, $value2, $value3, $value4)</code></pre>
-<h2>Parameter</h2>
+<h2>Description</h2>
+
+<p>Dynamic values can be embedded in a text. The syntax for this is defined via the <a href="https://docs.oracle.com/javase/8/docs/api/java/text/MessageFormat.html" target="_blank">Java message format</a>. If a text contains such placeholders (<code class="hljs inlineCode">{0}</code>, <code class="hljs inlineCode">{1}</code>,...), these can be assigned using the function <code class="hljs inlineCode">fill(...)</code>.</p>
+
+<h2>Parameters</h2>
+
 <table class="tlDocTable">
- <thead>
-  <tr>
-   <th>Name</th>
-   <th>Type</th>
-   <th>Description</th>
-   <th>Mandatory</th>
-   <th>Default</th>
-  </tr>
- </thead>
- <tbody>
-  <tr>
-   <td>res-key</td>
-   <td>Business object</td>
-   <td>A resource key with at least one parameter that can be filled dynamically.</td>
-   <td>yes</td>
-   <td></td>
-  </tr>
-  <tr>
-   <td>values</td>
-   <td>String</td>
-   <td>Dynamic values for the placeholders within the <code class="hljs inlineCode">res-key</code>.</td>
-   <td>yes</td>
-   <td></td>
-  </tr>
- </tbody>
+	<thead>
+		<tr>
+			<th>name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>String or internationalized text</td>
+			<td>A text with at least one parameter that can be filled dynamically.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>values</td>
+			<td>Number/string/object</td>
+			<td>Dynamic values for the placeholders to be replaced.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+	</tbody>
 </table>
+
 <h2>Return value</h2>
-<p><span style="color:#3498db"><strong>Type:</strong></span> String</p>
-<p>A multilingual text with parameters inserted.</p>
-<h2>Examples</h2>
-<pre><code>#("Die Antwort lautet {0}."@de, "{0} is the answer."@en).fill(42)</code></pre>
-<p><strong><span style="color:#3498db">Output German:</span></strong> Die Antwort lautet 42.</p>
-<p><span style="color:#3498db"><strong>Output English:</strong></span> 42 is the answer.</p>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> String or internationalized text (depending on the type of input)</p>
+
+<p>Text with inserted parameters.</p>
+
+<h2>Example with internationalized text</h2>
+
+<pre>
+<code>#("Die Antwort lautet {0}."@de, "{0} is the answer."@en).fill(42)</code></pre>
+
+<p><strong><span style="color:#3498db">Output German:</span></strong> <code class="hljs inlineCode">"Die Antwort lautet 42."</code></p>
+
+<p><span style="color:#3498db"><strong>Output English:</strong></span> <code class="hljs inlineCode">"42 is the answer."</code></p>
+
+<h2>Example with simple character string</h2>
+
+<pre>
+<code>"{0} is the answer.".fill(42)</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">"42 is the answer.</code></p>
+
+<p>If many texts are to be generated with the same pattern, the variant with <a class="tlObject" href="?page=messageFormat&amp;uuid=b82a5829-0daa-4b53-aec0-ff6d24107b83">message format</a> is more efficient.</p>

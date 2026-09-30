@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<layout name="dynamicLayoutDemo">
+<layout name="dynamicLayoutDemo"
+	cancelAction="closeModalDialog"
+	toolbar="true"
+>
 	<components>
 		<component class="com.top_logic.demo.layout.dynamic.demo.DynamicLayoutSelectComponent"
 			name="layoutSelectDemo"
 			page="/jsp/layout/demo/dynamicLayoutDemo.jsp"
 			resPrefix="layouts.layoutdemo.dynamicLayout.dynamicLayoutDemo.layoutSelectDemo."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			toolbar="false"
 		>
 			<layouts>

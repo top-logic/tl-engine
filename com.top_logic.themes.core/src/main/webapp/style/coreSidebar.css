@@ -1,0 +1,7 @@
+.licenseContent {
+	background: var(--support-danger);
+	color: var(--text-on-color);
+	padding-top: 8px;
+	padding-bottom: 8px;
+	border-radius: var(--corner-radius);
+}

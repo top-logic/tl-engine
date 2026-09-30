@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.base.accesscontrol.ApplicationPages;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
@@ -136,7 +136,7 @@ public class LogoutTimerControl extends AbstractControlBase {
 			out.write(", ");
 			out.writeInt(ApplicationConfig.getInstance().getConfig(Config.class).getCountingSeconds());
 			out.write(", ");
-			out.writeJsString(context.getContextPath() + ApplicationPages.getInstance().getLogoutPage());
+			out.writeJsString(context.getContextPath() + ApplicationPages.getInstance().getLoginPage());
 			out.write(");");
 			out.endScript();
 		}

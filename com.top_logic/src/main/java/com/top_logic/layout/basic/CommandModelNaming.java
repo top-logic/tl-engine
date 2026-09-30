@@ -7,7 +7,7 @@ package com.top_logic.layout.basic;
 
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -18,7 +18,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
-public class CommandModelNaming extends AbstractModelNamingScheme<CommandModel, CommandModelNaming.CommandModelName> {
+public class CommandModelNaming extends AbstractGlobalModelNamingScheme<CommandModel, CommandModelNaming.CommandModelName> {
 
 	private static final Property<CommandModelOwner> COMMAND_MODEL_OWNER =
 		TypedAnnotatable.property(CommandModelOwner.class, "CommandModelOwner");

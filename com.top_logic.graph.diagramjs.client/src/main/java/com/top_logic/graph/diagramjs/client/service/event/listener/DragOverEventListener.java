@@ -12,7 +12,7 @@ import com.google.gwt.user.client.EventListener;
 /**
  * Stop event propagation.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DragOverEventListener implements EventListener {
 

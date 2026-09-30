@@ -5,9 +5,9 @@
  */
 package com.top_logic.xio.importer.binding;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import javax.xml.stream.Location;
 
@@ -31,6 +31,8 @@ public abstract class AbstractModelBinding implements ModelBinding {
 
 	final TLModel _model;
 
+	private final boolean _usesSecurity;
+
 	private Map<String, Object> _objects = new HashMap<>();
 
 	/**
@@ -38,9 +40,36 @@ public abstract class AbstractModelBinding implements ModelBinding {
 	 *
 	 * @param model
 	 *        The context model.
+	 * @param usesSecurity
+	 *        See {@link #usesSecurity()}.
 	 */
-	public AbstractModelBinding(TLModel model) {
+	public AbstractModelBinding(TLModel model, boolean usesSecurity) {
 		_model = model;
+		_usesSecurity = usesSecurity;
+	}
+
+	/**
+	 * Whether the expressions of the import definition are evaluated with the current user's access
+	 * rights.
+	 *
+	 * <p>
+	 * An import definition is application configuration, not user input, and it maps an external
+	 * document onto the model. An import therefore normally runs with <em>definer's rights</em>
+	 * ({@code false}): the expressions resolve and write objects regardless of what the importing
+	 * user may read or write, and whether that user may import at all is decided by the execution
+	 * right of the enclosing command. Evaluating an import with the user's rights instead would
+	 * corrupt data rather than protect it - a lookup for an existing object the user must not read
+	 * silently yields nothing, so the import creates a duplicate.
+	 * </p>
+	 *
+	 * <p>
+	 * The flag is {@code true} only where the import is triggered from a context that is itself
+	 * subject to the user's rights and must not become a bypass: the <i>TL-Script</i> function
+	 * {@code parseXml} passes the security setting of the calling script here.
+	 * </p>
+	 */
+	public final boolean usesSecurity() {
+		return _usesSecurity;
 	}
 
 	@Override
@@ -51,6 +80,13 @@ public abstract class AbstractModelBinding implements ModelBinding {
 	@Override
 	public void setProperty(ImportPart handler, Object obj, String name, Object value) {
 		setValue(obj, name, value);
+	}
+
+	@Override
+	public void getProperty(ImportPart handler, Object obj, String name, Consumer<Object> continuation) {
+		TLObject self = (TLObject) obj;
+		TLStructuredTypePart part = self.tType().getPartOrFail(name);
+		continuation.accept(self.tValue(part));
 	}
 
 	@Override
@@ -100,7 +136,7 @@ public abstract class AbstractModelBinding implements ModelBinding {
 	@Override
 	public boolean isInstanceOf(Object obj, String type) {
 		try {
-			return TLModelUtil.isCompatibleInstance(resolveType(type), (TLObject) obj);
+			return TLModelUtil.isCompatibleInstance(resolveType(type), obj);
 		} catch (ConfigurationException ex) {
 			throw new ConfigurationError(ex);
 		}
@@ -139,14 +175,6 @@ public abstract class AbstractModelBinding implements ModelBinding {
 	protected void setValue(Object obj, String partName, Object value) {
 		TLObject self = (TLObject) obj;
 		TLStructuredTypePart part = self.tType().getPartOrFail(partName);
-		Object oldValue = self.tValue(part);
-		if (oldValue != null
-			&& (!(oldValue instanceof Collection<?>) || !((Collection<?>) oldValue).isEmpty())) {
-			// Assuming that null and empty are potential default values.
-
-			Logger.warn("Overriding value of part '" + part + "' with value '" + value + "', old value was '"
-				+ oldValue + "'.", ApplicationModelBinding.class);
-		}
 		self.tUpdate(part, value);
 	}
 

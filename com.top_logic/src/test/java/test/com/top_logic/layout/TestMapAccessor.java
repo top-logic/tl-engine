@@ -45,7 +45,7 @@ public class TestMapAccessor extends TestCase {
         values.put("drei", "3");
         
         Map inner = new HashMap();
-        inner.put("h¸",   "->");
+        inner.put("h√º",   "->");
         inner.put("hott", "<-");
         values.put(MapAccessor.THIS_ATTR, inner);
 
@@ -54,7 +54,7 @@ public class TestMapAccessor extends TestCase {
         assertEquals("1", complex.getValue(values, "eins"));
         assertEquals("2", complex.getValue(values, "zwei"));
         assertEquals("3", complex.getValue(values, "drei"));
-        assertEquals("->", complex.getValue(values, "h¸"));
+        assertEquals("->", complex.getValue(values, "h√º"));
         assertEquals("<-", complex.getValue(values, "hott"));
         
         complex.setValue(values, "eins", "I");

@@ -65,6 +65,19 @@ public class DefaultPropertyModel<T> implements PropertyModel<T> {
 		return _property;
 	}
 
+	/**
+	 * The {@link ConfigurationItem} that owns {@link #getProperty()}.
+	 * 
+	 * <p>
+	 * Not necessarily the item whose constraint is being checked: a constraint argument declared
+	 * with a multi-step {@link com.top_logic.basic.config.annotation.Ref} resolves to a property of
+	 * a different item, and a problem reported on that argument belongs to <em>that</em> item.
+	 * </p>
+	 */
+	public ConfigurationItem getItem() {
+		return _model;
+	}
+
 	@Override
 	public void setProblemDescription(ResKey message) {
 		_message = message;

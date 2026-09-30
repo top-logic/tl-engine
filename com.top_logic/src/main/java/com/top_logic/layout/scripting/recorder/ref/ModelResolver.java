@@ -22,11 +22,13 @@ import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
@@ -44,6 +46,7 @@ import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
 @ServiceDependencies({
 	TypeIndex.Module.class,
 })
+@Label("Model name resolver")
 public class ModelResolver extends ManagedClass {
 
 	/**
@@ -277,7 +280,11 @@ public class ModelResolver extends ManagedClass {
 		return genericLocate(modelNamingScheme, context, valueContext, name);
 	}
 
-	private ModelNamingScheme<?, ?, ?> getSchemeForNameType(Class<?> type) {
+	/**
+	 * Determines the {@link ModelNamingScheme} for the given {@link ModelName} type.
+	 */
+	@FrameworkInternal
+	public ModelNamingScheme<?, ?, ?> getSchemeForNameType(Class<?> type) {
 		ModelNamingScheme<?, ?, ?> modelNamingScheme = namingSchemeByNameType.get(type);
 		if (modelNamingScheme == null) {
 			throw new AssertionError("No scheme registered for name type: " + type);

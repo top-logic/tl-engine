@@ -9,20 +9,21 @@
  -->
 <th class="{classes} {isSticky ? 'tl-position--sticky'}"
 	scope="{isRowHeader ? 'row' : 'col'}"
-	style="height: {rowHeight};{isSticky ? 'left:' + offset + ';'}{styles}"
+	style="{isSticky ? 'left:' + offset + ';'}{styles}"
 	colspan="{colspan}"
 	data-is-fixed="{isSticky}"
 	data-first-column-index="{firstColumnIndex}"
 	data-last-column-index="{lastColumnIndex}"
 >
-	<div class="px-1"
-		style="{isSticky ? 'position:relative;'}overflow:hidden;white-space:nowrap;max-height:100%;"
+	<div class="tl-table__cell-container"
+		style="{isSticky ? 'position:relative;'};"
 	>
 		{label}
 	</div>
 	<tl:if test="isFixedTable">
 		<div class="tl-table__cell-resizer"
 			onmousedown="{onResizeGrabberMousedownHandler}"
+			ondblclick="{onResizeGrabberDoubleclickHandler}"
 		></div>
 	</tl:if>
 </th>

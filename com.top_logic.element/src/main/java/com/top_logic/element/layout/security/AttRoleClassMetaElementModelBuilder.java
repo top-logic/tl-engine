@@ -29,15 +29,9 @@ public class AttRoleClassMetaElementModelBuilder extends AttSecMetaElementModelB
 	public Collection<?> getModel(Object businessModel, LayoutComponent aComponent) {
 		Collection<?> theSuper = super.getModel(businessModel, aComponent);
 		ArrayList<Object> theResult = new ArrayList<>(theSuper.size() + 1);
-		theResult.add(AttributeClassifierRolesComponent.GLOBAL_DOMAIN);
+		theResult.add(AttributeClassifierRolesComponent.globalDomain());
         theResult.addAll(theSuper);
         return theResult;
-    }
-
-	@Override
-    public boolean supportsListElement(LayoutComponent aComponent, Object aObject) {
-		return super.supportsListElement(aComponent, aObject)
-			|| aObject == AttributeClassifierRolesComponent.GLOBAL_DOMAIN;
     }
 
 }

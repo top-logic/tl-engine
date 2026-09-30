@@ -11,7 +11,9 @@ import java.io.IOError;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -99,7 +101,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Utilities for layout templates.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class LayoutTemplateUtils {
 
@@ -314,10 +316,9 @@ public class LayoutTemplateUtils {
 		TypedConfiguration.minimize(arguments);
 		
 		try (StringWriter stringWriter = new StringWriter()) {
-			ConfigurationWriter configWriter = new ConfigurationWriter(stringWriter);
-
-			writeTemplateArguments(configWriter, arguments);
-
+			try (ConfigurationWriter configWriter = new ConfigurationWriter(stringWriter)) {
+				writeTemplateArguments(configWriter, arguments);
+			}
 			return stringWriter.toString();
 		} catch (XMLStreamException | IOException exception) {
 			throw new IOError(exception);
@@ -585,18 +586,23 @@ public class LayoutTemplateUtils {
 		return I18NConstants.DYNAMIC_COMPONENT.append(resPrefix);
 	}
 
-	private static void writeTemplateInternal(XMLStreamWriter out, String template, ConfigurationItem arguments, boolean isFinal) {
+	private static void writeTemplateInternal(XMLStreamWriter out, String template, ConfigurationItem arguments,
+			boolean markFinal) {
 		try {
 			out.setPrefix(ConfigurationSchemaConstants.CONFIG_NS_PREFIX, ConfigurationSchemaConstants.CONFIG_NS);
 			out.writeStartElement(ConfigurationSchemaConstants.CONFIG_NS, LayoutModelConstants.TEMPLATE_CALL_ELEMENT);
 			out.writeAttribute(LayoutModelConstants.TEMPLATE_CALL_TEMPLATE_ATTR, template);
-			out.writeAttribute(LayoutModelConstants.TEMPLATE_CALL_FINAL_ATTR, Boolean.toString(isFinal));
+			// Do not write out the default.
+			if (markFinal) {
+				out.writeAttribute(LayoutModelConstants.TEMPLATE_CALL_FINAL_ATTR, Boolean.toString(markFinal));
+			}
 			out.writeNamespace(ConfigurationSchemaConstants.CONFIG_NS_PREFIX, ConfigurationSchemaConstants.CONFIG_NS);
 
-			ConfigurationWriter configWriter = new ConfigurationWriter(out);
-			configWriter.setNamespaceWriting(false);
-			configWriter.writeRootElement(LayoutModelConstants.TEMPLATE_CALL_ARGUMENTS_ELEMENT,
-				arguments.descriptor(), arguments);
+			try (ConfigurationWriter configWriter = new ConfigurationWriter(out, false)) {
+				configWriter.setNamespaceWriting(false);
+				configWriter.writeRootElement(LayoutModelConstants.TEMPLATE_CALL_ARGUMENTS_ELEMENT,
+					arguments.descriptor(), arguments);
+			}
 			
 			out.writeEndElement();
 		} catch (XMLStreamException exception) {
@@ -607,26 +613,39 @@ public class LayoutTemplateUtils {
 	/**
 	 * Writes the template to the given File.
 	 * 
-	 * @param isFinal
+	 * @param markFinal
 	 *        Whether the layout must not be enhanced with overlays, when it is de-serialized.
 	 * 
 	 * 
 	 * @throws ConfigurationException
 	 *         When the arguments of the given {@link LayoutTemplateCall} could not be parsed.
 	 */
-	public static void writeTemplate(File file, TLLayout layout, boolean isFinal) throws ConfigurationException {
-			FileUtilities.ensureFileExisting(file);
+	public static void writeTemplate(File file, TLLayout layout, boolean markFinal) throws ConfigurationException {
+		/* Write and normalize a temporary sibling file, then atomically move it into place. This way,
+		 * a concurrent reader (e.g. the LayoutStorage background prefetch) observes either the complete
+		 * old or the complete new file, but never a partially written one, and a layout that is written
+		 * for the first time becomes visible with its content. The temporary file is created in the
+		 * target's own directory, so the move stays within one file system and is guaranteed to be
+		 * atomic. Its name marks it as a hidden file, which makes it invisible to the FileManager and
+		 * to the layout invalidation watching the layout directory. */
+		Path target = file.toPath();
+		Path directory = file.getAbsoluteFile().getParentFile().toPath();
+		try {
+			Files.createDirectories(directory);
 
-			try (OutputStream outputStream = new FileOutputStream(file)) {
-				layout.writeTo(outputStream, isFinal);
-			} catch (IOException ex) {
-				throw new IOError(ex);
-			}
+			Path tmp = Files.createTempFile(directory, "." + file.getName(), ".tmp");
 			try {
-				XMLPrettyPrinter.normalizeFile(file);
-			} catch (IOException | SAXException exception) {
-				throw new IOError(exception);
+				try (OutputStream outputStream = new FileOutputStream(tmp.toFile())) {
+					layout.writeTo(outputStream, markFinal);
+				}
+				XMLPrettyPrinter.normalizeFile(tmp.toFile());
+				Files.move(tmp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+			} finally {
+				Files.deleteIfExists(tmp);
 			}
+		} catch (IOException | SAXException ex) {
+			throw new IOError(ex);
+		}
 	}
 
 	/**
@@ -638,20 +657,20 @@ public class LayoutTemplateUtils {
 	 *        Template name.
 	 * @param arguments
 	 *        Arguments of a template call.
-	 * @param isFinal
+	 * @param markFinal
 	 *        Whether the written template call is final, i.e. whether no overlays must be applied
 	 *        when it is read.
 	 * @throws IOException
 	 *         Template configuration could not be written into the given stream.
 	 */
 	public static void writeLayoutTemplateCall(OutputStream stream, String templateName, ConfigurationItem arguments,
-			boolean isFinal) throws IOException {
+			boolean markFinal) throws IOException {
 		String utf8 = StringServices.UTF8;
 		try {
 			XMLStreamWriter out = XMLStreamUtil.getDefaultOutputFactory().createXMLStreamWriter(stream, utf8);
 			try {
 				out.writeStartDocument(utf8, "1.0");
-				LayoutTemplateUtils.writeTemplateInternal(out, templateName, arguments, isFinal);
+				LayoutTemplateUtils.writeTemplateInternal(out, templateName, arguments, markFinal);
 			} finally {
 				out.close();
 			}

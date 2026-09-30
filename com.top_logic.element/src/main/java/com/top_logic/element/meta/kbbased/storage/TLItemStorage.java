@@ -103,12 +103,13 @@ public abstract class TLItemStorage<C extends TLItemStorage.Config<?>> extends A
 	protected void internalSetAttributeValue(TLObject object, TLStructuredTypePart attribute, Object value)
 			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
 		value = toStorageObject(value);
-		if (value == getReferencedTLObject(object, attribute)) {
+		Object currentValue = getReferencedTLObject(object, attribute);
+		if (value == currentValue) {
 			// no change
 			return;
 		}
 
-		storeReferencedTLObject(object, attribute, value);
+		storeReferencedTLObject(object, attribute, currentValue, value);
 	}
 
 	/**
@@ -124,14 +125,16 @@ public abstract class TLItemStorage<C extends TLItemStorage.Config<?>> extends A
 	 *        The holder for the reference.
 	 * @param attribute
 	 *        The attribute describing the reference.
-	 * @param value
-	 *        The referenced value. May be <code>null</code>. The value is already transformed to a
-	 *        storage object.
-	 * 
+	 * @param oldValue
+	 *        The old referenced value. May be <code>null</code>. The value is already transformed
+	 *        to a storage object.
+	 * @param newValue
+	 *        The new referenced value. May be <code>null</code>. The value is already transformed
+	 *        to a storage object.
 	 * @see #storageMapping()
 	 */
-	protected abstract void storeReferencedTLObject(TLObject object, TLStructuredTypePart attribute, Object value)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException;
+	protected abstract void storeReferencedTLObject(TLObject object, TLStructuredTypePart attribute, Object oldValue,
+			Object newValue) throws NoSuchAttributeException, IllegalArgumentException, AttributeException;
 
 	@Override
 	protected void checkSetValue(TLObject object, TLStructuredTypePart attribute, Object simpleValue) throws TopLogicException {

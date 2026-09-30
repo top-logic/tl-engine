@@ -4,6 +4,9 @@
 	<params>
 		<param name="namePrefix"/>
 		<param name="modelBuilder"/>
+		<param name="securityObject"
+			optional="true"
+		/>
 		<param name="model"
 			optional="true"
 		/>
@@ -26,6 +29,9 @@
 			<!-- Empty by default. -->
 		</param>
 		<param name="multiSelection"
+			value="true"
+		/>
+		<param name="treeSemantics"
 			value="true"
 		/>
 	</params>
@@ -56,15 +62,23 @@
 				partnerGroup="${partnerGroup}"
 				resPrefix="layouts.demo.table.tree_grid.treeGrid."
 				resetInvisible="true"
+				securityObject="${securityObject}"
 				showMinimize="false"
 				titleKey="${titleKey}"
 			>
-				<selectionModelFactory multiple="${multiSelection}"/>
+				<selectionModelFactory
+					multiple="${multiSelection}"
+					treeSemantics="${treeSemantics}"
+				/>
 				<buttons>
 					<button id="exportExcelGrid"
 						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-						exportNameKey="/sTypes_Demo.xls"
-					/>
+						streaming="false"
+					>
+						<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+							downloadName="/sTypes_Demo.xls"
+						/>
+					</button>
 					<button id="toggleRootVisibility"
 						class="com.top_logic.demo.table.ToggleRootVisibilityCommand"
 						image="theme:ICON_GLOBE"
@@ -147,7 +161,11 @@
 							<column name="name"
 								mandatory="true"
 							>
-								<additionalHeaders/>
+								<additionalHeaders>
+									<byExpression useRowObjects="true">
+										<label>rows -&gt; #("Anzahl Cs: {0}"@de, "Number Cs: {0}"@en).fill($rows.filter(row -&gt; $row.instanceOf(`DemoTypes:DemoTypes.C.All`)).size())</label>
+									</byExpression>
+								</additionalHeaders>
 							</column>
 							<column name="float"
 								columnWidth="80px"

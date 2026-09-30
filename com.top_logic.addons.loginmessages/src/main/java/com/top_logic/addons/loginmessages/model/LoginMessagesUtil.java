@@ -113,14 +113,23 @@ public class LoginMessagesUtil {
 		}
 
 		// if there is a duration, check the difference
-		return DateUtil.differenceInDays(new Date(), confirmDate) >= confirmDuration;
+		return DateUtil.differenceInDays(confirmDate, new Date()) >= confirmDuration;
 	}
 
 	/**
 	 * Provides the {@link Date} stored in a {@link PersonalConfiguration} for the given {@link LoginMessage}.
 	 */
-	public static Date getConfirmDate(final PersonalConfiguration configuration, LoginMessage loginMessage) {
+	public static Date getConfirmDate(PersonalConfiguration configuration, LoginMessage loginMessage) {
 		String confirmName = LoginMessagesUtil.getConfirmName(loginMessage);
 		return (Date) configuration.getValue(confirmName);
+	}
+
+	/**
+	 * Stores the {@link Date} stored for the given {@link LoginMessage} in a
+	 * {@link PersonalConfiguration}.
+	 */
+	public static void setConfirmDate(PersonalConfiguration configuration, LoginMessage loginMessage, Date value) {
+		String confirmName = LoginMessagesUtil.getConfirmName(loginMessage);
+		configuration.setValue(confirmName, value);
 	}
 }

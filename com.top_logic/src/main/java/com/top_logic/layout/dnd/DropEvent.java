@@ -45,7 +45,7 @@ public abstract class DropEvent {
 	 * 
 	 * @see #getSource()
 	 */
-	public Collection<Object> getData() {
+	public Collection<?> getData() {
 		return _data.getDragData();
 	}
 

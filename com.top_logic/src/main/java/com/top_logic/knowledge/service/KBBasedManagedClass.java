@@ -21,7 +21,10 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@ServiceDependencies(KnowledgeBaseFactory.Module.class)
+@ServiceDependencies({
+	KnowledgeBaseFactory.Module.class,
+	PersistencyLayer.Module.class,
+})
 public class KBBasedManagedClass<C extends KBBasedManagedClass.Config<?>> extends ConfiguredManagedClass<C> {
 
 	/**

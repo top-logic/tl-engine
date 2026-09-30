@@ -11,12 +11,12 @@ import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 
 /**
- * {@link AbstractModelNamingScheme} for {@link ConfigurationItem}.
+ * {@link AbstractGlobalModelNamingScheme} for {@link ConfigurationItem}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class ConfigurationItemNaming
-		extends AbstractModelNamingScheme<ConfigurationItem, ConfigurationItemNaming.Name> {
+		extends AbstractGlobalModelNamingScheme<ConfigurationItem, ConfigurationItemNaming.Name> {
 
 	/**
 	 * {@link ModelName} for a {@link ConfigurationItem}.
@@ -42,7 +42,7 @@ public class ConfigurationItemNaming
 	/**
 	 * Creates a {@link ConfigurationItemNaming}.
 	 * 
-	 * @see AbstractModelNamingScheme#AbstractModelNamingScheme(Class, Class)
+	 * @see AbstractGlobalModelNamingScheme#AbstractGlobalModelNamingScheme(Class, Class)
 	 */
 	public ConfigurationItemNaming() {
 		super(ConfigurationItem.class, Name.class);

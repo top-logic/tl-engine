@@ -5,12 +5,13 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
   
   <artifactId>tl-core</artifactId>
   
-  <description>The TopLogic kernel.</description>
+	<name>${project.artifactId}</name>
+	<description>The TopLogic kernel.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
@@ -26,7 +27,12 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    
+    <dependency>
+      <groupId>com.networknt</groupId>
+      <artifactId>json-schema-validator</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-tools-resources</artifactId>
@@ -43,10 +49,6 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-convert</artifactId>
     </dependency>
-	<dependency>
-	    <groupId>commons-fileupload</groupId>
-	    <artifactId>commons-fileupload</artifactId>
-	</dependency>
 	<dependency>
 	    <groupId>commons-io</groupId>
 	    <artifactId>commons-io</artifactId>
@@ -68,24 +70,24 @@
 	    <groupId>org.jfree</groupId>
 	    <artifactId>jfreechart</artifactId>
 	</dependency>
-	<dependency>
-	    <groupId>javax.xml.ws</groupId>
-	    <artifactId>jaxws-api</artifactId>
-	</dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-common-json</artifactId>
     </dependency>
 	<dependency>
 	    <groupId>org.xhtmlrenderer</groupId>
-	    <artifactId>flying-saucer-pdf-openpdf</artifactId>
+	    <artifactId>flying-saucer-pdf</artifactId>
 	</dependency>
 	<dependency>
 	    <groupId>org.apache.xmlgraphics</groupId>
 	    <artifactId>batik-transcoder</artifactId>
 	</dependency>
+	<dependency>
+	    <groupId>org.apache.xmlgraphics</groupId>
+	    <artifactId>batik-codec</artifactId>
+	</dependency>
 
-	<!-- Note: Required as replacement for commons-logging in batik-transcoder. -->
+	<!-- Note: Required as replacement for commons-logging in batik-transcoder and batik-codec. -->
 	<dependency>
 	    <groupId>org.slf4j</groupId>
 	    <artifactId>jcl-over-slf4j</artifactId>
@@ -97,15 +99,29 @@
       <artifactId>ext-com-inter-fonts</artifactId>
     </dependency>
     
+	<!-- Note: Required for multi-factor authentication. -->
+	<!-- https://github.com/samdjstevens/java-totp -->
+	<dependency>
+	  <groupId>dev.samstevens.totp</groupId>
+	  <artifactId>totp</artifactId>
+	  <version>1.7.1</version>
+	</dependency>
+
 	<dependency>
 	    <groupId>org.webjars</groupId>
 	    <artifactId>jquery</artifactId>
-	    <version>3.6.4</version>
+	    <version>3.7.1</version>
 	</dependency>
 	<dependency>
 	    <groupId>org.webjars.bower</groupId>
 	    <artifactId>fotorama</artifactId>
 	    <version>4.6.4</version>
+	</dependency>
+	<!-- The flag images a country or a language is labelled with, see com.top_logic.util.FlagIcon. -->
+	<dependency>
+	    <groupId>org.webjars.npm</groupId>
+	    <artifactId>flag-icons</artifactId>
+	    <version>7.5.0</version>
 	</dependency>
   </dependencies>
 
@@ -116,7 +132,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>javacc-maven-plugin</artifactId>
-				<version>3.0.1</version>
+				<version>3.2.1</version>
 				
 				<executions>
 					<execution>
@@ -170,7 +186,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore />
 									</action>
 								</pluginExecution>
 							</pluginExecutions>

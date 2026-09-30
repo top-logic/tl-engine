@@ -20,24 +20,19 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.filt.DOTypeNameFilter;
 import com.top_logic.element.layout.meta.search.AttributedSearchComponent;
+import com.top_logic.element.meta.kbbased.AttributedWrapper;
 import com.top_logic.element.meta.kbbased.KBBasedMetaElement;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
-import com.top_logic.knowledge.service.db2.FlexData;
-import com.top_logic.knowledge.service.db2.NoFlexData;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
-import com.top_logic.knowledge.wrap.WrapperFactory;
-import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.mapBasedPersistancy.MapBasedPersistancySupport;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.util.Utils;
 
 /**
@@ -54,7 +49,7 @@ import com.top_logic.util.Utils;
  *
  * @author    <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */
-public class StoredQuery extends StoredFlexWrapper {
+public class StoredQuery extends AttributedWrapper {
 
     /** KO ID separator. */
     public static final char SEPARATOR = ',';
@@ -70,9 +65,6 @@ public class StoredQuery extends StoredFlexWrapper {
 
     /** Attribute storing the result columns of the query. */
     public static final String RESULT_COLUMNS = "ResultColumns";
-
-    /** KA Type to connect a StoredQuery to a Person */
-    public static final String OWNER_ASSOCIATION = "hasOwner";
 
 
     /**
@@ -108,7 +100,7 @@ public class StoredQuery extends StoredFlexWrapper {
 
         // Create query
 		KnowledgeObject theKO = aKB.createKnowledgeObject(STORED_QUERY_KO);
-        StoredQuery     theWrap = (StoredQuery) StoredFlexWrapper.getStoredQuery(theKO);
+		StoredQuery theWrap = theKO.getWrapper();
         MapBasedPersistancySupport.assignContainer(theWrap, anOwner);
 		theWrap.tSetData(NAME_ATTRIBUTE, aName);
         return theWrap;
@@ -192,7 +184,7 @@ public class StoredQuery extends StoredFlexWrapper {
      */
 	public static List getAllStoredQueries(KnowledgeBase aKB) {
         if (aKB == null) {
-            aKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+            aKB = PersistencyLayer.getKnowledgeBase();
         }
         Collection      allKOs = aKB.getAllKnowledgeObjects(STORED_QUERY_KO);
         return getWrappersFromCollection(allKOs);
@@ -206,10 +198,7 @@ public class StoredQuery extends StoredFlexWrapper {
      */
 	public Collection getFilters() {
 
-        // Get DataObject
-		FlexData theDO = this.getDataObjectForRead();
-
-        Collection theResult = MapBasedPersistancySupport.getObjects(theDO);
+		Collection theResult = MapBasedPersistancySupport.getObjects(tHandle());
 
         return theResult;
     }
@@ -259,9 +248,7 @@ public class StoredQuery extends StoredFlexWrapper {
 	 *        the filtes for this StoredQuery
 	 */
 	public void setFilters(Collection someFilters) {
-    	boolean doCleanup = this.getDataObjectForRead() != NoFlexData.INSTANCE; // Don't use this DO if it exists! Changes would not be committed!
-		FlexData theDO = getDataObjectForWrite(); // Provoke lock so that commit works
-    	MapBasedPersistancySupport.setObjects(someFilters, theDO, doCleanup);
+		MapBasedPersistancySupport.setObjects(someFilters, tHandle());
     }
 
 
@@ -340,11 +327,6 @@ public class StoredQuery extends StoredFlexWrapper {
         }
     }
 
-    @Override
-	public BoundObject getSecurityParent() {
-        return super.getSecurityParent();
-    }
-
     /**
 	 * Get the filter for an attribute in given Collection.
 	 *
@@ -413,23 +395,6 @@ public class StoredQuery extends StoredFlexWrapper {
             return PersonManager.getManager().getRoot();
         }
         return theP;
-    }
-
-    public Person getOwner() {
-        try {
-            Iterator it = tHandle().getOutgoingAssociations(OWNER_ASSOCIATION);
-            while (it.hasNext()) {
-                KnowledgeAssociation theKA = (KnowledgeAssociation)it.next();
-                Wrapper theOwner = WrapperFactory.getWrapper(theKA.getDestinationObject());
-                if (theOwner instanceof Person) {
-                    return (Person)theOwner;
-                }
-            }
-            return null;
-        }
-        catch (Exception ex) {
-            throw new WrapperRuntimeException("Failed to get owner: ", ex);
-        }
     }
 
 }

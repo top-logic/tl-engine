@@ -9,7 +9,6 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -27,20 +26,20 @@ import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Type;
 
 /**
  * {@link MigrationProcessor} creating a new {@link TLPrimitive}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<CreateTLDatatypeProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class CreateTLDatatypeProcessor extends TLModelBaseLineMigrationProcessor<CreateTLDatatypeProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link CreateTLDatatypeProcessor}.
 	 */
 	@TagName("create-datatype")
-	public interface Config extends PolymorphicConfiguration<CreateTLDatatypeProcessor>,
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<CreateTLDatatypeProcessor>,
 			AnnotatedConfig<TLTypeAnnotation>, DBColumnType {
 
 		/**
@@ -101,7 +100,7 @@ public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<Create
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			internalDoMigration(log, connection, tlModel);
 			return true;
 		} catch (Exception ex) {
@@ -112,6 +111,12 @@ public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<Create
 
 	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName typeName = getConfig().getName();
+		Type existing = _util.getTLTypeOrNull(connection, typeName);
+		if (existing != null) {
+			log.info("Datatype already exists: " + _util.qualifiedName(typeName), Log.WARN);
+			return;
+		}
+
 		_util.createTLDatatype(connection, typeName, getConfig().getKind(), getConfig(),
 			getConfig().getStorageMapping(),
 			getConfig());

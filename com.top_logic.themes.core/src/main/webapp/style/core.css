@@ -4,7 +4,7 @@
 }
 
 body {
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
 	font-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
 	letter-spacing: var(--body-02-letter-spacing);
@@ -23,9 +23,34 @@ body {
 	background: transparent;
 }
 
-:hover::-webkit-scrollbar {
-	width: var(--sb-size);
-	height: var(--sb-size);
+.lcAuto, .lcScroll, .tl-overflow--auto {
+	--sb-track-transition: transparent;
+	--sb-thumb-transition: transparent;
+	transition-property: --sb-track-transition, --sb-thumb-transition;
+	transition-duration: .5s;
+	transition-delay: 1s;
+}
+
+/* Show scroll bar in tables always. */
+.tl-table__content-container .tl-overflow--auto {
+	--sb-track-transition: var(--sb-track-color);
+	--sb-thumb-transition: var(--sb-thumb-color);
+}
+
+:is(.lcAuto, .lcScroll, .tl-overflow--auto):hover {
+	--sb-track-transition: var(--sb-track-color);
+	--sb-thumb-transition: var(--sb-thumb-color);
+	transition: --sb-track-transition, --sb-thumb-transition;
+}
+
+:is(.lcAuto, .lcScroll, .tl-overflow--auto)::-webkit-scrollbar-track {
+	background: var(--sb-track-transition);
+	border-radius: 4px;
+}
+
+:is(.lcAuto, .lcScroll, .tl-overflow--auto)::-webkit-scrollbar-thumb {
+	background: var(--sb-thumb-transition);
+	border-radius: 4px;
 }
 
 :hover::-webkit-scrollbar-track {
@@ -54,38 +79,43 @@ code {
 }
 
 h5 {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
 	font-size: var(--heading-compact-01-font-size);
 	line-height: var(--heading-compact-01-line-height);
 	letter-spacing: var(--heading-compact-01-letter-spacing);
+	font-weight: bold;
 }
 
 h4 {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
+	font-weight: bold;
 }
 
 h3 {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
+	font-weight: bold;
 }
 
 h2 {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
 	font-size: var(--heading-04-font-size);
 	line-height: var(--heading-04-line-height);
 	letter-spacing: var(--heading-04-letter-spacing);
+	font-weight: bold;
 }
 
 h1 {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
 	font-size: var(--heading-05-font-size);
 	line-height: var(--heading-05-line-height);
 	letter-spacing: var(--heading-05-letter-spacing);
+	font-weight: bold;
 }
 
 /* Text highlight color */
@@ -98,30 +128,25 @@ h1 {
     padding: 0 var(--spacing-03);
 }
 
-.margin5 {
-    margin-top: 0.5rem;
-}
-
 .noSelection {
 	position: relative; 
 	top: 40%; 
 	text-align: center
 }
 
-i.red {
+i.red,
+.tl-error-message {
 	color: var(--support-danger);
 }
 
-i.green {
+i.green,
+.tl-success-message {
 	color: var(--support-success);
 }
 
-i.yellow {
+i.yellow,
+.tl-warning-message {
 	color: var(--support-warning);
-}
-
-a img.type-image {
-    vertical-align: middle;
 }
 
 /* Overlay styles are needed as long as the old icons with an overlay are not removed completely */
@@ -135,24 +160,96 @@ i[class*=" overlay-"] span::before {
 	margin-left: -1em;
 }
 
+.cMinimizable.mcMinimized::after {
+    content: '';
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    width: 1px;
+    bottom: 0px;
+    background-color: var(--resize-bar);
+}
+
 .layoutVerticalAdjustmentGrabber {
-    cursor: n-resize;
+    cursor: ns-resize;
     background: var(--background);
 }
 
+.layoutVerticalAdjustmentGrabber:not(.fflCollapsed)::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    width: 100%;
+    height: 2px;
+    background-color: var(--resize-bar);
+}
+
+.layoutVerticalAdjustmentGrabber:not(.fflCollapsed):hover::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 8px;
+    background-color: var(--resize-bar);
+    clip-path: polygon(0 0,
+    				20% 80%,
+    				80% 80%,
+    				100% 0%);
+}
+
 .layoutHorizontalAdjustmentGrabber {
-  	cursor: e-resize;
-  	background: var(--background);
+    cursor: ew-resize;
+    background: var(--background);
+}
+
+.layoutHorizontalAdjustmentGrabber:not(.fflCollapsed)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 100%;
+    background-color: var(--resize-bar);
+}
+
+.layoutHorizontalAdjustmentGrabber:not(.fflCollapsed):hover::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 50px;
+    background-color: var(--resize-bar);
+    clip-path: polygon(0 0,
+    				80% 20%,
+    				80% 80%,
+    				0% 100%);
 }
 
 .fflCollapsed {
 	cursor: default;
 }
 
+.notificationTitle {
+    display: flex;
+    align-items: center;
+    color: var(--support-danger);
+	font-family: var(--font-family);
+	font-weight: bold;
+}
+
 /* The general footer of the application */
 .Footer {
 	display: flex;
-	justify-content: space-between;
+	justify-content: flex-end;
+	align-items: center;
+	gap: var(--spacing-02);
 	font-size: var(--body-01-font-size);
     line-height: var(--body-01-line-height);
     letter-spacing: var(--body-01-letter-spacing);
@@ -161,14 +258,17 @@ i[class*=" overlay-"] span::before {
 	padding: 0 var(--spacing-03) 0 var(--spacing-01)
 }
 
-
 /*
 ****					****
 ****	Anchor syles	****
 ****					****
 */
 a {
-	color: var(--link-primary);
+	color: var(--highlight, var(--link-primary));
+}
+
+.tl-table__cell a {
+	--highlight: var(--highlight-fg);
 }
 
 a, a:link {
@@ -176,95 +276,26 @@ a, a:link {
 	text-decoration: none;
 }
 
-a:not(.disabled):hover {
-	color: var(--link-primary-hover);
+a:hover {
+	color: var(--highlight, var(--link-primary-hover));
 	text-decoration: underline;
 }
 
-a:not(.disabled):active {
-	color: var(--text-primary);
+a:active {
+	color: var(--highlight, var(--text-primary));
 	text-decoration: underline;
 }
 
-a:not(.disabled):focus {
-    color: var(--link-primary-hover);
-	outline: 1px solid var(--focus);
+a:focus {
+    color: var(--highlight, var(--link-primary-hover));
+	outline: 2px solid var(--focus);
 	outline-offset: 2px;
-}
-
-a:visited, a.gotoLink:visited,
-a.cmdLink:visited {
-    /* color: var(--link-primary); */
 }
 
 .cmdLinkDisabled {
     text-decoration: none;
     cursor: default;
     color: var(--text-disabled);
-}
-
-/*
-****					      ****
-****	Code-Editor Styles	  ****
-****					      ****
-*/
-.fullSize .ace_editor {
-	position: absolute;
-	margin: 0;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	right: 0;
-	height: auto;
-}
-
-.popupEditField .cError {
-	position: relative;
-}
-
-.ace-eclipse .ace_active-line {
-    background: var(--background-selected);
-}
-
-.ace-eclipse .ace_marker-layer .ace_selection {
-    background: var(--script-editor-text-highlight);
-}
-
-.ace-eclipse .ace_gutter-active-line {
-	background: var(--layer-accent);
-}
-
-/* Adjust line height for the entire Ace Editor */
-.ace_editor {
-	font-size: var(--body-02-font-size);
-	line-height: var(--body-02-line-height);
-	border: 1px solid var(--border-subtle);
-}
-
-/* Adjust line height for the text area of the editor */
-.ace_content {
-	font-size: var(--body-02-font-size);
-	line-height: var(--body-02-line-height);
-}
-
-/* Styles for display help for TL-Script.*/
-div.tlScriptDoc {
-	max-width: 500px;
-	overflow: auto;
-}
-
-div.ace_tooltip {
-	white-space: normal;
-	max-height: 50vh;
-	overflow: auto;
-}
-
-div.ace_tooltip>code {
-	white-space: pre;
-}
-
-div.ace_tooltip>code.inlineCode {
-	white-space: normal;
 }
 
 /*
@@ -326,6 +357,8 @@ div.ace_tooltip>code.inlineCode {
 	height: var(--POPUP_TITLE_HEIGHT);
 	padding-left: 2px;
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 .pdlgToolbar {
@@ -341,12 +374,14 @@ div.ace_tooltip>code.inlineCode {
 	margin-right: var(--spacing-02);
 }
 
+.pdlgToolbar button,
 .pdlgToolbar a {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
+.pdlgToolbar button:hover,
 .pdlgToolbar a:hover {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .pdlgTitle {
@@ -358,18 +393,33 @@ div.ace_tooltip>code.inlineCode {
 }
 
 .menuTitle {
-	position: relative;
 	display: flex;
 	height: var(--POPUP_TITLE_HEIGHT);
-	padding-left: 2px;
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
+	
+/* ================================ */
+/* ====== Limit Context Menus ===== */
+/* ================================ */
+/* Settings to limit Context-Menu Titles so the context menu does not grow bigger than the options. */
+.menuTitle {
+	width: 100%;
+	position: absolute;
+	transform: translateY(calc(0px - var(--POPUP_TITLE_HEIGHT)));
+}
+
+.menuTitle + :not(.menuTitle) {
+	margin-top: var(--POPUP_TITLE_HEIGHT);
+}
+/* ================================ */
 
 .menuTitleContents {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	padding: 0 3px;
+	padding: 0 5px;
 	align-self: center;
 }
 
@@ -377,7 +427,7 @@ div.ace_tooltip>code.inlineCode {
 	margin: 0 var(--spacing-02);
 }
 
-.cTextPopupEditor .cTextInput .lFlexible textarea {
+.cTextPopupEditor .tl-text-input .lFlexible textarea {
 	height: 3rem;
 	margin-top: var(--spacing-02);
 }
@@ -390,16 +440,17 @@ div.ace_tooltip>code.inlineCode {
 }
 
 .fltGlobalContainer input,
-.fltGlobalContainer .cTextInput input {
+.fltGlobalContainer .tl-text-input input {
 	background: var(--background);
 }
 
-.fltGlobalContainer .cTextInput input {
+.fltGlobalContainer .tl-text-input input {
 	margin-bottom: var(--spacing-03);
 }
 
 div.fltHeader {
 	margin: 3px;
+	font-family: var(--font-family);
 	font-weight: bold;
 }
 
@@ -413,7 +464,7 @@ div.fltHeader {
 .fltCommandContent {
 	text-align: center;
 	box-sizing: border-box;
-	padding: var(--spacing-03) var(--spacing-01) var(--spacing-02) var(--spacing-01);
+	padding: var(--spacing-03) var(--spacing-03) var(--spacing-02) var(--spacing-03);
 }
 
 .fltMenu {
@@ -435,7 +486,7 @@ hr {
 .sidebarFilterContainer .fToggle,
 .sidebarFilterContainer .fToggle:focus,
 .sidebarFilterContainer .fToggle:hover {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .sidebarFilterContainer .fltSubContent {
@@ -451,16 +502,17 @@ hr {
 }
 
 .sidebarFilterContainer input,
-.sidebarFilterContainer .cTextInput input,
-.sidebarFilterContainer .cDateInput input,
-.sidebarFilterContainer .cDateInput .lFixedRight,
-.sidebarFilterContainer .cTimeInput input,
-.sidebarFilterContainer .cTimeInput .lFixedRight,
+.sidebarFilterContainer .tl-text-input input,
+.sidebarFilterContainer .tl-date-input input,
+.sidebarFilterContainer .tl-date-input .lFixedRight,
+.sidebarFilterContainer .tl-time-input input,
+.sidebarFilterContainer .tl-time-input .lFixedRight,
 .sidebarFilterContainer .ddwttDropBtn {
-	background: var(--background);
+	color: var(--highlight-fg, inherit);
+	background: var(--highlight-bg, var(--background));
 }
 
-.sidebarFilterContainer .cTextInput input {
+.sidebarFilterContainer .tl-text-input input {
 	margin-bottom: var(--spacing-03);
 }
 
@@ -581,6 +633,7 @@ div.fltList {
 
 .filterGroupTitle {
 	margin: 2px 2px 5px;
+	font-family: var(--font-family);
 	font-weight: bold;
 }
 
@@ -588,40 +641,41 @@ div.fltList {
 	margin-top: var(--spacing-02);
 }
 
-.defaultFilterContainer .cPopupSelect,
-.defaultFilterContainer .cTextSelect,
-.defaultFilterContainer .cExpandableTextInput,
-.defaultFilterContainer .cTextInput,
-.defaultFilterContainer .cDatetime,
-.defaultFilterContainer .cDateInput,
-.defaultFilterContainer .cIntegerInput,
-.defaultFilterContainer .cTimeInput {
+.defaultFilterContainer .tl-popup-select,
+.defaultFilterContainer .tl-text-select,
+.defaultFilterContainer .tl-expandable-text-input,
+.defaultFilterContainer .tl-text-input,
+.defaultFilterContainer .tl-datetime,
+.defaultFilterContainer .tl-date-input,
+.defaultFilterContainer .tl-integer-input,
+.defaultFilterContainer .tl-time-input {
 	width: 100%;
 	white-space: break-spaces;
 	word-wrap: break-word;
 	word-break: break-word;
 }
 
-.defaultFilterContainer .cDatetime {
+.defaultFilterContainer .tl-datetime {
 	flex-wrap: wrap;
 }
 
-.defaultFilterContainer .cDatetime input {
+.defaultFilterContainer .tl-datetime input {
 	width: 65px;
 }
 
-.defaultFilterContainer .cDateInput input {
+.defaultFilterContainer .tl-date-input input {
 	width: 100px;
 }
 
 .defaultFilterContainer input,
-.defaultFilterContainer .cTextInput input,
-.defaultFilterContainer .cDateInput input,
-.defaultFilterContainer .cDateInput .lFixedRight,
-.defaultFilterContainer .cTimeInput input,
-.defaultFilterContainer .cTimeInput .lFixedRight,
+.defaultFilterContainer .tl-text-input input,
+.defaultFilterContainer .tl-date-input input,
+.defaultFilterContainer .tl-date-input .lFixedRight,
+.defaultFilterContainer .tl-time-input input,
+.defaultFilterContainer .tl-time-input .lFixedRight,
 .defaultFilterContainer .ddwttDropBtn {
-	background: var(--background);
+	color: var(--highlight-fg, inherit);
+	background: var(--highlight-bg, var(--background));
 }
 
 .defaultFilterContainer .lFlexible > input {
@@ -638,20 +692,24 @@ div.fltList {
 	max-height: none;
 }
 
-.sidebarFilterEntry.collapsibleFilterEntry {
+.tl-sidebar-filter__entry.tl-sidebar-filter__entry--collapsible {
     display: flex;
     align-items: center;
     gap: var(--spacing-01);
-    background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
     padding: 0 var(--spacing-03);
 }
 
-.sidebarFilterEntry.collapsibleFilterEntry {
-	background: var(--layer-accent);
+.tl-sidebar-filter__entry.tl-sidebar-filter__entry--collapsible:hover {
+	background: var(--layer-accent-hover);
 }
 
-.sidebarFilterEntry.collapsibleFilterEntry:hover {
-	background: var(--layer-hover);
+.tl-sidebar-filter__entry--collapsible .tl-sidebar-filter__entry-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .checkboxMultiSelectEntry {
@@ -663,7 +721,8 @@ div.fltList {
 }
 
 .checkboxMultiSelectNoEntries {
-    font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -728,7 +787,7 @@ div.fltList {
 }
 
 .popupMenu a:hover .menuEntryCell .menuEntryImage {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .popupMenu a:focus {
@@ -872,7 +931,6 @@ div.dlgMaximized .input-image.dlgRestore {
 	left: 0;
 	height: 100%;
 	width: 100%;
-	cursor: wait;
 	background: var(--overlay);
 }
 
@@ -883,6 +941,8 @@ div.dlgMaximized .input-image.dlgRestore {
 	cursor: move;
 	height: var(--DIALOG_TITLE_HEIGHT);
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	padding: 0 var(--spacing-01);
 	box-sizing: border-box;
 }
@@ -916,14 +976,17 @@ div.dlgMaximized .input-image.dlgRestore {
 	gap: var(--spacing-02);
 }
 
+.dlgToolbar button,
+.dlgToolbar button:hover,
 .dlgToolbar a,
 .dlgToolbar a:hover {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 	box-shadow: none;
 }
 
+.dlgToolbar button:focus,
 .dlgToolbar a:focus {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .dlgBorderNE.dlgResizeNE {
@@ -1113,7 +1176,7 @@ div.selectbox li.selected a,
 div.selectbox .treeNode.treeSelected, 
 div.selectbox .treeNode.treeSelected a,
 div.selectbox .treeNode.treeSelected span {
-	color: var(--text-primary);
+	color: inherit;
 	cursor: default;
 	text-decoration: none;
 }
@@ -1161,16 +1224,6 @@ td.rightList {
     color: var(--text-disabled);
 }
 
-.cDefaultButton button {
-	border: none;
-	border-radius: var(--corner-radius);
-	cursor: pointer;
-}
-
-button.moveOption {
-	width: 100%;
-}
-
 /* ====================================== */
 /* ======    Styles for mega menu   ===== */
 /* ====================================== */
@@ -1179,13 +1232,13 @@ button.moveOption {
 	gap: var(--spacing-02);
 	justify-content: center;
 	align-items: center;
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
 	font-size: .875rem;
 	font-weight: 400;
 	color: var(--button-secondary);
 	background: transparent;
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
-	height: 2.3rem; /* 36.8px height */
+	height: var(--form-line-height);
 	padding: var(--spacing-02) var(--spacing-03);
 	border-radius: .25rem;
 	border: none;
@@ -1276,7 +1329,7 @@ button.moveOption {
 .tl-mega-menu__option:hover .tl-mega-menu__option-icon,
 .tl-mega-menu__option:focus .tl-mega-menu__option-icon,
 .tl-mega-menu__option--selected .tl-mega-menu__option-icon {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tl-mega-menu__option-text-container {
@@ -1287,14 +1340,15 @@ button.moveOption {
 }
 
 .tl-mega-menu__option-label {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-02-font-size);
 	line-height: var(--heading-02-line-height);
 	letter-spacing: var(--heading-02-letter-spacing);
 }
 
 .tl-mega-menu__option-tooltip {
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
     font-size: .875rem;
     font-weight: 400;
 }
@@ -1323,7 +1377,7 @@ button.moveOption {
 
 .tl-mega-menu__option-label--immutable {
 	color: var(--text-primary);
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
     font-size: .875rem;
     font-weight: 400;
 }
@@ -1348,7 +1402,8 @@ div.mboxImage {
 }
 
 div.mboxContent {
-	margin: 5px;
+	margin: var(--spacing-02) 0;
+	overflow-wrap: break-word;
 }
 
 div.mboxHeader {
@@ -1363,6 +1418,12 @@ div.mboxMessage {
 div.mboxInput {
 	margin-top: 5px;
 	padding-left: 10px;
+}
+
+.mboxContent .tl-error-message-title {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
 }
 
 /*
@@ -1385,7 +1446,8 @@ div.sxError {
 
 div.sxMessage,
 div.sxFailure {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-04-font-size);
 	line-height: var(--heading-04-line-height);
 	letter-spacing: var(--heading-04-letter-spacing);
@@ -1393,7 +1455,8 @@ div.sxFailure {
 }
 
 div.sxButtons {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -1467,7 +1530,7 @@ div.lcHidden {
 	filter: drop-shadow(var(--shadow-menu));
 	z-index: 9999999999999999;
 	--ttPadding: var(--spacing-02);
-	font-weight: normal;
+	font-weight: 400;
 	cursor: default;
 	display: flex;
 	flex-direction: column;
@@ -1524,7 +1587,7 @@ div.lcHidden {
 	overflow-y: auto;
 	white-space: normal;
 	overflow-wrap: break-word;
-	padding: var(--ttPadding) 12px;
+	padding: var(--ttPadding) 0.75rem;
 	line-height: 1.5 !important;
 	color: var(--text-inverse);
 	text-align: left;
@@ -1535,6 +1598,11 @@ div.lcHidden {
 .tooltipContent * {
 	color: var(--text-inverse);
 	line-height: 1.5 !important;
+	padding: 0;
+}
+
+.tooltipContent :is(ol, ul) {
+	padding-left: 0.75rem;
 }
 
 /*
@@ -1558,13 +1626,14 @@ div.lcHidden {
 
 .tl-info-service {
 	position: absolute;
-	top: var(--spacing-03);
+	bottom: var(--spacing-03);
 	right: var(--spacing-03);
 	width: 25rem;
 	max-height: 100%;
 	max-width: 100%;
 	overflow-y: auto;
 	overflow-x: hidden;
+	z-index: 100000;
 }
 
 .tl-info-service-item__hide-info-service_animation {
@@ -1574,9 +1643,9 @@ div.lcHidden {
 
 .tl-info-service-item {
 	position: relative;
-	margin: var(--spacing-02) var(--spacing-01) 0 0;
+	margin: var(--spacing-02) var(--spacing-01);
 	padding: 0 var(--spacing-03) var(--spacing-02) var(--spacing-03);
-	border-radius: 10px;
+	border-radius: .25rem;
 	box-shadow: var(--shadow-menu);
 	overflow-y: hidden;
 	overflow-x: auto;
@@ -1641,7 +1710,8 @@ div.lcHidden {
 }
 
 .tl-info-service-item__header-type-message {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -1715,6 +1785,11 @@ p.tl-info-service-item__details-message-no-bottom {
 	animation-duration: 0.2s;
 }
 
+.tl-info-service-item__hide-info_animation {
+	animation-name: tl-info-service-item__hide-info_animation;
+	animation-duration: 0.2s;
+}
+
 @keyframes tl-info-service-item__show-info_animation {
     0% {opacity: 0;}
     100% {opacity: 0.9; margin-top: 3px;}
@@ -1764,35 +1839,28 @@ span.ltcCounting input {
     to {border-color: rgba(247, 223, 68, 1);}
 }
 
-@keyframes showInfoServiceItemDetailMessage {
-    0% {height: 0;}
-    100% {height: auto;}
-}
-
-@keyframes hideInfoServiceItemDetailMessage {
-    0% {height: auto;}
-    100% {height: 0;}
-}
-
-@keyframes rotatedInfoServiceItemDetailExpandButton {
-    from {transform: rotateZ(0deg);}
-    to {transform: rotateZ(90deg);}
-}
-
-@keyframes regularInfoServiceItemDetailExpandButton {
-    from {transform: rotateZ(90deg);}
-    to {transform: rotateZ(0deg);}
-}
-
 /*
 ****					****
 ****	Tiles Styles	****
 ****					****
 */
+.tileContainer {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	display: grid;
+	align-items: center;
+	justify-items: center;
+	padding: var(--spacing-05);
+	box-sizing: border-box;
+}
+
 .tileRow {
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--spacing-03);
+	justify-content: space-evenly;
+	width: 100%;
 }
 
 .tileContainer .tileNoCards {
@@ -1801,7 +1869,8 @@ span.ltcCounting input {
 	top: 40%;
 	transform: translate(-50%);
 	text-align: center;
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
@@ -1813,15 +1882,20 @@ span.ltcCounting input {
 	background: var(--layer);
 	border: 1px solid var(--border-subtle);
 	margin: var(--spacing-02) 0;
-	padding-bottom: var(--spacing-03);
 	min-width: 0px;
 	background-clip: border-box;
 	border-radius: var(--corner-radius);
-	height: 20rem;
 	width: 16rem;
 	overflow: hidden;
 	cursor: pointer;
 	position: relative;
+	border: var(--link-primary) 3px solid;
+	border-radius: 10px;
+	box-shadow: 0px 0px 5px 5px white;
+}
+
+.card:hover {
+	box-shadow: 0px 0px 3px 3px var(--link-primary);
 }
 
 .card:active {
@@ -1837,10 +1911,6 @@ span.ltcCounting input {
 	background-color: var(--layer-active);
 }
 
-.card:hover {
-	box-shadow: var(--shadow-menu);
-}
-
 .card .cButton {
 	position: absolute;
 	right: var(--spacing-03);
@@ -1852,7 +1922,7 @@ span.ltcCounting input {
     justify-content: center;
     align-items: center;
     width: 100%;
-    height: 80%;
+    height: 15rem; /* Must be 15rem to ensure that the card never gets larger because of previewBoxOuter's content. */
     overflow: hidden;
     background: var(--background);
 }
@@ -1861,13 +1931,13 @@ span.ltcCounting input {
 	position: relative;
 }
 
-.previewBoxOuter:not(.galleryPreview) .previewBoxInner {
+.previewBoxOuter .previewBoxInner {
     display: inline-flex;
     justify-content: center;
     align-items: center;
     height: 50%;
     width: 50%;
-}
+} 
 
 span.card-img-top {
     height: 100%;
@@ -1897,19 +1967,11 @@ span.card-img-top {
 	font-size: 8rem;
 }
 
-.previewBoxOuter.galleryPreview .previewBoxInner {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    width: 100%;
-}
-
+.previewBoxOuter.galleryPreview .previewBoxInner,
+.previewBoxOuter.tablePreview .previewBoxInner,
+.previewBoxOuter.documentPreview .previewBoxInner,
 .previewBoxOuter.galleryPreview .previewBoxInner .cImageDisplay {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	height: 100%;
+    height: 100%;
     width: 100%;
 }
 
@@ -1921,45 +1983,28 @@ span.card-img-top {
 h5.card-title {
 	order: 2;
 	flex-shrink: 0;
-	padding: var(--spacing-02) var(--spacing-03) 0 var(--spacing-03);
+	padding: var(--spacing-02) var(--spacing-03);
 	background: var(--layer);
 	margin: 0;
 	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
+	text-align: center;
+	line-height: 1.4rem;
+	font-size: 1.2rem;
 }
 
-h5.card-title a {
-	color: var(--text-primary);
-	font-family: var(--font-family-bold);
-	font-size: var(--heading-03-font-size);
-	line-height: var(--heading-03-line-height);
-	letter-spacing: var(--heading-03-letter-spacing);
-}
-
-h5.card-title a:hover {
-	color: var(--text-primary);
+h5.card-title > a:hover {
 	text-decoration: none;
-}
-
-h5.card-title a:focus {
-	color: var(--text-primary);
-	box-shadow: none;
 }
 
 .card-text {
 	order: 3;
 	color: var(--text-primary);
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
 	background: var(--layer);
-	padding: 0 var(--spacing-03);
-	margin: 0;
-	overflow: hidden;
-	text-wrap: nowrap;
-	text-overflow: ellipsis;
+	padding: 0 var(--spacing-03) var(--spacing-02) var(--spacing-03);
 }
 
 .card-text > *,
@@ -1985,9 +2030,10 @@ h5.card-title a:focus {
 	min-width: 24px;
     border-radius: 50%;
     color: var(--text-on-color);
-    font-weight: 600;
+    font-weight: bold;
     border: 4px solid var(--background);
-    font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
     font-size: var(--body-01-font-size);
     line-height: var(--body-01-line-height);
     letter-spacing: var(--body-01-letter-spacing);
@@ -2008,7 +2054,6 @@ h5.card-title a:focus {
 */
 .Header {
 	display: flex;
-	height: var(--MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT);
 	overflow: hidden;
 }
 
@@ -2017,7 +2062,7 @@ h5.card-title a:focus {
     align-self: flex-start;
     background: var(--layer);
     width: 100%;
-    padding: var(--spacing-02) 0;
+    line-height: var(--breadcrumb-height);
 }
 
 .BreadCrumbOuter .Left {
@@ -2040,6 +2085,25 @@ h5.card-title a:focus {
 .breadcrumb {
 	display: flex;
 	padding: 0 var(--spacing-02);
+}
+
+.breadcrumb a,
+.breadcrumb a:hover,
+.breadcrumb a:active,
+.breadcrumb a:focus,
+.breadcrumb a:visited,
+.treeBody a,
+.treeBody a:hover,
+.treeBody a:active,
+.treeBody a:focus,
+.treeBody a:visited,
+.cButton a,
+.cButton a:hover,
+.cButton a:active,
+.cButton a:focus,
+.cButton a:visited
+{
+	color: inherit;
 }
 
 .tl-table__title-label .breadcrumb {
@@ -2066,48 +2130,29 @@ h5.card-title a:focus {
 	align-items: center;
 }
 
-.breadcrumb .treeNode .selectableNode .breadcrumbNodeText {
-	color: var(--text-secondary);
-}
-
-.breadcrumb .treeSelected .selectableNode .breadcrumbNodeText {
-	color: var(--text-primary);
-}
-
 .breadcrumb .treeSelected .selectableNode .breadcrumbNodeIcon {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:hover .breadcrumbNodeText,
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:hover .breadcrumbNodeIcon {
-	color: var(--link-primary-hover);
 	text-decoration: underline;
 }
 
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:active .breadcrumbNodeText {
-    color: var(--text-primary);
 	text-decoration: underline;
 }
 
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:active .breadcrumbNodeIcon {
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
 }
 
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:focus {
-    color: var(--link-primary-hover);
 	outline-offset: -1px;
 }
 
 .breadcrumb .treeSelected .selectableNode:focus {
     text-decoration: none;
-}
-
-.breadcrumb .treeNode:not(.treeSelected) .selectableNode:focus .breadcrumbNodeText {
-    color: var(--text-secondary);
-}
-
-.breadcrumb .treeNode:not(.treeSelected) .selectableNode:focus .breadcrumbNodeIcon {
-    color: var(--icon-secondary);
 }
 
 .breadcrumb .treeSelected .selectableNode:focus {
@@ -2117,22 +2162,6 @@ h5.card-title a:focus {
 
 .breadcrumbNodeSeparator {
 	padding: 0 var(--spacing-02);
-}
-
-.breadcrumbNodeSeparator i {
-	color: var(--icon-secondary);
-}
-
-.breadcrumbNodeSeparator .fMenu i {
-	color: var(--icon-secondary);
-}
-
-.breadcrumbNodeSeparator .fMenu:hover i {
-	color: var(--icon-primary);
-}
-
-.breadcrumbNodeSeparator .fMenu:focus i {
-	color: var(--icon-secondary);
 }
 
 .breadcrumbNodeSeparator .fMenu:focus {
@@ -2179,20 +2208,13 @@ h5.card-title a:focus {
 	padding-right: var(--spacing-02);
 }
 
-.breadcrumbMenuVisible .breadcrumbNodeText {
-	color: var(--text-secondary);
-}
-
 .breadcrumbMenuVisible .breadcrumbMenuNode:hover {
 	background: var(--layer-hover);
-}
-
-.breadcrumbMenuVisible .breadcrumbMenuNode:hover .breadcrumbNodeText {
 	color: var(--text-primary);
 }
 
 .breadcrumbMenuVisible .breadcrumbMenuNode:hover .breadcrumbNodeIcon {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 /* Needs to be on active state because focus does not work on this div element. */
@@ -2232,12 +2254,16 @@ h5.card-title a:focus {
 	text-decoration: none;
 }
 
+.treeBody.collapsed-borders {
+    border-collapse: collapse !important;
+}
+
 .tcrNode .treeNode {
     display: flex;
     align-items: center;
-    gap: var(--spacing-01);
-    height: 2rem;
-    padding: 0 var(--spacing-03);
+    gap: var(--spacing-02);
+    height: var(--form-line-height);
+    padding: 0 var(--spacing-02);
     position: relative;
 }
 
@@ -2246,7 +2272,6 @@ h5.card-title a:focus {
 }
 
 .tcrLink {
-	color: var(--text-secondary);
 	overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -2254,14 +2279,12 @@ h5.card-title a:focus {
 
 .treeNode .fToggle,
 .fToggle.tcrToggle, 
-.tlLeafIcon,
 .tcrNode .treeNode span i,
 .treeNode img,
 .tcrNode .treeNode span img {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	color: var(--icon-secondary);
 	/* 
 	Is needed for consistency as long as there are backend rendered 
 	toggle arrow pictures with width 15px. 
@@ -2269,18 +2292,38 @@ h5.card-title a:focus {
 	width: 15px;
 }
 
-.treeNode.treeSelected .fToggle.tcrToggle,
-.tlLeafIcon,
-.tcrNode .treeNode.treeSelected span {
-	color: var(--icon-primary);
+.treeNodeIcon {
+	display: flex;
+	align-items: center;
 }
 
+.treeNodeIcon > i {
+    color: var(--highlight, var(--icon-secondary));
+}
+
+.treeNode.treeSelected .treeNodeIcon > i,
+.treeNode:hover .treeNodeIcon > i {
+	color: var(--highlight, var(--button-fg, var(--icon-primary)));
+}
+
+.treeNode .fToggle,
+.fToggle.tcrToggle {
+    color: var(--icon-secondary);
+}
+
+.treeNode.treeSelected .fToggle.tcrToggle,
+.tcrNode .treeNode:hover .treeNode .fToggle,
+.tcrNode .treeNode:hover .fToggle.tcrToggle {
+	color: var(--button-fg, var(--icon-primary));
+}
+
+.tcrNoSelect {
+	color: var(--text-disabled);
+}
+
+.tcrNoSelect .treeNodeIcon:not(img),
 .treeNode .input-image.fToggle.disabled {
 	color: var(--icon-disabled);
-}
-
-.treeSelected .tcrLink {
-	color: var(--text-primary);
 }
 
 .tcrNode .treeNode:hover {
@@ -2288,19 +2331,13 @@ h5.card-title a:focus {
 	background: var(--layer-hover);
 }
 
-.tcrNode .treeNode:hover .tcrLink {
-	color: var(--text-primary);
-}
-
 .tcrNode .treeNode.treeSelected {
+	color: var(--text-primary);
 	background: var(--layer-selected);
 }
 
-.tcrNode .treeNode.treeSelected .tcrLink {
-	color: var(--text-primary);
-}
-
 .tcrNode .treeNode.treeSelected:hover {
+	color: var(--text-primary);
 	background: var(--layer-selected-hover);
 }
 
@@ -2346,12 +2383,13 @@ div.treeNode.treeSelected.dndInsertInto {
 	align-items: center;
 	justify-content: space-between;
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	gap: var(--spacing-02);
 	height: inherit;
 	overflow: hidden;
 	padding: var(--spacing-02) var(--spacing-03);
 	box-sizing: border-box;
-	border-bottom: 2px solid var(--border-subtle);
 }
 
 .cCollapsibleToolbar {
@@ -2359,17 +2397,29 @@ div.treeNode.treeSelected.dndInsertInto {
 }
 
 .cCollapsibleTitle {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
-	color: var(--text-primary);
+	color: var(--text-inverse);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
+.tl-title .tl-block-control {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-02);
+}
+
+.tl-block-control .cButton {
+    padding-left: var(--spacing-02);
+}
+
 .cCollapsibleToolbar .cButton,
+.cCollapsibleToolbar .ddwttContainer,
 .cToolbar .cButton,
 .tl-table__title-toolbar .cButton {
 	display: inline-flex;
@@ -2379,20 +2429,20 @@ div.treeNode.treeSelected.dndInsertInto {
 .cCollapsibleToolbar a:hover,
 .cToolbar a:hover,
 .tl-table__title-toolbar a:hover {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 	text-decoration: none;
 }
 
 .cCollapsibleToolbar a:focus,
 .cToolbar a:focus,
 .tl-table__title-toolbar a:focus {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .cCollapsibleToolbar a,
 .cToolbar a,
 .tl-table__title-toolbar a {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 /* for when the toolbar is collapsed */
@@ -2500,6 +2550,68 @@ div.DNDmouseMarker div.dndSelection {
     padding: 2px;
 }
 
+
+/*
+ * =======================================
+ * =======  Styles for Progress   ========
+ * =======================================
+ */
+progress {
+	width: 100%;
+	height: 1rem;
+	-webkit-appearance: none;
+	appearance: none;
+	box-sizing: border-box;
+}
+
+progress::-webkit-progress-bar {
+	background-color: var(--background);
+	border: 1px solid var(--border-interactive);
+	border-radius: var(--corner-radius);
+}
+
+progress::-webkit-progress-value {
+	background-color: var(--background-info);
+}
+
+progress[data-complete="true"]::-webkit-progress-value {
+	background-color: var(--background-success);
+}
+
+progress[data-complete="true"]::-webkit-progress-bar {
+	border: 1px solid var(--background-success);
+}
+
+progress::-moz-progress-bar {
+	background-color: var(--background-info);
+}
+
+progress[data-complete="true"]::-moz-progress-bar {
+	background-color: var(--background-success);
+}
+
+/*
+ * =======================================
+ * ======  Styles for logMessages  =======
+ * =======================================
+ */
+.logMessage.INFO {
+	color: var(--text-info);
+}
+
+.logMessage.WARN {
+	color: var(--text-warning--lighter);
+}
+
+.logMessage.DEBUG {
+	color: var(--text-debug);
+}
+
+.logMessage.ERROR,
+.logMessage.FATAL {
+	color: var(--text-danger);
+}
+
 /* ============================================================== */
 /* ====== Sync scrolling images (ssi), see ImageControl     ===== */
 /* ============================================================== */
@@ -2549,66 +2661,37 @@ div.ssiContentArea {
 
 /* ===== com.top_logic.layout.form.decorator.ChangeInfo ===== */
 
-.changeInfoNoChange {
-	display: flex;
+.changeInfo {
+	display: inline-flex;
 	align-items: center;
 }
 
-.changeInfoCreated {
-	display: flex;
-	align-items: center;
+.changeInfo.created {
 	color: green;
 }
 
-.changeInfoRemoved {
-	display: flex;
-	align-items: center;
+.changeInfo.removed {
 	color: red;
 }
 
-.changeInfoChanged {
-	display: flex;
-	align-items: center;
+.changeInfo.changed {
 	color: blue;
 }
 
-.changeInfoDeepChanged {
-	display: flex;
-	align-items: center;
+.changeInfo.deepChanged {
 	color: darkblue;
 }
 
-.changeInfoCreated img,
-.changeInfoRemoved img,
-.changeInfoChanged img, 
-.changeInfoDeepChanged img {
+.changeInfo img {
 	vertical-align: text-bottom;
 }
 
-.changeInfoCreated.form img,
-.changeInfoRemoved.form img,
-.changeInfoChanged.form img, 
-.changeInfoDeepChanged.form img {
+.changeInfo.form img {
 	padding-right: 5px;
 }
 
-.changeInfoCreated.table img,
-.changeInfoRemoved.table img,
-.changeInfoChanged.table img, 
-.changeInfoDeepChanged.table img {
+.changeInfo.table img {
 	padding-right: 0px;
-}
-
-.clickGuardContainer {
-	position: absolute;
-	left: 0;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	overflow: hidden;
-	background-color: white;
-	opacity: 0;
-	filter: alpha(opacity=0);
 }
 
 .activeGalleryManagementButton, .inactiveGalleryManagementButton {
@@ -2617,10 +2700,11 @@ div.ssiContentArea {
 	align-items: center;
 	flex-shrink: 0;
 	gap: var(--spacing-02);
-	height: 2rem; /* 32px height */
+	height: var(--form-line-height);
 	padding: 0 var(--spacing-03);
 	border-radius: var(--corner-radius);
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -2633,6 +2717,7 @@ div.ssiContentArea {
 	color: var(--text-on-color);
 	background: var(--button-primary);
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
+	width: inherit;
 }
 
 .activeGalleryManagementButton:hover,
@@ -2653,3 +2738,175 @@ div.ssiContentArea {
 	margin-left: var(--spacing-01);
 }
 
+.tl-danger {
+	--highlight: var(--text-danger);
+	--highlight-fg: var(--text-danger--on-color);
+	--highlight-bg: var(--background-danger);
+	--highlight-bg--hover: var(--background-danger--hover);
+	--highlight-bg--selected: var(--background-danger--selected);
+	--highlight-bg--selected--hover: var(--background-danger--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-danger.tl-lighter {
+	--highlight: var(--text-danger--lighter);
+	--highlight-fg: var(--text-danger--on-color--lighter);
+	--highlight-bg: var(--background-danger--lighter);
+	--highlight-bg--hover: var(--background-danger--hover--lighter);
+	--highlight-bg--selected: var(--background-danger--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-danger--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+.tl-warning {
+	--highlight: var(--text-warning);
+	--highlight-fg: var(--text-warning--on-color);
+	--highlight-bg: var(--background-warning);
+	--highlight-bg--hover: var(--background-warning--hover);
+	--highlight-bg--selected: var(--background-warning--selected);
+	--highlight-bg--selected--hover: var(--background-warning--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-warning.tl-lighter {
+	--highlight: var(--text-warning--lighter);
+	--highlight-fg: var(--text-warning--on-color--lighter);
+	--highlight-bg: var(--background-warning--lighter);
+	--highlight-bg--hover: var(--background-warning--hover--lighter);
+	--highlight-bg--selected: var(--background-warning--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-warning--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+.tl-success {
+	--highlight: var(--text-success);
+	--highlight-fg: var(--text-success--on-color);
+	--highlight-bg: var(--background-success);
+	--highlight-bg--hover: var(--background-success--hover);
+	--highlight-bg--selected: var(--background-success--selected);
+	--highlight-bg--selected--hover: var(--background-success--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-success.tl-lighter {
+	--highlight: var(--text-success--lighter);
+	--highlight-fg: var(--text-success--on-color--lighter);
+	--highlight-bg: var(--background-success--lighter);
+	--highlight-bg--hover: var(--background-success--hover--lighter);
+	--highlight-bg--selected: var(--background-success--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-success--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+.tl-info {
+	--highlight: var(--text-info);
+	--highlight-fg: var(--text-info--on-color);
+	--highlight-bg: var(--background-info);
+	--highlight-bg--hover: var(--background-info--hover);
+	--highlight-bg--selected: var(--background-info--selected);
+	--highlight-bg--selected--hover: var(--background-info--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-info.tl-lighter {
+	--highlight: var(--text-info--lighter);
+	--highlight-fg: var(--text-info--on-color--lighter);
+	--highlight-bg: var(--background-info--lighter);
+	--highlight-bg--hover: var(--background-info--hover--lighter);
+	--highlight-bg--selected: var(--background-info--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-info--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+.tl-debug {
+	--highlight: var(--text-debug);
+	--highlight-fg: var(--text-debug--on-color);
+	--highlight-bg: var(--background-debug);
+	--highlight-bg--hover: var(--background-debug--hover);
+	--highlight-bg--selected: var(--background-debug--selected);
+	--highlight-bg--selected--hover: var(--background-debug--selected--hover);
+	--highlight-weight: normal;
+}
+
+.tl-debug.tl-lighter {
+	--highlight: var(--text-debug--lighter);
+	--highlight-fg: var(--text-debug--on-color--lighter);
+	--highlight-bg: var(--background-debug--lighter);
+	--highlight-bg--hover: var(--background-debug--hover--lighter);
+	--highlight-bg--selected: var(--background-debug--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-debug--selected--hover--lighter);
+	--highlight-weight: normal;
+}
+
+.tl-accent-1 {
+	--highlight: var(--text-accent-1);
+	--highlight-fg: var(--text-accent-1--on-color);
+	--highlight-bg: var(--background-accent-1);
+	--highlight-bg--hover: var(--background-accent-1--hover);
+	--highlight-bg--selected: var(--background-accent-1--selected);
+	--highlight-bg--selected--hover: var(--background-accent-1--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-accent-1.tl-lighter {
+	--highlight: var(--text-accent-1--lighter);
+	--highlight-fg: var(--text-accent-1--on-color--lighter);
+	--highlight-bg: var(--background-accent-1--lighter);
+	--highlight-bg--hover: var(--background-accent-1--hover--lighter);
+	--highlight-bg--selected: var(--background-accent-1--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-accent-1--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+.tl-accent-2 {
+	--highlight: var(--text-accent-2);
+	--highlight-fg: var(--text-accent-2--on-color);
+	--highlight-bg: var(--background-accent-2);
+	--highlight-bg--hover: var(--background-accent-2--hover);
+	--highlight-bg--selected: var(--background-accent-2--selected);
+	--highlight-bg--selected--hover: var(--background-accent-2--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-accent-2.tl-lighter {
+	--highlight: var(--text-accent-2--lighter);
+	--highlight-fg: var(--text-accent-2--on-color--lighter);
+	--highlight-bg: var(--background-accent-2--lighter);
+	--highlight-bg--hover: var(--background-accent-2--hover--lighter);
+	--highlight-bg--selected: var(--background-accent-2--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-accent-2--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+.tl-accent-3 {
+	--highlight: var(--text-accent-3);
+	--highlight-fg: var(--text-accent-3--on-color);
+	--highlight-bg: var(--background-accent-3);
+	--highlight-bg--hover: var(--background-accent-3--hover);
+	--highlight-bg--selected: var(--background-accent-3--selected);
+	--highlight-bg--selected--hover: var(--background-accent-3--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-accent-3.tl-lighter {
+	--highlight: var(--text-accent-3--lighter);
+	--highlight-fg: var(--text-accent-3--on-color--lighter);
+	--highlight-bg: var(--background-accent-3--lighter);
+	--highlight-bg--hover: var(--background-accent-3--hover--lighter);
+	--highlight-bg--selected: var(--background-accent-3--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-accent-3--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+/* If the accent style is directly set on an icon, set all text colors to the view-mode foreground */
+i.tl-danger,
+i.tl-warning,
+i.tl-success,
+i.tl-info,
+i.tl-debug,
+i.tl-accent-1,
+i.tl-accent-3,
+i.tl-accent-2 {
+	--highlight-fg: var(--highlight);
+	color: var(--highlight, inherit);
+}

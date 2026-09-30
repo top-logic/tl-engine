@@ -8,6 +8,7 @@ package com.top_logic.layout.structure;
 import com.top_logic.knowledge.gui.layout.SizeInfo;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
+import com.top_logic.layout.layoutRenderer.LayoutControlRenderer;
 
 /**
  * The class {@link DefaultLayoutData} is the default immutable holder for the values provided by {@link LayoutData}. 
@@ -59,7 +60,7 @@ public class DefaultLayoutData implements LayoutData {
 	 */
 	public DefaultLayoutData(DisplayDimension aWidth, int aMaxWidth, DisplayDimension aHeight, int aMaxHeight,
 			Scrolling aScrollable) {
-		this(aWidth, 0, aMaxWidth, aHeight, 0, aMaxHeight, aScrollable);
+		this(aWidth, LayoutControlRenderer.MIN_SIZE, aMaxWidth, aHeight, LayoutControlRenderer.MIN_SIZE, aMaxHeight, aScrollable);
 	}
 
 	/**
@@ -185,6 +186,15 @@ public class DefaultLayoutData implements LayoutData {
 	public LayoutData resized(DisplayDimension newWidth, DisplayDimension newHeight) {
 		return new DefaultLayoutData(newWidth, this.getMinWidth(), this.getMaxWidth(), newHeight, this.getMinHeight(),
 			this.getMaxHeight(), this.getScrollable());
+	}
+
+	@Override
+	public LayoutData withScrolling(Scrolling scrolling) {
+		if (scrolling == this.getScrollable()) {
+			return this;
+		}
+		return new DefaultLayoutData(this.getWidthDimension(), this.getMinWidth(), this.getMaxWidth(),
+			this.getHeightDimension(), this.getMinHeight(), this.getMaxHeight(), scrolling);
 	}
 
 	@Override

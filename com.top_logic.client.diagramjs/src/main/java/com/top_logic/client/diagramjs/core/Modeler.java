@@ -19,7 +19,7 @@ import com.top_logic.client.diagramjs.util.JavaScriptObjectUtil;
 /**
  * Modeler for {@link Diagram} components.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class Modeler extends JavaScriptObject {
 

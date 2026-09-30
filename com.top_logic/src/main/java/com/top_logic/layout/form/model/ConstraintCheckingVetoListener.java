@@ -49,7 +49,7 @@ public class ConstraintCheckingVetoListener implements ValueVetoListener {
 	public ConstraintCheckingVetoListener() {
 		_title = ConstantDisplayValue.EMPTY_STRING;
 		DisplayDimension width = DisplayDimension.dim(500, DisplayUnit.PIXEL);
-		DisplayDimension height = DisplayDimension.dim(200, DisplayUnit.PIXEL);
+		DisplayDimension height = DisplayDimension.dim(300, DisplayUnit.PIXEL);
 		_layoutData = DefaultLayoutData.newLayoutData(width, height);
 	}
 

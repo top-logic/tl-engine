@@ -16,6 +16,7 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -29,11 +30,11 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 
 
 /**
- * Factory for WebFolders.
- * 
+ * Creates and manages the web folders used to store uploaded documents.
+ *
  * TODO FMA DSN for rootDoc should be configurable, per type.
  *      (Sub)-Class should be configurable (See Wrapper Factory)
- * 
+ *
  * @author    <a href=mailto:fma@top-logic.com>Frank Mausz</a>
  */
 @ServiceDependencies({
@@ -43,6 +44,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 	// needed for creation of root folder.
 	DataAccessService.Module.class
 })
+@Label("Web folder factory")
 public class WebFolderFactory extends ManagedClass {
     
 	/**
@@ -78,7 +80,7 @@ public class WebFolderFactory extends ManagedClass {
 	/**
 	 * Configuration for {@link WebFolderFactory}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<WebFolderFactory> {
 		/**
@@ -263,7 +265,7 @@ public class WebFolderFactory extends ManagedClass {
 	/**
 	 * Module for {@link WebFolderFactory}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public static final class Module extends TypedRuntimeModule<WebFolderFactory> {
 

@@ -319,7 +319,7 @@
 					command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
 					command-label="Designmodus"
 					command-name="toggleDesignModeCommand"
-					component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+					component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 					component-name="rootLayout#masterFrame"
 					user-id="root"
 				>
@@ -584,7 +584,6 @@
 					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					xmlns:config="http://www.top-logic.com/ns/config/6.0"
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
@@ -611,7 +610,7 @@
 					command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
 					command-label="Designmodus verlassen"
 					command-name="toggleDesignModeCommand"
-					component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+					component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 					component-name="rootLayout#masterFrame"
 					user-id="root"
 				>
@@ -716,7 +715,7 @@
 					command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
 					command-label="Designmodus"
 					command-name="toggleDesignModeCommand"
-					component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+					component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 					component-name="rootLayout#masterFrame"
 					user-id="root"
 				>
@@ -740,7 +739,7 @@
 					command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
 					command-label="Designmodus verlassen"
 					command-name="toggleDesignModeCommand"
-					component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+					component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 					component-name="rootLayout#masterFrame"
 					user-id="root"
 				>

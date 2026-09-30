@@ -65,10 +65,5 @@
 		>
 			<arguments/>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
-			component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
-			user-id="root"
-		/>
 	</actions>
 </action>

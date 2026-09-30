@@ -20,7 +20,6 @@ import com.top_logic.knowledge.service.StorageException;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
  * {@link RoleComputation} caching the groups of the person and the roles.
@@ -30,8 +29,6 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class PersonRoleCache extends RoleComputation {
-
-	private final Person _person;
 
 	private List<TLID> _groupIDs;
 
@@ -44,13 +41,12 @@ public class PersonRoleCache extends RoleComputation {
 	 * Creates a new {@link PersonRoleCache}.
 	 */
 	public PersonRoleCache(Person person, StorageAccessManager accessManager) {
-		super(accessManager);
-		_person = person;
-		_groupIDs = getGroupIDs(_person);
+		super(person, accessManager);
+		_groupIDs = getGroupIDs(getPerson());
 	}
 
 	@Override
-	public boolean hasRole(BoundObject boundObject, Collection<BoundedRole> someRoles) {
+	public boolean hasRole(BoundObject boundObject, Collection<? extends BoundRole> someRoles) {
 		if (CollectionUtil.isEmptyOrNull(someRoles)) {
 			return false;
 		}
@@ -66,7 +62,7 @@ public class PersonRoleCache extends RoleComputation {
 			try {
 				roles = Collections.unmodifiableSet(new HashSet<>(findRolesInStorage(boundObject, _groupIDs)));
 			} catch (StorageException ex) {
-				Logger.error("Unable to determine roles for person '" + _person.getName()
+				Logger.error("Unable to determine roles for person '" + getPerson().getName()
 					+ "'. No roles will be given to the person.", ex, PersonRoleCache.class);
 				roles = Collections.emptySet();
 			}
@@ -81,12 +77,12 @@ public class PersonRoleCache extends RoleComputation {
 	}
 
 	@Override
-	public <T extends BoundObject> Collection<T> getAllowedBusinessObjects(Collection<BoundedRole> someRoles,
+	public <T extends BoundObject> Collection<T> getAllowedBusinessObjects(Collection<? extends BoundRole> someRoles,
 			Collection<T> someObjects) {
 		try {
 			return findAllowedBusinessObjects(someRoles, _groupIDs, someObjects);
 		} catch (StorageException ex) {
-			Logger.error("Unable to determine allowed for person '" + _person.getName() + "'.", ex,
+			Logger.error("Unable to determine allowed for person '" + getPerson().getName() + "'.", ex,
 				PersonRoleCache.class);
 			return Collections.emptyList();
 		}

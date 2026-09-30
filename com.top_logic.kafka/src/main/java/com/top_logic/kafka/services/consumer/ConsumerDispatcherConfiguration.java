@@ -8,14 +8,19 @@ package com.top_logic.kafka.services.consumer;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.config.SaslConfigs;
+import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.StringDeserializer;
 
 import com.top_logic.basic.config.CommaSeparatedStringSet;
+import com.top_logic.basic.config.NamedConfiguration;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
@@ -27,7 +32,13 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.format.MillisFormat;
+import com.top_logic.basic.config.order.DisplayInherited;
+import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
+import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.kafka.serialization.StringDeserializer;
 import com.top_logic.kafka.services.common.CommonClientConfig;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 
 /**
  * Typed configuration interface for consumers retrieving data using a
@@ -35,16 +46,97 @@ import com.top_logic.kafka.services.common.CommonClientConfig;
  * 
  * @author <a href=mailto:wta@top-logic.com>wta</a>
  */
+@DisplayInherited(DisplayStrategy.APPEND)
+@DisplayOrder({
+	NamedConfiguration.NAME_ATTRIBUTE,
+	ConsumerDispatcherConfiguration.TOPICS,
+	CommonClientConfigs.CLIENT_ID_CONFIG,
+	ConsumerDispatcherConfiguration.CLIENT_RACK,
+	CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG,
+
+	ConsumerDispatcherConfiguration.VALUE_DESERIALIZER_TYPED_CONFIG,
+	ConsumerDispatcherConfiguration.KEY_DESERIALIZER_TYPED_CONFIG,
+	CommonClientConfig.LOG_WRITER,
+
+	ConsumerDispatcherConfiguration.PROCESSORS,
+
+	ConsumerDispatcherConfiguration.ALLOW_AUTO_CREATE_TOPICS,
+	ConsumerConfig.EXCLUDE_INTERNAL_TOPICS_CONFIG,
+	ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
+	ConsumerConfig.CHECK_CRCS_CONFIG,
+
+	ConsumerDispatcherConfiguration.POLLING_TIMEOUT,
+	ConsumerDispatcherConfiguration.ERROR_PAUSE_START,
+	ConsumerDispatcherConfiguration.ERROR_PAUSE_FACTOR,
+	ConsumerDispatcherConfiguration.ERROR_PAUSE_MAX,
+
+	ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG,
+	ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,
+	ConsumerConfig.DEFAULT_API_TIMEOUT_MS_CONFIG,
+	ConsumerConfig.FETCH_MAX_BYTES_CONFIG,
+	ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG,
+	ConsumerConfig.FETCH_MIN_BYTES_CONFIG,
+	ConsumerConfig.GROUP_ID_CONFIG,
+	ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG,
+	ConsumerConfig.ISOLATION_LEVEL_CONFIG,
+	ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG,
+	ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG,
+	ConsumerConfig.MAX_POLL_RECORDS_CONFIG,
+	ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG,
+	ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG,
+	CommonClientConfigs.CLIENT_DNS_LOOKUP_CONFIG,
+	CommonClientConfigs.CONNECTIONS_MAX_IDLE_MS_CONFIG,
+	CommonClientConfigs.METADATA_MAX_AGE_CONFIG,
+	CommonClientConfigs.ENABLE_METRICS_PUSH_CONFIG,
+	CommonClientConfigs.METRICS_NUM_SAMPLES_CONFIG,
+	CommonClientConfigs.METRICS_RECORDING_LEVEL_CONFIG,
+	CommonClientConfigs.METRICS_SAMPLE_WINDOW_MS_CONFIG,
+	CommonClientConfigs.RECEIVE_BUFFER_CONFIG,
+	CommonClientConfigs.RECONNECT_BACKOFF_MAX_MS_CONFIG,
+	CommonClientConfigs.RECONNECT_BACKOFF_MS_CONFIG,
+	CommonClientConfigs.REQUEST_TIMEOUT_MS_CONFIG,
+	CommonClientConfigs.RETRY_BACKOFF_MS_CONFIG,
+	CommonClientConfigs.SEND_BUFFER_CONFIG,
+	CommonClientConfigs.SECURITY_PROTOCOL_CONFIG,
+	CommonClientConfig.SECURITY_PROVIDERS,
+	SaslConfigs.SASL_JAAS_CONFIG,
+	SaslConfigs.SASL_MECHANISM,
+	SaslConfigs.SASL_KERBEROS_KINIT_CMD,
+	SaslConfigs.SASL_KERBEROS_MIN_TIME_BEFORE_RELOGIN,
+	SaslConfigs.SASL_KERBEROS_SERVICE_NAME,
+	SaslConfigs.SASL_KERBEROS_TICKET_RENEW_JITTER,
+	SaslConfigs.SASL_KERBEROS_TICKET_RENEW_WINDOW_FACTOR,
+	SaslConfigs.SASL_LOGIN_REFRESH_BUFFER_SECONDS,
+	SaslConfigs.SASL_LOGIN_REFRESH_MIN_PERIOD_SECONDS,
+	SaslConfigs.SASL_LOGIN_REFRESH_WINDOW_FACTOR,
+	SaslConfigs.SASL_LOGIN_REFRESH_WINDOW_JITTER,
+	SslConfigs.SSL_CIPHER_SUITES_CONFIG,
+	SslConfigs.SSL_ENABLED_PROTOCOLS_CONFIG,
+	SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG,
+	SslConfigs.SSL_KEY_PASSWORD_CONFIG,
+	SslConfigs.SSL_KEYMANAGER_ALGORITHM_CONFIG,
+	SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG,
+	SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG,
+	SslConfigs.SSL_KEYSTORE_TYPE_CONFIG,
+	SslConfigs.SSL_PROTOCOL_CONFIG,
+	SslConfigs.SSL_PROVIDER_CONFIG,
+	SslConfigs.SSL_SECURE_RANDOM_IMPLEMENTATION_CONFIG,
+	SslConfigs.SSL_TRUSTMANAGER_ALGORITHM_CONFIG,
+	SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG,
+	SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG,
+	SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG,
+	CommonClientConfig.UNTYPED_PROPERTIES,
+})
 public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfig<V, ConsumerDispatcher<K, V>> {
 
 	/** Property name of {@link #getAllowAutoCreateTopics()}. */
-	String ALLOW_AUTO_CREATE_TOPICS = "allow.auto.create.topics";
+	String ALLOW_AUTO_CREATE_TOPICS = ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG;
 
 	/** Property name of {@link #getClientRack()}. */
-	String CLIENT_RACK = "client.rack";
+	String CLIENT_RACK = CommonClientConfigs.CLIENT_RACK_CONFIG;
 
 	/**
-	 * @see #getValueDeserializer()
+	 * @see #getKeyDeserializer()
 	 */
 	String KEY_DESERIALIZER_TYPED_CONFIG = "key.deserializer.typed.config";
 
@@ -53,20 +145,41 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	 */
 	String VALUE_DESERIALIZER_TYPED_CONFIG = "value.deserializer.typed.config";
 
+	/** Property name of {@link #getTopics()}. */
+	String TOPICS = "topics";
+
+	/** Property name of {@link #getPollingTimeout()}. */
+	String POLLING_TIMEOUT = "polling-timeout";
+
+	/** Property name of {@link #getErrorPauseStart()}. */
+	String ERROR_PAUSE_START = "error-pause-start";
+
+	/** Property name of {@link #getErrorPauseFactor()}. */
+	String ERROR_PAUSE_FACTOR = "error-pause-factor";
+
+	/** Property name of {@link #getErrorPauseMax()}. */
+	String ERROR_PAUSE_MAX = "error-pause-max";
+
+	/** Property name of {@link #getProcessors()}. */
+	String PROCESSORS = "processors";
+
 	@ClassDefault(ConsumerDispatcher.class)
 	@Override
 	Class<? extends ConsumerDispatcher<K, V>> getImplementationClass();
-	
+
 	/**
-	 * a {@link Set} of topics to subscribe the consumer to
+	 * A comma separated {@link Set} of topic names to subscribe to.
 	 */
 	@Format(CommaSeparatedStringSet.class)
+	@Name(TOPICS)
+	@Mandatory
 	Set<String> getTopics();
 
 	/**
 	 * the number of milliseconds to wait for the arrival of new
 	 *         messages
 	 */
+	@Name(POLLING_TIMEOUT)
 	@LongDefault(1000)
 	long getPollingTimeout();
 
@@ -81,6 +194,7 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	 * failures.
 	 * </p>
 	 */
+	@Name(ERROR_PAUSE_START)
 	@FormattedDefault("10s")
 	@Format(MillisFormat.class)
 	long getErrorPauseStart();
@@ -100,6 +214,7 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	 * {@link #getErrorPauseStart()} again.
 	 * </p>
 	 */
+	@Name(ERROR_PAUSE_FACTOR)
 	@FloatDefault(2)
 	float getErrorPauseFactor();
 
@@ -110,6 +225,7 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	 * failures.
 	 * </p>
 	 */
+	@Name(ERROR_PAUSE_MAX)
 	@FormattedDefault("10min")
 	@Format(MillisFormat.class)
 	long getErrorPauseMax();
@@ -118,6 +234,8 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	 * a (possibly empty) {@link List} of configured
 	 *         {@link ConsumerProcessor}s
 	 */
+	@Name(PROCESSORS)
+	@Options(fun = AllInAppImplementations.class)
 	List<PolymorphicConfiguration<ConsumerProcessor<K,V>>> getProcessors();
 
 	/**
@@ -135,7 +253,7 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	@IntDefault(5 * 1000)
 	@KafkaClientProperty
 	int getAutoCommitIntervalMS();
-	
+
 	/**
 	 * @see ConsumerConfig#AUTO_OFFSET_RESET_DOC
 	 */
@@ -160,7 +278,7 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	String getClientRack();
 
 	/**
-	 * @see ConsumerConfig#DEFAULT_API_TIMEOUT_MS_DOC
+	 * @see ConsumerConfig#DEFAULT_API_TIMEOUT_MS_CONFIG
 	 */
 	@Name(ConsumerConfig.DEFAULT_API_TIMEOUT_MS_CONFIG)
 	@IntDefault(60 * 1000)
@@ -214,7 +332,14 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	@Mandatory
 	@KafkaClientProperty
 	String getGroupId();
-	
+
+	/**
+	 * @see ConsumerConfig#GROUP_INSTANCE_ID_DOC
+	 */
+	@Name(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG)
+	@KafkaClientProperty
+	String getGroupInstanceId();
+
 	/**
 	 * @see ConsumerConfig#HEARTBEAT_INTERVAL_MS_CONFIG
 	 */
@@ -225,6 +350,10 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	
 	/**
 	 * @see ConsumerConfig#INTERCEPTOR_CLASSES_DOC
+	 * 
+	 * @implNote Kafka specifies this in the {@link ConsumerConfig} <em>and</em> the
+	 *           {@link ProducerConfig}, but <em>not</em> in the {@link CommonClientConfigs}. It is
+	 *           therefore declared here that way, too.
 	 */
 	@Name(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG)
 	@KafkaClientProperty
@@ -245,15 +374,18 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	@IntDefault(1 * 1024 * 1024)
 	@KafkaClientProperty
 	int getMaxPartitionFetchBytes();
-	
+
 	/**
+	 * When more than this much time passes between two requests, the client will be removed from
+	 * the server.
+	 * 
 	 * @see ConsumerConfig#MAX_POLL_INTERVAL_MS_CONFIG
 	 */
 	@Name(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG)
 	@IntDefault(5 * 60 * 1000)
 	@KafkaClientProperty
 	int getMaxPollIntervalMS();
-	
+
 	/**
 	 * @see ConsumerConfig#MAX_POLL_RECORDS_CONFIG
 	 */
@@ -266,7 +398,7 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	 * @see ConsumerConfig#PARTITION_ASSIGNMENT_STRATEGY_CONFIG
 	 */
 	@Name(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG)
-	@StringDefault("org.apache.kafka.clients.consumer.RangeAssignor")
+	@StringDefault("org.apache.kafka.clients.consumer.RangeAssignor,org.apache.kafka.clients.consumer.CooperativeStickyAssignor")
 	@KafkaClientProperty
 	String getPartitionAssignmentStrategy();
 
@@ -275,26 +407,34 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	int getReceiveBufferBytes();
 	
 	@Override
-	@IntDefault(305 * 1000)
+	@IntDefault(30 * 1000)
 	int getRequestTimeoutMS();
 	
 	/**
 	 * @see ConsumerConfig#SESSION_TIMEOUT_MS_CONFIG
 	 */
 	@Name(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG)
-	@IntDefault(10 * 1000)
+	@IntDefault(45 * 1000)
 	@KafkaClientProperty
 	int getSessionTimeoutMS();
 	
 	/**
+	 * Deserializer for message keys.
+	 * 
+	 * <p>
+	 * A deserializer converts binary data transmitted in a message to objects.
+	 * </p>
+	 * 
 	 * @see ConsumerConfig#KEY_DESERIALIZER_CLASS_DOC
 	 */
+	@Label("Key deserializer")
 	@Name(KEY_DESERIALIZER_TYPED_CONFIG)
 	@ItemDefault(StringDeserializer.class)
+	@Options(fun = AllInAppImplementations.class)
 	PolymorphicConfiguration<? extends Deserializer<K>> getKeyDeserializer();
 
 	/**
-	 * For configuration of {@link Deserializer} which should be configured via Kafka.
+	 * When this option is not empty, {@link #getKeyDeserializer()} will be ignored.
 	 * 
 	 * @see ConsumerConfig#KEY_DESERIALIZER_CLASS_DOC
 	 */
@@ -303,14 +443,22 @@ public interface ConsumerDispatcherConfiguration<K, V> extends CommonClientConfi
 	Class<? extends Deserializer<K>> getKeyDeserializerClass();
 
 	/**
+	 * Deserializer for message contents.
+	 * 
+	 * <p>
+	 * A deserializer converts binary data transmitted in a message to objects.
+	 * </p>
+	 * 
 	 * @see ConsumerConfig#VALUE_DESERIALIZER_CLASS_DOC
 	 */
+	@Label("Value deserializer")
 	@Name(VALUE_DESERIALIZER_TYPED_CONFIG)
 	@ItemDefault(StringDeserializer.class)
+	@Options(fun = AllInAppImplementations.class)
 	PolymorphicConfiguration<? extends Deserializer<V>> getValueDeserializer();
 	
 	/**
-	 * For configuration of {@link Deserializer} which should be configured via Kafka.
+	 * When this option is not empty, {@link #getValueDeserializer()} will be ignored.
 	 * 
 	 * @see ConsumerConfig#VALUE_DESERIALIZER_CLASS_DOC
 	 */

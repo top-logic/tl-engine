@@ -11,7 +11,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
  * Edge between at least one {@link SegmentContainer} and an other container or a
  * {@link LayoutNode}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class VirtualSegmentEdge {
 	private final Object _source;

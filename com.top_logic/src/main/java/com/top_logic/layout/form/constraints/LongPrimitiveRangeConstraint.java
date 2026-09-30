@@ -15,7 +15,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class LongPrimitiveRangeConstraint extends AbstractLongPrimitiveConstraint {
+public class LongPrimitiveRangeConstraint extends AbstractLongPrimitiveConstraint implements IRangeConstraint {
 	boolean hasMin;
 	boolean hasMax;
 	long min;
@@ -80,4 +80,24 @@ public class LongPrimitiveRangeConstraint extends AbstractLongPrimitiveConstrain
 		return true;
 	}
 	
+	@Override
+	public Comparable<?> getLower() {
+		return hasMin ? Long.valueOf(min) : null;
+	}
+
+	@Override
+	public boolean isLowerInclusive() {
+		return true;
+	}
+
+	@Override
+	public Comparable<?> getUpper() {
+		return hasMax ? Long.valueOf(max) : null;
+	}
+
+	@Override
+	public boolean isUpperInclusive() {
+		return true;
+	}
+
 }

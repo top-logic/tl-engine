@@ -258,12 +258,6 @@ public class ExternalStorage<C extends ExternalStorage.Config<?>> extends Atomic
 	}
 
 	@Override
-	public Object getUpdateValue(AttributeUpdate update) throws NoSuchAttributeException,
-			IllegalArgumentException, AttributeException {
-		throw new AttributeException("getUpdateValue not supported");
-	}
-
-	@Override
 	public void checkUpdate(AttributeUpdate update) {
 		// Ignore
 		return;

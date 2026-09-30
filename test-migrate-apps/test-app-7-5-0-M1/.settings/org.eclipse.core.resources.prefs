@@ -1,4 +1,12 @@
 eclipse.preferences.version=1
-encoding//src/main/java=utf-8
-encoding//src/test/java=utf-8
-encoding/<project>=utf-8
+encoding//src/main/java=UTF-8
+encoding//src/test/java=UTF-8
+encoding/<project>=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/model.my.company.my.app750m1.exported.messages_de.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/model.my.company.my.app750m1.exported.messages_en.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/myapp750M1.messages_de.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/myapp750M1.messages_en.properties=UTF-8
+encoding//tmp/app-data/var/variants/my.company.my.app.7.5.0.M1Messages_de__dynamic.properties=UTF-8
+encoding//tmp/app-data/var/variants/my.company.my.app.7.5.0.M1Messages_en__dynamic.properties=UTF-8
+encoding//tmp/app-data/var/variants/my.company.my.app750m1.exportedMessages_de__dynamic.properties=UTF-8
+encoding//tmp/app-data/var/variants/my.company.my.app750m1.exportedMessages_en__dynamic.properties=UTF-8

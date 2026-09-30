@@ -9,17 +9,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.activation.DataHandler;
-import javax.activation.DataSource;
-import javax.mail.Address;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMultipart;
-
 import junit.framework.Test;
+
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
+import jakarta.mail.Address;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMultipart;
 
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
@@ -34,7 +34,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.mail.base.MailServer;
 import com.top_logic.mail.base.imap.IMAPMail;
-import com.top_logic.mail.proxy.Attachements;
+import com.top_logic.mail.proxy.Attachments;
 import com.top_logic.mail.proxy.exchange.ExchangeMail;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.sched.Scheduler;
@@ -57,14 +57,14 @@ public class TestMailMultipart extends BasicTestCase {
 
 	public void testMultipartRelated()
 			throws MessagingException, IOException, DataObjectException, InterruptedException {
-		Transaction createTx = _kb.beginTransaction();
+		Transaction createTx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TestMailFolderAwareWrapper wrapper = TestMailFolderAwareWrapper.newInstance(_kb, TestMailAttachment.class);
 		createTx.commit();
 
 		try {
 			checkMultipartRelated(wrapper);
 		} finally {
-			Transaction deleteTx = _kb.beginTransaction();
+			Transaction deleteTx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			wrapper.deleteWrapperAndFolder();
 			deleteTx.commit();
 		}
@@ -82,9 +82,9 @@ public class TestMailMultipart extends BasicTestCase {
 		assertEquals(1, mails.size());
 		ExchangeMail mail = new ExchangeMail(((IMAPMail) mails.get(0)).getOriginalMail());
 
-		Attachements attachements = mail.getAttachements();
-		assertNotNull(attachements);
-		assertEquals(1, attachements.getCount());
+		Attachments attachments = mail.getAttachments();
+		assertNotNull(attachments);
+		assertEquals(1, attachments.getCount());
 	}
 
 	protected void sendMultipartMail(String title) throws MessagingException, IOException, AddressException {

@@ -22,7 +22,7 @@ import com.google.gwt.core.client.JavaScriptObject;
  * <li>{@link #REVERTED}</li>
  * </ul>
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public enum CommandExecutionPhase {
 	

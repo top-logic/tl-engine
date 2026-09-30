@@ -12,6 +12,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
+import com.top_logic.layout.compare.WrapCompareCells;
 import com.top_logic.layout.table.AbstractCellRenderer;
 import com.top_logic.layout.table.CellRenderer;
 import com.top_logic.layout.table.TableRenderer.Cell;
@@ -28,7 +29,6 @@ import com.top_logic.layout.tree.renderer.RowTypeCellRenderer;
 import com.top_logic.layout.tree.renderer.TreeCellRenderer;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.tool.export.ExcelCellRenderer;
-import com.top_logic.tool.export.ExcelExportSupport;
 
 /**
  * {@link TableConfigurationProvider} for the comparison table.
@@ -43,23 +43,16 @@ public abstract class AbstractCompareTableProvider<CI extends CompareInfo> exten
 
 	private boolean _isTreeTable;
 
-	private ExcelExportSupport _excelExport;
-
 	/**
 	 * Creates a new {@link AbstractCompareTableProvider}.
 	 * 
 	 * @param compareService
 	 *        {@link CompareService} used to decorate changed cells.
-	 * @param excelExport
-	 *        {@link ExcelExportSupport} to get default {@link ExcelCellRenderer}:
-	 *        {@link ExcelExportSupport#defaultExcelCellRenderer()}.
 	 * @param isTreeTable
 	 *        Whether the displayed table is a tree table.
 	 */
-	public AbstractCompareTableProvider(CompareService<CI> compareService, ExcelExportSupport excelExport,
-			boolean isTreeTable) {
+	public AbstractCompareTableProvider(CompareService<CI> compareService, boolean isTreeTable) {
 		_compareService = compareService;
-		_excelExport = excelExport;
 		_isTreeTable = isTreeTable;
 	}
 
@@ -113,6 +106,8 @@ public abstract class AbstractCompareTableProvider<CI extends CompareInfo> exten
 			adaptCellRenderer(targetColumn);
 		}
 		adaptExcelCellRenderer(targetColumn);
+
+		WrapCompareCells.adaptColumn(targetColumn);
 	}
 
 	private void adaptCellExistenceTester(ColumnConfiguration targetColumn) {
@@ -142,7 +137,7 @@ public abstract class AbstractCompareTableProvider<CI extends CompareInfo> exten
 		if (column.isClassifiedBy(ColumnConfig.CLASSIFIER_NO_EXPORT)) {
 			return;
 		}
-		ExcelCellRenderer excelCellRenderer = column.finalExcelCellRenderer(_excelExport);
+		ExcelCellRenderer excelCellRenderer = column.getExcelRenderer();
 		column.setExcelRenderer(new CompareExcelRenderer(excelCellRenderer, _isTreeTable));
 	}
 

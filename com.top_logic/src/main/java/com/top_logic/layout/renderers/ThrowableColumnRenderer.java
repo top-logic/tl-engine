@@ -65,7 +65,7 @@ public class ThrowableColumnRenderer implements Renderer<Throwable> {
 		public HandlerResult executeCommand(DisplayContext commandContext) {
 			LayoutData layoutData = new DefaultLayoutData(
 				DisplayDimension.dim(800, DisplayUnit.PIXEL), 100,
-				DisplayDimension.dim(500, DisplayUnit.PIXEL), 100,
+				DisplayDimension.dim(600, DisplayUnit.PIXEL), 100,
 				Scrolling.AUTO);
 			DisplayValue title = new ResourceText(I18NConstants.STACKTRACE);
 			DialogModel dialogModel = new DefaultDialogModel(layoutData, title, true, true, null);

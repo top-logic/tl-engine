@@ -68,7 +68,7 @@ public class TestBPMLImporter extends BasicTestCase {
 		Resources bundle = Resources.getInstance();
 		_importer = new BPMLImporter(_log.asI18NLog(bundle));
 		_kb = PersistencyLayer.getKnowledgeBase();
-		_binding = new ApplicationModelBinding(_kb, ModelService.getApplicationModel());
+		_binding = new ApplicationModelBinding(_kb, ModelService.getApplicationModel(), false);
 	}
 
 	@Override
@@ -113,7 +113,7 @@ public class TestBPMLImporter extends BasicTestCase {
 	private void importFixture(String fixture) throws IOException, XMLStreamException {
 		Collaboration result;
 		Logger.info("Importing: " + fixture, TestBPMLImporter.class);
-		try (Transaction tx = _kb.beginTransaction()) {
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			try (InputStream in = fixture(fixture)) {
 				Source source = new StreamSource(in, fixture);
 				result = _importer.importBPML(_binding, source);

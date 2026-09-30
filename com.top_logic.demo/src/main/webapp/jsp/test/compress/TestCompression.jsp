@@ -32,7 +32,7 @@
 					value="false"
 				/>
 				<%
-				} else {
+			} else {
 				%>
 				<input name="gzip"
 					type="checkbox"

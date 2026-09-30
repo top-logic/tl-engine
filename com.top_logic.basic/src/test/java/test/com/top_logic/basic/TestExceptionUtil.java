@@ -10,7 +10,7 @@ import static com.top_logic.basic.ExceptionUtil.*;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import junit.framework.TestCase;
 
@@ -104,36 +104,36 @@ public class TestExceptionUtil extends TestCase {
 	
 	public void testGetFullMessageWithServletException() {
 		
-		assertEquals("javax.servlet.ServletException: ", getFullMessage(new ServletException()));
-		assertEquals("javax.servlet.ServletException: ", getFullMessage(new ServletException((String)null)));
-		assertEquals("javax.servlet.ServletException: ", getFullMessage(new ServletException("")));
-		assertEquals("javax.servlet.ServletException: Outer Message", getFullMessage(new ServletException("Outer Message")));
+		assertEquals("jakarta.servlet.ServletException: ", getFullMessage(new ServletException()));
+		assertEquals("jakarta.servlet.ServletException: ", getFullMessage(new ServletException((String)null)));
+		assertEquals("jakarta.servlet.ServletException: ", getFullMessage(new ServletException("")));
+		assertEquals("jakarta.servlet.ServletException: Outer Message", getFullMessage(new ServletException("Outer Message")));
 		
 		// Throws an NPE within ServletException itself:
-		// assertEquals("javax.servlet.ServletException", getFullMessage(new ServletException((Throwable)null)));
-		assertEquals("javax.servlet.ServletException: ", getFullMessage(new ServletException((String)null, null)));
-		assertEquals("javax.servlet.ServletException: ", getFullMessage(new ServletException("", null)));
-		assertEquals("javax.servlet.ServletException: Outer Message", getFullMessage(new ServletException("Outer Message", null)));
+		// assertEquals("jakarta.servlet.ServletException", getFullMessage(new ServletException((Throwable)null)));
+		assertEquals("jakarta.servlet.ServletException: ", getFullMessage(new ServletException((String)null, null)));
+		assertEquals("jakarta.servlet.ServletException: ", getFullMessage(new ServletException("", null)));
+		assertEquals("jakarta.servlet.ServletException: Outer Message", getFullMessage(new ServletException("Outer Message", null)));
 		
-		assertEquals("javax.servlet.ServletException: java.lang.IllegalStateException", getFullMessage(new ServletException(new IllegalStateException())));
-		assertEquals("javax.servlet.ServletException:  Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException((String)null, new IllegalStateException())));
-		assertEquals("javax.servlet.ServletException:  Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException("", new IllegalStateException())));
-		assertEquals("javax.servlet.ServletException: Outer Message Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException("Outer Message", new IllegalStateException())));
+		assertEquals("jakarta.servlet.ServletException: java.lang.IllegalStateException", getFullMessage(new ServletException(new IllegalStateException())));
+		assertEquals("jakarta.servlet.ServletException:  Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException((String)null, new IllegalStateException())));
+		assertEquals("jakarta.servlet.ServletException:  Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException("", new IllegalStateException())));
+		assertEquals("jakarta.servlet.ServletException: Outer Message Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException("Outer Message", new IllegalStateException())));
 		
-		assertEquals("javax.servlet.ServletException: java.lang.IllegalStateException", getFullMessage(new ServletException(new IllegalStateException((String)null))));
-		assertEquals("javax.servlet.ServletException:  Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException((String)null, new IllegalStateException((String)null))));
-		assertEquals("javax.servlet.ServletException:  Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException("", new IllegalStateException((String)null))));
-		assertEquals("javax.servlet.ServletException: Outer Message Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException("Outer Message", new IllegalStateException((String)null))));
+		assertEquals("jakarta.servlet.ServletException: java.lang.IllegalStateException", getFullMessage(new ServletException(new IllegalStateException((String)null))));
+		assertEquals("jakarta.servlet.ServletException:  Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException((String)null, new IllegalStateException((String)null))));
+		assertEquals("jakarta.servlet.ServletException:  Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException("", new IllegalStateException((String)null))));
+		assertEquals("jakarta.servlet.ServletException: Outer Message Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException("Outer Message", new IllegalStateException((String)null))));
 		
-		assertEquals("javax.servlet.ServletException: java.lang.IllegalStateException: ", getFullMessage(new ServletException(new IllegalStateException(""))));
-		assertEquals("javax.servlet.ServletException:  Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException((String)null, new IllegalStateException(""))));
-		assertEquals("javax.servlet.ServletException:  Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException("", new IllegalStateException(""))));
-		assertEquals("javax.servlet.ServletException: Outer Message Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException("Outer Message", new IllegalStateException(""))));
+		assertEquals("jakarta.servlet.ServletException: java.lang.IllegalStateException: ", getFullMessage(new ServletException(new IllegalStateException(""))));
+		assertEquals("jakarta.servlet.ServletException:  Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException((String)null, new IllegalStateException(""))));
+		assertEquals("jakarta.servlet.ServletException:  Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException("", new IllegalStateException(""))));
+		assertEquals("jakarta.servlet.ServletException: Outer Message Caused by: java.lang.IllegalStateException: ", getFullMessage(new ServletException("Outer Message", new IllegalStateException(""))));
 		
-		assertEquals("javax.servlet.ServletException: java.lang.IllegalStateException: Inner Message", getFullMessage(new ServletException(new IllegalStateException("Inner Message"))));
-		assertEquals("javax.servlet.ServletException:  Caused by: java.lang.IllegalStateException: Inner Message", getFullMessage(new ServletException((String)null, new IllegalStateException("Inner Message"))));
-		assertEquals("javax.servlet.ServletException:  Caused by: java.lang.IllegalStateException: Inner Message", getFullMessage(new ServletException("", new IllegalStateException("Inner Message"))));
-		assertEquals("javax.servlet.ServletException: Outer Message Caused by: java.lang.IllegalStateException: Inner Message", getFullMessage(new ServletException("Outer Message", new IllegalStateException("Inner Message"))));
+		assertEquals("jakarta.servlet.ServletException: java.lang.IllegalStateException: Inner Message", getFullMessage(new ServletException(new IllegalStateException("Inner Message"))));
+		assertEquals("jakarta.servlet.ServletException:  Caused by: java.lang.IllegalStateException: Inner Message", getFullMessage(new ServletException((String)null, new IllegalStateException("Inner Message"))));
+		assertEquals("jakarta.servlet.ServletException:  Caused by: java.lang.IllegalStateException: Inner Message", getFullMessage(new ServletException("", new IllegalStateException("Inner Message"))));
+		assertEquals("jakarta.servlet.ServletException: Outer Message Caused by: java.lang.IllegalStateException: Inner Message", getFullMessage(new ServletException("Outer Message", new IllegalStateException("Inner Message"))));
 		
 	}
 	

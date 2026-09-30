@@ -1392,10 +1392,12 @@ public class JSON {
 				switch (currentChar) {
 				case '.':
 				case 'E':
+				case 'e':
 					isFloat = true;
 					bufferChar();
 					break;
 					
+				case '+':
 				case '-': 
 				case '0': 
 				case '1': 
@@ -1419,7 +1421,14 @@ public class JSON {
 				if (isFloat) {
 					return valueFactory.createFloatValue(bufferContent());
 				} else {
-					return valueFactory.createIntegerValue(bufferContent());
+					// Buffer must be copied, because parsing must potentially be restarted.
+					String number = bufferContent().toString();
+					try {
+						return valueFactory.createIntegerValue(number);
+					} catch (NumberFormatException ex) {
+						// The value might be to large to be represented as long.
+						return valueFactory.createFloatValue(number);
+					}
 				}
 			} catch (NumberFormatException ex) {
 				throw (ParseException) parseProblem(this, ERROR_INVALID_NUMBER_FORMAT, startPos).initCause(ex);

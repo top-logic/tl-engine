@@ -7,6 +7,7 @@ package com.top_logic.model.impl;
 
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.access.StorageMapping;
 
 /**
@@ -90,4 +91,19 @@ public class TLPrimitiveImpl extends AbstractTLType implements TLPrimitive {
 		_binary = value;
 	}
 
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case BINARY_ATTR:
+				return isBinary();
+			case DB_PRECISION_ATTR:
+				return getDBPrecision();
+			case DB_SIZE_ATTR:
+				return getDBSize();
+			case DB_TYPE_ATTR:
+				return getDBType();
+			default:
+				return super.tValue(part);
+		}
+	}
 }

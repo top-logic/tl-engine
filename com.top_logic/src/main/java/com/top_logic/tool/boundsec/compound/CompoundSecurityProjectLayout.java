@@ -9,7 +9,6 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.BoundChecker;
@@ -67,19 +66,6 @@ public class CompoundSecurityProjectLayout extends CompoundSecurityLayout {
      * @return the primary checker.
      */
     public CompoundSecurityBoundChecker getPrimaryChecker() {
-        // initialize if not present yet
-        if (primaryChecker == null) {
-            // try my Children first
-            LayoutComponent checker = this.getComponentByName(this.primaryCheckerName);
-            if (checker == null) {
-                checker =  getMainLayout().getComponentByName(this.primaryCheckerName);
-            }
-            if (checker == null) {
-                throw new NullPointerException("No Primary Checker named '" 
-                        + this.primaryCheckerName + "'");
-            }
-            primaryChecker = (CompoundSecurityBoundChecker) checker;
-        }
         return primaryChecker;
     }
     
@@ -105,36 +91,6 @@ public class CompoundSecurityProjectLayout extends CompoundSecurityLayout {
     }
     
     /** 
-     * Delegate to primary checker
-     *
-     * @see com.top_logic.tool.boundsec.BoundLayout#hideReason(Object)
-     */
-    @Override
-	public ResKey hideReason(Object potentialModel) {
-		return getPrimaryChecker().hideReason(potentialModel);
-    }
-    
-    /** 
-     * Delegate to primary checker
-     *
-     * @see com.top_logic.tool.boundsec.BoundLayout#allow(com.top_logic.tool.boundsec.BoundCommandGroup, com.top_logic.tool.boundsec.BoundObject)
-     */
-    @Override
-	public boolean allow(BoundCommandGroup aGroup, BoundObject anObject) {
-        return getPrimaryChecker().allow(aGroup, anObject);
-    }
-    
-    /** 
-     * Delegate to primary checker
-     *
-     * @see com.top_logic.tool.boundsec.BoundLayout#allow(com.top_logic.tool.boundsec.BoundCommandGroup, com.top_logic.tool.boundsec.BoundObject)
-     */
-    @Override
-	public boolean allow(BoundObject anObject) {
-        return getPrimaryChecker().allow(anObject);
-    }
-    
-    /** 
      * Set the secondary checker as deledation destination in the primary checker.
      *
      * @see com.top_logic.tool.boundsec.compound.CompoundSecurityLayout#componentsResolved(InstantiationContext)
@@ -142,7 +98,20 @@ public class CompoundSecurityProjectLayout extends CompoundSecurityLayout {
     @Override
 	protected void componentsResolved(InstantiationContext context) {
         super.componentsResolved(context);
-        this.getPrimaryChecker().setDelegationDestination(this.getSecondaryChecker());
+
+		// try my Children first
+		LayoutComponent checker = this.getComponentByName(this.primaryCheckerName);
+		if (checker == null) {
+			checker = getMainLayout().getComponentByName(this.primaryCheckerName);
+		}
+		if (checker == null) {
+			throw new NullPointerException("No Primary Checker named '"
+				+ this.primaryCheckerName + "'");
+		}
+		primaryChecker = (CompoundSecurityBoundChecker) checker;
+		primaryChecker.setDelegationDestination(this.getSecondaryChecker());
+
+		initSecurityMaster(primaryChecker);
     }
     
     /** 
@@ -151,30 +120,10 @@ public class CompoundSecurityProjectLayout extends CompoundSecurityLayout {
      * @return the selected object in the primary checker
      */
     @Override
-	public BoundObject getCurrentObject(BoundCommandGroup aBCG, Object potentialModel) {
+	public BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
         Object theSelected = this.getPrimaryChecker().getSelected();
 
         return (theSelected instanceof BoundObject) ? (BoundObject) theSelected : null;
-    }
-    
-    /**
-     * Overriden to foreward anObject to primary checker.
-     */
-    @Override
-	public void setCurrentObject(BoundObject anObject){
-        CompoundSecurityBoundChecker primaryChecker = this.getPrimaryChecker();
-        
-        // If the primary checker is a layout component (e.g. a tree) then the component
-        // must have a change to initialize the model. Maybe it is better to make this
-        // in setSelected but this would be changed the current behavior. 
-        // The code here hasn't so strong consequences.
-        if (primaryChecker instanceof LayoutComponent) {
-			LayoutComponent layoutComponent = (LayoutComponent) primaryChecker;
-			layoutComponent.getModel();
-		}
-        
-		primaryChecker.setSelected(anObject);
-        super.setCurrentObject(anObject);
     }
     
 }

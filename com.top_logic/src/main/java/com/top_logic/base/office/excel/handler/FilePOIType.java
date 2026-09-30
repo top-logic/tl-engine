@@ -21,7 +21,7 @@ import com.top_logic.basic.io.FileUtilities;
 /**
  * Embed a given file into an excel file (assumed that it is an image).
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class FilePOIType extends AbstractImagePOIType {
 

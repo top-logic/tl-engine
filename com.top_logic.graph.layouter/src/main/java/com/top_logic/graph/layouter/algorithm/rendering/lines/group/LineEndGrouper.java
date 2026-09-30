@@ -18,7 +18,7 @@ import com.top_logic.graph.layouter.algorithm.rendering.lines.Line1DContainer;
 /**
  * Group one dimensional lines with the same target together.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class LineEndGrouper implements Line1DGroupAlgorithm {
 

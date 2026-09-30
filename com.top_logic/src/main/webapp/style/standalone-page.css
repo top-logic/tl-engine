@@ -1,0 +1,109 @@
+/*
+ * Styles of the stand-alone pages that the application delivers outside of its UI:
+ * the logout page and the page shown to an externally authenticated user without an account.
+ */
+
+@font-face {
+	font-family: "Inter-Regular";
+	src: url("../themes/default/fonts/Inter-Regular.otf") format("otf"),
+	url("../themes/default/fonts/Inter-Regular.woff") format("woff"),
+	url("../themes/default/fonts/Inter-Regular.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Inter-SemiBold";
+	src: url("../themes/default/fonts/Inter-SemiBold.otf") format("otf"),
+	url("../themes/default/fonts/Inter-SemiBold.woff") format("woff"),
+	url("../themes/default/fonts/Inter-SemiBold.ttf") format("truetype");
+}
+
+body {
+	font-family: 'Inter-Regular';
+	font-size: .875rem;
+	line-height: 1.125rem;
+	letter-spacing: .15px;
+	overflow: hidden;
+	background: transparent;
+	height: 100vh;
+	margin: 0;
+}
+
+.container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+}
+
+.caption {
+	margin: 0 auto;
+	color: #101113;
+	text-align: center;
+	margin-bottom: 24px;
+}
+
+/** Button styling **/
+/* Reset styling*/
+button {
+	background-color: transparent;
+	border-width: 0;
+	font-family: inherit;
+	font-size: inherit;
+	font-style: inherit;
+	font-weight: inherit;
+	line-height: inherit;
+	padding: 0;
+}
+
+button {
+	font-family: 'Inter-SemiBold';
+	font-size: .875rem;
+	line-height: 1.125rem;
+	letter-spacing: .15px;
+	padding: .5rem 1rem;
+	height: 2rem;
+	border-radius: .25rem;
+	cursor: pointer;
+	border: none;
+	background-color: #2968c8;
+	box-shadow: inset 0px 0px 0px 1px #2968c8;
+	color: #ffffff;
+}
+
+button:hover {
+	background: #245db2;
+	box-shadow: inset 0px 0px 0px 1px #245db2;
+}
+
+button:focus {
+	box-shadow: inset 0px 0px 0px 2px #2968C8, inset 0px 0px 0px 3px #ffffff;
+}
+
+/** TL Logo Settings **/
+.logo {
+	display: flex;
+	background-repeat: no-repeat;
+	justify-content: center;
+	margin-bottom: 1.5rem;
+}
+
+.logo img {
+	width: 340px;
+	height: auto;
+}
+
+/** Text styling **/
+h1 {
+	font-family: 'Inter-SemiBold';
+	font-size: 1.5rem;
+	line-height: 2rem;
+	letter-spacing: 0px;
+	color: #101113;
+	margin-top: 0;
+	margin-bottom: 1.5rem;
+}
+
+.small {
+	font-size: .875rem;
+}

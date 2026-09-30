@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.comment.layout;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
@@ -19,11 +20,14 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey QUOTETEXT = legacyKey("element.comments.commentTable.quotetext");
+	@CustomKey("element.comments.commentTable.quotetext")
+	public static ResKey QUOTETEXT;
 
-	public static ResKey SAVE = legacyKey("tl.command.save");
+	@CustomKey("tl.command.save")
+	public static ResKey SAVE;
 
-	public static ResKey3 COMMENT_TOOLTIP = legacyKey3("element.wrapper.comment.tooltip");
+	@CustomKey("element.wrapper.comment.tooltip")
+	public static ResKey3 COMMENT_TOOLTIP;
 
 	static {
 		initConstants(I18NConstants.class);

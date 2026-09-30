@@ -30,7 +30,7 @@ import com.top_logic.basic.config.annotation.TagName;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@Target(ElementType.METHOD)
+@Target({ ElementType.METHOD, ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
 @TagName("list-default")
 public @interface ListDefault {

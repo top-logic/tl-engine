@@ -5,8 +5,8 @@
  */
 package com.top_logic.element.model;
 
+import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.NameValueBuffer;
-import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.PersistentObject;
@@ -24,16 +24,14 @@ import com.top_logic.model.factory.TLFactory;
 public class DefaultModelFactory extends ModelFactory {
 
 	@Override
-	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues) {
+	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues, TLID id) {
 		NameValueBuffer values = new NameValueBuffer();
 		values.setValue(PersistentObject.TYPE_REF, type.tHandle());
 
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		String tableName = TLAnnotations.getTable(type);
 		TLFactory.failIfAbstract(type);
-		KnowledgeObject handle = kb.createKnowledgeObject(tableName, values);
-
-		TLObject result = handle.getWrapper();
+		TLObject result = kb.createObject(kb.getHistoryManager().getContextBranch(), id, tableName, values);
 		TLFactory.setupDefaultValues(context, result, type);
 
 		return result;

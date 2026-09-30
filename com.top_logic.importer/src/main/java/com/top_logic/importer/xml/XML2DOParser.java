@@ -69,7 +69,7 @@ public class XML2DOParser<C extends XMLFileImportParser.Config> extends DefaultH
     /**
      * Configuration of one XML tag.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface TagConfig extends NamedConfiguration {
 

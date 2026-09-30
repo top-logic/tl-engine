@@ -6,7 +6,6 @@
 package com.top_logic.element.meta.form.fieldprovider;
 
 import com.top_logic.basic.config.misc.TypedConfigUtil;
-import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.layout.form.FormMember;
@@ -17,7 +16,7 @@ import com.top_logic.layout.form.FormMember;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class ReferenceFieldProvider extends AbstractFieldProvider {
+public class ReferenceFieldProvider implements FieldProvider {
 
 	private final FieldProvider _compositionProvider =
 		TypedConfigUtil.newConfiguredInstance(CompositionFieldProvider.class);

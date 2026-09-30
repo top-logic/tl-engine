@@ -29,8 +29,8 @@
 		<param name="resPrefix"
 			value="export.table.component."
 		/>
-		<param name="securityProviderClass"
-			value="dialogParent"
+		<param name="securityObject"
+			value="ref:dialogParent"
 		/>
 		<param name="refreshInterval"
 			value="5"
@@ -44,6 +44,7 @@
 		<dialogInfo
 			defaultI18n="${dialogDefaultI18N}"
 			height="${dialogHeight}"
+			openButtonSecComp="${namePrefix}Component"
 			openHandlerClass="${dialogOpenHandlerClass}"
 			openHandlerName="${dialogOpenHandlerName}"
 			openerClique="exportButtons"
@@ -62,14 +63,14 @@
 
 		<components>
 			<component class="${class}"
+				buttonbar="true"
 				exportHandlers="${exportHandlers}"
 				name="${namePrefix}Component"
 				page="${page}"
 				refreshInterval="${refreshInterval}"
 				resPrefix="${resPrefix}"
-				securityProviderClass="${securityProviderClass}"
+				securityObject="${securityObject}"
 			/>
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

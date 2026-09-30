@@ -142,6 +142,12 @@
 			<rtexprvalue>true</rtexprvalue>
 		</attribute>
 		<attribute>
+			<name>labelPosition</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Where to place the label.</description>
+		</attribute>
+		<attribute>
 			<name>labelAbove</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -251,19 +257,14 @@
 		</attribute>
 	</tag>
 
-   <!-- To be called inside the <head> ... </head> section. Writes a <link rel=shortcut icon... 
+   <!-- To be called inside the <head> ... </head> section. Writes a <link rel=icon...
         statement to the page. This tag must not be used if the cssLink-tag is already used. -->
     <tag>
 	    <name>favicon</name>
 	    <tagclass>com.top_logic.gui.FaviconTag</tagclass>
 	    <bodycontent>empty</bodycontent>
 	    <info>Prints link to specified favicon.</info>
-	    <!-- Specifies the URL to the favicons -->
-	    <attribute>
-	       <name>shortcutIcon</name>
-	       <required>false</required>
-	       <rtexprvalue>true</rtexprvalue>
-	    </attribute>
+	    <!-- Specifies the URL to the favicon -->
 	    <attribute>
 	       <name>icon</name>
 	       <required>false</required>

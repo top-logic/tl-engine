@@ -6,12 +6,13 @@
 package com.top_logic.model.wysiwyg.storage;
 
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
+import com.top_logic.layout.wysiwyg.ui.StructuredTextUtil;
 import com.top_logic.model.access.StorageMapping;
 
 /**
  * {@link StorageMapping} for HTML attributes.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class StructuredTextAttributeStorageMapping implements StorageMapping<StructuredText> {
 
@@ -34,18 +35,26 @@ public class StructuredTextAttributeStorageMapping implements StorageMapping<Str
 		if (storageObject instanceof StructuredText) {
 			return (StructuredText) storageObject;
 		}
+		if (storageObject instanceof CharSequence text) {
+			return StructuredTextUtil.fromCommonMark(text);
+		}
 
 		return null;
 	}
 
 	@Override
 	public Object getStorageObject(Object businessObject) {
+		if (businessObject instanceof CharSequence text) {
+			return StructuredTextUtil.fromCommonMark(text);
+		}
 		return businessObject;
 	}
 
 	@Override
 	public boolean isCompatible(Object businessObject) {
-		return businessObject == null || businessObject instanceof StructuredText;
+		return businessObject == null
+			|| businessObject instanceof StructuredText
+			|| businessObject instanceof CharSequence;
 	}
 
 }

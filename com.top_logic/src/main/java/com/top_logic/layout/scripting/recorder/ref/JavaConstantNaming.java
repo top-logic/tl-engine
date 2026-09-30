@@ -18,7 +18,7 @@ import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class JavaConstantNaming extends AbstractModelNamingScheme<Object, JavaConstantNaming.Name> {
+public class JavaConstantNaming extends AbstractGlobalModelNamingScheme<Object, JavaConstantNaming.Name> {
 
 	/**
 	 * Configuration for a {@link JavaConstantNaming}.

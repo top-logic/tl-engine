@@ -108,15 +108,6 @@ public interface TreeModelBase<N> extends TreeView<N> {
 	boolean hasChild(N parent, Object node);
     
     /**
-     * Whether the given node has any children.
-     * 
-     * @param aNode
-     *        The node to check.
-     * @return <code>{@link #getChildren(Object) getChildren(aNode)}.{@link List#size() size())} > 0</code>
-     */
-	boolean hasChildren(N aNode);
-
-    /**
      * true when listener was registered (duplicates are suppressed).
      */
 	boolean addTreeModelListener(TreeModelListener listener);

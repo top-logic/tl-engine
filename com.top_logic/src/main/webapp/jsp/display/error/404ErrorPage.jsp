@@ -13,7 +13,7 @@
 	/* Do not use the JSP-variable "session": If there is currently no session a new session will be created for the request, which is undesired. */
 	HttpSession existingSession = request.getSession(false);
 	String  sessionId  = existingSession != null ? existingSession.getId() : "no session";
-	String  thePage    = (String) request.getAttribute(ErrorPage.JAVAX_SERVLET_ERROR_REQUEST_URI);
+	String  thePage    = (String) request.getAttribute(ErrorPage.JAKARTA_SERVLET_ERROR_REQUEST_URI);
 	String  theDate    = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date());
 	String 	theClientAddr = request.getRemoteAddr();
 	String 	theClientHost = request.getRemoteHost();

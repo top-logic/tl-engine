@@ -17,6 +17,7 @@ import com.top_logic.element.layout.formeditor.builder.TypedForm;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.layout.form.FormContainer;
+import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.values.edit.FormBuilder;
@@ -84,6 +85,7 @@ public class MonomorphicCreateFormBuilder extends ConfiguredDynamicFormBuilder {
 	@Override
 	public Object getModel(Object businessModel, LayoutComponent component) {
 		AttributeFormContext formContext = new AttributeFormContext(component.getResPrefix());
+		FormComponent.initFormContext(component, (FormHandler) component, formContext);
 
 		fillFormContext(component, formContext, businessModel);
 
@@ -113,9 +115,9 @@ public class MonomorphicCreateFormBuilder extends ConfiguredDynamicFormBuilder {
 		TLObject container = businessModel instanceof TLObject ? (TLObject) businessModel : null;
 		TLStructuredType type = getFormType();
 		TLFormObject newCreation = formContext.createObject(type, null, container);
+		initializeCreation(component, newCreation, businessModel);
 
-		FormContainer editorGroup = formContext.createFormContainerForOverlay(newCreation);
-		formContext.addMember(editorGroup);
+		FormContainer editorGroup = formContext.addFormContainerForOverlay(newCreation);
 		TypedForm typedForm = TypedForm.lookup(getConfiguredForms(), type);
 		setDisplayedTypedForm(typedForm);
 		FormEditorContext context = new FormEditorContext.Builder()
@@ -127,12 +129,22 @@ public class MonomorphicCreateFormBuilder extends ConfiguredDynamicFormBuilder {
 			.build();
 		FormEditorUtil.createAttributes(context, typedForm.getFormDefinition());
 
+		formContext.set(TOP_LEVEL_OBJECT, null);
 		return newCreation;
 	}
 
-	@Override
-	public TLStructuredType getType(FormComponent form, TLObject object) {
-		return _type;
+	/**
+	 * Initializes the given {@link TLFormObject} before fields for the form context are created.
+	 * 
+	 * @param component
+	 *        The context component.
+	 * @param creation
+	 *        The {@link TLFormObject} base of the currently created {@link FormContext}.
+	 * @param businessModel
+	 *        The context component's model.
+	 */
+	protected void initializeCreation(LayoutComponent component, TLFormObject creation, Object businessModel) {
+		// no initialization by default
 	}
 
 	@Override

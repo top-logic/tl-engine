@@ -1,0 +1,83 @@
+<h2>​​Syntax</h2>
+
+<pre>
+	<code>try($eval, $catch)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<div>
+<div>Führt einen Code-Block oder Ausdruck aus und behandelt auftretende Fehler über einen optionalen <code>catch</code>-Block. Die try-Funktion implementiert ein try-catch-Verhalten für TL-Script, das eine robuste Fehlerbehandlung ermöglicht.</div>
+</div>
+
+<p>Die Funktion arbeitet mit zwei Parametern:</p>
+
+<ol>
+	<li><strong>eval</strong>: Der auszuführende Code-Block oder Ausdruck, der einen Fehler verursachen könnte.</li>
+	<li><strong>catch</strong>: Ein optionaler Code-Block oder Ausdruck, der ausgeführt wird, wenn während der Ausführung von <code>eval</code> ein Fehler auftritt.</li>
+</ol>
+
+<div>
+<div>Wird der <code>eval</code>-Block erfolgreich ausgeführt, wird dessen Ergebnis zurückgegeben. Tritt ein Fehler auf, wird der <code>catch</code>-Block ausgeführt. Dieser erhält immer zwei Argumente: die Fehlermeldung <code>message</code> und den Wert <code>value</code>.</div>
+
+<ul>
+	<li><strong>message</strong>: Bei einer <code>I18NException</code> der <code>ResKey</code>, sonst die Fehlermeldung als Text.</li>
+	<li><strong>value</strong>: Der über das dritte Argument von <code>throw()</code> übergebene Wert. <code>null</code>, wenn der Fehler nicht aus einem <code>throw()</code> stammt oder <code>throw()</code> ohne Wert aufgerufen wurde.</li>
+</ul>
+</div>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable" style="height:155px; width:1517px">
+	<thead>
+		<tr>
+			<th>Bezeichnung</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Standard</th>
+		</tr>
+		<tr>
+			<td>
+			<p>eval</p>
+			</td>
+			<td>Code-Block oder Ausdruck</td>
+			<td>Der Code-Block oder Ausdruck, der ausgeführt werden soll.</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>catch</td>
+			<td>Code-Block oder Ausdruck</td>
+			<td>Der Code-Block oder Ausdruck, der bei einem Fehler ausgeführt wird. Erhält zwei Argumente: die Fehlermeldung und den über <code>throw()</code> übergebenen Wert (<code>value</code>).</td>
+			<td>nein</td>
+			<td>null</td>
+		</tr>
+	</thead>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Object</p>
+
+<div>
+<div>Gibt das Ergebnis des <code>eval</code>-Blocks zurück, wenn dieser erfolgreich ausgeführt wurde. Tritt ein Fehler auf, wird das Ergebnis des <code>catch</code>-Blocks zurückgegeben. Ist kein <code>catch</code>-Block angegeben, wird bei einem Fehler <code class="hljs inlineCode">null</code> zurückgegeben.</div>
+</div>
+
+<h2>Beispiele</h2>
+
+<pre>
+	<code>try(
+  sendMail(
+    subject: $subject,
+    to: $emailAddr,
+    body: $emailBody
+  ),
+  catch: mailError -&gt; {
+    info("E-Mail-Zustellung an " + $emailAddr + " fehlgeschlagen. Grund: " + $mailError);
+    false
+  }
+)</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Versucht eine E-Mail zu senden. Bei Erfolg wird das Ergebnis von <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.4rem] px-1 py-px text-[0.9rem]">sendMail</code> zurückgegeben. Bei einem Fehler wird <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.4rem] px-1 py-px text-[0.9rem]">false</code> zurückgegeben und eine Benutzerinfo mit der versuchten E-Mail-Adresse.</p>

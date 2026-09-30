@@ -24,10 +24,7 @@
 		<param name="exportDownloadNameKey"
 			value="admin.person.export.file.name"
 		/>
-		<param name="exportButtonComponent"
-			value=""
-		/>
-		<param name="securityProviderClass"
+		<param name="securityObject"
 			value="securityRoot"
 		/>
 		<param name="isSecurityMaster"
@@ -42,14 +39,13 @@
 	</params>
 
 	<component class="com.top_logic.layout.table.component.TableComponent"
-		buttonComponent="${exportButtonComponent}"
 		isSecurityMaster="${isSecurityMaster}"
 		modelBuilder="${builderClass}"
 		name="${namePrefix}PersonTable"
 		objectType="tl.accounts:Person"
 		partnerGroup="UserTableGroup"
 		resPrefix="admin.person.edit.table."
-		securityProviderClass="${securityProviderClass}"
+		securityObject="${securityObject}"
 		selectable="true"
 		useChangeHandling="false"
 	>
@@ -62,17 +58,17 @@
 			rowStyle="%FROZEN_TABLE_ROW_SMALL_STYLE%"
 			showTitle="true"
 		>
-			<column-default
-				columnWidth="${columnWidth}"
-				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
-			/>
+			<column-default columnWidth="${columnWidth}"/>
 		</table>
 		<buttons>
 			<button id="exportExcel"
 				class="com.top_logic.layout.table.export.ExcelExportHandler"
-				downloadNameKey="${exportDownloadNameKey}"
 				templateName="${exportTemplateName}"
-			/>
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+					downloadName="${exportDownloadNameKey}"
+				/>
+			</button>
 			${buttons}
 		</buttons>
 	</component>

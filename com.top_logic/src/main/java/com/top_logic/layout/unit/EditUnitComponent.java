@@ -40,7 +40,6 @@ import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.mig.html.NoImageResourceProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.Resources;
 import com.top_logic.util.resource.I18NConstants;
@@ -199,8 +198,7 @@ public class EditUnitComponent extends EditComponent {
 		String[] supportedLanguages = ResourcesModule.getInstance().getSupportedLocaleNames();
 		FormGroup languageGroup = new FormGroup(TRANSLATIONS_GROUP_NAME, I18NConstants.I18N_FORM_GROUP_PREFIX);
 		Resources resources = Resources.getInstance();
-		String groupLabel = resources.getString(I18NConstants.I18N_FORM_GROUP_TITLE);
-		languageGroup.setLabel(groupLabel);
+		languageGroup.setLabel(I18NConstants.I18N_FORM_GROUP_TITLE);
 		int i = 0;
 		for (String i18nAttributeKey : i18nAttributeKeys) {
 			FormGroup g = new FormGroup("group_" + i++, I18NConstants.I18N_FORM_GROUP_PREFIX);
@@ -279,14 +277,6 @@ public class EditUnitComponent extends EditComponent {
 	private static String getObjectIdentifier(Wrapper model, String uniqueAttribute) {
 		return (String) model.getValue(uniqueAttribute);
 	}
-
-	@Override
-	public boolean allow(BoundObject aObject) {
-        if (!supportsInternalModel(aObject)) {
-            return false;
-        }
-        return super.allow(aObject);
-    }
 
 	@Override
 	protected boolean supportsInternalModel(Object anObject) {

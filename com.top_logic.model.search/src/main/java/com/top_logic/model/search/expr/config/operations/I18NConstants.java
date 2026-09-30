@@ -5,10 +5,10 @@
  */
 package com.top_logic.model.search.expr.config.operations;
 
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
+import com.top_logic.basic.util.ResKey4;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -55,9 +55,10 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_EXPECTING_A_TARGET__EXPR;
 
 	/**
-	 * @en Positional arguments must occur only at the beginning of the arguments list.
+	 * @en Positional arguments may occur only at the beginning of the arguments list in call to
+	 *     function "{0}".
 	 */
-	public static ResKey ERROR_INVALID_NAMED_ARGUMENT_ORDER;
+	public static ResKey1 ERROR_INVALID_NAMED_ARGUMENT_ORDER__FUN;
 
 	/**
 	 * @en There is no named argument "{1}" in function "{0}". The function has no named arguments.
@@ -79,6 +80,31 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     "{0}" is defined more than once.
 	 */
 	public static ResKey2 ERROR_AMBIGUOUS_ARGUMENT__FUN_NAME;
+
+	/**
+	 * @en Unexpected number of arguments in call of function "{0}", the function expects no more
+	 *     than {1} arguments.
+	 */
+	public static ResKey2 ERROR_UNEXPECTED_ARGUMENT__FUN_CNT;
+
+	public static ResKey2 ERROR_WRONG_TARGET__ISCOMPATIBLEVALUE;
+
+	/**
+	 * @en There is no operation (command group) with name "{0}" in: {1}
+	 */
+	public static ResKey2 ERROR_UNKNOWN_OPERATION__NAME_EXPR;
+
+	/**
+	 * @en The wrong argument was passed to parameter "{1}" of function "{0}". A value of type "{2}"
+	 *     was expected, but the value was: {3}
+	 */
+	public static ResKey4 ERROR_WRONG_ARGUMENT__FUN_ARG_EXPECTED_VAL;
+
+	/**
+	 * @en The value {0} is no object that can be removed from the database. Expected is an object
+	 *     or an object identifier.
+	 */
+	public static ResKey1 ERROR_NOT_AN_OBJECT_TO_REMOVE__VALUE;
 
 	static {
 		initConstants(I18NConstants.class);

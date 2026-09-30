@@ -5,6 +5,9 @@
  */
 package com.top_logic.model.search.providers;
 
+import java.util.Collection;
+import java.util.stream.Collectors;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -16,8 +19,10 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.layout.dnd.DropEvent;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.dnd.TableDragSource;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -32,7 +37,7 @@ import com.top_logic.util.model.ModelService;
 public class TableDragSourceByExpression implements TableDragSource {
 
 	/** {@link ConfigurationItem} for the {@link TableDragSourceByExpression}. */
-	public interface Config extends PolymorphicConfiguration<TableDragSourceByExpression> {
+	public interface Config<I extends TableDragSourceByExpression> extends PolymorphicConfiguration<I> {
 
 		/**
 		 * Name of {@link #canDrag()}.
@@ -56,6 +61,31 @@ public class TableDragSourceByExpression implements TableDragSource {
 		Expr canDrag();
 
 		/**
+		 * Function creating the drag source model.
+		 * 
+		 * <p>
+		 * The drag source model can be retrieved at the drop location together with the dragged
+		 * objects.
+		 * </p>
+		 * 
+		 * <p>
+		 * The function receives the component's model as single argument.
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>model -> ...</code>
+		 * </pre>
+		 * 
+		 * <p>
+		 * If not given, the component's model is used as drag source model.
+		 * </p>
+		 * 
+		 * @see TableDragSource#getDragSourceModel(TableData)
+		 * @see DropEvent#getSource()
+		 */
+		Expr getDragSourceModel();
+
+		/**
 		 * Whether dragging from the given table is enabled.
 		 */
 		@Name(DRAG_ENABLED)
@@ -65,7 +95,11 @@ public class TableDragSourceByExpression implements TableDragSource {
 
 	}
 
+	private LayoutComponent _contextComponent;
+
 	private QueryExecutor _canDrag;
+
+	private QueryExecutor _sourceModel;
 
 	private boolean _dragEnabled;
 
@@ -78,17 +112,22 @@ public class TableDragSourceByExpression implements TableDragSource {
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public TableDragSourceByExpression(InstantiationContext context, Config config) {
+	public TableDragSourceByExpression(InstantiationContext context, Config<?> config) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		TLModel model = ModelService.getApplicationModel();
 
+		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
+			_contextComponent = component;
+		});
+
 		_canDrag = QueryExecutor.compile(kb, model, config.canDrag());
+		_sourceModel = QueryExecutor.compileOptional(config.getDragSourceModel());
 		_dragEnabled = config.getDragEnabled();
 	}
 
 	@Override
-	public boolean dragEnabled(TableData data, Object row) {
-		return (boolean) _canDrag.execute(row);
+	public boolean dragEnabled(TableData data, Object rowObject) {
+		return (boolean) _canDrag.execute(unwrap(rowObject));
 	}
 
 	@Override
@@ -97,8 +136,30 @@ public class TableDragSourceByExpression implements TableDragSource {
 	}
 
 	@Override
-	public Object getDragObject(TableData tableData, int row) {
-		return tableData.getViewModel().getRowObject(row);
+	public final Object getDragObject(TableData tableData, int row) {
+		return unwrap(tableData.getViewModel().getRowObject(row));
 	}
 
+	@Override
+	public Collection<?> getDragSelection(TableData tableData, int row) {
+		return tableData.getSelectionModel().getSelection().stream().map(this::unwrap).collect(Collectors.toSet());
+	}
+
+	@Override
+	public Object getDragSourceModel(TableData tableData) {
+		Object model = _contextComponent.getModel();
+
+		if (_sourceModel == null) {
+			return model;
+		} else {
+			return _sourceModel.execute(model);
+		}
+	}
+
+	/**
+	 * Hook for sub-classes to unwrap technical objects and hide them from the script layer.
+	 */
+	protected Object unwrap(Object rowObject) {
+		return rowObject;
+	}
 }

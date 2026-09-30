@@ -13,13 +13,12 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.service.openapi.client.authentication.AllAuthenticationDomains;
 import com.top_logic.service.openapi.client.authentication.ClientSecret;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry.ServiceRegistryPart;
-import com.top_logic.service.openapi.common.authentication.AllAuthenticationDomains;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.http.HTTPSecret;
-import com.top_logic.service.openapi.common.authentication.http.basic.BasicAuthentication;
 
 /**
  * {@link HTTPSecret} for <i>OpenAPI</i> clients.
@@ -55,7 +54,7 @@ public interface ClientBasicAuthSecret extends ClientSecret, HTTPSecret {
 
 		@Override
 		protected Predicate<? super AuthenticationConfig> filter() {
-			return BasicAuthentication.class::isInstance;
+			return BasicAuthentication.Config.class::isInstance;
 		}
 
 	}

@@ -5,7 +5,7 @@
  */
 package test.com.top_logic.knowledge.wrap.person;
 
-import javax.servlet.http.HttpSessionBindingListener;
+import jakarta.servlet.http.HttpSessionBindingListener;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -50,7 +50,7 @@ public class TestPersonalConfiguration extends BasicTestCase {
 		PersonalConfigurationWrapper persistentPC =
 			PersonalConfigurationWrapper.getPersonalConfiguration(currentPerson);
 		if (persistentPC != null) {
-			Transaction tx = persistentPC.getKnowledgeBase().beginTransaction();
+			Transaction tx = persistentPC.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			persistentPC.tDelete();
 			tx.commit();
 			return true;
@@ -104,9 +104,71 @@ public class TestPersonalConfiguration extends BasicTestCase {
 	}
 
 	/**
+	 * Tests that the personal configuration of a regular account reaches the database when it is
+	 * stored.
+	 */
+	public void testRegularAccountIsPersisted() {
+		Person root = TLContext.getContext().getCurrentPersonWrapper();
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		pc.setValue("key", "regularValue");
+
+		PersonalConfiguration.storePersonalConfiguration();
+
+		PersonalConfigurationWrapper persistent = PersonalConfigurationWrapper.getPersonalConfiguration(root);
+		assertNotNull("Personal configuration of a regular account was not stored.", persistent);
+		assertEquals("regularValue", persistent.getValue("key"));
+
+		TLContext.getContext().resetPersonalConfiguration();
+		assertEquals("Stored value not loaded again.", "regularValue",
+			PersonalConfiguration.getPersonalConfiguration().getValue("key"));
+	}
+
+	/**
+	 * Tests that the personal configuration of the anonymous account stays usable in the session
+	 * but is never written to the database, neither by an explicit store nor at session end.
+	 */
+	public void testAnonymousAccountIsNotPersisted() {
+		TLContext context = TLContext.getContext();
+		Person anonymous = PersonManager.getManager().getAnonymous();
+		assertNotNull("No anonymous account.", anonymous);
+		assertTrue(PersonManager.getManager().isAnonymous(anonymous));
+
+		Person root = context.getCurrentPersonWrapper();
+		context.setCurrentPerson(anonymous);
+		try {
+			assertFalse("Some test before has stored a personal configuration for the anonymous account.",
+				deletePersonalConfigurationWrapper());
+			assertTrue(TLContext.isAnonymous());
+
+			PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+			pc.setValue("key", "anonymousValue");
+
+			PersonalConfiguration.storePersonalConfiguration();
+
+			assertEquals("Value of the anonymous session lost on store.", "anonymousValue",
+				PersonalConfiguration.getPersonalConfiguration().getValue("key"));
+			assertNull("Personal configuration of the anonymous account was stored.",
+				PersonalConfigurationWrapper.getPersonalConfiguration(anonymous));
+
+			// Session end.
+			context.informUnboundListeners();
+			assertNull("Personal configuration of the anonymous account was stored at session end.",
+				PersonalConfigurationWrapper.getPersonalConfiguration(anonymous));
+
+			// A fresh load does not see the value of the former anonymous session.
+			context.resetPersonalConfiguration();
+			assertNull("Value of an anonymous session reached the shared anonymous account.",
+				PersonalConfiguration.getPersonalConfiguration().getValue("key"));
+		} finally {
+			deletePersonalConfigurationWrapper();
+			context.setCurrentPerson(root);
+		}
+	}
+
+	/**
 	 * Currently the personal configuration is made persistent, when session goes invalid. As this
 	 * can not be provoked in JUnit tests, the
-	 * {@link HttpSessionBindingListener#valueUnbound(javax.servlet.http.HttpSessionBindingEvent)}
+	 * {@link HttpSessionBindingListener#valueUnbound(jakarta.servlet.http.HttpSessionBindingEvent)}
 	 * is called which do the work.
 	 */
 	private void makeConfigurationPersistent(PersonalConfiguration pc) {

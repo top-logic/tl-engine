@@ -3,6 +3,7 @@
 <template>
 	<params>
 		<param name="namePrefix"/>
+		<param name="securityObject"/>
 		<param name="structure"/>
 		<param name="elements"/>
 		<param name="model"/>
@@ -41,6 +42,7 @@
 				openInEdit="${openInEdit}"
 				page=""
 				resPrefix="${resPrefix}"
+				securityObject="${securityObject}"
 				structureName="${structure}"
 				titleKey="${titleKey}"
 			>
@@ -49,8 +51,12 @@
 				<buttons>
 					<button id="exportExcelGrid"
 						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-						exportNameKey="/sTypes_Demo.xlsx"
-					/>
+						streaming="false"
+					>
+						<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+							downloadName="/sTypes_Demo.xlsx"
+						/>
+					</button>
 					<button id="openGridCompareView"
 						class="com.top_logic.element.layout.grid.OpenGridCompareViewCommand"
 					/>
@@ -89,6 +95,7 @@
 								cssClass="tblRight"
 							/>
 							<column name="computedCntStructure"
+								cssClass="num"
 								filterProvider="com.top_logic.layout.table.filter.SimpleComparableFilterProvider"
 							>
 								<accessor class="com.top_logic.model.search.providers.AccessorByExpression"

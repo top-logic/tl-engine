@@ -18,7 +18,8 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 
 /**
- * {@link FormatDefinition} that allows to specify a separate parsing format.
+ * {@link FormatDefinition} that allows to specify a separate format for parsing the value entered
+ * by a user.
  */
 @Label("Format with separate parser")
 public class NormalizingFormatDefinition<C extends NormalizingFormatDefinition.Config<?>> extends FormatDefinition<C> {

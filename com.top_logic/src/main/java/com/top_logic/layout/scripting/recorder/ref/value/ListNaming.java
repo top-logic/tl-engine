@@ -32,6 +32,11 @@ public class ListNaming extends ModelNamingScheme<Object, List<?>, ListNaming.Na
 		 */
 		List<ModelName> getValues();
 
+		/**
+		 * @see #getValues()
+		 */
+		void setValues(List<ModelName> values);
+
 	}
 
 	@Override

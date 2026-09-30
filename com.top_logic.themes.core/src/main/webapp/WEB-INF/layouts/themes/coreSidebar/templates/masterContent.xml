@@ -8,22 +8,10 @@
 	<layout name="sblOuterContainer"
 		resizable="false"
 	>
-		<layout name="leftLayoutBorder"
-			resizable="false"
-		>
-			<layoutInfo size="%SIDEBAR_LAYOUT_TOP_BORDER%"/>
-		</layout>
-
 		<layout name="sblMain"
 			horizontal="true"
 			resizable="false"
 		>
-			<layout name="topLayoutBorder"
-				resizable="false"
-			>
-				<layoutInfo size="%SIDEBAR_LAYOUT_LEFT_SIDE_BORDER%"/>
-			</layout>
-
 			<layout name="sblInnerMain"
 				horizontal="true"
 				resizable="%SIDEBAR_RESIZABLE%"
@@ -32,6 +20,7 @@
 
 				<components>
 					<layout name="sblSidebar"
+						initiallyMinimized="%SIDEBAR_MINIMIZED%"
 						resizable="false"
 					>
 						<layoutInfo size="%SIDEBAR_WIDTH%"/>
@@ -62,7 +51,7 @@
 							<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
 								<layoutInfo size="0px"/>
 								<componentControlProvider class="com.top_logic.layout.structure.ConditionalViewLayout"
-									css-class="notificationTitle licenseView"
+									css-class="licenseView"
 									size="%LICENCE_EXPIRE_BAR_HEIGHT%"
 								>
 									<include name="com.top_logic/license/license-expiry.xml"/>
@@ -116,15 +105,6 @@
 								<components>${mainTabbar}</components>
 							</component>
 
-							<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
-								<layoutInfo
-									scrolleable="false"
-									size="%com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT%"
-								/>
-								<componentControlProvider class="com.top_logic.layout.structure.sidebar.TitleButtonsViewProvider"
-									size="%com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT%"
-								/>
-							</layoutControl>
 							<layout-reference resource="statusBar.layout.xml"/>
 						</components>
 					</layout>

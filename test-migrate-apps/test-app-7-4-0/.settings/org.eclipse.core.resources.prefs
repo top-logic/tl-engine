@@ -1,4 +1,8 @@
 eclipse.preferences.version=1
-encoding//src/main/java=utf-8
-encoding//src/test/java=utf-8
-encoding/<project>=utf-8
+encoding//src/main/java=UTF-8
+encoding//src/test/java=UTF-8
+encoding/<project>=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/testapp740.app-messages_de.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/testapp740.app-messages_en.properties=UTF-8
+encoding//tmp/app-data/var/variants/tl.demo.graphMessages_de__dynamic.properties=UTF-8
+encoding//tmp/app-data/var/variants/tl.demo.graphMessages_en__dynamic.properties=UTF-8

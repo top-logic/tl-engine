@@ -24,7 +24,7 @@
 		editCommand="dummyEditWithoutModel"
 		lockOperation=""
 		resPrefix="${resPrefix}"
-		securityProviderClass="securityRoot"
+		securityObject="securityRoot"
 	>
 		<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
 			contextOptional="true"

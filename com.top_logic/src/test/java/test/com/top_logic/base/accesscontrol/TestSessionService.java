@@ -7,11 +7,11 @@ package test.com.top_logic.base.accesscontrol;
 
 import java.util.Collection;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
@@ -25,11 +25,10 @@ import com.meterware.servletunit.ServletUnitClient;
 
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.base.accesscontrol.LoginPageServlet;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.thread.ThreadContext;
-import com.top_logic.event.bus.Bus;
+import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -49,7 +48,7 @@ public class TestSessionService extends BasicTestCase {
     public void testAddRemoveSession () throws Exception {
         
         ServletRunner		sr = new ServletRunner();
-        sr.registerServlet("lpServlet", LoginPageServlet.class.getName());
+		sr.registerServlet("lpServlet", TLLayoutServlet.class.getName());
 
         ServletUnitClient   sc = sr.newClient();
 
@@ -62,19 +61,24 @@ public class TestSessionService extends BasicTestCase {
         ThreadContext.pushSuperUser();
         try {
 			HttpServletResponse response = ic.getResponse();
-			try (LoginCredentials login =
+			SessionService myService;
+			LoginCredentials login =
 				LoginCredentials.fromUserAndPassword(PersonManager.getManager().getRoot(),
-					SecureRandomService.getInstance().getRandomString().toCharArray())) {
-
-				try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+					SecureRandomService.getInstance().getRandomString().toCharArray());
+			try {
+				try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 					login.getPerson().getAuthenticationDevice().setPassword(login.getPerson(), login.getPassword());
 					tx.commit();
 				}
 
-				Login.getInstance().login(servletRequest, response, login);
+				boolean checkLoginCredentials = Login.getInstance().checkLoginCredentials(login, servletRequest, response);
+				assertTrue(checkLoginCredentials);
+				myService = SessionService.getInstance();
+				myService.loginUser(servletRequest, response, login.getPerson());
+			} finally {
+				login.clearPassword();
 			}
             
-    		SessionService myService = SessionService.getInstance();
     		
     		assertTrue(myService.validateSession(servletRequest));
     		
@@ -98,7 +102,7 @@ public class TestSessionService extends BasicTestCase {
     public static Test suite () {
         Test innerTest = new TestSuite (TestSessionService.class);
 		innerTest =
-			ServiceTestSetup.createSetup(innerTest, Bus.Module.INSTANCE, SessionService.Module.INSTANCE,
+			ServiceTestSetup.createSetup(innerTest, SessionService.Module.INSTANCE,
 				Login.Module.INSTANCE);
 		return PersonManagerSetup.createPersonManagerSetup(innerTest);
         

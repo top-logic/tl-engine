@@ -38,7 +38,7 @@
 						name="${namePrefix}Chart1"
 						page="/jsp/layout/image/chart.jsp"
 						resPrefix="${resPrefix}Chart1"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 					>
 						<export-manager class="com.top_logic.reporting.flex.chart.component.export.ConfiguredChartExportManager"
 							export-objects="NONE"
@@ -51,7 +51,7 @@
 						name="${namePrefix}Chart2"
 						page="/jsp/layout/image/chart.jsp"
 						resPrefix="${resPrefix}Chart2"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 					>
 						<export-manager class="com.top_logic.reporting.flex.chart.component.export.ConfiguredChartExportManager"
 							export-objects="NONE"

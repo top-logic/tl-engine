@@ -46,6 +46,7 @@
 							</annotations>
 						</property>
 						<reference name="taggedObj"
+							history-type="historic"
 							kind="forwards"
 							mandatory="false"
 							type="tl.model:TLObject"
@@ -53,7 +54,10 @@
 							<annotations>
 								<delete-protected/>
 								<storage-algorithm>
-									<historic-storage/>
+									<foreign-key-storage
+										storage-attribute="taggedObj"
+										storage-type="Tag"
+									/>
 								</storage-algorithm>
 							</annotations>
 						</reference>

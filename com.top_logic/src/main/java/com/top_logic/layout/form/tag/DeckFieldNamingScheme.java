@@ -10,7 +10,7 @@ import com.top_logic.layout.form.FormMemberBasedName;
 import com.top_logic.layout.form.FormMemberNamingScheme;
 import com.top_logic.layout.form.model.DeckField;
 import com.top_logic.layout.form.model.DeckField.CP.DeckFieldAdapter;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.NamedModel;
 import com.top_logic.layout.scripting.recorder.ref.ReferenceFactory;
@@ -22,7 +22,7 @@ import com.top_logic.layout.tabbar.TabBarModel;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DeckFieldNamingScheme extends AbstractModelNamingScheme<DeckFieldAdapter, DeckFieldNamingScheme.DeckFieldName> {
+public class DeckFieldNamingScheme extends AbstractGlobalModelNamingScheme<DeckFieldAdapter, DeckFieldNamingScheme.DeckFieldName> {
 
 	/**
 	 * Singleton {@link DeckFieldNamingScheme} instance.

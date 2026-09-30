@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.dnd;
 
+import java.util.Collection;
+
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
@@ -27,22 +29,22 @@ public interface DragSourceSPI {
 	 * Resolves the client-side representation of the drag data to an element of the
 	 * {@link #getDragSourceModel()}.
 	 * 
-	 * @param ref
+	 * @param dataId
 	 *        Client-side representation of the drag data.
 	 * @return Server-side drag data, see {@link DropEvent#getData()}.
 	 */
-	Object getDragData(String ref);
+	Collection<?> getDragData(String dataId);
 
 	/**
 	 * Tries to create a {@link ModelName} for the object with the given client-side identifier.
 	 * 
 	 * @param dragSource
 	 *        The {@link #getDragSourceModel() source model}
-	 * @param ref
+	 * @param dataId
 	 *        Client-side representation of the drag data.
 	 * 
 	 * @return {@link ModelName} for the drag data or empty if no such name could be created.
 	 */
-	Maybe<? extends ModelName> getDragDataName(Object dragSource, String ref);
+	Maybe<? extends ModelName> getDragDataName(Object dragSource, String dataId);
 
 }

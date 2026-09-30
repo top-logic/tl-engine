@@ -8,7 +8,7 @@ package com.top_logic.dsa.util;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import javax.activation.DataSource;
+import jakarta.activation.DataSource;
 
 import com.top_logic.dsa.DataAccessProxy;
 
@@ -16,7 +16,7 @@ import com.top_logic.dsa.DataAccessProxy;
  * An activation DataSource based on an DataAccessProxy objects.
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
- * @author    Andreas Röse
+ * @author    Andreas RÃ¶se
  */
 public class DataAccessProxyDataSource implements DataSource {
 

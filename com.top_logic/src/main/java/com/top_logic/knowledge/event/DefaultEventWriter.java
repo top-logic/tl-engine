@@ -30,6 +30,7 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Revision;
@@ -306,7 +307,7 @@ public class DefaultEventWriter implements EventWriter {
 	 * Begins a transaction. Finished in {@link #internalCommit(boolean)}
 	 */
 	protected void beginCommit() {
-		_tx = _kb.beginTransaction();
+		_tx = _kb.beginTransaction(I18NConstants.SYNTHESIZED_COMMIT_DURING_REPLAY);
 	}
 
 	/**

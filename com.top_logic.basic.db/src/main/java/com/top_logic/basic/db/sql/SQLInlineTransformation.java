@@ -55,13 +55,6 @@ public abstract class SQLInlineTransformation<A> extends SQLTransformation<A> {
 	}
 
 	@Override
-	protected SQLPart composeSQLAlterTable(SQLAlterTable sql, SQLTable table, SQLTableModification modification, A arg) {
-		sql.setTable(table);
-		sql.setModification(modification);
-		return sql;
-	}
-
-	@Override
 	protected SQLPart composeSQLUpdate(SQLUpdate sql, SQLTable table, List<SQLExpression> values, SQLExpression where,
 			A arg) {
 		sql.setTable(table);
@@ -98,6 +91,12 @@ public abstract class SQLInlineTransformation<A> extends SQLTransformation<A> {
 	}
 
 	@Override
+	protected SQLPart composeSQLLike(SQLLike sql, SQLExpression expr, A arg) {
+		sql.setExpr(expr);
+		return sql;
+	}
+
+	@Override
 	protected SQLPart composeSQLCast(SQLCast sql, SQLExpression expr, A arg) {
 		sql.setExpr(expr);
 		return sql;
@@ -125,6 +124,13 @@ public abstract class SQLInlineTransformation<A> extends SQLTransformation<A> {
 	protected SQLPart composeSQLInSet(SQLInSet sql, SQLExpression expr, SQLExpression values, A arg) {
 		sql.setExpr(expr);
 		sql.setValues(values);
+		return sql;
+	}
+
+	@Override
+	protected SQLPart composeSQLInSetSelect(SQLInSetSelect sql, SQLExpression expr, SQLSelect select, A arg) {
+		sql.setExpr(expr);
+		sql.setSelect(select);
 		return sql;
 	}
 

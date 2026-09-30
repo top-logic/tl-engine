@@ -58,9 +58,7 @@ import com.top_logic.mig.html.I18NResourceProvider;
 import com.top_logic.mig.html.layout.DialogInfo;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
-import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
@@ -433,17 +431,6 @@ public class ExportTableComponent extends FormComponent {
 		@Override
 		public BinaryDataSource getDownloadData(Object download) throws IOException {
 			return ((Export) download).getDocument();
-		}
-
-		/**
-		 * Overridden because we must return the components current object instead of the result document.
-		 */
-		@Override
-		protected BoundObject getBoundObject(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
-			if (aComponent instanceof BoundChecker) {
-				return ((BoundChecker) aComponent).getCurrentObject(this.getCommandGroup(), model);
-			}
-			return null;
 		}
 
 		@Override

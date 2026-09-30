@@ -7,6 +7,7 @@
 	</params>
 
 	<include name="history/historyDialog.xml"
+		dialogSecurityComponent="Historic${namePrefix}Edit"
 		namePrefix="${namePrefix}Histroy"
 	>
 		<contentView>
@@ -17,12 +18,12 @@
 						<components>
 							<!-- component to edit structured elements -->
 							<component class="com.top_logic.element.layout.structured.AdminElementComponent"
-								buttonComponent="${namePrefix}ShowHistoryButtons"
+								buttonbar="true"
 								model="selection(${namePrefix}HistroyTable)"
 								name="Historic${namePrefix}Edit"
 								page="/jsp/element/EditStructuredElement.jsp"
 								resPrefix="element.structure.edit."
-								securityProviderClass="default"
+								securityObject="model(DemoTypes:DemoTypes.All)"
 								structure="${structure}"
 								titleKey="layouts.demo.history.historyDialogWithContent.HistoricEdit.title"
 							>
@@ -33,8 +34,6 @@
 									/>
 								</dialogs>
 							</component>
-
-							<buttonbar name="${namePrefix}ShowHistoryButtons"/>
 						</components>
 					</layout>
 					<include name="commons/webfolder/documents.xml"

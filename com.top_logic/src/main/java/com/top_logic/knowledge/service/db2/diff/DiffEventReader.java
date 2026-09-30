@@ -188,17 +188,13 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 	 *         when trying to process query for that type fails.
 	 */
 	private void findNextType() throws SQLException {
-		while (true) {
-			boolean hasChange = _touchedTypes.next();
-			if (!hasChange) {
-				currentType = null;
-				break;
-			}
-			String typeName = _touchedTypes.getType();
-			currentType = getKnowledgeBase().lookupType(typeName);
-			initCurrentResults();
-			break;
+		if (!_touchedTypes.next()) {
+			currentType = null;
+			return;
 		}
+		String typeName = _touchedTypes.getType();
+		currentType = getKnowledgeBase().lookupType(typeName);
+		initCurrentResults();
 	}
 
 	/**
@@ -255,10 +251,15 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 	}
 
 	private void setNewFlexUpdateID() throws SQLException {
-		if (!_hasFlexUpdate) {
-			_hasFlexUpdate = flexUpdateResult.next();
-		}
-		if (_hasFlexUpdate) {
+		while (true) {
+			if (!_hasFlexUpdate) {
+				_hasFlexUpdate = flexUpdateResult.next();
+				if (!_hasFlexUpdate) {
+					// There is no more update at all.
+					currentFlexUpdateID = null;
+					break;
+				}
+			}
 			AttributeItemResult newValues = flexUpdateResult.getNewValues();
 			int compareValue = beforeRowType(newValues.getTypeName());
 			if (compareValue == 0) {
@@ -281,18 +282,23 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 //				assert false : "Illegal update: rowtype: '" + currentType + "', flextype: '" + newValues.getTypeName()
 //					+ "', flexid: '" + newValues.getIdentifier() + "'";
 				_hasFlexUpdate = false;
-				setNewFlexUpdateID();
+				// check next flex update
+				continue;
 			}
-		} else {
-			currentFlexUpdateID = null;
+			break;
 		}
 	}
 
 	private void setNewFlexDelID() throws SQLException {
-		if (!_hasFlexDeletion) {
-			_hasFlexDeletion = flexDeletionResult.next();
-		}
-		if (_hasFlexDeletion) {
+		while (true) {
+			if (!_hasFlexDeletion) {
+				_hasFlexDeletion = flexDeletionResult.next();
+				if (!_hasFlexDeletion) {
+					// There is no more deletion at all.
+					currentFlexDelID = null;
+					break;
+				}
+			}
 			int compareValue = beforeRowType(flexDeletionResult.getTypeName());
 			if (compareValue == 0) {
 				currentFlexDelID =
@@ -311,10 +317,10 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 				assert false : "Illegal update: rowtype: '" + currentType + "', flextype: '" + flexDeletionResult.getTypeName()
 					+ "', flexid: '" + flexDeletionResult.getObjectName() + "'";
 				_hasFlexDeletion = false;
-				setNewFlexDelID();
+				// check next flex deletion
+				continue;
 			}
-		} else {
-			currentFlexDelID = null;
+			break;
 		}
 	}
 

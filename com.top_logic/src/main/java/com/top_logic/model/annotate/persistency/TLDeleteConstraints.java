@@ -13,6 +13,8 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.access.DeleteConstraint;
+import com.top_logic.model.annotate.AnnotationInheritance;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.config.TLTypeAnnotation;
@@ -24,6 +26,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
  */
 @TagName("delete-constraints")
 @TargetType(value = { TLTypeKind.REF, TLTypeKind.COMPOSITION })
+@AnnotationInheritance(Policy.REDEFINE)
 @InApp
 public interface TLDeleteConstraints extends TLTypeAnnotation {
 

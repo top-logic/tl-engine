@@ -49,7 +49,7 @@ import com.top_logic.util.error.TopLogicException;
  * Stores custom service configurations in a separate configuration file in the autoconf folder of
  * the toplevel module.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLSaveServiceConfigHandler extends AbstractApplyCommandHandler {
 
@@ -156,9 +156,10 @@ public class TLSaveServiceConfigHandler extends AbstractApplyCommandHandler {
 	}
 
 	private String createConfigText(ApplicationConfig.Config config, StringWriter innerWriter) throws XMLStreamException {
-		OverrideConfigurationWriter configWriter = new OverrideConfigurationWriter(innerWriter, getOverrideConfigs());
-
-		TypedConfiguration.serialize(APPLICATION_CONFIG_ROOT_TAG_NAME, config, configWriter);
+		try (OverrideConfigurationWriter configWriter =
+			new OverrideConfigurationWriter(innerWriter, getOverrideConfigs())) {
+			TypedConfiguration.serialize(APPLICATION_CONFIG_ROOT_TAG_NAME, config, configWriter);
+		}
 
 		return TypedConfiguration.prettyPrint(innerWriter.toString(), getPrinterConfig());
 	}

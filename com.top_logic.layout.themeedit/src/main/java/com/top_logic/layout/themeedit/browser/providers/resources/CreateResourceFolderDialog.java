@@ -26,7 +26,7 @@ import com.top_logic.util.Resources;
 /**
  * A {@link SimpleFormDialog} for creating a new resource folder.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CreateResourceFolderDialog extends SimpleFormDialog {
 
@@ -38,7 +38,7 @@ public class CreateResourceFolderDialog extends SimpleFormDialog {
 	public CreateResourceFolderDialog(LayoutComponent component) {
 		super(I18NConstants.CREATE_RESOURCE_FOLDER_DIALOG,
 			DisplayDimension.dim(330, DisplayUnit.PIXEL),
-			DisplayDimension.dim(150, DisplayUnit.PIXEL));
+			DisplayDimension.dim(230, DisplayUnit.PIXEL));
 
 		_component = (TreeComponent) component;
 	}

@@ -12,7 +12,7 @@ import java.util.List;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.search.SearchResult;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -25,7 +25,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
-public class FastListNaming extends AbstractModelNamingScheme<FastListElement, FastListNaming.FastListName> {
+public class FastListNaming extends AbstractGlobalModelNamingScheme<FastListElement, FastListNaming.FastListName> {
 
 	/**
 	 * The separator between the {@link FastList} and the {@link FastListElement}.

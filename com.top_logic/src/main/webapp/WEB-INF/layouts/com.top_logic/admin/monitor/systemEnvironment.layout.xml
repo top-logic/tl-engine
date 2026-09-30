@@ -5,7 +5,7 @@
 		<form name="environmentVariables"
 			modelBuilder="com.top_logic.util.monitor.SystemEnvironmentBuilder"
 			resPrefix="%LAYOUT_RESPREFIX%"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<buttons>
 				<reference command-id="invalidate"/>

@@ -2,11 +2,13 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic.element/treegrid.template.xml"
 >
 	<arguments
 		defaultColumns="name"
+		defaultSelection="false"
+		expandSelected="false"
+		multiSelection="true"
 		partnerGroup="TreeGridPartner"
 		type="DemoTypes:DemoTypes.All"
 	>
@@ -32,10 +34,57 @@
 			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
 			rootNode="x -> $x[1].inRevision($x[0])"
 		/>
+		<configurationProviders>
+			<column-customizations>
+				<column name="name">
+					<css-classes>
+						<cell-class-by-expression>
+							<css-classes><![CDATA[value -> $value.length() < 3 ? "tl-info" : null]]></css-classes>
+						</cell-class-by-expression>
+					</css-classes>
+				</column>
+			</column-customizations>
+			<configurationProvider class="com.top_logic.model.search.providers.RowClassProviderByExpression">
+				<css-classes><![CDATA[row -> model -> $row.get(`DemoTypes:DemoTypes.All#name`)
+    .stringContains("4")
+    ? "tl-warning" 
+    : null]]></css-classes>
+			</configurationProvider>
+		</configurationProviders>
+		<selectionFilter class="com.top_logic.model.search.providers.ScriptedFilter">
+			<predicate>x -&gt; !$x.get(`DemoTypes:A#name`).stringEndsWith("-final")</predicate>
+		</selectionFilter>
 		<buttons>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-			/>
+				streaming="false"
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
+			</button>
 		</buttons>
+		<contextMenu class="com.top_logic.element.layout.grid.GridContextMenuProvider">
+			<contextMenuFactory>
+				<titleProvider class="com.top_logic.layout.provider.MetaLabelProvider"/>
+				<customCommands config:interface="com.top_logic.layout.table.tree.CustomTreeCommandsConfig">
+					<command config:interface="com.top_logic.layout.table.tree.CustomTreeCommandsConfig$SelectSubTreeConfig"
+						class="com.top_logic.tool.boundsec.CommandHandlerReference"
+					/>
+					<command config:interface="com.top_logic.layout.table.tree.CustomTreeCommandsConfig$DeselectSubTreeConfig"
+						class="com.top_logic.tool.boundsec.CommandHandlerReference"
+					/>
+					<command id="ID_e70ba172_052b_4dc0_b68a_12cadd1e91b9"
+						class="com.top_logic.layout.table.tree.SelectSubtree"
+						clique="select"
+						image="css:fa-solid fa-check-double"
+						levels="1"
+					>
+						<resourceKey key="dynamic.dd19feb0-9904-4e61-ba7b-dd57c71669d4">
+							<en>Select one level</en>
+							<de>Ebene auswählen</de>
+						</resourceKey>
+					</command>
+				</customCommands>
+			</contextMenuFactory>
+		</contextMenu>
 	</arguments>
 </config:template-call>

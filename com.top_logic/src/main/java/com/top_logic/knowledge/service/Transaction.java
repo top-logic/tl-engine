@@ -5,7 +5,7 @@
  */
 package com.top_logic.knowledge.service;
 
-import com.top_logic.basic.message.Message;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * A transaction in a {@link KnowledgeBase}.
@@ -17,17 +17,17 @@ import com.top_logic.basic.message.Message;
  * <pre>
  * Transaction tx = kb.beginTx("Saving changes.");
  * try {
- *    // Code that manipulates the knowledge base.
- *   
- *    // Commit changes in this transaction.
- *    tx.commit();
+ * 	// Code that manipulates the knowledge base.
+ * 
+ * 	// Commit changes in this transaction.
+ * 	tx.commit();
  * } finally {
- *    // Roll back, if control flow did not reach commit. Noop otherwise.
- *    tx.rollback("Invalid state.");
+ * 	// Roll back, if control flow did not reach commit. Noop otherwise.
+ * 	tx.rollback("Invalid state.");
  * }
  * </pre>
  * 
- * @see KnowledgeBase#beginTransaction(Message)
+ * @see KnowledgeBase#beginTransaction(ResKey)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -41,19 +41,26 @@ public interface Transaction extends AutoCloseable {
 	int STATE_OPEN = 0;
 	
 	/**
+	 * The transaction has been started in the persistency layer.
+	 * 
+	 * @see #getState()
+	 */
+	int STATE_STARTED = 1;
+
+	/**
 	 * {@link Transaction} has been successfully {@link #commit() committed}.
 	 * 
 	 * @see #getState()
 	 */
-	int STATE_COMMITTED = 1;
+	int STATE_COMMITTED = 2;
 
 	/**
-	 * {@link Transaction} has been {@link #rollback(Message, Throwable) rolled
-	 * back}, or {@link #commit()} has failed.
+	 * {@link Transaction} has been {@link #rollback(ResKey, Throwable) rolled back}, or
+	 * {@link #commit()} has failed.
 	 * 
 	 * @see #getState()
 	 */
-	int STATE_FAILED = 2;
+	int STATE_FAILED = 3;
 
 	/**
 	 * The {@link KnowledgeBase} in which this transaction happens.
@@ -63,10 +70,31 @@ public interface Transaction extends AutoCloseable {
 	/**
 	 * The state of this {@link Transaction}.
 	 * 
-	 * @return {@link #STATE_OPEN}, {@link #STATE_COMMITTED}, or {@link #STATE_FAILED}.
+	 * @return {@link #STATE_OPEN}, {@link #STATE_STARTED}, {@link #STATE_COMMITTED}, or
+	 *         {@link #STATE_FAILED}.
 	 */
 	int getState();
 	
+	/**
+	 * The commit message that is associated with the changes when committed.
+	 */
+	ResKey getCommitMessage();
+
+	/**
+	 * Updates the commit message.
+	 * 
+	 * <p>
+	 * Must only be called before the transaction in the persistency layer has been started.
+	 * </p>
+	 * 
+	 * @throws IllegalStateException
+	 *         If the transaction in the persistency layer has already been started.
+	 * 
+	 * @see #getState()
+	 * @see #STATE_STARTED
+	 */
+	void setCommitMessage(ResKey newCommitMessage) throws IllegalStateException;
+
 	/**
 	 * Whether this is a pseudo-nested transaction.
 	 */
@@ -88,7 +116,7 @@ public interface Transaction extends AutoCloseable {
 	 * @param failureMessage
 	 *        Message describing the failure that caused the rollback.
 	 */
-	void rollback(Message failureMessage);
+	void rollback(ResKey failureMessage);
 
 	/**
 	 * Closes this transaction, rolling back uncommitted changes.
@@ -98,7 +126,7 @@ public interface Transaction extends AutoCloseable {
 	 * @param cause
 	 *        an optional cause for this rollback. May be <code>null</code>.
 	 */
-	void rollback(Message failureMessage, Throwable cause);
+	void rollback(ResKey failureMessage, Throwable cause);
 
 	/**
 	 * The revision that was created during the preceding call to

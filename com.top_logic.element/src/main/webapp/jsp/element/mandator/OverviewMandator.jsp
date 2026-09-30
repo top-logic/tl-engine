@@ -8,9 +8,7 @@
 %><%@taglib uri="basic"     prefix="basic"
 %><%@taglib uri="meta"      prefix="meta"
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<%
 		MandatorOverviewComponent	theComp   = (MandatorOverviewComponent) MainLayout.getComponent(pageContext);

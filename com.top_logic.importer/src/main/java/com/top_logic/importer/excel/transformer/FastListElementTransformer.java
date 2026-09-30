@@ -165,8 +165,9 @@ public class FastListElementTransformer implements Transformer<Collection<FastLi
             if (theList == null) {
             	return null;
             }
-			try (Transaction transaction = theList.tKnowledgeBase().beginTransaction()) {
-				String theID = theList.getName() + '.' + Integer.toString(theList.size());
+			String theID = theList.getName() + '.' + Integer.toString(theList.size());
+			try (Transaction transaction = theList.tKnowledgeBase()
+				.beginTransaction(I18NConstants.CREATED_CLASSIFICATION_DURING_IMPORT__NAME.fill(theID))) {
 				FastListElement theElement = theList.addElement(null, theID, "", 0);
 				try (ResourceTransaction tx = ResourcesModule.getInstance().startResourceTransaction()) {
 					for (String theLang : ResourcesModule.getInstance().getSupportedLocaleNames()) {

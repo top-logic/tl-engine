@@ -24,7 +24,7 @@ import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.component.AbstractCreateComponent;
-import com.top_logic.layout.form.component.Editor;
+import com.top_logic.layout.form.component.edit.EditMode;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.tag.FormPageTag;
@@ -42,6 +42,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLMimeTypes;
+import com.top_logic.util.css.CssUtil;
 
 /**
  * {@link LayoutControlProvider} that renders a {@link FormMember} of a {@link FormHandler} by
@@ -369,7 +370,7 @@ public class DirectFormDisplay {
 	}
 
 	private boolean inEditMode(FormHandler component) {
-		return (component instanceof Editor && ((Editor) component).isInEditMode());
+		return (component instanceof EditMode && ((EditMode) component).isInEditMode());
 	}
 
 	private void initActionIcon(Object model, IconControl icon) {
@@ -420,8 +421,12 @@ public class DirectFormDisplay {
 		if (formMember == null) {
 			return noModelView(noModelKey);
 		}
+		String formMemberCss = formMember.getCssClasses();
+		String cssClassConfig = getConfig().getCssClass();
+		
+		String cssClasses = CssUtil.joinCssClasses(cssClassConfig, formMemberCss != null ? formMemberCss : "");
 		ControlProvider controlProvider = getConfig().getControlProvider();
-		return div(getConfig().getCssClass(),
+		return div(cssClasses,
 			controlProvider.createControl(formMember));
 	}
 

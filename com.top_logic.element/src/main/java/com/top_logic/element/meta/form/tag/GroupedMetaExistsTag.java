@@ -5,8 +5,8 @@
  */
 package com.top_logic.element.meta.form.tag;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.TagSupport;
 
 /**
  * Show inner content only in case an attribute exists.

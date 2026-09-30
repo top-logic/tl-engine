@@ -3,6 +3,7 @@
 <layout>
 	<components>
 		<component class="com.top_logic.demo.layout.demo.table.DemoFormulaTables"
+			buttonbar="true"
 			name="FormularTable"
 			page="/jsp/test/layout/table/FormulaTables.jsp"
 			resPrefix="layouts.layoutdemo.table.FormulaTable.FormularTable."
@@ -86,6 +87,5 @@
 				/>
 			</buttons>
 		</component>
-		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 	</components>
 </layout>

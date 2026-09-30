@@ -12,7 +12,9 @@ import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Named;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.folder.FolderDefinition;
 import com.top_logic.common.webfolder.WebFolderUtils;
 import com.top_logic.knowledge.gui.layout.upload.SimpleFileNameStrategy;
@@ -23,6 +25,7 @@ import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.control.IconControl;
+import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
@@ -35,12 +38,14 @@ import com.top_logic.layout.messagebox.AbstractFormPageDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 
 /**
  * Upload dialog providing the {@link DataField} for identifying the file to be uploaded.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class UploadDialog extends AbstractFormPageDialog {
 
@@ -136,6 +141,10 @@ public abstract class UploadDialog extends AbstractFormPageDialog {
 		
 	}
 
+	/**
+	 * Empty list indicates all types
+	 */
+	public static final List<String> ALL_TYPES = null;
 
 	private final CommandModel _uploadButton;
 
@@ -145,6 +154,10 @@ public abstract class UploadDialog extends AbstractFormPageDialog {
 
 	private long _maxUploadSize;
 
+	private List<String> _allowedFileTypes;
+
+	private boolean _withDescription;
+
 	/**
 	 * Creates a new {@link UploadDialog}.
 	 * 
@@ -153,11 +166,18 @@ public abstract class UploadDialog extends AbstractFormPageDialog {
 	 *        limit.
 	 */
 	protected UploadDialog(ResPrefix aPrefix, FolderDefinition folder, DisplayDimension width, DisplayDimension height, long maxUploadSize) {
+		this(aPrefix, folder, width, height, maxUploadSize, ALL_TYPES, true);
+	}
+
+	protected UploadDialog(ResPrefix aPrefix, FolderDefinition folder, DisplayDimension width, DisplayDimension height,
+			long maxUploadSize, List<String> allowedFileTypes, boolean withDescription) {
 		super(aPrefix, width, height);
+		_withDescription = withDescription;
 		_resourcePrefix = aPrefix;
 		_folder = folder;
 		_maxUploadSize = maxUploadSize;
-		Command uploadCommand = new Command.CommandChain(createUploadCommand(this), getDiscardClosure());
+		_allowedFileTypes = allowedFileTypes;
+		Command uploadCommand = closeDialogAfter(createUploadCommand(this));
 		getDialogModel().setDefaultCommand(uploadCommand);
 		CommandModel uploadButton = MessageBox.forwardStyleButton(I18NConstants.UPLOAD_DOCUMENT, uploadCommand);
 		_uploadButton = uploadButton;
@@ -193,17 +213,51 @@ public abstract class UploadDialog extends AbstractFormPageDialog {
 	protected abstract UploadCommand createUploadCommand(UploadDialog dialog);
 
 	@Override
-	protected HTMLFragment createBodyContent() {
+	protected HTMLFragment createSubtitleContent() {
+		return Fragments.empty();
+	}
+
+	/**
+	 * Returns the body html with a field for entering a description
+	 * 
+	 * @return the {@link HTMLFragment} for the body of the dialog
+	 */
+	protected HTMLFragment createBodyContentWith() {
 		return div(FormConstants.FORM_BODY_CSS_CLASS,
-			div(
-				input(SimpleFormDialog.INPUT_FIELD),
-				text(HTMLConstants.NBSP),
-				errorIcon(SimpleFormDialog.INPUT_FIELD)),
-			div(
-				div(
-					label(DocumentVersion.DESCRIPTION),
-					div(
+			div(ReactiveFormCSS.RF_COLUMNS_LAYOUT + " cols1",
+				div(ReactiveFormCSS.RF_INPUT_CELL,
+					div(ReactiveFormCSS.RF_LABEL,
+						label(SimpleFormDialog.INPUT_FIELD),
+						errorIcon(SimpleFormDialog.INPUT_FIELD)),
+					div(ReactiveFormCSS.RF_CELL,
+						input(SimpleFormDialog.INPUT_FIELD))),
+				div(ReactiveFormCSS.RF_INPUT_CELL + " " + ReactiveFormCSS.RF_LABEL_ABOVE,
+					div(ReactiveFormCSS.RF_LABEL,
+						label(DocumentVersion.DESCRIPTION),
+						errorIcon(DocumentVersion.DESCRIPTION)),
+					div(ReactiveFormCSS.RF_CELL,
 						input(DocumentVersion.DESCRIPTION)))));
+	}
+
+	/**
+	 * Returns the body html without a field for entering a description
+	 * 
+	 * @return the {@link HTMLFragment} for the body of the dialog
+	 */
+	protected HTMLFragment createBodyContentWithout() {
+		return span(input(SimpleFormDialog.INPUT_FIELD), text(HTMLConstants.NBSP),
+			errorIcon(SimpleFormDialog.INPUT_FIELD), br(), br(),
+			text(Resources.getInstance().getString(I18NConstants.UPLOAD_INFO)));
+	}
+
+	@Override
+	protected HTMLFragment createBodyContent() {
+		if (_withDescription) {
+			return createBodyContentWith();
+		} else {
+			return createBodyContentWithout();
+		}
+
 	}
 
 	@Override
@@ -219,17 +273,66 @@ public abstract class UploadDialog extends AbstractFormPageDialog {
 			blackList.add(content.getName());
 		}
 
-		DataField dataField = FormFactory.newDataField(SimpleFormDialog.INPUT_FIELD, FormFactory.MULTIPLE,
-			new SimpleFileNameStrategy(blackList, whiteList));
-		dataField.setLabel("");
-		dataField.setDownload(false);
-		dataField.setMaxUploadSize(_maxUploadSize);
+		DataField dataField = createDataField(blackList, whiteList);
+
 		context.addMember(dataField);
 		EnableButtonOnValue.enableButtonOnNonEmptyValue(dataField, getUploadButton());
 
 		StringField descriptionField = WebFolderUtils.createDescriptionField(DocumentVersion.DESCRIPTION, 5);
 		context.addMember(descriptionField);
+
+		descriptionField.setVisible(showDescriptionField());
+
     }
+
+	private boolean showDescriptionField() {
+		return true;
+	}
+
+	private DataField createDataField(List<String> blackList, List<String> whiteList) {
+		SimpleFileNameStrategy fileNamesStrategy =
+			createFileNameStrategy(blackList, whiteList);
+		DataField dataField = FormFactory.newDataField(SimpleFormDialog.INPUT_FIELD, true, fileNamesStrategy);
+
+		dataField.setLabel(I18NConstants.UPLOAD_DIALOG_FILES);
+		dataField.setTooltip(I18NConstants.UPLOAD_DIALOG_FILES.tooltip());
+
+		dataField.setDownload(false);
+		dataField.setMaxUploadSize(_maxUploadSize);
+		return dataField;
+	}
+
+
+	private SimpleFileNameStrategy createFileNameStrategy(List<String> blackList,
+			List<String> whiteList) {
+		final List<String> fileTypesWhiteList =
+			_allowedFileTypes == null ? ALL_TYPES : new ArrayList<>(_allowedFileTypes);
+		return new SimpleFileNameStrategy(blackList, whiteList) {
+
+			@Override
+			public ResKey checkFileName(String aName) {
+				ResKey theResult = super.checkFileName(aName);
+
+				if (theResult == null) {
+					if (ALL_TYPES == fileTypesWhiteList) {
+						return null;
+					}
+					String theName = aName.toLowerCase();
+
+					for (String theExtension : fileTypesWhiteList) {
+						if (theName.endsWith(theExtension.toLowerCase())) {
+							return null;
+						}
+					}
+
+					return ResKey.message(I18NConstants.MESSAGE_KEY_FILENAME_MUST_END_WITH, aName,
+						StringServices.join(fileTypesWhiteList, "; "));
+				}
+
+				return theResult;
+			}
+		};
+	}
 
     @Override
     protected void fillButtons(List<CommandModel> buttons) {

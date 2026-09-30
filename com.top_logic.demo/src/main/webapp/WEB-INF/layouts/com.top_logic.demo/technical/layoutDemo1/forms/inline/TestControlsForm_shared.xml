@@ -14,11 +14,11 @@
 	<layout>
 		<components>
 			<component class="com.top_logic.demo.layout.form.demo.TestControlsForm"
-				buttonComponent="${componentName}Buttons"
+				buttonbar="true"
 				name="${componentName}"
 				page="/jsp/test/layout/TestControlsForm.jsp"
 				resPrefix="layouts.layoutdemo.TestControlsForm_shared.main."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				webFolder="demoWebfolder"
 			>
 				<buttons>
@@ -82,17 +82,16 @@
 						name="${componentName}_gotoPerson"
 						page="/jsp/test/layout/TestControlsFormGotoPerson.jsp"
 						resPrefix="layouts.layoutdemo.TestControlsForm_shared.gotoPerson."
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 					>
 						<dialogInfo
-							height="300"
-							width="400"
+							height="400"
+							width="450"
 						/>
 					</component>
 				</dialogs>
 				${conf}
 			</component>
-			<buttonbar name="${componentName}Buttons"/>
 		</components>
 	</layout>
 </template>

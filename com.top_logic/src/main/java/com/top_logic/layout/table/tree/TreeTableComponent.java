@@ -20,13 +20,14 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -34,8 +35,11 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.col.Maybe;
+import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -49,6 +53,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.func.IFunction2;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.DisplayContext;
@@ -59,7 +64,11 @@ import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.component.InAppSelectable;
+import com.top_logic.layout.component.DefaultSelectionProvider;
+import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.structure.ContentLayouting;
 import com.top_logic.layout.structure.ControlRepresentable;
@@ -70,14 +79,17 @@ import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.table.ITableRenderer;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableModel;
+import com.top_logic.layout.table.TableModelUtils;
 import com.top_logic.layout.table.TableRenderer;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.component.ComponentRowSource;
 import com.top_logic.layout.table.component.ComponentSelectionVetoListener;
 import com.top_logic.layout.table.component.ComponentTableConfigProvider;
+import com.top_logic.layout.table.component.CorrectTypeFilter;
 import com.top_logic.layout.table.component.InvalidSelectionVeto;
 import com.top_logic.layout.table.component.TableComponent;
 import com.top_logic.layout.table.component.TableComponentTableConfigProvider;
+import com.top_logic.layout.table.component.WithCustomConfigKey;
 import com.top_logic.layout.table.control.SelectionVetoListener;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.model.SetTableResPrefix;
@@ -118,6 +130,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundComponent;
+import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.util.Utils;
 import com.top_logic.util.model.ModelService;
 
@@ -127,14 +140,15 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
 public class TreeTableComponent extends BoundComponent
-		implements SelectableWithSelectionModel, ControlRepresentable, TreeTableDataOwner, ComponentRowSource,
-		WithSelectionPath {
+		implements SelectableWithSelectionModel, InAppSelectable, ControlRepresentable, TreeTableDataOwner,
+		ComponentRowSource, WithSelectionPath, ObjectRevealer {
 
 	/**
 	 * Configuration options for {@link TreeTableComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends BoundComponent.Config, TreeViewConfig, SelectionModelConfig {
+	public interface Config extends BoundComponent.Config, TreeViewConfig, SelectionModelConfig,
+			InAppSelectable.InAppSelectableConfig, WithCustomConfigKey {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -244,6 +258,9 @@ public class TreeTableComponent extends BoundComponent
 		}
 	}
 
+	private static final Property<TreeTableComponent> TREE_OWNER =
+		TypedAnnotatable.property(TreeTableComponent.class, "owner");
+
 	/**
 	 * @see #channels()
 	 */
@@ -259,14 +276,27 @@ public class TreeTableComponent extends BoundComponent
 	private final SelectionListener _selectionListener = new SelectionListener() {
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
-			Collection<TreeUINode<?>> oldSelectedNodes = unsafeCast(oldSelection);
-			Set<AbstractTreeTableNode<?>> newSelectedNodes = unsafeCast(newSelection);
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+			Set<AbstractTreeTableNode<?>> newSelectedNodes = unsafeCast(event.getNewSelection());
+
+			// React only to the nodes that were newly added to the selection, so that a node that
+			// was collapsed while staying selected is not expanded again when the selection changes
+			// elsewhere. On a model rebuild the node instances differ from the old selection, hence
+			// all of them count as added and the selection is fully revealed.
+			Set<AbstractTreeTableNode<?>> addedNodes = new HashSet<>(newSelectedNodes);
+			addedNodes.removeAll(event.getOldSelection());
 
 			if (_expandSelected) {
-				for (AbstractTreeTableNode<?> newSelectedNode : newSelectedNodes) {
+				for (AbstractTreeTableNode<?> newSelectedNode : addedNodes) {
 					if (newSelectedNode != null) {
 						newSelectedNode.setExpanded(true);
+					}
+				}
+			}
+			if (_revealSelection) {
+				for (AbstractTreeTableNode<?> newSelectedNode : addedNodes) {
+					if (newSelectedNode != null) {
+						TLTreeModelUtil.expandParents(newSelectedNode);
 					}
 				}
 			}
@@ -279,7 +309,7 @@ public class TreeTableComponent extends BoundComponent
 				 * selection must not be reverted. */
 				Set<Object> newSelectedObjects = TreeUIModelUtil.getBusinessObjects(newSelectedNodes);
 				if (!CollectionUtil.equals(selectionFromChannel(), newSelectedObjects)) {
-					_selectionModel.setSelection(oldSelection);
+					_selectionModel.setSelection(event.getOldSelection());
 				}
 			}
 		}
@@ -288,6 +318,8 @@ public class TreeTableComponent extends BoundComponent
 	private boolean _rootVisible;
 
 	private boolean _expandSelected;
+
+	private boolean _revealSelection;
 
 	private boolean _expandRoot;
 
@@ -299,22 +331,55 @@ public class TreeTableComponent extends BoundComponent
 
 	private TreeTableData _treeTableData;
 
+	/**
+	 * Business objects of the expanded nodes, captured before the tree model is discarded, so
+	 * that the expansion state can be restored when the model is rebuilt.
+	 *
+	 * @see #_expansionRootObject
+	 */
+	private Collection<?> _expansionUserModel;
+
+	/**
+	 * The root business object of the tree from which {@link #_expansionUserModel} was captured.
+	 *
+	 * <p>
+	 * The captured expansion is only restored when the tree is rebuilt for the same root, i.e.
+	 * across an {@link #invalidate()}. When the displayed model changes, the (unrelated) expansion
+	 * of the previous tree must not leak into the new one.
+	 * </p>
+	 */
+	private Object _expansionRootObject;
+
 	private TableConfigurationProvider _tableConfigProvider;
 
 	private final SelectionModel _selectionModel;
 
 	private boolean _isSelectionValid;
 
+	private CommandHandler _onSelectionChange;
+
+	private final DefaultSelectionProvider _defaultSelectionProvider;
+
+	private IFunction2<String, Object, String> _configKeyBuilder;
+
 	/**
-	 * Legacy constructor for creating an {@link TreeTableComponent} via {@link Config}.
+	 * Filter that checks whether a potential list element has the correct {@link TLType}. If no
+	 * {@link #getTypes() types} are configured, all elements are potentially part of the list.
+	 */
+	private Filter<Object> _rowTypeFilter;
+
+	/**
+	 * Creates a {@link TreeTableComponent} via {@link Config}.
 	 */
 	@CalledByReflection
 	public TreeTableComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 		_types = resolveTypes(context, config);
+		_rowTypeFilter = CorrectTypeFilter.newTypeFilter(_types);
 		_rootVisible = config.isRootVisible();
 		_treeBuilder = context.getInstance(config.getTreeBuilder());
 		_expandSelected = config.getExpandSelected();
+		_revealSelection = config.getRevealSelection();
 		_expandRoot = config.getExpandRoot();
 		_hasDefaultSelection = config.getDefaultSelection();
 		_selectionModel = initSelectionModel(config);
@@ -323,6 +388,19 @@ public class TreeTableComponent extends BoundComponent
 		if (table != null) {
 			_tableConfigProvider = TableConfigurationFactory.toProvider(context, table);
 		}
+		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_defaultSelectionProvider = context.getInstance(config.getDefaultSelectionProvider());
+		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
+	}
+
+	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
+	}
+
+	@Override
+	public CommandHandler getOnSelectionHandler() {
+		return _onSelectionChange;
 	}
 
 	private Set<TLType> resolveTypes(InstantiationContext context, Config config) {
@@ -374,7 +452,7 @@ public class TreeTableComponent extends BoundComponent
 
 	/** @see Config#shouldCheckMissingTypeConfiguration() */
 	protected boolean shouldCheckMissingTypeConfiguration() {
-		return ((Config) getConfig()).shouldCheckMissingTypeConfiguration();
+		return getConfig().shouldCheckMissingTypeConfiguration();
 	}
 
 	private void checkMissingTypeConfiguration() {
@@ -541,7 +619,13 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private void updateNodeObject(Object nodeObject) {
-		if (getTreeModelBuilder().supportsNode(this, nodeObject)) {
+		if (!_rowTypeFilter.accept(nodeObject)) {
+			// Object has incorrect row type.
+			return;
+		}
+		TreeModelBuilder<Object> treeModelBuilder = getTreeModelBuilder();
+
+		if (treeModelBuilder != null && treeModelBuilder.supportsNode(this, nodeObject)) {
 			Maybe<AbstractTreeTableNode<?>> node = findNodeOfBusinessObject(nodeObject);
 			if (node.hasValue()) {
 				AbstractTreeTableNode<?> tableNode = node.get();
@@ -561,7 +645,12 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private Collection<? extends Object> getParentObjects(Object nodeObject) {
-		return getTreeModelBuilder().getParents(this, nodeObject);
+		TreeModelBuilder<Object> treeModelBuilder = getTreeModelBuilder();
+		if (treeModelBuilder != null) {
+			return treeModelBuilder.getParents(this, nodeObject);
+		} else {
+			return Collections.emptySet();
+		}
 	}
 
 	private void updateOldParents(AbstractTreeTableNode<?> node) {
@@ -584,16 +673,17 @@ public class TreeTableComponent extends BoundComponent
 
 	private List<AbstractTreeTableNode<?>> findNodes(Object nodeObject) {
 		TLTreeModel<AbstractTreeTableNode<?>> treeModel = getTreeModel();
-
+		TreeModelBuilder<Object> modelBuilder = getTreeModelBuilder();
 		if (treeModel instanceof IndexedTLTreeModel<?>) {
 			return ((IndexedTLTreeModel) treeModel).getIndex().getNodes(nodeObject);
+		} else if (modelBuilder != null) {
+			AbstractTreeTableNode<?> node =
+				TLTreeModelUtil.findNode(treeModel, createPath(modelBuilder, nodeObject), false);
+			return Collections.singletonList(node);
 		} else {
-			TreeModelBuilder<Object> modelBuilder = getTreeModelBuilder();
-
-			if (modelBuilder != null) {
-				AbstractTreeTableNode<?> node = TLTreeModelUtil.findNode(treeModel, createPath(modelBuilder, nodeObject), false);
-
-				return Collections.singletonList(node);
+			Maybe<AbstractTreeTableNode<?>> node = findNodeOfBusinessObject(nodeObject);
+			if (node.hasValue()) {
+				return Collections.singletonList(node.get());
 			} else {
 				return Collections.emptyList();
 			}
@@ -608,10 +698,13 @@ public class TreeTableComponent extends BoundComponent
 
 	private void updateChildrenInternal(AbstractTreeTableNode<?> node) {
 		if (node != null) {
-			unregisterSelectionListener();
-			TLTreeModelUtil.updateChildren((AbstractTreeTableNode) node,
-				getTreeModelBuilder().getChildIterator(this, node.getBusinessObject()));
-			registerSelectionListener();
+			TreeModelBuilder<Object> treeModelBuilder = getTreeModelBuilder();
+			if (treeModelBuilder != null) {
+				unregisterSelectionListener();
+				TLTreeModelUtil.updateChildren((AbstractTreeTableNode) node,
+					treeModelBuilder.getChildIterator(this, node.getBusinessObject()));
+				registerSelectionListener();
+			}
 		}
 	}
 
@@ -636,13 +729,7 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private void setDefaultTreeSelection() {
-		AbstractTreeTableNode<?> defaultSelectedNode = getDefaultSelection();
-
-		if (defaultSelectedNode != null) {
-			setSelection(Collections.singleton(defaultSelectedNode));
-		} else {
-			setSelection(Collections.emptySet());
-		}
+		setSelection(defaultSelection());
 	}
 
 	private Set<AbstractTreeTableNode<?>> getNodesForPaths(Collection<? extends List<?>> paths) {
@@ -817,7 +904,6 @@ public class TreeTableComponent extends BoundComponent
 	@Override
 	protected void handleNewModel(Object newModel) {
 		super.handleNewModel(newModel);
-		invalidateButtons();
 		rebuildTableModel();
 	}
 
@@ -849,6 +935,50 @@ public class TreeTableComponent extends BoundComponent
 			return Maybe.none();
 		}
 		return Maybe.some(rowOfObject);
+	}
+
+	/**
+	 * Resolves the node for the given business object, creating and expanding its ancestors so that
+	 * the node becomes displayed.
+	 *
+	 * @return The node, or <code>null</code> if the object is not part of the tree.
+	 */
+	private AbstractTreeTableNode<?> nodeToReveal(Object businessObject) {
+		List<AbstractTreeTableNode<?>> nodes = findNodes(businessObject);
+		AbstractTreeTableNode<?> node;
+		if (!nodes.isEmpty()) {
+			node = nodes.get(0);
+		} else {
+			Maybe<AbstractTreeTableNode<?>> displayed = findNodeOfBusinessObject(businessObject);
+			if (!displayed.hasValue()) {
+				return null;
+			}
+			node = displayed.get();
+		}
+		// Expand the ancestors so that the node is displayed.
+		TLTreeModelUtil.expandParents(node);
+		return node;
+	}
+
+	@Override
+	public boolean revealObject(Object businessObject) {
+		AbstractTreeTableNode<?> node = nodeToReveal(businessObject);
+		if (node == null) {
+			return false;
+		}
+
+		TableViewModel viewModel = getTableViewModel();
+		viewModel.validate(DefaultDisplayContext.getDisplayContext());
+		int row = viewModel.getRowOfObject(node);
+		if (row != TableViewModel.NO_ROW) {
+			TableModelUtils.scrollToRow(viewModel, row);
+			if (_control != null) {
+				// Trigger a repaint so that the scroll request is sent to the client, even if the
+				// node was already displayed and no expansion happened above.
+				_control.requestRepaint();
+			}
+		}
+		return true;
 	}
 
 	/** Convenience method for finding the node of a business object. */
@@ -885,9 +1015,15 @@ public class TreeTableComponent extends BoundComponent
 	/** Create a new {@link TableModel} and replace the old one. */
 	public void rebuildTableModel() {
 		if (hasTreeTableData()) {
+			AbstractTreeTableModel<?> oldTree = getTableData().getTree();
+			Collection<?> expansionUserModel = TreeUIModelUtil.getExpansionUserModel(oldTree);
+			Object expansionRoot = oldTree.getRoot().getBusinessObject();
 			AbstractTreeTableModel<?> treeModel = createTreeModel();
 			configureTreeModel(treeModel);
 			getTableData().setTree(treeModel);
+			if (Objects.equals(expansionRoot, treeModel.getRoot().getBusinessObject())) {
+				TreeUIModelUtil.setExpansionUserModel(expansionUserModel, treeModel);
+			}
 			adjustTreeTableData(getTableData());
 			invalidateSelection();
 			if (shouldCheckMissingTypeConfiguration()) {
@@ -905,9 +1041,21 @@ public class TreeTableComponent extends BoundComponent
 
 	private void clearTreeTableField() {
 		if (hasTreeTableData()) {
+			_expansionUserModel = TreeUIModelUtil.getExpansionUserModel(_treeTableData.getTree());
+			_expansionRootObject = _treeTableData.getTree().getRoot().getBusinessObject();
+
+			/* Drop the selection model that references the nodes of the discarded tree, but keep
+			 * the selection channel so that the selection can be restored when the tree is rebuilt
+			 * for the same model (invalidate). Removing the listener during the clear prevents the
+			 * (temporary) empty selection from being propagated to the selection channel. When the
+			 * displayed model actually changes, the retained selection paths do not resolve in the
+			 * new tree and the default selection is installed as before. */
+			unregisterSelectionListener();
+			_selectionModel.clear();
+			registerSelectionListener();
+
 			removeToolbarButtons(_treeTableData);
 			_treeTableData = null;
-			_selectionModel.clear();
 
 			if (_control != null) {
 				_control.detach();
@@ -1013,8 +1161,26 @@ public class TreeTableComponent extends BoundComponent
 	 *        Never null.
 	 */
 	protected void configureTreeModel(AbstractTreeTableModel<?> treeModel) {
-		treeModel.setRootVisible(isRootVisible() && treeModel.getRoot().getBusinessObject() != null);
+		AbstractTreeTableNode<?> root = treeModel.getRoot();
+		root.set(TREE_OWNER, this);
+		treeModel.setRootVisible(isRootVisible() && root.getBusinessObject() != null);
 		treeModel.addTreeModelListener(this::onTreeModelEvent);
+	}
+
+	/**
+	 * Determines the {@link TreeTableComponent} that created the given
+	 * {@link AbstractTreeTableModel}.
+	 * 
+	 * @param treeModel
+	 *        Tree model to get owner for.
+	 * @return The owning {@link TreeTableComponent} of the given tree model. May be
+	 *         <code>null</code> when the given model was not created by a
+	 *         {@link TreeTableComponent}.
+	 */
+	@FrameworkInternal
+	public static TreeTableComponent getOwner(AbstractTreeTableModel<?> treeModel) {
+		AbstractTreeTableNode<?> root = treeModel.getRoot();
+		return root.get(TREE_OWNER);
 	}
 
 	private void onTreeModelEvent(TreeModelEvent event) {
@@ -1081,7 +1247,7 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private TableConfigurationProvider createTableConfigurationProvider() {
-		Config config = (Config) getConfig();
+		Config config = getConfig();
 
 		List<TableConfigurationProvider> providers = new ArrayList<>();
 
@@ -1101,7 +1267,7 @@ public class TreeTableComponent extends BoundComponent
 			providers.add(_tableConfigProvider);
 		}
 
-		providers.add(((Config) getConfig()).getAdditionalConfiguration());
+		providers.add(getConfig().getAdditionalConfiguration());
 		providers.add(GenericTableConfigurationProvider.showDefaultColumns());
 
 		return TableConfigurationFactory.combine(providers);
@@ -1171,35 +1337,46 @@ public class TreeTableComponent extends BoundComponent
 		}
 
 		if (newSelectedNodes.isEmpty()) {
-			AbstractTreeTableNode<?> defaultSelection = getDefaultSelection();
-			if (defaultSelection != null) {
-				newSelectedNodes.add(defaultSelection);
-			}
+			newSelectedNodes.addAll(defaultSelection());
 		}
 
 		setSelection(newSelectedNodes);
 	}
 
 	private void setSelection(Set<? extends TreeUINode<?>> newSelectedNodes) {
-		SelectionUtil.setTreeSelection(_selectionModel, newSelectedNodes);
+		// Revealing the selection is handled by the selection listener when the model actually
+		// changes; here only the selection is established.
+		SelectionUtil.setSelection(_selectionModel, newSelectedNodes);
 	}
 
-	private AbstractTreeTableNode<?> getDefaultSelection() {
-		if (_hasDefaultSelection) {
-			AbstractTreeTableModel<?> treeModel = getTableData().getTree();
-
-			List<AbstractTreeTableNode<?>> displayedRows = treeModel.getTable().getDisplayedRows();
-
-			if (!displayedRows.isEmpty()) {
-				for (AbstractTreeTableNode<?> displayedRow : displayedRows) {
-					if (isSelectable(displayedRow)) {
-						return displayedRow;
-					}
-				}
-			}
+	private Set<? extends AbstractTreeTableNode<?>> defaultSelection() {
+		if (!_hasDefaultSelection) {
+			return Collections.emptySet();
 		}
 
-		return null;
+		if (_defaultSelectionProvider != null) {
+			return providedDefaultSelection();
+		}
+
+		AbstractTreeTableModel<?> treeModel = getTableData().getTree();
+		List<AbstractTreeTableNode<?>> displayedRows = treeModel.getTable().getDisplayedRows();
+		for (AbstractTreeTableNode<?> displayedRow : displayedRows) {
+			if (isSelectable(displayedRow)) {
+				return Collections.singleton(displayedRow);
+			}
+		}
+		return Collections.emptySet();
+	}
+
+	private Set<AbstractTreeTableNode<?>> providedDefaultSelection() {
+		Set<AbstractTreeTableNode<?>> result = new LinkedHashSet<>();
+		for (Object businessObject : _defaultSelectionProvider.computeDefaultSelection(getModel(), getSelected())) {
+			AbstractTreeTableNode<?> node = nodeToReveal(businessObject);
+			if (node != null && isSelectable(node)) {
+				result.add(node);
+			}
+		}
+		return result;
 	}
 
 	/* The cast is safe, as the tree model has this type parameter. The TableField just "forgets"
@@ -1247,7 +1424,7 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return CHANNELS;
 	}
 
@@ -1417,16 +1594,35 @@ public class TreeTableComponent extends BoundComponent
 			} else {
 				List<?> selectedPath = (List<?>) newValue;
 				selectionChannelValue = selectedPath.get(selectedPath.size() - 1);
+				TreeModelBuilder<Object> treeModelBuilder = tree.getTreeModelBuilder();
+				if (treeModelBuilder != null) {
+					tree.setModel(retrieveModelFromPath(treeModelBuilder, selectedPath, tree));
+				}
 			}
 		} else {
-			selectionChannelValue = ((Collection<?>) newValue).stream().map(path -> {
+			Collection<?> newValueCollection = (Collection<?>) newValue;
+			selectionChannelValue = newValueCollection.stream().map(path -> {
 				List<?> selectedPath = (List<?>) path;
 				return selectedPath.get(selectedPath.size() - 1);
 			}).collect(Collectors.toSet());
+			TreeModelBuilder<Object> treeModelBuilder = tree.getTreeModelBuilder();
+			if (treeModelBuilder != null && !newValueCollection.isEmpty()) {
+				tree.setModel(retrieveModelFromPath(treeModelBuilder, (List<?>) getFirst(newValueCollection), tree));
+			}
 		}
+
 		tree.setSelected(selectionChannelValue);
 
 		tree.invalidateSelection();
+	}
+
+	private static Object retrieveModelFromPath(TreeModelBuilder<Object> treeModelBuilder, List<?> path,
+			TreeTableComponent tree) {
+		Object actualSelected = getLast(path);
+		if (!ComponentUtil.isValid(actualSelected)) {
+			return tree.getModel();
+		}
+		return treeModelBuilder.retrieveModelFromNode(tree, actualSelected);
 	}
 
 	@Override
@@ -1443,8 +1639,9 @@ public class TreeTableComponent extends BoundComponent
 		AbstractTreeTableModel<?> treeModel = createTreeModel();
 		configureTreeModel(treeModel);
 
+		ConfigKey configKey = WithCustomConfigKey.resolveObjectKey(this, _configKeyBuilder, ConfigKey.component(this));
 		TreeTableData treeTableData =
-			DefaultTreeTableData.createTreeTableData(this, treeModel, ConfigKey.component(this));
+			DefaultTreeTableData.createTreeTableData(this, treeModel, configKey);
 
 		treeTableData.setSelectionModel(selectionModel);
 		ToolBar toolbar = getToolBar();
@@ -1457,6 +1654,16 @@ public class TreeTableComponent extends BoundComponent
 		/* Side-effect programming: Fetch view model to trigger loading of personal configuration
 		 * and sorting table. */
 		TableViewModel viewModel = treeTableData.getViewModel();
+
+		/* Restore the expansion state only after the view model exists, so that filters are
+		 * applied before nodes are expanded (see #22798). */
+		if (_expansionUserModel != null) {
+			if (Objects.equals(_expansionRootObject, treeModel.getRoot().getBusinessObject())) {
+				TreeUIModelUtil.setExpansionUserModel(_expansionUserModel, treeModel);
+			}
+			_expansionUserModel = null;
+			_expansionRootObject = null;
+		}
 
 		rowsChannel().set(new ArrayList<>(viewModel.getDisplayedRows()));
 		updateRowsChannelOnTableUpdate(viewModel);

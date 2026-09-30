@@ -18,7 +18,9 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -31,11 +33,12 @@ import com.top_logic.basic.xml.XMLPrettyPrinter.Config;
 
 /**
  * Describes a single API operation on a path.
- * 
+ *
  * @see OpenapiDocument
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	OperationObject.SUMMARY,
 	OperationObject.DESCRIPTION,
@@ -166,6 +169,7 @@ public interface OperationObject extends Described, WithSecurity, WithParameters
 	 */
 	@Nullable
 	@Name(X_TL_IMPLEMENTATION)
+	@Label("Implementation")
 	String getImplementation();
 
 	/**
@@ -194,11 +198,12 @@ public interface OperationObject extends Described, WithSecurity, WithParameters
 		}
 		StringWriter out = new StringWriter();
 		try {
-			ConfigurationWriter configurationWriter = new ConfigurationWriter(out);
-			configurationWriter.setXMLHeaderWriting(false);
-			ConfigurationDescriptor baseType =
-				TypedConfiguration.getConfigurationDescriptor(PolymorphicConfiguration.class);
-			configurationWriter.write("impl", baseType, impl);
+			try (ConfigurationWriter configurationWriter = new ConfigurationWriter(out)) {
+				configurationWriter.setXMLHeaderWriting(false);
+				ConfigurationDescriptor baseType =
+					TypedConfiguration.getConfigurationDescriptor(PolymorphicConfiguration.class);
+				configurationWriter.write("impl", baseType, impl);
+			}
 		} catch (XMLStreamException ex) {
 			throw new RuntimeException(ex);
 		}

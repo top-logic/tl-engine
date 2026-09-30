@@ -22,6 +22,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.component.model.MultiSelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -59,7 +60,7 @@ import com.top_logic.util.Utils;
  * 
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
-public class DynamicLayoutModel implements SelectionModel {
+public class DynamicLayoutModel implements SelectionModel<LayoutComponent> {
     
     /**
 	 * LayoutResolver that can provide the layout definitions for a given business model.
@@ -184,13 +185,16 @@ public class DynamicLayoutModel implements SelectionModel {
 			if (newComponent != null) {
 				newComponent.setVisible(true);
 			}
+
+			Object oldComponent = this.currentComponent;
+			MultiSelectionEvent event = new MultiSelectionEvent(this, Collections.singleton(oldComponent),
+				Collections.singleton(newComponent));
+			this.currentComponent = newComponent;
+
             for (Iterator theIt = this.selectionListeners.iterator(); theIt.hasNext();) {
                 SelectionListener theListener = (SelectionListener) theIt.next();
-                theListener.notifySelectionChanged(this, 
-                        Collections.singleton(this.currentComponent), 
-					Collections.singleton(newComponent));
+				theListener.notifySelectionChanged(this, event);
             }
-			this.currentComponent = newComponent;
         }
 	}
 
@@ -256,11 +260,11 @@ public class DynamicLayoutModel implements SelectionModel {
     }
 
     @Override
-	public Set<?> getSelection() {
+	public Set<? extends LayoutComponent> getSelection() {
         if (this.currentComponent != null) {
             return Collections.singleton(this.currentComponent);
         } else {
-            return Collections.EMPTY_SET;
+			return Collections.emptySet();
         }
     }
 
@@ -270,7 +274,7 @@ public class DynamicLayoutModel implements SelectionModel {
      * @see com.top_logic.mig.html.SelectionModel#isSelectable(java.lang.Object)
      */
     @Override
-	public boolean isSelectable(Object aObj) {
+	public boolean isSelectable(LayoutComponent aObj) {
         return false;
     }
 
@@ -280,17 +284,17 @@ public class DynamicLayoutModel implements SelectionModel {
 	}
 
     @Override
-	public boolean isSelected(Object aObj) {
+	public boolean isSelected(LayoutComponent aObj) {
         return this.currentComponent == aObj;
     }
 
     @Override
-	public void setSelected(Object aObj, boolean aSelect) {
+	public void setSelected(LayoutComponent aObj, boolean aSelect) {
         throw new UnsupportedOperationException("Selection can not be set extenally.");
     }
     
 	@Override
-	public void setSelection(Set<?> newSelection) {
+	public void setSelection(Set<? extends LayoutComponent> newSelection) {
 		throw new UnsupportedOperationException("Selection can not be set extenally.");
 	}
 

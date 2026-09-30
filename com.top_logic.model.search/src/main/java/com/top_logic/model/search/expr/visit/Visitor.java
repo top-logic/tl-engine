@@ -49,6 +49,7 @@ import com.top_logic.model.search.expr.Sort;
 import com.top_logic.model.search.expr.StringContains;
 import com.top_logic.model.search.expr.StringEndsWith;
 import com.top_logic.model.search.expr.StringStartsWith;
+import com.top_logic.model.search.expr.Try;
 import com.top_logic.model.search.expr.TupleExpression;
 import com.top_logic.model.search.expr.Union;
 import com.top_logic.model.search.expr.Update;
@@ -318,5 +319,10 @@ public interface Visitor<R, A> {
 	 * Visit case for {@link ArithmeticExpr}.
 	 */
 	R visitArithmetic(ArithmeticExpr expr, A arg);
+
+	/**
+	 * Visit case for {@link Try}
+	 */
+	R visitTry(Try expr, A arg);
 
 }

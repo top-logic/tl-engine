@@ -70,7 +70,7 @@ public class SingleTileFactory implements TileFactory {
 			
 			@Override
 			public Provider<Menu> getBurgerMenu() {
-				return BOComponentTile.getTileCommands(tileGroup(), componentBO());
+				return BOComponentTile.getTileCommands(tileGroup(), componentBO(), null);
 			}
 			
 			private GroupTileComponent tileGroup() {

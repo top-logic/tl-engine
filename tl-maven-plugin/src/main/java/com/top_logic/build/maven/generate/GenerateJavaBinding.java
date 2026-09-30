@@ -81,6 +81,22 @@ public class GenerateJavaBinding extends AbstractMojo {
 	@Parameter(required = false)
 	private String languages;
 
+	/**
+	 * The copyright header that is used for generated files.
+	 * 
+	 * <p>
+	 * If this configuration is set, the configuration {@link #copyrightHolder} is ignored.
+	 * </p>
+	 */
+	@Parameter
+	private String copyrightHeader;
+
+	/**
+	 * The copyright holder for the generated classes.
+	 */
+	@Parameter
+	private String copyrightHolder;
+
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		ResolveHelper resolveHelper =
@@ -88,14 +104,20 @@ public class GenerateJavaBinding extends AbstractMojo {
 				artifactHandlerManager);
 
 		try {
+			if (copyrightHolder != null) {
+				System.setProperty("tl_copyright_holder", copyrightHolder);
+			}
+			if (copyrightHeader != null) {
+				System.setProperty("tl_copyright_header", copyrightHeader);
+			}
 			List<URL> cp = TLAppWar.getAppClassPath(resolveHelper, project);
 			
 			// Add hard coded profile with otherwise provided classes.
 			TLAppWar.addToClassPath(cp, resolveHelper,
-				artifactFactory.createArtifact("javax.servlet", "javax.servlet-api", "3.1.0", "runtime", "jar"));
+				artifactFactory.createArtifact("jakarta.servlet", "jakarta.servlet-api", "6.0.0", "runtime", "jar"));
 
 			TLAppWar.addToClassPath(cp, resolveHelper,
-				artifactFactory.createArtifact("javax.servlet.jsp", "jsp-api", "2.2", "runtime", "jar"));
+				artifactFactory.createArtifact("jakarta.servlet.jsp", "jakarta.servlet.jsp-api", "3.1.0", "runtime", "jar"));
 
 			ClassLoader classLoader = TLAppWar.createClassLoader(cp);
 

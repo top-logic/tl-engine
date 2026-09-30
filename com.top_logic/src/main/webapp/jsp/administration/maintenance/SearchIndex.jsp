@@ -54,26 +54,36 @@
 				<h2>
 					Starting &amp; Stopping
 				</h2>
-				<form method="post">
-					<input name="startIndex"
-						type="hidden"
-						value="true"
-					/>
-					<input name="startIndexButton"
-						type="submit"
-						value="Start Index"
-					/>
-				</form>
-				<form method="post">
-					<input name="stopIndex"
-						type="hidden"
-						value="true"
-					/>
-					<input name="stopIndexButton"
-						type="submit"
-						value="Stop Index"
-					/>
-				</form>
+				<div style="display: flex; gap: var(--spacing-02);">
+					<form method="post">
+						<input name="startIndex"
+							type="hidden"
+							value="true"
+						/>
+						<button class="tlButton cButton tl-cmd-button"
+							name="startIndexButton"
+							type="submit"
+						>
+							<h4 class="tlButtonLabel">
+								Start Index
+							</h4>
+						</button>
+					</form>
+					<form method="post">
+						<input name="stopIndex"
+							type="hidden"
+							value="true"
+						/>
+						<button class="tlButton cButton tl-cmd-button"
+							name="stopIndexButton"
+							type="submit"
+						>
+							<h4 class="tlButtonLabel">
+								Stop Index
+							</h4>
+						</button>
+					</form>
+				</div>
 				<h2>
 					Rebuilding Search Index
 				</h2>
@@ -85,10 +95,16 @@
 						type="hidden"
 						value="true"
 					/>
-					<input name="rebuildIndexButton"
-						type="submit"
-						value="Start rebuilding the index"
-					/>
+					<p>
+						<button class="tlButton cButton tl-cmd-button"
+							name="rebuildIndexButton"
+							type="submit"
+						>
+							<h4 class="tlButtonLabel">
+								Start rebuilding the index
+							</h4>
+						</button>
+					</p>
 					(WARNING: this may take hours!)
 				</form>
 
@@ -110,14 +126,14 @@
 								%>
 								<tr>
 									<td>
-										<%= theType %>:
-									</td>
-									<td>
 										<input name="types"
 											type="checkbox"
 											value="<%= theType %>"
 										/>
 										<br/>
+									</td>
+									<td>
+										<%= theType %>
 									</td>
 								</tr>
 								<%
@@ -126,25 +142,31 @@
 						%>
 						<tr>
 							<td>
-								Only new objects:
-							</td>
-							<td>
 								<input name="onlyNew"
 									type="checkbox"
 									value="true"
 								/>
 							</td>
+							<td>
+								Only new objects
+							</td>
 						</tr>
 						<tr>
 							<td>
-								<input name="startIndexing"
-									type="submit"
-									value="Start re-indexing"
-								/>
-								(WARNING: this may take hours!)
 							</td>
 						</tr>
 					</table>
+					<p>
+						<button class="tlButton cButton tl-cmd-button"
+							name="startIndexing"
+							type="submit"
+						>
+							<h4 class="tlButtonLabel">
+								Start re-indexing
+							</h4>
+						</button>
+					</p>
+					(WARNING: this may take hours!)
 				</form>
 			<%  }
 			%>

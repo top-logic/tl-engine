@@ -5,11 +5,12 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-basic</artifactId>
-  <description>Collection of utilities.</description>
+	<name>${project.artifactId}</name>
+	<description>Collection of utilities.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<properties>
@@ -89,8 +90,8 @@
       <artifactId>tl-xref</artifactId>
     </dependency>
 	<dependency>
-	    <groupId>javax.activation</groupId>
-	    <artifactId>javax.activation-api</artifactId>
+		<groupId>jakarta.activation</groupId>
+		<artifactId>jakarta.activation-api</artifactId>
 	</dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -100,6 +101,14 @@
       <groupId>org.commonmark</groupId>
       <artifactId>commonmark</artifactId>
     </dependency>
+
+	<!-- Testing -->    
+	<dependency>
+		<groupId>com.networknt</groupId>
+		<artifactId>json-schema-validator</artifactId>
+		<scope>test</scope>
+	</dependency>		
+    
   </dependencies>
 
 	<build>

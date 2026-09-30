@@ -5,6 +5,7 @@
  */
 package com.top_logic.base.administration;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,7 +19,14 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey ENTERING_MAINTENANCE_MODE = legacyKey("main.admin.maintenanceWindow.task.defaultMessage");
+	@CustomKey("main.admin.maintenanceWindow.task.defaultMessage")
+	public static ResKey ENTERING_MAINTENANCE_MODE;
+
+	@CustomKey("main.admin.maintenanceWindow.component.isInMaintenanceWindow")
+	public static ResKey IN_MAINTENANCE_MODE;
+
+	@CustomKey("main.admin.maintenanceWindow.component.isAboutToEnterMaintenanceWindow")
+	public static ResKey ABOUT_TO_ENTER_MAINTENANCE_MODE;
 
 	static {
 		initConstants(I18NConstants.class);

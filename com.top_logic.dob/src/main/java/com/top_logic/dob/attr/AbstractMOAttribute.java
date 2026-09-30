@@ -233,7 +233,11 @@ public abstract class AbstractMOAttribute extends MOPartImpl implements MOAttrib
 	@Override
 	public void setDefaultProvider(MODefaultProvider defaultValue) {
 		_defaultProvider = defaultValue;
-		
+	}
+
+	@Override
+	public final MOAttribute copy() {
+		return copy(getName(), typeRef(getMetaObject()));
 	}
 
 }

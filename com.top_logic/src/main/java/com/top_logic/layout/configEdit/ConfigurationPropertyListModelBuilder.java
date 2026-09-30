@@ -81,11 +81,6 @@ public class ConfigurationPropertyListModelBuilder<C extends ConfigurationProper
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-		return _property.getElementType().isInstance(listElement);
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent contextComponent, Object listElement) {
 		return null;
 	}

@@ -53,7 +53,7 @@ public class TitleDefinitionTemplateProvider extends AbstractFormElementProvider
 
 	@Override
 	public ImageProvider getImageProvider() {
-		return ImageProvider.constantImageProvider(Icons.FORM_EDITOR__TITLE);
+		return (any, flavor) -> Icons.FORM_EDITOR__TITLE;
 	}
 
 	@Override

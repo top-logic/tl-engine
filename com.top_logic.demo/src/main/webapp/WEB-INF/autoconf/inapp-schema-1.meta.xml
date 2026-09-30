@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist>
+	<metaobject
+		abstract="false"
+		object_name="BPEntity"
+		object_type="MOKnowledgeObject"
+		super_class="TLObject"
+	/>
+</objectlist>

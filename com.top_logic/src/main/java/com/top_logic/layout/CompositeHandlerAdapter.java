@@ -8,6 +8,8 @@ package com.top_logic.layout;
 import java.io.IOException;
 import java.util.Collection;
 
+import jakarta.servlet.ServletException;
+
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 
 /**
@@ -42,7 +44,7 @@ public abstract class CompositeHandlerAdapter implements CompositeContentHandler
 	}
 
 	@Override
-	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException {
+	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException, ServletException {
 		assert _impl != null : "Delegate content handler has not yet been registered.";
 		_impl.handleContent(context, id, url);
 	}

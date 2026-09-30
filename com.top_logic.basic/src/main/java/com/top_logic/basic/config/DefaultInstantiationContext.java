@@ -98,6 +98,18 @@ public class DefaultInstantiationContext extends AbstractInstantiationContext {
 
 	private <T> T create(InstantiationContext self, PolymorphicConfiguration<T> configuration, Factory factory)
 			throws ConfigurationException {
+		try {
+			return tryCreate(self, configuration, factory);
+		} catch (ConfigurationException ex) {
+			throw ex;
+		} catch (Exception ex) {
+			throw new ConfigurationException(I18NConstants.ERROR_INSTANTIATION_FAILED__CLASS_LOCATION
+				.fill(configuration.getImplementationClass(), configuration.location()), null, null, ex);
+		}
+	}
+
+	private <T> T tryCreate(InstantiationContext self, PolymorphicConfiguration<T> configuration, Factory factory)
+			throws ConfigurationException {
 		T ref;
 		int createLevel;
 
@@ -109,9 +121,8 @@ public class DefaultInstantiationContext extends AbstractInstantiationContext {
 			_level--;
 		}
 
-		PropertyDescriptor idProperty = configuration.descriptor().getIdProperty();
-		if (idProperty != null) {
-			Class<?> idScope = configuration.descriptor().getIdScope();
+		Class<?> idScope = configuration.descriptor().getIdScope();
+		if (idScope != null) {
 			OuterRef inner = (OuterRef) _referencesById.remove(new OuterRef(idScope, createLevel, null));
 			if (inner != null) {
 				OuterRef outer = inner.resolve(createLevel, ref);
@@ -120,7 +131,10 @@ public class DefaultInstantiationContext extends AbstractInstantiationContext {
 					_referencesById.put(outer, outer);
 				}
 			}
+		}
 
+		PropertyDescriptor idProperty = configuration.descriptor().getIdProperty();
+		if (idProperty != null) {
 			Object id = configuration.value(idProperty);
 			if (id != null) {
 				fillReferenceValue(self, new IdRef(idScope, id), ref);

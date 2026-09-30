@@ -8,6 +8,7 @@ package com.top_logic.layout.form.component;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.base.locking.handler.LockHandler;
@@ -15,7 +16,11 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -23,6 +28,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
@@ -34,15 +40,18 @@ import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.form.component.edit.CanLock;
 import com.top_logic.layout.form.component.edit.EditMode;
 import com.top_logic.layout.form.model.FormContext;
+import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.mig.html.layout.SubComponentConfig;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.ChangeCheckDialogCloser;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler.ExecutabilityConfig.SimplifiedFormat;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -92,6 +101,10 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 		@ClassDefault(EditComponent.class)
 		Class<? extends LayoutComponent> getImplementationClass();
 
+		@Override
+		@StringDefault(CloseDialogInViewCommandHandler.COMMAND_ID)
+		String getCloseHandlerName();
+
 		/**
 		 * Whether the {@link FormContext} is reset whenever F5 is pressed.
 		 */
@@ -130,9 +143,43 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 				registry.registerButton(theDelete);
 			}
 		}
-
 	}
 
+	/**
+	 * Options for the switch-to-edit-mode command for direct configuration in the layout editor.
+	 */
+	public interface UIOptions extends ConfigurationItem {
+		/**
+		 * @see #getEditGroup()
+		 */
+		String EDIT_GROUP = "edit-group";
+
+		/**
+		 * @see #getEditExecutability()
+		 */
+		String EDIT_EXECUTABILITY_PROPERTY = "editExecutability";
+
+		/**
+		 * Command group to use for the switch to edit mode.
+		 */
+		@Name(EDIT_GROUP)
+		@FormattedDefault(SimpleBoundCommandGroup.WRITE_NAME)
+		CommandGroupReference getEditGroup();
+
+		/**
+		 * Rule that decides, whether this editor can be switched to edit mode.
+		 * 
+		 * @implNote Entry tag produces compatibility with
+		 *           {@link com.top_logic.tool.boundsec.CommandHandler.Config#getExecutability()}.
+		 * @see CommandHandler#isExecutable(LayoutComponent, Object, Map)
+		 */
+		@Name(EDIT_EXECUTABILITY_PROPERTY)
+		@EntryTag("rule")
+		@Format(SimplifiedFormat.class)
+		@DisplayMinimized
+		List<PolymorphicConfiguration<? extends ExecutabilityRule>> getEditExecutability();
+	}
+	
 	/** I18N of data appliance error */
 	public static final String DATA_APPLIANCE_ERROR =
 		"error_code_com.top_logic.layout.form.component.EditComponent.saveError";
@@ -152,15 +199,6 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 				return editor.checkComponentModeChange(((Boolean) newValue).booleanValue());
 			}
 		};
-
-	private static final ComponentChannel.ChannelListener EDIT_MODE_LISTENER = new ComponentChannel.ChannelListener() {
-
-		@Override
-		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
-			EditComponent editor = (EditComponent) sender.getComponent();
-			editor.handleComponentModeChange(((Boolean) newValue).booleanValue());
-		}
-	};
 
     private boolean allowRefresh;
 
@@ -186,7 +224,6 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
         super(context, someAttrs);
 
 		this.allowRefresh = someAttrs.getAllowRefresh();
-        this.alwaysReloadButtons = true;
 
 		_lockHandler = CanLock.createLockHandler(context, someAttrs);
     }
@@ -270,11 +307,6 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 		super.registerDialogCloseCommand();
     }
     
-    @Override
-    protected String getDefaultCloseDialogHandlerName() {
-    	return CloseDialogInViewCommandHandler.COMMAND_ID;
-    }
-
 	/**
 	 * Hook called before the actual mode change happens.
 	 * 
@@ -294,7 +326,10 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 
 			// Note: If the handler is null, the component only acts as slave of another edit mode
 			// handler.
-			if (handler != null && !allow(handler)) {
+			if (handler != null &&
+				!BoundChecker.allowCommand(this,
+					handler.getCommandGroup(),
+					handler.getTargetModel(this, Collections.emptyMap()))) {
 				return false;
 			}
 		}
@@ -335,7 +370,8 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 	 * @param editMode
 	 *        The new component mode.
 	 */
-	protected void handleComponentModeChange(boolean editMode) {
+	@Override
+	public void handleComponentModeChange(boolean editMode) {
 		// Even when switching from edit mode back to view mode, the
 		// contents of the form must be renewed, because changes to the form
 		// context may have happened during edit mode.
@@ -422,8 +458,6 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 
 		super.afterModelSet(oldModel, newModel);
 
-		this.invalidateButtons();
-
 		if (wasInEdit) {
 			// Even if the new model is null, try to re-switch to edit mode, because the current new
 			// model could be replaced later on with another non-null model.
@@ -463,7 +497,16 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 		return result;
 	}
 
-	private void reswitchToEdit() {
+	/**
+	 * Attempts to switch back to edit mode after validation or temporary mode changes.
+	 * 
+	 * <p>
+	 * Silently ignores the request if no edit command handler is available or if switching is
+	 * currently not executable. Token conflicts during mode switching are handled by displaying an
+	 * informational error dialog to the user without interrupting the current process.
+	 * </p>
+	 */
+	public void reswitchToEdit() {
 		CommandHandler switchCommand = getEditCommandHandler();
 		if (switchCommand == null) {
 			return;
@@ -514,7 +557,7 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 	}
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return CHANNELS;
 	}
 
@@ -570,9 +613,15 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
     	
     	@Override
 		public HandlerResult handleCommand(DisplayContext context, LayoutComponent component, Object model, Map<String, Object> someArguments) {
-			if (component instanceof EditMode) {
-				((EditMode) component).setViewMode();
+			if (component instanceof EditMode editor) {
+				editor.setViewMode();
     		}
+			if (component instanceof Editor editor) {
+				if (editor.saveClosesDialog()) {
+					// Then, it makes sense for cancel, too.
+					component.closeDialog();
+				}
+			}
     		return HandlerResult.DEFAULT_RESULT;
     	}
     	
@@ -617,8 +666,8 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 
         @Override
 		public HandlerResult handleCommand(DisplayContext context, LayoutComponent component, Object model, Map<String, Object> someArguments) {
-			if (component instanceof Editor) {
-				Editor editor = ((Editor) component);
+			if (component instanceof EditMode) {
+				EditMode editor = ((EditMode) component);
 
 				if (editor.isInEditMode()) {
 					try {

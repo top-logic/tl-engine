@@ -21,6 +21,9 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Type;
+import com.top_logic.model.migration.data.TypePart;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link MigrationProcessor} creates a new {@link TLReference}.
@@ -69,7 +72,7 @@ public class CreateTLReferenceProcessor extends AbstractEndAspectProcessor<Creat
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			internalDoMigration(log, connection, tlModel);
 			return true;
 		} catch (Exception ex) {
@@ -80,20 +83,34 @@ public class CreateTLReferenceProcessor extends AbstractEndAspectProcessor<Creat
 
 	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
+
+		Type ownerType =
+			_util.getTLTypeOrNull(connection, TLContext.TRUNK_ID, partName.getModuleName(), partName.getTypeName());
+		if (ownerType == null) {
+			log.info("Type of part does not exist: " + partName.getName(), Log.WARN);
+			return;
+		}
+		TypePart part = _util.getTLTypePart(connection, ownerType, partName.getPartName());
+		if (part != null) {
+			log.info("Part already exists: " + partName.getName(), Log.WARN);
+			return;
+		}
+
 		QualifiedTypeName targetType = getConfig().getType();
 		_util.createTLReference(log,
 			connection, partName, targetType,
-			getConfig().isMandatory(), getConfig().isComposite(),
+			getConfig().isMandatory(), getConfig().isAbstract(), getConfig().isComposite(),
 			getConfig().isAggregate(), getConfig().isMultiple(), getConfig().isBag(),
 			getConfig().isOrdered(),
 			getConfig().canNavigate(),
-			getConfig().getHistoryType(), getConfig());
+			getConfig().getHistoryType(), getConfig().getDeletionPolicy(), getConfig());
 
 		if (tlModel != null) {
 			MigrationUtils.createReference(log, tlModel, partName, targetType, nullIfUnset(Config.MANDATORY),
 				nullIfUnset(Config.COMPOSITE), nullIfUnset(Config.AGGREGATE), nullIfUnset(Config.MULTIPLE),
-				nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.NAVIGATE),
-				nullIfUnset(Config.HISTORY_TYPE), getConfig(), null);
+				nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.ABSTRACT),
+				nullIfUnset(Config.NAVIGATE), nullIfUnset(Config.HISTORY_TYPE), nullIfUnset(Config.DELETION_POLICY),
+				getConfig(), null);
 		}
 		log.info("Created reference " + _util.qualifiedName(partName));
 	}

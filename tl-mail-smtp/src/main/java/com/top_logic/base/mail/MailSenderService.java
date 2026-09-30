@@ -16,24 +16,25 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import javax.mail.Address;
-import javax.mail.BodyPart;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.SendFailedException;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
+
+import jakarta.mail.Address;
+import jakarta.mail.BodyPart;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
+import jakarta.mail.SendFailedException;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
 
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.PoolableObjectFactory;
@@ -51,6 +52,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -60,7 +62,6 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.IfTrue;
 import com.top_logic.basic.module.ConfiguredManagedClass;
-import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.version.Version;
@@ -70,13 +71,14 @@ import com.top_logic.layout.form.values.edit.annotation.DynamicMandatory;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link ManagedClass} for sending e-mail via SMTP.
- * 
+ * Sends e-mails via an SMTP mail server.
+ *
  * @see #sendMail(Mail) To send mails, create a new mail via {@link Mail} and pass it to the
  *      {@link #sendMail(Mail)} method.
  * 
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
+@Label("Mail sender (SMTP)")
 public final class MailSenderService extends ConfiguredManagedClass<MailSenderService.Config> implements Reloadable {
 
 	private Config _config;
@@ -678,6 +680,9 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
      * Returns the actual session.
      */
     private Session getSession() {
+		if (!_activated) {
+			throw new TopLogicException(I18NConstants.SMTP_NOT_ACTIVE);
+		}
 		if (_session == null) {
 			_session = Session.getInstance(createProperties(), null);
         }
@@ -916,7 +921,7 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
 	/**
 	 * Module for {@link MailSenderService}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public static final class Module extends TypedRuntimeModule<MailSenderService> {
 

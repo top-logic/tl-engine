@@ -1,0 +1,161 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.view.form;
+
+import java.util.Comparator;
+
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.InstanceFormat;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.element.meta.OptionProvider;
+import com.top_logic.layout.LabelComparator;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.SelectFieldModel;
+import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
+import com.top_logic.layout.react.control.select.SelectDisplay;
+
+/**
+ * {@link ReactFieldControlProvider} for attributes that are edited by selecting from a set of
+ * options.
+ *
+ * <p>
+ * Wraps a {@link SelectFieldModel} (an {@link AttributeSelectFieldModel}) in a
+ * {@link ReactDropdownSelectControl}, using {@link MetaResourceProvider} so that options and the
+ * current selection are rendered with the label and the image their model registers, in both edit
+ * and display mode.
+ * </p>
+ *
+ * <p>
+ * When configured for a special model datatype (e.g. {@code tl.util:Country}) via the
+ * {@link FieldControlService} type map, an {@link #getConfiguredOptions() option provider} supplies
+ * the selectable values. Without a configured option provider, options are derived from the
+ * attribute itself (enumeration, reference, enum datatype, or a TL-Script options annotation).
+ * </p>
+ *
+ * <p>
+ * The options are offered in a list that opens on demand, unless the {@link Config#getDisplay()
+ * display} asks for a shape that shows them all.
+ * </p>
+ */
+public class SelectControlProvider implements ReactFieldControlProvider {
+
+	/**
+	 * Configuration for {@link SelectControlProvider}.
+	 */
+	public interface Config extends PolymorphicConfiguration<SelectControlProvider> {
+
+		/** Configuration name for {@link #getOptionProvider()}. */
+		String OPTION_PROVIDER = "option-provider";
+
+		/** Configuration name for {@link #getDisplay()}. */
+		String DISPLAY = "display";
+
+		@Override
+		@ClassDefault(SelectControlProvider.class)
+		Class<? extends SelectControlProvider> getImplementationClass();
+
+		/**
+		 * The option source for the selectable values.
+		 *
+		 * <p>
+		 * If unset, options are derived from the attribute's type (enumeration, reference, enum
+		 * datatype) or its TL-Script options annotation.
+		 * </p>
+		 */
+		@Name(OPTION_PROVIDER)
+		@InstanceFormat
+		OptionProvider getOptionProvider();
+
+		/**
+		 * The shape the options are offered in.
+		 *
+		 * <p>
+		 * A list that opens on demand takes the room of one field whatever the number of options
+		 * and is searched by typing, which suits a list of any length. A cloud of toggles and a bar
+		 * of segments show every option at all times, so the value and what else could be chosen
+		 * are read without opening anything - at the price of the room all options take, which
+		 * makes them a choice for a handful of options rather than for a long list.
+		 * </p>
+		 */
+		@Name(DISPLAY)
+		SelectDisplay getDisplay();
+	}
+
+	private final OptionProvider _optionProvider;
+
+	private final SelectDisplay _display;
+
+	/**
+	 * Creates a {@link SelectControlProvider} without a configured option source (options are
+	 * derived from the attribute), offering them in a list that opens on demand.
+	 */
+	public SelectControlProvider() {
+		_optionProvider = null;
+		_display = SelectDisplay.DROPDOWN;
+	}
+
+	/**
+	 * Creates a configured {@link SelectControlProvider}.
+	 */
+	@CalledByReflection
+	public SelectControlProvider(InstantiationContext context, Config config) {
+		_optionProvider = config.getOptionProvider();
+		_display = config.getDisplay();
+	}
+
+	/**
+	 * The configured option source, or {@code null} to derive options from the attribute.
+	 */
+	public OptionProvider getConfiguredOptions() {
+		return _optionProvider;
+	}
+
+	/**
+	 * The shape the options are offered in.
+	 */
+	public SelectDisplay getDisplay() {
+		return _display;
+	}
+
+	/**
+	 * A selection is made on one control, however many options it accepts.
+	 *
+	 * <p>
+	 * The selected values are the value of the {@link SelectFieldModel} the control is bound to, so
+	 * a multi-valued field is picked from in one dropdown rather than through one dropdown per
+	 * value.
+	 * </p>
+	 */
+	@Override
+	public boolean editsCollections() {
+		return true;
+	}
+
+	@Override
+	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
+		SelectFieldModel selectModel = (SelectFieldModel) model;
+		// A resource provider rather than a label provider: an option is presented by its label and
+		// its image, and the image is what a plain label provider cannot answer - the control drops
+		// it for want of one. The two registries of LabelProviderService fall back to each other,
+		// so a type registered only for its label is labelled exactly as before.
+		LabelProvider labels = MetaResourceProvider.INSTANCE;
+		Comparator<?> optionOrder = LabelComparator.newCachingInstance(labels);
+		// An ordered attribute keeps the order the user gives its selection; an unordered one is
+		// shown in the order of the options.
+		return new ReactDropdownSelectControl(context, selectModel, labels, optionOrder, field.isOrdered(),
+			_display);
+	}
+
+}

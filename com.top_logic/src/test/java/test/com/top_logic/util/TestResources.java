@@ -44,7 +44,7 @@ import com.top_logic.util.Resources;
 /**
  * Test the {@link Resources}.
  *
- * @author     <a href="mailto:michanel.gaensler@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:michanel.gaensler@top-logic.com">Michael GÃ¤nsler</a>
  */
 @SuppressWarnings("javadoc")
 public class TestResources extends BasicTestCase { 

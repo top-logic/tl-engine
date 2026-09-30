@@ -5,10 +5,10 @@
  */
 package com.top_logic.gui;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.JspWriter;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspWriter;
+import jakarta.servlet.jsp.tagext.TagSupport;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.Resources;
@@ -16,7 +16,7 @@ import com.top_logic.util.Resources;
 /**
  * Write an image located in the theme area to the JSP.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ImageTag extends TagSupport {
 

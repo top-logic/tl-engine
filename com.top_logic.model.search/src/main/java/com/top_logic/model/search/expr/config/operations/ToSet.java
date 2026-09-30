@@ -5,12 +5,9 @@
  */
 package com.top_logic.model.search.expr.config.operations;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.TLType;
@@ -53,16 +50,7 @@ public class ToSet extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		Object base = arguments[0];
-		Set<?> result;
-		if (base == null) {
-			result = Collections.emptySet();
-		} else if (base instanceof Collection<?>) {
-			result = CollectionUtil.toSet((Collection<?>) base);
-		} else {
-			result = Collections.singleton(base);
-		}
-		return result;
+		return asSet(arguments[0]);
 	}
 
 	/**

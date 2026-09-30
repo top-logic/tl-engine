@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.form.boxes.tag;
 
-import javax.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.layout.form.boxes.control.BoxControl;
 import com.top_logic.layout.form.boxes.layout.BoxLayout;

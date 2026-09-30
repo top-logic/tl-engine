@@ -9,8 +9,11 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.model.access.StorageMapping;
 
 /**
  * Configuration specifying an attribute value of an {@link ObjectConf object import declaration}.
@@ -20,6 +23,11 @@ import com.top_logic.basic.config.annotation.Nullable;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public interface AttributeValueConf extends ConfigurationItem {
+
+	/**
+	 * @see #getValue()
+	 */
+	String VALUE = "value";
 
 	/**
 	 * Name of the attribute to import.
@@ -33,13 +41,24 @@ public interface AttributeValueConf extends ConfigurationItem {
 	void setName(String value);
 
 	/**
-	 * Textual value of a primitive attribute.
+	 * Textual representation of a primitive attribute's value.
 	 * 
 	 * <p>
-	 * For a reference attribute, {@link #getReferences()} must be set instead.
+	 * If the application type of the attribute type's {@link StorageMapping} declares a
+	 * {@link Format}, the value is given in that format. Otherwise, the value is a serialized
+	 * variant of the value stored in the database.
 	 * </p>
+	 * 
+	 * <p>
+	 * For a reference attribute, {@link #getCollectionValue()} must be set instead.
+	 * </p>
+	 * 
+	 * @implNote Without a {@link Format} annotation at the
+	 *           {@link StorageMapping#getApplicationType() application type}, the value is
+	 *           converted by {@link StorageMapping#getBusinessObject(Object)}.
 	 */
 	@Nullable
+	@Name(VALUE)
 	String getValue();
 
 	/**
@@ -48,13 +67,13 @@ public interface AttributeValueConf extends ConfigurationItem {
 	void setValue(String value);
 
 	/**
-	 * References to other objects to set in the {@link #getName()} attribute.
+	 * Values to set to the attribute {@link #getName()}.
 	 * 
 	 * <p>
-	 * For a primitive attribute, {@link #getValue()} must be set instead.
+	 * For single primitive values, {@link #getValue()} may be used as short-cut.
 	 * </p>
 	 */
 	@DefaultContainer
-	List<RefConf> getReferences();
+	List<ValueConf> getCollectionValue();
 
 }

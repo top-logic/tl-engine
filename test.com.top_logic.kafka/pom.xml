@@ -5,9 +5,10 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>test-tl-kafka</artifactId>
+	<name>${project.artifactId}</name>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<properties>
@@ -36,11 +37,19 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-kafka</artifactId>
+      <artifactId>tl-kafka-sync</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-kafka-server</artifactId>
+      <exclusions>
+        <exclusion>
+          <!-- This would be in conflict with 'org.slf4j:jcl-over-slf4j' which is coming from 'tl-core',
+                as both define the same classes, for example: org.apache.commons.logging.Log -->
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

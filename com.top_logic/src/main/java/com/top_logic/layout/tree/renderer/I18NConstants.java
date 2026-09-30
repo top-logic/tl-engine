@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.tree.renderer;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -21,9 +22,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResPrefix COMPONENTS = legacyPrefix("layout.");
 
-	public static ResKey COLLAPSE_NODE = legacyKey("tl.tree.collapseNode");
+	@CustomKey("tl.tree.collapseNode")
+	public static ResKey COLLAPSE_NODE;
 
-	public static ResKey EXPAND_NODE = legacyKey("tl.tree.expandNode");
+	@CustomKey("tl.tree.expandNode")
+	public static ResKey EXPAND_NODE;
 
 	public static ResKey1 SESSION_TIMEOUT_IN__TIME;
 

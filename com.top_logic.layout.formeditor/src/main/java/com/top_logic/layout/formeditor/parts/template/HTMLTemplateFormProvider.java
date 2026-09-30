@@ -29,6 +29,7 @@ import com.top_logic.basic.config.annotation.DerivedRef;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayInherited;
@@ -69,7 +70,6 @@ import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
-import com.top_logic.layout.formeditor.parts.ForeignObjectsTemplateProvider;
 import com.top_logic.layout.formeditor.parts.I18NConstants;
 import com.top_logic.layout.formeditor.parts.template.HTMLTemplateFormProvider.Config.TypeTemplate;
 import com.top_logic.layout.table.ConfigKey;
@@ -180,6 +180,7 @@ public class HTMLTemplateFormProvider
 		@ControlProvider(CodeEditorControl.CPHtml.class)
 		@ItemDisplay(ItemDisplayType.VALUE)
 		@Format(HTMLTagFormat.class)
+		@Mandatory
 		HTMLTemplate getTemplate();
 
 		/**
@@ -198,14 +199,14 @@ public class HTMLTemplateFormProvider
 	}
 
 	private static final ImageProvider IMAGE_PROVIDER =
-		ImageProvider.constantImageProvider(Icons.FORM_EDITOR__REFERENCE);
+		(any, flavor) -> Icons.FORM_EDITOR__REFERENCE;
 
 	private Map<TLType, Template> _templateByType = new HashMap<>();
 
 	private Template _template;
 
 	/**
-	 * Creates a new {@link ForeignObjectsTemplateProvider}.
+	 * Creates a {@link HTMLTemplateFormProvider}.
 	 */
 	public HTMLTemplateFormProvider(InstantiationContext context, Config<?> config) {
 		super(context, config);
@@ -255,7 +256,7 @@ public class HTMLTemplateFormProvider
 	private HTMLTemplateFragment displayTemplate(FormEditorContext form) {
 		TLObjectFragment objectFragment = new TLObjectFragment(form, _template, form.getModel());
 
-		return contentBox(htmlTemplate((displayContext, out) -> objectFragment.write(displayContext, out)));
+		return htmlTemplate((displayContext, out) -> objectFragment.write(displayContext, out));
 	}
 
 	private static class Template {
@@ -365,7 +366,7 @@ public class HTMLTemplateFormProvider
 		@Override
 		public Menu createContextMenu(String contextInfo) {
 			LayoutComponent component = FormComponent.componentForMember(_form.getFormContext());
-			Map<String, Object> args = ContextMenuUtil.createArguments(_model);
+			Map<String, Object> args = ContextMenuUtil.createSingleObjectArguments(_model);
 			Stream<CommandModel> buttonsStream =
 				ContextMenuUtil.toButtonsStream(component, args, _contextMenuCommands);
 			return ContextMenuUtil.toContextMenu(buttonsStream);
@@ -376,10 +377,14 @@ public class HTMLTemplateFormProvider
 			for (String varName : _fragment.getVariables()) {
 				VariableDefinition<?> varDef = _vars.get(varName);
 				if (varDef == null) {
-					TLStructuredTypePart part = _model.tType().getPart(varName);
-					if (part != null) {
-						Object value = _model.tValue(part);
-						_args.put(varName, value);
+					if (_model == null) {
+						_args.put(varName, null);
+					} else {
+						TLStructuredTypePart part = _model.tType().getPart(varName);
+						if (part != null) {
+							Object value = _model.tValue(part);
+							_args.put(varName, value);
+						}
 					}
 				} else {
 					LayoutComponent component = FormComponent.componentForMember(_form.getFormContext());
@@ -462,7 +467,7 @@ public class HTMLTemplateFormProvider
 		@Override
 		public void renderProperty(DisplayContext context, TagWriter out, String propertyName) throws IOException {
 			Object varValue = _args.get(propertyName);
-			if (varValue != null) {
+			if (varValue != null || _args.containsKey(propertyName)) {
 				render(context, out, varValue);
 				return;
 			}
@@ -481,10 +486,12 @@ public class HTMLTemplateFormProvider
 				return varValue;
 			}
 
-			TLStructuredTypePart part = _model.tType().getPart(propertyName);
-			if (part != null) {
-				Object value = _model.tValue(part);
-				return value;
+			if (_model != null) {
+				TLStructuredTypePart part = _model.tType().getPart(propertyName);
+				if (part != null) {
+					Object value = _model.tValue(part);
+					return value;
+				}
 			}
 
 			return super.getPropertyValue(propertyName);

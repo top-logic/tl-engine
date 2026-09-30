@@ -63,11 +63,11 @@ public class TracWikiImporter {
 	/** Regex to split camel case strings */
 	private static final String SPLIT_CAMEL_CASE =
 		// split between a small letter and a capital letter
-		"(?<=[a-zäöü])(?=[A-ZÄÖÜ])"
+		"(?<=[a-zÃ¤Ã¶Ã¼])(?=[A-ZÃ„Ã–Ãœ])"
 			// split between a letter and a number
-			+ "|(?<=[a-zA-ZäöüÄÖÜ])(?=[0-9])"
+			+ "|(?<=[a-zA-ZÃ¤Ã¶Ã¼Ã„Ã–Ãœ])(?=[0-9])"
 			// split between a number and a letter
-			+ "|(?<=[0-9])(?=[a-zA-ZäöüÄÖÜ])";
+			+ "|(?<=[0-9])(?=[a-zA-ZÃ¤Ã¶Ã¼Ã„Ã–Ãœ])";
 
 	/** Beginning of tag to wrap {@link Element}s @see Element#wrap(String) */
 	private static final String WRAP_TAG_BEGIN = "<";

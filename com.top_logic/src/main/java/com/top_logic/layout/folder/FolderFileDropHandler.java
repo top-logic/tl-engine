@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
@@ -80,7 +81,8 @@ public class FolderFileDropHandler implements FileDropHandler {
 	 */
 	@Override
 	public void uploadFiles(DisplayContext context, FolderNode selectedFolder, List<BinaryData> files) {
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.UPLOADED_DOCUMENT__NAME
+			.fill(files.stream().map(f -> f.getName()).collect(Collectors.joining(", "))))) {
 			WebFolder webFolder = (WebFolder) selectedFolder.getBusinessObject();
 			// Map with folder names as keys and List of files per folder as value.
 			Map<String, List<BinaryData>> droppedElements = groupFiles(files);

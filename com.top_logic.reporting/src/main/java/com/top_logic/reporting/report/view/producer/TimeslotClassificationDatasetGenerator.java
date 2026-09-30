@@ -41,7 +41,7 @@ import com.top_logic.util.Resources;
 /**
  * Create a stacked bar chart based in the normal ClassificationDatasetGenerator.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class TimeslotClassificationDatasetGenerator extends ClassificationDatasetGenerator {
 
@@ -223,7 +223,7 @@ public class TimeslotClassificationDatasetGenerator extends ClassificationDatase
     /**
 	 * Special bar chart configuration for creating a stacked bar chart.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     public static class TimeslotBarChartConfigurator extends BarChartConfigurator {
 

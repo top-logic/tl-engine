@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -30,6 +30,11 @@ public interface TlModelFactory {
 	 * Name of the data type <code>TLAnnotation</code> in module {@value #TL_MODEL_STRUCTURE}.
 	 */
 	public static final String TL_ANNOTATION_TYPE = "TLAnnotation";
+
+	/**
+	 * Name of the data type <code>DBType</code> in module {@value #TL_MODEL_STRUCTURE}.
+	 */
+	public static final String DB_TYPE_TYPE = "DBType";
 
 	/**
 	 * Lookup {@link com.top_logic.model.TLObject} type.
@@ -207,10 +212,59 @@ public interface TlModelFactory {
 	}
 
 	/**
+	 * Lookup {@link com.top_logic.model.TLPrimitive#BINARY_ATTR} of {@link com.top_logic.model.TLPrimitive}.
+	 */
+	public static com.top_logic.model.TLProperty getBinaryTLPrimitiveAttr() {
+		return (com.top_logic.model.TLProperty) getTLPrimitiveType().getPart(com.top_logic.model.TLPrimitive.BINARY_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLPrimitive#DB_PRECISION_ATTR} of {@link com.top_logic.model.TLPrimitive}.
+	 */
+	public static com.top_logic.model.TLProperty getDbPrecisionTLPrimitiveAttr() {
+		return (com.top_logic.model.TLProperty) getTLPrimitiveType().getPart(com.top_logic.model.TLPrimitive.DB_PRECISION_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLPrimitive#DB_SIZE_ATTR} of {@link com.top_logic.model.TLPrimitive}.
+	 */
+	public static com.top_logic.model.TLProperty getDbSizeTLPrimitiveAttr() {
+		return (com.top_logic.model.TLProperty) getTLPrimitiveType().getPart(com.top_logic.model.TLPrimitive.DB_SIZE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLPrimitive#DB_TYPE_ATTR} of {@link com.top_logic.model.TLPrimitive}.
+	 */
+	public static com.top_logic.model.TLProperty getDbTypeTLPrimitiveAttr() {
+		return (com.top_logic.model.TLProperty) getTLPrimitiveType().getPart(com.top_logic.model.TLPrimitive.DB_TYPE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLPrimitive#SCOPE_ATTR} of {@link com.top_logic.model.TLPrimitive}.
+	 */
+	public static com.top_logic.model.TLReference getScopeTLPrimitiveAttr() {
+		return (com.top_logic.model.TLReference) getTLPrimitiveType().getPart(com.top_logic.model.TLPrimitive.SCOPE_ATTR);
+	}
+
+	/**
 	 * Lookup {@link com.top_logic.model.TLAssociation} type.
 	 */
 	public static com.top_logic.model.TLClass getTLAssociationType() {
 		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(com.top_logic.model.TLAssociation.TL_ASSOCIATION_TYPE);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLAssociation#ENDS_ATTR} of {@link com.top_logic.model.TLAssociation}.
+	 */
+	public static com.top_logic.model.TLReference getEndsTLAssociationAttr() {
+		return (com.top_logic.model.TLReference) getTLAssociationType().getPart(com.top_logic.model.TLAssociation.ENDS_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLAssociation#SCOPE_ATTR} of {@link com.top_logic.model.TLAssociation}.
+	 */
+	public static com.top_logic.model.TLReference getScopeTLAssociationAttr() {
+		return (com.top_logic.model.TLReference) getTLAssociationType().getPart(com.top_logic.model.TLAssociation.SCOPE_ATTR);
 	}
 
 	/**
@@ -253,6 +307,13 @@ public interface TlModelFactory {
 	 */
 	public static com.top_logic.model.TLReference getGeneralizationsTLClassAttr() {
 		return (com.top_logic.model.TLReference) getTLClassType().getPart(com.top_logic.model.TLClass.GENERALIZATIONS_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLClass#SCOPE_ATTR} of {@link com.top_logic.model.TLClass}.
+	 */
+	public static com.top_logic.model.TLReference getScopeTLClassAttr() {
+		return (com.top_logic.model.TLReference) getTLClassType().getPart(com.top_logic.model.TLClass.SCOPE_ATTR);
 	}
 
 	/**
@@ -312,6 +373,13 @@ public interface TlModelFactory {
 	}
 
 	/**
+	 * Lookup {@link com.top_logic.model.TLStructuredTypePart#ABSTRACT_ATTR} of {@link com.top_logic.model.TLStructuredTypePart}.
+	 */
+	public static com.top_logic.model.TLProperty getAbstractTLStructuredTypePartAttr() {
+		return (com.top_logic.model.TLProperty) getTLStructuredTypePartType().getPart(com.top_logic.model.TLStructuredTypePart.ABSTRACT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link com.top_logic.model.TLStructuredTypePart#BAG_ATTR} of {@link com.top_logic.model.TLStructuredTypePart}.
 	 */
 	public static com.top_logic.model.TLProperty getBagTLStructuredTypePartAttr() {
@@ -323,6 +391,13 @@ public interface TlModelFactory {
 	 */
 	public static com.top_logic.model.TLReference getClassifiedByTLStructuredTypePartAttr() {
 		return (com.top_logic.model.TLReference) getTLStructuredTypePartType().getPart(com.top_logic.model.TLStructuredTypePart.CLASSIFIED_BY_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLStructuredTypePart#DEFINITION_ATTR} of {@link com.top_logic.model.TLStructuredTypePart}.
+	 */
+	public static com.top_logic.model.TLReference getDefinitionTLStructuredTypePartAttr() {
+		return (com.top_logic.model.TLReference) getTLStructuredTypePartType().getPart(com.top_logic.model.TLStructuredTypePart.DEFINITION_ATTR);
 	}
 
 	/**
@@ -344,6 +419,13 @@ public interface TlModelFactory {
 	 */
 	public static com.top_logic.model.TLProperty getOrderedTLStructuredTypePartAttr() {
 		return (com.top_logic.model.TLProperty) getTLStructuredTypePartType().getPart(com.top_logic.model.TLStructuredTypePart.ORDERED_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLStructuredTypePart#OVERRIDE_ATTR} of {@link com.top_logic.model.TLStructuredTypePart}.
+	 */
+	public static com.top_logic.model.TLProperty getOverrideTLStructuredTypePartAttr() {
+		return (com.top_logic.model.TLProperty) getTLStructuredTypePartType().getPart(com.top_logic.model.TLStructuredTypePart.OVERRIDE_ATTR);
 	}
 
 	/**
@@ -382,6 +464,13 @@ public interface TlModelFactory {
 	}
 
 	/**
+	 * Lookup {@link com.top_logic.model.TLAssociationEnd#END_INDEX_ATTR} of {@link com.top_logic.model.TLAssociationEnd}.
+	 */
+	public static com.top_logic.model.TLProperty getEndIndexTLAssociationEndAttr() {
+		return (com.top_logic.model.TLProperty) getTLAssociationEndType().getPart(com.top_logic.model.TLAssociationEnd.END_INDEX_ATTR);
+	}
+
+	/**
 	 * Lookup {@link com.top_logic.model.TLAssociationEnd#HISTORY_TYPE_ATTR} of {@link com.top_logic.model.TLAssociationEnd}.
 	 */
 	public static com.top_logic.model.TLProperty getHistoryTypeTLAssociationEndAttr() {
@@ -410,10 +499,38 @@ public interface TlModelFactory {
 	}
 
 	/**
+	 * Lookup {@link com.top_logic.model.TLReference#ABSTRACT_ATTR} of {@link com.top_logic.model.TLReference}.
+	 */
+	public static com.top_logic.model.TLProperty getAbstractTLReferenceAttr() {
+		return (com.top_logic.model.TLProperty) getTLReferenceType().getPart(com.top_logic.model.TLReference.ABSTRACT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLReference#AGGREGATE_ATTR} of {@link com.top_logic.model.TLReference}.
+	 */
+	public static com.top_logic.model.TLProperty getAggregateTLReferenceAttr() {
+		return (com.top_logic.model.TLProperty) getTLReferenceType().getPart(com.top_logic.model.TLReference.AGGREGATE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLReference#BACKWARDS_ATTR} of {@link com.top_logic.model.TLReference}.
+	 */
+	public static com.top_logic.model.TLProperty getBackwardsTLReferenceAttr() {
+		return (com.top_logic.model.TLProperty) getTLReferenceType().getPart(com.top_logic.model.TLReference.BACKWARDS_ATTR);
+	}
+
+	/**
 	 * Lookup {@link com.top_logic.model.TLReference#BAG_ATTR} of {@link com.top_logic.model.TLReference}.
 	 */
 	public static com.top_logic.model.TLProperty getBagTLReferenceAttr() {
 		return (com.top_logic.model.TLProperty) getTLReferenceType().getPart(com.top_logic.model.TLReference.BAG_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLReference#COMPOSITE_ATTR} of {@link com.top_logic.model.TLReference}.
+	 */
+	public static com.top_logic.model.TLProperty getCompositeTLReferenceAttr() {
+		return (com.top_logic.model.TLProperty) getTLReferenceType().getPart(com.top_logic.model.TLReference.COMPOSITE_ATTR);
 	}
 
 	/**
@@ -442,6 +559,20 @@ public interface TlModelFactory {
 	 */
 	public static com.top_logic.model.TLProperty getMultipleTLReferenceAttr() {
 		return (com.top_logic.model.TLProperty) getTLReferenceType().getPart(com.top_logic.model.TLReference.MULTIPLE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLReference#OPPOSITE_ATTR} of {@link com.top_logic.model.TLReference}.
+	 */
+	public static com.top_logic.model.TLReference getOppositeTLReferenceAttr() {
+		return (com.top_logic.model.TLReference) getTLReferenceType().getPart(com.top_logic.model.TLReference.OPPOSITE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link com.top_logic.model.TLReference#OPPOSITE_END_ATTR} of {@link com.top_logic.model.TLReference}.
+	 */
+	public static com.top_logic.model.TLReference getOppositeEndTLReferenceAttr() {
+		return (com.top_logic.model.TLReference) getTLReferenceType().getPart(com.top_logic.model.TLReference.OPPOSITE_END_ATTR);
 	}
 
 	/**
@@ -540,6 +671,13 @@ public interface TlModelFactory {
 	 */
 	public static com.top_logic.model.TLPrimitive getTLAnnotationType() {
 		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(TL_ANNOTATION_TYPE);
+	}
+
+	/**
+	 * Lookup {@value #DB_TYPE_TYPE} data type.
+	 */
+	public static com.top_logic.model.TLPrimitive getDBTypeType() {
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_MODEL_STRUCTURE).getType(DB_TYPE_TYPE);
 	}
 
 	/**

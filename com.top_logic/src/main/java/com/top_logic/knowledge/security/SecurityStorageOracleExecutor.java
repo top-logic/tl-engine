@@ -18,20 +18,20 @@ import com.top_logic.knowledge.security.SecurityStorage.SecurityStorageExecutor;
 import com.top_logic.util.db.DBUtil;
 
 /**
- * This is a SecurityStorageExecutor optimized for Oracle database access.
+ * This is a {@link SecurityStorageExecutor} optimized for <code>Oracle</code> database access.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
 public class SecurityStorageOracleExecutor extends SecurityStorageExecutor {
 
     /**
-     * Creates a new SecurityStorageOracleExecutor.
-     *
-     * @param connectionPool
-     *            the prepared statement cache to use for read operations
-     * @throws SQLException
-     *             if the initialization of the storage fails
-     */
+	 * Creates a new {@link SecurityStorageOracleExecutor}.
+	 *
+	 * @param connectionPool
+	 *        the prepared statement cache to use for read operations
+	 * @throws SQLException
+	 *         if the initialization of the storage fails
+	 */
     public SecurityStorageOracleExecutor(ConnectionPool connectionPool) throws SQLException {
         super(connectionPool);
     }
@@ -39,6 +39,15 @@ public class SecurityStorageOracleExecutor extends SecurityStorageExecutor {
 
 
     /* The SQL statements used by this class. */
+	/**
+	 * SQL statement checking whether the {@link SecurityStorage#TABLE_NAME} is not empty.
+	 */
+	protected static final String ORACLE_IS_NOT_EMPTY_STATEMENT =
+		"SELECT /*+ FIRST_ROWS(1) */ 1 FROM " + SecurityStorage.TABLE_NAME + " WHERE ROWNUM <= 1";
+
+	/**
+	 * SQL statement to truncate {@link SecurityStorage#TABLE_NAME}.
+	 */
     protected static final String ORACLE_CLEAR_STATEMENT = "TRUNCATE TABLE " + SecurityStorage.TABLE_NAME;
 
     @Override
@@ -61,7 +70,7 @@ public class SecurityStorageOracleExecutor extends SecurityStorageExecutor {
 
     @Override
     public boolean isEmpty() throws SQLException {
-        return !DBUtil.executeQueryAsBoolean("SELECT /*+ FIRST_ROWS(1) */ 1 FROM " + SecurityStorage.TABLE_NAME + " WHERE ROWNUM <= 1");
+		return !DBUtil.executeQueryAsBoolean(ORACLE_IS_NOT_EMPTY_STATEMENT);
     }
 
 }

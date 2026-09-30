@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8" ?>
-
-<theme id="darkModern"
-	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	extends="dark,dezentModern"
-	state="enabled"
-/>

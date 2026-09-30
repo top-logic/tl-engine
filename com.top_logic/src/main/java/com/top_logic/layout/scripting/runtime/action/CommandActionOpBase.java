@@ -138,17 +138,17 @@ public abstract class CommandActionOpBase<S extends CommandActionBase> extends C
 	protected Map<String, Object> getArguments(ActionContext context, CommandHandler command,
 			LayoutComponent component) {
 		Map<String, AttributeValue> argumentRefs = config.getArguments();
-		Map<String, Object> arguments = resolveArgumentValues(context, argumentRefs);
+		Map<String, Object> arguments = resolveArgumentValues(context, component, argumentRefs);
 		return arguments;
 	}
 
 	private static Map<String, Object> resolveArgumentValues(ActionContext context,
-			Map<String, AttributeValue> argumentRefs) {
+			LayoutComponent component, Map<String, AttributeValue> argumentRefs) {
 		HashMap<String, Object> arguments = MapUtil.newMap(argumentRefs.size() + 1);
 		for (Map.Entry<String, AttributeValue> entry : argumentRefs.entrySet()) {
 			String key = entry.getKey();
 			AttributeValue attributeValue = entry.getValue();
-			Object resolvedValue = context.resolve(attributeValue.getValue());
+			Object resolvedValue = context.resolve(attributeValue.getValue(), component);
 			arguments.put(key, resolvedValue);
 		}
 		return arguments;

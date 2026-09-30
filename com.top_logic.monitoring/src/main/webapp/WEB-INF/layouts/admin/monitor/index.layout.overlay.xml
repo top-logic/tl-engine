@@ -9,11 +9,6 @@
 			resource="com.top_logic.monitoring/admin/monitor/memory/memoryMonitorChart.layout.xml"
 		/>
 		<layout-reference resource="com.top_logic.monitoring/admin/monitor/schema/dbSchemaMonitor.layout.xml"/>
-		<layout-reference
-			config:position="after"
-			config:reference="com.top_logic/admin/monitor/performance/performanceMonitor.layout.xml"
-			resource="com.top_logic.monitoring/admin/monitor/performanceChart/performanceChart.layout.xml"
-		/>
 		<layout-reference resource="com.top_logic.monitoring/admin/monitor/history/revisionMonitor.layout.xml"/>
 	</components>
 </arguments>

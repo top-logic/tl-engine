@@ -381,8 +381,8 @@ public class MultiAttributeFilter implements InteractiveBuilder<Filter<Object>, 
 
 		@Override
 		protected void initValues(TLStructuredTypePart ma, FormField fromField, FormField toField) {
-			fromField.setValue(getConfig().getFrom());
-			toField.setValue(getConfig().getTo());
+			fromField.initializeField(getConfig().getFrom());
+			toField.initializeField(getConfig().getTo());
 		}
 
 	}

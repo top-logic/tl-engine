@@ -22,12 +22,12 @@
 	<layout name="${namePrefix}Dialog">
 		<components>
 			<form name="${namePrefix}Form"
-				buttonComponent="${namePrefix}ButtonBar"
-				closeHandlerName="cancelCreate"
+				buttonbar="true"
+				cancelAction="cancelCreate"
 				model="${ownerModel}"
 				resPrefix="${resPrefix}"
 				resetInvisible="true"
-				securityProviderClass="dialogParent"
+				securityObject="ref:dialogParent"
 			>
 				<include name="com.top_logic.element/admin/model/modelEditor/TypePartForm.xml"
 					create="true"
@@ -45,7 +45,6 @@
 					/>
 				</buttons>
 			</form>
-			<buttonbar name="${namePrefix}ButtonBar"/>
 		</components>
 	</layout>
 </template>

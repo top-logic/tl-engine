@@ -13,7 +13,7 @@ import com.top_logic.graph.layouter.algorithm.rendering.lines.Line1DContainer;
 /**
  * Layer partition for {@link Line1DContainer}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ContainerLayerPartition extends LayerPartition<Line1DContainer> {
 

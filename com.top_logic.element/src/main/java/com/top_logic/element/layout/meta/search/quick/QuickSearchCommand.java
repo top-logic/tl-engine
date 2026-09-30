@@ -30,6 +30,7 @@ import com.top_logic.layout.IdentityAccessor;
 import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.AttachedPropertyListener;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -70,7 +71,7 @@ import com.top_logic.util.TLContext;
 /**
  * Search command to the quick full text search.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class QuickSearchCommand extends AbstractSearchCommand {
 
@@ -320,8 +321,8 @@ public class QuickSearchCommand extends AbstractSearchCommand {
 		return new SelectionListener() {
 
 			@Override
-			public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
-
+			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+				Set<?> newSelection = event.getNewSelection();
 				if (!CollectionUtils.isEmpty(newSelection)) {
 					Object theObject = CollectionUtil.getFirst(newSelection);
 

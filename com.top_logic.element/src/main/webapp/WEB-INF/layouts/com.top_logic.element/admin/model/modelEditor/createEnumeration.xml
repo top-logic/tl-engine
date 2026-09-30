@@ -26,12 +26,12 @@
 	>
 		<components>
 			<form name="${formName}"
-				buttonComponent="${namePrefix}Buttons"
-				closeHandlerName="cancelCreate"
+				buttonbar="true"
+				cancelAction="cancelCreate"
 				model="${ownerModel}"
 				resPrefix="element.meta.createStructuredType.Form."
 				resetInvisible="true"
-				securityProviderClass="dialogParent"
+				securityObject="ref:dialogParent"
 			>
 				<modelBuilder class="com.top_logic.element.layout.meta.TLEnumerationFormBuilder"
 					contextOptional="true"
@@ -48,7 +48,6 @@
 					/>
 				</buttons>
 			</form>
-			<buttonbar name="${namePrefix}Buttons"/>
 		</components>
 	</layout>
 </template>

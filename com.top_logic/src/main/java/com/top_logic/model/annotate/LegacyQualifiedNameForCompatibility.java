@@ -9,6 +9,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.config.TLTypeAnnotation;
 
 /**
@@ -29,6 +30,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
  */
 @Deprecated
 @TagName("legacy-qualified-name")
+@AnnotationInheritance(Policy.REDEFINE)
 public interface LegacyQualifiedNameForCompatibility extends TLTypeAnnotation {
 
 	/**

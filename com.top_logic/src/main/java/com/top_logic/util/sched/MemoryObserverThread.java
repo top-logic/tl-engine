@@ -22,7 +22,6 @@ import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeriesCollection;
 
 import com.top_logic.base.chart.dataset.ExtendedTimeSeries;
-import com.top_logic.base.monitor.bus.EventBuffer;
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Reloadable;
@@ -30,11 +29,11 @@ import com.top_logic.basic.ReloadableManager;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
-import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.time.TimeZones;
@@ -47,8 +46,8 @@ import com.top_logic.util.monitor.MonitorMessage;
 import com.top_logic.util.monitor.MonitorResult;
 
 /**
- * {@link ManagedClass} to log memory usage.
- * 
+ * Periodically records the application's memory usage and can produce a graphical report.
+ *
  * <p>
  * In the default configuration a {@link MemoryUsageEntry} is created each
  * {@link Config#getLoggingInterval()} milliseconds and buffered for
@@ -72,6 +71,7 @@ import com.top_logic.util.monitor.MonitorResult;
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @ServiceDependencies({ AliasManager.Module.class, ApplicationMonitor.Module.class })
+@Label("Memory logging")
 public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverThread.Config>
 		implements MonitorComponent, Reloadable {
 	
@@ -705,8 +705,6 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
 	 * Circular Buffer for a certain number of Object for later access.
 	 * 
 	 * TODO KHA Use some kind of {@link Queue} or moved this into tl-basic.col.
-	 * 
-	 * @see EventBuffer
 	 * 
 	 * @author <a href=mailto:fsc@top-logic.com>fsc</a>
 	 */

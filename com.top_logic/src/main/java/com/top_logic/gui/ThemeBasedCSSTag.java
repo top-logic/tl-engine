@@ -7,7 +7,7 @@ package com.top_logic.gui;
 
 import java.io.IOException;
 
-import javax.servlet.jsp.JspWriter;
+import jakarta.servlet.jsp.JspWriter;
 
 import com.top_logic.base.taglibs.basic.CSSLinkTag;
 import com.top_logic.basic.Logger;

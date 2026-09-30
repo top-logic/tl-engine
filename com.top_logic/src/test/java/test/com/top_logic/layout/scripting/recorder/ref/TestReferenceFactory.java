@@ -22,7 +22,6 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.col.Maybe;
-import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
@@ -54,29 +53,6 @@ public class TestReferenceFactory extends BasicTestCase {
 		@Override
 		public int compareTo(Wrapper o) {
 			throw new UnsupportedOperationException();
-		}
-
-		/**
-		 * TODO #2829: Delete TL 6 deprecation
-		 * 
-		 * @deprecated Use {@link #tHandle()} or one of the other short-cuts for accessing
-		 *             underlying data, e.g. {@link #tGetData(String)}.
-		 * @deprecated Use {@link #tHandle()} instead
-		 */
-		@Override
-		public final KnowledgeObject getWrappedObject() {
-			return (KnowledgeObject) tHandle();
-		}
-
-		/**
-		 * TODO #2829: Delete TL 6 deprecation.
-		 * 
-		 * @deprecated Use {@link #tId()} instead
-		 */
-		@Deprecated
-		@Override
-		public final ObjectKey getObjectKey() {
-			return tId();
 		}
 
 	}

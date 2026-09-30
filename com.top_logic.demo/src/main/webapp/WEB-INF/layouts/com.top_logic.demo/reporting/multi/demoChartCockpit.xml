@@ -20,7 +20,7 @@
 				name="${namePrefix}Selector"
 				page="/jsp/demo/reporting/flex/demoMultiChartSelector.jsp"
 				resPrefix="${resPrefix}Selector."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				showMaximize="false"
 			>
 				<layoutInfo
@@ -46,7 +46,7 @@
 				name="${namePrefix}Chart"
 				page="/jsp/reporting/flex/chart/multipleCharts.jsp"
 				resPrefix="${resPrefix}Chart."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 			/>
 		</components>
 	</layout>

@@ -14,7 +14,7 @@ import com.top_logic.basic.io.CSVReader;
 /**
  * Instances of this class provide convenient access to Excel sheet using {@link CSVReader}.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CSVExcelContext extends ExcelContext {
 

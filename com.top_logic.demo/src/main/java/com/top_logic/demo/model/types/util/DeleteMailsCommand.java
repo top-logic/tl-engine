@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import javax.mail.MessagingException;
+import jakarta.mail.MessagingException;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -95,7 +95,7 @@ public class DeleteMailsCommand extends AbstractCommandHandler {
 
 		{
 			KnowledgeBase kb = mailfolderAware.getKnowledgeBase();
-			try (Transaction tx = kb.beginTransaction()) {
+			try (Transaction tx = kb.beginTransaction(I18NConstants.DELETED_MAILS)) {
 				Collection<? extends TLObject> content = folder.getContent();
 				for (TLObject mail : content) {
 					deleteMail((IMAPMail) mail);

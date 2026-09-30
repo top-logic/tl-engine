@@ -13,35 +13,42 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.OneWayListSink;
 import com.top_logic.basic.col.filter.FilterFactory;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.func.Function0;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.knowledge.objects.DestinationIterator;
 import com.top_logic.knowledge.objects.InvalidLinkException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.SourceIterator;
 import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
+import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
+import com.top_logic.knowledge.util.ItemByNameCache;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.WrapperNameComparator;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.IGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundObject;
 import com.top_logic.util.error.TopLogicException;
+import com.top_logic.util.model.ModelService;
 
 /**
  * A Group of members that are BoundObjects (normally Persons).
@@ -50,50 +57,81 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class Group extends AbstractBoundWrapper implements IGroup {
 
+	/**
+	 * {@link Function0} delivering all {@link Group}s.
+	 * 
+	 * @see Group#getAll()
+	 */
+	public static class AllGroups extends Function0<List<Group>> {
+	
+		@Override
+		public List<Group> apply() {
+			return getAll();
+		}
+	}
+
 	/** The type of KO wrapped by this class. */
     public static final String OBJECT_NAME      = "Group";
 
 	/** Full qualified name of the {@link TLType} of a {@link Group}. */
 	public static final String GROUP_TYPE = "tl.accounts:Group";
 
+	/** Full qualified name of the {@link TLType} of a representative {@link Group}. */
+	public static final String REPRESENTATIVE_GROUP_TYPE = "tl.accounts:RepresentativeGroup";
+
 	/**
 	 * Resolves {@link #GROUP_TYPE}.
 	 * 
 	 * @implNote Casts result of {@link TLModelUtil#resolveQualifiedName(String)} to
-	 *           {@link TLStructuredType}. Potential {@link ConfigurationException} are wrapped into
+	 *           {@link TLClass}. Potential {@link ConfigurationException} are wrapped into
 	 *           {@link ConfigurationError}.
 	 * 
-	 * @return The {@link TLStructuredType} representing the {@link Group}s.
+	 * @return The {@link TLClass} of {@link Group} objects.
+	 * 
+	 * @throws ConfigurationError
+	 *         iff {@link #REPRESENTATIVE_GROUP_TYPE} could not be resolved.
+	 */
+	public static TLClass getGroupType() throws ConfigurationError {
+		return (TLClass) TLModelUtil.resolveQualifiedName(GROUP_TYPE);
+	}
+
+	/**
+	 * Resolves {@link #REPRESENTATIVE_GROUP_TYPE}.
+	 * 
+	 * @implNote Casts result of {@link TLModelUtil#resolveQualifiedName(String)} to
+	 *           {@link TLClass}. Potential {@link ConfigurationException} are wrapped into
+	 *           {@link ConfigurationError}.
+	 * 
+	 * @return The {@link TLClass} of representative {@link Group} objects.
 	 * 
 	 * @throws ConfigurationError
 	 *         iff {@link #GROUP_TYPE} could not be resolved.
 	 */
-	public static TLStructuredType getGroupType() throws ConfigurationError {
-		return (TLStructuredType) TLModelUtil.resolveQualifiedName(GROUP_TYPE);
+	public static TLClass getRepresentativeGroupType() throws ConfigurationError {
+		return (TLClass) TLModelUtil.resolveQualifiedName(REPRESENTATIVE_GROUP_TYPE);
 	}
 
     /** The KO attribute used to store the system Group flag. */
     public static final String GROUP_SYSTEM      = "isSystem";
 
-	/** The KO attribute used to store the "is default group" flag. */
-	public static final String GROUP_DEFAULT = "defaultGroup";
-
-    /** The name of the KnowledgeAssociation between a BoundObject and a Group
-     *  used to say that a person belongs to that group.*/
-    public static final String GROUP_ASSOCIATION = "hasGroup";
+	/**
+	 * The name of the KnowledgeAssociation between a {@link Group} and its contents (other
+	 * {@link Group}s or {@link Person}s).
+	 */
+	public static final String GROUP_MEMBERS_ASSOCIATION = "hasGroupMembers";
 
 	/** The name of the {@link KnowledgeAssociation} between {@link Person} and {@link Group}. */
     public static final String DEFINES_GROUP_ASSOCIATION = "definesGroup";
 
 	private static final BoundObject EMPTY_BO = new SimpleBoundObject("__empty__");
 
-	private static final AssociationSetQuery<KnowledgeAssociation> GROUPS_ATTR = AssociationQuery.createOutgoingQuery(
-		"groups",
-		Group.GROUP_ASSOCIATION);
+	private static final AssociationSetQuery<KnowledgeAssociation> MEMBERS_ATTR = AssociationQuery.createOutgoingQuery(
+		"groupMembers", Group.GROUP_MEMBERS_ASSOCIATION);
 
-	private static final AssociationSetQuery<KnowledgeAssociation> MEMBERS_ATTR = AssociationQuery.createIncomingQuery(
-		"groupMembers",
-		Group.GROUP_ASSOCIATION);
+	static final AssociationSetQuery<KnowledgeAssociation> GROUPS_ATTR = AssociationQuery.createIncomingQuery(
+		"groups", Group.GROUP_MEMBERS_ASSOCIATION);
+
+	private static volatile ItemByNameCache<String> BY_NAME_CACHE;
 
     private transient BoundObject boundObject;
 
@@ -229,22 +267,26 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
     /**
-	 * Check if this is a default group, i.e. a group in which each user is a member
+	 * Whether this is the default group of the application, the group every newly created account
+	 * is added to.
 	 *
-	 * @return true if this is a default group
+	 * <p>
+	 * The value is computed from {@link InitialGroupManager.Config#getDefaultGroup()}. Changing that
+	 * setting neither adds accounts to nor removes accounts from a group, it only decides where
+	 * accounts created afterwards are put.
+	 * </p>
+	 *
+	 * @return Whether this is the group named by the configuration.
+	 * 
+	 * @implNote Without a running {@link InitialGroupManager} no group is the default group: the
+	 *           accounts model is also loaded by tests and tools that do not start that service.
 	 */
 	public boolean isDefaultGroup() {
-		return tGetDataBooleanValue(GROUP_DEFAULT);
-	}
-
-	/**
-	 * Setter for {@link #isDefaultGroup()}.
-	 *
-	 * @param isDefault
-	 *        Whether this is a default group.
-	 */
-	public void setDefaultGroup(boolean isDefault) {
-		this.tSetData(GROUP_DEFAULT, Boolean.valueOf(isDefault));
+		if (!InitialGroupManager.Module.INSTANCE.isActive()) {
+			return false;
+		}
+		Group defaultGroup = InitialGroupManager.getInstance().getDefaultGroup();
+		return defaultGroup != null && defaultGroup.equals(this);
 	}
 
 	/**
@@ -259,38 +301,30 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
     /**
-     * Create a new Group with the specified name.
-     *
-     * The Group will <em>not</em> be committed.
-     *
-     * @param aName             the name of the Group; must not be null
-     * @param aKnowledgeBase    the KnowledgeBase in which to create the Group;
-     *                          must not be null
-     *
-     * @return the new Group wrapper; never null
-     */
-    public static Group createGroup (String aName, KnowledgeBase aKnowledgeBase) {
-		Group theGroup;
-		{
-			KnowledgeObject theKO = aKnowledgeBase.createKnowledgeObject(OBJECT_NAME);
-            theKO.setAttributeValue (NAME_ATTRIBUTE, aName);
-
-            theGroup = (Group) WrapperFactory.getWrapper(theKO);
-        }
-        return theGroup;
+	 * Create a {@link Group} with the specified name.
+	 *
+	 * @param name
+	 *        The name of the Group.
+	 * @return The new {@link Group}.
+	 */
+	public static Group createGroup(String name) {
+		Group result = ModelService.getInstance().createGroup();
+		result.setName(name);
+		return result;
     }
 
-    /**
-     * Create a new Group with the specified name in the defaultKB.
-     *
-     * @param aName             the name of the Group; must not be null
-     *
-     * @return the new Group wrapper; never null
-     */
-    public static Group createGroup (String aName) {
-
-        return createGroup(aName, getDefaultKnowledgeBase());
-    }
+	/**
+	 * Create a representative {@link Group}.
+	 *
+	 * @see Person#getRepresentativeGroup()
+	 */
+	public static Group createRepresentativeGroup(Person account) {
+		Group result = ModelService.getInstance().createRepresentativeGroup();
+		result.setName(account.getName());
+		result.setIsSystem(true);
+		result.bind(account);
+		return result;
+	}
 
     /**
      * Get a Group by its name.
@@ -300,6 +334,9 @@ public class Group extends AbstractBoundWrapper implements IGroup {
      * @return  the Group or null if it doesn't exist
      */
     public static Group getGroupByName (KnowledgeBase aKB, String aName) {
+		if (aKB == getDefaultKnowledgeBase()) {
+			return fromCache(aKB, aName);
+		}
 
         KnowledgeObject theGroupKO = (KnowledgeObject) aKB
             .getObjectByAttribute(OBJECT_NAME, NAME_ATTRIBUTE, aName);
@@ -317,17 +354,42 @@ public class Group extends AbstractBoundWrapper implements IGroup {
      * @return  the Group or null if it doesn't exist
      */
     public static Group getGroupByName(String aName) {
-
-        return getGroupByName(getDefaultKnowledgeBase(), aName);
+		return fromCache(getDefaultKnowledgeBase(), aName);
     }
 
-    /**
-     * Get a Group by its identifier
-     *
-     * @param   aKB             the KnowledgeBase to fetch the Group from.
-     * @param   anID            the identifier of the Group
-     * @return  the Group or null if it doesn't exist
-     */
+	private static Group fromCache(KnowledgeBase defaultKB, String name) {
+		if (StringServices.isEmpty(name)) {
+			return null;
+		}
+
+		KnowledgeItem cachedGroup = getOrInstallByNameCache(defaultKB).getValue().get(name);
+		if (cachedGroup == null) {
+			return null;
+		}
+		return cachedGroup.getWrapper();
+
+	}
+
+	private static ItemByNameCache<String> getOrInstallByNameCache(KnowledgeBase defaultKB) {
+		ItemByNameCache<String> byNameCache = BY_NAME_CACHE;
+		if (byNameCache == null || byNameCache.kb() != defaultKB) {
+			// First access to cache or default KB has changed (PersistencyLayer may have been
+			// restarted).
+			byNameCache = new ItemByNameCache<>((DBKnowledgeBase) defaultKB, OBJECT_NAME, NAME_ATTRIBUTE, String.class);
+			BY_NAME_CACHE = byNameCache;
+		}
+		return byNameCache;
+	}
+
+	/**
+	 * Get a Group by its identifier
+	 *
+	 * @param aKB
+	 *        the KnowledgeBase to fetch the Group from.
+	 * @param anID
+	 *        the identifier of the Group
+	 * @return the Group or null if it doesn't exist
+	 */
     public static final Group getInstance (KnowledgeBase aKB, TLID anID) {
 		return (Group) WrapperFactory.getWrapper(anID, OBJECT_NAME, aKB);
      }
@@ -405,10 +467,8 @@ public class Group extends AbstractBoundWrapper implements IGroup {
         	return;
         }
         
-        if (anObject instanceof Group) {
-        	// Prevent creation of recursive containment.
-        	Group innerGroup = (Group) anObject;
-        	
+		if (anObject instanceof Group innerGroup) {
+			// Check that no membership cycle is created.
         	HashSet<Group> descendantsOrSelf = new HashSet<>();
 			innerGroup.addMembersRecursive(OneWayListSink.INSTANCE, descendantsOrSelf);
 			
@@ -418,13 +478,21 @@ public class Group extends AbstractBoundWrapper implements IGroup {
         	}
         }
 
-		KnowledgeObject theSource = (KnowledgeObject) anObject.tHandle();
-        KnowledgeObject      theDest   = this.tHandle();
-		theSource.getKnowledgeBase().createAssociation(theSource, theDest, Group.GROUP_ASSOCIATION);
+		KnowledgeObject memberHandle = (KnowledgeObject) anObject.tHandle();
+		KnowledgeObject groupHandle = this.tHandle();
+		groupHandle.getKnowledgeBase().createAssociation(groupHandle, memberHandle, Group.GROUP_MEMBERS_ASSOCIATION);
 
-        if(!this.isRepresentativeGroup() && anObject instanceof Person){
-//        	also add the persons representative group if this is no representative group itself
-        	addMember(((Person)anObject).getRepresentativeGroup());
+		if (!this.isRepresentativeGroup() && anObject instanceof Person account) {
+			// Also add the person's representative group (if this is group not a representative
+			// group itself)
+			Group representativeGroup = account.getRepresentativeGroup();
+
+			// Note: The representative group may be null, if the added account is newly created,
+			// since the representative groups are allocated only during commit by the
+			// PersonGroupsInitializer.
+			if (representativeGroup != null) {
+				addMember(representativeGroup);
+			}
         }
     }
 
@@ -501,22 +569,25 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
     /**
-     * Remove a BoundObject from the Group
-     *
-     * @param anObject    the BoundObject. May be <code>null</code> (code has no effect then).
-     * @throws DataObjectException if removal of the KA fails
-     */
-	public void removeMember(TLObject anObject) {
-        if (anObject == null) {
+	 * Remove a BoundObject from the Group
+	 *
+	 * @param member
+	 *        the BoundObject. May be <code>null</code> (code has no effect then).
+	 * @throws DataObjectException
+	 *         if removal of the KA fails
+	 */
+	public void removeMember(TLObject member) {
+		if (member == null) {
             return;
         }
 
-		KBUtils.deleteAllKI(((KnowledgeObject) anObject.tHandle())
-			.getOutgoingAssociations(Group.GROUP_ASSOCIATION, this.tHandle()));
+		KnowledgeObject groupHandle = this.tHandle();
+		KnowledgeObject memberHandle = (KnowledgeObject) member.tHandle();
+		KBUtils.deleteAllKI(groupHandle.getOutgoingAssociations(Group.GROUP_MEMBERS_ASSOCIATION, memberHandle));
 
-        if(anObject instanceof Person){
+		if (member instanceof Person) {
         	//also remove the persons representative group
-        	removeMember(((Person)anObject).getRepresentativeGroup());
+			removeMember(((Person) member).getRepresentativeGroup());
         }
     }
 

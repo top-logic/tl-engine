@@ -140,6 +140,7 @@ public enum TLTypeKind {
 			case MODULE:
 			case PROPERTY:
 			case REFERENCE:
+			case OBJECT:
 				throw new IllegalArgumentException("Not an attribute type: " + type);
 		}
 		throw new UnreachableAssertion("No such kind: " + type.getModelKind());

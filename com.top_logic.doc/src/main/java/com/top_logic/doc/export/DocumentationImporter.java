@@ -10,6 +10,8 @@ import static com.top_logic.basic.StringServices.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
@@ -156,9 +158,7 @@ public class DocumentationImporter {
 			log.info("No documentation root folder.");
 			return;
 		}
-		KBUtils.inTransaction(rootPage.tKnowledgeBase(), () -> {
-			importForLocales(log, rootPage);
-		});
+		importForLocales(log, rootPage);
 	}
 
 	private void importForLocales(Log log, Page rootPage) {
@@ -221,18 +221,30 @@ public class DocumentationImporter {
 		Page newParent = importPage(log, parent, locale, resourcePath, position);
 		log.info("Imported content from path " + resourcePath, Protocol.VERBOSE);
 		importContentPages(log, newParent, locale, resourcePath);
-		return parent;
+		return newParent;
 	}
 
 	private void importContentPages(Log log, Page parent, Locale locale, String rootPath) {
 		Set<String> resourcePaths = FileManager.getInstance().getResourcePaths(rootPath);
+		if (resourcePaths.isEmpty()) {
+			parent.tDelete();
+			return;
+		}
+
 		List<String> orderedResourcePaths = getResourcesSortedByFilename(resourcePaths);
 		int entryPosition = 1000;
 		for (String resourcePath : orderedResourcePaths) {
 			Page child = importSubTree(log, parent, locale, resourcePath, entryPosition);
-			if (child != null) {
+			if (parent.isChild(child)) {
 				entryPosition += 1000;
 			}
+		}
+
+		if (parent.getChildren().isEmpty()
+			&& !resourcePaths.contains(rootPath + TLDocExportImportConstants.PROPERTIES_FILE_NAME)
+			&& !resourcePaths.contains(rootPath + TLDocExportImportConstants.CONTENT_FILE_NAME)) {
+			parent.tDelete();
+			return;
 		}
 		sortChildren(parent);
 	}
@@ -285,6 +297,10 @@ public class DocumentationImporter {
 		String sourceBundle = null;
 
 		String propertyResourcePath = resourcePath + TLDocExportImportConstants.PROPERTIES_FILE_NAME;
+
+		String contents;
+		String contentResourcePath = resourcePath + TLDocExportImportConstants.CONTENT_FILE_NAME;
+
 		if (FileManager.getInstance().exists(propertyResourcePath)) {
 			try {
 				Properties propertiesMap = loadProperties(propertyResourcePath);
@@ -303,17 +319,15 @@ public class DocumentationImporter {
 			}
 		}
 
-		String contents;
-		String contentResourcePath = resourcePath + TLDocExportImportConstants.CONTENT_FILE_NAME;
 		if (FileManager.getInstance().exists(contentResourcePath)) {
 			try {
 				contents = getFileContents(contentResourcePath, StringServices.UTF8);
 			} catch (IOException ex) {
 				log.error("Failed to read contents of: '" + contentResourcePath + "'", ex);
-				contents = null;
+				contents = StringServices.EMPTY_STRING;
 			}
 		} else {
-			contents = null;
+			contents = StringServices.EMPTY_STRING;
 		}
 
 		Map<String, BinaryData> images = getImages(log, resourcePath);
@@ -346,7 +360,7 @@ public class DocumentationImporter {
 	public static Properties loadProperties(String propertiesResource) throws IOException {
 		Properties result = new Properties();
 		try (InputStream in = FileManager.getInstance().getData(propertiesResource).getStream()) {
-			result.load(in);
+			result.load(new InputStreamReader(in, StandardCharsets.UTF_8));
 		}
 		return result;
 	}
@@ -413,9 +427,9 @@ public class DocumentationImporter {
 	 *        UUID of the new {@link Page}. If <code>null</code> a random ID will be generated
 	 *        automatically.
 	 * @param contents
-	 *        Source code of the new {@link Page}.
+	 *        Source code of the new {@link Page}. Never null.
 	 * @param images
-	 *        {@link Map} of images of the HTML page.
+	 *        {@link Map} of images of the HTML page. Never null.
 	 * @param position
 	 *        The relative position of the {@link Page} within its siblings.
 	 * @param source
@@ -427,7 +441,7 @@ public class DocumentationImporter {
 		String idStripped = id.strip(); // The id is not allowed to be null.
 		String titleStripped = stripNullsafe(title);
 		String uuidStripped = stripNullsafe(uuid);
-		String contentsStripped = stripNullsafe(contents);
+		String contentsStripped = contents.strip();
 		String sourceStripped = stripNullsafe(source);
 		KnowledgeBase kb = parent.tKnowledgeBase();
 		KnowledgeItem existingPage = findExistingPage(kb, uuidStripped, idStripped);

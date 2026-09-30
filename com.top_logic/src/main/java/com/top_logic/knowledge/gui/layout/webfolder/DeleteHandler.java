@@ -10,12 +10,13 @@ import java.util.Map;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.event.ModelTrackingService;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
@@ -25,6 +26,8 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
@@ -50,6 +53,10 @@ public class DeleteHandler extends AbstractCommandHandler {
 		@FormattedDefault(SimpleBoundCommandGroup.DELETE_NAME)
 		@Override
 		CommandGroupReference getGroup();
+
+		@Override
+		@ItemDefault(DefaultDeleteConfirmation.class)
+		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 	}
 
@@ -114,7 +121,7 @@ public class DeleteHandler extends AbstractCommandHandler {
     }
     
     protected Wrapper getObjectToRemove(LayoutComponent aComponent, Map someArguments) {
-        KnowledgeBase theBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theBase = PersistencyLayer.getKnowledgeBase();
 		TLID theID = IdentifierUtil.fromExternalForm(BoundComponent.getParameter(someArguments, OBJECT_ID));
 
         if (theID != null) {
@@ -133,9 +140,6 @@ public class DeleteHandler extends AbstractCommandHandler {
      * Delete the wrapper
      */
     protected boolean deleteDocument(WebFolder theFolder, Wrapper aWrapper, LayoutComponent aComponent) {
-        // inform the system about deletion
-        ModelTrackingService.sendDeleteEvent(aWrapper, theFolder);
-        
 		return theFolder.remove(aWrapper);
     }
     
@@ -146,10 +150,4 @@ public class DeleteHandler extends AbstractCommandHandler {
 	public String[] getAttributeNames() {
         return (new String[] {OBJECT_ID, TYPE, CONTAINER_ID});
     }
-
-    @Override
-	public boolean needsConfirm() {
-        return (true);
-    }
-    
 }

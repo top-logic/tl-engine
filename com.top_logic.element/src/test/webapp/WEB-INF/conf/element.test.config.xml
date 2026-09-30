@@ -56,6 +56,20 @@
 			</instance>
 		</config>
 
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="projElement.Verantwortlicher"/>
+					<role name="projElement.Mitarbeiter"/>
+					<role name="projElement.TeilprojektVerantwortlicher"/>
+					<role name="projElement.Nutzer"/>
+					<role name="projElement.Hauptbenutzer"/>
+					<role name="projElement.Beobachter"/>
+					<role name="projElement.Projektbeobachter"/>
+				</roles>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.util.model.ModelService">
 			<instance>
 				<declarations>
@@ -63,8 +77,8 @@
 					<declaration file="/WEB-INF/model/TestGenericImportStructure.model.xml"/>
 					<declaration file="/WEB-INF/model/prodElement.model.xml"/>
 					<declaration file="/WEB-INF/model/projElement.model.xml"/>
-					<declaration file="/WEB-INF/model/securityChildren.model.xml"/>
 					<declaration file="/WEB-INF/model/TestTypes.model.xml"/>
+					<declaration file="/WEB-INF/model/ticket28519.model.xml"/>
 					<declaration file="/WEB-INF/model/TestXMLInstanceImporter.model.xml"/>
 				</declarations>
 				<settings>
@@ -76,17 +90,6 @@
 					</module>
 					<module name="Benchmark" enabled="true">
 						<factory value="test.com.top_logic.element.meta.benchmark.model.BenchmarkFactory"/>
-					</module>
-					<module name="projElement">
-						<roles>
-							<role name="projElement.Verantwortlicher"/>
-							<role name="projElement.Mitarbeiter"/>
-							<role name="projElement.TeilprojektVerantwortlicher"/>
-							<role name="projElement.Nutzer"/>
-							<role name="projElement.Hauptbenutzer"/>
-							<role name="projElement.Beobachter"/>
-							<role name="projElement.Projektbeobachter"/>
-						</roles>
 					</module>
 				</settings>
 				<classifications>
@@ -104,7 +107,16 @@
 				</label-providers>
 			</instance>
 		</config>
-	
+		
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				<handlers>
+					<handler id="TestIntrinsicCommands" 
+						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommand"/>
+				</handlers>
+			</instance>
+		</config>
+		
 	</services>
 
 	<configs>
@@ -113,8 +125,20 @@
 				<type-system name="Default">
 					<declarations>
 			            <declaration resource="webinf://kbase/TestElementMeta.xml"/>
+						<declaration resource="webinf://kbase/TestTypesMeta.xml" />
+						<declaration resource="webinf://kbase/TestTicket28519Meta.xml" />
 			        </declarations>
 			    </type-system>
+				<type-system name="TestTypes" class="com.top_logic.knowledge.service.TypeSystemSetup">
+					<declarations>
+						<declaration resource="webinf://kbase/BasicMeta.xml"/>
+					</declarations>
+					<providers>
+						<provider name="basic">
+							<impl class="com.top_logic.knowledge.service.db2.BasicTypeProvider" />
+						</provider>
+					</providers>
+				</type-system>
 			</type-systems>
 		</config>
 

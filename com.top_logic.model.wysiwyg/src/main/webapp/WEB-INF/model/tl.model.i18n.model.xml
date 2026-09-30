@@ -23,7 +23,6 @@
 						<storage-algorithm>
 							<implementation class="com.top_logic.model.wysiwyg.i18n.I18NStructuredTextAttributeStorage" />
 						</storage-algorithm>
-						<render-whole-line />
 					</annotations>
 				</datatype>
 			</types>

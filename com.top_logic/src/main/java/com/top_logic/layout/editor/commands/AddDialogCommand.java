@@ -68,7 +68,7 @@ public class AddDialogCommand extends AbstractComponentConfigurationCommandHandl
 		TLLayout layout = LayoutTemplateUtils.getOrCreateLayout(scope);
 
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx = kb.beginTransaction(I18NConstants.ADDED_DIALOG__NAME.fill(component.getTitleKey()))) {
 			Identifiers identifiers = LayoutTemplateUtils.replaceInnerTemplates(componentConfig);
 			String dialogIdentifier = LayoutTemplateUtils.createNewComponentLayoutKey();
 			identifiers.addComponentKey(dialogIdentifier);

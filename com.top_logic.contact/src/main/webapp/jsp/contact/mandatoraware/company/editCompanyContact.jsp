@@ -16,9 +16,7 @@ extends="com.top_logic.util.TopLogicJspBase"
 %><%@taglib uri="basic" prefix="basic"
 %><%@taglib uri="meta"     prefix="meta"
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<meta:formPage titleAttribute="<%=CompanyContact.NAME_ATTRIBUTE%>">
 			<%

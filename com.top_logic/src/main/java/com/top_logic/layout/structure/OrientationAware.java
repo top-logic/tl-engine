@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.structure;
 
+import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.func.Function1;
 
 /**
@@ -23,12 +24,12 @@ public interface OrientationAware {
 	/**
 	 * The how child controls of a container are arranged.
 	 */
-	public static enum Orientation {
+	public static enum Orientation implements ExternallyNamed {
 
 		/**
 		 * In a horizontal layout, children are placed from left to right.
 		 */
-		HORIZONTAL() {
+		HORIZONTAL("horizontal") {
 			@Override
 			public boolean isHorizontal() {
 				return true;
@@ -38,12 +39,23 @@ public interface OrientationAware {
 		/**
 		 * A vertical layout, children are placed from top to bottom.
 		 */
-		VERTICAL() {
+		VERTICAL("vertical") {
 			@Override
 			public boolean isHorizontal() {
 				return false;
 			}
 		};
+
+		private final String _externalName;
+
+		Orientation(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
 
 		/**
 		 * Convert the boolean encoding for orientations to an {@link Orientation} constant.

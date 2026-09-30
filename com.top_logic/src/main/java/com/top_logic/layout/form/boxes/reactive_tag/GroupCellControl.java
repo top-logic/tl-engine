@@ -6,17 +6,21 @@
 package com.top_logic.layout.form.boxes.reactive_tag;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.AbstractCommandModel;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.AttachListener;
 import com.top_logic.layout.basic.ConstantControl;
+import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.DefaultPopupMenuModel;
 import com.top_logic.layout.basic.PopupMenuModel;
 import com.top_logic.layout.basic.TemplateVariable;
@@ -29,7 +33,10 @@ import com.top_logic.layout.form.control.AbstractButtonRenderer;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ImageButtonRenderer;
 import com.top_logic.layout.form.control.PopupMenuButtonControl;
+import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.toolbar.DefaultToolBar;
+import com.top_logic.mig.html.layout.VisibilityListener;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -37,9 +44,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-public class GroupCellControl extends ConstantControl<HTMLFragment> implements CollapsedListener, GroupSettings {
+public class GroupCellControl extends ConstantControl<HTMLFragment>
+		implements CollapsedListener, VisibilityListener, GroupSettings {
 
 	private final Collapsible _collapsible;
+
+	private VisibilityModel _visibility;
 
 	private final ButtonControl _toggle;
 
@@ -49,6 +59,24 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 	
 	private static final AbstractButtonRenderer<?> TOGGLE_RENDERER =
 		ImageButtonRenderer.newSystemButtonRenderer(FormConstants.TOGGLE_BUTTON_CSS_CLASS);
+
+	private static final ControlCommand TOGGLE = new ControlCommand("toggle") {
+		@Override
+		public ResKey getI18NKey() {
+			return I18NConstants.TOGGLE;
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments) {
+			GroupCellControl groupCellControl = (GroupCellControl) control;
+			if (groupCellControl.isCollapsible()) {
+				groupCellControl.toggle();
+			}
+			return HandlerResult.DEFAULT_RESULT;
+		}
+	};
+
+	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(TOGGLE);
 
 	/**
 	 * Creates a {@link GroupCellControl}.
@@ -62,10 +90,11 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 	 *        Configuration options for the group display.
 	 */
 	public GroupCellControl(HTMLFragment model, Collapsible collapsible, GroupSettings settings) {
-		super(model);
+		super(model, COMMANDS);
 		_collapsible = Objects.requireNonNull(collapsible);
 		_settings = settings;
 		_toggle = createToggleButton();
+		_visibility = new VisibilityModel.Default();
 
 		if (!isCollapsible()) {
 			_toggle.getModel().setNotExecutable(I18NConstants.GROUP_NOT_COLLAPSIBLE);
@@ -91,12 +120,64 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 		return _collapsible;
 	}
 
+	private void toggle() {
+		_collapsible.setCollapsed(!_collapsible.isCollapsed());
+	}
+
 	/**
 	 * Title of the group.
 	 */
 	@TemplateVariable("title")
 	public HTMLFragment getTitle() {
 		return _title;
+	}
+
+	/**
+	 * Script that toggles the expand/collapsed state of the group when the group header is clicked.
+	 */
+	@TemplateVariable("onclick")
+	public void writeOnClick(TagWriter out) throws IOException {
+		if (_settings.isCollapsible()) {
+			out.write("const self = this;");
+			out.write("self.toggeling = true;");
+			out.write("setTimeout(function() {");
+			{
+				out.write("if (self.toggeling) {");
+				{
+					out.write("self.toggeling = false;");
+					TOGGLE.writeInvokeExpression(out, this);
+				}
+				out.write("}");
+			}
+			out.write("}, 250);");
+			out.write("return false;");
+		} else {
+			out.write("this.toggeling = false;");
+		}
+	}
+
+	/**
+	 * Script that prevents the toggle click, if the header receives a double click.
+	 */
+	@TemplateVariable("ondblclick")
+	public void writeOndDlClick(TagWriter out) throws IOException {
+		out.write("this.toggeling = false;");
+	}
+
+	/**
+	 * Sets a separate {@link VisibilityModel} that controls the visibility of this control.
+	 */
+	public void setVisibilityModel(VisibilityModel visibilityModel) {
+		_visibility = visibilityModel;
+	}
+
+	/**
+	 * Whether the group is currently visible.
+	 */
+	@Override
+	@TemplateVariable("visible")
+	public boolean isVisible() {
+		return _visibility.isVisible();
 	}
 
 	/**
@@ -129,13 +210,8 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 	}
 
 	@Override
-	public boolean getLabelAbove() {
-		return _settings.getLabelAbove();
-	}
-
-	@Override
-	public boolean getLabelInline() {
-		return _settings.getLabelInline();
+	public LabelPosition getLabelPosition() {
+		return _settings.getLabelPosition();
 	}
 
 	@Override
@@ -220,11 +296,13 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 	protected void internalAttach() {
 		super.internalAttach();
 		_collapsible.addListener(Collapsible.COLLAPSED_PROPERTY, this);
+		_visibility.addListener(VisibilityModel.VISIBLE_PROPERTY, this);
 	}
 
 	@Override
 	protected void internalDetach() {
 		_collapsible.removeListener(Collapsible.COLLAPSED_PROPERTY, this);
+		_visibility.removeListener(VisibilityModel.VISIBLE_PROPERTY, this);
 		super.internalDetach();
 	}
 
@@ -239,6 +317,14 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 			if (isCollapsible()) {
 				requestRepaint();
 			}
+		}
+		return Bubble.BUBBLE;
+	}
+
+	@Override
+	public Bubble handleVisibilityChange(Object sender, Boolean oldVisibility, Boolean newVisibility) {
+		if (sender.equals(_visibility)) {
+			requestRepaint();
 		}
 		return Bubble.BUBBLE;
 	}

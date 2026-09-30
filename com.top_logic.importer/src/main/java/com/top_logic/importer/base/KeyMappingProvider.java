@@ -13,7 +13,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 /**
  * Provide unique IDs for an {@link Wrapper} or a map of values read from excel file.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface KeyMappingProvider {
 
@@ -40,7 +40,7 @@ public interface KeyMappingProvider {
     /**
      * Default implementation of the key mapping interface. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class DefaultKeyMappingProvider implements KeyMappingProvider {
 

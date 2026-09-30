@@ -474,6 +474,7 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 	 * @deprecated Use normal {@link Task} and {@link SchedulingAlgorithm} instantiation via
 	 *             {@link TypedConfiguration} instead.
 	 */
+	@Deprecated
 	protected SchedulingAlgorithm createLegacySchedule(
 			int daytype, Date date, int daymask, int hour, int minute, long interval, int stopHour, int stopMinute) {
 		/* The bitmask is necessary as there is at least one other bit that is used as an
@@ -916,7 +917,8 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 			// to prevent conflicts with the commit of taskStarted.
 			return RetryResult.createSuccess(true);
 		}
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(com.top_logic.util.sched.task.I18NConstants.STOPPED_CLUSTER_TASK__TASK.fill(getName()));
 		try {
 			TaskLogWrapper logWrapper = (TaskLogWrapper) getLog();
 			logWrapper.touch();

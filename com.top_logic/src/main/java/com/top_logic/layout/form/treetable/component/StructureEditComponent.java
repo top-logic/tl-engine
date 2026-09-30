@@ -71,6 +71,7 @@ import com.top_logic.layout.compare.CompareAlgorithm;
 import com.top_logic.layout.compare.CompareAlgorithmHolder;
 import com.top_logic.layout.component.model.NoSelectionModel;
 import com.top_logic.layout.component.model.NoSingleSelectionModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormGroupAccessor;
@@ -966,7 +967,7 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
     }
 
     @Override
-	public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
+	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
         handleButtonExecutability();
     }
 
@@ -2087,7 +2088,7 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 
 		@Override
 		public void write(DisplayContext context, TagWriter out, Object value) throws IOException {
-			new SelectionPartControl(_selectionModel, value).write(context, out);
+			SelectionPartControl.createSelectionPartControl(_selectionModel, value).write(context, out);
 		}
 	}
 

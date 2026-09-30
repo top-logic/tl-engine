@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.search.expr;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
@@ -21,6 +22,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_NOT_A_DATE__VAL_EXPR;
 
 	public static ResKey2 ERROR_NOT_A_CALENDAR__VAL_EXPR;
+
+	/**
+	 * @en The value "{0}" is not a time zone, use a time zone id string (e.g. "Asia/Tokyo") or the
+	 *     time zone of a calendar in expression: {1}
+	 */
+	public static ResKey2 ERROR_NOT_A_TIME_ZONE__VAL_EXPR;
 
 	public static ResKey2 ERROR_NOT_A_TL_OBJECT__VAL_EXPR;
 
@@ -64,6 +71,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_NOT_A_RES_KEY__VALUE__EXPR;
 
 	/**
+	 * @en The value ''{0}'' in ''{1}'' is not an enumeration value.
+	 */
+	public static ResKey2 ERROR_NOT_AN_ENUM__VALUE__EXPR;
+
+	/**
 	 * @en Encoding value of expression {1} failed: {0}
 	 */
 	public static ResKey2 ENCODING_FAILED__MSG_EXPR;
@@ -73,7 +85,37 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_NOT_A_BINARY_VALUE__VAL_EXPR;
 
+	public static ResKey2 ERROR_INVALID_FORMAT_ID;
+
+	public static ResKey ERROR_EMPTY_FORMAT_ID;
+
+	/**
+	 * @en Operation not allowed in interactive context for non-admin users: {0}
+	 */
+	public static ResKey1 PERMISSION_DENIED__NAME;
+
+	/**
+	 * @en The user is not allowed to modify attribute {1} of object {0}.
+	 */
+	public static ResKey2 WRITE_PERMISSION_DENIED__OBJECT_ATTRIBUTE;
+
+	/**
+	 * @en The user is not allowed to create elements of type {0}.
+	 */
+	public static ResKey1 CREATE_PERMISSION_DENIED__TYPE;
+
+	/**
+	 * @en The user is not allowed to delete object {0}.
+	 */
+	public static ResKey1 DELETE_PERMISSION_DENIED__OBJECT;
+
+	/**
+	 * @en Invalid log level ''{0}'', expected one of: {1}
+	 */
+	public static ResKey2 ERROR_INVALID_LOG_LEVEL__VALUE_OPTIONS;
+
 	static {
 		initConstants(I18NConstants.class);
 	}
+
 }

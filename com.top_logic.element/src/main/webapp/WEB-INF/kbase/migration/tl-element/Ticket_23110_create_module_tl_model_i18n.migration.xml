@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_23110_create_module_tl_model_i18n"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_24085_layout_db_storage"
+			module="tl"
+		/>
+		<dependency name="Ticket_23128_added_icon_type"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor">
+	      <schema>
+	        <metaobject
+	          object_name="I18NAttributeStorage"
+	          super_class="Item"
+	        >
+	          <annotations>
+	            <annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+	              <implementation-factory class="com.top_logic.knowledge.service.db2.StaticKnowledgeObjectFactory"/>
+	            </annotation>
+	            <key-attributes attributes="object"/>
+	          </annotations>
+	          <reference
+	            att_name="object"
+	            branch-global="false"
+	            by-value="true"
+	            deletion-policy="delete-referer"
+	            history-type="current"
+	            is-container="false"
+	            mandatory="true"
+	            monomorphic="false"
+	            target-type="Object"
+	          />
+	          <reference
+	            att_name="metaAttribute"
+	            branch-global="false"
+	            by-value="true"
+	            deletion-policy="delete-referer"
+	            history-type="current"
+	            is-container="false"
+	            mandatory="true"
+	            monomorphic="true"
+	            target-type="MetaAttribute"
+	          />
+	          <mo_attribute
+	            att_name="lang"
+	            att_type="String"
+	            db_size="10"
+	            mandatory="true"
+	          />
+	          <mo_attribute
+	            att_name="value"
+	            att_type="String"
+	            db_size="1000000"
+	            db_type="clob"
+	            mandatory="false"
+	          />
+	        </metaobject>
+	      </schema>
+	    </processor>
+	
+	  <create-module name="tl.model.i18n"/>
+	  <create-datatype name="tl.model.i18n:I18NString"
+	    db_type="clob"
+	    kind="String"
+	  >
+	    <annotations>
+	      <config-type value="I18N_STRING"/>
+	      <storage-algorithm>
+	        <implementation class="com.top_logic.element.model.i18n.I18NAttributeStorage"/>
+	      </storage-algorithm>
+	    </annotations>
+	    <storage-mapping class="com.top_logic.element.model.i18n.I18NAttributeStorageMapping"/>
+	  </create-datatype>
+	</processors>
+</migration>

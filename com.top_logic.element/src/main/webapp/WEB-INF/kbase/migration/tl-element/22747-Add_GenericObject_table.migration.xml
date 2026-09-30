@@ -12,10 +12,17 @@
 			module="tl-element"
 		/>
 	</dependencies>
-	<migration>
-		<type-mapping/>
-		
-		<!-- TODO #22747: Add table-type for new table. -->
-
-	</migration>
+	<processors>
+	
+		<processor class="com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor">
+	      <schema>
+	        <metaobject
+	          object_name="GenericObject"
+	          object_type="MOKnowledgeObject"
+	          super_class="TLObject"
+	        />
+	      </schema>
+	    </processor>
+    	
+	</processors>
 </migration>

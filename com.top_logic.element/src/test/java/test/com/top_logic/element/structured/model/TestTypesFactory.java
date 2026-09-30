@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -25,6 +25,27 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 * Name of the structure <code>TestTypes</code> defined by {@link TestTypesFactory}.
 	 */
 	public static final String TEST_TYPES_STRUCTURE = "TestTypes";
+
+	/**
+	 * Lookup {@link CommonNode} type.
+	 */
+	public static com.top_logic.model.TLClass getCommonNodeType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(CommonNode.COMMON_NODE_TYPE);
+	}
+
+	/**
+	 * Lookup {@link CommonNode#CHILDREN_ATTR} of {@link CommonNode}.
+	 */
+	public static com.top_logic.model.TLReference getChildrenCommonNodeAttr() {
+		return (com.top_logic.model.TLReference) getCommonNodeType().getPart(CommonNode.CHILDREN_ATTR);
+	}
+
+	/**
+	 * Lookup {@link CommonNode#PARENT_ATTR} of {@link CommonNode}.
+	 */
+	public static com.top_logic.model.TLReference getParentCommonNodeAttr() {
+		return (com.top_logic.model.TLReference) getCommonNodeType().getPart(CommonNode.PARENT_ATTR);
+	}
 
 	/**
 	 * Lookup {@link A} type.
@@ -356,6 +377,55 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link ANode#COMPOSITE_ATTR} of {@link ANode}.
+	 */
+	public static com.top_logic.model.TLReference getCompositeANodeAttr() {
+		return (com.top_logic.model.TLReference) getANodeType().getPart(ANode.COMPOSITE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ANode#COMPOSITE1_ATTR} of {@link ANode}.
+	 */
+	public static com.top_logic.model.TLReference getComposite1ANodeAttr() {
+		return (com.top_logic.model.TLReference) getANodeType().getPart(ANode.COMPOSITE1_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ANode#COMPOSITE2_ATTR} of {@link ANode}.
+	 */
+	public static com.top_logic.model.TLReference getComposite2ANodeAttr() {
+		return (com.top_logic.model.TLReference) getANodeType().getPart(ANode.COMPOSITE2_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ANode#COMPOSITE_LIST1_ATTR} of {@link ANode}.
+	 */
+	public static com.top_logic.model.TLReference getCompositeList1ANodeAttr() {
+		return (com.top_logic.model.TLReference) getANodeType().getPart(ANode.COMPOSITE_LIST1_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ANode#COMPOSITE_LIST2_ATTR} of {@link ANode}.
+	 */
+	public static com.top_logic.model.TLReference getCompositeList2ANodeAttr() {
+		return (com.top_logic.model.TLReference) getANodeType().getPart(ANode.COMPOSITE_LIST2_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ANode#COMPOSITE_SET1_ATTR} of {@link ANode}.
+	 */
+	public static com.top_logic.model.TLReference getCompositeSet1ANodeAttr() {
+		return (com.top_logic.model.TLReference) getANodeType().getPart(ANode.COMPOSITE_SET1_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ANode#COMPOSITE_SET2_ATTR} of {@link ANode}.
+	 */
+	public static com.top_logic.model.TLReference getCompositeSet2ANodeAttr() {
+		return (com.top_logic.model.TLReference) getANodeType().getPart(ANode.COMPOSITE_SET2_ATTR);
+	}
+
+	/**
 	 * Lookup {@link ANode#NAME_ATTR} of {@link ANode}.
 	 */
 	public static com.top_logic.model.TLProperty getNameANodeAttr() {
@@ -447,6 +517,84 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link Part} type.
+	 */
+	public static com.top_logic.model.TLClass getPartType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(Part.PART_TYPE);
+	}
+
+	/**
+	 * Lookup {@link Part#NAME_ATTR} of {@link Part}.
+	 */
+	public static com.top_logic.model.TLProperty getNamePartAttr() {
+		return (com.top_logic.model.TLProperty) getPartType().getPart(Part.NAME_ATTR);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest} type.
+	 */
+	public static com.top_logic.model.TLClass getPreloadTestType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(PreloadTest.PRELOAD_TEST_TYPE);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest#COMPOSITE_LIST_ATTR} of {@link PreloadTest}.
+	 */
+	public static com.top_logic.model.TLReference getCompositeListPreloadTestAttr() {
+		return (com.top_logic.model.TLReference) getPreloadTestType().getPart(PreloadTest.COMPOSITE_LIST_ATTR);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest#COMPOSITE_SET_ATTR} of {@link PreloadTest}.
+	 */
+	public static com.top_logic.model.TLReference getCompositeSetPreloadTestAttr() {
+		return (com.top_logic.model.TLReference) getPreloadTestType().getPart(PreloadTest.COMPOSITE_SET_ATTR);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest#INLINE_ATTR} of {@link PreloadTest}.
+	 */
+	public static com.top_logic.model.TLReference getInlinePreloadTestAttr() {
+		return (com.top_logic.model.TLReference) getPreloadTestType().getPart(PreloadTest.INLINE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest#INLINE_REVERSE_ATTR} of {@link PreloadTest}.
+	 */
+	public static com.top_logic.model.TLReference getInlineReversePreloadTestAttr() {
+		return (com.top_logic.model.TLReference) getPreloadTestType().getPart(PreloadTest.INLINE_REVERSE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest#LINK_LIST_ATTR} of {@link PreloadTest}.
+	 */
+	public static com.top_logic.model.TLReference getLinkListPreloadTestAttr() {
+		return (com.top_logic.model.TLReference) getPreloadTestType().getPart(PreloadTest.LINK_LIST_ATTR);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest#LINK_SET_ATTR} of {@link PreloadTest}.
+	 */
+	public static com.top_logic.model.TLReference getLinkSetPreloadTestAttr() {
+		return (com.top_logic.model.TLReference) getPreloadTestType().getPart(PreloadTest.LINK_SET_ATTR);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest#SINGLETON_LINK_ATTR} of {@link PreloadTest}.
+	 */
+	public static com.top_logic.model.TLReference getSingletonLinkPreloadTestAttr() {
+		return (com.top_logic.model.TLReference) getPreloadTestType().getPart(PreloadTest.SINGLETON_LINK_ATTR);
+	}
+
+	/**
+	 * Name of type <code>CommonNode</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * 
+	 * @deprecated Use {@link CommonNode#COMMON_NODE_TYPE}.
+	 */
+	@Deprecated
+	public static final String COMMON_NODE_NODE = CommonNode.COMMON_NODE_TYPE;
+
+	/**
 	 * Name of type <code>A</code> in structure {@link #TEST_TYPES_STRUCTURE}.
 	 * 
 	 * @deprecated Use {@link A#A_TYPE}.
@@ -473,7 +621,7 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	/**
 	 * Storage table name of {@link #A_NODE_NODE} objects.
 	 */
-	public static final String KO_NAME_A_NODE = "StructuredElement";
+	public static final String KO_NAME_A_NODE = "AElement";
 
 	/**
 	 * Name of type <code>BNode</code> in structure {@link #TEST_TYPES_STRUCTURE}.
@@ -529,6 +677,32 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	@Deprecated
 	public static final String B_NODE_CHILD_NODE = BNodeChild.B_NODE_CHILD_TYPE;
+
+	/**
+	 * Name of type <code>Part</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * 
+	 * @deprecated Use {@link Part#PART_TYPE}.
+	 */
+	@Deprecated
+	public static final String PART_NODE = Part.PART_TYPE;
+
+	/**
+	 * Storage table name of {@link #PART_NODE} objects.
+	 */
+	public static final String KO_NAME_PART = "CompositePart";
+
+	/**
+	 * Name of type <code>PreloadTest</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * 
+	 * @deprecated Use {@link PreloadTest#PRELOAD_TEST_TYPE}.
+	 */
+	@Deprecated
+	public static final String PRELOAD_TEST_NODE = PreloadTest.PRELOAD_TEST_TYPE;
+
+	/**
+	 * Storage table name of {@link #PRELOAD_TEST_NODE} objects.
+	 */
+	public static final String KO_NAME_PRELOAD_TEST = "PreloadTest";
 
 	/**
 	 * Singleton <code>ROOT</code>.
@@ -606,6 +780,34 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public final CContent createCContent() {
 		return createCContent(null);
+	}
+
+	/**
+	 * Create an instance of {@link Part} type.
+	 */
+	public final Part createPart(com.top_logic.model.TLObject context) {
+		return (Part) createObject(getPartType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link Part} type.
+	 */
+	public final Part createPart() {
+		return createPart(null);
+	}
+
+	/**
+	 * Create an instance of {@link PreloadTest} type.
+	 */
+	public final PreloadTest createPreloadTest(com.top_logic.model.TLObject context) {
+		return (PreloadTest) createObject(getPreloadTestType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link PreloadTest} type.
+	 */
+	public final PreloadTest createPreloadTest() {
+		return createPreloadTest(null);
 	}
 
 	/**

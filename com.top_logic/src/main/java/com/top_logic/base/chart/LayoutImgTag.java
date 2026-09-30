@@ -8,8 +8,8 @@ package com.top_logic.base.chart;
 import java.awt.Dimension;
 import java.io.IOException;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;

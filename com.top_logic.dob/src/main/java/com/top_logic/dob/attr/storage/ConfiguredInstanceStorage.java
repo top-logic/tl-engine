@@ -111,7 +111,9 @@ public class ConfiguredInstanceStorage extends DBAttributeStorageImpl
 
 		try {
 			StringWriter buffer = new StringWriter();
-			new ConfigurationWriter(buffer).write(CONFIG_TAG, PolymorphicConfiguration.class, config);
+			try (ConfigurationWriter w = new ConfigurationWriter(buffer)) {
+				w.write(CONFIG_TAG, PolymorphicConfiguration.class, config);
+			}
 			return buffer.toString();
 		} catch (XMLStreamException ex) {
 			throw new IllegalArgumentException("Value cannot be serialized.", ex);

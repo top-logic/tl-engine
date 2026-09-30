@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamException;
@@ -202,6 +203,11 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 	}
 
 	@Override
+	public void getProperty(ImportPart handler, Object obj, String name, Consumer<Object> continuation) {
+		deref(obj, x -> internalGetProperty(handler, x, name, continuation));
+	}
+
+	@Override
 	public void setReference(ImportPart handler, Object obj, String name, Object value) {
 		deref(obj, x -> deref(value, y -> internalSetReference(handler, x, name, y)));
 	}
@@ -317,6 +323,15 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 		} catch (RuntimeException ex) {
 			error(location(), I18NConstants.ERROR_SETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_VALUE_MESSAGE.fill(handler,
 				obj, name, value, ex.getMessage()), ex);
+		}
+	}
+
+	private void internalGetProperty(ImportPart handler, Object obj, String name, Consumer<Object> continuation) {
+		try {
+			_binding.getProperty(handler, obj, name, continuation);
+		} catch (RuntimeException ex) {
+			error(location(), I18NConstants.ERROR_GETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_MESSAGE.fill(handler,
+				obj, name, ex.getMessage()), ex);
 		}
 	}
 

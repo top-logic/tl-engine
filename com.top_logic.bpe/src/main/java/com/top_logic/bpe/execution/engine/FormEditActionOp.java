@@ -8,6 +8,9 @@ package com.top_logic.bpe.execution.engine;
 import com.top_logic.base.config.i18n.InternationalizedUtil;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.bpe.bpml.display.ProcessFormDefinition;
+import com.top_logic.bpe.bpml.display.SpecializedForm;
+import com.top_logic.bpe.bpml.display.SpecializedForm.Config;
 import com.top_logic.bpe.bpml.model.ManualTask;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -35,8 +38,12 @@ public class FormEditActionOp extends AbstractApplicationActionOp<FormEditAction
 		ManualTask manualTask = getManualTask(context);
 		FormDefinition formDefinition = InternationalizedUtil.storeI18N(copyFormDefinition());
 
-		try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			manualTask.setDisplayDescription(formDefinition);
+		try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			ProcessFormDefinition form = TypedConfiguration.newConfigItem(ProcessFormDefinition.class);
+			Config<?> specializedForm = TypedConfiguration.newConfigItem(SpecializedForm.Config.class);
+			specializedForm.setForm(formDefinition);
+			form.setFormProvider(specializedForm);
+			manualTask.setFormDefinition(form);
 			transaction.commit();
 		}
 		return argument;

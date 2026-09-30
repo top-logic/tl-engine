@@ -28,6 +28,7 @@ import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.control.ValueDisplayControl.ValueDisplay;
 import com.top_logic.layout.form.model.FormFactory;
@@ -38,7 +39,6 @@ import com.top_logic.layout.form.values.edit.FormBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.form.implementation.FormEditorContext;
@@ -152,6 +152,9 @@ public class CreateFormBuilder extends ConfiguredDynamicFormBuilder {
 	@Override
 	public Object getModel(Object businessModel, LayoutComponent component) {
 		AttributeFormContext formContext = new AttributeFormContext(component.getResPrefix());
+		formContext.set(TOP_LEVEL_OBJECT, null);
+
+		FormComponent.initFormContext(component, (FormHandler) component, formContext);
 
 		FormField typeField = createTypeField(businessModel);
 		typeField.addValueListener((FormField field, Object oldValue, Object newValue) -> onTypeChange(field, oldValue,
@@ -294,11 +297,6 @@ public class CreateFormBuilder extends ConfiguredDynamicFormBuilder {
 				newCreation.tUpdate(part, existingValue);
 			}
 		}
-	}
-
-	@Override
-	public TLStructuredType getType(FormComponent form, TLObject object) {
-		return (TLStructuredType) form.getFormContext().getField(CreateFormBuilder.TYPE_IMAGE_FIELD).getValue();
 	}
 
 	@Override

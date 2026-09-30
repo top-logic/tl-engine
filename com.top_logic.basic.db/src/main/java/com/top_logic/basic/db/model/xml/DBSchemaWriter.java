@@ -36,9 +36,10 @@ public class DBSchemaWriter {
 	 *         If writing fails.
 	 */
 	public static void writeSchema(XMLStreamWriter writer, DBSchema model) throws XMLStreamException {
-		ConfigurationWriter out = new ConfigurationWriter(writer);
-		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(DBSchema.class);
-		out.write(DBSchema.SCHEMA_ELEMENT, descriptor, model);
+		try (ConfigurationWriter out = new ConfigurationWriter(writer, false)) {
+			ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(DBSchema.class);
+			out.write(DBSchema.SCHEMA_ELEMENT, descriptor, model);
+		}
 	}
 	
 }

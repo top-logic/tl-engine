@@ -19,16 +19,20 @@ ace.define('ace/mode/tlscript', function(require, exports, module) {
 				
 				var line = session.getLine(pos.row);
 				var prefixLine = line.substring(0, pos.column);
-				
+
+				var fullText = session.getValue();
+				var cursorOffset = session.doc.positionToIndex(pos);
+				var textToCursor = fullText.substring(0, cursorOffset);
+
 				// Delegates the computation of suggestions to the server.
-				services.ajax.execute('dispatchControlCommand', {controlCommand: 'tlScriptAutoCompletion', controlID: controlID, prefix: prefix, line: prefixLine });
+				services.ajax.execute('dispatchControlCommand', {controlCommand: 'tlScriptAutoCompletion', controlID: controlID, prefix: prefix, line: prefixLine, textToCursor: textToCursor });
 			},
 			
 			/**
 			 * Regular expression for an identifier deciding if completions should be computed and shown.
 			 */
 			identifierRegexps: [
-				/[a-zA-Z0-9$]+/
+				/[a-zA-Z0-9_$]+/
 			]
 	};
 	
@@ -141,13 +145,13 @@ ace.define('ace/mode/tlscript_highlight_rules', function(require, exports, modul
 					// Single quoted strings
 					// 'text'
 					token: "string.single",
-					regex: /'\w*'/
+					regex: /'(?:[^'\\]|\\.)*'/
 				},
 				{
 					// Double quoted strings
 					// "text"
 					token: "string.single",
-					regex: /"\w*"/
+					regex: /"(?:[^"\\]|\\.)*"/
 				},
 				{
 					// Arithmetic operators

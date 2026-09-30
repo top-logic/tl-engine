@@ -14,6 +14,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.util.ConstraintCheck;
@@ -35,6 +36,8 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 	private final QueryExecutor _check;
 
 	private final ScriptTracer _checkAnalyzer;
+
+	private ConstraintType _type;
 
 	/**
 	 * Configuration options for {@link ConstraintCheckByExpression}.
@@ -63,6 +66,12 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 		 */
 		Expr getCheck();
 
+		/**
+		 * The type of constraint to decide whether it should be reported as an error and saving
+		 * should be prevented, or only a warning should be displayed in the GUI.
+		 */
+		ConstraintType getType();
+
 	}
 
 	/**
@@ -79,6 +88,21 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 
 		_check = QueryExecutor.compile(config.getCheck());
 		_checkAnalyzer = ScriptTracer.compile(model(), config.getCheck());
+		disableSecurity();
+		_type = config.getType();
+	}
+
+	/**
+	 * Disables security for the scripts.
+	 * 
+	 * <p>
+	 * For example, if an object's name must be unique, it must be unique across all objects, not
+	 * just among the objects that user is allowed to see.
+	 * </p>
+	 */
+	private void disableSecurity() {
+		_check.disableSecurity();
+		_checkAnalyzer.disableSecurity();
 	}
 
 	private static TLModel model() {
@@ -91,8 +115,9 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 	}
 
 	@Override
-	public void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace) {
-		_checkAnalyzer.execute(trace, object.tValue(attribute), object);
+	public void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
+			OverlayLookup overlays) {
+		_checkAnalyzer.execute(trace, overlays, object.tValue(attribute), object);
 	}
 
 	private static ResKey toResKey(Object result) {
@@ -107,6 +132,11 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 		} else {
 			return I18NConstants.ERROR_INVALID_VALUE;
 		}
+	}
+
+	@Override
+	public ConstraintType type() {
+		return _type;
 	}
 
 }

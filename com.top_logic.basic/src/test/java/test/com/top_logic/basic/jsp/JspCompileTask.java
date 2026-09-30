@@ -182,11 +182,7 @@ class JspCompileTask {
 					}
 				} catch (Throwable ex) {
 					synchronized (lock) {
-						if (ex instanceof ThreadDeath) {
-							reportFailure("Sudden death of waiting thread.", ex);
-						} else {
-							reportFailure("Problem waiting for compiler.", ex);
-						}
+						reportFailure("Problem waiting for compiler.", ex);
 					}
 				} finally {
 					synchronized (lock) {

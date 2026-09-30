@@ -19,7 +19,7 @@
 				name="${namePrefix}Selector"
 				page="/jsp/demo/reporting/flex/demoChartSelector.jsp"
 				resPrefix="${resPrefix}Selector."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				target="${namePrefix}Settings"
 			>
 				<layoutInfo size="200px"/>
@@ -53,7 +53,7 @@
 						master="${namePrefix}Settings"
 						namePrefix="${namePrefix}Chart"
 						objectType="me:DemoTypes.A"
-						securityProvider="securityRoot"
+						securityObject="securityRoot"
 					/>
 				</components>
 			</layout>

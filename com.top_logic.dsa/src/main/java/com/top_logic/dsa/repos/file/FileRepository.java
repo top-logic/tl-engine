@@ -17,14 +17,14 @@ import com.top_logic.dsa.repos.RepositoryInfo;
 /**
  * File based implementation of a repository.
  * 
- * @author    <a href="mailto:Michael Gänsler@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:Michael GÃ¤nsler@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class FileRepository<C extends FileContainerObject, L extends FileLeafObject> extends AbstractRepository<C, L> {
 
 	/**
 	 * Configuration of {@link FileRepository}.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config<I extends FileRepository<?, ?>> extends AbstractRepository.Config<I> {
 		// Nothing in here...

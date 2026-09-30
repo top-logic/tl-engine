@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="X05_Ticket_26702_fix_spelling_of_attachment"
+		module="tl-mail"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28073_unversioned_model"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_26970_Update_stored_table_definition"
+			module="tl-mail"
+		/>
+	</dependencies>
+	<processors>
+		<alter-column
+			table="Mail"
+			column="attachements"
+			new-name="attachments"
+		/>
+		<update-property
+			name="tl.mail:Mail#attachements"
+			new-name="tl.mail:Mail#attachments"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

@@ -9,5 +9,7 @@
 			module="tl"
 		/>
 	</dependencies>
-	<migration force-replay="true"/>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.migration._23376.Ticket23376UpdateReferenceIdColumns"/>
+	</processors>
 </migration>

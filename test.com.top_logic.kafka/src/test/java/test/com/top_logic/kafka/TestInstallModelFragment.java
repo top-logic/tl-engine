@@ -19,7 +19,7 @@ import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.element.config.DefinitionReader;
 import com.top_logic.element.config.ModelConfig;
 import com.top_logic.element.model.DynamicModelService;
-import com.top_logic.kafka.knowledge.service.KafkaExportImportConfiguration;
+import com.top_logic.kafka.sync.knowledge.service.KafkaExportImportConfiguration;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.util.model.ModelService;
@@ -33,7 +33,7 @@ import com.top_logic.util.model.ModelService;
 public class TestInstallModelFragment extends BasicTestCase {
 
 	public void testInstallFragment() {
-		try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			DynamicModelService.getInstance().installFragment(readFragmentConfig());
 			transaction.commit();
 		}

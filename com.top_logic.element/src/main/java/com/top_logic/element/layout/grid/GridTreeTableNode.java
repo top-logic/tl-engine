@@ -11,7 +11,7 @@ import java.util.Objects;
 
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.layout.form.model.FormGroup;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -57,7 +57,7 @@ public class GridTreeTableNode extends AbstractTreeTableNode<GridTreeTableNode> 
 	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 	 */
 	public static class GridTreeTableNodeNaming extends
-			AbstractModelNamingScheme<GridTreeTableNode, GridTreeTableNodeNaming.GridNodeName> {
+			AbstractGlobalModelNamingScheme<GridTreeTableNode, GridTreeTableNodeNaming.GridNodeName> {
 
 		/**
 		 * {@link ModelName} of {@link GridTreeTableNode}s.

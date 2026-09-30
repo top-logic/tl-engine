@@ -5,9 +5,11 @@
  */
 package com.top_logic.element.layout.meta;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey5;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.model.TLClass;
@@ -33,9 +35,11 @@ public class I18NConstants extends I18NConstantsBase {
 	/** Configuration has unexpected configuration interface. */
 	public static ResKey2 CONFIGURATION_OF_UNEXPECTED_TYPE__EXPECTED_ACTUAL;
 
-	public static ResKey DELETE_PROTECTED = legacyKey("element.meta.attribute.edit.attRemove.disabled.deleteProtected");
+	@CustomKey("element.meta.attribute.edit.attRemove.disabled.deleteProtected")
+	public static ResKey DELETE_PROTECTED;
 
-	public static ResKey TOOLTIP = legacyKey("tl.type.tooltip");
+	@CustomKey("tl.type.tooltip")
+	public static ResKey TOOLTIP;
 
 	public static ResKey1 I18N_NAME_COLUMN__LOCALE;
 
@@ -68,6 +72,23 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en A type part with name ''{0}'' already exists in the generalization ''{1}''.
 	 */
 	public static ResKey2 ERROR_PART_WITH_NAME_EXISTS__NAME_GENERALIZATION;
+
+	/**
+	 * @en Created global display description.
+	 */
+	public static ResKey CREATE_GLOBAL_DISPLAY_DESCRIPTION;
+
+	/**
+	 * @en Deleted global display description.
+	 */
+	public static ResKey DELETE_GLOBAL_DISPLAY_DESCRIPTION;
+
+	/**
+	 * @en A type part with name ''{0}'' exists already in ''{1}'' (definition in ''{2}'') and
+	 *     ''{3}'' (definition in ''{4}''). It is not possible to have two different attributes with
+	 *     the same name.
+	 */
+	public static ResKey5 ERROR_CONFLICTING_ATTRIBUTE__NAME_TYPE1_DEFINITION1_TYPE2_DEFINITION2;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -14,13 +14,13 @@ import com.top_logic.layout.form.constraints.URLConstraint;
 /**
  * Create field for an URL.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class URLFieldProvider extends StringFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
-		FormMember field = super.getFormField(editContext, fieldName);
+	public FormMember createFormField(EditContext editContext, String fieldName) {
+		FormMember field = super.createFormField(editContext, fieldName);
 		field.setControlProvider(new URLControlProvider());
 		return field;
 	}

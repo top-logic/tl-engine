@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Control;
@@ -17,6 +16,8 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.WrappedModel;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.component.model.MultiSelectionEvent;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ImageButtonRenderer;
@@ -334,9 +335,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 		}
 
 		// Ensure initial  consistency.
-		SelectionModel selectionModel = getSelectionModel();
-		_selectionListener.notifySelectionChanged(selectionModel, selectionModel.getSelection(),
-			Collections.emptySet());
+		notifyRowMoved();
 
 		requestRepaint();
 	}
@@ -399,7 +398,8 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 		selectionModel.addSelectionListener(_selectionListener);
         
         // Ensure initial consistency.
-		_selectionListener.notifySelectionChanged(selectionModel, selectionModel.getSelection(), Collections.emptySet());
+		_selectionListener.notifySelectionChanged(selectionModel,
+			new MultiSelectionEvent(selectionModel, Collections.emptySet(), selectionModel.getSelection()));
 	}
 
 	@Override
@@ -409,6 +409,19 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 		getSelectionModel().removeSelectionListener(_selectionListener);
 	}
 	
+	/**
+	 * Triggers a selection changed notification, to use when a row was moved.
+	 * 
+	 * This is necessary because when moving a row the selection index changes but not the selected
+	 * object. Thus no notify is triggered when moving a row. Therefore it has to be triggered
+	 * manually.
+	 */
+	public void notifyRowMoved() {
+		SelectionModel selectionModel = getSelectionModel();
+		_selectionListener.notifySelectionChanged(selectionModel,
+			new MultiSelectionEvent(selectionModel, Collections.emptySet(), selectionModel.getSelection()));
+	}
+
 	/**
 	 * Removes the selected row. 
 	 */
@@ -475,6 +488,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 			// Execute the move.
 			applicationModel.moveRowToTop(viewModel.getApplicationModelRow(theRowID));
 			TableUtil.selectRow(table.getTableData(), 0);
+			((EditableTableControl) table).notifyRowMoved();
 			return HandlerResult.DEFAULT_RESULT;
 		}
 		
@@ -515,6 +529,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 				theRowID = (theRowID - 1 >= 0) ? (theRowID - 1) : 0;
 				TableUtil.selectRow(table.getTableData(), theRowID);
 			}
+			((EditableTableControl) table).notifyRowMoved();
             return HandlerResult.DEFAULT_RESULT;
 		}
 		
@@ -555,6 +570,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 				theRowID = ((theRowID + 1) < theMax) ? (theRowID + 1) : theRowID;
 				TableUtil.selectRow(table.getTableData(), theRowID);
 			}
+			((EditableTableControl) table).notifyRowMoved();
             return HandlerResult.DEFAULT_RESULT;
 		}
 		
@@ -592,6 +608,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 			// Execute the move.
 			applicationModel.moveRowToBottom(viewModel.getApplicationModelRow(theRowID));
 			TableUtil.selectRow(table.getTableData(), viewModel.getRowCount() - 1);
+			((EditableTableControl) table).notifyRowMoved();
 			return HandlerResult.DEFAULT_RESULT;
 		}
 		
@@ -632,7 +649,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 	class SelectionListener implements com.top_logic.layout.component.model.SelectionListener {
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			TableViewModel theViewModel = getViewModel();
 			int rowCount = theViewModel.getRowCount();
 			int selected = TableUtil.getSingleSelectedRow(getModel());

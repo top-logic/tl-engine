@@ -14,8 +14,8 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.StorageException;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -23,7 +23,7 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
 /**
  * Session local computation for roles assigned to a single person.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class RoleComputation {
 
@@ -31,15 +31,27 @@ public abstract class RoleComputation {
 
 	private final StorageAccessManager _accessManager;
 
+	private final Person _person;
+
 	/**
 	 * Creates a new {@link RoleComputation}.
-	 * 
+	 *
+	 * @param person
+	 *        The {@link Person} this computation is created for.
 	 * @param accessManager
 	 *        The {@link StorageAccessManager} creating this computation.
 	 */
-	public RoleComputation(StorageAccessManager accessManager) {
+	public RoleComputation(Person person, StorageAccessManager accessManager) {
+		_person = person;
 		_accessManager = accessManager;
 		_storage = accessManager.getSecurityStorage();
+	}
+
+	/**
+	 * The {@link Person} this computation was created for.
+	 */
+	public final Person getPerson() {
+		return _person;
 	}
 
 	/**
@@ -52,18 +64,19 @@ public abstract class RoleComputation {
 	 * 
 	 * @return <code>true</code> when the used has at least one of the roles.
 	 */
-	public abstract boolean hasRole(BoundObject boundObject, Collection<BoundedRole> someRoles);
+	public abstract boolean hasRole(BoundObject boundObject, Collection<? extends BoundRole> someRoles);
 
 	/**
 	 * Checks whether one of the given groups has one of the given roles on one of the given
 	 * business objects.
 	 */
-	protected boolean hasRole(BoundObject boundObject, Collection<BoundedRole> someRoles, Collection<TLID> groupIDs)
+	protected boolean hasRole(BoundObject boundObject, Collection<? extends BoundRole> someRoles,
+			Collection<TLID> groupIDs)
 			throws StorageException {
 		if (CollectionUtil.isEmptyOrNull(someRoles)) {
 			return false;
 		}
-		Collection<TLID> roleIDs = AbstractWrapper.idSet(someRoles);
+		Collection<TLID> roleIDs = idSet(someRoles);
 		return _storage.hasRole(groupIDs, getSecurityParentIDs(boundObject), roleIDs);
 	}
 
@@ -80,7 +93,7 @@ public abstract class RoleComputation {
 	/**
 	 * Find the roles the given groups on the given business object.
 	 */
-	protected List<BoundedRole> findRolesInStorage(BoundObject boundObject, List<TLID> groupIDs)
+	protected List<? extends BoundRole> findRolesInStorage(BoundObject boundObject, List<TLID> groupIDs)
 			throws StorageException {
 		return _storage.getRoles(groupIDs, getSecurityParentIDs(boundObject));
 	}
@@ -95,17 +108,19 @@ public abstract class RoleComputation {
 	 * @return A collection containing only the allowed BoundObjects of the given collection
 	 *         someObjects, may be empty but not <code>null</code>.
 	 */
-	public abstract <T extends BoundObject> Collection<T> getAllowedBusinessObjects(Collection<BoundedRole> someRoles,
+	public abstract <T extends BoundObject> Collection<T> getAllowedBusinessObjects(
+			Collection<? extends BoundRole> someRoles,
 			Collection<T> someObjects);
 
 	/**
 	 * Checks the given collection and returns only these objects, on which the given groups has one
 	 * of the given roles.
 	 */
-	protected <T extends BoundObject> Collection<T> findAllowedBusinessObjects(Collection<BoundedRole> someRoles,
+	protected <T extends BoundObject> Collection<T> findAllowedBusinessObjects(
+			Collection<? extends BoundRole> someRoles,
 			List<TLID> groupIDs, Collection<T> someObjects) throws StorageException {
 		List<T> theResult = new ArrayList<>(someObjects.size());
-		Collection<TLID> theRoleIDs = AbstractWrapper.idSet(someRoles);
+		Collection<TLID> theRoleIDs = idSet(someRoles);
 		Collection<TLID> allowedObjectIDs;
 		if (dontUseInStatementQuery(someRoles, someObjects)) {
 			allowedObjectIDs = _storage.getBusinessObjectIds(groupIDs, theRoleIDs);
@@ -115,16 +130,30 @@ public abstract class RoleComputation {
 		}
 		Collection<?> checkIDs = CollectionUtil.toContainsChecker(someObjects.size(), allowedObjectIDs);
 		for (T bo : someObjects) {
-			BoundObject potentiallyAllowedObject = bo;
-			while (potentiallyAllowedObject != null) {
-				if (checkIDs.contains(potentiallyAllowedObject.getID())) {
-					theResult.add(bo);
-					break;
-				}
-				potentiallyAllowedObject = potentiallyAllowedObject.getSecurityParent();
+			if (checkIDs.contains(bo.getID())) {
+				theResult.add(bo);
+			} else {
+				// Check securityParents
+				BoundHelper.visitAllSecurityParents(bo, secParent -> {
+					if (checkIDs.contains(secParent.getID())) {
+						theResult.add(bo);
+						return false;
+					}
+					return true;
+				});
 			}
 		}
 		return theResult;
+	}
+
+	private static Collection<TLID> idSet(Collection<? extends BoundRole> someRoles) {
+		ArrayList<TLID> result = new ArrayList<>();
+		for (BoundRole role : someRoles) {
+			if (role instanceof BoundedRole withId) {
+				result.add(withId.tIdLocal());
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -136,7 +165,7 @@ public abstract class RoleComputation {
 	 * @return <code>true</code>, if no in-statement-query should be used, <code>false</code>
 	 *         otherwise.
 	 */
-	protected boolean dontUseInStatementQuery(Collection<BoundedRole> someRoles,
+	protected boolean dontUseInStatementQuery(Collection<? extends BoundRole> someRoles,
 			Collection<? extends BoundObject> someObjects) {
 		return someObjects.size() > 256; // This number was selected arbitrary...
 	}

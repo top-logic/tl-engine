@@ -29,7 +29,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Editor for {@link TLProperty}s
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLPropertyFormBuilder extends TLStructuredTypePartFormBuilder {
 
@@ -47,6 +47,7 @@ public class TLPropertyFormBuilder extends TLStructuredTypePartFormBuilder {
 		PropertyModel.MULTIPLE_PROPERTY,
 		PropertyModel.ORDERED_PROPERTY,
 		PropertyModel.BAG_PROPERTY,
+		PropertyModel.ABSTRACT_PROPERTY,
 
 		PropertyModel.LABEL,
 		PropertyModel.DESCRIPTION,
@@ -95,7 +96,7 @@ public class TLPropertyFormBuilder extends TLStructuredTypePartFormBuilder {
 	/**
 	 * @see TLStructuredTypePartFormBuilder.EditModel
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface EditModel extends TLStructuredTypePartFormBuilder.EditModel {
 

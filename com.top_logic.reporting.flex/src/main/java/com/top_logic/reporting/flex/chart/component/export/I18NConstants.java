@@ -5,6 +5,7 @@
  */
 package com.top_logic.reporting.flex.chart.component.export;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -14,13 +15,17 @@ import com.top_logic.layout.I18NConstantsBase;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey DATE_LABEL = legacyKey("reporting.chart.export.date.label");
+	@CustomKey("reporting.chart.export.date.label")
+	public static ResKey DATE_LABEL;
 
-	public static ResKey TITLE_LABEL = legacyKey("reporting.chart.export.title.label");
+	@CustomKey("reporting.chart.export.title.label")
+	public static ResKey TITLE_LABEL;
 
-	public static ResKey USER_LABEL = legacyKey("reporting.chart.export.user.label");
+	@CustomKey("reporting.chart.export.user.label")
+	public static ResKey USER_LABEL;
 
-	public static ResKey INDEX_COLUMN = legacyKey("SlideReplacer.table.rowIndex");
+	@CustomKey("SlideReplacer.table.rowIndex")
+	public static ResKey INDEX_COLUMN;
 	
 	public static ResKey DOWNLOAD_FILE_NAME;
 

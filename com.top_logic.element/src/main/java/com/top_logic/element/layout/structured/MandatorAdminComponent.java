@@ -7,13 +7,11 @@ package com.top_logic.element.layout.structured;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.col.TupleFactory.Tuple;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
@@ -39,6 +37,7 @@ import com.top_logic.layout.form.model.HiddenField;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.Visibility;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
@@ -80,11 +79,6 @@ public class MandatorAdminComponent extends AdminElementComponent {
 
         this.minIDLength = someAttrs.getMinIDLength();
         this.maxIDLength = someAttrs.getMaxIDLength();
-    }
-    
-    @Override
-	protected Map<Tuple, Boolean> createAllowCache() {
-		return new HashMap<>(64);
     }
     
     @Override
@@ -247,7 +241,7 @@ public class MandatorAdminComponent extends AdminElementComponent {
         }
         
         @Override
-		protected Map<String,Object> extractValues(FormContainer formContainer, Wrapper aAnAttributed) {
+		protected Map<String, Object> extractValues(FormContainer formContainer, TLObject aAnAttributed) {
             Map<String,Object> theMap = super.extractValues(formContainer, aAnAttributed);
             
             theMap.put(NewMandatorComponent.PARENT_MANDATOR, formContainer.getField(NewMandatorComponent.PARENT_MANDATOR).getValue());

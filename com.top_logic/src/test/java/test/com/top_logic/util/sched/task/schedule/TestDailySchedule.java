@@ -61,12 +61,23 @@ public class TestDailySchedule extends ScheduleTestsCommon {
 		DailySchedule<?> schedule = createDailySchedule(6, 30);
 		assertNextSchedule(schedule, calendar(6, 30), NO_LAST_SCHEDULE, calendar(6, 30));
 		assertNextSchedule(schedule, calendar(6, 29), Maybe.some(calendar(6, 30)), nextDay(calendar(6, 30)));
+
+		schedule = createDailySchedule(6, 30, 3);
+		assertNextSchedule(schedule, calendar(6, 30), NO_LAST_SCHEDULE, calendar(6, 30));
+		assertNextSchedule(schedule, calendar(6, 29), Maybe.some(calendar(6, 30)),
+			nextDay(nextDay(nextDay(calendar(6, 30)))));
+	}
+
+	private DailySchedule<?> createDailySchedule(int hour, int minute, int period) {
+		DailySchedule.Config<?> config = createConfig(DailySchedule.Config.class);
+		setProperty(config, DailySchedule.Config.PROPERTY_NAME_TIME_OF_DAY, timeOfDay(hour, minute));
+		setProperty(config, DailySchedule.Config.PROPERTY_NAME_PERIOD, period);
+
+		return createInstance(config);
 	}
 
 	private DailySchedule<?> createDailySchedule(int hour, int minute) {
-		DailySchedule.Config<?> config = createConfig(DailySchedule.Config.class);
-		setProperty(config, DailySchedule.Config.PROPERTY_NAME_TIME_OF_DAY, timeOfDay(hour, minute));
-		return createInstance(config);
+		return createDailySchedule(hour, minute, 1);
 	}
 
 	/**

@@ -21,15 +21,17 @@ import java.util.concurrent.TimeoutException;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.Suspendable;
 
 /**
- * Service providing a singleton {@link ScheduledExecutorService}.
- * 
+ * Service providing a shared scheduler for executing tasks in the background.
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Scheduler service")
 public class SchedulerService extends ConfiguredManagedClass<SchedulerService.Config>
 		implements ScheduledExecutorService, Suspendable {
 
@@ -191,8 +193,6 @@ public class SchedulerService extends ConfiguredManagedClass<SchedulerService.Co
 				}
 				try {
 					command.run();
-				} catch (ThreadDeath ex) {
-					wrapperLogThreadDeath(command, ex);
 				} catch (Throwable ex) {
 					wrapperLogThrowable(command, ex);
 				}
@@ -204,15 +204,6 @@ public class SchedulerService extends ConfiguredManagedClass<SchedulerService.Co
 	private void wrapperLogSuspended(final Object command) {
 		logDebug("Not executing '" + StringServices.getObjectDescription(command) + "' as the "
 			+ SchedulerService.class.getSimpleName() + " is suspended.");
-	}
-
-	/**
-	 * A {@link ThreadDeath} could mean someone tried to kill one of the worker threads. That's
-	 * serious enough to be logged more explicit.
-	 */
-	private void wrapperLogThreadDeath(final Object command, ThreadDeath ex) {
-		logError("One of the " + SchedulerService.class.getSimpleName() + " threads received a ThreadDeath."
-			+ " Execution of '" + StringServices.getObjectDescription(command) + "' failed.", ex);
 	}
 
 	private void wrapperLogThrowable(final Object command, Throwable ex) {

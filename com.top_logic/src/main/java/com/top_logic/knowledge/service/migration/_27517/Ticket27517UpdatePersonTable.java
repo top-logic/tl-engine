@@ -12,11 +12,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Log;
@@ -363,6 +368,9 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 			updateTimeZones(log, connection, persons);
 			updateContacts(log, connection, persons);
 
+			// Auto-cleanup of potentially inconsistent data.
+			persons = makeLoginsUnique(log, persons);
+
 			Map<String, PersonRow> currentPersonByName = currentPersonByName(log, persons);
 			updatePersonsFromUser(log, connection, currentPersonByName);
 
@@ -374,13 +382,102 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 			
 			log.info("Persons migration finished.");
 		} catch (SQLException ex) {
-			log.error("Failure migrating persons.", ex);
+			log.error("Failure migrating persons: " + ex.getMessage(), ex);
+		}
+	}
+
+	private List<PersonRow> makeLoginsUnique(Log log, List<PersonRow> persons) {
+		List<PersonRow> sorted = new ArrayList<>(persons);
+		Comparator<PersonRow> comparator = Comparator.comparing(row -> row.getName());
+		comparator = comparator.thenComparingLong(row -> row.getBranch());
+		comparator = comparator.thenComparingLong(row -> row.getRevMin()).reversed();
+		sorted.sort(comparator);
+
+		Set<String> allLogins = new HashSet<>();
+		List<PersonRow> result = new ArrayList<>();
+		Map<Pair<Long, Long>, String> clashes = new HashMap<>();
+
+		String login = null;
+		long branch = 0;
+		long id = 0;
+		long revMin = 0, revMax = 0;
+		for (var row : sorted) {
+			String currentLogin = row.getName();
+			allLogins.add(currentLogin);
+
+			if (branch == row.getBranch() && currentLogin.equals(login)) {
+				// The current row referes to the same user as the last row seen. This is only OK,
+				// if this row represents a change to the user object (in this case, life spans of
+				// this row and the last row do not intersect).
+				if (intersects(revMin, revMax, row.getRevMin(), row.getRevMax())) {
+					// There is a clash of user names.
+					if (row.getIdentifier() == id) {
+						// There are two overlapping rows for the same identifier.
+						if (row.getRevMin() <= revMin - 1) {
+							// Make rows non-overlapping.
+							row.setRevMax(revMin - 1);
+							result.add(row);
+						} else {
+							// Drop duplicate.
+							log.info("Dropping duplicate row: " + row, Log.WARN);
+						}
+					} else {
+						// There is another user-object with a clashing identifier. Remember its
+						// identifier for consistently renaming that user later on.
+						clashes.putIfAbsent(Pair.of(row.getBranch(), row.getIdentifier()), row.getName());
+						result.add(row);
+					}
+				} else {
+					result.add(row);
+				}
+			} else {
+				result.add(row);
+			}
+
+			login = row.getName();
+			id = row.getIdentifier();
+			branch = row.getBranch();
+			revMin = row.getRevMin();
+			revMax = row.getRevMax();
 		}
 
+		if (!clashes.isEmpty()) {
+			for (var entry : clashes.entrySet()) {
+				String oldName = entry.getValue();
+				int suffix = 2;
+				while (allLogins.contains(oldName + "-" + suffix)) {
+					suffix++;
+				}
+				String newName = oldName + "-" + suffix;
+				allLogins.add(newName);
+				entry.setValue(newName);
+
+				log.info(
+					"Renaming duplicate user '" + oldName + ":" + entry.getKey().getRight() + "' to '" + newName + "'.",
+					Log.WARN);
+			}
+
+			for (var row : result) {
+				String newName = clashes.get(Pair.of(row.getBranch(), row.getIdentifier()));
+				if (newName != null) {
+					row.setName(newName);
+				}
+			}
+		}
+
+		return result;
+	}
+
+	private static boolean intersects(long revMin, long revMax, long revMin2, long revMax2) {
+		return within(revMin, revMax, revMin2) || within(revMin, revMax, revMax2);
+	}
+
+	private static boolean within(long revMin, long revMax, long rev) {
+		return rev >= revMin && rev <= revMax;
 	}
 
 	private Util util(MigrationContext context) {
-		return context.get(Util.PROPERTY);
+		return context.getSQLUtils();
 	}
 
 	private void createPasswords(Log log, PooledConnection connection, Collection<PersonRow> persons)
@@ -617,14 +714,22 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 
 	private Map<String, PersonRow> currentPersonByName(Log log, List<PersonRow> persons) {
 		Map<String, PersonRow> currentPersons = new HashMap<>();
+		Set<Long> clashingIDs = new HashSet<>();
 		for (PersonRow p : persons) {
 			if (p.getRevMax() < Revision.CURRENT_REV) {
 				continue;
 			}
 			PersonRow clash = currentPersons.put(p.getName(), p);
 			if (clash != null) {
-				log.error("Multiple current persons with name '" + p.getName() + "'.");
+				log.info(
+					"Multiple current persons with name '" + p.getName() + "', dropping: ID " + clash.getIdentifier(),
+					Log.WARN);
+				clashingIDs.add(Long.valueOf(clash.getIdentifier()));
 			}
+		}
+		if (!clashingIDs.isEmpty()) {
+			// Remove with full history.
+			persons.removeIf(p -> clashingIDs.contains(Long.valueOf(p.getIdentifier())));
 		}
 		return currentPersons;
 	}
@@ -678,19 +783,19 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 				}
 				while (true) {
 					if (personIndex == persons.size()) {
-						log.error("No Person with ID '" + personID + "' on branch '" + branch
+						log.info("No Person with ID '" + personID + "' on branch '" + branch
 								+ "' found. Ignoring data (" + branch + "," + revMin + "," + revMax + ","
 								+ contactID + "->" + personID
-								+ ").");
+							+ ").", Log.WARN);
 						break;
 					}
 					PersonRow p = persons.get(personIndex);
 					if (!sameObject(p, branch, personID)) {
 						if (branch < p.getBranch() || personID < p.getIdentifier()) {
-							log.error("No Person with ID '" + personID + "' on branch '" + branch
+							log.info("No Person with ID '" + personID + "' on branch '" + branch
 									+ "' found. Ignoring data (" + branch + "," + revMin + "," + revMax + ","
 									+ contactID + "->" + personID
-									+ ").");
+								+ ").", Log.WARN);
 							break;
 						}
 						personIndex++;
@@ -703,9 +808,9 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 					}
 					if (revMin < p.getRevMin()) {
 						if (revMax < p.getRevMin()) {
-							log.error("No Person alive at revision '" + revMin + "'. Ignoring data (" + branch + ","
+							log.info("No Person alive at revision '" + revMin + "'. Ignoring data (" + branch + ","
 									+ revMin + "," + revMax + "," + contactID + "->" + personID
-									+ ").");
+								+ ").", Log.WARN);
 							break;
 						}
 						p.setContact(contactID);
@@ -784,17 +889,17 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 				String timezone = result.getString(5);
 				while (true) {
 					if (personIndex == persons.size()) {
-						log.error("No Person with ID '" + personID + "' on branch '" + branch
+						log.info("No Person with ID '" + personID + "' on branch '" + branch
 								+ "' found. Ignoring data (" + branch + "," + revMin + "," + revMax + "," + timezone
-								+ ").");
+							+ ").", Log.WARN);
 						break;
 					}
 					PersonRow p = persons.get(personIndex);
 					if (!sameObject(p, branch, personID)) {
 						if (branch < p.getBranch() || personID < p.getIdentifier()) {
-							log.error("No Person with ID '" + personID + "' on branch '" + branch
+							log.info("No Person with ID '" + personID + "' on branch '" + branch
 									+ "' found. Ignoring data (" + branch + "," + revMin + "," + revMax + "," + timezone
-									+ ").");
+								+ ").", Log.WARN);
 							break;
 						}
 						personIndex++;
@@ -807,8 +912,8 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 					}
 					if (revMin < p.getRevMin()) {
 						if (revMax < p.getRevMin()) {
-							log.error("No Person alive at revision '" + revMin + "'. Ignoring data (" + branch + ","
-									+ revMin + "," + revMax + "," + timezone + ").");
+							log.info("No Person alive at revision '" + revMin + "'. Ignoring data (" + branch + ","
+								+ revMin + "," + revMax + "," + timezone + ").", Log.WARN);
 							break;
 						}
 						p.setTimeZone(timezone);
@@ -876,13 +981,13 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 		String branchColumn = _util.branchColumnOrNull();
 		if (branchColumn != null) {
 			order = orders(
-				order(false, column(branchColumn)),
-				order(false, column(idColumn)),
-				order(false, column(BasicTypes.REV_MIN_DB_NAME)));
+				order(column(branchColumn)),
+				order(column(idColumn)),
+				order(column(BasicTypes.REV_MIN_DB_NAME)));
 		} else {
 			order = orders(
-				order(false, column(idColumn)),
-				order(false, column(BasicTypes.REV_MIN_DB_NAME)));
+				order(column(idColumn)),
+				order(column(BasicTypes.REV_MIN_DB_NAME)));
 		}
 		return order;
 	}

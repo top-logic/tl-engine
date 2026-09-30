@@ -15,22 +15,24 @@
 		>
 			<bpmn:extensionElements>
 				<tl:modelType/>
-				<tl:taskTitle/>
+				<tl:tokenType/>
 				<tl:displayDescription/>
 				<tl:exportDescription/>
+				<tl:defaultOperation/>
+				<tl:edgeFormType/>
 			</bpmn:extensionElements>
 		</bpmn:participant>
 		<bpmn:extensionElements>
 			<tl:name value="My Process"/>
-			<tl:myTasksIcon/>
-			<tl:myTasksTitle/>
-			<tl:myTasksDescription/>
-			<tl:myProcessesIcon/>
-			<tl:myProcessesTitle/>
-			<tl:myProcessesDescription/>
-			<tl:state value="Development"/>
 			<tl:icon/>
-			<tl:description/>
+			<tl:state value="Development"/>
+			<tl:descriptionI18N/>
+			<tl:myTasksIcon/>
+			<tl:myTasksTitleI18N/>
+			<tl:myTasksDescriptionI18N/>
+			<tl:myProcessesIcon/>
+			<tl:myProcessesTitleI18N/>
+			<tl:myProcessesDescriptionI18N/>
 		</bpmn:extensionElements>
 	</bpmn:collaboration>
 	<bpmn:process id="Process_1"
@@ -43,6 +45,7 @@
 				<bpmn:flowNodeRef>EndEvent_1nemwbm</bpmn:flowNodeRef>
 				<bpmn:flowNodeRef>Task_1f5o1hp</bpmn:flowNodeRef>
 				<bpmn:extensionElements>
+					<tl:title/>
 					<tl:actorGroups/>
 					<tl:actorRule/>
 				</bpmn:extensionElements>
@@ -53,6 +56,7 @@
 				<bpmn:flowNodeRef>StartEvent_0menbhe</bpmn:flowNodeRef>
 				<bpmn:flowNodeRef>Task_16uk174</bpmn:flowNodeRef>
 				<bpmn:extensionElements>
+					<tl:title/>
 					<tl:actorGroups/>
 					<tl:actorRule/>
 				</bpmn:extensionElements>
@@ -69,7 +73,8 @@
 			<bpmn:outgoing>SequenceFlow_16fzfu0</bpmn:outgoing>
 			<bpmn:extensionElements>
 				<tl:icon/>
-				<tl:description/>
+				<tl:title/>
+				<tl:descriptionI18N/>
 			</bpmn:extensionElements>
 		</bpmn:startEvent>
 		<bpmn:manualTask id="Task_16uk174"
@@ -78,10 +83,13 @@
 			<bpmn:outgoing>SequenceFlow_04zbagu</bpmn:outgoing>
 			<bpmn:incoming>SequenceFlow_16fzfu0</bpmn:incoming>
 			<bpmn:extensionElements>
-				<tl:displayDescription/>
-				<tl:title/>
 				<tl:icon/>
-				<tl:description/>
+				<tl:titleI18N/>
+				<tl:titleFunction/>
+				<tl:formDefinition/>
+				<tl:descriptionI18N/>
+				<tl:canEdit value="true"/>
+				<tl:tokenType/>
 			</bpmn:extensionElements>
 		</bpmn:manualTask>
 		<bpmn:manualTask id="Task_1f5o1hp"
@@ -90,10 +98,13 @@
 			<bpmn:outgoing>SequenceFlow_0wn7jd3</bpmn:outgoing>
 			<bpmn:incoming>SequenceFlow_04zbagu</bpmn:incoming>
 			<bpmn:extensionElements>
-				<tl:displayDescription/>
-				<tl:title/>
 				<tl:icon/>
-				<tl:description/>
+				<tl:titleI18N/>
+				<tl:titleFunction/>
+				<tl:formDefinition/>
+				<tl:descriptionI18N/>
+				<tl:canEdit value="true"/>
+				<tl:tokenType/>
 			</bpmn:extensionElements>
 		</bpmn:manualTask>
 		<bpmn:sequenceFlow id="SequenceFlow_04zbagu"
@@ -101,7 +112,12 @@
 			targetRef="Task_1f5o1hp"
 		>
 			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
 				<tl:rule/>
+				<tl:operation/>
+				<tl:formType/>
 			</bpmn:extensionElements>
 		</bpmn:sequenceFlow>
 		<bpmn:sequenceFlow id="SequenceFlow_0wn7jd3"
@@ -109,7 +125,12 @@
 			targetRef="EndEvent_1nemwbm"
 		>
 			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
 				<tl:rule/>
+				<tl:operation/>
+				<tl:formType/>
 			</bpmn:extensionElements>
 		</bpmn:sequenceFlow>
 		<bpmn:sequenceFlow id="SequenceFlow_16fzfu0"
@@ -117,7 +138,12 @@
 			targetRef="Task_16uk174"
 		>
 			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
 				<tl:rule/>
+				<tl:operation/>
+				<tl:formType/>
 			</bpmn:extensionElements>
 		</bpmn:sequenceFlow>
 		<bpmn:extensionElements>

@@ -41,7 +41,7 @@ import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 /**
  * Upload handler for import of text based files which have a fixed value length.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 @SuppressWarnings("serial")
 public class TextFileImportParser extends AbstractImportParser {
@@ -49,7 +49,7 @@ public class TextFileImportParser extends AbstractImportParser {
     /**
      * Configuration of this upload handler. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface Config extends AbstractImportParser.Config {
 
@@ -84,7 +84,7 @@ public class TextFileImportParser extends AbstractImportParser {
     /**
      * Configuration of one fixed value column.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface MappingConfig extends ListDataImportPerformer.MappingConfig {
 
@@ -227,7 +227,7 @@ public class TextFileImportParser extends AbstractImportParser {
     /**
      * Representation of one line in the text file. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class TextLine {
 

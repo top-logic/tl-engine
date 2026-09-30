@@ -22,13 +22,18 @@
 		<dependency name="Ticket_25881_Removed_legacy_types"
 			module="tl-mail"
 		/>
+		<dependency name="Ticket_23110_create_module_tl_model_i18n"
+			module="tl-model-wysiwyg"
+		/>
 		<dependency name="Ticket_26398_remove_table_interfaces"
 			module="tl-demo"
 		/>
+		<dependency name="Ticket_25210_Model_references_in_form_definitions"
+			module="tl-bpe"
+		/>
 	</dependencies>
 	
-	<processors>
-
+	<pre-processors>
 		<processor class="com.top_logic.knowledge.service.migration.DeleteTableProcessor">
 			<tables>
 				<table object_name="Ticket"/>
@@ -36,9 +41,13 @@
 			</tables>
 		</processor>
 		
-		<delete-class name="tl.legacy.tabletypes:ExternalReferenceTable">
-		</delete-class>
-
+		<delete-class name="tl.legacy.tabletypes:ExternalReferenceTable"
+			skip-model-baseline-change="true"
+		/>
+		<delete-class name="tl.tables:ExternalReferenceTableInterface"
+			skip-model-baseline-change="true"
+		/>
+		
 		<!-- Remove implementation class annotations that prevents the object from being loaded, which is required for deleting it. -->
 		<update-annotations name="DemoRemote:Root">
 			<annotations>
@@ -48,7 +57,11 @@
 		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
 			transform="/WEB-INF/kbase/migration/tl-demo/Ticket_26660_Remove_dependency_to_tl_remote.migration.xslt"
 		/>
-	
+		
+	</pre-processors>
+	<processors>
+		<delete-module name="DemoRemote"/>
+		<delete-module name="Ticket"/>
 	</processors>
 	<migration>
 		<type-mapping class=""/>

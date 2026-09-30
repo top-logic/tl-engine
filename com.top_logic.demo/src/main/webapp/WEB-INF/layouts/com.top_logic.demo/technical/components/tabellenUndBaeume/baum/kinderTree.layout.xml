@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic/tree.template.xml"
 >
 	<arguments partnerGroup="TreePartner">
@@ -27,5 +26,8 @@
 			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
 			rootNode="x -> $x[1].inRevision($x[0])"
 		/>
+		<selectionFilter class="com.top_logic.model.search.providers.ScriptedFilter">
+			<predicate>x -&gt; !$x.get(`DemoTypes:A#name`).stringEndsWith("-final")</predicate>
+		</selectionFilter>
 	</arguments>
 </config:template-call>

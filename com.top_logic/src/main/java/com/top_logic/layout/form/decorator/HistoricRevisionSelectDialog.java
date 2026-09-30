@@ -120,7 +120,7 @@ class HistoricRevisionSelectDialog extends RevisionSelectDialog implements Selec
 
 			@Override
 			public Control createControl(Object model, String style) {
-				return new SelectionPartControl(_selectionModel, model);
+				return SelectionPartControl.createSelectionPartControl(_selectionModel, model);
 			}
 		};
 		final HiddenField currentRadio = FormFactory.newHiddenField(CURRENT_RADIO_BUTTON);

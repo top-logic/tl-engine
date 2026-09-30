@@ -50,7 +50,7 @@ public class DataSetup extends ThreadContextSetup {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		DataSetup.knowledgeObjects = new ArrayList<>(1024);
 
-		final Transaction createDocTx = kb.beginTransaction();
+		final Transaction createDocTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		{
 			// make some indexing
 			DataAccessProxy theDir = new DataAccessProxy("testRoot://" + dataRoot);
@@ -96,7 +96,7 @@ public class DataSetup extends ThreadContextSetup {
 		DataSetup.knowledgeObjects = null;
 
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction removeTx = kb.beginTransaction()) {
+		try (Transaction removeTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			kb.deleteAll(createdObjects);
 			removeTx.commit();
 		}

@@ -19,6 +19,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,9 +27,14 @@ import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import jakarta.activation.MimeType;
+import jakarta.activation.MimeTypeParseException;
+
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.equal.CustomEqualitySpecification;
 import com.top_logic.basic.col.equal.EqualityRedirect;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.io.binary.ByteArrayStream;
 
 /**
@@ -205,6 +211,71 @@ public abstract class StreamUtilities {
 		try (InputStream in = content.getStream()) {
 			return readAllFromStream(in, encoding);
 		}
+	}
+
+	/**
+	 * Reads the content from a {@link BinaryData} with the given character encoding.
+	 *
+	 * <p>
+	 * This overload resolves ambiguity between {@link BinaryContent} and {@link BinaryDataSource}
+	 * methods for {@link BinaryData} which implements both interfaces.
+	 * </p>
+	 */
+	public static String readAllFromStream(BinaryData data, String encoding) throws IOException {
+		return readAllFromStream((BinaryContent) data, encoding);
+	}
+
+	/**
+	 * Reads the content from a {@link BinaryData} with encoding specified in content type (using
+	 * {@link #ENCODING ISO} as default).
+	 */
+	public static String readAllFromStream(BinaryData data) throws IOException {
+		// Upcast to select most efficient implementation.
+		BinaryDataSource source = data;
+		return readAllFromStream(source);
+	}
+
+	/**
+	 * Reads the content from a {@link BinaryDataSource} with encoding specified in content type
+	 * (using {@link #ENCODING ISO} as default).
+	 *
+	 * <p>
+	 * This method efficiently reads from {@link BinaryDataSource} without converting to
+	 * {@link com.top_logic.basic.io.binary.BinaryData} first.
+	 * </p>
+	 */
+	public static String readAllFromStream(BinaryDataSource source) throws IOException {
+		return readAllFromStream(source, getCharset(source));
+	}
+
+	private static String getCharset(BinaryDataSource source) {
+		String contentType = source.getContentType();
+		MimeType mimeType;
+		try {
+			mimeType = new MimeType(contentType);
+		} catch (MimeTypeParseException ex) {
+			return ENCODING;
+		}
+
+		String charset = mimeType.getParameter("charset");
+		if (charset == null) {
+			charset = ENCODING;
+		}
+		return charset;
+	}
+
+	/**
+	 * Reads the content from a {@link BinaryDataSource} with the given character encoding.
+	 *
+	 * <p>
+	 * This method efficiently reads from {@link BinaryDataSource} without converting to
+	 * {@link com.top_logic.basic.io.binary.BinaryData} first.
+	 * </p>
+	 */
+	public static String readAllFromStream(BinaryDataSource source, String encoding) throws IOException {
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		source.deliverTo(buffer);
+		return buffer.toString(encoding);
 	}
 
 	/**
@@ -468,6 +539,40 @@ public abstract class StreamUtilities {
 	}
 
 	/**
+	 * Reads the given content to a byte array and returns it.
+	 * 
+	 * @param content
+	 *        the content to read. must not be <code>null</code>.
+	 * 
+	 * @return a byte array containing the contents of the stream
+	 * 
+	 * @throws IOException
+	 *         iff the given {@link InputStream} throws some
+	 */
+	public static byte[] readStreamContents(BinaryDataSource content) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream(BUF_SIZE);
+		content.deliverTo(out);
+		return out.toByteArray();
+	}
+
+	/**
+	 * Reads the given content to a byte array and returns it.
+	 * 
+	 * @param content
+	 *        the content to read. must not be <code>null</code>.
+	 * 
+	 * @return a byte array containing the contents of the stream
+	 * 
+	 * @throws IOException
+	 *         iff the given {@link InputStream} throws some
+	 */
+	public static byte[] readStreamContents(BinaryData content) throws IOException {
+		// Make call unambiguous.
+		BinaryDataSource source = content;
+		return readStreamContents(source);
+	}
+
+	/**
 	 * Computes the size of the given {@link InputStream}.
 	 * 
 	 * <p>
@@ -548,8 +653,8 @@ public abstract class StreamUtilities {
 	}
 
 	/**
-	 * Writes the given {@link Properties} in {@link #ISO_8859_1} encoding to the given output.
-	 * 
+	 * Writes the given {@link Properties} in UTF-8 encoding to the given output.
+	 *
 	 * <p>
 	 * Output is normalized in following sense:
 	 * <ul>
@@ -561,35 +666,56 @@ public abstract class StreamUtilities {
 	 * After the entries have been written, the output stream is flushed. The output stream remains
 	 * open after this method returns.
 	 * </p>
-	 * 
+	 *
 	 * @param out
 	 *        Stream to write content to.
 	 * @param props
 	 *        The {@link Properties} to write.
 	 */
 	public static void storeNormalized(OutputStream out, Properties props) throws IOException {
-		ByteArrayStream buffer = new ByteArrayStream();
-		props.store(buffer, null);
+		storeNormalized(out, props, StandardCharsets.UTF_8);
+	}
 
-		// Properties are written ISO-8859-1 encoded.
-		Charset cs = ISO_8859_1;
+	/**
+	 * Writes the given {@link Properties} in the given encoding to the given output.
+	 *
+	 * <p>
+	 * Output is normalized in following sense:
+	 * <ul>
+	 * <li>No "current date" is contained in the output.</li>
+	 * <li>Lines are sorted in natural order.</li>
+	 * </ul>
+	 * </p>
+	 * <p>
+	 * After the entries have been written, the output stream is flushed. The output stream remains
+	 * open after this method returns.
+	 * </p>
+	 *
+	 * @param out
+	 *        Stream to write content to.
+	 * @param props
+	 *        The {@link Properties} to write.
+	 */
+	public static void storeNormalized(OutputStream out, Properties props, Charset cs) throws IOException {
+		ByteArrayStream buffer = new ByteArrayStream();
+		try (OutputStreamWriter bufferWriter = new OutputStreamWriter(buffer, cs)) {
+			props.store(bufferWriter, null);
+		}
 
 		List<String> allLines;
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(buffer.getStream(), cs))) {
-
-			// Remove first line containing the current date!
-			String firstLine = br.readLine();
-			if (firstLine == null) {
-				// Does actually not occur, but is complained by FindBugs.
-				// If first line is null, nothing must be written.
-				return;
-			}
-			assert firstLine.charAt(0) == '#' : "First line is a comment containing the current date.";
-
 			// Sort all lines
 			allLines = new ArrayList<>();
 			String line;
 			while ((line = br.readLine()) != null) {
+				if (line.isEmpty()) {
+					continue;
+				}
+
+				if (line.charAt(0) == '#') {
+					continue;
+				}
+
 				allLines.add(line);
 			}
 			allLines.sort(null);

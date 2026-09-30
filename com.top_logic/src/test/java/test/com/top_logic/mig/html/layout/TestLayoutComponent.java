@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
@@ -435,8 +434,8 @@ public class TestLayoutComponent extends BasicTestCase {
 		}
 
 		@Override
-		protected Function<Object, ?> inverseTransformation() {
-			return x -> x != null && x.toString().startsWith(TRANSFORMED_PREFIX)
+		protected BiFunction<Object, Object, ?> inverseTransformation() {
+			return (x, y) -> x != null && x.toString().startsWith(TRANSFORMED_PREFIX)
 				? x.toString().substring(TRANSFORMED_PREFIX.length())
 				: "special";
 		}

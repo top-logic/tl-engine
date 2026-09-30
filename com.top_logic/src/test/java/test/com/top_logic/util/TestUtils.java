@@ -7,6 +7,7 @@ package test.com.top_logic.util;
 
 import java.awt.Dimension;
 import java.text.DateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
 
@@ -52,6 +53,24 @@ public class TestUtils extends BasicTestCase {
 		assertFalse(Utils.isFalse(Boolean.TRUE));
 		assertTrue(Utils.isFalse(Boolean.FALSE));
     }
+
+	public void testIsEmpty() {
+		assertTrue(Utils.isEmpty(null));
+		assertTrue(Utils.isEmpty(Collections.emptyList()));
+		assertTrue(Utils.isEmpty(Collections.emptyMap()));
+		assertTrue(Utils.isEmpty(Collections.emptySet()));
+		assertTrue(Utils.isEmpty(""));
+		assertTrue(Utils.isEmpty(new int[0]));
+		assertTrue(Utils.isEmpty(new boolean[0]));
+
+		assertFalse(Utils.isEmpty(Integer.valueOf(2)));
+		assertFalse(Utils.isEmpty(Collections.singletonList(null)));
+		assertFalse(Utils.isEmpty(Collections.singletonMap(null, null)));
+		assertFalse(Utils.isEmpty(Collections.singleton(Collections.emptyList())));
+		assertFalse(Utils.isEmpty("   "));
+		assertFalse(Utils.isEmpty(new Object[] { null }));
+		assertFalse(Utils.isEmpty(new boolean[] { false }));
+	}
     
     public void testGetImageDimension() {
     	

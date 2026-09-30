@@ -22,6 +22,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -40,7 +41,7 @@ import com.top_logic.model.search.ui.model.combinator.SearchExpressionCombinator
 import com.top_logic.util.model.ModelService;
 
 /**
- * The module of the model based search.
+ * Holds the configuration options for the model-based search.
  * <p>
  * Holds the config options for the search. This has two advantages. First, without this module,
  * they would be distributed all over the subpackages, hidden for example in option providers.
@@ -50,6 +51,7 @@ import com.top_logic.util.model.ModelService;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
+@Label("Model-based search")
 @ServiceDependencies({
 	SearchBuilder.Module.class
 })
@@ -73,9 +75,6 @@ public class ModelBasedSearch extends ConfiguredManagedClass<ModelBasedSearch.Co
 
 		/** Property name of {@link #getIncludeSubtypeUsages()}. */
 		String INCLUDE_SUBTYPE_USAGES = "include-subtype-usages";
-
-		/** Property name of {@link #getEnableOptimizations()}. */
-		String DISABLE_OPTIMIZATIONS = "disable-optimizations";
 
 		/** Property name of {@link #getAdditionalPredefinedParameters()}. */
 		String ADDITIONAL_PREDEFINED_PARAMETERS = "additional-predefined-parameters";
@@ -108,16 +107,6 @@ public class ModelBasedSearch extends ConfiguredManagedClass<ModelBasedSearch.Co
 		@BooleanDefault(true)
 		@Name(INCLUDE_SUBTYPE_USAGES)
 		boolean getIncludeSubtypeUsages();
-
-		/**
-		 * Enable optimizations.
-		 * <p>
-		 * Disabling the optimizations can be useful for example for debugging.
-		 * </p>
-		 */
-		@BooleanDefault(true)
-		@Name(DISABLE_OPTIMIZATIONS)
-		boolean getEnableOptimizations();
 
 		/**
 		 * {@link SupplierSearchExpressionBuilder} in addition to those registered in

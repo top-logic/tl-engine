@@ -43,6 +43,7 @@ import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MORepository;
+import com.top_logic.dob.meta.TypeSystem;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.ChangeSetReader;
 import com.top_logic.knowledge.event.CommitEvent;
@@ -64,7 +65,6 @@ import com.top_logic.knowledge.service.db2.DBObjectKey;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItem;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.Utils;
-import com.top_logic.util.message.MessageStoreFormat;
 
 /**
  * Utilities for abstracting features not declared at the {@link KnowledgeBase}
@@ -150,7 +150,7 @@ public class KBUtils {
 	 * {@link TLObject#tHandle()} of the argument.
 	 */
 	public static TLID getWrappedObjectName(TLObject wrapper) {
-		return getObjectName(wrapper.tHandle());
+		return wrapper.tIdLocal();
 	}
 
 	/**
@@ -158,7 +158,7 @@ public class KBUtils {
 	 * {@link TLObject#tHandle()} of the argument.
 	 */
 	public static String getWrappedObjectKeyString(TLObject wrapper) {
-		return getObjectKeyString(wrapper.tHandle());
+		return wrapper.tId().toString();
 	}
 
 	/**
@@ -166,7 +166,7 @@ public class KBUtils {
 	 * argument.
 	 */
 	public static Object getWrappedObjectKey(TLObject wrapper) {
-		return wrapper.tHandle().tId();
+		return wrapper.tId();
 	}
 
 	
@@ -420,7 +420,7 @@ public class KBUtils {
 		CommitEvent commit = new CommitEvent(newRevision,
 			ThreadContextManager.getSubSession().getContextId(),
 			System.currentTimeMillis(),
-			MessageStoreFormat.toString(Messages.NO_COMMIT_MESSAGE));
+			I18NConstants.SYNTHESIZED_COMMIT_DURING_REPLAY);
 		cs.setCommit(commit);
 		writer.write(cs);
 	}
@@ -691,7 +691,7 @@ public class KBUtils {
 	 * @return The result of the given action. Is null when the action returns null.
 	 */
 	public static <T> T inTransaction(KnowledgeBase knowledgeBase, Supplier<T> action) {
-		try (Transaction transaction = knowledgeBase.beginTransaction()) {
+		try (Transaction transaction = knowledgeBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			T result = action.get();
 			transaction.commit();
 			return result;
@@ -728,7 +728,7 @@ public class KBUtils {
 	 *        Is not allowed to be null;
 	 */
 	public static void inTransaction(KnowledgeBase knowledgeBase, Runnable action) {
-		try (Transaction transaction = knowledgeBase.beginTransaction()) {
+		try (Transaction transaction = knowledgeBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			action.run();
 			transaction.commit();
 		}
@@ -853,11 +853,21 @@ public class KBUtils {
 	}
 
 	private static boolean mustBeDeleted(TLObject item, Predicate<? super TLObject> filter) {
-		if (!item.tValid()) {
-			// Already deleted.
+		if (!item.tValid() || item.tTransient()) {
+			// Already deleted or cannot be deleted.
 			return false;
 		}
 		return filter.test(item);
+	}
+
+	/**
+	 * Determines the {@link TypeSystem} for the given {@link KnowledgeBase}.
+	 * 
+	 * @param kb
+	 *        {@link KnowledgeBase} to get type system from.
+	 */
+	public static TypeSystem typeSystem(KnowledgeBase kb) {
+		return ((DBKnowledgeBase) kb).getTypeSystem();
 	}
 
 }

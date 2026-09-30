@@ -571,7 +571,7 @@ public class ExcelValue extends StyledValue {
      * @return <code>true</code>, if the given excel value use the same style like an
      *         other excel value, <code>false</code> otherwise.
      */
-    protected boolean hasReferenceStyle() {
+	public boolean hasReferenceStyle() {
         return getCellStyleFrom() != null;
     }
 
@@ -601,7 +601,7 @@ public class ExcelValue extends StyledValue {
 	/**
 	 * Define the position of a cell within a sheet (optional with sheet information). 
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class CellPosition {
 
@@ -712,7 +712,7 @@ public class ExcelValue extends StyledValue {
 	/**
 	 * Define a region where all cells have been merged to one. 
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class MergeRegion {
 	    

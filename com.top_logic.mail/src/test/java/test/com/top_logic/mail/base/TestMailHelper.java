@@ -15,13 +15,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-import javax.mail.Address;
-import javax.mail.Flags;
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.Message.RecipientType;
-import javax.mail.MessagingException;
-import javax.mail.internet.InternetAddress;
+import jakarta.mail.Address;
+import jakarta.mail.Flags;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.Message.RecipientType;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.InternetAddress;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -59,7 +59,7 @@ public class TestMailHelper extends BasicTestCase {
 	 */
 	public static final String VALID_USER_NAME = "test-user1";
 
-	private static final String INVALID_ADDRESS = "fal§e@develop.local";
+	private static final String INVALID_ADDRESS = "falÂ§e@develop.local";
 
 	private static final String SERVER_ALIAS = "%IMAP_SERVER%";
 

@@ -39,6 +39,8 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.json.JsonBinding;
+import com.top_logic.basic.config.json.ResKeyJsonBinding;
 import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.text.TLMessageFormat;
 import com.top_logic.basic.xml.XMLStreamUtil;
@@ -53,6 +55,7 @@ import com.top_logic.basic.xml.XMLStreamUtil;
  */
 @Format(ResKey.ValueFormat.class)
 @Binding(ResKey.ValueBinding.class)
+@JsonBinding(ResKeyJsonBinding.class)
 @Label("Resource key")
 public abstract class ResKey {
 
@@ -70,7 +73,7 @@ public abstract class ResKey {
 	 * Use this as assertion that a certain key is never accessed.
 	 * </p>
 	 */
-	public static final ResKey NONE = none("", null);
+	public static final ResKey NONE = new NoKey();
 
 	/**
 	 * @see #message(ResKey, Object...)
@@ -346,7 +349,7 @@ public abstract class ResKey {
 	 */
 	public static Builder builder(ResKey literal) {
 		Builder builder;
-		if (literal.hasKey()) {
+		if (literal != null && literal.hasKey()) {
 			builder = builder(literal.getKey());
 		} else {
 			builder = builder();
@@ -652,7 +655,7 @@ public abstract class ResKey {
 	 * Derives a suffix key form this {@link ResKey}
 	 * 
 	 * @param suffix
-	 *        The suffix to appen to the internal representation.
+	 *        The suffix to append to the internal representation.
 	 * @return The new key.
 	 */
 	public final ResKey suffix(String suffix) {
@@ -688,7 +691,17 @@ public abstract class ResKey {
 	 * @see #tooltip()
 	 */
 	public final ResKey tooltipOptional() {
-		return tooltip().fallback(text(null));
+		return tooltip().optional();
+	}
+
+	/**
+	 * Derives an optional key form this {@link ResKey}, i.e. if no value is given for this key, the
+	 * optional key resolves to <code>null</code>.
+	 * 
+	 * @return A {@link ResKey} with <code>text(null)</code> as fallback.
+	 */
+	public final ResKey optional() {
+		return fallback(text(null));
 	}
 
 	/**
@@ -808,7 +821,7 @@ public abstract class ResKey {
 	 * @return An key that produces a missing resource error when being resolved.
 	 */
 	public static ResKey none(Object id, String local) {
-		return new NoKey(id, local);
+		return NONE.asResKey1().fill(id).suffix(local);
 	}
 
 	/**
@@ -1310,12 +1323,22 @@ public abstract class ResKey {
 
 	private static final class NoKey extends DirectKey {
 
-		private final Object _id;
+		private Object[] _args;
 
-		private final String _local;
+		private String _local;
 
-		NoKey(Object id, String local) {
-			_id = id;
+		/**
+		 * Creates a {@link ResKey.NoKey}.
+		 */
+		public NoKey() {
+			this(NOARGS, null);
+		}
+
+		/**
+		 * Creates a {@link NoKey}.
+		 */
+		public NoKey(Object[] args, String local) {
+			_args = args;
 			_local = local;
 		}
 
@@ -1326,22 +1349,22 @@ public abstract class ResKey {
 
 		@Override
 		public ResKey plain() {
-			return this;
+			return NONE;
 		}
 
 		@Override
 		public Object[] arguments() {
-			return NOARGS;
+			return _args;
 		}
 
 		@Override
 		ResKey internalFill(Object... arguments) {
-			return this;
+			return arguments.length == 1 && arguments[0] == null ? this : new NoKey(arguments, _local);
 		}
 
 		@Override
 		protected ResKey internalSuffix(String suffix) {
-			return none(_id, StringServices.isEmpty(_local) ? suffix.substring(1) : _local + suffix);
+			return new NoKey(_args, _local == null ? suffix : _local + suffix);
 		}
 
 		@Override
@@ -1351,19 +1374,14 @@ public abstract class ResKey {
 
 		@Override
 		public String getKey() {
-			return name();
+			return "none";
 		}
 
 		@Override
 		protected String internalEncode() {
-			return name();
+			return _args == null ? getKey() : ResKeyEncoding.encodeMessage(getKey(), _args);
 		}
 		
-		@Override
-		public String toString() {
-			return name();
-		}
-
 		@Override
 		protected boolean exists(I18NBundleSPI bundle) {
 			return false;
@@ -1382,13 +1400,27 @@ public abstract class ResKey {
 			}
 		}
 
+		@Override
+		public String toString() {
+			return name();
+		}
+
 		private String name() {
 			StringBuilder result = new StringBuilder();
 			result.append("none(");
-			result.append(_id);
+			boolean first = true;
+			if (_args != null) {
+				for (Object arg : _args) {
+					if (first) {
+						first = false;
+					} else {
+						result.append(',');
+					}
+					result.append(arg);
+				}
+			}
 			result.append(")");
 			if (_local != null) {
-				result.append(".");
 				result.append(_local);
 			}
 			return result.toString();
@@ -1834,6 +1866,8 @@ public abstract class ResKey {
 
 	/**
 	 * {@link ConfigurationValueBinding} for (potentially literal) {@link ResKey}s.
+	 *
+	 * @see ResKeyJsonBinding
 	 */
 	public static class ValueBinding extends AbstractConfigurationValueBinding<ResKey> {
 
@@ -1855,8 +1889,7 @@ public abstract class ResKey {
 		}
 
 		@Override
-		public ResKey loadConfigItem(XMLStreamReader in, ResKey baseValue)
-				throws XMLStreamException, ConfigurationException {
+		public ResKey loadConfigItem(XMLStreamReader in, ResKey baseValue) throws XMLStreamException {
 			String key = in.getAttributeValue(null, "key");
 
 			String text = XMLStreamUtil.nextText(in).trim();

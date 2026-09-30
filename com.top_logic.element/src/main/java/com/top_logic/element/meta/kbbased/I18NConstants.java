@@ -35,6 +35,22 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en There is no generator with name ''{0}''. */
 	public static ResKey1 NO_SUCH_GENERATOR__NAME;
 
+	/**
+	 * @en Started wrapper resolver ({0}).
+	 */
+	public static ResKey1 START_UP_WRAPPER_RESOLVER__IMPLCLASS;
+
+	/**
+	 * @en It is not possible to navigate backwards through the reference ''{0}''.
+	 */
+	public static ResKey1 ERROR_NO_REFERERS_AVAILABLE__REFERENCE;
+
+	/**
+	 * @en Attribute ''{0}'' is not accessible. Either it is declared abstract, or its storage
+	 *     implementation could not be instantiated.
+	 */
+	public static ResKey1 ERROR_ABSTRACT_ATTRIBUTE_ACCESS__ATTR;
+
     static {
         initConstants(I18NConstants.class);
     }

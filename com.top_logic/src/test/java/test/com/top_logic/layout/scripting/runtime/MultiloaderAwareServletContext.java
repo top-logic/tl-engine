@@ -12,8 +12,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Set;
 
-import javax.activation.FileTypeMap;
-import javax.servlet.ServletContext;
+import jakarta.activation.FileTypeMap;
+import jakarta.servlet.ServletContext;
 
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.MultiFileManager;

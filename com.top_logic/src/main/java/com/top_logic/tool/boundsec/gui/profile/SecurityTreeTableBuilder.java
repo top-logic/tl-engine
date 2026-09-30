@@ -20,10 +20,7 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
  */
 class SecurityTreeTableBuilder implements TreeBuilder<SecurityNode> {
 
-	private final String _domain;
-
-	public SecurityTreeTableBuilder(String domain) {
-		_domain = domain;
+	public SecurityTreeTableBuilder() {
 	}
 
 	@Override
@@ -44,10 +41,6 @@ class SecurityTreeTableBuilder implements TreeBuilder<SecurityNode> {
 	@Override
 	public boolean isFinite() {
 		return true;
-	}
-
-	String securityDomain() {
-		return _domain;
 	}
 
 }

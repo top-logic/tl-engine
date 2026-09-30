@@ -35,7 +35,6 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.util.Messages;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
@@ -64,7 +63,7 @@ public class Setup extends ThreadContextSetup {
 	static final String NODE_NAME = Setup.class.getName().replace('.', '_') + "_node";
 	
 	/** Name of the association table used by {@link #LIST_2_ATTR} to store their values. */
-	/* Defined in DemoMeta.xml */
+	/* Defined in TestTypesMeta.xml */
 	static final String LIST_2_ATTR_TABLE = "otherHasWrapperAttValue";
 	
 	static TLClass metaElement;
@@ -97,7 +96,7 @@ public class Setup extends ThreadContextSetup {
 	}
 
 	private void createMetaElement() throws DuplicateAttributeException, ConfigurationException, KnowledgeBaseException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TLModel tlModel = ModelService.getApplicationModel();
 		_module = TLModelUtil.makeModule(tlModel, STRUCTURE_NAME);
 		metaElement = TLModelUtil.addClass(_module, NODE_NAME);
@@ -141,9 +140,7 @@ public class Setup extends ThreadContextSetup {
 
 	private void removeModule() {
 		KnowledgeBase kb = _module.tKnowledgeBase();
-		Transaction tx =
-			kb.beginTransaction(
-				Messages.DELETED_MODEL_PART_RECURSIVELY__PART_NAME.fill(TLModelUtil.qualifiedName(_module)));
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			TLModelUtil.deleteRecursive(_module);
 

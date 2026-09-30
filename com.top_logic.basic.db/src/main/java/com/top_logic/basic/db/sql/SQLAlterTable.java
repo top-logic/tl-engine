@@ -10,37 +10,13 @@ package com.top_logic.basic.db.sql;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class SQLAlterTable extends AbstractSQLTableStatement {
-
-	private SQLTableModification _modification;
+public abstract class SQLAlterTable extends AbstractSQLTableStatement {
 
 	/**
 	 * Creates a new {@link SQLAlterTable}.
 	 */
-	SQLAlterTable(SQLTable table, SQLTableModification modification) {
+	SQLAlterTable(SQLTable table) {
 		super(table);
-		setModification(modification);
-	}
-
-	@Override
-	public <R, A> R visit(SQLVisitor<R, A> v, A arg) {
-		return v.visitSQLAlterTable(this, arg);
-	}
-
-	/**
-	 * The actual structural modification.
-	 */
-	public SQLTableModification getModification() {
-		return _modification;
-	}
-
-	/**
-	 * Setter for {@link #getModification()}.
-	 */
-	public void setModification(SQLTableModification modification) {
-		_modification = modification;
-
 	}
 
 }
-

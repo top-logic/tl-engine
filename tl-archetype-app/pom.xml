@@ -1,14 +1,11 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-all</artifactId>
-		<version>7.9.0-SNAPSHOT</version>
-		
-		<relativePath>../tl-parent-all</relativePath>
+		<version>8.0.0-SNAPSHOT</version>
+		<relativePath>..</relativePath>
 	</parent>
 
 	<artifactId>tl-archetype-app</artifactId>
@@ -21,11 +18,12 @@
 
 	<packaging>maven-archetype</packaging>
 
+	<name>${project.artifactId}</name>
 	<description>A Maven archetype that creates a TopLogic app module.</description>
 
 	<properties>
 		<tlVersion>${project.version}</tlVersion>
-		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
 	<developers>
@@ -36,12 +34,6 @@
 			<organizationUrl>https://www.top-logic.com</organizationUrl>
 		</developer>
 	</developers>
-
-	<scm>
-		<connection>scm:git:https://github.com/top-logic/tl-engine.git</connection>
-		<developerConnection>scm:git:http://tl.bos.local:3000/TopLogic/tl-engine.git</developerConnection>
-		<url>https://github.com/top-logic/tl-engine</url>
-	</scm>
 
 	<dependencies>
 		<!-- 
@@ -142,7 +134,7 @@
 			<extension>
 				<groupId>org.apache.maven.archetype</groupId>
 				<artifactId>archetype-packaging</artifactId>
-				<version>3.1.1</version>
+				<version>3.4.1</version>
 			</extension>
 		</extensions>
 		<pluginManagement>
@@ -173,7 +165,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore />
 									</action>
 								</pluginExecution>
 							</pluginExecutions>

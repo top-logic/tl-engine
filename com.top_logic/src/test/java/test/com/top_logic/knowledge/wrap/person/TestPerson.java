@@ -8,15 +8,16 @@ package test.com.top_logic.knowledge.wrap.person;
 import java.util.Locale;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.TestPersonSetup;
 import test.com.top_logic.basic.AssertNoErrorLogListener;
 import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.DefaultTestFactory;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.DataObjectException;
@@ -34,9 +35,9 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.Country;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Test for {@link com.top_logic.knowledge.wrap.person.Person}.
@@ -58,7 +59,7 @@ public class TestPerson extends BasicTestCase {
 
 		// delete the person without using PersonManager
 		KnowledgeBase kb = newPerson.getKnowledgeBase();
-		Transaction deleteTx = kb.beginTransaction();
+		Transaction deleteTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		newPerson.tDelete();
 		deleteTx.commit();
 
@@ -77,8 +78,104 @@ public class TestPerson extends BasicTestCase {
 		try {
 			createPerson(root.getName());
 			fail("Creating a person with the name of a different person should not work.");
-		} catch (KnowledgeBaseException ex) {
+		} catch (TopLogicException ex) {
 			// expected
+		}
+	}
+
+	/**
+	 * {@link Person#normalizeName(String)} strips surrounding whitespace, preserves case, and passes
+	 * {@code null} through.
+	 */
+	public void testNormalizeName() {
+		assertEquals("Admin", Person.normalizeName("  Admin  "));
+		assertEquals("Admin", Person.normalizeName("Admin"));
+		assertNull(Person.normalizeName(null));
+		assertEquals("", Person.normalizeName("   "));
+	}
+
+	/**
+	 * A lookup with surrounding whitespace resolves the account: the name is trimmed before the
+	 * (case-insensitive) lookup.
+	 */
+	public void testByNameTrimsWhitespace() {
+		Person person = createPerson("trimUser");
+		try {
+			assertNotNull("Lookup must trim surrounding whitespace.", Person.byName("  trimUser  "));
+			assertNotNull("Lookup is also case-insensitive.", Person.byName("  TRIMUSER  "));
+		} finally {
+			deletePersonAndUser(person);
+		}
+	}
+
+	/**
+	 * Creating an account with surrounding whitespace stores the trimmed name.
+	 */
+	public void testCreateTrimsWhitespace() {
+		Person person = createPerson("  spacey  ");
+		try {
+			assertEquals("Stored name must be trimmed.", "spacey", person.getName());
+			assertNotNull(Person.byName("spacey"));
+		} finally {
+			deletePersonAndUser(person);
+		}
+	}
+
+	/**
+	 * Creating an account with a disallowed character (an internal space) is rejected.
+	 */
+	public void testCreateRejectsInvalidName() {
+		try {
+			createPerson("bad name");
+			fail("Expected rejection of an invalid account name.");
+		} catch (TopLogicException expected) {
+			// Expected.
+		}
+	}
+
+	/**
+	 * An e-mail address is a valid account name under the e-mail-friendly default pattern.
+	 */
+	public void testCreateAcceptsEmailName() {
+		Person person = createPerson("jane.doe@example.com");
+		try {
+			assertEquals("jane.doe@example.com", person.getName());
+		} finally {
+			deletePersonAndUser(person);
+		}
+	}
+
+	/**
+	 * A non-ASCII name (e.g. from a directory account) is valid under the Unicode-aware default
+	 * pattern.
+	 */
+	public void testCreateAcceptsNonAsciiName() {
+		// Encoding-independent literal for "José" (é = U+00E9).
+		String name = "José";
+		Person person = createPerson(name);
+		try {
+			assertEquals(name, person.getName());
+		} finally {
+			deletePersonAndUser(person);
+		}
+	}
+
+	/**
+	 * Two self-provisioning attempts from e-mail addresses that differ only in case resolve to the
+	 * same account: the first creates it, the second is rejected as a case-insensitive duplicate.
+	 */
+	public void testCaseOnlyDifferentEmailIsDuplicate() {
+		Person person = createPerson("user@example.com");
+		try {
+			try {
+				createPerson("User@Example.com");
+				fail("Expected a case-insensitive duplicate rejection.");
+			} catch (TopLogicException expected) {
+				// Expected.
+			}
+			assertNotNull(Person.byName("USER@EXAMPLE.COM"));
+		} finally {
+			deletePersonAndUser(person);
 		}
 	}
 
@@ -143,21 +240,6 @@ public class TestPerson extends BasicTestCase {
 		}
 	}
 
-	public void testCreatePersonWithGroupName() {
-		String groupName = "someGroupName";
-		Transaction groupCreation = PersistencyLayer.getKnowledgeBase().beginTransaction();
-		Group group = Group.createGroup(groupName);
-		assertNotNull("Creating of group with name " + groupName + " should work.", group);
-		groupCreation.commit();
-
-		try {
-			createPerson(groupName);
-			fail("Ticket #9261: Group with name '" + groupName + "' already exists");
-		} catch (KnowledgeBaseException ex) {
-			// expected
-		}
-	}
-
 	public void testSavePerson() {
 		
     	Person root = PersonManager.getManager().getRoot();
@@ -165,12 +247,12 @@ public class TestPerson extends BasicTestCase {
     	
 		Locale previousLocale = root.getLocale();
     	// Modify back and forth.
-		Transaction modifyTx = kb.beginTransaction();
+		Transaction modifyTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		setLanguageAndCountry(root, Locale.TRADITIONAL_CHINESE);
 		modifyTx.commit();
 		assertNotEquals(previousLocale, root.getLocale());
     	
-		Transaction modifyBackTx = kb.beginTransaction();
+		Transaction modifyBackTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		setLanguageAndCountry(root, previousLocale);
 		modifyBackTx.commit();
 		assertEquals(previousLocale, root.getLocale());
@@ -210,11 +292,11 @@ public class TestPerson extends BasicTestCase {
 		String personName = "testToStringForDeletedKO";
 
 		KnowledgeBase kb = KBSetup.getKnowledgeBase();
-		Transaction createTx = kb.beginTransaction();
+		Transaction createTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		Person p = Person.create(kb, personName, null);
 		createTx.commit();
 
-		Transaction delTx = kb.beginTransaction();
+		Transaction delTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		p.tDelete();
 		delTx.commit();
 		try {
@@ -263,7 +345,7 @@ public class TestPerson extends BasicTestCase {
 	 */
 	private void deleteTestPersonKO(KnowledgeObject testPerson) throws DataObjectException {
 		KnowledgeBase kb = testPerson.getKnowledgeBase();
-		Transaction deleteTX = kb.beginTransaction();
+		Transaction deleteTX = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		testPerson.delete();
 		deleteTX.commit();
 	}
@@ -274,7 +356,7 @@ public class TestPerson extends BasicTestCase {
 	 */
 	private KnowledgeObject createTestPersonKO(String testPersonName) throws DataObjectException {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction createTX = kb.beginTransaction();
+		Transaction createTX = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject testPerson = kb.createKnowledgeObject(Person.OBJECT_NAME);
 		testPerson.setAttributeValue(Person.NAME_ATTRIBUTE, testPersonName);
 		createTX.commit();
@@ -305,7 +387,7 @@ public class TestPerson extends BasicTestCase {
 	}
 
 	private void deletePersonNotUser(Person person) throws Throwable {
-		Transaction transactionDeletePerson = person.getKnowledgeBase().beginTransaction();
+		Transaction transactionDeletePerson = person.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			// If the user of the person is deleted, the tests cannot reproduce the problem in #6255
 			// PersonManager.getManager().deleteUser(person);
@@ -324,11 +406,10 @@ public class TestPerson extends BasicTestCase {
 	public static Person createPerson(String personName) {
 		PersonManager personManager = PersonManager.getManager();
 		Person root = personManager.getRoot();
-		Transaction transactionCreatePerson = root.getKnowledgeBase().beginTransaction();
+		Transaction transactionCreatePerson = root.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
-			String authenticationDeviceID = root.getAuthenticationDeviceID();
-			Person testPerson =
-				Person.create(PersistencyLayer.getKnowledgeBase(), personName, authenticationDeviceID);
+			AuthenticationDevice authenticationDevice = root.getAuthenticationDevice();
+			Person testPerson = Person.create(PersistencyLayer.getKnowledgeBase(), personName, authenticationDevice);
 			transactionCreatePerson.commit();
 			return testPerson;
 		} finally {
@@ -340,7 +421,7 @@ public class TestPerson extends BasicTestCase {
 	 * Deletes the given {@link Person} formerly created with {@link #createPerson(String)}.
 	 */
 	public static void deletePersonAndUser(Person person) {
-		Transaction deleteTx = person.getKnowledgeBase().beginTransaction();
+		Transaction deleteTx = person.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		PersonManager r = PersonManager.getManager();
 		person.tDelete();
 		person.tDelete();
@@ -351,8 +432,8 @@ public class TestPerson extends BasicTestCase {
      * Return the suite of tests to perform. 
      */
     public static Test suite () {
-		final Test innerTest = PersonManagerSetup.createPersonManagerSetup(
-			TestPersonSetup.wrap(new TestSuite(TestPerson.class)));
+		final Test innerTest = PersonManagerSetup.createPersonManagerSetup(TestPerson.class,
+			TestPersonSetup.wrap(DefaultTestFactory.INSTANCE));
 		return innerTest;
     }
 

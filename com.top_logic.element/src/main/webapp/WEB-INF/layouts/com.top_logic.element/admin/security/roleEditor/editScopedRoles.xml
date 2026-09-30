@@ -11,40 +11,37 @@
 		</include>
 		<layout>
 			<components>
-				<component class="com.top_logic.element.layout.role.ScopedEditRoleComponent"
-					buttonComponent="EditRoleButtons"
+				<component class="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 					defaultFor="tl.accounts:Role"
 					model="selection(editRolesTable)"
 					name="EditRole"
 					page="/jsp/layout/admin/roles/EditRole.jsp"
 					resPrefix="admin.role.edit."
 					saveScrollPosition="true"
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 				>
 					<dialogs>
 						<layout name="newRoleDialog">
 							<dialogInfo
 								executability="InViewMode"
-								height="280"
+								height="380"
 								openerClique="create"
 								openerCommandGroup="Create"
-								width="360"
+								width="410"
 							/>
 
 							<components>
 								<component class="com.top_logic.tool.boundsec.gui.EditRoleComponent$NewRoleComponent"
-									buttonComponent="NewRoleButtons"
+									buttonbar="true"
 									name="NewRole"
 									page="/jsp/layout/admin/roles/NewRole.jsp"
 									resPrefix="admin.role.edit.new."
-									securityProviderClass="securityRoot"
+									securityObject="securityRoot"
 								/>
-								<buttonbar name="NewRoleButtons"/>
 							</components>
 						</layout>
 					</dialogs>
 				</component>
-				<buttonbar name="EditRoleButtons"/>
 			</components>
 		</layout>
 	</components>

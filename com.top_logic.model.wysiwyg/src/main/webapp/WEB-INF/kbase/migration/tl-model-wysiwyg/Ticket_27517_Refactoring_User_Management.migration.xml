@@ -19,6 +19,9 @@
 		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
 			module="tl-model-search"
 		/>
+		<dependency name="Ticket_23110_create_module_tl_model_i18n"
+			module="tl-model-wysiwyg"
+		/>
 	</dependencies>
 	<processors>
 		<add-annotations name="tl.model.wysiwyg:Html">

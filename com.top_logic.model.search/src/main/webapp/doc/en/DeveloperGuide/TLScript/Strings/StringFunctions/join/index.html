@@ -1,0 +1,81 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$list.join(separator: ", ", prefix: "(", suffix: ")")</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Joins a character string from the given list entries. A separator is inserted between each entry. Optionally, a prefix or suffix can be added at the beginning and end.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">input</code></td>
+			<td>List of values</td>
+			<td>The values to be converted into a character string</td>
+			<td>Yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">separator</code></td>
+			<td>Character string</td>
+			<td>The separator to be inserted between the individual values.</td>
+			<td>no</td>
+			<td><code class="hljs inlineCode">", "</code></td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">prefix</code></td>
+			<td>Character string</td>
+			<td>The optional prefix to be added at the beginning of the result.</td>
+			<td>no</td>
+			<td>empty</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">suffix</code></td>
+			<td>Character string</td>
+			<td>The optional suffix to be added at the end of the result.</td>
+			<td>no</td>
+			<td>empty</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> String</p>
+
+<p>All given values are concatenated and separated with a separator.</p>
+
+<h2>Examples</h2>
+
+<h3>Example 1: Output</h3>
+
+<pre>
+	<code>[1, 2, 3].join()
+</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">"1, 2, 3"</code></p>
+
+<h3>Example 2</h3>
+
+<pre>
+	<code>[1, 2, 3].join(separator: "; ", prefix: "{", suffix: "}");
+</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">"{1; 2; 3}"</code></p>
+
+<p> </p>

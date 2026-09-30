@@ -1,0 +1,11 @@
+<objects>
+	<!-- Test object for ticket #29069: Derived attribute returning a closure -->
+	<object id="e1" type="TestSearchExpression:E">
+		<attribute name="name" value="E1"/>
+		<attribute name="factor" value="3"/>
+	</object>
+	<object id="e2" type="TestSearchExpression:E">
+		<attribute name="name" value="E2"/>
+		<attribute name="factor" value="5"/>
+	</object>
+</objects>

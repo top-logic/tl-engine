@@ -158,7 +158,6 @@ public class ExtendedTreeTableRenderer extends TreeTableRenderer {
 							Renderer<Object> renderer = column.getRenderer();
                             writer.beginTag("nobr");
                             writeNodeDecoration(context, writer, nodeContext);
-                            writeTextSeparator(writer);
                             if (renderer != null) {
                                 renderer.write(context, writer, nodeContext.currentNode());
                             }

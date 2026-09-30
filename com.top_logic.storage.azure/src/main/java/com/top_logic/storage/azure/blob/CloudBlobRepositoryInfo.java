@@ -11,7 +11,7 @@ import com.top_logic.dsa.repos.RepositoryException;
 /**
  * Wrapper for an item (entry/container) in the cloud based repository.
  * 
- * @author Michael Gänsler
+ * @author Michael GÃ¤nsler
  */
 public class CloudBlobRepositoryInfo extends BaseRepositoryInfo {
 

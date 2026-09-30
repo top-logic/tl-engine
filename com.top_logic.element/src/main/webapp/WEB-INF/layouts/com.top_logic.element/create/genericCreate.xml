@@ -41,11 +41,11 @@
 		<param name="createCommandGroups"
 			optional="true"
 		/>
-		<param name="securityProvider"
-			value="default"
-		/>
 		<param name="securityObject"
 			value="model"
+		/>
+		<param name="isSecurityMaster"
+			value="true"
 		/>
 		<param name="resPrefix"
 			value="layouts.element.create.genericCreate."
@@ -76,10 +76,11 @@
 
 	<layout name="${dialogName}">
 		<component class="com.top_logic.layout.form.component.AbstractCreateComponent"
-			buttonComponent="${namePrefix}Buttons"
+			buttonbar="true"
 			commandGroups="${createCommandGroups}"
 			commands="${commands}"
 			create-handler="${createHandler}"
+			isSecurityMaster="${isSecurityMaster}"
 			model="${model}"
 			modelBuilder="${modelBuilder}"
 			name="${detailComponentName}"
@@ -87,7 +88,6 @@
 			page="/jsp/element/create/GenericCreate.jsp"
 			resPrefix="${resPrefix}"
 			securityObject="${securityObject}"
-			securityProviderClass="${securityProvider}"
 			setParentToEdit="${z_legacy_setParentToEdit}"
 			titleKey="${titleKey}"
 		>
@@ -95,6 +95,5 @@
 			<defaultAction>${defaultAction}</defaultAction>
 			<cancelAction>${cancelAction}</cancelAction>
 		</component>
-		<buttonbar name="${namePrefix}Buttons"/>
 	</layout>
 </template>

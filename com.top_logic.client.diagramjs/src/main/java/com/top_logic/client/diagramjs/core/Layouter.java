@@ -13,7 +13,7 @@ import com.top_logic.client.diagramjs.model.util.Waypoint;
 /**
  * Layouts diagramJS components.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class Layouter extends JavaScriptObject {
 

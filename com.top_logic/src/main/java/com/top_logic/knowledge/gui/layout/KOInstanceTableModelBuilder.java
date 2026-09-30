@@ -14,9 +14,10 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.dob.MetaObject;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -61,14 +62,18 @@ public class KOInstanceTableModelBuilder extends AbstractConfiguredInstance<KOIn
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-		return (anObject instanceof Wrapper) && ((Wrapper) anObject).tTable().getName().equals(metaObjectName);
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
+		return (listElement instanceof Wrapper) && ((Wrapper) listElement).tTable().getName().equals(metaObjectName);
 	}
 
 	@Override
 	public Collection<?> getModel(Object businessModel, LayoutComponent aComponent) {
 		// IGNORE FindBugs(RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT): For better portability.
-		return WrapperFactory.getWrappersByType(metaObjectName, KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase());
+		return WrapperFactory.getWrappersByType(metaObjectName, PersistencyLayer.getKnowledgeBase());
 	}
 
 	@Override

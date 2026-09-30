@@ -19,7 +19,7 @@ import com.top_logic.util.TLContext;
 /**
  * Unlock a locked document (when no update is performed). 
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class UnlockExecutable extends AbstractWebfolderAction {
 
@@ -36,10 +36,6 @@ public class UnlockExecutable extends AbstractWebfolderAction {
     @Override
 	public HandlerResult executeCommand(DisplayContext aContext) {
 		Document document = this.getDocument();
-		if (!ComponentUtil.isValid(document)) {
-			return ComponentUtil.errorObjectDeleted(aContext);
-		}
-
     	HandlerResult theResult = new HandlerResult();
 		try {
             DataAccessProxy theDAP = document.getDAP();
@@ -69,6 +65,9 @@ public class UnlockExecutable extends AbstractWebfolderAction {
 				return ExecutableState.NOT_EXEC_HIDDEN;
 			}
 
+			if (!ComponentUtil.isValid(document)) {
+				return ExecutableState.NO_EXEC_INVALID;
+			}
 			DataAccessProxy theDAP = document.getDAP();
             if (LockExecutable.isLocked(theDAP)) {
                 if (!TLContext.isAdmin()) {

@@ -27,8 +27,8 @@ import java.util.Properties;
 import java.util.List;
 import java.util.Arrays;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
 
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -224,7 +224,7 @@ public class WebXMLTest extends TestCase {
         assertEquals( "Context parameter 'icecream'", "vanilla", sr.getContextParameter( "icecream" ) );
         InvocationContext ic = client.newInvocation( "http://localhost/SimpleServlet" );
 
-        javax.servlet.ServletContext sc = ((HttpServlet) ic.getServlet()).getServletContext();
+        jakarta.servlet.ServletContext sc = ((HttpServlet) ic.getServlet()).getServletContext();
         assertNotNull( "ServletContext should not be null", sc );
         assertEquals( "ServletContext.getInitParameter()", "vanilla", sc.getInitParameter( "icecream" ) );
         assertEquals( "init parameter: cone", "waffle", sc.getInitParameter( "cone" ) );
@@ -248,7 +248,7 @@ public class WebXMLTest extends TestCase {
       
       InvocationContext ic = client.newInvocation( "http://localhost/SimpleServlet" );
 
-      javax.servlet.ServletContext sc = ((HttpServlet) ic.getServlet()).getServletContext();
+      jakarta.servlet.ServletContext sc = ((HttpServlet) ic.getServlet()).getServletContext();
       assertNotNull( "ServletContext should not be null", sc );
       assertEquals( "ServletContext.getInitParameter()", "strawberry", sc.getInitParameter( "icecream" ) );
       assertNull( "ServletContext.getInitParameter() should be null", sc.getInitParameter( "shoesize" ) );    	

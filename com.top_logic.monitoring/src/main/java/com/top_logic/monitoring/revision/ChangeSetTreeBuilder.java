@@ -59,7 +59,9 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelI18N;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.TLCollator;
+import com.top_logic.util.model.ModelService;
 
 /**
  * {@link DefaultTreeTableBuilder} building a tree containing {@link ChangeSet}, {@link ItemEvent},
@@ -378,9 +380,17 @@ public class ChangeSetTreeBuilder extends DefaultTreeTableBuilder {
 				ItemUpdate update = newEventsById.getValue(evtId);
 				if (update == null) {
 					update = new ItemUpdate(lookupRevision, evtId, true);
-					KnowledgeItem source = ChangeSetTreeBuilder.lookupInHistoryContext(_kb, sourceKey, lookupRevision);
-					ObjectKey currentTypeKey = KBUtils.ensureHistoryContext(typeKey(source), Revision.CURRENT_REV);
-					update.setValue(PersistentObject.TYPE_REF, currentTypeKey, currentTypeKey, false);
+					ObjectKey currentTypeKey = currentTypeKey(sourceKey, lookupRevision);
+					if (currentTypeKey != null) {
+						update.setValue(PersistentObject.TYPE_REF, currentTypeKey, currentTypeKey, false);
+					} else {
+						/* This may happen: When the association is unversioned, then the source
+						 * object is unversioned. It is not possible to resolve an unversioned
+						 * object in a stable revision. As a workaround not the current type version
+						 * of the historic object is used but the type of the current version of the
+						 * source. Unfortunately the source may already be deleted! in this case the
+						 * type can not be determined. */
+					}
 					Object newValue;
 					if (multipleRef) {
 						newValue = CollectionFactory.set(dest);
@@ -423,10 +433,29 @@ public class ChangeSetTreeBuilder extends DefaultTreeTableBuilder {
 				return newEventsById;
 			}
 
+			private ObjectKey currentTypeKey(ObjectKey sourceKey, long lookupRevision) {
+				if (MetaObjectUtils.isVersioned(sourceKey.getObjectType())) {
+					KnowledgeItem source = ChangeSetTreeBuilder.lookupInHistoryContext(_kb, sourceKey, lookupRevision);
+					return KBUtils.ensureHistoryContext(typeKey(source), Revision.CURRENT_REV);
+				} else {
+					sourceKey = KBUtils.ensureHistoryContext(sourceKey, Revision.CURRENT_REV);
+					KnowledgeItem source = _kb.resolveObjectKey(sourceKey);
+					if (source != null) {
+						return typeKey(source);
+					} else {
+						return null;
+					}
+				}
+			}
+
 			private ObjectKey typeKey(KnowledgeItem item) {
 				try {
 					TLObject wrapper = item.getWrapper();
 					TLStructuredType type = wrapper.tType();
+					if (type == null) {
+						// Type no longer exists, use top-most type.
+						type = TLModelUtil.tlObjectType(ModelService.getApplicationModel());
+					}
 					return type.tId();
 				} catch (NullPointerException ex) {
 					// Trap for problem reported in Ticket #23017.

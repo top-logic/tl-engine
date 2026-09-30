@@ -20,7 +20,7 @@ import com.top_logic.element.layout.meta.search.PublishableFieldSupport;
 import com.top_logic.element.layout.meta.search.QueryUtils;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.FormContainer;
@@ -37,6 +37,7 @@ import com.top_logic.reporting.report.model.RevisedReport;
 import com.top_logic.reporting.report.util.ReportConstants;
 import com.top_logic.reporting.report.wrap.StoredReport;
 import com.top_logic.reporting.report.xmlutilities.ReportWriter;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
@@ -101,7 +102,7 @@ public class PublishableNewStoredReportComponent extends AbstractCreateComponent
 	
 	@Override
 	public boolean isExpanded() {
-		return allow(CommandGroupRegistry.resolve(QueryUtils.PUBLISH_NAME));
+		return BoundChecker.allowCommand(this, CommandGroupRegistry.resolve(QueryUtils.PUBLISH_NAME), getModel());
 	}
 	
     @Override
@@ -152,7 +153,7 @@ public class PublishableNewStoredReportComponent extends AbstractCreateComponent
 			String theMEType = theMastersMaster.getObjectType();
 			
 			String theName = (String) (aContext.getField(NAME_ATTRIBUTE)).getValue();
-			KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+			KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 			KnowledgeObject theObject = theKB.createKnowledgeObject(StoredReport.KO_TYPE);
 			StoredReport theStoredReport = (StoredReport) WrapperFactory.getWrapper(theObject);
 			storeOwner(theStoredReport);

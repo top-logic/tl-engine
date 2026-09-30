@@ -21,7 +21,7 @@
 
 			<form:columns count="2">
 				<form:group name="<%=ApplicationMonitorComponent.GROUP_JAVA%>"
-					personalizationName="firstRow"
+					personalizationName="<%=ApplicationMonitorComponent.GROUP_JAVA%>"
 				>
 					<form:cell wholeLine="true">
 						<form:tableview name="<%=ApplicationMonitorComponent.FIELD_JAVA%>"/>
@@ -29,7 +29,7 @@
 				</form:group>
 
 				<form:groupCell name="<%=ApplicationMonitorComponent.GROUP_SYSTEM%>"
-					personalizationName="firstRow"
+					personalizationName="<%=ApplicationMonitorComponent.GROUP_SYSTEM%>"
 				>
 					<form:cell wholeLine="true">
 						<form:tableview name="<%=ApplicationMonitorComponent.FIELD_SYSTEM%>"/>
@@ -37,7 +37,7 @@
 				</form:groupCell>
 
 				<form:groupCell name="<%=ApplicationMonitorComponent.GROUP_MEMORY%>"
-					personalizationName="secondRow"
+					personalizationName="<%=ApplicationMonitorComponent.GROUP_MEMORY%>"
 				>
 					<form:cell wholeLine="true">
 						<form:tableview name="<%=ApplicationMonitorComponent.FIELD_MEMORY%>"/>
@@ -45,7 +45,7 @@
 				</form:groupCell>
 
 				<form:groupCell name="<%=ApplicationMonitorComponent.GROUP_LICENCE%>"
-					personalizationName="secondRow"
+					personalizationName="<%=ApplicationMonitorComponent.GROUP_LICENCE%>"
 				>
 					<form:cell wholeLine="true">
 						<form:tableview name="<%=ApplicationMonitorComponent.FIELD_LICENCE%>"/>

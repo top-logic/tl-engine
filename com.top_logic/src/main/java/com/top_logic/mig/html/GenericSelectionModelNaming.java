@@ -6,6 +6,7 @@
 package com.top_logic.mig.html;
 
 import com.top_logic.basic.col.Mapping;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.scripting.recorder.ref.GenericModelOwnerNaming;
 
 /**
@@ -22,6 +23,7 @@ public class GenericSelectionModelNaming extends
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
+	@TagName("generic-selection-model-name")
 	public interface GenericSelectionModelName extends GenericModelOwnerNaming.GenericModelName<SelectionModel> {
 		// Marker interface to have correct namespace.
 	}

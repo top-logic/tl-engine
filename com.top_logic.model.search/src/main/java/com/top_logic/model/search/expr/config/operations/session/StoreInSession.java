@@ -54,15 +54,16 @@ public class StoreInSession extends GenericMethod {
 		String key = asString(arguments[1]);
 		boolean persist = asBoolean(arguments[2]);
 
+		Object before;
 		if (persist) {
 			PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
 
-			Object before = pc.getJSONValue(key);
+			before = pc.getJSONValue(key);
 			pc.setJSONValue(key, value);
-			return before;
 		} else {
-			return DefaultDisplayContext.getDisplayContext().getSessionContext().mkMap(SCRIPT_STATE).put(key, value);
+			before = DefaultDisplayContext.getDisplayContext().getSessionContext().mkMap(SCRIPT_STATE).put(key, value);
 		}
+		return normalizeValue(before);
 	}
 
 	@Override

@@ -20,7 +20,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
  * that can be chosen for a property that has {@link Options} computed by
  * {@link DynamicComponentOptions}.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @TagName("available-templates")

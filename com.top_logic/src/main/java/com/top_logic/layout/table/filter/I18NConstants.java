@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.table.filter;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -19,9 +20,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey FILTER_VALUES;
 
-	public static ResKey FALSE_LABEL = legacyKey("layout.table.filter.falseLabel");
+	@CustomKey("layout.table.filter.falseLabel")
+	public static ResKey FALSE_LABEL;
 
-	public static ResKey TRUE_LABEL = legacyKey("layout.table.filter.trueLabel");
+	@CustomKey("layout.table.filter.trueLabel")
+	public static ResKey TRUE_LABEL;
 
 	static {
 		initConstants(I18NConstants.class);

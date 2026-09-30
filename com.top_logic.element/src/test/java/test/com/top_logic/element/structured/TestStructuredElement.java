@@ -30,7 +30,6 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
-import com.top_logic.model.TLScope;
 
 /**
  * Test for {@link StructuredElement}s
@@ -242,14 +241,14 @@ public class TestStructuredElement extends BasicTestCase {
 			tx.commit();
 		}
 
+		String moduleName = parent.tType().getModule().getName();
+		ModelFactory factory = DynamicModelService.getFactoryFor(moduleName);
 		try (Transaction tx = beginTransaction()) {
-			String moduleName = parent.tType().getModule().getName();
-			ModelFactory factory = DynamicModelService.getFactoryFor(moduleName);
-			TLClass abstractType = (TLClass) factory.getModule().getType("Subproject");
+			TLClass abstractType = (TLClass) factory.getModule().getType("projElement.Part");
 			assertTrue("Test needs an abstract type.", abstractType.isAbstract());
 			try {
-				StructuredElement child = (StructuredElement) factory.createObject(abstractType, parent, null);
-				child.setValue("name", "genericSubProject");
+				StructuredElement child = (StructuredElement) factory.createObject(abstractType, parent);
+				child.setValue("name", "genericPart");
 				tx.commit();
 				fail("Must not be able to create element for abstract type '" + abstractType + "'.");
 			} catch (Exception ex) {
@@ -259,9 +258,8 @@ public class TestStructuredElement extends BasicTestCase {
 
 		StructuredElement child;
 		try (Transaction tx = beginTransaction()) {
-			// Concrete class is defined in the root type.
-			TLClass subProjectType = (TLClass) ((TLScope) _projectRoot).getType("Subproject");
-			child = (StructuredElement) DynamicModelService.getInstance().createObject(subProjectType, parent, null);
+			TLClass subProjectType = (TLClass) factory.getModule().getType("Subproject");
+			child = (StructuredElement) DynamicModelService.getInstance().createObject(subProjectType, parent);
 			child.setValue("name", "genericSubProject");
 			parent.getChildrenModifiable().add(child);
 			tx.commit();
@@ -424,7 +422,7 @@ public class TestStructuredElement extends BasicTestCase {
 	}
 
 	private Transaction beginTransaction() {
-		return _projectRoot.getKnowledgeBase().beginTransaction();
+		return _projectRoot.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	}
 
 	/**

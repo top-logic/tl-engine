@@ -5,31 +5,30 @@
  */
 package com.top_logic.util.sched.task.schedule;
 
+import static com.top_logic.layout.form.template.model.Templates.*;
+
 import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-
-import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Day;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
-import com.top_logic.basic.xml.DOMUtil;
+import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.util.sched.task.Task;
+import com.top_logic.util.sched.task.schedule.DailySchedule.TimeOfDayConfig;
 
 /**
  * {@link SchedulingAlgorithm} for running a {@link Task} once a week.
@@ -46,24 +45,21 @@ public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
 
 	/** {@link TypedConfiguration} of {@link WeeklySchedule}. */
 	@TagName("weekly")
-	public interface Config<S extends WeeklySchedule<?>> extends AbstractSchedulingAlgorithm.Config<S> {
+	@DisplayOrder({
+		Config.PROPERTY_NAME_DAY_OF_WEEK,
+		Config.PROPERTY_NAME_TIME_OF_DAY,
+		Config.PROPERTY_NAME_PERIOD,
+	})
+	public interface Config<S extends WeeklySchedule<?>>
+			extends FixedDatePeriodicalSchedulingAlgorithm.Config<S>, TimeOfDayConfig {
 
 		/** Property name for {@link #getDayOfWeek()} */
 		String PROPERTY_NAME_DAY_OF_WEEK = "day-of-week";
-
-		/** Property name for {@link #getTimeOfDay()} */
-		String PROPERTY_NAME_TIME_OF_DAY = "time-of-day";
 
 		/** The {@link Day Day of week} at which the {@link Task} should be scheduled. */
 		@Mandatory
 		@Name(PROPERTY_NAME_DAY_OF_WEEK)
 		Day getDayOfWeek();
-
-		/** The time of day when the {@link Task} should be scheduled. */
-		@Mandatory
-		@Format(TimeOfDayAsDateValueProvider.class)
-		@Name(PROPERTY_NAME_TIME_OF_DAY)
-		Date getTimeOfDay();
 
 	}
 
@@ -87,16 +83,6 @@ public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
 	 */
 	public static final String NAME_FIELD_TIME_OF_DAY = NAME_FIELD_PREFIX + "TimeOfDay";
 
-	private static final Document TEMPLATE = DOMUtil.parseThreadSafe(""
-		+ "	<table " + templateRootAttributes() + " >"
-		+ templateStandardFields()
-		+ "		<tr>"
-		+ templateSmallField(NAME_FIELD_DAY_OF_WEEK)
-		+ templateSmallField(NAME_FIELD_TIME_OF_DAY)
-		+ "		</tr>"
-		+ "	</table>"
-		);
-
 	/**
 	 * Called by the {@link TypedConfiguration} for creating a {@link WeeklySchedule}.
 	 * 
@@ -118,13 +104,18 @@ public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
 	}
 
 	@Override
-	protected void addPeriod(Calendar result) {
-		result.add(Calendar.WEEK_OF_YEAR, 1);
+	protected void addPeriod(Calendar result, int period) {
+		result.add(Calendar.WEEK_OF_YEAR, period);
 	}
 
 	@Override
-	public Document getFormTemplateDocument() {
-		return TEMPLATE;
+	protected HTMLTemplateFragment createTemplate() {
+		return fragment(
+			fieldBox(NAME_FIELD_STRATEGY),
+			fieldBox(NAME_FIELD_CLASS),
+			fieldBox(NAME_FIELD_DAY_OF_WEEK),
+			fieldBox(NAME_FIELD_TIME_OF_DAY),
+			fieldBox(NAME_FIELD_PERIOD));
 	}
 
 	@Override
@@ -133,12 +124,18 @@ public class WeeklySchedule<C extends WeeklySchedule.Config<?>>
 
 		List<Day> dayOfWeekOptions = Arrays.asList(Day.values());
 		List<Day> dayOfWeekValue = Collections.singletonList(getConfig().getDayOfWeek());
-		group.addMember(FormFactory.newSelectField(
-			NAME_FIELD_DAY_OF_WEEK, dayOfWeekOptions, !FormFactory.MULTIPLE, dayOfWeekValue, FormFactory.IMMUTABLE));
+		group.addMember(transferPropertyLabel(Config.class, Config.PROPERTY_NAME_DAY_OF_WEEK,
+			FormFactory.newSelectField(
+				NAME_FIELD_DAY_OF_WEEK, dayOfWeekOptions, !FormFactory.MULTIPLE, dayOfWeekValue,
+				FormFactory.IMMUTABLE)));
 
 		DateFormat timeOfDayFormat = HTMLFormatter.getInstance().getShortTimeFormat();
-		group.addMember(FormFactory.newComplexField(
-			NAME_FIELD_TIME_OF_DAY, timeOfDayFormat, getConfig().getTimeOfDay(), FormFactory.IMMUTABLE));
+		group.addMember(
+			transferPropertyLabel(Config.class, Config.PROPERTY_NAME_TIME_OF_DAY,
+				FormFactory.newComplexField(
+				NAME_FIELD_TIME_OF_DAY, timeOfDayFormat, getConfig().getTimeOfDay(), FormFactory.IMMUTABLE)));
+
+		addPeriodField(group);
 	}
 
 }

@@ -272,34 +272,7 @@
 										value="0"
 									/>
 								</object>
-								<labeled-member label="Klassifikator"/>
-								<labeled-member label="Name"/>
-							</path>
-						</model>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="ClassifierA"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comparision="equals"
-					inverted="false"
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
-						<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Development > Modell Editor > Eigenschaften > Aufzählung-Eigenschaften"
-							/>
-							<path>
-								<labeled-member label="Klassifikatoren"/>
-								<named-member name="content"/>
-								<object>
-									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-										value="0"
-									/>
-								</object>
-								<labeled-member label="Klassifikator"/>
+								<labeled-member label="ClassifierA"/>
 								<labeled-member label="Voll qualifizierter Name"/>
 							</path>
 						</model>
@@ -326,34 +299,7 @@
 										value="1"
 									/>
 								</object>
-								<labeled-member label="Klassifikator"/>
-								<labeled-member label="Name"/>
-							</path>
-						</model>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="ClassifierB"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comparision="equals"
-					inverted="false"
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
-						<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Development > Modell Editor > Eigenschaften > Aufzählung-Eigenschaften"
-							/>
-							<path>
-								<labeled-member label="Klassifikatoren"/>
-								<named-member name="content"/>
-								<object>
-									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-										value="1"
-									/>
-								</object>
-								<labeled-member label="Klassifikator"/>
+								<labeled-member label="ClassifierB"/>
 								<labeled-member label="Voll qualifizierter Name"/>
 							</path>
 						</model>

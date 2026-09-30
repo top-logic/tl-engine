@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8" ?>
-
-<theme>
-	<styles>
-		<style name="/style/diagram-js.css"/>
-		<style name="/style/uml-js.css"/>
-	</styles>
-</theme>

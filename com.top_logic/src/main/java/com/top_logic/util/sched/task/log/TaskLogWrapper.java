@@ -226,7 +226,7 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 
 	private static RetryResult<TaskLogWrapper, Throwable> createRetry(Task task) {
 		KnowledgeBase knowledgeBase = PersistencyLayer.getKnowledgeBase();
-		Transaction transaction = knowledgeBase.beginTransaction();
+		Transaction transaction = knowledgeBase.beginTransaction(I18NConstants.CREATED_TASK__TASK.fill(task.getName()));
 		try {
 			KnowledgeObject taskLogKO = knowledgeBase.createKnowledgeObject(TYPE);
 			taskLogKO.setAttributeValue(NAME_ATTRIBUTE, task.getName());
@@ -454,7 +454,8 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 	}
 
 	private RetryResult<Void, Throwable> taskStartedInternal() {
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction =
+			PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.STARTED_TASK__TASK.fill(getName()));
 		try {
 			setState(TaskState.RUNNING);
 			createNotFinishedResult();
@@ -514,7 +515,8 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 	}
 
 	private RetryResult<Void, Throwable> tryCommitShrinkResultLists() {
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(I18NConstants.COMPRESSED_TASK_RESULT_LIST__TASK.fill(getName()));
 		try {
 			shrinkToMaxSize(FilterUtil.filterList(PROBLEM_FILTER, getOwnResults()), MAX_FAILURES);
 			shrinkToMaxSize(FilterUtil.filterList(NO_PROBLEM_FILTER, getOwnResults()), MAX_SUCCESSES);
@@ -549,7 +551,8 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 
 	private RetryResult<Void, Throwable> taskEndedInternal(
 			ResultType type, ResKey message, Throwable exception) {
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction =
+			PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.TASK_FINISHED__TASK.fill(getName()));
 		try {
 			Date end = new Date();
 			TaskResultWrapper currentResult = findLatestResult();
@@ -607,7 +610,8 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 	}
 
 	private RetryResult<Void, Throwable> taskCancelingInternal() {
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction =
+			PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.TASK_CANCELED__TASK.fill(getName()));
 		try {
 			touch();
 			if (getState().equals(TaskState.RUNNING)) {
@@ -799,7 +803,9 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 	}
 
 	private RetryResult<Void, Throwable> startupNodeCleanLocal(Task task) {
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction =
+			PersistencyLayer.getKnowledgeBase()
+				.beginTransaction(I18NConstants.CLEANED_TASK_LOG__TASK.fill(task.getName()));
 		try {
 			// Update the node id, which changes with every startup.
 			setClusterLock();
@@ -824,7 +830,8 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 	}
 
 	private RetryResult<Void, Throwable> startupNodeCleanGlobal(Task task) {
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(I18NConstants.CLEANED_GLOBAL_TASK_LOG__TASK.fill(task.getName()));
 		try {
 			/* This transaction is nested in the system startup transaction. If an object is changed
 			 * in this transaction and that is rolled back due to a concurrent commit from another

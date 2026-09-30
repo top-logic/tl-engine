@@ -19,7 +19,6 @@
 		name="${componentName}"
 		primaryChecker="${structure}Tree"
 		secondaryChecker="${structure}EditLayout"
-		securityDomain="${structure}"
 		titleKey="${resPrefix}tabber"
 	>
 		<components>
@@ -27,7 +26,7 @@
 				autoFocusSelection="true"
 				resPrefix="layouts.demo.editSecurityStructureWithExport.Tree."
 			>
-				<security-filter selectionRole="DemoSecurity.selection"/>
+				<security-filter selectionRole="selection"/>
 				<layoutInfo
 					minSize="100"
 					size="220"
@@ -35,19 +34,19 @@
 				<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"
 					structureName="${structure}"
 				>
-					<has-some-role roles="DemoSecurity.navigation"/>
+					<has-some-role roles="navigation"/>
 				</modelBuilder>
 			</treeView>
 			<tabbar name="${structure}demoStructureTab">
 				<components>
 					<securityLayout name="${structure}EditLayout"
 						helpID="structureDetail.helpID"
-						securityDomain="${structure}"
 						titleKey="layouts.demo.editSecurityStructureWithExport.EditLayout.tabber"
 					>
 						<tabInfo label="layouts.demo.editSecurityStructureWithExport.demoStructureDemoSecurityTypes.tab"/>
 						<components>
 							<include name="element/editStructureDetail.xml"
+								buttonbar="true"
 								defaultFor="${defaultFor}"
 								page="/jsp/demo/EditStructuredElement.jsp"
 								structure="${structure}"
@@ -61,11 +60,11 @@
 
 										<components>
 											<component class="com.top_logic.mig.html.layout.PageComponent"
+												buttonbar="true"
 												name="DialogA"
 												page="/jsp/layout/security/DialogA.jsp"
 												resPrefix="layouts.demo.editSecurityStructureWithExport.DialogA."
 											/>
-											<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 										</components>
 									</layout>
 
@@ -74,17 +73,17 @@
 
 										<components>
 											<component class="com.top_logic.element.layout.structured.AdminElementComponent"
+												buttonbar="true"
 												modifier=""
 												name="DialogGotoParent"
 												page="/jsp/layout/security/GotoParent.jsp"
 												resPrefix="layouts.demo.editSecurityStructureWithExport.DialogGotoParent."
-												securityProviderClass="default"
+												securityObject="model"
 											/>
-											<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 										</components>
 									</layout>
 
-									<layout>
+									<layout buttonbar="true">
 										<dialogInfo defaultI18n="demo.securityExample.Assistant"/>
 
 										<components>
@@ -99,7 +98,7 @@
 													name="demoFirstStepSecurity"
 													page="/jsp/layout/security/DialogA.jsp"
 													resPrefix="layouts.demo.editSecurityStructureWithExport.demoFirstStepSecurity."
-													securityProviderClass="securityRoot"
+													securityObject="securityRoot"
 												>
 													<assistantInfo/>
 												</component>
@@ -108,13 +107,11 @@
 													name="demoSecondStepSecurity"
 													page="/jsp/layout/security/DialogB.jsp"
 													resPrefix="layouts.demo.editSecurityStructureWithExport.demoSecondStepSecurity."
-													securityProviderClass="securityRoot"
+													securityObject="securityRoot"
 												>
 													<assistantInfo/>
 												</component>
 											</assistent>
-
-											<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 										</components>
 									</layout>
 								</editDialogs>
@@ -132,7 +129,6 @@
 					</securityLayout>
 					<securityLayout name="${structure}SecurityAEdit"
 						helpID="displayTypeA.helpID"
-						securityDomain="${structure}"
 						titleKey="layouts.demo.editSecurityStructureWithExport.SecurityAEdit.tabber"
 					>
 						<tabInfo label="layouts.demo.editSecurityStructureWithExport.demoStructureDemoSecurityA.tab"/>
@@ -140,19 +136,18 @@
 							<layout>
 								<components>
 									<component class="com.top_logic.demo.layout.security.EditAComponent"
+										buttonbar="true"
 										model="selection(${structure}Tree)"
 										name="EditAComponent"
 										page="/jsp/layout/security/DisplayA.jsp"
 										resPrefix="layouts.demo.editSecurityStructureWithExport.EditAComponent."
 									/>
-									<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 								</components>
 							</layout>
 						</components>
 					</securityLayout>
 					<securityLayout name="${structure}SecurityBEdit"
 						helpID="displayTypeB.helpID"
-						securityDomain="${structure}"
 						titleKey="layouts.demo.editSecurityStructureWithExport.SecurityBEdit.tabber"
 					>
 						<tabInfo label="layouts.demo.editSecurityStructureWithExport.demoStructureDemoSecurityB.tab"/>
@@ -160,19 +155,18 @@
 							<layout>
 								<components>
 									<component class="com.top_logic.demo.layout.security.EditBComponent"
+										buttonbar="true"
 										model="selection(${structure}Tree)"
 										name="EditBComponent"
 										page="/jsp/layout/security/DisplayB.jsp"
 										resPrefix="layouts.demo.editSecurityStructureWithExport.EditBComponent."
 									/>
-									<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 								</components>
 							</layout>
 						</components>
 					</securityLayout>
 					<securityLayout name="${structure}SecurityParentEdit"
 						helpID="displayParent.helpID"
-						securityDomain="${structure}"
 						titleKey="layouts.demo.editSecurityStructureWithExport.SecurityParentEdit.tabber"
 					>
 						<tabInfo label="layouts.demo.editSecurityStructureWithExport.demoStructureDemoSecurityParent.tab"/>
@@ -184,15 +178,15 @@
 										master-component
 									-->
 									<component class="com.top_logic.demo.layout.security.EditParentComponent"
+										buttonbar="true"
 										model="model(${structure}Edit)"
 										modifier=""
 										name="EditParentComponent"
 										page="/jsp/layout/security/DisplayParent.jsp"
 										resPrefix="layouts.demo.editSecurityStructureWithExport.EditParentComponent."
-										securityProviderClass="default"
+										securityObject="model"
 										structure="${structure}"
 									/>
-									<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 								</components>
 							</layout>
 						</components>

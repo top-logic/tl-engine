@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
@@ -21,6 +22,7 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.Equality;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
@@ -36,7 +38,7 @@ import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.channel.ComponentChannel.ChannelValueFilter;
 import com.top_logic.layout.component.ComponentUtil;
-import com.top_logic.layout.component.Selectable;
+import com.top_logic.layout.component.InAppSelectable;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.FieldMode;
@@ -47,19 +49,21 @@ import com.top_logic.layout.form.model.ValueVetoListener;
 import com.top_logic.layout.form.selection.TableSelectDialogProvider;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.SelectionControlProvider;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMandatory;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.SelectControlProvider;
 import com.top_logic.layout.structure.ContentLayouting;
 import com.top_logic.layout.structure.LayoutControlProvider.Layouting;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponentUIOptions;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.model.util.TLModelPartRefsFormat;
-import com.top_logic.util.Resources;
+import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
  * Base class for components presenting a single {@link SelectField} providing options to be used as
@@ -71,12 +75,12 @@ import com.top_logic.util.Resources;
  * </p>
  */
 public abstract class AbstractSelectorComponent extends FormComponent
-		implements Selectable, ValueListener, ValueVetoListener {
+		implements InAppSelectable, ValueListener, ValueVetoListener {
 
 	/**
 	 * {@link AbstractSelectorComponent} options directly displayed in the component's template.
 	 */
-	public interface UIOptions extends LayoutComponentUIOptions, Selectable.SelectableConfig {
+	public interface UIOptions extends LayoutComponentUIOptions, InAppSelectableConfig {
 
 		/**
 		 * @see #isMultiple()
@@ -92,6 +96,9 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		 * @see #getTypes()
 		 */
 		String TYPES = "types";
+
+		/** @see #getSelectionOnModelChange() */
+		String SELECTION_ON_MODEL_CHANGE = "selectionOnModelChange";
 
 		/**
 		 * Option how to display the selection.
@@ -110,7 +117,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		@Name(TYPES)
 		@DynamicMode(fun = VisibleIfTable.class, args = @Ref(PRESENTATION))
 		@DynamicMandatory(fun = IfTable.class, args = @Ref(PRESENTATION))
-		@Format(TLModelPartRefsFormat.class)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
 		List<TLModelPartRef> getTypes();
 
 		/**
@@ -144,6 +151,13 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		@Name(MULTIPLE)
 		boolean isMultiple();
 
+		/**
+		 * Updates the selection of the component when the model of the component has changed.
+		 */
+		@Name(SELECTION_ON_MODEL_CHANGE)
+		@Options(fun = AllInAppImplementations.class)
+		PolymorphicConfiguration<SelectionUpdater> getSelectionOnModelChange();
+
 	}
 
 	/**
@@ -173,16 +187,22 @@ public abstract class AbstractSelectorComponent extends FormComponent
 
 			if (newValue instanceof Collection) {
 				for (Object element : ((Collection<?>) newValue)) {
-					if (!selector.supportsOption(element)) {
+					if (selector.supportsOption(element).shouldRemove()) {
 						return false;
 					}
 				}
 				return true;
 			} else {
-				return selector.supportsOption(newValue);
+				return !selector.supportsOption(newValue).shouldRemove();
 			}
 		}
 	};
+
+	private CommandHandler _onSelectionChange;
+
+	private boolean _modelChanged;
+
+	private SelectionUpdater _selectionUpdateOnModelChange;
 
 	/**
 	 * Creates a {@link AbstractSelectorComponent} from configuration.
@@ -195,6 +215,13 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	@CalledByReflection
 	public AbstractSelectorComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
+		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_selectionUpdateOnModelChange = context.getInstance(config.getSelectionOnModelChange());
+	}
+
+	@Override
+	public CommandHandler getOnSelectionHandler() {
+		return _onSelectionChange;
 	}
 
 	/**
@@ -229,7 +256,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		SelectField selectField =
 			FormFactory.newSelectField(getSelectFieldName(), options, multiple(), null, false);
 		selectField.setTransient(true);
-		selectField.setLabel(Resources.getInstance().getString(getTitleKey()));
+		selectField.setLabel(getTitleKey());
 		selectField.setControlProvider(getSelectControlProvider());
 		selectField.setOptionComparator(Equality.INSTANCE);
 		selectField.setOptionLabelProvider(getOptionLabelProvider());
@@ -316,12 +343,11 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	}
 
 	@Override
-	protected boolean receiveModelCreatedEvent(Object aModel, Object changedBy) {
-		if (aModel != null && supportsInternalModel(aModel)) {
-			invalidate();
-			return true;
-		} else {
-			return false;
+	protected void handleTLObjectCreations(Stream<? extends TLObject> created) {
+		if (!isInvalid()) {
+			if (created.filter(obj -> supportsInternalModel(obj)).findFirst().isPresent()) {
+				invalidate();
+			}
 		}
 	}
 
@@ -368,7 +394,9 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	/**
 	 * Whether a value is supported as select option.
 	 */
-	protected abstract boolean supportsOption(Object value);
+	protected ElementUpdate supportsOption(Object value) {
+		return ElementUpdate.NO_CHANGE;
+	}
 
 	/**
 	 * The objects to select from in the order to present to the user.
@@ -376,12 +404,29 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	protected abstract List<?> getOptionList();
 
 	@Override
+	public boolean isModelValid() {
+		return !_modelChanged && super.isModelValid();
+	}
+
+	@Override
 	public boolean validateModel(DisplayContext context) {
 		boolean result = super.validateModel(context);
 
+		if (_modelChanged) {
+			_modelChanged = false;
+			if (_selectionUpdateOnModelChange != null) {
+				_selectionUpdateOnModelChange.updateSelection(this);
+			}
+		}
 		updateDefaultSelection();
 
 		return result;
+	}
+
+	@Override
+	protected void afterModelSet(Object oldModel, Object newModel) {
+		super.afterModelSet(oldModel, newModel);
+		_modelChanged = true;
 	}
 
 	@Override

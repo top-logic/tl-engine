@@ -2,12 +2,11 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic.model.search/transaction.template.xml"
 >
 	<arguments
 		formType="tl.demo.forms:DuplicateObjectInput"
-		height="300px"
+		height="320px"
 		width="400px"
 	>
 		<title class="com.top_logic.layout.component.title.ModelTitle"
@@ -28,6 +27,13 @@
 				<en>Duplicate selection</en>
 				<de>Selektion duplizieren</de>
 			</resourceKey>
+			<executability>
+				<rule-by-expression show-disabled="true">
+					<decision><![CDATA[x -> $x != null
+    ? true
+    : #("Kein Objekt gewählt"@de, "No object selected."@en)]]></decision>
+				</rule-by-expression>
+			</executability>
 		</open-handler>
 		<initialization><![CDATA[form -> model -> {
   newName=#("Kopie von {0}"@de, "Copy of {0}"@en).fill($model);
@@ -36,9 +42,8 @@
 }]]></initialization>
 		<transactionHandler id="perform"
 			class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
-			clique="main"
+			clique="default"
 			closeDialog="true"
-			confirm="false"
 			disabledImage=""
 			group="Write"
 			ignoreWarnings="default"
@@ -48,9 +53,11 @@
 				<en>Duplicate</en>
 				<de>Duplizieren</de>
 			</resourceKey>
-			<confirmMessage key="dynamic.709ca113-9f48-402d-bda6-f585ac2031f5">
-				<de>Soll wirklich eine Kopie angelegt werden?</de>
-			</confirmMessage>
+			<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+				<confirmMessage key="dynamic.709ca113-9f48-402d-bda6-f585ac2031f5">
+					<de>Soll wirklich eine Kopie angelegt werden?</de>
+				</confirmMessage>
+			</confirmation>
 			<postCreateActions>
 				<setModel target="selection(com.top_logic.demo/technical/components/transaction/allAsTable.layout.xml#Table)"/>
 			</postCreateActions>

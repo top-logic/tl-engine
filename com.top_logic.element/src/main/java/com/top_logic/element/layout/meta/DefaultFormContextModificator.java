@@ -24,7 +24,7 @@ import com.top_logic.model.TLStructuredTypePart;
 /** 
  * Default {@link FormContextModificator} implementation that does no modifications at all.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class DefaultFormContextModificator extends DefaultTableFieldConfigurator implements FormContextModificator {
 

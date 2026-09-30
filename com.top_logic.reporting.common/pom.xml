@@ -5,11 +5,12 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-reporting-common</artifactId>
-  <description>Base services for report generation.</description>
+	<name>${project.artifactId}</name>
+	<description>Base services for report generation.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

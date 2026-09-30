@@ -86,6 +86,11 @@ public interface SQLVisitor<R,A> {
 	R visitSQLBinaryExpression(SQLBinaryExpression sql, A arg);
 	
 	/**
+	 * Visit case for {@link SQLLike}.
+	 */
+	R visitSQLLike(SQLLike sql, A arg);
+
+	/**
 	 * Visit case for {@link SQLCast}.
 	 */
 	R visitSQLCast(SQLCast sql, A arg);
@@ -110,6 +115,11 @@ public interface SQLVisitor<R,A> {
 	 */
 	R visitSQLInSet(SQLInSet sql, A arg);
 	
+	/**
+	 * Visit case for {@link SQLInSetSelect}.
+	 */
+	R visitSQLInSetSelect(SQLInSetSelect sql, A arg);
+
 	/**
 	 * Visit case for {@link SQLTuple}.
 	 */
@@ -154,11 +164,6 @@ public interface SQLVisitor<R,A> {
 	 * Visit case for {@link SQLDelete}
 	 */
 	R visitSQLDelete(SQLDelete sql, A arg);
-
-	/**
-	 * Visit case for {@link SQLAlterTable}
-	 */
-	R visitSQLAlterTable(SQLAlterTable sql, A arg);
 
 	/**
 	 * Visit case for {@link SQLAddColumn}

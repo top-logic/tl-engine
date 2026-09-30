@@ -2,7 +2,7 @@
 %> <%@taglib uri="layout"   prefix="layout"
 %><layout:html>
 	<layout:head/>
-	
+
 	<layout:body>
 		<p>
 			Dieser Tabber wird nur eingeblendet, wenn ein Element vom Typ A selektiert ist.

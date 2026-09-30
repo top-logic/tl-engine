@@ -47,41 +47,38 @@
 				/>
 			</attributes>
 		</class>
-		<class name="SettingsForm">
+		<class name="Goto">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
 			<annotations>
 				<form-definition>
-					<form columns="ONE">
+					<form>
 						<field
-							attribute="von"
-							fullQualifiedName="test.transient:SettingsForm#von"
-							type="tl.core:Date"
-						/>
-						<field
-							attribute="bis"
-							fullQualifiedName="test.transient:SettingsForm#bis"
-							type="tl.core:Date"
-						/>
-						<field
-							attribute="divisor"
-							fullQualifiedName="test.transient:SettingsForm#divisor"
-							type="tl.core:Integer"
-						/>
+							attribute="text"
+							fullQualifiedName="test.transient:Goto#text"
+							type="tl.model.wysiwyg:Html"
+						>
+							<annotations>
+								<label-position value="hide-label"/>
+							</annotations>
+						</field>
 					</form>
 				</form-definition>
 			</annotations>
 			<attributes>
-				<property name="von"
-					type="tl.core:Date"
+				<property name="text"
+					type="tl.model.wysiwyg:Html"
 				/>
-				<property name="bis"
-					type="tl.core:Date"
-				/>
-				<property name="divisor"
-					type="tl.core:Integer"
-				/>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<string value="Click me!"/>
+						</default-value>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="Row">
@@ -111,6 +108,11 @@
 							fullQualifiedName="test.transient:Row#number"
 							type="tl.core:Integer"
 						/>
+						<field
+							attribute="text"
+							fullQualifiedName="test.transient:Row#text"
+							type="tl.model.wysiwyg:Html"
+						/>
 					</form>
 				</form-definition>
 			</annotations>
@@ -124,6 +126,89 @@
 				/>
 				<property name="date"
 					type="tl.core:Date"
+				/>
+				<property name="text"
+					type="tl.model.wysiwyg:Html"
+				/>
+				<reference name="transientResult"
+					kind="forwards"
+					navigate="true"
+					type="Goto"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[row -> new(`test.transient:Goto`, transient: true)
+    ..set(`test.transient:Goto#text`, $row.get(`test.transient:Row#text`))]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="SettingsForm">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form columns="ONE">
+						<field
+							attribute="von"
+							fullQualifiedName="test.transient:SettingsForm#von"
+							type="tl.core:Date"
+						/>
+						<field
+							attribute="bis"
+							fullQualifiedName="test.transient:SettingsForm#bis"
+							type="tl.core:Date"
+						/>
+						<field
+							attribute="divisor"
+							fullQualifiedName="test.transient:SettingsForm#divisor"
+							type="tl.core:Integer"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="von"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<value-listeners>
+							<script>
+								<operation><![CDATA[setting -> newValue -> oldValue -> 
+  if ($newValue != null && $oldValue != null, {
+    currentUntil = $setting.get(`test.transient:SettingsForm#bis`);
+    if ($currentUntil != null, {
+      newUntilMillis = $currentUntil.toMillis() - $oldValue.toMillis() + $newValue.toMillis();
+      $setting.set(`test.transient:SettingsForm#bis`, $newUntilMillis.toDate());
+      info(#("Value of attribute ''{0}'' was adjusted to retain the currently set time period."@en, "Der Wert des Attributes ''{0}'' wurde angepasst um den gegenwärtig eingestellten Zeitraum beizubehalten."@de).fill(`test.transient:SettingsForm#bis`.label()));
+    })
+  })]]></operation>
+							</script>
+						</value-listeners>
+					</annotations>
+				</property>
+				<property name="bis"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check><![CDATA[value -> object -> if ($value == null, null, {
+  from = $object.get(`test.transient:SettingsForm#von`);
+  if ($from == null, null,
+    if ($from.isDateGreater($value), #("''{0}'' must not be less then ''{1}''"@en, "''{0}'' darf nicht kleiner sein als ''{1}''"@de).fill(`test.transient:SettingsForm#bis`, `test.transient:SettingsForm#von`), null)
+  )
+})]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+				<property name="divisor"
+					type="tl.core:Integer"
 				/>
 			</attributes>
 		</class>

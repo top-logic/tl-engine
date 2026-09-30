@@ -351,7 +351,7 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
             // only delete companies that were not imported
             allCompanies.removeAll(this.importedCompanies);
 
-            Transaction t = this.kBase.beginTransaction();
+			Transaction t = this.kBase.beginTransaction(I18NConstants.SAP_IMPORT);
             try {
 				for (int i = 0; i < allCompanies.size(); i++) {
 					CompanyContact company = (CompanyContact) allCompanies.get(i);
@@ -369,7 +369,7 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
 					if (i % this.commit == 0) {
 						try {
 							t.commit();
-							t = this.kBase.beginTransaction();
+							t = this.kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 						} catch (KnowledgeBaseException e) {
 							logError("Failed to commit deleted contacts at " + i, e);
 						}

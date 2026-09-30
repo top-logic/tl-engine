@@ -52,6 +52,7 @@ import com.top_logic.model.search.expr.Sort;
 import com.top_logic.model.search.expr.StringContains;
 import com.top_logic.model.search.expr.StringEndsWith;
 import com.top_logic.model.search.expr.StringStartsWith;
+import com.top_logic.model.search.expr.Try;
 import com.top_logic.model.search.expr.TupleExpression;
 import com.top_logic.model.search.expr.UnaryOperation;
 import com.top_logic.model.search.expr.Union;
@@ -420,6 +421,13 @@ public abstract class Rewriter<A> extends DescendingVisitor<SearchExpression, A>
 			SearchExpression rightResult) {
 		expr.setLeft(leftResult);
 		expr.setRight(rightResult);
+		return compose(expr, arg);
+	}
+
+	@Override
+	protected SearchExpression composeTry(Try expr, A arg, SearchExpression tryResult, SearchExpression catchResult) {
+		expr.setTryBlock(tryResult);
+		expr.setCatchBlock(catchResult);
 		return compose(expr, arg);
 	}
 

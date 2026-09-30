@@ -28,6 +28,7 @@ import com.top_logic.model.search.expr.Filter;
 import com.top_logic.model.search.expr.Flatten;
 import com.top_logic.model.search.expr.Foreach;
 import com.top_logic.model.search.expr.GenericMethod;
+import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.GetDay;
 import com.top_logic.model.search.expr.IfElse;
 import com.top_logic.model.search.expr.InstanceOf;
@@ -47,6 +48,7 @@ import com.top_logic.model.search.expr.Recursion;
 import com.top_logic.model.search.expr.Referers;
 import com.top_logic.model.search.expr.Round;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.SingleElement;
 import com.top_logic.model.search.expr.Singleton;
 import com.top_logic.model.search.expr.Size;
@@ -55,6 +57,7 @@ import com.top_logic.model.search.expr.StringContains;
 import com.top_logic.model.search.expr.StringEndsWith;
 import com.top_logic.model.search.expr.StringOperation;
 import com.top_logic.model.search.expr.StringStartsWith;
+import com.top_logic.model.search.expr.Try;
 import com.top_logic.model.search.expr.TupleExpression;
 import com.top_logic.model.search.expr.TupleExpression.Coord;
 import com.top_logic.model.search.expr.Union;
@@ -106,7 +109,7 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 
 	@Override
 	public R visitKBQuery(KBQuery expr, A arg) {
-		return compose(expr, arg, wrap(expr.getClassType()), wrap(expr.getQuery()));
+		return compose(expr, arg, wrap(expr.getClassType()), wrap(expr.getQuery()), wrap(expr.getDynamicFilters()));
 	}
 
 	@Override
@@ -116,18 +119,20 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 
 	@Override
 	public R visitAccess(Access expr, A arg) {
-		return compose(expr, arg, descendPart(expr, arg, expr.getSelf()), wrap(expr.getPart()));
+		return compose(expr, arg, descendPart(expr, arg, expr.getSelf()), wrap(expr.getPart()),
+			wrap(expr.usesSecurity()));
 	}
 
 	@Override
 	public R visitAt(At expr, A arg) {
-		return compose(expr, arg, descendPart(expr, arg, expr.getSelf()), descendPart(expr, arg, expr.getIndex()));
+		return compose(expr, arg, descendPart(expr, arg, expr.getSelf()), descendPart(expr, arg, expr.getIndex()),
+			wrap(expr.usesSecurity()));
 	}
 
 	@Override
 	public R visitUpdate(Update expr, A arg) {
 		return compose(expr, arg, descendPart(expr, arg, expr.getSelf()), wrap(expr.getPart()),
-			descendPart(expr, arg, expr.getValue()));
+			descendPart(expr, arg, expr.getValue()), wrap(expr.usesSecurity()));
 	}
 
 	@Override
@@ -137,13 +142,14 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 
 	@Override
 	public R visitReferers(Referers expr, A arg) {
-		return compose(expr, arg, descendPart(expr, arg, expr.getTarget()), wrap(expr.getReference()));
+		return compose(expr, arg, descendPart(expr, arg, expr.getTarget()), wrap(expr.getReference()),
+			wrap(expr.usesSecurity()));
 	}
 
 	@Override
 	public R visitAssociationNavigation(AssociationNavigation expr, A arg) {
 		return compose(expr, arg, descendPart(expr, arg, expr.getSource()), wrap(expr.getSourceEnd()),
-			wrap(expr.getDestinationEnd()));
+			wrap(expr.getDestinationEnd()), wrap(expr.usesSecurity()));
 	}
 
 	@Override
@@ -218,12 +224,27 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 		return compose(expr, arg, descendParts(expr, arg, expr.getBase(), expr.getFunction()));
 	}
 
+	/**
+	 * Composes the call node from the visited arguments.
+	 * 
+	 * <p>
+	 * For a {@link GenericMethodWithSecurity}, the call node is wrapped into a
+	 * {@link GenericMethodWithSecurity} structure that additionally holds the
+	 * {@link GenericMethodWithSecurity#usesSecurity() security flag}, see
+	 * {@link SearchExpressionFactory#withSecurity(GenericMethodWithSecurity, boolean)}.
+	 * </p>
+	 */
 	@Override
 	public R visitGenericMethod(GenericMethod expr, A arg) {
 		SearchExpression[] arguments = expr.getArguments();
 		List<R> partResults = newResult(arguments.length);
 		List<R> parts = descendParts(partResults, expr, arg, arguments);
-		return compose(expr, arg, parts);
+		R call = compose(expr, arg, parts);
+		if (expr instanceof GenericMethodWithSecurity secured) {
+			return compose(GenericMethodWithSecurity.class, arg,
+				Arrays.asList(call, wrap(secured.usesSecurity())));
+		}
+		return call;
 	}
 
 	@Override
@@ -360,6 +381,15 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 	@Override
 	public R visitSort(Sort expr, A arg) {
 		return compose(expr, arg, descendPart(expr, arg, expr.getList()), descendPart(expr, arg, expr.getComparator()));
+	}
+
+	@Override
+	public R visitTry(Try expr, A arg) {
+		if (expr.getCatchBlock() == null) {
+			return compose(expr, arg, descendParts(expr, arg, expr.getTryBlock(), null));
+		} else {
+			return compose(expr, arg, descendParts(expr, arg, expr.getTryBlock(), expr.getCatchBlock()));
+		}
 	}
 
 	/**

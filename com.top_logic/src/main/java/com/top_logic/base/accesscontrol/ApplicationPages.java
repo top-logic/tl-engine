@@ -5,10 +5,12 @@
  */
 package com.top_logic.base.accesscontrol;
 
+import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 
 /**
  * Global configuration of special pages in the application.
@@ -35,6 +37,7 @@ public class ApplicationPages {
 		 */
 		@Name("startPage")
 		@Mandatory
+		@CalledFromJSP
 		String getStartPage();
 
 		/**
@@ -54,34 +57,54 @@ public class ApplicationPages {
 
 		/**
 		 * Configuration option that determines the suffix to the applications context path to which
+		 * a user is redirected, whose identity an external authentication system has verified, but
+		 * for whom this application has no account.
+		 * 
+		 * <p>
+		 * The page receives the name under which the external authentication system has
+		 * authenticated the user in a request parameter, see {@link ExternalAuthenticationServlet}.
+		 * </p>
+		 * 
+		 * @implNote The parameter is named {@link ExternalAuthenticationServlet#LOGIN_NAME_PARAM}.
+		 */
+		@Name("unknownAccountPage")
+		@Mandatory
+		String getUnknownAccountPage();
+
+		/**
+		 * Configuration option that determines the suffix to the applications context path to which
 		 * should be redirected for requesting authentication.
 		 */
 		@Name("loginPage")
 		@Mandatory
+		@CalledFromJSP
 		String getLoginPage();
 
 		/**
-		 * Configuration option that determines the suffix to the applications context path to which
-		 * should be redirected in response to an final authentication failure.
+		 * Application path that triggers a logout.
+		 * 
+		 * @see #getLogoutPage()
 		 */
-		@Name("loginErrorPage")
 		@Mandatory
-		String getLoginErrorPage();
+		@Name("triggerLogoutPage")
+		String getTriggerLogoutPage();
 
 		/**
-		 * Configuration option that determines the suffix to the applications context path to which
-		 * should be redirected in response to an authentication failure.
-		 */
-		@Name("loginRetryPage")
-		@Mandatory
-		String getLoginRetryPage();
-
-		/**
-		 * Configuration option that determines the suffix to the applications context path to which
-		 * should be redirected to trigger a logout.
+		 * Application path to with the user is forwarded after a logout.
+		 * 
+		 * <p>
+		 * If the value is empty, the {@link #getTriggerLogoutPage()} is displayed permanently until
+		 * the user decides what to do next.
+		 * </p>
+		 * 
+		 * @implNote This pages is exclusively used by the {@link #getTriggerLogoutPage()} in a
+		 *           time-based redirect.
+		 * 
+		 * @see #getTriggerLogoutPage()
 		 */
 		@Name("logoutPage")
-		@Mandatory
+		@Nullable
+		@CalledFromJSP
 		String getLogoutPage();
 
 		/**
@@ -99,18 +122,5 @@ public class ApplicationPages {
 		@Mandatory
 		String getLayoutServletPath();
 
-		/**
-		 * The key under which the application local path to the layout servlet is configured.
-		 */
-		@Name("login")
-		@Mandatory
-		String getLoginServletPath();
-
-		/**
-		 * The page that is displayed, if a user is required to change his password.
-		 */
-		@Mandatory
-		@Name("changePassword")
-		String getChangePasswordPage();
 	}
 }

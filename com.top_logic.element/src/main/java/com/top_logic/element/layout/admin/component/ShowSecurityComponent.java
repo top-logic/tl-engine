@@ -48,7 +48,7 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.table.TableData;
-import com.top_logic.layout.table.model.ExportConfig;
+import com.top_logic.layout.table.model.ExcelTemplateExportConfig;
 import com.top_logic.layout.table.model.ObjectTableModel;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationFactory;
@@ -70,7 +70,7 @@ import com.top_logic.util.model.ModelService;
 /**
  * Shows security information for the selected elements.
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ShowSecurityComponent extends FormComponent {
 
@@ -79,7 +79,7 @@ public class ShowSecurityComponent extends FormComponent {
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config extends FormComponent.Config, ExportConfig {
+	public interface Config extends FormComponent.Config, ExcelTemplateExportConfig {
 		
 		/** Configuration name for {@link #getTableName()}. */
 		public static final String TABLE_NAME = "tableName";
@@ -487,7 +487,7 @@ public class ShowSecurityComponent extends FormComponent {
     /**
      * Calculates the result table.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
 	public static class RefreshCommand extends AJAXCommandHandler {
 

@@ -29,6 +29,9 @@ import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.col.LazyListUnmodifyable;
 import com.top_logic.basic.col.filter.FilterFactory;
 import com.top_logic.basic.col.map.MultiMaps;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.shared.collection.map.MappedIterator;
@@ -53,6 +56,8 @@ import com.top_logic.element.meta.kbbased.PersistentObjectImpl;
 import com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.search.CompiledQuery;
+import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.InstancesQueryBuilder;
 import com.top_logic.knowledge.search.MonomorphicQueryBuilder;
 import com.top_logic.knowledge.search.SetExpression;
@@ -61,6 +66,7 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItem;
+import com.top_logic.knowledge.service.db2.SimpleQuery;
 import com.top_logic.knowledge.service.xml.annotation.InstancesQueryAnnotation;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Document;
@@ -69,16 +75,19 @@ import com.top_logic.knowledge.wrap.WebFolderFactory;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.list.FastList;
-import com.top_logic.layout.form.FormContextProxy;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
+import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
@@ -97,6 +106,7 @@ import com.top_logic.model.annotate.TLFullTextRelevant;
 import com.top_logic.model.annotate.TLRange;
 import com.top_logic.model.annotate.TLSearchRange;
 import com.top_logic.model.annotate.TLSize;
+import com.top_logic.model.annotate.TLValueListeners;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
@@ -175,12 +185,6 @@ public class AttributeOperations {
 		}
 
 		@Override
-		public Object getUpdateValue(AttributeUpdate update)
-				throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
-			throw undefined(update);
-		}
-
-		@Override
 		public Collection<?> getLiveCollection(TLObject object, TLStructuredTypePart attribute) {
 			throw undefined(object, attribute);
 		}
@@ -198,6 +202,11 @@ public class AttributeOperations {
 		@Override
 		public void addAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValue)
 				throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
+			throw undefined(object, attribute);
+		}
+
+		@Override
+		public Object getFormValue(TLFormObjectBase object, TLStructuredTypePart attribute) {
 			throw undefined(object, attribute);
 		}
 
@@ -239,17 +248,6 @@ public class AttributeOperations {
 		TLStructuredTypePart attribute = update.getAttribute();
 		checkAlive(object, attribute);
 		getStorageImplementation(object, attribute).checkUpdate(update);
-	}
-
-	/**
-	 * @see StorageImplementation#update(AttributeUpdate)
-	 */
-	public static Object getUpdateValue(AttributeUpdate update) throws NoSuchAttributeException, IllegalArgumentException,
-			AttributeException {
-		TLObject object = update.getObject();
-		TLStructuredTypePart attribute = update.getAttribute();
-		checkAlive(object, attribute);
-		return getStorageImplementation(object, attribute).getUpdateValue(update);
 	}
 
 	/**
@@ -302,20 +300,36 @@ public class AttributeOperations {
 	 */
 	private static TLStructuredTypePart getAttributeOverride(TLStructuredType actualType,
 			TLStructuredTypePart attribute) {
+		if (actualType == null) {
+			return null;
+		}
+
 		TLStructuredTypePart attributeInObjectRev = WrapperHistoryUtils.getWrapper(actualType.tRevision(), attribute);
 		if (attributeInObjectRev == null) {
 			// Attribute does not exist at the time of the accessed type.
 			return null;
 		}
+		if (actualType == attributeInObjectRev.getOwner()) {
+			// Short-cut for the case where the matching/correct attribute override was given.
+			return attributeInObjectRev;
+		}
 
-		TLStructuredType declaringType = attributeInObjectRev.getOwner();
-		if (declaringType == null || !TLModelUtil.isGeneralization(declaringType, actualType)) {
+		// Check whether the given attribute has a definition in the actual type.
+		TLStructuredTypePart definition = attributeInObjectRev.getDefinition();
+		TLStructuredType definingType = definition.getOwner();
+		if (definingType == null || !TLModelUtil.isGeneralization(definingType, actualType)) {
 			// Attribute of an unrelated type.
+
+			// Note: This still allows to use the overridden attribute of a subtype to access a
+			// value of an object of the super type. This is allowed only for convenience. Being
+			// pedantic makes object access in some scenarios more complicated (e.g. copying values
+			// common attributes of on object to an instance of a supertype).
 			return null;
 		}
-		if (actualType == declaringType) {
-			// Short-cut for the most common case of a non-overridden attribute.
-			return attributeInObjectRev;
+		if (actualType == definingType) {
+			// Short-cut for the case where a overridden attribute was used to access the defining
+			// type.
+			return definition;
 		}
 
 		// Lookup by name in the concrete type.
@@ -366,28 +380,6 @@ public class AttributeOperations {
 	@Deprecated
 	public static Set<? extends TLObject> getReferers(TLObject self, TLStructuredTypePart reference) {
 		return self.tReferers((TLReference) reference);
-	}
-
-	/**
-	 * Potential values that can be set to the given attribute.
-	 * 
-	 * <p>
-	 * Deprecated: Use {@link #allOptions(EditContext)}, other parameters are unused.
-	 * </p>
-	 * 
-	 * @param self
-	 *        The base object.
-	 * @param editContext
-	 *        The current update context.
-	 * @param form
-	 *        The current form inputs.
-	 * @return All available options.
-	 * 
-	 * @deprecated Use {@link #allOptions(EditContext)}.
-	 */
-	@Deprecated
-	public static OptionModel<?> getOptions(TLObject self, EditContext editContext, FormContextProxy form) {
-		return allOptions(editContext);
 	}
 
 	/**
@@ -453,16 +445,7 @@ public class AttributeOperations {
 
 	private static ListOptionModel<?> createLazyListOptionModel(Filter<Object> optionsFilter,
 			Supplier<List<?>> options) {
-		LazyListUnmodifyable<?> lazyOptions = new LazyListUnmodifyable<>() {
-
-			@Override
-			protected List<?> initInstance() {
-				return FilterUtil.filterList(optionsFilter, options.get());
-			}
-
-		};
-
-		return new DefaultListOptionModel<>(lazyOptions);
+		return new LazyListOptionModel<>(() -> FilterUtil.filterList(optionsFilter, options.get()));
 	}
 
 	private static ListOptionModel<?> createFilteredOptionModel(Filter<Object> optionsFilter, List<?> allOptions) {
@@ -485,7 +468,44 @@ public class AttributeOperations {
 		return new DefaultListOptionModel<>(options);
 	}
 
-	static <T extends TLObject> CloseableIterator<T> allDirectInstances(TLClass type, Class<T> expectedType) {
+	/**
+	 * Iterator through all direct instances of the given type.
+	 * 
+	 * <p>
+	 * Changes in the current transaction are not considered.
+	 * </p>
+	 * 
+	 * <p>
+	 * <b>Note:</b> The resulting iterator must be closed after iteration to prevent resource leaks!
+	 * </p>
+	 * 
+	 * @param type
+	 *        The type to find direct instances of.
+	 * @return {@link CloseableIterator} of instances.
+	 * 
+	 * @see #allDirectInstances(TLClass, boolean, Class)
+	 */
+	public static <T extends TLObject> CloseableIterator<T> allDirectInstances(TLClass type, Class<T> expectedType) {
+		return allDirectInstances(type, false, expectedType);
+
+	}
+
+	/**
+	 * Iterator through all direct instances of the given type.
+	 * 
+	 * <p>
+	 * <b>Note:</b> The resulting iterator must be closed after iteration to prevent resource leaks!
+	 * </p>
+	 * 
+	 * @param type
+	 *        The type to find direct instances of.
+	 * @param inTransaction
+	 *        Whether changes in the transaction must be considered.
+	 * 
+	 * @return {@link CloseableIterator} of instances.
+	 */
+	public static <T extends TLObject> CloseableIterator<T> allDirectInstances(TLClass type, boolean inTransaction,
+			Class<T> expectedType) {
 		if (type == null || type.isAbstract()) {
 			return EmptyClosableIterator.getInstance();
 		}
@@ -495,7 +515,11 @@ public class AttributeOperations {
 		String tableName = TLAnnotations.getTable(type);
 		try {
 			MOClass tableType = (MOClass) tableRepository.getType(tableName);
-			return instancesInTable(kb, expectedType, tableType, Collections.singleton(type));
+			if (tableType.isAbstract()) {
+				// Invalid model configuration.
+				return EmptyClosableIterator.getInstance();
+			}
+			return instancesInTable(kb, expectedType, tableType, Collections.singleton(type), inTransaction);
 		} catch (UnknownTypeException ex) {
 			Logger.error("Undefined table '" + tableName + "' for type '" + type + "'.", ex);
 			return EmptyClosableIterator.getInstance();
@@ -546,7 +570,7 @@ public class AttributeOperations {
 					try {
 						MOClass tableType = (MOClass) _tableRepository.getType(tableName);
 
-						return instancesInTable(_kb, expectedType, tableType, types);
+						return instancesInTable(_kb, expectedType, tableType, types, false);
 					} catch (UnknownTypeException ex) {
 						Logger.error("Undefined table '" + tableName + "' for type '" + type + "'.", ex);
 						return EmptyClosableIterator.getInstance();
@@ -577,9 +601,16 @@ public class AttributeOperations {
 	}
 
 	static <T extends TLObject> CloseableIterator<T> instancesInTable(KnowledgeBase kb, Class<T> expectedType,
-			MOClass tableType, Set<TLClass> types) {
-		SetExpression query = tableQuery(tableType, types);
-		return kb.<T>searchStream(queryResolved(query, expectedType));
+			MOClass tableType, Set<TLClass> types, boolean inTransaction) {
+		if (inTransaction) {
+			Expression instancesFilter = instancesFilter(tableType, types);
+			SimpleQuery<T> simpleQuery = SimpleQuery.queryResolved(expectedType, tableType, instancesFilter);
+			CompiledQuery<T> compileSimpleQuery = kb.compileSimpleQuery(simpleQuery);
+			return compileSimpleQuery.searchStream();
+		} else {
+			SetExpression query = tableQuery(tableType, types);
+			return kb.<T> searchStream(queryResolved(query, expectedType));
+		}
 	}
 
 	/**
@@ -595,6 +626,20 @@ public class AttributeOperations {
 	 *         from the given table.
 	 */
 	public static SetExpression tableQuery(MOClass tableType, Set<TLClass> types) {
+		return filter(allOf(tableType), instancesFilter(tableType, types));
+	}
+
+	/**
+	 * {@link KnowledgeBase} filtering a table to match all instances of the concrete
+	 * {@link TLClass}es from the given table.
+	 * 
+	 * @param tableType
+	 *        The {@link MOClass#getName() table} in which each {@link TLClass} store its instances.
+	 * @param types
+	 *        The concrete types of objects to resolve (excluding subtypes). See
+	 *        {@link #typesByTableName(TLClass)}.
+	 */
+	private static Expression instancesFilter(MOClass tableType, Set<TLClass> types) {
 		if (tableType instanceof MOKnowledgeItem) {
 			InstancesQueryBuilder builder = ((MOKnowledgeItem) tableType).getInstancesQueryBuilder();
 			if (builder == null ) {
@@ -607,9 +652,9 @@ public class AttributeOperations {
 						"No " + InstancesQueryBuilder.class + " and no " + InstancesQueryAnnotation.class + " annotation for table " + tableType + ".");
 				}
 			}
-			return builder.createInstancesQuery(tableType, types);
+			return builder.createInstancesFilter(tableType, types);
 		} else {
-			return MonomorphicQueryBuilder.INSTANCE.createInstancesQuery(tableType, types);
+			return MonomorphicQueryBuilder.INSTANCE.createInstancesFilter(tableType, types);
 		}
 	}
 
@@ -703,12 +748,15 @@ public class AttributeOperations {
 
 	/**
 	 * The upper bound of the given size annotation, or some default value, if none is given.
+	 *
+	 * @return {@link Integer#MAX_VALUE}, if the annotation declares
+	 *         {@link TLSize#NO_UPPER_BOUND no upper bound}.
 	 */
 	public static int getUpperBound(TLSize annotation) {
 		if (annotation == null) {
 			return 255;
 		}
-		return (int) annotation.getUpperBound();
+		return toIntBound(annotation.getUpperBound());
 	}
 
 	public static int getLowerBound(TLModelPart modelPart) {
@@ -722,7 +770,18 @@ public class AttributeOperations {
 		if (annotation == null) {
 			return 0;
 		}
-		return (int) annotation.getLowerBound();
+		return toIntBound(annotation.getLowerBound());
+	}
+
+	/**
+	 * Converts a bound declared as {@code long} in a {@link TLSize} annotation to an {@code int}.
+	 *
+	 * @implNote Saturates at {@link Integer#MAX_VALUE} instead of truncating. Without this,
+	 *           {@link TLSize#NO_UPPER_BOUND} ({@link Long#MAX_VALUE}) would become {@code -1},
+	 *           making an unbounded size constraint reject every non-empty text.
+	 */
+	private static int toIntBound(long bound) {
+		return (int) Math.min(bound, Integer.MAX_VALUE);
 	}
 
 	/**
@@ -736,7 +795,11 @@ public class AttributeOperations {
 		if (annotation == null) {
 			return null;
 		}
-		return (int) annotation.getUpperBound();
+		long upperBound = annotation.getUpperBound();
+		if (upperBound >= TLSize.NO_UPPER_BOUND) {
+			return null;
+		}
+		return toIntBound(upperBound);
 	}
 
 	/**
@@ -801,6 +864,82 @@ public class AttributeOperations {
 			return targetTypeAnnotation.getValue();
 		}
 		return null;
+	}
+
+	/**
+	 * Determines all {@link ValueListener} relevant for the given {@link TLStructuredTypePart}.
+	 * This includes also the {@link ValueListener} annotated to the overridden parts.
+	 * 
+	 * @see TLValueListeners
+	 */
+	public static List<? extends ValueListener> getValueListeners(TLStructuredTypePart attribute) {
+		InstantiationContext context = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY;
+		List<PolymorphicConfiguration<? extends ValueListener>> configs =
+			AttributeOperations.getValueListenerConfigs(attribute);
+		return TypedConfiguration.getInstanceList(context, configs);
+	}
+
+	/**
+	 * Determines all {@link ValueListener} configurations relevant for the given
+	 * {@link TLStructuredTypePart}. This includes also the {@link ValueListener} annotated to the
+	 * overridden parts.
+	 * 
+	 * @see #getValueListeners(TLStructuredTypePart)
+	 */
+	public static List<PolymorphicConfiguration<? extends ValueListener>> getValueListenerConfigs(
+			TLStructuredTypePart attribute) {
+		Set<TLClassPart> overriddenParts;
+		if (attribute instanceof TLClassPart classPart) {
+			overriddenParts = TLModelUtil.getOverriddenParts(classPart);
+		} else {
+			overriddenParts = Collections.emptySet();
+		}
+		if (overriddenParts.isEmpty()) {
+			return localAnnotatedValueListeners(attribute);
+		}
+		return addValueListenerConfigs(Collections.emptyList(), new HashSet<>(), overriddenParts,
+			(TLClassPart) attribute);
+	}
+
+	private static List<PolymorphicConfiguration<? extends ValueListener>> addValueListenerConfigs(
+			List<PolymorphicConfiguration<? extends ValueListener>> allListeners,
+			Set<TLClassPart> processedParts, Set<TLClassPart> overriddenParts,
+			TLClassPart attribute) {
+		boolean isNew = processedParts.add(attribute);
+		if (!isNew) {
+			// Attribute already processed
+			return allListeners;
+		}
+
+		TLValueListeners annotation = attribute.getAnnotation(TLValueListeners.class);
+		if (annotation == null || !annotation.isIgnoreInherited()) {
+			/* Sort all inherited listeners before the local listeners. */
+			for (TLClassPart overridden : overriddenParts) {
+				allListeners = addValueListenerConfigs(allListeners, processedParts,
+					TLModelUtil.getOverriddenParts(overridden), overridden);
+			}
+		}
+		if (annotation == null) {
+			// No locally annotated listeners
+			return allListeners;
+		}
+		if (allListeners.isEmpty()) {
+			allListeners = new ArrayList<>();
+		}
+		allListeners.addAll(annotation.getListeners());
+		return allListeners;
+	}
+
+	private static List<PolymorphicConfiguration<? extends ValueListener>> localAnnotatedValueListeners(
+			TLStructuredTypePart attribute) {
+		TLValueListeners annotation = attribute.getAnnotation(TLValueListeners.class);
+		List<PolymorphicConfiguration<? extends ValueListener>> localListeners;
+		if (annotation == null) {
+			localListeners = Collections.emptyList();
+		} else {
+			localListeners = annotation.getListeners();
+		}
+		return localListeners;
 	}
 
 	public static String getFolderType(TLModelPart modelPart) {
@@ -1145,7 +1284,8 @@ public class AttributeOperations {
 	 *        the roles to consider, may be null
 	 * @return the set of access right ids, never null
 	 */
-	public static Set<BoundCommandGroup> getAccess(TLStructuredTypePart attribute, Collection<BoundRole> roles) {
+	public static Set<BoundCommandGroup> getAccess(TLStructuredTypePart attribute,
+			Collection<? extends BoundRole> roles) {
 		if (roles == null || roles.isEmpty()) {
 			return Collections.emptySet();
 		}
@@ -1335,14 +1475,23 @@ public class AttributeOperations {
 	 * @param context
 	 *        Context in which the attribute is edited.
 	 * 
-	 * @return The {@link LabelPosition position} where the label is rendered.
+	 * @return The {@link LabelPosition position} where the label is rendered, or <code>null</code>
+	 *         if not specified.
 	 */
 	public static LabelPosition labelPosition(TLStructuredTypePart attribute, EditContext context) {
-		if (context != null) {
-			return labelPosition(attribute, context.getAnnotation(LabelPositionAnnotation.class));
-		}
+		return LabelPosition.nonNull(labelPositionOrNull(attribute, context));
+	}
 
-		return labelPosition(attribute);
+	/**
+	 * The annotated {@link LabelPosition} for the given attribute in the given context or
+	 * <code>null</code>.
+	 */
+	public static LabelPosition labelPositionOrNull(TLStructuredTypePart attribute, EditContext context) {
+		if (context != null) {
+			return labelPositionOrNull(attribute, context.getAnnotation(LabelPositionAnnotation.class));
+		} else {
+			return labelPositionOrNull(attribute);
+		}
 	}
 
 	/**
@@ -1354,16 +1503,27 @@ public class AttributeOperations {
 	 * @return The {@link LabelPosition position} where the label is rendered.
 	 */
 	public static LabelPosition labelPosition(TLStructuredTypePart attribute) {
-		return labelPosition(attribute, attribute.getAnnotation(LabelPositionAnnotation.class));
+		return LabelPosition.nonNull(labelPositionOrNull(attribute));
 	}
 
-	private static LabelPosition labelPosition(TLStructuredTypePart attribute, LabelPositionAnnotation annotation) {
+	/**
+	 * The {@link LabelPosition} annotated to the given attribute or <code>null</code>.
+	 */
+	public static LabelPosition labelPositionOrNull(TLStructuredTypePart attribute) {
+		return labelPositionOrNull(attribute, attribute.getAnnotation(LabelPositionAnnotation.class));
+	}
+
+	private static LabelPosition labelPositionOrNull(TLStructuredTypePart attribute,
+			LabelPositionAnnotation annotation) {
 		if (annotation != null) {
 			return annotation.getValue();
 		}
 
 		if (isBooleanAttribute(attribute) || isTristateAttribute(attribute)) {
-			if (getBooleanDisplay(attribute) == BooleanPresentation.CHECKBOX) {
+			BooleanPresentation booleanDisplay = getBooleanDisplay(attribute);
+			// A check box and a switch are small enough to stand before the text naming them,
+			// while a choice between labelled options is a field like any other.
+			if (booleanDisplay == BooleanPresentation.CHECKBOX || booleanDisplay == BooleanPresentation.SWITCH) {
 				return LabelPosition.AFTER_VALUE;
 			}
 		}
@@ -1371,6 +1531,6 @@ public class AttributeOperations {
 			return LabelPosition.HIDE_LABEL;
 		}
 
-		return LabelPosition.DEFAULT;
+		return null;
 	}
 }

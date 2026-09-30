@@ -1,0 +1,66 @@
+<p>A model is usually created in-app and can be used directly without code generation for the definition of views in the application. For this purpose, <a class="tlObject" data-custom="false" href="?page=TL-Script&amp;uuid=d1172c3d-4596-48b0-837a-42349d1e3227">TL script</a> expressions are used to access the model. However, if more complex algorithms need to be implemented that require access to the domain model, it may make sense to implement these in Java and extend the engine accordingly. In such a case, it is useful if the Java code has typed model interfaces that can be used for access. Without this layer, the properties of model elements can only be accessed via the generic API of <a href="https://dev.top-logic.com/doc/TL-7-latest/javadoc/#com.top_logic.model.TLObject" target="_blank">TLObject</a>. Attributes are accessed via their names, for example, which quickly leads to poorly maintainable code.</p>
+<p>To write maintainable code for accessing the TopLogic model, the so-called "wrapper generator" is available. This generates Java interfaces from a TopLogic model description, which can be used to access the model from Java code in a typed manner.</p>
+<h2>Java package definition</h2>
+<p>In order to be able to generate Java interfaces for the classes in a module, the Java package in which the generated code is to be created must be defined. To do this, the annotation <code class="hljs inlineCode">package-binding</code> must be set on the module for which interfaces are to be generated. This annotation cannot be made in-app in the model editor because it is not useful/necessary for normal in-app development. Instead, the model must be exported to the development environment in order to set the annotation in the XML definition of the model:</p>
+<pre><code class="language-xml">&lt;model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"&gt;
+   &lt;module name="my.app"&gt;
+      &lt;annotations&gt;
+         &lt;package-binding
+            implementation-package="my.company.my.app.model.impl"
+            interface-package="my.company.my.app.model"
+         /&gt;
+      &lt;/annotations&gt;
+
+      &lt;class name="A"&gt;
+         ...
+      &lt;/class&gt;
+   &lt;/module&gt;
+&lt;/model&gt;</code></pre>
+<p>The example above sets the annotation <code class="hljs inlineCode">package-binding</code> for the module <code class="hljs inlineCode">my.app</code> and defines that the generated interfaces are to be stored in the Java package <code class="hljs inlineCode">my.company.my.app.model</code>. The implementation classes used by the engine, which are also generated in the process, are created in the package <code class="hljs inlineCode">my.company.my.app.model.impl</code>.</p>
+<h2>Build customization</h2>
+<p>If a module defines Java packages for interfaces and implementation classes, generation can be started. To do this, either the class <code class="hljs inlineCode">com.top_logic.element.model.generate.WrapperGenerator</code> can be called from the development environment via a launch configuration, or the build definition (i.e. the <code class="hljs inlineCode">pom.xml</code>) of the application can be supplemented as follows:</p>
+<pre><code class="language-xml">&lt;build&gt;
+   &lt;plugins&gt;
+      &lt;plugin&gt;
+         &lt;groupId&gt;com.top-logic&lt;/groupId&gt;
+         &lt;artifactId&gt;tl-maven-plugin&lt;/artifactId&gt;
+         &lt;version&gt;${tl.version}&lt;/version&gt;
+
+         &lt;executions&gt;
+            &lt;execution&gt;
+               &lt;id&gt;generate-binding&lt;/id&gt;
+               &lt;goals&gt;
+                  &lt;goal&gt;generate-java&lt;/goal&gt;
+               &lt;/goals&gt;
+               &lt;configuration&gt;
+                  &lt;modules&gt;my.app&lt;/modules&gt;
+               &lt;/configuration&gt;
+            &lt;/execution&gt;
+         &lt;/executions&gt;
+      &lt;/plugin&gt;
+   &lt;/plugins&gt;
+&lt;/build&gt;
+</code></pre>
+<p>The above build plugin definition uses the standard Maven plugin <code class="hljs inlineCode">exec</code> to call the wrapper generator with the two mandatory arguments <code class="hljs inlineCode">-out</code> and <code class="hljs inlineCode">-modules</code>. The argument <code class="hljs inlineCode">-out</code> specifies where the generated code should be written. The modules for which code is to be generated are enumerated with <code class="hljs inlineCode">-modules</code>. If code is to be generated for more than one module, the module names must be passed comma-separated in one argument.</p>
+<h2>Wrapper generation</h2>
+<p>If the build definition has been adapted as described above, the generation can be triggered via the following call:</p>
+<pre><code class="language-bash">mvn install tl:generate-java@generate-binding</code></pre>
+<p>The generated code is stored in the Java packages defined on the model. Once this has been compiled accordingly, the application can be restarted. The classes generated in this way are automatically loaded and used for model elements in the corresponding module. Java implementations that access the model can then use regular Java instance-of queries to test the type of a model element and access the properties of model elements via the methods defined in the generated interfaces.</p>
+<h2>Coding of specialist functionality</h2>
+<p>Functions that access the model can either be defined externally, e.g. in static methods, or implemented directly as method implementations in the generated interfaces. For this purpose, the generation produces two Java interfaces (<code class="hljs inlineCode">A</code> and <code class="hljs inlineCode">ABase</code>) and one Java class (<code class="hljs inlineCode">AImpl</code>) for a model class <code class="hljs inlineCode">A</code>. Of these three types, two actually contain generated code (<code class="hljs inlineCode">ABase</code> and <code class="hljs inlineCode">AImpl</code>) and must therefore not be modified. The interface <code class="hljs inlineCode">A</code>, on the other hand, is merely an empty template that can be enriched with your own methods. Only <code class="hljs inlineCode">ABase</code> and <code class="hljs inlineCode">AImpl</code> are overwritten during a new generation. However, the customized template <code class="hljs inlineCode">A</code> is retained.</p>
+<p><strong>Caution:</strong> Self-defined methods in model interfaces must always be default methods with an implementation. Under no circumstances may the generated implementation class be adapted. Default implementations of model methods may only refer to properties defined in the model (which they can access via the generated get methods). Under no circumstances may the implementation class be supplemented with additional fields.</p>
+<p>An example of a specialized method in the generated template for a type <code class="hljs inlineCode">A</code> could look as follows:</p>
+<pre><code class="language-java">public interface A extends ABase {
+
+   /**
+    * The {@link #getName() name} enclosed in stars.
+    */
+   default String enhancedName() {
+      return "*** " + getName() + " ***";
+   }
+
+}
+</code></pre>
+<p>The method <code class="hljs inlineCode">enhancedName()</code> uses the generated access method <code class="hljs inlineCode">getName()</code> for the property <code class="hljs inlineCode">name</code> to calculate a new value.</p>
+<p>Specialized functionality can also use polymorphism. The default implementation can be missing in an interface for an abstract model type. In this case, default methods for the abstract interface method of the superordinate type must be specified in all interfaces of subtypes.</p>
+<p><strong>Caution:</strong> In this case in particular, the implementations for an abstract specialized method of an abstract model type must not be written to the generated implementation class (even if the development environment displays an error here), but rather as a default method in the generated interface for the corresponding model type.</p>

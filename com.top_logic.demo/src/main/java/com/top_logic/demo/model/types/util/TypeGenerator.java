@@ -22,7 +22,6 @@ import java.util.Set;
 
 import org.w3c.dom.Document;
 
-import com.top_logic.base.bus.MonitorEvent;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.DateUtil;
 import com.top_logic.basic.Logger;
@@ -31,7 +30,6 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.basic.xml.DOMUtil;
-import com.top_logic.demo.Messages;
 import com.top_logic.demo.edit.DemoFormContextModificator;
 import com.top_logic.demo.model.types.A;
 import com.top_logic.demo.model.types.B;
@@ -41,7 +39,6 @@ import com.top_logic.demo.model.types.DemoTypesA;
 import com.top_logic.demo.model.types.DemoTypesFactory;
 import com.top_logic.demo.model.types.Root;
 import com.top_logic.demo.model.types.X;
-import com.top_logic.element.core.util.ElementEventUtil;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.SimpleEditContext;
 import com.top_logic.element.meta.complex.CountryOptionProvider;
@@ -165,7 +162,7 @@ public class TypeGenerator {
 	static boolean generate(StructuredElement parent, String rootName, int numberOfChildren) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
-		Transaction tx = kb.beginTransaction(Messages.GENERATED_DEMO_TYPES.fill());
+		Transaction tx = kb.beginTransaction(com.top_logic.demo.I18NConstants.GENERATED_DEMO_TYPES);
 		
 		String parentType = parent.getElementType();
 		assert ! StringServices.isEmpty(parentType);
@@ -189,10 +186,8 @@ public class TypeGenerator {
 					child.setIsAssignable(rand.nextBoolean());
 					child.setStringInBAndC("GeneratedString_" + rand.nextInt());
 
-					sendCreateEvent(child);
 					for (int n = 0; n < 2; n++) {
 						StructuredElement cNode = child.createChild("C" + (cId++), C.C_TYPE);
-						sendCreateEvent(cNode);
 					}
 					createXChild(generatedRoot, "X" + i);
 				} else {
@@ -246,21 +241,19 @@ public class TypeGenerator {
 
 					Person person = createWrapperValueNullable(Person.class, DemoTypesFactory.getAccountDemoTypesAAttr(), rand);
 					child.setAccount(person);
-					sendCreateEvent(child);
 
 					for (int n = 0; n < 2; n++) {
 						C cNode = (C) child.createChild("C" + (cId++), C.C_TYPE);
 						
 						cNode.setValue(C.DEPENDENT_DATE_ATTR,
 							DateUtil.addDays(date1, (int) (rand.nextDouble() * range)));
-						
-						sendCreateEvent(cNode);
 					}
 					createXChild(child, "X" + i);
 				}
 			}
 			tx.commit();
-			Transaction structureReferenceUpdate = kb.beginTransaction(Messages.GENERATED_DEMO_TYPES.fill());
+			Transaction structureReferenceUpdate =
+				kb.beginTransaction(com.top_logic.demo.I18NConstants.GENERATED_DEMO_TYPES);
 			if (!generatedRootType.equals(A.A_TYPE)) {
 				for (StructuredElement child : generatedRoot.getChildren()) {
 					DemoTypesA ANode = (DemoTypesA) child;
@@ -326,17 +319,9 @@ public class TypeGenerator {
 		return createWrapperValue(TLClassifier.class, attribute, random);
 	}
 
-	private static void createXChild(StructuredElement parent, String name) {
+	private static StructuredElement createXChild(StructuredElement parent, String name) {
 		StructuredElement xNode = parent.createChild(name, X.X_TYPE);
-		sendCreateEvent(xNode);
-	}
-
-	static void sendCreateEvent(StructuredElement element) {
-		ElementEventUtil.sendEvent(element, MonitorEvent.CREATED);
-	}
-
-	static void sendDeleteEvent(StructuredElement deletedNode) {
-		ElementEventUtil.sendEvent(deletedNode, MonitorEvent.DELETED);
+		return xNode;
 	}
 
 	private static TLClassifier createChecklistSingleValue(Random random) {
@@ -536,15 +521,12 @@ public class TypeGenerator {
 
 		@Override
 		protected void fillFormContext(FormContext context) {
-			Resources resources = Resources.getInstance();
-
 			_rootName = FormFactory.newStringField(ROOT_NAME_FIELD, "Generated Root", false);
-			_rootName.setLabel(resources.getString(I18NConstants.TYPE_GENERATOR_DIALOG.key(ROOT_NAME_FIELD)));
+			_rootName.setLabel(I18NConstants.TYPE_GENERATOR_DIALOG.key(ROOT_NAME_FIELD));
 			_rootName.setControlProvider(ValueBelowLabel.INSTANCE);
 			
 			_numberChildren = FormFactory.newIntField(NUMBER_CHILDREN_FIELD, NUMBER_OF_CHILDREN, false);
-			_numberChildren
-				.setLabel(resources.getString(I18NConstants.TYPE_GENERATOR_DIALOG.key(NUMBER_CHILDREN_FIELD)));
+			_numberChildren.setLabel(I18NConstants.TYPE_GENERATOR_DIALOG.key(NUMBER_CHILDREN_FIELD));
 			_numberChildren.setControlProvider(ValueBelowLabel.INSTANCE);
 			_numberChildren.addConstraint(
 				new RangeConstraint(1, Integer.MAX_VALUE)

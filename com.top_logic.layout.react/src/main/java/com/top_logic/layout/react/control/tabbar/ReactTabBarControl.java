@@ -1,0 +1,352 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react.control.tabbar;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ScriptingControl;
+import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.dirty.ChannelVetoException;
+import com.top_logic.layout.react.dirty.DirtyChannel;
+import com.top_logic.layout.react.routing.RouteChangeListener;
+import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.routing.RouteMatch;
+import com.top_logic.layout.react.routing.RoutePattern;
+import com.top_logic.layout.react.routing.RouteSegment;
+import com.top_logic.layout.react.reveal.ChildRevealer;
+import com.top_logic.layout.react.routing.RoutingParticipant;
+import com.top_logic.layout.react.state.TabBarState;
+
+/**
+ * A {@link ReactControl} that renders a tab bar with lazily created content.
+ *
+ * <p>
+ * Only the currently visible tab's content control is created on the server. Previously visited tabs
+ * are cached so that re-selecting them is instant and preserves their state.
+ * </p>
+ *
+ * <p>
+ * The React component receives the following state:
+ * </p>
+ * <ul>
+ * <li>{@code tabs} - list of {@code {id, label}} objects</li>
+ * <li>{@code activeTabId} - the currently selected tab ID</li>
+ * <li>{@code activeContent} - the active tab's content as a child control descriptor (or
+ * {@code null})</li>
+ * </ul>
+ */
+public class ReactTabBarControl extends ReactControl implements RoutingParticipant, ChildRevealer {
+
+	private static final String REACT_MODULE = "TLTabBar";
+
+	/** Command argument key for the selected tab ID. */
+	/** The {@link ReactCommandHandler} that activates a tab. */
+	public static final String SELECT_TAB_COMMAND = "selectTab";
+
+	private final List<TabDefinition> _tabDefinitions;
+
+	private final LinkedHashMap<String, ReactControl> _contentCache = new LinkedHashMap<>();
+
+	private String _activeTabId;
+
+	private final List<RouteChangeListener> _routeChangeListeners = new ArrayList<>();
+
+	/**
+	 * Creates a new {@link ReactTabBarControl}.
+	 *
+	 * @param model
+	 *        The server-side model object.
+	 * @param tabDefinitions
+	 *        The tab definitions. Must not be empty.
+	 * @param initialActiveTabId
+	 *        The initially active tab ID, or {@code null} to default to the first tab.
+	 */
+	public ReactTabBarControl(ReactContext context, Object model, List<TabDefinition> tabDefinitions, String initialActiveTabId) {
+		super(context, model, REACT_MODULE);
+		_tabDefinitions = new ArrayList<>(tabDefinitions);
+		_activeTabId = initialActiveTabId != null ? initialActiveTabId : tabDefinitions.get(0).getId();
+
+		// Build the static tab list for the React component.
+		List<Map<String, Object>> tabList = new ArrayList<>();
+		for (TabDefinition tab : _tabDefinitions) {
+			Map<String, Object> tabInfo = new HashMap<>();
+			tabInfo.put(TabBarState.Tab.ID__PROP, tab.getId());
+			tabInfo.put(TabBarState.Tab.LABEL__PROP, tab.getLabel());
+			if (tab.getIcon() != null) {
+				tabInfo.put(TabBarState.Tab.ICON__PROP, tab.getIcon());
+			}
+			tabList.add(tabInfo);
+		}
+		putState(TabBarState.TABS__PROP, tabList);
+		putState(TabBarState.ACTIVE_TAB_ID__PROP, _activeTabId);
+		// activeContent is null until this tab bar is attached (or written) - see onAttach().
+	}
+
+	/**
+	 * Creates a new {@link ReactTabBarControl} with the first tab active.
+	 */
+	public ReactTabBarControl(ReactContext context, Object model, List<TabDefinition> tabDefinitions) {
+		this(context, model, tabDefinitions, null);
+	}
+
+	@Override
+	protected void onAttach() {
+		super.onAttach();
+		// The active tab's content comes into existence here rather than at the first write, because
+		// what it contributes to its surroundings has to be in place before those surroundings are
+		// rendered: a form puts its Save into the enclosing button bar as it attaches, and a bar
+		// built and written before the form exists shows without it. Putting the content into the
+		// state now also lets the attach propagation that follows this hook reach it.
+		materializeActiveContent();
+	}
+
+	@Override
+	protected void onBeforeWrite() {
+		super.onBeforeWrite();
+		// Covers a tab bar written without being attached; an attached one materialized its content
+		// in onAttach().
+		materializeActiveContent();
+	}
+
+	/**
+	 * Creates the active tab's content unless it already exists, and displays it.
+	 */
+	private void materializeActiveContent() {
+		if (getState(TabBarState.ACTIVE_CONTENT__PROP) != null) {
+			return;
+		}
+		ReactControl activeContent = getOrCreateContent(_activeTabId);
+		putState(TabBarState.ACTIVE_CONTENT__PROP, activeContent);
+		if (isAttached()) {
+			activeContent.attach();
+		}
+	}
+
+	/**
+	 * Also disposes the contents of tabs visited earlier: only the active tab's content is part of the
+	 * state, the others are only reachable through the cache.
+	 */
+	@Override
+	protected void cleanupChildren() {
+		super.cleanupChildren();
+		for (ReactControl cached : _contentCache.values()) {
+			cached.cleanupTree();
+		}
+		_contentCache.clear();
+	}
+
+	/**
+	 * The id of the tab currently displayed.
+	 */
+	public String getActiveTabId() {
+		return _activeTabId;
+	}
+
+	/**
+	 * Selects the tab with the given ID.
+	 *
+	 * <p>
+	 * If the tab's content has not been created yet, it is lazily created and cached.
+	 * </p>
+	 *
+	 * @param tabId
+	 *        The ID of the tab to select.
+	 */
+	public void selectTab(String tabId) {
+		if (tabId.equals(_activeTabId)) {
+			return;
+		}
+		ReactControl previousContent = _contentCache.get(_activeTabId);
+		_activeTabId = tabId;
+
+		if (!isSSEAttached()) {
+			// Not yet rendered, so the selection is applied by dropping the content of the tab left
+			// behind: onBeforeWrite() then mounts the content of the selected one, instead of writing
+			// the display of the tab that is no longer active.
+			putState(TabBarState.ACTIVE_TAB_ID__PROP, _activeTabId);
+			putState(TabBarState.ACTIVE_CONTENT__PROP, null);
+			if (previousContent != null) {
+				previousContent.detach();
+			}
+			return;
+		}
+
+		// Exchanging the display is how the navigation is carried out, so it is applied as one: the
+		// address bar gains a history entry for the tab now selected, and not a correction for every
+		// participant that appears or disappears on the way there.
+		RouteManager routeManager = getReactContext().getRouteManager();
+		if (routeManager != null) {
+			routeManager.navigate(() -> displayTab(tabId, previousContent));
+		} else {
+			displayTab(tabId, previousContent);
+		}
+	}
+
+	/**
+	 * Exchanges the displayed content for the content of the given tab.
+	 *
+	 * @param tabId
+	 *        The tab to display.
+	 * @param previousContent
+	 *        The content displayed until now, or {@code null} if there was none.
+	 */
+	private void displayTab(String tabId, ReactControl previousContent) {
+		ReactControl content = getOrCreateContent(tabId);
+
+		Object tx = beginUpdate();
+		putState(TabBarState.ACTIVE_TAB_ID__PROP, tabId);
+		putState(TabBarState.ACTIVE_CONTENT__PROP, content);
+		commitUpdate(tx);
+
+		if (previousContent != null) {
+			previousContent.detach();
+		}
+		if (isAttached()) {
+			content.attach();
+		}
+
+		notifyRouteListeners(tabId);
+	}
+
+	/**
+	 * Reports the route of the given tab to the {@link RouteChangeListener}s.
+	 */
+	private void notifyRouteListeners(String tabId) {
+		TabDefinition newTab = findTab(tabId);
+		if (newTab.getRoute() != null) {
+			RoutePattern pattern = RoutePattern.compile(newTab.getRoute(), newTab.getId());
+			RouteSegment segment = new RouteSegment(pattern.produce(Map.of()));
+			for (RouteChangeListener listener : new ArrayList<>(_routeChangeListeners)) {
+				listener.onRouteChange(this, segment);
+			}
+		}
+	}
+
+	private ReactControl getOrCreateContent(String tabId) {
+		ReactControl cached = _contentCache.get(tabId);
+		if (cached != null) {
+			return cached;
+		}
+
+		TabDefinition tabDef = findTab(tabId);
+		ReactControl content = tabDef.getContentFactory().get();
+		_contentCache.put(tabId, content);
+		return content;
+	}
+
+	private TabDefinition findTab(String tabId) {
+		for (TabDefinition tab : _tabDefinitions) {
+			if (tab.getId().equals(tabId)) {
+				return tab;
+			}
+		}
+		throw new IllegalArgumentException("Unknown tab ID: " + tabId);
+	}
+
+	// -- RoutingParticipant --
+
+	@Override
+	public List<RoutePattern> declaredRoutes() {
+		List<RoutePattern> routes = new ArrayList<>();
+		for (TabDefinition tab : _tabDefinitions) {
+			String route = tab.getRoute();
+			if (route != null) {
+				routes.add(RoutePattern.compile(route, tab.getId()));
+			}
+		}
+		return routes;
+	}
+
+	/**
+	 * Activates the tab the URL names, letting the tab being left veto the switch while it holds
+	 * unsaved changes.
+	 *
+	 * <p>
+	 * A URL is refused for the same reason a click on the tab is: what the user typed into the tab
+	 * being left is not dropped because an address named another tab. The
+	 * {@link ChannelVetoException} reaches whoever resolves the URL, which ends its adoption and
+	 * leaves the tab bar showing the tab it shows.
+	 * </p>
+	 */
+	@Override
+	public void activateRoute(RouteMatch match) {
+		revealChild(match.itemId());
+	}
+
+	@Override
+	public RouteSegment activeRouteSegment() {
+		TabDefinition activeTab = findTab(_activeTabId);
+		if (activeTab.getRoute() != null) {
+			RoutePattern pattern = RoutePattern.compile(activeTab.getRoute(), activeTab.getId());
+			return new RouteSegment(pattern.produce(Map.of()));
+		}
+		return null;
+	}
+
+	@Override
+	public void addRouteChangeListener(RouteChangeListener listener) {
+		_routeChangeListeners.add(listener);
+	}
+
+	@Override
+	public void removeRouteChangeListener(RouteChangeListener listener) {
+		_routeChangeListeners.remove(listener);
+	}
+
+	// -- Commands --
+
+	/**
+	 * Activates the tab with the given id, letting the tab being left veto the switch while it holds
+	 * unsaved changes.
+	 *
+	 * <p>
+	 * Only leaving the tab asks about unsaved changes; the tab already displayed is activated
+	 * without a question. A URL that stays within that tab - a deeper segment it shows, a query
+	 * parameter refining it, a step back between two addresses of the same page - reaches the tab
+	 * bar as the tab it displays: nothing here is being left, so nothing is asked, and the
+	 * participant the URL does concern keeps its say.
+	 * </p>
+	 */
+	@Override
+	public void revealChild(String key) {
+		if (!key.equals(_activeTabId)) {
+			TabDefinition currentTab = findTab(_activeTabId);
+			DirtyChannel dirtyChannel = currentTab.getDirtyChannel();
+			if (dirtyChannel != null && dirtyChannel.hasDirtyHandlers()) {
+				throw new ChannelVetoException(dirtyChannel.getDirtyHandlers(), () -> selectTab(key));
+			}
+		}
+
+		selectTab(key);
+	}
+
+	/**
+	 * Handles tab selection from the client.
+	 */
+	@ReactCommandHandler(SELECT_TAB_COMMAND)
+	void handleSelectTab(SelectTabArguments args) {
+		revealChild(args.getTabId());
+	}
+
+	/**
+	 * Addresses the active tab's content by the tab's stable ID (e.g. {@code tab[overview]}), so
+	 * content addresses encode which tab they belong to.
+	 */
+	@Override
+	public String scriptingChildSlot(ReactControl child) {
+		if (child == getState(TabBarState.ACTIVE_CONTENT__PROP)) {
+			return ScriptingControl.slotSegment("tab", _activeTabId);
+		}
+		return null;
+	}
+
+}

@@ -6,6 +6,7 @@
 package com.top_logic.layout.tree;
 
 import com.top_logic.layout.scripting.recorder.ref.NamedModel;
+import com.top_logic.layout.tree.model.TreeUIModel;
 
 /**
  * This class is used by the scripting framework to find the owner of the {@link TreeData}. The
@@ -13,11 +14,16 @@ import com.top_logic.layout.scripting.recorder.ref.NamedModel;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public interface TreeDataOwner extends NamedModel {
+public interface TreeDataOwner extends NamedModel, TreeModelOwner {
 
 	/**
 	 * Getter for the owned {@link TreeData}.
 	 */
 	public TreeData getTreeData();
+
+	@Override
+	default TreeUIModel<?> getTree() {
+		return getTreeData().getTreeModel();
+	}
 
 }

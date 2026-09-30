@@ -8,7 +8,6 @@ package com.top_logic.layout.table.export;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -26,6 +25,7 @@ import com.top_logic.basic.config.annotation.DefaultValueProviderShared;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
@@ -43,7 +43,6 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.AbstractFormMemberControl;
 import com.top_logic.layout.form.control.BlockControl;
 import com.top_logic.layout.form.control.ButtonControl;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.model.Column;
@@ -73,17 +72,19 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 		Config.CLIQUE_PROPERTY,
 		Config.GROUP_PROPERTY,
 		Config.EXECUTABILITY_PROPERTY,
-		Config.CONFIRM_PROPERTY,
-		Config.CONFIRM_MESSAGE,
-		Config.EXPORT_NAME_KEY,
+		Config.CONFIRMATION,
 		Config.EXPORT_SHEET_KEY,
+		Config.STREAMING,
+		Config.DOWNLOAD_NAME_PROVIDER,
 	})
 	public interface Config extends AbstractTableExportHandler.Config {
-		/** @see #getExportNameKey() */
-		String EXPORT_NAME_KEY = "exportNameKey";
-
 		/** I18N key for the export sheet name. */
 		String EXPORT_SHEET_KEY = "exportSheetKey";
+
+		/**
+		 * @see #getStreaming()
+		 */
+		String STREAMING = "streaming";
 
 		/**
 		 * Name of the Excel sheet that is filled with data.
@@ -95,23 +96,18 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 		ResKey getExportSheetKey();
 
 		/**
-		 * File name of the created download.
+		 * Whether to use streaming export.
+		 * 
+		 * <p>
+		 * Streaming export uses less memory, but does not support rich text formatting within
+		 * cells.
+		 * </p>
 		 */
-		@Label("Download name")
-		@Name(Config.EXPORT_NAME_KEY)
-		@ComplexDefault(ExportNameKeyDefault.class)
-		@InstanceFormat
-		ResKey getExportNameKey();
+		@Name(STREAMING)
+		@BooleanDefault(true)
+		boolean getStreaming();
 
-		/** {@link DefaultValueProvider} for {@link Config#getExportNameKey()}. */
-		class ExportNameKeyDefault extends DefaultValueProviderShared {
-			@Override
-			public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {
-				return com.top_logic.layout.table.model.I18NConstants.DOWNLOAD_FILE_KEY;
-			}
-		}
-
-		/** {@link DefaultValueProvider} for {@link Config#getExportNameKey()}. */
+		/** {@link DefaultValueProvider} for {@link Config#getExportSheetKey()}. */
 		class ExportSheetKeyDefault extends DefaultValueProviderShared {
 			@Override
 			public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {
@@ -124,29 +120,28 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 	/** I18N key for the export sheet name. */
 	private ResKey _exportSheetKey;
 
-	/** I18N key for the name of export file. */
-	private final ResKey _exportNameKey;
-
 	/**
 	 * Creates a {@link StreamingExcelExportHandler}.
 	 */
 	public StreamingExcelExportHandler(InstantiationContext context, Config config) {
 		super(context, config);
 
-		_exportNameKey = config.getExportNameKey();
 		_exportSheetKey = config.getExportSheetKey();
 	}
 
 	@Override
-	protected BinaryData createDownloadData(Runnable progressIncrementer, I18NLog log, LayoutComponent component) {
-		return createExporter(progressIncrementer, log, component).createData();
+	protected BinaryData createDownloadData(Runnable progressIncrementer, I18NLog log, LayoutComponent component, Object model) {
+		return createExporter(progressIncrementer, log, component, model).createData();
 	}
 
 	/**
 	 * Creates the export algorithm.
+	 * 
+	 * @param model
+	 *        The base model, for which the export is created.
 	 */
-	protected Exporter createExporter(Runnable progressIncrementer, I18NLog log, LayoutComponent component) {
-		return new Exporter(progressIncrementer, log, component);
+	protected Exporter createExporter(Runnable progressIncrementer, I18NLog log, LayoutComponent component, Object model) {
+		return new Exporter(progressIncrementer, log, component, model);
 	}
 
 	/**
@@ -166,12 +161,15 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 
 		private final Runnable _progressIncrementer;
 
+		private Object _model;
+
 		/**
 		 * Creates a {@link Exporter}.
 		 */
-		public Exporter(Runnable progressIncrementer, I18NLog log, LayoutComponent component) {
+		public Exporter(Runnable progressIncrementer, I18NLog log, LayoutComponent component, Object model) {
 			_log = log;
 			_component = component;
+			_model = model;
 			_progressIncrementer = progressIncrementer;
 			_tableData = extractTableData(getComponent());
 		}
@@ -202,12 +200,16 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 		 */
 		public BinaryData createData() {
 			try {
-				String downloadName = Resources.getInstance().getString(_exportNameKey);
+				String downloadName = getFilename(_component, _model);
 				boolean xFormat = !downloadName.endsWith(POIUtil.XLS_SUFFIX);
 				if (xFormat && !downloadName.endsWith(POIUtil.XLSX_SUFFIX)) {
 					downloadName += POIUtil.XLSX_SUFFIX;
 				}
-				ExcelWriter writer = new ExcelWriter(xFormat);
+				ExcelWriter writer = xFormat
+					? (((Config) getConfig()).getStreaming()
+						? ExcelWriter.createStreamingWriter()
+						: ExcelWriter.createWriter())
+					: ExcelWriter.createLegacyWriter();
 				writer.newTable(Resources.getInstance().getString(_exportSheetKey));
 
 				exportHeaders(writer);
@@ -402,16 +404,10 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 		 */
 		protected Object formatValue(Object aValue, TableViewModel model, int row, Column column) {
 			ExcelCellRenderer excelRenderer = column.getConfig().getExcelRenderer();
-			if (excelRenderer != null) {
-				AdjustableCellValueContext cellContext =
-					_exportRenderContexts.computeIfAbsent(column, ignored -> createCellValueContext(model, column));
-				cellContext.setCellValue(aValue);
-				return excelRenderer.renderCell(cellContext);
-			} else if ((aValue instanceof Number) || (aValue instanceof Date)) {
-				return aValue;
-			} else {
-				return MetaLabelProvider.INSTANCE.getLabel(aValue);
-			}
+			AdjustableCellValueContext cellContext =
+				_exportRenderContexts.computeIfAbsent(column, ignored -> createCellValueContext(model, column));
+			cellContext.setCellValue(aValue);
+			return excelRenderer.renderCell(cellContext);
 		}
 
 		/**

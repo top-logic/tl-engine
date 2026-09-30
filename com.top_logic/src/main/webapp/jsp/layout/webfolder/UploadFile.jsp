@@ -17,7 +17,7 @@ com.top_logic.mig.html.layout.FileUploadComponent"
 	String     theContext   		= request.getContextPath();
 	boolean    update       		= this.doingFileUpdate(application, request);
 	Theme      theTheme            = ThemeFactory.getTheme();
-	String	   theIcon      	   = "theme:DIALOGS_UPLOAD_DOCUMENT";
+	String	   theIcon      	   = "theme:ICONS_UPLOAD";
 	String     theUpdateFileName 	= "";
 	FileUploadComponent theComp    = (FileUploadComponent)MainLayout.getComponent(pageContext);
 	boolean    showDateField       = theComp.showUploadDateField();

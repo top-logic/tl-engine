@@ -14,7 +14,7 @@ import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.reporting.report.exception.ReportingException;
@@ -56,7 +56,7 @@ public class WrapperObjectProducer extends AbstractObjectProducer {
      */
     @Override
 	protected Collection _getObjectsInternal() {
-        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 
         return getObjects(theKB);
     }

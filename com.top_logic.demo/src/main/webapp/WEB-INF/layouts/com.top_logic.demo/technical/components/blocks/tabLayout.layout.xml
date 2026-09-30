@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_3af513cd_bc90_4cd3_b5db_e6abbf8e9866"
+		tabIcon="css:fas fa-cubes"
+	>
+		<tabLabel key="dynamic.20d47196-f8f6-4ff9-a280-7e785e1b7e92">
+			<en>Blocks</en>
+			<de>Blocks</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/blocks/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

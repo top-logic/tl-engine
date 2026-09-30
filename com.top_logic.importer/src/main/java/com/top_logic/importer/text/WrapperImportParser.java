@@ -20,14 +20,14 @@ import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.importer.excel.transformer.FastListElementTransformer;
 
 /**
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class WrapperImportParser {
 
     /**
      * Return a {@link com.top_logic.knowledge.wrap.person.Person Person} identified by its login name.
      *  
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Person extends TextImportParser<com.top_logic.knowledge.wrap.person.Person> {
 
@@ -47,7 +47,7 @@ public class WrapperImportParser {
     /**
      * Return a {@link com.top_logic.knowledge.wrap.person.Person Person} identified by its login name.
      *  
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class FastListElement extends TextImportParser<com.top_logic.knowledge.wrap.list.FastListElement> {
 
@@ -101,7 +101,7 @@ public class WrapperImportParser {
     /**
      * Base class for returning an {@link com.top_logic.contact.business.AbstractContact AbstractContact} for the defined ID. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public abstract static class AbstractContact<T extends com.top_logic.contact.business.AbstractContact> extends TextImportParser<com.top_logic.contact.business.AbstractContact> {
 
@@ -191,7 +191,7 @@ public class WrapperImportParser {
     /**
      * Return a {@link com.top_logic.contact.business.PersonContact PersonContact} for the defined ID. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class PersonContact<T extends com.top_logic.contact.business.PersonContact> extends AbstractContact<T> {
 
@@ -203,7 +203,7 @@ public class WrapperImportParser {
     /**
      * Return a {@link com.top_logic.contact.business.CompanyContact CompanyContact} for the defined ID. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class CompanyContact<T extends com.top_logic.contact.business.CompanyContact> extends AbstractContact<T> {
 

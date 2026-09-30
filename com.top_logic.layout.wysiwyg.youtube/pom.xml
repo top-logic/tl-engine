@@ -5,11 +5,11 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>tl-layout-wysiwyg-youtube</artifactId>
-  
-  <description>Youtube Plugin for CKEditor 4 version 2.1.19</description>
+	<name>${project.artifactId}</name>
+	<description>Youtube Plugin for CKEditor 4 version 2.1.19</description>
   <url>https://fonini.github.io/youtube-plugin-for-ckeditor-4.html</url>
   
   <licenses>

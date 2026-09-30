@@ -27,7 +27,8 @@ public class FieldValidityAssertionOp extends FieldAssertionOp<FieldValidityAsse
 	protected void checkAsserts(FormField field, ActionContext actionContext) {
 		Object expectedValidity = getConfig().getValidity();
 		Object actualValidity = FieldValidity.getValidity(field);
-		ApplicationAssertions.assertEquals(config, "The field has a wrong validity.", expectedValidity, actualValidity);
+		ApplicationAssertions.assertEquals(config, "The field '" + field.getQualifiedName() + "' has a wrong validity.",
+			expectedValidity, actualValidity);
 	}
 
 }

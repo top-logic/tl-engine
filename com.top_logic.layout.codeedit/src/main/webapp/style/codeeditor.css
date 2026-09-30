@@ -1,11 +1,3 @@
-.ace_editor {
-	border: 1px solid lightgray;
-	height: 200px;
-	
-	z-index: 0;
-	isolation: isolate;
-}
-
 .fullSize .ace_editor {
 	position: absolute;
 	margin: 0;
@@ -13,10 +5,86 @@
 	left: 0;
 	bottom: 0;
 	right: 0;
-	border: none;
 	height: auto;
 }
 
 .popupEditField .cError {
 	position: relative;
 }
+
+.ace-eclipse .ace_active-line {
+    background: var(--background-selected);
+}
+
+.ace-eclipse .ace_marker-layer .ace_selection {
+    background: var(--script-editor-text-highlight);
+}
+
+.ace-eclipse .ace_gutter-active-line {
+	color: var(--layer-accent-text);
+	background: var(--layer-accent);
+}
+
+/* Adjust line height for the entire Ace Editor */
+.ace_editor {
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+	border: 1px solid var(--border-subtle);
+}
+
+/* Adjust line height for the text area of the editor */
+.ace_content {
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+}
+
+div.ace_tooltip {
+	white-space: normal;
+	/* To overwrite ace's JS height implementation */
+/* 	max-height: 50vh !important; */
+	max-height: stretch !important;
+	max-height: -moz-available !important;
+	max-height: -webkit-fill-available !important;
+	/* To overwrite ace's JS width implementation */
+	max-width: stretch !important;
+	max-width: -moz-available !important;
+	max-width: -webkit-fill-available !important;
+	overflow: auto;
+	background: var(--background);
+	border: 1px solid var(--border-strong);
+	padding: var(--spacing-02);
+	font-family: var(--font-family);
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+	letter-spacing: var(--body-02-letter-spacing);
+	color: var(--text-primary);
+}
+
+div.ace_tooltip>code {
+	white-space: pre;
+}
+
+div.ace_tooltip>code.inlineCode {
+	white-space: normal;
+}
+
+.ace_tooltip pre {
+	border: 1px solid var(--border-subtle);
+	background: var(--layer);
+	padding: 0 var(--spacing-02);
+}
+
+.ace_tooltip pre code {
+  display: block; /* To avoid unwanted text indentation */
+}
+
+.ace_tooltip .tlScriptDoc h2:not(:first-of-type) {
+	font-family: var(--font-family);
+    font-size: var(--heading-03-font-size);
+    line-height: var(--heading-03-line-height);
+    letter-spacing: var(--heading-03-letter-spacing);
+    font-weight: bold;
+}
+
+
+

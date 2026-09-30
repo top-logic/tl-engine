@@ -6,7 +6,8 @@
 package com.top_logic.model.visit;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.gui.layout.FastListElementResourceProvider;
+import com.top_logic.knowledge.gui.AbstractTLItemResourceProvider;
+import com.top_logic.knowledge.gui.layout.list.FastListElementLabelProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
@@ -22,7 +23,6 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.annotate.TLI18NKey;
 import com.top_logic.model.resources.TLPartResourceProvider;
 import com.top_logic.model.resources.TLTypePartResourceProvider;
-import com.top_logic.model.resources.TLTypeResourceProvider;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.util.Resources;
 
@@ -55,17 +55,17 @@ public class LabelVisitor implements TLModelVisitor<String, Void> {
 
 	@Override
 	public String visitPrimitive(TLPrimitive model, Void arg) {
-		return TLTypeResourceProvider.getMetaElementLabel(model);
+		return AbstractTLItemResourceProvider.getMetaElementLabel(model);
 	}
 
 	@Override
 	public String visitClass(TLClass model, Void arg) {
-		return TLTypeResourceProvider.getMetaElementLabel(model);
+		return AbstractTLItemResourceProvider.getMetaElementLabel(model);
 	}
 
 	@Override
 	public String visitAssociation(TLAssociation model, Void arg) {
-		return TLTypeResourceProvider.getMetaElementLabel(model);
+		return AbstractTLItemResourceProvider.getMetaElementLabel(model);
 	}
 
 	@Override
@@ -85,12 +85,14 @@ public class LabelVisitor implements TLModelVisitor<String, Void> {
 
 	@Override
 	public String visitClassifier(TLClassifier model, Void arg) {
-		return FastListElementResourceProvider.INSTANCE.getLabel(model);
+		ResKey labelKey = FastListElementLabelProvider.labelKey(model);
+		return (Resources.getInstance().getString(labelKey));
 	}
 
 	@Override
 	public String visitEnumeration(TLEnumeration model, Void arg) {
-		return FastListElementResourceProvider.INSTANCE.getLabel(model);
+		ResKey labelKey = FastListElementLabelProvider.labelKey(model);
+		return (Resources.getInstance().getString(labelKey));
 	}
 
 	@Override
@@ -98,7 +100,10 @@ public class LabelVisitor implements TLModelVisitor<String, Void> {
 		return Resources.getInstance().getString(getModuleResourceKey(model), model.getName());
 	}
 
-	private ResKey getModuleResourceKey(TLModule module) {
+	/**
+	 * Label resource for a {@link TLModule}
+	 */
+	public static ResKey getModuleResourceKey(TLModule module) {
 		TLI18NKey annotation = module.getAnnotation(TLI18NKey.class);
 		if (annotation != null) {
 			return annotation.getValue();

@@ -13,6 +13,9 @@
 		<dependency name="Ticket_25881_Removed_legacy_types"
 			module="tl-element"
 		/>
+		<dependency name="Ticket_25800_inconsistent_signature_create_handler"
+			module="tl-model-search"
+		/>
 	</dependencies>
 	<processors>
 		<create-module name="tl.mail"/>

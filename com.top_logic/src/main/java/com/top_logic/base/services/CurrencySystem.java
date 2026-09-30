@@ -15,6 +15,7 @@ import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -23,7 +24,6 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WrapperFactory;
@@ -31,12 +31,13 @@ import com.top_logic.knowledge.wrap.currency.Currency;
 import com.top_logic.knowledge.wrap.unit.UnitWrapper;
 
 /**
- * The class {@link CurrencySystem} initializes and creates the currencies in a <i>TopLogic</i> system.
- * 
+ * Initializes and maintains the currencies available in the application.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
- * 
+ *
  */
 @ServiceDependencies(PersistencyLayer.Module.class)
+@Label("Currency system")
 public class CurrencySystem extends ManagedClass {
 
 	/** Name of Configuration property defining the main (System) Currency */
@@ -51,7 +52,7 @@ public class CurrencySystem extends ManagedClass {
 	/**
 	 * Configuration for currency system.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<CurrencySystem> {
 
@@ -88,7 +89,7 @@ public class CurrencySystem extends ManagedClass {
 
 		List<Currency> createdCurrencies = Collections.emptyList();
 		if (!confCodes.isEmpty()) {
-			Transaction tx = theBase.beginTransaction();
+			Transaction tx = theBase.beginTransaction(I18NConstants.STARTED_CURRENCY_SYSTEM);
 			try {
 				createdCurrencies = createCurrencies(theBase, confCodes);
 
@@ -149,7 +150,7 @@ public class CurrencySystem extends ManagedClass {
 		Currency theCurrency = Currency.getCurrencyInstance(code);
 		if (theCurrency != null)
 			throw new IllegalArgumentException("Currency with the given code '" + code + "' already exists.");
-		return createCurrency(KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase(), code, sortOrder);
+		return createCurrency(PersistencyLayer.getKnowledgeBase(), code, sortOrder);
 	}
 
 	/**
@@ -202,7 +203,7 @@ public class CurrencySystem extends ManagedClass {
 	/**
 	 * Module for {@link CurrencySystem}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public static final class Module extends TypedRuntimeModule<CurrencySystem> {
 

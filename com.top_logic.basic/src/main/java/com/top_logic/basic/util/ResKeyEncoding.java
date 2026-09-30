@@ -104,8 +104,16 @@ public class ResKeyEncoding {
 	 */
 	@FrameworkInternal
 	public static String encodeMessage(ResKey messageKey, Object... arguments) {
+		return encodeMessage(messageKey.internalEncode(), arguments);
+	}
+
+	/**
+	 * Use {@link ResKey#internalEncode()}
+	 */
+	@FrameworkInternal
+	public static String encodeMessage(String plainKey, Object... arguments) {
 		StringBuilder buffer = new StringBuilder();
-		buffer.append(messageKey.internalEncode());
+		buffer.append(plainKey);
 		for (Object argument : arguments) {
 			appendArgument(buffer, argument);
 		}
@@ -282,15 +290,38 @@ public class ResKeyEncoding {
 		}
 	}
 
-	static final String QUOTED_SPECIAL = "\\'|\\\"|\\\\";
+	static final String QUOTED_SPECIAL = "\\\\'|\\\\\"|\\\\\\\\";
 
+	/**
+	 * A quoted translation value, either single-quoted or double-quoted.
+	 *
+	 * <p>
+	 * The alternation of both quote styles is enclosed in a non-capturing group, so that whatever
+	 * follows the literal in an embedding pattern (such as {@link #LANGTAG}) applies to both quote
+	 * styles. The literal contributes exactly two capture groups: the contents of the single-quoted
+	 * form and the contents of the double-quoted form.
+	 * </p>
+	 */
 	static final String LITERAL =
-		"'" + "((?:" + "[^\\']*" + "|" + QUOTED_SPECIAL + ")*)" + "'" + "|" +
-			"\"" + "((?:" + "[^\\\"]*" + "|" + QUOTED_SPECIAL + ")*)" + "\"";
+		"(?:" +
+			"'" + "(" + "(?:" + "[^\\']*" + "|" + QUOTED_SPECIAL + ")*" + ")" + "'" + "|" +
+			"\"" + "(" + "(?:" + "[^\\\"]*" + "|" + QUOTED_SPECIAL + ")*" + ")" + "\"" +
+			")";
 
-	static final String LANGTAG = "@([a-zA-Z]+(?:-[a-zA-Z0-9]+)*)";
+	private static final String NAME = "[a-zA-Z][a-zA-Z0-9]*(?:-[a-zA-Z][a-zA-Z0-9]*)*";
 
-	static final Pattern TAGGED_STRING_PATTERN = Pattern.compile(LITERAL + LANGTAG);
+	static final String LANGTAG = "@(" + NAME + ")";
+
+	static final String SEPARATOR =
+		"(?:" + "(" + ",\\s+" + ")" + "|" + "(" + "\\)" + ")" + "|" + "(" + "\\}" + ")" + ")";
+
+	static final String SUBKEY_START = "(" + NAME + ")" + ":" + "\\s*" + "\\{";
+
+	static final Pattern TAGGED_STRING_PATTERN = Pattern.compile(
+		"(?:" +
+			"(?:" + "(?:" + LITERAL + LANGTAG + ")?" + SEPARATOR + ")" + "|" +
+			"(?:" + SUBKEY_START + ")" +
+			")");
 
 	private static ResKey atomicKey(String part) {
 		ResKey plain;
@@ -300,26 +331,36 @@ public class ResKeyEncoding {
 			keyLength = 2;
 			matcher.region(keyLength, part.length());
 			Builder translations = ResKey.builder();
-			while (matcher.find()) {
-				Locale lang = Locale.forLanguageTag(matcher.group(3));
-				String value = unquote(matcher.group(1), matcher.group(2));
-				translations.add(lang, value);
-				keyLength = matcher.end();
-			}
-			if (keyLength < part.length() && part.charAt(keyLength) == ')') {
-				// Skip ending parenthesis.
-				keyLength++;
-			}
+			keyLength = parseTranslations(translations, matcher, part, keyLength);
 
 			plain = translations.build();
+			if (plain == null) {
+				// No translation at all was parsed, e.g. a bare `#(` or `#()`. Checked here rather
+				// than below the "input fully consumed" return, which a bare `#(` reaches: its two
+				// characters are its whole input, so it would be handed back as a null key and only
+				// blow up wherever the caller stores or dereferences it. A null cannot be treated as
+				// malformed further down either, because it is how the literal-string path below
+				// legitimately arrives there - `ResKey.internalCreate("")` is itself null.
+				throw new IllegalArgumentException(
+					"Cannot parse resource key from '" + part + "': no translation.");
+			}
 		} else {
 			String key = decodeKey(part);
 			keyLength = key.length();
-			plain = ResKey.internalCreate(key);
+			plain = ResKey.NONE.getKey().equals(key) ? ResKey.NONE : ResKey.internalCreate(key);
 		}
 
 		if (keyLength == part.length()) {
 			return plain;
+		}
+
+		if (part.charAt(keyLength) != '/') {
+			// The key (or tagged translation) parsed above did not consume the whole input and did
+			// not stop right before an argument list either, e.g. an unterminated `#(...` tagged
+			// translation. The remainder cannot be an argument list, since every argument is
+			// prefixed with '/' by the encoder.
+			throw new IllegalArgumentException(
+				"Cannot parse resource key from '" + part + "': unexpected content at position " + keyLength + ".");
 		}
 
 		List<Object> arguments = decodeArguments(part, keyLength);
@@ -330,12 +371,53 @@ public class ResKeyEncoding {
 				return ResKey.text((String) arguments.get(0));
 			}
 		}
-	
+
+		if (plain == null) {
+			// Arguments without a key that do not encode a plain literal string - the literal path
+			// above arrives here with a null plain (see the tagged branch's own guard).
+			throw new IllegalArgumentException("Cannot parse resource key from '" + part + "'.");
+		}
+
 		return ResKey.message(plain, arguments.toArray());
 	}
 
+	private static int parseTranslations(Builder translations, Matcher matcher, String part, int keyLength) {
+		while (matcher.lookingAt()) {
+			String valSquote = matcher.group(1);
+			String valDquote = matcher.group(2);
+			String langName = matcher.group(3);
+			boolean nextTag = matcher.group(4) != null;
+			boolean endAll = matcher.group(5) != null;
+			boolean endSuffix = matcher.group(6) != null;
+			String suffix = matcher.group(7);
+
+			keyLength = matcher.end();
+			matcher.region(matcher.end(), part.length());
+
+			if (suffix != null) {
+				Builder inner = translations.suffix(suffix);
+
+				keyLength = parseTranslations(inner, matcher, part, keyLength);
+			} else {
+				if (langName != null) {
+					Locale lang = Locale.forLanguageTag(langName);
+					String value = unquote(valSquote, valDquote);
+					translations.add(lang, value);
+				}
+
+				if (endAll || endSuffix) {
+					break;
+				}
+
+				// A comma was seen.
+				assert nextTag;
+			}
+		}
+		return keyLength;
+	}
+
 	private static String unquote(String a, String b) {
-		return a == null ? unquote(b) : unquote(a);
+		return a != null ? unquote(a) : (b != null ? unquote(b) : null);
 	}
 
 	private static String unquote(String value) {

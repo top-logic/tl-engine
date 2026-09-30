@@ -25,12 +25,16 @@ public class TestHomepage {
 		String[] testCases = {
 			"00_SetMaintenanceHomepage",
 			"01_CheckMaintenanceHomepage",
-			"02_SetViewInfoHomepage",
-			"03_CheckViewInfoHomepage",
 			"04_SetMonitorHomepage",
 			"05_CheckMonitorHomepage",
 			"06_SetSearchHomepage",
 			"07_CheckSearchHomepage",
+			"08_SetChoiceHomepage",
+			"09_CheckChoiceHomepage",
+			"10_SetSettingsHomepage",
+			"11_CheckSettingsHomepage",
+			"12_SetDialogHomepage",
+			"13_CheckDialogHomepage",
 		};
 		TestSuite theTestSuite = XmlScriptedTestUtil.suite(TestHomepage.class, testCases);
 		return DemoSetup.createDemoSetup(theTestSuite);

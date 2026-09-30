@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.table.renderer;
 
+import static com.top_logic.layout.form.FormConstants.*;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -50,6 +52,7 @@ import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.control.TableHeaderSelectionControl;
+import com.top_logic.layout.form.control.TreeHeaderSelectionControl;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.layoutRenderer.LayoutControlRenderer;
 import com.top_logic.layout.provider.MetaResourceProvider;
@@ -66,11 +69,6 @@ import com.top_logic.layout.table.control.TableControl.SortCommand;
 import com.top_logic.layout.table.control.TableControl.TableCommand;
 import com.top_logic.layout.table.control.TableUpdateAccumulator.UpdateRequest;
 import com.top_logic.layout.table.display.ClientDisplayData;
-import com.top_logic.layout.table.display.ColumnAnchor;
-import com.top_logic.layout.table.display.IndexRange;
-import com.top_logic.layout.table.display.RowIndexAnchor;
-import com.top_logic.layout.table.display.ViewportState;
-import com.top_logic.layout.table.display.VisiblePaneRequest;
 import com.top_logic.layout.table.model.AdditionalHeaderControlModel;
 import com.top_logic.layout.table.model.Column;
 import com.top_logic.layout.table.model.ColumnBaseConfig;
@@ -89,6 +87,7 @@ import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.mig.html.TreeSelectionModel;
 import com.top_logic.util.Resources;
 import com.top_logic.util.css.CssUtil;
 
@@ -162,8 +161,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 */
 	private static final String TABLE_FILTER_SORT_ICON_CSS_CLASS = "tl-table__filter-sort-icons";
 
-	private static final String RIGHT_CSS_CLASS = "tblRight";
-	
 	public static final String CELL_INNER_SPACER_CSS_CLASS = "tblCellInnerSpacer";
 
 	public static final String CELL_ADJUSTMENT_CSS_CLASS = "tblCellAdjustment";
@@ -651,6 +648,9 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 			groupCellProperties.put("styles", null);
 			groupCellProperties.put("onResizeGrabberMousedownHandler", createFragmentToResizeColumn());
+			if (hasFixedColumns()) {
+				groupCellProperties.put("onResizeGrabberDoubleclickHandler", createFragmentToAutofitColumn());
+			}
 
 			if (isFixed) {
 				groupCellProperties.put("isSticky", true);
@@ -659,7 +659,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 				groupCellProperties.put("isSticky", false);
 			}
 
-			groupCellProperties.put("classes", CssUtil.joinCssClasses(getTHGroupClass(), group.getCssClasses()));
+			groupCellProperties.put("classes", CssUtil.joinCssClasses(getTHGroupClass(), group.getCssHeaderClasses()));
 			groupCellProperties.put("colspan", colspan);
 			groupCellProperties.put("isRowHeader", false);
 			groupCellProperties.put("label", createGroupCellLabelFragment(group, colspan, rowIndex));
@@ -750,6 +750,9 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 					headerCellProperties.put("styles", createHeaderCellStylesFragment(columnIndex));
 					headerCellProperties.put("onResizeGrabberMousedownHandler", createFragmentToResizeColumn());
+					if (hasFixedColumns()) {
+						headerCellProperties.put("onResizeGrabberDoubleclickHandler", createFragmentToAutofitColumn());
+					}
 					appendFixedColumnProperties(headerCellProperties, columnIndex, fixedColumnWidth, fixedColumns);
 
 					if (fixedColumns > 0) {
@@ -792,6 +795,14 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 			};
 		}
 
+		private HTMLFragment createFragmentToAutofitColumn() {
+			return (context, out) -> {
+				out.append("TABLE.fitClickedColumn(event, ");
+				out.writeJsString(getView().getID());
+				out.append(");");
+			};
+		}
+
 		private HTMLFragment createHeaderCellStylesFragment(int columnIndex) {
 			return (context, out) -> CssUtil.appendStyleOptional(out,
 				getModel().getColumnDescription(columnIndex).getHeadStyle());
@@ -815,7 +826,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		 */
 		@TemplateVariable("selectRowHandler")
 		public void writeSelectRowHandler(DisplayContext context, TagWriter out) throws IOException {
-			out.append("services.form.TableControl.selectRow(arguments[0], this, ");
+			out.append(TABLE_HANDLER_CLASS).append(".selectRow(arguments[0], this, ");
 			out.writeJsString(getView().getID());
 			out.append(");");
 		}
@@ -874,59 +885,9 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 			out.append("', ");
 			appendTableInformerCreator(_view, _model, out);
 			out.append(",");
-			appendClientDisplayData(out, _model);
+			ClientDisplayData.append(out, _model);
 			out.append(");");
 			HTMLUtil.endScriptAfterRendering(out);
-		}
-
-		private void appendClientDisplayData(TagWriter out, TableViewModel viewModel) throws IOException {
-			ClientDisplayData clientDisplayData = viewModel.getClientDisplayData();
-
-			out.append("function getDisplayData() {");
-
-			appendPaneRequest(out, viewModel);
-			appendViewportState(out, viewModel, clientDisplayData.getViewportState());
-
-			out.append("return { visiblePane:visiblePane, viewportState:viewportState }");
-			out.append("}()");
-		}
-
-		private void appendPaneRequest(TagWriter out, TableViewModel model) throws IOException {
-			VisiblePaneRequest paneRequest = PagePaneProvider.getPane(model);
-
-			IndexRange rowRange = paneRequest.getRowRange();
-			IndexRange columnRange = paneRequest.getColumnRange();
-
-			out.append("var visiblePane = new Object();");
-			out.append("visiblePane.rowRange = new Object();");
-			out.append("visiblePane.rowRange.firstIndex = " + rowRange.getFirstIndex() + ";");
-			out.append("visiblePane.rowRange.lastIndex = " + rowRange.getLastIndex() + ";");
-			out.append(
-				"visiblePane.rowRange.forcedVisibleIndexInRange = " + rowRange.getForcedVisibleIndexInRange() + ";");
-
-			out.append("visiblePane.columnRange = new Object();");
-			out.append("visiblePane.columnRange.firstIndex = "
-				+ TableUtil.getClientColumnIndex(model, columnRange.getFirstIndex()) + ";");
-			out.append("visiblePane.columnRange.lastIndex = "
-				+ TableUtil.getClientColumnIndex(model, columnRange.getLastIndex()) + ";");
-			out.append("visiblePane.columnRange.forcedVisibleIndexInRange = "
-				+ TableUtil.getClientColumnIndex(model, columnRange.getForcedVisibleIndexInRange()) + ";");
-		}
-
-		private void appendViewportState(TagWriter out, TableViewModel model, ViewportState state) throws IOException {
-			RowIndexAnchor rowAnchor = state.getRowAnchor();
-			ColumnAnchor columnAnchor = state.getColumnAnchor();
-
-			int columnIndex = TableUtil.getClientColumnIndex(model, model.getColumnIndex(columnAnchor.getColumnName()));
-
-			out.append("var viewportState = new Object();");
-			out.append("viewportState.rowAnchor = new Object();");
-			out.append("viewportState.rowAnchor.index = " + rowAnchor.getIndex() + ";");
-			out.append("viewportState.rowAnchor.indexPixelOffset = " + rowAnchor.getIndexPixelOffset() + ";");
-			
-			out.append("viewportState.columnAnchor = new Object();");
-			out.append("viewportState.columnAnchor.index = " + columnIndex + ";");
-			out.append("viewportState.columnAnchor.indexPixelOffset = " + columnAnchor.getIndexPixelOffset() + ";");
 		}
 
 		private void appendTableInformerCreator(TableControl view, TableViewModel viewModel, Appendable out)
@@ -1228,7 +1189,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 		private void writeSeparatorColgroupColumn(TagWriter out) {
 			out.beginBeginTag(COL);
-			out.writeAttribute(STYLE_ATTR, "width: --var(TABLE_SEPARATOR_WIDTH)");
+			out.writeAttribute(STYLE_ATTR, "width: var(--TABLE_SEPARATOR_WIDTH)");
 			out.endEmptyTag();
 		}
 
@@ -2602,7 +2563,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 	@Override
 	public String computeTHClass(Column column) {
-		return CssUtil.joinCssClasses(TABLE_HEADER_CELL_CSS_CLASS, column.getCssClasses());
+		return CssUtil.joinCssClasses(TABLE_HEADER_CELL_CSS_CLASS, column.getCssHeaderClasses());
 	}
 	
 	@Override
@@ -2705,9 +2666,12 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 				return new ControlProvider() {
 					@Override
 					public Control createControl(Object model, String style) {
-						Set<Object> allRows = CollectionUtil.toSet(state.getModel().getDisplayedRows());
-				
-						return new TableHeaderSelectionControl(selectionModel, allRows);
+						if (selectionModel instanceof TreeSelectionModel<?> treeSelection) {
+							return new TreeHeaderSelectionControl(selectionModel);
+						} else {
+							Set<Object> allRows = CollectionUtil.toSet(state.getModel().getDisplayedRows());
+							return new TableHeaderSelectionControl(selectionModel, allRows);
+						}
 					}
 				};
 			}

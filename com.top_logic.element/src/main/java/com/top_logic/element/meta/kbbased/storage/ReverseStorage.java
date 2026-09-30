@@ -6,6 +6,9 @@
 package com.top_logic.element.meta.kbbased.storage;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
@@ -15,8 +18,10 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.dob.ex.NoSuchAttributeException;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.meta.AbstractStorageBase;
 import com.top_logic.element.meta.AssociationStorage;
+import com.top_logic.element.meta.AssociationStorageDescriptor;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
@@ -76,6 +81,9 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 		super(context, config);
 	}
 
+	/**
+	 * New default configuration for an {@link ReverseStorage}.
+	 */
 	public static Config<?> defaultConfig() {
 		return TypedConfiguration.newConfigItem(Config.class);
 	}
@@ -86,9 +94,34 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 	}
 
 	@Override
+	public ObjectKey getBaseObjectId(Map<String, Object> row) {
+		throw new UnsupportedOperationException("Derived attribute.");
+	}
+
+	@Override
+	public ObjectKey getPartId(Map<String, Object> row) {
+		throw new UnsupportedOperationException("Derived attribute.");
+	}
+
+	@Override
+	public String getBaseObjectColumn() {
+		throw new UnsupportedOperationException("Derived attribute.");
+	}
+
+	@Override
+	public String getStorageColumn() {
+		throw new UnsupportedOperationException("Derived attribute.");
+	}
+
+	@Override
+	public List<? extends AssociationStorageDescriptor> getStorageDescriptors() {
+		return Collections.emptyList();
+	}
+
+	@Override
 	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute)
 			throws AttributeException {
-		TLAssociationEnd sourceEnd = ((TLReference) attribute.getDefinition()).getEnd();
+		TLAssociationEnd sourceEnd = ((TLReference) attribute).getEnd();
 		TLAssociationEnd destinationEnd = TLModelUtil.getOtherEnd(sourceEnd);
 		TLReference _destinationReference = destinationEnd.getReference();
 
@@ -125,31 +158,32 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 		TLAssociationEnd sourceEnd = ((TLReference) attribute).getEnd();
 		TLAssociationEnd destinationEnd = TLModelUtil.getOtherEnd(sourceEnd);
 		TLStructuredTypePart forwardRef = destinationEnd.getReference();
-		if (forwardRef != null) {
-			StorageImplementation forwardStorage = AttributeOperations.getStorageImplementation(forwardRef);
-			if (forwardStorage instanceof AssociationStorage) {
-				AssociationStorage linkStorage = (AssociationStorage) forwardStorage;
-				_outgoingQuery = linkStorage.getIncomingQuery();
-				_table = _outgoingQuery.getAssociationTypeName();
-				_monomorphic = linkStorage.monomophicTable();
+		StorageImplementation forwardStorage = AttributeOperations.getStorageImplementation(forwardRef);
+		if (forwardStorage instanceof AssociationStorage) {
+			AssociationStorage linkStorage = (AssociationStorage) forwardStorage;
+			_outgoingQuery = linkStorage.getIncomingQuery();
+			_table = _outgoingQuery.getAssociationTypeName();
+			_monomorphic = linkStorage.monomophicTable();
 
-				AbstractAssociationQuery<KnowledgeAssociation, ? extends Collection<KnowledgeAssociation>> otherOutgoing =
+			AbstractAssociationQuery<KnowledgeAssociation, ? extends Collection<KnowledgeAssociation>> otherOutgoing =
 					linkStorage.getOutgoingQuery();
-				if (otherOutgoing instanceof AssociationSetQuery<?>) {
-					@SuppressWarnings("unchecked")
-					AssociationSetQuery<KnowledgeAssociation> incomingQuery =
+			if (otherOutgoing instanceof AssociationSetQuery<?>) {
+				@SuppressWarnings("unchecked")
+				AssociationSetQuery<KnowledgeAssociation> incomingQuery =
 					(AssociationSetQuery<KnowledgeAssociation>) otherOutgoing;
-					_incomingQuery = incomingQuery;
-				} else {
-					_incomingQuery = AssociationQuery.createOutgoingQuery(
-						_outgoingQuery.getCacheKey().asString() + "Reverse",
-						_table,
-						_outgoingQuery.getAttributeQuery());
-				}
-
-				_preload = new AssociationNavigationPreload(_outgoingQuery);
-				_reversePreload = new AssociationNavigationPreload(_incomingQuery);
+				_incomingQuery = incomingQuery;
+			} else {
+				_incomingQuery = AssociationQuery.createOutgoingQuery(
+					_outgoingQuery.getCacheKey().asString() + "Reverse",
+					_table,
+					_outgoingQuery.getAttributeQuery());
 			}
+
+			_preload = new AssociationNavigationPreload(_outgoingQuery);
+			_reversePreload = new AssociationNavigationPreload(_incomingQuery);
+		} else {
+			_preload = forwardStorage.getReversePreload();
+			_reversePreload = forwardStorage.getPreload();
 		}
 
 		super.init(attribute);
@@ -198,12 +232,6 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 
 	@Override
 	public void addAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValue)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
-		throw new UnsupportedOperationException("Reverse attributes cannot be updated directly.");
-	}
-
-	@Override
-	public Object getUpdateValue(AttributeUpdate update)
 			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
 		throw new UnsupportedOperationException("Reverse attributes cannot be updated directly.");
 	}

@@ -8,17 +8,17 @@ package com.top_logic.base.taglibs.basic;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.TagSupport;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
@@ -49,12 +49,12 @@ public class AccessControlTag extends TagSupport {
 			LayoutComponent component = MainLayout.getComponent(pageContext);
 			TagWriter out = MainLayout.getTagWriter(pageContext);
 
-			if (!(component instanceof BoundComponent)) {
+			if (!(component instanceof BoundChecker)) {
 				return accessRefused(out);
 			}
 
-			BoundComponent check = (BoundComponent) component;
-			if (!check.allow(_commandGroup)) {
+			BoundChecker check = (BoundChecker) component;
+			if (!BoundChecker.allowCommand(check, _commandGroup, component.getModel())) {
 				return accessRefused(out);
 			}
 

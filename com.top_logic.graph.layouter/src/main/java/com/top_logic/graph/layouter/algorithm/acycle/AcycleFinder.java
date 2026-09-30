@@ -10,7 +10,7 @@ package com.top_logic.graph.layouter.algorithm.acycle;
  * 
  * @see AcycleAlgorithm
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class AcycleFinder implements AcycleAlgorithm {
 

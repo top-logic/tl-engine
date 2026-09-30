@@ -73,14 +73,6 @@ public abstract class SQLTransformation<A> implements SQLVisitor<SQLPart, A> {
 	}
 
 	@Override
-	public SQLPart visitSQLAlterTable(SQLAlterTable sql, A arg) {
-		SQLTable table = transform(sql.getTable(), arg);
-		SQLTableModification where = transform(sql.getModification(), arg);
-
-		return composeSQLAlterTable(sql, table, where, arg);
-	}
-
-	@Override
 	public SQLPart visitSQLAddColumn(SQLAddColumn sql, A arg) {
 		return sql;
 	}
@@ -155,6 +147,13 @@ public abstract class SQLTransformation<A> implements SQLVisitor<SQLPart, A> {
 	}
 
 	@Override
+	public SQLPart visitSQLLike(SQLLike sql, A arg) {
+		SQLExpression expr = transform(sql.getExpr(), arg);
+
+		return composeSQLLike(sql, expr, arg);
+	}
+
+	@Override
 	public SQLPart visitSQLCast(SQLCast sql, A arg) {
 		SQLExpression expr = transform(sql.getExpr(), arg);
 
@@ -188,6 +187,14 @@ public abstract class SQLTransformation<A> implements SQLVisitor<SQLPart, A> {
 		SQLExpression values = transform(sql.getValues(), arg);
 
 		return composeSQLInSet(sql, expr, values, arg);
+	}
+
+	@Override
+	public SQLPart visitSQLInSetSelect(SQLInSetSelect sql, A arg) {
+		SQLExpression expr = transform(sql.getExpr(), arg);
+		SQLSelect select = transform(sql.getSelect(), arg);
+
+		return composeSQLInSetSelect(sql, expr, select, arg);
 	}
 
 	@Override
@@ -290,9 +297,6 @@ public abstract class SQLTransformation<A> implements SQLVisitor<SQLPart, A> {
 	protected abstract SQLPart composeSQLDelete(SQLDelete sql, SQLTable table, SQLExpression condition, A arg);
 
 	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
-	protected abstract SQLPart composeSQLAlterTable(SQLAlterTable sql, SQLTable table, SQLTableModification modification, A arg);
-
-	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
 	protected abstract SQLPart composeSQLUpdate(SQLUpdate sql, SQLTable table, List<SQLExpression> values, SQLExpression where,
 			A arg);
 
@@ -310,6 +314,9 @@ public abstract class SQLTransformation<A> implements SQLVisitor<SQLPart, A> {
 			SQLExpression rightExpr, A arg);
 
 	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
+	protected abstract SQLPart composeSQLLike(SQLLike sql, SQLExpression expr, A arg);
+
+	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
 	protected abstract SQLPart composeSQLCast(SQLCast sql, SQLExpression expr, A arg);
 
 	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
@@ -323,6 +330,9 @@ public abstract class SQLTransformation<A> implements SQLVisitor<SQLPart, A> {
 
 	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
 	protected abstract SQLPart composeSQLInSet(SQLInSet sql, SQLExpression expr, SQLExpression values, A arg);
+
+	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
+	protected abstract SQLPart composeSQLInSetSelect(SQLInSetSelect sql, SQLExpression expr, SQLSelect select, A arg);
 
 	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
 	protected abstract SQLPart composeSQLTuple(SQLTuple sql, List<SQLExpression> expressions, A arg);

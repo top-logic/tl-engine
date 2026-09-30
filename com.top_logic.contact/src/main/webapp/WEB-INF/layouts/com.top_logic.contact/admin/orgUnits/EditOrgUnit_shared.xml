@@ -53,8 +53,8 @@
 					>
 						<inject>
 							<dialogInfo
-								height="250"
-								width="450"
+								height="350"
+								width="500"
 							>
 								<open-handler id="displayDialog_${namePrefix}OrgUnitnewElementLayoutDialog"
 									clique="create"
@@ -69,7 +69,6 @@
 					</include>
 				</dialogs>
 			</component>
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

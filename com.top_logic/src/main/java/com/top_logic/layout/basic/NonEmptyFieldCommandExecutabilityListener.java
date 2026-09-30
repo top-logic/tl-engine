@@ -11,7 +11,7 @@ import com.top_logic.layout.form.FormField;
 /**
  * The state of the command is executable if and only if the field has a value.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class NonEmptyFieldCommandExecutabilityListener extends CommandExecutabiltyFieldListener {
 

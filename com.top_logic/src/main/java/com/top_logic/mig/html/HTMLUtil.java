@@ -19,8 +19,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.w3c.dom.Node;
 
@@ -608,6 +608,8 @@ public class HTMLUtil {
 			}
 			writer.endAttribute();
 		}
+		// Use well-defined charset for scripts (otherwise the container decides sometimes wrong).
+		writer.writeAttribute(CHARSET_ATTR, StringServices.UTF8);
 		writer.endBeginTag();
 		// empty tag is not allowed in script tag
 		writer.endTag(SCRIPT_REF);

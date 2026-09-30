@@ -7,6 +7,7 @@ package com.top_logic.layout.admin.component;
 
 import java.util.Collection;
 
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.wrap.Group;
@@ -38,7 +39,11 @@ public class GroupListBuilder implements ListModelBuilder {
     }
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
 		return listElement instanceof Group;
 	}
 

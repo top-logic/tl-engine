@@ -5,8 +5,8 @@
  */
 package com.top_logic.model.search.expr.html;
 
-import java.io.IOError;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Collection;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -14,14 +14,21 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.provider.LabelProviderService;
+import com.top_logic.mig.html.Media;
 import com.top_logic.mig.html.layout.tag.JSPErrorUtil;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.Args;
+import com.top_logic.tool.export.pdf.PDFRenderer;
 
 /**
  * Base class for {@link SearchExpression}s that produce page output as side-effect to their
  * {@link #evalWith(EvalContext, Args) evaluation}.
+ * 
+ * <p>
+ * When no page output could be generated then a {@link HTMLFragment} is returned that generates the
+ * page output.
+ * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -52,7 +59,7 @@ public abstract class RenderExpression extends SearchExpression {
 		try {
 			write(context, out, args, definitions);
 		} catch (IOException ex) {
-			throw new IOError(ex);
+			throw new UncheckedIOException(ex);
 		} catch (Throwable ex) {
 			try {
 				JSPErrorUtil.produceErrorOutput(context, out, "Rendering dynamic contents failed.", ex,
@@ -87,7 +94,36 @@ public abstract class RenderExpression extends SearchExpression {
 			}
 		} else if (value instanceof HTMLFragment) {
 			((HTMLFragment) value).write(context, out);
+		} else if (value instanceof Number num) {
+			// No internationalized formatting for numbers. Otherwise it is almost impossible to
+			// compute values for technical attributes like width and height. If formatting is
+			// required, this can be done explicitly.
+			if (value instanceof Long x) {
+				out.writeText(x.toString());
+			} else if (value instanceof Integer x) {
+				out.writeInt(x.intValue());
+			} else {
+				double x = num.doubleValue();
+				if (Math.round(x) == x && x >= Long.MIN_VALUE && x <= Long.MAX_VALUE) {
+					// Do not output .0 when the number was de-facto an integer (TL-Script only
+					// operates on doubles).
+					out.writeText(Long.toString(num.longValue()));
+				} else {
+					out.writeText(num.toString());
+				}
+			}
+		} else if (value instanceof CharSequence text) {
+			// Short-cut for common case.
+			out.writeText(text);
 		} else {
+			Media media = context.getOutputMedia();
+			if (media == Media.PDF) {
+				PDFRenderer pdfRenderer = LabelProviderService.getInstance().getPDFRenderer(value);
+				if (pdfRenderer != null) {
+					pdfRenderer.write(context, out, null, value);
+					return;
+				}
+			}
 			Renderer<? super Object> valueRenderer = LabelProviderService.getInstance().getRenderer(value);
 			if (valueRenderer == null) {
 				valueRenderer = renderer;

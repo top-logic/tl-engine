@@ -8,7 +8,6 @@ package com.top_logic.element.meta.form.fieldprovider;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
-import com.top_logic.layout.ResPrefix;
 
 /**
  * Internationalization constants for this package.
@@ -28,7 +27,45 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey COMPOSITE_FIELD_INNER_FIELD_WARNING;
 
-	public static ResPrefix CREATE_COMPOSITION_ROW;
+	/**
+	 * @en Copy row
+	 */
+	public static ResKey COPY_COMPOSITION_ROW_LABEL;
+
+	/**
+	 * @en Create new element
+	 */
+	public static ResKey CREATE_COMPOSITION_ROW_HEADER;
+
+	/**
+	 * @en Select the type of object you want to create
+	 */
+	public static ResKey CREATE_COMPOSITION_ROW_MESSAGE;
+
+	/**
+	 * @en New element
+	 */
+	public static ResKey CREATE_COMPOSITION_ROW_TITLE;
+
+	/**
+	 * @en No model type annotation found at attribute "{0}".
+	 */
+	public static ResKey1 MISSING_TYPE_COMPUTATION__ATTRIBUTE;
+
+	/**
+	 * @en Edit details
+	 */
+	public static String EDIT_DETAILS;
+
+	/**
+	 * @en Detail opener
+	 */
+	public static ResKey DETAIL_OPENER;
+
+	/**
+	 * @en Edit details of {0}
+	 */
+	public static ResKey1 EDIT_DETAILS_TITLE__TYPE;
 
 	static {
         initConstants(I18NConstants.class);

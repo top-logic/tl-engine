@@ -5,8 +5,13 @@
  */
 package com.top_logic.model.migration.data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationValueProvider;
+import com.top_logic.basic.config.ListConfigValueProvider;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Derived;
@@ -82,6 +87,45 @@ public interface QualifiedTypeName extends NamedConfigMandatory, EqualityByValue
 		@Override
 		protected String getSpecificationNonNull(QualifiedTypeName configValue) {
 			return configValue.getName();
+		}
+
+	}
+
+	/**
+	 * Serialization format for lists of {@link QualifiedTypeName} separated by comma.
+	 */
+	public static final class ListFormat extends ListConfigValueProvider<QualifiedTypeName> {
+
+		private static final String SEPARATOR = ",";
+
+		private ConfigurationValueProvider<QualifiedTypeName> _inner = new Format();
+
+		@Override
+		public List<QualifiedTypeName> getValueNonEmpty(String propertyName, CharSequence propertyValue)
+				throws ConfigurationException {
+			String[] encodedValues = propertyValue.toString().split(SEPARATOR);
+			List<QualifiedTypeName> result = new ArrayList<>(encodedValues.length);
+			for (String encodedValue : encodedValues) {
+				encodedValue = encodedValue.trim();
+				result.add(_inner.getValue(propertyName, encodedValue));
+			}
+			return result;
+		}
+
+		@Override
+		public String getSpecificationNonNull(List<QualifiedTypeName> configValues) {
+			StringBuilder encodedEnums = new StringBuilder();
+			boolean addSeparator = false;
+			for (QualifiedTypeName value : configValues) {
+				if (addSeparator) {
+					encodedEnums.append(SEPARATOR);
+					encodedEnums.append(' ');
+				} else {
+					addSeparator = true;
+				}
+				encodedEnums.append(_inner.getSpecification(value));
+			}
+			return encodedEnums.toString();
 		}
 
 	}

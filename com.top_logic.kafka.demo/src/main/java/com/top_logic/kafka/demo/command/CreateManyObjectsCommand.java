@@ -14,14 +14,15 @@ import java.util.Set;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.Positive;
-import com.top_logic.basic.message.Message;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.kafka.demo.model.types.KafkaDemoFactory;
@@ -41,6 +42,8 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
@@ -62,8 +65,8 @@ public class CreateManyObjectsCommand extends AbstractCommandHandler {
 		CommandGroupReference getGroup();
 
 		@Override
-		@BooleanDefault(true)
-		boolean getConfirm();
+		@ItemDefault(DefaultConfirmation.class)
+		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 		@Override
 		@FormattedDefault("theme:KAFKA_DEMO_CREATE_MANY_OBJECTS")
@@ -99,7 +102,7 @@ public class CreateManyObjectsCommand extends AbstractCommandHandler {
 	}
 
 	private void createAndCommit(int objectCount) {
-		Message commitMessage = Messages.KAFKA_DEMO_CREATE_MANY_OBJECTS__COUNT.fill(objectCount);
+		ResKey commitMessage = I18NConstants.KAFKA_DEMO_CREATE_MANY_OBJECTS__COUNT.fill(objectCount);
 		try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction(commitMessage)) {
 			createAllNodes(objectCount);
 			transaction.commit();

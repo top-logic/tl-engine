@@ -24,18 +24,17 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.jsp.PageContext;
 
 import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.CollectionUtil;
-import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -83,7 +82,7 @@ import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.gui.JSFileCompiler;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
+import com.top_logic.knowledge.gui.layout.ButtonBar;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.CommandListener;
@@ -102,6 +101,7 @@ import com.top_logic.layout.URLParser;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.channel.ChannelFactory;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
@@ -118,11 +118,11 @@ import com.top_logic.layout.form.control.AbstractButtonControl;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.form.tag.FormTag;
-import com.top_logic.layout.form.tag.I18NConstants;
 import com.top_logic.layout.scripting.recorder.DynamicRecordable;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.recorder.ref.NamedModel;
+import com.top_logic.layout.structure.ButtonbarOptions;
 import com.top_logic.layout.structure.ContentLayouting;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.layout.structure.Expandable;
@@ -131,8 +131,8 @@ import com.top_logic.layout.structure.InlineLayoutControlProvider;
 import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.LayoutControlProvider.Layouting;
+import com.top_logic.layout.structure.OptionalToolbarOptions;
 import com.top_logic.layout.structure.PersonalizingExpandable;
-import com.top_logic.layout.structure.ToolbarOptions;
 import com.top_logic.layout.tabbar.TabInfo.TabConfig;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.toolbar.ToolBarChangeListener;
@@ -146,6 +146,7 @@ import com.top_logic.layout.window.WindowTemplate;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.UserAgent;
+import com.top_logic.mig.html.layout.WithChannelConfigs.ChannelConfig;
 import com.top_logic.mig.html.layout.tiles.GroupTileComponent;
 import com.top_logic.mig.html.layout.tiles.TileInfo;
 import com.top_logic.model.TLObject;
@@ -155,9 +156,9 @@ import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
+import com.top_logic.tool.boundsec.CommandHandlerReference;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
@@ -212,8 +213,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * Configuration options for {@link LayoutComponent}.
 	 */
 	public interface Config
-			extends PolymorphicConfiguration<LayoutComponent>, LayoutComponentUIOptions, IComponent.ComponentConfig, ToolbarOptions,
-			ExpandableConfig, WithGotoConfiguration, WithDefaultFor {
+			extends PolymorphicConfiguration<LayoutComponent>, LayoutComponentUIOptions, IComponent.ComponentConfig,
+			OptionalToolbarOptions, ButtonbarOptions,
+			ExpandableConfig, WithGotoConfiguration, WithDefaultFor, WithChannelConfigs {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -250,14 +252,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 		String COMPONENT = "component";
 
-		/** @see #getButtonComponent() */
-		String BUTTON_COMPONENT_NAME = "buttonComponent";
-
-		/**
-		 * @see #hasToolbar()
-		 */
-		String TOOLBAR = "toolbar";
-
 		/**
 		 * @see #getMaximizeRoot()
 		 */
@@ -265,9 +259,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 		/** @see #getHelpId() */
 		String HELP_ID = "helpID";
-
-		/** @see #getResetInvisible() */
-		String RESET_INVISIBLE = "resetInvisible";
 
 		/** @see #getDropTarget() */
 		String DROP_TARGET = "dropTarget";
@@ -346,17 +337,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 		/** @see #getResPrefix() */
 		void setResPrefix(ResPrefix value);
-
-		/**
-		 * Name of the {@link ButtonComponent} to place command in.
-		 */
-		@Name(BUTTON_COMPONENT_NAME)
-		ComponentName getButtonComponent();
-
-		/**
-		 * @see #getButtonComponent()
-		 */
-		void setButtonComponent(ComponentName value);
 
 		@Name(ATT_USE_CHANGE_HANDLING)
 		Boolean getUseChangeHandling();
@@ -524,17 +504,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		@Name(COMPONENT_RESOLVER_NAME)
 		List<PolymorphicConfiguration<ComponentResolver>> getComponentResolvers();
 
-		/**
-		 * Whether a toolbar should be allocated for this component automatically.
-		 * 
-		 * <p>
-		 * Not allocating a toolbar prevents this component from being maximizable and removes the
-		 * possibility of collapsing the component within a flexible layout.
-		 * </p>
-		 * 
-		 * @see com.top_logic.layout.structure.LayoutControlFactory.Config#getAutomaticToolbars()
-		 */
-		@Name(TOOLBAR)
+		@Override
+		@BooleanDefault(false)
 		boolean hasToolbar();
 
 		/**
@@ -572,17 +543,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		 * @see #getHelpId()
 		 */
 		void setHelpId(String value);
-
-		/**
-		 * Whether the component is {@link LayoutComponent#invalidate() invalidated}, when the it
-		 * becomes invisible.
-		 * 
-		 * <p>
-		 * This allows to release resources when this component is no longer visible.
-		 * </p>
-		 */
-		@Name(RESET_INVISIBLE)
-		boolean getResetInvisible();
 
 		/**
 		 * {@link ComponentDropTarget} that handles drop operations over the configured component.
@@ -738,8 +698,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 			}
 		};
 
-	/** @see #getButtonComponent() */
-	private ButtonComponent _buttons;
+	/** @see #getButtonBar() */
+	private ButtonBar _buttonBar;
 
     /**
      * A snipplet of js to be executed in the onScroll Handler.
@@ -763,8 +723,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	@Inspectable
 	private Object _model;
-
-	private LayoutComponent _window;
 
 	@Inspectable
 	private PropertyListeners _listeners;
@@ -827,15 +785,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 */
 	private Map<String, List<CommandHandler>> _buttonsByCliqueLazy;
 
-	/**
-	 * Set to true when the buttons should always be reloaded.
-	 * 
-	 * You should only set this if you cant invalidate the buttons yourself correctly. Before doing
-	 * so review your command functions, the <code>modelChanges()</code> and
-	 * <code>setInvalid()</code> functions.
-	 */
-	protected boolean alwaysReloadButtons;
-
 	private LayoutComponent currentDialog;
 
 	/** Flag to indicate that there are command models to attach. */
@@ -896,6 +845,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	private Set<TLObject> _observedObjects = Set.of();
 
+	private Map<String, ChannelSPI> _allChannels;
+
 	/**
 	 * When <code>true</code> this will result in some extra comments written to the HTML-header.
 	 * 
@@ -954,9 +905,26 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		}
 		_initiallyMinimized = atts.isInitiallyMinimized();
 		doResetScrollPosition(false);
-		_defaultCommand = context.getInstance(atts.getDefaultAction());
-		_cancelCommand = context.getInstance(atts.getCancelAction());
+		_defaultCommand = resolveCommand(context, atts.getDefaultAction());
+		_cancelCommand = resolveCommand(context, atts.getCancelAction());
+		_allChannels = addConfiguredChannels(context, programmaticChannels());
     }
+
+	/**
+	 * Instantiates the command through the {@link CommandHandlerFactory}.
+	 * 
+	 * <p>
+	 * {@link CommandHandler} cannot in general be instantiated directly, since the may be
+	 * configured as {@link CommandHandlerReference}.
+	 * </p>
+	 * 
+	 * @return The instantiated configuration, or <code>null</code> if an error occurred, or no
+	 *         configuration was passed.
+	 */
+	protected final CommandHandler resolveCommand(InstantiationContext context,
+			PolymorphicConfiguration<? extends CommandHandler> config) {
+		return config == null ? null : CommandHandlerFactory.getInstance().getCommand(context, config);
+	}
 
 	@Override
 	public boolean shouldRecord() {
@@ -985,13 +953,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	private static final LayoutComponent.GlobalConfig getGlobalConfig() {
 		return ApplicationConfig.getInstance().getConfig(LayoutComponent.GlobalConfig.class);
-	}
-
-	/**
-	 * the {@link CommandHandler#getID()} of the handler used to close this component
-	 */
-	protected String getDefaultCloseDialogHandlerName() {
-		return CloseModalDialogCommandHandler.HANDLER_NAME;
 	}
 
 	/**
@@ -1045,6 +1006,36 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return true;
 	}
 
+	@Override
+	public ResKey hideReason() {
+		Object internalModel = internalModel();
+		if (!ComponentUtil.isValid(internalModel)) {
+			return com.top_logic.tool.execution.I18NConstants.ERROR_INVALID_MODEL;
+		}
+
+		if (hideOnUnsupportedModel() && !supportsModel(internalModel)) {
+			return com.top_logic.tool.execution.I18NConstants.ERROR_MODEL_NOT_SUPPORTED;
+		}
+		
+		return null;
+	}
+
+	/**
+	 * Whether the component should be hidden, if an unsupported model is set.
+	 * 
+	 * <p>
+	 * If the component is show for an unsupported, model, <code>null</code> is displayed instead.
+	 * </p>
+	 */
+	protected boolean hideOnUnsupportedModel() {
+		return true;
+	}
+
+	@Override
+	public final boolean canShow() {
+		return hideReason() == null;
+	}
+
     /**
      * the top dialog component knows its creation component.
      */
@@ -1092,7 +1083,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 			}
 		} else {
 			main = null;
-			_window = null;
 		}
     }
 
@@ -1112,10 +1102,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		main = newMainLayout;
 		if (newMainLayout != null) {
 			newMainLayout.registerComponent(this);
-			LayoutComponent parent = getParent();
-			if (parent != null) {
-				_window = parent.getWindow();
-			}
 			notifyAddToMainLayout();
 		} else {
 			setToolBar(null);
@@ -1267,7 +1253,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		if (model instanceof TLObject) {
 			getModelScope().removeModelListener((TLObject) model, this);
 		} else {
-			extractTLObjects(getModel()).forEach(tlObject -> getModelScope().removeModelListener(tlObject, this));
+			extractTLObjects(model).forEach(tlObject -> getModelScope().removeModelListener(tlObject, this));
 		}
 	}
 
@@ -1286,10 +1272,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return emptySet();
 	}
 
-    /**
-     * Accessor to the parent.
-     * @return LayoutComponent, null if we are the root of the layout hierarchy
-     */
+	@Override
 	public final LayoutComponent getParent() {
 		return _parent;
     }
@@ -1344,9 +1327,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return _dialog;
 	}
 
-    /**
-	 * All dialogs of this component.
-	 */
+	@Override
 	public List<? extends LayoutComponent> getDialogs() {
 		return _dialogs;
     }
@@ -1425,10 +1406,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 		_validationRequested = true;
 
-        if (alwaysReloadButtons) {
-            invalidateButtons();
-        }
-        
 		firePropertyChanged(InvalidationListener.INVALIDATION_PROPERTY, this, Boolean.FALSE, Boolean.TRUE);
     }
     
@@ -1797,15 +1774,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return ThemeFactory.getTheme();
 	}
 
-	/**
-	 * Searches the enclosing window, where this component resides in. If this
-	 * component is a window itself, this method returns this component.
-	 * 
-	 * @return enclosing window, where this component resides in, or
-	 *         <code>null</code>, if this component is part of the main
-	 *         component tree.
-	 */
-    public final WindowComponent getEnclosingWindow() {
+	@Override
+	public final WindowComponent getEnclosingWindow() {
         LayoutComponent theAncestor = this;
         while ((theAncestor != null) && (! (theAncestor instanceof WindowComponent))) {
 			if (theAncestor.openedAsDialog()) {
@@ -2003,6 +1973,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 *
 	 * If nothing is configured a (unique) synthetic name is returned.
 	 */
+	@Override
 	public final ComponentName getName() {
 		return getConfig().getName();
     }
@@ -2142,17 +2113,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return getMainLayout().getComponentByName(aName);
     }
 
-    /**
-	 * Check if this component handles the given type.
-	 *
-	 * The type may either be a classname or (in TopLogic) some other meta-type. When this function
-	 * returns true, supports Objects shoud be true, too.
-	 * 
-	 * @param type
-	 *        the type. If <code>null</code> or empty false is returned
-	 * @return true if the component handles the type
-	 */
-    public final boolean isDefaultFor(String type) {
+	@Override
+	public final boolean isDefaultFor(String type) {
 		return getDefaultForTypes().contains(type);
     }
     
@@ -2280,14 +2242,33 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
 	/**
-	 * Available channel kinds of this component implementation.
+	 * Available channel kinds of this component type.
+	 * 
+	 * <p>
+	 * Subclasses can override this method to define implementation specific {@link ChannelSPI
+	 * channels}.
+	 * </p>
 	 */
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		if (this instanceof Selectable) {
 			return Selectable.MODEL_AND_SELECTION_CHANNEL;
 		} else {
 			return MODEL_CHANNEL;
 		}
+	}
+
+	/**
+	 * Available channel kinds of this component.
+	 * 
+	 * <p>
+	 * The return value contains all channels known by this component, the programmatic channels and
+	 * the configured channels.
+	 * </p>
+	 * 
+	 * @seee #programmaticChannels()
+	 */
+	protected final Map<String, ChannelSPI> channels() {
+		return _allChannels;
 	}
 
 	/**
@@ -2363,12 +2344,16 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	protected boolean receiveModelDeletedEvent(Set<TLObject> aModel, Object changedBy) {
 		/* has anyone deleted the model we are currently editing? */
 		boolean becameInvalid;
-		if (changedBy != this && aModel.contains(getModel())) {
+		if (changedBy != this && isModelTouchedByAny(aModel)) {
 			if (!hasMaster()) {
 				ModelSpec modelSpec = getConfig().getModelSpec();
 				if (modelSpec != null) {
 					setModel(TypedConfigUtil.createInstance(modelSpec).eval(this));
+				} else {
+					/* Ensure that the model channel does not contain deleted elements. */
+					setModel(null);
 				}
+
 			}
 			this.invalidate();
 			becameInvalid = true;
@@ -2380,15 +2365,33 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return becameInvalid || superInvalidated;
 	}
 
+	/**
+	 * Whether one of the given objects is or is part of this component's model.
+	 */
+	protected boolean isModelTouchedByAny(Set<TLObject> objs) {
+		Object model = getModel();
+
+		return objs.contains(model) || (model instanceof Collection<?> coll && CollectionUtil.containsAny(objs, coll));
+	}
+
 	@Override
     protected boolean receiveModelChangedEvent(Object aModel, Object changedBy ) {
         if (! isInvalid()) {
-			if (aModel != null && changedBy != this && aModel == getModel()) {
+			if (aModel != null && changedBy != this && isModelTouchedBy(aModel)) {
 				return receiveMyModelChangeEvent(changedBy);
            }
        }
        return false;
    }
+
+	/**
+	 * Whether the given object is or is part of this component's model.
+	 */
+	private boolean isModelTouchedBy(Object obj) {
+		Object model = getModel();
+
+		return obj == model || (model instanceof Collection<?> coll && coll.contains(obj));
+	}
 
 	/**
 	 * Hook for individual model change event handling.
@@ -2427,25 +2430,17 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
 	@Override
-	protected final boolean receiveDialogOpenedEvent(Object aModel, Object changedBy) {
-		boolean handleTypeResult;
+	protected final void receiveDialogOpenedEvent(Object aModel, Object changedBy) {
 		if (this.isVisible()) {
-			handleTypeResult = this.receiveDialogEvent(aModel, changedBy, true);
-		} else {
-			handleTypeResult = false;
+			this.receiveDialogEvent(aModel, changedBy, true);
 		}
-		return handleTypeResult;
 	}
 
 	@Override
-	protected final boolean receiveDialogClosedEvent(Object aModel, Object changedBy) {
-		boolean handleTypeResult;
+	protected final void receiveDialogClosedEvent(Object aModel, Object changedBy) {
 		if (this.isVisible()) {
-			handleTypeResult = this.receiveDialogEvent(aModel, changedBy, false);
-		} else {
-			handleTypeResult = false;
+			this.receiveDialogEvent(aModel, changedBy, false);
 		}
-		return handleTypeResult;
 	}
 
     /**
@@ -2459,11 +2454,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
      * @param    aDialog      The dialog opened or closed.
      * @param    anOwner      The component that opend / closed the dialog
      * @param    isOpen       true when dialog was opened
-     * @return   <code>true</code> to indicate that this part (or subparts)
-     *           have become invalid.
      */
-    public boolean receiveDialogEvent(Object aDialog, Object anOwner, boolean isOpen) {
-        return false;
+    public void receiveDialogEvent(Object aDialog, Object anOwner, boolean isOpen) {
+		// Does nothing in general
     }
 
     /**
@@ -2585,8 +2578,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	private void registerWindowOpener(InstantiationContext context, WindowTemplate.Config aSepWin) {
 		PolymorphicConfiguration<? extends CommandHandler> config = OpenWindowCommand.createWindowOpenHandler(aSepWin);
-		CommandHandler handler = CommandHandlerFactory.getInstance().getCommand(context, config);
-		registerCommandHandler(handler, aSepWin.getWindowInfo().getCreateOpenerButtons());
+		CommandHandler handler = resolveCommand(context, config);
+		if (handler != null) {
+			registerCommandHandler(handler, aSepWin.getWindowInfo().getCreateOpenerButtons());
+		}
     }
 
 	/**
@@ -2645,21 +2640,13 @@ public abstract class LayoutComponent extends ModelEventAdapter
             }
         }
 
-		ComponentName buttonComponentName = _config.getButtonComponent();
-		if (buttonComponentName != null) {
-			LayoutComponent buttonComponent = getComponentByName(buttonComponentName);
-			if (buttonComponent == null) {
-				throw new ConfigurationError("Undefined button component reference '" + buttonComponentName + "' in '"
-					+ _config.location() + "'.");
-			}
-			if (!(buttonComponent instanceof ButtonComponent)) {
-				throw new ConfigurationError("Not a button component '" + buttonComponentName + "' in '"
-					+ _config.location() + "'.");
-			}
-			setButtonComponent((ButtonComponent) buttonComponent);
+		if (definesButtonBar()) {
+			_buttonBar = new ButtonBar();
+		} else {
+			LayoutComponent parent = getParent();
+			_buttonBar = parent == null ? null : parent.getButtonBar();
         }
 
-		CommandHandlerFactory factory = CommandHandlerFactory.getInstance();
 		/* Register only the _configured_ default command, as it is guaranteed to be constant. If
 		 * getDefaultCommand is overridden its result might not be constant, which might require
 		 * dynamic registration and deregistration, complicating it a lot. Therefore, the overriding
@@ -2667,13 +2654,19 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		if (getConfiguredDefaultCommand() != null) {
 			registerCommand(getConfiguredDefaultCommand());
 		}
-		if (getConfiguredCancelCommand() != null) {
-			registerCommand(getConfiguredCancelCommand());
+
+		CommandHandler cancelHandler = getConfiguredCancelCommand();
+		if (cancelHandler != null) {
+			registerButtonCommand(cancelHandler);
 		}
+
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> commandConfigs = _config.getCommands();
 		if (!commandConfigs.isEmpty()) {
 			for (CommandHandler.ConfigBase<? extends CommandHandler> commandConfig : commandConfigs) {
-				registerCommand(factory.getCommand(context, commandConfig));
+				CommandHandler command = resolveCommand(context, commandConfig);
+				if (command != null) {
+					registerCommand(command);
+				}
         	}
 		}
 
@@ -2682,7 +2675,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> buttonConfigs = _config.getButtons();
 		if (!buttonConfigs.isEmpty()) {
 			for (CommandHandler.ConfigBase<? extends CommandHandler> commandConfig : buttonConfigs) {
-				registerButtonCommand(factory.getCommand(context, commandConfig));
+				CommandHandler command = resolveCommand(context, commandConfig);
+				if (command != null) {
+					registerButtonCommand(command);
+				}
         	}
         }
 
@@ -2704,10 +2700,45 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		List<PolymorphicConfiguration<ComponentResolver>> resolvers = _config.getComponentResolvers();
 		for (int index = 0, size = resolvers.size(); index < size; index++) {
 			PolymorphicConfiguration<ComponentResolver> config = resolvers.get(index);
-			context.getInstance(config).resolveComponent(context, this);
+			ComponentResolver resolver = context.getInstance(config);
+			if (resolver != null) {
+				resolver.resolveComponent(context, this);
+			}
 		}
 
 		_gotoTargets = LayoutUtils.resolveGotoTargets(context, getMainLayout(), getConfig().getGotoTargets().values());
+	}
+
+	/**
+	 * Here all the tuning happens to prepare dialogs to be displayed.
+	 */
+	private Map<String, ChannelSPI> addConfiguredChannels(InstantiationContext context, Map<String, ChannelSPI> baseChannels ) {
+		Map<String, ChannelConfig> additionalChannels = getConfig().getAdditionalChannels();
+		if (additionalChannels.isEmpty()) {
+			return baseChannels;
+		}
+		Map<String, ChannelSPI> allChannels = new HashMap<>(baseChannels);
+		for (ChannelConfig channelConfig : additionalChannels.values()) {
+			ChannelFactory factory = context.getInstance(channelConfig.getImpl());
+			ChannelSPI newChannel = factory.createChannel(channelConfig.getName());
+			String newChannelName = newChannel.getName();
+
+			ChannelSPI clash = allChannels.put(newChannelName, newChannel);
+			if (clash != null) {
+				allChannels.put(newChannelName, clash);
+				ResKey errMsg = I18NConstants.DUPLICATE_CHANNEL_NAME__NAME.fill(newChannelName);
+				context.error(Resources.getInstance().getString(errMsg));
+			}
+		}
+		return allChannels;
+	}
+
+	/**
+	 * Whether this component defines a button bar for displaying own buttons and buttons from inner
+	 * components.
+	 */
+	public boolean definesButtonBar() {
+		return _config.hasButtonbar();
 	}
 
     /** Try to make this component visible.
@@ -3094,7 +3125,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
         if (hasCommands()) {
             return commandsById.values();
         }
-        return null;
+		return Collections.emptyList();
     }
 
 	/**
@@ -3176,6 +3207,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
      *         used for the component).
      * @deprecated command parameters are not prefixed anymore
      */
+	@Deprecated
     public static String getPrefixedCommandParameterName(String aCommandParameterName) {
         return COMMAND_PREFIX + aCommandParameterName;
     }
@@ -3217,11 +3249,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 */
     protected void registerDialogCloseCommand() {
 		String closeHandlerName = _config.getCloseHandlerName();
-		if (closeHandlerName.isEmpty()) {
-			closeHandlerName = getDefaultCloseDialogHandlerName();
-		}
 		if (!StringServices.isEmpty(closeHandlerName)) {
-			this.registerCommandHandler(closeHandlerName, getButtonComponent() != null);
+			this.registerCommandHandler(closeHandlerName, getButtonBar() != null);
 		}
     }
 
@@ -3280,8 +3309,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 			if (openhandler == null) {
 				continue;
 			}
-			CommandHandler command = CommandHandlerFactory.getInstance().getCommand(context, openhandler);
-			registerCommandHandler(command, dialog.getDialogInfo().getCreateOpenerButtons());
+			CommandHandler command = resolveCommand(context, openhandler);
+			if (command != null) {
+				registerCommandHandler(command, dialog.getDialogInfo().getCreateOpenerButtons());
+			}
 		}
     }
 
@@ -3388,17 +3419,17 @@ public abstract class LayoutComponent extends ModelEventAdapter
      * e.g. adding buttons and not replacing buttons.
      */
 	private final void registerButtons() {
-		ButtonComponent buttonComponent = getButtonComponent();
+		ButtonBar buttonComponent = getButtonBar();
 		if (buttonComponent != null) {
 			List<? extends CommandModel> buttons = createButtonCommandModels();
-			buttonComponent.addTransientButtons(buttons);
+			buttonComponent.addButtons(buttons);
 		}
 	}
 
     /**
      * Create {@link CommandModel}s from buttonCommands.
      *
-     * @return a List of {@link CommandModel}s for the {@link ButtonComponent}, may be null
+     * @return a List of {@link CommandModel}s for the {@link ButtonBar}, may be null
      */
 	final protected List<? extends CommandModel> createButtonCommandModels() {
 		Map<String, List<CommandHandler>> buttonsByClique = buttonsByClique();
@@ -3465,13 +3496,13 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	/**
 	 * Create a {@link CommandModel} for the given {@link CommandHandler} for being displayed in the
-	 * {@link ButtonComponent}.
+	 * {@link ButtonBar}.
 	 * @param command
 	 *        The Command to create a CommandModel for.
 	 * @param targetComponent
 	 *        the {@link LayoutComponent} to execute the command.
 	 * 
-	 * @return A {@link CommandModel} to be displayed in the {@link ButtonComponent}.
+	 * @return A {@link CommandModel} to be displayed in the {@link ButtonBar}.
 	 */
 	protected CommandModel modelForCommand(CommandHandler command, Map<String, Object> arguments, LayoutComponent targetComponent) {
 		return command.createCommandModel(targetComponent, arguments);
@@ -3508,17 +3539,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
         return newlyAdded;
     }
 
-	/**
-     * Reload the Buttons (ususally when Button state has changed).
-     *
-     * This is done by invalidating the ComponentProxy.
-     */
-    public void invalidateButtons() {
-		if (_buttons != null) {
-			_buttons.invalidate();
-        }
-    }
-
     /**
      * Write a JScript function to submit the form for the given command.
      *
@@ -3532,23 +3552,13 @@ public abstract class LayoutComponent extends ModelEventAdapter
     }
 
     /**
-     * Getter for ButtonComponent identified by group name.
-     *
-     * @return null if not found
-     */
-    public ButtonComponent getButtonComponent() {
-		return _buttons;
-    }
-
-    /**
-     * Allow direct setting of the ButtonComponent.
-     */
-	public void setButtonComponent(ButtonComponent aComponent) {
-		if (_buttons != null && aComponent != null && aComponent != _buttons) {
-			throw new ConfigurationError("Inconsistent button component '" + _buttons.getName() + "' vs. '"
-				+ aComponent.getName() + "' in '" + _config.location() + "'.");
-		}
-		_buttons = aComponent;
+	 * The {@link ButtonBar}, this component adds commands to.
+	 *
+	 * @return The component's button bar, <code>null</code> if all buttons are added to the
+	 *         toolbar.
+	 */
+    public ButtonBar getButtonBar() {
+		return _buttonBar;
     }
 
 	/**
@@ -4149,7 +4159,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 				String cliqueGroup = factory.getCliqueGroup(clique);
 				CommandHandler.Display display = factory.getDisplay(cliqueGroup);
 				if (display == CommandHandler.Display.TOOLBAR || display == CommandHandler.Display.MENU
-					|| (display == CommandHandler.Display.COMMANDS && getButtonComponent() == null)) {
+					|| (display == CommandHandler.Display.COMMANDS && getButtonBar() == null)) {
 					removeCommandsFromToolbar(oldValue, cliqueGroup);
 				}
 			}
@@ -4178,7 +4188,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 				String cliqueGroup = factory.getCliqueGroup(clique);
 				CommandHandler.Display display = factory.getDisplay(cliqueGroup);
 				if (display == CommandHandler.Display.TOOLBAR || display == CommandHandler.Display.MENU
-						|| (display == CommandHandler.Display.COMMANDS && getButtonComponent() == null)) {
+						|| (display == CommandHandler.Display.COMMANDS && getButtonBar() == null)) {
 					List<CommandHandler> handlers = entry.getValue();
 					Collections.sort(handlers, commandOrder);
 
@@ -4361,7 +4371,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
     
     @Override
 	@Deprecated
-    public final void handleContent(DisplayContext context, String id, URLParser url) throws IOException {
+	public final void handleContent(DisplayContext context, String id, URLParser url)
+			throws IOException, ServletException {
 		getEnclosingFrameScope().handleContent(context, id, url);
     }
     
@@ -4418,22 +4429,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
 	/**
-	 * Returns the support for opening and closing a {@link LayoutComponent} as dialog.
-	 * 
-	 * @return <code>null</code> if and only if the {@link MainLayout} is not yet resolved.
-	 * 
-	 * @see #componentsResolved(InstantiationContext)
+	 * The support for opening and closing a {@link LayoutComponent} as dialog.
 	 */
 	public DialogSupport getDialogSupport() {
-		return getWindow().getDialogSupport();
-	}
-
-	/**
-	 * The enclosing {@link WindowComponent} if it is an external window, otherwise the
-	 * {@link MainLayout}.
-	 */
-	public LayoutComponent getWindow() {
-		return _window;
+		return DefaultDisplayContext.getDisplayContext().getWindowScope().getDialogSupport();
 	}
 
 	/**
@@ -4510,11 +4509,24 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		if (this instanceof Selectable) {
 			((Selectable) this).linkSelectionChannel(log);
 		}
+
+		for (ChannelConfig channelConf : config.getAdditionalChannels().values()) {
+			ModelSpec channelValue = channelConf.getValue();
+			if (channelValue == null) {
+				continue;
+			}
+			ComponentChannel additionalChannel = getChannel(channelConf.getName());
+			ChannelLinking channelLinking = getChannelLinking(channelValue);
+			additionalChannel.linkChannel(log, this, channelLinking);
+		}
 	}
 
 	@Override
 	public final void closeDialog() {
 		LayoutComponent dialog = getDialogTopLayout();
+		if (dialog == null) {
+			return;
+		}
 		LayoutComponent opener = getDialogParent();
 		DialogSupport dialogSupport = opener.getDialogSupport();
 		if (!dialogSupport.isDialogOpened(dialog)) {
@@ -4523,12 +4535,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 		opener.setDialog(null);
 		dialogSupport.deregisterOpenedDialog(dialog);
-
-		// Needed to refresh button component in case the dialog was aborted
-		ButtonComponent buttons = opener.getButtonComponent();
-		if (buttons != null) {
-			buttons.invalidate();
-		}
 
 		dialog.setVisible(false);
 		dialog.invalidate();
@@ -4546,7 +4552,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	public ResKey noModelKey() {
 		return ResKey.fallback(getConfig().getNoModelKey(),
 			ResKey.fallback(getResPrefix().key(FormTag.DEFAULT_NO_MODEL_KEY_SUFFIX),
-				I18NConstants.NO_MODEL));
+				com.top_logic.layout.form.tag.I18NConstants.NO_MODEL));
 	}
 
 	/**

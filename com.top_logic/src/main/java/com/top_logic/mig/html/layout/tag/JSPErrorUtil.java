@@ -7,7 +7,7 @@ package com.top_logic.mig.html.layout.tag;
 
 import java.io.IOException;
 
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.jsp.PageContext;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.xml.TagWriter;

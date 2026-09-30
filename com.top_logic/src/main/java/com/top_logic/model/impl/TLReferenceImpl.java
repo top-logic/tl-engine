@@ -6,7 +6,6 @@
 package com.top_logic.model.impl;
 
 
-import java.util.Collections;
 import java.util.Set;
 
 import com.top_logic.basic.Protocol;
@@ -15,7 +14,9 @@ import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Default implementation of {@link TLReference}.
@@ -97,6 +98,18 @@ public class TLReferenceImpl extends AbstractStructuredTypePart<TLClass> impleme
 		getEnd().setOrdered(value);
 	}
 
+	@Override
+	public boolean isAbstract() {
+		checkState();
+		return getEnd().isAbstract();
+	}
+
+	@Override
+	public void setAbstract(boolean value) {
+		checkState();
+		getEnd().setAbstract(value);
+	}
+
 	private void checkState() {
 		if (this.end == null) {
 			throw new IllegalStateException("Reference '" + this + "' has not yet an end assigned.");
@@ -154,11 +167,33 @@ public class TLReferenceImpl extends AbstractStructuredTypePart<TLClass> impleme
 	@Override
 	public Set<? extends TLObject> getReferers(TLObject element) {
 		// Not available in transient models.
-		return Collections.emptySet();
+		throw new TopLogicException(I18NConstants.ERROR_NO_REFERERS_AVAILABLE__REFERENCE.fill(this));
 	}
 
 	@Override
 	public AccessChecker getAccessChecker() {
 		return getEnd().getAccessChecker();
+	}
+
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case AGGREGATE_ATTR:
+				return isAggregate();
+			case COMPOSITE_ATTR:
+				return isComposite();
+			case BACKWARDS_ATTR:
+				return isBackwards();
+			case HISTORY_TYPE_ATTR:
+				return getHistoryType();
+			case END_ATTR:
+				return getEnd();
+			case OPPOSITE_ATTR:
+				return getOpposite();
+			case OPPOSITE_END_ATTR:
+				return getOppositeEnd();
+			default:
+				return super.tValue(part);
+		}
 	}
 }

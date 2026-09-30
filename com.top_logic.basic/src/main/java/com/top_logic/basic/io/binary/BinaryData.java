@@ -10,18 +10,29 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.top_logic.basic.config.annotation.Binding;
+import com.top_logic.basic.config.json.JsonBinding;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.StreamUtilities;
 
 /**
- * Class encapsulating an {@link InputStream} to be used as input and output
- * value in a BinaryMetaAttribute.
- * 
- * Implementations of BinaryData are immutable unless stated otherwise.
- * 
+ * Binary data whose content can be read multiple times through {@link #getStream()}.
+ *
+ * <p>
+ * This is the preferred interface to implement when providing binary values: Based on
+ * {@link #getStream()}, the interface provides {@link #deliverTo(OutputStream)} and
+ * {@link #toData()} as efficient defaults, so a {@link BinaryData} can be consumed in both pull and
+ * push style without conversion. Implementations should extend {@link AbstractBinaryData} to
+ * conform to the {@link #equals(Object)} and {@link #hashCode()} contract.
+ * </p>
+ *
+ * <p>
+ * Implementations of {@link BinaryData} are immutable unless stated otherwise.
+ * </p>
+ *
  * @author     <a href="mailto:kbu@top-logic.com">kbu</a>
  */
 @Binding(BinaryDataBinding.class)
+@JsonBinding(BinaryDataJsonBinding.class)
 public interface BinaryData extends BinaryDataSource, BinaryContent {
 
 	/**

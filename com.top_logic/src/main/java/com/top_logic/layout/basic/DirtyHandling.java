@@ -16,14 +16,16 @@ import org.w3c.dom.Element;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.MapUtil;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.DisplayValue;
-import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.WindowScope;
@@ -54,7 +56,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * The class {@link DirtyHandling} handles changed made in form contexts before
@@ -63,6 +64,9 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class DirtyHandling {
+
+	private static final TypedAnnotatable.Property<Boolean> SKIP_DIRTY_HANDLING_PROPERTY =
+		TypedAnnotatable.property(Boolean.class, "skipDirtyHandling");
 
 	/**
 	 * Additional command attribute that marks an execution as being already approved by the user.
@@ -220,6 +224,10 @@ public class DirtyHandling {
 	 */
 	public boolean checkDirty(DisplayContext context, CommandHandler handler, LayoutComponent component,
 			Map<String, Object> someArguments) {
+		if (skipDirtyHandling(context)) {
+			return false;
+		}
+
 		Collection<? extends ChangeHandler> affectedFormHandlers =
 			handler.checkScopeProvider().getCheckScope(component).getAffectedFormHandlers();
 		boolean dirty = checkDirty(affectedFormHandlers);
@@ -233,13 +241,17 @@ public class DirtyHandling {
 		return dirty;
 	}
 
+	private boolean skipDirtyHandling(DisplayContext context) {
+		return Utils.isTrue(context.get(DirtyHandling.SKIP_DIRTY_HANDLING_PROPERTY));
+	}
+
 	/**
 	 * This method opens a dialog to inform the user that some {@link ChangeHandler} have changes
-	 * and must be checked. The dialog allows the user to decide whether the changes shall be
-	 * stored, discarded or whether the action shall be canceled.
+	 * and must be checked. The dialog allows the user to decide whether to save or discard the
+	 * changes or cancel the action.
 	 * 
 	 * @param command
-	 *        the command to execute if the user does not cancel the action. action.
+	 *        The command to execute if the user does not cancel the action.
 	 * @param affectedFormHandlers
 	 *        The {@link ChangeHandler}s which may have changes. At least one of them must be
 	 *        changed.
@@ -249,7 +261,7 @@ public class DirtyHandling {
 	 */
 	public void openConfirmDialog(Command command, Collection<? extends ChangeHandler> affectedFormHandlers,
 			WindowScope scope) {
-		DialogWindowControl dialog = createDialogWindowControl(scope, command, affectedFormHandlers);
+		DialogWindowControl dialog = createConfirmDialog(command, Command.DO_NOTHING, affectedFormHandlers);
 		scope.openDialog(dialog);
 	}
 
@@ -276,13 +288,26 @@ public class DirtyHandling {
 		return false;
 	}
 
-	private DialogWindowControl createDialogWindowControl(WindowScope scope, Command command,
+	/**
+	 * Creates the dialog displaying the information that some {@link ChangeHandler} have changes
+	 * and must be checked. The dialog allows the user to decide whether to save or discard the
+	 * changes or cancel the action.
+	 * 
+	 * @param continueCommand
+	 *        The command to execute if the user does not cancel the action.
+	 * @param cancelCommand
+	 *        The command to execute when the user cancel the action.
+	 * @param affectedFormHandlers
+	 *        The {@link ChangeHandler}s which may have changes. At least one of them must be
+	 *        changed.
+	 * 
+	 * @see #openConfirmDialog(Command, Collection, WindowScope)
+	 */
+	public DialogWindowControl createConfirmDialog(Command continueCommand, Command cancelCommand,
 			Collection<? extends ChangeHandler> affectedFormHandlers) {
-		FrameScope ids = scope.getTopLevelFrameScope();
-		String fcId = ids.createNewID();
 		DefaultDialogModel dialogModel =
 			new DefaultDialogModel(layoutData(), DIRTY_HANDLING_DIALOG_TITLE, false, true, null);
-		FormContext ctx = new FormContext(fcId, RES_PREFIX);
+		FormContext ctx = new FormContext("confirmContext", RES_PREFIX);
 
 		FormGroup buttons = new FormGroup(BUTTONS_GROUP, RES_PREFIX);
 		Command closeAction = dialogModel.getCloseAction();
@@ -305,7 +330,7 @@ public class DirtyHandling {
 			}
 		}
 		
-		Command applyHander = new ApplyChanges(command, closeAction, affectedFormHandlers);
+		Command applyHander = new ApplyChanges(continueCommand, closeAction, affectedFormHandlers);
 		CommandField theApply = FormFactory.newCommandField(APPLY_CHANGES, applyHander);
 		
 		if (!canApply) {
@@ -318,10 +343,10 @@ public class DirtyHandling {
 		
 		buttons.addMember(theApply);
 		dialogModel.setDefaultCommand(theApply);
-		Command discardHandler = new DiscardChanges(command, closeAction, affectedFormHandlers);
+		Command discardHandler = new DiscardChanges(continueCommand, closeAction, affectedFormHandlers);
 		CommandField discardChanges = FormFactory.newCommandField(DISCARD_CHANGES, discardHandler);
 		buttons.addMember(discardChanges);
-		CommandField cancel = FormFactory.newCommandField(CANCEL, closeAction);
+		CommandField cancel = FormFactory.newCommandField(CANCEL, closeAction.compose(cancelCommand));
 		buttons.addMember(cancel);
 		ctx.addMember(buttons);
 
@@ -329,12 +354,13 @@ public class DirtyHandling {
 			FormGroup changedMembers = new FormGroup("changedMember", RES_PREFIX);
 			ctx.addMember(changedMembers);
 			Iterator<? extends ChangeHandler> it = affectedFormHandlers.iterator();
+			int i = 0;
 			while (it.hasNext()) {
 				ChangeHandler current = it.next();
 				if (current.isChanged()) {
 					String description = current.getChangeDescription();
 					if (description != null) {
-						changedMembers.addMember(FormFactory.newStringField(ids.createNewID(), description, true));
+						changedMembers.addMember(FormFactory.newStringField("change_" + (i++), description, true));
 					}
 				}
 			}
@@ -376,9 +402,15 @@ public class DirtyHandling {
 					Logger.error("Handler '" + currentHandler
 						+ "'participates in change handling without discard closure.", DirtyHandlingAction.class);
 				} else {
-					HandlerResult result = discardClosure.executeCommand(context);
-					if (!result.isSuccess()) {
-						return result;
+					Boolean oldValue = context.get(SKIP_DIRTY_HANDLING_PROPERTY);
+					context.set(SKIP_DIRTY_HANDLING_PROPERTY, true);
+					try {
+						HandlerResult result = discardClosure.executeCommand(context);
+						if (!result.isSuccess()) {
+							return result;
+						}
+					} finally {
+						context.set(SKIP_DIRTY_HANDLING_PROPERTY, oldValue);
 					}
 				}
 			}
@@ -430,19 +462,26 @@ public class DirtyHandling {
 						remainingHandlers = lazyAdd(remainingHandlers, currentHandler);
 						continue;
 					}
-					final HandlerResult result = applyClosure.executeCommand(context);
-					if (result.isSuspended()) {
-						// Cannot handle more than one confirm upon apply.
-						suspended = result;
-						continue;
-					}
-					if (!result.isSuccess()) {
-						encodedErrors = lazyAddAll(encodedErrors, result.getEncodedErrors());
-						TopLogicException problem = result.getException();
-						if (problem != null) {
-							encodedErrors = lazyAdd(encodedErrors, problem.getErrorKey());
+
+					Boolean oldValue = context.get(SKIP_DIRTY_HANDLING_PROPERTY);
+					context.set(SKIP_DIRTY_HANDLING_PROPERTY, true);
+					try {
+						final HandlerResult result = applyClosure.executeCommand(context);
+						if (result.isSuspended()) {
+							// Cannot handle more than one confirm upon apply.
+							suspended = result;
+							continue;
 						}
-						remainingHandlers = lazyAdd(remainingHandlers, currentHandler);
+						if (!result.isSuccess()) {
+							encodedErrors = lazyAddAll(encodedErrors, result.getEncodedErrors());
+							I18NRuntimeException problem = result.getException();
+							if (problem != null) {
+								encodedErrors = lazyAdd(encodedErrors, problem.getErrorKey());
+							}
+							remainingHandlers = lazyAdd(remainingHandlers, currentHandler);
+						}
+					} finally {
+						context.set(SKIP_DIRTY_HANDLING_PROPERTY, oldValue);
 					}
 				}
 			}

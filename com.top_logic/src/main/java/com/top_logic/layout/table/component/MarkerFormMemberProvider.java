@@ -47,7 +47,7 @@ public class MarkerFormMemberProvider implements FormMemberProvider {
                 BooleanField theMarkerHeadField = FormFactory.newBooleanField(ColumnConfiguration.COLUMN_CONTROL_TYPE_HEADER);
                 theColumnGroup.addMember(theMarkerHeadField);
                 Set theCellfields = initFromTableModel(theTableModel, theMarkerColumn);
-                theMarkerHeadField.setValue(determinAccumulatedValue(theCellfields));
+				theMarkerHeadField.initializeField(determinAccumulatedValue(theCellfields));
                 MarkerHeadListener theMarkerHeadListener = new MarkerHeadListener(theCellfields, theMarkerColumn);
                 theMarkerHeadField.addValueListener(theMarkerHeadListener);
                 MarkerCellListener theMarkerCellListener = new MarkerCellListener(theMarkerHeadField, theCellfields, theMarkerColumn);

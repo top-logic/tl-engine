@@ -17,7 +17,7 @@ import com.top_logic.graph.layouter.algorithm.rendering.lines.Line1DContainer;
 /**
  * Default partitioner for a one dimensional lines.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class NoLineIntersectionLayerPartitioner implements LayerPartitionAlgorithm<Line1DContainer> {
 

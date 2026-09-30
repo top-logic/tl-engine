@@ -1,0 +1,255 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.react.field;
+
+import java.text.Format;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import com.top_logic.basic.format.configured.Formatter;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
+import com.top_logic.layout.react.control.form.ReactBooleanChoiceControl;
+import com.top_logic.layout.react.control.form.ReactCheckboxControl;
+import com.top_logic.layout.react.control.form.ReactDatePickerControl;
+import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
+import com.top_logic.layout.react.control.form.ReactNumberInputControl;
+import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.form.ReactValueListControl;
+import com.top_logic.mig.html.HTMLFormatter;
+import com.top_logic.model.annotate.ui.BooleanPresentation;
+
+/**
+ * The {@link ReactFieldControlProvider}s that edit values, by value type.
+ *
+ * <p>
+ * A control is looked up by the {@link FieldSpec#getValueType() type of the edited value}, so a model
+ * attribute and a configuration property holding the same kind of value are edited the same way. The
+ * lookup considers supertypes, so a provider registered for a base type serves its subtypes.
+ * </p>
+ *
+ * <p>
+ * The registry starts out with the providers for the types the platform edits itself. An application
+ * or another module registers further ones through {@link #register(Class, ReactFieldControlProvider)}.
+ * A single field can deviate from its type's provider; how that is expressed is up to the editing
+ * side, which passes the provider it resolved instead of asking the registry.
+ * </p>
+ *
+ * <p>
+ * Both halves of the decision are made here: which provider edits the value type, and how the
+ * multiplicity of the field is realized. A {@link FieldSpec#isMultiple() multi-valued} field whose
+ * provider edits one value at a time is wrapped in a {@link ReactValueListControl}, so that each
+ * element is edited by the very control its type asks for. An editing side therefore reaches the
+ * control through {@link #createControl(ReactContext, FieldSpec, FieldModel)} or
+ * {@link #createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)} rather than
+ * calling a provider itself.
+ * </p>
+ */
+public class FieldControlRegistry {
+
+	/**
+	 * Edits a value as a single- or multi-line text.
+	 *
+	 * @implNote Declared before {@link #getInstance() the shared registry}, which registers it while
+	 *           being created.
+	 */
+	public static final ReactFieldControlProvider TEXT = (context, field, model) -> {
+		ReactTextInputControl control = new ReactTextInputControl(context, model);
+		if (field.getMultilineRows() > 0) {
+			control.setMultiline(field.getMultilineRows());
+		}
+		return control;
+	};
+
+	private static final FieldControlRegistry INSTANCE = new FieldControlRegistry();
+
+	private final Map<Class<?>, ReactFieldControlProvider> _providers = new LinkedHashMap<>();
+
+	/**
+	 * Creates a {@link FieldControlRegistry} holding the platform's providers.
+	 */
+	protected FieldControlRegistry() {
+		register(String.class, TEXT);
+		register(Boolean.class, FieldControlRegistry::createBooleanControl);
+		register(Number.class,
+			(context, field, model) -> new ReactNumberInputControl(context, model, numberFormat(field)));
+		register(Date.class,
+			(context, field, model) -> new ReactDatePickerControl(context, model, field.getDateKind(),
+				field.getDateFormat()));
+		register(BinaryData.class, (context, field, model) -> new ReactBinaryFieldControl(context, model));
+		// An internationalized text is edited in the current language, with the other languages
+		// reachable through the editor's dialog.
+		register(ResKey.class, (context, field, model) -> ReactI18NStringInputControl.createEditor(context, model,
+			field.getMultilineRows(), field.getLabel()));
+	}
+
+	/**
+	 * The registry the editing sides consult.
+	 */
+	public static FieldControlRegistry getInstance() {
+		return INSTANCE;
+	}
+
+	/**
+	 * Registers the provider editing values of the given type and its subtypes.
+	 *
+	 * @param valueType
+	 *        The type of the edited value. A primitive type is registered as its wrapper.
+	 * @param provider
+	 *        Creates the control.
+	 */
+	public void register(Class<?> valueType, ReactFieldControlProvider provider) {
+		_providers.put(wrapperType(valueType), provider);
+	}
+
+	/**
+	 * The provider editing values of the given type, or {@code null} if none is registered for it or
+	 * any of its supertypes.
+	 */
+	public ReactFieldControlProvider lookup(Class<?> valueType) {
+		if (valueType == null) {
+			return null;
+		}
+		for (Class<?> type = wrapperType(valueType); type != null; type = type.getSuperclass()) {
+			ReactFieldControlProvider provider = _providers.get(type);
+			if (provider != null) {
+				return provider;
+			}
+			for (Class<?> intf : type.getInterfaces()) {
+				ReactFieldControlProvider fromInterface = _providers.get(intf);
+				if (fromInterface != null) {
+					return fromInterface;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Creates the control editing the given value.
+	 *
+	 * <p>
+	 * Falls back to editing the value as {@link #TEXT text} when no provider is registered for its
+	 * type, so an unforeseen type is still displayed.
+	 * </p>
+	 */
+	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
+		ReactFieldControlProvider provider = lookup(field.getValueType());
+		return createControl(context, field, model, provider == null ? TEXT : provider);
+	}
+
+	/**
+	 * Creates the control editing the given value with the given provider.
+	 *
+	 * <p>
+	 * The place where the multiplicity of a field is realized. A field holding
+	 * {@link FieldSpec#isMultiple() several values} whose provider
+	 * {@link ReactFieldControlProvider#editsCollections() edits one value at a time} is displayed as
+	 * a {@link ReactValueListControl}: one control per element, each created by the given provider
+	 * over the {@link FieldSpec#elementSpec() element specification}. Everything else is handed to
+	 * the provider as it stands, through
+	 * {@link ReactFieldControlProvider#createField(ReactContext, FieldSpec, FieldModel)}, which
+	 * applies what the specification says about the display of the control.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context to create the control in.
+	 * @param field
+	 *        What is being edited.
+	 * @param model
+	 *        Holds the edited value; the whole collection for a multi-valued field.
+	 * @param provider
+	 *        Creates the control editing a value of this field's type.
+	 * @return The control to display.
+	 */
+	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model,
+			ReactFieldControlProvider provider) {
+		if (field.isMultiple() && !provider.editsCollections()) {
+			return new ReactValueListControl(context, model, field, provider);
+		}
+		return provider.createField(context, field, model);
+	}
+
+	/**
+	 * Edits a boolean value as a checkbox, or as a switch, radio buttons or a select when it
+	 * {@link FieldSpec#getBooleanPresentation() asks} for it.
+	 *
+	 * <p>
+	 * A checkbox and a switch show the value in place, while radio buttons and a select offer it as
+	 * a choice between labelled values. A {@link FieldSpec#isTriState() tri-state} value keeps a
+	 * state for "no value": the checkbox gets a third state, the choice a third option, and a
+	 * switch - having no third position - stays a checkbox.
+	 * </p>
+	 */
+	private static ReactControl createBooleanControl(ReactContext context, FieldSpec field, FieldModel model) {
+		BooleanPresentation presentation = field.getBooleanPresentation();
+		if (presentation == BooleanPresentation.RADIO || presentation == BooleanPresentation.SELECT) {
+			return new ReactBooleanChoiceControl(context, model, presentation, field.isTriState());
+		}
+		return new ReactCheckboxControl(context, model, presentation, field.isTriState());
+	}
+
+	/**
+	 * The format a numeric value is displayed in and entered in.
+	 *
+	 * <p>
+	 * The {@link FieldSpec#getNumberFormat() format the field asks for}, or the default format for
+	 * its value type: two decimal places for a fractional value, none for a whole number - both in
+	 * the user's locale.
+	 * </p>
+	 *
+	 * @param field
+	 *        The field to be edited.
+	 */
+	public static Format numberFormat(FieldSpec field) {
+		Format format = field.getNumberFormat();
+		if (format != null) {
+			return format;
+		}
+		Class<?> type = wrapperType(field.getValueType());
+		Formatter formatter = HTMLFormatter.getInstance();
+		return type == Double.class || type == Float.class ? formatter.getDoubleFormat() : formatter.getLongFormat();
+	}
+
+	/**
+	 * The wrapper type of a primitive type, the type itself otherwise.
+	 */
+	private static Class<?> wrapperType(Class<?> type) {
+		if (!type.isPrimitive()) {
+			return type;
+		}
+		if (type == boolean.class) {
+			return Boolean.class;
+		}
+		if (type == int.class) {
+			return Integer.class;
+		}
+		if (type == long.class) {
+			return Long.class;
+		}
+		if (type == double.class) {
+			return Double.class;
+		}
+		if (type == float.class) {
+			return Float.class;
+		}
+		if (type == short.class) {
+			return Short.class;
+		}
+		if (type == byte.class) {
+			return Byte.class;
+		}
+		if (type == char.class) {
+			return Character.class;
+		}
+		return type;
+	}
+}

@@ -19,7 +19,7 @@ import com.top_logic.mig.html.HTMLConstants;
  * {@link CellRenderer} that displays a {@link WebFolder} just by the
  * {@link WebFolderTableUtil#getWebFolderCount(Object) number} of entries.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class WebFolderAttributeRenderer extends AbstractCellRenderer {
 

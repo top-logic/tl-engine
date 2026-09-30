@@ -17,9 +17,7 @@ com.top_logic.basic.xml.TagWriter"
 %><%@taglib uri="ajaxform" prefix="form"
 %><%@taglib uri="meta"     prefix="meta"
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:formPage>
 			<%

@@ -9,17 +9,19 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.HasURLFormat;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 
 /**
  * The object provides metadata about the API. The metadata MAY be used by the clients if needed,
  * and MAY be presented in editing or documentation generation tools for convenience.
- * 
+ *
  * @see "https://spec.openapis.org/oas/v3.0.3.html#info-object"
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	InfoObject.TITLE,
 	InfoObject.DESCRIPTION,

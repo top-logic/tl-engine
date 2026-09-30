@@ -53,7 +53,7 @@ public abstract class AbstractDocumentTest extends BasicTestCase {
 	    super.setUp ();
 		_emptyContent = new TestingBinaryData(0, 10);
 		KnowledgeBase kb = KBSetup.getKnowledgeBase();
-		final Transaction tx = kb.beginTransaction();
+		final Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		this._folder = WebFolder.createFolder(kb, getClass().getSimpleName() + "_" + getName(), TEST_BASE);
 		tx.commit();
 	}
@@ -61,7 +61,7 @@ public abstract class AbstractDocumentTest extends BasicTestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		KnowledgeBase kb = KBSetup.getKnowledgeBase();
-		final Transaction tx = kb.beginTransaction();
+		final Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		if (this._folder == null && !this._folder.tValid()) {
 			WebFolder.deleteRecursively(this._folder);
 		}
@@ -76,7 +76,7 @@ public abstract class AbstractDocumentTest extends BasicTestCase {
 		Document result = (Document) this._folder.getChildByName(testName);
 		if (result == null) {
 			final KnowledgeBase kb = KBSetup.getKnowledgeBase();
-			final Transaction tx = kb.beginTransaction();
+			final Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			result = this._folder.createOrUpdateDocument(testName, _emptyContent);
 			tx.commit();
 		}

@@ -8,7 +8,7 @@ package com.top_logic.element.layout.scripting;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.MetaElementUtil;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -23,7 +23,7 @@ import com.top_logic.model.TLStructuredTypePart;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class MetaAttributeNaming extends AbstractModelNamingScheme<TLStructuredTypePart, MetaAttributeNaming.MetaAttributeName> {
+public class MetaAttributeNaming extends AbstractGlobalModelNamingScheme<TLStructuredTypePart, MetaAttributeNaming.MetaAttributeName> {
 
 	/**
 	 * Name to identify {@link TLStructuredTypePart}.

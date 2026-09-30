@@ -261,7 +261,7 @@
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
 								<list>
 									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="users"
+										label="Benutzer"
 									/>
 								</list>
 							</value>
@@ -333,7 +333,7 @@
 								<key-values>
 									<attribute name="name">
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-											string="users"
+											string="user"
 										/>
 									</attribute>
 								</key-values>

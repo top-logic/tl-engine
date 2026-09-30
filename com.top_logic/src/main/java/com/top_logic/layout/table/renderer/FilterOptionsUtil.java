@@ -33,7 +33,6 @@ import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 
 /**
@@ -102,35 +101,28 @@ public class FilterOptionsUtil {
 			boolean includeParentsImmutable = !_viewModel.isFiniteTree();
 			BooleanField includeParentsField = FormFactory.newBooleanField(INCLUDE_PARENTS_FIELD_NAME,
 				includeParentsValue, includeParentsImmutable);
-			includeParentsField.setLabel(translate(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS));
+			includeParentsField.setLabel(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS);
 			if (_viewModel.isFiniteTree()) {
-				includeParentsField.setTooltip(translate(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS_TOOLTIP));
+				includeParentsField.setTooltip(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS_TOOLTIP);
 			} else {
-				includeParentsField
-					.setTooltip(translate(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS_TOOLTIP_INFINITE_TREE));
+				includeParentsField.setTooltip(I18NConstants.FILTER_OPTIONS_INCLUDE_PARENTS_TOOLTIP_INFINITE_TREE);
 			}
 			context.addMember(includeParentsField);
 
 			BooleanField includeChildrenField = FormFactory.newBooleanField(INCLUDE_CHILDREN_FIELD_NAME,
 				Boolean.valueOf(_viewModel.isFilterIncludeChildren()), false);
-			includeChildrenField.setLabel(translate(I18NConstants.FILTER_OPTIONS_INCLUDE_CHILDREN));
-			includeChildrenField.setTooltip(translate(I18NConstants.FILTER_OPTIONS_INCLUDE_CHILDREN_TOOLTIP));
+			includeChildrenField.setLabel(I18NConstants.FILTER_OPTIONS_INCLUDE_CHILDREN);
+			includeChildrenField.setTooltip(I18NConstants.FILTER_OPTIONS_INCLUDE_CHILDREN_TOOLTIP);
 			context.addMember(includeChildrenField);
 		}
 
 		@Override
 		protected void fillButtons(List<CommandModel> buttons) {
 			CommandModel ok = MessageBox.button(ButtonType.OK,
-				new Command.CommandChain(
-					new ApplyFilterOptionsExecutable(_viewModel, getFormContext()),
-					getDiscardClosure()));
+				closeDialogAfter(new ApplyFilterOptionsExecutable(_viewModel, getFormContext())));
 			buttons.add(ok);
 
 			addCancel(buttons);
-		}
-
-		private String translate(ResKey i18nKey) {
-			return Resources.getInstance().getString(i18nKey);
 		}
 
 	}
@@ -165,7 +157,9 @@ public class FilterOptionsUtil {
 			DisplayDimension width =
 				DisplayDimension.dim(ThemeFactory.getTheme().getValue(com.top_logic.layout.Icons.FILTER_DIALOG_WIDTH),
 					DisplayUnit.PIXEL);
-			DisplayDimension height = DisplayDimension.dim(110, DisplayUnit.PIXEL);
+			DisplayDimension height =
+				DisplayDimension.dim(ThemeFactory.getTheme().getValue(com.top_logic.layout.Icons.FILTER_DIALOG_HEIGHT),
+					DisplayUnit.PIXEL);
 			return new FilterOptionsDialog(I18NConstants.FILTER_OPTIONS_TITLE, width, height, viewModel).open(context);
 		}
 

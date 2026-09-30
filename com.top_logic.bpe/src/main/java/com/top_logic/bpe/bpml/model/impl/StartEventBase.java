@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2022 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -16,5 +16,51 @@ public interface StartEventBase extends com.top_logic.bpe.bpml.model.Event, com.
 	 * Name of type <code>StartEvent</code>
 	 */
 	String START_EVENT_TYPE = "StartEvent";
+
+	/**
+	 * Part <code>requireReview</code> of <code>StartEvent</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String REQUIRE_REVIEW_ATTR = "requireReview";
+
+	/**
+	 * Part <code>title</code> of <code>StartEvent</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model.i18n:I18NString</code> in configuration.
+	 * </p>
+	 */
+	String TITLE_ATTR = "title";
+
+	/**
+	 * Getter for part {@link #REQUIRE_REVIEW_ATTR}.
+	 */
+	default boolean getRequireReview() {
+		return (Boolean) tValueByName(REQUIRE_REVIEW_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #REQUIRE_REVIEW_ATTR}.
+	 */
+	default void setRequireReview(boolean newValue) {
+		tUpdateByName(REQUIRE_REVIEW_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #TITLE_ATTR}.
+	 */
+	default com.top_logic.basic.util.ResKey getTitle() {
+		return (com.top_logic.basic.util.ResKey) tValueByName(TITLE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TITLE_ATTR}.
+	 */
+	default void setTitle(com.top_logic.basic.util.ResKey newValue) {
+		tUpdateByName(TITLE_ATTR, newValue);
+	}
 
 }

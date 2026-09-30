@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout;
 
+import java.io.IOException;
+
 /**
  * {@link URLBuilder} can be used to encode a hierarchy of resources into a URL
  * for the client. The {@link #getURL() constructed URL} can be written to the
@@ -59,4 +61,16 @@ public interface URLBuilder {
 	 * Creates a copy of this {@link URLBuilder}.
 	 */
 	URLBuilder copy();
+
+	/**
+	 * Appends the URL to the given {@link Appendable}.
+	 * 
+	 * @param out
+	 *        Appendable to add URL to.
+	 * @throws IOException
+	 *         thrown by the given {@link Appendable}.
+	 */
+	default void appendTo(Appendable out) throws IOException {
+		out.append(getURL());
+	}
 }

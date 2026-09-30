@@ -33,9 +33,14 @@ public class ColorFieldProvider extends AbstractFieldProvider {
 	}
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
+		boolean isMandatory = editContext.isMandatory();
+		boolean isDisabled = editContext.isDisabled();
+
 		ComplexField result = FormFactory.newComplexField(fieldName, ColorFormat.INSTANCE);
 		result.setControlProvider(ColorControlProvider.INSTANCE);
+		result.setMandatory(isMandatory);
+		result.setImmutable(isDisabled);
 		return result;
 	}
 

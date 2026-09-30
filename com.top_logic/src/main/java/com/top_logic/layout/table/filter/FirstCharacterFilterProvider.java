@@ -59,7 +59,7 @@ public class FirstCharacterFilterProvider implements TableFilterProvider {
     private static final Pattern DEFAULT_CHARACTERS = Pattern.compile("[A-Za-z]");
 
 	private static final Map<String, String> UMLAUT_MAPPING =
-		(new MapBuilder<String, String>()).put("Ä", "A").put("Ü", "U").put("Ö", "O").toMap();
+		(new MapBuilder<String, String>()).put("Ã„", "A").put("Ãœ", "U").put("Ã–", "O").toMap();
 
 	LabelProvider _labelProvider;
 

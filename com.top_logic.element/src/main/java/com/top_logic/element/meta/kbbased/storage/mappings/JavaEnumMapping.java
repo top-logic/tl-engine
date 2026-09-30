@@ -65,6 +65,10 @@ public class JavaEnumMapping<E extends Enum<E>, C extends JavaEnumMapping.Config
 	@Override
 	public E getBusinessObject(Object aStorageObject) {
 		String name = (String) aStorageObject;
+		return toEnum(name);
+	}
+
+	private E toEnum(String name) {
 		if (StringServices.isEmpty(name)) {
 			return null;
 		}
@@ -80,12 +84,20 @@ public class JavaEnumMapping<E extends Enum<E>, C extends JavaEnumMapping.Config
 		if (aBusinessObject == null) {
 			return null;
 		}
-		return EnumerationNameMapping.INSTANCE.map(((Enum<?>) aBusinessObject));
+		Enum<?> enumValue;
+		if (aBusinessObject instanceof String) {
+			// Allow to set attribute as string to be usable from TLScript.
+			enumValue = toEnum((String) aBusinessObject);
+		} else {
+			enumValue = (Enum<?>) aBusinessObject;
+		}
+		return EnumerationNameMapping.INSTANCE.map(enumValue);
 	}
 
 	@Override
 	public boolean isCompatible(Object businessObject) {
-		return businessObject == null || getApplicationType().isInstance(businessObject);
+		return businessObject == null || getApplicationType().isInstance(businessObject)
+			|| businessObject instanceof String;
 	}
 
 }

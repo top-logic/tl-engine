@@ -5,6 +5,7 @@
  */
 package com.top_logic.mig.html;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,9 +19,11 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey NO_LABEL = legacyKey("model.tl5.enum.tl.yesno.tl.no");
+	@CustomKey("model.tl5.enum.tl.yesno.tl.no")
+	public static ResKey NO_LABEL;
 
-	public static ResKey YES_LABEL = legacyKey("model.tl5.enum.tl.yesno.tl.yes");
+	@CustomKey("model.tl5.enum.tl.yesno.tl.yes")
+	public static ResKey YES_LABEL;
 
 	static {
 		initConstants(I18NConstants.class);

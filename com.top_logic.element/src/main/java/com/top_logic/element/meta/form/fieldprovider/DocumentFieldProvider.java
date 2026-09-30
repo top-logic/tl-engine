@@ -22,7 +22,6 @@ import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.util.Resources;
 
 /**
  * {@link FieldProvider} for {@link TLStructuredTypePart}s of type {@link Document}.
@@ -32,7 +31,7 @@ import com.top_logic.util.Resources;
 public class DocumentFieldProvider extends AbstractFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();
 		boolean isSearch = editContext.isSearchUpdate();
@@ -53,7 +52,7 @@ public class DocumentFieldProvider extends AbstractFieldProvider {
 				isDisabled = true;
 			}
 		}
-		result.setLabel(Resources.getInstance().getString(editContext.getLabelKey()));
+		result.setLabel(editContext.getLabelKey());
 		result.setImmutable(isDisabled);
 		result.setMandatory(isMandatory);
 		return result;

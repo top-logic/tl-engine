@@ -5,13 +5,12 @@
  */
 package com.top_logic.layout.table.model;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.CommaSeparatedStringSet;
-import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -32,8 +31,8 @@ import com.top_logic.layout.table.provider.ColumnOptionMapping;
  */
 @InApp
 @Label("Available columns")
-public class AllVisibleColumnsProvider extends NoDefaultColumnAdaption
-		implements ConfiguredInstance<AllVisibleColumnsProvider.Config<?>> {
+public class AllVisibleColumnsProvider extends AbstractConfiguredInstance<AllVisibleColumnsProvider.Config<?>>
+		implements TableConfigurationProvider {
 
 	/**
 	 * Configuration of the {@link AllVisibleColumnsProvider}.
@@ -53,9 +52,8 @@ public class AllVisibleColumnsProvider extends NoDefaultColumnAdaption
 		String EXCLUDED = "excluded";
 
 		/**
-		 * Column names for the configured types in its form model.
-		 * 
-		 * @see AllColumnsForConfiguredTypes
+		 * Names of columns that can be choosen by the user (or cannot be choosen by the user
+		 * depending on the {@link #isExcluded()} flag).
 		 */
 		@Options(fun = AllColumnsForConfiguredTypes.class, mapping = ColumnOptionMapping.class)
 		@OptionLabels(ColumnOptionLabelProvider.class)
@@ -69,20 +67,18 @@ public class AllVisibleColumnsProvider extends NoDefaultColumnAdaption
 		void setColumns(Set<String> columns);
 
 		/**
-		 * Whether the selected {@link #getColumns()} must be excluded from the selectable columns.
-		 * All other columns have their default visibility.
+		 * Whether the selected {@link #getColumns()} should be excluded from the selectable
+		 * columns. All other columns have their default visibility.
 		 */
 		@Name(EXCLUDED)
+		@Label("Exclude selected columns")
 		boolean isExcluded();
 
 		/**
 		 * Setter for {@link #isExcluded()}.
 		 */
 		void setExcluded(boolean value);
-
 	}
-
-	private Config<?> _config;
 
 	/**
 	 * Creates a {@link AllVisibleColumnsProvider} from configuration.
@@ -94,25 +90,27 @@ public class AllVisibleColumnsProvider extends NoDefaultColumnAdaption
 	 */
 	@CalledByReflection
 	public AllVisibleColumnsProvider(InstantiationContext context, Config<?> config) {
-		_config = config;
+		super(context, config);
 	}
 
 	@Override
 	public void adaptConfigurationTo(TableConfiguration table) {
-		Set<String> columns = getColumns();
+		Set<String> configuredColumns = getConfig().getColumns();
+		boolean excludeColumns = getConfig().isExcluded();
 
 		for (ColumnConfiguration elementaryColumn : table.columns().getElementaryColumns()) {
-			String name = elementaryColumn.getName();
-
-			if (TableControl.SELECT_COLUMN_NAME.equals(name)) {
+			String columnName = elementaryColumn.getName();
+			if (TableControl.SELECT_COLUMN_NAME.equals(columnName)) {
+				// Handled above.
 				continue;
 			}
-			if (getConfig().isExcluded()) {
-				if (columns.contains(name)) {
+
+			if (excludeColumns) {
+				if (configuredColumns.contains(columnName)) {
 					elementaryColumn.setVisibility(DisplayMode.excluded);
 				}
 			} else {
-				if (columns.contains(name)) {
+				if (configuredColumns.contains(columnName)) {
 					if (elementaryColumn.getVisibility() == DisplayMode.excluded) {
 						elementaryColumn.setVisibility(DisplayMode.hidden);
 					}
@@ -120,18 +118,7 @@ public class AllVisibleColumnsProvider extends NoDefaultColumnAdaption
 					elementaryColumn.setVisibility(DisplayMode.excluded);
 				}
 			}
-
 		}
-
-	}
-
-	private Set<String> getColumns() {
-		return new HashSet<>(getConfig().getColumns());
-	}
-
-	@Override
-	public Config<?> getConfig() {
-		return _config;
 	}
 
 }

@@ -13,9 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
-import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ConfigurationError;
@@ -24,6 +22,7 @@ import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigUtil;
@@ -44,6 +43,7 @@ import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.element.config.ClassConfig;
 import com.top_logic.element.config.DefinitionReader;
 import com.top_logic.element.config.ExtendsConfig;
@@ -78,8 +78,10 @@ import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.impl.generated.TLObjectBase;
 import com.top_logic.model.impl.generated.TlModelFactory;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.model.CompatibilityService;
 import com.top_logic.util.model.ModelService;
 
@@ -89,7 +91,6 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @ServiceDependencies({
-	InitialGroupManager.Module.class,
 	CompatibilityService.Module.class,
 	WrapperMetaAttributeUtil.Module.class,
 })
@@ -134,11 +135,11 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 		String SETTINGS = "settings";
 
 		/**
-		 * Automatically adjusts the persistent application model to changes performed in the static
-		 * model configuration during boot.
+		 * Strategy to follow, if the static model configuration of the current software version
+		 * differs from the persistent model baseline.
 		 */
 		@Name("auto-upgrade")
-		boolean getAutoUpgrade();
+		UpgradeStrategy getAutoUpgrade();
 
 		/**
 		 * List of model file references that together build up the the application model.
@@ -283,8 +284,18 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 	}
 
 	@Override
-	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues) {
-		return getFactory(type.getModule()).createObject(type, context, initialValues);
+	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues, TLID id) {
+		return getFactory(type.getModule()).createObject(type, context, initialValues, id);
+	}
+
+	@Override
+	public Group createGroup() {
+		return (Group) createObject(Group.getGroupType());
+	}
+
+	@Override
+	public Group createRepresentativeGroup() {
+		return (Group) createObject(Group.getRepresentativeGroupType());
 	}
 
 	/**
@@ -294,13 +305,28 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 		return Collections.unmodifiableCollection(_factories.values());
 	}
 
+	/**
+	 * @implNote The whole setup runs without an access check: the security configuration is resolved
+	 *           against the very model that is built here, so it cannot exist yet (it is started as an
+	 *           extension point of this service, i.e. immediately afterwards). Setting up the model
+	 *           touches the model itself - allocating the module singletons applies the default values
+	 *           of their attributes, and a {@code default-by-expression} default that allocates objects
+	 *           executes <i>TL-Script</i>. See {@link ModelAccessRights#uncheckedSecurity(ComputationEx2)}.
+	 */
 	@Override
 	protected void startUpInContext() throws ConfigurationException, KnowledgeBaseException {
+		ModelAccessRights.<Void, ConfigurationException, KnowledgeBaseException> uncheckedSecurity(() -> {
+			internalStartUpInContext();
+			return null;
+		});
+	}
+
+	private void internalStartUpInContext() throws ConfigurationException, KnowledgeBaseException {
 		super.startUpInContext();
 
 		InstantiationContext context = ApplicationConfig.getInstance().getServiceStartupContext();
 		
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(I18NConstants.MODEL_SERVIVE_STARTUP);
 		try {
 			_modelConfig = new ModelConfigLoader().load(context, config());
 			if (_modelConfig == null) {
@@ -352,9 +378,6 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 		boolean initialSetup = dbModel.getModules().isEmpty();
 
 		Protocol log = log();
-		ModelResolver modelResolver = new ModelResolver(log, dbModel, getFactory());
-		modelResolver.createModel(_modelConfig);
-		modelResolver.complete();
 
 		if (!initialSetup) {
 			// The model baseline was lost, the current configuration is used as new baseline, but
@@ -370,28 +393,38 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 
 			List<DiffElement> patch = patchCreator.getPatch();
 			if (!patch.isEmpty()) {
-				Logger.info(
-					"Restoring missing model baseline, diff to existing model follows:\n"
-						+ patch.stream().map(Object::toString).collect(Collectors.joining("\n")),
-					DynamicModelService.class);
+				Logger.info("Restoring missing model baseline.", DynamicModelService.class);
 
-				MigrationProcessors processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
-				ApplyModelPatch.applyPatch(new BufferingProtocol(), ModelCopy.copy(getModel()), null, patch,
-					processors.getProcessors());
-				new ConstraintChecker().check(log(), processors);
+				try {
+					MigrationProcessors processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
+					ApplyModelPatch.applyPatch(new BufferingProtocol(), ModelCopy.copy(getModel()), null, patch,
+						processors.getProcessors());
+					new ConstraintChecker().check(log(), processors);
 
-				Logger.info(
-					"The following migration would adjust the existing model to the current configuration:\n"
-						+ processors,
-					DynamicModelService.class);
+					Logger.info(
+						"The following migration would adjust the existing model to the current configuration:\n"
+							+ processors,
+						DynamicModelService.class);
+				} catch (RuntimeException ex) {
+					Logger.error(
+						"Failed to create migration making persistent model match configuration: \n" + patch, ex,
+						DynamicModelService.class);
+				}
 			}
 		}
+
+		// Note: This must be done after producing the automatic migration instructions above.
+		// Otherwise, new types, and modules would no appear in the diff.
+		ModelResolver modelResolver = new ModelResolver(log, dbModel, getFactory());
+		modelResolver.createModel(_modelConfig);
+		modelResolver.complete();
 
 		storeModelConfig(connection);
 	}
 
 	private void upgradeModel(PooledConnection connection, String oldConfigXML) throws SQLException {
-		if (!config().getAutoUpgrade()) {
+		UpgradeStrategy autoUpgrade = config().getAutoUpgrade();
+		if (autoUpgrade == UpgradeStrategy.IGNORE) {
 			// No incremental update.
 			Logger.info("Automatic model upgrade disabled.", DynamicModelService.class);
 			return;
@@ -414,11 +447,35 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 
 		List<DiffElement> patch = patchCreator.getPatch();
 		if (!patch.isEmpty()) {
-			Logger.info("Started incremental model upgrade: " + patch, DynamicModelService.class);
+			if (autoUpgrade == UpgradeStrategy.PREVENT) {
+				MigrationProcessors processors;
+				try {
+					processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
+					ApplyModelPatch.applyPatch(log, ModelCopy.copy(getModel()), getFactory(), patch,
+						processors.getProcessors());
+				} catch (RuntimeException ex) {
+					Logger.error("Failed to apply model patch: " + ex.getMessage() + "\n" + patch, ex,
+						DynamicModelService.class);
+					throw ex;
+				}
 
-			MigrationProcessors processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
-			ApplyModelPatch.applyPatch(log, getModel(), getFactory(), patch, processors.getProcessors());
-			new ConstraintChecker().check(log(), processors);
+				throw new IllegalStateException(
+					"Model baseline differs from static model, auto-upgrade diabled, migration required: "
+						+ processors);
+			}
+
+			Logger.info("Started incremental model upgrade.", DynamicModelService.class);
+
+			MigrationProcessors processors;
+			try {
+				processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
+				ApplyModelPatch.applyPatch(log, getModel(), getFactory(), patch, processors.getProcessors());
+				new ConstraintChecker().check(log(), processors);
+			} catch (RuntimeException ex) {
+				Logger.error("Failed to apply model patch: " + ex.getMessage() + "\n" + patch, ex,
+					DynamicModelService.class);
+				throw ex;
+			}
 
 			storeModelConfig(connection);
 
@@ -430,7 +487,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 				DynamicModelService.class);
 
 		} else {
-			Logger.info("No incremental model upgrade necessary.", DynamicModelService.class);
+			Logger.info("Model baseline matches static model, no upgrade required.", DynamicModelService.class);
 		}
 	}
 

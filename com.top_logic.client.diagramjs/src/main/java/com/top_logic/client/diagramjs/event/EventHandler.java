@@ -10,7 +10,7 @@ import jsinterop.annotations.JsFunction;
 /**
  * Basic event handler for events dispatched from within diagramjs.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 @JsFunction
 public interface EventHandler {

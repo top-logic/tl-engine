@@ -11,8 +11,8 @@
 </ul>
 <h2>Technische Vorraussetzung</h2>
 <ul>
- <li>Das exportierende TL-System muß das Module <code class="hljs inlineCode">com.top_logic.kafka</code> nutzen.</li>
- <li>Das importierende TL-System muß das Module <code class="hljs inlineCode">com.top_logic.kafka</code> nutzen.</li>
+ <li>Das exportierende TL-System muß das Module <code class="hljs inlineCode">com.top_logic.kafka.sync</code> nutzen.</li>
+ <li>Das importierende TL-System muß das Module <code class="hljs inlineCode">com.top_logic.kafka.sync</code> nutzen.</li>
  <li>Es muß ein laufendes Kafka vorhanden sein. Das Modul <code class="hljs inlineCode">com.top_logic.kafka.server</code> enthält einen Kafka-Server und Launchkonfigurationen um Kafka zu starten.</li>
  <li>Der Alias %KAFKA_SERVER% muß korrekt auf die URL des Kafka-Server gesetzt sein.</li>
  <li>Der Alias %DATA_CHANGE_CONSUMER_GROUP_NAME% sollte gesetzt sein. Hintergrund ist, dass alle TL-Systeme mit dem selben Wert dieser Variable als eine Gruppe angesehen werden, d.h. wenn ein importierendes TL-System die Änderungen bekommt, bekommen alle anderen Systeme diese Änderungen nicht mehr. Falls verschiedene System von einer gemeinsamen Quelle importieren, müssen diese Systeme also in verschienden Gruppen sein.</li>

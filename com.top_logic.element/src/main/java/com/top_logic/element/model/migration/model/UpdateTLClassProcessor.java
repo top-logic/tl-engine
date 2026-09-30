@@ -12,9 +12,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -37,8 +35,7 @@ import com.top_logic.model.migration.data.Type;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLClassProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class UpdateTLClassProcessor extends TLModelBaseLineMigrationProcessor<UpdateTLClassProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link UpdateTLClassProcessor}.
@@ -47,7 +44,8 @@ public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLC
 	 */
 	@TagName("update-class")
 	public interface Config
-			extends PolymorphicConfiguration<UpdateTLClassProcessor>, AnnotatedConfig<TLTypeAnnotation> {
+			extends TLModelBaseLineMigrationProcessor.Config<UpdateTLClassProcessor>,
+			AnnotatedConfig<TLTypeAnnotation> {
 
 		/**
 		 * Qualified name of the {@link TLClass} to update.
@@ -120,7 +118,7 @@ public class UpdateTLClassProcessor extends AbstractConfiguredInstance<UpdateTLC
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Update class migration failed at " + getConfig().location(), ex);

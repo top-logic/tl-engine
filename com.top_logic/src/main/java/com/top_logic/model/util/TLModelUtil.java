@@ -107,10 +107,13 @@ public class TLModelUtil {
 
 	private static final char SCOPE_ID_PART_SEPARATOR = '/';
 
-	/** Separator of of type and the part of its type in a qualified name. */
+	/**
+	 * Separator between model element and part in a qualified name, e.g. between type name and
+	 * attribute name, or module name and singleton name.
+	 */
 	public static final char QUALIFIED_NAME_PART_SEPARATOR = '#';
 
-	/** Separator of module and type in the qualified name of {@link TLType}. */
+	/** Separator between module and type in the qualified name of {@link TLType}. */
 	public static final char QUALIFIED_NAME_SEPARATOR = ':';
 
 	/** {@link Pattern} for splitting a qualified type name into its parts. */
@@ -895,6 +898,25 @@ public class TLModelUtil {
 	}
 
 	/**
+	 * The value representing "no value" for the given part, depending on its multiplicity.
+	 *
+	 * <p>
+	 * For a single-valued part this is <code>null</code>. For a multiple part it is an empty
+	 * collection of the same kind that the storage returns for a non-empty value: an empty list for
+	 * an {@link TLStructuredTypePart#isOrdered() ordered} part, an empty set otherwise. The
+	 * collection type is determined by {@link TLStructuredTypePart#isOrdered()} alone; a
+	 * (non-ordered) {@link TLStructuredTypePart#isBag() bag} is returned as a set, just as the
+	 * storage does.
+	 * </p>
+	 */
+	public static Object getEmptyValue(TLStructuredTypePart part) {
+		if (part.isMultiple()) {
+			return part.isOrdered() ? Collections.emptyList() : Collections.emptySet();
+		}
+		return null;
+	}
+
+	/**
 	 * Compute, whether the first class is a generalization of the second one.
 	 * <p>
 	 * Returns true, if c1 and c2 are equal.
@@ -1336,7 +1358,7 @@ public class TLModelUtil {
 	 * @return The opposite end.
 	 */
 	public static final TLAssociationEnd getOtherEnd(TLAssociationEnd end) {
-		List<TLAssociationEnd> allEnds = CollectionUtil.toListIterable(TLModelUtil.getEnds(end.getOwner()));
+		List<TLAssociationEnd> allEnds = TLModelUtil.getEnds(end.getOwner());
 		int endIndex = allEnds.indexOf(end);
 		TLAssociationEnd otherEnd = allEnds.get(1 - endIndex);
 		return otherEnd;
@@ -1785,7 +1807,16 @@ public class TLModelUtil {
 	 * @see #resolveQualifiedName(String)
 	 */
 	public static TLModelPart resolveModelPart(String qualifiedName) throws TopLogicException {
-		TLObject object = TLModelUtil.resolveQualifiedName(qualifiedName);
+		return resolveModelPart(model(), qualifiedName);
+	}
+
+	/**
+	 * Resolves the {@link TLModelPart} with the given qualified name in the given model.
+	 *
+	 * @see #resolveQualifiedName(String)
+	 */
+	public static TLModelPart resolveModelPart(TLModel model, String qualifiedName) throws TopLogicException {
+		TLObject object = TLModelUtil.resolveQualifiedName(model, qualifiedName);
 
 		if (object instanceof TLModelPart) {
 			return (TLModelPart) object;
@@ -2330,8 +2361,11 @@ public class TLModelUtil {
 	 * </p>
 	 * 
 	 * @see #potentialTables(TLClass, boolean)
+	 * 
+	 * @throws UnknownTypeException
+	 *         iff the table configured table does not exist.
 	 */
-	public static MOStructure getTable(TLStructuredType type) {
+	public static MOStructure getTable(TLStructuredType type) throws UnknownTypeException {
 		String tableName = CompatibilityService.getInstance().getTableFor(type);
 		if (tableName == null) {
 			return null;

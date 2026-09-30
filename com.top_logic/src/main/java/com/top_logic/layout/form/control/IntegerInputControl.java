@@ -20,6 +20,7 @@ import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.constraints.IRangeConstraint;
 import com.top_logic.layout.form.constraints.RangeConstraint;
 import com.top_logic.layout.form.tag.Icons;
 import com.top_logic.layout.form.template.ControlProvider;
@@ -62,8 +63,10 @@ public class IntegerInputControl extends AbstractFormFieldControl {
 	private final TextInputControl textInput;
     private String incButtonId;
     private String decButtonId;
-    private Comparable min;
-    private Comparable max;
+
+	private long min = Long.MIN_VALUE;
+
+	private long max = Long.MAX_VALUE;
 
     /** 
      * Creates a {@link IntegerInputControl}.
@@ -72,7 +75,14 @@ public class IntegerInputControl extends AbstractFormFieldControl {
      */
     public IntegerInputControl(FormField aModel) {
 		super(aModel);
-        textInput = new TextInputControl(aModel);
+		textInput = new TextInputControl(aModel) {
+			@Override
+			protected void writeControlClassesContent(Appendable out) throws IOException {
+				super.writeControlClassesContent(out);
+
+				out.append(FormConstants.FLEXIBLE_CSS_CLASS);
+			}
+		};
         textInput.setMultiLine(false);
         textInput.setRows(1);
     }
@@ -109,7 +119,7 @@ public class IntegerInputControl extends AbstractFormFieldControl {
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cIntegerInput";
+		return "tl-integer-input";
 	}
 
     @Override
@@ -167,28 +177,27 @@ public class IntegerInputControl extends AbstractFormFieldControl {
 		setMinMax(field);
 		boolean isDisabled = field.isDisabled();
 		Object theObj = field.hasValue() ? field.getValue() : null;
-        Comparable theValue = null;
+		Object theValue = null;
         if (theObj != null && isApplicableType(theObj)) {
-            theValue = (Comparable)theObj;
+			theValue = theObj;
         }
+        
         // span to position the plus/minus buttons
         anOut.beginBeginTag(SPAN);
 		anOut.writeAttribute(ID_ATTR, buttonsId());
 		anOut.writeAttribute(CLASS_ATTR, FormConstants.FIXED_RIGHT_CSS_CLASS);
-        anOut.writeAttribute(STYLE_ATTR, "position: relative;");
         anOut.endBeginTag();
 		{
 			writeIncrementButton(aContext, anOut, isDisabled, theValue);
 
 			writeDecrementButton(aContext, anOut, isDisabled, theValue);
 		}
-
 		anOut.endTag(SPAN);
 	}
 
-	private void writeDecrementButton(DisplayContext context, TagWriter out, boolean disabled, Comparable value)
+	private void writeDecrementButton(DisplayContext context, TagWriter out, boolean disabled, Object value)
 			throws IOException {
-		boolean disabledState = disabled || isLessThanMin(value);
+		boolean disabledState = disabled || isLessOrEqualMin(value);
 
 		ThemeImage enabledImagePath = Icons.DECREMENT_BUTTON_IMAGE;
 		ThemeImage disabledImagePath = Icons.DECREMENT_BUTTON_DISABLED_IMAGE;
@@ -213,9 +222,9 @@ public class IntegerInputControl extends AbstractFormFieldControl {
 		tag.endEmptyTag(context, out);
 	}
 
-	private void writeIncrementButton(DisplayContext context, TagWriter out, boolean disabled, Comparable value)
+	private void writeIncrementButton(DisplayContext context, TagWriter out, boolean disabled, Object value)
 			throws IOException {
-		boolean disabledState = disabled || isGreaterThanMax(value);
+		boolean disabledState = disabled || isGreaterOrEqualMax(value);
 
 		ThemeImage enabledImagePath = Icons.INCREMENT_BUTTON_IMAGE;
 		ThemeImage disabledImagePath = Icons.INCREMENT_BUTTON_DISABLED_IMAGE;
@@ -255,9 +264,9 @@ public class IntegerInputControl extends AbstractFormFieldControl {
 		out.append(",");
 		textInput.writeInputIdJsString(out);
 		out.append(", ");
-		out.writeJsLiteral(min);
+		out.writeJsLiteral(min == Long.MIN_VALUE ? null : min);
 		out.append(", ");
-		out.writeJsLiteral(max);
+		out.writeJsLiteral(max == Long.MAX_VALUE ? null : max);
 		if (showWait(this)) {
 			out.append(",true");
 		}
@@ -310,7 +319,7 @@ public class IntegerInputControl extends AbstractFormFieldControl {
      * @param anObject The value to check.
      */
     private static boolean isApplicableType(Object anObject) {
-        return anObject instanceof Integer || anObject instanceof Long;
+		return anObject instanceof Number;
     }
     
     /** 
@@ -321,19 +330,14 @@ public class IntegerInputControl extends AbstractFormFieldControl {
      * is empty, i.e. none has been entered, if the minimum is greater than the
      * implicit default value zero.
      */
-    private boolean isLessThanMin(Comparable aValue) {
+	private boolean isLessOrEqualMin(Object aValue) {
         boolean theResult = false;
-        if (min != null) {
-            if (aValue != null) {
-                theResult = aValue.compareTo(min) <= 0;
-            }
-            else {
-                theResult = Integer.valueOf(0).compareTo((Integer)min) <= 0;
-            }
+		if (aValue != null) {
+			theResult = toLong(aValue) <= min;
         }
         return theResult;
     }
-    
+
     /** 
      * This method checks if the given value is less than the configured maximum.
      * 
@@ -342,19 +346,18 @@ public class IntegerInputControl extends AbstractFormFieldControl {
      * is empty, i.e. none has been entered, if the maximum is less than the
      * implicit default value zero.
      */
-    private boolean isGreaterThanMax(Comparable aValue) {
+	private boolean isGreaterOrEqualMax(Object aValue) {
         boolean theResult = false;
-        if (max != null) {
-            if (aValue != null) {
-                theResult = aValue.compareTo(max) >= 0;
-            }
-            else {
-                theResult = Integer.valueOf(0).compareTo((Integer)max) >= 0;
-            }
+		if (aValue != null) {
+			theResult = toLong(aValue) >= max;
         }
         return theResult;
     }
     
+	private static long toLong(Object aValue) {
+		return ((Number) aValue).longValue();
+	}
+
     /** 
      * This method sets the minimum and maximum constraints of this control according
      * to any {@link RangeConstraint} attached to the model's {@link FormField}.
@@ -363,15 +366,18 @@ public class IntegerInputControl extends AbstractFormFieldControl {
      */
     private void setMinMax(FormField aField) {
 		for (Constraint constraint : aField.getConstraints()) {
-            if (constraint instanceof RangeConstraint) {
-                RangeConstraint rangeConstraint = (RangeConstraint) constraint;
-                Comparable theLowerComp = rangeConstraint.getLower();
-                Comparable theUpperComp = rangeConstraint.getUpper();
-                if (theLowerComp == null || isApplicableType(theLowerComp)) {
-                    min = theLowerComp;
+			if (constraint instanceof IRangeConstraint rangeConstraint) {
+				Object lower = rangeConstraint.getLower();
+				Object upper = rangeConstraint.getUpper();
+				if (lower != null && isApplicableType(lower)) {
+					min = toLong(lower);
+				} else {
+					min = Long.MIN_VALUE;
                 }
-                if (theUpperComp == null || isApplicableType(theUpperComp)) {
-                    max = theUpperComp;
+				if (upper != null && isApplicableType(upper)) {
+					max = toLong(upper);
+				} else {
+					max = Long.MAX_VALUE;
                 }
             }
         }

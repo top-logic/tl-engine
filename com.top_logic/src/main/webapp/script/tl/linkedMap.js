@@ -28,6 +28,17 @@ services.LinkedMap.prototype.put = function(key, value) {
 	this.storage[key] = value;
 };
 
+/**
+ * @param key - any number or string
+ */
+services.LinkedMap.prototype.remove = function(key) {
+	const index = this.order.indexOf(key);
+	if (index >= 0) {
+		this.order.splice(index, 1);
+		delete this.storage[key];
+	} 
+};
+
 services.LinkedMap.prototype.values = function() {
 	if (this.order.length == 0) {
 		return null;

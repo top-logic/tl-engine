@@ -5,7 +5,7 @@
 	page="/jsp/element/expression/selectExpression.jsp"
 	reportComponent="layouts_model_search_modelSearch_reports_Configurator"
 	resPrefix="layouts.model.search.modelSearch.SearchSelectorComponent."
-	securityProviderClass="com.top_logic.model.search.ui.selector.ModelSearchSelectorSecurityObjectProvider"
+	securityObject="ref:com.top_logic.model.search.ui.selector.ModelSearchSelectorSecurityObjectProvider"
 	toolbar="false"
 >
 	<layoutInfo size="50"/>
@@ -13,24 +13,23 @@
 		<layout name="SaveSearchAs">
 			<dialogInfo
 				disabledImage="theme:ICONS_BUTTON_SAVE_DISABLED"
-				height="220px"
+				height="360px"
 				image="theme:ICONS_BUTTON_SAVE"
 				openHandlerClass="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsOpenDialogCommand"
 				openerClique="save"
 				openerCommandGroup="Create"
 				resizable="true"
-				width="400px"
+				width="450px"
 			/>
 
 			<components>
 				<component class="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsComponent"
-					buttonComponent="SaveSearchAsButtons"
+					buttonbar="true"
 					name="SaveSearchAsForm"
 					page="/jsp/model/search/SaveSearchAs.jsp"
 					resPrefix="layouts.model.search.modelSearch.SaveSearchAsForm."
-					securityProviderClass="securityRoot"
+					securityObject="securityRoot"
 				/>
-				<buttonbar name="SaveSearchAsButtons"/>
 			</components>
 		</layout>
 	</dialogs>

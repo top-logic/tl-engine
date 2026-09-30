@@ -12,23 +12,33 @@ import java.util.Set;
 import com.top_logic.basic.col.ComparableComparator;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.form.template.ControlProvider;
+import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.security.SecurityAddingTableConfiguration;
+import com.top_logic.layout.table.CellClassProvider;
 import com.top_logic.layout.table.filter.AllCellsExist;
 import com.top_logic.layout.table.filter.LabelFilterProvider;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
 import com.top_logic.layout.table.model.ColumnConfigurator;
 import com.top_logic.layout.table.provider.generic.TableConfigModelInfo;
+import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.AnnotationLookup;
+import com.top_logic.model.annotate.ui.CssClassProvider;
 import com.top_logic.model.annotate.ui.PDFRendererAnnotation;
+import com.top_logic.model.annotate.ui.TLCssClass;
 import com.top_logic.model.export.ConcatenatedPreloadContribution;
 import com.top_logic.model.export.PreloadContribution;
+import com.top_logic.model.fallback.FallbackCellClassProvider;
+import com.top_logic.model.fallback.StorageWithFallback;
 import com.top_logic.model.util.TLTypeContext;
 import com.top_logic.tool.export.pdf.PDFRenderer;
 
@@ -64,6 +74,12 @@ public abstract class ColumnInfo implements ColumnConfigurator {
 
 	private DisplayMode _visibility;
 
+	private String _staticCss;
+
+	private boolean _cssOverride;
+
+	private CellClassProvider _cellClassProvider;
+
 	/**
 	 * Creates a {@link ColumnInfo}.
 	 * 
@@ -79,6 +95,20 @@ public abstract class ColumnInfo implements ColumnConfigurator {
 		_headerI18NKey = headerI18NKey;
 		_visibility = visibility;
 		_accessor = accessor;
+
+		TLTypePart typePart = contentType.getTypePart();
+		if (typePart != null) {
+			TLCssClass cssAnnotation = typePart.getAnnotation(TLCssClass.class);
+			if (cssAnnotation != null) {
+				_staticCss = cssAnnotation.getValue();
+				_cssOverride = cssAnnotation.getOverride();
+				PolymorphicConfiguration<? extends CssClassProvider> dynamicCss = cssAnnotation.getDynamicCssClass();
+				if (dynamicCss != null) {
+					CssClassProvider provider = TypedConfigUtil.createInstance(dynamicCss);
+					_cellClassProvider = CellClassAdapter.wrap(contentType, provider);
+				}
+			}
+		}
 	}
 
 	/**
@@ -134,9 +164,12 @@ public abstract class ColumnInfo implements ColumnConfigurator {
 	protected abstract void setCellExistenceTester(ColumnConfiguration column);
 	
 	/**
-	 * Adapts {@link ColumnConfiguration#getExcelRenderer()}.
+	 * Adapts {@link ColumnConfiguration#internalExcelRenderer()}.
 	 */
-	protected abstract void setExcelRenderer(ColumnConfiguration column);
+	protected void setExcelRenderer(ColumnConfiguration column) {
+		column.setExcelRenderer(
+			LabelProviderService.getInstance().getExcelCellRendererForType(getTypeContext().getType()));
+	}
 
 	/**
 	 * Adapts {@link ColumnConfiguration#getCellRenderer()}.
@@ -180,7 +213,7 @@ public abstract class ColumnInfo implements ColumnConfigurator {
 			|| column.getCellExistenceTester() == null) {
 			setCellExistenceTester(column);
 		}
-		if (column.getExcelRenderer() == null) {
+		if (column.internalExcelRenderer() == null) {
 			setExcelRenderer(column);
 		}
 		if (column.getCellRenderer() == null) {
@@ -199,6 +232,24 @@ public abstract class ColumnInfo implements ColumnConfigurator {
 		}
 		if (column.getPDFRenderer() == null) {
 			setPDFRenderer(column);
+		}
+		if (_cssOverride) {
+			// When override is set, always replace existing classes, even with null/empty
+			column.setCssClass(_staticCss);
+		} else if (_staticCss != null) {
+			// Only add if there's actually a class to add
+			column.addCssClass(_staticCss);
+		}
+		if (_cellClassProvider != null) {
+			column.setCssClassProvider(_cellClassProvider);
+		} else {
+			TLTypePart part = getTypeContext().getTypePart();
+			if (part != null && part instanceof TLStructuredTypePart attribute) {
+				StorageDetail storage = attribute.getStorageImplementation();
+				if (storage instanceof StorageWithFallback fallbackStorage) {
+					column.setCssClassProvider(new FallbackCellClassProvider(attribute, fallbackStorage));
+				}
+			}
 		}
 	}
 

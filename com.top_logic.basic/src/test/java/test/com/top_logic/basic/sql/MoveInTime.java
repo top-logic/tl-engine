@@ -33,7 +33,7 @@ import com.top_logic.basic.time.CalendarUtil;
 /**
  * Work on a database and move all dates in time.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class MoveInTime {
 

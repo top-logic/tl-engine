@@ -11,7 +11,9 @@ import java.util.Set;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
+import com.top_logic.knowledge.service.db2.PersistentObject;
 
 /**
  * {@link TLObject} without persistency.
@@ -25,6 +27,12 @@ public abstract class TransientObject extends AbstractTLObject {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * A {@link TransientObject} exists on its own and is therefore always valid; a subclass that is
+	 * created in a {@link #tContainer() container} is valid while that container is.
+	 * 
+	 * @see TLObject#tValid()
+	 */
 	@Override
 	public boolean tValid() {
 		return true;
@@ -52,13 +60,24 @@ public abstract class TransientObject extends AbstractTLObject {
 
 	@Override
 	public void tUpdate(TLStructuredTypePart part, Object value) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Transient object can not be updated.");
+	}
+
+	@Override
+	public Object tGetData(String property) {
+		return null;
+	}
+
+	@Override
+	public Object tSetData(String property, Object value) {
+		throw new UnsupportedOperationException("Transient object can not be updated.");
 	}
 
 	/**
 	 * @deprecated Use {@link #tId()} instead
 	 */
 	@Override
+	@Deprecated
 	public ObjectKey getObjectKey() {
 		return tId();
 	}
@@ -75,6 +94,30 @@ public abstract class TransientObject extends AbstractTLObject {
 
 	@Override
 	public KnowledgeBase tKnowledgeBase() {
-		return null;
+		// For generic code that e.g. resolves the revision of this object, it is required to get
+		// some value.
+		return PersistencyLayer.getKnowledgeBase();
 	}
+
+	@Override
+	public String toString() {
+		String values;
+		try {
+			values = this.toStringValues();
+		} catch (Throwable ex) {
+			values = ", ERROR: '" + PersistentObject.toString(ex) + "'";
+		}
+
+		String className = this.getClass().getSimpleName();
+		return className + "(" + "type:" + tType() + values + ")";
+	}
+
+	/**
+	 * Hook for {@link #toString()} to retrieve relevant values in a format " (
+	 * <code>, property: value</code>)*".
+	 */
+	protected String toStringValues() {
+		return "";
+	}
+
 }

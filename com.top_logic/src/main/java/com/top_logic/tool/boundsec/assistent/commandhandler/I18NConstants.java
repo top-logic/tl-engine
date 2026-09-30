@@ -5,6 +5,7 @@
  */
 package com.top_logic.tool.boundsec.assistent.commandhandler;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,11 +19,14 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey SWITCH_ASSISTENT_BACKWARD = legacyKey("assistent.switchAssistentBackward");
+	@CustomKey("assistent.switchAssistentBackward")
+	public static ResKey SWITCH_ASSISTENT_BACKWARD;
 
-	public static ResKey SWITCH_ASSISTENT_FORWARD = legacyKey("assistent.switchAssistentForward");
+	@CustomKey("assistent.switchAssistentForward")
+	public static ResKey SWITCH_ASSISTENT_FORWARD;
 
-	public static ResKey SWITCH_ASSISTENT_SHOW = legacyKey("assistent.switchAssistentShow");
+	@CustomKey("assistent.switchAssistentShow")
+	public static ResKey SWITCH_ASSISTENT_SHOW;
 
 	static {
 		initConstants(I18NConstants.class);

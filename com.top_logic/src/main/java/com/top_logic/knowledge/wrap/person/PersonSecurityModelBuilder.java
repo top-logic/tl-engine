@@ -20,7 +20,7 @@ import com.top_logic.tool.boundsec.util.BoundSecurityFilter;
  * The builder will return all persons alive and adapt the {@link BoundSecurityFilter}
  * to that list to hide persons not allowed to be seen by the current user.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class PersonSecurityModelBuilder extends PersonModelBuilder {
 

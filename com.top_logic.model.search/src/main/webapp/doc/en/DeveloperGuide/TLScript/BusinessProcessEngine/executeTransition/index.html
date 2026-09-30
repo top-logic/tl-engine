@@ -1,0 +1,66 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>executeTransition($currentToken, $targetNode)
+</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Executes a transition from the current lock to a specified target node in a process instance if there is a valid path between them.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name of the process</th>
+			<th>Process type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Standard</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>currentToken</td>
+			<td>Token</td>
+			<td>Current token of a process instance</td>
+			<td>Yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>target</td>
+			<td>Node</td>
+			<td>Target node for the transition to</td>
+			<td>Yes</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><strong>Type:</strong> Boolean</p>
+
+<p>Returns true if the transition was executed successfully, false if the transition is not possible or the parameters are invalid.</p>
+
+<h2>Examples</h2>
+
+<pre>
+	<code>// Create a process instance with specific name
+processInstance = createProcessInstance($startEvent, "Process-001");
+
+// Get one of the current Tokens
+currentToken = $processInstance.get(`tl.bpe.execution:ProcessExecution#activeTokens`).firstElement();
+
+// Get all reachable nodes from current token
+targetNode = reachableNodes($currentToken).firstElement();
+
+// Execute Transition to first element of reachableNodes
+executeTransition($currentToken, $targetNode)</code>
+</pre>
+
+<p><strong>Output: </strong>true - The active Token of "Process-001" is now the token associated with $targetNode.</p>
+
+<p> </p>

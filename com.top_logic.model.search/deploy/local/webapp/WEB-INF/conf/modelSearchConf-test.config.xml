@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
@@ -12,4 +12,15 @@
 			</instance>
 		</config>
 	</services>
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/TestSearchExpressionMeta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
 </application>

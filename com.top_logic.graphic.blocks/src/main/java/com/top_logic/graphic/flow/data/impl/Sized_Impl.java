@@ -1,0 +1,425 @@
+package com.top_logic.graphic.flow.data.impl;
+
+/**
+ * Implementation of {@link com.top_logic.graphic.flow.data.Sized}.
+ */
+public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_Impl implements com.top_logic.graphic.flow.data.Sized {
+
+	private Double _minWidth = null;
+
+	private Double _maxWidth = null;
+
+	private Double _minHeight = null;
+
+	private Double _maxHeight = null;
+
+	private Double _desiredX = null;
+
+	private Double _desiredY = null;
+
+	private boolean _preserveAspectRatio = false;
+
+	/**
+	 * Creates a {@link Sized_Impl} instance.
+	 *
+	 * @see com.top_logic.graphic.flow.data.Sized#create()
+	 */
+	public Sized_Impl() {
+		super();
+	}
+
+	@Override
+	public TypeKind kind() {
+		return TypeKind.SIZED;
+	}
+
+	@Override
+	public final Double getMinWidth() {
+		return _minWidth;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setMinWidth(Double value) {
+		internalSetMinWidth(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getMinWidth()} without chain call utility. */
+	protected final void internalSetMinWidth(Double value) {
+		_listener.beforeSet(this, MIN_WIDTH__PROP, value);
+		_minWidth = value;
+		_listener.afterChanged(this, MIN_WIDTH__PROP);
+	}
+
+	@Override
+	public final boolean hasMinWidth() {
+		return _minWidth != null;
+	}
+
+	@Override
+	public final Double getMaxWidth() {
+		return _maxWidth;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setMaxWidth(Double value) {
+		internalSetMaxWidth(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getMaxWidth()} without chain call utility. */
+	protected final void internalSetMaxWidth(Double value) {
+		_listener.beforeSet(this, MAX_WIDTH__PROP, value);
+		_maxWidth = value;
+		_listener.afterChanged(this, MAX_WIDTH__PROP);
+	}
+
+	@Override
+	public final boolean hasMaxWidth() {
+		return _maxWidth != null;
+	}
+
+	@Override
+	public final Double getMinHeight() {
+		return _minHeight;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setMinHeight(Double value) {
+		internalSetMinHeight(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getMinHeight()} without chain call utility. */
+	protected final void internalSetMinHeight(Double value) {
+		_listener.beforeSet(this, MIN_HEIGHT__PROP, value);
+		_minHeight = value;
+		_listener.afterChanged(this, MIN_HEIGHT__PROP);
+	}
+
+	@Override
+	public final boolean hasMinHeight() {
+		return _minHeight != null;
+	}
+
+	@Override
+	public final Double getMaxHeight() {
+		return _maxHeight;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setMaxHeight(Double value) {
+		internalSetMaxHeight(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getMaxHeight()} without chain call utility. */
+	protected final void internalSetMaxHeight(Double value) {
+		_listener.beforeSet(this, MAX_HEIGHT__PROP, value);
+		_maxHeight = value;
+		_listener.afterChanged(this, MAX_HEIGHT__PROP);
+	}
+
+	@Override
+	public final boolean hasMaxHeight() {
+		return _maxHeight != null;
+	}
+
+	@Override
+	public final Double getDesiredX() {
+		return _desiredX;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setDesiredX(Double value) {
+		internalSetDesiredX(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDesiredX()} without chain call utility. */
+	protected final void internalSetDesiredX(Double value) {
+		_listener.beforeSet(this, DESIRED_X__PROP, value);
+		_desiredX = value;
+		_listener.afterChanged(this, DESIRED_X__PROP);
+	}
+
+	@Override
+	public final boolean hasDesiredX() {
+		return _desiredX != null;
+	}
+
+	@Override
+	public final Double getDesiredY() {
+		return _desiredY;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setDesiredY(Double value) {
+		internalSetDesiredY(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDesiredY()} without chain call utility. */
+	protected final void internalSetDesiredY(Double value) {
+		_listener.beforeSet(this, DESIRED_Y__PROP, value);
+		_desiredY = value;
+		_listener.afterChanged(this, DESIRED_Y__PROP);
+	}
+
+	@Override
+	public final boolean hasDesiredY() {
+		return _desiredY != null;
+	}
+
+	@Override
+	public final boolean isPreserveAspectRatio() {
+		return _preserveAspectRatio;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setPreserveAspectRatio(boolean value) {
+		internalSetPreserveAspectRatio(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isPreserveAspectRatio()} without chain call utility. */
+	protected final void internalSetPreserveAspectRatio(boolean value) {
+		_listener.beforeSet(this, PRESERVE_ASPECT_RATIO__PROP, value);
+		_preserveAspectRatio = value;
+		_listener.afterChanged(this, PRESERVE_ASPECT_RATIO__PROP);
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setContent(com.top_logic.graphic.flow.data.Box value) {
+		internalSetContent(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setX(double value) {
+		internalSetX(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setY(double value) {
+		internalSetY(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setWidth(double value) {
+		internalSetWidth(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setHeight(double value) {
+		internalSetHeight(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
+	@Override
+	public String jsonType() {
+		return SIZED__TYPE;
+	}
+
+	@SuppressWarnings("hiding")
+	static final java.util.List<String> PROPERTIES;
+	static {
+		java.util.List<String> local = java.util.Arrays.asList(
+			MIN_WIDTH__PROP, 
+			MAX_WIDTH__PROP, 
+			MIN_HEIGHT__PROP, 
+			MAX_HEIGHT__PROP, 
+			DESIRED_X__PROP, 
+			DESIRED_Y__PROP, 
+			PRESERVE_ASPECT_RATIO__PROP);
+		java.util.List<String> tmp = new java.util.ArrayList<>();
+		tmp.addAll(com.top_logic.graphic.flow.data.impl.Decoration_Impl.PROPERTIES);
+		tmp.addAll(local);
+		PROPERTIES = java.util.Collections.unmodifiableList(tmp);
+	}
+
+	@SuppressWarnings("hiding")
+	static final java.util.Set<String> TRANSIENT_PROPERTIES;
+	static {
+		java.util.HashSet<String> tmp = new java.util.HashSet<>();
+		tmp.addAll(com.top_logic.graphic.flow.data.impl.Decoration_Impl.TRANSIENT_PROPERTIES);
+		tmp.addAll(java.util.Arrays.asList(
+				));
+		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
+	}
+
+	@Override
+	public java.util.List<String> properties() {
+		return PROPERTIES;
+	}
+
+	@Override
+	public java.util.Set<String> transientProperties() {
+		return TRANSIENT_PROPERTIES;
+	}
+
+	@Override
+	public Object get(String field) {
+		switch (field) {
+			case MIN_WIDTH__PROP: return getMinWidth();
+			case MAX_WIDTH__PROP: return getMaxWidth();
+			case MIN_HEIGHT__PROP: return getMinHeight();
+			case MAX_HEIGHT__PROP: return getMaxHeight();
+			case DESIRED_X__PROP: return getDesiredX();
+			case DESIRED_Y__PROP: return getDesiredY();
+			case PRESERVE_ASPECT_RATIO__PROP: return isPreserveAspectRatio();
+			default: return super.get(field);
+		}
+	}
+
+	@Override
+	public void set(String field, Object value) {
+		switch (field) {
+			case MIN_WIDTH__PROP: internalSetMinWidth((Double) value); break;
+			case MAX_WIDTH__PROP: internalSetMaxWidth((Double) value); break;
+			case MIN_HEIGHT__PROP: internalSetMinHeight((Double) value); break;
+			case MAX_HEIGHT__PROP: internalSetMaxHeight((Double) value); break;
+			case DESIRED_X__PROP: internalSetDesiredX((Double) value); break;
+			case DESIRED_Y__PROP: internalSetDesiredY((Double) value); break;
+			case PRESERVE_ASPECT_RATIO__PROP: internalSetPreserveAspectRatio((boolean) value); break;
+			default: super.set(field, value); break;
+		}
+	}
+
+	@Override
+	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+		super.writeFields(scope, out);
+		if (hasMinWidth()) {
+			out.name(MIN_WIDTH__PROP);
+			out.value(getMinWidth());
+		}
+		if (hasMaxWidth()) {
+			out.name(MAX_WIDTH__PROP);
+			out.value(getMaxWidth());
+		}
+		if (hasMinHeight()) {
+			out.name(MIN_HEIGHT__PROP);
+			out.value(getMinHeight());
+		}
+		if (hasMaxHeight()) {
+			out.name(MAX_HEIGHT__PROP);
+			out.value(getMaxHeight());
+		}
+		if (hasDesiredX()) {
+			out.name(DESIRED_X__PROP);
+			out.value(getDesiredX());
+		}
+		if (hasDesiredY()) {
+			out.name(DESIRED_Y__PROP);
+			out.value(getDesiredY());
+		}
+		out.name(PRESERVE_ASPECT_RATIO__PROP);
+		out.value(isPreserveAspectRatio());
+	}
+
+	@Override
+	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
+		switch (field) {
+			case MIN_WIDTH__PROP: {
+				if (hasMinWidth()) {
+					out.value(getMinWidth());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case MAX_WIDTH__PROP: {
+				if (hasMaxWidth()) {
+					out.value(getMaxWidth());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case MIN_HEIGHT__PROP: {
+				if (hasMinHeight()) {
+					out.value(getMinHeight());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case MAX_HEIGHT__PROP: {
+				if (hasMaxHeight()) {
+					out.value(getMaxHeight());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case DESIRED_X__PROP: {
+				if (hasDesiredX()) {
+					out.value(getDesiredX());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case DESIRED_Y__PROP: {
+				if (hasDesiredY()) {
+					out.value(getDesiredY());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case PRESERVE_ASPECT_RATIO__PROP: {
+				out.value(isPreserveAspectRatio());
+				break;
+			}
+			default: super.writeFieldValue(scope, out, field);
+		}
+	}
+
+	@Override
+	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+		switch (field) {
+			case MIN_WIDTH__PROP: setMinWidth(in.nextDouble()); break;
+			case MAX_WIDTH__PROP: setMaxWidth(in.nextDouble()); break;
+			case MIN_HEIGHT__PROP: setMinHeight(in.nextDouble()); break;
+			case MAX_HEIGHT__PROP: setMaxHeight(in.nextDouble()); break;
+			case DESIRED_X__PROP: setDesiredX(in.nextDouble()); break;
+			case DESIRED_Y__PROP: setDesiredY(in.nextDouble()); break;
+			case PRESERVE_ASPECT_RATIO__PROP: setPreserveAspectRatio(in.nextBoolean()); break;
+			default: super.readField(scope, in, field);
+		}
+	}
+
+	@Override
+	public <R,A,E extends Throwable> R visit(com.top_logic.graphic.flow.data.Decoration.Visitor<R,A,E> v, A arg) throws E {
+		return v.visit(this, arg);
+	}
+
+}

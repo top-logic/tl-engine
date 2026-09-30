@@ -11,6 +11,7 @@ import java.util.Iterator;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.BasicTestSetup;
 import test.com.top_logic.basic.ControlFlowAssertion;
@@ -18,6 +19,7 @@ import test.com.top_logic.basic.ControlFlowAssertion;
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.annotation.Name;
 
 /**
  * Test case for {@link ConfigUtil}
@@ -150,6 +152,17 @@ public class TestConfigUtil extends BasicTestCase {
 		}
 	}
 	
+	public enum NamedEnum {
+		@Name("first-option")
+		FIRST,
+		
+		@Name("second-option")
+		SECOND,
+		
+		@Name("third-option")
+		THIRD
+	}
+
 	private static final Object DEFAULT = new NamedConstant("DEFAULT");
 
 	private static final Class<?>[] INT_PARAM = { int.class };
@@ -529,9 +542,13 @@ public class TestConfigUtil extends BasicTestCase {
 				fail();
 			} catch (ConfigurationException ex) {/*expected*/}
 		}
-
 	}
 
+	public void testNameAnnotatedEnum() {
+		assertEquals(NamedEnum.FIRST, ConfigUtil.getEnumConstant(NamedEnum.class, "first-option"));
+		assertEquals(NamedEnum.FIRST, ConfigUtil.getEnumConstant(NamedEnum.class, "FIRST"));
+		assertEquals("first-option", ConfigUtil.getEnumExternalName(NamedEnum.FIRST));
+	}
 
 	public static Test suite() {
 		return BasicTestSetup.createBasicTestSetup(new TestSuite(TestConfigUtil.class));

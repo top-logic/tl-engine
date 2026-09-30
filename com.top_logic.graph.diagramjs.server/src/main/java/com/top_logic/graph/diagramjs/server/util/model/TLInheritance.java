@@ -10,18 +10,18 @@ import com.top_logic.model.TLClass;
 /**
  * Inheritance between two {@link TLClass}es.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface TLInheritance {
 
 	/**
-	 * Generalisation of {@link #getTarget()}
+	 * Specialization of {@link #getGeneralization()}
 	 */
-	TLClass getSource();
+	TLClass getSpecialization();
 
 	/**
-	 * Specialisation of {@link #getSource()}
+	 * Generalisation of {@link #getSpecialization()}
 	 */
-	TLClass getTarget();
+	TLClass getGeneralization();
 
 }

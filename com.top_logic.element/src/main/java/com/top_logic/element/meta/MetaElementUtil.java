@@ -124,22 +124,6 @@ public class MetaElementUtil {
     }
 
     /**
-	 * Gets all objects which are from the given meta element type or a sub meta element type.
-	 * 
-	 * TODO #6121: Delete TL 5.8.0 deprecation 
-	 * 
-	 * @param aMetaElement
-	 *        the desired super meta element
-	 * @return a set of all objects which are from the given meta element type or a sub meta element
-	 *         type.
-	 * @deprecated Use {@link #getAllInstancesOf(TLClass, Class)}
-	 */
-	@Deprecated
-	public static List<Wrapper> getAllInstancesOf(TLClass aMetaElement) {
-		return getAllInstancesOf(aMetaElement, Wrapper.class);
-    }
-    
-    /**
      * Gets all objects which are from the given meta element type or a sub meta element
      * type.
      * 
@@ -152,21 +136,6 @@ public class MetaElementUtil {
 		return AttributeOperations.allInstances(aMetaElement, expectedType);
     }
 
-	/**
-     * Gets all objects which are from the given meta element type.
-     * 
-     * TODO #6121: Delete TL 5.8.0 deprecation 
-     * 
-     * @param metaElement
-     *        the desired meta element
-     * @return a set of all objects which are from the given meta element type.
-     * @deprecated Use {@link #getAllDirectInstancesOf(TLClass, Class)}.
-     */
-	@Deprecated
-	public static List<Wrapper> getAllDirectInstancesOf(TLClass metaElement) {
-		return getAllDirectInstancesOf(metaElement, Wrapper.class);
-	}
-	
 	/**
 	 * Gets all objects which are from the given meta element type.
 	 * 
@@ -194,6 +163,8 @@ public class MetaElementUtil {
 	 * @param type
 	 *        The type to find direct instances of.
 	 * @return {@link CloseableIterator} of instances.
+	 * 
+	 * @see AttributeOperations#allDirectInstances(TLClass, Class)
 	 */
 	public static <T extends TLObject> CloseableIterator<T> iterateDirectInstances(TLClass type, Class<T> expectedType) {
 		return AttributeOperations.allDirectInstances(type, expectedType);
@@ -835,17 +806,14 @@ public class MetaElementUtil {
 		if (existingPart != null) {
 			// Is override.
 			if (existingPart.getOwner() == clazz) {
-				throw new TopLogicException(I18NConstants.DUPLICATE_ATTRIBUTE__ID.fill(classPart.getName()));
+				throw new TopLogicException(
+					com.top_logic.model.I18NConstants.DUPLICATE_ATTRIBUTE__NAME_CLASS.fill(classPart.getName(), clazz));
 			}
-			copyCharacteristics((TLClassPart) existingPart, classPart);
+			TLCharacteristicsCopier.copyOverrideCharacteristics(existingPart, classPart);
 		}
 
 		clazz.getLocalClassParts().add(index, classPart);
 		classPart.updateDefinition();
-	}
-
-	private static void copyCharacteristics(TLClassPart source, TLClassPart destination) {
-		TLCharacteristicsCopier.copyCharacteristics(source, destination);
 	}
 
 	private static void addAssociationPart(TLAssociation association, int index, TLStructuredTypePart part) {

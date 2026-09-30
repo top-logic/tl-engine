@@ -7,6 +7,7 @@ package com.top_logic.model.form.definition;
 
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.implementation.FormEditorTemplateProvider;
 
 /**
@@ -48,11 +49,11 @@ public interface ContainerProperties<T extends FormEditorTemplateProvider> exten
 	 * @return Where the labels of the elements inside this container element are rendered.
 	 */
 	@Name(LABEL_PLACEMENT)
-	LabelPlacement getLabelPlacement();
+	LabelPosition getLabelPlacement();
 
 	/**
 	 * @see #getLabelPlacement()
 	 */
-	void setLabelPlacement(LabelPlacement labelPlacement);
+	void setLabelPlacement(LabelPosition labelPlacement);
 
 }

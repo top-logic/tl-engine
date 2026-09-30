@@ -13,9 +13,9 @@ import com.top_logic.element.ElementStartStop;
  * StartStopListener if needed (at least to set up your Version)
  * 
  * There is a Bug in WAS 5.x when this class does dot (re-)implement
- * {@link javax.servlet.ServletContextListener} it will fail to load 
+ * {@link jakarta.servlet.ServletContextListener} it will fail to load 
  *
- * @author   <a href="mailto:jco@top-logic.com">Jörg Conotte</a>
+ * @author   <a href="mailto:jco@top-logic.com">JÃ¶rg Conotte</a>
  */
 public class DemoStartStopListener extends ElementStartStop {
 	

@@ -13,7 +13,7 @@ import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.kafka.server.module.KafkaModule;
 
 import kafka.server.KafkaConfig;
-import scala.collection.JavaConversions;
+import scala.collection.JavaConverters;
 
 /**
  * Extension of {@link KafkaModule} for tests.
@@ -40,7 +40,7 @@ public class TestKafkaModule extends KafkaModule {
 	}
 
 	private void removeKafkaData(KafkaConfig kafkaConfig) {
-		List<String> logDirs = JavaConversions.seqAsJavaList(kafkaConfig.logDirs());
+		List<String> logDirs = JavaConverters.asJava(kafkaConfig.logDirs());
 		for (String logDir : logDirs) {
 			FileUtilities.deleteR(new File(logDir));
 		}

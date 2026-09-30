@@ -20,6 +20,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.I18NConstants;
+import com.top_logic.tool.execution.service.CommandApprovalService;
 import com.top_logic.util.TLResKeyUtil;
 
 /**
@@ -27,7 +28,7 @@ import com.top_logic.util.TLResKeyUtil;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-@InApp
+@InApp(classifiers = CommandApprovalService.APPROVAL_SERVICE_CLASSIFIER)
 public class ExecutabilityByExpression extends AbstractConfiguredInstance<ExecutabilityByExpression.Config>
 		implements ExecutabilityRule {
 

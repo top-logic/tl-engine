@@ -49,6 +49,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.CommandBuilder;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.DisabledPropertyListener;
 import com.top_logic.layout.form.FormContainer;
@@ -95,7 +96,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.VisibilityListener;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 import com.top_logic.util.css.CssUtil;
 
 /**
@@ -345,7 +345,7 @@ public class Fields {
 
 		@Override
 		public void handleChange(Value<?> target) {
-			_dest.setLabel(Resources.getInstance().getString(_value.get()));
+			_dest.setLabel(_value.get());
 		}
 	}
 
@@ -361,7 +361,7 @@ public class Fields {
 
 		@Override
 		public void handleChange(Value<?> target) {
-			_dest.setTooltip(Resources.getInstance().getString(_value.get()));
+			_dest.setTooltip(_value.get());
 		}
 	}
 
@@ -377,7 +377,7 @@ public class Fields {
 
 		@Override
 		public void handleChange(Value<?> target) {
-			_dest.setTooltipCaption(Resources.getInstance().getString(_value.get()));
+			_dest.setTooltipCaption(_value.get());
 		}
 	}
 
@@ -1316,8 +1316,44 @@ public class Fields {
 		return field;
 	}
 
+	/**
+	 * Adds a new button for the given {@link Command} to the given container.
+	 * 
+	 * @param parent
+	 *        The {@link FormContainer} to add button to.
+	 * @param name
+	 *        Name of the new button
+	 * @param image
+	 *        Image to display the button.
+	 * @param command
+	 *        {@link Command} for the button.
+	 * 
+	 * @see #button(FormContainer, String, ThemeImage, CommandBuilder)
+	 */
 	public static CommandField button(FormContainer parent, String name, ThemeImage image, final Command command) {
 		CommandField result = FormFactory.newCommandField(name, command);
+		result.setImage(image);
+		parent.addMember(result);
+		return result;
+	}
+
+	/**
+	 * Adds a new button for the given {@link CommandBuilder} to the given container.
+	 * 
+	 * @param parent
+	 *        The {@link FormContainer} to add button to.
+	 * @param name
+	 *        Name of the new button
+	 * @param image
+	 *        Image to display the button.
+	 * @param builder
+	 *        Builder for the {@link Command} for the button.
+	 * 
+	 * @see #button(FormContainer, String, ThemeImage, Command)
+	 */
+	public static CommandField button(FormContainer parent, String name, ThemeImage image,
+			final CommandBuilder builder) {
+		CommandField result = FormFactory.newCommandField(name, builder);
 		result.setImage(image);
 		parent.addMember(result);
 		return result;

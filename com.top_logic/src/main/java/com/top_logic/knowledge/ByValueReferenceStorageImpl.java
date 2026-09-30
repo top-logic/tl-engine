@@ -49,7 +49,10 @@ public class ByValueReferenceStorageImpl extends KnowledgeReferenceStorageImpl {
 	/** Singleton {@link ByValueReferenceStorageImpl} instance. */
 	public static final ByValueReferenceStorageImpl INSTANCE = new ByValueReferenceStorageImpl();
 
-	private ByValueReferenceStorageImpl() {
+	/**
+	 * Creates a {@link ByValueReferenceStorageImpl}.
+	 */
+	protected ByValueReferenceStorageImpl() {
 		// singleton instance
 	}
 
@@ -100,8 +103,10 @@ public class ByValueReferenceStorageImpl extends KnowledgeReferenceStorageImpl {
 		if (cacheValue instanceof ObjectKey) {
 			if (applicationValue == null) {
 				if (((MOReference) attribute).getDeletionPolicy() == DeletionPolicy.VETO) {
-					// Target has been deleted, veto is not yet checked (only during commit), but
+					// a) Target has been deleted, veto is not yet checked (only during commit), but
 					// somebody tries to access the reference after deleting the referenced object.
+					// b) Access to a historic object with a type that does no longer exist in
+					// current.
 					return null;
 				}
 				throw new KnowledgeBaseRuntimeException("Cache value '" + cacheValue + "' for attribute '" + attribute
@@ -124,7 +129,13 @@ public class ByValueReferenceStorageImpl extends KnowledgeReferenceStorageImpl {
 		setCacheValue(attribute, item, storage, stableObjectKey);
 	}
 
-	private IdentifiedObject getReferencedObject(ObjectContext context, Object cacheValue) {
+	/**
+	 * Resolves the given cache value (either an {@link ObjectKey} or already an
+	 * {@link IdentifiedObject} to the referenced object.
+	 * 
+	 * @see #getObjectKey(Object)
+	 */
+	protected final IdentifiedObject getReferencedObject(ObjectContext context, Object cacheValue) {
 		if (cacheValue instanceof IdentifiedObject) {
 			return (IdentifiedObject) cacheValue;
 		} else {
@@ -144,13 +155,19 @@ public class ByValueReferenceStorageImpl extends KnowledgeReferenceStorageImpl {
 		return getObjectKey(cacheValue);
 	}
 
-	private ObjectKey getObjectKey(Object cacheValue) {
+	/**
+	 * Retrieves an {@link ObjectKey} from the given cache value (either already an
+	 * {@link ObjectKey}, or an {@link IdentifiedObject}).
+	 * 
+	 * @see #getReferencedObject(ObjectContext, Object)
+	 */
+	protected final ObjectKey getObjectKey(Object cacheValue) {
 		if (cacheValue instanceof ObjectKey) {
 			return (ObjectKey) cacheValue;
 		} else {
-			assert cacheValue instanceof KnowledgeItem : "Cache contains either '" + ObjectKey.class.getName()
-				+ "' or '" + KnowledgeItem.class.getName() + "'.";
-			KnowledgeItem cachedReference = (KnowledgeItem) cacheValue;
+			assert cacheValue instanceof IdentifiedObject : "Cache contains either '" + ObjectKey.class.getName()
+				+ "' or '" + IdentifiedObject.class.getName() + "'.";
+			IdentifiedObject cachedReference = (IdentifiedObject) cacheValue;
 			return cachedReference.tId();
 		}
 	}

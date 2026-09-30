@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic.element/treegrid.template.xml"
 >
 	<arguments
@@ -171,6 +170,7 @@
 		</buttons>
 		<dialogs>
 			<layout-reference resource="com.top_logic.demo/technical/components/dragAndDrop/newLibraryElement/newLibraryElementDialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/dragAndDrop/importLibraryScriptDialog.layout.xml"/>
 		</dialogs>
 	</arguments>
 </config:template-call>

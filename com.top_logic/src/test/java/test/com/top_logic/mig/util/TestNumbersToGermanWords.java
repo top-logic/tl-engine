@@ -49,13 +49,13 @@ public class TestNumbersToGermanWords extends TestCase {
         assertEquals("Minus Zwei Trillionen Einhundertsiebenundzwanzig Billiarden",
                         NumbersToGermanWords.convert(-2127000000000000000L));
         String result = NumbersToGermanWords.convert(123456789867542.0);
-        assertEquals("Einhundertdreiundzwanzig Billionen Vierhundertsechsundfünfzig Milliarden Siebenhundertneunundachtzig Millionen Achthundertsiebenundsechzigtausendfünfhundertzweiundvierzig",
+        assertEquals("Einhundertdreiundzwanzig Billionen VierhundertsechsundfÃ¼nfzig Milliarden Siebenhundertneunundachtzig Millionen AchthundertsiebenundsechzigtausendfÃ¼nfhundertzweiundvierzig",
                      result);
         result = NumbersToGermanWords.convert(1234567898675423196L);
-        assertEquals("Eine Trillion Zweihundertvierunddreißig Billiarden Fünfhundertsiebenundsechzig Billionen Achthundertachtundneunzig Milliarden Sechshundertfünfundsiebzig Millionen Vierhundertdreiundzwanzigtausendeinhundertsechsundneunzig",
+        assertEquals("Eine Trillion ZweihundertvierunddreiÃŸig Billiarden FÃ¼nfhundertsiebenundsechzig Billionen Achthundertachtundneunzig Milliarden SechshundertfÃ¼nfundsiebzig Millionen Vierhundertdreiundzwanzigtausendeinhundertsechsundneunzig",
                      result);
         result = NumbersToGermanWords.convert(-1324657896875423196L);
-        assertEquals("Minus Eine Trillion Dreihundertvierundzwanzig Billiarden Sechshundertsiebenundfünfzig Billionen Achthundertsechsundneunzig Milliarden Achthundertfünfundsiebzig Millionen Vierhundertdreiundzwanzigtausendeinhundertsechsundneunzig",
+        assertEquals("Minus Eine Trillion Dreihundertvierundzwanzig Billiarden SechshundertsiebenundfÃ¼nfzig Billionen Achthundertsechsundneunzig Milliarden AchthundertfÃ¼nfundsiebzig Millionen Vierhundertdreiundzwanzigtausendeinhundertsechsundneunzig",
                      result);
         try {
             NumbersToGermanWords.convert(Long.MAX_VALUE * 10.0d);
@@ -95,17 +95,17 @@ public class TestNumbersToGermanWords extends TestCase {
             assertEquals(NumbersToGermanWords.convert(- NumbersToGermanWords.MAX_DOUBLE + i),
                          NumbersToGermanWords.convert(- maxLong + i));
         }  
-        assertEquals("Neun Billiarden Sieben Billionen Einhundertneunundneunzig Milliarden Zweihundertvierundfünfzig Millionen Siebenhundertvierzigtausendneunhundertneunundachtzig",
+        assertEquals("Neun Billiarden Sieben Billionen Einhundertneunundneunzig Milliarden ZweihundertvierundfÃ¼nfzig Millionen Siebenhundertvierzigtausendneunhundertneunundachtzig",
             NumbersToGermanWords.convert(NumbersToGermanWords.MAX_DOUBLE));   
-        assertEquals("Neun Billiarden Sieben Billionen Einhundertneunundneunzig Milliarden Zweihundertvierundfünfzig Millionen Siebenhundertvierzigtausendneunhundertachtundachtzig",
+        assertEquals("Neun Billiarden Sieben Billionen Einhundertneunundneunzig Milliarden ZweihundertvierundfÃ¼nfzig Millionen Siebenhundertvierzigtausendneunhundertachtundachtzig",
             NumbersToGermanWords.convert(NumbersToGermanWords.MAX_DOUBLE - 1));   
-        assertEquals("Neun Billiarden Sieben Billionen Einhundertneunundneunzig Milliarden Zweihundertvierundfünfzig Millionen Siebenhundertvierzigtausendneunhundertsiebenundachtzig",
+        assertEquals("Neun Billiarden Sieben Billionen Einhundertneunundneunzig Milliarden ZweihundertvierundfÃ¼nfzig Millionen Siebenhundertvierzigtausendneunhundertsiebenundachtzig",
             NumbersToGermanWords.convert(NumbersToGermanWords.MAX_DOUBLE - 2));   
-        assertEquals("Minus Neun Billiarden Sieben Billionen Einhundertneunundneunzig Milliarden Zweihundertvierundfünfzig Millionen Siebenhundertvierzigtausendneunhundertneunundachtzig",
+        assertEquals("Minus Neun Billiarden Sieben Billionen Einhundertneunundneunzig Milliarden ZweihundertvierundfÃ¼nfzig Millionen Siebenhundertvierzigtausendneunhundertneunundachtzig",
             NumbersToGermanWords.convert(- NumbersToGermanWords.MAX_DOUBLE));   
-        assertEquals("Minus Neun Billiarden Sieben Billionen Einhundertneunundneunzig Milliarden Zweihundertvierundfünfzig Millionen Siebenhundertvierzigtausendneunhundertachtundachtzig",
+        assertEquals("Minus Neun Billiarden Sieben Billionen Einhundertneunundneunzig Milliarden ZweihundertvierundfÃ¼nfzig Millionen Siebenhundertvierzigtausendneunhundertachtundachtzig",
             NumbersToGermanWords.convert(- NumbersToGermanWords.MAX_DOUBLE + 1));   
-        assertEquals("Minus Neun Billiarden Sieben Billionen Einhundertneunundneunzig Milliarden Zweihundertvierundfünfzig Millionen Siebenhundertvierzigtausendneunhundertsiebenundachtzig",
+        assertEquals("Minus Neun Billiarden Sieben Billionen Einhundertneunundneunzig Milliarden ZweihundertvierundfÃ¼nfzig Millionen Siebenhundertvierzigtausendneunhundertsiebenundachtzig",
             NumbersToGermanWords.convert(- NumbersToGermanWords.MAX_DOUBLE + 2)); 
     }
 

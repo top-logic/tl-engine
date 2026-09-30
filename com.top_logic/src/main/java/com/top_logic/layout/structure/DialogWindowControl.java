@@ -7,8 +7,10 @@ package com.top_logic.layout.structure;
 
 import java.awt.Dimension;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
@@ -23,8 +25,10 @@ import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.ControlRenderer;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.basic.DirtyHandling;
 import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.basic.XMLTag;
+import com.top_logic.layout.basic.check.ChangeHandler;
 import com.top_logic.layout.component.configuration.OpenGuiInspectorFragment;
 import com.top_logic.layout.component.configuration.ToolRowCommandRenderer;
 import com.top_logic.layout.form.FormConstants;
@@ -45,16 +49,6 @@ import com.top_logic.util.css.CssUtil;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class DialogWindowControl extends WindowControl<DialogWindowControl> implements DialogClosedListener {
-
-	/**
-	 * Additional height added to ensure dialog windows are displayed correctly in the core theme.
-	 */
-	private static final int HEIGHT_ENLARGER = 100;
-
-	/**
-	 * Additional width added to ensure dialog windows are displayed correctly in the core theme.
-	 */
-	private static final int WIDTH_ENLARGER = 50;
 
 	/**
 	 * Property that is set to the {@link DisplayContext} when the "maxmimized changed" event is
@@ -94,12 +88,22 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 	 */
 	public DialogWindowControl(DialogModel dialogModel) {
 		super(dialogModel, DIALOG_COMMANDS);
-		if (dialogModel.isClosed()) {
+	}
+	
+	@Override
+	public void setWindowModel(WindowModel model) {
+		DialogModel dialogModel = getDialogModel();
+		if (dialogModel != null) {
+			dialogModel.removeListener(DialogModel.CLOSED_PROPERTY, this);
+		}
+		super.setWindowModel(model);
+		DialogModel newDialogModel = getDialogModel();
+		if (newDialogModel.isClosed()) {
 			/* dialog models can not be reopened. If this Control is displayed, it never disappears
 			 * from the client */
 			throw new IllegalArgumentException("Dialog model must not already be closed.");
 		}
-		getDialogModel().addListener(DialogModel.CLOSED_PROPERTY, this);
+		newDialogModel.addListener(DialogModel.CLOSED_PROPERTY, this);
 	}
 	
 	/**
@@ -131,14 +135,14 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 		String heightUnit;
 		if (getDialogModel().hasCustomizedSize()) {
 			Dimension customizedSize = getDialogModel().getCustomizedSize();
-			width = Integer.toString(customizedSize.width + WIDTH_ENLARGER);
-			height = Integer.toString(customizedSize.height + HEIGHT_ENLARGER);
+			width = Integer.toString(customizedSize.width);
+			height = Integer.toString(customizedSize.height);
 			widthUnit = heightUnit = "px";
 		} else {
 			LayoutData constraint = getConstraint();
-			width = Float.toString(constraint.getWidth() + WIDTH_ENLARGER);
+			width = Float.toString(constraint.getWidth());
 			widthUnit = constraint.getWidthUnit().toString();
-			height = Float.toString(constraint.getHeight() + HEIGHT_ENLARGER);
+			height = Float.toString(constraint.getHeight());
 			heightUnit = constraint.getHeightUnit().toString();
 		}
 		out.append("(function() {\n");
@@ -234,7 +238,10 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 	 */
 	@TemplateVariable("dialogTitle")
 	public void writeDialogTitle(DisplayContext context, TagWriter out) throws IOException {
-		this.getTitle().write(context, out);
+		HTMLFragment title = getTitle();
+		if (title != null) {
+			title.write(context, out);
+		}
 	}
 
 	/**
@@ -379,7 +386,23 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 				result.addErrorMessage(I18NConstants.ERROR_DIALOG_NOT_CLOSABLE);
 				return result;
 			}
-			
+
+			return getCloseDialogHandlerResult(context, dialogModel);
+		}
+
+		/**
+		 * Checks if a dialog has unsaved changes before it closes itself.
+		 */
+		private HandlerResult getCloseDialogHandlerResult(DisplayContext context, DialogModel dialogModel) {
+			Collection<? extends ChangeHandler> affectedFormHandlers = dialogModel.getAffectedFormHandlers();
+			DirtyHandling dirtyHandling = DirtyHandling.getInstance();
+			boolean dirty = dirtyHandling.checkDirty(affectedFormHandlers);
+
+			if (dirty) {
+				dirtyHandling.openConfirmDialog(dialogModel.getCloseAction(), affectedFormHandlers,
+					context.getWindowScope());
+				return HandlerResult.DEFAULT_RESULT;
+			}
 			return dialogModel.getCloseAction().executeCommand(context);
 		}
 

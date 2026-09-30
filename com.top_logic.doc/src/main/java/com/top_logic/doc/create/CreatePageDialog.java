@@ -21,7 +21,7 @@ import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.messagebox.AbstractFormPageDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.util.Resources;
+import com.top_logic.model.form.ReactiveFormCSS;
 
 /**
  * {@link AbstractFormPageDialog} containing {@link StringField}s for the title and help id to
@@ -55,8 +55,7 @@ public class CreatePageDialog extends AbstractFormPageDialog {
 		super(isChild ? I18NConstants.CREATE_CHILD_PAGE_TITLE : I18NConstants.CREATE_PAGE_TITLE,
 			isChild ? I18NConstants.CREATE_CHILD_PAGE_HEADER : I18NConstants.CREATE_PAGE_HEADER,
 			I18NConstants.CREATE_PAGE_MESSAGE, width, height);
-		Command createCommand =
-			new Command.CommandChain(new CreatePageCommand(component, this, selected, isChild), getDiscardClosure());
+		Command createCommand = closeDialogAfter(new CreatePageCommand(component, this, selected, isChild));
 		CommandModel createButton = MessageBox.forwardStyleButton(I18NConstants.CREATE_BUTTON, createCommand);
 		this._createButton = createButton;
 		getDialogModel().setDefaultCommand(createCommand);
@@ -66,8 +65,10 @@ public class CreatePageDialog extends AbstractFormPageDialog {
 	protected HTMLFragment createBodyContent() {
 		HTMLFragment titleInput = input(PAGE_TITLE);
 		HTMLFragment helpIdInput = input(HELP_ID);
-		return div(TL_DOC_CREATE_DIALOG_CSS, label(PAGE_TITLE), div(titleInput), label(HELP_ID),
-			div(helpIdInput));
+		return div(TL_DOC_CREATE_DIALOG_CSS, div(ReactiveFormCSS.RF_LABEL, label(PAGE_TITLE)),
+			div(ReactiveFormCSS.RF_CELL, titleInput),
+			div(ReactiveFormCSS.RF_LABEL, label(HELP_ID)),
+			div(ReactiveFormCSS.RF_CELL, helpIdInput));
 	}
 
 	@Override
@@ -79,11 +80,11 @@ public class CreatePageDialog extends AbstractFormPageDialog {
 	@Override
 	protected void fillFormContext(FormContext context) {
 		StringField titleField = FormFactory.newStringField(PAGE_TITLE);
-		titleField.setLabel(Resources.getInstance().getString(I18NConstants.CREATE_PAGE_PAGE_TITLE));
+		titleField.setLabel(I18NConstants.CREATE_PAGE_PAGE_TITLE);
 		titleField.setMandatory(true);
 
 		StringField helpIdField = FormFactory.newStringField(HELP_ID);
-		helpIdField.setLabel(Resources.getInstance().getString(I18NConstants.CREATE_PAGE_HELP_ID));
+		helpIdField.setLabel(I18NConstants.CREATE_PAGE_HELP_ID);
 		context.addMember(titleField);
 		context.addMember(helpIdField);
 	}

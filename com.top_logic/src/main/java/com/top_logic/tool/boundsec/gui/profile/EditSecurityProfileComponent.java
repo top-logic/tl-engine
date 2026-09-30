@@ -10,19 +10,18 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.ArrayUtil;
-import com.top_logic.basic.Environment;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Filter;
+import com.top_logic.basic.col.TupleFactory;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.CommaSeparatedStringSet;
 import com.top_logic.basic.config.ConfigurationException;
@@ -32,7 +31,6 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.util.Utils;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.Control;
@@ -56,7 +54,7 @@ import com.top_logic.layout.form.tag.TableTag;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.template.DefaultTooltipControlProvider;
 import com.top_logic.layout.progress.DefaultProgressInfo;
-import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.structure.ControlRepresentable;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.TableViewModel;
@@ -77,14 +75,13 @@ import com.top_logic.layout.tree.model.TreeTableModel;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.layout.tree.model.TreeUIModelUtil;
 import com.top_logic.mig.html.layout.ComponentInstantiationContext;
+import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutConfigTree;
 import com.top_logic.mig.html.layout.LayoutUtils;
-import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
-import com.top_logic.tool.boundsec.BoundHelper;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
-import com.top_logic.tool.boundsec.securityObjectProvider.SecurityRootObjectProvider;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.export.AbstractOfficeExportHandler.OfficeExportValueHolder;
 import com.top_logic.tool.export.ExportAware;
@@ -127,9 +124,11 @@ public class EditSecurityProfileComponent extends EditComponent
 
 	static final Property<CommandNode> COMMAND_NODE = TypedAnnotatable.property(CommandNode.class, "commandNode");
 
+	static final Property<BoundedRole> ROLES = TypedAnnotatable.property(BoundedRole.class, "role");
+
 	private Set<String> _excludedRoles;
 
-	Map<String, Set<BoundedRole>> _rolesMap = Collections.emptyMap();
+	Map<String, BoundedRole> _rolesMap;
 
 	private Collection<?> _oldExpansionModel;
 
@@ -187,9 +186,6 @@ public class EditSecurityProfileComponent extends EditComponent
 
 	@Override
 	protected boolean doValidateModel(DisplayContext context) {
-		if (getModel() == null) {
-			setModel(SecurityRootObjectProvider.INSTANCE.getSecurityRoot());
-		}
 		initRolesMap();
 		getFormContext();
 		return super.doValidateModel(context);
@@ -222,48 +218,22 @@ public class EditSecurityProfileComponent extends EditComponent
 
 	private void initRolesMap() {
 		if (_rolesMap == null) {
-			_rolesMap = createRoleMap();
+			_rolesMap = BoundedRole.getAll()
+				.stream()
+				.collect(Collectors.toMap(BoundedRole::getName, Function.identity()));
+			_rolesMap.keySet().removeAll(_excludedRoles);
 		}
 	}
 
 	private void resetRolesMap() {
 		_rolesMap = null;
+		// Ensure that the tree is rebuild when the roles map is re-created.
+		removeFormContext();
 	}
 
 	@Override
 	protected boolean supportsInternalModel(Object anObject) {
 		return anObject instanceof TLObject && super.supportsInternalModel(anObject);
-	}
-
-	private TLModule model() {
-		return (TLModule) getModel();
-	}
-
-	private Map<String, Set<BoundedRole>> createRoleMap() {
-		TLModule model = model();
-		Map<String, Set<BoundedRole>> map = new HashMap<>();
-		Collection<?> roles = BoundHelper.getInstance().getPossibleRoles(model);
-		for (Object obj : roles) {
-			BoundedRole role = (BoundedRole) obj;
-			String name = role.getName();
-			if (_excludedRoles.contains(name)) {
-				continue;
-			}
-			int index = name.lastIndexOf('.');
-			String localName;
-			if (index > 0) {
-				localName = name.substring(index + 1);
-			} else {
-				localName = name;
-			}
-			Set<BoundedRole> set = map.get(localName);
-			if (set == null) {
-				set = new HashSet<>();
-				map.put(localName, set);
-			}
-			set.add(role);
-		}
-		return map;
 	}
 
 	@Override
@@ -286,7 +256,7 @@ public class EditSecurityProfileComponent extends EditComponent
 		for (String col : getRoles()) {
 			ColumnConfiguration dc = table.declareColumn(col);
 			dc.setFieldProvider(commandGroupFieldProvider);
-			dc.setColumnLabel(createRoleName(col));
+			dc.setColumnLabel(MetaLabelProvider.INSTANCE.getLabel(_rolesMap.get(col)));
 			dc.setAccessor(accessor);
 			dc.setControlProvider(DefaultFormFieldControlProvider.INSTANCE);
 		}
@@ -296,39 +266,107 @@ public class EditSecurityProfileComponent extends EditComponent
 
 		private final TableConfiguration _config;
 
-		private final Map<String, Set<BoundedRole>> _rolesByLocalName;
+		private final Map<String, BoundedRole> _roleByName;
 
-		public CommandGroupFieldProvider(TableConfiguration config, Map<String, Set<BoundedRole>> map) {
+		private final Map<Object, BooleanField> _fields = new HashMap<>();
+
+		private final Map<Object, List<BooleanField>> _delegatesToResolve = new HashMap<>();
+
+		public CommandGroupFieldProvider(TableConfiguration config, Map<String, BoundedRole> map) {
 			_config = config;
-			_rolesByLocalName = map;
+			_roleByName = map;
 		}
 
 		@Override
-		public FormMember createField(Object aModel, Accessor anAccessor, String aProperty) {
-			String fieldName = getFieldName(aModel, anAccessor, aProperty);
+		public FormMember createField(Object aModel, Accessor anAccessor, String property) {
+			String fieldName = getFieldName(aModel, anAccessor, property);
 			if (!(aModel instanceof CommandNode)) {
 				return notRelevant(fieldName);
 			}
 			CommandNode node = (CommandNode) aModel;
 			ConfigNode config = node.configNode();
-			Set<BoundedRole> colRoles = _rolesByLocalName.get(aProperty);
-			if (!config.needsCheckBox(colRoles)) {
+			BoundedRole role = _roleByName.get(property);
+			if (!config.needsCheckBox(role)) {
 				return notRelevant(fieldName);
 			}
-			Boolean hasRight = Boolean.valueOf(node.hasRight(colRoles));
-			BooleanField field = FormFactory.newBooleanField(fieldName, hasRight, !FormFactory.IMMUTABLE);
+			Boolean hasRight = Boolean.valueOf(node.hasRight(role));
+			boolean immutable;
+			CompoundSecurityLayout.Config securityLayout = config.securityLayout();
+			if (securityLayout != config.config()) {
+				/* Node represents a security layout which delegates its security to a different
+				 * one. The values must not be changed. */
+				immutable = FormFactory.IMMUTABLE;
+			} else {
+				immutable = !FormFactory.IMMUTABLE;
+			}
+			BooleanField field = FormFactory.newBooleanField(fieldName, hasRight, immutable);
 			field.setLabel(fieldName + ": " + ExportNameLabels.INSTANCE.getLabel(node));
-			field.setTooltipCaption(_config.getDeclaredColumn(aProperty).getColumnLabel());
-			field.setTooltip(node.getRoleNamesAsTooltip(colRoles));
+			field.setTooltipCaption(_config.getDeclaredColumn(property).getColumnLabel());
+			field.setTooltip(node.getRoleNameAsTooltip(role));
 			field.setControlProvider(DefaultTooltipControlProvider.INSTANCE);
+			field.setTransient(immutable);
 			field.set(COMMAND_NODE, node);
+			field.set(ROLES, role);
+
+			connectWithSecuritySource(field, securityLayout, node, property);
 			return field;
+		}
+
+		private void connectWithSecuritySource(BooleanField field, CompoundSecurityLayout.Config securityLayout,
+				CommandNode node, String property) {
+			LayoutComponent.Config nodeConfig = node.configNode().config();
+			ComponentName name = nodeConfig.getName();
+			BoundCommandGroup group = node.group();
+			Object fieldKey = key(name, group, property);
+			_fields.put(fieldKey, field);
+			if (securityLayout != nodeConfig) {
+				// Security delegated.
+				Object delegateKey = key(securityLayout.getName(), group, property);
+				BooleanField sourceField = _fields.get(delegateKey);
+				if (sourceField != null) {
+					connect(sourceField, field);
+				} else {
+					// Delegate target not yet create. Store for later.
+					_delegatesToResolve
+						.computeIfAbsent(delegateKey, k -> new ArrayList<>())
+						.add(field);
+				}
+
+			} else {
+				// Check whether delegate target was created before
+				_delegatesToResolve
+					.getOrDefault(fieldKey, Collections.emptyList())
+					.forEach(delegate -> connect(field, delegate));
+			}
+		}
+
+		private void connect(BooleanField source, BooleanField target) {
+			source.addValueListener(new ValueListener() {
+
+				@Override
+				public void valueChanged(FormField field, Object oldValue, Object newValue) {
+					target.setValue(newValue);
+				}
+			});
 		}
 
 		private StringField notRelevant(String fieldName) {
 			return FormFactory.newStringField(fieldName, StringServices.EMPTY_STRING, true);
 		}
 
+		private static Object key(ComponentName name, BoundCommandGroup group, String property) {
+			return TupleFactory.newTuple(name, group, property);
+		}
+
+		@Override
+		public String getFieldName(Object aModel, Accessor anAccessor, String aProperty) {
+			return escapeDotForFieldName(aProperty);
+		}
+
+	}
+
+	static String escapeDotForFieldName(String aProperty) {
+		return aProperty.replace('.', '_');
 	}
 
 	@Override
@@ -424,10 +462,6 @@ public class EditSecurityProfileComponent extends EditComponent
 		return defaultColumns;
 	}
 
-	private String securityDomain() {
-		return model().getName();
-	}
-
 	@Override
 	protected void installFormContext(FormContext newFormContext) {
 		super.installFormContext(newFormContext);
@@ -473,23 +507,6 @@ public class EditSecurityProfileComponent extends EditComponent
 		return (TableField) getFormContext().getField(TREE);
 	}
 
-	private String createRoleName(String col) {
-		Set<BoundedRole> set = _rolesMap.get(col);
-		Iterator<BoundedRole> iter = set.iterator();
-		BoundedRole role = iter.next();
-		String label = MetaResourceProvider.INSTANCE.getLabel(role);
-		if (!Environment.isDeployed()) {
-			while (iter.hasNext()) {
-				BoundedRole next = iter.next();
-				if (!Utils.equals(MetaResourceProvider.INSTANCE.getLabel(next), label)) {
-					Logger.error("Roles with same suffix are expected to have the same translation '" + label + "'. "
-						+ set, this);
-				}
-			}
-		}
-		return label;
-	}
-
 	/**
 	 * roles ordered by name
 	 */
@@ -508,7 +525,7 @@ public class EditSecurityProfileComponent extends EditComponent
 
 	private AbstractTreeTableModel<?> buildTreeTable(LayoutConfigTree tree,
 			List<String> columns, TableConfiguration config, FormContainer container) {
-		SecurityTreeTableBuilder builder = new SecurityTreeTableBuilder(securityDomain());
+		SecurityTreeTableBuilder builder = new SecurityTreeTableBuilder();
 		return new SecurityTreeTableModel(builder, tree.getRoot(), columns, config, new Consumer<SecurityNode>() {
 
 			private final StringBuilder _nameBuffer;

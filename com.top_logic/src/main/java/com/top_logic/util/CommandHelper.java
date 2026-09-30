@@ -5,14 +5,14 @@
  */
 package com.top_logic.util;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Small helper for checking submit commands in forms,   
  * no matter whether they came from input type="submit" or  
  * input type="image"  
  *  
- * @author                      Michael Röschter 
+ * @author                      Michael RÃ¶schter 
  */
 public class CommandHelper {
 

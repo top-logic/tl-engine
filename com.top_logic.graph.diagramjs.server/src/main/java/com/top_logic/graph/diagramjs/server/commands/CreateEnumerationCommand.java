@@ -22,7 +22,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * {@link ControlCommand} for creating an enumeration.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CreateEnumerationCommand extends ControlCommand {
 

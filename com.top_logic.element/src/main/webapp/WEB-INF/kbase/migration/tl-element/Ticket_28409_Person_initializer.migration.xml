@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28409_Person_initializer"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28298_update_account"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<add-annotations name="tl.accounts:Person">
+			<annotations>
+				<object-initializers>
+					<initializer class="com.top_logic.knowledge.wrap.person.PersonGroupsInitializer"/>
+				</object-initializers>
+			</annotations>
+		</add-annotations>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

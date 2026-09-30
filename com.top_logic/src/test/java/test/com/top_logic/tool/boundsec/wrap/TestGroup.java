@@ -13,8 +13,8 @@ import junit.framework.TestSuite;
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 
+import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -40,9 +40,9 @@ public class TestGroup extends BasicTestCase {
 	
 	@Override
 	protected void tearDown() throws Exception {
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		for (int usedId = startId; usedId < nextId; usedId++) {
 			String name = getName(usedId);
 			
@@ -62,9 +62,9 @@ public class TestGroup extends BasicTestCase {
 	}
 
 	public void testCreate() {
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		Person p1 = mkPerson();
 		Group g1 = mkGroup(p1);
 		Person p2 = mkPerson();
@@ -83,9 +83,9 @@ public class TestGroup extends BasicTestCase {
 	}
 
 	public void testContainmentSafety() {
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		Person p1 = mkPerson();
 		Group g1 = mkGroup(p1);
 		Person p2 = mkPerson();
@@ -93,7 +93,7 @@ public class TestGroup extends BasicTestCase {
 		g1.addMember(g2);
 		
 		// Externally create cyclic containment relation.
-		kb.createAssociation(g1.tHandle(), g2.tHandle(), Group.GROUP_ASSOCIATION);
+		kb.createAssociation(g2.tHandle(), g1.tHandle(), Group.GROUP_MEMBERS_ASSOCIATION);
 		
 		tx.commit();
 		
@@ -103,9 +103,9 @@ public class TestGroup extends BasicTestCase {
 	}
 	
 	public void testPreventRecursion0() {
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		Person p1 = mkPerson();
 		Group g1 = mkGroup(p1);
 		try {
@@ -120,9 +120,9 @@ public class TestGroup extends BasicTestCase {
 	}
 	
 	public void testPreventRecursion1() {
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		Person p1 = mkPerson();
 		Group g1 = mkGroup(p1);
 		Person p2 = mkPerson();
@@ -141,9 +141,9 @@ public class TestGroup extends BasicTestCase {
 	}
 
 	public void testPreventRecursion2() {
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		Person p1 = mkPerson();
 		Group g1 = mkGroup(p1);
 		Person p2 = mkPerson();
@@ -170,52 +170,10 @@ public class TestGroup extends BasicTestCase {
 		assertEquals(set(p1, p2, p4), toSet(g4.getMembers(true)));
 	}
 	
-	/**
-	 * @see "Ticket #3171: Security-Problem durch Wiederverwendung existierender Representative-Group für neuen Benutzer"
-	 * @see "Ticket #3350: Person.getRepresentativeGroup() überprüft nur auf (nicht eindeutigen) Namen"
-	 */
-	public void testRepresentativeGroup() {
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
-
-		Person p1;
-		{
-			Transaction tx = kb.beginTransaction();
-			
-			p1 = mkPerson();
-			
-			tx.commit();
-		}
-
-		Person p2 = Person.byName(p1.getName());
-		assertSame(p1, p2);
-		assertSame(p1.getRepresentativeGroup(), p2.getRepresentativeGroup());
-
-		// Delete representative group.
-		{
-			Transaction tx = kb.beginTransaction();
-			
-			p1.getRepresentativeGroup().tDelete();
-			
-			tx.commit();
-		}
-		
-		if (p2.getRepresentativeGroup() == null) {
-			fail("Test should fail due to the known bug in ticket #8958: Stale cache.");
-		} else {
-			/* Exptected due to the known bug in ticket #8958: Stale cache. */
-		}
-
-	}
-	
 	public void testIsInGroup() {
 		Person p1 = mkPerson();
 		Group g1 = mkGroup(p1);
 		assertTrue(p1.isInGroup(g1));
-	}
-
-	public void testIsInRepresentativeGroup() {
-		Person p1 = mkPerson();
-		assertTrue(p1.isInGroup(p1.getRepresentativeGroup()));
 	}
 
 	public void testIsInGroupRecursive() {
@@ -249,7 +207,7 @@ public class TestGroup extends BasicTestCase {
 	private Person mkPerson() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		String name = mkName();
-		return Person.create(kb, name, "dbSecurity");
+		return Person.create(kb, name, TLSecurityDeviceManager.getInstance().getAuthenticationDevice("dbSecurity"));
 	}
 	
 	private String mkName() {

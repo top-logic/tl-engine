@@ -7,7 +7,7 @@ package com.top_logic.layout.form.tag;
 
 import java.awt.event.ActionListener;
 
-import javax.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormMember;

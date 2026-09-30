@@ -37,7 +37,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.dob.DataObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * AuthenticationDevice and PersonDataAccessDevice against LDAP.
@@ -76,6 +78,14 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 		 */
 		@MapBinding()
 		Map<String, String> getMappings();
+
+		/**
+		 * The requirement for the multi-factor authentication for accounts with this authentication
+		 * device.
+		 */
+		@Name("mfa-requirement")
+		@Mandatory
+		MfaRequirement getMFARequirement();
 	}
 
 	/**
@@ -98,6 +108,14 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 		super(context, config);
 		initLAS(getDeviceID(), config);
 		mappings = new HashMap();
+	}
+
+	/**
+	 * @see com.top_logic.basic.config.AbstractConfiguredInstance#getConfig()
+	 */
+	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
 	}
 
 	/**
@@ -204,32 +222,54 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 
 	@Override
 	public List<Person> synchronizeUsers(KnowledgeBase kb) {
-		String authenticationDeviceID = getAuthenticationDeviceID();
 		List<Person> existingPersons = new ArrayList<>();
 		for (DataObject user : las.getAllUserData()) {
-			String userName = (String) user.getAttributeValue(UserInterface.USER_NAME);
+			LDAPDataObject ldapUser = (LDAPDataObject) user;
+			String userName = (String) ldapUser.getAttributeValue(UserInterface.USER_NAME);
 			if (StringServices.isEmpty(userName)) {
-				Logger.warn("Encountered empty username in '" + getDeviceID() + "' - entry ignored.",
+				Logger.warn(
+					"Encountered empty username in attribute '" + ldapUser.getExternalAttrName(UserInterface.USER_NAME)
+							+ "' in '" + getDeviceID() + "' - entry ignored.",
 					this);
 				continue;
 			}
 
-			Person account = Person.byName(userName);
-			if (account == null) {
-				account =
-					Person.create(PersistencyLayer.getKnowledgeBase(), userName, authenticationDeviceID);
-			}
-			existingPersons.add(account);
-			UserInterface localUser = account.getUser();
-			if (localUser != null) {
-				localUser.setName((String) user.getAttributeValue(UserInterface.NAME));
-				localUser.setFirstName((String) user.getAttributeValue(UserInterface.FIRST_NAME));
-				localUser.setTitle((String) user.getAttributeValue(UserInterface.TITLE));
-				localUser.setPhone((String) user.getAttributeValue(UserInterface.PHONE));
-				localUser.setEMail((String) user.getAttributeValue(UserInterface.EMAIL));
+			try {
+				Person account = Person.byName(userName);
+				if (account == null) {
+					account = Person.create(PersistencyLayer.getKnowledgeBase(), userName, this);
+				}
+				existingPersons.add(account);
+				UserInterface localUser = account.getUser();
+				if (localUser != null) {
+					String surname = (String) ldapUser.getAttributeValue(UserInterface.NAME);
+					if (StringServices.isEmpty(surname)) {
+						Logger.warn(
+							"Encountered empty surname for user '" + userName + "' in attribute '"
+									+ ldapUser.getExternalAttrName(UserInterface.NAME) + "' in '" + getDeviceID()
+									+ "'. Using '" + userName + "' as name.",
+							this);
+						surname = userName;
+					}
+					localUser.setName(surname);
+					localUser.setFirstName((String) ldapUser.getAttributeValue(UserInterface.FIRST_NAME));
+					localUser.setTitle((String) ldapUser.getAttributeValue(UserInterface.TITLE));
+					localUser.setPhone((String) ldapUser.getAttributeValue(UserInterface.PHONE));
+					localUser.setEMail((String) ldapUser.getAttributeValue(UserInterface.EMAIL));
+				}
+			} catch (TopLogicException ex) {
+				// A single directory account with an invalid or case-conflicting name must not abort
+				// the synchronization of all other accounts (Ticket #29423).
+				Logger.error("Cannot synchronize account '" + userName + "' from '" + getDeviceID()
+					+ "' (invalid or conflicting login name) - entry skipped.", ex, this);
 			}
 		}
 		return existingPersons;
+	}
+
+	@Override
+	public MfaRequirement getMFARequirement() {
+		return getConfig().getMFARequirement();
 	}
 
 	/**

@@ -8,14 +8,12 @@ package com.top_logic.reporting.view.component.table;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.element.layout.grid.GridBuilder;
 import com.top_logic.element.layout.grid.GridComponent;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.tool.boundsec.SecurityObjectProvider;
-import com.top_logic.tool.boundsec.securityObjectProvider.PathSecurityObjectProvider;
-import com.top_logic.tool.boundsec.securityObjectProvider.path.SecurityPath;
 
 /**
  * {@link GridComponent} implementing {@link FilterAwareComponent}.
@@ -25,7 +23,9 @@ import com.top_logic.tool.boundsec.securityObjectProvider.path.SecurityPath;
 public class FilterAwareGridComponent extends GridComponent implements FilterAwareComponent {
 	
 	public interface Config extends GridComponent.Config {
-
+		@Override
+		@FormattedDefault("path:master.currentObject")
+		PolymorphicConfiguration<? extends SecurityObjectProvider> getSecurityObject();
 	}
 
 	/**
@@ -48,15 +48,6 @@ public class FilterAwareGridComponent extends GridComponent implements FilterAwa
 			return (FilterAwareModelBuilder) builder;
 		}
 		return null;
-	}
-	
-	@Override
-	protected SecurityObjectProvider getDefaultSecurityObjectProvider() {
-		PathSecurityObjectProvider.Config config =
-			TypedConfiguration.newConfigItem(PathSecurityObjectProvider.Config.class);
-		config.getPath().add(SecurityPath.master().getConfig());
-		config.getPath().add(SecurityPath.currentObject().getConfig());
-		return TypedConfigUtil.createInstance(config);
 	}
 	
 }

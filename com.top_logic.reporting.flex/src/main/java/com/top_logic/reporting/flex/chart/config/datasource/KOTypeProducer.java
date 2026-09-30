@@ -14,7 +14,7 @@ import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.reporting.flex.chart.config.gui.ChartContextObserver;
@@ -61,7 +61,7 @@ public class KOTypeProducer implements ChartDataSource<DataContext>,
 		if (StringServices.isEmpty(type)) {
 			return result;
 		}
-		KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		result.addAll(WrapperFactory.getWrappersByType(type, kb));
 		return result;
 

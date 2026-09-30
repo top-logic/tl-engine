@@ -21,7 +21,7 @@ import com.top_logic.model.TLObject;
  * The BridgeAssociation is an asymetric feature (for now).
  * </p>
  * 
- * @author  Klaus Halfmann / Jörg Connotte
+ * @author  Klaus Halfmann / JÃ¶rg Connotte
  */
 public interface KnowledgeAssociation extends KnowledgeItem, TLObject {
 

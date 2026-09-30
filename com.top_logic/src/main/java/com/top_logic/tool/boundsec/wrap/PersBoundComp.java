@@ -43,7 +43,7 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
  * They are used for Security reasons
  * only and carry <em>no</em> Layout/HTML/User specific information
  *
- * @see com.top_logic.tool.boundsec.BoundMainLayout#initBoundComponents(KnowledgeBase)
+ * @see com.top_logic.tool.boundsec.BoundMainLayout#initPersBoundComps(KnowledgeBase, List)
  * @see SecurityComponentCache
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
@@ -247,7 +247,7 @@ public class PersBoundComp extends AbstractWrapper {
      *
      * @param   aGroup      The CommandGroups that will require the roles.
      */
-    public Set rolesForCommandGroup(BoundCommandGroup aGroup) {
+	public Set<? extends BoundedRole> rolesForCommandGroup(BoundCommandGroup aGroup) {
     	String grpId = aGroup.getID();
 		AssociationSetQuery<KnowledgeAssociation> theQuery;
     	synchronized (NEEDS_ROLE_QUERY_BY_GROUP_ID) {
@@ -261,7 +261,7 @@ public class PersBoundComp extends AbstractWrapper {
     		}
     	}
 
-    	return resolveWrappers(theQuery);
+		return (Set<? extends BoundedRole>) resolveWrappers(theQuery);
     }
 
     /**

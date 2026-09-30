@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<security>
+	<profiles>
+		<profile name="demo.react.Administrator">
+			<view name="administration">
+				<commandGroup name="Read"/>
+			</view>
+		</profile>
+	</profiles>
+</security>

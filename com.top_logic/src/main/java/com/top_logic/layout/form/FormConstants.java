@@ -19,6 +19,11 @@ import com.top_logic.mig.html.HTMLConstants;
  */
 public interface FormConstants {
 
+	/**
+	 * Default CSS class for elements that should have <code>overflow: auto;</code>
+	 */
+	public static final String OVERFLOW_AUTO_CLASS = "tl-overflow--auto";
+
 	/** Default CSS class of a from body {@link HTMLConstants#DIV}. */
 	public static final String FORM_BODY_CSS_CLASS = "frmBody";
 
@@ -46,7 +51,7 @@ public interface FormConstants {
     public static final String BUTTON_PLUS_CSS_CLASS = "button_plus";
     
     /** Prefix for the {@link IntegerInputControl}'s minus button style class */
-    public static final String BUTTON_MINUS_CSS_CLASS = "button_minus";
+    public static final String BUTTON_MINUS_CSS_CLASS = "tl-button-minus";
 
 	/**
 	 * CSS class that describes a top-level HTML element of a conditionally
@@ -269,6 +274,11 @@ public interface FormConstants {
 	 */
 	public static final String CLOCK_HANDLER_CLASS = FORM_PACKAGE + ".TimeInputControl";
 
+	/**
+	 * JavaScript class of a table control.
+	 */
+	String TABLE_HANDLER_CLASS = FORM_PACKAGE + ".TableControl";
+
 	public static final String SELECT_CONTROL_CLASS = FORM_PACKAGE + ".SelectControl";
 
 	public static final String CHOICE_CONTROL_CLASS = FORM_PACKAGE + ".ChoiceControl";
@@ -290,8 +300,29 @@ public interface FormConstants {
 	 * 
 	 * @see #FLEXIBLE_CSS_CLASS
 	 * @see #FIXED_RIGHT_CSS_CLASS
+	 * 
+	 * @deprecated The styles for this class are completely broken, since they imply colors and
+	 *             sizes.
 	 */
+	@Deprecated
 	public static final String FIXED_LEFT_CSS_CLASS = "lFixedLeft";
+
+	/**
+	 * Flexible cell layout.
+	 * 
+	 * @see #FLEXIBLE2_CSS_CLASS
+	 * @see #FIXED_RIGHT2_CSS_CLASS
+	 */
+	public static final String DECORATED_CELL2_CSS_CLASS = "cDecoratedCell2";
+
+	/**
+	 * CSS class that creates a fixed size box (at the left of the flexible box) within a flexible
+	 * table cell layout.
+	 * 
+	 * @see #FLEXIBLE2_CSS_CLASS
+	 * @see #FIXED_RIGHT2_CSS_CLASS
+	 */
+	public static final String FIXED_LEFT2_CSS_CLASS = "lFixedLeft2";
 
 	/**
 	 * CSS class that creates a flexible box that consumes all available space within a flexible
@@ -299,8 +330,34 @@ public interface FormConstants {
 	 * 
 	 * @see #FIXED_LEFT_CSS_CLASS
 	 * @see #FIXED_RIGHT_CSS_CLASS
+	 * 
+	 * @deprecated The styles for this class are completely broken, since they imply colors and
+	 *             sizes.
 	 */
+	@Deprecated
 	public static final String FLEXIBLE_CSS_CLASS = "lFlexible";
+
+	/**
+	 * CSS class that creates a flexible box that consumes all available space within a flexible
+	 * table cell layout.
+	 * 
+	 * @see #FIXED_LEFT2_CSS_CLASS
+	 * @see #FIXED_RIGHT2_CSS_CLASS
+	 */
+	public static final String FLEXIBLE2_CSS_CLASS = "lFlexible2";
+
+	/**
+	 * CSS class that creates a fixed size box (at the right of the flexible box) within a flexible
+	 * table cell layout.
+	 * 
+	 * @see #FLEXIBLE_CSS_CLASS
+	 * @see #FIXED_LEFT_CSS_CLASS
+	 * 
+	 * @deprecated The styles for this class are completely broken, since they imply colors and
+	 *             sizes.
+	 */
+	@Deprecated
+	public static final String FIXED_RIGHT_CSS_CLASS = "lFixedRight";
 
 	/**
 	 * CSS class that creates a fixed size box (at the right of the flexible box) within a flexible
@@ -309,7 +366,7 @@ public interface FormConstants {
 	 * @see #FLEXIBLE_CSS_CLASS
 	 * @see #FIXED_LEFT_CSS_CLASS
 	 */
-	public static final String FIXED_RIGHT_CSS_CLASS = "lFixedRight";
+	public static final String FIXED_RIGHT2_CSS_CLASS = "lFixedRight2";
 
 	/**
 	 * CSS class attached to all input elements that open a (popup-) menu.
@@ -341,4 +398,5 @@ public interface FormConstants {
 	 * states of the application.
 	 */
 	public static final String PUSHED_CSS_CLASS = "pushed";
+
 }

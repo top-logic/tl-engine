@@ -40,6 +40,7 @@ import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.H2Helper;
 import com.top_logic.basic.sql.MySQLHelper;
 import com.top_logic.basic.sql.OracleHelper;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.AttributeStorage;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MOAttribute;
@@ -944,9 +945,9 @@ public class SQLDumper implements EventWriter {
 
 		private final String _author;
 
-		private final String _log;
+		private final ResKey _log;
 
-		public Rev(MetaObject revisionType, long rev, long date, String author, String log) {
+		public Rev(MetaObject revisionType, long rev, long date, String author, ResKey log) {
 			super(new ObjectBranchId(0, revisionType, LongID.valueOf(rev)), rev, rev);
 			_date = date;
 			_author = author;
@@ -964,7 +965,7 @@ public class SQLDumper implements EventWriter {
 		}
 
 		@Override
-		public String getLog() {
+		public ResKey getLog() {
 			return _log;
 		}
 

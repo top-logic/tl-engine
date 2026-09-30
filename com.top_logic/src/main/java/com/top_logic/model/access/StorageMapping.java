@@ -49,4 +49,13 @@ public interface StorageMapping<T> {
 	 */
 	boolean isCompatible(Object businessObject);
 
+	/**
+	 * Normalizes a value (e.g. when returned from a derived attribute implemented by a script
+	 * expression).
+	 */
+	default Object normalizeValue(Object value) {
+		Object storage = getStorageObject(value);
+		return getBusinessObject(storage);
+	}
+
 }

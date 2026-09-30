@@ -1,4 +1,22 @@
 {
+  "arrow-down-quarter-circle": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Arrow down quarter circle"
+  },
+  "arrow-half-circle": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Arrow half circle"
+  },
   "arrow-left-solid": {
     "search": {
       "terms": []
@@ -89,6 +107,15 @@
     ],
     "label": "Arrow to right solid"
   },
+  "arrow-up-quarter-circle": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Arrow-up-quarter-circle"
+  },
   "ban": {
     "search": {
       "terms": []
@@ -106,6 +133,15 @@
       ""
     ],
     "label": "Bars"
+  },
+  "base-frame": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Baseframe"
   },
   "book": {
     "search": {
@@ -152,6 +188,15 @@
     ],
     "label": "Book open exclamation"
   },
+  "building-blocks": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Building blocks"
+  },
   "button-background": {
     "search": {
       "terms": []
@@ -161,14 +206,14 @@
     ],
     "label": "Button background"
   },
-  "building-blocks": {
+  "calender": {
     "search": {
       "terms": []
     },
     "styles": [
       ""
     ],
-    "label": "Building blocks"
+    "label": "Calender"
   },
   "camera": {
     "search": {
@@ -323,7 +368,7 @@
     ],
     "label": ""
   },
-  "chart-bars": {
+  "chart-bar": {
     "search": {
       "terms": []
     },
@@ -503,6 +548,15 @@
     ],
     "label": ""
   },
+  "cockpit": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Cockpit"
+  },
   "collapse": {
     "search": {
       "terms": []
@@ -629,6 +683,15 @@
     ],
     "label": ""
   },
+  "device-grouping": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Device grouping"
+  },
   "download": {
     "search": {
       "terms": []
@@ -682,6 +745,15 @@
       ""
     ],
     "label": ""
+  },
+  "equipment": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Equipment"
   },
   "error": {
     "search": {
@@ -1007,6 +1079,15 @@
     ],
     "label": ""
   },
+  "fixture": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Fixture"
+  },
   "flashlight-square": {
     "search": {
       "terms": []
@@ -1124,6 +1205,24 @@
     ],
     "label": ""
   },
+  "gears-connected": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Gears connected"
+  },
+  "gripper": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Gripper"
+  },
   "group": {
     "search": {
       "terms": []
@@ -1132,6 +1231,24 @@
       ""
     ],
     "label": ""
+  },
+  "handling-device": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Handling device"
+  },
+  "handling-system": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Handling system"
   },
   "hierarchy": {
     "search": {
@@ -1187,6 +1304,24 @@
     ],
     "label": ""
   },
+  "inline-construction": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Inline construction"
+  },
+  "inline-transport": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Inline transport"
+  },
   "international-text": {
     "search": {
       "terms": []
@@ -1214,6 +1349,15 @@
     ],
     "label": ""
   },
+  "lightbulb": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Lightbulb"
+  },
   "lightbulb-circle": {
     "search": {
       "terms": []
@@ -1222,6 +1366,15 @@
       ""
     ],
     "label": ""
+  },
+  "line": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Line"
   },
   "locked": {
     "search": {
@@ -1403,6 +1556,24 @@
     ],
     "label": ""
   },
+  "portfolio": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Portfolio"
+  },
+  "program": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Program"
+  },
   "project": {
     "search": {
       "terms": []
@@ -1510,6 +1681,24 @@
       ""
     ],
     "label": ""
+  },
+  "robot": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Robot"
+  },
+  "robot-system": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Robot system"
   },
   "row-add": {
     "search": {
@@ -1654,6 +1843,15 @@
       ""
     ],
     "label": ""
+  },
+  "station": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Station"
   },
   "step-into": {
     "search": {
@@ -2069,6 +2267,15 @@
     ],
     "label": "window-minimize"
   },
+  "window-minimize-thin": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Window minimize thin"
+  },
   "window-normalize": {
     "search": {
       "terms": []
@@ -2077,5 +2284,23 @@
       ""
     ],
     "label": "window-normalize"
+  },
+  "window-restore": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Window restore"
+  },
+  "workplace": {
+    "search": {
+      "terms": []
+    },
+    "styles": [
+      ""
+    ],
+    "label": "Workplace"
   }
 }

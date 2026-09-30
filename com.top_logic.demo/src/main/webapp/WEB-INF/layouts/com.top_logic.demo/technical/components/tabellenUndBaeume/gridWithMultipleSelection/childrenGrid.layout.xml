@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic.element/grid.template.xml"
 >
 	<arguments
@@ -26,13 +25,24 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="x -> $x[1].inRevision($x[0]).get(`tl.element:StructuredElementContainer#children`)"
 			modelForElement="listElement -> x -> [$x[0], $listElement.get(`DemoTypes:DemoTypes.All#parent`)]"
-			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.All`)"
 			supportsModel="true"
 		/>
+		<selectionFilter class="com.top_logic.model.search.providers.ScriptedFilter">
+			<predicate>x -&gt; !$x.get(`DemoTypes:A#name`).stringEndsWith("-final")</predicate>
+		</selectionFilter>
 		<buttons>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-			/>
+				streaming="false"
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
+			</button>
 		</buttons>
+		<contextMenu class="com.top_logic.element.layout.grid.GridContextMenuProvider">
+			<contextMenuFactory include-dependent-commands="false">
+				<titleProvider class="com.top_logic.layout.provider.MetaLabelProvider"/>
+				<customCommands class="com.top_logic.layout.basic.contextmenu.config.MetaContextMenuCommandsProvider"/>
+			</contextMenuFactory>
+		</contextMenu>
 	</arguments>
 </config:template-call>

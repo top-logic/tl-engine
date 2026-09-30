@@ -14,13 +14,14 @@ import com.top_logic.common.webfolder.model.FolderContent;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -30,7 +31,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * this class will only remove an association or delete a document with
  * it's content from the server.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class WebFolderDeleteExecutable extends AbstractFolderDelete {
 
@@ -55,9 +56,10 @@ public class WebFolderDeleteExecutable extends AbstractFolderDelete {
 				}
 
 				HandlerResult theResult = new HandlerResult();
-				KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+				KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 
-				Transaction theTX = theKB.beginTransaction();
+				Transaction theTX = theKB.beginTransaction(
+					I18NConstants.DELETED_DOCUMENT__NAME.fill(MetaLabelProvider.INSTANCE.getLabel(deletedObject)));
 				try {
 					final WebFolder folder = (WebFolder) aFolder;
 					assert folder != null : "The node this " + AbstractFolderDelete.class.getName() + " [" + this

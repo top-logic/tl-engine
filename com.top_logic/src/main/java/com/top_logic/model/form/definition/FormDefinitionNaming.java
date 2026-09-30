@@ -9,7 +9,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ConfigurationItemNaming;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
@@ -23,7 +23,7 @@ import com.top_logic.model.util.TLModelPartRef;
  * Since those require a special context type, {@link ConfigurationItemNaming} is not applicable.
  * </p>
  */
-public class FormDefinitionNaming extends AbstractModelNamingScheme<FormDefinition, FormDefinitionNaming.Name> {
+public class FormDefinitionNaming extends AbstractGlobalModelNamingScheme<FormDefinition, FormDefinitionNaming.Name> {
 
 	/**
 	 * {@link ModelName} for a {@link ConfigurationItem}.
@@ -50,7 +50,7 @@ public class FormDefinitionNaming extends AbstractModelNamingScheme<FormDefiniti
 	/**
 	 * Creates a {@link ConfigurationItemNaming}.
 	 * 
-	 * @see AbstractModelNamingScheme#AbstractModelNamingScheme(Class, Class)
+	 * @see AbstractGlobalModelNamingScheme#AbstractGlobalModelNamingScheme(Class, Class)
 	 */
 	public FormDefinitionNaming() {
 		super(FormDefinition.class, Name.class);

@@ -9,14 +9,14 @@ import java.util.Date;
 
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.PropertyAccessor;
-import com.top_logic.layout.ReadOnlyPropertyAccessor;
+import com.top_logic.layout.ValidObjectPropertyAccessor;
 
 /**
  * {@link PropertyAccessor} for the {@link Wrapper#getLastModified()} property.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class WebFolderDateProperty extends ReadOnlyPropertyAccessor<Object> {
+public class WebFolderDateProperty extends ValidObjectPropertyAccessor<Object> {
 
 	/**
 	 * Singleton {@link WebFolderDateProperty} instance.
@@ -28,7 +28,7 @@ public class WebFolderDateProperty extends ReadOnlyPropertyAccessor<Object> {
 	}
 	
 	@Override
-	public Object getValue(Object anObject) {
+	protected Object getValidValue(Object anObject) {
 		{
 			if (anObject instanceof Wrapper) {
 				return new Date(((Wrapper) anObject).getLastModified());

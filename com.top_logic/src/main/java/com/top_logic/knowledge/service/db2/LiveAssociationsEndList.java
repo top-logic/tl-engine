@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.service.db2;
 
+import java.util.Comparator;
 import java.util.List;
 
 import com.top_logic.basic.col.KeyValueBuffer;
@@ -128,13 +129,7 @@ public class LiveAssociationsEndList<T extends TLObject> extends MutableList<T> 
 
 	private void removeLink(KnowledgeAssociation link) {
 		/* Delete association. The magic of information of caches will update list. */
-		{
-			if (_outgoingQuery) {
-				DBKnowledgeAssociation.clearDestinationAndRemoveLink(link);
-			} else {
-				DBKnowledgeAssociation.clearSourceAndRemoveLink(link);
-			}
-		}
+		DBKnowledgeAssociation.clearReferencesAndRemoveLink(link);
 	}
 
 	private void createLink(int index, T element, Object order) {
@@ -165,6 +160,11 @@ public class LiveAssociationsEndList<T extends TLObject> extends MutableList<T> 
 
 	private String orderAttribute() {
 		return _associationQuery.getOrderAttribute();
+	}
+
+	@Override
+	public void sort(Comparator<? super T> c) {
+		_links.sort((l1, l2) -> c.compare(_endAccess.map(l1), _endAccess.map(l2)));
 	}
 
 }

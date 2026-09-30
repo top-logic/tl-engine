@@ -5,9 +5,10 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>tl-service-openapi-common</artifactId>
+	<name>${project.artifactId}</name>
 	<url>https://github.com/top-logic/tl-engine/</url>
   <dependencies>
     <dependency>
@@ -28,11 +29,11 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-model-wysiwyg</artifactId>
+      <artifactId>tl-contact</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-contact</artifactId>
+      <artifactId>tl-model-wysiwyg</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

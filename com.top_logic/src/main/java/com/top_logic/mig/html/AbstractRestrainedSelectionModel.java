@@ -7,6 +7,7 @@ package com.top_logic.mig.html;
 
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.filter.FilterFactory;
+import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.component.model.AbstractSelectionModel;
 
 /**
@@ -14,10 +15,11 @@ import com.top_logic.layout.component.model.AbstractSelectionModel;
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
-public abstract class AbstractRestrainedSelectionModel extends AbstractSelectionModel {
+public abstract class AbstractRestrainedSelectionModel<T> extends AbstractSelectionModel<T> {
 
-	private Filter<Object> _selectionFilter;
-	private Filter<Object> _deselectionFilter;
+	private Filter<? super T> _selectionFilter;
+
+	private Filter<? super T> _deselectionFilter;
 
 	/**
 	 * Create a new {@link AbstractRestrainedSelectionModel}.
@@ -27,48 +29,59 @@ public abstract class AbstractRestrainedSelectionModel extends AbstractSelection
 		_selectionFilter = _deselectionFilter = FilterFactory.trueFilter();
 	}
 
+	@Override
+	public boolean isSelectable(T obj) {
+		return getSelectionFilter().accept(obj);
+	}
+
+	/**
+	 * Whether the given object can be selected.
+	 */
+	public boolean isDeselectable(T obj) {
+		return !ComponentUtil.isValid(obj) || getDeselectionFilter().accept(obj);
+	}
+
 	/**
 	 * A setter for a selection filter
 	 * 
-	 * @param selectionFilter - the {@link Filter filter}, which defines, if an object is selectable, or not.
-	 * If the filter is null, then every object is selectable.
+	 * @param selectionFilter
+	 *        The {@link Filter filter}, which defines, whether an object is selectable or not. If
+	 *        the filter is <code>null</code>, then every object is selectable.
 	 */
-	public void setSelectionFilter(Filter<?> selectionFilter) {
-		this._selectionFilter = nonNull(selectionFilter);
+	public void setSelectionFilter(Filter<? super T> selectionFilter) {
+		_selectionFilter = nonNull(selectionFilter);
 	}
 
 	/**
 	 * @see #setSelectionFilter(Filter)
 	 */
-	public Filter<Object> getSelectionFilter() {
+	public Filter<? super T> getSelectionFilter() {
 		return _selectionFilter;
 	}
 
 	/**
-	 * A setter for a deselection filter
+	 * Setter for {@link #getDeselectionFilter()}
 	 * 
 	 * @param deselectionFilter
-	 *        - the {@link Filter filter}, which defines, if an object can be removed from
-	 *        selection, or not. If the filter is null, then every object is deselectable.
+	 *        May be <code>null</code>. In that case {@link FilterFactory#trueFilter()} is used.
 	 */
-	public void setDeselectionFilter(Filter<?> deselectionFilter) {
+	public void setDeselectionFilter(Filter<? super T> deselectionFilter) {
 		_deselectionFilter = nonNull(deselectionFilter);
 	}
 
 	/**
-	 * @set {@link #setDeselectionFilter(Filter)}
+	 * The {@link Filter filter}, which defines whether an object can be removed from the selection
+	 * or not.
 	 */
-	public Filter<Object> getDeselectionFilter() {
+	public Filter<? super T> getDeselectionFilter() {
 		return _deselectionFilter;
 	}
 
 	/**
-	 * given filter, if it is not <code>null</code>, {@link FilterFactory#trueFilter()}
-	 *         otherwise.
+	 * Given filter, if it is not <code>null</code>, {@link FilterFactory#trueFilter()} otherwise.
 	 */
-	@SuppressWarnings("unchecked")
-	protected final Filter<Object> nonNull(Filter<?> selectionFilter) {
-		return (Filter<Object>) (selectionFilter == null ? FilterFactory.trueFilter() : selectionFilter);
+	protected final Filter<? super T> nonNull(Filter<? super T> selectionFilter) {
+		return selectionFilter == null ? FilterFactory.trueFilter() : selectionFilter;
 	}
 
 }

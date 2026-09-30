@@ -2,7 +2,56 @@
 
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="test.override">
+		<interface name="Common">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</interface>
+		<interface name="Composite">
+			<generalizations>
+				<generalization type="Common"/>
+			</generalizations>
+			<attributes>
+				<reference name="contents"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Content"
+				/>
+			</attributes>
+		</interface>
+		<class name="ConcreteComposite">
+			<generalizations>
+				<generalization type="Composite"/>
+			</generalizations>
+			<attributes>
+				<reference name="contents"
+					override="true"
+					type="ConcreteContent"
+				/>
+			</attributes>
+		</class>
+		<interface name="Content">
+			<generalizations>
+				<generalization type="Common"/>
+			</generalizations>
+		</interface>
+		<class name="ConcreteContent">
+			<generalizations>
+				<generalization type="Content"/>
+			</generalizations>
+		</class>
 		<interface name="N">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
 			<attributes>
 				<property name="name"
 					mandatory="true"

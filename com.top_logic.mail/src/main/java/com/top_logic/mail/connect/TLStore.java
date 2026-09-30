@@ -9,21 +9,21 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.mail.Folder;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.Store;
-import javax.mail.URLName;
-import javax.mail.event.ConnectionListener;
-import javax.mail.event.FolderListener;
-import javax.mail.event.StoreListener;
+import jakarta.mail.Folder;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
+import jakarta.mail.Store;
+import jakarta.mail.URLName;
+import jakarta.mail.event.ConnectionListener;
+import jakarta.mail.event.FolderListener;
+import jakarta.mail.event.StoreListener;
 
 import com.top_logic.basic.Logger;
 
 /**
  * Debugging class for simulating a broken communication to the mail server ({@link #checkConnect(String)}.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class TLStore extends Store {
 

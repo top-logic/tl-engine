@@ -9,15 +9,14 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.EndAspect;
 import com.top_logic.element.model.migration.model.UpdateTLPropertyProcessor.UpdateTypePartConfig;
@@ -33,16 +32,17 @@ import com.top_logic.model.migration.data.TypePart;
 /**
  * {@link MigrationProcessor} updating a {@link TLAssociationEnd}.
  * 
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
-public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<UpdateTLAssociationEndProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class UpdateTLAssociationEndProcessor
+		extends TLModelBaseLineMigrationProcessor<UpdateTLAssociationEndProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link UpdateTLAssociationEndProcessor}.
 	 */
 	@TagName("update-association-end")
-	public interface Config extends PolymorphicConfiguration<UpdateTLAssociationEndProcessor>, UpdateEndAspectConfig {
+	public interface Config
+			extends TLModelBaseLineMigrationProcessor.Config<UpdateTLAssociationEndProcessor>, UpdateEndAspectConfig {
 
 		// sum interface
 
@@ -81,6 +81,24 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 		@Nullable
 		@Label("Historization")
 		HistoryType getHistoryType();
+
+		/**
+		 * Setter for {@link #getHistoryType()}.
+		 */
+		void setHistoryType(HistoryType value);
+
+		/**
+		 * See {@link EndAspect#getDeletionPolicy()}.
+		 */
+		@Name(EndAspect.DELETION_POLICY_PROPERTY)
+		@NullDefault
+		@Nullable
+		DeletionPolicy getDeletionPolicy();
+
+		/**
+		 * @see #getDeletionPolicy()
+		 */
+		void setDeletionPolicy(DeletionPolicy value);
 	}
 
 	private Util _util;
@@ -101,7 +119,7 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 
 			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
@@ -132,9 +150,10 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 		}
 
 		_util.updateTLStructuredTypePart(connection, associationEnd, null, null, newAssociationEndName,
-			getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
+			getConfig().isMandatory(), getConfig().isAbstract(), getConfig().isComposite(), getConfig().isAggregate(),
+			getConfig().isMultiple(),
 			getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(),
-			null, null);
+			getConfig().getDeletionPolicy(), null, null);
 
 		boolean updateModelBaseline;
 		if (tlModel == null || TLStructuredTypeColumns.isSyntheticAssociationName(endName.getTypeName())) {
@@ -144,9 +163,8 @@ public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<
 		} else {
 			MigrationUtils.updateAssociationEnd(log, tlModel, endName, newName, null,
 				getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
-				getConfig().isMultiple(),
-				getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(),
-				getConfig());
+				getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().isAbstract(),
+				getConfig().canNavigate(), getConfig().getHistoryType(), getConfig().getDeletionPolicy(), getConfig());
 			updateModelBaseline = true;
 		}
 		return updateModelBaseline;

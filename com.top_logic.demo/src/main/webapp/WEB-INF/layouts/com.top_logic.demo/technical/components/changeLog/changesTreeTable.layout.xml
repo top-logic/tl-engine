@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/treetable.template.xml"
+>
+	<arguments
+		defaultColumns="changeType,ID_e8c289ed_dc52_4667_980b_f52e9cc58281,newValue,oldValue"
+		model="selection(com.top_logic.demo/technical/components/changeLog/change_LogTable.layout.xml#Table)"
+		rootVisible="false"
+		type="tl.changelog:Change,tl.changelog:Modification"
+	>
+		<name key="dynamic.8aa81b61-93a0-48f1-aafd-7ef2820c4978">
+			<en>Changes</en>
+			<de>Anderungen</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			nodePredicate="node->$node.instanceOf(`tl.changelog:ChangeSet`) || $node.instanceOf(`tl.changelog:Change`) || $node.instanceOf(`tl.changelog:Modification`)"
+			rootNode="model -> $model"
+		>
+			<children><![CDATA[node->switch {
+    $node.instanceOf(`tl.changelog:ChangeSet`): 
+        $node.get(`tl.changelog:ChangeSet#changes`);
+    $node.instanceOf(`tl.changelog:Update`): 
+        $node.get(`tl.changelog:Update#modifications`);
+}]]></children>
+			<leafPredicate><![CDATA[node -> switch {
+    $node.instanceOf(`tl.changelog:ChangeSet`): false;
+    $node.instanceOf(`tl.changelog:Update`): false;
+    default: true;
+}]]></leafPredicate>
+			<parents><![CDATA[node->switch {
+    $node.instanceOf(`tl.changelog:Change`): 
+        $node.referers(`tl.changelog:ChangeSet#changes`);
+    $node.instanceOf(`tl.changelog:Modification`): 
+        $node.referers(`tl.changelog:Update#modifications`);
+}]]></parents>
+		</modelBuilder>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="ID_e8c289ed_dc52_4667_980b_f52e9cc58281"
+				columnType="tl.model:TLObject"
+			>
+				<columnLabel key="dynamic.d4e32797-d636-4f52-ace4-b6b9e4ada4db">
+					<en>Target</en>
+					<de>Betreff</de>
+				</columnLabel>
+				<accessor><![CDATA[x -> switch {
+    $x.instanceOf(`tl.changelog:ChangeSet`): $x.get(`tl.changelog:ChangeSet#revision`);
+    $x.instanceOf(`tl.changelog:Change`): $x.get(`tl.changelog:Change#object`);
+    $x.instanceOf(`tl.changelog:Modification`): $x.get(`tl.changelog:Modification#part`);
+}]]></accessor>
+			</configurationProvider>
+			<id-column value="ID_e8c289ed_dc52_4667_980b_f52e9cc58281"/>
+			<configurationProvider class="com.top_logic.layout.table.model.AllVisibleColumnsProvider"
+				columns="modifications"
+				excluded="true"
+			/>
+		</configurationProviders>
+	</arguments>
+</config:template-call>

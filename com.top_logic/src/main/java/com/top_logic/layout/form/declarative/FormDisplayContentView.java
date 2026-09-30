@@ -7,7 +7,7 @@ package com.top_logic.layout.form.declarative;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;

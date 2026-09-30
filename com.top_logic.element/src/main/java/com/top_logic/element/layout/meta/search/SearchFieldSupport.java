@@ -64,7 +64,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
-import com.top_logic.model.resources.TLTypeResourceProvider;
+import com.top_logic.model.resources.TLPartResourceProvider;
 import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
@@ -77,7 +77,7 @@ import com.top_logic.util.resource.ResourceMapMapping;
 /**
  * Supporting class for accessing and creating fields in a search component.
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class SearchFieldSupport {
 
@@ -193,7 +193,7 @@ public class SearchFieldSupport {
             SelectField theField = FormFactory.newSelectField(META_ELEMENT, aList, false, Collections.singletonList(aMetaElement), false);
 
             theField.setMandatory(true);
-            theField.setOptionLabelProvider(new TLTypeResourceProvider());
+			theField.setOptionLabelProvider(TLPartResourceProvider.INSTANCE);
             theField.addValueListener(ChangeMetaElementListener.INSTANCE);
 			SelectFieldUtils.setCustomOrderComparator(theField);
 
@@ -303,7 +303,7 @@ public class SearchFieldSupport {
 
             SelectField theColumnField = FormFactory.newSelectField(TABLE_COLUMNS, forSort, true, false);
 
-            theColumnField.setValue(theCurrent);
+			theColumnField.initializeField(theCurrent);
             theColumnField.setOptionLabelProvider(new MetaElementLabelProvider(DefaultResourceProvider.INSTANCE, aME, thePrefix));
             theColumnField.setOptionComparator(new MappedComparator(rmm, comp));
             theColumnField.setCustomOrder(true);
@@ -538,15 +538,12 @@ public class SearchFieldSupport {
                     
                     theField.setDisabled(false);
                 }
-
-                // Invalidate the buttons if a change happens from
-               	theComponent.invalidateButtons();
             }
         }
     }
 
     /**
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class ChangeMetaElementListener implements ValueListener {
 
@@ -567,8 +564,6 @@ public class SearchFieldSupport {
                     theComponent.resetStoredQuery();
                     theComponent.fireModelModifiedEvent(theNewValue, theComponent);
                 }
-
-                theComponent.invalidateButtons();
             }
 
             aField.setDisabled(false);
@@ -576,7 +571,7 @@ public class SearchFieldSupport {
     }
 
     /**
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class ChangeColorListener implements ValueListener {
 
@@ -641,7 +636,7 @@ public class SearchFieldSupport {
     }
 
     /**
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class InputListener implements ValueListener {
 
@@ -726,7 +721,7 @@ public class SearchFieldSupport {
     }
 
     /**
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class GroupInputListener implements ValueListener {
 
@@ -798,7 +793,7 @@ public class SearchFieldSupport {
     /**
      * Change the color of the inputFileds when change and disable the #STORED_QUERY field.
      *
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class InputColorListener implements ValueListener {
 

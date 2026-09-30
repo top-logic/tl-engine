@@ -87,7 +87,7 @@ public class ColumnDescription extends ColumnConfiguration {
 	@Inspectable
     private String name;
 
-    private Collection<String> classifiers;
+	private Collection<String> _classifiers = Collections.emptySet();
 
     /** Show the name of the column in the table header. Default is <code>true</code>. */
 	private boolean showHeader = DEFAULT_SHOW_HEADER;
@@ -150,6 +150,8 @@ public class ColumnDescription extends ColumnConfiguration {
 
 	private String cssClass;
 
+	private String cssHeaderClass;
+
 	private String cssClassGroupFirst;
 
 	private String cssClassGroupLast;
@@ -192,6 +194,8 @@ public class ColumnDescription extends ColumnConfiguration {
 
 	private void copyFrom(ColumnDescription templateColumn) {
 		updateFrom(PropertyCopier.INSTANCE, templateColumn.getSettings());
+		// Copy the internal flag that tracks explicit full-text provider setting
+		this.fullTextProviderExplicitlySet = templateColumn.fullTextProviderExplicitlySet;
 	}
 
 	@Override
@@ -370,7 +374,7 @@ public class ColumnDescription extends ColumnConfiguration {
 	}
 
 	@Override
-	public ExcelCellRenderer getExcelRenderer() {
+	public ExcelCellRenderer internalExcelRenderer() {
 		return _excelRenderer;
 	}
 
@@ -403,17 +407,10 @@ public class ColumnDescription extends ColumnConfiguration {
 
 	@Override
 	public LabelProvider getFullTextProvider() {
-		if (useResourceProviderAsFullTextProvider()) {
+		if (!fullTextProviderExplicitlySet) {
 			return getResourceProvider();
 		}
 		return fullTextProvider;
-	}
-
-	private boolean useResourceProviderAsFullTextProvider() {
-		if (fullTextProvider == null) {
-			return true;
-		}
-		return !fullTextProviderExplicitlySet;
 	}
 
 	@Override
@@ -435,7 +432,7 @@ public class ColumnDescription extends ColumnConfiguration {
 			copyFullTextProvider(fullTextProvider);
 		}
 	}
-    
+
     @Override
 	public ControlProvider getHeadControlProvider() {
         return (this.headControlProvider);
@@ -614,6 +611,22 @@ public class ColumnDescription extends ColumnConfiguration {
 	}
 
 	@Override
+	public String getCssHeaderClass() {
+		return this.cssHeaderClass;
+	}
+
+	@Override
+	protected void copyCssHeaderClass(String cssClass) {
+		checkFrozen();
+		this.cssHeaderClass = cssClass;
+	}
+
+	@Override
+	public void setCssHeaderClass(String cssClass) {
+		copyCssHeaderClass(cssClass);
+	}
+
+	@Override
 	public String getCssClassGroupFirst() {
 		return this.cssClassGroupFirst;
 	}
@@ -664,16 +677,12 @@ public class ColumnDescription extends ColumnConfiguration {
 	@Override
 	protected void copyClassifiers(Collection<String> classifiers) {
 		checkFrozen();
-		if (classifiers == null) {
-			this.classifiers = null;
-		} else {
-			this.classifiers = Collections.unmodifiableCollection(classifiers);
-		}
+		_classifiers = classifiers == null ? Collections.emptySet() : Collections.unmodifiableCollection(classifiers);
 	}
 	
 	@Override
-	protected Collection<String> getClassifiers() {
-		return classifiers;
+	public Collection<String> getClassifiers() {
+		return _classifiers;
 	}
 
 	@Override

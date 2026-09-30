@@ -27,6 +27,7 @@ function init() {
 	LIST_ELEMENTS.set("packages", true);
 	LIST_ELEMENTS.set("subtypes", true);
 	LIST_ELEMENTS.set("classes", true);
+	LIST_ELEMENTS.set("records", true);
 	LIST_ELEMENTS.set("interfaces", true);
 	LIST_ELEMENTS.set("enums", true);
 	LIST_ELEMENTS.set("configs", true);

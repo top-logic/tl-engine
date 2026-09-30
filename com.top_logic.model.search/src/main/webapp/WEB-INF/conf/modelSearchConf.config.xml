@@ -63,6 +63,7 @@
 						config-name="CODE"
 						legacy-type-code="1"
 					>
+						<label-position value="above-value"/>
 						<field-provider>
 							<impl class="com.top_logic.model.search.code.CodeEditorFieldProvider"/>
 						</field-provider>
@@ -91,6 +92,7 @@
 						config-name="JSON"
 						legacy-type-code="1"
 					>
+						<label-position value="above-value"/>
 						<code-editor-language value="ace/mode/json"/>
 						<tag-provider>
 							<impl class="com.top_logic.element.meta.form.tag.CustomInputTagProvider"
@@ -155,6 +157,7 @@
 						config-name="TEMPLATE"
 						legacy-type-code="1"
 					>
+						<label-position value="above-value"/>
 						<field-provider>
 							<impl class="com.top_logic.element.meta.form.fieldprovider.format.FormattedFieldProvider">
 								<configuration-format impl="com.top_logic.model.search.persistency.attribute.tempate.TemplateStorageMapping"/>
@@ -179,6 +182,7 @@
 						config-name="REPORT"
 						legacy-type-code="1"
 					>
+						<label-position value="above-value"/>
 						<field-provider>
 							<impl class="com.top_logic.element.meta.form.fieldprovider.format.FormattedFieldProvider">
 								<configuration-format impl="com.top_logic.model.search.persistency.attribute.tempate.TemplateStorageMapping"/>
@@ -203,6 +207,7 @@
 						config-name="MACRO"
 						legacy-type-code="1"
 					>
+						<label-position value="above-value"/>
 						<field-provider impl="com.top_logic.model.search.persistency.attribute.macro.ui.HiddenFieldProvider"/>
 						<tag-provider impl="com.top_logic.model.search.persistency.attribute.macro.ui.MacroTagProvider"/>
 						<pdf-renderer impl="com.top_logic.model.search.persistency.attribute.macro.ui.MacroPDFRenderer"/>
@@ -274,8 +279,9 @@
 				<declarations>
 					<declaration file="/WEB-INF/model/SearchExpressionStructure.model.xml"/>
 					<declaration file="/WEB-INF/model/tl-model-search/extension.tl.core.model.xml"/>
-					<declaration file="/WEB-INF/model/tl-model-search/extension.tl.accounts.model.xml"/>
+					<declaration file="/WEB-INF/model/tl-model-search/extension.tl.folder.model.xml"/>
 					<declaration file="/WEB-INF/model/tl.model.search.model.xml"/>
+					<declaration file="/WEB-INF/model/tl-model-search/extension.tl.changelog.model.xml"/>
 				</declarations>
 				<settings>
 					<module name="SearchExpressionStructure">
@@ -329,38 +335,67 @@
 					<method name="stringStartsWith" class="com.top_logic.model.search.expr.config.operations.StringStartsWithBuilder"/>
 					<method name="stringContains" class="com.top_logic.model.search.expr.config.operations.StringContainsBuilder"/>
 					<method name="stringEndsWith" class="com.top_logic.model.search.expr.config.operations.StringEndsWithBuilder"/>
+					<method name="with" class="com.top_logic.model.search.expr.config.operations.With$Builder"/>
+					<method name="transpose" class="com.top_logic.model.search.expr.config.operations.Transpose$Builder"/>
 					
 					<method name="subString" class="com.top_logic.model.search.expr.config.operations.string.SubString$Builder"/>
 					<method name="toLowerCase" class="com.top_logic.model.search.expr.config.operations.string.ToLowerCase$Builder"/>
 					<method name="toUpperCase" class="com.top_logic.model.search.expr.config.operations.string.ToUpperCase$Builder"/>
+					<method name="trim" class="com.top_logic.model.search.expr.config.operations.string.Trim$Builder"/>
+					<method name="trimStart" class="com.top_logic.model.search.expr.config.operations.string.Trim$Builder" side="START"/>
+					<method name="trimEnd" class="com.top_logic.model.search.expr.config.operations.string.Trim$Builder" side="END"/>
 
 					<method name="toString" class="com.top_logic.model.search.expr.ToString$Builder"/>
 					<method name="base64Encode" class="com.top_logic.model.search.expr.config.operations.binary.Base64Encode$Builder"/>
 					<method name="base64Decode" class="com.top_logic.model.search.expr.config.operations.binary.Base64Decode$Builder"/>
 					<method name="contextPath" class="com.top_logic.model.search.expr.config.operations.web.ContextPath$Builder"/>
+					<method name="color" class="com.top_logic.model.search.expr.config.operations.web.ColorFunction$Builder"/>
+					<method name="colorValues" class="com.top_logic.model.search.expr.config.operations.web.ColorValues$Builder"/>
+					<method name="themeVar" class="com.top_logic.model.search.expr.config.operations.web.ResolveThemeVar$Builder"/>
 					<method name="numberFormat" class="com.top_logic.model.search.expr.NumerFormatExpr$Builder"/>
 					<method name="dateFormat" class="com.top_logic.model.search.expr.DateFormatExpr$Builder"/>
 					<method name="messageFormat" class="com.top_logic.model.search.expr.MessageFormatExpr$Builder"/>
 					<method name="format" class="com.top_logic.model.search.expr.FormatExpr$Builder"/>
+					<method name="configuredFormat" class="com.top_logic.model.search.expr.ConfiguredFormat$Builder"/>
 					<method name="parse" class="com.top_logic.model.search.expr.ParseExpr$Builder"/>
+					<method name="split" class="com.top_logic.model.search.expr.config.operations.string.Split$Builder"/>
+					<method name="join" class="com.top_logic.model.search.expr.config.operations.string.Join$Builder"/>
 					<method name="label" class="com.top_logic.model.search.expr.config.operations.Label$Builder"/>
 					
 					<method name="translate" class="com.top_logic.model.search.expr.config.operations.string.Translate$Builder"/>
 					<method name="internationalize" class="com.top_logic.model.search.expr.config.operations.string.Internationalize$Builder"/>
 					<method name="localize" class="com.top_logic.model.search.expr.config.operations.string.Localize$Builder"/>
-
+ 					<method name="generateSequenceId" class="com.top_logic.model.search.expr.config.operations.string.GenerateSequenceId$Builder"/>
+					<method name="resetSequence" class="com.top_logic.model.search.expr.config.operations.string.ResetSequence$Builder"/>
+					
 					<method name="binary" class="com.top_logic.model.search.expr.config.operations.binary.Binary$Builder"/>
 					<method name="zipArchive" class="com.top_logic.model.search.expr.config.operations.binary.ZipArchive$Builder"/>
 					<method name="zipEntry" class="com.top_logic.model.search.expr.config.operations.binary.ZipEntry$Builder"/>
+					<method name="unzip" class="com.top_logic.model.search.expr.config.operations.binary.Unzip$Builder"/>
+					<method name="gzip" class="com.top_logic.model.search.expr.config.operations.binary.Gzip$Builder"/>
+					<method name="gunzip" class="com.top_logic.model.search.expr.config.operations.binary.Gunzip$Builder"/>
 					<method name="pdf2txt" class="com.top_logic.model.search.expr.config.operations.binary.Pdf2Txt$Builder"/>
+					<method name="pdfFile" class="com.top_logic.model.search.expr.config.operations.binary.PdfFile$Builder"/>
+					<method name="parseCSV" class="com.top_logic.model.search.expr.config.operations.binary.ParseCSV$Builder"/>
+					<method name="parseExcel" class="com.top_logic.model.search.expr.config.operations.binary.ParseExcel$Builder"/>
 					<method name="parseJson" class="com.top_logic.model.search.expr.config.operations.binary.ParseJson$Builder"/>
-					
+					<method name="instanceExport" class="com.top_logic.model.search.expr.config.operations.binary.InstanceExport$Builder"/>
+					<method name="instanceImport" class="com.top_logic.model.search.expr.config.operations.binary.InstanceImport$Builder"/>
+					<method name="toConfig" class="com.top_logic.model.search.expr.config.operations.struct.ToConfig$Builder"/>
+					<method name="toJson" class="com.top_logic.model.search.expr.config.operations.binary.ToJson$Builder"/>
+					<method name="excelFile" class="com.top_logic.model.search.expr.config.operations.binary.ExcelFile$Builder"/>
+					<method name="excelSheet" class="com.top_logic.model.search.expr.config.operations.binary.ExcelSheet$Builder"/>
+					<method name="excelCell" class="com.top_logic.model.search.expr.config.operations.binary.ExcelCell$Builder"/>
+					<method name="excelFormula" class="com.top_logic.model.search.expr.config.operations.binary.ExcelFormula$Builder"/>
+					<method name="excelStyle" class="com.top_logic.model.search.expr.config.operations.binary.ExcelStyle$Builder"/>
+				
 					<method name="regex" class="com.top_logic.model.search.expr.config.operations.regex.Regex$Builder"/>
 					<method name="regexSearch" class="com.top_logic.model.search.expr.config.operations.regex.RegexSearch$Builder"/>
 					<method name="regexReplace" class="com.top_logic.model.search.expr.config.operations.regex.RegexReplace$Builder"/>
 					<method name="regexGroup" class="com.top_logic.model.search.expr.config.operations.regex.RegexGroup$Builder"/>
 					<method name="regexStart" class="com.top_logic.model.search.expr.config.operations.regex.RegexStart$Builder"/>
 					<method name="regexEnd" class="com.top_logic.model.search.expr.config.operations.regex.RegexEnd$Builder"/>
+					<method name="encodeXML" class="com.top_logic.model.search.expr.config.operations.string.EncodeXML$Builder"/>
 					
 					<method name="indexBy" class="com.top_logic.model.search.expr.config.operations.cache.IndexBy$Builder"/>
 					<method name="indexReduce" class="com.top_logic.model.search.expr.config.operations.cache.IndexReduce$Builder"/>
@@ -372,6 +407,7 @@
 					<method name="getKey" class="com.top_logic.model.search.expr.config.operations.struct.GetKey$Builder"/>
 					<method name="getValue" class="com.top_logic.model.search.expr.config.operations.struct.GetValue$Builder"/>
 
+					<method name="try" class="com.top_logic.model.search.expr.Try$Builder"/>
 					<method name="ifElse" class="com.top_logic.model.search.expr.config.operations.IfElseBuilder"/>
 					<method name="if" class="com.top_logic.model.search.expr.config.operations.IfElseBuilder"/>
 					<method name="isEmpty" class="com.top_logic.model.search.expr.config.operations.IsEmptyBuilder"/>
@@ -380,7 +416,9 @@
 					<method name="copy" class="com.top_logic.model.search.expr.config.operations.Copy$Builder"/>
 					<method name="get" class="com.top_logic.model.search.expr.config.operations.GetBuilder"/>
 					<method name="set" class="com.top_logic.model.search.expr.config.operations.SetBuilder"/>
+					<method name="transient" class="com.top_logic.model.search.expr.config.operations.IsTransient$Builder"/>
 					<method name="add" class="com.top_logic.model.search.expr.Add$Builder"/>
+					<method name="remove" class="com.top_logic.model.search.expr.Remove$Builder"/>
 					<method name="loadFromSession" class="com.top_logic.model.search.expr.config.operations.session.LoadFromSession$Builder"/>
 					<method name="storeInSession" class="com.top_logic.model.search.expr.config.operations.session.StoreInSession$Builder"/>
 					<method name="type" class="com.top_logic.model.search.expr.config.operations.Type$Builder"/>
@@ -392,9 +430,17 @@
 					<method name="referers" class="com.top_logic.model.search.expr.config.operations.ReferersBuilder"/>
 					<method name="instanceOf" class="com.top_logic.model.search.expr.config.operations.InstanceOfBuilder"/>
 					<method name="isCompatible" class="com.top_logic.model.search.expr.config.operations.IsCompatible$Builder"/>
+					<method name="isCompatibleValue" class="com.top_logic.model.search.expr.config.operations.IsCompatibleValue$Builder"/>
 					<method name="singleElement" class="com.top_logic.model.search.expr.config.operations.SingleElementBuilder"/>
 					<method name="singleton" class="com.top_logic.model.search.expr.config.operations.SingletonBuilder"/>
-					<method name="fill" class="com.top_logic.model.search.expr.config.operations.ResKeyArgumentsBuilder"/>
+					<method name="canRead" class="com.top_logic.model.search.expr.config.operations.CanAccess$Builder" command-group="Read"/>
+					<method name="canWrite" class="com.top_logic.model.search.expr.config.operations.CanAccess$Builder" command-group="Write"/>
+					<method name="canDelete" class="com.top_logic.model.search.expr.config.operations.CanAccess$Builder" command-group="Delete"/>
+					<method name="canReadAttribute" class="com.top_logic.model.search.expr.config.operations.CanAccessAttribute$Builder" command-group="Read"/>
+					<method name="canWriteAttribute" class="com.top_logic.model.search.expr.config.operations.CanAccessAttribute$Builder" command-group="Write"/>
+					<method name="canCreate" class="com.top_logic.model.search.expr.config.operations.CanCreate$Builder"/>
+					<method name="canExecute" class="com.top_logic.model.search.expr.config.operations.CanExecute$Builder"/>
+					<method name="fill" class="com.top_logic.model.search.expr.Fill$Builder"/>
 					<method name="associationNavigation" class="com.top_logic.model.search.expr.config.operations.AssociationNavigationBuilder"/>
 					<method name="all" class="com.top_logic.model.search.expr.config.operations.AllBuilder"/>
 					<method name="none" class="com.top_logic.model.search.expr.config.operations.EmptySetBuilder"/>
@@ -505,7 +551,8 @@
 					<method name="dstOffset" class="com.top_logic.model.search.expr.CalendarField$Builder"
 						field="DST_OFFSET"
 					/>
-					
+					<method name="timeZone" class="com.top_logic.model.search.expr.CalendarTimeZone$Builder"/>
+
 					<method name="withEra" class="com.top_logic.model.search.expr.CalendarUpdate$Builder"
 						op="SET" field="ERA"
 					/>
@@ -624,9 +671,20 @@
 					<method name="modifiedRevision" class="com.top_logic.model.search.expr.config.operations.revision.ModifiedRevision$Builder"/>
 					<method name="currentRevision" class="com.top_logic.model.search.expr.config.operations.revision.CurrentRevision$Builder"/>
 					<method name="equalsUnversioned" class="com.top_logic.model.search.expr.config.operations.EqualsUnversioned$Builder"/>
+					<method name="filterPermission" class="com.top_logic.model.search.expr.config.operations.security.FilterPermission$Builder"/>
+					<method name="dbConfig" class="com.top_logic.model.search.expr.config.operations.app.GetDBConfig$Builder"/>
+					<method name="appConfig" class="com.top_logic.model.search.expr.config.operations.app.GetAppConfig$Builder"/>
+					<method name="flatMap" class="com.top_logic.model.search.expr.config.operations.FlatMap$Builder"/>
+					<method name="sessionRevision" class="com.top_logic.model.search.expr.config.operations.revision.SessionRevision$Builder"/>
+					<method name="changeLog" class="com.top_logic.model.search.expr.config.operations.changelog.ChangeLog$Builder"/>
+					<method name="revertChanges" class="com.top_logic.model.search.expr.config.operations.changelog.RevertChanges$Builder"/>
+					<method name="enumName" class="com.top_logic.model.search.expr.config.operations.EnumName$Builder"/>
+					<method name="resolveEnum" class="com.top_logic.model.search.expr.config.operations.ResolveEnum$Builder"/>
+					<method name="filterSecurity" class="com.top_logic.model.search.expr.FilterSecurity$Builder"/>
 				</methods>
 				<method-resolvers>
 					<method-resolver class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions$Module"/>
+					<method-resolver class="com.top_logic.model.search.expr.config.operations.TLScriptMethodResolver"/>
 				</method-resolvers>
 			</instance>
 		</config>
@@ -647,7 +705,7 @@
 					<handler id="resetModelSearch" class="com.top_logic.model.search.ui.selector.ResetSearchCommand"
 						clique="reset"/>
 					<handler id="saveModelSearch" class="com.top_logic.model.search.ui.selector.SaveSearchCommand"
-						clique="save" group="System">
+						clique="save">
 						<executability>
 							<rule class="com.top_logic.tool.execution.NullSelectionDisabled"/>
 						</executability>
@@ -690,6 +748,12 @@
 		
 		<config config:interface="com.top_logic.layout.form.values.edit.EditorFactory$Config">
 			<customizations>
+				<property name="com.top_logic.element.config.annotation.TLStorage#implementation">
+					<annotations>
+						<implementation-class-default value="com.top_logic.model.search.providers.AttributeByExpression"/>
+					</annotations>
+				</property>
+
 				<type name="com.top_logic.layout.ScriptFunction0">
 					<annotations>
 						<property-editor value="com.top_logic.model.search.form.ScriptFunction0Impl$Editor"/>

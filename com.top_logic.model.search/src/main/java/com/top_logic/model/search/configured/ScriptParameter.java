@@ -11,11 +11,11 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.layout.meta.HideActiveIf;
-import com.top_logic.element.layout.meta.HideActiveIfNot;
+import com.top_logic.html.i18n.HtmlResKey;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
+import com.top_logic.layout.form.values.edit.mode.HideActiveIfNot;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.AllTypes;
 import com.top_logic.model.util.TLModelPartRef;
@@ -77,7 +77,7 @@ public interface ScriptParameter extends NamedConfigMandatory, Internationalized
 	 * The description of this parameter.
 	 */
 	@Override
-	ResKey getDescription();
+	HtmlResKey getDescription();
 
 	/**
 	 * The type of the parameter.

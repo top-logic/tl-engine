@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic/tabbar.template.xml"
 >
 	<arguments>
@@ -25,6 +24,7 @@
 			<layout-reference resource="com.top_logic.demo/technical/components/componentVisibility/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicForms/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicViews/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/generalForms/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/reports/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/pDFExport/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/graph/tabLayout.layout.xml"/>
@@ -34,6 +34,12 @@
 			<layout-reference resource="com.top_logic.demo/technical/components/hTMLTemplates/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/toggleButton/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/dynamicVisibility/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/fallbackValues/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/workflow/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/changeLog/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/blocks/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/tabLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

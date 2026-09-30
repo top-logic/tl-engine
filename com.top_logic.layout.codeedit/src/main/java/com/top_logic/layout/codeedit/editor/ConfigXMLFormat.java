@@ -66,12 +66,13 @@ public final class ConfigXMLFormat extends Format {
 
 		try {
 			ConfigurationItem config = (ConfigurationItem) value;
-			ConfigurationWriter writer = new ConfigurationWriter(buffer);
-			String tag = _tagForDescriptor.get(config.descriptor());
-			if (tag == null) {
-				tag = _property.getPropertyName();
+			try (ConfigurationWriter writer = new ConfigurationWriter(buffer)) {
+				String tag = _tagForDescriptor.get(config.descriptor());
+				if (tag == null) {
+					tag = _property.getPropertyName();
+				}
+				writer.write(tag, _descriptorsByTag.get(tag), config);
 			}
-			writer.write(tag, _descriptorsByTag.get(tag), config);
 		} catch (XMLStreamException ex) {
 			throw new IOError(ex);
 		}

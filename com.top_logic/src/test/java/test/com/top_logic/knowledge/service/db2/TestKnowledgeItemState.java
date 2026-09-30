@@ -29,7 +29,7 @@ import com.top_logic.knowledge.service.Transaction;
 public class TestKnowledgeItemState extends AbstractDBKnowledgeBaseTest {
 
 	public void testState() {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
 		BObjWithState b1 = (BObjWithState) BObj.newBObj("b1");
 		assertEquals(State.NEW, b1.getStateInConstructor());
@@ -39,7 +39,7 @@ public class TestKnowledgeItemState extends AbstractDBKnowledgeBaseTest {
 
 		assertEquals(State.PERSISTENT, b1.tHandle().getState());
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
 		b1.tDelete();
 		assertEquals(State.PERSISTENT, b1.tHandle().getState());
@@ -48,7 +48,7 @@ public class TestKnowledgeItemState extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testLoadingState() throws DataObjectException {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1Old = BObj.newBObj("b1");
 		tx1.commit();
 

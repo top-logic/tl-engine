@@ -73,9 +73,19 @@
 								<delete-protected/>
 							</annotations>
 						</property>
+						<reference name="children"
+							override="true"
+							type="Mandator.all"
+						/>
+						<reference name="parent"
+							kind="backwards"
+							override="true"
+							type="Mandator.all"
+						/>
 					</attributes>
 					<generalizations>
 						<generalization type="tl.element:StructuredElement"/>
+						<generalization type="tl.element:StructuredElementContainer"/>
 					</generalizations>
 				</interface>
 				<class name="RootElement">
@@ -106,7 +116,6 @@
 					</attributes>
 					<generalizations>
 						<generalization type="Mandator.all"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
 					</generalizations>
 				</class>
 				<class name="Mandator">
@@ -124,7 +133,6 @@
 					<generalizations>
 						<generalization type="Mandator.all"/>
 						<generalization type="mandatorStructure:RootElementChild"/>
-						<generalization type="tl.element:StructuredElementContainer"/>
 						<generalization type="mandatorStructure:MandatorChild"/>
 					</generalizations>
 				</class>

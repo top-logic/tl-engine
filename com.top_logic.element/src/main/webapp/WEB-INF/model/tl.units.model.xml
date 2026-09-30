@@ -3,6 +3,9 @@
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="tl.units">
 		<interface name="AbstractUnit">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
 			<attributes>
 				<property name="name"
 					mandatory="true"
@@ -36,7 +39,7 @@
 			</generalizations>
 			<annotations>
 				<implementation-binding class-name="com.top_logic.knowledge.wrap.currency.Currency"/>
-				<main-properties properties="name, factor"/>
+				<main-properties properties="name,factor,baseUnit"/>
 				<table name="Currency"/>
 			</annotations>
 			<attributes>
@@ -61,6 +64,26 @@
 						<delete-protected/>
 					</annotations>
 				</property>
+				<property name="format"
+					override="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<string value="###,###,###,##0.00"/>
+						</default-value>
+					</annotations>
+				</property>
+				<property name="sortOrder"
+					override="true"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<default-value>
+							<int value="0"/>
+						</default-value>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="Unit">
@@ -76,7 +99,7 @@
 					icon="theme:mime.tl.units.Unit"
 					large-icon="theme:mime.tl.units.Unit.large"
 				/>
-				<main-properties properties="name, format"/>
+				<main-properties properties="name,format"/>
 				<table name="Unit"/>
 			</annotations>
 			<attributes>

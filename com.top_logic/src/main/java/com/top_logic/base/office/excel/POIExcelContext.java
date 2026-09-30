@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellPropertyType;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -24,6 +25,7 @@ import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.ss.util.CellUtil;
 import org.apache.poi.ss.util.DateFormatConverter;
 
+import com.top_logic.base.office.POIUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.format.DateFormatDefinition;
 import com.top_logic.basic.format.FormatDefinition;
@@ -131,7 +133,7 @@ public class POIExcelContext extends ExcelContext {
 				final Workbook workbook = cell.getSheet().getWorkbook();
 				final short formatIndex = workbook.createDataFormat().getFormat(getDateFormatString());
 	            
-				CellUtil.setCellStyleProperty(cell, CellUtil.DATA_FORMAT, formatIndex);
+				CellUtil.setCellStyleProperty(cell, CellPropertyType.DATA_FORMAT, formatIndex);
 	        }
 	        
 	        // apply the cell value
@@ -145,7 +147,9 @@ public class POIExcelContext extends ExcelContext {
 	    
 	    // String implementation is always unformatted
 	    else if(value instanceof String) {
-	        getCell(true).setCellValue((String) value);
+	        String text = (String) value;
+			text = POIUtil.shortenTextSize(_sheet.getWorkbook(), text);
+			getCell(true).setCellValue(text);
 	    }
 	    
 	    // Null implementation avoids creating blank cells

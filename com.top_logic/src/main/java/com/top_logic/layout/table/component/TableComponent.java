@@ -20,18 +20,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.collections4.CollectionUtils;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
@@ -47,12 +46,14 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.func.IFunction2;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.check.MasterSlaveCheckProvider;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
@@ -62,8 +63,12 @@ import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.compare.CompareAlgorithm;
 import com.top_logic.layout.compare.CompareAlgorithmHolder;
 import com.top_logic.layout.component.ComponentUtil;
-import com.top_logic.layout.component.Selectable;
+import com.top_logic.layout.component.DefaultSelectionProvider;
+import com.top_logic.layout.component.DefaultSelectionProviderConfig;
+import com.top_logic.layout.component.InAppSelectable;
+import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.component.FormComponent;
@@ -98,6 +103,7 @@ import com.top_logic.layout.table.model.TableModelListener;
 import com.top_logic.layout.table.model.TableUtil;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.layout.toolbar.ToolBar;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelConfig;
@@ -109,6 +115,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
@@ -118,15 +125,17 @@ import com.top_logic.util.model.ModelService;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class TableComponent extends BuilderComponent implements SelectableWithSelectionModel,
-		FormHandler, TableDataOwner, ControlRepresentable, CompareAlgorithmHolder, ComponentRowSource {
+public class TableComponent extends BuilderComponent implements SelectableWithSelectionModel, InAppSelectable,
+		FormHandler, TableDataOwner, ControlRepresentable, CompareAlgorithmHolder, ComponentRowSource,
+		ObjectRevealer {
 
 	/**
 	 * Configuration options for {@link TableComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config
-			extends BuilderComponent.Config, ColumnsChannel.Config, Selectable.SelectableConfig, SelectionModelConfig {
+	public interface Config extends BuilderComponent.Config, ColumnsChannel.Config,
+			InAppSelectable.InAppSelectableConfig, DefaultSelectionProviderConfig, SelectionModelConfig,
+			WithCustomConfigKey {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -220,6 +229,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 		@Override
 		PolymorphicConfiguration<? extends ListModelBuilder> getModelBuilder();
+
 	}
 
     /** Configuration name for excluded columns attribute. */
@@ -270,37 +280,87 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		}
 	};
 
+	/**
+	 * Responds to selection changes by updating the table model when the new selection is not
+	 * already present in the current model.
+	 */
 	private static final ChannelListener ON_SELECTION_CHANGE = new ChannelListener() {
 		@Override
-		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
-			TableComponent table = (TableComponent) sender.getComponent();
+		public void handleNewValue(ComponentChannel sender, Object oldSelection, Object newSelection) {
+		    TableComponent table = (TableComponent) sender.getComponent();
+		    
+			boolean shouldUpdateModel = false;
+			Object selectionForModelRetrieval = null;
 
-			table.invalidateSelection();
+			// Handle Collection selections
+			if (newSelection instanceof Collection) {
+				Collection<?> collection = (Collection<?>) newSelection;
+		        
+				// Only process non-empty collections
+				if (!collection.isEmpty()) {
+					// Get the first new element (non-null and not already in table)
+					selectionForModelRetrieval = collection.stream()
+						.filter(element -> element != null && !table.getTableModel().containsRowObject(element))
+						.findFirst()
+						.orElse(null);
+
+					shouldUpdateModel = (selectionForModelRetrieval != null);
+				}
+			}
+			// Handle single object selections
+			else if (newSelection != null) {
+				// Only update model if selection is not already in the table
+				if (!table.getTableModel().containsRowObject(newSelection)) {
+					selectionForModelRetrieval = newSelection;
+					shouldUpdateModel = true;
+		        }
+		    }
+		    
+			// Update model if needed
+			if (shouldUpdateModel) {
+				Object retrievedModel =
+					table.getListBuilder().retrieveModelFromListElement(table, selectionForModelRetrieval);
+				table.setModel(retrievedModel);
+			}
+
+		    table.invalidateSelection();
 		}
 	};
 
 	private static final ChannelValueFilter SELECTION_FILTER = new ChannelValueFilter() {
+
 		@Override
 		public boolean accept(ComponentChannel sender, Object oldValue, Object newValue) {
 			TableComponent self = (TableComponent) sender.getComponent();
 
-			if (!ComponentUtil.isValid(newValue)) {
-				self.showErrorSelectedObjectDeleted();
-				return false;
-			}
-
-			if (newValue != null) {
-				if (newValue instanceof Collection) {
-					for (Object selectedObject : (Collection<?>) newValue) {
-						if (!self.getListBuilder().supportsListElement(self, selectedObject)) {
-							return false;
-						}
-					}
-				} else {
-					if (!self.getListBuilder().supportsListElement(self, newValue)) {
+			if (newValue instanceof Collection) {
+				for (Object selectedObject : (Collection<?>) newValue) {
+					if (!checkSelectedSingleValue(self, selectedObject)) {
 						return false;
 					}
 				}
+				return true;
+			} else if (newValue != null) {
+				return checkSelectedSingleValue(self, newValue);
+			} else {
+				return true;
+			}
+		}
+
+		private boolean checkSelectedSingleValue(TableComponent self, Object selectedObject) {
+			if (!ComponentUtil.isValid(selectedObject)) {
+				/* At this point, it cannot be determined whether the element was deleted by the
+				 * user or whether the deletion originated from another session. */
+//				self.showErrorSelectedObjectDeleted();
+				return false;
+			}
+			if (!self._rowTypeFilter.accept(selectedObject)) {
+				/* Type of the selected element is incompatible with the rows types of
+				 * the table. */
+				return false;
+			}
+			if (self.getListBuilder().supportsListElement(self, selectedObject).shouldRemove()) {
+				return false;
 			}
 			return true;
 		}
@@ -360,11 +420,12 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	private final SelectionListener _selectionListener = new SelectionListener() {
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			if (!isSelectable()) {
 				return;
 			}
 
+			Set<?> newSelection = event.getNewSelection();
 			if (ScriptingRecorder.isRecordingActive()) {
 				ScriptingRecorder.recordSelection(_tableData, newSelection, true,
 					SelectionChangeKind.ABSOLUTE);
@@ -377,7 +438,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 				boolean selectionChannelIsUpdated = setSelectionToChannel(newSelection, true);
 
 				if (!selectionChannelIsUpdated) {
-					_selectionModel.setSelection(oldSelection);
+					_selectionModel.setSelection(event.getOldSelection());
 				}
 			}
 		}
@@ -397,29 +458,55 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	private SelectionModel _selectionModel;
 
-    /**
+	private CommandHandler _onSelectionChange;
+
+	private final DefaultSelectionProvider _defaultSelectionProvider;
+
+	private IFunction2<String, Object, String> _configKeyBuilder;
+
+	/**
+	 * Filter that checks whether a potential list element has the correct {@link TLType}. If no
+	 * {@link #getTypes() types} are configured, all elements are potentially part of the list.
+	 */
+	private Filter<Object> _rowTypeFilter;
+
+	/**
 	 * Create a {@link TableComponent}.
 	 */
-	public TableComponent(final InstantiationContext context, final Config attr) throws ConfigurationException {
-		super(context, attr);
-		_types = resolveTypes(context, attr);
-        this.useFooterForPaging = attr.getUseFooterForPaging();
+	public TableComponent(final InstantiationContext context, final Config config) throws ConfigurationException {
+		super(context, config);
+		_types = resolveTypes(context, config);
+		_rowTypeFilter = CorrectTypeFilter.newTypeFilter(_types);
+		this.useFooterForPaging = config.getUseFooterForPaging();
 
-        this.selectable         = attr.getSelectable();
-        this.cachingApplModel   = attr.getCaching();
-        this.defaultSortable    = attr.getDefaultSortable();
+		this.selectable = config.getSelectable();
+		this.cachingApplModel = config.getCaching();
+		this.defaultSortable = config.getDefaultSortable();
 
         // initialization of the column comparators of the newly created TableComponent is done in #componentsResolved to allow for post changes 
         // of the columnDescriptionManager.
         // initColumnComparatorsFromColumnDescriptions();
-        this.columnBuilder          = this.createColumnBuilder(context, attr);
-		this.formMemberProvider = attr.getFormMemberProvider();
+		this.columnBuilder = this.createColumnBuilder(context, config);
+		this.formMemberProvider = config.getFormMemberProvider();
 
-		TableConfig table = attr.getTable();
+		TableConfig table = config.getTable();
 		if (table != null) {
 			_configuredProvider = TableConfigurationFactory.toProvider(context, table);
 		}
-		_selectionModel = createSelectionModel(attr);
+		_selectionModel = createSelectionModel(config);
+		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_defaultSelectionProvider = context.getInstance(config.getDefaultSelectionProvider());
+		_configKeyBuilder = context.getInstance(config.getCustomConfigKey());
+	}
+
+	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
+	}
+
+	@Override
+	public CommandHandler getOnSelectionHandler() {
+		return _onSelectionChange;
 	}
 
 	private Set<TLType> resolveTypes(InstantiationContext context, Config config) {
@@ -508,6 +595,14 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	}
 
 	private void setDefaultSelection() {
+		if (_defaultSelectionProvider != null && getConfig().getDefaultSelection() && this.listValid
+				&& getTableControl().isSelectable()) {
+			Set<Object> selection =
+				getSelectableObjects(_defaultSelectionProvider.computeDefaultSelection(getModel(), getSelected()));
+			SelectionUtil.setSelection(_selectionModel, selection);
+			return;
+		}
+
 		Object defaultSelection = getDefaultSelection();
 
 		if (defaultSelection != null) {
@@ -544,8 +639,10 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	}
 
 	private boolean isObjectSelectable(TableModel tableModel, Object object) {
-		return tableModel.containsRowObject(object) && _selectionModel.isSelectable(object)
-			&& getListBuilder().supportsListElement(this, object);
+		return tableModel.containsRowObject(object)
+				&& _selectionModel.isSelectable(object)
+				&& _rowTypeFilter.accept(object)
+				&& !getListBuilder().supportsListElement(this, object).shouldRemove();
 	}
 
 	private boolean validateRows() {
@@ -593,7 +690,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	/** @see Config#shouldCheckMissingTypeConfiguration() */
 	protected boolean shouldCheckMissingTypeConfiguration() {
-		return ((Config) getConfig()).shouldCheckMissingTypeConfiguration();
+		return getConfig().shouldCheckMissingTypeConfiguration();
 	}
 
 	private void checkMissingTypeConfiguration() {
@@ -709,12 +806,26 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
             return true;
         }
 
-        EditableRowTableModel tableModel = getTableModel();
+		if (!_rowTypeFilter.accept(aModel)) {
+			// model has a invalid row type. It will never be displayed as list element.
+			return false;
+		}
+		
+		ElementUpdate decision = this.getListBuilder().supportsListElement(this, aModel);
+		if (decision == ElementUpdate.NO_CHANGE) {
+			return false;
+		}
+		if (decision == ElementUpdate.UNKNOWN) {
+			invalidate();
+			return true;
+		}
+
+		EditableRowTableModel tableModel = getTableModel();
 		int row = tableModel.getRowOfObject(aModel);
         if (row < 0) {
 			// The changed model is not within the displayed rows.
 
-            if (this.getListBuilder().supportsListElement(this, aModel)) {
+			if (decision.shouldAdd()) {
 				// The element is now part of this table.
             	addNewRowObject(aModel);
             	return true;
@@ -724,13 +835,13 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
             	return false;
             }
         } else {
-            if (this.getListBuilder().supportsListElement(this, aModel)) {
-            	// Forward event to the UI and request a repaint.
-            	tableModel.updateRows(row, row);
-            } else {
+			if (decision.shouldRemove()) {
 				// The element is no longer part of this table.
 				removeRow(tableModel, aModel, row);
 				invalidateSelection();
+			} else {
+				// Forward event to the UI and request a repaint.
+				tableModel.updateRows(row, row);
             }
         	
         	return true;
@@ -750,13 +861,27 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
             return false;
         }
 
-        if (! this.getListBuilder().supportsListElement(this, aModel)) {
-        	return false;
-        }
+		if (_rowTypeFilter.accept(aModel)) {
+			// model has a valid row type. It may be displayed as list element.
 
-        addNewRowObject(aModel);
-        
-        return true;
+			ElementUpdate updateDecision = this.getListBuilder().supportsListElement(this, aModel);
+			switch (updateDecision) {
+				case ADD:
+					addNewRowObject(aModel);
+					return true;
+				case UNKNOWN:
+					invalidate();
+					return true;
+				case NO_CHANGE:
+				case REMOVE:
+					return false;
+			}
+
+			throw new IllegalArgumentException("Uncovered case: " + updateDecision);
+		}
+
+
+		return false;
     }
 
 	/** 
@@ -835,11 +960,11 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	}
 
 	private Object getDefaultSelection() {
-		if (((Config) getConfig()).getDefaultSelection()) {
+		if (getConfig().getDefaultSelection()) {
 			if (this.listValid) {
 				List<?> displayedRows = getTableModel().getDisplayedRows();
 
-				if (!CollectionUtils.isEmpty(displayedRows) && getTableControl().isSelectable()) {
+				if (!CollectionUtil.isEmpty(displayedRows) && getTableControl().isSelectable()) {
 					return getDefaultSelection(displayedRows);
 				}
 			}
@@ -885,6 +1010,18 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	public TableViewModel getViewModel() {
 		return getTableData().getViewModel();
+	}
+
+	@Override
+	public boolean revealObject(Object businessObject) {
+		TableViewModel viewModel = getViewModel();
+		viewModel.validate(DefaultDisplayContext.getDisplayContext());
+		int row = viewModel.getApplicationModel().getRowOfObject(businessObject);
+		if (row < 0) {
+			return false;
+		}
+		TableModelUtils.scrollToRow(viewModel, row);
+		return true;
 	}
 
 	private FormTableModel createFormTableModel(EditableRowTableModel applicationModel) {
@@ -1009,7 +1146,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	 * Creates the {@link TableConfigurationProvider} for this {@link TableComponent}.
 	 */
 	protected TableConfigurationProvider createTableConfigurationProvider() {
-		Config config = (Config) getConfig();
+		Config config = getConfig();
 
 		List<TableConfigurationProvider> providers = new ArrayList<>();
 		ComponentTableConfigProvider componentTableConfigProvider = config.getComponentTableConfigProvider();
@@ -1040,7 +1177,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	 * If this table displays non-TLObjects, the {@link Set} is empty.
 	 * </p>
 	 */
-	protected Set<TLType> getTypes() {
+	protected Set<? extends TLType> getTypes() {
 		return _types;
 	}
 
@@ -1113,7 +1250,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 				case 0:
 					return setSelected(null);
 				case 1:
-					return setSelected(CollectionUtils.extractSingleton(newSelection));
+					return setSelected(newSelection.iterator().next());
 				default:
 					throw new IllegalArgumentException(
 						"Multiple selection " + newSelection + " for single selection table: " + this);
@@ -1306,8 +1443,9 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	private TableData createTableData() {
 		FormTableModel tableModel = createFormTableModel(createApplicationModel());
+		ConfigKey configKey = WithCustomConfigKey.resolveObjectKey(this, _configKeyBuilder, ConfigKey.component(this));
 		TableData tableData =
-			DefaultTableData.createTableData(this, tableModel, ConfigKey.component(this));
+			DefaultTableData.createTableData(this, tableModel, configKey);
 		if (getToolBar() != null) {
 			tableData.setToolBar(getToolBar());
 		}
@@ -1320,7 +1458,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	}
 
     @Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return ColumnsChannel.COLUMNS_MODEL_ROWS_AND_SELECTION_CHANNEL;
 	}
 
@@ -1328,7 +1466,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	public void linkChannels(Log log) {
 		super.linkChannels(log);
 
-		Config config = (Config) getConfig();
+		Config config = getConfig();
 		ChannelLinking channelLinking = getChannelLinking(config.getColumns());
 		columnsChannel().linkChannel(log, this, channelLinking);
 		columnsChannel().addListener(COLUMNS_LISTENER);

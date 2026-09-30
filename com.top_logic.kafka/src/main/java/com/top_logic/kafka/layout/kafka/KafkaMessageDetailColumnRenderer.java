@@ -34,7 +34,7 @@ import com.top_logic.util.Resources;
  * {@link Renderer} writing a button opening a message box with a formatted display of a
  * {@link KafkaMessage}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class KafkaMessageDetailColumnRenderer extends AbstractShowObjectColumnRenderer<KafkaMessage> {
 
@@ -56,7 +56,7 @@ public class KafkaMessageDetailColumnRenderer extends AbstractShowObjectColumnRe
 	/**
 	 * Rendering information to a {@link KafkaMessage}.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class KafkaMessageRenderer implements Renderer<KafkaMessage> {
 

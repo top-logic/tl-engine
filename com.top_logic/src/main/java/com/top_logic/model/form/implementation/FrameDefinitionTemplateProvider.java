@@ -63,7 +63,7 @@ public class FrameDefinitionTemplateProvider extends AbstractFormContainerProvid
 
 	@Override
 	public ImageProvider getImageProvider() {
-		return ImageProvider.constantImageProvider(Icons.FORM_EDITOR__FRAME);
+		return (any, flavor) -> Icons.FORM_EDITOR__FRAME;
 	}
 
 	@Override
@@ -100,7 +100,7 @@ public class FrameDefinitionTemplateProvider extends AbstractFormContainerProvid
 		if (getConfig() != null) {
 			cssClass = getConfig().getCssClass();
 			cssShowBorder = getConfig().getShowBorder().booleanValue() ? "showBorder" : "";
-			cssWholeLine = getWholeLine() ? ReactiveFormCSS.RF_LINE : "";
+			cssWholeLine = getWholeLine() ? cssWholeLine : "";
 		}
 
 		String cssClasses =

@@ -31,7 +31,6 @@ import com.top_logic.basic.time.TimeZones;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.basic.version.Version;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ReadOnlyAccessor;
@@ -440,12 +439,6 @@ public class ApplicationMonitorComponent extends FormComponent {
 		final TLLicense license = LicenseTool.getInstance().getLicense();
 		final Formatter format = HTMLFormatter.getInstance();
 
-		int licenseFullUsers = license.getUsers();
-		int licenseRestricedUsers = license.getRestrictedUsers();
-		List<Person> allPersons = Person.all();
-		long systemFullUsers = allPersons.stream().filter(Person.FULL_USER_FILTER).count();
-		long systemRestricedUsers = allPersons.stream().filter(Person.RESTRICTED_USER_FILTER).count();
-
 		result.add(property(PRODUCT_TYPE, LicenseTool.productType()));
 		result.add(property(LICENCE_STATE, resource(LicenseTool.licenseState(license))));
 
@@ -454,15 +447,6 @@ public class ApplicationMonitorComponent extends FormComponent {
 			license.getValidity() == null ? "--" : format.formatDate(license.getValidity())));
 		result.add(property(LICENSE_EXPIRE_DATE,
 			license.getExpireDate() == null ? resource(NO_EXPIRY) : format.formatDate(license.getExpireDate())));
-
-		result.add(property(LICENSE_USERS_FULL,
-			licenseFullUsers == Integer.MAX_VALUE ? resource(UNLIMITED)
-				: resource(LICENSE_USERS_VALUE, systemFullUsers, licenseFullUsers)));
-		result.add(property(LICENSE_USERS_RESTRICTED,
-			licenseRestricedUsers == Integer.MAX_VALUE ? resource(UNLIMITED)
-				: resource(LICENSE_USERS_VALUE, systemRestricedUsers, licenseRestricedUsers)));
-		result.add(property(LICENSE_CLUSTER_SIZE, license.getClusterSize() == Integer.MAX_VALUE ? resource(UNLIMITED)
-			: Integer.toString(license.getClusterSize())));
 
 		return result;
 	}

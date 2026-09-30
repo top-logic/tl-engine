@@ -30,7 +30,7 @@ public class TestMonomorphicSearch extends AbstractDBKnowledgeBaseClusterTest {
 			// This test uses branches, but there is no multiple branch support.
 			return;
 		}
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		int objCnt = 500;
 		for (int n = 0; n < objCnt; n++) {
 			BObj.newBObj("b" + n);

@@ -17,8 +17,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
+import com.top_logic.knowledge.gui.layout.ButtonBar;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
@@ -28,7 +29,6 @@ import com.top_logic.layout.Renderer;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.Command;
-import com.top_logic.layout.basic.Command.CommandChain;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.ControlCommandModel;
@@ -67,7 +67,7 @@ import com.top_logic.util.Resources;
 /**
  * Control displaying a value with a popup button opening a popup dialog for editing this value.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F?rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class PopupEditControl extends AbstractFormFieldControl {
 
@@ -322,7 +322,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 
 	@Override
 	protected String getTypeCssClass() {
-		return isImmutable() ? "cTextPopupView" : "cTextPopup";
+		return isImmutable() ? "tl-text-popup-view" : "tl-text-popup";
 	}
 
 	@Override
@@ -340,7 +340,12 @@ public class PopupEditControl extends AbstractFormFieldControl {
 		writeControlAttributes(context, out);
 		out.endBeginTag();
 		{
-			_settings.getFirstLineRenderer().write(context, out, getFieldModel().getValue());
+			FormField field = getFieldModel();
+			Object value = field.getValue();
+			if (Utils.isEmpty(value)) {
+				value = field.getPlaceholder();
+			}
+			_settings.getFirstLineRenderer().write(context, out, value);
 			if (editable) {
 				writeEditorButton(context, out);
 			}
@@ -350,7 +355,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 
 	private void writeEditorButton(DisplayContext context, TagWriter out) throws IOException {
 		out.beginBeginTag(SPAN);
-		out.writeAttribute(CLASS_ATTR, FormConstants.FIXED_LEFT_CSS_CLASS);
+		out.writeAttribute(CLASS_ATTR, FormConstants.FIXED_RIGHT_CSS_CLASS);
 		out.endBeginTag();
 		{
 			new ButtonControl(_openEditor).write(context, out);
@@ -403,7 +408,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 		layout.addChild(editlayout);
 
 		Command closeAction = dialogModel.getCloseAction();
-		CommandChain apply = new CommandChain(getApplyCommand(originalField, editField), closeAction);
+		Command apply = getApplyCommand(originalField, editField).andThen(closeAction);
 		dialogModel.setDefaultCommand(apply);
 		LayoutControlAdapter buttonsLayout = new LayoutControlAdapter(getButtonsTag(apply, closeAction));
 		buttonsLayout.setConstraint(
@@ -420,7 +425,8 @@ public class PopupEditControl extends AbstractFormFieldControl {
 	private FormField createEditFieldInternal(FormField originalField) {
 		FormField editField = createEditField(originalField);
 		editField.setLabel(originalField.getLabel());
-		editField.setValue(originalField.getValue());
+		editField.setPlaceholder(originalField.getPlaceholder());
+		editField.initializeField(originalField.getValue());
 		editField.setControlProvider(originalField.getControlProvider());
 		copyFieldConstraints(originalField, editField);
 		copyFieldAnnotations(originalField, editField);
@@ -548,7 +554,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 	protected Tag getButtonsTag(Command apply, Command cancel) {
 		HTMLFragment applyButton = getApplyButton(apply);
 		HTMLFragment cancelButton = getCancelButton(cancel);
-		return Fragments.div(ButtonComponent.DEFAULT_CSS_CLASS, applyButton, cancelButton);
+		return Fragments.div(ButtonBar.DEFAULT_CSS_CLASS, applyButton, cancelButton);
 	}
 
 	/**

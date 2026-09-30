@@ -11,6 +11,7 @@ import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.FileUtilities;
 
 /**
@@ -19,6 +20,30 @@ import com.top_logic.basic.io.FileUtilities;
  * @author     <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public class RegExpUtil {
+
+	/**
+	 * Regex matching a single whitespace.
+	 * <p>
+	 * Matches not just ASCII whitespace characters, but also unicode whitespace characters. It
+	 * matches even those characters, which Java considers to be "spaces, but not whitespaces". For
+	 * example the character {@link StringServices#NARROW_NO_BREAK_SPACE narrow no-break space} is a
+	 * whitespace character according to Unicode, but only a space for Java. This regex matches it,
+	 * too.
+	 * </p>
+	 * 
+	 */
+	public static final Pattern UNICODE_WHITESPACE = Pattern.compile("\\p{Blank}", Pattern.UNICODE_CHARACTER_CLASS);
+
+	/**
+	 * Replaces all whitespaces by normal spaces, even unicode whitespace.
+	 * <p>
+	 * See {@link #UNICODE_WHITESPACE} for the details about what is matched. Does not trim the
+	 * whitespace: The result is always as long as the input.
+	 * </p>
+	 */
+	public static String normalizeWhitespace(String text) {
+		return UNICODE_WHITESPACE.matcher(text).replaceAll(" ");
+	}
 
 	/**
 	 * Does the {@link CharSequence} contain text matching the {@link Pattern}?

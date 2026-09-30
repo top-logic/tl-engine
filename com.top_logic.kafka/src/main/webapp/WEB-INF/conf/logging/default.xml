@@ -71,13 +71,20 @@
 			/>
 			<SizeBasedTriggeringPolicy size="1 MB"/>
 		</RollingFile>
+		<!--
+			Forwards log events to an external log viewer (e.g. Chainsaw) listening on
+			localhost:4445. Opt-in per developer: start the application with
+			-Dtl_logReceiver=true. Failures to reach the receiver are ignored, so a
+			closed receiver never stalls the other appenders or the application.
+		-->
 		<SystemPropertyArbiter
-			propertyName="tl_developerMode"
+			propertyName="tl_logReceiver"
 			propertyValue="true"
 		>
 			<Socket name="SOCKET_APPENDER"
 				host="localhost"
 				port="4445"
+				ignoreExceptions="true"
 			>
 				<SerializedLayout/>
 			</Socket>
@@ -148,7 +155,7 @@
 				</Filters>
 			</AppenderRef>
 			<SystemPropertyArbiter
-				propertyName="tl_developerMode"
+				propertyName="tl_logReceiver"
 				propertyValue="true"
 			>
 				<AppenderRef ref="SOCKET_APPENDER"/>

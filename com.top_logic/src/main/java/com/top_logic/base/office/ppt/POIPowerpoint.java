@@ -163,7 +163,7 @@ public class POIPowerpoint extends Powerpoint {
 		return new HSLFSlideShow(aTemplateStream);
 	}
 	
-	protected void processSlideMaster(MasterSheet<?, ?> aMaster, POIPowerpointUtil aUtil, Map someReplacements)
+	protected void processSlideMaster(MasterSheet aMaster, POIPowerpointUtil aUtil, Map someReplacements)
 			throws IOException {
 	    aUtil.parseForTokens(aMaster, POIPowerpointUtil.shapesStable(aMaster), someReplacements);
 	}

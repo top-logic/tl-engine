@@ -8,9 +8,10 @@
 	<components>
 		<editor name="Editor"
 			applyCommand="applyTLEnumeration"
+			isSecurityMaster="true"
 			model="selection(com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree)"
 			resPrefix="element.meta.EnumerationEditor."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<include name="com.top_logic.element/admin/model/modelEditor/EnumerationForm.xml"
 				showNoModel="false"

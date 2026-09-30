@@ -571,9 +571,9 @@ public class ValueResolver implements ValueRefVisitor<Object, ActionContext> {
 	}
 
 	private String fuzzyNormalize(String attributeLabel) {
-		return attributeLabel.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue")
-			.replace("Ä", "Ae").replace("Ö", "Oe").replace("Ü", "Ue")
-			.replace("ß", "ss").replaceAll("[^A-Za-z0-9]+", "");
+		return attributeLabel.replace("Ã¤", "ae").replace("Ã¶", "oe").replace("Ã¼", "ue")
+			.replace("Ã„", "Ae").replace("Ã–", "Oe").replace("Ãœ", "Ue")
+			.replace("ÃŸ", "ss").replaceAll("[^A-Za-z0-9]+", "");
 	}
 
 	@Override
@@ -976,13 +976,7 @@ public class ValueResolver implements ValueRefVisitor<Object, ActionContext> {
 		} else {
 			TableData table = (TableData) treeNodeContext;
 			TableViewModel viewModel = table.getViewModel();
-			Set<?> selection = table.getSelectionModel().getSelection();
-			Object selectedRow = CollectionUtil.getSingleValueFromCollection(selection);
-			if (selectedRow != null) {
-				return Utils.equals(selectedRow, node);
-			}
-
-			return false;
+			return table.getSelectionModel().isSelected(node);
 		}
 	}
 

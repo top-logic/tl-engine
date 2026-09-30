@@ -11,6 +11,7 @@ import static com.top_logic.layout.wysiwyg.ui.StructuredText.*;
 import static java.util.Collections.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -25,7 +26,9 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.element.meta.AssociationStorageDescriptor;
 import com.top_logic.element.meta.AttributeException;
+import com.top_logic.element.meta.DefaultAssociationStorageDescriptor;
 import com.top_logic.element.meta.kbbased.storage.AbstractStorage;
 import com.top_logic.element.model.i18n.I18NAttributeStorage;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -34,6 +37,7 @@ import com.top_logic.knowledge.service.db2.StaticItem;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
+import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextUtil;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.export.PreloadBuilder;
@@ -50,23 +54,33 @@ import com.top_logic.util.TLContextManager;
 public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttributeStorage.Config<?>>
 		extends CommonStructuredTextAttributeStorage<C> {
 
+	private static final Collection<? extends Class<?>> COMPATIBLE_TYPES =
+		Arrays.asList(I18NStructuredText.class, CharSequence.class);
+
 	/** Name of the database table storing the sources codes. */
-	private static final String SOURCES_CODES_TABLE_NAME = I18NAttributeStorage.I18N_STORAGE_KO_TYPE;
+	public static final String SOURCES_CODES_TABLE_NAME = I18NAttributeStorage.I18N_STORAGE_KO_TYPE;
 
 	/** Name of the database table storing the images. */
-	private static final String IMAGES_TABLE_NAME = "I18NHTMLAttributeStorage";
+	public static final String IMAGES_TABLE_NAME = "I18NHTMLAttributeStorage";
 
 	/** Name of the column for the language in which the image is used. */
-	private static final String LANGUAGE_ATTRIBUTE_NAME = I18NAttributeStorage.LANGUAGE_ATTRIBUTE_NAME;
+	public static final String LANGUAGE_ATTRIBUTE_NAME = I18NAttributeStorage.LANGUAGE_ATTRIBUTE_NAME;
 
 	/** Name of the column for the source code. */
-	private static final String SOURCE_CODE_ATTRIBUTE_NAME = I18NAttributeStorage.VALUE_ATTRIBUTE_NAME;
+	public static final String SOURCE_CODE_ATTRIBUTE_NAME = I18NAttributeStorage.VALUE_ATTRIBUTE_NAME;
 
 	private AssociationSetQuery<? extends KnowledgeItem> _sourceCodesQuery;
 
 	private List<Locale> _supportedLocales;
 
 	private PreloadContribution _sourcePreload;
+
+	private List<DefaultAssociationStorageDescriptor> _storageDescriptors = Arrays.asList(
+		new DefaultAssociationStorageDescriptor(SOURCES_CODES_TABLE_NAME,
+			OBJECT_ATTRIBUTE_NAME,
+			META_ATTRIBUTE_ATTRIBUTE_NAME,
+			SOURCE_CODE_ATTRIBUTE_NAME),
+		newImageDescriptor(IMAGES_TABLE_NAME));
 
 	/** {@link TypedConfiguration} constructor for {@link I18NStructuredTextAttributeStorage}. */
 	public I18NStructuredTextAttributeStorage(InstantiationContext context, C config) {
@@ -76,10 +90,12 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 	@Override
 	public void init(TLStructuredTypePart attribute) {
 		super.init(attribute);
-		_sourceCodesQuery = this.createQuery(getSourceCodeTableName(), attribute, StaticItem.class);
+		_sourceCodesQuery = this.createQuery(getSourceCodeTableName(), attribute.getDefinition(), StaticItem.class);
 		_sourcePreload = new AssociationCachePreload(_sourceCodesQuery);
 		
 		_supportedLocales = unmodifiableList(list(getSupportedLocales()));
+
+		_storageDescriptors.forEach(descriptor -> descriptor.checkKeyAttributes(attribute));
 	}
 
 	@Override
@@ -97,7 +113,7 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 		Map<Locale, StructuredText> structuredTexts = map();
 		addSourceCodes(tlObject, structuredTexts);
 		addImages(tlObject, structuredTexts);
-		return new I18NStructuredText(structuredTexts);
+		return !structuredTexts.isEmpty() ? new I18NStructuredText(structuredTexts) : I18NStructuredText.EMPTY;
 	}
 
 	private void addSourceCodes(TLObject tlObject, Map<Locale, StructuredText> structuredTexts) {
@@ -138,19 +154,17 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 
 	@Override
 	protected void internalSetAttributeValue(TLObject owner, TLStructuredTypePart attribute, Object newValue) {
-		I18NStructuredText newI18nStructuredTexts = (I18NStructuredText) newValue;
-		boolean sourceCodeChanged = setSourceCodes(owner, attribute, newI18nStructuredTexts);
-		boolean imagesChanged = setImages(owner, attribute, newI18nStructuredTexts);
-		if (sourceCodeChanged || imagesChanged) {
-			/* As an updated attribute does not affect the TLObject itself, Lucene will not create a
-			 * new index. Thats why the owner has to be touched. */
-			owner.tTouch();
+		I18NStructuredText newI18nStructuredTexts;
+		if (newValue instanceof CharSequence text) {
+			newI18nStructuredTexts = I18NStructuredTextUtil.fromCommonMark(text);
+		} else {
+			newI18nStructuredTexts = (I18NStructuredText) newValue;
 		}
+		setSourceCodes(owner, attribute, newI18nStructuredTexts);
+		setImages(owner, attribute, newI18nStructuredTexts);
 	}
 
-	private boolean setSourceCodes(TLObject owner, TLStructuredTypePart attribute, I18NStructuredText newValue) {
-		boolean changed = false;
-
+	private void setSourceCodes(TLObject owner, TLStructuredTypePart attribute, I18NStructuredText newValue) {
 		/* Don't iterator over the locales in the I18NStructuredText. That would write one entry per
 		 * fallback locale, which is multiple times more than necessary. Writing just one entry per
 		 * "supported locale" is correct, as that means effectively one entry is written per
@@ -162,15 +176,8 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 			String newSourceCode = getSourceCodeNullSafe(getEntryNullsafe(newValue, language));
 			if (StringServices.isEmpty(newSourceCode)) {
 				oldSourceCode.delete();
-				changed = true;
 			} else {
-				if (changed) {
-					/* It is not necessary to check for change of source code, because only the
-					 * accumulated change state is required. */
-					setSourceCode(oldSourceCode, newSourceCode);
-				} else {
-					changed |= updateSourceCode(oldSourceCode, newSourceCode);
-				}
+				updateSourceCode(oldSourceCode, newSourceCode);
 			}
 			supportedLocales.remove(language);
 		}
@@ -179,10 +186,8 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 			String newSourceCode = getSourceCodeNullSafe(getEntryNullsafe(newValue, language));
 			if (!StringServices.isEmpty(newSourceCode)) {
 				createSourceCodeTLObject(owner, attribute, language, newSourceCode);
-				changed = true;
 			}
 		}
-		return changed;
 	}
 
 	private void createSourceCodeTLObject(TLObject owner, TLStructuredTypePart attribute, Locale language,
@@ -203,8 +208,7 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 		setSourceCode(sourceCode, text);
 	}
 
-	private boolean setImages(TLObject owner, TLStructuredTypePart attribute, I18NStructuredText newValue) {
-		boolean someImageChanged = false;
+	private void setImages(TLObject owner, TLStructuredTypePart attribute, I18NStructuredText newValue) {
 		Map<Locale, Set<KnowledgeItem>> oldImagesByLocale = getImagesByLocale(owner);
 		/* Don't iterator over the locales in the I18NStructuredText. That would write one entry per
 		 * fallback locale, which is multiple times more than necessary. Writing just one entry per
@@ -215,11 +219,10 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 			Map<String, BinaryData> newImages = getImagesNullSafe(newLocalizedValue);
 			Set<String> newFileNames = newImages.keySet();
 			Set<KnowledgeItem> oldImages = CollectionUtil.nonNull(oldImagesByLocale.get(locale));
-			someImageChanged |= updateImages(oldImages, newImages);
-			someImageChanged |= addImages(owner, attribute, locale, oldImages, newLocalizedValue, newFileNames);
-			someImageChanged |= removeImages(oldImages, newFileNames);
+			updateImages(oldImages, newImages);
+			addImages(owner, attribute, locale, oldImages, newLocalizedValue, newFileNames);
+			removeImages(oldImages, newFileNames);
 		}
-		return someImageChanged;
 	}
 
 	private Map<Locale, Set<KnowledgeItem>> getImagesByLocale(TLObject owner) {
@@ -239,13 +242,12 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 		return newI18nStructuredTexts.getEntries().get(locale);
 	}
 
-	private boolean addImages(TLObject owner, TLStructuredTypePart attribute, Locale locale,
+	private void addImages(TLObject owner, TLStructuredTypePart attribute, Locale locale,
 			Set<KnowledgeItem> oldImages, StructuredText newStructuredText, Set<String> newFileNames) {
 		Set<String> possibleToBeAdded = set(newFileNames);
 		Set<String> oldFileNames = getFileNames(oldImages);
 		possibleToBeAdded.removeAll(oldFileNames);
 		addImages(owner, attribute, newStructuredText, locale, possibleToBeAdded);
-		return !possibleToBeAdded.isEmpty();
 	}
 
 	private void addImages(TLObject owner, TLStructuredTypePart attribute, StructuredText structuredText,
@@ -258,8 +260,8 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 	}
 
 	@Override
-	protected Class<?> getApplicationValueType() {
-		return I18NStructuredText.class;
+	protected Collection<? extends Class<?>> getApplicationValueTypes() {
+		return COMPATIBLE_TYPES;
 	}
 
 	private Locale getLanguage(KnowledgeItem object) {
@@ -287,17 +289,11 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 	}
 
 	/**
-	 * Updates the source code of the given object.
-	 * 
-	 * @return Whether source code changed.
+	 * Updates the source code of the given object, if it differs from the given one.
 	 */
-	private boolean updateSourceCode(KnowledgeItem sourceCodeObject, String newSourceCode) {
-		String sourceCode = getSourceCode(sourceCodeObject);
-		if (!Utils.equals(sourceCode, newSourceCode)) {
+	private void updateSourceCode(KnowledgeItem sourceCodeObject, String newSourceCode) {
+		if (!Utils.equals(getSourceCode(sourceCodeObject), newSourceCode)) {
 			setSourceCode(sourceCodeObject, newSourceCode);
-			return true;
-		} else {
-			return false;
 		}
 	}
 
@@ -317,9 +313,14 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 	@Override
 	public boolean isEmpty(Object value) {
 		if (value instanceof I18NStructuredText) {
-			return ((I18NStructuredText) value).getEntries().isEmpty();
+			return ((I18NStructuredText) value).isEmpty();
 		}
 		return super.isEmpty(value);
+	}
+
+	@Override
+	public List<? extends AssociationStorageDescriptor> getStorageDescriptors() {
+		return _storageDescriptors;
 	}
 
 }

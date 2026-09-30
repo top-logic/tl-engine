@@ -29,39 +29,14 @@
   </description>
 
   <!-- ==================================================================== -->
-  <!-- Removes static references to beans from javax.el.BeanELResolver to   -->
-  <!-- ensure webapp classloader can be released on undeploy                -->
-  <!-- ==================================================================== -->
-  <listener>
-   <listener-class>org.eclipse.jetty.servlet.listener.ELContextCleaner</listener-class>
-  </listener>
-  
-  <!-- ==================================================================== -->
   <!-- Removes static cache of Methods from java.beans.Introspector to      -->
   <!-- ensure webapp classloader can be released on undeploy                -->
   <!-- ==================================================================== -->  
-  <listener>
-   <listener-class>org.eclipse.jetty.servlet.listener.IntrospectorCleaner</listener-class>
-  </listener>
-  
-
-  <!-- ==================================================================== -->
-  <!-- Context params to control Session Cookies                            -->
-  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -->
   <!--
     UNCOMMENT TO ACTIVATE 
-    <context-param> 
-      <param-name>org.eclipse.jetty.servlet.SessionDomain</param-name> 
-      <param-value>127.0.0.1</param-value> 
-    </context-param> 
-    <context-param>
-      <param-name>org.eclipse.jetty.servlet.SessionPath</param-name>
-      <param-value>/</param-value>
-    </context-param>
-    <context-param>
-      <param-name>org.eclipse.jetty.servlet.MaxAge</param-name>
-      <param-value>-1</param-value>
-    </context-param>
+  <listener>
+   <listener-class>org.eclipse.jetty.ee10.servlet.listener.IntrospectorCleaner</listener-class>
+  </listener>
   -->
 
   <!-- ==================================================================== -->
@@ -129,7 +104,7 @@
  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -->
   <servlet>
     <servlet-name>default</servlet-name>
-    <servlet-class>org.eclipse.jetty.servlet.DefaultServlet</servlet-class>
+    <servlet-class>org.eclipse.jetty.ee10.servlet.DefaultServlet</servlet-class>
     <init-param>
       <param-name>aliases</param-name>
       <param-value>false</param-value>
@@ -276,7 +251,7 @@
   <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -->
   <servlet id="jsp">
     <servlet-name>jsp</servlet-name>
-    <servlet-class>org.eclipse.jetty.jsp.JettyJspServlet</servlet-class>
+    <servlet-class>org.eclipse.jetty.ee10.jsp.JettyJspServlet</servlet-class>
     <init-param>
       <param-name>logVerbosityLevel</param-name>
       <param-value>DEBUG</param-value>

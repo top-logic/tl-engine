@@ -6,6 +6,7 @@
 package com.top_logic.model.search.ui;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.JSSnipplet;
@@ -26,6 +27,8 @@ import com.top_logic.layout.form.control.ErrorControl;
 import com.top_logic.layout.form.control.PopupEditControl;
 import com.top_logic.layout.form.template.AbstractFormFieldControlProvider;
 import com.top_logic.layout.form.template.ControlProvider;
+import com.top_logic.layout.form.values.edit.EditorFactory;
+import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.util.regex.TLRegexBuilder;
@@ -34,7 +37,7 @@ import com.top_logic.util.regex.TLRegexBuilder;
 /**
  * {@link CodeEditorControl} for editing {@link Expr TL-Script expressions}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class TLScriptCodeEditorControl extends CodeEditorControl implements TLScriptConstants {
 
@@ -59,6 +62,15 @@ public class TLScriptCodeEditorControl extends CodeEditorControl implements TLSc
 	 */
 	public TLScriptCodeEditorControl(FormField member) {
 		super(member, MODE_TL_SCRIPT, getControlCommands());
+	}
+
+	/**
+	 * The context variables (without the leading <code>$</code>) declared for the edited property via
+	 * {@link ScriptContextVariables}, or an empty list if none.
+	 */
+	public List<String> getContextVariableNames() {
+		ValueModel valueModel = EditorFactory.getValueModel(getFieldModel());
+		return ScriptContextVariablesResolver.resolve(valueModel);
 	}
 
 	/**
@@ -164,7 +176,12 @@ public class TLScriptCodeEditorControl extends CodeEditorControl implements TLSc
 	private String createTLScriptAutoCompletionRegex() {
 		return new TLRegexBuilder().add(createTLModelConstantExpression())
 			.or().add(createTLScriptFunctionExpression())
+			.or().add(createVariableExpression())
 			.or().add(createDefaultExpression()).toJavascriptString();
+	}
+
+	private String createVariableExpression() {
+		return new TLRegexBuilder().then("$").emptyWord().endOfLine().toString();
 	}
 
 	private String createTLScriptFunctionExpression() {

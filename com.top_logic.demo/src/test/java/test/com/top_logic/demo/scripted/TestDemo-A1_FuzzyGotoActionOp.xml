@@ -63,11 +63,6 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Strukturen > Organisation"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Tabellen"
 					/>
 				</action>
@@ -168,20 +163,6 @@
 							user-id="root"
 						>
 							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="Position"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
-								/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="Test"
-							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.layout.form.component.EditComponent$CancelCommand"

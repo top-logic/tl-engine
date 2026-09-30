@@ -13,7 +13,7 @@ import com.top_logic.base.services.simpleajax.NothingCommand;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
+import com.top_logic.knowledge.gui.layout.ButtonBar;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.CommandModelFactory;
 import com.top_logic.layout.form.FormContainer;
@@ -29,7 +29,7 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
 
 /**
  * The class {@link DemoButtonComponent} is a demo class for toggling buttons in a
- * {@link ButtonComponent}.
+ * {@link ButtonBar}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -53,7 +53,7 @@ public class DemoButtonComponent extends FormComponent {
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
 				boolean buttonsVisible = ((Boolean) newValue).booleanValue();
-				getButtonComponent().setTransientButtons(buttonsVisible ? commands : null);
+				getButtonBar().setButtons(buttonsVisible ? commands : null);
 			}
 		});
 		grp.addMember(theField);
@@ -87,9 +87,14 @@ public class DemoButtonComponent extends FormComponent {
 		});
 		grp.addMember(toggleMenuField);
 
-		CommandModel model1 = CommandModelFactory.commandModel(NothingCommand.INSTANCE, this, ResKey.text("Kommando1"));
-		CommandModel model2 = CommandModelFactory.commandModel(NothingCommand.INSTANCE, this, ResKey.text("Kommando2"));
-		CommandModel model3 = CommandModelFactory.commandModel(NothingCommand.INSTANCE, this, ResKey.text("Kommando3"));
+		CommandModel model1 = CommandModelFactory.commandModel(NothingCommand.INSTANCE, this);
+		CommandModel model2 = CommandModelFactory.commandModel(NothingCommand.INSTANCE, this);
+		CommandModel model3 = CommandModelFactory.commandModel(NothingCommand.INSTANCE, this);
+
+		model1.setLabel("Kommando1");
+		model2.setLabel("Kommando2");
+		model3.setLabel("Kommando3");
+
 		commands.add(model1);
 		addToogleCommandFields(grp, model1, I18NConstants.DEMO_BUTTON_COMPONENT_BUTTON1_NOT_EXECUTABLE);
 		commands.add(model2);

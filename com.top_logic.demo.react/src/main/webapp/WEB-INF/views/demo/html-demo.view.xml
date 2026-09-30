@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	HTML content demo: <html> displays ready-made HTML - the answer of an agent, a generated
+	exposé - either as part of the page or as a document of its own.
+	
+	The upper panel reads a channel holding an HTML literal of a script expression, which
+	evaluates to a fragment; the element renders it and inserts the result where it stands, so
+	headings, emphasis, lists and tables read as a section of this page.
+	
+	The panel below it reads a channel holding the same kind of content as plain text, with a
+	script tag in it. Content that becomes part of the page is checked against the application's
+	HTML whitelist first: this one is refused, and the message of the check takes its place.
+	
+	The lower pane holds the three exposés - whole HTML documents with a head, styles of their own
+	and a coloured header band. On the left they are repeated as cards by an <object-list>, each
+	card showing its document with display="thumbnail": a preview laid out at the page size the
+	document is written for and scaled down to the width of the card, so it keeps its proportions
+	instead of being reflowed. A preview takes no clicks and no focus; the button below it writes
+	the card's document to the "expose" channel, which is what selects it.
+	
+	On the right the selected exposé is shown with display="document". A document is not inserted
+	into the page: it is fetched by a frame from the element's data endpoint and shown isolated,
+	keeping its own styles and taking none of this page's. No script runs in that frame, which is
+	why a document needs no whitelist check. The print button hands the frame to the browser's
+	print dialog, which is also where the browser offers saving it as a PDF file.
+	
+	The exposé shown is the one on the "expose" channel, and the first of the list while nothing
+	is selected.
+-->
+<view>
+	<channels>
+		<derived-channel name="answer">
+			<expr><![CDATA[{{{
+<h3>Statusbericht Projekt Apollo</h3>
+<p>Der Meilenstein <strong>Beta-Release</strong> ist erreicht. Zwei Arbeitspakete sind noch offen, beide ohne Auswirkung auf den Termin.</p>
+<ul>
+<li>Abnahme der Schnittstelle durch den Fachbereich</li>
+<li>Migration der Altdaten aus dem Vorsystem</li>
+</ul>
+<table>
+<tr><th>Paket</th><th>Stand</th></tr>
+<tr><td>Oberfläche</td><td>abgeschlossen</td></tr>
+<tr><td>Import</td><td>in Arbeit</td></tr>
+</table>
+}}}]]></expr>
+		</derived-channel>
+		<derived-channel name="rejected">
+			<expr><![CDATA["<p>Dieser Absatz bringt ein Skript mit.</p><script>alert('!')</script>"]]></expr>
+		</derived-channel>
+		<derived-channel name="exposes">
+			<expr><![CDATA[[
+	binary('expose-1.html', '<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Stadtvilla am Park</title>
+<style>
+body { margin: 0; color: #1f2933; font-family: Georgia, "Times New Roman", serif; }
+header { padding: 2.5rem 2rem; background: #1f4e5f; color: #ffffff; }
+header h1 { margin: 0; font-size: 2.1rem; font-weight: normal; }
+header p { margin: 0.6rem 0 0 0; font-family: Helvetica, Arial, sans-serif; font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; }
+main { padding: 2rem; max-width: 46rem; }
+h2 { margin-top: 2rem; font-size: 1.2rem; font-weight: normal; color: #1f4e5f; }
+p { line-height: 1.65; }
+table { width: 100%; margin: 1.5rem 0; border-collapse: collapse; font-family: Helvetica, Arial, sans-serif; font-size: 0.85rem; }
+th { width: 12rem; color: #52606d; font-weight: normal; text-align: left; }
+th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d7dee3; }
+</style>
+</head>
+<body>
+<header>
+<h1>Stadtvilla am Park</h1>
+<p>Exposé 1 – Freistehendes Einfamilienhaus</p>
+</header>
+<main>
+<table>
+<tr><th>Lage</th><td>Am Stadtpark 14, 60318 Frankfurt</td></tr>
+<tr><th>Wohnfläche</th><td>245 m²</td></tr>
+<tr><th>Grundstück</th><td>820 m²</td></tr>
+<tr><th>Baujahr</th><td>1912, saniert 2019</td></tr>
+<tr><th>Kaufpreis</th><td>1.850.000 EUR</td></tr>
+</table>
+<h2>Das Objekt</h2>
+<p>Die Stadtvilla steht auf einem alten Baumgrundstück unmittelbar am Park. Stuckdecken, Flügeltüren und das originale Treppenhaus sind erhalten; Heizung, Elektrik und Bäder wurden bei der Sanierung vollständig erneuert. Über die Südterrasse gelangt man in einen gewachsenen Garten mit altem Baumbestand.</p>
+<h2>Aufteilung</h2>
+<p>Im Erdgeschoss liegen Diele, Salon, Bibliothek und eine Wohnküche mit Zugang zur Terrasse. Das Obergeschoss nimmt drei Schlafzimmer und zwei Bäder auf, das ausgebaute Dachgeschoss ein Atelier mit Dachterrasse. Die Doppelgarage und zwei Stellplätze gehören zum Objekt.</p>
+</main>
+</body>
+</html>
+', 'text/html'),
+	binary('expose-2.html', '<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Loft im Speicher</title>
+<style>
+body { margin: 0; color: #211b16; font-family: Georgia, "Times New Roman", serif; }
+header { padding: 2.5rem 2rem; background: #8c4a24; color: #ffffff; }
+header h1 { margin: 0; font-size: 2.1rem; font-weight: normal; }
+header p { margin: 0.6rem 0 0 0; font-family: Helvetica, Arial, sans-serif; font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; }
+main { padding: 2rem; max-width: 46rem; }
+h2 { margin-top: 2rem; font-size: 1.2rem; font-weight: normal; color: #8c4a24; }
+p { line-height: 1.65; }
+table { width: 100%; margin: 1.5rem 0; border-collapse: collapse; font-family: Helvetica, Arial, sans-serif; font-size: 0.85rem; }
+th { width: 12rem; color: #6b5b4e; font-weight: normal; text-align: left; }
+th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2d8cf; }
+</style>
+</head>
+<body>
+<header>
+<h1>Loft im Speicher</h1>
+<p>Exposé 2 – Dachgeschoss im Hafenspeicher</p>
+</header>
+<main>
+<table>
+<tr><th>Lage</th><td>Speicherstraße 7, 20457 Hamburg</td></tr>
+<tr><th>Wohnfläche</th><td>168 m²</td></tr>
+<tr><th>Raumhöhe</th><td>4,20 m</td></tr>
+<tr><th>Baujahr</th><td>1889, Umbau 2021</td></tr>
+<tr><th>Kaufpreis</th><td>1.240.000 EUR</td></tr>
+</table>
+<h2>Das Objekt</h2>
+<p>Der Speicher aus der Gründerzeit trägt im Dachgeschoss ein einziges, durchgehendes Loft. Die gusseisernen Stützen und die Balkenlage der Decke sind sichtbar geblieben, die Fassade wurde nach denkmalpflegerischer Auflage instand gesetzt. Zwei Lastenluken sind zu bodentiefen Fenstern zum Wasser geworden.</p>
+<h2>Aufteilung</h2>
+<p>Der offene Wohnraum misst 74 m² und öffnet sich nach Westen zum Hafenbecken. Dahinter liegen zwei abgetrennte Schlafräume, ein Bad mit Tageslicht und eine Ankleide. Der Aufzug fährt in die Wohnung, ein Kellerabteil und ein Stellplatz in der Tiefgarage gehören dazu.</p>
+</main>
+</body>
+</html>
+', 'text/html'),
+	binary('expose-3.html', '<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Reihenhaus am Kanal</title>
+<style>
+body { margin: 0; color: #17241b; font-family: Georgia, "Times New Roman", serif; }
+header { padding: 2.5rem 2rem; background: #2f6b4f; color: #ffffff; }
+header h1 { margin: 0; font-size: 2.1rem; font-weight: normal; }
+header p { margin: 0.6rem 0 0 0; font-family: Helvetica, Arial, sans-serif; font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; }
+main { padding: 2rem; max-width: 46rem; }
+h2 { margin-top: 2rem; font-size: 1.2rem; font-weight: normal; color: #2f6b4f; }
+p { line-height: 1.65; }
+table { width: 100%; margin: 1.5rem 0; border-collapse: collapse; font-family: Helvetica, Arial, sans-serif; font-size: 0.85rem; }
+th { width: 12rem; color: #4f6155; font-weight: normal; text-align: left; }
+th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d3e0d7; }
+</style>
+</head>
+<body>
+<header>
+<h1>Reihenhaus am Kanal</h1>
+<p>Exposé 3 – Reihenmittelhaus mit Garten</p>
+</header>
+<main>
+<table>
+<tr><th>Lage</th><td>Uferweg 23, 28203 Bremen</td></tr>
+<tr><th>Wohnfläche</th><td>132 m²</td></tr>
+<tr><th>Grundstück</th><td>310 m²</td></tr>
+<tr><th>Baujahr</th><td>1978, modernisiert 2016</td></tr>
+<tr><th>Kaufpreis</th><td>595.000 EUR</td></tr>
+</table>
+<h2>Das Objekt</h2>
+<p>Das Reihenmittelhaus liegt in einer ruhigen Anliegerstraße, deren Gärten bis an den Kanal reichen. Fenster, Dach und Dämmung wurden bei der Modernisierung erneuert, die Gasheizung 2016 durch eine Luftwärmepumpe ersetzt. Der Energieausweis weist 68 kWh je Quadratmeter und Jahr aus.</p>
+<h2>Aufteilung</h2>
+<p>Erdgeschoss mit Küche, Esszimmer und Wohnraum zum Garten, darüber drei Zimmer und ein Tageslichtbad. Das Souterrain nimmt Hauswirtschaftsraum, Werkstatt und einen Fahrradkeller auf. Vor dem Haus liegt ein eigener Stellplatz, der Bootssteg am Kanal wird von der Nachbarschaft gemeinsam genutzt.</p>
+</main>
+</body>
+</html>
+', 'text/html')
+]
+]]></expr>
+		</derived-channel>
+		<channel name="expose"/>
+		<derived-channel name="current"
+			expr="selected -> documents -> ifElse($selected != null, $selected, $documents[0])"
+			inputs="expose, exposes"
+		/>
+	</channels>
+
+	<split-panel
+		orientation="vertical"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="200"
+				size="45"
+				unit="%"
+			>
+				<inset>
+					<stack
+						direction="column"
+						gap="default"
+					>
+						<panel>
+							<title>
+								<en>Agent answer</en>
+								<de>Agenten-Antwort</de>
+							</title>
+							<html input="answer"/>
+						</panel>
+
+						<panel>
+							<title>
+								<en>Rejected fragment</en>
+								<de>Abgewiesenes Fragment</de>
+							</title>
+							<text>
+								<label>
+									<en>The content below carries a script tag. It is checked against the application's HTML whitelist before it reaches the page, and what the check refuses is not displayed.</en>
+									<de>Der Inhalt unten enthält ein Skript-Tag. Er wird gegen die HTML-Whitelist der Anwendung geprüft, bevor er die Seite erreicht; was die Prüfung ablehnt, wird nicht angezeigt.</de>
+								</label>
+							</text>
+							<html input="rejected"/>
+						</panel>
+					</stack>
+				</inset>
+			</pane>
+			<pane
+				min-size="260"
+				size="55"
+				unit="%"
+			>
+				<split-panel
+					orientation="horizontal"
+					resizable="true"
+				>
+					<panes>
+						<pane
+							min-size="240"
+							size="38"
+							unit="%"
+						>
+							<panel>
+								<title>
+									<en>Exposés</en>
+									<de>Exposés</de>
+								</title>
+								<object-list
+									gap="default"
+									inputs="exposes"
+									items="exposes -> $exposes"
+									layout="grid"
+									max-columns="3"
+									min-column-width="8rem"
+								>
+									<item>
+										<card padding="compact">
+											<html
+												display="thumbnail"
+												input="element"
+											/>
+											<text
+												css-class="tlText--strong"
+												input="element"
+												overflow="ellipsis"
+											/>
+											<button appearance="link">
+												<action class="com.top_logic.layout.view.command.GenericViewCommand"
+													input="element"
+												>
+													<label>
+														<en>Show</en>
+														<de>Anzeigen</de>
+													</label>
+													<write-channel name="expose"/>
+												</action>
+											</button>
+										</card>
+									</item>
+									<empty-text>
+										<en>No exposé.</en>
+										<de>Kein Exposé.</de>
+									</empty-text>
+								</object-list>
+							</panel>
+						</pane>
+						<pane
+							min-size="260"
+							size="62"
+							unit="%"
+						>
+							<panel>
+								<title>
+									<en>Exposé</en>
+									<de>Exposé</de>
+								</title>
+								<html
+									display="document"
+									input="current"
+									print="true"
+								/>
+							</panel>
+						</pane>
+					</panes>
+				</split-panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

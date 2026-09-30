@@ -5,8 +5,8 @@
  */
 package com.top_logic.model.instance.importer.resolver;
 
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 
@@ -24,20 +24,15 @@ public class AccountResolver implements InstanceResolver {
 	 */
 	public static final String KIND = "account";
 
-	private PersonManager _pm;
-
 	/**
 	 * Creates a {@link AccountResolver}.
-	 *
-	 * @param pm
-	 *        The {@link PersonManager} providing access to {@link Person} instances.
 	 */
-	public AccountResolver(PersonManager pm) {
-		_pm = pm;
+	public AccountResolver() {
+		super();
 	}
 
 	@Override
-	public TLObject resolve(String kind, String id) {
+	public TLObject resolve(I18NLog log, Object context, String kind, String id) {
 		return Person.byName(id);
 	}
 

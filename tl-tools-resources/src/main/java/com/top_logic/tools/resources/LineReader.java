@@ -1,26 +1,26 @@
 /*
  * SPDX-FileCopyrightText: 2013 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
+ *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.tools.resources;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.Reader;
 
 /**
  * read in a "logical line" from input stream, skip all comment and blank lines and filter out
  * those leading whitespace characters ( , and ) from the beginning of a "natural line". Method
  * returns the char length of the "logical line" and stores the line in "lineBuf".
- * 
+ *
  * This class is mostly a copy of the private class: <code>Properties.LineReader</code>
  */
 public class LineReader {
-    public LineReader(InputStream inStream) {
-        this.inStream = inStream;
+    public LineReader(Reader reader) {
+        this.reader = reader;
     }
 
-    byte[] inBuf = new byte[8192];
+    char[] inBuf = new char[8192];
 
     char[] lineBuf = new char[1024];
 
@@ -28,7 +28,7 @@ public class LineReader {
 
     int inOff = 0;
 
-    InputStream inStream;
+    Reader reader;
 
     int readLine() throws IOException {
         int len = 0;
@@ -43,7 +43,7 @@ public class LineReader {
 
         while (true) {
             if (inOff >= inLimit) {
-                inLimit = inStream.read(inBuf);
+                inLimit = reader.read(inBuf);
                 inOff = 0;
                 if (inLimit <= 0) {
                     if (len == 0 || isCommentLine) {
@@ -52,9 +52,7 @@ public class LineReader {
                     return len;
                 }
             }
-            // The line below is equivalent to calling a
-            // ISO8859-1 decoder.
-            c = (char) (0xff & inBuf[inOff++]);
+            c = inBuf[inOff++];
             if (skipLF) {
                 skipLF = false;
                 if (c == '\n') {
@@ -106,7 +104,7 @@ public class LineReader {
                     continue;
                 }
                 if (inOff >= inLimit) {
-                    inLimit = inStream.read(inBuf);
+                    inLimit = reader.read(inBuf);
                     inOff = 0;
                     if (inLimit <= 0) {
                         return len;

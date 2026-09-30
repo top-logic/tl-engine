@@ -19,16 +19,19 @@ import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.gui.layout.upload.AcceptedFileTypesConfig;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -38,19 +41,27 @@ import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.codeedit.editor.ConfigXMLEditor;
+import com.top_logic.layout.component.WithCommitMessage;
+import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
+import com.top_logic.layout.form.component.PostCreateAction;
+import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
+import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.ProgressDialog;
-import com.top_logic.layout.messagebox.SimpleFormDialog;
+import com.top_logic.layout.messagebox.SimpleTemplateDialog;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -60,6 +71,7 @@ import com.top_logic.util.model.ModelService;
 import com.top_logic.xio.importer.XmlImporter;
 import com.top_logic.xio.importer.binding.ApplicationModelBinding;
 import com.top_logic.xio.importer.binding.ModelBinding;
+import com.top_logic.xio.importer.binding.TransientModelBinding;
 import com.top_logic.xio.importer.handlers.ConfiguredImportHandler;
 import com.top_logic.xio.importer.handlers.DispatchingImporter;
 import com.top_logic.xio.importer.handlers.Handler;
@@ -70,7 +82,7 @@ import com.top_logic.xio.importer.handlers.Handler;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp
-public class XMLImportCommand extends AbstractCommandHandler {
+public class XMLImportCommand extends AbstractCommandHandler implements WithPostCreateActions {
 
 	/**
 	 * Configuration options for {@link XMLImportCommand}.
@@ -84,10 +96,16 @@ public class XMLImportCommand extends AbstractCommandHandler {
 		Config.PROGRESS_TITLE,
 		Config.PROGRESS_WIDTH,
 		Config.PROGRESS_HEIGHT,
+		Config.ACCEPTED_TYPES_NAME,
 		Config.IMPORT_DEFINITION,
+		Config.TRANSIENT,
+		Config.COMMIT_MESSAGE,
 		Config.LOGGING,
+		Config.POST_PROCESSING,
+		Config.POST_CREATE_ACTIONS,
 	})
-	public interface Config extends AbstractCommandHandler.Config {
+	public interface Config extends AbstractCommandHandler.Config, WithCommitMessage, WithPostCreateActions.Config,
+			AcceptedFileTypesConfig {
 
 		/** @see #getUploadTitle() */
 		String UPLOAD_TITLE = "upload-title";
@@ -115,6 +133,12 @@ public class XMLImportCommand extends AbstractCommandHandler {
 
 		/** @see #getImportDefinition() */
 		String IMPORT_DEFINITION = "import-definition";
+
+		/** @see #getTransient() */
+		String TRANSIENT = "transient";
+
+		/** @see #getPostProcessing() */
+		String POST_PROCESSING = "postProcessing";
 
 		/** @see #getLogging() */
 		String LOGGING = "logging";
@@ -201,10 +225,43 @@ public class XMLImportCommand extends AbstractCommandHandler {
 		ImportSpec getImportDefinition();
 
 		/**
+		 * Whether to instantiate objects transiently.
+		 * 
+		 * <p>
+		 * To have any effect, the imported object must be further processed in a
+		 * {@link #getPostProcessing() post processing action}.
+		 * </p>
+		 */
+		@Name(TRANSIENT)
+		boolean getTransient();
+
+		/**
 		 * Whether to write import operations to the application log.
 		 */
 		@Name(LOGGING)
 		boolean getLogging();
+
+		/**
+		 * Function to invoke on the imported object after the import succeeded.
+		 * 
+		 * <p>
+		 * The function receives the imported object as first argument and the command's target
+		 * model as second argument:
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>result -> model -> ...</code>
+		 * </pre>
+		 * 
+		 * <p>
+		 * The function is invoked within the import transaction and may create additional
+		 * side-effects. Especially, if the import creates a transient object, the post processing
+		 * action is required to transform the transient import result to a persistent object for
+		 * the import to have any effect.
+		 * </p>
+		 */
+		@Name(POST_PROCESSING)
+		Expr getPostProcessing();
 
 		@FormattedDefault("theme:ICONS_IMPORT")
 		@Override
@@ -218,6 +275,10 @@ public class XMLImportCommand extends AbstractCommandHandler {
 		@FormattedDefault(SimpleBoundCommandGroup.CREATE_NAME)
 		CommandGroupReference getGroup();
 
+		@Override
+		@StringDefault("*.xml")
+		String getAcceptedTypes();
+
 		/**
 		 * Container for the import handler definition.
 		 */
@@ -230,6 +291,7 @@ public class XMLImportCommand extends AbstractCommandHandler {
 			@ControlProvider(ConfigXMLEditor.CP.class)
 			@ItemDisplay(ItemDisplayType.VALUE)
 			@RenderWholeLine
+			@LabelPositioning(LabelPosition.ABOVE)
 			@ItemDefault(DispatchingImporter.Config.class)
 			@NonNullable
 			@DefaultContainer
@@ -259,6 +321,10 @@ public class XMLImportCommand extends AbstractCommandHandler {
 
 	private final boolean _logging;
 
+	private final QueryExecutor _postProcessing;
+
+	private final List<PostCreateAction> _actions;
+
 	/**
 	 * Creates a {@link XMLImportCommand}.
 	 */
@@ -276,6 +342,12 @@ public class XMLImportCommand extends AbstractCommandHandler {
 		_progressHeight = config.getProgressHeight();
 		_importDefinition = context.getInstance(config.getImportDefinition().getHandler());
 		_logging = config.getLogging();
+		_postProcessing = QueryExecutor.compileOptional(config.getPostProcessing());
+		_actions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
+	}
+
+	private Config config() {
+		return (Config) getConfig();
 	}
 
 	private static ResKey fallback(ResKey value, ResKey fallback) {
@@ -285,12 +357,15 @@ public class XMLImportCommand extends AbstractCommandHandler {
 	@Override
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
 			Map<String, Object> someArguments) {
-		return new SimpleFormDialog(_uploadTitle, _uploadHeader, _uploadMessage, _uploadWidth, _uploadHeight) {
+		return new SimpleTemplateDialog(_uploadTitle, _uploadHeader, _uploadMessage, _uploadWidth, _uploadHeight) {
 			private DataField _dataField;
 
 			@Override
 			protected void fillFormContext(FormContext context) {
 				_dataField = FormFactory.newDataField(INPUT_FIELD, false);
+				_dataField.setLabel(I18NConstants.UPLOAD_FIELD_LABEL);
+				_dataField.setMandatory(true);
+				config().applyAcceptedTypes(_dataField);
 				context.addMember(_dataField);
 			}
 
@@ -301,7 +376,10 @@ public class XMLImportCommand extends AbstractCommandHandler {
 			}
 
 			private HandlerResult startImport(DisplayContext displaycontext) {
-				return openProgress(displaycontext, _dataField.getDataItem(), getDiscardClosure());
+				if (!getFormContext().checkAll()) {
+					return AbstractApplyCommandHandler.createErrorResult(getFormContext());
+				}
+				return openProgress(displaycontext, aComponent, model, _dataField.getDataItem(), getDiscardClosure());
 			}
 
 		}.open(aContext);
@@ -310,7 +388,8 @@ public class XMLImportCommand extends AbstractCommandHandler {
 	/**
 	 * Performs the actual import.
 	 */
-	protected HandlerResult openProgress(DisplayContext displaycontext, BinaryData dataItem, Command closeUpload) {
+	protected HandlerResult openProgress(DisplayContext displaycontext, LayoutComponent component, Object model,
+			BinaryData dataItem, Command closeUpload) {
 		Handler importDefinition = _importDefinition;
 		boolean logging = _logging;
 
@@ -322,6 +401,8 @@ public class XMLImportCommand extends AbstractCommandHandler {
 
 		return new ProgressDialog(_progressTitle, _progressWidth, _progressHeight) {
 			private boolean _success;
+
+			private Object _result;
 
 			@Override
 			protected int getStepCnt() {
@@ -339,7 +420,14 @@ public class XMLImportCommand extends AbstractCommandHandler {
 					importer.setLogCreations(logging);
 
 					KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-					ModelBinding modelBinding = new ApplicationModelBinding(kb, ModelService.getApplicationModel());
+					boolean transientImport = ((Config) getConfig()).getTransient();
+					// The import definition is application configuration and runs with definer's
+					// rights; that this user may import at all is decided by the execution right of
+					// this command, see AbstractModelBinding#usesSecurity().
+					boolean usesSecurity = false;
+					ModelBinding modelBinding = transientImport ?
+						new TransientModelBinding(ModelService.getApplicationModel(), usesSecurity) :
+						new ApplicationModelBinding(kb, ModelService.getApplicationModel(), usesSecurity);
 
 					try (InputStream stream = dataItem.getStream()) {
 						InputStream in =
@@ -348,8 +436,15 @@ public class XMLImportCommand extends AbstractCommandHandler {
 
 						log.info(I18NConstants.STARTING_IMPORT);
 
-						try (Transaction tx = kb.beginTransaction()) {
-							importer.importModel(modelBinding, source);
+						try (Transaction tx =
+							kb.beginTransaction(
+								((Config) getConfig()).buildCommandMessage(component, XMLImportCommand.this, null))) {
+							_result = importer.importModel(modelBinding, source, model);
+
+							if (_postProcessing != null) {
+								log.info(I18NConstants.POST_PROCESSING);
+								_result = _postProcessing.execute(_result, model);
+							}
 
 							log.info(I18NConstants.COMMITTING_CHANGES);
 							tx.commit();
@@ -380,6 +475,8 @@ public class XMLImportCommand extends AbstractCommandHandler {
 					public HandlerResult executeCommand(DisplayContext context) {
 						if (wasSuccessful()) {
 							closeUpload.executeCommand(context);
+
+							WithPostCreateActions.processCreateActions(_actions, component, _result);
 						}
 						return closeProgress.executeCommand(context);
 					}

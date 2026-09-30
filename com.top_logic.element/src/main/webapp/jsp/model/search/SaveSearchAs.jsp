@@ -7,7 +7,6 @@
 %><layout:html>
 	<layout:head/>
 	<layout:body>
-		
 		<form:form>
 			<form:vertical>
 				<form:inputCell name="<%= TLNamed.NAME_ATTRIBUTE %>"/>

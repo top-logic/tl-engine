@@ -91,13 +91,29 @@ public class Lambda extends SearchExpression implements Definition {
 	}
 
 	@Override
-	public Object internalEval(EvalContext definitions, Args args) {
-		if (!args.hasValue()) {
-			// Keep the function as function value.
-			return this;
+	public Object internalEval(EvalContext innerDefinitions, Args innerArgs) {
+		if (!innerArgs.hasValue()) {
+			// Keep the function as function value. Since the function body may depend on
+			// definitions from the outside, the original context must be kept.
+			EvalContext contextSnapshot = innerDefinitions.snapshot();
+
+			return new Lambda(_name, _body) {
+				@Override
+				public Object internalEval(EvalContext outerDefinitions, Args outerArgs) {
+					if (!outerArgs.hasValue()) {
+						return this;
+					}
+
+					// Copy to avoid race conditions.
+					EvalContext execSnapshot = contextSnapshot.snapshot();
+
+					execSnapshot.defineVar(_key, outerArgs.value());
+					return _body.evalWith(execSnapshot, outerArgs.next());
+				}
+			};
 		}
-		definitions.defineVar(_key, args.value());
-		return _body.evalWith(definitions, args.next());
+		innerDefinitions.defineVar(_key, innerArgs.value());
+		return _body.evalWith(innerDefinitions, innerArgs.next());
 	}
 
 }

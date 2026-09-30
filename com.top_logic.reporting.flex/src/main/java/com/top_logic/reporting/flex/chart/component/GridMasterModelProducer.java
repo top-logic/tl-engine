@@ -20,7 +20,7 @@ import com.top_logic.reporting.flex.chart.config.datasource.MasterModelProducer;
  * Provide the business objects in the master component (expecting that component to be a
  * {@link GridComponent}).
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class GridMasterModelProducer extends MasterModelProducer {
 

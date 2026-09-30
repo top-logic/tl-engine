@@ -9,13 +9,9 @@ import java.util.Collection;
 import java.util.List;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
-
-import test.com.top_logic.basic.ThreadContextSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.model.DerivedTLTypePart;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
@@ -39,6 +35,7 @@ import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
 import com.top_logic.model.config.annotation.SystemEnum;
 import com.top_logic.model.impl.generated.TlModelFactory;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -47,31 +44,7 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @SuppressWarnings("javadoc")
-public class TestTLMetaModel extends TestPersistentModelPart {
-
-	private static class MetaModelTestSetup extends ThreadContextSetup {
-		public MetaModelTestSetup(Test test) {
-			super(test);
-		}
-
-		@Override
-		protected void doSetUp() throws Exception {
-			extendApplicationModel(PersistencyLayer.getKnowledgeBase(), TestTLMetaModel.class, "model.xml");
-		}
-
-		@Override
-		protected void doTearDown() throws Exception {
-			Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
-			TLModule module = ModelService.getApplicationModel().getModule("test.com.top_logic.element.meta.TestTLMetaModel");
-			for (TLModuleSingleton singleton : module.getSingletons()) {
-				// Must delete instances of classes before the TLClass can be deleted.
-				singleton.getSingleton().tDelete();
-			}
-			module.tDelete();
-			tx.commit();
-		}
-
-	}
+public class TestTLMetaModel extends TestWithModelExtension {
 
 	private TLModule _module;
 
@@ -165,6 +138,7 @@ public class TestTLMetaModel extends TestPersistentModelPart {
 		assertEquals(_assEnd.isComposite(), _assEnd.tValueByName(TLAssociationEnd.COMPOSITE_ATTR));
 		assertEquals(_assEnd.isAggregate(), _assEnd.tValueByName(TLAssociationEnd.AGGREGATE_ATTR));
 		assertEquals(_assEnd.canNavigate(), _assEnd.tValueByName(TLAssociationEnd.NAVIGATE_ATTR));
+		assertEquals(_assEnd.getEndIndex(), _assEnd.tValueByName(TLAssociationEnd.END_INDEX_ATTR));
 	}
 
 	public void testModule() {
@@ -197,26 +171,53 @@ public class TestTLMetaModel extends TestPersistentModelPart {
 	}
 
 	public void testReference() {
-		testStructuredTypePart(_reference);
-		assertEquals(_reference.getEnd(), _reference.tValueByName(TLReference.END_ATTR));
+		testReference(_reference);
+	}
+
+	private void testReference(TLReference reference) {
+		testStructuredTypePart(reference);
+		assertEquals(reference.getEnd(), reference.tValueByName(TLReference.END_ATTR));
+		assertEquals(reference.isAggregate(), toBoolean(reference.tValueByName(TLReference.AGGREGATE_ATTR)));
+		assertEquals(reference.isComposite(), toBoolean(reference.tValueByName(TLReference.COMPOSITE_ATTR)));
+		assertEquals(reference.getOpposite(), reference.tValueByName(TLReference.OPPOSITE_ATTR));
+		assertEquals(reference.getOppositeEnd(), reference.tValueByName(TLReference.OPPOSITE_END_ATTR));
+	}
+
+	private static boolean toBoolean(Object booleanValue) {
+		if (booleanValue == null) {
+			return false;
+		}
+		return ((Boolean) booleanValue).booleanValue();
 	}
 
 	private void testStructuredTypePart(TLStructuredTypePart structuredTypePart) {
 		testTypePart(structuredTypePart);
+		testDerivedTypePart(structuredTypePart);
+		assertEquals(structuredTypePart.isAbstract(),
+			toBoolean(structuredTypePart.tValueByName(TLReference.ABSTRACT_ATTR)));
 		assertEquals(structuredTypePart.isMandatory(),
-			structuredTypePart.tValueByName(TLStructuredTypePart.MANDATORY_ATTR));
+			toBoolean(structuredTypePart.tValueByName(TLStructuredTypePart.MANDATORY_ATTR)));
 		assertEquals(structuredTypePart.isMultiple(),
-			structuredTypePart.tValueByName(TLStructuredTypePart.MULTIPLE_ATTR));
+			toBoolean(structuredTypePart.tValueByName(TLStructuredTypePart.MULTIPLE_ATTR)));
 		assertEquals(structuredTypePart.isOrdered(),
-			structuredTypePart.tValueByName(TLStructuredTypePart.ORDERED_ATTR));
+			toBoolean(structuredTypePart.tValueByName(TLStructuredTypePart.ORDERED_ATTR)));
 		assertEquals(structuredTypePart.isBag(),
-			structuredTypePart.tValueByName(TLStructuredTypePart.BAG_ATTR));
+			toBoolean(structuredTypePart.tValueByName(TLStructuredTypePart.BAG_ATTR)));
+		assertEquals(structuredTypePart.isOverride(),
+			toBoolean(structuredTypePart.tValueByName(TLStructuredTypePart.OVERRIDE_ATTR)));
+		assertEquals(structuredTypePart.getDefinition(),
+			structuredTypePart.tValueByName(TLStructuredTypePart.DEFINITION_ATTR));
 	}
 
 	private void testSingleton(TLModuleSingleton singleton) {
 		assertEquals(singleton.getName(), singleton.tValueByName(TLModuleSingleton.NAME_ATTR));
 		assertEquals(singleton.getModule(), singleton.tValueByName(TLModuleSingleton.MODULE_ATTR));
 		assertEquals(singleton.getSingleton(), singleton.tValueByName(TLModuleSingleton.SINGLETON_ATTR));
+	}
+
+	private void testDerivedTypePart(DerivedTLTypePart derivedPart) {
+		assertEquals("Derived info mismatch: " + TLModelUtil.qualifiedName(derivedPart), derivedPart.isDerived(),
+			toBoolean(derivedPart.tValueByName(DerivedTLTypePart.DERIVED_ATTR)));
 	}
 
 	private void testTypePart(TLTypePart typePart) {
@@ -238,8 +239,8 @@ public class TestTLMetaModel extends TestPersistentModelPart {
 	private void testClass(TLClass type) {
 		testStructuredType(type);
 		assertEquals(toSet(type.getLocalParts()), type.tValueByName(TLClass.LOCAL_PARTS_ATTR));
-		assertEquals(type.isAbstract(), type.tValueByName(TLClass.ABSTRACT_ATTR));
-		assertEquals(type.isFinal(), type.tValueByName(TLClass.FINAL_ATTR));
+		assertEquals(type.isAbstract(), toBoolean(type.tValueByName(TLClass.ABSTRACT_ATTR)));
+		assertEquals(type.isFinal(), toBoolean(type.tValueByName(TLClass.FINAL_ATTR)));
 		// Concrete Collection type of specializations is not defined.
 		assertEquals(toSet(type.getSpecializations()),
 			toSet((Collection<?>) type.tValueByName(TLClass.SPECIALIZATIONS_ATTR)));
@@ -249,6 +250,7 @@ public class TestTLMetaModel extends TestPersistentModelPart {
 	private void testAssociation(TLAssociation type) {
 		testStructuredType(type);
 		assertEquals(toSet(type.getLocalParts()), type.tValueByName(TLAssociation.LOCAL_PARTS_ATTR));
+		assertEquals(type.getEnds(), type.tValueByName(TLAssociation.ENDS_ATTR));
 	}
 
 	private void testStructuredType(TLStructuredType type) {
@@ -257,6 +259,10 @@ public class TestTLMetaModel extends TestPersistentModelPart {
 
 	private void testPrimitive(TLPrimitive type) {
 		testType(type);
+		assertEquals(type.getDBType(), type.tValueByName(TLPrimitive.DB_TYPE_ATTR));
+		assertEquals(type.getDBSize(), type.tValueByName(TLPrimitive.DB_SIZE_ATTR));
+		assertEquals(type.getDBPrecision(), type.tValueByName(TLPrimitive.DB_PRECISION_ATTR));
+		assertEquals(type.isBinary(), type.tValueByName(TLPrimitive.BINARY_ATTR));
 	}
 
 	private void testType(TLType type) {
@@ -283,7 +289,7 @@ public class TestTLMetaModel extends TestPersistentModelPart {
 	 * @return a cumulative {@link Test} for all Tests in {@link TestTLMetaModel}.
 	 */
 	public static Test suite() {
-		return suite(new MetaModelTestSetup(new TestSuite(TestTLMetaModel.class)));
+		return suite(new ModelExtensionTestSetup(TestTLMetaModel.class));
 	}
 
 }

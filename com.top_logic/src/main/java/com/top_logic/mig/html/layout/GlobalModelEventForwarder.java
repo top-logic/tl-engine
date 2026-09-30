@@ -133,6 +133,21 @@ public final class GlobalModelEventForwarder extends DefaultModelScope implement
 		return associationEndRelevance;
 	}
 
+	/**
+	 * Creates a new {@link GlobalModelEventForwarder} for a single browser window.
+	 *
+	 * <p>
+	 * Each window gets its own {@link UpdateChain} cursor via
+	 * {@link KnowledgeBase#getSessionUpdateChain()}, which returns an independent cursor
+	 * per call. Multiple forwarders can coexist per session without racing.
+	 * </p>
+	 */
+	public static GlobalModelEventForwarder createForWindow() {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		return new GlobalModelEventForwarder(
+			kb, kb.getSessionUpdateChain(), configuredAssociationRelevance());
+	}
+
 	@Override
 	public boolean synthesizeModelEvents() {
 		TLSubSessionContext subSession = TLContextManager.getSubSession();

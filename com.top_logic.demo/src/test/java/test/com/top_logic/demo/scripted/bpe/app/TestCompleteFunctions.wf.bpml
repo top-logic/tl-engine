@@ -1,0 +1,1533 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<bpmn:definitions
+	xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+	xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+	xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+	xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+	xmlns:tl="http://www.top-logic.com/ns/BPMN/extensions/7.0"
+	targetNamespace="http://bpmn.io/schema/bpmn"
+>
+	<bpmn:collaboration id="Collaboration_0rxd91k">
+		<bpmn:participant id="Participant_1jf73bx"
+			name="WorkflowTest"
+			processRef="Process_1"
+		>
+			<bpmn:extensionElements>
+				<tl:modelType value="test.process:Document"/>
+				<tl:tokenType value="tl.bpe.execution:Token"/>
+				<tl:displayDescription>
+					<form>
+						<group>
+							<field
+								attribute="name"
+								fullQualifiedName="test.process:Document#name"
+								type="tl.core:String"
+								visibility="mandatory"
+							>
+								<annotations/>
+							</field>
+							<field
+								attribute="description"
+								fullQualifiedName="test.process:Document#description"
+								type="tl.core:String"
+								visibility="mandatory"
+							>
+								<annotations/>
+							</field>
+							<label>
+								<en>Basic</en>
+								<de>Basic</de>
+							</label>
+							<dynamicVisibility class=""/>
+						</group>
+						<group>
+							<field
+								attribute="userUpdate"
+								fullQualifiedName="test.process:Document#userUpdate"
+								type="tl.core:Boolean"
+								visibility="read-only"
+							>
+								<annotations/>
+							</field>
+							<field
+								attribute="automaticUpdate1"
+								fullQualifiedName="test.process:Document#automaticUpdate1"
+								type="tl.core:Boolean"
+								visibility="read-only"
+							>
+								<annotations/>
+							</field>
+							<field
+								attribute="automaticUpdate2"
+								fullQualifiedName="test.process:Document#automaticUpdate2"
+								type="tl.core:Boolean"
+								visibility="read-only"
+							>
+								<annotations/>
+							</field>
+							<field
+								attribute="reviewUpdate"
+								fullQualifiedName="test.process:Document#reviewUpdate"
+								type="tl.core:Boolean"
+								visibility="read-only"
+							>
+								<annotations/>
+							</field>
+							<label>
+								<en>Updates</en>
+								<de>Updates</de>
+							</label>
+							<dynamicVisibility class=""/>
+						</group>
+						<group>
+							<field
+								attribute="reviewComment"
+								fullQualifiedName="test.process:Document#reviewComment"
+								type="tl.core:String"
+								visibility="read-only"
+							>
+								<annotations/>
+							</field>
+							<field
+								attribute="reviseComment"
+								fullQualifiedName="test.process:Document#reviseComment"
+								type="tl.core:String"
+								visibility="read-only"
+							>
+								<annotations/>
+							</field>
+							<label>
+								<en>comments</en>
+								<de>comments</de>
+							</label>
+							<dynamicVisibility class=""/>
+						</group>
+						<group>
+							<field
+								attribute="standardProcess"
+								fullQualifiedName="test.process:Document#standardProcess"
+								type="tl.core:Boolean"
+								visibility="read-only"
+							>
+								<annotations/>
+							</field>
+							<field
+								attribute="edgeProcess"
+								fullQualifiedName="test.process:Document#edgeProcess"
+								type="tl.core:Boolean"
+								visibility="read-only"
+							>
+								<annotations/>
+							</field>
+							<label>
+								<en>Automatic Process</en>
+								<de>Automatic Process</de>
+							</label>
+							<dynamicVisibility class=""/>
+						</group>
+					</form>
+				</tl:displayDescription>
+				<tl:exportDescription/>
+				<tl:defaultOperation><![CDATA[doc -> oldToken -> newToken -> formdata -> $doc.set(`test.process:Document#standardProcess`, true)]]></tl:defaultOperation>
+				<tl:edgeFormType/>
+			</bpmn:extensionElements>
+		</bpmn:participant>
+		<bpmn:extensionElements>
+			<tl:name value="WorkflowTest"/>
+			<tl:icon/>
+			<tl:state value="Released"/>
+			<tl:descriptionI18N/>
+			<tl:myTasksIcon/>
+			<tl:myTasksTitleI18N/>
+			<tl:myTasksDescriptionI18N/>
+			<tl:myProcessesIcon/>
+			<tl:myProcessesTitleI18N/>
+			<tl:myProcessesDescriptionI18N/>
+		</bpmn:extensionElements>
+	</bpmn:collaboration>
+	<bpmn:process id="Process_1"
+		isExecutable="false"
+	>
+		<bpmn:laneSet>
+			<bpmn:lane id="Lane_0q9t6rd"
+				name="Reviewer"
+			>
+				<bpmn:flowNodeRef>EndEvent_1kp75rq</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>ExclusiveGateway_0gy00p9</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>Task_0xu44yg</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>Task_0zsucyf</bpmn:flowNodeRef>
+				<bpmn:extensionElements>
+					<tl:title/>
+					<tl:actorGroups>
+						<group name="user"/>
+					</tl:actorGroups>
+					<tl:actorRule/>
+				</bpmn:extensionElements>
+			</bpmn:lane>
+			<bpmn:lane id="Lane_1l70kc6"
+				name="System"
+			>
+				<bpmn:flowNodeRef>ExclusiveGateway_017h6zj</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>ExclusiveGateway_1oomces</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>Task_00mhris</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>Task_0cf6592</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>Task_0iunw1s</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>Task_0tylsyp</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>Task_19ad1ea</bpmn:flowNodeRef>
+				<bpmn:extensionElements>
+					<tl:title/>
+					<tl:actorGroups/>
+					<tl:actorRule/>
+				</bpmn:extensionElements>
+			</bpmn:lane>
+			<bpmn:lane id="Lane_1v5bf6k"
+				name="User"
+			>
+				<bpmn:flowNodeRef>ExclusiveGateway_1498isp</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>StartEvent_1lz7lty</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>StartEvent_1q96plu</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>Task_0ck03l2</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>Task_0yizh4a</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>Task_1v4ff57</bpmn:flowNodeRef>
+				<bpmn:extensionElements>
+					<tl:title/>
+					<tl:actorGroups>
+						<group name="user"/>
+					</tl:actorGroups>
+					<tl:actorRule/>
+				</bpmn:extensionElements>
+			</bpmn:lane>
+		</bpmn:laneSet>
+		<bpmn:endEvent id="EndEvent_1kp75rq">
+			<bpmn:incoming>SequenceFlow_1vbggvb</bpmn:incoming>
+		</bpmn:endEvent>
+		<bpmn:parallelGateway id="ExclusiveGateway_017h6zj"
+			name="fork 1"
+		>
+			<bpmn:outgoing>SequenceFlow_15dpaw9</bpmn:outgoing>
+			<bpmn:outgoing>SequenceFlow_1jpbc5b</bpmn:outgoing>
+			<bpmn:outgoing>SequenceFlow_1otfmfs</bpmn:outgoing>
+			<bpmn:outgoing>SequenceFlow_1p2qsd9</bpmn:outgoing>
+			<bpmn:incoming>SequenceFlow_0h7utt9</bpmn:incoming>
+		</bpmn:parallelGateway>
+		<bpmn:exclusiveGateway id="ExclusiveGateway_0gy00p9">
+			<bpmn:outgoing>SequenceFlow_0xndyxt</bpmn:outgoing>
+			<bpmn:outgoing>SequenceFlow_1vbggvb</bpmn:outgoing>
+			<bpmn:incoming>SequenceFlow_187cwsl</bpmn:incoming>
+			<bpmn:extensionElements>
+				<tl:automatic value="false"/>
+			</bpmn:extensionElements>
+		</bpmn:exclusiveGateway>
+		<bpmn:exclusiveGateway id="ExclusiveGateway_1498isp"
+			default="SequenceFlow_0myn9qu"
+		>
+			<bpmn:outgoing>SequenceFlow_0j1yq6m</bpmn:outgoing>
+			<bpmn:outgoing>SequenceFlow_0myn9qu</bpmn:outgoing>
+			<bpmn:outgoing>SequenceFlow_1kigwia</bpmn:outgoing>
+			<bpmn:outgoing>SequenceFlow_1ysvyxg</bpmn:outgoing>
+			<bpmn:incoming>SequenceFlow_0vblt8s</bpmn:incoming>
+			<bpmn:extensionElements>
+				<tl:automatic value="false"/>
+			</bpmn:extensionElements>
+		</bpmn:exclusiveGateway>
+		<bpmn:parallelGateway id="ExclusiveGateway_1oomces"
+			name="join 1"
+		>
+			<bpmn:outgoing>SequenceFlow_1rn2ot7</bpmn:outgoing>
+			<bpmn:incoming>SequenceFlow_0j2xfu5</bpmn:incoming>
+			<bpmn:incoming>SequenceFlow_15dpaw9</bpmn:incoming>
+			<bpmn:incoming>SequenceFlow_1pqjwvw</bpmn:incoming>
+			<bpmn:incoming>SequenceFlow_1w3qcna</bpmn:incoming>
+		</bpmn:parallelGateway>
+		<bpmn:startEvent id="StartEvent_1lz7lty"
+			name="Advance directly"
+		>
+			<bpmn:outgoing>SequenceFlow_1ecokax</bpmn:outgoing>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:title/>
+				<tl:descriptionI18N/>
+				<tl:requireReview value="false"/>
+			</bpmn:extensionElements>
+		</bpmn:startEvent>
+		<bpmn:startEvent id="StartEvent_1q96plu"
+			name="Stay in Create"
+		>
+			<bpmn:outgoing>SequenceFlow_0c1o4pd</bpmn:outgoing>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:title/>
+				<tl:descriptionI18N/>
+				<tl:requireReview value="true"/>
+			</bpmn:extensionElements>
+		</bpmn:startEvent>
+		<bpmn:task id="Task_00mhris"
+			name="hidden Task"
+		>
+			<bpmn:incoming>SequenceFlow_1kigwia</bpmn:incoming>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:titleI18N/>
+				<tl:titleFunction/>
+				<tl:descriptionI18N/>
+				<tl:tokenType/>
+			</bpmn:extensionElements>
+		</bpmn:task>
+		<bpmn:serviceTask id="Task_0cf6592"
+			name="Automatic Update 1"
+		>
+			<bpmn:outgoing>SequenceFlow_1w3qcna</bpmn:outgoing>
+			<bpmn:incoming>SequenceFlow_1otfmfs</bpmn:incoming>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:titleI18N>
+					<resource>
+						<de>2.1</de>
+					</resource>
+				</tl:titleI18N>
+				<tl:titleFunction/>
+				<tl:descriptionI18N/>
+				<tl:action><![CDATA[doc -> $doc.set(`test.process:Document#automaticUpdate1`, true)]]></tl:action>
+				<tl:tokenType/>
+			</bpmn:extensionElements>
+		</bpmn:serviceTask>
+		<bpmn:manualTask id="Task_0ck03l2"
+			name="Revise"
+		>
+			<bpmn:outgoing>SequenceFlow_0vblt8s</bpmn:outgoing>
+			<bpmn:incoming>SequenceFlow_1e1uh1k</bpmn:incoming>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:titleI18N/>
+				<tl:titleFunction/>
+				<tl:formDefinition>
+					<process-form>
+						<standard-form
+							default-visibility="read-only"
+							source-task="Task_1v4ff57"
+						>
+							<overlays>
+								<overlay
+									attribute="reviseComment"
+									visibility="mandatory"
+								/>
+							</overlays>
+						</standard-form>
+					</process-form>
+				</tl:formDefinition>
+				<tl:descriptionI18N>
+					<de>
+						<text img-count="0"><![CDATA[<p>type form with read only</p>
+]]></text>
+					</de>
+					<en>
+						<text img-count="0"><![CDATA[<p>type form with read only</p>
+]]></text>
+					</en>
+				</tl:descriptionI18N>
+				<tl:canEdit value="true"/>
+				<tl:tokenType/>
+			</bpmn:extensionElements>
+		</bpmn:manualTask>
+		<bpmn:task id="Task_0iunw1s"
+			name="warning task"
+		>
+			<bpmn:incoming>SequenceFlow_0j1yq6m</bpmn:incoming>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:titleI18N/>
+				<tl:titleFunction/>
+				<tl:descriptionI18N/>
+				<tl:tokenType/>
+			</bpmn:extensionElements>
+		</bpmn:task>
+		<bpmn:serviceTask id="Task_0tylsyp"
+			name="Automatic Update 2"
+		>
+			<bpmn:outgoing>SequenceFlow_1pqjwvw</bpmn:outgoing>
+			<bpmn:incoming>SequenceFlow_1p2qsd9</bpmn:incoming>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:titleI18N>
+					<resource>
+						<de>2.2</de>
+					</resource>
+				</tl:titleI18N>
+				<tl:titleFunction/>
+				<tl:descriptionI18N/>
+				<tl:action><![CDATA[doc -> $doc.set(`test.process:Document#automaticUpdate2`, true)]]></tl:action>
+				<tl:tokenType/>
+			</bpmn:extensionElements>
+		</bpmn:serviceTask>
+		<bpmn:manualTask id="Task_0xu44yg"
+			name="Review Document"
+		>
+			<bpmn:outgoing>SequenceFlow_187cwsl</bpmn:outgoing>
+			<bpmn:incoming>SequenceFlow_0myn9qu</bpmn:incoming>
+			<bpmn:incoming>SequenceFlow_1rn2ot7</bpmn:incoming>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:titleI18N>
+					<resource>
+						<de>3</de>
+					</resource>
+				</tl:titleI18N>
+				<tl:titleFunction/>
+				<tl:formDefinition>
+					<process-form>
+						<standard-form
+							default-visibility="read-only"
+							source-task="Task_1v4ff57"
+						>
+							<overlays>
+								<overlay
+									attribute="reviewComment"
+									visibility="mandatory"
+								/>
+							</overlays>
+						</standard-form>
+					</process-form>
+				</tl:formDefinition>
+				<tl:descriptionI18N>
+					<de>
+						<text img-count="0"><![CDATA[<p>custom form</p>
+]]></text>
+					</de>
+					<en>
+						<text img-count="0"><![CDATA[<p>custom form</p>
+]]></text>
+					</en>
+				</tl:descriptionI18N>
+				<tl:canEdit value="true"/>
+				<tl:tokenType/>
+			</bpmn:extensionElements>
+		</bpmn:manualTask>
+		<bpmn:sendTask id="Task_0yizh4a"
+			name="Send Revise Mail"
+		>
+			<bpmn:outgoing>SequenceFlow_1e1uh1k</bpmn:outgoing>
+			<bpmn:incoming>SequenceFlow_0xndyxt</bpmn:incoming>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:receiverGroups>
+					<group name="user"/>
+				</tl:receiverGroups>
+				<tl:receiverRule/>
+				<tl:titleI18N>
+					<resource>
+						<en>Send Revise Mail</en>
+						<de>Send Revise Mail</de>
+					</resource>
+				</tl:titleI18N>
+				<tl:titleFunction/>
+				<tl:subjectTemplate><![CDATA[<p>Send Revise Mail</p>
+]]></tl:subjectTemplate>
+				<tl:contentTemplate><![CDATA[<p>Send Revise Mail</p>
+]]></tl:contentTemplate>
+				<tl:descriptionI18N>
+					<de>
+						<text img-count="0"><![CDATA[<p>Send Revise Mail</p>
+]]></text>
+					</de>
+					<en>
+						<text img-count="0"><![CDATA[<p>Send Revise Mail</p>
+]]></text>
+					</en>
+				</tl:descriptionI18N>
+				<tl:tokenType/>
+			</bpmn:extensionElements>
+		</bpmn:sendTask>
+		<bpmn:manualTask id="Task_0zsucyf"
+			name="Review Update"
+		>
+			<bpmn:outgoing>SequenceFlow_0j2xfu5</bpmn:outgoing>
+			<bpmn:incoming>SequenceFlow_1jpbc5b</bpmn:incoming>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:titleI18N/>
+				<tl:titleFunction/>
+				<tl:formDefinition>
+					<process-form>
+						<standard-form
+							default-visibility="read-only"
+							source-task="Task_1v4ff57"
+						>
+							<overlays>
+								<overlay
+									attribute="reviewUpdate"
+									visibility="mandatory"
+								/>
+							</overlays>
+						</standard-form>
+					</process-form>
+				</tl:formDefinition>
+				<tl:descriptionI18N>
+					<de>
+						<text img-count="0"><![CDATA[<p>type form with read only</p>
+]]></text>
+					</de>
+					<en>
+						<text img-count="0"><![CDATA[<p>type form with read only</p>
+]]></text>
+					</en>
+				</tl:descriptionI18N>
+				<tl:canEdit value="true"/>
+				<tl:tokenType/>
+			</bpmn:extensionElements>
+		</bpmn:manualTask>
+		<bpmn:task id="Task_19ad1ea"
+			name="Error Task"
+		>
+			<bpmn:incoming>SequenceFlow_1ysvyxg</bpmn:incoming>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:titleI18N/>
+				<tl:titleFunction/>
+				<tl:descriptionI18N/>
+				<tl:tokenType/>
+			</bpmn:extensionElements>
+		</bpmn:task>
+		<bpmn:manualTask id="Task_1v4ff57"
+			name="Create Document"
+		>
+			<bpmn:outgoing>SequenceFlow_0h7utt9</bpmn:outgoing>
+			<bpmn:incoming>SequenceFlow_0c1o4pd</bpmn:incoming>
+			<bpmn:incoming>SequenceFlow_1ecokax</bpmn:incoming>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:titleI18N>
+					<resource>
+						<en>1</en>
+						<de>1</de>
+					</resource>
+				</tl:titleI18N>
+				<tl:titleFunction/>
+				<tl:formDefinition>
+					<process-form>
+						<form-provider class=""/>
+					</process-form>
+				</tl:formDefinition>
+				<tl:descriptionI18N>
+					<de>
+						<text img-count="0"><![CDATA[<p>custom form</p>
+]]></text>
+					</de>
+					<en>
+						<text img-count="0"><![CDATA[<p>custom form</p>
+]]></text>
+					</en>
+				</tl:descriptionI18N>
+				<tl:canEdit value="true"/>
+				<tl:tokenType/>
+			</bpmn:extensionElements>
+		</bpmn:manualTask>
+		<bpmn:sequenceFlow id="SequenceFlow_0c1o4pd"
+			sourceRef="StartEvent_1q96plu"
+			targetRef="Task_1v4ff57"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_0h7utt9"
+			name="Start Parallel Update"
+			sourceRef="Task_1v4ff57"
+			targetRef="ExclusiveGateway_017h6zj"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_0j1yq6m"
+			name="warning"
+			sourceRef="ExclusiveGateway_1498isp"
+			targetRef="Task_0iunw1s"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule>
+					<sequence-flow>
+						<rule-conditions>
+							<rule-condition class="com.top_logic.bpe.bpml.display.ConfigurableCondition"
+								condition="false"
+								message=""
+								rule-type="WARNING"
+							/>
+						</rule-conditions>
+					</sequence-flow>
+				</tl:rule>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_0j2xfu5"
+			name="confirm Update"
+			sourceRef="Task_0zsucyf"
+			targetRef="ExclusiveGateway_1oomces"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule>
+					<sequence-flow>
+						<rule-conditions>
+							<rule-condition class="com.top_logic.bpe.bpml.display.ConfigurableCondition"
+								condition="doc -> $doc.get(`test.process:Document#reviewUpdate`) != false"
+							>
+								<message>
+									<en>Update from reviewer is necessary.</en>
+									<de>Update vom Reviewer ist notwendig.</de>
+								</message>
+							</rule-condition>
+						</rule-conditions>
+					</sequence-flow>
+				</tl:rule>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_0myn9qu"
+			name="review and reset standard operation"
+			sourceRef="ExclusiveGateway_1498isp"
+			targetRef="Task_0xu44yg"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="true"/>
+				<tl:operation><![CDATA[doc -> oldToken -> newToken -> formdata -> 
+$doc
+    ..set(`test.process:Document#standardProcess`, false)
+    ..set(`test.process:Document#edgeProcess`, true)]]></tl:operation>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_0vblt8s"
+			sourceRef="Task_0ck03l2"
+			targetRef="ExclusiveGateway_1498isp"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_0xndyxt"
+			name="revise Document"
+			sourceRef="ExclusiveGateway_0gy00p9"
+			targetRef="Task_0yizh4a"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_15dpaw9"
+			sourceRef="ExclusiveGateway_017h6zj"
+			targetRef="ExclusiveGateway_1oomces"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_187cwsl"
+			sourceRef="Task_0xu44yg"
+			targetRef="ExclusiveGateway_0gy00p9"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_1e1uh1k"
+			sourceRef="Task_0yizh4a"
+			targetRef="Task_0ck03l2"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_1ecokax"
+			sourceRef="StartEvent_1lz7lty"
+			targetRef="Task_1v4ff57"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_1jpbc5b"
+			name="review update"
+			sourceRef="ExclusiveGateway_017h6zj"
+			targetRef="Task_0zsucyf"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_1kigwia"
+			name="hidden"
+			sourceRef="ExclusiveGateway_1498isp"
+			targetRef="Task_00mhris"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule>
+					<sequence-flow>
+						<rule-conditions>
+							<rule-condition class="com.top_logic.bpe.bpml.display.ConfigurableCondition"
+								condition="false"
+								rule-type="HIDDEN"
+							/>
+						</rule-conditions>
+					</sequence-flow>
+				</tl:rule>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_1otfmfs"
+			name="update 1"
+			sourceRef="ExclusiveGateway_017h6zj"
+			targetRef="Task_0cf6592"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_1p2qsd9"
+			name="update 2"
+			sourceRef="ExclusiveGateway_017h6zj"
+			targetRef="Task_0tylsyp"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_1pqjwvw"
+			sourceRef="Task_0tylsyp"
+			targetRef="ExclusiveGateway_1oomces"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_1rn2ot7"
+			sourceRef="ExclusiveGateway_1oomces"
+			targetRef="Task_0xu44yg"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_1vbggvb"
+			name="Finalize Document"
+			sourceRef="ExclusiveGateway_0gy00p9"
+			targetRef="EndEvent_1kp75rq"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_1w3qcna"
+			sourceRef="Task_0cf6592"
+			targetRef="ExclusiveGateway_1oomces"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="SequenceFlow_1ysvyxg"
+			name="error"
+			sourceRef="ExclusiveGateway_1498isp"
+			targetRef="Task_19ad1ea"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule>
+					<sequence-flow>
+						<rule-conditions>
+							<rule-condition class="com.top_logic.bpe.bpml.display.ConfigurableCondition"
+								condition="false"
+								message=""
+							/>
+						</rule-conditions>
+					</sequence-flow>
+				</tl:rule>
+				<tl:skipStandardOperation value="false"/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:extensionElements>
+			<tl:actorGroups/>
+			<tl:actorRule/>
+		</bpmn:extensionElements>
+	</bpmn:process>
+	<bpmndi:BPMNDiagram id="BPMNDiagram_1">
+		<bpmndi:BPMNPlane id="BPMNPlane_1"
+			bpmnElement="Collaboration_0rxd91k"
+		>
+			<bpmndi:BPMNShape id="Participant_1jf73bx_di"
+				bpmnElement="Participant_1jf73bx"
+			>
+				<dc:Bounds
+					height="1191"
+					width="2221"
+					x="138"
+					y="-187"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="Lane_1v5bf6k_di"
+				bpmnElement="Lane_1v5bf6k"
+			>
+				<dc:Bounds
+					height="429"
+					width="2191"
+					x="168"
+					y="-187"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="Lane_0q9t6rd_di"
+				bpmnElement="Lane_0q9t6rd"
+			>
+				<dc:Bounds
+					height="343"
+					width="2191"
+					x="168"
+					y="661"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="ManualTask_0s1mauv_di"
+				bpmnElement="Task_1v4ff57"
+			>
+				<dc:Bounds
+					height="80"
+					width="100"
+					x="500"
+					y="89"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="Lane_1l70kc6_di"
+				bpmnElement="Lane_1l70kc6"
+			>
+				<dc:Bounds
+					height="419"
+					width="2191"
+					x="168"
+					y="242"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="ServiceTask_0i71tp0_di"
+				bpmnElement="Task_0tylsyp"
+			>
+				<dc:Bounds
+					height="80"
+					width="100"
+					x="1055"
+					y="417"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="Association_0n3k5jw_di">
+				<di:waypoint
+					x="869"
+					y="49"
+				/>
+				<di:waypoint
+					x="841"
+					y="-4"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="StartEvent_1q96plu_di"
+				bpmnElement="StartEvent_1q96plu"
+			>
+				<dc:Bounds
+					height="36"
+					width="36"
+					x="222"
+					y="67"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="72"
+						x="204"
+						y="37"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_0c1o4pd_di"
+				bpmnElement="SequenceFlow_0c1o4pd"
+			>
+				<di:waypoint
+					x="258"
+					y="85"
+				/>
+				<di:waypoint
+					x="406"
+					y="85"
+				/>
+				<di:waypoint
+					x="406"
+					y="112"
+				/>
+				<di:waypoint
+					x="500"
+					y="112"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge id="SequenceFlow_1p2qsd9_di"
+				bpmnElement="SequenceFlow_1p2qsd9"
+			>
+				<di:waypoint
+					x="697"
+					y="384"
+				/>
+				<di:waypoint
+					x="845"
+					y="384"
+				/>
+				<di:waypoint
+					x="845"
+					y="457"
+				/>
+				<di:waypoint
+					x="1055"
+					y="457"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="40"
+						x="894"
+						y="440"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="ManualTask_0rx17k8_di"
+				bpmnElement="Task_0xu44yg"
+			>
+				<dc:Bounds
+					height="80"
+					width="100"
+					x="1480"
+					y="805"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_1otfmfs_di"
+				bpmnElement="SequenceFlow_1otfmfs"
+			>
+				<di:waypoint
+					x="697"
+					y="384"
+				/>
+				<di:waypoint
+					x="845"
+					y="384"
+				/>
+				<di:waypoint
+					x="845"
+					y="312"
+				/>
+				<di:waypoint
+					x="1055"
+					y="312"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="26"
+						x="908"
+						y="293"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="ParallelGateway_07yrwki_di"
+				bpmnElement="ExclusiveGateway_017h6zj"
+			>
+				<dc:Bounds
+					height="50"
+					width="50"
+					x="647"
+					y="359"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="29"
+						x="657"
+						y="419"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_1w3qcna_di"
+				bpmnElement="SequenceFlow_1w3qcna"
+			>
+				<di:waypoint
+					x="1155"
+					y="312"
+				/>
+				<di:waypoint
+					x="1384"
+					y="312"
+				/>
+				<di:waypoint
+					x="1384"
+					y="361"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="ParallelGateway_1u0yfrt_di"
+				bpmnElement="ExclusiveGateway_1oomces"
+			>
+				<dc:Bounds
+					height="50"
+					width="50"
+					x="1359"
+					y="361"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="27"
+						x="1390"
+						y="405"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_1pqjwvw_di"
+				bpmnElement="SequenceFlow_1pqjwvw"
+			>
+				<di:waypoint
+					x="1155"
+					y="457"
+				/>
+				<di:waypoint
+					x="1384"
+					y="457"
+				/>
+				<di:waypoint
+					x="1384"
+					y="411"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge id="SequenceFlow_1rn2ot7_di"
+				bpmnElement="SequenceFlow_1rn2ot7"
+			>
+				<di:waypoint
+					x="1409"
+					y="386"
+				/>
+				<di:waypoint
+					x="1437"
+					y="386"
+				/>
+				<di:waypoint
+					x="1437"
+					y="845"
+				/>
+				<di:waypoint
+					x="1480"
+					y="845"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge id="SequenceFlow_0h7utt9_di"
+				bpmnElement="SequenceFlow_0h7utt9"
+			>
+				<di:waypoint
+					x="600"
+					y="129"
+				/>
+				<di:waypoint
+					x="672"
+					y="129"
+				/>
+				<di:waypoint
+					x="672"
+					y="359"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="27"
+						width="69"
+						x="602"
+						y="104"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="StartEvent_1lz7lty_di"
+				bpmnElement="StartEvent_1lz7lty"
+			>
+				<dc:Bounds
+					height="36"
+					width="36"
+					x="222"
+					y="156"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="84"
+						x="198"
+						y="199"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_1ecokax_di"
+				bpmnElement="SequenceFlow_1ecokax"
+			>
+				<di:waypoint
+					x="258"
+					y="174"
+				/>
+				<di:waypoint
+					x="386"
+					y="174"
+				/>
+				<di:waypoint
+					x="386"
+					y="150"
+				/>
+				<di:waypoint
+					x="500"
+					y="150"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="ServiceTask_006maqr_di"
+				bpmnElement="Task_0cf6592"
+			>
+				<dc:Bounds
+					height="80"
+					width="100"
+					x="1055"
+					y="272"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="ExclusiveGateway_0gy00p9_di"
+				bpmnElement="ExclusiveGateway_0gy00p9"
+				isMarkerVisible="true"
+			>
+				<dc:Bounds
+					height="50"
+					width="50"
+					x="1651"
+					y="820"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_187cwsl_di"
+				bpmnElement="SequenceFlow_187cwsl"
+			>
+				<di:waypoint
+					x="1580"
+					y="845"
+				/>
+				<di:waypoint
+					x="1651"
+					y="845"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="EndEvent_1kp75rq_di"
+				bpmnElement="EndEvent_1kp75rq"
+			>
+				<dc:Bounds
+					height="36"
+					width="36"
+					x="1814"
+					y="827"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_1vbggvb_di"
+				bpmnElement="SequenceFlow_1vbggvb"
+			>
+				<di:waypoint
+					x="1701"
+					y="845"
+				/>
+				<di:waypoint
+					x="1814"
+					y="845"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="27"
+						width="52"
+						x="1737"
+						y="808"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge id="SequenceFlow_0xndyxt_di"
+				bpmnElement="SequenceFlow_0xndyxt"
+			>
+				<di:waypoint
+					x="1676"
+					y="820"
+				/>
+				<di:waypoint
+					x="1676"
+					y="169"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="85"
+						x="1649"
+						y="493"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="SendTask_1e87cij_di"
+				bpmnElement="Task_0yizh4a"
+			>
+				<dc:Bounds
+					height="80"
+					width="100"
+					x="1626"
+					y="89"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_1e1uh1k_di"
+				bpmnElement="SequenceFlow_1e1uh1k"
+			>
+				<di:waypoint
+					x="1726"
+					y="129"
+				/>
+				<di:waypoint
+					x="1821"
+					y="129"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="ManualTask_1upvvc0_di"
+				bpmnElement="Task_0ck03l2"
+			>
+				<dc:Bounds
+					height="80"
+					width="100"
+					x="1821"
+					y="89"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_0vblt8s_di"
+				bpmnElement="SequenceFlow_0vblt8s"
+			>
+				<di:waypoint
+					x="1921"
+					y="129"
+				/>
+				<di:waypoint
+					x="2016"
+					y="129"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="ExclusiveGateway_0tz8agl_di"
+				bpmnElement="ExclusiveGateway_1498isp"
+				isMarkerVisible="true"
+			>
+				<dc:Bounds
+					height="50"
+					width="50"
+					x="2016"
+					y="104"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_1kigwia_di"
+				bpmnElement="SequenceFlow_1kigwia"
+			>
+				<di:waypoint
+					x="2041"
+					y="154"
+				/>
+				<di:waypoint
+					x="2041"
+					y="475"
+				/>
+				<di:waypoint
+					x="2173"
+					y="475"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="34"
+						x="2091"
+						y="457"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="Task_19ad1ea_di"
+				bpmnElement="Task_19ad1ea"
+			>
+				<dc:Bounds
+					height="80"
+					width="100"
+					x="2173"
+					y="332"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_1ysvyxg_di"
+				bpmnElement="SequenceFlow_1ysvyxg"
+			>
+				<di:waypoint
+					x="2066"
+					y="129"
+				/>
+				<di:waypoint
+					x="2120"
+					y="129"
+				/>
+				<di:waypoint
+					x="2120"
+					y="372"
+				/>
+				<di:waypoint
+					x="2173"
+					y="372"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="24"
+						x="2135"
+						y="354"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="Task_0iunw1s_di"
+				bpmnElement="Task_0iunw1s"
+			>
+				<dc:Bounds
+					height="80"
+					width="100"
+					x="2173"
+					y="547"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="SequenceFlow_0j1yq6m_di"
+				bpmnElement="SequenceFlow_0j1yq6m"
+			>
+				<di:waypoint
+					x="2041"
+					y="154"
+				/>
+				<di:waypoint
+					x="2041"
+					y="587"
+				/>
+				<di:waypoint
+					x="2173"
+					y="587"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="39"
+						x="2037"
+						y="368"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge id="SequenceFlow_0myn9qu_di"
+				bpmnElement="SequenceFlow_0myn9qu"
+			>
+				<di:waypoint
+					x="2041"
+					y="104"
+				/>
+				<di:waypoint
+					x="2041"
+					y="-9"
+				/>
+				<di:waypoint
+					x="1530"
+					y="-9"
+				/>
+				<di:waypoint
+					x="1530"
+					y="805"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="33"
+						x="1769"
+						y="-27"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge id="SequenceFlow_15dpaw9_di"
+				bpmnElement="SequenceFlow_15dpaw9"
+			>
+				<di:waypoint
+					x="697"
+					y="384"
+				/>
+				<di:waypoint
+					x="1359"
+					y="386"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="60"
+						x="837"
+						y="156"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge id="SequenceFlow_1jpbc5b_di"
+				bpmnElement="SequenceFlow_1jpbc5b"
+			>
+				<di:waypoint
+					x="697"
+					y="384"
+				/>
+				<di:waypoint
+					x="845"
+					y="384"
+				/>
+				<di:waypoint
+					x="845"
+					y="872"
+				/>
+				<di:waypoint
+					x="1055"
+					y="872"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge id="SequenceFlow_0j2xfu5_di"
+				bpmnElement="SequenceFlow_0j2xfu5"
+			>
+				<di:waypoint
+					x="1155"
+					y="872"
+				/>
+				<di:waypoint
+					x="1384"
+					y="872"
+				/>
+				<di:waypoint
+					x="1384"
+					y="411"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape id="ManualTask_1jxfqjr_di"
+				bpmnElement="Task_0zsucyf"
+			>
+				<dc:Bounds
+					height="80"
+					width="100"
+					x="1055"
+					y="832"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="Task_0rfh629_di"
+				bpmnElement="Task_00mhris"
+			>
+				<dc:Bounds
+					height="80"
+					width="100"
+					x="2173"
+					y="435"
+				/>
+			</bpmndi:BPMNShape>
+		</bpmndi:BPMNPlane>
+	</bpmndi:BPMNDiagram>
+</bpmn:definitions>

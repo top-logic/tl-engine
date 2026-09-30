@@ -51,6 +51,7 @@ import com.top_logic.model.search.expr.Sort;
 import com.top_logic.model.search.expr.StringContains;
 import com.top_logic.model.search.expr.StringEndsWith;
 import com.top_logic.model.search.expr.StringStartsWith;
+import com.top_logic.model.search.expr.Try;
 import com.top_logic.model.search.expr.TupleExpression;
 import com.top_logic.model.search.expr.TupleExpression.Coord;
 import com.top_logic.model.search.expr.Union;
@@ -595,5 +596,16 @@ public abstract class DescendingVisitor<R, A> extends AbstractDescendingVisitor<
 	 * Combines the visit results of {@link ArithmeticExpr} contents.
 	 */
 	protected abstract R composeArithmetic(ArithmeticExpr expr, A arg, R leftResult, R rightResult);
+
+	@Override
+	public R visitTry(Try expr, A arg) {
+		return composeTry(expr, arg, descendPart(expr, arg, expr.getTryBlock()),
+			expr.getCatchBlock() == null ? null : descendPart(expr, arg, expr.getCatchBlock()));
+	}
+
+	/**
+	 * Combines the visit results of {@link Try} contents.
+	 */
+	protected abstract R composeTry(Try expr, A arg, R tryResult, R catchResult);
 
 }

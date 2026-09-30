@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic.element/grid.template.xml"
 >
 	<arguments
@@ -23,7 +22,7 @@
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`test.optionprovider:WithOptions`)"
 			modelForElement="null"
-			supportsElement="element->$element.instanceOf(`test.optionprovider:WithOptions`)"
+			supportsElement="true"
 			supportsModel="true"
 		/>
 		<buttons>

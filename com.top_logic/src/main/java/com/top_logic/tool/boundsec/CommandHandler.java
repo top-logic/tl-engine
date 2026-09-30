@@ -57,15 +57,16 @@ import com.top_logic.layout.channel.linking.ref.ComponentRef;
 import com.top_logic.layout.channel.linking.ref.ComponentRelation;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.model.FieldMode;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
-import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
 import com.top_logic.layout.form.values.edit.initializer.UUIDInitializer;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandlerFactory.Config.CliqueConfig;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
@@ -79,6 +80,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
+@Label("Command")
 public interface CommandHandler
 		extends ConfiguredInstance<CommandHandler.ConfigBase<? extends CommandHandler>>, BoundCommand,
 		ExecutabilityRuleSPI {
@@ -291,38 +293,20 @@ public interface CommandHandler
 	public interface ConfirmConfig extends ConfigurationItem {
 
 		/**
-		 * @see #getConfirm()
+		 * @see #getConfirmation()
 		 */
-		String CONFIRM_PROPERTY = "confirm";
+		String CONFIRMATION = "confirmation";
 
 		/**
-		 * @see #getConfirmMessage()
-		 */
-		String CONFIRM_MESSAGE = "confirmMessage";
-
-		/**
-		 * Whether the user is asked for confirmation before the command is actually executed.
-		 */
-		@Name(CONFIRM_PROPERTY)
-		boolean getConfirm();
-
-		/**
-		 * The message to display to the user requesting for confirmation that the command should
-		 * really be executed.
+		 * The algorithm to compute a confirm message before a command is executed.
 		 * 
 		 * <p>
-		 * The message can refer to the {@link TargetConfig#getTarget() target model} of the command
-		 * using the <code>{0}</code> placeholder.
-		 * </p>
-		 * 
-		 * <p>
-		 * The message is only displayed, if {@link #getConfirm()} is set. If no value is set, but
-		 * {@link #getConfirm()} is checked, a generic confirmation message is displayed.
+		 * If the computed confirm message is <code>null</code>, no confirmation is displayed.
 		 * </p>
 		 */
-		@Name(CONFIRM_MESSAGE)
-		@DynamicMode(fun = VisibleIf.class, args = @Ref(CONFIRM_PROPERTY))
-		ResKey getConfirmMessage();
+		@Name(CONFIRMATION)
+		@Options(fun = AllInAppImplementations.class)
+		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 		/**
 		 * Dynamic field mode that displays a field only if a referenced checkbox is checked.
@@ -423,6 +407,7 @@ public interface CommandHandler
 	@Abstract
 	@TitleProperty(name = ConfigBase.UI_TITLE)
 	@CollapseEntries
+	@Format(CommandHandlerFormat.class)
 	public interface ConfigBase<T extends CommandHandler> extends PolymorphicConfiguration<T> {
 
 		/**
@@ -453,8 +438,7 @@ public interface CommandHandler
 		Config.GROUP_PROPERTY,
 		Config.TARGET,
 		Config.EXECUTABILITY_PROPERTY,
-		Config.CONFIRM_PROPERTY,
-		Config.CONFIRM_MESSAGE
+		Config.CONFIRMATION,
 	})
 	public interface Config
 			extends ConfigBase<CommandHandler>, ExecutabilityConfig, TargetConfig, ConfirmConfig, CommandDefaults {
@@ -897,8 +881,7 @@ public CommandScriptWriter getCommandScriptWriter(LayoutComponent component);
 	 * @see ButtonControl#ButtonControl(CommandModel)
 	 */
 	default CommandModel createCommandModel(LayoutComponent component, Map<String, Object> arguments) {
-		ResKey label = getResourceKey(component);
-		return new ComponentCommandModel(this, component, arguments, label);
+		return new ComponentCommandModel(this, component, arguments);
 	}
 
 }

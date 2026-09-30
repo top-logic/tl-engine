@@ -5,11 +5,12 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-bpe</artifactId>
-  <description>Business process engine.</description>
+	<name>${project.artifactId}</name>
+	<description>Business process engine.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
@@ -50,4 +51,28 @@
       <artifactId>tl-xio</artifactId>
     </dependency>
   </dependencies>
+
+  
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-maven-plugin</artifactId>
+
+				<executions>
+					<execution>
+						<id>generate-binding</id>
+						<goals>
+							<goal>generate-java</goal>
+						</goals>
+						
+						<configuration>
+							<modules>tl.bpe.bpml, tl.bpe.execution</modules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	
 </project>

@@ -12,7 +12,7 @@ import junit.framework.Test;
 
 import test.com.top_logic.LocalTestSetup;
 
-import com.top_logic.basic.message.Message;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.UnknownTypeException;
@@ -24,6 +24,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.RefetchTimeout;
 import com.top_logic.knowledge.service.Transaction;
@@ -135,10 +136,10 @@ public abstract class AbstractDBKnowledgeBaseClusterTest extends AbstractDBKnowl
 	}
 
 	protected Transaction beginNode2() {
-		return beginNode2(null);
+		return beginNode2(I18NConstants.NO_COMMIT_MESSAGE);
 	}
 	
-	protected Transaction beginNode2(Message modificationDescription) {
+	protected Transaction beginNode2(ResKey modificationDescription) {
 		return kbNode2().beginTransaction(modificationDescription);
 	}
 	

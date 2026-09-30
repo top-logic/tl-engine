@@ -13,7 +13,7 @@ import com.top_logic.tool.boundsec.assistent.ValidatingUploadHandler;
  * Error component to be displayed when the {@link ValidatingUploadHandler} 
  * has found at least one error in the uploaded file. 
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ErrorComponent extends ProcessingComponent {
 

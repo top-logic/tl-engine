@@ -13,6 +13,11 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.layout.editor.DynamicComponentDefinition;
+import com.top_logic.layout.editor.DynamicComponentOptionMapping;
+import com.top_logic.layout.editor.DynamicComponentOptions;
+import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 
 /**
  * Base configuration for an aggregation of component configs.
@@ -37,6 +42,9 @@ public interface SubComponentConfig extends ConfigurationItem {
 	@Name(COMPONENTS)
 	@EntryTag(LayoutComponent.Config.COMPONENT)
 	@Key(LayoutComponent.Config.NAME)
+	@Options(fun = DynamicComponentOptions.class, mapping = DynamicComponentOptionMapping.class)
+	@OptionLabels(DynamicComponentDefinition.Labels.class)
+
 	@DefaultContainer
 	List<LayoutComponent.Config> getComponents();
 

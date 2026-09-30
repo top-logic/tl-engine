@@ -12,7 +12,8 @@ import java.util.TimeZone;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.jsp.PageContext;
 
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
@@ -153,7 +154,7 @@ public class ContentHandlersRegistry extends WindowRegistry<SubsessionHandler> {
 
 	@Override
 	protected void dispatch(DisplayContext context, SubsessionHandler rootHandler, WindowId windowId,
-			URLParser url) throws IOException {
+			URLParser url) throws IOException, ServletException {
 		TLSubSessionContext subSession;
 		if (rootHandler == null) {
 			rootHandler = startLogin(context, windowId);

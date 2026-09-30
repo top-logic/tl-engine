@@ -40,7 +40,7 @@
                         </processors>
                     </consumer>
                     <consumer name="KB-Data-Change-Consumer">
-	                    <value.deserializer.typed.config class="com.top_logic.kafka.serialization.ChangeSetDeserializer" >
+	                    <value.deserializer.typed.config class="com.top_logic.kafka.sync.serialization.ChangeSetDeserializer" >
 	                    	<type-mapping class="com.top_logic.knowledge.service.db2.migration.FuzzyTableNameMapping">
 	                    		<renames>
 	                    			<rename name="NotExistingType" target-name="StructuredElement" />
@@ -89,12 +89,6 @@
 			</type-systems>
 		</config>
 		
-		<config config:interface="com.top_logic.base.security.SecurityConfiguration">
-			<layout>
-				<domain-mapper class="com.top_logic.element.layout.admin.StructureDomainMapper" />
-			</layout>
-		</config>
-
 		<config config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$GlobalConfig">
 			<types>
 				<type name="kafka.demo:CommonNode" attributes="tType,name"/>

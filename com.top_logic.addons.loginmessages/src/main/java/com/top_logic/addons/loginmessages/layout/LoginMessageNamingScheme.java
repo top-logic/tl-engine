@@ -11,7 +11,7 @@ import com.top_logic.addons.loginmessages.layout.LoginMessageNamingScheme.LoginM
 import com.top_logic.addons.loginmessages.model.LoginMessagesUtil;
 import com.top_logic.addons.loginmessages.model.intf.LoginMessage;
 import com.top_logic.basic.util.Utils;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -21,7 +21,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  *
  * @author <a href="mailto:Dmitry.Ivanizki@top-logic.com">Dmitry Ivanizki</a>
  */
-public class LoginMessageNamingScheme extends AbstractModelNamingScheme<LoginMessage, LoginMessageName> {
+public class LoginMessageNamingScheme extends AbstractGlobalModelNamingScheme<LoginMessage, LoginMessageName> {
 
 	/**
 	 * A {@link ModelName} for a {@link LoginMessage}.
@@ -31,21 +31,18 @@ public class LoginMessageNamingScheme extends AbstractModelNamingScheme<LoginMes
 	public interface LoginMessageName extends ModelName {
 
 		/** Name getter. */
-		public String getName();
+		String getName();
 
 		/** Name setter. */
-		public void setName(String name);
+		void setName(String name);
 
 	}
 
-	@Override
-	public Class<LoginMessageName> getNameClass() {
-		return LoginMessageName.class;
-	}
-
-	@Override
-	public Class<LoginMessage> getModelClass() {
-		return LoginMessage.class;
+	/**
+	 * Creates a {@link LoginMessageNamingScheme}.
+	 */
+	public LoginMessageNamingScheme() {
+		super(LoginMessage.class, LoginMessageName.class);
 	}
 
 	@Override

@@ -5,9 +5,7 @@
 %><%@taglib uri="layout" prefix="layout"
 %><%@taglib uri="ajaxform" prefix="form"
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:filterForm
 			displayWithoutModel="false"

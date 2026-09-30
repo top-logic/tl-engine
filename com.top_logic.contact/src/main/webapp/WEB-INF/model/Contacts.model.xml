@@ -74,7 +74,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="40"/>
+						<size-constraint upper-bound="100"/>
 						<sort-order value="110.0"/>
 						<delete-protected/>
 					</annotations>
@@ -85,7 +85,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="40"/>
+						<size-constraint upper-bound="100"/>
 						<sort-order value="120.0"/>
 						<delete-protected/>
 					</annotations>
@@ -107,7 +107,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="40"/>
+						<size-constraint upper-bound="100"/>
 						<sort-order value="140.0"/>
 						<delete-protected/>
 					</annotations>
@@ -126,7 +126,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="40"/>
+						<size-constraint upper-bound="100"/>
 						<sort-order value="160.0"/>
 						<delete-protected/>
 					</annotations>
@@ -152,7 +152,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="40"/>
+						<size-constraint upper-bound="100"/>
 						<sort-order value="330.0"/>
 						<delete-protected/>
 					</annotations>
@@ -162,7 +162,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="9"/>
+						<size-constraint upper-bound="150"/>
 						<sort-order value="500.0"/>
 						<delete-protected/>
 					</annotations>
@@ -172,7 +172,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="10"/>
+						<size-constraint upper-bound="32"/>
 						<sort-order value="510.0"/>
 						<delete-protected/>
 					</annotations>
@@ -242,16 +242,6 @@
 						<delete-protected/>
 					</annotations>
 				</property>
-				<property name="position"
-					type="tl.core:String"
-				>
-					<annotations>
-						<multi-line value="false"/>
-						<size-constraint upper-bound="40"/>
-						<sort-order value="140.0"/>
-						<delete-protected/>
-					</annotations>
-				</property>
 				<property name="phone_mobile"
 					type="tl.core:String"
 				>
@@ -295,18 +285,6 @@
 						<delete-protected/>
 					</annotations>
 				</reference>
-				<reference name="boss"
-					kind="forwards"
-					type="PersonContact"
-				>
-					<annotations>
-						<constraint>
-							<config-reference name="PersonContact"/>
-						</constraint>
-						<sort-order value="250.0"/>
-						<delete-protected/>
-					</annotations>
-				</reference>
 				<property name="fullName"
 					type="tl.core:String"
 				>
@@ -339,6 +317,19 @@
 					kind="backwards"
 					type="tl.accounts:Person"
 				/>
+				<!-- The login name of the last assigned account. When the account gets 
+					deleted and re-created later on, this property can be used to re-use the 
+					contact. -->
+				<property name="loginName"
+					type="tl.core:String"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+						<storage-algorithm>
+							<primitive-storage storage-attribute="FKey"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 	</module>

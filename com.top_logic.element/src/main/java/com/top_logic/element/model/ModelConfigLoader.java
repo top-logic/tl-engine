@@ -8,7 +8,6 @@ package com.top_logic.element.model;
 import java.io.IOError;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -18,7 +17,6 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.element.ElementException;
@@ -26,8 +24,6 @@ import com.top_logic.element.config.DefinitionReader;
 import com.top_logic.element.config.ModelConfig;
 import com.top_logic.element.config.ModuleConfig;
 import com.top_logic.element.config.ObjectTypeConfig;
-import com.top_logic.element.config.RoleAssignment;
-import com.top_logic.element.config.SingletonConfig;
 import com.top_logic.element.model.DynamicModelService.Config;
 import com.top_logic.model.annotate.TLModuleDisplayGroup;
 import com.top_logic.model.config.TLModuleAnnotation;
@@ -166,25 +162,6 @@ public class ModelConfigLoader {
 		}
 
 		result.keySet().removeAll(ambiguous);
-	}
-
-	private void applyRoleAssignments(SingletonConfig setting, SingletonConfig definition) {
-		if (!setting.getRoleAssignments().isEmpty()) {
-			PropertyDescriptor definitionProperty =
-				definition.descriptor().getProperty(SingletonConfig.ROLE_ASSIGNMENTS);
-			definition.update(definitionProperty, combineRoleAssignments(setting, definition));
-		}
-	}
-
-	private List<RoleAssignment> combineRoleAssignments(SingletonConfig setting, SingletonConfig definition) {
-		Collection<RoleAssignment> settingRoles = setting.getRoleAssignments();
-		Collection<RoleAssignment> definitionRoles = definition.getRoleAssignments();
-
-		int combinedSize = settingRoles.size() + definitionRoles.size();
-		List<RoleAssignment> combinedRoles = new ArrayList<>(combinedSize);
-		combinedRoles.addAll(definitionRoles);
-		combinedRoles.addAll(settingRoles);
-		return combinedRoles;
 	}
 
 	private ModelConfig parseModel(final InstantiationContext context) {

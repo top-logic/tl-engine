@@ -7,7 +7,6 @@
 %><layout:html>
 	<layout:head/>
 	<layout:body>
-		
 		Testing cells on a plain page.
 		<%@include file="TestBoxesContent.jsp" %>
 	</layout:body>

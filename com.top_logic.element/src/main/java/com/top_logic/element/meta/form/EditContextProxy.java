@@ -132,11 +132,6 @@ public class EditContextProxy implements EditContext {
 	}
 
 	@Override
-	public boolean isRestricted() {
-		return _base.isRestricted();
-	}
-
-	@Override
 	public boolean isSearchUpdate() {
 		return _base.isSearchUpdate();
 	}

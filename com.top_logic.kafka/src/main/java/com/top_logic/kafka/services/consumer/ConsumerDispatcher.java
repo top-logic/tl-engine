@@ -111,7 +111,7 @@ public class ConsumerDispatcher<K, V> extends Thread
 	
 	private Instant _lastRunEndTimestamp;
 
-	private final KafkaLogWriter<V> _logWriter;
+	private final KafkaLogWriter<? super V> _logWriter;
 
 	private ExponentialBackoff _exponentialBackoff;
 
@@ -351,11 +351,6 @@ public class ConsumerDispatcher<K, V> extends Thread
 		} catch (WakeupException e) {
 			Logger.info(String.format(INFO_EXECUTE, getConfig().getName()), e, ConsumerDispatcher.class);
 			setLastRunError(e);
-		} catch (ThreadDeath e) {
-			/* Never catch ThreadDeath, as it is used by Java internally to terminate threads. */
-			Logger.error(String.format(ERROR_THREAD_TERMINATION, getConfig().getName()), e, ConsumerDispatcher.class);
-			setLastRunError(e);
-			throw e;
 		} catch (Throwable e) {
 			long errorPause = calcErrorPause();
 			Logger.error(String.format(ERROR_EXECUTE, getConfig().getName(), errorPause), e, ConsumerDispatcher.class);

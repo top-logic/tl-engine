@@ -65,8 +65,6 @@ public class ScriptedTestCollector implements Provider<Test> {
 	public Test get() {
 		try {
 			return getScriptedTestsUnsafe();
-		} catch (ThreadDeath ex) {
-			throw ex;
 		} catch (RuntimeException | Error ex) {
 			String message = "Failed to collect the scripted tests. Cause: " + ex.getMessage();
 			return SimpleTestFactory.newBrokenTest("Collection of ScriptedTests", new RuntimeException(message, ex));

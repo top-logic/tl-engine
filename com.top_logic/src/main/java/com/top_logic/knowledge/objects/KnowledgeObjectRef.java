@@ -15,6 +15,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 
 /**
  * A Proxy/Reference to a KnowledgeObject that is Serializable.
@@ -87,12 +88,11 @@ public class KnowledgeObjectRef implements Serializable {
      */
 	public KnowledgeItem getKnowledgeObject() throws InvalidLinkException {
         if (ko == null) {      
-            KnowledgeBaseFactory kbf = KnowledgeBaseFactory.getInstance();
             KnowledgeBase kb; 
             if (kbName == null)
-                kb = kbf.getDefaultKnowledgeBase();
+				kb = PersistencyLayer.getKnowledgeBase();
             else
-                kb = kbf.getKnowledgeBase(kbName);
+				kb = KnowledgeBaseFactory.getInstance().getKnowledgeBase(kbName);
             
             if (koId == null) {
             	return null;

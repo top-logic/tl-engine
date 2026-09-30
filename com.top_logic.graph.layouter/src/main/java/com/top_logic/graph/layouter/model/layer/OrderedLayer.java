@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * General layer where the items are ordered.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class OrderedLayer<I> extends AbstractLayer<I> {
 

@@ -6,20 +6,24 @@
 package com.top_logic.service.openapi.common.document;
 
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.annotation.Final;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.codeedit.control.CodeEditorControl;
 import com.top_logic.layout.codeedit.control.EditorControlConfig;
 import com.top_logic.layout.codeedit.editor.DefaultCodeEditor;
+import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
+import com.top_logic.model.annotate.LabelPosition;
 
 /**
  * A named <i>OpenAPI</i> schema.
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Final
 @DisplayOrder({
 	SchemaObject.NAME_ATTRIBUTE,
 	SchemaObject.SCHEMA,
@@ -36,6 +40,7 @@ public interface SchemaObject extends NamedConfigMandatory {
 	@EditorControlConfig(language = CodeEditorControl.MODE_JSON, prettyPrinting = true)
 	@PropertyEditor(DefaultCodeEditor.class)
 	@RenderWholeLine
+	@LabelPositioning(LabelPosition.ABOVE)
 	@Mandatory
 	String getSchema();
 

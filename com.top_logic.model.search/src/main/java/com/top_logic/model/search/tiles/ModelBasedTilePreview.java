@@ -16,6 +16,7 @@ import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.tiles.component.ComponentTile;
 import com.top_logic.mig.html.layout.tiles.component.LabelBasedPreview;
 import com.top_logic.model.TLObject;
@@ -143,7 +144,11 @@ public class ModelBasedTilePreview extends LabelBasedPreview<ModelBasedTilePrevi
 				return Fragments.empty();
 			}
 		}
-		return Fragments.message(tile.getTileComponent().getTitleKey());
+		LayoutComponent tileComponent = tile.getTileComponent();
+		if (tileComponent == null) {
+			return Fragments.empty();
+		}
+		return Fragments.message(tileComponent.getTitleKey());
 	}
 
 	@Override

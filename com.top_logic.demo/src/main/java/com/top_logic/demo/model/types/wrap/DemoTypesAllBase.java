@@ -26,4 +26,12 @@ public interface DemoTypesAllBase extends com.top_logic.element.structured.Struc
 	 */
 	String NAME_ATTR = "name";
 
+	/**
+	 * Getter for part {@link #PARENT_ATTR}.
+	 */
+	@Override
+	default com.top_logic.demo.model.types.DemoTypesContainer getParent() {
+		return (com.top_logic.demo.model.types.DemoTypesContainer) tValueByName(PARENT_ATTR);
+	}
+
 }

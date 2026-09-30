@@ -81,14 +81,12 @@ public class CSSBuffer {
 	 * 
 	 * @param stylesheetName
 	 *        The name of the stylesheet being generated.
-	 * @param contextPath
-	 *        The application context to generate absolute links.
 	 * @param theme
 	 *        The context {@link Theme}.
 	 */
-	public void replaceVariables(String stylesheetName, String contextPath, Theme theme) {
+	public void replaceVariables(String stylesheetName, Theme theme) {
 		_buffer = appendVariables(theme, _buffer);
-		_buffer = expandedUrls(contextPath, theme, _buffer);
+		_buffer = expandedUrls(theme, _buffer);
     }
 
 	private static StringBuilder appendVariables(Theme theme, StringBuilder buffer) {
@@ -113,8 +111,7 @@ public class CSSBuffer {
 	}
 
 	// Expand CSS-embedded theme image references.
-	private static StringBuilder expandedUrls(String contextPath, Theme theme,
-			CharSequence source) {
+	private static StringBuilder expandedUrls(Theme theme, CharSequence source) {
 		StringBuilder result = new StringBuilder(source.length());
 
 		Matcher matcher = ABSOLUTE_URL_PATTERN.matcher(source);
@@ -124,7 +121,7 @@ public class CSSBuffer {
 
 			String url = matcher.group(1).trim();
 			result.append("url(");
-			result.append(contextPath);
+			result.append("..");
 			result.append(theme.getFileLink(url));
 			result.append(")");
 			index = matcher.end();

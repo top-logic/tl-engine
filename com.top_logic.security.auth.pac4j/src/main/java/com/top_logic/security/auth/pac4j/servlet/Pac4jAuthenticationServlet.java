@@ -7,22 +7,28 @@ package com.top_logic.security.auth.pac4j.servlet;
 
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
-import org.pac4j.core.context.JEEContext;
+import org.pac4j.core.config.Config;
 import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.session.JEESessionStore;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.profile.UserProfile;
+import org.pac4j.jee.context.JEEContext;
+import org.pac4j.jee.context.session.JEESessionStore;
 import org.pac4j.jee.filter.SecurityFilter;
+import org.pac4j.oidc.profile.OidcProfile;
 
 import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet;
 import com.top_logic.base.accesscontrol.ExternalUserMapping;
+import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.Login.LoginFailedException;
 import com.top_logic.base.accesscontrol.LoginCredentials;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory;
 import com.top_logic.security.auth.pac4j.config.UserNameExtractor;
 
@@ -44,21 +50,43 @@ public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 	@Override
 	protected LoginCredentials retrieveLoginCredentials(HttpServletRequest request, HttpServletResponse response)
 			throws ForwardRequiredException, LoginDeniedException, LoginFailedException {
-		WebContext context = new JEEContext(request, response);
-		ProfileManager manager = new ProfileManager(context, JEESessionStore.INSTANCE);
-		Optional<UserProfile> profileHandle = manager.getProfile();
+		Optional<UserProfile> profileHandle = getUserProfile(request, response);
 		if (!profileHandle.isPresent()) {
 			throw new LoginDeniedException("No user profile retrieved.");
 		}
+		return getLoginCredentials(profileHandle);
+	}
 
+	private LoginCredentials getLoginCredentials(Optional<UserProfile> profileHandle) {
 		UserProfile profile = profileHandle.get();
-
 		String clientName = profile.getClientName();
-		Pac4jConfigFactory<?> pac4j = Pac4jConfigFactory.getInstance();
-		UserNameExtractor userNameExtractor = pac4j.getUserNameExtractor(clientName);
-		String userName = userNameExtractor.getUserName((CommonProfile) profile);
-		ExternalUserMapping userMapping = pac4j.getUserMapping(clientName);
+		String userName = getUserName(profile, clientName);
+		ExternalUserMapping userMapping = Pac4jConfigFactory.getInstance().getUserMapping(clientName);
 		return LoginCredentials.fromUser(userMapping.findAccountForExternalName(userName));
 	}
-	
+
+	private String getUserName(UserProfile profile, String clientName) {
+		UserNameExtractor userNameExtractor = Pac4jConfigFactory.getInstance().getUserNameExtractor(clientName);
+		return userNameExtractor.getUserName((CommonProfile) profile);
+	}
+
+	@Override
+	protected void loginUser(Person person, HttpServletRequest request, HttpServletResponse response)
+			throws InMaintenanceModeException {
+		super.loginUser(person, request, response);
+		UserProfile userProfile = getUserProfile(request, response).get();
+		if (userProfile instanceof OidcProfile) {
+			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+			installUserTokens(new Pac4jUserTokens(displayContext, (OidcProfile) userProfile));
+		}
+	}
+
+	private Optional<UserProfile> getUserProfile(HttpServletRequest request, HttpServletResponse response) {
+		Config config = Pac4jConfigFactory.getInstance().getPac4jConfig();
+		WebContext context = new JEEContext(request, response);
+		ProfileManager manager = config.getProfileManagerFactory().apply(context, new JEESessionStore());
+		manager.setConfig(config);
+		return manager.getProfile();
+	}
+
 }

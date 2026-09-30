@@ -5,11 +5,12 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-search-lucene</artifactId>
-  <description>Integration of the Lucene full-text search engine.</description>
+	<name>${project.artifactId}</name>
+	<description>Integration of the Lucene full-text search engine.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
@@ -31,11 +32,15 @@
     </dependency>
 	<dependency>
 	    <groupId>org.apache.lucene</groupId>
-	    <artifactId>lucene-analyzers-common</artifactId>
+	    <artifactId>lucene-analysis-common</artifactId>
 	</dependency>
 	<dependency>
 	    <groupId>org.apache.lucene</groupId>
 	    <artifactId>lucene-queryparser</artifactId>
+	</dependency>
+	<dependency>
+	    <groupId>org.apache.lucene</groupId>
+	    <artifactId>lucene-backward-codecs</artifactId>
 	</dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

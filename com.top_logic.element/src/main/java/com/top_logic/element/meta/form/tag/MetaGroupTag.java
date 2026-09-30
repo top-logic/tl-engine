@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.TagSupport;
 
 import com.top_logic.element.meta.gui.CreateAttributedComponent;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -21,7 +21,7 @@ import com.top_logic.model.TLClass;
 /**
  * Groups the attribute, label and attributes tag.
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class MetaGroupTag extends AbstractTag {
 

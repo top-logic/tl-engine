@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic.element/form.template.xml"
 >
 	<arguments model="selection(com.top_logic.demo/technical/components/dropOn/processorsTree.layout.xml#Tree)">
@@ -14,7 +13,7 @@
 			<button id="ID_0f2576fe_c33b_4279_ad95_3e862b94acc9"
 				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
 				clique="moveLeft"
-				image="css:bi bi-arrow-left"
+				image="css:fa-solid fa-arrow-left"
 				operation="null"
 				transaction="false"
 			>

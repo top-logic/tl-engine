@@ -207,7 +207,7 @@ public class FormEditorUtil {
 	private static FormField createPlaceholder(TLStructuredTypePart aMA) {
 		FormField field = FormFactory.newStringField(aMA.getName() + aMA.tId());
 		field.setLabel(MetaLabelProvider.INSTANCE.getLabel(aMA));
-		field.setValue(Resources.getInstance().getString(I18NConstants.FORM_EDITOR__NO_ATTRIBUTED_OBJECT));
+		field.initializeField(Resources.getInstance().getString(I18NConstants.FORM_EDITOR__NO_ATTRIBUTED_OBJECT));
 		field.setImmutable(true);
 
 		return field;

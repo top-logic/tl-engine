@@ -17,7 +17,7 @@
 
 		<tableView name="${namePrefix}StylesTable"
 			model="selection(${namePrefix}ThemeTable)"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			titleKey="${resPrefix}.styles.table.title"
 		>
 			<modelBuilder class="com.top_logic.layout.themeedit.browser.providers.StyleSheetListModelBuilder"/>
@@ -45,8 +45,8 @@
 				<button id="deleteStyleSheet"
 					class="com.top_logic.layout.themeedit.browser.providers.stylesheet.DeleteStylesheetHandler"
 					clique="delete"
-					confirm="true"
 				>
+					<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 					<executability>
 						<rule class="com.top_logic.tool.execution.EmptyTableModelDisabledRule"/>
 						<rule class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"/>
@@ -59,7 +59,7 @@
 			<editor name="${namePrefix}StylesEditor"
 				applyCommand="storeStyleSheet"
 				model="selection(${namePrefix}StylesTable)"
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				showMaximize="true"
 				titleKey="${resPrefix}.styles.editor.title"
 			>

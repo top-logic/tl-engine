@@ -108,8 +108,8 @@ public class ExtIDAttribute extends AbstractMOAttribute {
 	}
 
 	@Override
-	public MOAttribute copy() {
-		ExtIDAttribute copy = new ExtIDAttribute(getName(), typeRef(getMetaObject()));
+	public MOAttribute copy(String newName, MetaObject newType) {
+		ExtIDAttribute copy = new ExtIDAttribute(newName, newType);
 		copy.initFrom(this);
 		copy.setStorage(getStorage());
 		return copy;

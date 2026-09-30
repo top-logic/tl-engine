@@ -17,11 +17,13 @@ import java.util.Map;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeException;
@@ -37,7 +39,11 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.service.db2.OrderedLinkQuery;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.composite.CompositeStorage;
+import com.top_logic.model.composite.ContainerStorage;
+import com.top_logic.model.composite.LinkTable;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -46,7 +52,8 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp(classifiers = TLStorage.REFERENCE_CLASSIFIER)
-public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C> {
+@Label("Sorted storage in separate table")
+public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C> implements CompositeStorage {
 
 	/**
 	 * Configuration options for {@link ListStorage}.
@@ -122,7 +129,7 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 			boolean changed = false;
 			for (KnowledgeAssociation link : new ArrayList<>(links)) {
 				if (itemKey.equals(link.getDestinationIdentity())) {
-					DBKnowledgeAssociation.clearDestinationAndRemoveLink(link);
+					DBKnowledgeAssociation.clearReferencesAndRemoveLink(link);
 					changed = true;
 					break;
 				}
@@ -223,7 +230,7 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 
 			// Remove tail.
 			for (int n = links.size() - 1; n >= destPos; n--) {
-				DBKnowledgeAssociation.clearDestinationAndRemoveLink(links.get(n));
+				DBKnowledgeAssociation.clearReferencesAndRemoveLink(links.get(n));
 			}
 		} else {
 			if (src != null) {
@@ -281,7 +288,7 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 		String associationEndName = DBKnowledgeAssociation.REFERENCE_SOURCE_NAME;
 		String orderAttributeName = getConfig().getOrderAttribute();
 		Map<String, ?> filter;
-		if (getConfig().isMonomorphicTable()) {
+		if (monomophicTable()) {
 			filter = Collections.emptyMap();
 		} else {
 			filter = Collections.singletonMap(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR,
@@ -292,6 +299,11 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 			associationTypeName, associationEndName, orderAttributeName, filter, liveResult);
 	}
 
+	@Override
+	public ContainerStorage getContainerStorage(TLReference reference) {
+		return new LinkTable(getTable());
+	}
+
 	/**
 	 * Creates a configuration for the {@link ListStorage}.
 	 *
@@ -299,10 +311,14 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 	 *        Whether the reference is a composition.
 	 * @param historyType
 	 *        The history type of the value of the reference.
+	 * @param deletionPolicy
+	 *        The deletion policy of the reference.
+	 * @param unversioned
+	 *        Whether reference values must be stored unversioned.
 	 * @return The storage configuration.
 	 */
-	public static Config<?> listConfig(boolean composite, HistoryType historyType) {
-		return defaultConfig(Config.class, composite, historyType);
+	public static Config<?> listConfig(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy, boolean unversioned) {
+		return defaultConfig(Config.class, composite, historyType, deletionPolicy, unversioned);
 	}
 
 }

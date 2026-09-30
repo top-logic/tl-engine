@@ -3,11 +3,12 @@
 <layout name="dialog1">
 	<components>
 		<component class="com.top_logic.demo.layout.demo.dialog.DemoDialog"
-			buttonComponent="dialog1Buttons"
+			buttonbar="true"
+			closeHandlerName="closeModalDialog"
 			name="infoDialog1"
 			page="/jsp/test/layout/dialog/DemoDialogContent.jsp"
 			resPrefix="layouts.layoutdemo.dialog.dialog1.infoDialog1."
-			securityProviderClass="dialogParent"
+			securityObject="ref:dialogParent"
 		>
 			<dialogs>
 				<layout name="dialog1a">
@@ -15,11 +16,12 @@
 
 					<components>
 						<component class="com.top_logic.demo.layout.demo.dialog.DemoDialog"
-							buttonComponent="dialog1aButtons"
+							buttonbar="true"
+							closeHandlerName="closeModalDialog"
 							name="infoDialog1a"
 							page="/jsp/test/layout/dialog/DemoDialogContent.jsp"
 							resPrefix="layouts.layoutdemo.dialog.dialog1.infoDialog1."
-							securityProviderClass="dialogParent"
+							securityObject="ref:dialogParent"
 						>
 							<buttons>
 								<button id="toggleDialogMaximality"
@@ -27,7 +29,6 @@
 								/>
 							</buttons>
 						</component>
-						<buttonbar name="dialog1aButtons"/>
 					</components>
 				</layout>
 			</dialogs>
@@ -37,6 +38,5 @@
 				/>
 			</buttons>
 		</component>
-		<buttonbar name="dialog1Buttons"/>
 	</components>
 </layout>

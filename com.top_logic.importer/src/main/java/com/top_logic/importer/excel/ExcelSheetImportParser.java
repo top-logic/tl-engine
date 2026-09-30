@@ -30,7 +30,7 @@ import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 /**
  * Parse one excel sheet and provide data read in on {@link Map}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ExcelSheetImportParser<C extends ExcelSheetImportParser.Config>
         extends AbstractExcelFileImportParser<C> {
@@ -38,7 +38,7 @@ public class ExcelSheetImportParser<C extends ExcelSheetImportParser.Config>
     /**
      * Configuration for parsing the excel file.
      * 
-     * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface Config extends AbstractExcelFileImportParser.Config {
 

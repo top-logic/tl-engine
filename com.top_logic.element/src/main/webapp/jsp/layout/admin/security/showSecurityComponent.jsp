@@ -6,17 +6,11 @@
 %><%
 ShowSecurityComponent component = (ShowSecurityComponent) MainLayout.getComponent(pageContext);
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:form>
-			<p>
-				<form:resource key="pageMessage"/>
-			</p>
-
 			<form:columns count="4">
-				<form:descriptionCell labelAbove="true">
+				<form:descriptionCell>
 					<form:description>
 						<form:label name="<%=ShowSecurityComponent.FIELD_PERSONS%>"/>
 						<form:error name="<%=ShowSecurityComponent.FIELD_PERSONS%>"/>
@@ -26,7 +20,7 @@ ShowSecurityComponent component = (ShowSecurityComponent) MainLayout.getComponen
 					/>
 				</form:descriptionCell>
 
-				<form:descriptionCell labelAbove="true">
+				<form:descriptionCell>
 					<form:description>
 						<form:label name="<%=ShowSecurityComponent.FIELD_TYPES%>"/>
 						<form:error name="<%=ShowSecurityComponent.FIELD_TYPES%>"/>
@@ -36,7 +30,7 @@ ShowSecurityComponent component = (ShowSecurityComponent) MainLayout.getComponen
 					/>
 				</form:descriptionCell>
 
-				<form:descriptionCell labelAbove="true">
+				<form:descriptionCell>
 					<form:description>
 						<form:label name="<%=ShowSecurityComponent.FIELD_OBJECTS%>"/>
 						<form:error name="<%=ShowSecurityComponent.FIELD_OBJECTS%>"/>
@@ -46,7 +40,7 @@ ShowSecurityComponent component = (ShowSecurityComponent) MainLayout.getComponen
 					/>
 				</form:descriptionCell>
 
-				<form:descriptionCell labelAbove="true">
+				<form:descriptionCell>
 					<form:description>
 						<form:label name="<%=ShowSecurityComponent.FIELD_ROLES%>"/>
 						<form:error name="<%=ShowSecurityComponent.FIELD_ROLES%>"/>

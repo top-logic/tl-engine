@@ -19,7 +19,7 @@ import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.element.structured.StructuredElementFactory;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ui.BreadcrumbStrings;
@@ -32,7 +32,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class StructurePathNamingScheme
-		extends AbstractModelNamingScheme<StructuredElement, StructurePathNamingScheme.StructurePathName> {
+		extends AbstractGlobalModelNamingScheme<StructuredElement, StructurePathNamingScheme.StructurePathName> {
 
 	/**
 	 * The {@link ModelName} of the {@link StructurePathNamingScheme}.

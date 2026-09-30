@@ -13,7 +13,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * Provides information about all {@link Thread}s in the JVM (via @link {@link ThreadData} objects).
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ThreadListModelBuilder implements ListModelBuilder {
 
@@ -34,11 +34,6 @@ public class ThreadListModelBuilder implements ListModelBuilder {
 	@Override
 	public boolean supportsModel(Object model, LayoutComponent component) {
 		return model == null;
-	}
-
-	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object element) {
-		return element instanceof ThreadData;
 	}
 
 	@Override

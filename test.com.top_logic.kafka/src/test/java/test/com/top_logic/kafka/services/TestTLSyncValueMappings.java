@@ -10,7 +10,7 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import com.top_logic.element.structured.StructuredElement;
-import com.top_logic.kafka.knowledge.service.TLSynced;
+import com.top_logic.kafka.sync.knowledge.service.TLSynced;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;

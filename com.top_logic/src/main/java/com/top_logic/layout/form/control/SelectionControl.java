@@ -246,7 +246,7 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cPopupSelect";
+		return "tl-popup-select";
 	}
 
 	@Override
@@ -266,38 +266,44 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 		{
 			if (theModel.isImmutable()) {
 				if (theModel.hasValue()&& hasInputField()) {
-					List<Throwable> labelErrors = new ArrayList<>();
-					Renderer<Object> theRenderer = getRenderer(theModel);
 					List sortedSelection = theModel.getSelection();
-					if (!theModel.hasCustomOrder()) {
-						sortedSelection = new ArrayList(sortedSelection);
-						Collections.sort(sortedSelection, theModel.getOptionComparator());
-					}
-					DecorateInfo decorateInfo = DecorateService.start(context, out, theModel, getLabelProvider(theModel));
-					int itemContainerDepth = out.getDepth();
-					for (Iterator it = sortedSelection.iterator(); it.hasNext();) {
-						try {
-							theRenderer.write(context, out, it.next());
-						} catch (Throwable throwable) {
-							out.endAll(itemContainerDepth);
-							labelErrors.add(throwable);
-							out.writeText(
-								Resources.getInstance().getString(I18NConstants.RENDERING_ERROR_SELECT_FIELD));
+					if (sortedSelection.isEmpty()) {
+						out.writeText(SelectFieldUtils.getEmptySelectionLabelImmutable(theModel));
+					} else {
+						List<Throwable> labelErrors = new ArrayList<>();
+						Renderer<Object> theRenderer = getRenderer(theModel);
+						if (!theModel.hasCustomOrder()) {
+							sortedSelection = new ArrayList(sortedSelection);
+							Collections.sort(sortedSelection, theModel.getOptionComparator());
 						}
-						if (it.hasNext()) {
-							out.beginBeginTag(SPAN);
-							out.writeAttribute(CLASS_ATTR, "tl-separator");
-							out.endBeginTag();
-							out.writeText(SelectFieldUtils.getCollectionSeparator(theModel));
-							out.endTag(SPAN);
+						DecorateInfo decorateInfo =
+							DecorateService.start(context, out, theModel, getLabelProvider(theModel));
+						int itemContainerDepth = out.getDepth();
+						for (Iterator it = sortedSelection.iterator(); it.hasNext();) {
+							try {
+								theRenderer.write(context, out, it.next());
+							} catch (Throwable throwable) {
+								out.endAll(itemContainerDepth);
+								labelErrors.add(throwable);
+								out.writeText(
+									Resources.getInstance().getString(I18NConstants.RENDERING_ERROR_SELECT_FIELD));
+							}
+							if (it.hasNext()) {
+								out.beginBeginTag(SPAN);
+								out.writeAttribute(CLASS_ATTR, "tl-separator");
+								out.endBeginTag();
+								out.writeText(SelectFieldUtils.getCollectionSeparator(theModel));
+								out.endTag(SPAN);
+							}
 						}
-					}
-					DecorateService.end(context, out, theModel, decorateInfo);
-					if (!CollectionUtil.isEmpty(labelErrors)) {
-						renderingError = ExceptionUtil.createException(
-							"Error occured during rendering of options of field '" + getFieldModel().getQualifiedName()
-								+ "'.",
-							labelErrors);
+						DecorateService.end(context, out, theModel, decorateInfo);
+						if (!CollectionUtil.isEmpty(labelErrors)) {
+							renderingError = ExceptionUtil.createException(
+								"Error occured during rendering of options of field '"
+									+ getFieldModel().getQualifiedName()
+									+ "'.",
+								labelErrors);
+						}
 					}
 				}
 			} else if (theModel.isVisible()) {
@@ -356,6 +362,18 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 						if (rawValue instanceof String) {
 							out.writeAttribute(VALUE_ATTR, (String)rawValue);
 						}
+					}
+
+					Object placeholder = theModel.getPlaceholder();
+					if (placeholder != null) {
+						out.beginAttribute(PLACEHOLDER_ATTR);
+						try {
+							SelectFieldUtils.writeSelectionAsTextEditable(out, theModel,
+								SelectFieldUtils.toList(placeholder));
+						} catch (Throwable throwable) {
+							renderingError = throwable;
+						}
+						out.endAttribute();
 					}
 					out.endEmptyTag();
 
@@ -878,6 +896,7 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 	}
 	
 	public static HandlerResult openSelectorPopup(DisplayContext commandContext, WindowScope windowScope, SelectField targetField) {
+		targetField.getOptionModel().resetBaseModel();
 		AbstractSelectDialog selectDialog = targetField.getSelectDialogProvider().createSelectDialog(targetField);
 		selectDialog.open(windowScope);
 		return HandlerResult.DEFAULT_RESULT;

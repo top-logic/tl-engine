@@ -8,14 +8,13 @@ package com.top_logic.knowledge.service;
 import java.util.Date;
 import java.util.Set;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.dob.identifier.ObjectKey;
-import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.compare.AbstractAuthorAccessor;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TransientObject;
 import com.top_logic.model.core.Author;
 import com.top_logic.model.core.TlCoreFactory;
 import com.top_logic.model.core.generated.RevisionBase;
@@ -68,31 +67,6 @@ public interface Revision extends RevisionBase, Comparable<Revision> {
 		private long INITIAL_REV = 0;
 
 		@Override
-		public String getAuthor() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Author resolveAuthor() {
-			return null;
-		}
-
-		@Override
-		public long getDate() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Date resolveDate() {
-			return null;
-		}
-
-		@Override
-		public String getLog() {
-			return StringServices.EMPTY_STRING;
-		}
-
-		@Override
 		public long getCommitNumber() {
 			return INITIAL_REV;
 		}
@@ -115,31 +89,6 @@ public interface Revision extends RevisionBase, Comparable<Revision> {
 	 */
 	@Label("The current revision")
 	Revision CURRENT = new TransientRevision() {
-
-		@Override
-		public String getAuthor() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Author resolveAuthor() {
-			return null;
-		}
-
-		@Override
-		public long getDate() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Date resolveDate() {
-			return null;
-		}
-
-		@Override
-		public String getLog() {
-			return StringServices.EMPTY_STRING;
-		}
 
 		@Override
 		public long getCommitNumber() {
@@ -201,7 +150,7 @@ public interface Revision extends RevisionBase, Comparable<Revision> {
 	/**
 	 * A log message that was created for the commit of this revision. 
 	 */
-	public String getLog();
+	public ResKey getLog();
 
 	/**
 	 * The date and time when this revision was created.
@@ -276,26 +225,45 @@ public interface Revision extends RevisionBase, Comparable<Revision> {
 	 * @see Revision#INITIAL
 	 * @see Revision#CURRENT
 	 */
-	abstract class TransientRevision implements Revision {
+	abstract class TransientRevision extends TransientObject implements Revision {
+
+		/**
+		 * Redeclared to resolve conflict of {@link Revision#tType()} and
+		 * {@link TransientObject#tType()}.
+		 * 
+		 * @see com.top_logic.model.TransientObject#tType()
+		 * @see com.top_logic.knowledge.service.Revision#tType()
+		 */
 		@Override
-		public KnowledgeItem tHandle() {
+		public TLStructuredType tType() {
+			return Revision.super.tType();
+		}
+
+		@Override
+		public String getAuthor() {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public boolean tValid() {
-			return true;
-		}
-
-		@Override
-		public Object tSetData(String property, Object value) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public ObjectKey tId() {
+		public Author resolveAuthor() {
 			return null;
 		}
+
+		@Override
+		public long getDate() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Date resolveDate() {
+			return null;
+		}
+
+		@Override
+		public ResKey getLog() {
+			return I18NConstants.NO_COMMIT_MESSAGE;
+		}
+
 	}
 
 }

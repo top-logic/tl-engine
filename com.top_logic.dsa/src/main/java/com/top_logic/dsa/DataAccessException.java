@@ -10,7 +10,7 @@ package com.top_logic.dsa;
  * This exception is is thrown during alls sorts of data access.
  * 
  * @author  Klaus Halfmann
- * @author  Steffen Bögelsack
+ * @author  Steffen BÃ¶gelsack
  */
 public class DataAccessException extends RuntimeException {
 

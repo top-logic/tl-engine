@@ -12,12 +12,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.io.StringWriter;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -164,9 +165,21 @@ public class ResourceFile {
 	}
 
 	/**
-	 * This method is mostly taken from {@link Properties#load(InputStream)}
+	 * Loads UTF-8 encoded resource entries.
+	 *
+	 * <p>
+	 * Parser layout is taken from {@link Properties#load(InputStream)}, but the input is read
+	 * as UTF-8 instead of ISO-8859-1.
+	 * </p>
 	 */
 	public void load(InputStream in) throws IOException {
+		load(new InputStreamReader(in, StandardCharsets.UTF_8));
+	}
+
+	/**
+	 * Loads resource entries from the given {@link Reader}.
+	 */
+	public void load(Reader in) throws IOException {
 	    char[] convtBuf = new char[1024];
 	    LineReader reader = new LineReader(in);
 	
@@ -357,12 +370,10 @@ public class ResourceFile {
 	}
 
 	/**
-	 * Writes the contents to the given stream.
+	 * Writes the contents as UTF-8 to the given stream.
 	 */
 	public void writeTo(OutputStream out) throws IOException {
-		Charset charset = Charset.forName("ISO_8859-1");
-		CharsetEncoder encoder = charset.newEncoder();
-		OutputStreamWriter writer = new OutputStreamWriter(out, charset);
+		OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8);
 
 		ArrayList<String> keyList = new ArrayList<>(getKeys());
 		Collections.sort(keyList);
@@ -427,13 +438,8 @@ public class ResourceFile {
 							writer.write("\\f");
 						}
 						break;
-					default: {
-						if (encoder.canEncode(ch)) {
-							writer.write(ch);
-						} else {
-							encode(writer, ch);
-						}
-					}
+					default:
+						writer.write(ch);
 				}
 			}
 			writer.write(NL);
@@ -448,14 +454,6 @@ public class ResourceFile {
 
 	private static boolean whiteSpace(char ch) {
 		return ch == ' ' || ch == '\t' || ch == '\f';
-	}
-
-	private static void encode(OutputStreamWriter writer, char ch) throws IOException {
-		writer.write("\\u" + fill(Integer.toHexString(ch).toUpperCase()));
-	}
-
-	private static String fill(String hexString) {
-		return "0000".substring(hexString.length()) + hexString;
 	}
 
 	private static InputStream stream(File data) throws FileNotFoundException {

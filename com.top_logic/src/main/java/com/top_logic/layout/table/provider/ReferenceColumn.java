@@ -114,11 +114,6 @@ public class ReferenceColumn extends ColumnInfo {
 	}
 
 	@Override
-	protected void setExcelRenderer(ColumnConfiguration column) {
-		// No information here
-	}
-
-	@Override
 	protected void setRenderer(ColumnConfiguration column) {
 		// No information here
 	}

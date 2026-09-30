@@ -9,9 +9,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.knowledge.service.migration.MigrationContext;
@@ -21,21 +19,24 @@ import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLClassifierAnnotation;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.Type;
+import com.top_logic.model.migration.data.TypePart;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link MigrationProcessor} creating a new {@link TLClassifier}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class CreateTLClassifierProcessor extends AbstractConfiguredInstance<CreateTLClassifierProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class CreateTLClassifierProcessor extends TLModelBaseLineMigrationProcessor<CreateTLClassifierProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link CreateTLClassifierProcessor}.
 	 */
 	@TagName("create-classifier")
 	public interface Config
-			extends PolymorphicConfiguration<CreateTLClassifierProcessor>, AnnotatedConfig<TLClassifierAnnotation> {
+			extends TLModelBaseLineMigrationProcessor.Config<CreateTLClassifierProcessor>,
+			AnnotatedConfig<TLClassifierAnnotation> {
 
 		/**
 		 * Qualified name of the new {@link TLClassifier}.
@@ -67,7 +68,7 @@ public class CreateTLClassifierProcessor extends AbstractConfiguredInstance<Crea
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			internalDoMigration(log, connection, tlModel);
 			return true;
 		} catch (Exception ex) {
@@ -78,6 +79,19 @@ public class CreateTLClassifierProcessor extends AbstractConfiguredInstance<Crea
 
 	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName classifierName = getConfig().getName();
+
+		Type ownerType = _util.getTLTypeOrNull(connection, TLContext.TRUNK_ID, classifierName.getModuleName(),
+			classifierName.getTypeName());
+		if (ownerType == null) {
+			log.info("Enumeration of classifier '" + classifierName.getName() + "' does not exist.", Log.WARN);
+			return;
+		}
+
+		TypePart part = _util.getTLTypePart(connection, ownerType, classifierName.getPartName());
+		if (part != null) {
+			log.info("Classifier '" + classifierName.getName() + "' already exists.", Log.WARN);
+			return;
+		}
 		_util.createTLClassifier(connection, classifierName, getConfig());
 		if (tlModel != null) {
 			MigrationUtils.createClassifier(log, tlModel, classifierName, getConfig());

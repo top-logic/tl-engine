@@ -40,7 +40,7 @@ import com.top_logic.model.TLObject;
  * @see LayoutCache
  * @see DatabaseLayoutCacheEntry
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DatabaseLayoutCache extends SimpleKBCache<DatabaseLayoutCacheEntry> implements LayoutCache {
 

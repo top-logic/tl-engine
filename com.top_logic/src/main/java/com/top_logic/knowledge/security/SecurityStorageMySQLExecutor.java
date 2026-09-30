@@ -21,20 +21,20 @@ import com.top_logic.knowledge.security.SecurityStorage.SecurityStorageExecutor;
 import com.top_logic.util.db.DBUtil;
 
 /**
- * This is a SecurityStorageExecutor optimized for MySQL database access.
+ * This is a {@link SecurityStorageExecutor} optimized for <code>MySQL</code> database access.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
 public class SecurityStorageMySQLExecutor extends SecurityStorageExecutor {
 
     /**
-     * Creates a new SecurityStorageMySQLExecutor.
-     *
-     * @param connectionPool
-     *            the prepared statement cache to use for read operations
-     * @throws SQLException
-     *             if the initialization of the storage fails
-     */
+	 * Creates a new {@link SecurityStorageMySQLExecutor}.
+	 *
+	 * @param connectionPool
+	 *        the prepared statement cache to use for read operations
+	 * @throws SQLException
+	 *         if the initialization of the storage fails
+	 */
     public SecurityStorageMySQLExecutor(ConnectionPool connectionPool) throws SQLException {
         super(connectionPool);
     }
@@ -55,20 +55,34 @@ public class SecurityStorageMySQLExecutor extends SecurityStorageExecutor {
 	 * @see #MYSQL_INSERT_STATEMENT
 	 */
 	protected static final int MYSQL_INSERT_STATEMENT_PARAMETERS = 4;
-    protected static final String MYSQL_IS_EMPTY_STATEMENT = "SELECT 1 FROM " + SecurityStorage.TABLE_NAME + " LIMIT 1";
+
+	/**
+	 * SQL statement checking whether the {@link SecurityStorage#TABLE_NAME} is not empty.
+	 */
+    protected static final String MYSQL_IS_NOT_EMPTY_STATEMENT = "SELECT 1 FROM " + SecurityStorage.TABLE_NAME + " LIMIT 1";
+
+	/**
+	 * SQL statement to truncate {@link SecurityStorage#TABLE_NAME}.
+	 */
     protected static final String MYSQL_CLEAR_STATEMENT = "TRUNCATE TABLE " + SecurityStorage.TABLE_NAME;
+
+	/**
+	 * SQL statement to add default index to {@link SecurityStorage#TABLE_NAME}.
+	 */
     protected static final String MYSQL_CREATE_DEFAULT_INDEX = "ALTER TABLE " + SecurityStorage.TABLE_NAME + " ADD INDEX " + SecurityStorage.DEFAULT_INDEX_NAME +
                                                                " (" + SecurityStorage.ATTRIBUTE_BUSINESS_OBJECT + "," + SecurityStorage.ATTRIBUTE_ROLE + "," + SecurityStorage.ATTRIBUTE_REASON + ")";
 
     @Override
-	public boolean insert(Object[] aVector) throws SQLException {
+	public boolean insertIgnore(Object[] aVector) throws SQLException {
         checkVectorNotNull(aVector);
-        return DBUtil.executeUpdate(getWriteConnection(), MYSQL_INSERT_STATEMENT, aVector) > 0;
+		Connection writeConnection = getWriteConnection();
+		Object[] storageValues = storageValues(aVector);
+		return DBUtil.executeUpdate(writeConnection, MYSQL_INSERT_STATEMENT, storageValues) > 0;
     }
 
     @Override
     public boolean isEmpty() throws SQLException {
-        return !DBUtil.executeQueryAsBoolean(MYSQL_IS_EMPTY_STATEMENT);
+        return !DBUtil.executeQueryAsBoolean(MYSQL_IS_NOT_EMPTY_STATEMENT);
     }
 
     @Override
@@ -79,14 +93,14 @@ public class SecurityStorageMySQLExecutor extends SecurityStorageExecutor {
     @Override
 	public int multiInsertIgnore(List<Object[]> vectors) throws SQLException {
         Connection writeConnection = getWriteCache().getConnection();
-        PreparedStatement pstm = writeConnection.prepareStatement(MYSQL_INSERT_STATEMENT);
 		int maxBatchSize = dbHelper.getMaxBatchSize(MYSQL_INSERT_STATEMENT_PARAMETERS);
-        try {
+		try (PreparedStatement pstm = writeConnection.prepareStatement(MYSQL_INSERT_STATEMENT)) {
             int result = 0, counter = 0;
 			for (Object[] vector : vectors) {
                 if (vector == null) continue;
                 checkVectorNotNull(vector);
-                DBUtil.setVector(pstm, vector);
+				Object[] storageValues = storageValues(vector);
+				DBUtil.setVector(pstm, storageValues);
                 pstm.addBatch();
                 counter++;
 				if (counter >= maxBatchSize) {
@@ -98,8 +112,6 @@ public class SecurityStorageMySQLExecutor extends SecurityStorageExecutor {
                 result += ArrayUtil.sum(pstm.executeBatch());
             }
             return result;
-        } finally {
-            pstm.close();
         }
     }
 

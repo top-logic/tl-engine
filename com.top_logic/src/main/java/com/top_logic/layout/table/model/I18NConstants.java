@@ -16,13 +16,11 @@ import com.top_logic.layout.ResPrefix;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * {@link ResKey} for the default name of the download file.
-	 * 
-	 * @see ExportConfig#getDownloadNameKey()
-	 * 
-	 * @en Table data
+	 * @en There is no column with the identifier {0}. It is important that the inner columns are
+	 *     defined in a previous column configuration before it is used in a column group
+	 *     configuration.
 	 */
-	public static ResKey DOWNLOAD_FILE_KEY;
+	public static ResKey1 NO_SUCH_COLUMN__COLUMN;
 	
 	/**
 	 * {@link ResKey} when table could not be exported.

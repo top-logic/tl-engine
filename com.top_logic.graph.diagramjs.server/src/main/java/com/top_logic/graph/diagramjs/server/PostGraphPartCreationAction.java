@@ -21,7 +21,7 @@ import com.top_logic.model.TLModelPart;
  * Creates a new {@link GraphPart}, client side representation, for a newly created, diagram
  * relevant, {@link TLModelPart}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class PostGraphPartCreationAction implements PostCreateAction {
 
@@ -41,11 +41,13 @@ public class PostGraphPartCreationAction implements PostCreateAction {
 		SharedGraph graph = graphComponent.getGraphModel();
 		GraphPart newPart = graph.getGraphPart(newModel);
 
-		if (newPart instanceof Node) {
-			GraphModelUtil.applyBounds((Node) newPart, getCreatedBounds(component));
-		}
+		if (newPart != null) {
+			if (newPart instanceof Node) {
+				GraphModelUtil.applyBounds((Node) newPart, getCreatedBounds(component));
+			}
 
-		graph.setSelectedGraphParts(Collections.singleton(newPart));
+			graph.setSelectedGraphParts(Collections.singleton(newPart));
+		}
 	}
 
 	private Bounds getCreatedBounds(LayoutComponent component) {

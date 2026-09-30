@@ -34,7 +34,7 @@ public interface DOMap {
     public boolean put (DataObject key, DataObject value);
 
     /** Remove all key/value-pairs in this map wich first component is
-     * equal to the specifed one. If the key doesn´t exists nothing happens.
+     * equal to the specifed one. If the key doesnÂ´t exists nothing happens.
      */
     public void remove (DataObject key);
 

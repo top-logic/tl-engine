@@ -35,7 +35,7 @@ import com.top_logic.basic.xml.TagUtil;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class ConfigurationWriter {
+public class ConfigurationWriter implements AutoCloseable {
 	
 	private static final XMLOutputFactory OUTPUT_FACTORY;
 	static {
@@ -51,6 +51,8 @@ public class ConfigurationWriter {
 	private boolean _writeNamespace;
 
 	private boolean _writeXMLHeader;
+
+	private boolean _transitiveClose;
 
 	/**
 	 * Creates a {@link ConfigurationWriter}.
@@ -69,7 +71,20 @@ public class ConfigurationWriter {
 	 *        The {@link XMLStreamWriter} to write to.
 	 */
 	public ConfigurationWriter(XMLStreamWriter out) {
+		this(out, true);
+	}
+
+	/**
+	 * Creates a {@link ConfigurationWriter}.
+	 *
+	 * @param out
+	 *        The {@link XMLStreamWriter} to write to.
+	 * @param transitiveClose
+	 *        Whether to close the underlying stream writer, if this writer is closed.
+	 */
+	public ConfigurationWriter(XMLStreamWriter out, boolean transitiveClose) {
 		this.out = out;
+		_transitiveClose = transitiveClose;
 		setNamespaceWriting(true);
 		setXMLHeaderWriting(true);
 	}
@@ -775,6 +790,13 @@ public class ConfigurationWriter {
 
 	protected String getElementTag(PropertyDescriptor property, ConfigurationItem entry) {
 		return property.getElementName(entry.descriptor());
+	}
+
+	@Override
+	public void close() throws XMLStreamException {
+		if (_transitiveClose) {
+			out.close();
+		}
 	}
 	
 }

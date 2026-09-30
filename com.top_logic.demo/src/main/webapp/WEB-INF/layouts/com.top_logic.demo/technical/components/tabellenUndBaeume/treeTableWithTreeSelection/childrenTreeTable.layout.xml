@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/treetable.template.xml"
+>
+	<arguments
+		defaultColumns="ID_554985f5_b2f1_4a65_9a5c_5e29fe648960,name"
+		defaultSelection="false"
+		expandSelected="false"
+		multiSelection="true"
+		type="DemoTypes:DemoTypes.All"
+	>
+		<name key="dynamic.d1d03790-8a0b-4aa4-b4e7-332f8bf3416e">
+			<en>Children</en>
+			<de>Kinder</de>
+		</name>
+		<buttons>
+			<button id="revealSelection"
+				class="com.top_logic.tool.boundsec.GenericCommandHandler"
+				image="css:fas fa-eye"
+			>
+				<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					input="selection(self())"
+				>
+					<function><![CDATA[paths -> $paths.map(path -> $path.lastElement())]]></function>
+				</target>
+				<postCreateActions>
+					<reveal/>
+				</postCreateActions>
+				<resourceKey key="dynamic.reveal-selection-test">
+					<en>Reveal selection</en>
+					<de>Selektion sichtbar machen</de>
+					<tooltip>
+						<en>Test for ticket #29009: makes the current selection visible again by expanding its ancestors and scrolling it into view. Select some nodes, collapse an ancestor so the selection is hidden, then press this button.</en>
+						<de>Test für Ticket #29009: macht die aktuelle Selektion wieder sichtbar, indem die Vorfahren aufgeklappt werden und in den Viewport gescrollt wird. Knoten selektieren, einen Vorfahren zuklappen (Selektion wird unsichtbar), dann diesen Button drücken.</de>
+					</tooltip>
+				</resourceKey>
+			</button>
+		</buttons>
+		<model class="com.top_logic.layout.channel.linking.impl.CombineLinking">
+			<channel name="selection">
+				<target name="com.top_logic.demo/technical/components/tabellenUndBaeume/versionSelector.layout.xml#Selector"/>
+			</channel>
+			<channel name="selection">
+				<target name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"/>
+			</channel>
+		</model>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node.get(`tl.element:StructuredElementContainer#children`)"
+			nodePredicate="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)"
+			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
+			rootNode="x -> $x[1].inRevision($x[0])"
+		/>
+		<configurationProviders>
+			<tree-select-column
+				channel="visibilityChannel(self())"
+				columnId="ID_554985f5_b2f1_4a65_9a5c_5e29fe648960"
+			>
+				<columnLabel key="dynamic.2dee4bcf-9708-45a0-bb6d-c907da5bdb60">
+					<en>Visibility</en>
+					<de>Sichtbarkeit</de>
+				</columnLabel>
+			</tree-select-column>
+		</configurationProviders>
+		<additional-channels>
+			<additional-channel name="visibilityChannel">
+				<impl class="com.top_logic.layout.channel.SetChannelFactory"/>
+				<value class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					input="model(self())"
+				>
+					<function><![CDATA[model -> {
+  root = $model[1].inRevision($model[0]);
+  // Add the path to the root element to the channel to ensure all elements are treated as visible.
+  rootPath = [$root];
+  // Value of the channel is a set of paths.
+  [$rootPath];
+}]]></function>
+				</value>
+			</additional-channel>
+		</additional-channels>
+	</arguments>
+</config:template-call>

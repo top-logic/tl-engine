@@ -19,7 +19,7 @@ import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
@@ -107,7 +107,7 @@ public class HistoricStorage<C extends HistoricStorage.Config<?>> extends Abstra
 			String theType = (String) object.tGetData(theAttBase + KO_ATT_SUFFIX_TYPE);
 			Branch theBranch = HistoryUtils.getBranch(theBranchNo.longValue());
 
-			KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+			KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 			Wrapper theResult = WrapperFactory.getWrapper(theBranch, revision, theID, theType, theKB);
 			return theResult;
 		} catch (ClassCastException ex) {

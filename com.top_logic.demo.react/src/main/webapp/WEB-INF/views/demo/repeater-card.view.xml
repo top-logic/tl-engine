@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	One card of the repeater grid, instantiated per flow node.
+	
+	The card is a view of its own because it needs a channel of its own: the picture of the element
+	is derived from it, and channels are declared per view. The repeater binds its element channel
+	to the "element" channel below, so the derivation runs per card.
+	
+	The thumbnail is left to the browser to load when the card comes into view; a grid of cards far
+	down the page is what lazy loading is for.
+-->
+<view>
+	<channels>
+		<channel name="element"/>
+		<derived-channel name="photo"
+			expr="n -> $n.get(`test.flowchart:FlowNode#image`)"
+			inputs="element"
+		/>
+	</channels>
+	<card>
+		<overlay>
+			<image
+				aspect-ratio="16/9"
+				input="photo"
+				lazy="true"
+				width="100%"
+			/>
+			<layer
+				css-class="tlDemoBadge"
+				position="bottom-right"
+			>
+				<text input="element"/>
+			</layer>
+		</overlay>
+		<text
+			css-class="tlText--strong"
+			input="element"
+		/>
+	</card>
+</view>

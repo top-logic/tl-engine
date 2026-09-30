@@ -92,12 +92,17 @@ public class SecurityListModelBuilder extends ListModelBuilderProxy
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-		boolean supportsListElement = super.supportsListElement(contextComponent, listElement);
-		if (!supportsListElement) {
-			return false;
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		ElementUpdate updateDecision = super.supportsListElement(contextComponent, listElement);
+		switch (updateDecision) {
+			case ADD:
+				return ElementUpdate.fromDecision(getInitializedFilter(contextComponent).accept(listElement));
+			case NO_CHANGE:
+			case REMOVE:
+			case UNKNOWN:
+				return updateDecision;
 		}
-		return getInitializedFilter(contextComponent).accept(listElement);
+		throw new IllegalArgumentException("Uncovered case: " + updateDecision);
 	}
 
 }

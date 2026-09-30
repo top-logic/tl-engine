@@ -19,6 +19,12 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/** I18N to be used when the file to be uploaded has not an authorized file type extension. */
+	public static ResKey MESSAGE_KEY_FILENAME_MUST_END_WITH;
+
+	/** Used for information for upload. */
+	public static ResKey UPLOAD_INFO;
+
 
 	public static ResPrefix ZIP_DOWNLOAD_FOLDER_DIALOG;
 	public static ResKey ZIP_DOWNLOAD_FOLDER;
@@ -79,6 +85,34 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey MSG_FOLDER_NOT_EMPTY;
 	
+	/**
+	 * @en Files
+	 * @tooltip Select files to upload.
+	 */
+	public static ResKey UPLOAD_DIALOG_FILES;
+
+	/**
+	 * @en File
+	 * @tooltip Select new version of file. The file selected must have the same name as the file to
+	 *          update.
+	 */
+	public static ResKey UPDATE_DIALOG_FILE;
+
+	/**
+	 * @en Created folder "{0}".
+	 */
+	public static ResKey1 CREATED_FOLDER__NAME;
+
+	/**
+	 * @en Updated documnet "{0}".
+	 */
+	public static ResKey1 UPDATED_DOCUMENT__NAME;
+
+	/**
+	 * @en Deleted document "{0}".
+	 */
+	public static ResKey1 DELETED_DOCUMENT__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

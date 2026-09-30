@@ -48,7 +48,7 @@ import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 /**
  * Utilities for themes.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ThemeUtil {
 
@@ -284,10 +284,15 @@ public class ThemeUtil {
 		for (String themeDirectoryPath : themeDirectoryPaths) {
 			List<BinaryData> themeConfigContents = FileManager.getInstance()
 				.getDataOverlays(themeDirectoryPath + MultiThemeFactory.THEME_CONFIGURATION_FILENAME);
-			Collections.reverse(themeConfigContents);
-			String theme = Paths.get(themeDirectoryPath).getFileName().toString();
-			ThemeConfig themeConfig = readThemeConfig(theme, themeConfigContents);
-			themeConfigByName.put(theme, themeConfig);
+			if (themeConfigContents.isEmpty()) {
+				Logger.error("Theme configuration not found for '" + themeDirectoryPath
+					+ "'. A theme must have a theme.xml file to be instantiated.", ThemeUtil.class);
+			} else {
+				Collections.reverse(themeConfigContents);
+				String theme = Paths.get(themeDirectoryPath).getFileName().toString();
+				ThemeConfig themeConfig = readThemeConfig(theme, themeConfigContents);
+				themeConfigByName.put(theme, themeConfig);
+			}
 		}
 
 		return themeConfigByName;

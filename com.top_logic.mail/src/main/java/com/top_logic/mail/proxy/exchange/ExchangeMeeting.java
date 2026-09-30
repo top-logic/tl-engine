@@ -16,18 +16,18 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Stack;
 
-import javax.activation.DataHandler;
-import javax.activation.DataSource;
-import javax.mail.BodyPart;
-import javax.mail.Flags.Flag;
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Part;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage.RecipientType;
-import javax.mail.internet.MimeMultipart;
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
+import jakarta.mail.BodyPart;
+import jakarta.mail.Flags.Flag;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
+import jakarta.mail.Part;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage.RecipientType;
+import jakarta.mail.internet.MimeMultipart;
 
 import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.basic.Logger;
@@ -40,7 +40,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * MS-Exchange implementation for the {@link MailMeeting} interface. 
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ExchangeMeeting extends AbstractMailMeeting {
 
@@ -68,7 +68,7 @@ public class ExchangeMeeting extends AbstractMailMeeting {
     }
 
     @Override
-	public boolean hasAttachements() throws TopLogicException {
+	public boolean hasAttachments() throws TopLogicException {
         try {
             String[] theHeaders = this.getMessage().getHeader("X-MS-Has-Attach");
 
@@ -426,7 +426,7 @@ public class ExchangeMeeting extends AbstractMailMeeting {
     /**
 	 * Handle calendar values in a stream.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     private static class CalendarDataHandler extends DataHandler {
 
@@ -438,7 +438,7 @@ public class ExchangeMeeting extends AbstractMailMeeting {
     /**
 	 * Data source for calendar values.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     private static class CalendarDataSource implements DataSource {
 

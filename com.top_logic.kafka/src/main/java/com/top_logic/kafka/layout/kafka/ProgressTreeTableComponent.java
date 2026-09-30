@@ -24,7 +24,7 @@ import com.top_logic.layout.table.tree.TreeTableComponent;
 /**
  * Tree based table which can change it's content without user interaction.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ProgressTreeTableComponent extends TreeTableComponent implements Runnable {
 
@@ -146,7 +146,7 @@ public class ProgressTreeTableComponent extends TreeTableComponent implements Ru
 	/**
 	 * Updater to be asked for changes in the table rows.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static interface TreeTableComponentValueUpdater {
 

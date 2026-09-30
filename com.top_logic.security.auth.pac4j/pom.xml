@@ -5,11 +5,12 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-security-auth-pac4j</artifactId>
-  <description>Single-sign-on through OpenID connect.</description>
+	<name>${project.artifactId}</name>
+	<description>Single-sign-on through OpenID connect.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
@@ -29,17 +30,22 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-core</artifactId>
     </dependency>
+    <dependency>
+		<groupId>com.nimbusds</groupId>
+		<artifactId>nimbus-jose-jwt</artifactId>
+		<version>10.10</version>
+	</dependency>
 	<dependency>
 	    <groupId>org.pac4j</groupId>
 	    <artifactId>pac4j-oidc</artifactId>
 	</dependency>
 	<dependency>
 	    <groupId>org.pac4j</groupId>
-	    <artifactId>pac4j-jee</artifactId>
+	    <artifactId>pac4j-jakartaee</artifactId>
 	</dependency>
 	<dependency>
 	    <groupId>org.pac4j</groupId>
-	    <artifactId>jee-pac4j</artifactId>
+	    <artifactId>jakartaee-pac4j</artifactId>
 	</dependency>
   </dependencies>
 </project>

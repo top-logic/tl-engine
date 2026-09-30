@@ -15,10 +15,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.base.services.simpleajax.AJAXConstants;
 import com.top_logic.base.services.simpleajax.AbstractSystemAjaxCommand;
@@ -453,7 +453,7 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
         aOut.writeContent(res.getString(getResPrefix().key("progressHeader")));
         aOut.endTag("h2");
 
-        // Setzt das DIV für den Fortschrits-Text
+        // Setzt das DIV fÃ¼r den Fortschrits-Text
         aOut.writeContent(lineSeparator + "<div id=\"" + PROGRESS_TEXT
                           + "\" class=\"" + PROGRESS_TEXT + "\" style=\"width: "
                           + progressComponentWidth + ";\">");
@@ -533,14 +533,14 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
         
         HTMLUtil.endDiv(aOut);
 
-        // Setzt das DIV Messages für die Meldungen
+        // Setzt das DIV Messages fÃ¼r die Meldungen
         aOut.writeContent(lineSeparator + "<div id=\"" + MESSAGES
                           + "\" class=\"" + MESSAGES + "\" style=\"width: "
                           + progressComponentWidth + "; height: "
                           + progressComponentHeight + ";\">");
         aOut.writeContent(lineSeparator + "</div>");
 
-        // Setzt die Timeout-Funktion entsprechend des übergebenen
+        // Setzt die Timeout-Funktion entsprechend des Ã¼bergebenen
         // Refresh-Intervalls
         aOut.beginScript();
 		aOut.append(getRefreshCommand((refreshInterval * 1000)));

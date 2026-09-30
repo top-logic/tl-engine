@@ -4,13 +4,13 @@
   <parent>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-all</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
-    
-    <relativePath>../tl-parent-all</relativePath>
+    <version>8.0.0-SNAPSHOT</version>
+    <relativePath>..</relativePath>
   </parent>
 
   <artifactId>tl-ide-jetty</artifactId>
-  <description>Services for starting a TopLogic application in the development environment.</description>
+	<name>${project.artifactId}</name>
+	<description>Services for starting a TopLogic application in the development environment.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
 	<properties>
@@ -19,20 +19,16 @@
 
   <dependencies>
 	<dependency>
-	    <groupId>org.eclipse.jetty</groupId>
-	    <artifactId>jetty-webapp</artifactId>
+	    <groupId>org.eclipse.jetty.ee10</groupId>
+	    <artifactId>jetty-ee10-webapp</artifactId>
 	</dependency>
 	<dependency>
-	    <groupId>org.eclipse.jetty</groupId>
-	    <artifactId>apache-jsp</artifactId>
+	    <groupId>org.eclipse.jetty.ee10</groupId>
+	    <artifactId>jetty-ee10-apache-jsp</artifactId>
 	</dependency>
 	<dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlet</artifactId>
-	</dependency>
-	<dependency>
-	  <groupId>org.eclipse.jdt</groupId>
-	  <artifactId>ecj</artifactId>
+      <groupId>org.eclipse.jetty.ee10</groupId>
+      <artifactId>jetty-ee10-servlet</artifactId>
 	</dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -45,6 +41,24 @@
   	<dependency>
 	    <groupId>com.manticore-projects.tools</groupId>
 	    <artifactId>h2migrationtool</artifactId>
+
+		<!-- Exclude old version of dependency. -->
+		<!-- Note: tl-ide-jetty is explicitly added to the dependencies when starting through exec:java plugin. 
+		     This causes the dependencies of h2migrationtool to override the regular dependencies of the application
+		     causing dependencies to be downgraded which causes the app to fail.
+		-->
+		<exclusions>
+			<exclusion>
+				<groupId>commons-io</groupId>
+				<artifactId>commons-io</artifactId>
+			</exclusion>
+		</exclusions>
+	</dependency>
+	
+	<!-- Re-add new version of dependency. -->
+	<dependency>
+		<groupId>commons-io</groupId>
+		<artifactId>commons-io</artifactId>
 	</dependency>
   </dependencies>
 </project>

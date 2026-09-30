@@ -7,7 +7,6 @@ package com.top_logic.layout.themeedit.browser.providers;
 
 import java.util.Collection;
 
-import com.top_logic.basic.config.NamedConfiguration;
 import com.top_logic.gui.config.ThemeConfig;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -39,13 +38,8 @@ public class StyleSheetListModelBuilder implements ListModelBuilder {
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-		return listElement instanceof NamedConfiguration;
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent contextComponent, Object listElement) {
-		return null;
+		return contextComponent.getModel();
 	}
 
 }

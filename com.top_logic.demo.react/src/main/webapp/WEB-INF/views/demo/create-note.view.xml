@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Create dialog for a tl.demo.projectManagement:Note inside a project.
+	
+	"model" carries the transient Note (bound by the opening command); "container" is the project
+	the note belongs to. The Create button persists the note with <persist-transient> and adds it to
+	ProjectScope#notes of the container. It binds its input to the draft ("model"), so its intrinsic
+	rule offers it only while the user may create a note in the project.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="container"/>
+	</channels>
+	<window width="500px">
+		<title>
+			<en>New Note</en>
+			<de>Neue Notiz</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="text"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					input="model"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Erstellen</de>
+					</label>
+					<store-form-state/>
+					<persist-transient
+						container="container"
+						reference="notes"
+					/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

@@ -47,7 +47,7 @@ import com.top_logic.util.Resources;
 /**
  * Checks if the given data is a valid theme zip file.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ThemeFileStructureContraint extends AbstractConstraint {
 
@@ -124,7 +124,7 @@ public class ThemeFileStructureContraint extends AbstractConstraint {
 	}
 
 	private Optional<ThemeConfig> readThemeConfig(File themeZipTmpFile) throws IOException, FileNotFoundException {
-		try (FileSystem fileSystem = FileSystems.newFileSystem(themeZipTmpFile.toPath(), null)) {
+		try (FileSystem fileSystem = FileSystems.newFileSystem(themeZipTmpFile.toPath())) {
 			List<Path> themeConfigurationPaths = getThemeConfigurationPaths(fileSystem);
 
 			if (themeConfigurationPaths.size() == 1) {

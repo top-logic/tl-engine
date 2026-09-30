@@ -11,7 +11,7 @@ import com.top_logic.model.TLClass;
 /**
  * Extend the normal model builder to provide the meta element out of a given name.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface SearchModelBuilder extends ModelBuilder {
 

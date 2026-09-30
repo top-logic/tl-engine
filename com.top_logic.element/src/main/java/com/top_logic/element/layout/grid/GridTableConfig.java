@@ -10,6 +10,7 @@ import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.form.component.FormTableConfig;
+import com.top_logic.layout.form.values.edit.annotation.AcceptableClassifiers;
 
 /**
  * {@link FormTableConfig} with defaults for {@link GridComponent}.
@@ -21,6 +22,7 @@ public interface GridTableConfig extends FormTableConfig {
 	@Override
 	@ItemDefault(GridContextMenuProvider.class)
 	@ImplementationClassDefault(GridContextMenuProvider.class)
+	@AcceptableClassifiers({ "common", "grid" })
 	PolymorphicConfiguration<? extends ContextMenuProvider> getContextMenu();
 
 }

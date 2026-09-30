@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.diff.CollectionDiff;
 import com.top_logic.basic.col.diff.SetDiff;
 import com.top_logic.basic.col.diff.op.Create;
@@ -23,6 +22,7 @@ import com.top_logic.basic.config.InstanceAccess;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.equal.ConfigEquality;
+import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.element.config.ModuleConfig;
 import com.top_logic.element.config.PartConfig;
@@ -32,12 +32,10 @@ import com.top_logic.element.model.diff.config.AddAnnotations;
 import com.top_logic.element.model.diff.config.AddGeneralization;
 import com.top_logic.element.model.diff.config.CreateClassifier;
 import com.top_logic.element.model.diff.config.CreateModule;
-import com.top_logic.element.model.diff.config.CreateRole;
 import com.top_logic.element.model.diff.config.CreateSingleton;
 import com.top_logic.element.model.diff.config.CreateStructuredTypePart;
 import com.top_logic.element.model.diff.config.CreateType;
 import com.top_logic.element.model.diff.config.Delete;
-import com.top_logic.element.model.diff.config.DeleteRole;
 import com.top_logic.element.model.diff.config.DiffElement;
 import com.top_logic.element.model.diff.config.MakeAbstract;
 import com.top_logic.element.model.diff.config.MakeConcrete;
@@ -46,11 +44,18 @@ import com.top_logic.element.model.diff.config.MoveGeneralization;
 import com.top_logic.element.model.diff.config.MoveStructuredTypePart;
 import com.top_logic.element.model.diff.config.RemoveAnnotation;
 import com.top_logic.element.model.diff.config.RemoveGeneralization;
+import com.top_logic.element.model.diff.config.RenamePart;
+import com.top_logic.element.model.diff.config.UpdateAbstract;
+import com.top_logic.element.model.diff.config.UpdateBag;
+import com.top_logic.element.model.diff.config.UpdateDeletionPolicy;
+import com.top_logic.element.model.diff.config.UpdateHistoryType;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
+import com.top_logic.element.model.diff.config.UpdateMultiplicity;
+import com.top_logic.element.model.diff.config.UpdateOrdered;
+import com.top_logic.element.model.diff.config.UpdatePartType;
 import com.top_logic.element.model.diff.config.UpdateStorageMapping;
 import com.top_logic.element.model.export.ModelConfigExtractor;
 import com.top_logic.model.ModelKind;
-import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
@@ -71,8 +76,6 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypeVisitor;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.TLAnnotation;
-import com.top_logic.model.annotate.security.RoleConfig;
-import com.top_logic.model.annotate.security.TLRoleDefinitions;
 import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -176,6 +179,37 @@ public class CreateModelPatch {
 		public Void visitAssociation(TLAssociation model, TLType arg) {
 			// No changes supported.
 			return null;
+		}
+	};
+
+	/**
+	 * {@link TLTypeVisitor} that is responsible for deciding whether two types of the same
+	 * {@link ModelKind} are considered compatible in a sense that an attribute of the visited type
+	 * can be incrementally changed to an attribute of the argument type.
+	 */
+	private final TLTypeVisitor<Boolean, TLType> _typeCompatibility = new TLTypeVisitor<>() {
+		@Override
+		public Boolean visitPrimitive(TLPrimitive left, TLType arg) {
+			TLPrimitive right = (TLPrimitive) arg;
+			return Utils.equals(left.getDBPrecision(), right.getDBPrecision()) &&
+				Utils.equals(left.getDBSize(), right.getDBSize()) &&
+				Utils.equals(left.getDBType(), right.getDBType()) &&
+				Utils.equals(left.getKind(), right.getKind());
+		}
+
+		@Override
+		public Boolean visitEnumeration(TLEnumeration model, TLType arg) {
+			return Boolean.TRUE;
+		}
+
+		@Override
+		public Boolean visitClass(TLClass model, TLType arg) {
+			return Boolean.TRUE;
+		}
+
+		@Override
+		public Boolean visitAssociation(TLAssociation model, TLType arg) {
+			return Boolean.TRUE;
 		}
 	};
 
@@ -285,30 +319,6 @@ public class CreateModelPatch {
 		}
 	};
 
-	private TLTypeVisitor<Boolean, TLType> _isCompatible = new TLTypeVisitor<>() {
-
-		@Override
-		public Boolean visitPrimitive(TLPrimitive model, TLType arg) {
-			return isCompatiblePrimitive(model, (TLPrimitive) arg);
-		}
-
-		@Override
-		public Boolean visitEnumeration(TLEnumeration model, TLType arg) {
-			return true;
-		}
-
-		@Override
-		public Boolean visitClass(TLClass model, TLType arg) {
-			return true;
-		}
-
-		@Override
-		public Boolean visitAssociation(TLAssociation model, TLType arg) {
-			throw new UnreachableAssertion("Associations are not used as value types.");
-		}
-
-	};
-
 	/**
 	 * Analyzed differences in the given models and adds {@link DiffElement} to the current patch
 	 * transforming the left model to the right model.
@@ -340,13 +350,17 @@ public class CreateModelPatch {
 	 *        The target.
 	 */
 	public void addPatch(TLModule left, TLModule right) {
-		// Associations are handled implicitly.
-		processTypeDiff(left.getClasses(), right.getClasses());
-		processTypeDiff(left.getEnumerations(), right.getEnumerations());
-		processTypeDiff(left.getDatatypes(), right.getDatatypes());
+		// Associations are handled implicitly. But all types must be handled in one call to detect
+		// incompatible updates (e.g. from enumeration to class). This must not be simply handled as
+		// delete and create, because both types may share the same name. In such a situation,
+		// special actions must be created.
+		processTypeDiff(noAssociations(left.getTypes()), noAssociations(right.getTypes()));
 
 		addSingletonsPatch(right, left.getAnnotation(TLSingletons.class), right.getAnnotation(TLSingletons.class));
-		addRolesPatch(right, left.getAnnotation(TLRoleDefinitions.class), right.getAnnotation(TLRoleDefinitions.class));
+	}
+
+	private Collection<? extends TLType> noAssociations(Collection<? extends TLType> types) {
+		return types.stream().filter(t -> t.getModelKind() != ModelKind.ASSOCIATION).toList();
 	}
 
 	private void processTypeDiff(Collection<? extends TLType> leftTypes, Collection<? extends TLType> rightTypes) {
@@ -393,46 +407,12 @@ public class CreateModelPatch {
 	private void addDelete(TLModule module, SingletonConfig singletonConfig) {
 		Delete delete = TypedConfiguration.newConfigItem(Delete.class);
 		delete.setName(module.getName() + TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + singletonConfig.getName());
+		delete.setKind(ModelKind.OBJECT);
 		addDiff(delete);
 	}
 
 	private Collection<SingletonConfig> getSingletons(TLSingletons annotation) {
 		return annotation == null ? Collections.emptyList() : annotation.getSingletons();
-	}
-
-	/**
-	 * Creates a patch for a singleton change in a {@link TLModule}.
-	 */
-	public void addRolesPatch(TLModule module, TLRoleDefinitions left, TLRoleDefinitions right) {
-		Collection<RoleConfig> leftValues = getRoles(left);
-		Collection<RoleConfig> rightValues = getRoles(right);
-
-		SetDiff<RoleConfig> diff =
-			CollectionDiff.diffSet(RoleConfig::getName, leftValues, rightValues);
-		for (RoleConfig config : diff.getDeleted()) {
-			addDelete(module, config);
-		}
-		for (RoleConfig config : diff.getCreated()) {
-			addCreate(module, config);
-		}
-	}
-
-	private void addCreate(TLModule module, RoleConfig config) {
-		CreateRole create = TypedConfiguration.newConfigItem(CreateRole.class);
-		create.setModule(module.getName());
-		create.setRole(TypedConfiguration.copy(config));
-		addDiff(create);
-	}
-
-	private void addDelete(TLModule module, RoleConfig config) {
-		DeleteRole delete = TypedConfiguration.newConfigItem(DeleteRole.class);
-		delete.setModule(module.getName());
-		delete.setRole(config.getName());
-		addDiff(delete);
-	}
-
-	private Collection<RoleConfig> getRoles(TLRoleDefinitions annotation) {
-		return annotation == null ? Collections.emptyList() : annotation.getRoles();
 	}
 
 	/**
@@ -445,10 +425,10 @@ public class CreateModelPatch {
 	 *        The target.
 	 */
 	public void addPatch(TLType left, TLType right) {
-		if (left.getModelKind() == right.getModelKind()) {
+		if (isCompatibleType(left, right)) {
 			left.visitType(_typeDiff, right);
 		} else {
-			delete(left);
+			deleteForRecreate(left);
 			createType(right);
 		}
 	}
@@ -461,31 +441,19 @@ public class CreateModelPatch {
 	}
 
 	final void addPatchPrimitive(TLPrimitive model, TLPrimitive right) {
-		if (isCompatiblePrimitive(model, right)) {
-			if (!Utils.equals(model.getStorageMapping(), right.getStorageMapping())) {
-				UpdateStorageMapping update = TypedConfiguration.newConfigItem(UpdateStorageMapping.class);
-				update.setType(TLModelUtil.qualifiedName(model));
+		if (!Utils.equals(model.getStorageMapping(), right.getStorageMapping())) {
+			UpdateStorageMapping update = TypedConfiguration.newConfigItem(UpdateStorageMapping.class);
+			update.setType(TLModelUtil.qualifiedName(model));
 
-				@SuppressWarnings("unchecked")
-				PolymorphicConfiguration<StorageMapping<?>> mappingConfig =
-					(PolymorphicConfiguration<StorageMapping<?>>) InstanceAccess.INSTANCE
-						.getConfig(right.getStorageMapping());
-				update.setStorageMapping(mappingConfig);
-				addDiff(update);
-			}
-
-			processAnnotationChanges(model, right);
-		} else {
-			delete(model);
-			createType(right);
+			@SuppressWarnings("unchecked")
+			PolymorphicConfiguration<StorageMapping<?>> mappingConfig =
+				(PolymorphicConfiguration<StorageMapping<?>>) InstanceAccess.INSTANCE
+					.getConfig(right.getStorageMapping());
+			update.setStorageMapping(mappingConfig);
+			addDiff(update);
 		}
-	}
 
-	boolean isCompatiblePrimitive(TLPrimitive left, TLPrimitive right) {
-		return Utils.equals(left.getDBPrecision(), right.getDBPrecision()) &&
-			Utils.equals(left.getDBSize(), right.getDBSize()) &&
-			Utils.equals(left.getDBType(), right.getDBType()) &&
-			Utils.equals(left.getKind(), right.getKind());
+		processAnnotationChanges(model, right);
 	}
 
 	final void addPatchEnumeration(TLEnumeration model, TLEnumeration other) {
@@ -536,7 +504,7 @@ public class CreateModelPatch {
 
 	void addPartUpdate(TLStructuredTypePart left, TLStructuredTypePart right, TLClassPart rightSuccessor) {
 		if (!isCompatiblePart(left, right)) {
-			delete(left);
+			deleteForRecreate(left);
 
 			createStructuredTypePart(right, rightSuccessor);
 			reCreateInverseReference(left, right);
@@ -548,7 +516,7 @@ public class CreateModelPatch {
 
 	void addPartMove(TLStructuredTypePart left, TLStructuredTypePart right, TLStructuredTypePart before) {
 		if (!isCompatiblePart(left, right)) {
-			delete(left);
+			deleteForRecreate(left);
 
 			createStructuredTypePart(right, before);
 			reCreateInverseReference(left, right);
@@ -557,6 +525,10 @@ public class CreateModelPatch {
 
 		addPartChanges(left, right);
 
+		addMoveStructuredTypePart(left, before);
+	}
+
+	private void addMoveStructuredTypePart(TLStructuredTypePart left, TLStructuredTypePart before) {
 		MoveStructuredTypePart move = TypedConfiguration.newConfigItem(MoveStructuredTypePart.class);
 		move.setPart(TLModelUtil.qualifiedName(left));
 		if (before != null) {
@@ -616,65 +588,115 @@ public class CreateModelPatch {
 	}
 	private void addPartChanges(TLStructuredTypePart left, TLStructuredTypePart right) {
 		processAnnotationChanges(left, right);
+		
+		if (!isEquivalent(left.getType(), right.getType())) {
+			UpdatePartType typeUpdate = TypedConfiguration.newConfigItem(UpdatePartType.class);
+			typeUpdate.setPart(TLModelUtil.qualifiedName(left));
+			typeUpdate.setTypeSpec(TLModelUtil.qualifiedName(right.getType()));
+			addDiff(typeUpdate);
+		}
+		
+		if (left.isMultiple() != right.isMultiple()) {
+			UpdateMultiplicity update = TypedConfiguration.newConfigItem(UpdateMultiplicity.class);
+			update.setPart(TLModelUtil.qualifiedName(left));
+			update.setMultiple(right.isMultiple());
+			addDiff(update);
+		}
+		
+		if (left.isOrdered() != right.isOrdered()) {
+			UpdateOrdered update = TypedConfiguration.newConfigItem(UpdateOrdered.class);
+			update.setPart(TLModelUtil.qualifiedName(left));
+			update.setOrdered(right.isOrdered());
+			addDiff(update);
+		}
+		
+		if (left.isBag() != right.isBag()) {
+			UpdateBag update = TypedConfiguration.newConfigItem(UpdateBag.class);
+			update.setPart(TLModelUtil.qualifiedName(left));
+			update.setBag(right.isBag());
+			addDiff(update);
+		}
 
-		boolean oldMandatory = left.isMandatory();
-		boolean newMandatory = right.isMandatory();
-		if (oldMandatory != newMandatory) {
+		if (left.isMandatory() != right.isMandatory()) {
 			UpdateMandatory update = TypedConfiguration.newConfigItem(UpdateMandatory.class);
 			update.setPart(TLModelUtil.qualifiedName(left));
-			update.setMandatory(newMandatory);
+			update.setMandatory(right.isMandatory());
 			addDiff(update);
+		}
+
+		if (left.isAbstract() != right.isAbstract()) {
+			UpdateAbstract update = TypedConfiguration.newConfigItem(UpdateAbstract.class);
+			update.setPart(TLModelUtil.qualifiedName(left));
+			update.setAbstract(right.isAbstract());
+			addDiff(update);
+		}
+
+		if (left instanceof TLReference leftRef && right instanceof TLReference rightRef) {
+			if (leftRef.getDeletionPolicy() != rightRef.getDeletionPolicy()) {
+				UpdateDeletionPolicy update = TypedConfiguration.newConfigItem(UpdateDeletionPolicy.class);
+				update.setPart(TLModelUtil.qualifiedName(leftRef));
+				update.setDeletionPolicy(rightRef.getDeletionPolicy());
+				addDiff(update);
+			}
+			if (leftRef.getHistoryType() != rightRef.getHistoryType()) {
+				UpdateHistoryType update = TypedConfiguration.newConfigItem(UpdateHistoryType.class);
+				update.setPart(TLModelUtil.qualifiedName(leftRef));
+				update.setHistoryType(rightRef.getHistoryType());
+				addDiff(update);
+			}
 		}
 	}
 
-	private boolean isCompatiblePart(TLStructuredTypePart left, TLStructuredTypePart right) {
-		return
-			isCompatibleValueType(left.getType(), right.getType()) &&
-				(!isProperty(left)
-				|| isCompatibleProperty((TLProperty) left, (TLProperty) right))
-			&&
-				(!isReference(left)
-				|| isCompatibleReference((TLReference) left, (TLReference) right));
+	private boolean isEquivalent(TLType left, TLType right) {
+		if (alreadyDeleted(left)) {
+			// Note: This is the special case where the type was already visited and considered
+			// incompatible, which resulted in a delete and re-create of the type. The old type then
+			// must be considered incompatible with all other types, because it must be exchanged
+			// under all circumstances.
+			return false;
+		}
+		return sameTypeSyntactically(left, right) && isCompatibleType(left, right);
 	}
 
-	private boolean isProperty(TLStructuredTypePart part) {
-		return part.getModelKind() == ModelKind.PROPERTY;
+	private boolean alreadyDeleted(TLType left) {
+		return !left.tValid() || left.getModule() == null;
+	}
+
+	/**
+	 * Whether the left part can be updated to the right part.
+	 * 
+	 * <p>
+	 * Incompatible parts are deleted and re-created.
+	 * </p>
+	 */
+	private boolean isCompatiblePart(TLStructuredTypePart left, TLStructuredTypePart right) {
+		return left.isDerived() == right.isDerived() && isCompatibleType(left.getType(), right.getType());
+	}
+
+	/**
+	 * Whether the left type can be updated to the right type.
+	 * 
+	 * <p>
+	 * Incompatible types must be deleted and re-created later on.
+	 * </p>
+	 */
+	private boolean isCompatibleType(TLType left, TLType right) {
+		return left.getModelKind() == right.getModelKind() && left.visitType(_typeCompatibility, right);
 	}
 
 	private boolean isReference(TLStructuredTypePart part) {
 		return part.getModelKind() == ModelKind.REFERENCE;
 	}
 
-	private boolean isCompatibleValueType(TLType left, TLType right) {
-		return left.getModelKind() == right.getModelKind() &&
-			isCorrespondingModule(left.getModule(), right.getModule()) &&
-			left.getName().equals(right.getName()) &&
-			left.visitType(_isCompatible, right);
+	/**
+	 * Whether the two types are syntactically the same (same module, same name).
+	 */
+	private boolean sameTypeSyntactically(TLType left, TLType right) {
+		return sameName(left.getModule(), right.getModule()) && sameName(left, right);
 	}
 
-	private boolean isCorrespondingModule(TLModule left, TLModule right) {
+	private boolean sameName(TLNamedPart left, TLNamedPart right) {
 		return left.getName().equals(right.getName());
-	}
-
-	private boolean isCompatibleProperty(TLProperty left, TLProperty right) {
-		return left.isDerived() == right.isDerived() &&
-			left.isMultiple() == right.isMultiple() &&
-			left.isOrdered() == right.isOrdered();
-	}
-
-	private boolean isCompatibleReference(TLReference left, TLReference right) {
-		return left.isDerived() == right.isDerived() &&
-			left.isMultiple() == right.isMultiple() &&
-			left.isOrdered() == right.isOrdered() &&
-			left.isBag() == right.isBag();
-	}
-
-	private PolymorphicConfiguration<?> storageConfig(TLStructuredTypePart left) {
-		StorageDetail impl = left.getStorageImplementation();
-		if (impl == null) {
-			return null;
-		}
-		return (PolymorphicConfiguration<?>) InstanceAccess.INSTANCE.getConfig(impl);
 	}
 
 	void processCreateDelete(SetDiff<? extends TLNamedPart> diff) {
@@ -768,10 +790,9 @@ public class CreateModelPatch {
 		CreateStructuredTypePart result = TypedConfiguration.newConfigItem(CreateStructuredTypePart.class);
 		result.setType(TLModelUtil.qualifiedName(newOwner));
 		result.setPart((PartConfig) model.visit(_configExtractor, null));
-		if (before != null) {
-			result.setBefore(before.getName());
-		}
+
 		addDiff(result);
+		addMoveStructuredTypePart(model, before);
 	}
 
 	final void createClassifier(TLClassifier created, TLClassifier before) {
@@ -782,9 +803,39 @@ public class CreateModelPatch {
 		addDiff(result);
 	}
 
+	final void deleteForRecreate(TLNamedPart deleted) {
+		// First rename to new unique name to allow first create the new part with the same name and
+		// delete the outdated version at the end. This is required to have a chance to update
+		// usages of the deleted part with the new part.
+		RenamePart result = TypedConfiguration.newConfigItem(RenamePart.class);
+		result.setPart(TLModelUtil.qualifiedName(deleted));
+		String tmpName = "ToBeDeleted_" + SecureRandomService.getInstance().getRandomString().replace('-', '_');
+		result.setNewName(tmpName);
+		addDiff(result);
+
+		delete(deleted, tmpName);
+	}
+
 	final void delete(TLNamedPart deleted) {
+		delete(deleted, null);
+	}
+
+	final void delete(TLNamedPart deleted, String tmpName) {
 		Delete result = TypedConfiguration.newConfigItem(Delete.class);
-		result.setName(TLModelUtil.qualifiedName(deleted));
+
+		String qualifiedName = TLModelUtil.qualifiedName(deleted);
+		if (tmpName != null) {
+			String originalName = deleted.getName();
+			assert qualifiedName.endsWith(originalName) : "Qualified name '" + qualifiedName + "' ends with '"
+				+ originalName + "'.";
+			qualifiedName = qualifiedName.substring(0, qualifiedName.length() - originalName.length()) + tmpName;
+		}
+		result.setName(qualifiedName);
+
+		result.setKind(deleted.getModelKind());
+		if (deleted instanceof TLReference ref) {
+			result.setBackwards(ref.isBackwards());
+		}
 		addDiff(result);
 	}
 

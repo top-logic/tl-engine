@@ -7,7 +7,7 @@
 	partnerGroup="AttributeTreeGroup"
 	resPrefix="layouts.element.meta.metaElementTree."
 	rootVisible="false"
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 	showMaximize="true"
 >
 	<treeBuilder class="com.top_logic.layout.table.tree.TreeBuilderAdaptor"
@@ -23,10 +23,6 @@
 		<rowObjectResourceProvider class="com.top_logic.layout.tree.model.TLTreeNodeResourceProvider">
 			<impl class="com.top_logic.element.layout.meta.MetaElementTreeResourceProvider"/>
 		</rowObjectResourceProvider>
-		<exporter
-			downloadNameKey="layouts.element.meta.metaElementTree.exportName"
-			templateName="defaultTemplate.xlsx"
-		/>
 		<columns>
 			<column name="name"
 				accessor="com.top_logic.layout.IdentityAccessor"
@@ -104,10 +100,10 @@
 			<inject>
 				<dialogInfo
 					defaultI18n="element.meta.metaElementTree.newEnumeration"
-					height="430"
+					height="530"
 					openerClique="createMenu"
 					openerCommandGroup="Create"
-					width="550"
+					width="600"
 				/>
 			</inject>
 		</include>
@@ -120,10 +116,10 @@
 			<inject>
 				<dialogInfo
 					defaultI18n="element.meta.metaElementTree.newType"
-					height="430"
+					height="530"
 					openerClique="createMenu"
 					openerCommandGroup="Create"
-					width="550"
+					width="600"
 				/>
 			</inject>
 		</include>
@@ -136,10 +132,10 @@
 			<inject>
 				<dialogInfo
 					defaultI18n="element.meta.metaElementTree.newModule"
-					height="430"
+					height="530"
 					openerClique="createMenu"
 					openerCommandGroup="Create"
-					width="550"
+					width="600"
 				/>
 			</inject>
 		</include>
@@ -165,5 +161,13 @@
 			group="Create"
 			image="theme:ICONS_BUTTON_MODEL_IMPORT"
 		/>
+		<button id="exportExcel"
+			class="com.top_logic.layout.table.export.ExcelExportHandler"
+			templateName="defaultTemplate.xlsx"
+		>
+			<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+				downloadName="layouts.element.meta.metaElementTree.exportName"
+			/>
+		</button>
 	</buttons>
 </tree-table>

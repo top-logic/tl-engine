@@ -12,7 +12,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
 /**
  * Layering for {@link LayoutNode}s.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class NodeLayering<L extends NodeLayer> {
 

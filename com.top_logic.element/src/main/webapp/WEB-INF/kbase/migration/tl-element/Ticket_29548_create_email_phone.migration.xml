@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29548_create_email_phone"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_29563_default_group_derived"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<create-datatype name="tl.util:EMail"
+			db_size="1333"
+			db_type="varchar"
+			kind="String"
+		>
+			<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+				application-type="java.lang.String"
+			/>
+		</create-datatype>
+		<create-datatype name="tl.util:Phone"
+			db_size="1333"
+			db_type="varchar"
+			kind="String"
+		>
+			<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+				application-type="java.lang.String"
+			/>
+		</create-datatype>
+	</processors>
+	<post-processors/>
+</migration>

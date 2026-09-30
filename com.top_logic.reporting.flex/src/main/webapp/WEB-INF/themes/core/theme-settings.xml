@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="ICONS_LARGE_CHART_SELECT60"
+		value="css: fa-solid fa-chart-pie"
+	/>
+</settings>

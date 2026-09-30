@@ -13,14 +13,15 @@
 				<dialogInfo
 					defaultI18n="demo.table.demoLargeTableDialog"
 					executability="Always"
-					height="450"
+					height="550"
 					image="theme:ICONS_OPEN_SELECTOR"
-					width="720"
+					width="770"
 				/>
 			</inject>
 		</include>
 		<include name="com.top_logic.demo/structure/demoTypes/treeGrid/tree_grid.xml"
 			namePrefix="TreeGridInDialog"
+			treeSemantics="false"
 		>
 			<modelBuilder class="com.top_logic.demo.model.types.util.CyclicDemoTreeBuilder"/>
 			<inject>

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -16,6 +16,15 @@ public interface TLAssociationBase extends com.top_logic.model.TLStructuredType 
 	 * Name of type <code>TLAssociation</code>
 	 */
 	String TL_ASSOCIATION_TYPE = "TLAssociation";
+
+	/**
+	 * Part <code>ends</code> of <code>TLAssociation</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLAssociationEnd</code> in configuration.
+	 * </p>
+	 */
+	String ENDS_ATTR = "ends";
 
 	/**
 	 * Part <code>subsets</code> of <code>TLAssociation</code>

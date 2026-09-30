@@ -12,7 +12,7 @@ import com.top_logic.layout.tree.model.TLTreeNode;
 /**
  * Accessor to the kafka topic interface.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class KafkaTopicAccessor extends ReadOnlyAccessor<Object> {
 

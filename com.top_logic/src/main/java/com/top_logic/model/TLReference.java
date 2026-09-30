@@ -5,10 +5,13 @@
  */
 package com.top_logic.model;
 
+import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Reference;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.model.impl.generated.TLReferenceBase;
 
@@ -33,6 +36,20 @@ public interface TLReference extends TLReferenceBase, TLClassPart {
 	 */
 	void setEnd(TLAssociationEnd value);
 	
+	/**
+	 * Whether this reference points to the composite part of an aggregation association.
+	 */
+	default boolean isComposite() {
+		return getEnd().isComposite();
+	}
+
+	/**
+	 * Whether this reference points to the aggregate part of an aggregation association.
+	 */
+	default boolean isAggregate() {
+		return getEnd().isAggregate();
+	}
+
 	/**
 	 * Same as {@link TLAssociationEnd#getType() type} of the implemented
 	 * {@link TLReference#getEnd() end}.
@@ -69,6 +86,16 @@ public interface TLReference extends TLReferenceBase, TLClassPart {
 	}
 
 	@Override
+	default boolean isAbstract() {
+		return getEnd().isAbstract();
+	}
+
+	@Override
+	default void setAbstract(boolean value) {
+		getEnd().setAbstract(value);
+	}
+
+	@Override
 	default boolean isBag() {
 		return getEnd().isBag();
 	}
@@ -89,6 +116,44 @@ public interface TLReference extends TLReferenceBase, TLClassPart {
 	}
 
 	/**
+	 * Whether this is a reverse reference to a regular forwards reference.
+	 * 
+	 * @see #getOpposite()
+	 */
+	default boolean isBackwards() {
+		return getEnd().getEndIndex() == 0;
+	}
+
+	/**
+	 * The {@link TLReference} in the {@link #getType() target type} that points in reverse
+	 * direction.
+	 * 
+	 * @return The opposite reference if such reference exists in the target type, <code>null</code>
+	 *         otherwise.
+	 * 
+	 * @see TLAssociation#getEnds()
+	 */
+	default TLReference getOpposite() {
+		return getOppositeEnd().getReference();
+	}
+
+	/**
+	 * The {@link TLAssociationEnd} that points in reverse direction.
+	 * 
+	 * @return The opposite end of the association this reference navigates.
+	 * 
+	 * @see TLAssociation#getEnds()
+	 */
+	default TLAssociationEnd getOppositeEnd() {
+		TLAssociationEnd selfEnd = getEnd();
+		List<TLAssociationEnd> ends = selfEnd.getOwner().getEnds();
+		int selfIndex = ends.indexOf(selfEnd);
+		int oppositeIndex = 1 - selfIndex;
+
+		return ends.get(oppositeIndex);
+	}
+
+	/**
 	 * The type of history of the values of this reference. The values of this attribute can be
 	 * either all current, historized, or a mixture of current and historized values.
 	 */
@@ -104,12 +169,33 @@ public interface TLReference extends TLReferenceBase, TLClassPart {
 	}
 
 	/**
+	 * Specification how to handle deletions of objects referenced.
+	 */
+	default DeletionPolicy getDeletionPolicy() {
+		return getEnd().getDeletionPolicy();
+	}
+
+	/**
+	 * @see #getDeletionPolicy()
+	 */
+	default void setDeletionPolicy(DeletionPolicy value) {
+		getEnd().setDeletionPolicy(value);
+	}
+
+	/**
 	 * Resolves all objects pointing to the given object through this reference.
+	 * <p>
+	 * Note: This method must not be called directly. Use {@link TLObject#tReferers(TLReference)} to
+	 * get referers.
+	 * </p>
 	 * 
 	 * @param element
 	 *        The element that is searched in the contents of this {@link TLReference}.
 	 * @return All base objects that contain the given element in the value of this reference.
+	 * 
+	 * @see TLObject#tReferers(TLReference)
 	 */
+	@FrameworkInternal
 	Set<? extends TLObject> getReferers(TLObject element);
 
 	@Override

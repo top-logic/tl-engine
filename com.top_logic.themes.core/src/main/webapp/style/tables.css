@@ -1,3 +1,25 @@
+/* 
+/* Design of a regular, unmodified table, which get 
+/* created through inapp configurations 
+*/
+.tl-standard-table {
+	white-space: nowrap;
+	display: table;
+	width: 100%;
+	margin: var(--spacing-02) 0;
+	background: var(--background);
+	border-collapse: collapse;
+	border-spacing: 0 10px;
+}
+
+/* Modifier class that enables text wrapping in table cells
+ * while preserving all other tl-standard-table styles.
+ * Usage: <table class="tl-standard-table multiline">
+ */
+.tl-standard-table.multiline {
+    white-space: normal;
+}
+
 table.treeBody {
 	white-space: nowrap;
 	display: table;
@@ -8,12 +30,27 @@ table.treeBody {
     border-spacing: 0 10px;
 }
 
-th {
-	text-align: left;
+table.treeBody .tl-table__row:not(.tblSelected):hover > td {
+    background: var(--highlight-bg--hover, var(--background));
 }
 
-table.treeBody .tl-table__row:not(.tblSelected):hover > td {
-    background: var(--background);
+.tl-standard-table th {
+	text-align: left;
+	color: var(--text-primary);
+	font-family: var(--font-family);
+	font-weight: bold;
+    font-size: var(--heading-compact-02-font-size);
+    line-height: var(--heading-compact-02-line-height);
+    letter-spacing: var(--heading-compact-02-letter-spacing);
+    background: var(--layer);
+}
+
+.tl-standard-table th,
+.tl-standard-table td {
+    padding: 0 var(--spacing-02);
+    height: var(--table-height);
+    box-sizing: border-box;
+    border: 1px solid var(--border-subtle);
 }
 
 /* ============================================ */
@@ -35,12 +72,32 @@ table.tblTableNoBorder {
 	margin: 0;
 }
 
-td.tblRight .px-1,
-td.tblRight .px-1 > * {
-	justify-content: flex-end;
+td.tblCenter {
+	text-align: center;
 }
 
-table td.tblRight .px-1 span.lFlexible > input {
+td.tblRight {
+	text-align: right;
+}
+
+td.tblRight span.tl-decorated-cell,
+td.tblRight span.tl-date-input,
+td.tblRight span.tl-text-popup,
+td.tblRight span.tl-datetime,
+td.tblRight span.tl-time-input,
+td.tblRight span.tl-text-input,
+td.tblRight span.tl-icon-chooser,
+td.tblRight span.tl-integer-input,
+td.tblRight span.tl-expandable-text-input {
+	justify-content: safe flex-end;
+}
+
+td.tblRight .tl-table__cell-container,
+td.tblRight .tl-table__cell-container > * {
+/* 	justify-content: safe flex-end; */
+}
+
+table td.tblRight .tl-table__cell-container span.lFlexible > input {
 	text-align: right;
 }
 
@@ -50,11 +107,11 @@ table td div.tblRight span.cError {
 }
 
 a.tl-table__title {
-	color: var(--text-primary);
+	color: var(--layer-accent-text);
 }
 
 a.tl-table__title:visited {
-	color: var(--text-primary);
+	color: var(--layer-accent-text);
 }
 
 .tl-table__title {
@@ -62,9 +119,13 @@ a.tl-table__title:visited {
 	justify-content: space-between;
     align-items: center;
     gap: var(--spacing-02);
-	background: var(--layer-accent);
-	color: var(--text-primary);
-	font-family: var(--font-family-bold);
+
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
+
+	font-family: var(--font-family);
+	font-weight: bold;
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -78,9 +139,12 @@ a.tl-table__title:visited {
 }
 
 th.tblTitleRight {
-	background: var(--layer-accent);
-	color: var(--text-primary);
-	font-family: var(--font-family-bold);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
+
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
@@ -94,34 +158,6 @@ th.tblTitleRight {
 	border-spacing: 0px;
 	float: right;
 	white-space: nowrap;
-}
-
-input.tblRowSelector {
-	margin-top: 4px;	
-}
-
-input.tblRowSelector {
-	/* empty: due to transparent image. */
-}
-
-input.tblRowSelected {
-	background-image: var(--TABLE_ROW_SELECTED);
-}
-
-tr.tl-table__row:hover input.tblRowSelector, input.tblRowSelector:focus {
-	background-image: var(--TABLE_ROW_FOCUSED);
-}
-
-a.tblRowSelector {
-	display: none;
-}
-
-a.tblRowSelector i {
-	font-size: 9px;
-}
-
-tr.tl-table__row:hover a.tblRowSelector, a.tblRowSelector:focus, a.tblRowSelected {
-	display: inline-block;
 }
 
 span.tblButton input {
@@ -169,7 +205,7 @@ th.tblCounterNoBorder {
 }
 
 .tl-table__footer-pager i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tl-table__footer-pager-item {
@@ -179,7 +215,7 @@ th.tblCounterNoBorder {
 }
 
 .tl-table__footer-pager .ddwttDropBtn {
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
     font-size: var(--body-01-font-size);
     line-height: var(--body-0-line-height);
     letter-spacing: var(--body-01-letter-spacing);
@@ -191,7 +227,8 @@ td.tl-table__cell {
 }
 
 .tl-table__cell {
-	color: var(--text-secondary);
+	color: var(--highlight-fg, var(--text-secondary));
+	background-color: var(--highlight-bg, inherit);
     white-space: nowrap;
 	padding: 0px;
 	border-color: var(--border-subtle);
@@ -201,13 +238,13 @@ td.tl-table__cell {
 }
 
 th.tl-table__cell {
-    color: var(--text-primary);
-	font-family: var(--font-family-bold);
+    color: var(--highlight-fg, var(--text-primary));
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
-	font-weight: 600;
-    background: var(--layer);
+    background: var(--highlight-bg--selected, var(--layer));
     border-bottom-color: var(--border-subtle);
     border-bottom-style: solid;
     border-bottom-width: 1px;
@@ -231,8 +268,8 @@ td.tl-table__cell {
 }
 
 .tl-table__row.header .tl-table__cell:hover {
-	color: var(--text-primary);
-	background: var(--layer-hover);
+	color: var(--highlight-fg, var(--text-primary));
+	background: var(--highlight-bg--selected--hover, var(--layer-hover));
 }
 
 .tl-table__header-cell-content span.activeFilter:hover {
@@ -277,12 +314,12 @@ th.tblTHRight {
 }
 
 tr.tl-table__row {
-	background-color: var(--background);
+	background-color: var(--TABLE_ROW_BACKGROUND_COLOR);
 }
 
 /* Note: Order matters: Must appear below `tl-table__row` to override styles. */
 tr.tblEven {
-	background-color: var(--background);
+	background-color: var(--TABLE_ROW_EVEN_BACKGROUND_COLOR);
 }
 
 /* Note: Order matters: Must appear below `tblEven` to override styles. */
@@ -391,7 +428,6 @@ td.tblTD100 {
     white-space:    nowrap;
 	padding:        2px;
 	border-color:   var(--layer-accent);
-	color:          var(--text-primary);
 	width:          100%;
 	border-width:   0px;
 }
@@ -403,8 +439,9 @@ tr.treeSelected td.tl-table__cell--selected {
 td.tblTDselectWrap {
 	padding:          2px;
 	border-color:     var(--layer-accent);
-	color:            var(--text-primary);
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	border-width:     0px;
 }
 
@@ -414,8 +451,9 @@ td.tblTDselectStrong {
     white-space:      nowrap;
 	padding:          2px;
 	border-color:     var(--layer-accent);
-	color:            var(--text-primary);
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	border-width:     0px;
 }
 
@@ -424,22 +462,12 @@ td.tblTDselect100 {
     white-space:      nowrap;
 	padding:          2px;
 	border-color:     var(--layer-accent);
-	color:            var(--text-primary);
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	width:            100%;
 	border-width:     0px;
 }
-
-/** A Numeric table entry */
-td.num {
-	font-family:    var(--MONOSPACE_FAMILY);
-	text-align:     right;
-    white-space:    nowrap;
-	padding:        2px;
-	border-color:   transparent;
-	color:          var(--text-primary);
-}
-
 
 a.tl-table__cell {
 	font-size:13px;
@@ -472,7 +500,8 @@ table.regTable {
 
 th.regTitle {
 	background-color: var(--layer-accent);
-	color:            var(--text-primary);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	font-size:        13px;
 	font-weight:      normal;
 	padding:          2px;
@@ -601,37 +630,6 @@ select.tbl {	/* Tables can be written as selects, using this style */
  	width: 80%;
 }
 
-div.movingheader{
-	text-align: 		 left;
-	position:			 absolute;
-	font-size:           13px;
-	font-weight:         normal;
-    white-space:         nowrap;
-	padding:             0px;
-	border-bottom-color: var(--border-subtle);
-	border-bottom-style: solid;
-	border-bottom-width: 0px;
-	border-right-width:  0px;
-	border-left-width:   0px;
-	border-top-width:    0px;
-	color:               black;
-	background-color:    var(--layer-accent);
-}
-
-th.insertRight{
-	border-right-color:  var(--REPLACECOLOR) !important;
-	border-right-width: 2px !important;
-	border-right-style: solid !important;
-	z-index: 1000 !important;
-}
-
-th.insertLeft{
-	border-left-color:   var(--REPLACECOLOR) !important;
-	border-left-width: 2px !important;
-	border-left-style: solid !important;
-	z-index: 1000 !important;
-}
-
 .fltButtons {
 	height: var(--TABLE_FILTER_BUTTON_BAR_HEIGHT);
 	display: flex;
@@ -645,12 +643,8 @@ td.fltButton {
 	position: relative;
 }
 
-.fltButtons .cButton {
-	padding: 0 var(--spacing-01);
-}
-
 .tl-table__header-cell-content .fltButton.tl-table__filter-sort-icons {
-	color: var(--icon-primary);
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 	align-self: center;
 }
 
@@ -659,23 +653,18 @@ td.fltButton {
 }
 
 .tl-table__header-cell-content .fltButton:not(.activeFilter):not(.tl-table__filter-sort-icons):hover {
-	color: var(--icon-primary);
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
-.tl-table__header-cell-content .fltButton.activeFilter {
-	color: var(--icon-interactive);
-}
-
-.tl-table__header-cell-content .fltButton.activeFilter:hover {
+.fltReset a:not(.disabled),
+.fltReset:hover a:not(.disabled), 
+.fltReset button:not(.disabled),
+.fltReset:hover button:not(.disabled),
+.tl-table__header-cell-content .fltButton.activeFilter,
+.tl-table__header-cell-content .fltButton.activeFilter:hover, 
+.tl-sidebar-filter__reset-button i {
 	color: var(--support-danger);
-}
-
-i.bi-funnel-fill.tablefilter {
-	color: var(--icon-interactive);
-}
-
-a:not(.disabled) i.bi-funnel-fill.tablefilter:hover {
-	color: var(--support-danger);
+	text-shadow: var(--icon-outline);
 }
 
 th span.tl-table__filter-sort-icons {
@@ -712,7 +701,7 @@ div.tl-table__filter-sort-container {
   	margin-bottom: var(--spacing-03);
 }
 
-.sidebarFilterEntry {
+.tl-sidebar-filter__entry {
 	position: relative;
 	box-sizing: border-box;
 	height: 1.5rem;
@@ -724,11 +713,11 @@ div.tl-table__filter-sort-container {
 	align-items: center;
 }
 
-.collapsibleFilterEntry {
+.tl-sidebar-filter__entry--collapsible {
 	cursor: pointer;
 }
 
-.resetSidebarFilterButton {
+.tl-sidebar-filter__reset-button {
 	position: absolute;
 	right: 0;
 	padding-right: var(--spacing-01);
@@ -773,37 +762,38 @@ div.tblTreeFrozenTitle > table.tblFrozen {
 	height: 100%;
 }
 
-tr.tblFrozen {
-}
-
-tr.tblFilterDirectMatch {
-}
-
-tr.tblFilterDirectMatch td,
-tr.tblFilterDirectMatch td input {
-}
-
-tr.tblFilterIndirectMatch {
-}
-
-tr.tblFilterIndirectMatch td {
+tr.tblFilterIndirectMatch td,
+tr.tblFilterIndirectMatch td a {
 	color: var(--text-disabled);
 }
 
-tr.tblSelected.tblFilterIndirectMatch td {
-	color: var(--text-on-color-disabled);
-}
-
-tr.tblFilterIndirectMatch .cButton a {
+tr.tblFilterIndirectMatch .cButton a,
+tr.tblFilterIndirectMatch i {
 	color: var(--icon-disabled);
 }
 
-.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .px-1 {
+tr.tblSelected.tblFilterIndirectMatch td,
+.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .tl-table__cell-container,
+.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .tl-table__cell a,
+.tblFilterIndirectMatch.tl-table__row.tblSelected .tl-table__cell a {
 	color: var(--text-on-color-disabled);
 }
 
-.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .cButton a {
-	color: var(--icon-on-color-disabled);
+.tblFilterIndirectMatch.tblSelected i,
+.tblFilterIndirectMatch:not(.tblSelected):hover i,
+.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .cButton a,
+.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .treeType > i,
+.tblFilterIndirectMatch.tl-table__row.tblSelected .treeType > i {
+	color: var(--icon-disabled);
+}
+
+.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .tl-table__cell a,
+.tblFilterIndirectMatch.tl-table__row.tblSelected:hover .tl-table__cell a {
+	text-decoration: none;
+}
+
+.tblFilterIndirectMatch.tl-table__row .tl-table__cell a:focus {
+	outline: none;
 }
 
 tr.tblFilterIndirectMatch td img,
@@ -812,14 +802,11 @@ tr.tblFilterIndirectMatch td input {
 	opacity: 0.6;
 }
 
-tr.tblFilterNotValidated {
-}
-
 tr.tblFilterNotValidated td,
 tr.tblFilterNotValidated td input,
 tr.tblFilterNotValidated td select,
 tr.tblFilterNotValidated td label {
-	font-weight: 600;
+	font-weight: bold;
 	color: var(--text-primary);
 }
 
@@ -908,9 +895,12 @@ div.tblSeperatorLine {
 /* ============================================================== */
 
 table td span.cError {
-	position: absolute;
-	top: 0px;
-	right: 2px;	
+	padding-left: var(--spacing-02);	
+}
+
+/* Hide error display completely, if there is no error. */
+table td span.cError.no-error {
+	display: none;
 }
 
 table td span.cError i {
@@ -925,19 +915,33 @@ table td span.cError i {
 	position: static;
 }
 
-table td span.cDecoratedCell,
-table td span.cPopupSelect,
-table td span.cTextSelect,
-table td span.cDropdownSelect,
-table td span.cDateInput,
-table td span.cIntegerInput,
-table td span.cDatetime,
-table td span.cTimeInput,
-table td span.cTextPopup,
-table td span.cExpandableTextInput,
-table td span.cTextInput,
-table td .cDataItem,
-table td span.downloadControl {
+table td .ddwttDropBtn,
+table td .ddwttDropBtn .ddwttButtonContent {
+	flex-grow: 1;
+}
+
+table td .ddwttContainer {
+	width: 100%;
+}
+
+table td .ddwttContainer .ddwttTag {
+	margin-bottom: auto;
+}
+
+table td span.tl-decorated-cell,
+table td span.tl-popup-select,
+table td span.tl-text-select,
+table td span.tl-dropdown-select,
+table td span.tl-date-input,
+table td span.tl-integer-input,
+table td span.tl-datetime,
+table td span.tl-time-input,
+table td span.tl-text-popup,
+table td span.tl-expandable-text-input,
+table td span.tl-text-input,
+table td span.tl-icon-chooser,
+table td span.tl-data-item.download,
+table td span.tl-download--download-mode {
 	display: flex;
 	flex-wrap: nowrap;
 	align-items: center;
@@ -945,56 +949,46 @@ table td span.downloadControl {
 	height: 100%;
 }
 
-table td span.cDecoratedCell .lFlexible, 
-table td span.cDecoratedCell .lFixedLeft {
+table td span.tl-decorated-cell :is(.lFlexible,.lFixedLeft),
+table td span.tl-decorated-cell :is(.lFlexible,.lFixedLeft) > .cTooltip {
 	height: inherit;
 	display: inline-flex;
 	align-items: center;
 }
 
-table .cDecoratedCell > .lFlexible > :first-child:not(a) {
+table .tl-decorated-cell > .lFlexible > :first-child:not(a) {
 	flex-grow: 2;
 }
 
-table td span.cDecoratedCell {
-	gap: var(--spacing-02);
+table td span.tl-decorated-cell {
+	gap: var(--spacing-01);
 }
 
-.cDecoratedCell .treeType {
-	color: var(--icon-secondary);
+.treeType > i {
+	color: var(--highlight-fg, var(--icon-secondary));
 }
 
-.tl-table__row:not(.tblSelected):hover .cDecoratedCell .treeType, 
-td.tl-table__cell--selected .cDecoratedCell .treeType {
-	color: var(--icon-primary);
+.tl-table__row:not(.tblSelected):hover .treeType > i, 
+td.tl-table__cell--selected .treeType > i {
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
-table.i18nStringTable td span.cDecoratedCell .lFlexible {
-	padding-left: 0px;
-	padding-right: 0px;
-}
-
-table.i18nStringTable td {
-	padding-bottom: var(--spacing-02);
-}
-
-table td span.cTextPopup span.content {
+table td span.tl-text-popup span.content {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
-table td .cDataItem span.lFlexible span.content,
-table td span.downloadControl span.content {
-	width: 100%;
+table td .tl-data-item span.lFlexible span.content,
+table td span.tl-download--download-mode span.content {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
-table td span.cTextPopup.descriptionSizeConstraint span.content{
+table td span.tl-text-popup.descriptionSizeConstraint span.content{
 	position: relative;
 }
 
-.cTextPopup.descriptionSizeConstraint .cImageButton{
+.tl-text-popup.descriptionSizeConstraint .cImageButton{
 	vertical-align: middle;
 }
 
@@ -1009,55 +1003,62 @@ table td span.cTextPopup.descriptionSizeConstraint span.content{
 	text-overflow: ellipsis;
 }
 
-.cTextPopupEditor .cTextInput.cannot-edit:not(.disabled) {
+.cTextPopupEditor .tl-text-input.cannot-edit:not(.disabled) {
 	display: inline-block;
 	width: 497px;
 	height: 280px;
 	overflow: auto;
 }
 
-.cTextPopupEditor .cTextInput.cannot-edit:not(.disabled) {
+.cTextPopupEditor .tl-text-input.cannot-edit:not(.disabled) {
     padding: 2px 8px 4px 8px;
     box-sizing: border-box;
 }
 
-.cTextPopupEditor .cTextInput .is-input {
+.cTextPopupEditor .tl-text-input .is-input {
     width: 100%;
     box-sizing: border-box;    
 }
 
-span.cTextPopupView span.content p,
-span.cTextPopupView span.content ul,
-span.cTextPopupView span.content li,
-span.cTextPopup span.content p,
-span.cTextPopup span.content ul,
-span.cTextPopup span.content li {
+span.tl-text-popup-view span.content p,
+span.tl-text-popup-view span.content ul,
+span.tl-text-popup-view span.content li,
+span.tl-text-popup span.content p,
+span.tl-text-popup span.content ul,
+span.tl-text-popup span.content li {
 	margin: 0px;
 	padding: 0px;
 	display: inline;
 }
 
-table td span.cTextPopupView span.content p,
-table td span.cTextPopupView span.content ul,
-table td span.cTextPopupView span.content li,
-table td span.cTextPopup span.content p,
-table td span.cTextPopup span.content ul,
-table td span.cTextPopup span.content li,
-table td a.cDownload {
+table td span.tl-text-popup-view span.content p,
+table td span.tl-text-popup-view span.content ul,
+table td span.tl-text-popup-view span.content li,
+table td span.tl-text-popup span.content p,
+table td span.tl-text-popup span.content ul,
+table td span.tl-text-popup span.content li,
+table td a.tl-download {
 	display: block;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
-table.tl-table td span.lFlexible,
-table.tl-table td span.lFlexibleCustom {
-	display: inline-flex;
-	overflow: hidden;
+:is(.tl-table__cell,.rf_cell) :is(.lFlexible,.lFlexibleCustom,.ddwttContainer),
+:is(.lFlexible,.lFlexibleCustom) input:is(.is-input,.is-popup) {
+	box-sizing: border-box;
 	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-table td span.lFlexible > select {
+:is(.lFlexible,.lFlexibleCustom) textarea {
+	box-sizing: border-box;
 	width: 100%;
+	text-overflow: ellipsis;
+}
+
+.tl-table__cell :is(.lFlexible,.lFlexibleCustom) {
+	height: var(--table-row-height);
 }
 
 /* Use default width for select fields in title of
@@ -1066,22 +1067,25 @@ table td span.lFlexible > select {
 	width: auto;
 }
 
-table td .cDatetime .lFlexible {
+/* 
+Padding is spacing-01 instead of 03 for tables 
+because of the datetimeinput field.
+ */
+table td .tl-text-input input,
+table td .tl-integer-input input, 
+table td .tl-expandable-text-input input, 
+table td .tl-block-text-input input, 
+table td .tl-popup-select input,
+table td .tl-text-popup,
+table td .tl-datetime .tl-date-input input,
+table td .tl-datetime .tl-time-input input,
+table td .tl-date-input input,
+table td .ddwttDropBtn {
+	padding: 0 var(--spacing-01);
+}
+
+table.tl-table td .tl-datetime .lFixedRight .tl-date-input .lFlexible {
 	width: fit-content !important;
-}
-
-table td .cDatetime .cDateInput input,
-table td .cDatetime .cTimeInput input {
-	padding-right: 0;
-    padding-left: 0;
-}
-
-table.tl-table td .cDateTime .lFixedRight .cDateInput .lFlexible {
-	width: fit-content !important;
-}
-
-table td span.lFlexible > input:not([type="image"]) {
-	width: 100%;
 }
 
 /* Use default width for input fields in title of
@@ -1269,6 +1273,11 @@ table td span.lFlexible > input:not([type="image"]) {
 	width: 100%;
 }
 
+/* If the error element is next to a tlscript field, hide it.  */
+.popupEditField .tlscript:not(.fullSize) + .cError {
+	display: none;
+}
+
 div.dirtyHandlingDialog {
 	width: 100%;
 	height: 100%; 
@@ -1307,8 +1316,12 @@ div.dirtyHandlingDialog .changes {
 }
 
 .h-100 {
-  	height: 100% !important;
-  	overflow: auto;
+	height: 100% !important;
+	overflow: auto;
+}
+
+.h-100:has(~ .cError) {
+	height: unset !important;
 }
 
 .w-100 {
@@ -1316,23 +1329,39 @@ div.dirtyHandlingDialog .changes {
   	overflow: auto;
 }
 
-.px-1 {
-	padding-right: var(--spacing-02) !important;
-	padding-left: var(--spacing-02) !important;
-    display: inline-flex;
-    align-items: center;
-    width: 100%;
+table {
+	--table-row-height: 15px;
+}
+
+.tl-table__cell {
+    height:var(--table-row-height);
+}
+
+.tl-table__cell-container {
+	overflow:hidden;
+	white-space:nowrap;
+	text-overflow: ellipsis;
+	padding: 0 var(--spacing-01) !important;
     box-sizing: border-box;
-    vertical-align: middle;
+    height:var(--table-row-height);
+    line-height:var(--table-row-height);
 }
 
-.px-1 .tl-radio-checkbox-container {
-	display: flex;
-	justify-content: center;
-	flex-grow: 1;
+.tl-table__cell-container img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
 }
 
-.px-1 .cPopupSelect.cannot-edit {
+.lFixedLeft {
+	padding-right: var(--spacing-01);
+}
+
+th .tl-table__cell-container {
+	width: 100%;
+}
+
+.tl-table__cell-container .tl-popup-select.cannot-edit {
 	flex-wrap: nowrap;
 }
 
@@ -1368,10 +1397,16 @@ div.dirtyHandlingDialog .changes {
 	border-collapse: separate !important;
 	border-spacing: 0px;
 	margin: 0px;
+
+	border-left:  1px solid var(--border-subtle);
+	border-right: 1px solid var(--border-subtle);	
 }
 
 .tl-table--fixed {
 	table-layout: fixed;
+}
+
+.tl-table--fixed {
 	width: min-content;
 }
 
@@ -1393,9 +1428,9 @@ div.dirtyHandlingDialog .changes {
 	left: 0;
 	display: flex;
 	justify-content: center;
-	background: var(--layer-accent);
+	background: var(--layer);
 	color: var(--text-primary);
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
@@ -1409,19 +1444,26 @@ div.dirtyHandlingDialog .changes {
 }
 
 .tl-table__cell-resizer {
-	width: 4px;
+	width: 16px;
 	cursor: col-resize;
 	position: absolute;
 	top: 0;
-	right: 0;
+	right: -8px;
 	height: 100%;
+	z-index: 1;
+}
+
+th:last-child .tl-table__cell-resizer {
+	right: 0;
+	width: 12px;
 }
 
 .tl-table__cell {
 	background-clip: padding-box !important;
 	position: relative;
 	box-sizing: border-box;
-	background-color: var(--background);
+	color: var(--highlight-fg, inherit);
+	background-color: var(--highlight-bg, var(--background));
 }
 
 .tl-table__cell:not(:last-child),
@@ -1446,7 +1488,8 @@ div.dirtyHandlingDialog .changes {
 }
 
 .tblSelected .tl-table__cell {
-	background: inherit;
+	color: var(--highlight-fg, inherit);
+	background: var(--highlight-bg--selected, inherit);
 }
 
 .tl-table-overlay {
@@ -1558,6 +1601,7 @@ div.dirtyHandlingDialog .changes {
 	border-right-width: .25rem !important;
 	border-right-style: solid !important;
 	width: 0px;
+	padding: 0px;
 }
 
 .tl-table-overlay .tl-table__fix-flex-separator {
@@ -1566,7 +1610,7 @@ div.dirtyHandlingDialog .changes {
 
 .tl-table-overlay__scroller-icon {
 	font-size: 25px;
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tl-flex--fill {
@@ -1587,13 +1631,14 @@ table.tl-table--fixed td.tl-table__cell--selected.treeTableTd {
 
 th.treeTableTh {
     color: var(--text-primary);
-    font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
     white-space: nowrap;     
     border: var(--TABLE_COLUMN_BORDER_WIDTH) solid var(--border-subtle);
-    background: var(--layer-accent);
+    background: var(--layer);
     background-position-y: bottom;
 }
 
@@ -1601,11 +1646,6 @@ td.treeTableTdFirst {
     background-color:var(--layer);
     border: var(--TABLE_COLUMN_BORDER_WIDTH) solid var(--border-subtle);
     overflow: hidden;
-}
-
-td.treeTableTdFirst span {
-    white-space:  nowrap;
-    vertical-align: middle;
 }
 
 tr.treeSelected td.treeTableTdFirst {
@@ -1630,33 +1670,30 @@ td.treeTableTd span {
 *****************************************************************************/
 td.tl-table__cell--selected {
     white-space:      nowrap;
-    color:            var(--text-primary);
-    background-color: var(--layer-selected);
+    color:            var(--highlight-fg, var(--text-primary));
+    background-color: var(--highlight-bg, var(--layer-selected));
     border-color:     var(--border-subtle);
 }
 
 .tblSelected.tl-table__row:hover {
-	background-color: var(--layer-selected-hover)
+	background-color: var(--layer-selected-hover);
+}
+
+.tblSelected.tl-table__row:hover .tl-table__cell {
+	background-color: var(--highlight-bg--selected--hover, var(--layer-selected-hover));
 }
 
 .tl-table__row:not(.tblSelected):hover > td {
-	background-color: var(--layer-hover);
-}
-
-.tl-table__row:not(.tblSelected):hover .px-1 {
-	color: var(--text-primary);
+	color: var(--highlight-fg, var(--text-primary));
+	background-color: var(--highlight-bg--hover, var(--layer-hover));
 }
 
 .tl-table__row:not(.tblSelected):hover .fToggle a {
-	color: var(--icon-primary);
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
 .tl-table__cell--selectable .fToggle a {
-	color: var(--icon-secondary);
-}
-
-.i18nStringTable.tl-table {
-	border: none;
+	color: var(--highlight-fg, var(--icon-secondary));
 }
 
 .adjustableColumn {

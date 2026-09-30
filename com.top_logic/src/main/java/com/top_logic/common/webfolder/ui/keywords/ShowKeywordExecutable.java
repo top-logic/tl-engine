@@ -14,6 +14,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
+import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.MessageBox.MessageType;
@@ -44,7 +45,8 @@ public class ShowKeywordExecutable extends AbstractWebfolderAction {
 		if (keywords.isEmpty()) {
 			return emptySearchResult(context);
 		}
-		KeywordsDialog dialog = new KeywordsDialog(keywords, DisplayDimension.FIFTY_PERCENT, DisplayDimension.dim(450, DisplayUnit.PIXEL));
+		KeywordsDialog dialog =
+			new KeywordsDialog(keywords, DisplayDimension.FIFTY_PERCENT, DisplayDimension.dim(520, DisplayUnit.PIXEL));
 		return dialog.open(context);
 	}
 
@@ -58,6 +60,9 @@ public class ShowKeywordExecutable extends AbstractWebfolderAction {
 
 	@Override
 	protected ExecutableState calculateExecutability() {
+		if (!ComponentUtil.isValid(getContentObject())) {
+			return ExecutableState.NO_EXEC_INVALID;
+		}
 		return ExecutableState.EXECUTABLE;
 	}
 

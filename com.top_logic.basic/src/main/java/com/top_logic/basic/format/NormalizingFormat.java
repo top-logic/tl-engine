@@ -29,7 +29,7 @@ import com.top_logic.basic.UnreachableAssertion;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class NormalizingFormat extends NumberFormat {
+public class NormalizingFormat extends NumberFormatDecorator {
 
 	/**
 	 * Creates a {@link NormalizingFormat} wrapped around the given implementation.
@@ -51,6 +51,11 @@ public class NormalizingFormat extends NumberFormat {
 	 */
 	private NormalizingFormat(NumberFormat impl) {
 		_impl = impl;
+	}
+
+	@Override
+	protected NumberFormat impl() {
+		return _impl;
 	}
 
 	@Override

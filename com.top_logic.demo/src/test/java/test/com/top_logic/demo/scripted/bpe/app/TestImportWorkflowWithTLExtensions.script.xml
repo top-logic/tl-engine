@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Prozess Cockpit"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Prozess Editor"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:/Workflow/Action-Workflow-Hochladen.xml"
+			template-name-comment="Workflow Hochladen"
+		>
+			<parameters>
+				<parameter name="Name"
+					value="The Process.bpml"
+				/>
+				<parameter name="URL"
+					value="file:src/test/java/test/com/top_logic/demo/scripted/bpe/app/TestImportWorkflowWithTLExtensions.bpml"
+				/>
+			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+					node-path="The Process"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Prozess Editor > Workflow"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Symbol"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						tab-path="Administration > Development > Prozess Editor"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="css:fas fa-bullhorn"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="multi-set-equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Status"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						tab-path="Administration > Development > Prozess Editor"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
+				<context-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Status"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						tab-path="Administration > Development > Prozess Editor"
+					/>
+				</context-name>
+				<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+					<values>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+							label="Aktiv"
+						/>
+					</values>
+				</local-name>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+					node-path="The Process > Der Prozess > Anlegen"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Prozess Editor > Workflow"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Symbol"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						tab-path="Administration > Development > Prozess Editor"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="css:far fa-laugh-wink"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Beschreibung"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						tab-path="Administration > Development > Prozess Editor"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
+				<context-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Beschreibung"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						tab-path="Administration > Development > Prozess Editor"
+					/>
+				</context-name>
+				<local-name config:interface="com.top_logic.layout.wysiwyg.ui.scripting.I18NStructuredTextNamingScheme$Name">
+					<translations>
+						<translation language="de">
+							<text>
+								<source-code><![CDATA[<p>Eine <strong>neue </strong><em>lustige </em><u>Aufgabe</u> mit <img src="ref:addElementDisabled_49432.png" style="opacity:1" />Bild.</p>]]></source-code>
+								<image name="addElementDisabled_49432.png">iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAc0lEQVQ4y91RsQ2AMAxzUQeEhIBrekO+8le5Id8gARNDWRjKUKjUAYRXJ3YcA5VwOYLkAGABEEnG3JzPEWY2lxg1tRHeF3Dnwzoz20qXQgg9yfXyHBGJpQKq6qoikBwf60kvSh1/WKO/qaoFsAOYVBXfxQGXeh7V7BrRYQAAAABJRU5ErkJggg==</image>
+							</text>
+						</translation>
+					</translations>
+				</local-name>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Bezeichnung"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						tab-path="Administration > Development > Prozess Editor"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ResKeyNaming$Name">
+				<translations>
+					<translation
+						lang="de"
+						value="Machs mit {0}"
+					/>
+					<translation
+						lang="en"
+						value="Do it with {0}"
+					/>
+				</translations>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Dynamische Bezeichnung"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						tab-path="Administration > Development > Prozess Editor"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="i18n -> execution -> task -> token -> $i18n.fill($execution)"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+					node-path="The Process > Der Prozess > Übernehmen"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Prozess Editor > Workflow"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Aktion"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						tab-path="Administration > Development > Prozess Editor"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="x -> null"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+					table="BPEdge"
+				>
+					<branch config:interface=""/>
+					<revision config:interface=""/>
+					<attributes>
+						<attribute name="name">
+							<value config:interface=""/>
+						</attribute>
+						<attribute name="process">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+								table="BPElement"
+							>
+								<branch config:interface=""/>
+								<revision config:interface=""/>
+								<attributes>
+									<attribute name="name">
+										<value config:interface=""/>
+									</attribute>
+									<attribute name="collaboration">
+										<value config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+											node-path="The Process"
+										/>
+									</attribute>
+									<attribute name="extId">
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="Process_1"
+										/>
+									</attribute>
+								</attributes>
+								<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="MetaElement"
+								>
+									<branch config:interface=""/>
+									<revision config:interface=""/>
+									<attributes>
+										<attribute name="scope">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+												table="TLModule"
+											>
+												<branch config:interface=""/>
+												<revision config:interface=""/>
+												<attributes>
+													<attribute name="name">
+														<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+															value="tl.bpe.bpml"
+														/>
+													</attribute>
+												</attributes>
+											</value>
+										</attribute>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="Process"
+											/>
+										</attribute>
+									</attributes>
+								</type>
+							</value>
+						</attribute>
+						<attribute name="extId">
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="SequenceFlow_1p9scyc"
+							/>
+						</attribute>
+					</attributes>
+					<type config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+						table="MetaElement"
+					>
+						<branch config:interface=""/>
+						<revision config:interface=""/>
+						<attributes>
+							<attribute name="scope">
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
+									table="TLModule"
+								>
+									<branch config:interface=""/>
+									<revision config:interface=""/>
+									<attributes>
+										<attribute name="name">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="tl.bpe.bpml"
+											/>
+										</attribute>
+									</attributes>
+								</value>
+							</attribute>
+							<attribute name="name">
+								<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+									value="SequenceFlow"
+								/>
+							</attribute>
+						</attributes>
+					</type>
+				</selectee>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Prozess Editor > Workflow"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Zustand"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorProperties"
+						tab-path="Administration > Development > Prozess Editor"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="true"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+					node-path="The Process"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Prozess Editor > Alle Prozesse"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.bpe.modeler.export.ExportBPMLDefinition"
+			command-label="BPML exportieren"
+			command-name="export"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
+					node-path="The Process"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Prozess Editor > Alle Prozesse"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.knowledge.gui.layout.form.DeleteSimpleWrapperCommandHandler"
+			command-label="Löschen..."
+			command-name="delete"
+			component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+			component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+	</actions>
+</action>

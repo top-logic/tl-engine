@@ -46,14 +46,17 @@ public class Ticket25242UseLegacyTabbarTemplatesForOldLayouts implements Migrati
 
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
-		_util = context.get(Util.PROPERTY);
+		_util = context.getSQLUtils();
 
 		String table = SQLH.mangleDBName(PersistentTemplateLayoutWrapper.KO_NAME_TEMPLATE_LAYOUTS);
 		String templateColumn = SQLH.mangleDBName(PersistentTemplateLayoutWrapper.TEMPLATE_ATTR);
 		String argumentsColumn = SQLH.mangleDBName(PersistentTemplateLayoutWrapper.ARGUMENTS_ATTR);
 
+		/* Note: _util.branchColumnDef() may return constant column. It is important (at least in
+		 * H2) that no constant column is contained in the result list, otherwise the row can not be
+		 * updated, even if the branch column is not updated at all. */
 		SQLSelect select = select(
-			columns(
+			Util.listWithoutNull(
 				_util.branchColumnDef(),
 				columnDef(BasicTypes.IDENTIFIER_DB_NAME),
 				columnDef(BasicTypes.REV_MAX_DB_NAME),

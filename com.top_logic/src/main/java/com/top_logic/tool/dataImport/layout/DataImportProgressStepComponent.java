@@ -5,13 +5,9 @@
  */
 package com.top_logic.tool.dataImport.layout;
 
-import java.util.Map;
-
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.progress.AJAXProgressComponent;
-import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 
 /**
  * The DataImportProgressStepComponent is a progress step of the DataImportAssistant.
@@ -31,12 +27,6 @@ public class DataImportProgressStepComponent extends AJAXProgressComponent {
 	protected void becomingVisible() {
         resetState();
         super.becomingVisible();
-    }
-
-    @Override
-	protected void progressFinished(DisplayContext aSomeContext, Map aSomeArguments) {
-        AssistentComponent theAssistent = AssistentComponent.getEnclosingAssistentComponent(this);
-        theAssistent.invalidateButtons();
     }
 
 }

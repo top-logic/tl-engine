@@ -18,6 +18,7 @@ import com.top_logic.layout.form.DefaultExpansionModel;
 import com.top_logic.layout.form.boxes.reactive_tag.AbstractGroupSettings;
 import com.top_logic.layout.form.boxes.reactive_tag.GroupCellControl;
 import com.top_logic.layout.form.boxes.tag.PersonalizedExpansionModel;
+import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.form.template.model.internal.TemplateRenderer;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.template.WithProperties;
@@ -41,6 +42,8 @@ public class FieldSetBoxTemplate extends AbstractGroupSettings<FieldSetBoxTempla
 	private boolean _initiallyCollapsed;
 
 	private Consumer<GroupCellControl> _initializer;
+
+	private VisibilityModel _visibilityModel;
 
 	/**
 	 * Creates a {@link FieldSetBoxTemplate}.
@@ -116,6 +119,21 @@ public class FieldSetBoxTemplate extends AbstractGroupSettings<FieldSetBoxTempla
 		return this;
 	}
 
+	/**
+	 * Handles visibility of this control.
+	 */
+	public VisibilityModel getVisibilityModel() {
+		return _visibilityModel;
+	}
+
+	/**
+	 * @see #getVisibilityModel()
+	 */
+	public FieldSetBoxTemplate setVisibilityModel(VisibilityModel visibilityModel) {
+		_visibilityModel = visibilityModel;
+		return this;
+	}
+
 	@Override
 	public void write(DisplayContext displayContext, TagWriter out, WithProperties properties) throws IOException {
 		Collapsible collapsible = createExpansionModel();
@@ -124,6 +142,9 @@ public class FieldSetBoxTemplate extends AbstractGroupSettings<FieldSetBoxTempla
 		GroupCellControl groupCell = new GroupCellControl(content, collapsible, this).setTitle(legend);
 		if (_initializer != null) {
 			_initializer.accept(groupCell);
+		}
+		if (_visibilityModel != null) {
+			groupCell.setVisibilityModel(_visibilityModel);
 		}
 		TemplateRenderer.renderControl(displayContext, out, groupCell);
 	}

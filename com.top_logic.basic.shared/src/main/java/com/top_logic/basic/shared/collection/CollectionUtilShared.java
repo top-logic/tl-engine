@@ -26,6 +26,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.top_logic.basic.shared.collection.factory.CollectionFactoryShared;
@@ -40,11 +41,6 @@ import com.top_logic.basic.shared.collection.map.MapUtilShared;
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
 public abstract class CollectionUtilShared extends CollectionFactoryShared {
-
-	/**
-	 * Error message if a cycle in dependencies is found.
-	 */
-	public static final String CYCLIC_DEPENDENCIES_MESSAGE = "Cyclic dependencies, cannot sort topologically, cycle: ";
 
 	/** @see IteratorUtilShared#EMPTY_ITERATOR */
 	public static final Iterator<?> EMPTY_ITERATOR = IteratorUtilShared.EMPTY_ITERATOR;
@@ -308,8 +304,30 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	}
 
 	/**
-	 * Wraps the given value(s) into a list, if it is neither <code>null</code> or already a
+	 * Wraps the given value(s) into a collection, if it is neither <code>null</code> or already a
 	 * collection.
+	 * 
+	 * <p>
+	 * The resulting collection must not be modified. It may either be the argument itself or a
+	 * read-only view.
+	 * </p>
+	 * 
+	 * @param value
+	 *        The value to wrap.
+	 * 
+	 * @see #asList(Object)
+	 * @see #asSet(Object)
+	 */
+	public static Collection<?> asCollection(Object value) {
+		if (value instanceof Collection<?>) {
+			return (Collection<?>) value;
+		} else {
+			return asList(value);
+		}
+	}
+
+	/**
+	 * Wraps the given value(s) into a list, if it is neither <code>null</code> or already a list.
 	 * 
 	 * <p>
 	 * The resulting list must not be modified. It may either be the argument itself or a read-only
@@ -322,6 +340,9 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 * @return The given value, if it is already a list. A collection is converted to a list. A
 	 *         singleton value is wrapped into a singleton list. For <code>null</code>, the empty
 	 *         list is returned.
+	 * 
+	 * @see #asCollection(Object)
+	 * @see #asSet(Object)
 	 */
 	public static List<?> asList(Object value) {
 		if (value instanceof List<?>) {
@@ -391,7 +412,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	}
 
 	/**
-	 * Wraps the given value into a set, if it is neither <code>null</code> or already a collection.
+	 * Wraps the given value into a set, if it is neither <code>null</code> or already a set.
 	 * 
 	 * <p>
 	 * The resulting set must not be modified. It may either be the argument itself or a read-only
@@ -404,6 +425,9 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 * @return The given value, if it is already a set. A collection is converted to a set. A
 	 *         singleton value is wrapped into a singleton set. For <code>null</code>, the empty set
 	 *         is returned.
+	 * 
+	 * @see #asCollection(Object)
+	 * @see #asList(Object)
 	 */
 	public static Set<?> asSet(Object value) {
 		if (value instanceof Set<?>) {
@@ -642,22 +666,26 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 
 	/**
 	 * Removes duplicated entries from a given list.
-	 * 
+	 *
 	 * <p>
-	 * This implementation uses a temporary {@link Set}, consider using more efficient methods for
-	 * lists with {@link Comparable} elements, e.g. #sort other Methods in case you have a) lots of
-	 * data b) a List that is already sorted in some way.
+	 * The order of the given list is kept: Of each duplicated entry, the first occurrence remains
+	 * at its position.
 	 * </p>
-	 * 
+	 *
+	 * <p>
+	 * This implementation uses a temporary {@link LinkedHashSet}, consider using more efficient
+	 * methods, e.g. {@link #removeDuplicatesSortedInline(List)}, in case you have a list that is
+	 * already sorted.
+	 * </p>
+	 *
 	 * @param aList
 	 *        The list that contains duplicated entries.
-	 * @return A list that contains no duplicated entries.
-	 * 
+	 * @return A new list that contains no duplicated entries.
+	 *
 	 * @see #sortRemovingDuplicates(List)
 	 */
 	public static <E> List<E> removeDuplicates(List<? extends E> aList) {
-		Set<? extends E> temp = toSet(aList);
-		return new ArrayList<>(temp);
+		return new ArrayList<>(new LinkedHashSet<>(aList));
 	}
 
 	/**
@@ -874,6 +902,9 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 *        the collection to get the first element from.
 	 * @return the first element of the given collection or <code>null</code>, if the collection is
 	 *         empty
+	 * 
+	 * @see #getElementAt(Collection, int)
+	 * @see #getLast(Collection)
 	 */
 	public static <T> T getFirst(Collection<T> aCollection) {
 		if (isEmptyOrNull(aCollection)) {
@@ -930,6 +961,9 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 *        the collection to get the last element from.
 	 * @return the last element of the given collection or <code>null</code>, if the collection is
 	 *         empty
+	 * 
+	 * @see #getFirst(Collection)
+	 * @see #getElementAt(Collection, int)
 	 */
 	public static <E> E getLast(Collection<E> aCollection) {
 		if (isEmptyOrNull(aCollection)) {
@@ -965,6 +999,37 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 			return anObject; // implies check for null
 		}
 		return getLast((Collection<?>) anObject);
+	}
+
+	/**
+	 * Determines the <code>index</code>th element of the given collection.
+	 *
+	 * @param collection
+	 *        The collection to get the element from.
+	 * @return The element of the given collection at the given <code>index</code> or
+	 *         <code>null</code>, if the index is is out of range.
+	 * 
+	 * @see #getFirst(Collection)
+	 * @see #getLast(Collection)
+	 */
+	public static <E> E getElementAt(Collection<E> collection, int index) {
+		if (collection == null) {
+			return null;
+		}
+		if (index < 0 || index >= collection.size()) {
+			return null;
+		}
+		if (collection instanceof RandomAccess) {
+			return ((List<E>) collection).get(index);
+		}
+		Iterator<E> elements = collection.iterator();
+		while (index > 0) {
+			// Ignore elements with smaller index.
+			elements.next();
+			index--;
+		}
+		return elements.next();
+
 	}
 
 	/**
@@ -1303,6 +1368,24 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	}
 
 	/**
+	 * Concatenates the given lists where duplicates are removed, or returns one of the given lists,
+	 * if the other one is empty.
+	 */
+	public static <T> List<T> concatUnique(List<T> left, List<T> right) {
+		if (left.isEmpty()) {
+			return right;
+		}
+		if (right.isEmpty()) {
+			return left;
+		}
+
+		LinkedHashSet<T> result = new LinkedHashSet<>();
+		result.addAll(left);
+		result.addAll(right);
+		return new ArrayList<>(result);
+	}
+
+	/**
 	 * Completes the given graph with its reflexive hull.
 	 * 
 	 * @param <N>
@@ -1372,24 +1455,52 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 *         If the given graph is cyclic.
 	 */
 	public static <T> List<T> topsort(Function<T, ? extends Iterable<? extends T>> dependencies, Collection<T> input,
-			boolean addDependencies) throws IllegalArgumentException {
-		Set<T> inputSet = addDependencies ? null : new HashSet<>(input);
+			boolean addDependencies) throws CyclicDependencyException {
 		List<T> result = new ArrayList<>();
+		processTopsorted(dependencies, input, addDependencies, result::add);
+		return result;
+	}
+
+	/**
+	 * Consumes the given input values topologically.
+	 * 
+	 * <p>
+	 * In topological order, a dependency is consumed before the element that depends on it.
+	 * </p>
+	 * 
+	 * @param <T>
+	 *        The type of input elements.
+	 * @param dependencies
+	 *        A function that reports dependencies for a given element.
+	 * @param input
+	 *        The elements to consume.
+	 * @param consumeDependencies
+	 *        Whether missing dependencies should be consumed.
+	 * @param consumer
+	 *        The executing consumer.
+	 * 
+	 * @throws IllegalArgumentException
+	 *         If the given graph is cyclic.
+	 */
+	public static <T> void processTopsorted(Function<T, ? extends Iterable<? extends T>> dependencies,
+			Collection<T> input, boolean consumeDependencies, Consumer<? super T> consumer) {
+		Set<T> inputSet = consumeDependencies ? null : new HashSet<>(input);
 
 		HashSet<T> seen = new HashSet<>();
 		LinkedHashSet<T> pending = new LinkedHashSet<>();
 		for (T element : input) {
-			addInTopologicalOrder(dependencies, result, seen, pending, element, inputSet, addDependencies);
+			addInTopologicalOrder(dependencies, consumer, seen, pending, element, inputSet, consumeDependencies);
 		}
-
-		return result;
 	}
 
 	private static <T> void addInTopologicalOrder(Function<T, ? extends Iterable<? extends T>> dependencies,
-			List<T> result, Set<T> seen, Set<T> pending, T element, Set<T> input, boolean addDependencies) {
+			Consumer<? super T> result, Set<T> seen, Set<T> pending, T element, Set<T> input, boolean addDependencies) {
 		if (seen.contains(element)) {
 			if (pending.contains(element)) {
-				throw new IllegalArgumentException(CYCLIC_DEPENDENCIES_MESSAGE + pending);
+				ArrayList<T> cycle = new ArrayList<>(pending);
+				cycle.add(element);
+
+				throw new CyclicDependencyException(cycle);
 			}
 			return;
 		}
@@ -1400,7 +1511,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 		}
 		pending.remove(element);
 		if (addDependencies || input.contains(element)) {
-			result.add(element);
+			result.accept(element);
 		}
 	}
 
@@ -2237,7 +2348,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 
 	/** Returns null, if the {@link Collection} is null or empty, or contains only nulls. */
 	public static <T extends Comparable<T>> T max(Collection<? extends T> values) {
-		// Note: Java 11 requires a variable for the reduction to accept the types.
+		// Note: 'javac' requires a variable for the reduction to accept the types.
 		BinaryOperator<T> reduction = CollectionUtilShared::maxUnsafe;
 		return reduce(reduction, values);
 	}
@@ -2255,7 +2366,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 
 	/** Returns null, if the {@link Collection} is null or empty, or contains only nulls. */
 	public static <T extends Comparable<T>> T min(Collection<? extends T> values) {
-		// Note: Java 11 requires a variable for the reduction to accept the types.
+		// Note: 'javac' requires a variable for the reduction to accept the types.
 		BinaryOperator<T> reduction = CollectionUtilShared::minUnsafe;
 		return reduce(reduction, values);
 	}

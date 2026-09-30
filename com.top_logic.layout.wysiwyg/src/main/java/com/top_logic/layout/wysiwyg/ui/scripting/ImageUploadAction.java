@@ -26,13 +26,13 @@ import com.top_logic.layout.wysiwyg.ui.StructuredText;
 /**
  * {@link ApplicationAction} that represents an image upload for a {@link StructuredText}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface ImageUploadAction extends ApplicationAction {
 	/**
 	 * {@link AbstractApplicationActionOp} for {@link ImageUploadAction}.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public class Op extends AbstractApplicationActionOp<ImageUploadAction> {
 

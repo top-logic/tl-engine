@@ -123,7 +123,7 @@ public final class ScriptedTest extends LogListeningTestCase {
 	/**
 	 * {@link InstantiationContext} for the {@link ScriptedTest}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public static class ScriptedTestInstantiationContext extends SimpleInstantiationContext {
 
@@ -404,8 +404,6 @@ public final class ScriptedTest extends LogListeningTestCase {
 		for (ApplicationSession session : sessionCopy) {
 			try {
 				invalidateSession(session);
-			} catch (ThreadDeath exception) {
-				throw exception;
 			} catch (Throwable exception) {
 				// Keep the first problem, as the others are often just consequential errors
 				if (problem == null) {

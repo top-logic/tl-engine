@@ -19,7 +19,7 @@
 		<param name="newJSP"
 			value="/jsp/layout/admin/group/NewDGroup.jsp"
 		/>
-		<param name="securityProviderClass"
+		<param name="securityObject"
 			value="securityRoot"
 		/>
 		<param name="isSecurityMaster"
@@ -32,7 +32,7 @@
 			<include name="com.top_logic/admin/security/groups/groupTable.xml"
 				isSecurityMaster="${isSecurityMaster}"
 				namePrefix="${namePrefix}EditGroup"
-				securityProviderClass="${securityProviderClass}"
+				securityObject="${securityObject}"
 			>
 				<inject>
 					<layoutInfo size="413px"/>
@@ -41,39 +41,36 @@
 			<layout>
 				<components>
 					<component class="${editComponent}"
-						buttonComponent="${namePrefix}EditGroupButtons"
 						defaultFor="tl.accounts:Group"
 						model="selection(${namePrefix}EditGroup_Table)"
 						name="${namePrefix}EditGroup"
 						page="${editJSP}"
 						permitEditSystemFlag="${permitEditSystemFlag}"
 						resPrefix="admin.group.edit."
-						securityProviderClass="${securityProviderClass}"
+						securityObject="${securityObject}"
 					>
 						<dialogs>
 							<layout name="${namePrefix}NewGroupDialog">
 								<dialogInfo
 									executability="InViewMode"
-									height="330"
+									height="430"
 									openerClique="create"
 									openerCommandGroup="Create"
-									width="400"
+									width="450"
 								/>
 
 								<components>
 									<component class="${newComponent}"
-										buttonComponent="${namePrefix}NewGroupButtons"
+										buttonbar="true"
 										name="${namePrefix}NewGroup"
 										page="${newJSP}"
 										resPrefix="admin.group.edit.new."
-										securityProviderClass="${securityProviderClass}"
+										securityObject="${securityObject}"
 									/>
-									<buttonbar name="${namePrefix}NewGroupButtons"/>
 								</components>
 							</layout>
 						</dialogs>
 					</component>
-					<buttonbar name="${namePrefix}EditGroupButtons"/>
 				</components>
 			</layout>
 		</components>

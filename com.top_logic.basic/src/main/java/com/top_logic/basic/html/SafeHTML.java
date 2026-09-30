@@ -11,6 +11,7 @@ import java.util.Map;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedPolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.module.ManagedClass;
@@ -21,6 +22,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("HTML safety check")
 public class SafeHTML extends ManagedClass {
 
 	/** Name of a script tag */
@@ -39,7 +41,7 @@ public class SafeHTML extends ManagedClass {
 	 * Configuration for {@link SafeHTML} specifying which attribute names, tag names and attribute
 	 * values are allowed.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<SafeHTML> {
 		/**

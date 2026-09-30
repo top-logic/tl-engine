@@ -26,7 +26,7 @@ import com.top_logic.mail.base.Mail;
 /**
  * Display component for a single mail.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class MailComponent extends FormComponent {
 
@@ -70,8 +70,8 @@ public class MailComponent extends FormComponent {
 	        theContext.addMember(this.createAddressField(FIELD_CC, theMail.getCC()));
 	        theContext.addMember(theGroup);
 
-	        if (theMail.hasAttachements()) {
-	        	for (Document theAttachment : theMail.getAttachements()) {
+	        if (theMail.hasAttachments()) {
+	        	for (Document theAttachment : theMail.getAttachments()) {
 					theGroup.addMember(this.createAttachmentField(theAttachment));
 	            }
 	        }
@@ -95,7 +95,7 @@ public class MailComponent extends FormComponent {
 		String    theName  = IdentifierUtil.toExternalForm(KBUtils.getWrappedObjectName(anAttachment)).replaceAll("[^\\w]", "");
 		DataField theField = FormFactory.newDataField(theName);
 
-		theField.setValue(anAttachment);
+		theField.initializeField(anAttachment);
 		theField.setImmutable(true);
 
 		return theField;

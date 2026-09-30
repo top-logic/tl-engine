@@ -5,23 +5,17 @@
 <root>
 	<alias>
 		<entry name="%QUICK_SEARCH_SEARCH_COMPONENT%" value="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput" />
+		
+    	<!-- Aliases for TestServerClient.script.xml -->
+		<entry name="%TEST_OPEN_API_URL%" value="${env:tl_test_testopenapi_url}"/>
+		<entry name="%TEST_OPEN_API_SERVER_ID%" value="${env:tl_test_testopenapi_server_id}"/>
+		<entry name="%TEST_OPEN_API_SERVER_SECRET%" value="${env:tl_test_testopenapi_server_secret}"/>
+		<entry name="%TEST_OPEN_API_CLIENT_ID%" value="${env:tl_test_testopenapi_client_id}"/>
+		<entry name="%TEST_OPEN_API_CLIENT_SECRET%" value="${env:tl_test_testopenapi_client_secret}"/>
 	</alias>
 	
 	<properties>
-        <section name="Monitoring">
-            <entry name="com.top_logic.event.logEntry.LogEntryReceiver$Module" value="enabled"/>
-        </section>
 		
-<!-- 		<section name="RoleSetup" > -->
-<!-- 			<entry name="DemoSecurity" value="Role1,Role2,Role3" comment="" /> -->
-<!-- 			<entry name="DemoSecurity" value="SecurityAdministrator" comment="" /> -->
-<!-- 		</section> -->
-	
-<!-- 		<section name="InitialGroupManager" > -->
-<!-- 			<entry name="initialGroups" value="securityAdministrators" /> -->
-<!-- 			<entry name="groupRoles.securityAdministrators" value="DemoSecurity.SecurityAdministrator" /> -->
-<!-- 		</section> -->
-        
 		<section name="ConfiguredAttributedTooltips" comment="Attributes to show in ConfiguredAttributedTooltipProvider">
             <entry name="me:DemoTypes:A" value="name, tl.type, boolean" />
 		</section>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objects>
+	<object id="1"
+		type="test.flowchart:Part"
+	>
+		<attribute name="name"
+			value="A295 600 00 00"
+		/>
+		<attribute name="color"
+			value="#008800"
+		/>
+	</object>
+	<object id="2"
+		type="test.flowchart:Part"
+	>
+		<attribute name="name"
+			value="A294 600 03 00"
+		/>
+		<attribute name="color"
+			value="#00EEEE"
+		/>
+	</object>
+	<object id="3"
+		type="test.flowchart:Part"
+	>
+		<attribute name="name"
+			value="A167 600 04 10"
+		/>
+		<attribute name="color"
+			value="#FF8800"
+		/>
+	</object>
+	<object id="4"
+		type="test.flowchart:Part"
+	>
+		<attribute name="name"
+			value="A530 600 12 00"
+		/>
+		<attribute name="color"
+			value="#EE00EE"
+		/>
+	</object>
+</objects>

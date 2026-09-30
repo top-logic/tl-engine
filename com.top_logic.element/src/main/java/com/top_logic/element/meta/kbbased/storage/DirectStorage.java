@@ -92,12 +92,6 @@ public class DirectStorage<C extends DirectStorage.Config<?>> extends AbstractSt
 	}
 
 	@Override
-	public Object getUpdateValue(AttributeUpdate update)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public void removeAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValue)
 			throws NoSuchAttributeException, AttributeException {
 		throw new UnsupportedOperationException();

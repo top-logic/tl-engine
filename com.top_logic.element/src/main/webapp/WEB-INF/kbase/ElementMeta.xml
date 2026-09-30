@@ -57,6 +57,8 @@
 	    	is-container="false" 
 	    	deletion-policy="veto" 
 	    	target-type="MetaElement"
+	    	
+	    	storage="com.top_logic.knowledge.CurrentOnlyReferenceStorage"
     	/>
 </attributes>
     </metaobject>
@@ -99,6 +101,28 @@
 				</index-parts>
 		    </mo_index>
 		</index>
+	</association>
+
+	<association super_class="hasStructureChild" object_name="hasChildDeleteReferer">
+		<attributes>
+		    <source
+				override="true"
+		    	target-type="Object"
+		    	deletion-policy="delete-referer" 
+				is-container="true"
+		    />
+		</attributes>
+	</association>
+	
+	<association super_class="hasStructureChild" object_name="hasStructureChildVeto">
+		<attributes>
+		    <destination
+				override="true"
+				is-container="true"
+		    	target-type="Object"
+		    	deletion-policy="veto" 
+		    />
+		</attributes>
 	</association>
 
 	<metaobject object_type="MOKnowledgeObject" object_name="TLModule" super_class="TLModelPart" abstract="false">
@@ -309,6 +333,7 @@
 			And they don't have this attribute. -->
 		</reference>
 		<mo_attribute att_name="mandatory"        att_type="Boolean" mandatory="false" />
+		<mo_attribute att_name="abstract" att_type="Boolean" mandatory="false" />
 		<mo_attribute att_name="deleteProtected"  att_type="Boolean" mandatory="false" />
 		
 		<mo_attribute att_name="composite"           att_type="Boolean" mandatory="false" />
@@ -319,6 +344,9 @@
 		<mo_attribute att_name="navigate"           att_type="Boolean" mandatory="false" />
 		<mo_attribute att_name="historyType" att_type="String" mandatory="false">
 			<storage class="com.top_logic.dob.attr.storage.EnumAttributeStorage" enum="com.top_logic.dob.meta.MOReference$HistoryType" />
+		</mo_attribute>
+		<mo_attribute att_name="deletionPolicy" att_type="String" mandatory="false">
+			<storage class="com.top_logic.dob.attr.storage.EnumAttributeStorage" enum="com.top_logic.dob.meta.MOReference$DeletionPolicy" />
 		</mo_attribute>
 		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute" att_name="storageImplementation" att_type="Void"  mandatory="false">
 			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
@@ -456,6 +484,7 @@
 			</annotation>
 			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
 				full-load="true" />
+			<key-attributes attributes="source,dest"/>
 		</annotations>
 		
 		<attributes>
@@ -557,6 +586,27 @@
 	</association>
 	
 	<association super_class="hasWrapperAttValueBaseAssociation" object_name="hasWrapperAttValue" />
+	
+	<association super_class="hasWrapperAttValueBaseAssociation" object_name="hasWrapperDeleteReferer">
+		<attributes>
+		    <source
+				override="true"
+		    	target-type="Object"
+		    	deletion-policy="delete-referer" 
+				is-container="true"
+		    />
+		</attributes>
+	</association>
+
+	<association super_class="hasWrapperAttValueBaseAssociation" object_name="hasWrapperVeto">
+		<attributes>
+		    <destination
+				override="true"
+		    	target-type="Object"
+		    	deletion-policy="veto" 
+		    />
+		</attributes>
+	</association>
 
 		<!-- Database table storing references to historic objects. Note: This 
 			definition is actually a copy of "hasWrapperAttValueBaseAssociation". The 
@@ -569,6 +619,7 @@
 			</annotation>
 			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
 				full-load="true" />
+			<key-attributes attributes="source,dest,metaAttribute"/>
 		</annotations>
 		<attributes>
 			<source
@@ -625,6 +676,7 @@
 			</annotation>
 			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
 				full-load="true" />
+			<key-attributes attributes="source,dest,metaAttribute"/>
 		</annotations>
 		<attributes>
 			<source
@@ -680,6 +732,17 @@
 <attributes>
 		<mo_attribute att_name="name"      att_type="String" mandatory="true"/>
 		<mo_attribute att_name="sortOrder" att_type="Integer" mandatory="false" />
+		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
+			att_name="tType"
+			att_type="MetaElement"
+			mandatory="true"
+		>
+			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
+				<value-factory class="com.top_logic.element.meta.kbbased.TLTypeCacheFactory"
+					type="tl.search:StoredQuery"
+				/>
+			</storage>
+		</mo_attribute>
 </attributes>
 	</metaobject>
 
@@ -716,5 +779,54 @@
 		</specialisations>
 	</alternative>
 	
+		<metaobject
+			db_name="HAS_MIXED_VALUE_UNV"
+			object_name="hasMixedValueUnversioned"
+			super_class="hasMixedValue"
+			versioned="false"
+		/>
+		<metaobject
+			db_name="HAS_HISTORIC_VALUE_UNV"
+			object_name="hasHistoricValueUnversioned"
+			super_class="hasHistoricValue"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_WRAPPER_DEL_REF_UNV"
+			object_name="hasWrapperDeleteRefererUnversioned"
+			super_class="hasWrapperDeleteReferer"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_WRAPPER_UNV"
+			object_name="hasWrapperAttValueUnversioned"
+			super_class="hasWrapperAttValue"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_STRUCT_CHILD_VETO_UNV"
+			object_name="hasStructureChildVetoUnversioned"
+			super_class="hasStructureChildVeto"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_STRUCT_CHILD_UNV"
+			object_name="hasStructureChildUnversioned"
+			super_class="hasStructureChild"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_CHILD_DEL_REF_UNV"
+			object_name="hasChildDeleteRefererUnversioned"
+			super_class="hasChildDeleteReferer"
+			versioned="false"
+		/>
+		<association
+			db_name="HAS_WRAPPER_VETO_UNV"
+			object_name="hasWrapperVetoUnversioned"
+			super_class="hasWrapperVeto"
+			versioned="false"
+		/>
+
 </metaobjects>
 </objectlist>

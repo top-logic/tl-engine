@@ -6,9 +6,7 @@
 %><%@taglib uri="layout" prefix="layout"
 %><%@taglib uri="ajaxform" prefix="form"
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:form ignoreModel="true">
 			<%
@@ -16,16 +14,11 @@
 			(ExpressionSelectorComponent<?>) MainLayout.getComponent(pageContext);
 			String selectorFieldName = selectorComponent.getExpressionSelectorName();
 			%>
-			<form:columns
-				keep="true"
-			>
-				<form:inputCell name="<%= selectorFieldName %>"
-				/>
+			<form:columns keep="true">
+				<form:inputCell name="<%= selectorFieldName %>"/>
 				<form:scope name="<%= QueryUtils.FORM_GROUP %>">
-					<form:inputCell name="<%= QueryUtils.PUBLISH_QUERY_FIELD %>"
-					/>
-					<form:inputCell name="<%= QueryUtils.VISIBLE_GROUPS_FIELD %>"
-					/>
+					<form:inputCell name="<%= QueryUtils.PUBLISH_QUERY_FIELD %>"/>
+					<form:inputCell name="<%= QueryUtils.VISIBLE_GROUPS_FIELD %>"/>
 				</form:scope>
 			</form:columns>
 		</form:form>

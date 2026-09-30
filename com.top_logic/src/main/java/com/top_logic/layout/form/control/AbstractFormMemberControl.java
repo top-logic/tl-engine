@@ -70,7 +70,8 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 
 	@Override
 	public Menu createContextMenu(String contextInfo) {
-		return getContextMenuProvider().getContextMenu(getModel());
+		FormMember model = getModel();
+		return getContextMenuProvider().getContextMenu(model, model);
 	}
 
 	/**
@@ -176,6 +177,9 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 		registerListener(model);
 	}
 
+	/**
+	 * Registers listeners on the given model in response to attaching this control.
+	 */
 	protected void registerListener(FormMember member) {
 		member.addListener(FormMember.VISIBLE_PROPERTY, this);
 		member.addListener(FormMember.CLASS_PROPERTY, this);

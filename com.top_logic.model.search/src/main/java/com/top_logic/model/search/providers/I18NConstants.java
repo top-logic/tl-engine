@@ -10,6 +10,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
+import com.top_logic.basic.util.ResKey5;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -59,6 +60,31 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Invalid field mode "{0}", possible values are: {1}
 	 */
 	public static ResKey2 ERROR_MODE__VALUE_OPTIONS;
+
+	/**
+	 * @en The model of a form must be a modeled instance (TLObject), but was: {0}
+	 */
+	public static ResKey1 ERROR_NO_TLOBJECT_FORM_MODEL__FORM;
+
+	/**
+	 * @en Executed table command: {0}
+	 */
+	public static ResKey1 EXECUTED_TABLE_COMMAND__LABEL;
+
+	/**
+	 * @en Executed script task: {0}
+	 */
+	public static ResKey1 SCRIPT_TASK__TASK;
+
+	/**
+	 * @en Multiple instances of type {0} with value "{2}" in key attribute {1}: {3} and {4}
+	 */
+	public static ResKey5 NON_UNIQUE_KEY__TYPE_ATTR_KEY_OBJ1_OBJ2;
+
+	/**
+	 * @en Invalid update value in function "{0}": {1}
+	 */
+	public static ResKey2 INVALID_UPDATE_TYPE__FUN_EX;
 
 	static {
 		initConstants(I18NConstants.class);

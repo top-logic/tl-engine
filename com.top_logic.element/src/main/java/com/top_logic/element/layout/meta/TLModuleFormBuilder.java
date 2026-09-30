@@ -23,8 +23,10 @@ import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.ModuleConfig;
+import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.mode.ActiveIf;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.config.TLModuleAnnotation;
@@ -35,7 +37,7 @@ import com.top_logic.util.model.ModelService;
 /**
  * {@link DeclarativeFormBuilder} for a {@link TLModule}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLModuleFormBuilder extends DeclarativeFormBuilder<TLModule, TLModuleFormBuilder.EditModel> {
 
@@ -54,7 +56,7 @@ public class TLModuleFormBuilder extends DeclarativeFormBuilder<TLModule, TLModu
 	/**
 	 * Base edit properties of all {@link TLModule} configurations.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	@DisplayOrder({
 		EditModel.NAME,
@@ -149,7 +151,7 @@ public class TLModuleFormBuilder extends DeclarativeFormBuilder<TLModule, TLModu
 
 		ResKey key = TLModelNamingConvention.getModuleLabelKey(businessModel);
 		formModel.setLabel(key);
-		formModel.setDescription(key.tooltip());
+		formModel.setDescription(new DefaultHtmlResKey(key.tooltip()));
 		formModel.setCreate(getConfig().isCreate());
 
 		for (TLAnnotation annotation : businessModel.getAnnotations()) {

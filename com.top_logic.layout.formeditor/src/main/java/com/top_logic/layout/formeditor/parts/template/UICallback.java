@@ -115,23 +115,16 @@ public class UICallback extends AbstractVariableDefinition<UICallback.Config> {
 
 	@Override
 	public Object eval(LayoutComponent component, FormEditorContext editorContext, Object model) {
-		return new CallbackFragment(_executability, _action, component, model);
+		return new CallbackFragment(component, model);
 	}
 
-	private static final class CallbackFragment implements HTMLFragment {
-
-		private QueryExecutor _action;
+	private final class CallbackFragment implements HTMLFragment {
 
 		private Object _model;
 
-		private ExecutabilityRule _executability;
-
 		private LayoutComponent _component;
 
-		public CallbackFragment(ExecutabilityRule executability, QueryExecutor action, LayoutComponent component,
-				Object model) {
-			_executability = executability;
-			_action = action;
+		public CallbackFragment(LayoutComponent component, Object model) {
 			_component = component;
 			_model = model;
 		}
@@ -155,7 +148,9 @@ public class UICallback extends AbstractVariableDefinition<UICallback.Config> {
 						return HandlerResult.DEFAULT_RESULT;
 					}
 
-					try (var tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+					try (var tx =
+						PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.FORM_ACTION__NAME_COMP
+							.fill(getConfig().getName(), _component.getTitleKey()))) {
 						_action.execute(_model, arguments.get("args"));
 						tx.commit();
 					}

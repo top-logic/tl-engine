@@ -9,7 +9,7 @@ import org.jfree.chart.labels.PieToolTipGenerator;
 import org.jfree.data.general.PieDataset;
 
 /**
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ReportingPieToolTipGenerator extends ReportingTooltipGenerator implements PieToolTipGenerator {
 

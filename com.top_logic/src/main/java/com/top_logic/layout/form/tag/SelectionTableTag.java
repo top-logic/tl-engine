@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.BodyContent;
-import javax.servlet.jsp.tagext.BodyTag;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.BodyContent;
+import jakarta.servlet.jsp.tagext.BodyTag;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
@@ -146,7 +146,7 @@ public class SelectionTableTag extends AbstractFormFieldControlTag implements Bo
 
 	@Override
 	public String addControl(HTMLFragment childControl) {
-		((TableControl) getControl()).addTitleBarControl(childControl);
+		TableTag.table(getControl()).addTitleBarControl(childControl);
 	    // Additional controls are displayed in a flow layout without any other
 		// user-defined mark-up.
 	    return null;
@@ -243,7 +243,7 @@ public class SelectionTableTag extends AbstractFormFieldControlTag implements Bo
 			}
 		}
 		
-		return control;
+		return TableTag.limitHeight(control, viewModel.getConfigKey());
 	}
 
 	private void wrapAccessors(TableConfiguration tableConfiguration) {

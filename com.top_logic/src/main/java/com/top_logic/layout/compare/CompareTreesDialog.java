@@ -143,9 +143,11 @@ public class CompareTreesDialog<N> extends TreeTableDialog {
 	@Override
 	protected AbstractTreeTableModel<?> createTreeModel() {
 		CompareService<CompareInfo> compareService = new CompareService<>(null, _algorithm);
+		TableConfigurationProvider tableConfig =
+			TableConfigurationFactory.combine(_tableConfig, WrapCompareCells.INSTANCE);
 		AbstractTreeTableModel<?> compareTreeTableModel =
 			compareService.getCompareTreeTableModel(_baseValueTree, _baseValueRoot,
-			_changeValueTree, _changeValueRoot, _columnNames, _tableConfig, _identifierMapping);
+			_changeValueTree, _changeValueRoot, _columnNames, tableConfig, _identifierMapping);
 		if (_rootVisible) {
 			compareTreeTableModel.setRootVisible(true);
 			// Expand root as just one displayed node looks poor 

@@ -20,10 +20,11 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
- * The class {@link ModuleSystem} manages all configured services in the system.
- * 
+ * Manages all configured services in the system.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Module system")
 public final class ModuleSystem extends ManagedClass {
 
 	/**
@@ -41,7 +42,7 @@ public final class ModuleSystem extends ManagedClass {
 	 * Configuration for {@link ModuleSystem}. Contains all services which are needed by the
 	 * application.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<ModuleSystem> {
 

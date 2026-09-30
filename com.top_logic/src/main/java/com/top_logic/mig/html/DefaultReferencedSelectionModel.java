@@ -16,9 +16,10 @@ import com.top_logic.basic.col.Filter;
  * 
  * @author     <a href="mailto:STS@top-logic.com">STS</a>
  */
-public class DefaultReferencedSelectionModel extends DefaultMultiSelectionModel implements ReferencedSelectionModel {
+public class DefaultReferencedSelectionModel<T> extends DefaultMultiSelectionModel<T>
+		implements ReferencedSelectionModel<T> {
 	
-	private final ListModel referencedSelection;
+	private final ListModel<T> referencedSelection;
 	
 	/**
 	 * Create a new DefaultReferencedSelectionModel
@@ -29,20 +30,17 @@ public class DefaultReferencedSelectionModel extends DefaultMultiSelectionModel 
 	 * @param referencedSelection
 	 *        The external selection list.
 	 */
-	public DefaultReferencedSelectionModel(Filter selectionFilter, ListModel referencedSelection,
+	public DefaultReferencedSelectionModel(Filter<? super T> selectionFilter, ListModel<T> referencedSelection,
 			SelectionModelOwner owner) {
 		super(selectionFilter, owner);
 		this.referencedSelection = referencedSelection;
 	}
 
 	@Override
-	public boolean isSelectable(Object obj) {
+	public boolean isSelectable(T obj) {
 		return !isReferencedSelection(obj) && super.isSelectable(obj);
 	}
 
-	/** 
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean isReferencedSelection(Object obj) {
 		
@@ -61,11 +59,8 @@ public class DefaultReferencedSelectionModel extends DefaultMultiSelectionModel 
 		return isPresent;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void propagateReferencedSelectionChange(Set changedSelection) {
+	public void propagateReferencedSelectionChange(Set<? extends T> changedSelection) {
 		fireSelectionChanged(changedSelection);
 	}
 }

@@ -30,6 +30,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.component.AbstractCreateComponent;
+import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -42,7 +43,7 @@ import com.top_logic.tool.boundsec.CommandHandlerUtil;
 /**
  * Generic component to create a new object.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  * 
  * @deprecated Use {@link AbstractCreateComponent} with {@link CreateFormBuilder}
  */
@@ -80,6 +81,8 @@ public abstract class CreateAttributedComponent extends AbstractCreateComponent 
     @Override
 	public FormContext createFormContext() {
         AttributeFormContext theContext = new AttributeFormContext(this.getResPrefix());
+		FormComponent.initFormContext(this, this, theContext);
+
         TLClass          theMeta    = getMetaElement();
 
         this.addAttributedConstraints(theMeta, theContext);
@@ -108,7 +111,7 @@ public abstract class CreateAttributedComponent extends AbstractCreateComponent 
 			for (TLStructuredTypePart attribute : type.getAllParts()) {
 				this.addAnotherMetaAttribute(formContext, type, creation, attribute);
 			}
-			_modifier.postModify(this, type, null, formContext, formContext);
+			_modifier.postModify(this, type, creation, formContext, formContext);
         }
     }
 

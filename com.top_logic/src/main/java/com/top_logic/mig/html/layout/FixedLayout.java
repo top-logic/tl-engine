@@ -59,18 +59,19 @@ public class FixedLayout implements TLLayout {
 	}
 
 	@Override
-	public void writeTo(OutputStream stream, boolean isFinal) throws IOException {
+	public void writeTo(OutputStream stream, boolean markFinal) throws IOException {
 		Config configToWrite;
-		if (isFinal == _config.isFinal()) {
+		if (markFinal == _config.isFinal()) {
 			configToWrite = _config;
 		} else {
 			configToWrite = TypedConfiguration.copy(_config);
-			configToWrite.setFinal(isFinal);
+			configToWrite.setFinal(markFinal);
 		}
 
 		try (Writer out = new OutputStreamWriter(stream, StringServices.CHARSET_UTF_8)) {
-			ConfigurationWriter confWriter = new ConfigurationWriter(out);
-			confWriter.write(LayoutComponent.Config.COMPONENT, LayoutComponent.Config.class, configToWrite);
+			try (ConfigurationWriter confWriter = new ConfigurationWriter(out)) {
+				confWriter.write(LayoutComponent.Config.COMPONENT, LayoutComponent.Config.class, configToWrite);
+			}
 		} catch (XMLStreamException exception) {
 			throw new IOException(exception);
 		}

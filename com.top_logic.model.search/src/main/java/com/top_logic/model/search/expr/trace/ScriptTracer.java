@@ -7,12 +7,14 @@ package com.top_logic.model.search.expr.trace;
 
 import com.top_logic.basic.col.Sink;
 import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.Pointer;
@@ -29,10 +31,18 @@ import com.top_logic.util.model.ModelService;
  * </p>
  * 
  * @see #compile(Expr)
- * @see #execute(KnowledgeBase, Sink, Object...)
+ * @see #execute(KnowledgeBase, Sink, OverlayLookup, Object...)
  * @see QueryExecutor
  */
 public class ScriptTracer {
+
+	/**
+	 * Creates a {@link ScriptTracer} for the given expression, or <code>null</code> if no
+	 * expression is given.
+	 */
+	public static ScriptTracer compileOptional(Expr expr) {
+		return expr == null ? null : compile(expr);
+	}
 
 	/**
 	 * Creates a {@link ScriptTracer} for the given expression.
@@ -66,6 +76,24 @@ public class ScriptTracer {
 	}
 
 	/**
+	 * Disables the security check for the traced expression.
+	 *
+	 * <p>
+	 * By default, the traced expression applies security, i.e. it is evaluated with the current
+	 * user's access rights (data of objects the user must not read is not accessible). Calling this
+	 * method permanently switches security off for this {@link ScriptTracer}'s expression, so that
+	 * the traced evaluation operates regardless of the current user's access rights. It must
+	 * therefore only be used for internal scripts that must not be subject to the user's access
+	 * rights.
+	 * </p>
+	 *
+	 * @see QueryExecutor#disableSecurity()
+	 */
+	public void disableSecurity() {
+		UpdateSecurityVisitor.disableSecurity(_debugExpr);
+	}
+
+	/**
 	 * Evaluates the the script of this {@link ScriptTracer} and reports all accesses to the given
 	 * {@link Sink}.
 	 * 
@@ -75,8 +103,8 @@ public class ScriptTracer {
 	 *        The arguments to the script.
 	 * @return The evaluation result returned by the script.
 	 */
-	public Object execute(Sink<Pointer> trace, Object... args) {
-		return execute(PersistencyLayer.getKnowledgeBase(), trace, args);
+	public Object execute(Sink<Pointer> trace, OverlayLookup overlays, Object... args) {
+		return execute(PersistencyLayer.getKnowledgeBase(), trace, overlays, args);
 	}
 
 	/**
@@ -91,13 +119,16 @@ public class ScriptTracer {
 	 *        The arguments to the script.
 	 * @return The evaluation result returned by the script.
 	 */
-	public Object execute(KnowledgeBase kb, Sink<Pointer> trace, Object... args) {
-		return _debugExpr.evalWith(ScriptTracer.tracingContext(kb, _model, trace), Args.some(args));
+	public Object execute(KnowledgeBase kb, Sink<Pointer> trace, OverlayLookup overlays,
+			Object... args) {
+		return _debugExpr.evalWith(ScriptTracer.tracingContext(kb, _model, trace, overlays), Args.some(args));
 	}
 
-	private static EvalContext tracingContext(KnowledgeBase kb, TLModel model, Sink<Pointer> trace) {
-		EvalContext context = new EvalContext(kb, model, null, null);
+	private static EvalContext tracingContext(KnowledgeBase kb, TLModel model, Sink<Pointer> trace,
+			OverlayLookup overlays) {
+		EvalContext context = new EvalContext(false, kb, model, null, null);
 		context.defineVar(TracingAccessRewriter.TRACE, trace);
+		context.defineVar(TracingAccessRewriter.UPDATE_CONTAINER, overlays);
 		return context;
 	}
 

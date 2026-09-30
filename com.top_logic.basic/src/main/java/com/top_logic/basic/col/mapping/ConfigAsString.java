@@ -102,7 +102,9 @@ public class ConfigAsString<C extends ConfigAsString.Config<?>> extends Abstract
 			}
 
 			StringWriter buffer = new StringWriter();
-			new ConfigurationWriter(buffer).write(_rootTag, _staticType, input);
+			try (ConfigurationWriter w = new ConfigurationWriter(buffer)) {
+				w.write(_rootTag, _staticType, input);
+			}
 
 			String xmlString = buffer.toString();
 			String transformedXML = _inner.apply(xmlString);

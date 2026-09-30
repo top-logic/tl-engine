@@ -5,13 +5,13 @@
  */
 package com.top_logic.mail.proxy;
 
-import javax.mail.Flags.Flag;
-import javax.mail.Message;
+import jakarta.mail.Flags.Flag;
+import jakarta.mail.Message;
 
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface MailServerMessage {
 
@@ -41,7 +41,7 @@ public interface MailServerMessage {
      * @return    <code>true</code>, if this message contains attachments.
      * @throws    TopLogicException    If there an error occurred during check.
      */
-    public boolean hasAttachements() throws TopLogicException;
+    public boolean hasAttachments() throws TopLogicException;
 
     /**
      * Return the attachments located in this mail.
@@ -49,7 +49,7 @@ public interface MailServerMessage {
      * @return    The attachments or <code>null</code>, if this mail has no attachments.
      * @throws    TopLogicException    If reading the attachments from mail server fails for a reason.
      */
-    public Attachements getAttachements() throws TopLogicException;
+    public Attachments getAttachments() throws TopLogicException;
 
     /** 
      * Return the message, this instance was created from.

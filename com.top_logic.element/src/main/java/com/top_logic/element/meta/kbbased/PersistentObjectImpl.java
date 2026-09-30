@@ -9,10 +9,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.ChangeAware;
 import com.top_logic.element.meta.ValidityCheck;
@@ -24,13 +25,20 @@ import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
-import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLScope;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.cache.TLModelCacheService;
+import com.top_logic.model.cache.TLModelOperations.CompositionStorages;
+import com.top_logic.model.composite.LinkTable;
+import com.top_logic.model.composite.SourceTable;
+import com.top_logic.model.composite.TargetTable;
+import com.top_logic.model.impl.TransientTLObjectImpl;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -41,9 +49,6 @@ import com.top_logic.util.error.TopLogicException;
 public class PersistentObjectImpl {
 
 	private static final String ATTRIBUTE_SUFFIX_LAST_CHANGED = "_last_changed";
-
-	private static final AssociationSetQuery<KnowledgeAssociation> COMPOSITION_LINKS =
-		AssociationQuery.createIncomingQuery("containerLinks", ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION);
 
 	public static void addMetaElement(TLObject self, TLClass aMetaElement) {
 		PersistentScope.addMetaElement(self, aMetaElement);
@@ -61,46 +66,181 @@ public class PersistentObjectImpl {
 	 * Implementation of {@link TLObject#tContainer()}.
 	 */
 	public static TLObject tContainer(TLObject self) {
-		KnowledgeAssociation link = tContainerLink(self);
-		if (link == null) {
+		TLStructuredType selfType = self.tType();
+		if (selfType.getModelKind() != ModelKind.CLASS) {
 			return null;
 		}
-		return link.getSourceObject().getWrapper();
+		CompositionStorages compositionStorage =
+			TLModelCacheService.getOperations().getCompositionStorages((TLClass) selfType);
+
+		TLObject inTargetContainer = inTargetContainer(self, compositionStorage);
+		if (inTargetContainer != null) {
+			return inTargetContainer;
+		}
+		TLObject linkContainer = linkContainer(self, compositionStorage);
+		if (linkContainer != null) {
+			return linkContainer;
+		}
+		TLObject inSourceContainer = inSourceContainer(self, compositionStorage);
+		if (inSourceContainer != null) {
+			return inSourceContainer;
+		}
+		return null;
+	}
+
+	private static TLObject inSourceContainer(TLObject self, CompositionStorages compositionStorage) {
+		for (SourceTable inSource : compositionStorage.storedInSource()) {
+			AssociationSetQuery<TLObject> query = inSourceQuery(inSource);
+			Set<TLObject> containers = AbstractWrapper.resolveLinks(self, query);
+			switch (containers.size()) {
+				case 0:
+					continue;
+				case 1:
+					return containers.iterator().next();
+				default:
+					throw failMultipleContainers(self, containers);
+			}
+		}
+		return null;
+	}
+
+	private static AssociationSetQuery<TLObject> inSourceQuery(SourceTable inSource) {
+		String table = inSource.getTable();
+		String targetRef = inSource.getPartAttribute();
+		return AssociationQuery.createQuery("source for " + table + "." + targetRef, TLObject.class, table, targetRef);
+	}
+
+	private static TLObject linkContainer(TLObject self, CompositionStorages compositionStorage) {
+		KnowledgeAssociation link = findLink(self, compositionStorage);
+		if (link != null) {
+			return link.getSourceObject().getWrapper();
+		}
+		return null;
+	}
+
+	private static TLObject inTargetContainer(TLObject self, CompositionStorages compositionStorage) {
+		for (TargetTable inTarget : compositionStorage.storedInTarget()) {
+			TLObject container = self.tGetDataReference(TLObject.class, inTarget.getContainer());
+			if (container != null) {
+				// Container found
+				return container;
+			}
+		}
+		return null;
 	}
 
 	/**
 	 * Implementation of {@link TLObject#tContainerReference()}.
 	 */
 	public static TLReference tContainerReference(TLObject self) {
-		KnowledgeAssociation link = tContainerLink(self);
-		if (link == null) {
+		TLStructuredType selfType = self.tType();
+		if (selfType.getModelKind() != ModelKind.CLASS) {
 			return null;
 		}
-		return ((KnowledgeItem) link.getAttributeValue(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR)).getWrapper();
+		CompositionStorages compositionStorage =
+			TLModelCacheService.getOperations().getCompositionStorages((TLClass) selfType);
+
+		TLReference inTargetReference = inTargetReference(self, compositionStorage);
+		if (inTargetReference != null) {
+			return inTargetReference;
+		}
+		TLReference linkReference = linkReference(self, compositionStorage);
+		if (linkReference != null) {
+			return linkReference;
+		}
+		TLReference inSourceReference = inSourceReference(self, compositionStorage);
+		if (inSourceReference != null) {
+			return inSourceReference;
+		}
+		return null;
 	}
 
-	private static KnowledgeAssociation tContainerLink(TLObject self) {
-		Set<KnowledgeAssociation> links = AbstractWrapper.resolveLinks(self, COMPOSITION_LINKS);
+	private static TLReference inSourceReference(TLObject self, CompositionStorages compositionStorage) {
+		for (SourceTable inSource : compositionStorage.storedInSource()) {
+			AssociationSetQuery<TLObject> query = inSourceQuery(inSource);
+			Set<TLObject> containers = AbstractWrapper.resolveLinks(self, query);
+			switch (containers.size()) {
+				case 0:
+					continue;
+				case 1:
+					return inSource.getReference();
+				default:
+					throw failMultipleContainers(self, containers);
+			}
+		}
+		return null;
+	}
+
+	private static TLReference linkReference(TLObject self, CompositionStorages compositionStorage) {
+		KnowledgeAssociation link = findLink(self, compositionStorage);
+		if (link != null) {
+			TLObject container = link.getSourceObject().getWrapper();
+			return findConcreteReference(container,
+				link.tGetDataReference(TLReference.class, WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR));
+		}
+		return null;
+	}
+
+	private static TLReference inTargetReference(TLObject self, CompositionStorages compositionStorage) {
+		for (TargetTable inTarget : compositionStorage.storedInTarget()) {
+			TLReference compositeRef = inTarget.getReference(self);
+			if (compositeRef != null) {
+				// Container found
+				return compositeRef;
+			}
+		}
+		return null;
+	}
+
+	private static TLReference findConcreteReference(TLObject self, TLReference ref) {
+		return (TLReference) self.tType().getPartOrFail(ref.getName());
+	}
+
+	private static KnowledgeAssociation findLink(TLObject self, CompositionStorages storages) {
+		Set<KnowledgeAssociation> links = findLinks(self, storages);
 		if (links.isEmpty()) {
 			return null;
 		}
 		Iterator<KnowledgeAssociation> iterator = links.iterator();
 		KnowledgeAssociation link = iterator.next();
 		if (iterator.hasNext()) {
-			throw new IllegalStateException("Object '" + self + "' is part of multiple containers.");
+			List<TLObject> allContainers = links.stream()
+				.map(KnowledgeAssociation::getSourceObject)
+				.map(KnowledgeItem::<TLObject> getWrapper)
+				.collect(Collectors.toList());
+			throw failMultipleContainers(self, allContainers);
 		}
 		return link;
+	}
+
+	private static IllegalStateException failMultipleContainers(TLObject self,
+			Collection<? extends TLObject> allContainers) {
+		return new IllegalStateException("Object '" + self + "' is part of multiple containers: " + allContainers);
+	}
+
+	private static Set<KnowledgeAssociation> findLinks(TLObject self, CompositionStorages storages) {
+		for (LinkTable linkTable : storages.storedInLink()) {
+			String tableName = linkTable.getTable();
+			AssociationSetQuery<KnowledgeAssociation> query =
+				AssociationQuery.createIncomingQuery("containerLinks for " + tableName, tableName);
+			Set<KnowledgeAssociation> links = AbstractWrapper.resolveLinks(self, query);
+			if (!links.isEmpty()) {
+				return links;
+			}
+		}
+
+		return Collections.emptySet();
 	}
 
 	public static void removeMetaElement(TLObject self, TLClass aMetaElement) {
 		PersistentScope.removeMetaElement(self, aMetaElement);
 	}
 
-	public static TLClass getMetaElement(TLObject self, String aMetaElementType) {
+	public static TLClass getMetaElement(TLScope self, String aMetaElementType) {
 		return PersistentScope.getMetaElement(self, aMetaElementType);
 	}
 
-	public static Set<TLClass> getMetaElements(TLObject self) {
+	public static Set<TLClass> getMetaElements(TLScope self) {
 		return PersistentScope.getMetaElements(self);
 	}
 
@@ -113,24 +253,41 @@ public class PersistentObjectImpl {
 	 *        the value
 	 */
 	public static void addValue(TLObject object, String aKey, Object aValue) {
-        try{
-			TLStructuredTypePart attribute = object.tType().getPart(aKey);
-            if (AttributeOperations.isCollectionValued(attribute)) {
-				AttributeOperations.addAttributeValue(object, attribute, aValue);
-            }
-            else{
-				throw new IllegalStateException("Attribute is not collection-valued: " + attribute);
-            } 
-        }
-        catch (NoSuchAttributeException e) {
-			throw new IllegalStateException(aKey + " is not an attribute of " + object);
-        }
-        catch (Exception ex) {
-            String message = "Problem adding attribute "+aValue+" to "+aKey;
+		addValue(object, getAttribute(object, aKey), aValue);
+	}
+
+	private static TLStructuredTypePart getAttribute(TLObject object, String name) throws IllegalStateException {
+		TLStructuredTypePart attribute = object.tType().getPart(name);
+		if (attribute == null) {
+			throw new IllegalStateException(
+				name + " is not an attribute of " + TLModelUtil.qualifiedName(object.tType()));
+		}
+		return attribute;
+	}
+
+	/**
+	 * Add a value to a collection-valued attribute
+	 * 
+	 * @param attribute
+	 *        The collection valued attribute.
+	 * @param value
+	 *        The value to add.
+	 */
+	public static void addValue(TLObject object, TLStructuredTypePart attribute, Object value) {
+		try {
+			if (AttributeOperations.isCollectionValued(attribute)) {
+				AttributeOperations.addAttributeValue(object, attribute, value);
+			} else {
+				throw new IllegalStateException("Attribute is not collection-valued but a collection is added: "
+					+ TLModelUtil.qualifiedName(attribute));
+			}
+		} catch (Exception ex) {
+			String message =
+				"Problem adding value '" + value + "' to attribute '" + TLModelUtil.qualifiedName(attribute) + "'.";
 			Logger.error(message, ex, PersistentObjectImpl.class);
             throw new IllegalStateException(message, ex);
-        }  
-    }
+		}
+	}
 
 
     /**
@@ -164,25 +321,34 @@ public class PersistentObjectImpl {
 	 *        the value
 	 */
 	public static void removeValue(TLObject self, String aKey, Object aValue) {
-        try{
-			TLStructuredTypePart attribute = self.tType().getPart(aKey);
+		removeValue(self, getAttribute(self, aKey), aValue);
+    }
+
+	/**
+	 * Remove a value from a collection-valued attribute.
+	 * 
+	 * @param attribute
+	 *        The collection valued attribute.
+	 * @param value
+	 *        The value to remove.
+	 */
+	public static void removeValue(TLObject self, TLStructuredTypePart attribute, Object value) {
+		try{
             if (AttributeOperations.isCollectionValued(attribute)) {
-				AttributeOperations.removeAttributeValue(self, attribute, aValue);
+				AttributeOperations.removeAttributeValue(self, attribute, value);
             }
             else {
 				throw new IllegalStateException("Attribute is not a collection-valued: " + attribute);
             }
             
         }
-        catch (NoSuchAttributeException e) {
-			throw new IllegalStateException(aKey + " is not a attribute of " + self);
-        }
         catch (Exception ex) {
-            String message = "Problem removing attribute "+aValue+" from "+aKey;
+			String message =
+				"Problem removing value '" + value + "' from '" + TLModelUtil.qualifiedName(attribute) + "'.";
 			Logger.error(message, ex, PersistentObjectImpl.class);
             throw new IllegalStateException(message, ex);
-        }  
-    }
+        }
+	}
 
     /**
 	 * Integrates MetaAttributes. Falls back to FlexWrapper mechanism if there is no attribute of
@@ -203,7 +369,7 @@ public class PersistentObjectImpl {
             return;
         }
         
-		setValue(self, part, aValue);  
+		setValue(self, part, aValue);
     }
 
 	public static void setValue(TLObject self, TLStructuredTypePart attribute, Object value) {
@@ -216,7 +382,7 @@ public class PersistentObjectImpl {
                 if (value == null) {
                     collectionValue = Collections.EMPTY_LIST;
                 } else if (!(value instanceof Collection)) {
-					throw new IllegalArgumentException("Value must be a collection.");
+					throw TransientTLObjectImpl.errorNoCollection();
                 } else {
                 	collectionValue = (Collection<?>) value;
                 }
@@ -226,10 +392,12 @@ public class PersistentObjectImpl {
 
 			touch(self, attribute);
 		} catch (RuntimeException ex) {
-			throw new TopLogicException(I18NConstants.ERROR_SETTING_VALUE__ATTRIBUTE_VALUE.fill(attribute, value), ex);
+			throw new TopLogicException(
+				I18NConstants.ERROR_SETTING_VALUE__ATTRIBUTE_VALUE.fill(TLModelUtil.qualifiedName(attribute), value),
+				ex);
         }
 	}
-    
+
 	public static void touch(TLObject self, TLStructuredTypePart part) {
 		if (AttributeOperations.getValidityCheck(part).isActive()) {
 			String lastChangeProperty = getTouchProperty(part);

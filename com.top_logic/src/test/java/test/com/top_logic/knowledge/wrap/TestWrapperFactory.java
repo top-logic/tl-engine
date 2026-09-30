@@ -28,7 +28,7 @@ import com.top_logic.dob.DataObjectException;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Address;
@@ -64,10 +64,10 @@ public class TestWrapperFactory extends BasicTestCase {
 	 * <tt>ReadWriteLock</tt> to synchronize creation and fetching is faster.
 	 */
 	public void testFetchWrapperPerformance() throws DataObjectException, InterruptedException {
-		KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 		int numberObjects = 1000;
 		ArrayList<KnowledgeObject> kos = new ArrayList<>(numberObjects);
-		Transaction createTX = theKB.beginTransaction();
+		Transaction createTX = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		for (int i = 0; i < numberObjects; i++) {
 			kos.add(theKB.createKnowledgeObject(SUPER_KO));
 		}
@@ -88,10 +88,10 @@ public class TestWrapperFactory extends BasicTestCase {
 	 * faster.
 	 */
 	public void testFetchCreateWrapperPerformance() throws DataObjectException, InterruptedException {
-		KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 		int numberObjects = 1000;
 		ArrayList<KnowledgeObject> kos = new ArrayList<>(numberObjects);
-		Transaction createTX = theKB.beginTransaction();
+		Transaction createTX = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		for (int i = 0; i < numberObjects; i++) {
 			kos.add(theKB.createKnowledgeObject(SUPER_KO));
 		}
@@ -153,7 +153,7 @@ public class TestWrapperFactory extends BasicTestCase {
         KnowledgeBase theKB =
             KBSetup.getKnowledgeBase();
         KnowledgeBase theDefaultKB =
-            KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+            PersistencyLayer.getKnowledgeBase();
         // create test objects
 		KnowledgeObject superObject = theKB.createKnowledgeObject(SUPER_KO);
 		KnowledgeObject subObject = theKB.createKnowledgeObject(SUB_KO);
@@ -244,7 +244,7 @@ public class TestWrapperFactory extends BasicTestCase {
      */
     public void addAdressKOs() throws Exception {
         KnowledgeBase theKB = KBSetup.getKnowledgeBase();
-		try (Transaction theTX = theKB.beginTransaction()) {
+		try (Transaction theTX = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			for (int adrNo = 0; adrNo < ADR_COUNT; adrNo++) {
 				KnowledgeObject theKO = theKB.createKnowledgeObject(Address.OBJECT_NAME);
 				id[adrNo] = theKO.getObjectName();

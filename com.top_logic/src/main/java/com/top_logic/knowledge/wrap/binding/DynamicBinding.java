@@ -141,6 +141,9 @@ public class DynamicBinding extends AbstractImplementationBinding implements Con
 	}
 
 	private Class<? extends TLObject> findImplClass(TLType type) {
+		if (type == null) {
+			return defaultApplicationType();
+		}
 		return _implementationClasses.computeIfAbsent(type.tIdLocal(), localId -> findImplClassUncached(type));
 	}
 
@@ -199,6 +202,10 @@ public class DynamicBinding extends AbstractImplementationBinding implements Con
 
 	private TLType type(KnowledgeItem item) {
 		KnowledgeItem typeHandle = (KnowledgeItem) item.getValue(_typeAttr);
+		if (typeHandle == null) {
+			// A historic object is accessed whose type does no longer exist in current.
+			return null;
+		}
 		return (TLType) typeHandle.getWrapper();
 	}
 

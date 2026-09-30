@@ -8,21 +8,24 @@ package com.top_logic.security.auth.pac4j.config;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 import org.pac4j.core.client.Client;
 import org.pac4j.core.context.HttpConstants;
 import org.pac4j.core.util.generator.ValueGenerator;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
+import org.pac4j.oidc.metadata.StaticOidcOpMetadataResolver;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
+import com.nimbusds.openid.connect.sdk.Prompt;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
@@ -34,6 +37,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 
@@ -46,6 +50,18 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
  */
 public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurator.Config<?>>
 		extends AbstractConfiguredInstance<C> implements ClientConfigurator {
+
+	/**
+	 * Value of the OIDC {@link OidcConfiguration#PROMPT} parameter demanding that the identity
+	 * provider authenticates the user itself instead of answering from its single-sign-on session.
+	 */
+	private static final String PROMPT_LOGIN = Prompt.Type.LOGIN.toString();
+
+	/**
+	 * Value of the OIDC {@link OidcConfiguration#MAX_AGE} parameter accepting no authentication that
+	 * happened before the request.
+	 */
+	private static final int MAX_AGE_IMMEDIATE = 0;
 
 	/**
 	 * Configuration options for {@link DefaultOidcClientConfigurator}.
@@ -173,6 +189,7 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		 * @see OidcConfiguration#isWithState()
 		 */
 		@Name("with-state")
+		@BooleanDefault(true)
 		public boolean getWithState();
 
 		/**
@@ -196,8 +213,6 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		 * If not set, {@link #getDiscoveryURI()} must be set to dynamically retrieve the provider
 		 * configuration.
 		 * </p>
-		 * 
-		 * @see OidcConfiguration#getProviderMetadata()
 		 */
 		@Name("provider-metadata")
 		@Format(ProviderFormat.class)
@@ -250,14 +265,31 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 
 	@Override
 	public final Client createClient(ServletContext context) {
+		return initClient(createRawClient(), getConfig().getName(), context);
+	}
+
+	@Override
+	public final Client createReauthenticationClient(ServletContext context) {
 		OidcClient result = createRawClient();
 
-		result.setName(getConfig().getName());
-		C config = getConfig();
-		result.setCallbackUrl(Pac4jConfigFactory.resolveCallbackUrl(context, config));
-		result.setUrlResolver(Pac4jConfigFactory.createUrlResolver(config));
+		OidcConfiguration clientConfig = result.getConfiguration();
+		clientConfig.setMaxAge(MAX_AGE_IMMEDIATE);
+		clientConfig.addCustomParam(OidcConfiguration.PROMPT, PROMPT_LOGIN);
 
-		return result;
+		return initClient(result, Pac4jConfigFactory.getReauthenticationName(getConfig().getName()), context);
+	}
+
+	/**
+	 * Registers the given client under the given {@link Client#getName() name} and completes it with
+	 * the settings every client built from this configuration shares.
+	 */
+	private Client initClient(OidcClient client, String name, ServletContext context) {
+		client.setName(name);
+		C config = getConfig();
+		client.setCallbackUrl(Pac4jConfigFactory.resolveCallbackUrl(context, config));
+		client.setUrlResolver(Pac4jConfigFactory.createUrlResolver(config));
+
+		return client;
 	}
 
 	/**
@@ -305,7 +337,10 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		odic.setClientId(config.getClientId());
 		odic.setConnectTimeout(config.getConnectTimeout());
 		for (Entry<String, String> entry : config.getCustomParams().entrySet()) {
-			odic.addCustomParam(entry.getKey(), entry.getValue());
+			String value = entry.getValue();
+			if (!StringServices.isEmpty(value)) {
+				odic.addCustomParam(entry.getKey(), value);
+			}
 		}
 		odic.setDiscoveryURI(config.getDiscoveryURI());
 		odic.setLogoutUrl(config.getLogoutUrl());
@@ -317,7 +352,7 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		}
 		OIDCProviderMetadata providerMetadata = config.getProviderMetadata();
 		if (providerMetadata != null) {
-			odic.setProviderMetadata(providerMetadata);
+			odic.setOpMetadataResolver(new StaticOidcOpMetadataResolver(odic, providerMetadata));
 		}
 		odic.setReadTimeout(config.getReadTimeout());
 		odic.setResourceRetriever(config.getResourceRetriever());

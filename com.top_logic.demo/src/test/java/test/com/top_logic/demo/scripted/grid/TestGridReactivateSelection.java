@@ -7,6 +7,7 @@ package test.com.top_logic.demo.scripted.grid;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
 import test.com.top_logic.demo.DemoSetup;
 import test.com.top_logic.layout.scripting.XmlScriptedTestUtil;
 
@@ -27,7 +28,6 @@ public class TestGridReactivateSelection {
 			"01_TestCloseDetailDialog",
 			"02_TestDetailDialogEditsObject",
 			"03_TestReleaseReacquireWhenOpeningDialog",
-			"04_TestChangeCheckForGridInDialog",
 			"05_TestReleaseReacquireWhenGridInDialog",
 			"Cleanup",
 		};

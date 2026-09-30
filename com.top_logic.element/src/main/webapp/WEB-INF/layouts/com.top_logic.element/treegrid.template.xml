@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.element.layout.meta.FormContextModificatorTemplateParameters, com.top_logic.tool.boundsec.WithSecurityMaster">
+	<properties extends="com.top_logic.layout.tree.component.WithTreeModelBuilder, com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.mig.html.DefaultSelectionModelFactory$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.element.layout.meta.FormContextModificatorTemplateParameters, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.basic.contextmenu.component.config.WithContextMenu, com.top_logic.layout.form.component.edit.CanLock$Config, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.layout.WithChannelConfigs, com.top_logic.layout.table.component.WithCustomConfigKey">
 		<annotations>
 			<display-inherited value="APPEND"/>
 
@@ -19,16 +19,20 @@
 					<property name="partnerGroup"/>
 					<property name="readOnlyColumns"/>
 					<property name="configurationProviders"/>
+					<property name="selectionFilter"/>
 
 					<property name="rootVisible"/>
 					<property name="expandRoot"/>
 					<property name="defaultSelection"/>
+					<property name="defaultSelectionProvider"/>
 					<property name="expandSelected"/>
+					<property name="revealSelection"/>
 					<property name="multiSelection"/>
 					<property name="adjustSelectionWhenCollapsing"/>
 					<property name="showDetailOpener"/>
 					<property name="isSecurityMaster"/>
 
+					<property name="toolbar"/>
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
 					<property name="showPopOut"/>
@@ -41,6 +45,12 @@
 					<property name="dragSource"/>
 					<property name="dropTargets"/>
 					<property name="buttons"/>
+					<property name="contextMenu"/>
+					<property name="onSelectionChange"/>
+					<property name="lockHandler"/>
+					<property name="goto-targets"/>
+					<property name="additional-channels"/>
+					<property name="custom-config-key"/>
 				</value>
 			</display-order>
 		</annotations>
@@ -55,16 +65,6 @@
 		<property name="model"
 			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
 			type="com.top_logic.layout.ModelSpec"
-		/>
-		<property name="modelBuilder"
-			instance-type="com.top_logic.layout.tree.component.TreeModelBuilder"
-			type="PolymorphicConfiguration"
-		>
-			<mandatory/>
-			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
-		</property>
-		<property name="multiSelection"
-			type="boolean"
 		/>
 		<property name="adjustSelectionWhenCollapsing"
 			default="false"
@@ -97,20 +97,13 @@
 			<!-- Note: Required to produce format compatible with CommandHandler.Config#executability. -->
 			<entry-tag value="rule"/>
 		</property>
-		<!-- Note: Only for legacy usages of this template. Use `securityObject` instead. -->
-		<property name="securityProviderClass"
-			default="securityRoot"
-			type="String"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
-			<hidden/>
-		</property>
 		<property name="fixedColumns"
 			default="2"
 			type="Integer"
 		/>
 		<property name="buttons"
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			instance-type="com.top_logic.tool.boundsec.CommandHandler"
 			type="List"
 		>
 			<acceptable-classifiers value="treegrid, commons"/>
@@ -137,11 +130,26 @@
 			/>
 			<entry-tag value="dropTarget"/>
 		</property>
+		<property name="onSelectionChange"
+			instance-type="com.top_logic.layout.component.OnSelectionChangeHandler"
+		/>
+		<property name="contextMenu"
+			instance-type="com.top_logic.layout.basic.contextmenu.ContextMenuProvider"
+			type="PolymorphicConfiguration"
+		>
+			<acceptable-classifiers
+				unclassified="false"
+				value="treegrid, common"
+			/>
+			<item-default value="com.top_logic.element.layout.grid.GridContextMenuProvider"/>
+		</property>
 	</properties>
 
-	<component class="com.top_logic.element.layout.grid.GridComponent"
+	<grid name="Grid"
 		adjustSelectionWhenCollapsing="${adjustSelectionWhenCollapsing}"
+		custom-config-key="${custom-config-key}"
 		defaultSelection="${defaultSelection}"
+		defaultSelectionProvider="${defaultSelectionProvider}"
 		deleteCommand=""
 		dialogs="${dialogs}"
 		editCommand="customEdit"
@@ -151,33 +159,36 @@
 		expandSelected="${expandSelected}"
 		gridApplyHandlerClass="${applyHandler}"
 		isSecurityMaster="${isSecurityMaster}"
+		lockHandler="${lockHandler}"
+		lockOperation="${lockOperation}"
 		model="${model}"
 		modelBuilder="${modelBuilder}"
-		name="Grid"
+		onSelectionChange="${onSelectionChange}"
 		page=""
 		partnerGroup="${partnerGroup}"
 		resPrefix="layout.element.grid.Grid."
+		revealSelection="${revealSelection}"
 		rootVisible="${rootVisible}"
 		securityObject="${securityObject}"
-		securityProviderClass="${securityProviderClass}"
 		selection="${selection}"
 		showDetailOpener="${showDetailOpener}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"
 		titleKey="${name}"
+		toolbar="${toolbar}"
 	>
 		<modifier class="com.top_logic.element.layout.meta.TemplateFormContextModificator"
 			readOnlyColumns="${readOnlyColumns}"
 		/>
-		<selectionModelFactory multiple="${multiSelection}"/>
+		<selectionModelFactory class="com.top_logic.element.layout.grid.GridSelectionModelFactory"
+			filter="${selectionFilter}"
+			multiple="${multiSelection}"
+			treeSemantics="${tree-semantics-supported}"
+		/>
 		<buttons>
 			${buttons}
 			<include name="templates/editComponentCommands.xml"/>
-			<button id="exportExcelGrid"
-				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-				exportNameKey="/sExport.xlsx"
-			/>
 			<button id="customEdit"
 				class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 				clique="edit"
@@ -190,14 +201,17 @@
 				</executability>
 			</button>
 		</buttons>
+		<goto-targets>${goto-targets}</goto-targets>
+		<additional-channels>${additional-channels}</additional-channels>
 		<tables>
 			<table
 				configurationProviders="${configurationProviders}"
+				contextMenu="${contextMenu}"
 				defaultColumns="${defaultColumns}"
 				dragSource="${dragSource}"
 				dropTargets="${dropTargets}"
 				fixedColumns="${fixedColumns}"
 			/>
 		</tables>
-	</component>
+	</grid>
 </config:template>

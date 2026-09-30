@@ -47,16 +47,17 @@ import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.MySQLHelper;
 import com.top_logic.basic.sql.OracleHelper;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.sql.PostgreSQLHelper;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.dob.MetaObject;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.SimpleCommitHandler;
 import com.top_logic.knowledge.service.StorageException;
 import com.top_logic.knowledge.service.ThreadLocalCommitable;
@@ -225,7 +226,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
     /**
      * Returns the AccessManager which uses this {@link SecurityStorage}.
      */
-    protected final AccessManager getAccessManager() {
+	protected AccessManager getAccessManager() {
     	return accessManager;
     }
 
@@ -249,6 +250,9 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 		}
 		if (sqlDialect instanceof DB2Helper) {
 			return new SecurityStorageDB2Executor(connectionPool);
+		}
+		if (sqlDialect instanceof PostgreSQLHelper) {
+			return new SecurityStoragePostgreSQLExecutor(connectionPool);
 		}
 		// Add here more DBSpecific executors and maybe version checks
 		return new SecurityStorageExecutor(connectionPool);
@@ -618,7 +622,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
             throw new IllegalArgumentException("Illegal Arguments: aVector must be of length 4 and no parameter must be null.");
         }
         try {
-            return executor.insert(aVector);
+            return executor.insertIgnore(aVector);
         }
         catch (SQLException e) {
             throw new StorageException("Error while requesting the database.", e);
@@ -656,33 +660,38 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
     }
 
     /**
-     * Inserts an entry from a hasRole association to the database: The given group has the
-     * given role an the given business object for the hasRole reason. The parameter must
-     * NOT be <code>null</code>.
-     *
-     * @param aKA
-     *            the has role association to insert
-     * @return <code>true</code> if a entry has been inserted, <code>false</code> if the
-     *         entry was already in the database
-     * @throws StorageException
-     *             if some error occurs while requesting the database
-     */
-    public boolean insert(KnowledgeAssociation/*<hasRole>*/ aKA) throws StorageException {
-        if (aKA == null || !aKA.tTable().getName().equals(BoundedRole.HAS_ROLE_ASSOCIATION)) {
-            throw new IllegalArgumentException("Illegal Arguments: The KA must be a KnowledgeAssociation of type " + BoundedRole.HAS_ROLE_ASSOCIATION);
-        }
+	 * Inserts an entry from a {@link BoundedRole#ROLE_ASSIGNMENT_OBJECT_NAME} to the database: The
+	 * given group has the given role an the given business object for the {@link #REASON_HAS_ROLE
+	 * "hasRole"} reason. The parameter must NOT be <code>null</code>.
+	 *
+	 * @param roleAssignment
+	 *        The {@link BoundedRole#ROLE_ASSIGNMENT_OBJECT_NAME assignment} to insert.
+	 * @return <code>true</code> if a entry has been inserted, <code>false</code> if the entry was
+	 *         already in the database
+	 * @throws StorageException
+	 *         if some error occurs while requesting the database
+	 */
+	public boolean insert(KnowledgeItem/* <hasRole> */ roleAssignment) throws StorageException {
+		ensureRoleAssignment(roleAssignment);
         try {
-            KnowledgeObject owner = (KnowledgeObject) aKA.getAttributeValue(BoundedRole.ATTRIBUTE_OWNER);
 			return insert(new Object[] {
-				objectId(owner),
-				objectId(aKA.getSourceObject()),
-				objectId(aKA.getDestinationObject()),
+				objectId(roleAssignment.getReferencedKey(BoundedRole.ATTRIBUTE_OWNER)),
+				objectId(roleAssignment.getReferencedKey(BoundedRole.ATTRIBUTE_OBJECT)),
+				objectId(roleAssignment.getReferencedKey(BoundedRole.ATTRIBUTE_ROLE)),
 				REASON_HAS_ROLE });
         }
         catch (Exception e) {
             throw new StorageException("Can't get necessary informations from the KA.", e);
         }
     }
+
+	private void ensureRoleAssignment(KnowledgeItem roleAssignment) {
+		if (roleAssignment == null
+				|| !roleAssignment.tTable().getName().equals(BoundedRole.ROLE_ASSIGNMENT_OBJECT_NAME)) {
+			throw new IllegalArgumentException(
+				"Illegal argument: The item must have type " + BoundedRole.ROLE_ASSIGNMENT_OBJECT_NAME);
+        }
+	}
 
     // Remove
 
@@ -763,24 +772,22 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
     }
 
     /**
-     * Removes an entry from a hasRole association from the database. The parameter must NOT
-     * be <code>null</code>.
-     *
-     * @param aKA
-     *            the has role association to remove
-     * @return the amount of entries that have been deleted from the database
-     * @throws StorageException
-     *             if some error occurs while requesting the database
-     */
-    public int remove(KnowledgeAssociation/*<hasRole>*/ aKA) throws StorageException {
-        if (aKA == null || !aKA.tTable().getName().equals(BoundedRole.HAS_ROLE_ASSOCIATION)) {
-            throw new IllegalArgumentException("Illegal Arguments: The KA must be a KnowledgeAssociation of type " + BoundedRole.HAS_ROLE_ASSOCIATION);
-        }
+	 * Removes an entry from a {@link BoundedRole#ROLE_ASSIGNMENT_OBJECT_NAME} from the database.
+	 * The parameter must NOT be <code>null</code>.
+	 *
+	 * @param roleAssignment
+	 *        The {@link BoundedRole#ROLE_ASSIGNMENT_OBJECT_NAME assignment} to remove.
+	 * @return the amount of entries that have been deleted from the database
+	 * @throws StorageException
+	 *         if some error occurs while requesting the database
+	 */
+	public int remove(KnowledgeItem/* <hasRole> */ roleAssignment) throws StorageException {
+		ensureRoleAssignment(roleAssignment);
         try {
 			return remove(new Object[] {
-				objectId(((KnowledgeItem) aKA.getAttributeValue(BoundedRole.ATTRIBUTE_OWNER))),
-				objectId(aKA.getSourceObject()),
-				objectId(aKA.getDestinationObject()),
+				objectId(roleAssignment.getReferencedKey(BoundedRole.ATTRIBUTE_OWNER)),
+				objectId(roleAssignment.getReferencedKey(BoundedRole.ATTRIBUTE_OBJECT)),
+				objectId(roleAssignment.getReferencedKey(BoundedRole.ATTRIBUTE_ROLE)),
 				REASON_HAS_ROLE });
         }
         catch (Exception e) {
@@ -797,16 +804,15 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
      * @throws StorageException
      *             if some error occurs while requesting the database
      */
-	public int removeObjects(Map<TLID, Object> removedObjects) throws StorageException {
+	public int removeObjects(Map<TLID, KnowledgeItem> removedObjects) throws StorageException {
         if (CollectionUtil.isEmptyOrNull(removedObjects)) return 0;
         int result = removeObjects(CollectionUtil.toList(removedObjects.keySet()));
 
         try {
 			Object[] vector = new Object[4];
-			for (Map.Entry<TLID, Object> entry : removedObjects.entrySet()) {
-                Object value = entry.getValue();
-				if (value instanceof KnowledgeObject
-						&& ((KnowledgeObject) value).tTable().getName().equals(Group.OBJECT_NAME)) {
+			for (Map.Entry<TLID, KnowledgeItem> entry : removedObjects.entrySet()) {
+				KnowledgeItem value = entry.getValue();
+				if (value.tTable().getName().equals(Group.OBJECT_NAME)) {
                     vector[0] = entry.getKey();
                     result += executor.remove(vector);
                 }
@@ -1096,8 +1102,8 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
         Logger.info("Computing direct roles...", SecurityStorage.class);
 		StopWatch sw = StopWatch.createStartedWatch();
         int counterEntries = 0;
-        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
-		for (KnowledgeAssociation association : theKB.getAllKnowledgeAssociations(BoundedRole.HAS_ROLE_ASSOCIATION)) {
+        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
+		for (KnowledgeObject association : theKB.getAllKnowledgeObjects(BoundedRole.ROLE_ASSIGNMENT_OBJECT_NAME)) {
 			if (insert(association))
 				counterEntries++;
 
@@ -1108,28 +1114,33 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 
 
     /**
-     * Updates the security storage, if {@link #isAutoUpdate()} is enabled.
-     *
-     * @param aChangesInformation
-     *            an Object containing all change informations needed for updates
-     * @throws StorageException
-     *             if some error occurs while requesting the database
-     */
-    public final void updateSecurity(Object aChangesInformation) throws StorageException {
-        if (autoUpdate) internalUpdateSecurity(aChangesInformation);
+	 * Updates the security storage, if {@link #isAutoUpdate()} is enabled.
+	 *
+	 * @param aChangesInformation
+	 *        an Object containing all change informations needed for updates
+	 * @param invalidRules
+	 *        an Object containing all invalid rules
+	 * @throws StorageException
+	 *         if some error occurs while requesting the database
+	 */
+	public final void updateSecurity(Object aChangesInformation, Object invalidRules)
+			throws StorageException {
+		if (autoUpdate)
+			internalUpdateSecurity(aChangesInformation, invalidRules);
     }
 
     /**
-     * Updates the security storage. This is a hook for subclasses which may extend this
-     * method to make updates.
-     *
-     * @param aChangesInformation
-     *            an Object containing all change informations needed by subclasses for
-     *            updates
-     * @throws StorageException
-     *             if some error occurs while requesting the database
-     */
-    protected void internalUpdateSecurity(Object aChangesInformation) throws StorageException {
+	 * Updates the security storage. This is a hook for subclasses which may extend this method to
+	 * make updates.
+	 *
+	 * @param aChangesInformation
+	 *        an Object containing all change informations needed by subclasses for updates
+	 * @param invalidRules
+	 *        an Object containing all invalid rules
+	 * @throws StorageException
+	 *         if some error occurs while requesting the database
+	 */
+	protected void internalUpdateSecurity(Object aChangesInformation, Object invalidRules) throws StorageException {
         // Nothing to do here
     }
 
@@ -1299,6 +1310,8 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			SQL_REMOVE_FOR_ALL_TARGETS_STATEMENT =
 				SQL_REMOVE_PREFIX + " WHERE " + attributeBusinessObjectColumnRef + "=? AND "
 					+ attributeRoleColumnRef + "=? AND " + attributeReasonColumnRef + "=?";
+			SQL_REMOVE_REASONS =
+					SQL_REMOVE_PREFIX + " WHERE " + attributeReasonColumnRef + " IN ";
 			SQL_HAS_ROLE_FROM_COLLECTION_STATEMENT_PART_1 =
 				SQL_HAS_ROLE_INFIX + " WHERE " + attributeGroupColumnRef + " IN ";
 			SQL_INSERT_STATEMENT = "INSERT INTO " + securityStorageTableRef + updateHint() + " VALUES (?, ?, ?, ?)";
@@ -1451,6 +1464,9 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
         protected final String SQL_REMOVE_FOR_ALL_TARGETS_STATEMENT;
 
         protected final String SQL_REMOVE_OBJECTS_PART_1;
+
+		/** SQL statement to remove all rows with one of the given reasons. */
+		protected final String SQL_REMOVE_REASONS;
 
         protected final String SQL_HAS_ROLE_FROM_COLLECTION_STATEMENT_PART_1;
 
@@ -1622,7 +1638,12 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			return theResult;
         }
 
-        public boolean insert(Object[] aVector) throws SQLException {
+		/**
+		 * Inserts given vector and ignores duplicate.
+		 * 
+		 * @see #multiInsertIgnore(List)
+		 */
+        public boolean insertIgnore(Object[] aVector) throws SQLException {
             checkVectorNotNull(aVector);
             Connection writeConnection = getWriteConnection();
 			Object[] storageValues = storageValues(aVector);
@@ -1630,6 +1651,11 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			return DBUtil.executeUpdate(writeConnection, SQL_INSERT_STATEMENT, storageValues) > 0;
         }
 
+		/**
+		 * Inserts all vectors and ignores duplicates.
+		 * 
+		 * @see #insertIgnore(Object[])
+		 */
         public int multiInsertIgnore(List<Object[]> vectors) throws SQLException {
         	Connection writeConnection = getWriteCache().getConnection();
 			int maxBatchLength =
@@ -1766,6 +1792,34 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
             }
         }
 
+		/**
+		 * Removes all entries stored for the given reasons.
+		 * 
+		 * @return Number of removed rows.
+		 */
+		public int removeReasons(Iterator<Integer> reasons) throws SQLException {
+			StringBuilder sb = new StringBuilder(1024);
+			sb.append(SQL_REMOVE_REASONS);
+			dbHelper.literalSet(sb, DBType.INT, reasons);
+			return DBUtil.executeUpdate(getWriteConnection(), sb.toString());
+		}
+
+		/**
+		 * Converts {@link TLID} objects in the given vector to their storage values.
+		 */
+		protected static Object[] storageValues(Object[] aVector) {
+			if (aVector == null) {
+				return null;
+			}
+
+			Object[] result = new Object[aVector.length];
+			for (int i = 0; i < aVector.length; i++) {
+				Object value = aVector[i];
+				result[i] = storageValue(value);
+			}
+			return result;
+		}
+
     }
 
 	protected static Object securityId(BoundObject obj) {
@@ -1780,8 +1834,8 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 		return storageValue(KBUtils.getWrappedObjectName(obj));
 	}
 
-	protected static Object objectId(KnowledgeItem obj) {
-		return storageValue(KBUtils.getObjectName(obj));
+	protected static Object objectId(ObjectKey obj) {
+		return storageValue(obj.getObjectName());
 	}
 
     /**
@@ -1808,22 +1862,6 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
         }
         return result;
     }
-
-	/**
-	 * Converts {@link TLID} objects in the given vector to their storage values.
-	 */
-	protected static Object[] storageValues(Object[] aVector) {
-		if (aVector == null) {
-			return null;
-		}
-		
-		Object[] result = new Object[aVector.length];
-		for (int i = 0; i < aVector.length; i++) {
-			Object value = aVector[i];
-			result[i] = storageValue(value);
-		}
-		return result;
-	}
 
 	/**
 	 * Converts the given value to its storage value.

@@ -22,8 +22,6 @@ import com.top_logic.util.css.CssUtil;
  */
 public class CellControl extends ConstantControl<HTMLFragment> {
 
-	private static final String WHOLE_LINE_CSS = ReactiveFormCSS.RF_LINE;
-
 	private static final String CELL_SMALL_CSS = "rf_cellSmall";
 
 	private String _cssClass;
@@ -119,7 +117,7 @@ public class CellControl extends ConstantControl<HTMLFragment> {
 		super.writeControlClassesContent(out);
 		HTMLUtil.appendCSSClass(out, _cssClass);
 		if (_wholeLine) {
-			HTMLUtil.appendCSSClass(out, WHOLE_LINE_CSS);
+			HTMLUtil.appendCSSClass(out, ReactiveFormCSS.RF_LINE);
 		}
 		if (_width != null) {
 			HTMLUtil.appendCSSClass(out, CELL_SMALL_CSS);

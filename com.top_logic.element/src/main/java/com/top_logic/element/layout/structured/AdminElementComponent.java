@@ -44,7 +44,7 @@ import com.top_logic.util.Resources;
  * This component is able to create, modify and delete a {@link com.top_logic.element.structured.StructuredElement}.
  * It will only refer the interface, not the implementation behind.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class AdminElementComponent extends EditAttributedComponent {
 
@@ -113,8 +113,6 @@ public class AdminElementComponent extends EditAttributedComponent {
      */
     public AdminElementComponent(InstantiationContext context, Config someAttrs) throws ConfigurationException {
         super(context, someAttrs);
-        
-        this.alwaysReloadButtons = true;
         
         this.editRoot      = someAttrs.getEditRoot();
         // TODO MGA/KBU/KHA this should be mandatory 
@@ -211,11 +209,8 @@ public class AdminElementComponent extends EditAttributedComponent {
 	 */
 	protected FormMember createNameField(StructuredElement anElement, ResPrefix resPrefix) {
         StringField theField = FormFactory.newStringField(AdminElementComponent.ELEMENT_NAME, /* mandatory */ true, /* immutable */ false, new StringLengthConstraint(1, 255));
-
         String theName = anElement.getName();
-        theField.setValue       (theName);
-        theField.setDefaultValue(theName);
-
+		theField.initializeField(theName);
         return (theField);
     }
 

@@ -18,7 +18,7 @@ import com.top_logic.layout.form.template.ControlProvider;
 /**
  * Popup for the WYSIWYG editor which is used by a button in grids and tables.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class StructuredTextPopupControl extends PopupEditControl {
 

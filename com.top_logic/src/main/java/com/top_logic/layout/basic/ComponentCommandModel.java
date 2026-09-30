@@ -7,7 +7,6 @@ package com.top_logic.layout.basic;
 
 import java.util.Map;
 
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.check.CheckScope;
 import com.top_logic.layout.basic.check.DefaultCheckScope;
@@ -19,6 +18,7 @@ import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link DynamicCommandModel} calling a {@link CommandHandler} on a specific
@@ -39,22 +39,52 @@ public class ComponentCommandModel extends DynamicDelegatingCommandModel {
 	 * @param someArguments
 	 *        The arguments to pass to the given handler, see
 	 *        {@link CommandHandler#handleCommand(DisplayContext, LayoutComponent, Object, Map)}.
-	 * @param label
-	 *        The label of the button.
 	 */
 	public ComponentCommandModel(CommandHandler command, LayoutComponent component,
-			Map<String, Object> someArguments, ResKey label) {
+			Map<String, Object> someArguments) {
 		super(ComponentCommand.newInstance(command, component, someArguments));
-		if (label == null) {
-			throw new IllegalArgumentException("'label' must not be 'null'.");
-		}
-		Resources resources = Resources.getInstance();
-		setLabel(resources.getString(label));
-		setTooltip(resources.getString(label.tooltipOptional()));
-		setImage(command.getImage(component));
 		setNotExecutableImage(command.getNotExecutableImage(component));
 		setCssClasses(command.getCssClasses(component));
 		setShowProgress(true);
+	}
+
+	@Override
+	public String getLabel() {
+		String labelOverride = super.getLabel();
+		if (labelOverride != null) {
+			return labelOverride;
+		}
+
+		Resources resources = Resources.getInstance();
+		return resources.getString(getCommandHandler().getResourceKey(getComponent()), null);
+	}
+
+	@Override
+	public String getTooltip() {
+		String tooltipOverride = super.getTooltip();
+		if (tooltipOverride != null) {
+			return tooltipOverride;
+		}
+
+		return defaultTooltip();
+	}
+
+	/**
+	 * The tooltip used when no tooltip was {@link #setTooltip(String) set} explicitly: the tooltip
+	 * of the underlying {@link CommandHandler}.
+	 */
+	protected String defaultTooltip() {
+		Resources resources = Resources.getInstance();
+		return resources.getString(getCommandHandler().getResourceKey(getComponent()).tooltipOptional());
+	}
+
+	@Override
+	public ThemeImage getImage() {
+		ThemeImage imageOverride = super.getImage();
+		if (imageOverride != null) {
+			return imageOverride;
+		}
+		return getCommandHandler().getImage(getComponent());
 	}
 
 	/**
@@ -89,7 +119,14 @@ public class ComponentCommandModel extends DynamicDelegatingCommandModel {
 			CommandModelRegistry.getRegistry().deregisterCommandModel(this);
 			return;
 		}
-		super.updateExecutabilityState();
+		try {
+			super.updateExecutabilityState();
+		} catch (Exception ex) {
+			throw new TopLogicException(I18NConstants.ERROR_UPDATING_EXECUTABILITY__CMD_CMP_MSG
+				.fill(getCommandHandler().getResourceKey(getComponent()), getComponent().getTitleKey(),
+					ex.getMessage()),
+				ex);
+		}
 	}
 
 	/**

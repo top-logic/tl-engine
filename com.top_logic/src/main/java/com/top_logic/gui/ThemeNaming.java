@@ -5,7 +5,7 @@
  */
 package com.top_logic.gui;
 
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -15,7 +15,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-public class ThemeNaming extends AbstractModelNamingScheme<Theme, ThemeNaming.Name> {
+public class ThemeNaming extends AbstractGlobalModelNamingScheme<Theme, ThemeNaming.Name> {
 
 	/** {@link ModelName} of a {@link Theme}, used by the {@link ThemeNaming}. */
 	public interface Name extends ModelName {

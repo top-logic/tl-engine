@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="multi-set-equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Kontext"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/selectionComponent/contextSelector.layout.xml#Selector"
+						tab-path="Technisches Demo > Komponenten > Auswahl"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
+				<context-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Kontext"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/selectionComponent/contextSelector.layout.xml#Selector"
+						tab-path="Technisches Demo > Komponenten > Auswahl"
+					/>
+				</context-name>
+				<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+					<values>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+							label="A1 (TestHomepage_A)"
+						/>
+					</values>
+				</local-name>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="multi-set-equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Kinder"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/selectionComponent/childrenSelector.layout.xml#Selector"
+						tab-path="Technisches Demo > Komponenten > Auswahl"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
+				<context-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Kinder"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.demo/technical/components/selectionComponent/childrenSelector.layout.xml#Selector"
+						tab-path="Technisches Demo > Komponenten > Auswahl"
+					/>
+				</context-name>
+				<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+					<values>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+							label="X1"
+						/>
+					</values>
+				</local-name>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CheckVisibilityOp"
+			component-name="com.top_logic.demo/technical/components/selectionComponent/detailsForm.layout.xml#Form"
+			visible="true"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
+			comment=""
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/components/selectionComponent/detailsForm.layout.xml#Form"
+					tab-path="Technisches Demo > Komponenten > Auswahl"
+				/>
+			</actual-value>
+			<constraints>
+				<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
+					<expected-value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+						path="TestHomepage_A > A1 > X1"
+						singleton="ROOT"
+						singleton-label="ROOT"
+						structure="DemoTypes"
+					/>
+				</constraint>
+			</constraints>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path=""
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="TestHomepage_A"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo > Typendemo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+			command-label="Löschen..."
+			command-name="elementRemove"
+			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			template="script:misc/Action-Persoenliche Einstellungen zuruecksetzen.xml"
+			template-name-comment="Persoenliche Einstellungen zuruecksetzen"
+		/>
+	</actions>
+</action>

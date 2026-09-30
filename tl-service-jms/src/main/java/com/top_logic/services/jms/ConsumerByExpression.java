@@ -9,6 +9,12 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
+import jakarta.jms.BytesMessage;
+import jakarta.jms.JMSException;
+import jakarta.jms.MapMessage;
+import jakarta.jms.Message;
+import jakarta.jms.TextMessage;
+
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
@@ -18,12 +24,6 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-
-import jakarta.jms.BytesMessage;
-import jakarta.jms.JMSException;
-import jakarta.jms.MapMessage;
-import jakarta.jms.Message;
-import jakarta.jms.TextMessage;
 
 /**
  * Consumer implementation that processes the message via a TL-Script function.
@@ -61,6 +61,11 @@ public class ConsumerByExpression extends Consumer<ConsumerByExpression.Config> 
 	public ConsumerByExpression(InstantiationContext instContext, Config config) {
 		super(instContext, config);
 		_processing = QueryExecutor.compile(config.getProcessing());
+
+		// Messages are processed in a JMS listener thread without a logged-in user. The processing
+		// is backend logic that must operate on all data and must not be subject to a user's access
+		// rights; with security enabled it would even be denied, as there is no current user.
+		_processing.disableSecurity();
 	}
 
 	/**
@@ -75,7 +80,7 @@ public class ConsumerByExpression extends Consumer<ConsumerByExpression.Config> 
 
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			if (getConfig().getTransaction()) {
-				try (Transaction tx = kb.beginTransaction()) {
+				try (Transaction tx = kb.beginTransaction(I18NConstants.PROCESSED_JMS_MESSAGE)) {
 					internalProcess(message);
 					tx.commit();
 				}

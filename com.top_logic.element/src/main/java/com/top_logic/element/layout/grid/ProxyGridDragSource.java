@@ -5,9 +5,10 @@
  */
 package com.top_logic.element.layout.grid;
 
+import java.util.Collection;
+
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
-import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.dnd.TableDragSource;
 
@@ -45,13 +46,18 @@ public class ProxyGridDragSource implements GridDragSource {
 	}
 
 	@Override
-	public Maybe<? extends ModelName> getDragDataName(Object dragSource, TableData tableData, int row) {
-		Maybe<? extends ModelName> rowName =
-			ModelResolver.buildModelNameIfAvailable(_impl.getDragObject(tableData, row));
-		if (rowName.hasValue()) {
-			return Maybe.some(GridBusinessObjectNaming.newName(rowName.get()));
-		}
-		return Maybe.none();
+	public Collection<?> getDragSelection(TableData tableData, int row) {
+		return _impl.getDragSelection(tableData, row);
+	}
+
+	@Override
+	public Object getDragSourceModel(TableData tableData) {
+		return _impl.getDragSourceModel(tableData);
+	}
+
+	@Override
+	public Maybe<? extends ModelName> getDragDataName(Object dragSource, TableData tableData, Object dragObject) {
+		return _impl.getDragDataName(dragSource, tableData, dragObject);
 	}
 
 	@Override

@@ -324,7 +324,7 @@ public class BPMLExporter
 			throws XMLStreamException {
 		AttributeValueBinding<Object> binding = getExportBinding(attribute);
 		if (binding != null) {
-			hasExtensions = startExtendsions(hasExtensions);
+			hasExtensions = startExtensions(hasExtensions);
 
 			Object value = obj.tValue(attribute);
 			boolean emptyElement = binding.useEmptyElement(attribute, value);
@@ -354,7 +354,7 @@ public class BPMLExporter
 		return resolvedBinding;
 	}
 
-	private boolean startExtendsions(boolean hasExtensions) throws XMLStreamException {
+	private boolean startExtensions(boolean hasExtensions) throws XMLStreamException {
 		if (!hasExtensions) {
 			_out.writeStartElement(BPMN, EXTENSION_ELEMENTS);
 			hasExtensions = true;

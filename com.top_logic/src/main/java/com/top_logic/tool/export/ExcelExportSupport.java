@@ -6,13 +6,11 @@
 package com.top_logic.tool.export;
 
 import java.awt.Color;
-import java.text.Format;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -30,18 +28,10 @@ import com.top_logic.basic.col.MutableInteger;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.knowledge.wrap.WebFolder;
-import com.top_logic.knowledge.wrap.Wrapper;
-import com.top_logic.knowledge.wrap.currency.Amount;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.Renderer;
-import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ResourceRenderer;
-import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
-import com.top_logic.layout.security.ProtectedValueExportMapping;
 import com.top_logic.layout.table.DefaultTableData;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableModel;
@@ -57,7 +47,6 @@ import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.layout.tree.renderer.ColumnDeclaration;
 import com.top_logic.layout.tree.renderer.DefaultTableDeclaration;
 import com.top_logic.layout.tree.renderer.TableDeclaration;
-import com.top_logic.mig.html.HTMLFormatterFormat;
 import com.top_logic.tool.export.ExcelCellRenderer.RenderContext;
 import com.top_logic.util.FormFieldHelper;
 import com.top_logic.util.Resources;
@@ -99,23 +88,6 @@ public class ExcelExportSupport {
 	 */
     private Map<ExcelCellFormatter,CellPosition> cellStyleCache;
     
-	private final ExcelCellRenderer _excelCellRenderer = new AbstractExcelCellRenderer() {
-
-		@Override
-		protected ExcelValue renderValue(RenderContext context, Object cellValue, int excelRow, int excelColumn) {
-			Format format = (Format) context.getCustomContext();
-			ResourceProvider resourceProvider = context.modelColumn().getConfig().getResourceProvider();
-			Object theCellValue = ExcelExportSupport.this.getExportableValue(resourceProvider, cellValue, format);
-			return getExcelCellValue(cellValue, theCellValue, excelRow, excelColumn);
-		}
-
-		@Override
-		public Object newCustomContext(TableModel model, Column modelColumn) {
-			return HTMLFormatterFormat.INSTANCE;
-		}
-
-	};
-
     /**
 	 * Creates a new {@link ExcelExportSupport} with a new cell style cache. If
 	 * the ExcelExport should be reused call the reset caches method before.
@@ -140,14 +112,6 @@ public class ExcelExportSupport {
         }
     	return null;
     }
-
-	/**
-	 * {@link ExcelCellRenderer} that is used to export when the special column does not declare an
-	 * own {@link ExcelCellRenderer}.
-	 */
-	public final ExcelCellRenderer defaultExcelCellRenderer() {
-		return _excelCellRenderer;
-	}
 
 	/**
 	 * Extract the values from the given tree and return this as excel values.
@@ -541,7 +505,7 @@ public class ExcelExportSupport {
 	}
 
 	private ExcelCellRenderer getExcelCellRenderer(Column column) {
-		return column.getConfig().finalExcelCellRenderer(this);
+		return column.getConfig().getExcelRenderer();
 	}
 
 	private void addExportColumns(Collection<? super Column> exportColumns, Iterable<? extends Column> allColumns) {
@@ -563,11 +527,6 @@ public class ExcelExportSupport {
 
 	private boolean isExportColumn(Column column) {
 		return column.isVisible() && !excludeColumnFromExport(column);
-	}
-
-	protected ExcelValue getExcelCellValue(Object theRawValue, Object theCellValue,
-			int theRow, int theColumn) {
-		return new ExcelValue(theRow, theColumn, theCellValue);
 	}
 
 	protected ExcelValue getExcelHeaderValue(String aColumnName, String theHeaderText,
@@ -745,63 +704,12 @@ public class ExcelExportSupport {
         this.cellStyleCache = new HashMap<>();
     }
 
-	protected Object getExportableValue(ResourceProvider resourceProvider, Object aValue, Format aFormat) {
-		aValue = ProtectedValueExportMapping.INSTANCE.map(aValue);
-
-		if (aValue instanceof FormField && ((FormField) aValue).hasValue()) {
-			aValue = ((FormField) aValue).getValue();
-		}
-        if (aValue instanceof Collection) {
-            StringBuffer theString = new StringBuffer();
-			Iterator<?> theIter = ((Collection<?>) aValue).iterator();
-            
-            while (theIter.hasNext()) {
-				theString.append(resourceProvider.getLabel(theIter.next()));
-                if (theIter.hasNext()) {
-                    theString.append(", ");
-                }
-            }
-            return theString.toString();
-        }
-        else if (aValue instanceof Amount) {
-            aValue = Double.valueOf(((Amount) aValue).getValue());
-        }
-        else if (aValue instanceof Control) {
-            aValue = FormFieldHelper.getProperValue(aValue);
-        }
-        else if ((aValue != null) 
-                && !(aValue instanceof Date) 
-                && !(aValue instanceof Number) 
-                && !(aValue instanceof String) 
-                && !(aValue instanceof WebFolder)) {
-            aValue = this.getCellContentFromObject(aValue);
-        }
-
-        if (aValue == null) {
-            aValue = "";
-        }
-
-        return (aValue);
-    }
-
-    /** 
-     * This method returns the label for the given object.  
-     * 
-     * @param value A value maybe <code>null</code>.
-     */
-    public String getLabel(Object value) {
-    	return getCellContentFromObject(value);
-    }
-    
     /** 
      * This method extracts information from the object for display it in an excel cell.
      * 
      * @param     aContent A {@link Wrapper}.
      * @return    Returns a string to display in an excel cell. 
      */
-    protected String getCellContentFromObject(Object aContent) {
-        return MetaLabelProvider.INSTANCE.getLabel(aContent);
-    }
 
 	/**
 	 * Getter for the configuration.

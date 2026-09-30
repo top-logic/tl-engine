@@ -8,12 +8,12 @@ package com.top_logic.util;
 import java.io.IOException;
 import java.util.Locale;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.SessionContext;
@@ -29,13 +29,15 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class NoContextServlet extends HttpServlet {
+public class NoContextServlet extends AbstractTopLogicServlet {
 
 	private static final String ACCEPT_LANGUAGE_HEADER = "accept-language";
 
 	@Override
 	protected final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		executeInInteraction(req, resp);
+		/* The type parameters are necessary here. Without them, Eclipse reports an error. */
+		TopLogicServlet.<IOException, ServletException> withSessionIdLogMark(req,
+			() -> executeInInteraction(req, resp));
 	}
 
 	private void executeInInteraction(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
@@ -46,7 +48,7 @@ public class NoContextServlet extends HttpServlet {
 			installSessionContext(req, displayContext);
 			doService(req, resp);
 		} finally {
-			DefaultDisplayContext.teardownDisplayContext(req, displayContext);
+			DefaultDisplayContext.teardownDisplayContext(req);
 		}
 	}
 

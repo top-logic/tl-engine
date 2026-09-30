@@ -7,10 +7,14 @@ package com.top_logic.service.openapi.server;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import com.top_logic.basic.util.RunnableEx2;
+import com.top_logic.util.AbstractTopLogicServlet;
+import com.top_logic.util.TopLogicServlet;
 
 /**
  * {@link HttpServlet} endpoint for the {@link OpenApiServer}.
@@ -19,10 +23,22 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class OpenApiServlet extends HttpServlet {
+public class OpenApiServlet extends AbstractTopLogicServlet {
 
 	@Override
-	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		/* The type parameters are necessary here. Without them, Eclipse reports an error. */
+		TopLogicServlet.<IOException, ServletException> withSessionIdLogMark(req,
+			() -> serviceWithLogMark(req, resp));
+	}
+
+	/**
+	 * The implementation of {@link #serviceWithLogMark(HttpServletRequest, HttpServletResponse)}
+	 * but with an enclosing log mark for the session id. See
+	 * {@link TopLogicServlet#withSessionIdLogMark(HttpServletRequest, RunnableEx2)} for details.
+	 */
+	protected void serviceWithLogMark(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
 		if (req.getPathInfo() == null) {
 			// Redirect "/myApp/api" to "/myApp/api/"
 			resp.sendRedirect(req.getRequestURI() + "/");

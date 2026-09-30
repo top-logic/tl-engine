@@ -57,7 +57,7 @@ public abstract class RewriteMigrationProcessor<C extends RewriteMigrationProces
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		_rewriter.init(log);
-		_util = context.get(Util.PROPERTY);
+		_util = context.getSQLUtils();
 
 		doMigration(log, connection, _rewriter);
 	}

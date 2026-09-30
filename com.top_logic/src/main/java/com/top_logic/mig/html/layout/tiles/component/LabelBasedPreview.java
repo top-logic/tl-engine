@@ -8,6 +8,7 @@ package com.top_logic.mig.html.layout.tiles.component;
 import static com.top_logic.layout.basic.fragments.Fragments.*;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.InlineList;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.InstantiationContext;
@@ -24,12 +25,10 @@ import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.control.PopupMenuButtonControl;
 import com.top_logic.layout.toolbar.DefaultToolBar;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.mig.html.layout.tiles.TileLayout;
 import com.top_logic.util.css.CssUtil;
 
 /**
- * {@link ConfiguredTilePreview} that displays an optional icon and the label of a
- * {@link TileLayout}.
+ * {@link ConfiguredTilePreview} that displays an optional icon and the label of a tile.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -57,7 +56,7 @@ public class LabelBasedPreview<C extends LabelBasedPreview.Config<?>> extends Co
 		String ICON = "icon";
 
 		/**
-		 * A static icon for the {@link TileLayout}.
+		 * A static icon for the tile.
 		 * 
 		 * @return May be <code>null</code>.
 		 */
@@ -87,6 +86,7 @@ public class LabelBasedPreview<C extends LabelBasedPreview.Config<?>> extends Co
 			try {
 				label = label(tile);
 			} catch (RuntimeException ex) {
+				Logger.error("Preview label generation failed.", ex, LabelBasedPreview.class);
 				errors = InlineList.add(ResKey.class, errors,
 					I18NConstants.ERROR_LABEL_PREVIEW_LABEL__MSG.fill(errorMessage(ex)));
 				label = text("ERROR");
@@ -95,6 +95,7 @@ public class LabelBasedPreview<C extends LabelBasedPreview.Config<?>> extends Co
 			try {
 				description = description(tile);
 			} catch (RuntimeException ex) {
+				Logger.error("Preview description generation failed.", ex, LabelBasedPreview.class);
 				errors = InlineList.add(ResKey.class, errors,
 					I18NConstants.ERROR_LABEL_PREVIEW_DESCRIPTION__MSG.fill(errorMessage(ex)));
 				description = text("ERROR");
@@ -103,6 +104,7 @@ public class LabelBasedPreview<C extends LabelBasedPreview.Config<?>> extends Co
 			try {
 				previewContent = previewContent(tile);
 			} catch (RuntimeException ex) {
+				Logger.error("Preview content generation failed.", ex, LabelBasedPreview.class);
 				errors = InlineList.add(ResKey.class, errors,
 					I18NConstants.ERROR_LABEL_PREVIEW_CONTENT__MSG.fill(errorMessage(ex)));
 				previewContent = defaultPreviewContent(text("ERROR"), null);
@@ -204,11 +206,30 @@ public class LabelBasedPreview<C extends LabelBasedPreview.Config<?>> extends Co
 	 * 
 	 * @param tile
 	 *        The {@link ComponentTile} to create label for.
+	 * 
+	 * @return {@link #labelPart(HTMLFragment)} with some content, if there should be a label part
+	 *         in the tile.
 	 */
 	protected HTMLFragment label(ComponentTile tile) {
+		HTMLFragment content = labelContent(tile);
+		if (content != empty()) {
+			return labelPart(content);
+		} else {
+			return empty();
+		}
+	}
+
+	/**
+	 * Produces the label part of a tile.
+	 * 
+	 * <p>
+	 * Must be returned from {@link #label(ComponentTile)}, if the card should have a label.
+	 * </p>
+	 */
+	protected HTMLFragment labelPart(HTMLFragment labelContent) {
 		return h5("card-title",
 			a(attributes(attribute(HTMLConstants.HREF_ATTR, HTMLConstants.HREF_EMPTY_LINK)), 
-				labelContent(tile)));
+				labelContent));
 	}
 
 	/**

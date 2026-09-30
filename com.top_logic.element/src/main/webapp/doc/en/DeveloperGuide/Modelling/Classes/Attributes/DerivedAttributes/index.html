@@ -1,0 +1,9 @@
+<p>Normally, a property of an object is followed by a storage location for the value of the property for each object of the class that defines the property. For a text attribute, for example, a text can be saved for each object that has this attribute. The same applies to references. The assignments that are delivered when accessing a reference are normally stored in the database.</p>
+<p>However, there are cases in which you want to display information for an object that was not entered directly elsewhere, but is calculated from other information. A calculated attribute corresponds to an Excel cell in a spreadsheet for which a formula is stored. Instead of displaying the value entered in this cell, the cell then displays the result of the calculation rule stored in it.</p>
+<h2>Creating calculated properties</h2>
+<p>A calculated property (attribute or reference) is created in the same way as a normal property. However, the calculation rule to be evaluated is also stored in an adjustment.</p>
+<p><img src="ref:image.png" style="height:445px; opacity:1; width:600px"></p>
+<p>When creating the attribute, select the "Storage rule" customization. This allows you to enter a function expression that is evaluated on the current object for which the calculated property is to be displayed.</p>
+<h2>Define calculation function</h2>
+<p>The function expression is a <a class="tlObject" data-custom="false" href="?page=TL-Script&amp;uuid=d1172c3d-4596-48b0-837a-42349d1e3227">TL script function</a> that is passed the current object as an argument and can access its other properties and perform navigation operations from this object (see <a class="tlObject" data-custom="false" href="?page=Functions&amp;uuid=8f4a805f-125a-4905-8df3-65aa54e20947">Functions</a>). The result of this function evaluation is then displayed in all places where the calculated property is displayed.</p>
+<p></p>

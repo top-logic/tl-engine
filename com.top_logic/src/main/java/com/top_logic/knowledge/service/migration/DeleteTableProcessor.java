@@ -32,9 +32,11 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLDelete;
 import com.top_logic.basic.db.sql.SQLQuery;
@@ -63,11 +65,13 @@ public class DeleteTableProcessor extends AbstractConfiguredInstance<DeleteTable
 	/**
 	 * Configuration options of {@link DeleteTableProcessor}.
 	 */
+	@TagName("delete-table")
 	public interface Config extends PolymorphicConfiguration<DeleteTableProcessor> {
 		/**
 		 * Names of the table types to delete.
 		 */
 		@Name("tables")
+		@DefaultContainer
 		List<TableRef> getTables();
 
 		/**

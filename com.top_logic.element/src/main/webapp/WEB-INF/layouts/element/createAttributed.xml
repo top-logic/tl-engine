@@ -38,12 +38,10 @@
 		<param name="executabilityRule"
 			value="InViewMode"
 		/>
-		<param name="securityProvider"
-			value="default"
+		<param name="securityObject"
+			value="model"
 		/>
-		<param name="securityDomain"
-			optional="true"
-		/>
+
 		<param name="height"
 			value="660px"
 		/>
@@ -75,7 +73,6 @@
 
 	<securityLayout name="${namePrefix}CreateAttributedDialog"
 		horizontal="false"
-		securityDomain="${securityDomain}"
 		titleKey="${resPrefix}.dialog.tabber"
 	>
 		<dialogInfo
@@ -95,6 +92,7 @@
 		<components>
 			<!-- component to create attributed objects -->
 			<component class="${detailComponent}"
+				buttonbar="true"
 				commandGroups="${createCommandGroups}"
 				create-handler="${create-handler}"
 				element="${element}"
@@ -104,11 +102,10 @@
 				newModelAction="${newModelAction}"
 				page="${page}"
 				resPrefix="${resPrefix}"
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 				structure="${structure}"
 				type="${type}"
 			>${createAttributedParameters}</component>
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</securityLayout>
 </template>

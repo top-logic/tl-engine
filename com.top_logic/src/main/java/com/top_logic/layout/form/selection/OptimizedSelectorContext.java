@@ -324,7 +324,7 @@ public class OptimizedSelectorContext extends SelectorContext {
 	 * current filter criterion.
 	 * </p>
 	 */
-	private void updateOptions(final DefaultListModel listModel, List matchingOptions, Page newPage) {
+	private void updateOptions(final DefaultListModel<?> listModel, List<?> matchingOptions, Page newPage) {
 		if (isMultiSelect()) {
 			// Update with all options on the new page. Hide selected options.
 			ListModelUtilities.replaceAll(

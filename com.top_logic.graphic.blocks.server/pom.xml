@@ -1,0 +1,98 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>8.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-graphic-blocks-server</artifactId>
+	<name>${project.artifactId}</name>
+	<url>https://github.com/top-logic/tl-engine/</url>
+
+  <dependencies>
+  	<dependency>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-ajax-server</artifactId>
+  	</dependency>
+  	
+  	<dependency>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-graph-diagramjs-server</artifactId>
+  	</dependency>
+  	
+  	<dependency>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-model-search</artifactId>
+  	</dependency>
+  	
+  	<dependency>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-graphic-blocks</artifactId>
+		<version>${project.version}</version>
+  	</dependency>
+  	
+    <!-- The GWT client-code. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graphic-blocks-client</artifactId>
+	  <version>${project.version}</version>
+      <type>war</type>
+      <classifier>web-fragment</classifier>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Required so Surefire (configured in tl-parent-core to scan tl-basic's test-jar for
+         test/TestAll.class) actually finds and runs the module's tests. Without this dependency
+         the build silently passes even when test classes in this module fail. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-model-search</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  
+  <build>
+  	<plugins>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-war-plugin</artifactId>
+	
+			<executions>
+				<execution>
+					<id>war-fragment</id>
+					<phase>package</phase>
+					<goals>
+						<goal>war</goal>
+					</goals>
+					<configuration>
+						<overlays>
+							<overlay>
+								<groupId>com.top-logic</groupId>
+								<artifactId>tl-graphic-blocks-client</artifactId>
+								<type>war</type>
+								<classifier>web-fragment</classifier>
+							</overlay>
+						</overlays>
+					</configuration>
+				</execution>
+			</executions>
+		</plugin>
+  	</plugins>
+  </build>
+</project>

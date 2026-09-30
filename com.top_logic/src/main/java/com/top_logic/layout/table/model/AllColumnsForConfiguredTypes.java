@@ -14,8 +14,10 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.func.Function0;
+import com.top_logic.layout.editor.config.ColumnsTemplateParameters;
 import com.top_logic.layout.editor.config.TypeTemplateParameters;
 import com.top_logic.layout.editor.config.TypesTemplateParameters;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
@@ -54,7 +56,7 @@ public class AllColumnsForConfiguredTypes extends Function0<Collection<ColumnOpt
 
 	@Override
 	public Collection<ColumnOption> apply() {
-		return AllColumnOptions.INSTANCE.apply(getTypeRefs());
+		return AllColumnOptions.INSTANCE.apply(getTypeRefs(), getProviders(), null);
 	}
 
 	private Collection<TLModelPartRef> getTypeRefs() {
@@ -62,6 +64,19 @@ public class AllColumnsForConfiguredTypes extends Function0<Collection<ColumnOpt
 
 		if (typeProperty != null) {
 			return createModelPartRefs(CollectionUtil.asSet(_formModel.value(typeProperty)));
+		}
+
+		return Collections.emptyList();
+	}
+
+	@SuppressWarnings("unchecked")
+	private Collection<PolymorphicConfiguration<? extends TableConfigurationProvider>> getProviders() {
+		PropertyDescriptor configuredProviders =
+			_formModel.descriptor().getProperty(ColumnsTemplateParameters.CONFIGURATION_PROVIDERS);
+
+		if (configuredProviders != null) {
+			return (Collection<PolymorphicConfiguration<? extends TableConfigurationProvider>>) _formModel
+				.value(configuredProviders);
 		}
 
 		return Collections.emptyList();

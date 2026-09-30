@@ -29,6 +29,7 @@ import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.db2.migration.TLModelMigrationUtil;
 import com.top_logic.layout.tools.rewrite.DocumentRewrite;
 import com.top_logic.layout.tools.rewrite.RewriteMigrationProcessor;
+import com.top_logic.model.migration.Util;
 import com.top_logic.model.search.providers.DefaultByExpression;
 
 /**
@@ -74,9 +75,12 @@ public class DefaultByExpressionProcessor extends RewriteMigrationProcessor<Rewr
 	}
 
 	private SQLSelect createMetaAttributeSelect(String annotationColumn) {
+		/* Note: util().branchColumnDef() may return constant column. It is important (at least in
+		 * H2) that no constant column is contained in the result list, otherwise the row can not be
+		 * updated, even if the branch column is not updated at all. */
 		return select(
-			columns(
-				util().branchColumnDef(),
+			Util.listWithoutNull(
+				util().branchColumnDefOrNull(),
 				columnDef(BasicTypes.IDENTIFIER_DB_NAME),
 				columnDef(BasicTypes.REV_MAX_DB_NAME),
 				columnDef(annotationColumn)),

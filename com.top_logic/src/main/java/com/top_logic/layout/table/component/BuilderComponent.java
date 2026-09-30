@@ -17,7 +17,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * Component, which will get it's model from the configured builder class.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class BuilderComponent extends ControlComponent {
 	

@@ -11,14 +11,16 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.FormField;
@@ -34,6 +36,8 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.util.error.TopLogicException;
@@ -85,7 +89,6 @@ public class MaintenanceWindowComponent extends FormComponent {
         if (maintenanceModeState != maintenanceWndMgr.getMaintenanceModeState()) {
             maintenanceModeState = maintenanceWndMgr.getMaintenanceModeState();
             invalidate();
-            invalidateButtons();
             super.validateModel(aContext);
             return true;
         }
@@ -117,6 +120,14 @@ public class MaintenanceWindowComponent extends FormComponent {
 
         /** Saves the name of the minutes field. */
         public static final String MIN_FIELD = "min_field";
+
+		/**
+		 * Name of the field deciding whether users may still log in while the maintenance mode is
+		 * announced.
+		 * 
+		 * @see MaintenanceWindowManager#enterMaintenanceWindow(long, boolean)
+		 */
+		public static final String ALLOW_LOGIN_FIELD = "allow_login_field";
 
         /** the default value for the minutes field. */
         public static final String DEFAULT_MIN_VALUE = "5";
@@ -150,9 +161,11 @@ public class MaintenanceWindowComponent extends FormComponent {
         public FormContext createFormContext() {
             FormContext theContext = new FormContext("form", this.getResPrefix());
             StringField theField = FormFactory.newStringField(MIN_FIELD);
-            theField.setValue(DEFAULT_MIN_VALUE);
+			theField.initializeField(DEFAULT_MIN_VALUE);
             theField.addConstraint(IsPositiveIntegerConstraint.INSTANCE);
             theContext.addMember(theField);
+			theContext.addMember(
+				FormFactory.newBooleanField(ALLOW_LOGIN_FIELD, Boolean.FALSE, !FormFactory.IMMUTABLE));
             return theContext;
         }
 
@@ -220,7 +233,9 @@ public class MaintenanceWindowComponent extends FormComponent {
                     FormField theField = theContext.getField(EnterMaintenanceWindowDialog.MIN_FIELD);
                     String theValue = (String)theField.getValue();
                     int min = StringServices.isEmpty(theValue) ? 0 : Integer.parseInt(theValue);
-                    MaintenanceWindowManager.getInstance().enterMaintenanceWindow(min*60*1000);
+					boolean allowLogin = Utils.isTrue(
+						(Boolean) theContext.getField(EnterMaintenanceWindowDialog.ALLOW_LOGIN_FIELD).getValue());
+					MaintenanceWindowManager.getInstance().enterMaintenanceWindow(min * 60 * 1000, allowLogin);
                     performCloseDialog(theComp, theResult);
                 }
                 catch (Exception e) {
@@ -230,7 +245,6 @@ public class MaintenanceWindowComponent extends FormComponent {
                 LayoutComponent theParent = theComp.getDialogParent();
                 if (theParent != null) {
                     theParent.invalidate();
-                    theParent.invalidateButtons();
                 }
             }
             else {
@@ -261,8 +275,8 @@ public class MaintenanceWindowComponent extends FormComponent {
 		public interface Config extends AbstractCommandHandler.Config {
 
 			@Override
-			@BooleanDefault(true)
-			boolean getConfirm();
+			@ItemDefault(DefaultConfirmation.class)
+			PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 			@Override
 			@FormattedDefault(SimpleBoundCommandGroup.WRITE_NAME)
@@ -289,7 +303,6 @@ public class MaintenanceWindowComponent extends FormComponent {
 		public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> aSomeArguments) {
 			MaintenanceWindowManager.getInstance().enterMaintenanceWindow();
 			aComponent.invalidate();
-			aComponent.invalidateButtons();
 			return HandlerResult.DEFAULT_RESULT;
         }
 
@@ -332,7 +345,6 @@ public class MaintenanceWindowComponent extends FormComponent {
 		public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> aSomeArguments) {
 			MaintenanceWindowManager.getInstance().leaveMaintenanceWindow();
 			aComponent.invalidate();
-			aComponent.invalidateButtons();
 			HandlerResult result = new HandlerResult();
 			result.setCloseDialog(true);
 			return result;
@@ -352,8 +364,8 @@ public class MaintenanceWindowComponent extends FormComponent {
 		public interface Config extends AbstractCommandHandler.Config {
 
 			@Override
-			@BooleanDefault(true)
-			boolean getConfirm();
+			@ItemDefault(DefaultConfirmation.class)
+			PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 			@Override
 			@FormattedDefault(SimpleBoundCommandGroup.WRITE_NAME)
@@ -380,7 +392,6 @@ public class MaintenanceWindowComponent extends FormComponent {
 		public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> aSomeArguments) {
 			MaintenanceWindowManager.getInstance().abortEnterMaintenanceWindow();
 			aComponent.invalidate();
-			aComponent.invalidateButtons();
 			return HandlerResult.DEFAULT_RESULT;
         }
 

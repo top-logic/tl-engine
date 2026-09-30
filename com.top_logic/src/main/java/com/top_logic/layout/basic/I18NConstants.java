@@ -5,8 +5,10 @@
  */
 package com.top_logic.layout.basic;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.form.FormHandler;
@@ -25,7 +27,8 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResPrefix FILTER_SIDEBAR = legacyPrefix("filterSidebar.");
 
-	public static ResKey FILTER_SIDEBAR_SELECT = legacyKey("tl.table.sidebar.select");
+	@CustomKey("tl.table.sidebar.select")
+	public static ResKey FILTER_SIDEBAR_SELECT;
 
 	/**
 	 * Shown message when spontaneously no apply closure is available.
@@ -57,21 +60,29 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey CANNOT_COLLAPSE_ALREADY_ALL_COLLAPSED;
 
-	public static ResKey SIDEBAR_COLLAPSE_ALL = legacyKey("tl.table.sidebar.collapseAll");
+	@CustomKey("tl.table.sidebar.collapseAll")
+	public static ResKey SIDEBAR_COLLAPSE_ALL;
 
-	public static ResKey ERROR_COMMAND_NOT_EXECUTABLE = legacyKey("tl.command.notExecutableError");
+	@CustomKey("tl.command.notExecutableError")
+	public static ResKey ERROR_COMMAND_NOT_EXECUTABLE;
 
-	public static ResKey SIDEBAR_REFRESH_DISABLED = legacyKey("tl.table.sidebar.refresh.disabled");
+	@CustomKey("tl.table.sidebar.refresh.disabled")
+	public static ResKey SIDEBAR_REFRESH_DISABLED;
 
-	public static ResKey SIDEBAR_EXPAND_ALL = legacyKey("tl.table.sidebar.expandAll");
+	@CustomKey("tl.table.sidebar.expandAll")
+	public static ResKey SIDEBAR_EXPAND_ALL;
 
-	public static ResKey SIDEBAR_FILTERS = legacyKey("tl.table.sidebar.filterChooser");
+	@CustomKey("tl.table.sidebar.filterChooser")
+	public static ResKey SIDEBAR_FILTERS;
 
-	public static ResKey ERROR_INVALID_INPUT = legacyKey("tl.executable.disabled.formErrors");
+	@CustomKey("tl.executable.disabled.formErrors")
+	public static ResKey ERROR_INVALID_INPUT;
 
-	public static ResKey ERROR_APPLY_NOT_POSSIBLE = legacyKey("tl.executable.disabled.noTabApply");
+	@CustomKey("tl.executable.disabled.noTabApply")
+	public static ResKey ERROR_APPLY_NOT_POSSIBLE;
 
-	public static ResKey SIDEBAR_REFRESH = legacyKey("tl.table.sidebar.refresh");
+	@CustomKey("tl.table.sidebar.refresh")
+	public static ResKey SIDEBAR_REFRESH;
 
 	public static ResKey KEY_CODE_HANDLER;
 
@@ -84,6 +95,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey CONTEXT_MENU_OPENER;
 
 	public static ResPrefix DIRTY_HANDLING;
+
+	/**
+	 * @en Failed to update command executability of command "{0}" in component "{1}": {2}
+	 */
+	public static ResKey3 ERROR_UPDATING_EXECUTABILITY__CMD_CMP_MSG;
+
+	/**
+	 * @en Failed to compute executability state: {0}
+	 */
+	public static ResKey1 FAILED_TO_COMPUTE_STATE__MSG;
 
 	static {
 		initConstants(I18NConstants.class);

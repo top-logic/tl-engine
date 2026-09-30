@@ -19,7 +19,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.label.ObjectLabel;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.WebFolder;
@@ -78,10 +78,10 @@ public class ExportRun /*implements Runnable*/ {
                 theOut.close();
 
                 if (this.checkResult(theResult)) {
-                    KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+                    KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
                     
 					Document theDocument;
-					try (Transaction theTrans = theKB.beginTransaction()) {
+					try (Transaction theTrans = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 						WebFolder theFolder = this.getOrCreateWebfolder(theKB);
 						theDocument = this.export.getDocument();
 
@@ -131,7 +131,7 @@ public class ExportRun /*implements Runnable*/ {
      */
     private String createDocumentID(String aFileextension) {
 		String theID = IdentifierUtil.toExternalForm(StringID.createRandomID());
-        theID = theID.replaceAll("[-:^$&%?ง]", StringServices.EMPTY_STRING);
+        theID = theID.replaceAll("[-:^$&%?ยง]", StringServices.EMPTY_STRING);
         return theID + Export.EXTENSION_SEPARATOR + aFileextension;
     }
 

@@ -10,6 +10,8 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.InAppClassifierConstants;
 import com.top_logic.layout.table.model.IDColumnConfig;
 import com.top_logic.layout.table.model.IDColumnTableConfigurationProvider;
+import com.top_logic.model.annotate.AnnotationInheritance;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
@@ -34,6 +36,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
  */
 @TagName(IDColumnConfig.ID_COLUMN)
 @TargetType(value = { TLTypeKind.REF, TLTypeKind.COMPOSITION })
+@AnnotationInheritance(Policy.INHERIT)
 @InApp(classifiers = { InAppClassifierConstants.FORM_RELEVANT })
 public interface TLIDColumn extends TLTypeAnnotation, TLAttributeAnnotation, IDColumnConfig {
 

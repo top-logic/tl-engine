@@ -55,10 +55,6 @@ public abstract class ConfiguredMonitorComponent<C extends ConfiguredMonitorComp
 	public final void checkState(MonitorResult result) {
 		try {
 			checkStateInTryCatch(result);
-		} catch (ThreadDeath threadDeath) {
-			logError(threadDeath);
-			/* Never stop ThreadDeath. */
-			throw threadDeath;
 		} catch (Throwable exception) {
 			String message = "Failed to determine state. Cause:  " + exception.getMessage();
 			result.addMessage(createMessage(Status.ERROR, message));

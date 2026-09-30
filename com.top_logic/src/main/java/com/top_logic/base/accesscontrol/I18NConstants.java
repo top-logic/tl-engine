@@ -6,6 +6,7 @@
 package com.top_logic.base.accesscontrol;
 
 import com.top_logic.basic.CalledFromJSP;
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -16,21 +17,25 @@ import com.top_logic.layout.I18NConstantsBase;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey MAX_USERS_EXCEEDED;
-
 	public static ResKey COMMIT_FAILED;
 
-	public static ResKey ERROR_AUTHENTICATE = legacyKey("logout.messages.errorauthenticate");
+	@CustomKey("tl.login.message")
+	public static ResKey TL_LOGIN_MESSAGE;
 
-	public static ResKey1 ERROR_AUTHENTICATE_MAINTENANCE_MODE =
-		legacyKey1("logout.messages.errorauthenticatemaintenancemode");
+	@CustomKey("logout.messages.errorauthenticate")
+	public static ResKey1 ERROR_AUTHENTICATE;
 
-	public static ResKey1 ERROR_AUTHENTICATE_MAINTENANCE_MODE_SOON =
-		legacyKey1("logout.messages.errorauthenticatemaintenancemodesoon");
+	@CustomKey("logout.messages.errorauthenticatemaintenancemode")
+	public static ResKey1 ERROR_AUTHENTICATE_MAINTENANCE_MODE;
 
-	public static ResKey SESSION_INVALID = legacyKey("logout.messages.invalidated");
+	@CustomKey("logout.messages.errorauthenticatemaintenancemodesoon")
+	public static ResKey1 ERROR_AUTHENTICATE_MAINTENANCE_MODE_SOON;
 
-	public static ResKey SESSION_NOT_FOUND = legacyKey("logout.messages.logout");
+	@CustomKey("logout.messages.invalidated")
+	public static ResKey SESSION_INVALID;
+
+	@CustomKey("logout.messages.logout")
+	public static ResKey SESSION_NOT_FOUND;
 
 	/**
 	 * @en Password change required
@@ -127,11 +132,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey PWD_CHANGE_SUBMIT;
 
-	public static ResKey ERROR_NTLM_AUTHEMTICATION_FAILED = legacyKey("logout.messages.errorauthenticate.ntlm");
+	@CustomKey("logout.messages.errorauthenticate.ntlm")
+	public static ResKey ERROR_NTLM_AUTHEMTICATION_FAILED;
 
-	public static ResKey ERROR_BASIC_AUTHENTICATION_FAILED = legacyKey("com.top_logic.base.accesscontrol.BasicAuthenticationServlet.noAuthorizationSent.redirectText");
+	@CustomKey("com.top_logic.base.accesscontrol.BasicAuthenticationServlet.noAuthorizationSent.redirectText")
+	public static ResKey ERROR_BASIC_AUTHENTICATION_FAILED;
 
-	public static ResKey ERROR_SESSION_TIMED_OUT = legacyKey("logout.messages.timeout");
+	@CustomKey("logout.messages.timeout")
+	public static ResKey ERROR_SESSION_TIMED_OUT;
 
 	/**
 	 * @en The application {0} is buzzy. Please wait a moment and then try reloading the page.
@@ -150,6 +158,64 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CalledFromJSP
 	public static ResKey APP_BUZZY_RELOAD;
+
+	/**
+	 * @en User changed password: {0}
+	 */
+	public static ResKey1 CHANGED_PASSWORD__USER;
+
+	/**
+	 * @en Unable to set cookies
+	 * @tooltip It is not possible to set cookies. Please check the browser settings.
+	 */
+	@CalledFromJSP
+	public static ResKey ERROR_SET_COOKIES;
+
+	/**
+	 * @en Identity confirmation
+	 */
+	public static ResKey IDENTITY_VERIFICATION_TITLE;
+
+	/**
+	 * @en Your identity is confirmed. You can close this window.
+	 */
+	public static ResKey IDENTITY_VERIFIED;
+
+	/**
+	 * @en You signed in as a different user; the identity was not confirmed.
+	 */
+	public static ResKey ERROR_IDENTITY_MISMATCH;
+
+	/**
+	 * @en This confirmation is no longer valid.
+	 */
+	public static ResKey ERROR_IDENTITY_VERIFICATION_UNKNOWN;
+
+	/**
+	 * @en Not registered
+	 */
+	@CalledFromJSP
+	public static ResKey UNKNOWN_ACCOUNT_TITLE;
+
+	/**
+	 * @en Your login as ''{0}'' was successful, but you are not registered for this application.
+	 *     Please contact your administrator.
+	 */
+	@CalledFromJSP
+	public static ResKey1 UNKNOWN_ACCOUNT_MESSAGE__LOGIN_NAME;
+
+	/**
+	 * @en Your login was successful, but you are not registered for this application. Please
+	 *     contact your administrator.
+	 */
+	@CalledFromJSP
+	public static ResKey UNKNOWN_ACCOUNT_MESSAGE;
+
+	/**
+	 * @en To the login
+	 */
+	@CalledFromJSP
+	public static ResKey UNKNOWN_ACCOUNT_LOGIN;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -12,7 +12,7 @@ import com.top_logic.layout.form.ValueListener;
 /**
  * Change the executable state of the command dependent on the content of the field.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class CommandExecutabiltyFieldListener implements ValueListener {
 

@@ -46,8 +46,7 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 
 	private static final String NO_BASE_OBJECT_CSS = "foreignAttributeNoBaseObjectMessage";
 
-	private static final ImageProvider IMAGE_PROVIDER =
-		ImageProvider.constantImageProvider(Icons.FORM_EDITOR__REFERENCE);
+	private static final ImageProvider IMAGE_PROVIDER = (any, flavor) -> Icons.FORM_EDITOR__REFERENCE;
 
 	private final FieldDefinitionTemplateProvider _delegate;
 
@@ -78,6 +77,13 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 			_foreignObjectQuery = null;
 			_attributeOwnerType = null;
 		}
+	}
+
+	/**
+	 * The provider creating the field (in the context of the referenced object).
+	 */
+	protected FieldDefinitionTemplateProvider getDelegate() {
+		return _delegate;
 	}
 
 	private TLClass resolveAttributeOwner(InstantiationContext context, ForeignAttributeDefinition config) {
@@ -120,7 +126,7 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 
 	@Override
 	protected DisplayDimension getDialogHeight() {
-		return DisplayDimension.dim(500, DisplayUnit.PIXEL);
+		return DisplayDimension.dim(600, DisplayUnit.PIXEL);
 	}
 
 	@Override
@@ -197,14 +203,13 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 
 	private HTMLTemplateFragment attributeLabelForPosition(TLStructuredTypePart part, LabelPosition labelPosition) {
 		switch (labelPosition) {
-			case DEFAULT:
-				return text(MetaLabelProvider.INSTANCE.getLabel(part) + ':');
 			case AFTER_VALUE:
 				return text(MetaLabelProvider.INSTANCE.getLabel(part));
 			case HIDE_LABEL:
 				return null;
+			default:
+				return text(MetaLabelProvider.INSTANCE.getLabel(part) + ':');
 		}
-		throw LabelPosition.noSuchPosition(labelPosition);
 	}
 
 }

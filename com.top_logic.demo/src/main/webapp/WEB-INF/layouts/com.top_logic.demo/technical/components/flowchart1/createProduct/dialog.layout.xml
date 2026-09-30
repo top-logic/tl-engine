@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<title>
+			<title key="dynamic.5a1f068a-97e7-4f8a-989a-b5f79132fb9f">
+				<en>Create product</en>
+				<de>Produkt anlegen</de>
+			</title>
+		</title>
+		<open-handler id="ID_649305e7_b161_4820_9354_4bbe0632c764"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="theme:ICONS_ADD_BUTTON"
+			targetComponent="com.top_logic.demo/technical/components/flowchart1/createProduct/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.5a1f068a-97e7-4f8a-989a-b5f79132fb9f">
+				<en>Create product</en>
+				<de>Produkt anlegen</de>
+			</resourceKey>
+		</open-handler>
+		<typeOptions type="test.flowchart:Product"/>
+		<create-handler id="ID_ac2c6ab5_7e1f_4770_840d_c284d3f64a5c"/>
+	</arguments>
+</config:template-call>

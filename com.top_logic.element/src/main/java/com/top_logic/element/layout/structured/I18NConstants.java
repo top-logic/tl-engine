@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.layout.structured;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -26,13 +27,16 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @see I18NConstantsBase */
 	public static ResKey GLOBAL_CONFIGURATION;
 
-	public static ResKey ERROR_MANDATOR_HAS_CHILDREN = legacyKey("element.mandator.edit.elementRemove.disabled.hasChildren");
+	@CustomKey("element.mandator.edit.elementRemove.disabled.hasChildren")
+	public static ResKey ERROR_MANDATOR_HAS_CHILDREN;
 
-	public static ResKey ERROR_MANDATOR_IS_REFERENCED = legacyKey("element.mandator.edit.elementRemove.disabled.isRefered");
+	@CustomKey("element.mandator.edit.elementRemove.disabled.isRefered")
+	public static ResKey ERROR_MANDATOR_IS_REFERENCED;
 
 	public static ResKey ERROR_ROOT_CANNOT_BE_DELETED;
 
-	public static ResKey ERROR_ROOT_CANNOT_BE_EDITED = legacyKey("tl.executable.disabled.notEditable");
+	@CustomKey("tl.executable.disabled.notEditable")
+	public static ResKey ERROR_ROOT_CANNOT_BE_EDITED;
 
 	static {
 		initConstants(I18NConstants.class);

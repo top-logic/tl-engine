@@ -1,0 +1,691 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Script Konsole"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+  names = list("alice", "bob", "charlie", "diana");
+  
+  // Index by first letter, but store uppercase version
+  result = $names.indexBy(
+    keyFun: name -> $name.subString(0, 1),
+    mapFun: name -> toUpperCase($name)
+  );
+  
+  $result;
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="a"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="ALICE"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="b"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="BOB"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="c"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="CHARLIE"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="d"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="DIANA"
+						/>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+  employees = list(
+    {"name": "Alice Smith", "age": 30, "salary": 75000},
+    {"name": "Bob Jones", "age": 25, "salary": 65000},
+    {"name": "Charlie Brown", "age": 35, "salary": 85000}
+  );
+  
+  // Index by name, but store only age and salary info
+  result = $employees.indexBy(
+    keyFun: emp -> $emp["name"],
+    mapFun: emp -> {
+      "age": $emp["age"],
+      "salary": $emp["salary"],
+      "category": if($emp["age"] >= 30, "senior", "junior")
+    }
+  );
+  
+  $result;
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Alice Smith"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="age"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+										value="30.0"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="salary"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+										value="75000.0"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="category"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="senior"
+									/>
+								</value>
+							</values>
+						</value>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Bob Jones"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="age"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+										value="25.0"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="salary"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+										value="65000.0"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="category"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="junior"
+									/>
+								</value>
+							</values>
+						</value>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="Charlie Brown"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="age"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+										value="35.0"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="salary"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+										value="85000.0"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="category"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="senior"
+									/>
+								</value>
+							</values>
+						</value>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+  products = list(
+    {"name": "Apple iPhone", "price": 999, "category": "electronics"},
+    {"name": "Apple MacBook", "price": 1299, "category": "computers"},
+    {"name": "Apple Watch", "price": 399, "category": "electronics"}
+  );
+  
+  // Index by category, store price, resolve conflicts by summing
+  result = $products.indexBy(
+    keyFun: product -> $product["category"],
+    clashFun: price1 -> price2 -> $price1 + $price2,
+    mapFun: product -> $product["price"]
+  );
+  
+  $result;
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="electronics"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="1398.0"
+						/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="computers"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+							value="1299.0"
+						/>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+  measurements = list(
+    {"id": "temp1", "celsius": 25},
+    {"id": "temp2", "celsius": 30},
+    {"id": "temp3", "celsius": 0},
+    {"id": "temp4", "celsius": 100}
+  );
+  
+  // Index by id, convert celsius to fahrenheit and store
+  result = $measurements.indexBy(
+    keyFun: measurement -> $measurement["id"],
+    mapFun: measurement -> {
+      celsius = $measurement["celsius"];
+      fahrenheit = $celsius * 9 / 5 + 32;
+      {
+        "celsius": $celsius,
+        "fahrenheit": $fahrenheit,
+        "description": if($celsius < 10, "cold", 
+                         if($celsius > 25, "hot", "moderate"))
+      };
+    }
+  );
+  
+  $result;
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="temp1"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="celsius"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+										value="25.0"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="fahrenheit"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+										value="77.0"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="description"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="moderate"
+									/>
+								</value>
+							</values>
+						</value>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="temp2"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="celsius"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+										value="30.0"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="fahrenheit"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+										value="86.0"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="description"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="hot"
+									/>
+								</value>
+							</values>
+						</value>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="temp3"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="celsius"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+										value="0.0"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="fahrenheit"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+										value="32.0"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="description"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="cold"
+									/>
+								</value>
+							</values>
+						</value>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="temp4"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="celsius"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+										value="100.0"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="fahrenheit"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+										value="212.0"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="description"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="hot"
+									/>
+								</value>
+							</values>
+						</value>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+  // Test with empty list
+  emptyResult = list().indexBy(
+    keyFun: x -> $x,
+    mapFun: x -> toUpperCase($x)
+  );
+  
+  // Test with list containing null values
+  mixedData = list(
+    {"key": "A", "value": "test1"},
+    {"key": "B", "value": null},
+    {"key": "C", "value": "test2"}
+  );
+  
+  resultWithNull = $mixedData.indexBy(
+    keyFun: item -> $item["key"],
+    mapFun: item -> {
+      value = $item["value"];
+      if($value == null, "NO_VALUE", toUpperCase($value));
+    }
+  );
+  
+  {
+    "empty": $emptyResult,
+    "withNull": $resultWithNull
+  };
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+				<values>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="empty"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name"/>
+					</value>
+					<value>
+						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+							value="withNull"
+						/>
+						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+							<values>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="A"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="TEST1"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="B"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="NO_VALUE"
+									/>
+								</value>
+								<value>
+									<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="C"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="TEST2"
+									/>
+								</value>
+							</values>
+						</value>
+					</value>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value=""
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Development > Modell Editor"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen"
+			/>
+		</action>
+	</actions>
+</action>

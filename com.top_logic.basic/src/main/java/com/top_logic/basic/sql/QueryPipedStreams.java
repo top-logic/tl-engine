@@ -88,7 +88,7 @@ public class QueryPipedStreams extends Thread {
         
         try {
             pQuery.getPreparedStatement().setBinaryStream(index, pIn, length);
-            yield();    // Give OutputStream time to start sending data.
+			Thread.yield(); // Give OutputStream time to start sending data.
             // Will (hopefully) block until InputStream is closed via OutputStream
             pQuery.executeUpdate();
         }

@@ -6,6 +6,7 @@
 package com.top_logic.tool.boundsec.gui.profile;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
 
@@ -21,6 +22,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResPrefix COMMAND_GROUP = legacyPrefix("commandGroup.");
 
 	public static ResPrefix ROLE_HEADERS = legacyPrefix("admin.EditRolesProfile.header.");
+
+	/** @en Computed from: {0} */
+	public static ResKey1 COMPUTED_FROM__SOURCE;
 
 	static {
 		initConstants(I18NConstants.class);

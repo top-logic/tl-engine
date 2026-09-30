@@ -815,9 +815,6 @@
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="Default attribute1"
-							/>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
 								label="Attribute1"
 							/>
 						</values>
@@ -937,7 +934,7 @@
 					command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
 					command-label="Designmodus"
 					command-name="toggleDesignModeCommand"
-					component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+					component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 					component-name="rootLayout#masterFrame"
 					user-id="root"
 				>
@@ -1111,7 +1108,6 @@
 					user-id="root"
 				/>
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					xmlns:config="http://www.top-logic.com/ns/config/6.0"
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
@@ -1322,7 +1318,7 @@
 							type="TestAnnotationOverrideInForms:B"
 						>
 							<annotations>
-								<visible-columns visible-columns="hiddenAttribute,attribute1"/>
+								<visible-columns visible-columns="attribute1,hiddenAttribute"/>
 								<main-properties properties="defaultAttribute1"/>
 							</annotations>
 						</field>
@@ -1443,7 +1439,7 @@
 							type="TestAnnotationOverrideInForms:B"
 						>
 							<annotations>
-								<visible-columns visible-columns="hiddenAttribute,attribute1"/>
+								<visible-columns visible-columns="attribute1,hiddenAttribute"/>
 								<main-properties properties="defaultAttribute1"/>
 								<read-only read-only-columns="defaultAttribute1"/>
 							</annotations>
@@ -1507,7 +1503,7 @@
 					command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
 					command-label="Designmodus verlassen"
 					command-name="toggleDesignModeCommand"
-					component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+					component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 					component-name="rootLayout#masterFrame"
 					user-id="root"
 				>
@@ -1590,12 +1586,12 @@
 						tab-path="Strukturen"
 					/>
 				</action>
-		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-			template="resource:WEB-INF/test/actions/misc/Action-Persoenliche Einstellungen zuruecksetzen.xml"
-			template-name-comment="Persoenliche Einstellungen zuruecksetzen"
-		>
-			<parameters/>
-		</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="resource:WEB-INF/test/actions/misc/Action-Persoenliche Einstellungen zuruecksetzen.xml"
+					template-name-comment="Persoenliche Einstellungen zuruecksetzen"
+				>
+					<parameters/>
+				</action>
 			</actions>
 		</action>
 	</actions>

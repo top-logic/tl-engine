@@ -27,9 +27,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
  * {@link AbstractGridCreateHandler} that can be parameterized with TL-Script expressions.
@@ -123,10 +121,6 @@ public class GridCreateHandlerByExpression extends AbstractGridCreateHandler {
 		@Override
 		@FormattedDefault(CommandHandlerFactory.CREATE_CLIQUE)
 		String getClique();
-
-		@Override
-		@FormattedDefault(SimpleBoundCommandGroup.CREATE_NAME)
-		CommandGroupReference getGroup();
 	}
 
 	private final CreateTypeOptions _typeOptions;

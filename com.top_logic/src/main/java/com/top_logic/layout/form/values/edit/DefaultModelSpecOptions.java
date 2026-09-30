@@ -17,7 +17,7 @@ import com.top_logic.layout.channel.linking.ref.NamedComponent;
 /**
  * Specialized {@link ModelSpec} options for dynamic component creation.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DefaultModelSpecOptions extends Function0<List<ModelSpec>> {
 

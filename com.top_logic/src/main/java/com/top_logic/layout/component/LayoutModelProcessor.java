@@ -44,6 +44,7 @@ import com.top_logic.basic.io.DirectoriesOnlyFilter;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.gui.Theme;
@@ -624,6 +625,7 @@ public class LayoutModelProcessor extends Operation {
 
 		XMLProperties.startWithMetaConf(application.getMetaConfResource());
 
+		ModuleUtil.INSTANCE.startModule(ThreadContextManager.class);
 		ModuleUtil.INSTANCE.startModule(ThemeFactory.class);
 		ModuleUtil.INSTANCE.startModule(CommandGroupRegistry.class);
 		ModuleUtil.INSTANCE.startModule(DynamicComponentService.class);

@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.servlet.ServletResponse;
+import jakarta.servlet.ServletResponse;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.FrameworkInternal;
@@ -173,6 +173,9 @@ public interface HTMLConstants {
 
 	/** Constant for the HTML attribute "src". */
     public static final String SRC_ATTR = "src";
+
+	/** Constant for the HTML attribute "charset". */
+	public static final String CHARSET_ATTR = "charset";
 
 	/** Constant for the HTML attribute "href". */
     public static final String HREF_ATTR = "href";

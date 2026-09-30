@@ -24,7 +24,7 @@ public class ComparableFilterSerializationV2 implements ConfiguredFilterSerializ
 	public List<Object> serialize(ComparableFilterConfiguration configuration) {
 		List<Object> serializedState = new ArrayList<>(3);
 		serializedState.add(Collections.singletonList(2));
-		serializedState.add(configuration.getFilterPattern());
+		serializedState.add(IdentityTransformer.INSTANCE.transformToJSON(configuration.getFilterPattern()));
 		serializedState.add(ComparableFilterSerializationV1.INSTANCE.serialize(configuration));
 		return serializedState;
 	}
@@ -32,7 +32,8 @@ public class ComparableFilterSerializationV2 implements ConfiguredFilterSerializ
 	@SuppressWarnings("unchecked")
 	@Override
 	public void deserialize(ComparableFilterConfiguration configuration, List<Object> serializedState) {
-		configuration.setFilterPattern((List<Object>) serializedState.get(1));
+		configuration
+			.setFilterPattern(IdentityTransformer.INSTANCE.transformFromJSON((List<Object>) serializedState.get(1)));
 		ComparableFilterSerializationV1.INSTANCE.deserialize(configuration, (List<Object>) serializedState.get(2));
 	}
 }

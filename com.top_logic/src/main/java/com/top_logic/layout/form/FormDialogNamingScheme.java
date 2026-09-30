@@ -12,7 +12,7 @@ import com.top_logic.layout.form.FormDialogNamingScheme.FormDialogName;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.messagebox.AbstractFormDialogBase;
 import com.top_logic.layout.scripting.ScriptingUtil;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -25,7 +25,7 @@ import com.top_logic.mig.html.layout.MainLayout;
  * 
  * @author <a href="mailto:Jan.Stolzenburg@top-logic.com">Jan.Stolzenburg</a>
  */
-public class FormDialogNamingScheme extends AbstractModelNamingScheme<AbstractFormDialogBase, FormDialogName> {
+public class FormDialogNamingScheme extends AbstractGlobalModelNamingScheme<AbstractFormDialogBase, FormDialogName> {
 
 	/** Identifies as {@link FormContext} the currently active dialog. */
 	public interface FormDialogName extends ModelName {

@@ -1,5 +1,8 @@
 package com.top_logic.tools.resources.translate.deepl.protocol.impl;
 
+/**
+ * Implementation of {@link com.top_logic.tools.resources.translate.deepl.protocol.Glossaries}.
+ */
 public class Glossaries_Impl extends de.haumacher.msgbuf.data.AbstractDataObject implements com.top_logic.tools.resources.translate.deepl.protocol.Glossaries {
 
 	private final java.util.List<com.top_logic.tools.resources.translate.deepl.protocol.Glossary> _glossaries = new java.util.ArrayList<>();
@@ -32,18 +35,18 @@ public class Glossaries_Impl extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	@Override
-	public com.top_logic.tools.resources.translate.deepl.protocol.Glossaries addGlossarie(com.top_logic.tools.resources.translate.deepl.protocol.Glossary value) {
-		internalAddGlossarie(value);
+	public com.top_logic.tools.resources.translate.deepl.protocol.Glossaries addGlossary(com.top_logic.tools.resources.translate.deepl.protocol.Glossary value) {
+		internalAddGlossary(value);
 		return this;
 	}
 
-	/** Implementation of {@link #addGlossarie(com.top_logic.tools.resources.translate.deepl.protocol.Glossary)} without chain call utility. */
-	protected final void internalAddGlossarie(com.top_logic.tools.resources.translate.deepl.protocol.Glossary value) {
+	/** Implementation of {@link #addGlossary(com.top_logic.tools.resources.translate.deepl.protocol.Glossary)} without chain call utility. */
+	protected final void internalAddGlossary(com.top_logic.tools.resources.translate.deepl.protocol.Glossary value) {
 		_glossaries.add(value);
 	}
 
 	@Override
-	public final void removeGlossarie(com.top_logic.tools.resources.translate.deepl.protocol.Glossary value) {
+	public final void removeGlossary(com.top_logic.tools.resources.translate.deepl.protocol.Glossary value) {
 		_glossaries.remove(value);
 	}
 
@@ -67,11 +70,13 @@ public class Glossaries_Impl extends de.haumacher.msgbuf.data.AbstractDataObject
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case GLOSSARIES__PROP: {
+				java.util.List<com.top_logic.tools.resources.translate.deepl.protocol.Glossary> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					addGlossarie(com.top_logic.tools.resources.translate.deepl.protocol.Glossary.readGlossary(in));
+					newValue.add(com.top_logic.tools.resources.translate.deepl.protocol.Glossary.readGlossary(in));
 				}
 				in.endArray();
+				setGlossaries(newValue);
 			}
 			break;
 			default: super.readField(in, field);

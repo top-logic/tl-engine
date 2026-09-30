@@ -5,7 +5,11 @@
  */
 package com.top_logic.element.meta.form.overlay;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
@@ -20,7 +24,7 @@ import com.top_logic.model.TLObject;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class TLFormObjectNaming extends AbstractModelNamingScheme<TLFormObject, TLFormObjectNaming.Name> {
+public class TLFormObjectNaming extends AbstractModelNamingScheme<TLFormObject, TLFormObjectNaming.Name, Object> {
 
 	/**
 	 * {@link ModelName} for {@link TLFormObjectNaming}.
@@ -63,25 +67,48 @@ public class TLFormObjectNaming extends AbstractModelNamingScheme<TLFormObject, 
 	 * Creates a {@link TLFormObjectNaming}.
 	 */
 	public TLFormObjectNaming() {
-		super(TLFormObject.class, Name.class);
+		super(TLFormObject.class, Name.class, Object.class);
 	}
 
 	@Override
-	protected void initName(Name name, TLFormObject model) {
-		name.setFormContext(ModelResolver.buildModelName(model.getScope().getFormContext()));
-		name.setEditedObject(ModelResolver.buildModelName(model.getEditedObject()));
+	protected void initName(Object valueContext, Name name, TLFormObject model) {
+		name.setFormContext(ModelResolver.buildModelName(valueContext, model.getScope().getFormContext()));
+		name.setEditedObject(ModelResolver.buildModelName(valueContext, model.getEditedObject()));
 		name.setDomain(model.getDomain());
 	}
 
 	@Override
-	public TLFormObject locateModel(ActionContext context, Name name) {
+	public TLFormObject locateModel(ActionContext context, Object valueContext, Name name) {
 		AttributeFormContext formContext =
-			(AttributeFormContext) ModelResolver.locateModel(context, name.getFormContext());
-		TLObject editedObject = (TLObject) ModelResolver.locateModel(context, name.getEditedObject());
+			(AttributeFormContext) ModelResolver.locateModel(context, valueContext, name.getFormContext());
+		TLObject editedObject = (TLObject) ModelResolver.locateModel(context, valueContext, name.getEditedObject());
 		String domain = name.getDomain();
-		TLFormObject result = formContext.getAttributeUpdateContainer().getOverlay(editedObject, domain);
+		AttributeUpdateContainer updateContainer = formContext.getAttributeUpdateContainer();
+		TLFormObject result = updateContainer.getOverlay(editedObject, domain);
 		if (result == null) {
-			ApplicationAssertions.assertNotNull(name, "Form object overlay cannot be resolved.", result);
+			List<String> existingDomains = new ArrayList<>();
+			for (TLFormObject obj : updateContainer.getAllOverlays()) {
+				if (editedObject != null && editedObject == obj.getEditedObject()) {
+					throw ApplicationAssertions.fail(name, "Wrong domain in object overlay reference, domain: " + domain
+						+ ", expecting: " + obj.getDomain());
+				}
+
+				if (obj.getEditedObject() == null) {
+					existingDomains.add(obj.getDomain());
+				}
+			}
+
+			if (editedObject == null && existingDomains.size() == 1) {
+				throw ApplicationAssertions.fail(name, "Wrong domain in object overlay reference, domain: " + domain
+					+ ", expecting: " + existingDomains.get(0));
+			}
+
+			if (editedObject == null) {
+				ApplicationAssertions.fail(name, "Form create overlay cannot be resolved (domain '" + domain
+					+ "'), existing domains: " + existingDomains);
+			} else {
+				ApplicationAssertions.fail(name, "Form object overlay cannot be resolved. ");
+			}
 		}
 		return result;
 	}

@@ -19,7 +19,7 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
 /**
  * {@link Comparator} for bottom {@link NodePort}s of a {@link LayoutNode}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ConnectedBottomNodePortComparator implements Comparator<NodePort> {
 

@@ -251,6 +251,13 @@ public class TlDemoAspectFactory extends com.top_logic.element.structured.wrap.S
 	}
 
 	/**
+	 * Lookup {@link CommonChild#PARENT_ATTR} of {@link CommonChild}.
+	 */
+	public static com.top_logic.model.TLReference getParentCommonChildAttr() {
+		return (com.top_logic.model.TLReference) getCommonChildType().getPart(CommonChild.PARENT_ATTR);
+	}
+
+	/**
 	 * Name of type <code>Common</code> in structure {@link #TL_DEMO_ASPECT_STRUCTURE}.
 	 * 
 	 * @deprecated Use {@link Common#COMMON_TYPE}.

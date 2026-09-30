@@ -12,6 +12,7 @@ import java.util.Set;
 import junit.framework.TestCase;
 
 import com.top_logic.basic.col.Filter;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
@@ -34,11 +35,11 @@ public class TestDefaultSingleSelectionModel extends TestCase {
 		Set<?> _selectedObjects;
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-			assertNotNull(formerlySelectedObjects);
-			assertNotNull(selectedObjects);
-			_formerlySelectedObjects = formerlySelectedObjects;
-			_selectedObjects = selectedObjects;
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+			assertNotNull(event.getOldSelection());
+			assertNotNull(event.getNewSelection());
+			_formerlySelectedObjects = event.getOldSelection();
+			_selectedObjects = event.getNewSelection();
 		}
 
 		void reset() {

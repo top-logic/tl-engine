@@ -5,6 +5,7 @@
  */
 package com.top_logic.reporting.layout.flexreporting.producer;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,9 +19,11 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey PIE_CHART_LABEL = legacyKey("reporting.chart.pie.label");
+	@CustomKey("reporting.chart.pie.label")
+	public static ResKey PIE_CHART_LABEL;
 
-	public static ResKey NO_CHART_DATA = legacyKey("reporting.chart.noData");
+	@CustomKey("reporting.chart.noData")
+	public static ResKey NO_CHART_DATA;
 
 	static {
 		initConstants(I18NConstants.class);

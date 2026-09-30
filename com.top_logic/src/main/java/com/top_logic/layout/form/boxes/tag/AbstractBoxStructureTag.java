@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.form.boxes.tag;
 
-import javax.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspException;
 
 /**
  * {@link AbstractBoxContainerTag} that does not allow any contents expect other {@link BoxTag}s.

@@ -6,31 +6,52 @@
 package com.top_logic.element.meta.form.overlay;
 
 import com.top_logic.element.model.DynamicModelService;
-import com.top_logic.knowledge.wrap.ValueProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.factory.TLFactory;
+import com.top_logic.model.impl.TransientObjectFactory;
 
 /**
  * {@link ObjectConstructor} that creates a new instance generically.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DefaultObjectConstructor implements ObjectConstructor {
+public abstract class DefaultObjectConstructor implements ObjectConstructor {
+
+	@Override
+	public TLObject newInstance(TLFormObject overlay) {
+		return factory().createObject((TLClass) overlay.tType(), overlay.tContainer());
+	}
+
+	/**
+	 * The factory used to allocated objects.
+	 */
+	protected abstract TLFactory factory();
 
 	/**
 	 * Singleton {@link DefaultObjectConstructor} instance.
 	 */
-	public static final DefaultObjectConstructor INSTANCE = new DefaultObjectConstructor();
-
-	private static final ValueProvider NONE = new ValueProvider() {
+	private static final ObjectConstructor PERSISTENT_INSTANCE = new DefaultObjectConstructor() {
 		@Override
-		public Object getValue(String aKey) {
-			return null;
+		protected TLFactory factory() {
+			return DynamicModelService.getInstance();
 		}
 
 		@Override
-		public void setValue(String aName, Object aValue) {
-			throw new UnsupportedOperationException();
+		public boolean isTransient(TLFormObject overlay) {
+			return false;
+		}
+	};
+
+	private static final ObjectConstructor TRANSIENT_INSTANCE = new DefaultObjectConstructor() {
+		@Override
+		protected TLFactory factory() {
+			return TransientObjectFactory.INSTANCE;
+		}
+
+		@Override
+		public boolean isTransient(TLFormObject overlay) {
+			return true;
 		}
 	};
 
@@ -38,9 +59,17 @@ public class DefaultObjectConstructor implements ObjectConstructor {
 		// Singleton constructor.
 	}
 
-	@Override
-	public TLObject newInstance(TLFormObject overlay) {
-		return DynamicModelService.getInstance().createObject((TLClass) overlay.getType(), overlay.tContainer(),
-			NONE);
+	/**
+	 * {@link ObjectConstructor} using {@link DynamicModelService} for allocation.
+	 */
+	public static ObjectConstructor getPersistentInstance() {
+		return PERSISTENT_INSTANCE;
+	}
+
+	/**
+	 * {@link ObjectConstructor} using {@link TransientObjectFactory} for allocation.
+	 */
+	public static ObjectConstructor getTransientInstance() {
+		return TRANSIENT_INSTANCE;
 	}
 }

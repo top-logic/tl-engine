@@ -5,7 +5,7 @@
  */
 package com.top_logic.element.meta.form.fieldprovider;
 
-import java.util.List;
+import java.util.Comparator;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfiguredInstance;
@@ -18,11 +18,12 @@ import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.OptionProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
+import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.constraints.GenericMandatoryConstraint;
 import com.top_logic.layout.form.model.SelectField;
-import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
+import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.selection.SelectDialogConfig;
@@ -90,7 +91,7 @@ public class ComplexFieldProvider extends AbstractSelectFieldProvider
 	}
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();
 		boolean isSearch = editContext.isSearchUpdate();
@@ -99,16 +100,23 @@ public class ComplexFieldProvider extends AbstractSelectFieldProvider
 			: null;
 
 		OptionModel<?> options;
+		Comparator comparator;
 		if (editContext.getOptions() != null) {
-			options = editContext.getOptions().generate(editContext);
+			Generator generator = editContext.getOptions();
+			options = generator.generate(editContext);
+			comparator = generator.getOptionOrder();
 		} else {
 			options = getConfig().getOptionProvider().getOptions(editContext);
+			comparator = null;
 		}
 		options = filterOptions(options, editContext);
 		SelectField selectField =
 			newSelectField(fieldName, options, editContext.isMultiple(), false, isSearch, isMandatory,
 				mandatoryChecker,
 				isDisabled, true);
+		if (comparator != null) {
+			selectField.setOptionComparator(comparator);
+		}
 		if (!editContext.isOrdered()) {
 			OptionsPresentation optionsPresentation = AttributeOperations.getOptionsPresentation(
 				editContext.getAnnotation(OptionsDisplay.class), editContext.getValueType());
@@ -136,13 +144,16 @@ public class ComplexFieldProvider extends AbstractSelectFieldProvider
 		if (!(options instanceof ListOptionModel)) {
 			return options;
 		}
-		List<?> baseOptions = ((ListOptionModel<?>) options).getBaseModel();
-		List<?> filteredOptions =
-			AttributeOperations.adjustOptions(editContext, baseOptions);
-		if (baseOptions == filteredOptions) {
-			return options;
-		}
-		return new DefaultListOptionModel<>(filteredOptions);
+		ListOptionModel<?> baseListModel = (ListOptionModel<?>) options;
+		return new LazyListOptionModel<Object>(
+			() -> AttributeOperations.adjustOptions(editContext, baseListModel.getBaseModel())) {
+
+			@Override
+			public void resetBaseModel() {
+				super.resetBaseModel();
+				baseListModel.resetBaseModel();
+			}
+		};
 	}
 
 }

@@ -68,10 +68,8 @@ public abstract class AbstractDBAttribute extends AbstractMOAttribute implements
         return dbName;
     }
     
-    /**
-     * @see #getDBName()
-     */
-    public void setDBName(String dbName) {
+	@Override
+	public void setDBName(String dbName) {
     	checkUpdate();
 		this.dbName = dbName;
 	}

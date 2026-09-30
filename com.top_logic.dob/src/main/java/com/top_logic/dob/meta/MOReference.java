@@ -24,33 +24,50 @@ import com.top_logic.dob.sql.DBMetaObject;
 public interface MOReference extends MOAttribute {
 	
 	/**
-	 * Specification of how to react on the deletion of an object referenced by a
-	 * {@link MOReference}.
+	 * Specification of how to react on the deletion of an object stored in a reference.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	public enum DeletionPolicy implements ExternallyNamed {
 		
 		/**
-		 * The reference is set to <code>null</code>, if the referenced object is deleted.
+		 * The deleted object is removed from the reference.
+		 * 
+		 * <p>
+		 * A reference that can store only a single object is reset to <code>null</code>, if the
+		 * referenced object is deleted.
+		 * </p>
 		 */
 		CLEAR_REFERENCE("clear-reference"),
 		
 		/**
-		 * The object that refers to the deleted object should be also be deleted.
+		 * The object that refers to the deleted object is also deleted.
+		 * 
+		 * <p>
+		 * Note: When using this setting on a reference that can contain multiple values, deleting
+		 * one of the referenced objects deletes the referring object, but not the other objects
+		 * also referenced. To also delete those sibling objects, also mark the reference as
+		 * composition.
+		 * </p>
 		 */
 		DELETE_REFERER("delete-referer"),
 		
 		/**
-		 * The reference should be stabilized. This means that the reference should be modified to
-		 * point to the the historic version of the referenced object directly before deletion.
+		 * The reference to a deleted object is stabilized. This means that the reference is
+		 * modified to point to the the historic version of the referenced object directly before
+		 * the deletion.
+		 * 
+		 * <p>
+		 * This setting is only possible for a reference of "mixed" history type (meaning that the
+		 * reference may contain current and historic objects).
+		 * </p>
 		 */
 		STABILISE_REFERENCE("stabilise-reference"),
 		
 		/**
-		 * The deletion of the referenced object should fail, if the reference is not cleared
-		 * manually in the same transaction or the referring object is deleted altogether with the
-		 * referenced object.
+		 * The deletion of a referenced object fails, if the reference is not explicitly cleared in
+		 * the same transaction or the referring object is deleted altogether with the referenced
+		 * object.
 		 */
 		VETO("veto"),
 		;

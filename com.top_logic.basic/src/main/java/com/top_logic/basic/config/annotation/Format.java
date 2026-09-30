@@ -31,6 +31,10 @@ import com.top_logic.basic.config.ConfigurationValueProvider;
 @TagName("format")
 public @interface Format {
 	
+	/**
+	 * Type of the {@link ConfigurationValueProvider} which parses a string value to the configured
+	 * element and formats a configured element to a suitable string representation.
+	 */
 	Class<? extends ConfigurationValueProvider<?>> value();
 
 }

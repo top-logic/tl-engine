@@ -25,7 +25,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
  * 
  * @see DynamicComponentOptions
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class LayoutTemplateOptionsFunction extends Function0<List<LayoutTemplate>> {
 

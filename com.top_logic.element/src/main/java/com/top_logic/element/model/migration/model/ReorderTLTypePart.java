@@ -11,9 +11,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -33,14 +31,13 @@ import com.top_logic.model.migration.data.Type;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class ReorderTLTypePart extends AbstractConfiguredInstance<ReorderTLTypePart.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class ReorderTLTypePart extends TLModelBaseLineMigrationProcessor<ReorderTLTypePart.Config> {
 
 	/**
 	 * Configuration options of {@link ReorderTLTypePart}.
 	 */
 	@TagName("reorder-part")
-	public interface Config extends PolymorphicConfiguration<ReorderTLTypePart> {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<ReorderTLTypePart> {
 
 		/**
 		 * Qualified name of the {@link TLTypePart} to reorder.
@@ -89,7 +86,7 @@ public class ReorderTLTypePart extends AbstractConfiguredInstance<ReorderTLTypeP
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Reordering tl part migration failed at " + getConfig().location(), ex);
@@ -102,10 +99,8 @@ public class ReorderTLTypePart extends AbstractConfiguredInstance<ReorderTLTypeP
 		QualifiedPartName partToReorder = getConfig().getName();
 		QualifiedTypeName owner = partToReorder.getOwner();
 
-		Type type;
-		try {
-			type = _util.getTLTypeOrFail(connection, owner);
-		} catch (MigrationException ex) {
+		Type type = _util.getTLTypeOrNull(connection, owner);
+		if (type == null) {
 			log.info("No type with name '" + _util.qualifiedName(owner) + "' as owner of '"
 					+ _util.qualifiedName(partToReorder) + "' available at" + getConfig().location(),
 				Log.WARN);
@@ -115,7 +110,7 @@ public class ReorderTLTypePart extends AbstractConfiguredInstance<ReorderTLTypeP
 		boolean updateModelBaseline;
 		String before = getConfig().getBefore();
 		if (FastList.OBJECT_NAME.equals(type.getTable())) {
-			_util.reorderTLClassifier(connection, type, partToReorder.getName(), before);
+			_util.reorderTLClassifier(connection, type, partToReorder.getPartName(), before);
 			updateModelBaseline =
 				tlModel == null ? false : MigrationUtils.reorderClassifier(log, tlModel, partToReorder, before);
 		} else {

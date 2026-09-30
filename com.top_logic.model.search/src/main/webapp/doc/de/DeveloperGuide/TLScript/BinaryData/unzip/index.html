@@ -1,0 +1,84 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$binary.unzip()</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Entpackt eine ZIP-Datei und stellt die enthaltenen Dateien als Liste von JSON-Objekten zur Verfügung.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>binary</td>
+			<td>Binärwert</td>
+			<td>Die zu entpackende ZIP-Datei</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Liste von JSON-Objekten</p>
+
+<p>Für jede in der ZIP-Datei enthaltene Datei ein Eintrag mit den folgenden Feldern:</p>
+
+<ul>
+	<li>
+	<p><code><code class="hljs inlineCode">data</code></code> Die entpackten Binärdaten des Eintrags.</p>
+	</li>
+	<li>
+	<p><code><code class="hljs inlineCode">name</code> </code>Der Dateiname der ausgepackten Datei.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">comment</code> Ein optionaler Kommentar</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">compressedSize</code> Die Größe des komprimierten Inhalts.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">crc</code> Die CRC-Checksumme des Inhalts.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">extra</code> Optionale dem Inhalt zugeordnete Binärdaten.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">creationTime</code> Das Datum der letzten Änderung des Inhalts.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">lastAccessTime</code> Das Datum des letzten Zugriffs auf den Inhalt.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">lastModifiedTime</code> Das Datum der letzten Änderung des Inhalts.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">method</code> Die Kompressionsmethode, entweder <code class="hljs inlineCode">"deflated"</code> oder <code class="hljs inlineCode">"stored"</code>.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">size</code> Die entpackte Größe des Inhalts.</p>
+	</li>
+</ul>
+
+<h2>Beispiele</h2>
+
+<h3>Gesamtgröße berechnen</h3>
+
+<pre>
+	<code>$zip.unzip().map(entry -&gt; $entry["size"]).sum()</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Die zu erwartende Gesamtgröße bei Entpacken der übergebenen ZIP-Datei <code class="hljs inlineCode">$zip</code>.</p>

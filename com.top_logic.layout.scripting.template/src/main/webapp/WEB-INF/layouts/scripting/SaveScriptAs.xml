@@ -15,7 +15,7 @@
 			image="theme:SAVE_SCRIPT_AS"
 			openerClique="additional-apply"
 			openerCommandGroup="System"
-			width="655px"
+			width="710px"
 		/>
 		<components>
 			<component class="com.top_logic.layout.folder.file.selection.FileSelectionComponent"
@@ -23,7 +23,7 @@
 				model="provider(com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorBuilder)"
 				name="${namePrefix}FolderSelector"
 				resPrefix="tl.scripting.recorder.saveScriptAs.folderSelector."
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 			>
 				<modelBuilder class="com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorBuilder"/>
 				<treeBuilder>
@@ -37,17 +37,17 @@
 				</treeBuilder>
 			</component>
 			<form class="com.top_logic.layout.form.component.SelectableFormComponent"
-				buttonComponent="${namePrefix}Buttons"
+				buttonbar="true"
 				dontRecord="true"
 				model="selection(${namePrefix}FolderSelector)"
 				name="${namePrefix}FileNameInput"
 				page="/jsp/layout/scripting/SaveScriptAs.jsp"
 				resPrefix="tl.scripting.recorder.saveScriptAs.form."
 				resetInvisible="true"
-				securityProviderClass="securityRoot"
+				securityObject="securityRoot"
 				toolbar="false"
 			>
-				<layoutInfo size="72px"/>
+				<layoutInfo size="140px"/>
 				<modelBuilder class="com.top_logic.layout.scripting.template.gui.saveas.SaveScriptAsFormBuilder"
 					allowedEndings=".script.xml"
 				/>
@@ -57,7 +57,6 @@
 					/>
 				</buttons>
 			</form>
-			<buttonbar name="${namePrefix}Buttons"/>
 		</components>
 	</component>
 </template>

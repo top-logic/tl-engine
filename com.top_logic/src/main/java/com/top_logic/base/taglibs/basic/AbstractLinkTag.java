@@ -7,16 +7,16 @@ package com.top_logic.base.taglibs.basic;
 
 import java.io.IOException;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.JspWriter;
-import javax.servlet.jsp.PageContext;
-import javax.servlet.jsp.tagext.Tag;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspWriter;
+import jakarta.servlet.jsp.PageContext;
+import jakarta.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.TagSupport;
 
 /**
  * Base class for {@link Tag}s writing HTML <code>link</code>s.
  * 
- * @author <a href=mailto:jco@top-logic.com>Jörg Connotte</a>
+ * @author <a href=mailto:jco@top-logic.com>JÃ¶rg Connotte</a>
  */
 public abstract class AbstractLinkTag extends TagSupport {
 

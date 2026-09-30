@@ -42,7 +42,7 @@
 
 			<property name="com.top_logic.dob.schema.config.MetaObjectConfig#db_name">
 				<annotations>
-					<dynamic-mode fun="com.top_logic.element.layout.meta.DisabledIf">
+					<dynamic-mode fun="com.top_logic.layout.form.values.edit.mode.DisabledIf">
 						<args>
 							<ref value="abstract"/>
 						</args>

@@ -13,23 +13,25 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import javax.mail.Flags.Flag;
-import javax.mail.Folder;
-import javax.mail.FolderClosedException;
-import javax.mail.FolderNotFoundException;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.event.ConnectionEvent;
-import javax.mail.event.MessageCountEvent;
-import javax.mail.event.MessageCountListener;
+import jakarta.mail.Flags.Flag;
+import jakarta.mail.Folder;
+import jakarta.mail.FolderClosedException;
+import jakarta.mail.FolderNotFoundException;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.event.ConnectionEvent;
+import jakarta.mail.event.MessageCountEvent;
+import jakarta.mail.event.MessageCountListener;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dsa.DataAccessProxy;
+import com.top_logic.element.meta.kbbased.PersistentObjectImpl;
 import com.top_logic.knowledge.objects.KOAttributes;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.searching.FullTextBuBuffer;
 import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.Transaction;
@@ -39,19 +41,22 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.mail.base.Mail;
 import com.top_logic.mail.base.MailFactory;
 import com.top_logic.mail.base.MailFolder;
-import com.top_logic.mail.proxy.Attachements.Attachement;
+import com.top_logic.mail.proxy.Attachments.Attachment;
 import com.top_logic.mail.proxy.MailDataSourceAdaptor;
 import com.top_logic.mail.proxy.MailMessage;
 import com.top_logic.mail.proxy.MailReceiver;
 import com.top_logic.mail.proxy.MailReceiverService;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.util.error.TopLogicException;
 
 
 /**
  * Wrapper representation of a mail folder on a mail server.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class IMAPMailFolder extends AbstractContainerWrapper implements MailFolder {
 
@@ -73,6 +78,67 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
     public IMAPMailFolder(KnowledgeObject ko) {
         super(ko);
     }
+
+	@Override
+	public TLClass tType() {
+		return PersistentObjectImpl.tType(this);
+	}
+
+	@Override
+	public Set<String> getAllAttributeNames() {
+		Set<String> theResult = super.getAllAttributeNames();
+
+		for (TLStructuredTypePart part : tType().getAllParts()) {
+			theResult.add(part.getName());
+		}
+
+		return theResult;
+	}
+
+	@Override
+	public TLObject tContainer() {
+		return PersistentObjectImpl.tContainer(this);
+	}
+
+	@Override
+	public TLReference tContainerReference() {
+		return PersistentObjectImpl.tContainerReference(this);
+	}
+
+	@Override
+	public Object getValue(String anAttribute) {
+		return PersistentObjectImpl.getValue(this, anAttribute);
+	}
+
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		return PersistentObjectImpl.getValue(this, part);
+	}
+
+	@Override
+	public void generateFullText(FullTextBuBuffer buffer) {
+		PersistentObjectImpl.generateFullText(buffer, this);
+	}
+
+	@Override
+	public void setValue(String aKey, Object aValue) {
+		PersistentObjectImpl.setValue(this, aKey, aValue);
+	}
+
+	@Override
+	public void tUpdate(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.setValue(this, part, value);
+	}
+
+	@Override
+	public void tAdd(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.addValue(this, part, value);
+	}
+
+	@Override
+	public void tRemove(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.removeValue(this, part, value);
+	}
 
 	@Override
 	public Collection<? extends TLObject> getContent() {
@@ -208,7 +274,8 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
 	public Mail createMail(MailMessage aMail) {
         if (aMail != null) {
         	String      theMailID = aMail.getID();
-			Transaction theTX     = this.tHandle().getKnowledgeBase().beginTransaction();
+			Transaction theTX = this.tHandle().getKnowledgeBase()
+				.beginTransaction(I18NConstants.STORED_RECEIVED_MAIL__ID.fill(theMailID));
 
             try {
 				Mail theMail = MailFactory.createMail(aMail);
@@ -500,17 +567,17 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
      * Return the URL to create a {@link DataAccessProxy} for accessing mail information.
      * 
      * @param    aMessage         The mail to get the URL for, may be <code>null</code>.
-     * @param    anAttachement    The attachment to get the URL for, may be <code>null</code>.
+     * @param    anAttachment    The attachment to get the URL for, may be <code>null</code>.
      * @return   The requested URL, never <code>null</code>, but may be empty, if mail is <code>null</code>.
      * @throws   MessagingException    When getting URL fails.
      * @throws   IOException           When accessing the mail server fails.
      */
-    protected String getMailURL(Message aMessage, Attachement anAttachement) throws MessagingException, IOException {
+    protected String getMailURL(Message aMessage, Attachment anAttachment) throws MessagingException, IOException {
         if (aMessage == null) {
             return ("");
         }
         else {
-            return MailFolder.MAIL_DSA_PREFIX + MailDataSourceAdaptor.getURL(aMessage, anAttachement);
+            return MailFolder.MAIL_DSA_PREFIX + MailDataSourceAdaptor.getURL(aMessage, anAttachment);
         }
     }
 

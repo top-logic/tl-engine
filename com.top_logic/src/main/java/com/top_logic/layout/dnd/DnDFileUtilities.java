@@ -14,12 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
 
-import org.apache.commons.fileupload.FileItem;
-
-import com.top_logic.base.multipart.MultipartRequest;
 import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
 import com.top_logic.basic.config.format.MemorySizeFormat;
@@ -125,33 +123,34 @@ public class DnDFileUtilities {
 	 * @param uploadHandler
 	 *        Is not allowed to be null.
 	 */
-	public static void handleContent(DisplayContext context, Consumer<MultipartRequest> uploadHandler) {
+	public static void handleContent(DisplayContext context, Consumer<HttpServletRequest> uploadHandler) {
 		final HttpServletRequest request = context.asRequest();
-		boolean uploadWasTriggered = request instanceof MultipartRequest;
-		if (uploadWasTriggered) {
-			uploadHandler.accept((MultipartRequest) request);
-		}
+		uploadHandler.accept(request);
 		final HttpServletResponse response = context.asResponse();
 		response.setContentType(CONTENT_TYPE_TEXT_HTML_UTF_8);
 	}
 
 	/**
-	 * Extracts the file name of a {@link FileItem} and cuts out any path names.
+	 * Extracts the file name of a {@link Part} and cuts out any path names.
 	 * 
 	 * @param fileItem
 	 *        The file to get the name of.
 	 * @return file name
 	 */
-	public static String getFileName(final FileItem fileItem) {
-		int splitNameIndex = fileItem.getName().lastIndexOf(':');
+	public static String getFileName(Part fileItem) {
+		String uploadName = fileItem.getSubmittedFileName();
+		if (uploadName == null) {
+			uploadName = fileItem.getName();
+		}
+		int splitNameIndex = uploadName.lastIndexOf(':');
 		String fileName =
-			(splitNameIndex != -1) ? fileItem.getName().substring(splitNameIndex + 1) : fileItem.getName();
+			(splitNameIndex != -1) ? uploadName.substring(splitNameIndex + 1) : fileItem.getName();
 		assert fileName != null : "File must have a non-null name.";
 		return fileName;
 	}
 
 	/**
-	 * Determines the content type (mime type) of the {@link FileItem}.
+	 * Determines the content type (mime type) of the {@link Part}.
 	 * 
 	 * @param fileItem
 	 *        Content type of this file will be determined.
@@ -159,7 +158,7 @@ public class DnDFileUtilities {
 	 *        Name of the file.
 	 * @return content type of the file
 	 */
-	public static String getContentType(final FileItem fileItem, String fileName) {
+	public static String getContentType(Part fileItem, String fileName) {
 		String contentType = fileItem.getContentType();
 		if (BinaryData.CONTENT_TYPE_OCTET_STREAM.equals(contentType)) {
 			contentType = MimeTypes.getInstance().getMimeType(fileName);

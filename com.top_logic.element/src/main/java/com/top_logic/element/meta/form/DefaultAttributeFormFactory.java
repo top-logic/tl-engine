@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
@@ -22,8 +23,11 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Configuration;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Mapping;
-import com.top_logic.basic.col.Sink;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -33,8 +37,8 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
-import com.top_logic.element.meta.AttributeUpdateContainer.Handle;
 import com.top_logic.element.meta.LegacyTypeCodes;
+import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -65,11 +69,10 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.annotate.TLConstraints;
 import com.top_logic.model.annotate.TLDynamicVisibility;
+import com.top_logic.model.annotate.ui.CssClassProvider;
 import com.top_logic.model.annotate.ui.PDFRendererAnnotation;
 import com.top_logic.model.annotate.ui.TLCssClass;
 import com.top_logic.model.annotate.util.ConstraintCheck;
-import com.top_logic.model.form.definition.FormVisibility;
-import com.top_logic.model.util.Pointer;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
@@ -120,6 +123,9 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		}
 	};
 
+	private static final Property<String> DYNAMIC_CSS_CLASS =
+		TypedAnnotatable.property(String.class, "dynamicCssClass");
+
 	@Override
 	protected FormMember toFormField(AttributeUpdate update, AttributeUpdateContainer container, String fieldName) {
         TLStructuredTypePart theMA = update.getAttribute();
@@ -133,7 +139,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 			    Person        thePerson = TLContext.getContext().getCurrentPersonWrapper();
 				TLObject theAttrib = update.getObject();
 			    if (theAttrib instanceof BoundObject) {
-					Collection<BoundRole> theRoles = theAM.getRoles(thePerson, (BoundObject) theAttrib);
+					Collection<? extends BoundRole> theRoles = theAM.getRoles(thePerson, (BoundObject) theAttrib);
 					Collection<BoundCommandGroup> theAccess = AttributeOperations.getAccess(theMA, theRoles);
                     if ( ! theAccess.contains(SimpleBoundCommandGroup.READ)) {
                         resultField.setBlocked(true);
@@ -147,13 +153,53 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		}
 
 		if (result != null) {
-			TLCssClass annotation = update.getAnnotation(TLCssClass.class);
-			if (annotation != null) {
-				result.setCssClasses(annotation.getValue());
-			}
+			addCssClass(update, theMA, result);
 		}
 
 		return result;
+	}
+
+	private void addCssClass(AttributeUpdate update, TLStructuredTypePart attribute, FormMember member) {
+		TLCssClass annotation = update.getAnnotation(TLCssClass.class);
+		if (annotation == null) {
+			return;
+		}
+
+		String staticCssClass = annotation.getValue();
+		if (member instanceof FormField field) {
+			PolymorphicConfiguration<? extends CssClassProvider> dynamicCssClass = annotation.getDynamicCssClass();
+			if (dynamicCssClass != null) {
+				CssClassProvider provider = TypedConfigUtil.createInstance(dynamicCssClass);
+				ValueListener cssUpdate = (f, oldValue, newValue) -> {
+					String oldClass = f.get(DYNAMIC_CSS_CLASS);
+					String newClass = provider.getCssClass(update.getObject(), attribute, newValue);
+					if (StringServices.equals(oldClass, newClass)) {
+						return;
+					}
+					if (oldClass != null) {
+						f.removeCssClass(oldClass);
+					}
+					if (newClass == null) {
+						newClass = staticCssClass;
+					}
+					if (newClass != null) {
+						f.addCssClass(newClass);
+					}
+					f.set(DYNAMIC_CSS_CLASS, newClass);
+				};
+				field.addValueListener(cssUpdate);
+
+				// Setup initial value.
+				cssUpdate.valueChanged(field, null, field.getValue());
+				return;
+			}
+		}
+		boolean override = annotation.getOverride();
+		if (override) {
+			member.setCssClasses(staticCssClass);
+		} else {
+			member.addCssClass(staticCssClass);
+		}
 	}
 
 	protected FormMember createFormMember(
@@ -174,133 +220,34 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		if (provider != null) {
 			FormMember result = provider.getFormField(update, name);
 
+			if (result == null) {
+				return null;
+			}
+
+			applyDynamicVisibility(update, updateContainer, result);
+
 			if (result instanceof FormField) {
 				FormField field = (FormField) result;
-
-				TLDynamicVisibility modeAnnotation = attribute.getAnnotation(TLDynamicVisibility.class);
-				if (modeAnnotation != null) {
-					ModeSelector modeSelector = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
-						.getInstance(modeAnnotation.getModeSelector());
-
-					TLObject object = update.getOverlay();
-
-					class Observer implements ValueListener, Sink<Pointer> {
-						private final List<AttributeUpdateContainer.Handle> _handles = new ArrayList<>();
-
-						@Override
-						public void valueChanged(FormField changedField, Object oldValue, Object newValue) {
-							FormVisibility mode = modeSelector.getMode(object, attribute);
-							mode.applyTo(result);
-							switch (mode) {
-								case READ_ONLY:
-									// Reset to original value to prevent modifying values by
-									// temporarily activating fields.
-									((FormField) result).reset();
-									break;
-								case HIDDEN:
-									// Clear value to prevent leaking irrelevant values into the
-									// model.
-									((FormField) result).setValue(null);
-									break;
-								default:
-									break;
-							}
-
-							removeListeners();
-
-							modeSelector.traceDependencies(object, attribute, this);
-						}
-
-						private void removeListeners() {
-							for (Handle handle : _handles) {
-								handle.release();
-							}
-							_handles.clear();
-						}
-
-						@Override
-						public void add(Pointer p) {
-							_handles.add(updateContainer.addValueListener(p.object(), p.attribute(), this));
-						}
-					}
-
-					new Observer().valueChanged(null, null, null);
-				}
 
 				TLConstraints annotation = attribute.getAnnotation(TLConstraints.class);
 				if (annotation != null) {
 					List<ConstraintCheck> checks = TypedConfiguration.getInstanceList(
 						SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, annotation.getConstraints());
-					Constraint constraint = new Constraint() {
-						private Collection<FormField> _dependencies = Collections.emptyList();
-
-						@Override
-						public Collection<FormField> reportDependencies() {
-							return _dependencies;
+					for (ConstraintCheck check : checks) {
+						switch (check.type()) {
+							case WARNING: {
+								field.addWarningConstraint(toFormConstraint(update, updateContainer, field, check));
+								break;
+							}
+							default:
+								field.addConstraint(toFormConstraint(update, updateContainer, field, check));
 						}
-
-						@Override
-						public boolean check(Object value) throws CheckException {
-							// Lazily initialize dependencies, since the are not yet available
-							// at the time, the field is constructed. Moreover, the dependencies
-							// must be updated whenever a new check occurs, since the test
-							// expression may access other fields depending on the values received.
-							// The simplest example is boolean evaluation, where the second
-							// condition of an and condition is only evaluated, if the first
-							// condition yields true.
-							Set<FormField> newDependencies = computeDependencies();
-
-							Collection<FormField> oldDependencies = _dependencies;
-							for (FormField dependency : oldDependencies) {
-								if (!newDependencies.contains(dependency)) {
-									dependency.removeDependant(field);
-								}
-							}
-							for (FormField dependency : newDependencies) {
-								if (!oldDependencies.contains(dependency)) {
-									dependency.addDependant(field);
-								}
-							}
-							_dependencies = newDependencies;
-
-							for (FormField dependency : _dependencies) {
-								if (!dependency.hasValue()) {
-									return false;
-								}
-							}
-
-							TLObject object = updateContainer.getOverlay(update);
-							for (ConstraintCheck check : checks) {
-								ResKey failure = check.check(object, attribute);
-								if (failure != null) {
-									throw new CheckException(Resources.getInstance().getString(failure));
-								}
-							}
-							return true;
-						}
-
-						private Set<FormField> computeDependencies() {
-							HashSet<FormField> dependencies = new HashSet<>();
-							TLObject object = updateContainer.getOverlay(update);
-							for (ConstraintCheck dependency : checks) {
-								dependency.traceDependencies(object, attribute, p -> {
-									AttributeUpdate other = updateContainer.getAttributeUpdate(p.attribute(), p.object());
-									if (other == null) {
-										return;
-									}
-									
-									FormMember otherMember = updateContainer.getFormContext().getMember(other);
-									if (otherMember instanceof FormField && otherMember != field) {
-										dependencies.add((FormField) otherMember);
-									}
-								});
-							}
-							return dependencies;
-						}
-					};
-					field.addConstraint(constraint);
+					}
 				}
+
+				addAnnotatedListeners(field, attribute);
 			}
+			
 			return result;
 		}
 
@@ -309,11 +256,111 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		return null;
 	}
 
+	private void applyDynamicVisibility(AttributeUpdate update, AttributeUpdateContainer updateContainer,
+			FormMember member) {
+		TLStructuredTypePart attribute = update.getAttribute();
+		TLDynamicVisibility modeAnnotation = attribute.getAnnotation(TLDynamicVisibility.class);
+		if (modeAnnotation == null) {
+			return;
+		}
+		ModeSelector modeSelector = TypedConfigUtil.createInstance(modeAnnotation.getModeSelector());
+
+		TLObject object = update.getOverlay();
+
+		new FieldModeObserver(member, updateContainer, modeSelector, object, attribute, !update.isDisabled())
+			.valueChanged(null, null, null);
+	}
+
+	private Constraint toFormConstraint(AttributeUpdate update, final AttributeUpdateContainer updateContainer,
+			FormField field, ConstraintCheck check) {
+		Constraint constraint = new Constraint() {
+			private Collection<FormField> _dependencies = Collections.emptyList();
+
+			@Override
+			public Collection<FormField> reportDependencies() {
+				return _dependencies;
+			}
+
+			@Override
+			public boolean check(Object value) throws CheckException {
+				// Lazily initialize dependencies, since the are not yet available
+				// at the time, the field is constructed. Moreover, the dependencies
+				// must be updated whenever a new check occurs, since the test
+				// expression may access other fields depending on the values
+				// received.
+				// The simplest example is boolean evaluation, where the second
+				// condition of an and condition is only evaluated, if the first
+				// condition yields true.
+				Set<FormField> newDependencies = computeDependencies();
+
+				Collection<FormField> oldDependencies = _dependencies;
+				for (FormField dependency : oldDependencies) {
+					if (!newDependencies.contains(dependency)) {
+						dependency.removeDependant(field);
+					}
+				}
+				for (FormField dependency : newDependencies) {
+					if (!oldDependencies.contains(dependency)) {
+						dependency.addDependant(field);
+					}
+				}
+				_dependencies = newDependencies;
+
+				for (FormField dependency : _dependencies) {
+					if (!dependency.hasValue()) {
+						return false;
+					}
+				}
+
+				TLObject object = updateContainer.getOverlay(update);
+				final TLStructuredTypePart attribute = update.getAttribute();
+				ResKey failure = check.check(object, attribute);
+				if (failure != null) {
+					throw new CheckException(Resources.getInstance().getString(failure));
+				}
+				return true;
+			}
+
+			private Set<FormField> computeDependencies() {
+				HashSet<FormField> dependencies = new HashSet<>();
+				TLObject object = updateContainer.getOverlay(update);
+				AttributeFormContext formContext = updateContainer.getFormContext();
+				final TLStructuredTypePart attribute = update.getAttribute();
+				check.traceDependencies(object, attribute, p -> {
+					AttributeUpdate other =
+						updateContainer.getAttributeUpdate(p.attribute(), p.object());
+					if (other == null) {
+						return;
+					}
+
+					FormMember otherMember = formContext.getMember(other);
+					if (otherMember instanceof FormField && otherMember != field) {
+						dependencies.add((FormField) otherMember);
+					}
+				}, updateContainer);
+				return dependencies;
+			}
+		};
+		return constraint;
+	}
+
+	private void addAnnotatedListeners(FormField field, TLStructuredTypePart attribute) {
+		AttributeOperations.getValueListeners(attribute).forEach(field::addValueListener);
+	}
+
 	public static OptionModel<?> getOptionList(final EditContext editContext, final LabelProvider theProv,
 			final SelectField selectField) {
+		Generator generator = editContext.getOptions();
+		Comparator optionComparator;
+		if (generator != null) {
+			Comparator<?> generatorOrder = generator.getOptionOrder();
+			optionComparator = generatorOrder != null ? generatorOrder : LabelComparator.newCachingInstance(theProv);
+		} else {
+			optionComparator = LabelComparator.newCachingInstance(theProv);
+		}
 		// Set the used comparator to the field to guarantee the same order of the options
 		// in OptimizedSelectiorContext
-		selectField.setOptionComparator(LabelComparator.newCachingInstance(theProv));
+		selectField.setOptionComparator(optionComparator);
 		
 		// Create the possible options to this field as lazy list that
         // is only created, if it is really used. If the field is
@@ -375,11 +422,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 	}
 
 	protected void initFormMember(AttributeUpdate aAttributeUpdate, FormMember result) {
-		ResKey resKey = aAttributeUpdate.getLabelKey();
-		Resources resources = Resources.getInstance();
-		result.setLabel(resources.getString(resKey));
-		result.setTooltip(resources.getString(resKey.tooltipOptional()));
-		result.setTooltipCaption(resources.getString(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX), null));
+		initLabel(result, aAttributeUpdate);
 		
 		if (AttributeOperations.isReadOnly(aAttributeUpdate.getAttribute())) {
 			/* The value for the attribute can not be updated. Therefore a constraint is not useful,
@@ -388,6 +431,16 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 			result.clearConstraints();
 		}
 		AttributeFormFactory.setAttributeUpdate(result, aAttributeUpdate);
+	}
+
+	/**
+	 * Initializes label and tooltip of the given field.
+	 */
+	public static void initLabel(FormMember result, EditContext editContext) {
+		ResKey resKey = editContext.getLabelKey();
+		result.setLabel(resKey);
+		result.setTooltip(resKey.tooltipOptional());
+		result.setTooltipCaption(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX).optional());
 	}
 
 	protected Object createExampleValue(AttributeUpdate aAttributeUpdate) {

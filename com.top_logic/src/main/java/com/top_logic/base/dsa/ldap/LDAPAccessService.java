@@ -404,8 +404,8 @@ public class LDAPAccessService {
 				try {
 					theResult.addAll(getMembersForGroup(aGroupDN, returnDOs, new ArrayList()));
 				} catch (Exception ne) {
-					Logger.error(this.getDeviceID() + ": Unable to lookup group: " + aGroupDN, ne, this);
-					throw new TopLogicException(LDAPAccessService.class, "ldaperror", ne);
+					throw new TopLogicException(
+						I18NConstants.ERROR_LOOKUP_GROUP__DEVICE_GROUP.fill(this.getDeviceID(), aGroupDN), ne);
 				}
 			}
 			return theResult;
@@ -551,7 +551,8 @@ public class LDAPAccessService {
 					if (aMemberDO != null) {
 						memberName = (String) aMemberDO.getAttributeValue(UserInterface.USER_NAME);
 					}
-					if (StringServices.isEmpty(memberName) || !memberName.equals(aName)) {
+					// Account names are matched case-insensitively (Ticket #29423).
+					if (StringServices.isEmpty(memberName) || !memberName.equalsIgnoreCase(aName)) {
 						allMembersDNs.remove();
 					}
 				} catch (Exception e) {

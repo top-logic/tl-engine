@@ -11,6 +11,7 @@
 	<groupId>\${groupId}</groupId>
 	<artifactId>\${artifactId}</artifactId>
 	<version>\${version}</version>
+	<name>${project.artifactId}</name>
 	
 #if ($ProfessionalEdition == "false")
 	<licenses>
@@ -29,9 +30,11 @@
 #end
 	
 	<properties>
-		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		
-		<tl.deb.skip>false</tl.deb.skip>
+		<!-- Enable for Debian package deployment. -->
+		<tl.deb.skip>true</tl.deb.skip>
+		
 		<tl.deb.attach>false</tl.deb.attach>
 		<tl.deb.maintainer>info@\${project.groupId}</tl.deb.maintainer>
 		<tl.deb.section>misc</tl.deb.section>
@@ -55,7 +58,6 @@
 		<dependency>
 		    <groupId>com.top-logic</groupId>
 		    <artifactId>tl-license-professional</artifactId>
-		    <version>7.7.0</version>
 		</dependency>
 #else
 		<!-- Using TopLogic OpenSource Edition. AGPL license conditions apply. -->
@@ -64,7 +66,6 @@
 		<dependency>
 		    <groupId>com.top-logic</groupId>
 		    <artifactId>tl-license-professional</artifactId>
-		    <version>\${tl.version}</version>
 		</dependency>
 		-->
 #end
@@ -112,6 +113,16 @@
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-contact</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-graphic-blocks-server</artifactId>
+		</dependency>
+#if ($useSelfService == "true")
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-security-selfservice</artifactId>
+		</dependency>
+#end
 #if ($useChartJS == "true")
 		<dependency>
 			<groupId>com.top-logic</groupId>
@@ -217,14 +228,14 @@
 
 								<data>
 									<type>link</type>
-									<linkName>/var/lib/tomcat9/webapps/\${tl.deb.contextName}.war</linkName>
+									<linkName>/var/lib/tomcat10/webapps/\${tl.deb.contextName}.war</linkName>
 									<linkTarget>\${tl.deb.installDir}/\${project.build.finalName}-app.war</linkTarget>
 									<symlink>true</symlink>
 								</data>
 
 								<data>
 									<type>link</type>
-									<linkName>/etc/tomcat9/Catalina/localhost/\${tl.deb.contextName}.xml</linkName>
+									<linkName>/etc/tomcat10/Catalina/localhost/\${tl.deb.contextName}.xml</linkName>
 									<linkTarget>\${tl.deb.installDir}/tomcat/context.xml</linkTarget>
 									<symlink>true</symlink>
 								</data>
@@ -238,7 +249,7 @@
 
 								<data>
 									<type>link</type>
-									<linkName>/var/lib/tomcat9/lib/mariadb-java-client.jar</linkName>
+									<linkName>/var/lib/tomcat10/lib/mariadb-java-client.jar</linkName>
 									<linkTarget>/usr/share/java/mariadb-java-client.jar</linkTarget>
 									<symlink>true</symlink>
 								</data>
@@ -295,4 +306,58 @@
 			</snapshots>
 		</snapshotRepository>
 	</distributionManagement>
+
+	<!--
+		The TopLogic repositories, which also resolve this project's parent POM and the
+		TopLogic build plugins. With them declared here, the application builds against a
+		TopLogic SNAPSHOT version by only changing the version of the parent POM above,
+		without any Maven settings.
+	-->
+	<repositories>
+		<repository>
+			<id>tl-releases</id>
+			<url>https://dev.top-logic.com/nexus/repository/toplogic/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+
+		<repository>
+			<id>tl-snapshots</id>
+			<url>https://dev.top-logic.com/nexus/repository/toplogic-snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>tl-releases</id>
+			<url>https://dev.top-logic.com/nexus/repository/toplogic/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+
+		<pluginRepository>
+			<id>tl-snapshots</id>
+			<url>https://dev.top-logic.com/nexus/repository/toplogic-snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
 </project>

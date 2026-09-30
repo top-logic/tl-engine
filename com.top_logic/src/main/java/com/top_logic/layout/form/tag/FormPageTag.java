@@ -10,15 +10,16 @@ import static com.top_logic.layout.basic.fragments.Fragments.*;
 import java.io.IOException;
 import java.util.Collection;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
-import javax.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.PageContext;
+import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.Renderer;
@@ -37,6 +38,7 @@ import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.control.BooleanChoiceControl;
 import com.top_logic.layout.form.control.CheckboxControl;
 import com.top_logic.layout.form.control.ChoiceControl;
+import com.top_logic.layout.form.control.DropDownControl;
 import com.top_logic.layout.form.control.IconSelectControl;
 import com.top_logic.layout.form.control.SelectControl;
 import com.top_logic.layout.form.control.SelectOptionControl;
@@ -54,6 +56,7 @@ import com.top_logic.mig.html.DefaultResourceProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLMimeTypes;
@@ -61,7 +64,7 @@ import com.top_logic.util.TLMimeTypes;
 /**
  * {@link FormTag} rendering a fixed title area.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class FormPageTag extends PageAreaTag implements FormTagProperties {
 
@@ -458,18 +461,20 @@ public class FormPageTag extends PageAreaTag implements FormTagProperties {
 	 * 
 	 * @param labelAbove
 	 *        If <code>true</code> label is rendered above, else it will be rendered before.
+	 * @deprecated Use {@link #setLabelPosition(LabelPosition)}
 	 */
+	@Deprecated
+	@CalledFromJSP
 	public void setLabelAbove(Boolean labelAbove) {
 		_formTag.setLabelAbove(labelAbove);
 	}
 
 	/**
-	 * Returns whether the label is rendered above the content.
-	 * 
-	 * @return If <code>true</code> label is rendered above, else it will be rendered before.
+	 * Sets the default {@link LabelPosition} for the whole form.
 	 */
-	public Boolean getLabelAbove() {
-		return _formTag.getLabelAbove();
+	@CalledFromJSP
+	public void setLabelPosition(LabelPosition value) {
+		_formTag.setLabelPosition(value);
 	}
 
 	@Override
@@ -638,10 +643,10 @@ public class FormPageTag extends PageAreaTag implements FormTagProperties {
 				DefaultDisplayContext.getDisplayContext().getResources().getString(I18NConstants.INPUT_VALUE__ATTRIBUTE.fill(member.getLabel()));
 			((WithPlaceHolder) input).setPlaceHolder(placeHolder);
 			return concat(input, nbsp(), error);
-		} else if (input instanceof SelectControl) {
+		} else if (input instanceof SelectControl || input instanceof DropDownControl) {
 			String emptyLabel =
 				DefaultDisplayContext.getDisplayContext().getResources().getString(I18NConstants.SELECT_VALUE__ATTRIBUTE.fill(member.getLabel()));
-			((SelectField) ((SelectControl) input).getModel()).setEmptyLabel(emptyLabel);
+			((SelectField) ((Control) input).getModel()).setEmptyLabel(emptyLabel);
 			return concat(input, nbsp(), error);
 		} else if (input instanceof ValueDisplayControl) {
 			// Only a value should be displayed, no label.

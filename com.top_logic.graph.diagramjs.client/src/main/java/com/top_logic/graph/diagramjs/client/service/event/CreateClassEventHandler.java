@@ -19,7 +19,7 @@ import com.top_logic.graph.diagramjs.util.DiagramJSGraphControlCommon;
 /**
  * {@link EventHandler} to trigger server side class node creation.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class CreateClassEventHandler implements EventHandler {
 

@@ -8,7 +8,7 @@
 		defaultFor=""
 		model="selection(com.top_logic.demo/technical/components/tiles/releasesTileLayout.layout.xml#Table)"
 		saveClosesDialog="true"
-		securityProviderClass="securityRoot"
+		securityObject="securityRoot"
 		type=""
 	>
 		<name key="dynamic.42bffbfa-ceb1-41f8-ae74-c74f94588a09">

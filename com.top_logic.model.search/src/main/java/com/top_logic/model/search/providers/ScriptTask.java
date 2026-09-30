@@ -49,6 +49,11 @@ public class ScriptTask<C extends ScriptTask.Config<?>> extends TaskImpl<C> {
 		super(context, config);
 
 		_script = QueryExecutor.compile(config.getScript());
+
+		// The task runs periodically in a system context (see run()) without a logged-in user. It
+		// is backend logic that must operate on all data and must not be subject to a user's access
+		// rights; with security enabled it would even be denied, as there is no current user.
+		_script.disableSecurity();
 	}
 
 	@Override
@@ -62,7 +67,8 @@ public class ScriptTask<C extends ScriptTask.Config<?>> extends TaskImpl<C> {
 
 			getLog().taskStarted();
 
-			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			try (Transaction tx =
+				PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.SCRIPT_TASK__TASK.fill(getName()))) {
 				Object result = _script.execute();
 				tx.commit();
 

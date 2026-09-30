@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.folder;
 
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -35,7 +35,7 @@ public interface FolderDataOwner extends NamedModel {
 	 * 
 	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 	 */
-	public class OwnedFolderDataNaming extends AbstractModelNamingScheme<FolderData, OwnedFolderDataNaming.FolderName> {
+	public class OwnedFolderDataNaming extends AbstractGlobalModelNamingScheme<FolderData, OwnedFolderDataNaming.FolderName> {
 
 		/**
 		 * {@link ModelName} of a {@link FolderData} within a {@link FolderDataOwner}.

@@ -5,14 +5,12 @@
  */
 package com.top_logic.layout.scripting.recorder.ref.ui.form;
 
-import java.applet.AppletContext;
-
 import com.top_logic.basic.col.Filter;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 
 /**
- * Factory for {@link AppletContext}-dependent {@link Filter}s identifying {@link FormMember}s.
+ * Factory for {@link ActionContext}-dependent {@link Filter}s identifying {@link FormMember}s.
  * 
  * @see DefaultFormMemberNaming.Name#getPath()
  * @see GlobalFormMemberNaming.Name#getMatchers()
@@ -23,7 +21,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
 public interface FieldMatcher {
 
 	/**
-	 * Build a {@link AppletContext}-local {@link Filter} that can identify (
+	 * Build a {@link ActionContext}-local {@link Filter} that can identify (
 	 * {@link Filter#accept(Object)}) a {@link FormMember}.
 	 */
 	Filter<? super FormMember> createFilter(ActionContext context);

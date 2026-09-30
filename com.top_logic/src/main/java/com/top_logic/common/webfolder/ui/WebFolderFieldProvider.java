@@ -43,7 +43,7 @@ import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class WebFolderFieldProvider extends FolderFieldProvider {
 
@@ -166,17 +166,26 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
 
 			theModel.setSingleSelection(theFolder);
 
-			return WebFolderUIFactory.createZipDownloadField(theModel, name, com.top_logic.tool.export.Icons.DOWNLOAD,
+			return getUIFactory().createZipDownloadField(theModel, name, com.top_logic.tool.export.Icons.DOWNLOAD,
 				com.top_logic.tool.export.Icons.DOWNLOAD_DISABLED);
-        }
-			return this.createHiddenField(name);
-        }
+		}
+		return this.createHiddenField(name);
+	}
 
 	protected FormMember createAdd2ClipboardField(String name, final Object businessObject, ExecutableState allowAdd) {
 		CommandField field = ModifyClipboardExecutable.createField((Wrapper) businessObject, name, allowAdd);
 		field.setInheritDeactivation(false);
 		return field;
     }
+
+	/**
+	 * Get factory for UI
+	 * 
+	 * @return the Factory for creating the UI
+	 */
+	protected WebFolderUIFactory getUIFactory() {
+		return WebFolderUIFactory.getInstance();
+	}
     
 	protected FormMember createLockField(String name, FolderNode node) {
 		if (!(node.getBusinessObject() instanceof Document)) {

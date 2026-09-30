@@ -126,6 +126,12 @@ public class ModelCreation {
 		REORDER_PROPERTIES,
 
 		/**
+		 * When this resolver runs in the context of a model patch apply, this is the phase, where
+		 * old model elements are deleted.
+		 */
+		CLEANUP,
+
+		/**
 		 * Creating roles in modules.
 		 */
 		CREATE_ROLE,
@@ -240,6 +246,13 @@ public class ModelCreation {
 	 */
 	public void reorderProperties(Runnable step) {
 		add(Phase.REORDER_PROPERTIES, step);
+	}
+
+	/**
+	 * Schedules a cleanup operation.
+	 */
+	public void cleanup(Runnable step) {
+		add(Phase.CLEANUP, step);
 	}
 
 	/**

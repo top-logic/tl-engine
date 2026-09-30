@@ -8,6 +8,7 @@ package com.top_logic.common.webfolder.ui;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.Decision;
@@ -53,7 +54,7 @@ import com.top_logic.tool.execution.ExecutableState;
 /**
  * FolderComponent to display a WebFolder.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class WebFolderComponent extends FolderComponent implements WebFolderAware {
 
@@ -132,7 +133,7 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 		_hasUploadCommand = config.getHasUploadCommand();
 
 		long customSize = config.getMaxUploadSize();
-		_maxUploadSize = (customSize > 0) ? customSize : WebFolderUIFactory.getInstance().getMaxUploadSize();
+		_maxUploadSize = (customSize > 0) ? customSize : getUIFactory().getMaxUploadSize();
 	}
 
     @Override
@@ -140,7 +141,8 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 		long maxUploadSize = getMaxUploadSize();
 		FileDropHandler fileDropHandler =
 			new FolderFileDropHandler(getManualLocking(), !context.isImmutable(), maxUploadSize);
-		return WebFolderUIFactory.createControl(getBreadcrumbRenderer(), getFolderData(), context, fileDropHandler);
+		return getUIFactory().createControl(getBreadcrumbRenderer(), getFolderData(), context,
+			fileDropHandler);
     }
     
 	/**
@@ -251,14 +253,39 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 
 		private long _maxUploadSize;
 
-		public WebFolderUploadExecutor(SingleSelectionModel folderSelection, long maxUploadSize) {
-			this(folderSelection, IGNORE, maxUploadSize);
+		private List<String> _allowedFileTypes;
+
+		private boolean _withDescription;
+
+		/**
+		 * Sets the allowed file types to the given value
+		 * 
+		 * @param allowedFileTypes
+		 *        a list with the allowed suffixes for files to upload
+		 */
+		public void setAllowedFileTypes(List<String> allowedFileTypes) {
+			_allowedFileTypes = allowedFileTypes;
 		}
 
-		public WebFolderUploadExecutor(SingleSelectionModel folderSelection, Consumer<? super Document> continuation, long maxUploadSize) {
+		public WebFolderUploadExecutor(SingleSelectionModel folderSelection, long maxUploadSize) {
+			this(folderSelection, maxUploadSize, true);
+		}
+		public WebFolderUploadExecutor(SingleSelectionModel folderSelection, long maxUploadSize,
+				boolean withDescription) {
+			this(folderSelection, IGNORE, maxUploadSize, withDescription);
+		}
+
+		public WebFolderUploadExecutor(SingleSelectionModel folderSelection, Consumer<? super Document> continuation,
+				long maxUploadSize) {
+			this(folderSelection, continuation, maxUploadSize, true);
+		}
+
+		public WebFolderUploadExecutor(SingleSelectionModel folderSelection, Consumer<? super Document> continuation,
+				long maxUploadSize, boolean withDescription) {
 			_folderSelection = folderSelection;
 			_continuation = continuation;
 			_maxUploadSize = maxUploadSize;
+			_withDescription = withDescription;
 		}
 
 		public SingleSelectionModel getFolderSelection() {
@@ -268,7 +295,7 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 		@Override
 		public UploadDialog createUploadDialog(ResPrefix resourcePrefix, FolderDefinition folderDefinition) {
 			return new UploadDialog(resourcePrefix, folderDefinition, getUploadWidth(), getUploadHeight(),
-				_maxUploadSize) {
+				_maxUploadSize, _allowedFileTypes, _withDescription) {
 				@Override
 				protected UploadCommand createUploadCommand(final UploadDialog dialog) {
 					return new WebfolderUpload(dialog, getFolderSelection(), _continuation);
@@ -287,7 +314,7 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 		 * Height of the upload dialog.
 		 */
 		protected DisplayDimension getUploadHeight() {
-			return DisplayDimension.dim(500, DisplayUnit.PIXEL);
+			return DisplayDimension.dim(400, DisplayUnit.PIXEL);
 		}
 	
 		/**
@@ -332,7 +359,9 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 			 * Upload into the given folder.
 			 */
 			protected HandlerResult executeUpload(DisplayContext aContext, WebFolder folder, List<BinaryData> files) {
-				Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
+				Transaction tx =
+					PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.UPLOADED_DOCUMENT__NAME
+						.fill(files.stream().map(f -> f.getName()).collect(Collectors.joining(", "))));
 				try {
 					List<Document> documents = new ArrayList<>();
 					for (BinaryData file : files) {
@@ -407,7 +436,7 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 	 * configuration of this component.
 	 */
 	protected boolean getManualLockingDefault() {
-		return WebFolderUIFactory.getInstance().getManualLocking();
+		return getUIFactory().getManualLocking();
 	}
 
 	/**

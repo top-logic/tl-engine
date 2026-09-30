@@ -32,7 +32,6 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.RefetchTimeout;
 import com.top_logic.knowledge.service.Revision;
@@ -269,7 +268,7 @@ public class PersistentTokenService extends ConfiguredTokenService<ConfiguredTok
 			try {
 				// Make sure that reads after a successful token acquisition get up
 				// to date data. See Ticket #1093.
-				KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().refetch();
+				PersistencyLayer.getKnowledgeBase().refetch();
 			} catch (RefetchTimeout ex) {
 				throw new TopLogicException(I18NConstants.ERROR_REFETCH__PROBLEM.fill(ex.getMessage()));
 			}

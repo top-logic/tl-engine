@@ -11,8 +11,8 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.layout.formeditor.builder.ConfiguredDynamicFormBuilder;
-import com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter;
 import com.top_logic.element.layout.formeditor.builder.TypedForm;
+import com.top_logic.element.layout.formeditor.builder.TypedFormDefinition;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -74,16 +74,18 @@ public class DeleteFormDefinitionCommand extends AbstractCommandHandler {
 	private HandlerResult deleteLocalFormDefinition(FormComponent component, String scope, TLLayout layout) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		try (Transaction tx = kb.beginTransaction()) {
-			FormsTemplateParameter args = (FormsTemplateParameter) layout.getArguments();
+		try (Transaction tx =
+			kb.beginTransaction(I18NConstants.DELETED_FORM__COMPONENT.fill(component.getTitleKey()))) {
 			TypedForm typedForm = ((ConfiguredDynamicFormBuilder) component.getBuilder()).getDisplayedTypedForm();
 			TLStructuredType type = typedForm.getFormType();
 
 			if (type != null) {
-				args.getForms().remove(TLModelPartRef.ref(type));
+				Map<TLModelPartRef, TypedFormDefinition> forms =
+					AbstractConfigureFormDefinitionCommand.getFormDefinitions(layout);
+				forms.remove(TLModelPartRef.ref(type));
 			}
 
-			LayoutTemplateUtils.storeLayout(scope, layout.getTemplateName(), args);
+			LayoutTemplateUtils.storeLayout(scope, layout.getTemplateName(), layout.getArguments());
 
 			tx.commit();
 		} catch (ConfigurationException exception) {

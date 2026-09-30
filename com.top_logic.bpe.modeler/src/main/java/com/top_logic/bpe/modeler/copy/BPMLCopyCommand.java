@@ -71,7 +71,10 @@ public class BPMLCopyCommand extends PreconditionCommandHandler implements WithP
 		return new Success() {
 			@Override
 			protected void doExecute(DisplayContext context) {
-				try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+				String newName = form.getNewName();
+				try (Transaction tx =
+					PersistencyLayer.getKnowledgeBase()
+						.beginTransaction(I18NConstants.COPIED_WORKFLOW__FROM_TO.fill(orig.getName(), newName))) {
 					Collaboration newVersion = DeepCopy.copyDeep(orig);
 					newVersion.setName(form.getNewName());
 					newVersion.setState(TLModelUtil.findPart("tl.bpe.bpml:ApprovalState#Development"));

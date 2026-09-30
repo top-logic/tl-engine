@@ -26,9 +26,4 @@ public final class EmptyTableConfigurationProvider implements TableConfiguration
 		// no table adaption
 	}
 
-	@Override
-	public void adaptDefaultColumn(ColumnConfiguration defaultColumn) {
-		// no table adaption
-	}
-
 }

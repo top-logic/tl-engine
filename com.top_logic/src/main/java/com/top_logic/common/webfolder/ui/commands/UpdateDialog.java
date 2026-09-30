@@ -18,7 +18,7 @@ import com.top_logic.common.webfolder.WebFolderUtils;
 import com.top_logic.common.webfolder.ui.WebFolderUIFactory;
 import com.top_logic.knowledge.gui.layout.upload.SimpleFileNameStrategy;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.DocumentVersion;
@@ -29,6 +29,7 @@ import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.control.IconControl;
+import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
@@ -43,14 +44,14 @@ import com.top_logic.layout.messagebox.AbstractFormPageDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.layout.structure.DialogModel;
-import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
 /**
  * Update dialog providing the {@link DataField} for identifying the file to be uploaded (and updated).
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class UpdateDialog extends AbstractFormPageDialog {
 
@@ -62,7 +63,7 @@ public class UpdateDialog extends AbstractFormPageDialog {
 	 * When updating a {@link Document} will become new version.
 	 * Moreover the stuff from the {@link DataField} will be used as content for that new version.
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class UpdateCommand implements Command {
 	
@@ -102,7 +103,8 @@ public class UpdateDialog extends AbstractFormPageDialog {
 				if (theItem == null) {
 					return UploadDialog.errorNoDocumentSelected();
 				}
-	            Transaction theTX   = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+				Transaction theTX = PersistencyLayer.getKnowledgeBase()
+					.beginTransaction(I18NConstants.UPDATED_DOCUMENT__NAME.fill(document.getName()));
 	
 	            try {
 					document.update(theItem);
@@ -131,7 +133,7 @@ public class UpdateDialog extends AbstractFormPageDialog {
 
 	public UpdateDialog(Document aModel, boolean manualLocking) {
 		super(I18NConstants.UPDATE_DIALOG, DisplayDimension.dim(500, DisplayUnit.PIXEL),
-			DisplayDimension.dim(300, DisplayUnit.PIXEL));
+			DisplayDimension.dim(400, DisplayUnit.PIXEL));
         
 		this.document = aModel;
 		UpdateDialog.UpdateCommand updateCommand = new UpdateDialog.UpdateCommand(this, document, getDiscardClosure());
@@ -180,16 +182,25 @@ public class UpdateDialog extends AbstractFormPageDialog {
 	}
 
 	@Override
+	protected HTMLFragment createSubtitleContent() {
+		return Fragments.empty();
+	}
+
+	@Override
 	protected HTMLFragment createBodyContent() {
 		return div(FormConstants.FORM_BODY_CSS_CLASS,
-			div(
-				input(SimpleFormDialog.INPUT_FIELD),
-				text(HTMLConstants.NBSP),
-				errorIcon(SimpleFormDialog.INPUT_FIELD)),
-			div(
-				div(
-					label(DocumentVersion.DESCRIPTION),
-					div(
+			div(ReactiveFormCSS.RF_COLUMNS_LAYOUT + " cols1",
+				div(ReactiveFormCSS.RF_INPUT_CELL,
+					div(ReactiveFormCSS.RF_LABEL,
+						label(SimpleFormDialog.INPUT_FIELD),
+						errorIcon(SimpleFormDialog.INPUT_FIELD)),
+					div(ReactiveFormCSS.RF_CELL,
+						input(SimpleFormDialog.INPUT_FIELD))),
+				div(ReactiveFormCSS.RF_INPUT_CELL + " " + ReactiveFormCSS.RF_LABEL_ABOVE,
+					div(ReactiveFormCSS.RF_LABEL,
+						label(DocumentVersion.DESCRIPTION),
+						errorIcon(DocumentVersion.DESCRIPTION)),
+					div(ReactiveFormCSS.RF_CELL,
 						input(DocumentVersion.DESCRIPTION)))));
 	}
 
@@ -207,8 +218,11 @@ public class UpdateDialog extends AbstractFormPageDialog {
 			FormFactory.newDataField(SimpleFormDialog.INPUT_FIELD, new SimpleFileNameStrategy(theBlack, theWhite));
 		context.addMember(updateData);
 
+		updateData.setLabel(I18NConstants.UPDATE_DIALOG_FILE);
+		updateData.setTooltip(I18NConstants.UPDATE_DIALOG_FILE.tooltip());
+
 		StringField stringField = WebFolderUtils.createDescriptionField(DocumentVersion.DESCRIPTION, 5);
-		stringField.setValue(document.getDocumentVersion().getDescription());
+		stringField.initializeField(document.getDocumentVersion().getDescription());
 		context.addMember(stringField);
 
 		EnableButtonOnValue.enableButtonOnNonEmptyValue(updateData, _updateButton);

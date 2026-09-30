@@ -11,7 +11,7 @@ import com.top_logic.basic.config.annotation.Name;
 /**
  * Configuration for the field management.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface FieldManagement extends ConfigurationItem {
 	String COMPLEX_FIELD_DATE_YEAR_MAX = "ComplexField.date.year.max";

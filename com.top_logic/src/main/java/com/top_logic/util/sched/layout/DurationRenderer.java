@@ -15,7 +15,7 @@ import com.top_logic.layout.Renderer;
 /**
  * Display a long value as duration in "mm:ss,msec".
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class DurationRenderer implements Renderer<Long> {
 

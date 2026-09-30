@@ -9,7 +9,9 @@
     <source path="collection.factory" />
     <source path="collection.iterator" />
     <source path="collection.map" />
+    <source path="html" />
     <source path="io" />
+    <source path="graph" />
     <source path="string" />
 
 </module>

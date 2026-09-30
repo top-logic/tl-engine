@@ -38,6 +38,7 @@ import com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder;
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder;
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.EditModel;
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.PartModel;
+import com.top_logic.element.layout.meta.TypeHasNoConflictingAttributes;
 import com.top_logic.graph.common.model.Edge;
 import com.top_logic.graph.common.model.GraphModel;
 import com.top_logic.graph.common.model.GraphPart;
@@ -52,7 +53,7 @@ import com.top_logic.graph.diagramjs.server.util.layout.Bounds;
 import com.top_logic.graph.diagramjs.server.util.model.TLInheritance;
 import com.top_logic.graph.diagramjs.server.util.model.TLInheritanceImpl;
 import com.top_logic.graph.diagramjs.util.GraphLayoutConstants;
-import com.top_logic.graph.layouter.LayoutContext;
+import com.top_logic.graph.layouter.DiagramJSLayoutContext;
 import com.top_logic.graph.layouter.LayoutDirection;
 import com.top_logic.graph.layouter.TechnicalNamesLabelProvider;
 import com.top_logic.graph.server.component.builder.GraphModelBuilder;
@@ -76,6 +77,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.impl.generated.TlModelFactory;
@@ -86,14 +88,14 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Component to display a dynamic automated layouted graph using library <code>UmlJS</code>.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DiagramJSGraphComponent extends AbstractGraphComponent implements DiagramHandler, Selectable {
 
 	/**
 	 * Graph component configuration.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends AbstractGraphComponent.Config, Selectable.SelectableConfig {
 
@@ -475,9 +477,13 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 			throw new TopLogicException(I18NConstants.ERROR_NO_CYCLIC_INHERITANCE);
 		}
 
+		TypeHasNoConflictingAttributes.checkNewGeneralization(sourceClass, targetClass);
+
 		DiagramJSGraphModel graphModel = (DiagramJSGraphModel) getGraphModel();
 
-		try (Transaction trans = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction trans =
+			PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.ADDED_GENERALIZATION__CLASS_GEN
+				.fill(TLModelUtil.qualifiedName(sourceClass), TLModelUtil.qualifiedName(targetClass)))) {
 			List<TLClass> generalizations = sourceClass.getGeneralizations();
 			generalizations.add(targetClass);
 			switch (generalizations.size()) {
@@ -672,11 +678,11 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	}
 
 	/**
-	 * {@link LayoutContext} containing the {@link LayoutDirection} and a
+	 * {@link DiagramJSLayoutContext} containing the {@link LayoutDirection} and a
 	 *         {@link LabelProvider} for {@link TLModelPart}s.
 	 */
-	public LayoutContext getLayoutContext() {
-		return new LayoutContext(LayoutDirection.VERTICAL_FROM_SINK, getLabelProvider(), getHiddenElements(),
+	public DiagramJSLayoutContext getLayoutContext() {
+		return new DiagramJSLayoutContext(LayoutDirection.VERTICAL_FROM_SINK, getLabelProvider(), getHiddenElements(),
 			getHiddenGeneralizations());
 	}
 
@@ -742,20 +748,34 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 
 	@Override
 	protected void handleTLObjectCreations(Stream<? extends TLObject> creations) {
-		if (hasGraphModel()) {
-			getOrderedModelPartCreations(getDiagramRelevantObjects(creations)).forEach(object -> getOrCreateGraphPart(object));
+		SharedGraph graph = _graphData.getGraph();
+
+		if (graph != null) {
+			getOrderedModelPartCreations(getDiagramRelevantObjects(graph, creations)).forEach(object -> getOrCreateGraphPart(object));
 		}
 	}
 
-	private Stream<TLModelPart> getDiagramRelevantObjects(Stream<? extends TLObject> objects) {
-		return objects.filter(object -> isValidDiagramObject(object)).map(TLModelPart.class::cast);
+	private Stream<TLModelPart> getDiagramRelevantObjects(SharedGraph graph, Stream<? extends TLObject> objects) {
+		return objects.filter(object -> isValidDiagramObject(graph, object)).map(TLModelPart.class::cast);
 	}
 
-	private boolean isValidDiagramObject(TLObject object) {
+	private boolean isValidDiagramObject(SharedGraph graph, TLObject object) {
 		boolean isModelPart = object instanceof TLModelPart;
-		boolean belongsToDisplayedModule = belongsToDisplayedModule(object);
+		boolean belongsToDisplayedDiagram = belongsToDisplayedDiagram(graph, object);
 
-		return isModelPart && belongsToDisplayedModule && GraphModelUtil.isValidModelDiagramObject((TLModelPart) object);
+		return isModelPart && belongsToDisplayedDiagram	&& GraphModelUtil.isValidModelDiagramObject((TLModelPart) object);
+	}
+
+	private boolean belongsToDisplayedDiagram(SharedGraph graph, TLObject object) {
+		if (GraphModelUtil.getEnclosingModule(object) == _currentDisplayedModule) {
+			return true;
+		}
+
+		if (object instanceof TLReference && graph.getGraphPart(((TLReference) object).getOwner()) != null) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private List<TLModelPart> getOrderedModelPartCreations(Stream<? extends TLModelPart> creations) {
@@ -826,7 +846,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		for (Edge outgoingEdge : node.getOutgoingEdges()) {
 			Object tag = outgoingEdge.getTag();
 
-			if (tag instanceof TLInheritance && !generalizations.contains(((TLInheritance) tag).getTarget())) {
+			if (tag instanceof TLInheritance && !generalizations.contains(((TLInheritance) tag).getGeneralization())) {
 				generalizationEdgesToRemove.add(outgoingEdge);
 			}
 		}
@@ -859,10 +879,6 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		} else {
 			return GraphModelUtil.createGraphPart(graph, object, getLayoutContext(), getInvisibleGraphParts());
 		}
-	}
-
-	private boolean belongsToDisplayedModule(TLObject object) {
-		return GraphModelUtil.getEnclosingModule(object) == _currentDisplayedModule;
 	}
 
 	@Override

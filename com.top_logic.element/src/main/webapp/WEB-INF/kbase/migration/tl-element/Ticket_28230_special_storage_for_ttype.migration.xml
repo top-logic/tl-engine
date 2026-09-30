@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28230_special_storage_for_ttype"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28073_unversioned_model"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+	  <remove-annotations name="tl.model:TLObject#tType">
+	    <annotation class="com.top_logic.element.config.annotation.TLStorage"/>
+	  </remove-annotations>
+	  <add-annotations name="tl.model:TLObject#tType">
+	    <annotations>
+	      <storage-algorithm>
+	        <implementation class="com.top_logic.element.meta.kbbased.storage.TTypeStorage"/>
+	      </storage-algorithm>
+	    </annotations>
+	  </add-annotations>
+	</processors>
+	<post-processors/>
+</migration>

@@ -10,7 +10,7 @@ import com.top_logic.basic.config.annotation.TagName;
 /**
  * {@link JSONValue} primitive for the boolean true.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  * 
  * @see JSONBoolean
  */

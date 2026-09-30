@@ -10,12 +10,16 @@ import java.util.Map;
 
 import javax.naming.NamingException;
 
+import jakarta.jms.JMSContext;
+import jakarta.jms.JMSException;
+
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
@@ -25,15 +29,12 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.event.infoservice.InfoService;
 
-import jakarta.jms.JMSContext;
-import jakarta.jms.JMSException;
-
 /**
- * The TopLogic Service to set the config for a connection and establish this connection to a JMS
- * Message System.
- * 
+ * Establishes and manages connections to a JMS messaging system.
+ *
  * @author <a href="mailto:simon.haneke@top-logic.com">Simon Haneke</a>
  */
+@Label("JMS messaging")
 public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 
 	/**
@@ -108,6 +109,8 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 
 	private Map<String, Pair<Consumer, Thread>> _consumers = new HashMap<>();
 
+	private JMSClient _mqClient;
+
 	/**
 	 * Constructor for the service that establishes connections with the given config.
 	 * 
@@ -124,18 +127,18 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 	protected void startUp() {
 		super.startUp();
 		for (DestinationConfig config : getConfig().getDestinationConfigs().values()) {
-			JMSClient mqClient = (JMSClient) TypedConfigUtil.createInstance(config.getMQSystemClient());
+			_mqClient = (JMSClient) TypedConfigUtil.createInstance(config.getMQSystemClient());
 			try {
-				mqClient.setupMQConnection();
+				_mqClient.setupMQConnection();
 
-				for (Producer.Config<?> pconfig : mqClient.getProducerConfigs().values()) {
+				for (Producer.Config<?> pconfig : _mqClient.getProducerConfigs().values()) {
 					Producer prod = TypedConfigUtil.createInstance(pconfig);
-					prod.setup(mqClient);
+					prod.setup(_mqClient);
 					_producers.put(pconfig.getName(), prod);
 				}
-				for (Consumer.Config<?> cconfig : mqClient.getConsumerConfigs().values()) {
+				for (Consumer.Config<?> cconfig : _mqClient.getConsumerConfigs().values()) {
 					Consumer cons = TypedConfigUtil.createInstance(cconfig);
-					cons.setup(mqClient);
+					cons.setup(_mqClient);
 					Thread consThread = new Thread(() -> cons.receive());
 					consThread.setName("JMS Consumer - " + cconfig.getName());
 					consThread.start();
@@ -159,6 +162,10 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 			cons.close();
 		}
 		_consumers = null;
+		if (_mqClient != null) {
+			_mqClient.close();
+			_mqClient = null;
+		}
 		super.shutDown();
 	}
 

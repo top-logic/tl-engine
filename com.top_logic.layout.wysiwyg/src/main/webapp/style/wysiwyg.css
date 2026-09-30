@@ -16,25 +16,27 @@
 }
 
 .cke_editable {
-	padding: 0 12px;
+	padding: 0 var(--spacing-03);
 	overflow: auto;
 }
 
-.immutableSourceCodeFrame > p:first-child {
-	/* HTML as value of a field in a form does must not have enormous space between label and text. */
+.immutableSourceCodeFrame > :first-child {
+	/* HTML as value of a field in a form must not have enormous space between label and text. */
 	margin-top: 0px;
 }
 
 .structuredTextFullHeight {
-	padding: 12px;
+	padding: 0 var(--spacing-03);
+}
+
+.structuredTextFullHeight .tlTranslatedI18nField {
+	height: 100%;
 }
 
 .structuredTextFullHeight,
 .cke_editable {
-	position: absolute;
 	width: 100%;
 	box-sizing: border-box;
-	font-size: 14px;
 }
 
 .structuredTextFullHeight .cke_inner {
@@ -55,44 +57,12 @@
 	box-sizing: border-box;
 }
 
-.structuredTextFullHeight a:link, 
-.structuredTextFullHeight a:visited,
-.cke_editable a:link,
-.cke_editable a:visited {
-  text-decoration: none;
-  color: rgb(0, 143, 184);
-}
-
-.structuredTextFullHeight a:hover,
-.cke_editable a:hover {
-  text-decoration: underline;
-}
-
 .tlObjectWrapper {
 	white-space: nowrap;
 }
 
 .cke_notification_message {
 	overflow-wrap: break-word;	
-}
-
-.tlDocTable td,
-.tlDocTable th {
-	padding: 5px;
-	font-size: 14px;
-}
-
-.tlDocTable th {
-	background: var(--LAYOUT_MAIN_COLOR);
-	color: #FBFBFD;
-}
-
-.tlDocTable tr:nth-child(even) {
-	background: #e7e8e8;
-}
-
-.tlDocTable tr:nth-child(odd) {
-	background: #FFF;
 }
 
 .cke_combo__format .cke_combopanel {

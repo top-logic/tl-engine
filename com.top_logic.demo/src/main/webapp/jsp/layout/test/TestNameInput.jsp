@@ -3,7 +3,7 @@
 %> <%@taglib uri="ajaxform" prefix="form"
 %><layout:html>
 	<layout:head/>
-	
+
 	<layout:body>
 		<form:form>
 			<table

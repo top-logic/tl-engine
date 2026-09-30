@@ -14,9 +14,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.activation.DataSource;
-import javax.mail.Address;
-import javax.mail.internet.InternetAddress;
+import jakarta.activation.DataSource;
+import jakarta.mail.Address;
+import jakarta.mail.internet.InternetAddress;
 
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.CollectionUtil;
@@ -24,6 +24,8 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.Named;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
@@ -38,15 +40,15 @@ import com.top_logic.layout.form.format.MailAddressFormat;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.Resources;
-import com.top_logic.util.error.TopLogicException;
 
 /**
- * The MailHelper provides useful methods for sending mails.
- * 
+ * Provides convenience methods for composing and sending e-mails.
+ *
  * Instead of building up {@link Mail} objects yourself, you are encouraged to use this helper.
- * 
+ *
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
+@Label("Mail helper")
 public class MailHelper extends ConfiguredManagedClass<ConfiguredManagedClass.Config<MailHelper>> {
 
     /** Attribute - subject of the e-mail */
@@ -438,7 +440,7 @@ public class MailHelper extends ConfiguredManagedClass<ConfiguredManagedClass.Co
             if (! this.isSuccess()) {
                 StringBuffer theError = this.getErrorResultString();
                 
-                TopLogicException theEx = this.getException();
+				I18NRuntimeException theEx = this.getException();
                 if (theEx != null) {
                     Logger.error(theError.toString(), theEx.getCause(), aCaller);
                 }

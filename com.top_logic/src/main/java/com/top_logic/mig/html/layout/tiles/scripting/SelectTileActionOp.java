@@ -6,6 +6,7 @@
 package com.top_logic.mig.html.layout.tiles.scripting;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.scripting.action.ActionFactory;
@@ -25,6 +26,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Select tile '{tile-label}' in '{group}'")
 public class SelectTileActionOp extends AbstractApplicationActionOp<SelectTileActionOp.SelectTileAction> {
 
 	/**

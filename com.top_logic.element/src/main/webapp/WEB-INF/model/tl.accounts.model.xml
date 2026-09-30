@@ -2,6 +2,15 @@
 
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="tl.accounts">
+		<datatype name="MfaRequirement"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="ENUM"/>
+			</annotations>
+			<enum-storage enum="com.top_logic.knowledge.wrap.person.MfaRequirement"/>
+		</datatype>
 		<class name="Address">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -98,9 +107,14 @@
 				</property>
 			</attributes>
 		</class>
-		<class name="Group">
+		<interface name="GroupMember">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</interface>
+		<class name="Group">
+			<generalizations>
+				<generalization type="GroupMember"/>
 			</generalizations>
 			<annotations>
 				<table name="Group"/>
@@ -160,19 +174,51 @@
 				</property>
 				<reference name="members"
 					inverse-reference="groups"
-					kind="backwards"
+					kind="forwards"
 					multiple="true"
 					navigate="true"
-					type="Person"
-				/>
+					type="GroupMember"
+				>
+					<annotations>
+						<storage-algorithm>
+							<set-storage
+								monomorphic-table="true"
+								table="hasGroupMembers"
+							/>
+						</storage-algorithm>
+						<create-visibility value="hidden"/>
+					</annotations>
+				</reference>
 				<property name="defaultGroup"
 					type="tl.core:Boolean"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.tool.boundsec.wrap.Group#isDefaultGroup()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="RepresentativeGroup">
+			<generalizations>
+				<generalization type="Group"/>
+			</generalizations>
+			<attributes>
+				<reference name="members"
+					override="true"
+					type="Person"
 				/>
 			</attributes>
 		</class>
 		<class name="Person">
 			<generalizations>
 				<generalization type="tl.core:Author"/>
+				<generalization type="GroupMember"/>
 			</generalizations>
 			<annotations>
 				<implementation-binding class-name="com.top_logic.knowledge.wrap.person.Person"/>
@@ -182,6 +228,9 @@
 				/>
 				<main-properties properties="name,firstName,lastName"/>
 				<table name="Person"/>
+				<object-initializers>
+					<initializer class="com.top_logic.knowledge.wrap.person.PersonGroupsInitializer"/>
+				</object-initializers>
 			</annotations>
 			<attributes>
 				<property name="name"
@@ -231,6 +280,7 @@
 					</annotations>
 				</property>
 				<property name="timezone"
+					mandatory="true"
 					type="tl.util:TimeZone"
 				>
 					<annotations>
@@ -284,27 +334,55 @@
 				</reference>
 				<reference name="groups"
 					inverse-reference="members"
-					kind="forwards"
+					kind="backwards"
 					multiple="true"
-					navigate="true"
 					type="Group"
-				>
-					<annotations>
-						<storage-algorithm>
-							<set-storage
-								monomorphic-table="true"
-								table="hasGroup"
-							/>
-						</storage-algorithm>
-						<create-visibility value="hidden"/>
-					</annotations>
-				</reference>
+				/>
 				<property name="firstName"
 					type="tl.core:String"
 				/>
 				<property name="lastName"
 					type="tl.core:String"
 				/>
+				<reference name="deputyFor"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="GroupMember"
+				/>
+				<property name="mfaSecret"
+					type="tl.core:Password"
+				>
+					<annotations>
+						<delete-protected/>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+				<property name="mfaRequirement"
+					type="MfaRequirement"
+				/>
+			</attributes>
+		</class>
+		<class name="PersistentView">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="PersBoundComp"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<primitive-storage storage-attribute="ID"/>
+						</storage-algorithm>
+						<size-constraint upper-bound="254"/>
+						<delete-protected/>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="Role">
@@ -361,5 +439,85 @@
 				</property>
 			</attributes>
 		</class>
+		<class name="RoleAssignment">
+			<annotations>
+				<table name="hasRole"/>
+			</annotations>
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="role"
+					deletion-policy="delete-referer"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="Role"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="dest"
+								storage-type="hasRole"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="group"
+					deletion-policy="delete-referer"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="Group"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="owner"
+								storage-type="hasRole"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="object"
+					deletion-policy="delete-referer"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.model:TLObject"
+				>
+					<annotations>
+						<storage-algorithm>
+							<foreign-key-storage
+								storage-attribute="source"
+								storage-type="hasRole"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<interface name="WithOwner">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="owner"
+					deletion-policy="delete-referer"
+					kind="forwards"
+					navigate="true"
+					type="Person"
+				>
+					<annotations>
+						<storage-algorithm>
+							<singleton-link-storage
+								monomorphic-table="true"
+								table="hasOwner"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</interface>
 	</module>
 </model>

@@ -6,7 +6,7 @@
 package com.top_logic.element.meta.form.tag;
 
 /**
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class GroupedMetaErrorTag extends MetaErrorTag {
 

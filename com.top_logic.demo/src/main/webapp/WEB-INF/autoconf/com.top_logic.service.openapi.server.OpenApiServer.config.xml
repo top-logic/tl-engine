@@ -14,6 +14,20 @@
 					title="TL-Demo OpenAPI Server"
 					version="1.0"
 				/>
+				<authentications>
+					<basic-authentication
+						domain="BasicAuth"
+						in-user-context="true"
+					/>
+					<authentication class="com.top_logic.demo.api.CustomAuthentication"
+						domain="API-Key DB"
+						header="api-key"
+					>
+						<lookup-user><![CDATA[secret -> all(`test.dynamic_api_key:ApiKey`)
+.filter(key -> $key.get(`test.dynamic_api_key:ApiKey#secret`) == $secret)
+.map(key -> $key.get(`test.dynamic_api_key:ApiKey#owner`))]]></lookup-user>
+					</authentication>
+				</authentications>
 				<paths>
 					<PathItem path="/ping">
 						<parameters>
@@ -59,6 +73,52 @@ A POST request to "/ping/a/b/c?q=q1&q=q2" e.g. delivers the result:
   "q": $q,
   "path": $path,
   "body": $body
+}]]></operation>
+								</implementation>
+							</operation>
+						</operations>
+					</PathItem>
+					<PathItem path="/whoami">
+						<operations>
+							<operation
+								authentication="API-Key DB,BasicAuth"
+								method="GET"
+							>
+								<implementation>
+									<operation><![CDATA[currentUser() == null ? "anonymous" : {
+    "login": currentUser().get(`tl.accounts:Person#name`),
+    "firstName": currentUser().get(`tl.accounts:Person#firstName`),
+    "lastName": currentUser().get(`tl.accounts:Person#lastName`),
+    "email": currentUser().get(`tl.accounts:Person#contact`).get(`Contacts:PersonContact#email`)
+}]]></operation>
+								</implementation>
+							</operation>
+						</operations>
+					</PathItem>
+					<PathItem path="/demo/A/{name}/binary">
+						<parameters>
+							<path-parameter name="name"
+								description="The name of the Demo.A object whose binary attribute is requested."
+								format="string"
+							/>
+						</parameters>
+						<operations>
+							<operation
+								method="GET"
+								summary="Downloads the binary attribute of a Demo.A object."
+							>
+								<description><![CDATA[Looks up the first Demo.A object with the given name and returns the raw bytes of its binary attribute. Demonstrates streaming binary responses from an OpenAPI endpoint via TL-Script (#29234).
+
+Returns 404 if no matching object exists or its binary attribute is empty. Otherwise the response carries the binary's own content type (e.g. image/png).]]></description>
+								<implementation transaction="false">
+									<operation><![CDATA[{
+  obj = all(`DemoTypes:A`)
+    .filter(x -> $x.get(`DemoTypes:A#name`) == $name)
+    .firstElement();
+  $obj == null ? response(404) : {
+    data = $obj.get(`DemoTypes:A#binary`);
+    $data == null ? response(404) : $data;
+  };
 }]]></operation>
 								</implementation>
 							</operation>

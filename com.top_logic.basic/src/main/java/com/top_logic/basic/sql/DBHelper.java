@@ -33,6 +33,7 @@ import java.text.Format;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Iterator;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.IdentifierUtil;
@@ -381,6 +382,36 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
     protected void internalCheck(Statement aStm) throws SQLException {
         Logger.info("No database check implemented for '" + this.getClass().getSimpleName() + "'.", this);
     }
+
+	/**
+	 * Prepares the database for the schema about to be created, e.g. by creating custom
+	 * collations.
+	 *
+	 * <p>
+	 * Invoked once before the tables of a schema are created. The default implementation does
+	 * nothing.
+	 * </p>
+	 *
+	 * @param connection
+	 *        The connection to the database to prepare.
+	 */
+	public void prepareDatabase(PooledConnection connection) throws SQLException {
+		// Hook for dialects that need one-time database preparation.
+	}
+
+	/**
+	 * Whether this dialect makes a non-binary string column case-insensitive through the column's
+	 * own collation.
+	 *
+	 * <p>
+	 * Dialects that cannot apply a case-insensitive collation per column (e.g. Oracle and DB2,
+	 * where case-insensitivity depends on the database/session configuration) return
+	 * <code>false</code>.
+	 * </p>
+	 */
+	public boolean supportsColumnCollation() {
+		return true;
+	}
 
 	private final Config _config;
 
@@ -2114,7 +2145,18 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	public void appendLikeCaseSensitive(Appendable sql) throws IOException {
 		sql.append("LIKE");
 	}
-    
+
+	/**
+	 * Appends a collation to a {@code LIKE} operand when the dialect needs a deterministic
+	 * collation for pattern matching. The default implementation appends nothing.
+	 *
+	 * @param buffer
+	 *        The buffer receiving the collation clause (appended directly after the operand).
+	 */
+	public void appendLikeCollation(Appendable buffer) throws IOException {
+		// Most dialects need no explicit collation for LIKE.
+	}
+
 	/** Dump a given table as INSERT suiteable for the Helpers Database.
 	 * 
 	 * @param out Output will be written here.
@@ -2386,7 +2428,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
      */
 	protected void internalEscape(Appendable out, String str) throws IOException {
 		int len    = str.length();
-		char quote = '\'';
+		char quote = stringQuoteChar();
 		
 		out.append(quote);
 		for (int i = 0; i < len; i++) {
@@ -2397,6 +2439,13 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 		        out.append(ch);
 		}
 		out.append(quote);
+	}
+
+	/**
+	 * Character that is used to quote string literals.
+	 */
+	public char stringQuoteChar() {
+		return '\'';
 	}
     
     /**
@@ -2942,19 +2991,31 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * @param values
 	 *        The literal values.
 	 */
-	public void literalSet(Appendable sql, DBType dbType, Iterable<?> values) {
+	public final void literalSet(Appendable sql, DBType dbType, Iterable<?> values) {
+		literalSet(sql, dbType, values.iterator());
+	}
+
+	/**
+	 * Appends a SQL set literal to the given buffer.
+	 * 
+	 * @param sql
+	 *        The buffer to append.
+	 * @param dbType
+	 *        The {@link Types} type of the contents.
+	 * @param values
+	 *        The literal values.
+	 */
+	public void literalSet(Appendable sql, DBType dbType, Iterator<?> values) {
 		Format format = getLiteralFormat(dbType);
 
 		try {
 			sql.append('(');
-			boolean first = true;
-			for (Object value : values) {
-				if (first) {
-					first = false;
-				} else {
+			if (values.hasNext()) {
+				sql.append(format.format(values.next()));
+				while (values.hasNext()) {
 					sql.append(',');
+					sql.append(format.format(values.next()));
 				}
-				sql.append(format.format(value));
 			}
 			sql.append(')');
 		} catch (IOException ex) {
@@ -3099,7 +3160,14 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * Creates a <code>DROP</code> statement for a foreign key constraint.
 	 */
 	public String dropForeignKey(String tableName, String foreignKeyName) {
-		return "ALTER TABLE " + tableRef(tableName) + " DROP CONSTRAINT " + tableRef(foreignKeyName);
+		return alterTable(tableName) + "DROP CONSTRAINT " + tableRef(foreignKeyName);
+	}
+
+	/**
+	 * Creates the "ALTER TABLE " prefix for schema modification commands.
+	 */
+	protected String alterTable(String tableName) {
+		return "ALTER TABLE " + tableRef(tableName) + " ";
 	}
 
 	/**
@@ -3354,6 +3422,28 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	}
 
 	/**
+	 * Appends the SQL command to modify the name of a column.
+	 * 
+	 * <p>
+	 * Appends the part of the "ALTER TABLE" that describes the modification of a column, i.e.
+	 * "MODIFY &lt;columnName&gt; &lt;type&gt;".
+	 * </p>
+	 * 
+	 * @see #appendChangeMandatory(Appendable, String, DBType, String, String, long, int, boolean,
+	 *      boolean, Object)
+	 */
+	public void appendChangeColumnName(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
+			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+		result.append(alterTable(tableName));
+		result.append("CHANGE ");
+		result.append(columnRef(columnName));
+		result.append(" ");
+		result.append(columnRef(newName));
+		result.append(" ");
+		appendDBType(result, sqlType, newName, size, precision, mandatory, binary, defaultValue);
+	}
+
+	/**
 	 * Appends the SQL command to modify the type of a column.
 	 * 
 	 * <p>
@@ -3361,14 +3451,17 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * "MODIFY &lt;columnName&gt; &lt;type&gt;".
 	 * </p>
 	 * 
-	 * @see #appendChangeMandatory(Appendable, DBType, String, long, int, boolean, boolean, Object)
+	 * @see #appendChangeMandatory(Appendable, String, DBType, String, String, long, int, boolean,
+	 *      boolean, Object)
 	 */
-	public void appendChangeColumnType(Appendable result, DBType sqlType, String columnName, long size, int precision,
-			boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+	public void appendChangeColumnType(Appendable result, String tableName, DBType sqlType, String columnName,
+			String newName,
+			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+		result.append(alterTable(tableName));
 		appendModifyColumnKeyword(result);
 		result.append(columnRef(columnName));
 		result.append(" ");
-		appendDBType(result, sqlType, columnName, size, precision, mandatory, binary, defaultValue);
+		appendDBType(result, sqlType, newName, size, precision, mandatory, binary, defaultValue);
 	}
 
 	/**
@@ -3381,14 +3474,17 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * 
 	 * @implNote Here also the type is added, because most databases needs it.
 	 * 
-	 * @see #appendChangeColumnType(Appendable, DBType, String, long, int, boolean, boolean, Object)
+	 * @see #appendChangeColumnType(Appendable, String, DBType, String, String, long, int, boolean,
+	 *      boolean, Object)
 	 */
-	public void appendChangeMandatory(Appendable result, DBType sqlType, String columnName, long size, int precision,
-			boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+	public void appendChangeMandatory(Appendable result, String tableName, DBType sqlType, String columnName,
+			String newName,
+			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+		result.append(alterTable(tableName));
 		appendModifyColumnKeyword(result);
 		result.append(columnRef(columnName));
 		result.append(" ");
-		appendDBType(result, sqlType, columnName, size, precision, mandatory, binary, defaultValue);
+		appendDBType(result, sqlType, newName, size, precision, mandatory, binary, defaultValue);
 	}
 
 	/**

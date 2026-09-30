@@ -10,7 +10,6 @@ import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 
-import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.col.MapBuilder;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
@@ -117,9 +116,13 @@ class PersonalConfigurationUtil {
 					}
 				}
 			} catch (ConfigurationException ex) {
-				// Invalid format reset pages
-				storePages(pc, null);
-				throw new ConfigurationError(ex);
+				// Invalid format.
+				if (homepage == null) {
+					pages = null;
+				} else {
+					pages = TypedConfiguration.newConfigItem(Homepages.class);
+					pages.getPages().put(homepage.getMainLayout(), homepage);
+				}
 			}
 
 		}
@@ -134,8 +137,9 @@ class PersonalConfigurationUtil {
 		}
 		try {
 			StringWriter out = new StringWriter();
-			ConfigurationWriter configWriter = new ConfigurationWriter(out);
-			configWriter.write("hps", TypedConfiguration.getConfigurationDescriptor(Homepages.class), pages);
+			try (ConfigurationWriter configWriter = new ConfigurationWriter(out)) {
+				configWriter.write("hps", TypedConfiguration.getConfigurationDescriptor(Homepages.class), pages);
+			}
 			pc.setValue(HOMEPAGE, out.toString());
 		} catch (XMLStreamException ex) {
 			throw new RuntimeException(ex);

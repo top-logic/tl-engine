@@ -7,38 +7,23 @@ package com.top_logic.knowledge.monitor;
 
 import static com.top_logic.knowledge.search.ExpressionFactory.*;
 
-import java.rmi.RemoteException;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.top_logic.base.bus.UserEvent;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.FilteredIterator;
-import com.top_logic.basic.config.CommaSeparatedStringSet;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.event.bus.AbstractReceiver;
-import com.top_logic.event.bus.Bus;
-import com.top_logic.event.bus.BusEvent;
-import com.top_logic.knowledge.objects.KnowledgeItem;
-import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.RevisionQuery;
+import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * Monitor component for user activities within the application.
@@ -49,50 +34,17 @@ import com.top_logic.knowledge.wrap.person.Person;
  * 
  * @author    <a href="mailto:mga@top-logic.com"></a>
  */
-@ServiceDependencies(PersistencyLayer.Module.class)
-public class UserMonitor extends AbstractReceiver {
+@Label("User activity monitor")
+public class UserMonitor extends KBBasedManagedClass<UserMonitor.Config> {
 
 	/** Number of milliseconds that {@link UserSession}s will looked up in the past. */
 	public static final long THREE_DAYS = TimeUnit.DAYS.toMillis(3);
 
-	/** Config attribute for the user names to exclude from creating login and logout events. */
-    public static final String CONF_EXCLUDE_UIDS = "excludeUIDs";
-    
-    /** The Knowledgebase to use (usually the default KB) */
-	private final KnowledgeBase kBase;
-    
-    
-	/** User names to exclude from automatic deleting. */
-	private final Set<String> excludeUIDs;
-
 	/**
 	 * Configuration for {@link UserMonitor}.
-	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
 	 */
-	public interface Config extends AbstractReceiver.Config {
-
-		/**
-		 * The user names to exclude from beeing logged.
-		 */
-		@Name(CONF_EXCLUDE_UIDS)
-		@Label("Exclude user IDs")
-		@Format(CommaSeparatedStringSet.class)
-		Set<String> getExcludeUIDs();
-
-		/**
-		 * Namespace for the service.
-		 */
-		@Override
-		@StringDefault(Bus.CHANGES)
-		String getServiceNamespace();
-
-		/**
-		 * Name of the service.
-		 */
-		@Override
-		@StringDefault(Bus.USER)
-		String getServiceName();
+	public interface Config extends KBBasedManagedClass.Config<UserMonitor> {
+		// No configuration here
 	}
 
 	/**
@@ -103,72 +55,7 @@ public class UserMonitor extends AbstractReceiver {
 	 */
 	public UserMonitor(InstantiationContext context, Config config) {
 		super(context, config);
-        kBase = PersistencyLayer.getKnowledgeBase();
-
-		excludeUIDs = config.getExcludeUIDs();
-       	subscribe();
 	}
-
-	/**
-     * Dispatch the Events depending on (LOGIN/LOGUT) type.
-     */
-    @Override
-	public void receive(BusEvent anEvent) throws RemoteException {
-        String theType = anEvent.getType();
-
-        if (UserEvent.LOGGED_IN.equals(theType)) {
-            this.login((UserEvent) anEvent);
-        }
-        else if (UserEvent.LOGGED_OUT.equals(theType)) {
-            this.logout((UserEvent) anEvent);
-        }
-    }
-
-    /**
-     * Find a user session with the given parameters.
-     * 
-     * @param    aUser      The user name of the session.
-     * @param    anID       The ID of the session.
-     * @param    aServer    The server the user session runs.
-     * @return   The found session or <code>null</code>, if there is no
-     *           such session.
-     */
-    public UserSession findUserSession(KnowledgeBase aKB, String aUser, String anID, String aServer) {
-        UserSession result = null;
-        try {
-			Iterator<KnowledgeItem> iter = aKB.getObjectsByAttribute(
-                UserSession.OBJECT_NAME,UserSession.SESSION_ID,anID);
-            
-            while (iter.hasNext()) {
-				KnowledgeItem theKO = iter.next();
-                if (aUser  .equals(theKO.getAttributeValue(UserSession.USER_NAME)) 
-                 && aServer.equals(theKO.getAttributeValue(UserSession.SERVER))
-                 && null == theKO.getAttributeValue(UserSession.LOGOUT)) {
-					result = UserSession.getInstance((KnowledgeObject) theKO);
-                     break;
-                }
-            }
-        }
-        catch (Exception e) {
-            Logger.error("failed to findUserSession(" +
-                    aUser + "," + anID + "," + aServer + ")", e, this);
-        }
-
-        return result;
-    }
-
-    /**
-     * Find a user session with the given parameters.
-     * 
-     * @param    aUser      The user name of the session.
-     * @param    anID       The ID of the session.
-     * @param    aServer    The server the user session runs.
-     * @return   The found session or <code>null</code>, if there is no
-     *           such session.
-     */
-    public UserSession findUserSession(String aUser, String anID, String aServer) {
-        return findUserSession(kBase, aUser, anID, aServer);
-    }
 
     /**
      * Return the iterator containing all currently open sessions.
@@ -190,76 +77,6 @@ public class UserMonitor extends AbstractReceiver {
         return (new OpenSessionIterator(this.getUserSessions(aBase).iterator()));
     }
 
-    /**
-     * Handle the login of a user.
-     * 
-     * @param    anEvent    The event holding the information about the login.
-     */
-    protected void login(UserEvent anEvent) {
-		Person theUser = anEvent.getPassiveUser();
-        Date          theDate = anEvent.getDate();
-
-		String userName = theUser.getName();
-		if (isExcluded(userName)) {
-			return;
-		}
-		try (Transaction tx = kBase.beginTransaction()) {
-			UserSession.startSession(kBase, userName, anEvent.getSessionID(), anEvent.getMachine(), theDate);
-            // This should happen in the (TL-/DB-)context of the user logging in.
-			tx.commit();
-        }
-    }
-
-    /**
-     * Handle the logout of a user.
-     * 
-     * @param    anEvent    The event holding the information about the logout.
-     * @return   <code>true</code>, if ending the session succeeds.
-     */
-    protected boolean logout(UserEvent anEvent) {
-		Person theUser = anEvent.getPassiveUser();
-        Date          theDate    = anEvent.getDate();
-
-		String userName = theUser.getName();
-		if (isExcluded(userName)) {
-			return false;
-		}
-
-		UserSession   theSession = this.findSessionOnServer(userName,
-                                                            anEvent.getSessionID());
-		boolean theResult;
-		try (Transaction tx = theSession.getKnowledgeBase().beginTransaction()) {
-			theResult = theSession.endSession(theDate);
-
-			if (theResult) {
-				tx.commit();
-			}
-		}
-
-        return (theResult);
-    }
-
-    /**
-     * Return the open user session for the given user.
-     * 
-     * @param    aUser    The name of the user to find the 
-     * @return   The found session.
-     */
-    protected UserSession findSessionOnServer(
-        KnowledgeBase aBase, String aUser, String anID) {
-        return findUserSession(aBase,aUser, anID, UserSession.getServerName());
-    }
-
-    /**
-     * Return the open user session for the given user.
-     * 
-     * @param    aUser    The name of the user to find the 
-     * @return   The found session.
-     */
-    protected UserSession findSessionOnServer(String aUser, String anID) {
-        return findUserSession(kBase, aUser, anID, UserSession.getServerName());
-    }
-    
     /**
      * Return the current list of user sessions back to given Date.
      * 
@@ -354,7 +171,7 @@ public class UserMonitor extends AbstractReceiver {
      * @return    The list of user sessions, null on error.
      */
     public List<UserSession> getUserSessions() {
-        return getUserSessions(kBase);
+		return getUserSessions(kb());
     }
     
     /** 
@@ -365,12 +182,8 @@ public class UserMonitor extends AbstractReceiver {
      * @return the session list
      */
     public List<UserSession> getUserSessions(Date aStartDate, Date anEndDate) {
-    	return this.getUserSessions(kBase, aStartDate, anEndDate, UserSession.LOGIN);
+		return this.getUserSessions(kb(), aStartDate, anEndDate, UserSession.LOGIN);
     }
-
-	private boolean isExcluded(String userName) {
-		return excludeUIDs.contains(userName);
-	}
 
 	/**
 	 * Returns the {@link UserSession}s within the given range.
@@ -397,7 +210,7 @@ public class UserMonitor extends AbstractReceiver {
 	/**
      * Special iterator for all currently open user sessions.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
 	public class OpenSessionIterator extends FilteredIterator<UserSession> {
 

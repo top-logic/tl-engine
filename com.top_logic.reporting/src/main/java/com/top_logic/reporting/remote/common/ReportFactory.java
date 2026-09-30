@@ -17,6 +17,7 @@ import com.top_logic.base.office.AbstractOffice.ImageReplacerData;
 import com.top_logic.base.office.excel.ExcelImage;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.StreamUtilities;
@@ -28,9 +29,12 @@ import com.top_logic.reporting.remote.ReportDescriptor;
 import com.top_logic.reporting.remote.Reporter;
 
 /**
+ * Generates reports through a configured remote reporter.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 @Deprecated
+@Label("Report factory")
 public final class ReportFactory extends ManagedClass {
 	
 	public static final String FILE_TYPE = "FileType";
@@ -93,8 +97,8 @@ public final class ReportFactory extends ManagedClass {
      * Convenience method to handle special content. E.g. replace image references in the map with byte[]-representation 
      * of this image.
      * 
-     * TODO CCA: verschiedene keys können das selbe image referenzieren und image sollte dann nicht 
-     * mehrfach übertragen werden!
+     * TODO CCA: verschiedene keys kÃ¶nnen das selbe image referenzieren und image sollte dann nicht 
+     * mehrfach Ã¼bertragen werden!
      */
 	public static void handleSpecialContentForWrite(Map aValueMap) throws IOException {
 		if (aValueMap == null) {
@@ -152,7 +156,7 @@ public final class ReportFactory extends ManagedClass {
                 aValueMap.put(key, map);
             }
             
-            // TODO CCA: Object[][] (enthält String, File oder ImageReplacerData)
+            // TODO CCA: Object[][] (enthÃ¤lt String, File oder ImageReplacerData)
         }
     }
 	

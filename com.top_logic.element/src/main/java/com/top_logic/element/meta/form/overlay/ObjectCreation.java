@@ -6,12 +6,17 @@
 package com.top_logic.element.meta.form.overlay;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
+import com.top_logic.knowledge.service.db2.PersistentObject;
+import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
@@ -48,7 +53,7 @@ public class ObjectCreation extends FormObjectOverlay {
 	 */
 	public ObjectCreation(AttributeUpdateContainer scope, TLStructuredType type, String domain,
 			ObjectConstructor constructor) {
-		super(scope, type);
+		super(scope, type, domain == null ? scope.newCreateID() : domain);
 
 		// Note: Create domains are encoded into GUI IDs. While null is a legal value encoded as
 		// "null", the string "null" as domain would result in an ambiguity.
@@ -66,9 +71,40 @@ public class ObjectCreation extends FormObjectOverlay {
 		return true;
 	}
 
+	/**
+	 * The constructor function that will allocate the object during commit.
+	 */
+	public ObjectConstructor getConstructor() {
+		return _constructor;
+	}
+
 	@Override
 	public TLObject getEditedObject() {
 		return _created != null && _created.tValid() ? _created : null;
+	}
+
+	/**
+	 * As long as the object has not yet been allocated, this overlay has no identity. After
+	 * {@link #create()}, identity queries are answered by the created object, exactly as
+	 * {@link ObjectEditing} answers them with the edited object.
+	 *
+	 * <p>
+	 * This ensures that code receiving this overlay as creation context (e.g. a
+	 * {@link DefaultProvider} deriving a context-dependent sequence identifier) observes the
+	 * identity of the created object, when objects are created together with their container in a
+	 * single transaction.
+	 * </p>
+	 */
+	@Override
+	public ObjectKey tId() {
+		TLObject created = getEditedObject();
+		return created == null ? null : created.tId();
+	}
+
+	@Override
+	public KnowledgeItem tHandle() {
+		TLObject created = getEditedObject();
+		return created == null ? super.tHandle() : created.tHandle();
 	}
 
 	@Override
@@ -102,7 +138,28 @@ public class ObjectCreation extends FormObjectOverlay {
 	}
 
 	@Override
-	protected Object defaultValue(TLStructuredTypePart part) {
+	public Object defaultValue(TLStructuredTypePart part) {
+		// This method computes the value to use, if the form has no field for the given part of
+		// this FormObjectOverlay.
+		// In case of ObjectCreation where we don't have a base-object as fallback, this will either
+		// be a calculated value or a default-value.
+		// In case of derived attributes consider the storage-implementation to calculate the value:
+		// See com.top_logic.model.impl.TransientTLObjectImpl.directValue(TLStructuredTypePart)
+		if (part.isDerived()) {
+			if (part.getModelKind() == ModelKind.REFERENCE && ((TLReference) part).isBackwards()) {
+				// Find forwards reference.
+				TLReference backwards = (TLReference) part;
+				TLReference forwards = backwards.getOppositeEnd().getReference();
+				return tReferers(forwards);
+			} else {
+				if (part.getName().equals(PersistentObject.T_TYPE_ATTR)) {
+					return tType();
+				} else {
+					return part.getStorageImplementation().getAttributeValue(this, part);
+				}
+			}
+		}
+		// Otherwise we check if a default value is configured.
 		DefaultProvider defaultProvider = DisplayAnnotations.getDefaultProvider(part);
 		if (defaultProvider != null) {
 			return defaultProvider.createDefault(_container, part, true);

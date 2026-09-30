@@ -48,7 +48,6 @@ public abstract class AbstractTreeContentRenderer extends TreeContentRenderer im
 		try {
 			writeNodeDecoration(context, writer, nodeContext);
 			writeTypeImage(context, writer, nodeContext);
-			writeTextSeparator(writer);
 			writeNodeText(context, writer, nodeContext);
 		} catch (Throwable throwable) {
 			try {
@@ -145,6 +144,7 @@ public abstract class AbstractTreeContentRenderer extends TreeContentRenderer im
 		if (nodeImage != null) {
 			XMLTag tag = nodeImage.toIcon();
 			tag.beginBeginTag(context, writer);
+			writer.writeAttribute(CLASS_ATTR, "treeNodeIcon");
 			writer.writeAttribute(DRAGGABLE_ATTR, DRAGGABLE_FALSE_VALUE);
 			if (tooltip != null) {
 				HTMLUtil.writeImageTooltipHtml(context, writer, tooltip);
@@ -152,13 +152,6 @@ public abstract class AbstractTreeContentRenderer extends TreeContentRenderer im
 			tag.endEmptyTag(context, writer);
     	}
     }
-
-    /**
-     * Renders a separator between the graphical and textual tree representation. 
-     */
-    protected void writeTextSeparator(TagWriter writer)  throws IOException {
-		writer.writeText(HTMLConstants.NBSP);
-	}
 
 	/**
 	 * Write the textual representation of the currently rendered node. This text may possibly

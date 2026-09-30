@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the agent access administration into the admin view defined by
+	tl-layout-view (WEB-INF/views/admin/admin.view.xml). Same-path overlay merged by the ViewLoader
+	in dependency order, so the section is there where this module is deployed and absent where it is
+	not - tl-layout-view knows nothing about it.
+
+	Contributed as a section of its own rather than as a tab inside "System": an overlay replaces a
+	single-valued property, so a nested tab bar would take the place of the one it is meant to extend.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar>
+		<tabs>
+			<tab id="agent-access"
+				config:operation="add"
+				config:position="end"
+			>
+				<label>
+					<en>Agent access</en>
+					<de>Agentenzugriff</de>
+				</label>
+				<view-ref view="admin/system/agent-tokens.view.xml"/>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

@@ -20,7 +20,7 @@ import com.top_logic.util.Utils;
 /**
  * Lock an unlocked document (for performing an update later on). 
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class LockExecutable extends AbstractWebfolderAction {
 
@@ -37,10 +37,6 @@ public class LockExecutable extends AbstractWebfolderAction {
     @Override
 	public HandlerResult executeCommand(DisplayContext aContext) {
 		Document document = getDocument();
-		if (!ComponentUtil.isValid(document)) {
-			return ComponentUtil.errorObjectDeleted(aContext);
-		}
-
     	HandlerResult theResult = new HandlerResult();
 		{
             DataAccessProxy theDAP = document.getDAP();
@@ -62,6 +58,10 @@ public class LockExecutable extends AbstractWebfolderAction {
 		Document document = getDocument();
 		if (document == null) {
 			return ExecutableState.NOT_EXEC_HIDDEN;
+		}
+
+		if (!ComponentUtil.isValid(getContentObject())) {
+			return ExecutableState.NO_EXEC_INVALID;
 		}
 
 		{

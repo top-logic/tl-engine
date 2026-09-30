@@ -6,15 +6,17 @@
 package com.top_logic.tool.boundsec.wrap;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 
 /**
  * Persistent {@link com.top_logic.tool.boundsec.BoundObject}.
@@ -34,7 +36,7 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
     }
 
     @Override
-	public final Collection<BoundRole> getRoles(Person aPerson) {
+	public final Set<BoundRole> getRoles(Person aPerson) {
 		return BoundedRole.getRoles(this, toGroup(aPerson));
     }
 
@@ -43,17 +45,17 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
 	}
 
 	@Override
-	public final Collection<BoundRole> getRoles(Group aGroup) {
+	public final Set<BoundRole> getRoles(Group aGroup) {
 		return BoundedRole.getRoles(this, aGroup);
     }
 
     @Override
-	public final Collection<BoundRole> getLocalAndGlobalRoles(Person aPerson) {
+	public final Set<BoundRole> getLocalAndGlobalRoles(Person aPerson) {
 		return BoundedRole.getLocalAndGlobalRoles(this, aPerson);
     }
 
     @Override
-	public final Collection<BoundRole> getLocalAndGlobalAndGroupRoles(Person aPerson) {
+	public final Set<BoundRole> getLocalAndGlobalAndGroupRoles(Person aPerson) {
 		return BoundedRole.getLocalAndGlobalAndGroupRoles(this, aPerson);
     }
 
@@ -63,23 +65,33 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
     }
 
     @Override
-	public final Collection<BoundRole> getRoles() {
+	public final Set<BoundRole> getRoles() {
 		return BoundedRole.getRoles(this, null);
     }
 
     @Override
 	public Collection<? extends BoundObject> getSecurityChildren() {
-        return null;
+		return Collections.emptyList();
     }
 
     @Override
-	public BoundObject getSecurityParent() {
-		BoundHelper boundHelper = BoundHelper.getInstance();
-		if (boundHelper.useDefaultObject()) {
-			return boundHelper.getDefaultObject();
-        }
+	public final BoundObject getSecurityParent() {
+		throw new UnsupportedOperationException("Call getSecurityParents()");
+	}
 
-        return null;
-    }
+	/**
+	 * The security parents configured for the type of this object.
+	 * 
+	 * <p>
+	 * The security-parent rules of the {@link AccessManager} define the parent set. An object
+	 * whose type has no security-parent rules has no security parent. The global security root
+	 * is a parent only if a rule names it explicitly (the "singleton" security-parent path
+	 * element).
+	 * </p>
+	 */
+	@Override
+	public Collection<? extends BoundObject> getSecurityParents() {
+		return AccessManager.getInstance().getSecurityParents(this);
+	}
 
 }

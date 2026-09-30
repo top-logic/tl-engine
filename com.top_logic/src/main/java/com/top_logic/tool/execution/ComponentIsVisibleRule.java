@@ -12,7 +12,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * {@link ExecutabilityRule} that displays a command, if its component is visible.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ComponentIsVisibleRule implements ExecutabilityRule {
 

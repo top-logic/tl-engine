@@ -38,7 +38,7 @@ import com.top_logic.util.error.TopLogicException;
  * The simple process of importing a file to the system can be handled by 
  * this controller.
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class EVAAssistantController extends StepAssistantComponent {
 
@@ -260,7 +260,7 @@ public class EVAAssistantController extends StepAssistantComponent {
      * thread an hand over the {@link EVAAssistantController#getProcessFileHandler() 
      * process file handler} to it for doing the work.
      * 
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
 	public static class ImportCommandHandler extends AJAXCommandHandler {
 
@@ -324,7 +324,7 @@ public class EVAAssistantController extends StepAssistantComponent {
 	/**
 	 * Import data from a file by using a {@link ProcessFileHandler} as importer.
 	 * 
-	 * @author     <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+	 * @author     <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
 	 */
 	public static class ImportTask extends BatchImpl implements InContext {
 
@@ -414,7 +414,7 @@ public class EVAAssistantController extends StepAssistantComponent {
     /**
      * Handler used in the {@link ImportTask} to do the work. 
      * 
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public interface ProcessFileHandler extends ProgressInfo {
 

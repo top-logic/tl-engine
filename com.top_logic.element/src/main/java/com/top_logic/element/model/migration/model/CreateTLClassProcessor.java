@@ -9,9 +9,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Hidden;
@@ -29,6 +27,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
 import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Type;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -36,15 +35,15 @@ import com.top_logic.model.util.TLModelUtil;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLClassProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class CreateTLClassProcessor extends TLModelBaseLineMigrationProcessor<CreateTLClassProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link CreateTLClassProcessor}.
 	 */
 	@TagName("create-class")
 	public interface Config
-			extends PolymorphicConfiguration<CreateTLClassProcessor>, AnnotatedConfig<TLTypeAnnotation> {
+			extends TLModelBaseLineMigrationProcessor.Config<CreateTLClassProcessor>,
+			AnnotatedConfig<TLTypeAnnotation> {
 
 		/** Name for {@link #isAbstract()}. */
 		String ABSTRACT = ClassConfig.ABSTRACT;
@@ -136,7 +135,7 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			internalDoMigration(context, log, connection, tlModel);
 			return true;
 		} catch (Exception ex) {
@@ -148,6 +147,13 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 	private void internalDoMigration(MigrationContext context, Log log, PooledConnection connection, Document tlModel)
 			throws Exception {
 		QualifiedTypeName className = getConfig().getName();
+
+		Type existing = _util.getTLTypeOrNull(connection, className);
+		if (existing != null) {
+			log.info("Type already exists: " + className.getName(), Log.WARN);
+			return;
+		}
+
 		_util.createTLClass(connection, className,
 			getConfig().isAbstract(), getConfig().isFinal(),
 			getConfig());
@@ -165,7 +171,6 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 		QualifiedTypeName primaryGeneralization = getConfig().getPrimaryGeneralization();
 		if (primaryGeneralization == null) {
 			if (getConfig().isWithoutPrimaryGeneralization()) {
-				log.info("Skip generalization creation for '" + _util.qualifiedName(newClass) + "'.");
 				return;
 			}
 			if (!TlModelFactory.TL_MODEL_STRUCTURE.equals(newClass.getModuleName())) {

@@ -52,12 +52,6 @@ public class HistoryModelBuilder implements ListModelBuilder {
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-		return (anObject instanceof Wrapper)
-			&& aComponent.getModel() == WrapperHistoryUtils.getCurrent((Wrapper) anObject);
-	}
-
-	@Override
 	public Object retrieveModelFromListElement(LayoutComponent aComponent, Object anObject) {
 		return WrapperHistoryUtils.getCurrent((Wrapper) anObject);
 	}
@@ -81,7 +75,9 @@ public class HistoryModelBuilder implements ListModelBuilder {
 			versions.add(version);
 	
 			Wrapper beforeLastUpdate =
-				WrapperHistoryUtils.getWrapper(HistoryUtils.getRevision(versionRevision.getCommitNumber() - 1), version);
+				WrapperHistoryUtils.getWrapper(
+					HistoryUtils.getPreviousRevision(HistoryUtils.getHistoryManager(), versionRevision.getCommitNumber()),
+					version);
 			if (beforeLastUpdate == null) {
 				// No predecessor version.
 				break;

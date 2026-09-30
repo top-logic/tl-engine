@@ -39,7 +39,7 @@ import com.top_logic.element.structured.util.I18NConstants;
 import com.top_logic.element.structured.util.NumberHandler;
 import com.top_logic.element.structured.util.NumberHandlerFactory;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 
 /**
@@ -54,7 +54,7 @@ public class TestConfiguredNumberHandler extends BasicTestCase {
 	 * Test concurrent number generation on new number sequences.
 	 */
 	public void testConcurrent() throws InterruptedException {
-		final KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		final KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
 		NumberHandlerFactory factory = NumberHandlerFactory.getInstance();
 		final NumberHandler handler = factory.getNumberHandler("TestConfiguredNumberHandler_testConcurrent");
@@ -74,7 +74,7 @@ public class TestConfiguredNumberHandler extends BasicTestCase {
 						@Override
 						public void run() throws Exception {
 							{
-								Transaction tx = kb.beginTransaction();
+								Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 								numbers.add(handler.generateId(null));
 								
 								// Simulate long running transaction.

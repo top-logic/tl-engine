@@ -3,7 +3,7 @@
 </pre>
 <h2>Beschreibung</h2>
 <p>Reduziert die Menge <code class="hljs inlineCode">set</code> auf einen einzigen Wert, indem eine assoziative Kombinatorfunktion <code class="hljs inlineCode">fun</code> angewendet wird.</p>
-<p>Der Ausdruck <code class="hljs inlineCode">list(v1, v2, ...., vn).reduce(i, fun)</code> entspricht der Auswertung von <code class="hljs inlineCode">fun(.... fun(fun(i, v1), v2)....), vn)</code>. Das bedeutet, <code class="hljs inlineCode">fun</code> wird zunächst auf die Elemente <code class="hljs inlineCode">i</code> und <code class="hljs inlineCode">v1</code> angewendet. Anschließend wird <code class="hljs inlineCode">fun</code> auf das Ergebnis davon und auf <code class="hljs inlineCode">v2</code> angwendet und so weiter, bis alle Elemente der Menge kombiniert wurden.</p>
+<p>Der Ausdruck <code class="hljs inlineCode">list(v1, v2, ...., vn).reduce(i, fun)</code> entspricht der Auswertung von <code class="hljs inlineCode">fun(.... fun(fun(i, v1), v2)....), vn)</code>. Das bedeutet, <code class="hljs inlineCode">fun</code> wird zunächst auf die Elemente <code class="hljs inlineCode">i</code> und <code class="hljs inlineCode">v1</code> angewendet. Anschließend wird <code class="hljs inlineCode">fun</code> auf das Ergebnis davon und auf <code class="hljs inlineCode">v2</code> angewendet und so weiter, bis alle Elemente der Menge kombiniert wurden.</p>
 <h2>Parameter</h2>
 <table class="tlDocTable">
  <thead>

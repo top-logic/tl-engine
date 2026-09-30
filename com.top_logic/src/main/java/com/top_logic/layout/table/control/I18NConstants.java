@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.table.control;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -22,9 +23,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey DND_TABLE_DRAG_OVER_ACTION;
 
-	public static ResKey SHOW_ALL_PAGES = legacyKey("tl.table.paging.option.all");
+	@CustomKey("tl.table.paging.option.all")
+	public static ResKey SHOW_ALL_PAGES;
 
-	public static ResKey DEFAULT_PAGE_SIZE = legacyKey("tl.table.paging.option.default");
+	@CustomKey("tl.table.paging.option.default")
+	public static ResKey DEFAULT_PAGE_SIZE;
 
 	public static ResKey SORT_TABLE_ROWS;
 
@@ -60,7 +63,8 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey JUMP_TO_NEXT_PAGE;
 
-	public static ResKey SELECT_COLUMN = legacyKey("tl.table._select");
+	@CustomKey("tl.table._select")
+	public static ResKey SELECT_COLUMN;
 
 	public static ResKey DND_TABLE_DROP;
 

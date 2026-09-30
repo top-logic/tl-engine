@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.table.control;
 
+import static com.top_logic.layout.form.FormConstants.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,6 +21,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import org.bouncycastle.util.Strings;
 
@@ -33,8 +36,10 @@ import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.PropertyListener;
+import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
@@ -76,12 +81,13 @@ import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOpener;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOwner;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
+import com.top_logic.layout.component.model.MultiSelectionEvent;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.dnd.DnD;
 import com.top_logic.layout.dnd.DndData;
 import com.top_logic.layout.dnd.DragSourceSPI;
 import com.top_logic.layout.form.CheckException;
-import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -102,6 +108,8 @@ import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming;
+import com.top_logic.layout.scripting.recorder.ref.value.ListNaming;
+import com.top_logic.layout.scripting.recorder.ref.value.ListNaming.Name;
 import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.DefaultPopupDialogModel;
 import com.top_logic.layout.structure.DialogClosedListener;
@@ -123,11 +131,13 @@ import com.top_logic.layout.table.control.access.CellRef;
 import com.top_logic.layout.table.control.access.ColumsCollectionRef;
 import com.top_logic.layout.table.control.access.RowDisplay;
 import com.top_logic.layout.table.control.access.RowsCollectionRef;
+import com.top_logic.layout.table.display.ClientDisplayData;
 import com.top_logic.layout.table.display.ColumnAnchor;
 import com.top_logic.layout.table.display.IndexRange;
 import com.top_logic.layout.table.display.RowIndexAnchor;
 import com.top_logic.layout.table.display.ViewportState;
 import com.top_logic.layout.table.display.VisiblePaneRequest;
+import com.top_logic.layout.table.dnd.TableDragSource;
 import com.top_logic.layout.table.dnd.TableDropEvent;
 import com.top_logic.layout.table.dnd.TableDropEvent.Position;
 import com.top_logic.layout.table.dnd.TableDropTarget;
@@ -144,8 +154,9 @@ import com.top_logic.layout.table.model.TableModelListener;
 import com.top_logic.layout.table.model.TableUtil;
 import com.top_logic.layout.table.renderer.DefaultTableRenderer;
 import com.top_logic.layout.table.renderer.Icons;
+import com.top_logic.layout.table.renderer.TableButtons;
 import com.top_logic.layout.toolbar.ToolBar;
-import com.top_logic.mig.html.DefaultMultiSelectionModel;
+import com.top_logic.mig.html.AbstractMultiSelectionModel;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.SelectionModel;
@@ -163,6 +174,11 @@ import com.top_logic.util.error.TopLogicException;
 public class TableControl extends AbstractControl implements TableModelListener,
 		SelectionListener, TableDataListener, PageCountListener, PageListener, PageSizeOptionsListener,
 		PageSizeListener, DragSourceSPI, ContextMenuOwner {
+
+	/**
+	 * Prefix added to the dragged row ID, when the dragged row was part of the selection.
+	 */
+	private static final String SELECTION_REF_PREFIX = "selection-";
 
 	/** Name of the technical select column */
 	public static final String SELECT_COLUMN_NAME = "_select";
@@ -253,7 +269,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	private boolean visible = true;
     
-	private TableData tableData;
+	private final TableData tableData;
 
 	private TableUpdateAccumulator updateAccumulator;
 	
@@ -263,6 +279,11 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	/** Translation key for title of table */
 	public static final String RES_TITLE = "title";
+
+	/**
+	 * Property to transfer the table control ID to {@link TableButtons}.
+	 */
+	public static final Property<String> CONTROL_ID_PROPERTY = TypedAnnotatable.property(String.class, "controlID");
 
 	public TableControl(TableData tableData, ITableRenderer tableRenderer) {
 		this(tableData, TABLE_COMMANDS, tableRenderer);
@@ -353,7 +374,8 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		pagingModel.addListener(PagingModel.PAGE_SIZE_OPTIONS_EVENT, this);
 
 		// Initialize.
-		notifySelectionChanged(selectionModel, Collections.emptySet(), selectionModel.getSelection());
+		notifySelectionChanged(selectionModel,
+			new MultiSelectionEvent(selectionModel, Collections.emptySet(), selectionModel.getSelection()));
 	}
 	
 	@Override
@@ -444,22 +466,40 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		Object directTarget = getTableData().getTableModel().getRowObject(rowIndex);
 		Set<?> selection = getTableData().getSelectionModel().getSelection();
 		Object extendedTarget = ContextMenuProvider.getContextMenuTarget(directTarget, selection);
-		return getContextMenuProvider().getContextMenu(extendedTarget);
+		return getContextMenuProvider().getContextMenu(directTarget, extendedTarget);
 	}
 
 	@Override
 	public Object getDragSourceModel() {
-		return getModel();
+		return getTableData().getDragSource().getDragSourceModel(getTableData());
 	}
 
 	@Override
-	public Object getDragData(String ref) {
-		return getTableData().getDragSource().getDragObject(getTableData(), getRowIndex(ref));
+	public Collection<?> getDragData(String dataId) {
+		TableDragSource dragSource = getTableData().getDragSource();
+		if (dataId.startsWith(SELECTION_REF_PREFIX)) {
+			return dragSource.getDragSelection(getTableData(),
+				getRowIndex(dataId.substring(SELECTION_REF_PREFIX.length())));
+		} else {
+			return Collections.singletonList(dragSource.getDragObject(getTableData(), getRowIndex(dataId)));
+		}
 	}
 
 	@Override
-	public Maybe<? extends ModelName> getDragDataName(Object dragSource, String ref) {
-		return getTableData().getDragSource().getDragDataName(dragSource, getTableData(), getRowIndex(ref));
+	public Maybe<? extends ModelName> getDragDataName(Object dragSource, String dataId) {
+		Collection<?> dragData = getDragData(dataId);
+		List<ModelName> dragObjectNames = dragData.stream()
+			.map(dragObject -> getTableData().getDragSource().getDragDataName(dragSource, getTableData(), dragObject)
+				.getElse(null))
+			.collect(Collectors.toList());
+
+		if (dragObjectNames.contains(null)) {
+			return Maybe.none();
+		}
+
+		Name listName = TypedConfiguration.newConfigItem(ListNaming.Name.class);
+		listName.setValues(dragObjectNames);
+		return Maybe.<ModelName> some(listName);
 	}
 
 	final int getRowIndex(String rowId) {
@@ -782,13 +822,16 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	}
 
 	private int getLastClickedRow() {
-		int lastClickedRow;
-		if (getSelectionModel() instanceof SingleSelectionModel) {
-			lastClickedRow = -1;
-		} else {
-			Object lastSelectedRowObject = ((DefaultMultiSelectionModel) getSelectionModel()).getLastSelected();
-			lastClickedRow = getViewModel().getRowOfObject(lastSelectedRowObject);
+		int lastClickedRow = -1;
+
+		if (getSelectionModel() instanceof AbstractMultiSelectionModel multiselectionModel) {
+			Object lastSelectedRowObject = multiselectionModel.getLastSelected();
+
+			if (lastSelectedRowObject != null) {
+				lastClickedRow = getViewModel().getRowOfObject(lastSelectedRowObject);
+			}
 		}
+
 		return lastClickedRow;
 	}
     
@@ -799,8 +842,9 @@ public class TableControl extends AbstractControl implements TableModelListener,
 				Object rowObject = getRowObject(newSelectedRow);
 				Set<Object> newSelection = Collections.singleton(rowObject);
 				recordAbsoluteSelection(newSelection);
-				if (globalSelectionModel instanceof DefaultMultiSelectionModel) {
-					DefaultMultiSelectionModel multiSelectionModel = (DefaultMultiSelectionModel) globalSelectionModel;
+				if (globalSelectionModel instanceof AbstractMultiSelectionModel) {
+					AbstractMultiSelectionModel multiSelectionModel =
+						(AbstractMultiSelectionModel) globalSelectionModel;
 					multiSelectionModel.setSelection(newSelection, rowObject);
 				} else {
 					globalSelectionModel.setSelection(newSelection);
@@ -841,8 +885,12 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			}
 		}
 		recordAbsoluteSelection(selection);
-		((DefaultMultiSelectionModel) selectionModel).setSelection(selection,
-			getViewModel().getRowObject(newSelectedRow));
+
+		if (selectionModel instanceof AbstractMultiSelectionModel multiSelectionModel) {
+			multiSelectionModel.setSelection(selection, getViewModel().getRowObject(newSelectedRow));
+		} else {
+			selectionModel.setSelection(selection);
+		}
 	}
 
 	private void setSelected(Set<Object> selection, int row, boolean doSelect) {
@@ -976,6 +1024,8 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			createPageInputControl();
 			createPageSizeControl();
 		}
+
+		this.tableData.set(CONTROL_ID_PROPERTY, getID());
 
 		getRenderer().write(context, out, this);
 		
@@ -1117,25 +1167,47 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	}
 	
 	@Override
-	public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-		updateRows(formerlySelectedObjects);
-		updateRows(selectedObjects);
+	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+		updateRows(event.getUpdatedObjects());
 
 		if (!model.getSelection().isEmpty()) {
 			setVisibleRange(model);
+
+			if (isAttached() && !isRepaintRequested()) {
+				addUpdate(createScrollIntoViewportAction());
+			}
 		} else {
 			setUndefinedRange();
 		}
 	}
 
-	private void setVisibleRange(Object selectionModel) {
+	private JSSnipplet createScrollIntoViewportAction() {
+		return new JSSnipplet(new DynamicText() {
+
+			@Override
+			public void append(DisplayContext context, Appendable out) throws IOException {
+				out.append("TABLE.updateScrollPosition('");
+				out.append(getID());
+				out.append("',");
+				ClientDisplayData.append(out, getViewModel());
+				out.append(");");
+			}
+		});
+	}
+
+	private void setVisibleRange(SelectionModel selectionModel) {
 		TableViewModel viewModel = getViewModel();
 		int row;
-		if (selectionModel instanceof DefaultSingleSelectionModel) {
-			row = viewModel.getRowOfObject(((DefaultSingleSelectionModel) selectionModel).getSingleSelection());
+		if (selectionModel instanceof DefaultSingleSelectionModel singleSelection) {
+			row = viewModel.getRowOfObject(singleSelection.getSingleSelection());
+		} else if (selectionModel instanceof AbstractMultiSelectionModel<?> multiSelection) {
+			Object selected = multiSelection.getLastSelected();
+			if (selected == null) {
+				selected = CollectionUtilShared.getFirst(multiSelection.getSelection());
+			}
+			row = viewModel.getRowOfObject(selected);
 		} else {
-			Object lastSelectedRow = ((DefaultMultiSelectionModel) selectionModel).getLastSelected();
-			row = viewModel.getRowOfObject(lastSelectedRow);
+			row = viewModel.getRowOfObject(CollectionUtilShared.getFirst(selectionModel.getSelection()));
 		}
 		if (row != TableViewModel.NO_ROW) {
 			getVisiblePaneRequest().setPersistentRowRange(IndexRange.singleIndex(row));
@@ -1266,10 +1338,19 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	/**
 	 * {@link ControlCommandModel} for this {@link TableControl} and given {@link ControlCommand}.
+	 * 
+	 * @see #newTableCommandModel(TableControl, ControlCommand)
 	 */
 	protected ControlCommandModel newTableCommandModel(ControlCommand command) {
-		ControlCommandModel result = new ControlCommandModel(command, this);
-		TableData table = getTableData();
+		return newTableCommandModel(this, command);
+	}
+
+	/**
+	 * {@link ControlCommandModel} for the given {@link TableControl} and {@link ControlCommand}.
+	 */
+	public static ControlCommandModel newTableCommandModel(TableControl control, ControlCommand command) {
+		ControlCommandModel result = new ControlCommandModel(command, control);
+		TableData table = control.getTableData();
 		if (table.getOwner() != NoTableDataOwner.INSTANCE) {
 			result.set(LabeledButtonNaming.BUSINESS_OBJECT, table);
 		}
@@ -2186,8 +2267,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		 */
 		public final void writeInvokeExpression(Appendable out, Control control, int row, int column)
 				throws IOException {
-			out.append(FormConstants.FORM_PACKAGE);
-			out.append(".TableControl.select(arguments[0], this, ");
+			out.append(TABLE_HANDLER_CLASS).append(".select(arguments[0], this, ");
 			TagUtil.writeJsString(out, control.getID());
 			out.append(", ");
 			if (row < 0) {
@@ -2290,20 +2370,13 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		}
 	}
 	
-	/**
-	 * {@link CheckedTableCommand} executed, when the element is dragged over a drop zone.
-	 */
-	public static class DnDTableDragOverAction extends CheckedTableCommand {
-
-		private static final String COMMAND_NAME = "dragOver";
+	private abstract static class AbstractDnDTableAction extends CheckedTableCommand {
 
 		/**
-		 * Singleton {@link DnDTableDragOverAction} instance.
+		 * Creates a new {@link AbstractDnDTableAction}.
 		 */
-		public static final DnDTableDragOverAction INSTANCE = new DnDTableDragOverAction();
-
-		private DnDTableDragOverAction() {
-			super(COMMAND_NAME);
+		public AbstractDnDTableAction(String command) {
+			super(command);
 		}
 
 		@Override
@@ -2317,32 +2390,61 @@ public class TableControl extends AbstractControl implements TableModelListener,
 				String pos = (String) arguments.get(DND_TABLE_POS_PARAM);
 				String refId = (String) arguments.get(DND_TABLE_REF_ID_PARAM);
 
-				int rowNum = refId == null ? -1 : table.getRowIndex(refId);
+				int rowNum = (refId == null || refId.equals(table.getID())) ? -1 : table.getRowIndex(refId);
 				TableDropEvent dropEvent = new TableDropEvent(data, tableData, rowNum, Position.fromString(pos));
 
-				List<TableDropTarget> dropTargets = table.getApplicationModel().getTableConfiguration().getDropTargets();
-
-				for (TableDropTarget dropTarget : dropTargets) {
-					if (dropTarget.canDrop(dropEvent)) {
-						displayDropMarker(table, refId, pos);
-
-						return HandlerResult.DEFAULT_RESULT;
-					}
-				}
-
-				changeToNoDropCursor(table, refId);
+				return handleDropEvent(dropEvent, table, pos, refId);
 			}
-
 
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		private void changeToNoDropCursor(TableControl control, String targetID) {
+		protected abstract HandlerResult handleDropEvent(TableDropEvent event, TableControl table, String pos,
+				String refId);
+	}
+
+	/**
+	 * {@link CheckedTableCommand} executed, when the element is dragged over a drop zone.
+	 */
+	public static class DnDTableDragOverAction extends AbstractDnDTableAction {
+
+		private static final String COMMAND_NAME = "dragOver";
+
+		/**
+		 * Singleton {@link DnDTableDragOverAction} instance.
+		 */
+		public static final DnDTableDragOverAction INSTANCE = new DnDTableDragOverAction();
+
+		private DnDTableDragOverAction() {
+			super(COMMAND_NAME);
+		}
+
+		@Override
+		protected HandlerResult handleDropEvent(TableDropEvent event, TableControl table, String pos, String refId) {
+			List<TableDropTarget> dropTargets = table.getApplicationModel().getTableConfiguration().getDropTargets();
+
+			for (TableDropTarget dropTarget : dropTargets) {
+				if (dropTarget.canDrop(event)) {
+					displayDropMarker(table, refId, pos);
+
+					return HandlerResult.DEFAULT_RESULT;
+				}
+			}
+
+			changeToNoDropCursor(table, refId, pos);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		private void changeToNoDropCursor(TableControl control, String targetID, String position) {
 			control.getFrameScope().addClientAction(new JSSnipplet(new DynamicText() {
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
-					out.append("services.form.TableControl.changeToNoDropCursor(");
+					out.append(TABLE_HANDLER_CLASS).append(".changeToNoDropCursor(");
 					TagUtil.writeJsString(out, targetID);
+					if (!StringServices.isEmpty(position)) {
+						out.append(",");
+						TagUtil.writeJsString(out, position);
+					}
 					out.append(");");
 				}
 			}));
@@ -2352,7 +2454,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			control.getFrameScope().addClientAction(new JSSnipplet(new DynamicText() {
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
-					out.append("services.form.TableControl.displayDropMarker(");
+					out.append(TABLE_HANDLER_CLASS).append(".displayDropMarker(");
 					TagUtil.writeJsString(out, targetID);
 					if (!StringServices.isEmpty(position)) {
 						out.append(",");
@@ -2370,7 +2472,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	}
 
-	public static class DndTableDropAction extends CheckedTableCommand {
+	public static class DndTableDropAction extends AbstractDnDTableAction {
 		public static final TableControl.TableCommand INSTANCE = new TableControl.DndTableDropAction();
 
 		public DndTableDropAction() {
@@ -2378,31 +2480,17 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		}
 
 		@Override
-		public HandlerResult executeChecked(DisplayContext context, TableControl table, Map<String, Object> arguments) {
-			TableData tableData = table.getModel();
+		protected HandlerResult handleDropEvent(TableDropEvent event, TableControl table, String pos, String refId) {
 			List<TableDropTarget> dropTargets = table.getApplicationModel().getTableConfiguration().getDropTargets();
+			for (TableDropTarget dropTarget : dropTargets) {
+				if (dropTarget.canDrop(event)) {
+					dropTarget.handleDrop(event);
 
-			DndData data = DnD.getDndData(context, arguments);
-			if (data != null) {
-				String pos = (String) arguments.get(DND_TABLE_POS_PARAM);
-
-				String refId = (String) arguments.get(DND_TABLE_REF_ID_PARAM);
-				int rowNum = refId == null ? -1 : table.getRowIndex(refId);
-
-				TableDropEvent dropEvent = new TableDropEvent(data, tableData, rowNum, Position.fromString(pos));
-
-				for (TableDropTarget dropTarget : dropTargets) {
-					if (dropTarget.canDrop(dropEvent)) {
-						dropTarget.handleDrop(dropEvent);
-
-						return HandlerResult.DEFAULT_RESULT;
-					}
+					return HandlerResult.DEFAULT_RESULT;
 				}
-
-				throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
 			}
 
-			return HandlerResult.DEFAULT_RESULT;
+			throw new TopLogicException(com.top_logic.layout.dnd.I18NConstants.DROP_NOT_POSSIBLE);
 		}
 
 		@Override

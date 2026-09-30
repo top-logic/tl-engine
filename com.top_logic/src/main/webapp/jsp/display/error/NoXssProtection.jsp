@@ -1,4 +1,4 @@
-<%@page import="com.top_logic.base.accesscontrol.LoginPageServlet"
+<%@page import="com.top_logic.knowledge.gui.layout.TLLayoutServlet"
 %><%@page import="com.top_logic.knowledge.gui.layout.HttpSecureHeaderFilter"
 %><%@taglib uri="basic" prefix="basic"
 %>
@@ -40,11 +40,11 @@
 				upstream Apache server, you may disable this check in the init
 				parameters of the
 				<code>
-					<%=LoginPageServlet.class.getName()%>
+					<%=TLLayoutServlet.class.getName()%>
 				</code>
 				, using parameter
 				<code>
-					<%=LoginPageServlet.DISABLE_SECURE_HEADER_CHECK %>
+					<%=TLLayoutServlet.DISABLE_SECURE_HEADER_CHECK %>
 				</code>
 				.
 			</p>

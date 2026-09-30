@@ -16,7 +16,7 @@ import com.top_logic.layout.scripting.template.excel.ExcelActionOp.ExcelAction;
 /**
  * Action to be executed in a correct context environment.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class CommittingExcelActionOp<C extends ExcelAction> extends ExcelActionOp<C> {
 
@@ -51,7 +51,9 @@ public abstract class CommittingExcelActionOp<C extends ExcelAction> extends Exc
 
 	@Override
 	public Object execute(ActionContext actionContext) throws Exception {
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction =
+			PersistencyLayer.getKnowledgeBase()
+				.beginTransaction(I18NConstants.SCRIPT_ACTION__IMPL.fill(getClass().getSimpleName()));
 
 		try {
 			Object theObject = this.executeWithCommit(actionContext);

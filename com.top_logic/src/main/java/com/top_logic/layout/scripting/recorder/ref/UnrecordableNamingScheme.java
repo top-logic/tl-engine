@@ -15,7 +15,7 @@ import com.top_logic.layout.scripting.recorder.gui.inspector.plugin.assertion.As
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public abstract class UnrecordableNamingScheme<M, N extends ModelName> extends AbstractModelNamingScheme<M, N> {
+public abstract class UnrecordableNamingScheme<M, N extends ModelName> extends AbstractGlobalModelNamingScheme<M, N> {
 
 	/**
 	 * Creates a {@link UnrecordableNamingScheme}.

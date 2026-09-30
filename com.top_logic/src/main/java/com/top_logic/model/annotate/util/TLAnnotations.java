@@ -5,11 +5,19 @@
  */
 package com.top_logic.model.annotate.util;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.layout.form.model.DataField;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -20,6 +28,10 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.ExportColumns;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.annotate.TLObjectInitializers;
+import com.top_logic.model.annotate.TLPersistentCache;
+import com.top_logic.model.annotate.ui.BinaryDisplay;
+import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
 import com.top_logic.model.config.TLTypeAnnotation;
@@ -27,6 +39,7 @@ import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.config.annotation.MultiSelect;
 import com.top_logic.model.config.annotation.TableName;
 import com.top_logic.model.form.EditContextBase;
+import com.top_logic.model.initializer.TLObjectInitializer;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -70,7 +83,7 @@ public class TLAnnotations {
 	}
 
 	/**
-	 * Lookup an annotation of the given annotation type in the given modelpart.
+	 * Lookup an annotation of the given annotation type in the given model part.
 	 * 
 	 * @param modelPart
 	 *        The annotated {@link TLModelPart}.
@@ -119,6 +132,21 @@ public class TLAnnotations {
 	}
 
 	/**
+	 * Determines how the {@link DataField} of a {@link BinaryData} shall be presented.
+	 * 
+	 * @param annotation
+	 *        The annotation determining the display. If <code>null</code>, a default is applied.
+	 * @param multiple
+	 *        Whether multiple values are allowed in the current context.
+	 */
+	public static BinaryPresentation getBinaryPresentation(BinaryDisplay annotation, boolean multiple) {
+		if (annotation == null) {
+			return BinaryPresentation.DATA_ITEM;
+		}
+		return annotation.getPresentation();
+	}
+
+	/**
 	 * Setter for {@link #getTable(TLType)}.
 	 */
 	public static void setTable(TLType type, String tableName) {
@@ -157,15 +185,30 @@ public class TLAnnotations {
 	 * @return Table where instances of the given type are stored. Not <code>null</code>.
 	 */
 	public static String getTable(TLType type) {
-		TableName tableAnnotation = type.getAnnotation(TableName.class);
+		TableName tableAnnotation = getTableName(type);
 		if (tableAnnotation != null) {
 			return tableAnnotation.getName();
 		}
+		return GENERIC_TABLE_NAME;
+	}
+
+	/**
+	 * {@link TableName} annotation of the given type, if there is one. Otherwise the
+	 * {@link TableName} annotation of the primary generalisation (recursively).
+	 * 
+	 * @return May be <code>null</code> if no primary generalisation (recursively) has a
+	 *         {@link TableName} annotation.
+	 */
+	public static TableName getTableName(TLType type) {
+		TableName tableAnnotation = type.getAnnotation(TableName.class);
+		if (tableAnnotation != null) {
+			return tableAnnotation;
+		}
 		TLClass primaryGeneralization = TLModelUtil.getPrimaryGeneralization(type);
 		if (primaryGeneralization == null) {
-			return GENERIC_TABLE_NAME;
+			return null;
 		}
-		return getTable(primaryGeneralization);
+		return getTableName(primaryGeneralization);
 	}
 
 	/**
@@ -215,5 +258,72 @@ public class TLAnnotations {
 		return getExportColumns(primaryGeneralization);
 	}
 
-}
+	/**
+	 * The {@link TLObjectInitializer}s that are annotated at the given {@link TLStructuredType} or
+	 * any super type.
+	 * 
+	 * <p>
+	 * {@link TLObjectInitializer} of the super classes occur before the intializers of sub classes.
+	 * </p>
+	 * 
+	 * @see #getLocalInitializers(TLStructuredType)
+	 */
+	public static List<TLObjectInitializer> getInitializers(TLStructuredType type) {
+		if (type instanceof TLClass clazz) {
+			Set<TLClass> allGeneralizations = TLModelUtil.getReflexiveTransitiveGeneralizations(clazz);
 
+			/* The "first" generalization is the type itself and the "last" is the most general
+			 * type. It is best to first apply the initialisers of the most general type before
+			 * applying the initialisers of the specialisations. */
+			TLClass[] tmp = allGeneralizations.toArray(TLClass[]::new);
+			ArrayUtil.reverse(tmp);
+
+			return Arrays.stream(tmp)
+				.map(TLAnnotations::getLocalInitializers)
+				.flatMap(List::stream)
+				.collect(Collectors.toList());
+		} else {
+			return getLocalInitializers(type);
+		}
+	}
+
+	/**
+	 * The {@link TLObjectInitializer}s that are annotated at the given {@link TLStructuredType}.
+	 * 
+	 * @see #getInitializers(TLStructuredType)
+	 */
+	public static List<TLObjectInitializer> getLocalInitializers(TLStructuredType type) {
+		TLObjectInitializers localInitializers = getAnnotation(type, TLObjectInitializers.class);
+		if (localInitializers == null) {
+			return Collections.emptyList();
+		}
+		return TypedConfigUtil.createInstanceList(localInitializers.getInitializers());
+	}
+
+	/**
+	 * Whether the value of the part is actually a persistent cache.
+	 * 
+	 * @see #isPersistentCache(TLStructuredType)
+	 */
+	public static boolean isPersistentCache(TLStructuredTypePart typePart) {
+		TLPersistentCache annotation = getAnnotation(typePart, TLPersistentCache.class);
+		if (annotation != null) {
+			return annotation.getValue();
+		}
+		return false;
+	}
+
+	/**
+	 * Whether instanced of the given type is actually a persistent cache.
+	 * 
+	 * @see #isPersistentCache(TLStructuredTypePart)
+	 */
+	public static boolean isPersistentCache(TLStructuredType type) {
+		TLPersistentCache annotation = getAnnotation(type, TLPersistentCache.class);
+		if (annotation != null) {
+			return annotation.getValue();
+		}
+		return false;
+	}
+
+}

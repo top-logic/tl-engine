@@ -13,6 +13,7 @@ import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.component.DefaultApplyAttributedCommandHandler;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.Accessor;
+import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.NodeGroupInitializer;
 import com.top_logic.layout.form.treetable.component.ConfigurableStructureEditComponent;
@@ -57,6 +58,8 @@ public class AttributedStructureEditComponent<N extends MutableTLTreeNode<N>> ex
 	@Override
 	public FormContext createFormContext() {
 		AttributeFormContext formContext = new AttributeFormContext(this.getResPrefix());
+		FormComponent.initFormContext(this, this, formContext);
+
 		initFormContext(formContext);
 		return formContext;
 	}

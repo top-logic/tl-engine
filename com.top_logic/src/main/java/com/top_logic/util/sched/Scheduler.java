@@ -32,6 +32,7 @@ import com.top_logic.basic.Reloadable;
 import com.top_logic.basic.ReloadableManager;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.GCQueue;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -40,6 +41,7 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -115,6 +117,7 @@ import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
 	SchedulerService.Module.class,
 	ThreadContextManager.Module.class,
 })
+@Label("Task scheduler")
 public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implements Reloadable, Runnable, Suspendable {
 
 	/**
@@ -568,29 +571,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		}
     }
     
-    /** helper function to limit deprecation warning to one place.*/
-	protected static final void stop(SchedulerEntry entry) {
-		Logger.error("Stopping " + entry.getTask().getName(), Scheduler.class);
-		entry.getThread().stop();
-    }
-    
-    
-	/**
-	 * Stop all {@link Task}s that are still active.
-	 * 
-	 * Called when Scheduler is going down.
-	 */
-	protected synchronized void stopStillActive() {
-		Iterator<SchedulerEntry> entriesIterator = getActiveEntries().iterator();
-		while (entriesIterator.hasNext()) {
-			SchedulerEntry entry = entriesIterator.next();
-			ScheduledThread thread = entry.getThread();
-			if ((thread != null) && thread.isAlive()) {
-				stop(entry);
-			}
-		}
-    }
-
 	/** Starts the given task. */
 	protected void startTask(SchedulerEntry entry) {
 		Task task = entry.getTask();
@@ -689,14 +669,15 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	}
 
 	private List<SchedulerEntry> getWaitingEntries() {
-		@SuppressWarnings("unchecked")
+		Filter<? super SchedulerEntry> enabledOrStarted = or(
+			EnabledSchedulerEntryFilter.INSTANCE,
+			ManuallyStartedSchedulerEntryFilter.INSTANCE);
+		Filter<? super SchedulerEntry> valid = not(BrokenSchedulerEntryFilter.INSTANCE);
 		List<SchedulerEntry> result = toList(getEntries().getAllEntries(
 			and(
 				TopLevelSchedulerEntryFilter.INSTANCE,
-				or(
-					EnabledSchedulerEntryFilter.INSTANCE,
-					ManuallyStartedSchedulerEntryFilter.INSTANCE),
-				not(BrokenSchedulerEntryFilter.INSTANCE),
+				enabledOrStarted,
+				valid,
 				new SchedulerEntryStateFilter(SchedulerEntry.State.WAITING))));
 		Collections.sort(result, new SchedulerEntryByTaskComparator(TaskComparator.INSTANCE));
 		return result;
@@ -706,9 +687,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		Task task = entry.getTask();
 		try {
 			return tryStartTaskUnsafe(entry);
-		} catch (ThreadDeath ex) {
-			// Don't try to repair anything, as this thread is dying anyway.
-			throw ex;
 		} catch (Throwable ex) {
 			logError("Failed to start task '" + task.getName() + "'. The task might be in an inconsistent state."
 				+ " That can cause duplicate, missing or wrong executions.", ex);
@@ -838,7 +816,8 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 */
 	private boolean requestClusterLock(final Task task) {
 		// No retry necessary, as a failed request means, an other cluster node is running the task.
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(I18NConstants.REQUESTED_CLUSTER_LOCK_FOR__TASK.fill(task.getName()));
 		try {
 			TaskLogWrapper logWrapper = (TaskLogWrapper) task.getLog();
 			logWrapper.touch();
@@ -915,8 +894,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 				Logger.error("Interupted while handleOvertime()", this);
             }
 			if (entry.getThread().isAlive()) {
-				Logger.error("Failed to signalStop() to " + theCulprit + " calling stop()", this);
-				stop(entry);
+				Logger.error("Failed to signalStop() to " + theCulprit + ".", this);
             }
         }
         
@@ -1287,7 +1265,8 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	private RetryResult<Void, Throwable> clearClusterLockUnsafe(Task task) {
 		TaskLogWrapper logWrapper = (TaskLogWrapper) task.getLog();
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(I18NConstants.CLEARED_CLUSTER_LOCK__TASK.fill(task.getName()));
 		try {
 			logWrapper.touch();
 			if (logWrapper.hasClusterLock()) {
@@ -1397,8 +1376,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
     protected void dispatch() {
 		try {
 			dispatchUnsafe();
-		} catch (ThreadDeath ex) {
-			throw ex;
 		} catch (Throwable ex) {
 			Logger.error("Scheduler failed. It might be in an inconsistent or broken state, "
 				+ "but will try to continue its work and fix its state. Cause: " + ex.getMessage(),
@@ -1527,10 +1504,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 				Logger.error("Fix failed: Scheduler failed to leave the maintenance mode."
 					+ " It will try again later. Cause: " + reason.getMessage(), reason, Scheduler.class);
 			}
-		} catch (ThreadDeath ex) {
-			Logger.error("Fix failed: Scheduler failed to leave the maintenance mode."
-				+ " It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
-			throw ex;
 		} catch (Throwable ex) {
 			Logger.error("Fix failed: Scheduler failed to leave the maintenance mode."
 				+ " It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
@@ -1551,10 +1524,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 				fixesIterator.remove();
 				Logger.info(
 					"Applied Fix: Removed cluster lock for task '" + task.getName() + "'.", Scheduler.class);
-			} catch (ThreadDeath ex) {
-				Logger.error("Fix failed: Scheduler failed to remove cluster lock for task '" + task.getName()
-					+ "'. It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
-				throw ex;
 			} catch (Throwable ex) {
 				Logger.error("Fix failed: Scheduler failed to remove cluster lock for task '" + task.getName()
 					+ "'. It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
@@ -1564,7 +1533,8 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	private void forceUncheckedMarkTaskAsInactive(Task task) {
 		TaskLogWrapper logWrapper = (TaskLogWrapper) task.getLog();
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(I18NConstants.COMPLETED_TASK__TASK.fill(task.getName()));
 		try {
 			logWrapper.forceUncheckedMarkTaskAsInactive(task, I18NConstants.TASK_MARKED_AS_DONE_BY_SCHEDULER);
 			transaction.commit();
@@ -1587,10 +1557,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 				task.getLog().taskDied(I18NConstants.TASK_DONE_WITHOUT_RESULT);
 				fixesIterator.remove();
 				Logger.info("Applied Fix: Wrote task end result for task '" + task.getName() + "'.", Scheduler.class);
-			} catch (ThreadDeath ex) {
-				Logger.error("Fix failed: Scheduler failed to write missing result for task '" + task.getName()
-					+ "'. It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
-				throw ex;
 			} catch (Throwable ex) {
 				Logger.error("Fix failed: Scheduler failed to write missing result for task '" + task.getName()
 					+ "'. It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
@@ -1628,10 +1594,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 					Logger.error("Fix failed: Scheduler failed to fix log of task '" + task.getName()
 						+ "', will try again later. Cause: " + reason.getMessage(), reason, Scheduler.class);
 				}
-			} catch (ThreadDeath ex) {
-				Logger.error("Fix failed: Scheduler failed to fix log of task '" + task.getName()
-					+ "'. It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
-				throw ex;
 			} catch (Throwable ex) {
 				Logger.error("Fix failed: Scheduler failed to fix log of task '" + task.getName()
 					+ "'. It will try again later. Cause: " + ex.getMessage(), ex, Scheduler.class);
@@ -1737,8 +1699,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 			runCount = getActiveEntries().size();
         }
         if (runCount > 0) {
-			status.append(" Stopping ").append(runCount).append(" Tasks");
-			stopStillActive();
+			status.append(" The following tasks failed to stop: ").append(runCount);
         }
         Logger.info(status.toString(), this);
     }
@@ -1792,15 +1753,12 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * The {@link Task}s that are running or starting.
 	 */
 	protected Collection<SchedulerEntry> getActiveEntries() {
+		Filter<? super SchedulerEntry> isActive = or(
+			new SchedulerEntryStateFilter(SchedulerEntry.State.RUNNING),
+			new SchedulerEntryStateFilter(SchedulerEntry.State.STARTING),
+			new SchedulerEntryStateFilter(SchedulerEntry.State.WAITING_FOR_MAINTENANCE_MODE));
 		return getEntries().getAllEntries(
-			and(
-				TopLevelSchedulerEntryFilter.INSTANCE,
-				or(
-					new SchedulerEntryStateFilter(SchedulerEntry.State.RUNNING),
-					new SchedulerEntryStateFilter(SchedulerEntry.State.STARTING),
-					new SchedulerEntryStateFilter(SchedulerEntry.State.WAITING_FOR_MAINTENANCE_MODE))
-				)
-			);
+			and(TopLevelSchedulerEntryFilter.INSTANCE, isActive));
 	}
 
     /**
@@ -2084,8 +2042,6 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 						DBProperties.GLOBAL_PROPERTY, getPropertyNameTaskBlock(task),
 						Boolean.valueOf(isBlocked).toString());
 					return RetryResult.createSuccess();
-				} catch (ThreadDeath ex) {
-					throw ex;
 				} catch (Throwable ex) {
 					return RetryResult.createFailure(ex);
 				}

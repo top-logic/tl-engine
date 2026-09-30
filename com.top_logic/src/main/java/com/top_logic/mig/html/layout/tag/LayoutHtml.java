@@ -7,11 +7,11 @@ package com.top_logic.mig.html.layout.tag;
 
 import java.io.Writer;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
-import javax.servlet.jsp.tagext.Tag;
-import javax.servlet.jsp.tagext.TryCatchFinally;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.PageContext;
+import jakarta.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.TryCatchFinally;
 
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -96,7 +96,7 @@ public class LayoutHtml implements LayoutConstants, LayoutTag, Tag, TryCatchFina
     }
 
     /**
-     * @see javax.servlet.jsp.tagext.Tag#release()
+     * @see jakarta.servlet.jsp.tagext.Tag#release()
      */
     @Override
 	public void release() {
@@ -104,7 +104,7 @@ public class LayoutHtml implements LayoutConstants, LayoutTag, Tag, TryCatchFina
     }
 
     /**
-     * @see javax.servlet.jsp.tagext.Tag#setPageContext(PageContext)
+     * @see jakarta.servlet.jsp.tagext.Tag#setPageContext(PageContext)
      */
     @Override
 	public void setPageContext(PageContext context) {

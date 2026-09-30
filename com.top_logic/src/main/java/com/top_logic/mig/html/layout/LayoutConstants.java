@@ -116,7 +116,11 @@ public interface LayoutConstants {
 	 * Whether the given component name is a synthetic component name.
 	 */
 	static boolean isSyntheticName(ComponentName name) {
-		return isSyntheticName(name.qualifiedName());
+		if (name.isLocalName()) {
+			return isSyntheticName(name.localName());
+		} else {
+			return isSyntheticName(name.scope());
+		}
 	}
 
 	/**

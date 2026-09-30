@@ -15,7 +15,7 @@ import com.top_logic.tool.boundsec.commandhandlers.ToggleCommandHandler;
 /**
  * Show technical generalizations.
  * 
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
 @Label("Show technical generalizations")
 public class ShowTechnicalGeneralizationsHandler extends ToggleCommandHandler {

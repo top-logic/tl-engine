@@ -5,10 +5,12 @@
  */
 package com.top_logic.model.impl;
 
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 
 /**
@@ -29,6 +31,7 @@ public class TLAssociationEndImpl extends AbstractStructuredTypePart<TLAssociati
 
 	private HistoryType _historyType = HistoryType.CURRENT;
 
+	private DeletionPolicy _deletionPolicy = DeletionPolicy.CLEAR_REFERENCE;
 
 	/*package protected*/ TLAssociationEndImpl(TLModelImpl model, String name) {
 		super(model, name);
@@ -88,4 +91,35 @@ public class TLAssociationEndImpl extends AbstractStructuredTypePart<TLAssociati
 		_historyType = type;
 	}
 
+	@Override
+	public DeletionPolicy getDeletionPolicy() {
+		return _deletionPolicy;
+	}
+
+	@Override
+	public void setDeletionPolicy(DeletionPolicy value) {
+		_deletionPolicy = value;
+	}
+
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case AGGREGATE_ATTR:
+				return isAggregate();
+			case COMPOSITE_ATTR:
+				return isComposite();
+			case END_INDEX_ATTR:
+				return getEndIndex();
+			case HISTORY_TYPE_ATTR:
+				return getHistoryType();
+			case DELETION_POLICY_ATTR:
+				return getDeletionPolicy();
+			case NAVIGATE_ATTR:
+				return canNavigate();
+			case REFERENCE_ATTR:
+				return getReference();
+			default:
+				return super.tValue(part);
+		}
+	}
 }

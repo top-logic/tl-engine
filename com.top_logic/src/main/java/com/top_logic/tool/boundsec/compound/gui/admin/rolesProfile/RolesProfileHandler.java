@@ -7,7 +7,6 @@ package com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,15 +22,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.tree.TreeModel;
-import javax.xml.parsers.FactoryConfigurationError;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
 
-import org.xml.sax.SAXException;
-
-import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.FileManager;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.DescendantDFSIterator;
@@ -45,9 +37,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.FileUtilities;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.basic.xml.sax.SAXUtil;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.DefaultDescendingLayoutVisitor;
@@ -55,20 +45,17 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutConfigTree;
 import com.top_logic.mig.html.layout.LayoutConfigTreeNode;
 import com.top_logic.mig.html.layout.LayoutConstants;
-import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
-import com.top_logic.tool.boundsec.compound.CompoundSecurityLayoutCommandGroupDistributor;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.RoleProfileConfig;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.ViewConfig;
 import com.top_logic.tool.boundsec.gui.profile.CommandGroupCollector;
-import com.top_logic.tool.boundsec.gui.profile.CommandGroupDistributor;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * This class collects methods to handle roles profile related functionality.
@@ -297,6 +284,10 @@ public class RolesProfileHandler {
 		if (secComp == null) {
 			return;
 		}
+		if (!node.getConfig().getName().qualifiedName().equals(secComp.getName())) {
+			/*Component delegates to another PersBoundComp. Ignore it.*/
+			return;
+		}
 		ViewConfig viewConfig = null;
 		for (BoundCommandGroup cg : sortedCopy(allCommandGroups)) {
 			Collection theRoles = secComp.rolesForCommandGroup(cg);
@@ -316,7 +307,7 @@ public class RolesProfileHandler {
 	private BoundCommandGroup[] sortedCopy(Collection<BoundCommandGroup> allCommandGroups) {
 		BoundCommandGroup[] sortedGroups =
 			allCommandGroups.toArray(new BoundCommandGroup[allCommandGroups.size()]);
-		Arrays.sort(sortedGroups, Comparator.comparing(BoundCommandGroup::getID));
+		Arrays.sort(sortedGroups, SimpleBoundCommandGroup.COMPARE_BY_ID);
 		return sortedGroups;
 	}
 
@@ -384,10 +375,6 @@ public class RolesProfileHandler {
 		while (allNodes.hasNext()) {
 			importProfiles(allNodes.next(), profiles, roleByName, allConfiguredViews);
 		}
-		allNodes = new DescendantDFSIterator<>(tree, tree.getRoot());
-		while (allNodes.hasNext()) {
-			CommandGroupDistributor.distributeNeededRolesToChildren(allNodes.next());
-		}
 	}
 
 	private Map<String, BoundedRole> rolesByName(Collection<String> roleNames) {
@@ -442,97 +429,6 @@ public class RolesProfileHandler {
 		return (SecurityConfig) reader.read();
 	}
 
-    /**
-     * Import a roles profile from a given file name.
-     *
-     * @param aMainLayout       the main layout to set the roles profile in
-     * @param aProfileFileName  the name of the source containing the roles profile
-     * @return <code>true</code> if the profiles are successfully imported
-     */
-	boolean importProfiles(MainLayout aMainLayout, String aProfileFileName) throws Exception {
-        // check for destination file and create if necessary
-        FileManager theFM = FileManager.getInstance();
-		try (InputStream in = theFM.getStreamOrNull(aProfileFileName)) {
-			if (in == null) {
-				return false;
-			}
-			return importProfiles(aMainLayout, in);
-		}
-    }
-
-    /**
-     * Import a roles profile from a given input stream.
-     *
-     * @param aMainLayout       the main layout to set the roles profile in
-     * @param aSource           the input stream to read the profiles from
-     * @return <code>true</code> if the profiles are successfully imported
-     */
-	boolean importProfiles(MainLayout aMainLayout, InputStream aSource)
-			throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException {
-        // remove old settings
-//      aMainLayout.acceptVisitorRecursively(new ProjectLayoutSecurityPreImportVisitor());
-        // parse inpit and set profile on project layouts
-        boolean parsingOK = false;
-        try {
-            ThreadContext.pushSuperUser();
-			SAXParser parser = SAXUtil.newSAXParser();
-			RolesProfileImporter rolesProfileImporter = new RolesProfileImporter(aMainLayout);
-			parser.parse(aSource, rolesProfileImporter);
-			if (!rolesProfileImporter.hasAnyProfile()) {
-				// thow Exception if no profile information was found in the XML file
-				throw new TopLogicException(getClass(), "noProfile");
-			}
-            parsingOK = true;
-        } catch (SAXException sax) {
-            if (sax.getCause() != null) {
-                Logger.error("Failed to importProfiles()", sax.getCause(), this);
-            }
-            throw sax;
-        }  finally {
-            ThreadContext.popSuperUser();
-        }
-
-        // distribute the imported security
-        aMainLayout.acceptVisitorRecursively(new ProjectLayoutSecurityPostImportVisitor());
-
-        return parsingOK;
-    }
-
-	/**
-	 * This method visits every {@link LayoutComponent} and reloads the security(roles)-profiles if
-	 * it is a {@link CompoundSecurityLayout}.
-	 * 
-	 * @param aMainLayout
-	 *        The {@link MainLayout} for which the reload should be applied.
-	 */
-	@CalledFromJSP
-	public static void reloadSecurityProfiles(MainLayout aMainLayout) {
-		ProjectLayoutSecurityPostImportVisitor visitor = new ProjectLayoutSecurityPostImportVisitor();
-		aMainLayout.acceptVisitorRecursively(visitor);
-	}
-
-
-    /**
-     * This visitor distributes the profiles set at the project layouts during the import
-     * to the components contained in the project layouts.
-     */
-	protected static class ProjectLayoutSecurityPostImportVisitor extends DefaultDescendingLayoutVisitor {
-
-        /**
-         * Distribute the access set on the Project Layout
-         *
-         * @see com.top_logic.mig.html.layout.LayoutComponentVisitor#visitLayoutComponent(com.top_logic.mig.html.layout.LayoutComponent)
-         */
-        @Override
-		public boolean visitLayoutComponent(LayoutComponent aComponent) {
-            if (aComponent instanceof CompoundSecurityLayout) {
-                CompoundSecurityLayout thePL = (CompoundSecurityLayout) aComponent;
-                thePL.acceptVisitorRecursively(new CompoundSecurityLayoutCommandGroupDistributor());
-            }
-
-            return true;
-        }
-    }
     /**
      * This visitor removes the existing roles profiles form the
      * project layouts so the import can work on a clean layout.

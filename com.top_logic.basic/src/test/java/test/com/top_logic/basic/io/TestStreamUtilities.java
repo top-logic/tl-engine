@@ -14,11 +14,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 import junit.framework.Test;
@@ -27,10 +29,14 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.BasicTestSetup;
 
+import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.EmptyInputStream;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.NullWriter;
 import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 
 /**
  * Test class to check the {@link StreamUtilities} class.
@@ -39,7 +45,9 @@ import com.top_logic.basic.io.StreamUtilities;
  */
 public class TestStreamUtilities extends BasicTestCase {
 
-    /** Counter to adjust timing */
+	private static final int STREAM_TEST_SIZE = 10000;
+
+	/** Counter to adjust timing */
     private static final int COUNT = 4096;
 
     /** temporary file containing some testData */
@@ -68,7 +76,7 @@ public class TestStreamUtilities extends BasicTestCase {
             // It will NOT work when using \n\r or \r I know 
             largeBuf.append("This is a dummy Text to fill this file with some Data\n");
             largeBuf.append("0123456789 the quick brown fox jumps over the lazy dogs back.\n");
-                          // Ä     Ö     Ü     ä     ö     ü     ß     ê      Á     Ò 
+                          // Ã„     Ã–     Ãœ     Ã¤     Ã¶     Ã¼     ÃŸ     Ãª      Ã     Ã’ 
             largeBuf.append("\u00c4\u00d6\u00dc\u00e5\u00f6\u00fc\u00df\u00ea\u00cA\u00d2 ");
             largeBuf.append("THE QUICK BROWN FOX JUMPS OVER THE LAZY DOGS BACK:\n");
         }
@@ -271,7 +279,7 @@ public class TestStreamUtilities extends BasicTestCase {
     public void testStrings () throws IOException 
     {
         File strFile = BasicTestCase.createNamedTestFile("testStringMethods.txt");
-        String str   = "Blah\nBlubber\nMBA Pörsön\nBlurks";
+        String str   = "Blah\nBlubber\nMBA PÃ¶rsÃ¶n\nBlurks";
         FileUtilities.writeStringToFile(str, strFile);
 
         // Will not work outside Windoof ...
@@ -315,33 +323,106 @@ public class TestStreamUtilities extends BasicTestCase {
 	public void testStoreNormalized() throws IOException {
 		Properties props = new Properties();
 		props.put("b", "b");
-		props.put("a1", "ü");
-		props.put("c", "ä");
-		props.put("A", "ß");
+		props.put("a1", "Ã¼");
+		props.put("c", "Ã¤");
+		props.put("A", "ÃŸ");
 		ByteArrayOutputStream actual = new ByteArrayOutputStream();
 		StreamUtilities.storeNormalized(actual, props);
 
 		Properties loaded = new Properties();
-		loaded.load(new ByteArrayInputStream(actual.toByteArray()));
+		loaded.load(new InputStreamReader(new ByteArrayInputStream(actual.toByteArray()), StandardCharsets.UTF_8));
 		assertEquals("Serialized must semantically be equal.", props, loaded);
 
 		StringWriter expected = new StringWriter();
 		try (BufferedWriter bw = new BufferedWriter(expected)) {
-			bw.write("A=\\u00DF");
+			bw.write("A=ÃŸ");
 			bw.newLine();
-			bw.write("a1=\\u00FC");
+			bw.write("a1=Ã¼");
 			bw.newLine();
 			bw.write("b=b");
 			bw.newLine();
-			bw.write("c=\\u00E4");
+			bw.write("c=Ã¤");
 			bw.newLine();
 		}
-		assertEquals("Unexpected content.", expected.toString(), new String(actual.toByteArray(), "ISO-8859-1"));
+		assertEquals("Unexpected content.", expected.toString(),
+			new String(actual.toByteArray(), StandardCharsets.UTF_8));
 	}
 
-    /** 
-     * Return the suite of tests to execute.
-     */
+	/**
+	 * @see StreamUtilities#readStreamContents(BinaryContent)
+	 */
+	public void testReadBinaryContent() throws IOException {
+		byte[] result = StreamUtilities.readStreamContents(new BinaryContent() {
+			@Override
+			public InputStream getStream() throws IOException {
+				return new InputStream() {
+					private int _cnt = STREAM_TEST_SIZE;
+
+					@Override
+					public int read() throws IOException {
+						if (_cnt == 0) {
+							return -1;
+						}
+						return (_cnt--) & 0xFF;
+					}
+				};
+			}
+		});
+		assertStreamContents(result);
+	}
+
+	/**
+	 * @see StreamUtilities#readStreamContents(BinaryDataSource)
+	 */
+	public void testReadBinaryDataSource() throws IOException {
+		byte[] result = StreamUtilities.readStreamContents(new BinaryDataSource() {
+
+			@Override
+			public String getName() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public long getSize() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public String getContentType() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public void deliverTo(OutputStream out) throws IOException {
+				for (int n = STREAM_TEST_SIZE; n > 0; n--) {
+					out.write((byte) (n & 0xFF));
+				}
+			}
+		});
+		assertStreamContents(result);
+	}
+
+	/**
+	 * @see StreamUtilities#readStreamContents(BinaryData)
+	 */
+	public void testReadBinaryData() throws IOException {
+		byte[] content = new byte[STREAM_TEST_SIZE];
+		for (int n = STREAM_TEST_SIZE; n > 0; n--) {
+			content[STREAM_TEST_SIZE - n] = (byte) (n & 0xFF);
+		}
+		byte[] result = StreamUtilities.readStreamContents(BinaryDataFactory.createBinaryData(content));
+		assertStreamContents(result);
+	}
+
+	private void assertStreamContents(byte[] result) {
+		for (int n = STREAM_TEST_SIZE; n > 0; n--) {
+			assertEquals((byte) (n & 0xFF), result[STREAM_TEST_SIZE - n]);
+		}
+	}
+
+	/**
+	 * Return the suite of tests to execute.
+	 */
     public static Test suite () {
         return BasicTestSetup.createBasicTestSetup(new TestSuite(TestStreamUtilities.class));
     }

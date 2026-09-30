@@ -13,10 +13,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -103,7 +103,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
- * @author Dieter Rothb‰cher
+ * @author Dieter Rothb√§cher
  */
 public class FormComponent extends BuilderComponent implements FormHandler, FormFieldConstants,
 		TableFieldConfigurator {
@@ -416,20 +416,6 @@ public class FormComponent extends BuilderComponent implements FormHandler, Form
     }
 
 	@Override
-    public boolean receiveDialogEvent(Object aDialog, Object anOwner, boolean dialogOpened) {
-		if (!this.isVisible()) {
-			return false;
-		}
-		if (this.getDialogParent() == anOwner) {
-			// This component is the being opened as dialog. Do not mangle its
-			// immutable state.
-			return false;
-		}
-
-		return super.receiveDialogEvent(aDialog, anOwner, dialogOpened);
-	}
-
-	@Override
 	protected void afterModelSet(Object oldModel, Object newModel) {
 		super.afterModelSet(oldModel, newModel);
 		updateForm();
@@ -473,7 +459,7 @@ public class FormComponent extends BuilderComponent implements FormHandler, Form
 	@Override
     protected boolean receiveModelDeletedEvent(Set<TLObject> aModel, Object changedBy) {
 		boolean becameInvalid;
-		if (changedBy != this && hasFormContext() && aModel.contains(getModel())) {
+		if (changedBy != this && hasFormContext() && isModelTouchedByAny(aModel)) {
             try {
                 removeFormContext();
             } catch (Exception exp) {
@@ -674,8 +660,12 @@ public class FormComponent extends BuilderComponent implements FormHandler, Form
 	 *        the new context which will be returned by {@link #getFormContext()}.
 	 */
 	protected void setupFormContext(FormContext newFormContext) {
+		// Note: This should have been done by the builder, since building the form context
+		// may require access to the component. To allow this, the linking should be established
+		// right after constructing the form context.
 		FormComponent.initFormContext(this, this, newFormContext);
-    	newFormContext.setFieldsToDefaultValues();
+
+		newFormContext.setFieldsToDefaultValues();
 	}
     
     /**

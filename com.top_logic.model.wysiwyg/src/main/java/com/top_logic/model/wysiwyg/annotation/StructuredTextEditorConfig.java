@@ -24,7 +24,7 @@ import com.top_logic.model.annotate.TargetType;
  * @see #getFeatures()
  * @see com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService.Config
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 @TargetType(value = TLTypeKind.STRING, name = { "tl.model.wysiwyg:Html", "tl.model.i18n:I18NHtml" })
 @TagName(StructuredTextEditorConfig.EDITOR_CONFIGURATION)

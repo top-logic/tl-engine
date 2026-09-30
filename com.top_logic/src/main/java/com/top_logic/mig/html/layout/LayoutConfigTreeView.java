@@ -7,8 +7,10 @@ package com.top_logic.mig.html.layout;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import com.top_logic.basic.ArrayUtil;
+import com.top_logic.basic.col.FilterIterator;
 import com.top_logic.basic.col.TreeView;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
 
@@ -47,6 +49,15 @@ public class LayoutConfigTreeView implements TreeView<Config> {
 
 	@Override
 	public Iterator<? extends Config> getChildIterator(Config node) {
+		Iterator<? extends Config> result = configChildren(node);
+
+		// Note: In case of errors in the configuration, some children could not have been loaded.
+		// This should not completely crash the application, but would do so if returning null
+		// elements (that cannot be checked for being leafs above).
+		return new FilterIterator<>(result, Objects::nonNull);
+	}
+
+	private Iterator<? extends Config> configChildren(Config node) {
 		List<Config> dialogs = node.getDialogs();
 		if (node instanceof LayoutContainer.Config) {
 			List<? extends Config> children = ((LayoutContainer.Config) node).getChildConfigurations();

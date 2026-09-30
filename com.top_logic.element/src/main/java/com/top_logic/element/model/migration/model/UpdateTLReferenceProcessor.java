@@ -9,9 +9,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.TagName;
@@ -36,16 +34,14 @@ import com.top_logic.model.migration.data.TypePart;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<UpdateTLReferenceProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class UpdateTLReferenceProcessor extends TLModelBaseLineMigrationProcessor<UpdateTLReferenceProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link UpdateTLReferenceProcessor}.
 	 */
 	@TagName("update-reference")
-	public interface Config extends PolymorphicConfiguration<UpdateTLReferenceProcessor>,
-			UpdateTLAssociationEndProcessor.UpdateEndAspectConfig,
-			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<UpdateTLReferenceProcessor>,
+			UpdateTLAssociationEndProcessor.UpdateEndAspectConfig {
 
 		/**
 		 * Qualified name of the target type.
@@ -103,7 +99,7 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 	@Override
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Updating reference migration failed at " + getConfig().location(), ex);
@@ -155,36 +151,40 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 			}
 			_util.updateTLReference(connection,
 				reference, newType, newOwner,
-				newReferenceName, getConfig().isMandatory(),
+				newReferenceName, getConfig().isMandatory(), getConfig().isAbstract(),
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
-				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), newEnd);
-			if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
+				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(),
+				getConfig().getDeletionPolicy(), getConfig(), newEnd);
+			if (tlModel == null) {
 				updateModelBaseline = false;
 			} else {
 				MigrationUtils.updateReference(log, tlModel,
 					referenceName, getConfig().getNewName(), getConfig().getNewType(),
 					getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
-					getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(),
-					getConfig().getHistoryType(), getConfig(), getConfig().getNewEnd());
+					getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().isAbstract(),
+					getConfig().canNavigate(), getConfig().getHistoryType(), getConfig().getDeletionPolicy(),
+					getConfig(), getConfig().getNewEnd());
 				updateModelBaseline = true;
 			}
 			log.info("Updated reference " + _util.qualifiedName(referenceName));
 		} else {
 			_util.updateInverseReference(connection,
 				reference,
-				newReferenceName, getConfig().isMandatory(),
+				newReferenceName, getConfig().isMandatory(), getConfig().isAbstract(),
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
-				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), newEnd);
+				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(),
+				getConfig().getDeletionPolicy(), getConfig(), newEnd);
 			if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
 				updateModelBaseline = false;
 			} else {
 				MigrationUtils.updateInverseReference(log, tlModel,
 					referenceName, newReferenceName,
 					getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
-					getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(),
-					getConfig().getHistoryType(), getConfig(), getConfig().getNewEnd());
+					getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().isAbstract(),
+					getConfig().canNavigate(), getConfig().getHistoryType(), getConfig().getDeletionPolicy(),
+					getConfig(), getConfig().getNewEnd());
 				updateModelBaseline = true;
 			}
 			log.info("Updated inverse reference " + _util.qualifiedName(referenceName));

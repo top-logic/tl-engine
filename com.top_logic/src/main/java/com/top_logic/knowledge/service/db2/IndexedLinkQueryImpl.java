@@ -29,7 +29,6 @@ class IndexedLinkQueryImpl<K, T extends TLObject> extends FilteredAssociationQue
 			boolean liveResult) {
 		super(cacheKey, expectedType, associationTypeName, referenceAttribute, attributeQuery);
 
-		assert keyAttribute != null : "Key attribute must not be null.";
 		assert keyType != null : "Key type must not be null.";
 
 		_keyAttribute = keyAttribute;

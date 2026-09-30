@@ -6,6 +6,7 @@
 package test.com.top_logic.demo.layout.security;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 
 import junit.framework.Test;
@@ -16,9 +17,10 @@ import test.com.top_logic.layout.scripting.ApplicationTestSetup;
 import test.com.top_logic.layout.scripting.runtime.TestedApplicationSession;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.element.structured.wrap.StructuredElementWrapper;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -30,12 +32,11 @@ import com.top_logic.layout.scripting.runtime.action.SimpleActionOp;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.BoundChecker;
+import com.top_logic.tool.boundsec.BoundCheckerComponent;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundMainLayout;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
-import com.top_logic.tool.boundsec.compound.CompoundSecurityLayoutCommandGroupDistributor;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
@@ -93,24 +94,24 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 
 		session = application.login(PersonManager.getManager().getRoot(), layoutName());
 
-		KnowledgeBase kBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase kBase = PersistencyLayer.getKnowledgeBase();
 		BoundMainLayout m = (BoundMainLayout) ((TestedApplicationSession) session).getMasterFrame();
-		Transaction t = kBase.beginTransaction();
-		m.initBoundComponents(kBase);
+		Transaction t = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+		BoundMainLayout.initPersBoundComps(kBase, Collections.singletonList(m.getConfig()));
 		t.commit();
 
 		session.invalidate();
 
-		Transaction tx = kBase.beginTransaction();
+		Transaction tx = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		// Create a test roles on root
 		testRole = BoundedRole.createBoundedRole("testSec", kBase);
-		String authenticationDeviceID =
-			TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice().getDeviceID();
+		AuthenticationDevice authenticationDevice =
+			TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
 
 		// Create test users if necessary
 		test1Person = Person.byName(kBase, "testSec");
 		if (test1Person == null) {
-			test1Person = Person.create(kBase, "testSec", authenticationDeviceID);
+			test1Person = Person.create(kBase, "testSec", authenticationDevice);
 		}
 
 		if (null == SecurityComponentCache.getSecurityComponent(toComponentName("testPLD"))) {
@@ -142,7 +143,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 		session.invalidate();
 		session = null;
 		KnowledgeBase kb = testRole.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		testRole.tDelete();
 		TestPerson.deletePersonAndUser(test1Person);
 		tx.commit();
@@ -165,7 +166,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
     	@Override
 		public void performTest(ActionContext context) throws Exception {
 			// Get the Layouts
-			KnowledgeBase kBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+			KnowledgeBase kBase = PersistencyLayer.getKnowledgeBase();
 
 	        BoundMainLayout theMain = (BoundMainLayout) context.getMainLayout();
 	        
@@ -177,7 +178,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 			CompoundSecurityLayout thePL3 =
 				(CompoundSecurityLayout) theMain.getComponentByName(toComponentName("testPL3"));
 	
-			Transaction tx1 = kBase.beginTransaction();
+			Transaction tx1 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	        // Set the role profiles so that testRole has
 	        //  - read access for: nothing
 	        //  - write acces for: nothing
@@ -205,7 +206,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 	        assertFalse(theHelper.allowView(dummy3, theMain));
 	        
 	        // 5. View: role without profile -> no view
-			Transaction tx2 = kBase.beginTransaction();
+			Transaction tx2 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	        BoundedRole.assignRole(dummy1, test1Person, testRole);
 	        BoundedRole.assignRole(dummy2, test1Person, testRole);
 	        BoundedRole.assignRole(dummy3, test1Person, testRole);
@@ -214,7 +215,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 	        assertFalse(theHelper.allowView(dummy2, theMain));
 	        assertFalse(theHelper.allowView(dummy3, theMain));
 	        
-			Transaction tx3 = kBase.beginTransaction();
+			Transaction tx3 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	        // 6. View: role with READ -> view
 	        setAccess(testRole,  thePL1, SimpleBoundCommandGroup.READ,  true);          
 			tx3.commit();
@@ -222,14 +223,14 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 	        assertFalse(theHelper.allowView(dummy2, theMain));
 	        assertFalse(theHelper.allowView(dummy3, theMain));
 	        
-			Transaction tx4 = kBase.beginTransaction();
+			Transaction tx4 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	        setAccess(testRole,  thePL2, SimpleBoundCommandGroup.READ,  true);
 			tx4.commit();
 	        assertTrue(theHelper.allowView(dummy1, theMain));
 	        assertFalse(theHelper.allowView(dummy2, theMain));
 	        assertTrue(theHelper.allowView(dummy3, theMain));
 	
-			Transaction tx5 = kBase.beginTransaction();
+			Transaction tx5 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	        setAccess(testRole,  thePL1, SimpleBoundCommandGroup.READ,  false);          
 	        setAccess(testRole,  thePL2, SimpleBoundCommandGroup.READ,  false);          
 	        setAccess(testRole,  thePL3, SimpleBoundCommandGroup.READ,  true);
@@ -260,7 +261,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 	//        assertFalse(theHelper.allowView(dummy2, theMain));
 	//        assertTrue(theHelper.allowView(dummy3, theMain));
 	        
-			Transaction tx6 = kBase.beginTransaction();
+			Transaction tx6 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	        // 8. View: role with both -> view
 	        setAccess(testRole,  thePL3, SimpleBoundCommandGroup.READ,  true);
 	        setAccess(testRole,  thePL3, SimpleBoundCommandGroup.WRITE, true);
@@ -279,9 +280,9 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 	public static class StructureTestAction implements SimpleActionOp {
 		@Override
 		public void performTest(ActionContext context) throws Exception {
-			KnowledgeBase kBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+			KnowledgeBase kBase = PersistencyLayer.getKnowledgeBase();
 
-			Transaction tx1 = kBase.beginTransaction();
+			Transaction tx1 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			StructuredElementWrapper theProject = DummyType1.newDummyType1("Project");
 			BoundedRole.assignRole(theProject, test1Person, testRole);
 			tx1.commit();
@@ -317,7 +318,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 			theRoles = thePL3.getRolesForCommandGroup(SimpleBoundCommandGroup.READ);
 			assertTrue(theRoles.isEmpty());
 
-			Transaction tx2 = kBase.beginTransaction();
+			Transaction tx2 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			// Setup role profiles
 			setAccess(testRole, thePLD, SimpleBoundCommandGroup.READ, true);
 			setAccess(testRole, thePL1, SimpleBoundCommandGroup.READ, true);
@@ -343,11 +344,11 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 			if (false) {
 				/* Does not work because checker is DelegateStructureHTMLTree which does not
 				 * invalidates cache. */
-				assertTrue(thePLD.allow(theProject));
+				assertTrue(BoundChecker.allowShowSecurityObject(thePLD, theProject));
 			}
-			assertTrue(thePL1.allow(theProject));
-			assertFalse(thePL2.allow(theProject));
-			assertFalse(thePL3.allow(theProject));
+			assertTrue(BoundChecker.allowShowSecurityObject(thePL1, theProject));
+			assertFalse(BoundChecker.allowShowSecurityObject(thePL2, theProject));
+			assertFalse(BoundChecker.allowShowSecurityObject(thePL3, theProject));
 
 			// test handles and defaultFor
 
@@ -374,8 +375,6 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
             return;
         }
         setAccess(aRole, aChecker, aGroup, isAllowed, true);
-        aChecker.acceptVisitorRecursively(new CompoundSecurityLayoutCommandGroupDistributor());
-
     }
 
     /**
@@ -389,16 +388,8 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
      * @param recursive     ir true add/remove the access to/from all child checkers of aChecker
      */
     private static void setAccess(BoundedRole aRole, BoundChecker aChecker, BoundCommandGroup aCmdGrp,  boolean isAllowed, boolean recursive) {
-        if (aChecker instanceof BoundComponent ) {
-			PersBoundComp persBoundComp = ((BoundComponent) aChecker).getPersBoundComp();
-            if (isAllowed) {
-				persBoundComp.addAccess(aCmdGrp, aRole);
-            }
-            else {
-				persBoundComp.removeAccess(aCmdGrp, aRole);
-            }
-        } else if (aChecker instanceof CompoundSecurityLayout ) {
-			PersBoundComp persBoundComp = ((CompoundSecurityLayout) aChecker).getPersBoundComp();
+		if (aChecker instanceof BoundCheckerComponent checker) {
+			PersBoundComp persBoundComp = checker.getPersBoundComp();
             if (isAllowed) {
 				persBoundComp.addAccess(aCmdGrp, aRole);
             }

@@ -51,8 +51,8 @@
 		<param name="openCreateLabel"
 			value="element.structure.edit.layout.openAsDialog"
 		/>
-		<param name="securityProvider"
-			value="default"
+		<param name="securityObject"
+			value="model"
 		/>
 		<param name="modifier"
 			value=""
@@ -66,19 +66,16 @@
 		<param name="exportDialogs">
 			<!-- Empty by default. -->
 		</param>
-		<param name="buttonbarName"
-			value="${namePrefixComposed}structureEditButtons"
+		<param name="buttonbar"
+			value="false"
 		/>
-		<param name="buttonbar">
-			<buttonbar name="${buttonbarName}"/>
-		</param>
 	</params>
 
 	<layout>
 		<components>
 			<!-- component to edit structured elements -->
 			<component class="com.top_logic.element.layout.structured.AdminElementComponent"
-				buttonComponent="${buttonbarName}"
+				buttonbar="${buttonbar}"
 				commandGroups="${editCommandGroups}"
 				defaultFor="${defaultFor}"
 				editRoot="${editRoot}"
@@ -87,7 +84,7 @@
 				name="${namePrefixComposed}Edit"
 				page="${page}"
 				resPrefix="element.structure.edit."
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 				showNoModel="${showNoModel}"
 				structure="${structure}"
 				titleKey="layouts.element.editStructureDetail.editTitle.${structure}"
@@ -100,7 +97,7 @@
 						forms="${createForms}"
 						namePrefix="${namePrefixComposed}"
 						newModelAction="set-parent-model"
-						securityProvider="${securityProvider}"
+						securityObject="${securityObject}"
 						setParentToEdit="true"
 					>
 						<inject>
@@ -136,7 +133,6 @@
 				</dialogs>
 				${subConfiguration}
 			</component>
-			${buttonbar}
 		</components>
 	</layout>
 </template>

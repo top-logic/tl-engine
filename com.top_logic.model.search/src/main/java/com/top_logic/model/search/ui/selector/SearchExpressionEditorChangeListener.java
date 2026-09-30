@@ -22,7 +22,7 @@ import com.top_logic.model.search.ui.SearchExpressionEditor;
  * {@link SearchExpressionEditorChangeListener} actualize the selected search expression if the
  * SearchExpressionEditor to create a model based search expression is changed.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 final class SearchExpressionEditorChangeListener implements TabBarListener {
 

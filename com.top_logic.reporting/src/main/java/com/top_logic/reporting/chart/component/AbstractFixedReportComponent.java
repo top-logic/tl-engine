@@ -190,7 +190,6 @@ public abstract class AbstractFixedReportComponent extends JFreeChartComponent i
 		public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> someArguments) {
 			HandlerResult result = new HandlerResult();
 			
-			aComponent.invalidateButtons();
 			aComponent.invalidate();
 			
 			return result;

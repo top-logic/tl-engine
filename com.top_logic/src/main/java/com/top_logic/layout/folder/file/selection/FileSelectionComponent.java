@@ -6,14 +6,12 @@
 package com.top_logic.layout.folder.file.selection;
 
 import java.io.File;
-import java.util.Set;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.folder.FolderDefinition;
 import com.top_logic.common.folder.impl.FileFolderDefinition;
 import com.top_logic.common.folder.model.FolderNode;
@@ -25,6 +23,7 @@ import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.SingleSelectionModel;
 import com.top_logic.layout.component.Selectable;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.folder.CurrentSelectionStorage;
 import com.top_logic.layout.folder.FolderControl;
@@ -125,7 +124,7 @@ public class FileSelectionComponent extends FolderComponent implements Selectabl
 
 	private FolderControl createFolderControl(FormContext context) {
 		FolderData folderData = getFolderData();
-		return WebFolderUIFactory.createControl(getBreadcrumbRenderer(), folderData, context, null);
+		return WebFolderUIFactory.getInstance().createControl(getBreadcrumbRenderer(), folderData, context, null);
 	}
 
 	private void initializeControl(FolderControl folderControl) {
@@ -166,7 +165,7 @@ public class FileSelectionComponent extends FolderComponent implements Selectabl
 		tableData.getSelectionModel().addSelectionListener(new SelectionListener() {
 
 			@Override
-			public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
+			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 				applySelectionFromTableToChannel(tableData);
 			}
 		});
@@ -273,18 +272,6 @@ public class FileSelectionComponent extends FolderComponent implements Selectabl
 				+ " does not support updating, deleting or adding a file to the clipboard.");
 		}
 		return new FileSelectionTableConfigBuilder().build();
-	}
-
-	@Override
-	public ResKey hideReason(Object potentialModel) {
-		/* This method is overridden and duplicates the code from the BoundComponent to prevent a
-		 * "State modification during rendering" error to be logged: The allow() implementation in
-		 * the superclass calls "getModel()" before doing anything else. That causes the model to be
-		 * initialized, which sends events. But this is not allowed, as allow() is called during
-		 * rendering. To prevent that error, this method is overridden and does not use
-		 * "getModel()", as the model is not relevant for the security of this component anyway. The
-		 * implementation from the BoundComponent works and is therefore used. */
-		return securityReason(potentialModel);
 	}
 
 	@Override

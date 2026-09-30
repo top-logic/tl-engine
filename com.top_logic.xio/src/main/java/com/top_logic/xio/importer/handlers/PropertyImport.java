@@ -65,14 +65,15 @@ public class PropertyImport<C extends PropertyImport.Config<?>> extends StoreHan
 
 	@Override
 	public Object importXml(ImportContext context, XMLStreamReader in) throws XMLStreamException {
+		String rawValue = in.getAttributeValue(null, getConfig().getXmlAttribute());
 		try {
-			String rawValue = in.getAttributeValue(null, getConfig().getXmlAttribute());
 			if (rawValue != null) {
 				storeProperty(context, format(rawValue));
 			}
 		} catch (ConfigurationException ex) {
 			context.error(in.getLocation(),
-				I18NConstants.ERROR_PROPERTY_FORMAT__HANDLER_MESSAGE.fill(location(), ex.getErrorKey()));
+				I18NConstants.ERROR_PROPERTY_FORMAT__HANDLER_VALUE_MESSAGE.fill(location(), rawValue,
+					ex.getErrorKey()));
 		}
 		return null;
 	}

@@ -5,16 +5,16 @@
  */
 package com.top_logic.layout.basic.contextmenu.config;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.provider.LabelProviderService.ContextMenuConfig;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -27,6 +27,7 @@ import com.top_logic.tool.boundsec.CommandHandler;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Commands for types")
 public class ConfiguredContextMenuCommandsProvider<C extends ConfiguredContextMenuCommandsProvider.Config<?>>
 		extends AbstractConfiguredInstance<C> implements ContextMenuCommandsProvider {
 
@@ -54,7 +55,7 @@ public class ConfiguredContextMenuCommandsProvider<C extends ConfiguredContextMe
 		List<ContextMenuConfig> getEntries();
 	
 		/**
-		 * Whether to ignore globally configured commands.
+		 * Whether to ignore globally configured commands from the application configuration.
 		 * 
 		 * @see LabelProviderService#getContextCommands(Object)
 		 */
@@ -72,9 +73,9 @@ public class ConfiguredContextMenuCommandsProvider<C extends ConfiguredContextMe
 	public ConfiguredContextMenuCommandsProvider(InstantiationContext context, C config) {
 		super(context, config);
 
-		NoContextMenuCommands contextMenuCommands = TypedConfigUtil.createInstance(NoContextMenuCommands.Config.class);
-		_globalCommands = config.getOverride() ? contextMenuCommands : LabelProviderService.getInstance();
-		_customCommands = config.getEntries().isEmpty() ? contextMenuCommands
+		NoContextMenuCommands noCommands = NoContextMenuCommands.INSTANCE;
+		_globalCommands = config.getOverride() ? noCommands : LabelProviderService.getInstance();
+		_customCommands = config.getEntries().isEmpty() ? noCommands
 			: new LabelProviderService.ContextCommandRegistry(context, config.getEntries());
 	}
 
@@ -87,20 +88,7 @@ public class ConfiguredContextMenuCommandsProvider<C extends ConfiguredContextMe
 	public List<CommandHandler> getContextCommands(Object obj) {
 		List<CommandHandler> generalCommands = _globalCommands.getContextCommands(obj);
 		List<CommandHandler> customCommands = _customCommands.getContextCommands(obj);
-		return join(generalCommands, customCommands);
-	}
-
-	private static <T> List<T> join(List<T> generalCommands, List<T> customCommands) {
-		if (generalCommands.isEmpty()) {
-			return customCommands;
-		}
-		if (customCommands.isEmpty()) {
-			return generalCommands;
-		}
-		List<T> result = new ArrayList<>(generalCommands.size() + customCommands.size());
-		result.addAll(generalCommands);
-		result.addAll(customCommands);
-		return result;
+		return CollectionUtil.concat(generalCommands, customCommands);
 	}
 
 }

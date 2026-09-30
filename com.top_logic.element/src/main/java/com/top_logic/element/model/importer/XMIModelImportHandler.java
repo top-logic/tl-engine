@@ -132,7 +132,7 @@ public class XMIModelImportHandler extends AbstractCommandHandler {
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
 			Map<String, Object> someArguments) {
 		return new CreateConfigurationDialog<>(ModelUpload.class, DefaultDialogModel.dialogModel(I18NConstants.UPLOAD_MODEL_Definition,
-			DisplayDimension.px(400), DisplayDimension.px(200)),
+			DisplayDimension.px(400), DisplayDimension.px(300)),
 			this::processModelData).open(aContext);
 	}
 
@@ -274,7 +274,8 @@ public class XMIModelImportHandler extends AbstractCommandHandler {
 				public HandlerResult executeCommand(DisplayContext context) {
 					Logger.info("Applying model patch: " + patch, XMIModelImportHandler.class);
 
-					try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+					try (Transaction tx = PersistencyLayer.getKnowledgeBase()
+						.beginTransaction(I18NConstants.IMPORTED_MODEL_PATCH__NAME.fill(modelDefinition.getName()))) {
 						ApplyModelPatch.applyPatch(log, targetModel, service.getFactory(), patch);
 
 						tx.commit();

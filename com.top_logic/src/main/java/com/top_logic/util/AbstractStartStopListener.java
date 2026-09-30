@@ -12,9 +12,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 import com.top_logic.base.administration.LoggerAdminBean;
 import com.top_logic.base.administration.MaintenanceWindowManager;
@@ -51,6 +51,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.migration.MigrationService;
 import com.top_logic.mig.html.ContainerDetector;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.license.InvalidLicenceException;
@@ -318,7 +319,7 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 
         KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
         Transaction tx = kb.beginTransaction(
-        	Messages.APPLICATION_STARTUP__NAME_VERSION.fill(theVersion.getName(), theVersion.getVersionString()));
+			I18NConstants.APPLICATION_STARTUP__NAME_VERSION.fill(theVersion.getName(), theVersion.getVersionString()));
         {
         	this.initSubClassHook(aContext);
 
@@ -514,7 +515,6 @@ public abstract class AbstractStartStopListener implements ServletContextListene
         // help the RMI Process(es) to calm down
         // From jdk141/docs/guide/rmi/faq.html#noexit
         System.gc();
-        System.runFinalization();
 
 //        // release default connection a clean way.
 //        this.closeStmCache();
@@ -608,9 +608,13 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 		
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		Transaction tx = kb.beginTransaction(
-			Messages.APPLICATION_STARTUP__NAME_VERSION.fill(theVersion.getName(), theVersion.getVersionString()));
+			I18NConstants.APPLICATION_STARTUP__NAME_VERSION.fill(theVersion.getName(), theVersion.getVersionString()));
 		{
 			ModuleUtil.INSTANCE.startConfiguredModules();
+
+			if (MigrationService.Module.INSTANCE.isActive()) {
+				MigrationService.Module.INSTANCE.getImplementationInstance().applicationStarted();
+			}
 		}
 		commitStartupChanges(tx, theVersion);
 	}

@@ -43,7 +43,7 @@ import com.top_logic.tool.boundsec.conditional.Hide;
 /**
  * Button to create a new {@link Wrapper} in the {@link GridComponent}.
  *
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class GridCreateHandler extends AbstractGridCreateHandler {
 
@@ -158,8 +158,8 @@ public class GridCreateHandler extends AbstractGridCreateHandler {
 			Object selection = ((Selectable) component).getSelected();
 			if (selection == null) {
 				return new Failure(I18NConstants.NO_SELECTION);
-			} else if (selection instanceof Wrapper) {
-				TLStructuredType selectionType = ((Wrapper) selection).tType();
+			} else if (selection instanceof TLObject) {
+				TLStructuredType selectionType = ((TLObject) selection).tType();
 				if (!parentTypes.contains(TLModelUtil.qualifiedName(selectionType))) {
 					return new Failure(I18NConstants.WRONG_SELECTION);
 				}

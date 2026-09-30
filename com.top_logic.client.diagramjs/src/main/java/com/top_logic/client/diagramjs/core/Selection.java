@@ -16,7 +16,7 @@ import com.top_logic.client.diagramjs.util.JavaScriptObjectUtil;
 /**
  * Selecter for graph part components of {@link Diagram}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class Selection extends JavaScriptObject {
 

@@ -41,6 +41,6 @@ public class GridDropTargetByExpression extends TableDropTargetByExpression {
 			return null;
 		}
 
-		return ((GridComponent) _contextComponent).getBusinessObjectFromInternalRow(internalRowObject);
+		return ((GridComponent) getContextComponent()).getBusinessObjectFromInternalRow(internalRowObject);
 	}
 }

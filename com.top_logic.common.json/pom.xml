@@ -5,10 +5,11 @@
 		<relativePath>../tl-parent-build</relativePath>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-build</artifactId>
-		<version>7.9.0-SNAPSHOT</version>
+		<version>8.0.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>tl-common-json</artifactId>
+	<name>${project.artifactId}</name>
 	<description>Port of the gstream JSON library to GWT.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
@@ -25,7 +26,6 @@
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-basic-shared</artifactId>
-			<version>7.9.0-SNAPSHOT</version>
 			<classifier>sources</classifier>
 			<scope>provided</scope>
 		</dependency>

@@ -8,7 +8,7 @@ package com.top_logic.mail.base;
 import java.util.Collection;
 import java.util.Date;
 
-import javax.mail.Address;
+import jakarta.mail.Address;
 
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
@@ -19,7 +19,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * A representation of a mail.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface Mail extends Wrapper {
 
@@ -53,7 +53,7 @@ public interface Mail extends Wrapper {
     public static final String ATTR_SENT_DATE = "sentDate";
 
     /** Flag, if mail has attachments. */
-    public static final String HAS_ATTACHEMENT = "attachements";
+	public static final String HAS_ATTACHMENT = "attachments";
 
     /** 
      * Return the unique ID of this mail.
@@ -100,10 +100,10 @@ public interface Mail extends Wrapper {
     public abstract String getMessage();
 
     /** <code>true</code> when mail has attachments. */
-    public abstract boolean hasAttachements();
+    public abstract boolean hasAttachments();
 
     /** The attachments of this mail. */
-    public abstract Collection<Document> getAttachements();
+    public abstract Collection<Document> getAttachments();
 
 	/** Set the given addresses in this mail. */
 	public void setAddress(String aKey, Address[] someAddresses);

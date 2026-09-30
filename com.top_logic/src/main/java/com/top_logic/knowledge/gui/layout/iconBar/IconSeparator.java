@@ -8,10 +8,10 @@ package com.top_logic.knowledge.gui.layout.iconBar;
 import java.io.IOException;
 import java.io.Writer;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.ThemeFactory;
@@ -40,7 +40,7 @@ public class IconSeparator extends Adorner {
 			ServletException {
 		Writer theWriter = anOut.contentWriter();
 		theWriter.write("<td class=\"cmdButtonCell\" valign=\"top\">");
-		theWriter.write("<img class=\"cmdImg\" src=\"");
+		theWriter.write("<img class=\"tl-cmd-button__img\" src=\"");
 		theWriter.write(aRequest.getContextPath());
 		theWriter.write(ThemeFactory.getTheme().getFileLink(SEPARATOR_IMAGE));
 		theWriter.write("\" />");

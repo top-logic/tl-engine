@@ -6,6 +6,7 @@
 package com.top_logic.knowledge.service.db2;
 
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
@@ -37,12 +38,21 @@ public class KnowledgeAssociationImpl extends KnowledgeItemImpl {
 	 * @see KnowledgeAssociation#getSourceIdentity()
 	 */
 	public static ObjectKey getSourceIdentity(KnowledgeAssociationInternal self) {
-		MOReference sourceAttribute = getAttribute(self, DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
-		ObjectKey sourceId = self.getReferencedKey(sourceAttribute);
+		ObjectKey sourceId = getSourceIdentityOrNull(self);
 		if (sourceId == null) {
 			throw new IllegalStateException("No source in " + self);
 		}
 		return sourceId;
+	}
+
+	/**
+	 * Like {@link #getSourceIdentity(KnowledgeAssociationInternal)} but it doesn't fail and returns
+	 * <code>null</code>.
+	 */
+	@FrameworkInternal
+	public static ObjectKey getSourceIdentityOrNull(KnowledgeAssociationInternal self) {
+		MOReference sourceAttribute = getAttribute(self, DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+		return self.getReferencedKey(sourceAttribute);
 	}
 
 	private static MOReference getAttribute(KnowledgeAssociationInternal self, String attributeName) {
@@ -72,12 +82,21 @@ public class KnowledgeAssociationImpl extends KnowledgeItemImpl {
 	 * @see KnowledgeAssociation#getDestinationIdentity()
 	 */
 	public static ObjectKey getDestinationIdentity(KnowledgeAssociationInternal self) {
-		MOReference destAttribute = getAttribute(self, DBKnowledgeAssociation.REFERENCE_DEST_NAME);
-		ObjectKey destId = self.getReferencedKey(destAttribute);
+		ObjectKey destId = getDestinationIdentityOrNull(self);
 		if (destId == null) {
 			throw new IllegalStateException("No destination in " + self);
 		}
 		return destId;
+	}
+
+	/**
+	 * Like {@link #getDestinationIdentity(KnowledgeAssociationInternal)} but it doesn't fail and
+	 * returns <code>null</code>.
+	 */
+	@FrameworkInternal
+	public static ObjectKey getDestinationIdentityOrNull(KnowledgeAssociationInternal self) {
+		MOReference destAttribute = getAttribute(self, DBKnowledgeAssociation.REFERENCE_DEST_NAME);
+		return self.getReferencedKey(destAttribute);
 	}
 
 	private static void checkResult(KnowledgeAssociationInternal self, ObjectKey identity,

@@ -6,6 +6,7 @@
 package com.top_logic.layout.form.boxes.reactive_tag;
 
 import java.io.IOException;
+import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
@@ -19,11 +20,14 @@ import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.boxes.tag.JSPLayoutedControls;
 import com.top_logic.layout.form.control.CheckboxControl;
 import com.top_logic.layout.form.control.ErrorControl;
 import com.top_logic.layout.form.control.IconSelectControl;
+import com.top_logic.layout.form.control.ImageUploadControl;
 import com.top_logic.layout.form.control.LabelControl;
 import com.top_logic.layout.form.control.TextInputControl;
+import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.form.model.VisibilityModel.AlwaysVisible;
 import com.top_logic.layout.form.template.ControlProvider;
@@ -32,7 +36,6 @@ import com.top_logic.layout.form.template.FormTemplateConstants;
 import com.top_logic.mig.html.layout.VisibilityListener;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.ReactiveFormCSS;
-import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * Control to write a tag creating a description/content cell. Its visibility is controlled by a
@@ -59,7 +62,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 		}
 	
 		Control inputControl = cp.createControl(member, inputStyle);
-		LabelPosition labelPosition = controlLabelFirst(inputControl);
+		LabelPosition labelPosition = labelPositonForInput(inputControl);
 		boolean wholeLine = controlWholeLine(inputControl);
 	
 		LabelControl labelControl = (LabelControl) labelControl(member, colon, labelPosition);
@@ -90,7 +93,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 		switch (labelPosition) {
 			case AFTER_VALUE:
 				return cp.createControl(member, FormTemplateConstants.STYLE_LABEL_VALUE);
-			case DEFAULT:
+			case DEFAULT, ABOVE, ABOVE_INPUT, INLINE:
 				return cp.createControl(member,
 					colon ? FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
 						: FormTemplateConstants.STYLE_LABEL_VALUE);
@@ -128,20 +131,22 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 
 	private HTMLFragment _description;
 
-	private LabelPlacement _labelPlacement = LabelPlacement.DEFAULT;
+	private FormMember _member;
 
 	/**
 	 * Creates a {@link DescriptionCellControl}.
 	 * 
-	 * @param visibility
+	 * @param member
 	 *        The {@link VisibilityModel} to use. If <code>null</code> it will use an
 	 *        {@link AlwaysVisible}.
 	 * @param model
 	 *        The content to display.
 	 */
-	public DescriptionCellControl(VisibilityModel visibility, HTMLFragment model) {
-		if (visibility != null) {
-			setVisibilityModel(visibility);
+	public DescriptionCellControl(FormMember member, HTMLFragment model) {
+		_member = member;
+
+		if (member != null) {
+			setVisibilityModel(member);
 		} else {
 			setVisibilityModel(AlwaysVisible.INSTANCE);
 		}
@@ -189,21 +194,28 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	@TemplateVariable("labelFirst")
 	public boolean isLabelFirst() {
-		return _labelPosition == LabelPosition.DEFAULT;
+		return _labelPosition != LabelPosition.AFTER_VALUE;
 	}
 
 	/**
 	 * @see #isLabelFirst()
 	 */
 	public void setLabelPosition(LabelPosition labelPosition) {
-		_labelPosition = labelPosition;
-	}
-
-	/**
-	 * Sets the definition where the the label has to be rendered.
-	 */
-	public void setLabelPlacement(LabelPlacement labelPlacement) {
-		_labelPlacement = labelPlacement;
+		Control ctrl = null;
+		if (_model instanceof JSPLayoutedControls) {
+			List<HTMLFragment> controls = ((JSPLayoutedControls) _model).getControls();
+			if (controls.size() == 1)
+				ctrl = (Control) controls.get(0);
+		} else if (_member instanceof DataField) {
+			ControlProvider cp = _member.getControlProvider();
+			if (cp != null)
+				ctrl = cp.createControl(_member);
+		}
+		if (ctrl instanceof ImageUploadControl && ((ImageUploadControl) ctrl).isDefaultLabelAbove()) {
+			_labelPosition = LabelPosition.ABOVE;
+		} else {
+			_labelPosition = labelPosition;
+		}
 	}
 
 	/**
@@ -212,7 +224,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	@TemplateVariable("keepInline")
 	public boolean getKeepInline() {
-		return _labelPlacement == LabelPlacement.INLINE;
+		return _labelPosition == LabelPosition.INLINE;
 	}
 
 	/**
@@ -221,7 +233,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	@TemplateVariable("cellClasses")
 	public String getCellClasses() {
 		String css = ReactiveFormCSS.RF_INPUT_CELL;
-		String labelCSS = _labelPlacement.cssClass();
+		String labelCSS = _labelPosition.cssClass(isEditMode());
 		if (labelCSS != null) {
 			css = css + " " + labelCSS;
 		}
@@ -229,6 +241,10 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 			css = css + " " + _cellClass;
 		}
 		return css;
+	}
+
+	private boolean isEditMode() {
+		return _member != null && !_member.isImmutable();
 	}
 
 	/**
@@ -329,12 +345,12 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 * @return If the HTMLFragment is not a {@link CheckboxControl} and not a
 	 *         {@link IconSelectControl}.
 	 */
-	protected static LabelPosition controlLabelFirst(HTMLFragment control) {
+	protected static LabelPosition labelPositonForInput(HTMLFragment control) {
 		if (control instanceof CheckboxControl) {
 			return LabelPosition.AFTER_VALUE;
 		}
 		if (control instanceof IconSelectControl) {
-			return LabelPosition.AFTER_VALUE;
+			return LabelPosition.INLINE;
 		}
 		return LabelPosition.DEFAULT;
 	}

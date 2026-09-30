@@ -28,8 +28,8 @@
 		<param name="createCommandGroups"
 			optional="true"
 		/>
-		<param name="securityProvider"
-			value="default"
+		<param name="securityObject"
+			value="model"
 		/>
 		<param name="newResPrefix"
 			value="element.structure.edit."
@@ -45,16 +45,16 @@
 		<components>
 			<!-- component to edit structured elements -->
 			<component class="${detailComponent}"
-				buttonComponent="${namePrefixInternal}Buttons"
+				buttonbar="true"
 				commandGroups="${createCommandGroups}"
+				isSecurityMaster="true"
 				model="${model}"
 				name="${detailComponentName}"
 				newModelAction="${newModelAction}"
 				page="${jSPNewPage}"
 				resPrefix="${newResPrefix}"
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 			>${createComponentConfig}</component>
-			<buttonbar name="${namePrefixInternal}Buttons"/>
 		</components>
 	</layout>
 </template>

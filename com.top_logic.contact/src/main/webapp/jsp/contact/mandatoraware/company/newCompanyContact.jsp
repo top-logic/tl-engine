@@ -14,7 +14,6 @@ autoFlush="true"
 %><%@taglib uri="meta"     prefix="meta"
 %><layout:html>
 	<layout:head>
-		
 		<basic:cssLink/>
 	</layout:head>
 	<layout:body>

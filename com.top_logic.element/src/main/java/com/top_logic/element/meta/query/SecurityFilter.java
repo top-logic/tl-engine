@@ -26,7 +26,7 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 /**
  * Check security based on one {@link BoundChecker}.
  * 
- * @author <a href="mailto:mga@top-logic.com>Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
  */
 public class SecurityFilter<C extends BoundObject> extends BasicCollectionFilter<C> {
 
@@ -120,7 +120,7 @@ public class SecurityFilter<C extends BoundObject> extends BasicCollectionFilter
 			BoundCommandGroup theCommand = this.getCommandGroup();
 
 			for (C theElement : aCollection) {
-				if (this.getChecker(theElement, theCommand).allow(theCommand, theElement)) {
+				if (BoundChecker.allowCommandOnSecurityObject(this.getChecker(theElement, theCommand), theCommand, theElement)) {
 					theResult.add(theElement);
 				}
 			}

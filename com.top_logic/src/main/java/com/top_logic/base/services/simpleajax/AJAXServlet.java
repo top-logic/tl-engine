@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -107,6 +107,23 @@ public class AJAXServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * This endpoint answers {@code XMLHttpRequest}s, for whose caller the check's redirect to an
+	 * HTML page is of no use. Skipping it also keeps two requests that arrive while the session is
+	 * ending from racing for the check's one-shot marker - a race whose loser is told that cookies
+	 * cannot be set, however well the browser handles them.
+	 *
+	 * @implNote A request without a session ends in
+	 *           {@link #handleNoSession(jakarta.servlet.http.HttpServletRequest, jakarta.servlet.http.HttpServletResponse)},
+	 *           which is not overridden here: the client has no handling for a dedicated answer, so
+	 *           it reports a generic error either way. It did so before as well, only after an
+	 *           additional redirect round-trip and on a response it first tried to parse.
+	 */
+	@Override
+	protected boolean isCookieCheckRequired() {
+		return false;
+	}
+
+	/**
 	 * Response header that marks an AJAX response.
 	 * 
 	 * <p>
@@ -148,7 +165,7 @@ public class AJAXServlet extends TopLogicServlet {
      * Creates a new {@link AJAXServlet} that has a {@link #LOG_COMMAND}
      * registered for accepting client-side log messages.
      * 
-     * @see javax.servlet.GenericServlet#init(javax.servlet.ServletConfig)
+     * @see jakarta.servlet.GenericServlet#init(jakarta.servlet.ServletConfig)
      */
     @Override
 	public void init(ServletConfig aConfig) throws ServletException {
@@ -178,7 +195,7 @@ public class AJAXServlet extends TopLogicServlet {
      * session or the current session is timed out.
      */
     @Override
-	protected void forwardPage(String aPage, HttpServletRequest aRequest, HttpServletResponse aResponse) throws IOException, ServletException {
+	protected void forwardToPage(String aPage, HttpServletRequest aRequest, HttpServletResponse aResponse) throws IOException, ServletException {
 		// Send a reload action. This triggers the default action behavior of
 		// forwarding the user to the login page, if the session has timed out.
 		String redirectMessage =
@@ -287,6 +304,17 @@ public class AJAXServlet extends TopLogicServlet {
 			}
 			try {
 				MainLayout mainLayout = rootHandler.getMainLayout();
+				if (mainLayout == null) {
+					/* The subsession is registered but its component tree does not (yet) exist. This
+					 * may occur if the browser window unloads (sending e.g. a 'notifyUnload' request)
+					 * before the login has finished rendering the main layout. Answer with an empty
+					 * response to keep the client's request sequence intact. */
+					TagWriter out = MainLayout.getTagWriter(request, response);
+					UpdateWriter writer = new UpdateWriter(displayContext, out, encoding, rxSequence);
+					writer.endResponse();
+					out.flushBuffer();
+					return;
+				}
 				String sourceReference = getSourceComponentReference(ajaxRequest, mainLayout);
 				if (Utils.equals(sourceReference, SOURCE_COMPONENT_NOT_VISIBLE)) {
 					/* This may occur if loading a component automatically triggers an AJAX-request,
@@ -350,7 +378,8 @@ public class AJAXServlet extends TopLogicServlet {
 									"', arguments: '" + logArguments(command) +
 									"', source: '" + command.getContextComponentID() +
 									"', target: '" + command.getTargetComponentID() +
-									"', session: " + sessionId + ',' + userAgent + ')', AJAXServlet.class);
+									"', " + userAgent + ')',
+									AJAXServlet.class);
 
 								continue;
 							}
@@ -368,8 +397,8 @@ public class AJAXServlet extends TopLogicServlet {
 				unlock(lock, key, ajaxRequest, rxSequence, rootHandler, sessionId, userAgent);
 			}
 		} catch (FatalXMLError ex) {
-			Logger.error("IOException or TagException during evaluating result actions. (session: " + sessionId
-				+ ',' + userAgent + ')', ex, AJAXServlet.class);
+			Logger.error("IOException or TagException during evaluating result actions. (" + userAgent + ')',
+				ex, AJAXServlet.class);
 			throw (IOException) new IOException().initCause(ex);
         } catch (Throwable ex) {
             // FactoryConfigurationError
@@ -381,8 +410,7 @@ public class AJAXServlet extends TopLogicServlet {
                 ajaxRequest = null;
             }
             else {
-				Logger.error("Error while parsing AJAX command. (session: " + sessionId + ',' + userAgent + ')', ex,
-					AJAXServlet.class);
+				Logger.error("Error while parsing AJAX command. (" + userAgent + ')', ex, AJAXServlet.class);
             }
 
             clearParsers(); // Throw away parsers, as their state is undefined.
@@ -424,8 +452,8 @@ public class AJAXServlet extends TopLogicServlet {
 		try {
 			return lock(lock, ajaxRequest, rootHandler);
 		} catch (InterruptedException ex) {
-			Logger.info("Wait for sequence number becoming valid was interrupted. (sequence: '" + rxSequence
-				+ "', session: " + sessionId + ',' + userAgent + ')', AJAXServlet.class);
+			Logger.info("Wait for sequence number becoming valid was interrupted. (sequence: '" + rxSequence + "', "
+				+ userAgent + ')', AJAXServlet.class);
 			TagWriter out = MainLayout.getTagWriter(request, response);
 			UpdateWriter writer = newUpdateWriter(rxSequence, out, encoding);
 			writer.setRequestDropped();
@@ -487,8 +515,6 @@ public class AJAXServlet extends TopLogicServlet {
 		out.append(commonSource);
 		out.append(", targetComponent: '");
 		out.append(commonTarget);
-		out.append("', session: ");
-		out.append(sessionId);
 		out.append(',');
 		out.append(userAgent);
 		out.append(')');
@@ -607,7 +633,7 @@ public class AJAXServlet extends TopLogicServlet {
 				Logger.info("Unable to find component for request " +
 					"(source: '" + ajaxRequest.getContextComponentID() +
 					"', target: '" + ajaxRequest.getTargetComponentID() +
-					"', session: " + sessionId + ',' + userAgent + ')', AJAXServlet.class);
+					"', " + userAgent + ')', AJAXServlet.class);
 			} else {
 				// Associate the context component with the current request. This is
 				// required at least for the creation of the DisplayContext, see below.
@@ -620,8 +646,8 @@ public class AJAXServlet extends TopLogicServlet {
 		    // the path to the requested component is  (most likely) not valid any more
 		    // the request can be ignored. (ASK TSA,BHU)
 			Logger.info(
-				"Request for path could not be handled, the component is most likely no longer visible. (session: "
-						+ sessionId + ',' + userAgent + ')', AJAXServlet.class);
+				"Request for path could not be handled, the component is most likely no longer visible. ("
+					+ userAgent + ')', AJAXServlet.class);
 		    assert false: "Request for invalid path, the request will be ignored.";
 			return null;
 		}
@@ -995,10 +1021,6 @@ public class AJAXServlet extends TopLogicServlet {
             logMessage.append("layout: '");
             logMessage.append(aComponent.getLocation());
             logMessage.append('\'');
-            
-            first = separator(logMessage, first);
-            logMessage.append("session: ");
-			logMessage.append(TopLogicServlet.getSessionId(context.asRequest()));
             
 			logMessage.append(", ");
 			logMessage.append(context.getUserAgent());

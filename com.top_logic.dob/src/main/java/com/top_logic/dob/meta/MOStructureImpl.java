@@ -11,7 +11,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -412,16 +411,16 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
 		this.cachedAllDbAtttributes  = computeAllDbAttributes(cachedAllAttributes);
 		this.cachedDbSize  = computeDBColumnCount(cachedAllDbAtttributes);
 
-		initAttributeOwner(cachedDeclaredAttributes);
+		initAttributeOwner();
 	}
 
-    protected final void initAttributeOwner(List<MOAttribute> declaredAttributes) {
+	protected final void initAttributeOwner() {
     	int cacheIndex = computeFirstCacheIndex();
 		int columnIndex = computeFirstColumnIndex();
     	
     	// Note: Must be deferred upon freeze, because one can remove attributes.
-		for (int n = 0, cnt = declaredAttributes.size(); n < cnt; n++) {
-			MOAttribute attr = declaredAttributes.get(n);
+		for (int n = 0, cnt = cachedDeclaredAttributes.size(); n < cnt; n++) {
+			MOAttribute attr = cachedDeclaredAttributes.get(n);
 			
 			attr.initOwner(this, cacheIndex);
 			cacheIndex += attr.getStorage().getCacheSize();
@@ -560,34 +559,6 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
 			}
 		}
 	}
-    
-
-    @Override
-	public String toString() {
-    	StringBuffer result = new StringBuffer();
-    	
-    	result.append(getName());
-    	result.append(' ');
-    	result.append('{');
-    	
-    	for (Iterator<MOAttribute> it = this.getAttributes().iterator(); it.hasNext(); ) {
-    		MOAttribute attr = it.next();
-    		
-    		result.append(attr.getName());
-    		result.append(':');
-    		result.append(' ');
-    		
-    		result.append(attr.getMetaObject().toString());
-    		result.append(';');
-    		if (it.hasNext()) {
-    			result.append(' ');
-    		}
-    	}
-    	
-    	result.append('}');
-    	
-		return result.toString();
-    }
     
 	/**
 	 * Service method to read the values of all attributes of this structure into a cache and

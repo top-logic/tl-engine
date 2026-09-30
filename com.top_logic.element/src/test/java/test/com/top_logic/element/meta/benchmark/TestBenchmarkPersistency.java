@@ -22,7 +22,7 @@ import test.com.top_logic.element.util.ElementWebTestSetup;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 
 /**
  * Benchmarking object persistence operations.
@@ -50,7 +50,7 @@ public class TestBenchmarkPersistency extends BasicTestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		kb = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		kb = PersistencyLayer.getKnowledgeBase();
 		fac = BenchmarkFactory.getInstance();
 		kb.commit();
 	}

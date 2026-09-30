@@ -218,11 +218,6 @@ public class CommentDialogComponent extends FormComponent {
         }
 
         @Override
-        public boolean needsConfirm() {
-            return false;
-        }
-
-        @Override
 		@Deprecated
         public ResKey getDefaultI18NKey() {
 			return (I18NConstants.SAVE);
@@ -232,7 +227,7 @@ public class CommentDialogComponent extends FormComponent {
     /**
      * Perform the editing of a comment.
      *
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class EditCommentHandler extends AbstractCommandHandler {
 
@@ -269,11 +264,6 @@ public class CommentDialogComponent extends FormComponent {
         }
 
         @Override
-        public boolean needsConfirm() {
-            return false;
-        }
-
-        @Override
 		@Deprecated
         public ResKey getDefaultI18NKey() {
 			return (I18NConstants.SAVE);
@@ -286,7 +276,7 @@ public class CommentDialogComponent extends FormComponent {
      * This table will render buttons for every row (comment) of the table. Dependend
      * on this rows, two commands will be requested, "quote..." and "edit...".
      *
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class OwnerExecutabilityRule implements ExecutabilityRule {
 

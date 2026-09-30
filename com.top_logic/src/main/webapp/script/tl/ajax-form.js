@@ -28,6 +28,28 @@ services.form = {
 		});
 	},
 	
+	/**
+	 * Displays the message of an upload that the server refused.
+	 *
+	 * The body of such a response is a rendered info service item. It is shown in the info area of
+	 * the top level window, in the same way as a message produced during a command.
+	 *
+	 * @param response
+	 *            The response of the upload request.
+	 * @returns A promise that is resolved after a potential message has been displayed, so that the
+	 *          command following the upload can be chained.
+	 */
+	handleUploadResponse: function(response) {
+		if (response.ok) {
+			return Promise.resolve();
+		}
+		return response.text().then(function(message) {
+			if (message != "") {
+				showInfoArea(message);
+			}
+		});
+	},
+	
 	callback: function(ctrlId, ...parameters) {
 		services.ajax.execute("dispatchControlCommand", {
 			controlCommand: "callback",
@@ -295,12 +317,12 @@ services.form = {
 		updateFunction();
 	},
 	
-	_putToDnDCache: function(sourceID, targetID, dropability) {
-		if(window.tlDnD.cache === undefined) {
-			window.tlDnD.cache = new services.util.TwoKeyMap();
+	_putToDnDCache: function(sourceID, targetID, position, dropability) {
+		if(services.ajax.mainLayout.tlDnD.cache === undefined) {
+			services.ajax.mainLayout.tlDnD.cache = new services.util.ThreeKeyMap();
 		}
 		
-		window.tlDnD.cache.set(sourceID, targetID, dropability);
+		services.ajax.mainLayout.tlDnD.cache.set(sourceID, targetID, position, dropability);
 	},
 	
 	_createDragImageElement: function(draggedObjects) {
@@ -320,9 +342,15 @@ services.form = {
 		/*
 		 * The element from which the image for the drag operation is created should not be visible
 		 * to the user. The height is unknown and depends on the number and size of the elements to be dragged. 
-		 * Therefore, the element is moved down by the maximal height (i.e. height of the viewport).
+		 * Therefore, the element is moved up by the maximal height (i.e. height of the viewport).
+		 *
+		 * The browser does not display objects above its top edge and to the left of its left edge. 
+		 * This content is cut off by the browser. 
+		 * In contrast to the right and bottom edges, the size of the rendered container does not change if an element is positioned absolute, 
+		 * for example, 100vh above the top edge. However, if you were to position absolute the element 100vh below the 
+		 * bottom edge, the height of the rendered container would suddenly double.
 		 */
-		dragImageElement.style.bottom = "-100vh";
+		dragImageElement.style.bottom = "100vh";
 	
 		document.body.appendChild(dragImageElement);
 		
@@ -428,8 +456,8 @@ services.form = {
 	 * <<class>>
 	 */
 	SelectOptionControl : {
-		handleOnChange : function(inputElement, showWait) {
-			services.form.sendValueUpdate(inputElement, inputElement.parentNode.id,
+		handleOnChange : function(inputElement, ctrlID, showWait) {
+			services.form.sendValueUpdate(inputElement, ctrlID,
                     inputElement.checked, showWait);
 
 			return false;
@@ -440,8 +468,8 @@ services.form = {
 	 * <<class>>
 	 */
 	SelectionPartControl : {
-		handleOnChange : function(inputElement, showWait) {
-			services.form.sendValueUpdate(inputElement, inputElement.parentNode.id,
+		handleOnChange : function(inputElement, ctrlID, showWait) {
+			services.form.sendValueUpdate(inputElement, ctrlID,
 				inputElement.checked, showWait);
 			
 			return false;
@@ -477,12 +505,16 @@ services.form = {
             var eventSource = BAL.getEventSource(evt);
             
             var tableCell = eventSource.closest('td');
+            if (!BAL.DOM.containsClass(tableCell, "tl-table__cell--selectable")) {
+                return false;
+            }
+            
             var tableRowId = tableCell.parentNode.id;
             
             var index = tableRowId.lastIndexOf('.');
 			var rowId = parseInt(tableRowId.substring(index + 1));
 
-            this.select(evt, element, controlId, rowId, TABLE.getChildIndex(tableCell));
+            return this.select(evt, element, controlId, rowId, TABLE.getChildIndex(tableCell));
         },
         
         select : function(evt, element, controlId, rowId, columnId) {
@@ -494,7 +526,7 @@ services.form = {
                 // or an anchor was clicked.
                 return true;
             }
-            this._select(evt, controlId, rowId, columnId);
+            return this._select(evt, controlId, rowId, columnId);
         },
 		
 		_select : function(evt, controlId, rowId, columnId) {
@@ -524,34 +556,38 @@ services.form = {
 				return false;
 			}
 
+			var dataId;
 			var draggedRows = [];
-			
+
 			if(BAL.DOM.containsClass(rowElement, "tblSelected")) {
 				/*
 				 * When one of the selected rows is dragged, the whole selection is dragged.
 				 */
+				dataId = "selection-" + rowElement.id;
 				for (const selectedRow of controlElement.querySelectorAll('tr.tblSelected')) {
 					if(!draggedRows.includes(selectedRow)) {
 						draggedRows.push(selectedRow);
 					}
 				}
 			} else {
+				dataId = rowElement.id;
 				draggedRows.push(rowElement);
 			}
 
 			var scope = services.ajax.COMPONENT_ID;
 			var dragImageElement = services.form._createDragImageElement(draggedRows);
 
-			window.tlDnD = {
+			services.ajax.mainLayout.tlDnD = {
 				/**
 				 * For Chrome and IE the dataTransfer data is only available during the drop event handling. 
 				 */
-				data: "dnd://" + scope + "/" + controlElement.id + "/" + draggedRows.map(row => row.id).join(),
+				data: "dnd://" + scope + "|" + controlElement.id + "|" + dataId,
+				sourceID: dataId,
 				image: dragImageElement
 			};
 
-			event.dataTransfer.setData("text", window.tlDnD.data);
-			event.dataTransfer.setDragImage(window.tlDnD.image, 0, 0);
+			event.dataTransfer.setData("text", services.ajax.mainLayout.tlDnD.data);
+			event.dataTransfer.setDragImage(services.ajax.mainLayout.tlDnD.image, 0, 0);
 			event.dataTransfer.effectAllowed = "all";
 			
 			return true;
@@ -570,7 +606,9 @@ services.form = {
 				success = rowElement != null;
 				if (success) {
 					targetId = rowElement.id;
-					if (dropType == "ORDERED") {
+					if (rowElement == controlElement) {
+						pos = "onto";
+					} else if (dropType == "ORDERED") {
 						if (BAL.DOM.containsClass(rowElement, "dndInsertAbove")) {
 							pos = "above";
 						} else if (BAL.DOM.containsClass(rowElement, "dndInsertBelow")) {
@@ -585,7 +623,7 @@ services.form = {
 			}
 			
 			if (success) {
-				var data = window.tlDnD.data;
+				var data = services.ajax.mainLayout.tlDnD.data;
 				services.ajax.execute("dispatchControlCommand", {
 					controlCommand : "dndDrop",
 					controlID : controlElement.id,
@@ -603,19 +641,24 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			if(!window.tlDnD || !window.tlDnD.data){
+			if(!services.ajax.mainLayout.tlDnD){
 				event.dataTransfer.dropEffect = 'none';
 				return;
 			}
 			
 			if(!controlElement.isDragOverHandled) {
 				var row = this.getRow(controlElement, event.target);
-				
-				if(row != null) {
-					var position = services.form.TableControl._getDropPosition(event, controlElement, row);
-					
-					if(window.tlDnD.cache !== undefined) {
-						var isDropable = window.tlDnD.cache.get(window.tlDnD.data.split("/").pop(), row.id);
+				var position; 
+				if (row == null) {
+					row = controlElement;
+					position = "onto";
+				} else {
+					position = services.form.TableControl._getDropPosition(event, controlElement, row);
+				}
+
+				{
+					if(services.ajax.mainLayout.tlDnD.cache !== undefined) {
+						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.sourceID, row.id, position);
 						
 						if(isDropable !== undefined) {
 							if(isDropable) {
@@ -635,7 +678,7 @@ services.form = {
 					services.ajax.execute("dispatchControlCommand", {
 						controlCommand : "dragOver",
 						controlID : controlElement.id,
-						data: window.tlDnD.data,
+						data: services.ajax.mainLayout.tlDnD.data,
 						id: row.id,
 						pos: position
 					}, true);
@@ -643,9 +686,6 @@ services.form = {
 					setTimeout(function() {
 						controlElement.isDragOverHandled = false;
 					}, 50);
-				} else {
-					this.resetMarker();
-					event.dataTransfer.dropEffect = 'none';
 				}
 			}
 		},
@@ -663,15 +703,27 @@ services.form = {
 			}
 		},
 		
-		changeToNoDropCursor: function(targetID) {
+		changeToNoDropCursor: function(targetID, position) {
 			this.resetMarker();
-			
-			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, false);
+			if (!services.ajax.mainLayout.tlDnD) {
+				// No DnD data found. That may happen when the user has 
+				// ended drag before the server answer is applied.
+				return;
+			}
+			var sourceID = services.ajax.mainLayout.tlDnD.sourceID;
+			services.form._putToDnDCache(sourceID, targetID, position, false);
 		},
 		
 		displayDropMarker: function(targetID, position) {
+			if (!services.ajax.mainLayout.tlDnD) {
+				// No DnD data found. That may happen when the user has 
+				// ended drag before the server answer is applied.
+				this.resetMarker();
+				return false;
+			}
 			this.displayDropMarkerInternal(document.getElementById(targetID), position);
-			services.form._putToDnDCache(window.tlDnD.data.split("/").pop(), targetID, true);
+			var sourceID = services.ajax.mainLayout.tlDnD.sourceID;
+			services.form._putToDnDCache(sourceID, targetID, position, true);
 
 			return false;
 		},
@@ -704,9 +756,9 @@ services.form = {
 		},
 		
 		handleOnDragEnd: function(event, controlElement) {
-			window.tlDnD.image.remove();
+			services.ajax.mainLayout.tlDnD.image.remove();
 			
-			delete window.tlDnD;
+			delete services.ajax.mainLayout.tlDnD;
 		},
 		
 		getRow: function(controlElement, targetElement) {
@@ -733,6 +785,7 @@ services.form = {
 			var markerElement = this.currentInsertionMarker;
 			if (markerElement != null) {
 				this.resetMarkerOn(markerElement);
+				this.currentInsertionMarker = null;
 			}
 		},
 		
@@ -845,7 +898,7 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			if(!window.tlDnD || !window.tlDnD.data){
+			if(!services.ajax.mainLayout.tlDnD){
 				event.dataTransfer.dropEffect = 'none';
 				return;
 			}
@@ -880,7 +933,7 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 
-			var data = window.tlDnD.data;
+			var data = services.ajax.mainLayout.tlDnD.data;
 			services.ajax.execute("dispatchControlCommand", {
 				controlCommand : "dndDrop",
 				controlID : controlElement.id,
@@ -1069,16 +1122,17 @@ services.form = {
 
 			var dragImageElement = services.form._createDragImageElement(draggedNodes);
 			
-			window.tlDnD = {
+			services.ajax.mainLayout.tlDnD = {
 				/**
 				 * For Chrome and IE the dataTransfer data is only available during the drop event handling. 
 				 */
-				data: "dnd://" + scope + "/" + controlElement.id + "/" + draggedNodeIDs,
+				data: "dnd://" + scope + "|" + controlElement.id + "|" + draggedNodeIDs,
+				sourceID: draggedNodeIDs,
 				image: dragImageElement
 			};
 			
-			event.dataTransfer.setData("text", window.tlDnD.data);
-			event.dataTransfer.setDragImage(window.tlDnD.image, 0, 0);
+			event.dataTransfer.setData("text", services.ajax.mainLayout.tlDnD.data);
+			event.dataTransfer.setDragImage(services.ajax.mainLayout.tlDnD.image, 0, 0);
 			event.dataTransfer.effectAllowed = "all";
 			
 			return true;
@@ -1088,32 +1142,38 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			if(!window.tlDnD || !window.tlDnD.data){
+			if(!services.ajax.mainLayout.tlDnD){
 				event.dataTransfer.dropEffect = 'none';
 				return;
 			}
 			
 			if(!controlElement.isDragOverHandled) {
 				var dropTarget = this.getDropTarget(controlElement, event);
+				var node;
+				var position;
+				if (dropTarget !== undefined) {
+					node = dropTarget.node;
+					position = dropTarget.position;
+				} else {
+					// control element is used as placeholder for root element which might not be visible.
+					node = controlElement;
+					position = "within";
+				}
 				
-				if(dropTarget !== undefined) {
-					if(window.tlDnD.cache !== undefined) {
-						var isDropable = window.tlDnD.cache.get(window.tlDnD.data.split("/").pop(), dropTarget.node.id);
+				{
+					if(services.ajax.mainLayout.tlDnD.cache !== undefined) {
+						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.sourceID, node.id, position);
 						
 						if(isDropable !== undefined) {
-							var isDropableAtPosition = isDropable[dropTarget.position];
+							if(isDropable) {
+								this.displayDropMarkerInternal(node, position);
+								event.dataTransfer.dropEffect = "move";
+							} else {
+								this.resetMarker();
+								event.dataTransfer.dropEffect = 'none';
+							}
 							
-							if(isDropableAtPosition !== undefined) {
-								if(isDropableAtPosition) {
-									this.displayDropMarkerInternal(dropTarget.node, dropTarget.position);
-									event.dataTransfer.dropEffect = "move";
-								} else {
-									this.resetMarker();
-									event.dataTransfer.dropEffect = 'none';
-								}
-								
-								return;
-							} 
+							return;
 						}
 					}
 					
@@ -1122,9 +1182,9 @@ services.form = {
 					services.ajax.execute("dispatchControlCommand", {
 						controlCommand : "dragOver",
 						controlID : controlElement.id,
-						data: window.tlDnD.data,
-						id: dropTarget.node.id,
-						pos: dropTarget.position
+						data: services.ajax.mainLayout.tlDnD.data,
+						id: node.id,
+						pos: position
 					}, true);
 					
 					setTimeout(function() {
@@ -1136,30 +1196,25 @@ services.form = {
 		
 		changeToNoDropCursor: function(targetID, pos) {
 			this.resetMarker();
-			
-			var sourceID = window.tlDnD.data.split("/").pop();
-			this.addToDnDCache(sourceID, targetID, pos, false);
-		},
-		
-		addToDnDCache: function (sourceID, targetID, pos, isDropable) {
-			if(window.tlDnD.cache !== undefined) {
-				var cacheValue = window.tlDnD.cache.get(sourceID, targetID);
-				if(cacheValue !== undefined) {
-					cacheValue[pos] = isDropable;
-					return;
-				}
+			if (!services.ajax.mainLayout.tlDnD) {
+				// No DnD data found. That may happen when the user has 
+				// ended drag before the server answer is applied.
+				return;
 			}
-			
-			var cacheValue = {};
-			cacheValue[pos] = isDropable;
-			
-			services.form._putToDnDCache(sourceID, targetID, cacheValue);
+			var sourceID = services.ajax.mainLayout.tlDnD.sourceID;
+			services.form._putToDnDCache(sourceID, targetID, pos, false);
 		},
 		
 		displayDropMarker: function(targetID, pos) {
+			if (!services.ajax.mainLayout.tlDnD) {
+				// No DnD data found. That may happen when the user has 
+				// ended drag before the server answer is applied.
+				this.resetMarker();
+				return false;
+			}
 			this.displayDropMarkerInternal(document.getElementById(targetID), pos);
-			var sourceID = window.tlDnD.data.split("/").pop();
-			this.addToDnDCache(sourceID, targetID, pos, true);
+			var sourceID = services.ajax.mainLayout.tlDnD.sourceID;
+			services.form._putToDnDCache(sourceID, targetID, pos, true);
 
 			return false;
 		},
@@ -1297,12 +1352,16 @@ services.form = {
 		},
 		
 		handleOnDragEnd: function(event, controlElement) {
-			window.tlDnD.image.remove();
+			services.ajax.mainLayout.tlDnD.image.remove();
 			
-			delete window.tlDnD;
+			delete services.ajax.mainLayout.tlDnD;
 		},
 		
 		getDropPositionFromElement: function(controlElement, nodeElement) {
+			if (nodeElement == controlElement) {
+				// control element is used as placeholder for root element which might not be visible.
+				return "within";
+			}
 			var dropType = BAL.DOM.getNonStandardAttribute(controlElement, "data-droptype");
 			
 			if (dropType == "ORDERED") {
@@ -1325,7 +1384,7 @@ services.form = {
 			var node = this.currentInsertionMarker;
 			if(node != null) {
 				var position = this.getDropPositionFromElement(controlElement, node);
-				var data = window.tlDnD.data;
+				var data = services.ajax.mainLayout.tlDnD.data;
 				
 				services.ajax.execute("dispatchControlCommand", {
 					controlCommand : "dndTreeDrop",
@@ -1346,6 +1405,7 @@ services.form = {
 				BAL.DOM.removeClass(this.currentInsertionMarker, "dndInsertWithin");
 				BAL.DOM.removeClass(this.currentInsertionMarker, "dndInsertBelow");
 				BAL.DOM.removeClass(this.currentInsertionMarker, "dndInsertInto");
+				this.currentInsertionMarker = null;
 			}
 		},
 		
@@ -1938,6 +1998,21 @@ services.form = {
 			controlElement.enableTimer = null;
 		},
 
+		/**
+		 * Activates an anchor-based button with the space key like a native button.
+		 *
+		 * The synthesized click event triggers the element's onclick attribute and
+		 * activates the button through the regular handleClick() path.
+		 */
+		handleKeyDown : function(event, element) {
+			event = BAL.getEvent(event);
+			if (BAL.getKeyCode(event) == 32) {
+				element.click();
+				return false;
+			}
+			return true;
+		},
+
 		handleClick : function(event, controlID, progressDivID) {
 			BAL.eventStopPropagation(BAL.getEvent(event));
 			var delay = services.ajax.progressBarDelay;
@@ -2118,7 +2193,7 @@ services.form = {
 			var img = BAL.DOM.getFirstElementChild(controlElement);
 			var imageCnt = 0;
 			while (img != null) {
-				if (img.className.indexOf("input-image") > -1) {
+				if (BAL.DOM.getNonStandardAttribute(img, "data-value") != null) {
 					images[imageCnt] = img;
 					if (img == element) {
 						currentIndex = imageCnt;
@@ -2143,7 +2218,7 @@ services.form = {
 				images[currentIndex].style.display = "none";
 			}
 			images[newIndex].style.display = "inline";
-			images[newIndex].focus();
+			BAL.focusFirst(images[newIndex]);
 			
 			// Notify server.
 			services.form.sendValueUpdate(controlElement, controlId, newValue, showWait);
@@ -2620,6 +2695,19 @@ services.form = {
 				element.requestImageUpdate = false;
 				self.updateImage(ctrlID, sizeContainerId, doRespectVerticalScrollbar, doRespectHorizontalScrollbar);
 			}
+		}
+	},
+	
+	DisplayPDFControl : {
+		hideToolbar : function(iframe) {
+			if (iframe.closest(".card") == null) return;
+			console.log(iframe.contentDocument);
+			let css = document.createElement("style");
+			css.type = "text/css";
+			css.append("#mainContainer{min-width: unset}");
+			css.append(".toolbar{display: none}");
+			css.append("#viewerContainer{position: unset}");
+			iframe.contentDocument.head.appendChild(css);
 		}
 	},
 
@@ -3272,7 +3360,7 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			if(!window.tlDnD || !window.tlDnD.data){
+			if(!services.ajax.mainLayout.tlDnD){
 				event.dataTransfer.dropEffect = 'none';
 				return;
 			}
@@ -3298,7 +3386,7 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 
-			var data = window.tlDnD.data;
+			var data = services.ajax.mainLayout.tlDnD.data;
 			
         	services.ajax.execute("dispatchControlCommand", {
         		controlCommand : "dndFieldDrop",
@@ -3311,7 +3399,7 @@ services.form = {
 		
 		controlElement: function(element) {
             while (element != null) {
-            	if (BAL.DOM.containsClass(element, "cPopupSelect")) {
+            	if (BAL.DOM.containsClass(element, "tl-popup-select")) {
             		return element;
             	}
 
@@ -3334,15 +3422,21 @@ services.form = {
 		selItemCl: "ddwttSelectedItem",
 		actItemCl: "ddwttActiveItem",
 		itemLabelCl: "ddwttItemLabel",
+		overflowCl: "ddwttOverflow",
 		mutObserver: null,
 
-		buttonDrop: function(button) {
+		buttonDrop: function(event, button) {
+			// Prevent other event handlers registered in the background of the drop-down to also fire.
+			if (event != null) {
+				event.stopPropagation();
+			}
+
 			const ddBoxOriginal = button.nextElementSibling;
 			let ddBox = this.getDDBox();
 			
 			const onGlobalChange = function() {
 				if (ddBox.contains(document.activeElement)) {
-					services.form.DropDownControl.buttonDrop(button);
+					services.form.DropDownControl.buttonDrop(null, button);
 				}
 			};
 
@@ -3363,9 +3457,10 @@ services.form = {
 				let activeItem = this.getActiveItem(button, ddList);
 
 				this.positionDD(button, ddBox);
+				this.addScrollEvents(button, onGlobalChange);
+				
 				if (activeItem) {
 					this.setItemActive(activeItem, true, false);
-					this.addScrollEvents(button, onGlobalChange);
 				}
 				
 				let dialog = button.closest(".dlgWindow");
@@ -3415,7 +3510,7 @@ services.form = {
 			const callback = (mutationList) => {
 				mutationList.forEach((mutation) => {
 					if (mutation.type === "attributes") {
-						this.buttonDrop(button);
+						this.buttonDrop(null, button);
 					}
 				});
 			};
@@ -3520,23 +3615,20 @@ services.form = {
 
 		setDimensions: function(btnPos, ddBox, ddMaxHeight) {
 			let search = ddBox.querySelector(":scope > ." + this.searchCl),
-				ddList = ddBox.querySelector(":scope > ." + this.listCl),
-				incrWidth = window.getComputedStyle(ddBox).getPropertyValue("width");
+				ddList = ddBox.querySelector(":scope > ." + this.listCl);
 			
 			ddBox.style.removeProperty("right");
 			ddBox.style.setProperty("left", btnPos.left + "px");
 			ddBox.style.setProperty("min-width", btnPos.width + "px");
-			ddBox.style.setProperty("max-height", ddMaxHeight + "px");
-			
-			let scrollbarW = ddList.offsetWidth - ddList.clientWidth;
-			if (btnPos.width < (parseFloat(incrWidth) + scrollbarW)) {
-				incrWidth = parseFloat(incrWidth) + scrollbarW + "px";
-				ddList.style.setProperty("width", incrWidth);
-				if (parseFloat(incrWidth) > (window.innerWidth - btnPos.left)) {
-					ddBox.style.removeProperty("left");
-					ddBox.style.setProperty("right", (window.innerWidth - btnPos.right) + "px");
-				}
+			ddBox.style.setProperty("max-height", (ddMaxHeight - 8) + "px"); // 8px offset to edge of the screen
+				
+			let maxWidth = (window.innerWidth - btnPos.left - 9); // 8px offset to edge of the screen (1px additional needed because of border)
+			if (btnPos.right > maxWidth) {
+				ddBox.style.removeProperty("left");
+				ddBox.style.setProperty("right", (window.innerWidth - btnPos.right) + "px");
+				maxWidth = (btnPos.right - 8); // 8px offset to edge of the screen
 			}
+			ddBox.style.setProperty("max-width", maxWidth + "px");
 			
 			let searchW = ddList.getBoundingClientRect().width + "px";
 			search.style.setProperty("width", searchW);
@@ -3576,6 +3668,7 @@ services.form = {
 		lostFocus: function() {
 			const ddBox = this.getDDBox();
 			const button = this.getButton(ddBox);
+			const container = document.getElementById(ddBox.dataset.ctrlid);
 			const ddList = ddBox.querySelector("." + this.listCl);
 			let itemList = ddList.children;
 
@@ -3586,8 +3679,8 @@ services.form = {
 							this.setItemInactive(item);
 						}
 					}
-					if (button.parentElement.classList.contains(this.activeCl)) {
-						this.buttonDrop(button);
+					if (container.classList.contains(this.activeCl)) {
+						this.buttonDrop(null, button);
 					}
 				}
 			}, 150);
@@ -3600,7 +3693,7 @@ services.form = {
 				button = this.getButton(ddBox);
 			} else {
 				if (multi) {
-					this.buttonDrop(button);
+					this.buttonDrop(null, button);
 					ddBox = this.getDDBox();
 					button = this.getButton(ddBox);
 				} else {
@@ -3693,7 +3786,7 @@ services.form = {
 						tempActive = activeItem;
 						
 					if (sourceBtn && !multi) {
-						this.buttonDrop(button);
+						this.buttonDrop(null, button);
 						ddList = this.getDDBox().querySelector("." + this.listCl);
 						activeItem = this.getActiveItem(button, ddList);
 					}
@@ -3702,7 +3795,7 @@ services.form = {
 						itemH = activeItem.getBoundingClientRect().height;
 						
 					if (sourceBtn && !multi) {
-						this.buttonDrop(button);
+						this.buttonDrop(null, button);
 						ddList = tempList;
 						activeItem = tempActive;
 					}
@@ -3783,14 +3876,14 @@ services.form = {
 					if (sourceBtn && !multi) {
 						return;
 					}
-					this.buttonDrop(button);
+					this.buttonDrop(null, button);
 					event.stopImmediatePropagation();
 					return;
 					
 				// [TAB] was pressed
 				case "Tab":
 					if (multi || !sourceBtn) {
-						this.buttonDrop(button);
+						this.buttonDrop(null, button);
 					}
 					return;
 
@@ -3812,7 +3905,7 @@ services.form = {
 			}
 
 			if (sourceBtn && !multi) {
-				this.buttonDrop(button);
+				this.buttonDrop(null, button);
 			}
 
 			let search = this.getDDBox().querySelector(":scope > ." + this.searchCl);
@@ -3855,12 +3948,23 @@ services.form = {
 		},
 
 		selectItem: function(item) {
-			const ddBox = item.parentElement.parentElement;
+			// getDDBox is only for when the dropdown is currently opened, as only then the DDBox exists directly below the html body's first child
+			// || 
+			// querySelector is for when a tag gets removed (item unselected). There are 2 different cases:
+			// 1. Tag/Item removed that is part of the shadow copy of the DDBox (inside the DropDownControl)
+			//	-> In this case the param item is the actual item, parent's parent would be the DDBox
+			// 2. Tag removed that's item is currently not selectable and therefor not part of the shadow DDBox
+			// 	-> In this case the param item is the tag, so we need to pick the container containing the tag and select the box inside of it as the tag location is a sibling of the DDBox
+			const ddBox = this.getDDBox() || document.body.firstElementChild.querySelector(":scope ." + this.containerCl + ":has(#" + item.id + ") ." + this.boxCl);
+			if (!ddBox) {
+				console.log("No item container (DDBox) found!");
+				return;
+			}
 			const button = this.getButton(ddBox);
 			let ctrlID = ddBox.dataset.ctrlid;
 			
 			if (button.parentElement.classList.contains(this.activeCl)) {
-				this.buttonDrop(button);
+				this.buttonDrop(null, button);
 			}
 	
 			services.ajax.execute("dispatchControlCommand", {
@@ -3876,6 +3980,19 @@ services.form = {
 
 		setSelectedLabel: function(button, selection) {
 			button.firstElementChild.textContent = selection;
+		},
+		
+		enterTag: function(tag) {
+			let label = tag.querySelector(":scope .ddwttItemLabel");
+			console.log("Client width: " + label.clientWidth);
+			console.log("Scroll width: " + label.scrollWidth);
+			if (label.clientWidth < label.scrollWidth) { // !tag.classList.contains(this.overflowCl)
+				tag.classList.add(this.overflowCl);
+			}
+		},
+		
+		leaveTag: function(tag) {
+			tag.classList.remove(this.overflowCl);
 		},
 
 		removeTag: function(tag, itemID) {
@@ -4085,7 +4202,8 @@ services.form = {
 			fetch(uploadUrl, {
 			  method: "POST", 
 			  body: formData
-			}).then((response) => self.uploadPerformed(controlID));
+			}).then((response) => services.form.handleUploadResponse(response))
+			  .then(() => self.uploadPerformed(controlID));
 		},
 		
 		uploadPerformed: function(controlID) {
@@ -4097,6 +4215,86 @@ services.form = {
 			});
 		}
 
+	},
+	
+	ImageUploadControl: {
+		controlID: null,
+		image: null,
+		
+		addPaste: function() {
+			window.addEventListener("paste", this.dropToUpload);
+		},
+		
+		removePaste: function() {
+			window.removeEventListener("paste", this.dropToUpload);
+		},
+		
+		dropToUpload: function(event) {
+			event.preventDefault();
+			let dropFiles;
+			if (event.type == "paste") {
+				dropFiles = event.clipboardData.files;
+			} else {
+				dropFiles = event.dataTransfer.files;
+			}
+			
+			if (dropFiles.length != 0 && dropFiles[0].type.match("image.*")) {
+				const imageUpload = document.querySelector("input#" + services.form.ImageUploadControl.controlID + "-upload");
+				if (!imageUpload) return;
+				imageUpload.files = dropFiles;
+				
+				const changeEvent = new Event("change");
+				imageUpload.dispatchEvent(changeEvent);
+			}
+		},
+		
+		updateImage: function(jsImgUpCtrl, files) {
+			let imageName = files[0].name;
+			let imageSize = files[0].size;
+			let imageType = files[0].type;
+			
+			jsImgUpCtrl.image = new File([files[0]], imageName, {type: imageType});
+			
+			services.ajax.execute("dispatchControlCommand", {
+				controlCommand : "imageUpdate",
+				controlID : jsImgUpCtrl.controlID,
+				value: imageName,
+				size: imageSize
+			});
+		},
+		
+		submit: function(controlID, uploadUrl) {
+			services.ajax.showWaitPane();
+			
+			const self = services.form.ImageUploadControl;
+			
+			const formData = new FormData();
+			formData.append("file", self.image);
+			
+			fetch(uploadUrl, {
+				method: "POST", 
+				body: formData
+			}).then((response) => services.form.handleUploadResponse(response))
+			  .then(() => self.uploadPerformed(controlID));
+		},
+		
+		uploadPerformed: function(controlID) {
+			services.ajax.hideWaitPane();
+			
+			services.ajax.execute("dispatchControlCommand", {
+				controlCommand : "uploadPerformed",
+				controlID : controlID
+			});
+		},
+		
+		setInOrOut: function(img) {
+			const clearButton = img.parentElement.querySelector(".fClear");
+			if (clearButton != null) {
+				if (img.clientWidth < clearButton.clientWidth * 2) {
+					clearButton.classList.remove("inset");
+				}
+			}
+		}
 	},
 
 	ListControl : {
@@ -4676,7 +4874,9 @@ services.form = {
 	},
 	
 	FlexibleFlowLayout: {
-		MINIMUM_SIZE: 20, //px, randomely choosen
+		/* This value can only be estimated through experimentation rather than exact calculation. 
+		If set too low, global scrollbars may appear. If set too high, excess space is reserved for elements that do not require it. */
+		MINIMUM_SIZE: 25, //px, chosen based on above guidelines
 		
 		initLayoutAdjustment: function(event, ctrlID, separatorID, adjustmentBar, resizeMode, isArrangedHorizontal) {
 			if(!services.layout.isCollapsed(adjustmentBar)) {
@@ -4754,9 +4954,9 @@ services.form = {
 				var layoutConstraint = layoutChild.layoutConstraint;
 				if(layoutConstraint.unit != "px") {
 					if(adjustmentDataContainer.isArrangedHorizontal) {
-						layoutConstraint.size = layoutChild.layoutResult._width;
+						layoutConstraint.size = Math.max(layoutConstraint.minSize, layoutChild.layoutResult._width);
 					} else {
-						layoutConstraint.size = layoutChild.layoutResult._height;
+						layoutConstraint.size = Math.max(layoutConstraint.minSize, layoutChild.layoutResult._height);
 					}
 					layoutChild.layoutConstraint.unit = "px";
 				}
@@ -4797,6 +4997,7 @@ services.form = {
 					// Only space, that exceeds minimum size, will be distributed in percent (see layouting in layout.js)
 					layoutConstraint.size = Math.round((pixelSize - services.form.FlexibleFlowLayout.getNodeMinSizeInPx(layoutChild)) / sumPixelOfPercentLayouts * 100);
 				}
+				layoutConstraint.size = Math.max(layoutConstraint.minSize, layoutConstraint.size);
 				layoutSizes[layoutChild.id] = layoutConstraint.size;
 				services.layout.setSizeAnnotation(layoutChild, layoutConstraint);
 				layoutChild = BAL.DOM.getNextElementSibling(layoutChild);
@@ -4930,7 +5131,7 @@ services.form = {
 		adjustNodeSize: function(node, oldSize, newSize, adjustmentDataContainer) {
 			var layoutConstraint = node.layoutConstraint;
 			var effectiveNewSize = newSize - adjustmentDataContainer.effectiveSizeDelta;
-			layoutConstraint.size = effectiveNewSize;
+			layoutConstraint.size = Math.max(layoutConstraint.minSize, effectiveNewSize);
 		},
 		
 		renderLayout: function (node) {
@@ -4987,11 +5188,11 @@ services.form = {
 	},
 	
 	LogoutTimerControl: {
-		init: function(controlID, timeoutSeconds, countingSeconds, logoutUrl) {
+		init: function(controlID, timeoutSeconds, countingSeconds, loginUrl) {
 			var element = document.getElementById(controlID);
 			element.timeoutSeconds = timeoutSeconds;
 			element.countingSeconds = countingSeconds;
-			element.logoutUrl = logoutUrl;
+			element.loginUrl = loginUrl;
 			
 			this.resetTimer(controlID);
 			
@@ -5056,7 +5257,7 @@ services.form = {
 				var secondsLeft = Math.floor(millisLeft / 1000);
 				
 				if (secondsLeft < 0) {
-					services.ajax.showSessionTimeout(element.logoutUrl);
+					services.ajax.showSessionTimeout(element.loginUrl);
 				} else {
 					var minutesLeft = Math.floor(secondsLeft / 60);
 					var secondsRest = secondsLeft % 60;
@@ -5075,14 +5276,8 @@ services.form = {
 	
 	MediaQueryControl: {
 		parentLayoutInformation: new Map(),
-
-		defaultSizes: [700, 1250, 1800, 2350, 2900],
-		
-		onResize: function(controlID, classPrefix, maxColumns, sizes) {
-			if (sizes == null) {
-				sizes = this.defaultSizes;
-			}
-			
+				
+		onResize: function(controlID, classPrefix, maxColumns, sizes) {			
 			if (maxColumns > sizes.length) {
 				maxColumns = sizes.length;
 			}

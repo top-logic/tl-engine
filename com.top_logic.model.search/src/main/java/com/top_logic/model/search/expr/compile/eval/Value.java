@@ -5,13 +5,14 @@
  */
 package com.top_logic.model.search.expr.compile.eval;
 
-import com.top_logic.dob.attr.MOPrimitive;
-import com.top_logic.knowledge.search.Expression;
-import com.top_logic.knowledge.search.ExpressionFactory;
+import com.top_logic.dob.MetaObject;
+import com.top_logic.knowledge.service.db2.expr.visit.PolymorphicTypeComputation;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.And;
+import com.top_logic.model.search.expr.CompareOp;
 import com.top_logic.model.search.expr.IsEqual;
+import com.top_logic.model.search.expr.Literal;
 import com.top_logic.model.search.expr.Not;
 import com.top_logic.model.search.expr.Or;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -33,7 +34,7 @@ public abstract class Value {
 	 *        The other {@link Value}.
 	 * @return The resulting {@link Value}.
 	 */
-	public abstract Value processEquals(SearchExpression orig, Value other);
+	public abstract Value processEquals(IsEqual orig, Value other);
 
 	/**
 	 * Interprets an {@link Access} expression on this this {@link Value}.
@@ -42,7 +43,7 @@ public abstract class Value {
 	 *        The original {@link SearchExpression} representing the processed operation.
 	 * @return The resulting {@link Value}.
 	 */
-	public abstract Value processAccess(SearchExpression orig, TLStructuredTypePart part);
+	public abstract Value processAccess(Access orig, TLStructuredTypePart part);
 
 	/**
 	 * Interprets an {@link Not} expression on this this {@link Value}.
@@ -51,7 +52,7 @@ public abstract class Value {
 	 *        The original {@link SearchExpression} representing the processed operation.
 	 * @return The resulting {@link Value}.
 	 */
-	public abstract Value processNot(SearchExpression orig);
+	public abstract Value processNot(Not orig);
 
 	/**
 	 * Interprets an {@link Or} comparison of this and the other {@link Value}.
@@ -62,7 +63,7 @@ public abstract class Value {
 	 *        The other {@link Value}.
 	 * @return The resulting {@link Value}.
 	 */
-	public abstract Value processOr(SearchExpression orig, Value other);
+	public abstract Value processOr(Or orig, Value other);
 
 	/**
 	 * Interprets an {@link And} comparison of this and the other {@link Value}.
@@ -73,25 +74,41 @@ public abstract class Value {
 	 *        The other {@link Value}.
 	 * @return The resulting {@link Value}.
 	 */
-	public abstract Value processAnd(SearchExpression orig, Value other);
+	public abstract Value processAnd(And orig, Value other);
+
+	/**
+	 * Interprets a {@link CompareOp} order comparison ({@code <}, {@code <=}, {@code >}, {@code >=})
+	 * of this and the other {@link Value}.
+	 *
+	 * @param orig
+	 *        The original {@link SearchExpression} representing the processed operation.
+	 * @param other
+	 *        The other {@link Value}.
+	 * @return The resulting {@link Value}.
+	 */
+	public abstract Value processCompareOp(CompareOp orig, Value other);
 
 	/**
 	 * Whether this {@link Value} has a {@link #compiled() compilation result}.
 	 */
-	public abstract boolean hasCompiledPart();
+	public final boolean hasCompiledPart() {
+		return compiled() != null;
+	}
 
 	/**
-	 * The compilation result of this {@link Value}, if {@link #hasCompiledPart()}.
+	 * Compiled part of this {@link Value}. May be <code>null</code>.
 	 */
-	public abstract Expression compiled();
+	public abstract CompiledValue compiled();
 
 	/**
 	 * Whether this {@link Value} has an {@link #interpreted() interpretation result}.
 	 */
-	public abstract boolean hasInterpretedPart();
+	public final boolean hasInterpretedPart() {
+		return interpreted() != null;
+	}
 
 	/**
-	 * The interpretation of this {@link Value}, if {@link #hasInterpretedPart()}.
+	 * The interpretation of this {@link Value}. May be <code>null</code>.
 	 */
 	public abstract SearchExpression interpreted();
 
@@ -100,30 +117,23 @@ public abstract class Value {
 	 * 
 	 * @param orig
 	 *        The original {@link SearchExpression} representing the given literal value.
-	 * @param literal
+	 * @param literalValue
 	 *        The literal value.
 	 * @return A {@link Value} representing the literal.
 	 */
-	public static Value literal(SearchExpression orig, Object literal) {
-		if (literal instanceof Boolean) {
-			return new CompiledExpression(MOPrimitive.BOOLEAN, ExpressionFactory.literal(literal));
+	public static Value literal(Literal orig, Object literalValue) {
+		if (literalValue == null) {
+			// Null literal is not allowed in the KB.
+			return new NullLiteral(orig);
 		}
-		if (literal instanceof String) {
-			return new CompiledExpression(MOPrimitive.STRING, ExpressionFactory.literal(literal));
+		if (CompiledValue.isUnstored(literalValue)) {
+			return new InterpretedExpression(orig);
 		}
-		if (literal instanceof Double) {
-			return new CompiledExpression(MOPrimitive.DOUBLE, ExpressionFactory.literal(literal));
+		MetaObject literalType = PolymorphicTypeComputation.getLiteralType(literalValue);
+		if (literalType == MetaObject.INVALID_TYPE) {
+			return new InterpretedExpression(orig);
 		}
-		if (literal instanceof Float) {
-			return new CompiledExpression(MOPrimitive.FLOAT, ExpressionFactory.literal(literal));
-		}
-		if (literal instanceof Long) {
-			return new CompiledExpression(MOPrimitive.LONG, ExpressionFactory.literal(literal));
-		}
-		if (literal instanceof Integer) {
-			return new CompiledExpression(MOPrimitive.INTEGER, ExpressionFactory.literal(literal));
-		}
-		return new InterpretedExpression(orig);
+		return new CompiledLiteral(literalType, literalValue);
 	}
 
 }

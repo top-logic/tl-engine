@@ -16,7 +16,7 @@ import com.top_logic.util.Resources;
 /**
  * Constant holder describing how labels for FastListElements are fetched.
  *
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class FastListElementLabelProvider implements LabelProvider {
 

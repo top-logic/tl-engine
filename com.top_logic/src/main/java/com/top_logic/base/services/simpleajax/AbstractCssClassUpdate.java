@@ -49,7 +49,7 @@ public abstract class AbstractCssClassUpdate extends DOMAction {
 			writeCssClassContent(context, writer);
 			writer.endCssClasses();
 			writer.endEmptyTag();
-		} catch (Exception throwable) {
+		} catch (Throwable throwable) {
 			writer.endAll(currentDepth);
 			writer.endTag(AJAXConstants.AJAX_PROPERTY);
 			Logger.error("Could not create css class update (Cause: " + throwable.getMessage(), throwable, this);
@@ -58,11 +58,13 @@ public abstract class AbstractCssClassUpdate extends DOMAction {
 
 	/**
 	 * Creates the content of the {@link HTMLConstants#CLASS_ATTR}.
-	 * 
+	 *
 	 * <p>
-	 * The given {@link TagWriter} is in CSS class mode so that multiple classes can be written
-	 * using multiple {@link Appendable#append(CharSequence)} calls without caring about separators.
+	 * The given {@link Appendable} is either a {@link TagWriter} in CSS class mode (when called
+	 * during XML rendering) or a plain {@link Appendable} (when called externally). Multiple
+	 * classes can be written using multiple {@link Appendable#append(CharSequence)} calls without
+	 * caring about separators.
 	 * </p>
 	 */
-	protected abstract void writeCssClassContent(DisplayContext context, Appendable out) throws IOException;
+	public abstract void writeCssClassContent(DisplayContext context, Appendable out) throws IOException;
 }

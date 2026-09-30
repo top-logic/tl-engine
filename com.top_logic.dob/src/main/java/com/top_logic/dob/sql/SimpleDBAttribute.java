@@ -19,7 +19,7 @@ public class SimpleDBAttribute extends AbstractSimpleDBAttribute {
 	 * 
 	 * @see #getDBColumnIndex()
 	 */
-	private int _dbIndex;
+	private int _dbIndex = -1;
 
 	/**
 	 * Creates a new {@link SimpleDBAttribute} with default {@link #isBinary() binary} from DB type.
@@ -56,6 +56,9 @@ public class SimpleDBAttribute extends AbstractSimpleDBAttribute {
 
 	@Override
 	public int getDBColumnIndex() {
+		if (_dbIndex == -1) {
+			throw new IllegalStateException("DB index was not yet initialized.");
+		}
 		return _dbIndex;
 	}
 

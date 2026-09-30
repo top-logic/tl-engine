@@ -312,9 +312,29 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 		} catch (DuplicateAttributeException e) {
 			throw new UnreachableAssertion(e);
 		}
+
+		// Note: Even if it sounds appealing to move the REV_MAX column more to the start of the
+		// index to bring rows for the current revision more close together, this is not advisable,
+		// since optimizers of some DBs (including PostgreSQL) then do not consider this index for
+		// the most frequent queries for attribute load. Those queries are typically structured like
+		// this:
+
+		// select * from FLEX_DATA
+		// where branch=?
+		// and type=?
+		// and identifier=?
+		// and rev_min <= [rev]
+		// and rev_max >= [rev]
+
+		// Here, the REV_MAX column only occurs in a range condition. Even if this is no problem for
+		// query execution, since the range most likely only consists of a single value
+		// Long.MAX_VALUE, this may prevent the optimizer from using this index at all preferring a
+		// full-table-scan. This results in catastrophic performance degradation for non-trivial
+		// datasets.
 		DBAttribute[] primaryKeyColumns =
-			BasicTypeProvider.primaryKeyColumns(branchAttribute, revMaxAttribute, typeAttribute, idAttribute,
+			BasicTypeProvider.primaryKeyColumns(branchAttribute, typeAttribute, idAttribute, revMaxAttribute,
 				attributeAttribute);
+
 		type.setPrimaryKey(primaryKeyColumns);
 		/* Compress value must be strict less than number of columns in the prefix. Otherwise Oracle
 		 * sends a ORA-25194 error. */
@@ -439,48 +459,48 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link Boolean#TRUE} value.  
      */
-	static final byte BOOLEAN_TRUE = 1;
+	public static final byte BOOLEAN_TRUE = 1;
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link Boolean#FALSE} value.  
      */
-	static final byte BOOLEAN_FALSE = 2;
+	public static final byte BOOLEAN_FALSE = 2;
     
 	// Row types that use the long data column.
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link Long} value in the {@link #createLongTypeAttr()}.  
      */
-	static final byte LONG_TYPE = 10;
+	public static final byte LONG_TYPE = 10;
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link Integer} value in the {@link #createLongTypeAttr()}.
      */
-	static final byte INTEGER_TYPE = 11;
+	public static final byte INTEGER_TYPE = 11;
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link Date} value in the {@link #createLongTypeAttr()}.  
      */
-	static final byte DATE_TYPE = 12;
+	public static final byte DATE_TYPE = 12;
     
 	// Row types that use the double data column.
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link Double} value in the {@link #createDoubleDataAttr()}.  
      */
-	static final byte DOUBLE_TYPE = 20;
+	public static final byte DOUBLE_TYPE = 20;
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link Float} value in the {@link #createDoubleDataAttr()}.  
      */
-	static final byte FLOAT_TYPE = 21;
+	public static final byte FLOAT_TYPE = 21;
     
 	// Row types that use the varchar data column.
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link String} value in the {@link #createVarcharDataAttr()}.  
      */
-	static final byte STRING_TYPE = 30;
+	public static final byte STRING_TYPE = 30;
 
 	/**
 	 * {@link #createDataTypeAttr()} value that marks an empty (non null size 0)
@@ -492,32 +512,32 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	 * data. See e.g. Oracle.
 	 * </p>
 	 */
-	static final byte EMPTY_STRING_TYPE = 31;
+	public static final byte EMPTY_STRING_TYPE = 31;
 	
 	// Row types that use the clob data column.
     
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link String} value in the {@link #createClobDataAttr()}.  
      */
-	static final byte CLOB_TYPE = 40;
+	public static final byte CLOB_TYPE = 40;
 
     /**
      * {@link #createDataTypeAttr()} value that marks a {@link String} value in the {@link #createBlobDataAttr()}.  
      */
-	static final byte BLOB_TYPE = 50;
+	public static final byte BLOB_TYPE = 50;
 
 	/**
 	 * {@link #createDataTypeAttr()} value that marks a {@link TLID}. If value is {@link LongID} it
 	 * is stored in {@link #LONG_DATA}, otherwise it is stored in {@link #VARCHAR_DATA}.
 	 */
-	static final byte TL_ID_TYPE = 60;
+	public static final byte TL_ID_TYPE = 60;
 
 	/**
 	 * {@link #createDataTypeAttr()} value that marks a {@link ExtID}. {@link ExtID#systemId()} is
 	 * stored in {@link #LONG_DATA} (it is random long and therefore large),
 	 * {@link ExtID#objectId()} is stored in {@link #VARCHAR_DATA}
 	 */
-	static final byte EXT_ID_TYPE = 70;
+	public static final byte EXT_ID_TYPE = 70;
 
 	/**
 	 * {@link Comparator} that compares {@link ObjectKey} by
@@ -592,52 +612,62 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	}
 
 	/**
+	 * Interface to access the actually coded flex data value.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface FlexDataValue {
+
+		/**
+		 * The encoding of the type of the value and the column that contains the data.
+		 */
+		byte getDataType() throws SQLException;
+
+		/**
+		 * The data from the {@link AbstractFlexDataManager#createLongTypeAttr()}.
+		 */
+		long getLongData() throws SQLException;
+
+		/**
+		 * The data from the {@link AbstractFlexDataManager#createDoubleDataAttr()}.
+		 */
+		double getDoubleData() throws SQLException;
+
+		/**
+		 * The data from the {@link AbstractFlexDataManager#createVarcharDataAttr()}.
+		 */
+		String getVarcharData() throws SQLException;
+
+		/**
+		 * The data from the {@link AbstractFlexDataManager#createClobDataAttr()}.
+		 */
+		String getClobData() throws SQLException;
+
+		/**
+		 * The data from the {@link AbstractFlexDataManager#createBlobDataAttr()}.
+		 */
+		BinaryData getBlobData() throws SQLException;
+
+	}
+
+	/**
 	 * {@link QueryResult} interface this {@link FlexDataManager} is able to
 	 * retrieve attribute values from.
 	 * 
 	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 	 */
-    public interface AttributeResult extends QueryResult {
-    	/**
-    	 * The name of the attribute this row contains the value.
-    	 */
-    	String getAttributeName() throws SQLException;
+	public interface AttributeResult extends QueryResult, FlexDataValue {
+
+		/**
+		 * The name of the attribute this row contains the value.
+		 */
+		String getAttributeName() throws SQLException;
 
 		/**
 		 * The minimum revision from which the row is valid.
 		 */
 		long getRevMin() throws SQLException;
 
-		/**
-		 * The encoding of the type of the value and the column that contains
-		 * the data.
-		 */
-    	byte getDataType() throws SQLException;
-    	
-    	/**
-    	 * The data from the {@link AbstractFlexDataManager#createLongTypeAttr()}.
-    	 */
-    	long getLongData() throws SQLException;
-    	
-    	/**
-    	 * The data from the {@link AbstractFlexDataManager#createDoubleDataAttr()}.
-    	 */
-    	double getDoubleData() throws SQLException;
-    	
-    	/**
-    	 * The data from the {@link AbstractFlexDataManager#createVarcharDataAttr()}.
-    	 */
-    	String getVarcharData() throws SQLException;
-    	
-    	/**
-    	 * The data from the {@link AbstractFlexDataManager#createClobDataAttr()}.
-    	 */
-    	String getClobData() throws SQLException;
-    	
-        /**
-         * The data from the {@link AbstractFlexDataManager#createBlobDataAttr()}.
-         */
-        BinaryData getBlobData() throws SQLException;
     }
     
 	static abstract class AttributeResultSetWrapper extends ResultSetWrapper implements AttributeResult {
@@ -1054,7 +1084,7 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				ge(column(tableAlias, BasicTypes.REV_MAX_DB_NAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT)),
 				le(column(tableAlias, BasicTypes.REV_MIN_DB_NAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT))
 				);
-			List<SQLOrder> order = orders(order(false, column(tableAlias, IDENTIFIER_DBNAME)));
+				List<SQLOrder> order = orders(order(column(tableAlias, IDENTIFIER_DBNAME)));
 			SQLSelect select = select(columns, from, where, order);
 			select.setNoBlockHint(true);
 			List<Parameter> parameters = new ArrayList<>();
@@ -1407,46 +1437,41 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			int retry = sqlDialect.retryCount();
 			while (true) {
 				PooledConnection readConnection = this.connectionPool.borrowReadConnection();
-				try {
-					GetBulkAttributesStatement.BulkAttributeResult res =
-						this.getBulkAttributesStatement.query(connectionPool, readConnection, branch, typeName,
-							bulkIds, dataRevision);
-					try {
-						Iterator<T> baseIt = bulkObjects.iterator();
+				try (GetBulkAttributesStatement.BulkAttributeResult res =
+					this.getBulkAttributesStatement.query(connectionPool, readConnection, branch, typeName,
+						bulkIds, dataRevision)) {
+					Iterator<T> baseIt = bulkObjects.iterator();
 
-						ImmutableFlexData flexData = null;
-						TLID currentId = null;
-						while (res.next()) {
-							TLID nextId = res.getObjectName();
-							if (!nextId.equals(currentId)) {
-								if (currentId != null) {
-									// Flush current data.
-									flushData(dataRevision, callback, keyMapping, baseIt, flexData, currentId);
-								}
-
-								// Construct new data.
-								currentId = nextId;
-								flexData = new ImmutableFlexData();
+					ImmutableFlexData flexData = null;
+					TLID currentId = null;
+					while (res.next()) {
+						TLID nextId = res.getObjectName();
+						if (!nextId.equals(currentId)) {
+							if (currentId != null) {
+								// Flush current data.
+								flushData(dataRevision, callback, keyMapping, baseIt, flexData, currentId);
 							}
 
-							assert flexData != null;
-							String name = res.getAttributeName();
-							long revMin = res.getRevMin();
-							Object value = fetchValue(res);
-
-							flexData.initAttributeValue(name, value, revMin);
+							// Construct new data.
+							currentId = nextId;
+							flexData = new ImmutableFlexData();
 						}
 
-						// flush last data
-						flushData(dataRevision, callback, keyMapping, baseIt, flexData, currentId);
+						assert flexData != null;
+						String name = res.getAttributeName();
+						long revMin = res.getRevMin();
+						Object value = fetchValue(res);
 
-						// skip objects without attributes
-						while (baseIt.hasNext()) {
-							T baseObject = baseIt.next();
-							callback.loadEmpty(dataRevision, baseObject);
-						}
-					} finally {
-						res.close();
+						flexData.initAttributeValue(name, value, revMin);
+					}
+
+					// flush last data
+					flushData(dataRevision, callback, keyMapping, baseIt, flexData, currentId);
+
+					// skip objects without attributes
+					while (baseIt.hasNext()) {
+						T baseObject = baseIt.next();
+						callback.loadEmpty(dataRevision, baseObject);
 					}
 					break;
 				} catch (SQLException sqx) {
@@ -1549,35 +1574,32 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				PooledConnection commitConnection = context.getConnection();
 				readConnection = commitConnection;
 			}
-			try {
-				AttributeResult res =
-					getHistoricAttributesStatement.query(connectionPool, readConnection, branch, type, id,
-						dataRevision);
-				try {
-					if (res.next()) {
-						AbstractFlexData flexData;
-						if (mutable) {
-							flexData = new MutableFlexData();
-						} else {
-							flexData = new ImmutableFlexData();
-						}
-						do {
-							String name = res.getAttributeName();
-							long revMin = res.getRevMin();
-							Object value = fetchValue(res);
-							flexData.initAttributeValue(name, value, revMin);
-						} while (res.next());
-						return flexData;
+			try (AttributeResult res =
+				getHistoricAttributesStatement.query(connectionPool, readConnection, branch, type, id,
+					dataRevision)) {
+				FlexData data;
+				if (res.next()) {
+					AbstractFlexData flexData;
+					if (mutable) {
+						flexData = new MutableFlexData();
 					} else {
-						if (mutable) {
-							return new MutableFlexData();
-						} else {
-							return NoFlexData.INSTANCE;
-						}
+						flexData = new ImmutableFlexData();
 					}
-				} finally {
-					res.close();
+					do {
+						String name = res.getAttributeName();
+						long revMin = res.getRevMin();
+						Object value = fetchValue(res);
+						flexData.initAttributeValue(name, value, revMin);
+					} while (res.next());
+					data = flexData;
+				} else {
+					if (mutable) {
+						data = new MutableFlexData();
+					} else {
+						data = NoFlexData.INSTANCE;
+					}
 				}
+				return data;
 			} catch (SQLException sqx) {
 				retry--;
 				readConnection.closeConnection(sqx);
@@ -1592,7 +1614,10 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 		}
 	}
 
-	public static Object fetchValue(AttributeResult resultSet) throws SQLException {
+	/**
+	 * Fetches the value from the given {@link FlexDataValue}.
+	 */
+	public static Object fetchValue(FlexDataValue resultSet) throws SQLException {
 		byte dataType = resultSet.getDataType();
 		switch (dataType) {
 		case STRING_TYPE: {
@@ -1841,9 +1866,9 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			args[clobDataIdx] = null;
 			args[blobDataIndex] = null;
 			if (value != null) {
-				throw new SQLException("Dont know how to store() a " + value.getClass());
+				throw new SQLException("Cannot store values of type '" + value.getClass() + "' to flex data.");
 			} else {
-				throw new IllegalArgumentException("Must not try to store null.");
+				throw new IllegalArgumentException("Must not try to store null to flex data.");
 			}
 		}
 	}

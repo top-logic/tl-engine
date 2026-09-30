@@ -8,7 +8,7 @@ package com.top_logic.mig.html;
 import java.util.Set;
 
 import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -18,7 +18,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class SelectionNaming extends AbstractModelNamingScheme<Set, SelectionNaming.Name> {
+public class SelectionNaming extends AbstractGlobalModelNamingScheme<Set, SelectionNaming.Name> {
 
 	/**
 	 * Name of the selection of a {@link SelectionModel}

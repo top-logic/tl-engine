@@ -58,7 +58,7 @@ public class CommandDispatcher {
 
 	/**
 	 * Command argument that prevents a user confirmation even for commands that have the
-	 * {@link com.top_logic.tool.boundsec.CommandHandler.Config#getConfirm()} option set.
+	 * {@link com.top_logic.tool.boundsec.CommandHandler.Config#getConfirmation()} option set.
 	 */
 	private static final TypedAnnotatable.Property<Boolean> COMMAND_APPROVED =
 		TypedAnnotatable.property(Boolean.class, "commandApproved", Boolean.FALSE);
@@ -92,7 +92,7 @@ public class CommandDispatcher {
 			ResKey message = CommandHandlerUtil.getConfirmKey(command, component, someArguments);
 			if (message != null) {
 				LayoutData layout =
-					DefaultLayoutData.newLayoutData(DisplayDimension.px(400), DisplayDimension.px(150));
+					DefaultLayoutData.newLayoutData(DisplayDimension.px(400), DisplayDimension.px(250));
 
 				HandlerResult suspended = HandlerResult.suspended();
 				Command continuation = suspended.resumeContinuation(COMMAND_APPROVED, Boolean.TRUE);
@@ -209,7 +209,7 @@ public class CommandDispatcher {
         	}
     
         	return theResult;
-		} catch (TopLogicException ex) {
+		} catch (I18NRuntimeException ex) {
 			HandlerResult error = new HandlerResult();
 			error.setException(ex);
 			return error;
@@ -234,7 +234,7 @@ public class CommandDispatcher {
 	 * When passing a command with approved arguments to the
 	 * {@link #dispatchCommand(CommandHandler, DisplayContext, LayoutComponent, Map)} method, no
 	 * user confirmation is requested, even if the command has the
-	 * {@link com.top_logic.tool.boundsec.CommandHandler.Config#getConfirm()} option set.
+	 * {@link com.top_logic.tool.boundsec.CommandHandler.Config#getConfirmation()} option set.
 	 * </p>
 	 * 
 	 * @param context
@@ -256,13 +256,16 @@ public class CommandDispatcher {
 		ResKey errorKey = getErrorKey(result);
 		if (errorKey != null) {
 			String failureMessage = context.getResources().getString(errorKey);
+			// Record the concrete failure text as a literal expected message. ExpectedFailureAction
+			// matches it as a literal substring by default (regexp mode is off), so no quoting is
+			// required.
 			failureExpectation.setExpectedFailureMessage(failureMessage);
 		}
 		return failureExpectation;
 	}
 
 	private ResKey getErrorKey(HandlerResult result) {
-		TopLogicException problem = result.getException();
+		I18NRuntimeException problem = result.getException();
 		if (problem != null) {
 			return getErrorKey(problem);
 		}
@@ -274,7 +277,7 @@ public class CommandDispatcher {
 		return null;
 	}
 
-	private ResKey getErrorKey(TopLogicException problem) {
+	private ResKey getErrorKey(I18NRuntimeException problem) {
 		ResKey errorKey;
 		errorKey = problem.getErrorKey();
 	
@@ -319,11 +322,21 @@ public class CommandDispatcher {
      * @return an {@link ExecutableState} containing information about the executability of the command
      */
     public static final ExecutableState resolveExecutableState(CommandHandler aCommand, LayoutComponent aChecker, Map<String, Object> someArguments) {
-		if (!ComponentUtil.isValid(aChecker.getModel())) {
+		Object componentModel = aChecker.getModel();
+		if (!ComponentUtil.isValid(componentModel)) {
 			return ExecutableState.NO_EXEC_INVALID;
 		}
 
 		Object model = CommandHandlerUtil.getTargetModel(aCommand, aChecker, someArguments);
+		if (model != componentModel) {
+			// Command doesn't operate on the components model.
+			if (!ComponentUtil.isValid(model)) {
+				return ExecutableState.NO_EXEC_INVALID;
+			}
+		} else {
+			// Validity of component model already checked.
+		}
+
 		ExecutableState commandState = aCommand.isExecutable(aChecker, model, someArguments);
 		if (!commandState.isExecutable()) {
 			return commandState;

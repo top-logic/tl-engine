@@ -29,6 +29,7 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -39,7 +40,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Default configurable model builder for {@link AttributedSearchComponent}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class DefaultConfigurableSearchModelBuilder<C extends DefaultConfigurableSearchModelBuilder.Config>
 		extends AbstractExtendedSearchModelBuilder
@@ -48,7 +49,7 @@ public class DefaultConfigurableSearchModelBuilder<C extends DefaultConfigurable
 	/**
 	 * Configuration just holds the different {@link ElementConfig}s.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config extends PolymorphicConfiguration<DefaultConfigurableSearchModelBuilder<?>> {
 
@@ -64,7 +65,7 @@ public class DefaultConfigurableSearchModelBuilder<C extends DefaultConfigurable
 	/**
 	 * Search configuration for one kind of business object.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface ElementConfig extends NamedConfiguration {
 
@@ -225,7 +226,7 @@ public class DefaultConfigurableSearchModelBuilder<C extends DefaultConfigurable
 
 	/** The {@link KnowledgeBase} to use. */
 	protected final KnowledgeBase getKnowledgeBase() {
-		return KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		return PersistencyLayer.getKnowledgeBase();
 	}
 
 	/** The KO-type configured for the given {@link TLClass}. */

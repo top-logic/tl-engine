@@ -323,6 +323,74 @@ public class TestDeletion extends AbstractDBKnowledgeBaseTest {
 		rollback(tx);
 	}
 
+	/**
+	 * Test that deleting a referenced object that is contained in a
+	 * {@link DeletionPolicy#DELETE_REFERER} reference causes deleting an referrer which is created
+	 * in the delete revision.
+	 */
+	public void testDeleteNewReferrer() {
+		{
+			Transaction createTx = begin();
+			KnowledgeObject reference = newD("reference");
+			createTx.commit();
+
+			Transaction tx = begin();
+			KnowledgeObject referer = newE("referer");
+			referer.setAttributeValue(REFERENCE_DELETE_POLICY_NAME, reference);
+			reference.delete();
+			tx.commit();
+
+			assertFalse(reference.isAlive());
+			assertFalse("Reference is a 'delete referer' reference.", referer.isAlive());
+		}
+		{
+			Transaction tx = begin();
+			KnowledgeObject reference = newD("reference");
+			KnowledgeObject referer = newF("referer");
+			referer.setAttributeValue(REFERENCE_DELETE_POLICY_CONTAINER_NAME, reference);
+			reference.delete();
+			tx.commit();
+
+			assertFalse(reference.isAlive());
+			assertFalse("Reference is a 'delete referer' reference.", referer.isAlive());
+		}
+		{
+			Transaction createTx = begin();
+			KnowledgeObject reference1 = newD("reference");
+			KnowledgeObject reference2 = newD("reference2");
+			createTx.commit();
+
+			Transaction tx = begin();
+			KnowledgeObject referer = newE("referer");
+			referer.setAttributeValue(REFERENCE_DELETE_POLICY_NAME, reference1);
+			KnowledgeObject referer2 = newE("referer2");
+			referer2.setAttributeValue(REFERENCE_DELETE_POLICY_NAME, reference2);
+			kb().deleteAll(list(reference1, reference2));
+			tx.commit();
+
+			assertFalse(reference1.isAlive());
+			assertFalse(reference2.isAlive());
+			assertFalse("Reference is a 'delete referer' reference.", referer.isAlive());
+			assertFalse("Reference is a 'delete referer' reference.", referer2.isAlive());
+		}
+		{
+			Transaction tx = begin();
+			KnowledgeObject reference1 = newD("reference");
+			KnowledgeObject reference2 = newD("reference2");
+			KnowledgeObject referer = newF("referer");
+			KnowledgeObject referer2 = newE("referer2");
+			referer.setAttributeValue(REFERENCE_DELETE_POLICY_CONTAINER_NAME, reference1);
+			referer2.setAttributeValue(REFERENCE_DELETE_POLICY_NAME, reference2);
+			kb().deleteAll(list(reference1, reference2));
+			tx.commit();
+
+			assertFalse(reference1.isAlive());
+			assertFalse(reference2.isAlive());
+			assertFalse("Reference is a 'delete referer' reference.", referer.isAlive());
+			assertFalse("Reference is a 'delete referer' reference.", referer2.isAlive());
+		}
+	}
+
 	public static Test suite() {
 		return suiteDefaultDB(TestDeletion.class);
 	}

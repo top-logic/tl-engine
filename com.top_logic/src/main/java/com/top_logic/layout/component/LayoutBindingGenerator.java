@@ -12,6 +12,7 @@ import org.w3c.dom.NodeList;
 
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.generate.CodeUtil;
 import com.top_logic.basic.generate.JavaGenerator;
 import com.top_logic.layout.processor.LayoutModelConstants;
@@ -64,8 +65,8 @@ public final class LayoutBindingGenerator extends JavaGenerator {
 		line(" * ");
 		line(" * <p>");
 		Element rootComponent = applicationLayout.getDocumentElement();
-		String rootDefinitionName = rootComponent.getAttributeNS(LayoutModelConstants.ANNOTATION_NS, LayoutModelConstants.DEFINITION_FILE_ANNOTATION_ATTR);
-		String rootDefinitionVersion = rootComponent.getAttributeNS(LayoutModelConstants.ANNOTATION_NS, LayoutModelConstants.DEFINITION_VERSION_ANNOTATION_ATTR);
+		String rootDefinitionName = rootComponent.getAttributeNS(ConfigurationReader.ANNOTATION_NS, ConfigurationReader.DEFINITION_FILE_ANNOTATION_ATTR);
+		String rootDefinitionVersion = rootComponent.getAttributeNS(ConfigurationReader.ANNOTATION_NS, LayoutModelConstants.DEFINITION_VERSION_ANNOTATION_ATTR);
 		line(" * This file was generated from declaration <code>" + 
 				stripCommonPrefix(outputPath, rootDefinitionName) + "</code> (" + rootDefinitionVersion + ").");
 		line(" * </p>");
@@ -97,9 +98,9 @@ public final class LayoutBindingGenerator extends JavaGenerator {
 			for (Node parentOrSelf = component; parentOrSelf != null; parentOrSelf = parentOrSelf.getParentNode()) {
 				if (parentOrSelf.getNodeType() == Node.ELEMENT_NODE) {
 					Element parentOrSelfElement = (Element) parentOrSelf;
-					if (parentOrSelfElement.hasAttributeNS(LayoutModelConstants.ANNOTATION_NS, LayoutModelConstants.DEFINITION_FILE_ANNOTATION_ATTR)) {
-						String definitionPath = parentOrSelfElement.getAttributeNS(LayoutModelConstants.ANNOTATION_NS, LayoutModelConstants.DEFINITION_FILE_ANNOTATION_ATTR);
-						String definitionVersion = parentOrSelfElement.getAttributeNS(LayoutModelConstants.ANNOTATION_NS, LayoutModelConstants.DEFINITION_VERSION_ANNOTATION_ATTR);
+					if (parentOrSelfElement.hasAttributeNS(ConfigurationReader.ANNOTATION_NS, ConfigurationReader.DEFINITION_FILE_ANNOTATION_ATTR)) {
+						String definitionPath = parentOrSelfElement.getAttributeNS(ConfigurationReader.ANNOTATION_NS, ConfigurationReader.DEFINITION_FILE_ANNOTATION_ATTR);
+						String definitionVersion = parentOrSelfElement.getAttributeNS(ConfigurationReader.ANNOTATION_NS, LayoutModelConstants.DEFINITION_VERSION_ANNOTATION_ATTR);
 						if (StringServices.isEmpty(definitionVersion)) {
 							definitionVersion = "no revision information";
 						}

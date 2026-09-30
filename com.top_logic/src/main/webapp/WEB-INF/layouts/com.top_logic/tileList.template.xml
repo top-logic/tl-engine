@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.mig.html.layout.tiles.TileComponentName">
+	<properties extends="com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.InAppSecurityLayoutConfig, com.top_logic.mig.html.layout.tiles.TileComponentName, com.top_logic.mig.html.layout.tiles.component.TileListComponent$ContextMenuButtons">
 		<annotations>
 			<display-inherited value="APPEND"/>
 
 			<display-order>
 				<value>
 					<property name="name"/>
+					<property name="types"/>
 					<property name="model"/>
 					<property name="modelBuilder"/>
 					<property name="preview"/>
 					<property name="noCardKey"/>
-					<property name="securityDomain"/>
+
 					<property name="securityObject"/>
 					<property name="contextMenuButtons"/>
 					<property name="buttons"/>
@@ -20,6 +21,12 @@
 			</display-order>
 		</annotations>
 
+		<property name="types"
+			element-type="com.top_logic.model.util.TLModelPartRef"
+			type="List"
+		>
+			<format value="com.top_logic.model.util.TLModelPartRef$CommaSeparatedTLModelPartRefs"/>
+		</property>
 		<property name="model"
 			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
 			type="com.top_logic.layout.ModelSpec"
@@ -33,15 +40,9 @@
 		</property>
 		<property name="buttons"
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			instance-type="com.top_logic.tool.boundsec.CommandHandler"
 			type="List"
 		>
-			<acceptable-classifiers value="list, commons"/>
-		</property>
-		<property name="contextMenuButtons"
-			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
-			type="List"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
 			<acceptable-classifiers value="list, commons"/>
 		</property>
 		<property name="preview"
@@ -65,27 +66,10 @@
 			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplateDefault"/>
 			<layout-templates value="com.top_logic/placeholder.template.xml"/>
 		</property>
-		<property name="securityDomain"
-			default="SecurityStructure"
-			type="String"
-		>
-			<nullable/>
-			<options
-				fun="com.top_logic.tool.boundsec.manager.SecurityStructures"
-				mapping="com.top_logic.model.config.TLModelPartMapping"
-			/>
-		</property>
-		<property name="helpID"
-			type="String"
-		>
-			<property-editor value="com.top_logic.layout.help.UseHelpEditor"/>
-			<value-initializer value="com.top_logic.layout.form.values.edit.initializer.UUIDInitializer"/>
-		</property>
 	</properties>
 
 	<securityLayout name="ContextList"
 		helpID="${helpID}"
-		securityDomain="${securityDomain}"
 		titleKey="${name}"
 	>
 		<component class="com.top_logic.mig.html.layout.tiles.ContextTileComponent"
@@ -104,6 +88,7 @@
 				securityObject="${securityObject}"
 				tilePreview="${preview}"
 				titleKey="${name}"
+				types="${types}"
 			>
 				<buttons>
 					${buttons}

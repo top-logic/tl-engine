@@ -6,6 +6,7 @@
 package com.top_logic.model.wysiwyg.storage;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -17,6 +18,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey HASH_ALGORITHM_ERROR;
 
 	public static ResKey READ_FILE_DATA_ERROR;
+
+	/** @en Error transforming ''{0}'' to structured text. */
+	public static ResKey1 ERROR_CREATING_STRUCTURED_TEXT__INPUT;
 
 	static {
 		initConstants(I18NConstants.class);

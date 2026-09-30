@@ -56,11 +56,6 @@ public class DocumentColumn extends ColumnInfo {
 	}
 
 	@Override
-	protected void setExcelRenderer(ColumnConfiguration column) {
-		// No information.
-	}
-
-	@Override
 	protected void setRenderer(ColumnConfiguration column) {
 		column.setRenderer(DocumentDownloadRenderer.INSTANCE);
 	}

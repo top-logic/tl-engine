@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model>
+	<module name="test.com.top_logic.element.changelog.TestLastChangeRevision">
+		<class name="Item">
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<property name="title"
+					type="tl.model.i18n:I18NString"
+				/>
+				<reference name="single"
+					type="Item"
+				/>
+				<reference name="many"
+					multiple="true"
+					type="Item"
+				/>
+				<reference name="children"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Item"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -124,8 +124,9 @@ public class TestLayoutStorage extends BasicTestCase {
 	private void writeConfigTo(File file, LayoutComponent.Config config) throws IOException, FileNotFoundException {
 		try (FileOutputStream fout = new FileOutputStream(file)) {
 			try (Writer out = new OutputStreamWriter(fout, StringServices.CHARSET_UTF_8)) {
-				ConfigurationWriter confWriter = new ConfigurationWriter(out);
-				confWriter.write(LayoutComponent.Config.COMPONENT, LayoutComponent.Config.class, config);
+				try (ConfigurationWriter confWriter = new ConfigurationWriter(out)) {
+					confWriter.write(LayoutComponent.Config.COMPONENT, LayoutComponent.Config.class, config);
+				}
 			} catch (XMLStreamException exception) {
 				throw new IOException(exception);
 			}

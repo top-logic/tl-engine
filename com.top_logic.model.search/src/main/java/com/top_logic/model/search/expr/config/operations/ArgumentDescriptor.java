@@ -5,16 +5,56 @@
  */
 package com.top_logic.model.search.expr.config.operations;
 
+import java.util.Collection;
+
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.Argument;
 
 /**
- * Description of arguments of a {@link MethodBuilder}.
+ * Describes arguments of a <i>TLScript</i> function.
  * 
  * @see MethodBuilder#build(com.top_logic.model.search.expr.config.dom.Expr.Method, Argument[])
  */
 public interface ArgumentDescriptor {
+
+	/**
+	 * The maximum number of arguments, or <code>-1</code> for an unlimited number of arguments.
+	 */
+	int getMaxArgCnt();
+
+	/**
+	 * The name of the argument with the given position.
+	 * 
+	 * @param n
+	 *        The index of the argument.
+	 */
+	String getArgumentName(int n);
+
+	/**
+	 * The index of the argument with the given name.
+	 * 
+	 * @param name
+	 *        The name of the argument.
+	 * 
+	 * @return The index of the argument with the given name, or <code>-1</code> if no such argument
+	 *         is known.
+	 */
+	int getArgumentIndex(String name);
+
+	/**
+	 * The default value to use for the argument with the given index, or <code>null</code> if this
+	 * is a mandatory argument.
+	 * 
+	 * @param n
+	 *        The index of the argument.
+	 */
+	SearchExpression getDefaultValue(int n);
+
+	/**
+	 * The list of all argument names known.
+	 */
+	Collection<String> getArgumentNames();
 
 	/**
 	 * Unwraps arguments making positional arguments from potentially named arguments.

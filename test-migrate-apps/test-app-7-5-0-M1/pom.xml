@@ -5,17 +5,15 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>test-migrate-apps</artifactId>
-		<version>7.9.0-SNAPSHOT</version>
+		<version>8.0.0-SNAPSHOT</version>
 	</parent>
 	
 	<artifactId>test-app-7-5-0-M1</artifactId>
+	<name>${project.artifactId}</name>
 	<url>https://github.com/top-logic/tl-engine/</url>
 	
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
-		
-		<!-- Only for test, never deploy. -->
-		<tl.app.skip>true</tl.app.skip>
 	</properties>
 
 	<dependencies>
@@ -48,10 +46,6 @@
 			<groupId>com.top-logic</groupId>
       		<artifactId>tl-themes-core</artifactId>
     	</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-themes-dezent</artifactId>
-		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-doc</artifactId>

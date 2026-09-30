@@ -143,8 +143,6 @@ public class AssistantMultiFileUploadComponent extends FileUploadComponent {
 	 */
     public AssistantMultiFileUploadComponent(InstantiationContext context, Config atts) throws ConfigurationException {
     	super(context, atts);
-    	
-    	alwaysReloadButtons = true;
     }
 
     @Override

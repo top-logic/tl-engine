@@ -26,6 +26,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
@@ -142,10 +143,10 @@ public class PersonGroupComponent extends EditComponent {
             // Check allowance on the boundobject of the group if available
             boolean allowed = true;
             if (theBO == null) {
-                allowed = this.allow(SimpleBoundCommandGroup.WRITE);
+                allowed = BoundChecker.allowCommand(this, SimpleBoundCommandGroup.WRITE, this.getModel());
             }
             else {
-                allowed = this.allow(SimpleBoundCommandGroup.WRITE, theBO);
+                allowed = BoundChecker.allowCommandOnSecurityObject(this, SimpleBoundCommandGroup.WRITE, theBO);
             }
 
             if (!allowed) {
@@ -165,7 +166,8 @@ public class PersonGroupComponent extends EditComponent {
      * @return true if aCmdGroup is allowed in the BoundObject hierarchy of aRoot
      */
     protected boolean allowInHierarchy(BoundCommandGroup aCmdGroup, BoundObject aRoot, TLContext aContext) {
-        if (this.checkAccess(aContext, aRoot, aCmdGroup)) {
+		Person user = aContext.currentUser();
+		if (this.allow(user, aRoot, aCmdGroup)) {
             return true;
         }
 
@@ -175,7 +177,7 @@ public class PersonGroupComponent extends EditComponent {
             Iterator theChildrenIt = theChildren.iterator();
             while (theChildrenIt.hasNext() && !allowed) {
                 BoundObject theBO = (BoundObject) theChildrenIt.next();
-                allowed = this.checkAccess(aContext, theBO, aCmdGroup);
+				allowed = this.allow(user, theBO, aCmdGroup);
             }
         }
 

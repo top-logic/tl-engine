@@ -24,7 +24,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * Build up the list of sensors relevant to the user.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class SensorListModelBuilder extends AbstractConfiguredInstance<SensorListModelBuilder.Config>
 		implements ListModelBuilder {
@@ -32,7 +32,7 @@ public class SensorListModelBuilder extends AbstractConfiguredInstance<SensorLis
 	/**
 	 * Configuration of this model builder.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config extends PolymorphicConfiguration<SensorListModelBuilder> {
 
@@ -95,11 +95,6 @@ public class SensorListModelBuilder extends AbstractConfiguredInstance<SensorLis
     @Override
     public boolean supportsModel(Object aModel, LayoutComponent aComponent) {
         return (aModel == null);
-    }
-
-    @Override
-    public boolean supportsListElement(LayoutComponent aComponent, Object anElement) {
-        return (anElement instanceof Sensor);
     }
 
     @Override

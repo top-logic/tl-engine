@@ -17,11 +17,11 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Properties;
 
-import javax.mail.BodyPart;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Part;
+import jakarta.mail.BodyPart;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
+import jakarta.mail.Part;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -34,7 +34,7 @@ import com.top_logic.util.PropertyKey;
  * 
  * This class served some basic operations for implementing a {@link MailMeeting}.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractMailMeeting extends AbstractMailServerMessage implements MailMeeting {
 

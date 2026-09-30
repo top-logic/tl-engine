@@ -141,7 +141,7 @@ public class IconSelectControl extends AbstractFormFieldControl {
     
 	@Override
 	protected String getTypeCssClass() {
-		return "cIconSelect";
+		return "tl-icon-select";
 	}
 
 	@Override
@@ -238,6 +238,12 @@ public class IconSelectControl extends AbstractFormFieldControl {
 	{
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(STYLE_ATTR, (isOptionActive ? "display: inline; " : "display: none; "));
+		if (index >= 0) {
+			writeValueAttribute(out, fieldValue, index);
+		}
+		if (!disabled) {
+			writeOnClick(out, FormConstants.ICON_SELECT_CONTROL_CLASS, this, null);
+		}
 		out.endBeginTag();
 
 		XMLTag icon = resourceProvider.getImage(fieldValue, imageFlavor).toButton();
@@ -246,14 +252,9 @@ public class IconSelectControl extends AbstractFormFieldControl {
 			TRISTATE_CSS_CLASS,
 			resourceProvider.getCssClass(fieldValue),
 			disabled ? FormConstants.DISABLED_CSS_CLASS : null);
-		if (index >= 0) {
-			writeValueAttribute(out, fieldValue, index);
-		}
 
 		if (disabled) {
 			out.writeAttribute(DISABLED_ATTR, DISABLED_DISABLED_VALUE);
-		} else {
-			writeOnClick(out, FormConstants.ICON_SELECT_CONTROL_CLASS, this, null);
 		}
 		icon.endEmptyTag(context, out);
 

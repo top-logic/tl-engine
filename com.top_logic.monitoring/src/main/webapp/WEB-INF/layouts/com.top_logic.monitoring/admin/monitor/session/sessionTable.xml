@@ -5,7 +5,7 @@
 	model="selection(sessionSearch)"
 	modelBuilder="com.top_logic.monitoring.session.UserMonitorListModelBuilder"
 	resPrefix="admin.sys.session."
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 	selectable="false"
 	toolbar="true"
 >
@@ -48,6 +48,7 @@
 				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
 			/>
 			<column name="id"
+				accessor="com.top_logic.monitoring.session.SessionIdAccessor"
 				columnWidth="300px"
 				filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
 			/>
@@ -56,7 +57,10 @@
 	<buttons>
 		<button id="exportExcel"
 			class="com.top_logic.layout.table.export.ExcelExportHandler"
-			downloadNameKey="admin.sys.sysUserMonitor.export.download.name"
-		/>
+		>
+			<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+				downloadName="admin.sys.sysUserMonitor.export.download.name"
+			/>
+		</button>
 	</buttons>
 </tableView>

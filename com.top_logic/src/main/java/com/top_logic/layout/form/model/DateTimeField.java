@@ -21,6 +21,7 @@ import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.time.CalendarUtil;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.KeyEvent;
 import com.top_logic.layout.KeyEventListener;
@@ -449,7 +450,6 @@ public class DateTimeField extends CompositeField {
 	 */
 	public DateTimeField(String name, Date date, boolean immutable) {
 		super(name, I18NConstants.DATE_TIME_FIELD);
-		setImmutable(immutable);
 		DateTimeFieldProxy dateField = createDateField(date, immutable);
 		FormField dayField = createDayField(date, immutable);
 		ComplexField timeField = createTimeField(date, immutable);
@@ -464,6 +464,9 @@ public class DateTimeField extends CompositeField {
 		setControlProvider(DateTimeControl.CP.INSTANCE);
 		addErrorWarningsUpdater(dateField, dayField, timeField);
 		addListeners(dayField, timeField);
+
+		// Note: Must be done last, since it de-facto sets the state on an inner field.
+		setImmutable(immutable);
 	}
 
 	private void addListeners(final FormField dayField, final FormField timeField) {
@@ -785,6 +788,20 @@ public class DateTimeField extends CompositeField {
 			getTimeField().initializeField(toTime(defaultDate));
 		}
 		_listenerDeactivated = false;
+	}
+
+	@Override
+	public void setPlaceholder(Object value) {
+		super.setPlaceholder(value);
+
+		if (Utils.isEmpty(value)) {
+			getDayField().setPlaceholder(null);
+			getTimeField().setPlaceholder(null);
+		} else {
+			Date placeholderDate = (Date) value;
+			getDayField().setPlaceholder(toDay(placeholderDate));
+			getTimeField().setPlaceholder(toTime(placeholderDate));
+		}
 	}
 
 	@Override

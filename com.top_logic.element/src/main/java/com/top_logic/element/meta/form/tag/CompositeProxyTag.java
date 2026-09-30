@@ -9,9 +9,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
-import javax.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.PageContext;
+import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.layout.form.tag.AbstractProxyTag;
@@ -82,7 +82,7 @@ public class CompositeProxyTag extends AbstractProxyTag {
 	/**
 	 * Sets the {@link PageContext} for each {@link Tag} in {@link #tags}.
 	 * 
-	 * @see com.top_logic.layout.form.tag.AbstractProxyTag#setPageContext(javax.servlet.jsp.PageContext)
+	 * @see com.top_logic.layout.form.tag.AbstractProxyTag#setPageContext(jakarta.servlet.jsp.PageContext)
 	 */
 	@Override
 	public void setPageContext(PageContext aPageContext) {
@@ -96,7 +96,7 @@ public class CompositeProxyTag extends AbstractProxyTag {
 	/**
 	 * Sets the given parent to all {@link Tag}s in {@link #tags}.
 	 * 
-	 * @see com.top_logic.layout.form.tag.AbstractProxyTag#setParent(javax.servlet.jsp.tagext.Tag)
+	 * @see com.top_logic.layout.form.tag.AbstractProxyTag#setParent(jakarta.servlet.jsp.tagext.Tag)
 	 */
 	@Override
 	public void setParent(Tag aParent) {

@@ -20,7 +20,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class LastRevisionNamingScheme extends AbstractModelNamingScheme<Revision, LastRevisionNamingScheme.Name> {
+public class LastRevisionNamingScheme extends AbstractGlobalModelNamingScheme<Revision, LastRevisionNamingScheme.Name> {
 
 	/**
 	 * {@link ModelNamingScheme} for the last committed revision.

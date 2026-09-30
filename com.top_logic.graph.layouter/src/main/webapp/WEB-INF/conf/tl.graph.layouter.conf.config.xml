@@ -10,10 +10,4 @@
 			</instance>
 		</config>
 	</services>
-
-	<configs>
-		<config config:interface="com.top_logic.base.accesscontrol.ExternalAuthentication"
-			isEnabled="false"
-		/>
-	</configs>
 </application>

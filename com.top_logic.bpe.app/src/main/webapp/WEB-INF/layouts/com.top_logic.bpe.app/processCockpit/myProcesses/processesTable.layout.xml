@@ -13,9 +13,11 @@
 	>
 		<modelBuilder class="com.top_logic.bpe.app.layout.ProcessExecutionListModelBuilder"/>
 		<configurationProviders>
-			<configurationProvider class="com.top_logic.bpe.app.layout.tiles.ContextTableConfiguration"
-				name-of-export-file="bpe.app.ProcessExecution.Table.export.ProcessExecution"
-			/>
+			<configurationProvider class="com.top_logic.bpe.app.layout.tiles.ContextTableConfiguration">
+				<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+					downloadName="bpe.app.ProcessExecution.Table.export.ProcessExecution"
+				/>
+			</configurationProvider>
 			<sort-columns order="executionNumber:ascending"/>
 		</configurationProviders>
 		<component class="com.top_logic.mig.html.layout.LayoutReference$LayoutReferenceComponent"

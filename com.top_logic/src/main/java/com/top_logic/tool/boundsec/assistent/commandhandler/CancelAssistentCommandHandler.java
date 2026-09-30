@@ -46,7 +46,6 @@ public class CancelAssistentCommandHandler extends CloseModalDialogCommandHandle
         AssistentComponent theAssistent = (AssistentComponent) aComponent;
         theAssistent.dialogCanceled();
         theAssistent.invalidate();
-        theAssistent.invalidateButtons();
         return new HandlerResult();
     }
 

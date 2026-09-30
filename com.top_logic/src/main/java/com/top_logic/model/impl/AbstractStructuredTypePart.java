@@ -40,6 +40,8 @@ public abstract class AbstractStructuredTypePart<O extends TLStructuredType> ext
 
 	private boolean ordered;
 
+	private boolean _abstract;
+
 	private boolean bag;
 	
 	private TLStructuredTypePart _definition = this;
@@ -52,6 +54,23 @@ public abstract class AbstractStructuredTypePart<O extends TLStructuredType> ext
 		super(model, name);
 	}
 	
+	@Override
+	public void setName(String value) {
+		O owner = getOwner();
+		if (owner != null) {
+			List<TLStructuredTypePart> localParts = (List<TLStructuredTypePart>) owner.getLocalParts();
+			int index = localParts.indexOf(this);
+			// Note: The owner of this part keeps an index of all of its parts by name. When simply
+			// changing the name, this index gets corrupted. Since changing a part name is only
+			// possible, if the part is not owned, the part is temporarily removed from its owner.
+			TLStructuredTypePart self = localParts.remove(index);
+			super.setName(value);
+			localParts.add(index, self);
+		} else {
+			super.setName(value);
+		}
+	}
+
 	@Override
 	public boolean isMandatory() {
 		return this.mandatory;
@@ -80,6 +99,16 @@ public abstract class AbstractStructuredTypePart<O extends TLStructuredType> ext
 	@Override
 	public void setOrdered(boolean ordered) {
 		this.ordered = ordered;
+	}
+
+	@Override
+	public boolean isAbstract() {
+		return _abstract;
+	}
+
+	@Override
+	public void setAbstract(boolean value) {
+		_abstract = value;
 	}
 
 	@Override
@@ -123,16 +152,6 @@ public abstract class AbstractStructuredTypePart<O extends TLStructuredType> ext
 			_storage = CompatibilityService.getInstance().createStorage(this);
 		}
 		return _storage;
-	}
-
-	@Override
-	public final boolean isDerived() {
-		StorageDetail storage = getStorageImplementation();
-		if (storage == null) {
-			/* Happens during tests in "com.top_logic". */
-			return false;
-		}
-		return storage.isReadOnly();
 	}
 
 	@Override
@@ -229,4 +248,25 @@ public abstract class AbstractStructuredTypePart<O extends TLStructuredType> ext
 		return getDefaultsFromPrimaryGeneralization(annotationInterface, primaryGeneralization);
 	}
 
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case ABSTRACT_ATTR:
+				return isAbstract();
+			case BAG_ATTR:
+				return isBag();
+			case DEFINITION_ATTR:
+				return getDefinition();
+			case MANDATORY_ATTR:
+				return isMandatory();
+			case MULTIPLE_ATTR:
+				return isMultiple();
+			case ORDERED_ATTR:
+				return isOrdered();
+			case OVERRIDE_ATTR:
+				return isOverride();
+			default:
+				return super.tValue(part);
+		}
+	}
 }

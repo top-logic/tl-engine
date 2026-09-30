@@ -8,7 +8,7 @@
 	</layout:head>
 	<layout:body>
 		<form:formPage
-			image="theme:ICONS_UPLOAD60"
+			image="theme:ICONS_UPLOAD"
 			titleKeySuffix="title"
 		>
 			<p>

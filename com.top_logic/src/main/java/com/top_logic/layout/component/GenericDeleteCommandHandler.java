@@ -11,9 +11,10 @@ import java.util.Map;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.knowledge.service.KBUtils;
@@ -23,14 +24,16 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.form.component.CommitMessages;
 import com.top_logic.layout.form.component.edit.EditMode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
-import com.top_logic.tool.boundsec.CommandHandlerUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRuleManager;
@@ -60,8 +63,8 @@ public class GenericDeleteCommandHandler extends AbstractCommandHandler {
 		ThemeImage getDisabledImage();
 
 		@Override
-		@BooleanDefault(true)
-		boolean getConfirm();
+		@ItemDefault(DefaultDeleteConfirmation.class)
+		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 		@Override
 		@FormattedDefault(CommandHandlerFactory.DELETE_CLIQUE)
@@ -92,7 +95,7 @@ public class GenericDeleteCommandHandler extends AbstractCommandHandler {
 	public HandlerResult handleCommand(DisplayContext context, LayoutComponent component, Object model,
 			Map<String, Object> arguments) {
 		if (model == null) {
-			return HandlerResult.error("object.selection", GenericDeleteCommandHandler.class);
+			return HandlerResult.error(I18NConstants.NO_OBJECT_SELECTED);
         }
         
 		tryExecute(component, model);
@@ -116,7 +119,9 @@ public class GenericDeleteCommandHandler extends AbstractCommandHandler {
 	private void withEditLock(LayoutComponent component, Object model)
 			throws DataObjectException, KnowledgeBaseException {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx = kb.beginTransaction(CommitMessages.forObject(
+			I18NConstants.DELETED_TYPED__TYPE_OBJ,
+			I18NConstants.DELETED_OBJECT__OBJ, model))) {
 			inTransaction(component, model);
 			tx.commit();
 		}
@@ -199,11 +204,5 @@ public class GenericDeleteCommandHandler extends AbstractCommandHandler {
 	protected ExecutabilityRule intrinsicExecutability() {
 		return ExecutabilityRuleManager.getRule(ExecutabilityRuleManager.KEY_GENERAL_DELETE);
     }
-
-	@Override
-	protected ResKey getDefaultConfirmKey(LayoutComponent component, Map<String, Object> arguments,
-			Object targetModel) {
-		return CommandHandlerUtil.defaultDeletionConfirmKey(targetModel);
-	}
 
 }

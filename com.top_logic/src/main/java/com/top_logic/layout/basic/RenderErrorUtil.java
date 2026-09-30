@@ -7,8 +7,8 @@ package com.top_logic.layout.basic;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
 
 import com.top_logic.basic.ExceptionUtil;
 import com.top_logic.basic.Logger;

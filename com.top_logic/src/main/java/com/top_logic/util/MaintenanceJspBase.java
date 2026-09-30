@@ -13,10 +13,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspWriter;
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspWriter;
+import jakarta.servlet.jsp.PageContext;
 
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.CalledFromJSP;
@@ -33,7 +33,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.URLBuilder;
 import com.top_logic.layout.basic.CommandModel;
@@ -87,15 +87,15 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 	/** Whether time for execution should be logged. */
 	protected boolean LOG_TIME = false;
 
-	private static final String SPAN_START_BEGIN = "<span style=\"color:";
+	private static final String SPAN_START_BEGIN = "<span class=\"tl-";
 
 	private static final String SPAN_START_END = "\">";
 
-	private static final String SPAN_GREEN = SPAN_START_BEGIN + "green" + SPAN_START_END;
+	private static final String SPAN_SUCCESS = SPAN_START_BEGIN + "success-message" + SPAN_START_END;
 
-	private static final String SPAN_ORANGE = SPAN_START_BEGIN + "orange" + SPAN_START_END;
+	private static final String SPAN_WARNING = SPAN_START_BEGIN + "warning-message" + SPAN_START_END;
 
-	private static final String SPAN_RED = SPAN_START_BEGIN + "red" + SPAN_START_END;
+	private static final String SPAN_ERROR = SPAN_START_BEGIN + "error-message" + SPAN_START_END;
 
 	private static final String SPAN_END = "</span>";
 
@@ -113,7 +113,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 		if (LOG_PRINTS) {
 			Logger.error(string, getClass());
 		}
-		write(SPAN_RED + quote(string) + SPAN_END + "<br/>\n");
+		write(SPAN_ERROR + quote(string) + SPAN_END + "<br/>\n");
 	}
 
 	/**
@@ -134,7 +134,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 		if (LOG_PRINTS) {
 			Logger.error(string, error, getClass());
 		}
-		write(SPAN_RED + quote(string) + SPAN_END + "<br/>\n");
+		write(SPAN_ERROR + quote(string) + SPAN_END + "<br/>\n");
 	}
 
 	/**
@@ -144,7 +144,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 		if (LOG_PRINTS) {
 			Logger.warn(string, getClass());
 		}
-		write(SPAN_ORANGE + quote(string) + SPAN_END + "<br/>\n");
+		write(SPAN_WARNING + quote(string) + SPAN_END + "<br/>\n");
 	}
 
 	/**
@@ -154,7 +154,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 		if (LOG_PRINTS) {
 			Logger.warn(string, exception, getClass());
 		}
-		write(SPAN_ORANGE + quote(string) + SPAN_END + "<br/>\n");
+		write(SPAN_WARNING + quote(string) + SPAN_END + "<br/>\n");
 	}
 
 	/**
@@ -162,7 +162,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 	 */
 	protected void printInfo(String string) throws IOException {
 		printLog(string);
-		write(SPAN_GREEN + quote(string) + SPAN_END + "<br/>\n");
+		write(SPAN_SUCCESS + quote(string) + SPAN_END + "<br/>\n");
 	}
 
 	/**
@@ -170,7 +170,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 	 */
 	protected void printInfo(String string, Throwable error) throws IOException {
 		printLog(string, error);
-		write(SPAN_GREEN + quote(string) + SPAN_END + "<br/>\n");
+		write(SPAN_SUCCESS + quote(string) + SPAN_END + "<br/>\n");
 	}
 
 	/**
@@ -264,7 +264,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 	 *        If <code>true</code> actually no commit occurs.
 	 */
 	protected boolean commit(boolean simulate) throws IOException {
-		KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+		KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 		if (simulate) {
 			rollback();
 			printColor("blue", "Simulating OK.");
@@ -284,7 +284,7 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 	 * Reverts the {@link KnowledgeBase} changes.
 	 */
 	protected void rollback() {
-		KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().rollback();
+		PersistencyLayer.getKnowledgeBase().rollback();
 	}
 
 	/**

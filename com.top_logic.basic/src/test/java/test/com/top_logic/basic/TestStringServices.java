@@ -394,13 +394,13 @@ public class TestStringServices extends BasicTestCase {
         assertEquals(charToHex('{'), StringServices.toHexString("{"));
         assertEquals(charToHex('%'), StringServices.toHexString("%"));
         assertEquals(charToHex(';'), StringServices.toHexString(";"));
-        assertEquals(charToHex('µ'), StringServices.toHexString("µ"));
+        assertEquals(charToHex('Âµ'), StringServices.toHexString("Âµ"));
         assertEquals(charToHex('\"'), StringServices.toHexString("\""));
         assertEquals(charToHex('&'), StringServices.toHexString("&"));
         assertEquals(charToHex('/'), StringServices.toHexString("/"));
-        assertEquals(charToHex('ß'), StringServices.toHexString("ß"));
-        assertEquals(charToHex('²'), StringServices.toHexString("²"));
-        assertEquals(charToHex('´'), StringServices.toHexString("´"));
+        assertEquals(charToHex('ÃŸ'), StringServices.toHexString("ÃŸ"));
+        assertEquals(charToHex('Â²'), StringServices.toHexString("Â²"));
+        assertEquals(charToHex('Â´'), StringServices.toHexString("Â´"));
         assertEquals(charToHex(' '), StringServices.toHexString(" "));
         assertEquals(charToHex('\uaaaa'), StringServices.toHexString("\uaaaa"));
         assertEquals(charToHex('\ubbbb'), StringServices.toHexString("\ubbbb"));
@@ -517,7 +517,7 @@ public class TestStringServices extends BasicTestCase {
         assertEquals(
             "This needs no escape",
             StringServices.unEscape("This needs no escape"));
-        assertEquals("\n\rä\\x\\y", StringServices.unEscape("\\n\\rä\\x\\y"));
+        assertEquals("\n\rÃ¤\\x\\y", StringServices.unEscape("\\n\\rÃ¤\\x\\y"));
         assertEquals("\u1235\u4567", StringServices.unEscape("\\u1235\\u4567"));
     }
 
@@ -528,7 +528,7 @@ public class TestStringServices extends BasicTestCase {
         String str = "This needs no escape";
         assertEquals(str, StringServices.unEscape(StringServices.escape(str)));
 
-        str = "ÄÖÜ äöüß ^ô°áà~µ@|";
+        str = "Ã„Ã–Ãœ Ã¤Ã¶Ã¼ÃŸ ^Ã´Â°Ã¡Ã ~Âµ@|";
         assertEquals(str, StringServices.unEscape(StringServices.escape(str)));
 
         str = "\u1234\u2345\u3456\u4567\u5678\u6789\u7890";
@@ -648,15 +648,15 @@ public class TestStringServices extends BasicTestCase {
 		result = StringServices.cutString(text, 10, 50, map);
 		assertEquals(expect, result);
 
-        text = "Derzeit stehen ca. 40 Ressourcen zur Verfügung.";
-        expect = "Derzeit\nstehen ca.\n40\nRessourcen\nzur\nVerfügung.";
+        text = "Derzeit stehen ca. 40 Ressourcen zur VerfÃ¼gung.";
+        expect = "Derzeit\nstehen ca.\n40\nRessourcen\nzur\nVerfÃ¼gung.";
         result = StringServices.cutString(text, 20, 10, map);
         assertEquals(expect, result);
         result = StringServices.cutString(result, 20, 10, map);
         assertEquals(expect, result);
 
 		map = newFontSizeMap(FONT1);
-		expect = "Derzeit\nstehen ca.\n40\nRessource\nn zur\nVerfügung.";
+		expect = "Derzeit\nstehen ca.\n40\nRessource\nn zur\nVerfÃ¼gung.";
         result = StringServices.cutString(text, 20, 10, map);
         assertEquals(expect, result);
         result = StringServices.cutString(result, 20, 10, map);
@@ -777,15 +777,15 @@ public class TestStringServices extends BasicTestCase {
         result = StringServices.cutStringKeepSpaces(result, 4, 10, map);
         assertEquals(expect, result);
 
-        text = "Derzeit stehen ca. 40 Ressourcen zur Verfügung.";
-        expect = "Derzeit \nstehen ca. \n40 \nRessourcen \nzur \nVerfügung.";
+        text = "Derzeit stehen ca. 40 Ressourcen zur VerfÃ¼gung.";
+        expect = "Derzeit \nstehen ca. \n40 \nRessourcen \nzur \nVerfÃ¼gung.";
         result = StringServices.cutStringKeepSpaces(text, 20, 10, map);
         assertEquals(expect, result);
         result = StringServices.cutStringKeepSpaces(result, 20, 10, map);
         assertEquals(expect, result);
 
 		map = newFontSizeMap(FONT1);
-		expect = "Derzeit \nstehen ca. \n40 \nRessource\nn zur \nVerfügung.";
+		expect = "Derzeit \nstehen ca. \n40 \nRessource\nn zur \nVerfÃ¼gung.";
         result = StringServices.cutStringKeepSpaces(text, 20, 10, map);
         assertEquals(expect, result);
         result = StringServices.cutStringKeepSpaces(result, 20, 10, map);
@@ -1060,11 +1060,11 @@ public class TestStringServices extends BasicTestCase {
     public void testNullEmpty() {
         assertEquals("", StringServices.nonNull(null));
         assertEquals("", StringServices.nonNull(""));
-        assertEquals("änything", StringServices.nonNull("änything"));
+        assertEquals("Ã¤nything", StringServices.nonNull("Ã¤nything"));
 
         assertNull(StringServices.nonEmpty(null));
         assertNull(StringServices.nonEmpty(""));
-        assertEquals("änything", StringServices.nonEmpty("änything"));
+        assertEquals("Ã¤nything", StringServices.nonEmpty("Ã¤nything"));
     }
 
     /**
@@ -1521,7 +1521,6 @@ public class TestStringServices extends BasicTestCase {
 			assertEquals("a", runnable.getResult());
 		}
 		else {
-			replacer.stop();
 			throw new AssertionFailedError("String replacement is in infinity loop!");
 		}
 		
@@ -1535,7 +1534,6 @@ public class TestStringServices extends BasicTestCase {
 			assertEquals("", runnable.getResult());
 		}
 		else {
-			replacer.stop();
 			throw new AssertionFailedError("String replacement is in infinity loop!");
 		}
 		
@@ -1549,7 +1547,6 @@ public class TestStringServices extends BasicTestCase {
 			assertEquals("a", runnable.getResult());
 		}
 		else {
-			replacer.stop();
 			throw new AssertionFailedError("String replacement is in infinity loop!");
 		}
 		
@@ -1563,7 +1560,6 @@ public class TestStringServices extends BasicTestCase {
 			assertEquals("a;b;c", runnable.getResult());
 		}
 		else {
-			replacer.stop();
 			throw new AssertionFailedError("String replacement is in infinity loop!");
 		}
     }

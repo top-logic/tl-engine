@@ -5,6 +5,7 @@
  */
 package com.top_logic.tool.boundsec.gui;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -24,7 +25,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_NOT_A_ROLE__ELEMENT;
 
-	public static ResKey ERROR_SYSTEM_ROLE_CANNOT_BE_DETETED = legacyKey("admin.role.edit.deleteRole.disabled.isSystem");
+	@CustomKey("admin.role.edit.deleteRole.disabled.isSystem")
+	public static ResKey ERROR_SYSTEM_ROLE_CANNOT_BE_DETETED;
 
 	static {
 		initConstants(I18NConstants.class);

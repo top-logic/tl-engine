@@ -50,7 +50,7 @@ public class TestJournallableWrapper extends BasicTestCase {
      */
     public void testGetNullJournalEntry() throws Exception {
         KnowledgeBase       theKB = KBSetup.getKnowledgeBase();
-		Transaction tx = theKB.beginTransaction();
+		Transaction tx = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject adrKO = theKB.createKnowledgeObject(TestingJournallableWrapper.OBJECT_NAME);
 		tx.commit();
 		Object theO = WrapperFactory.getWrapper(adrKO);
@@ -58,7 +58,7 @@ public class TestJournallableWrapper extends BasicTestCase {
         
         assertNull(jAdr.getJournalEntry(null, null, null));
         
-		Transaction deleteTx = theKB.beginTransaction();
+		Transaction deleteTx = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
         theKB.delete(adrKO);
 		deleteTx.commit();
     }

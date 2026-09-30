@@ -40,6 +40,8 @@ import com.top_logic.doc.export.DocumentationImporter;
 import com.top_logic.doc.export.TLDocExportImportConstants;
 import com.top_logic.doc.model.Page;
 import com.top_logic.event.infoservice.InfoService;
+import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.form.values.edit.annotation.AcceptedTypes;
@@ -121,7 +123,7 @@ public class ImportDocumentationAsZipCommand extends AbstractImportExportDocumen
 				settings -> processImport(settings, page),
 				I18NConstants.IMPORT_DIALOG.key("title"),
 				DisplayDimension.px(300),
-				DisplayDimension.px(150));
+				DisplayDimension.px(250));
 		return importDialog.open(aContext);
 	}
 
@@ -137,7 +139,9 @@ public class ImportDocumentationAsZipCommand extends AbstractImportExportDocumen
 		importer.setMissingDocumentationHandler(
 			locale -> showNoImportFilesFoundMessage(locale, settings.getImportData().getName()));
 		BufferingProtocol protocol = new BufferingProtocol();
-		importer.doImport(protocol, target);
+		KBUtils.inTransaction(PersistencyLayer.getKnowledgeBase(), () -> {
+			importer.doImport(protocol, target);
+		});
 		protocol.checkErrors();
 		FileUtilities.deleteR(importRoot);
 		return HandlerResult.DEFAULT_RESULT;

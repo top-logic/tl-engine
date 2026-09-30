@@ -3,6 +3,7 @@
 <include name="com.top_logic.demo/structure/demoTypes/treeGrid/tree_grid.xml"
 	namePrefix=""
 	titleKey="layouts.demo.table.tree_grid_table.title"
+	treeSemantics="false"
 >
 	<modelBuilder class="com.top_logic.demo.model.types.util.CyclicDemoTreeBuilder"/>
 	<additionalButtons>

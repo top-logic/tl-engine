@@ -27,7 +27,6 @@ import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
-import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
@@ -71,7 +70,7 @@ public class ShowBookmarkLinkCommandHandler extends PreconditionCommandHandler {
 
 	@Override
 	protected CommandStep prepare(LayoutComponent component, Object model, Map<String, Object> arguments) {
-		BoundComponent targetComponent = targetView(component);
+		LayoutComponent targetComponent = targetView(component);
 
 		if (!GotoHandler.canShow(model, targetComponent)) {
 			return new Hide();
@@ -82,7 +81,7 @@ public class ShowBookmarkLinkCommandHandler extends PreconditionCommandHandler {
 			protected void doExecute(DisplayContext context) {
 				MessageBox.newBuilder(MessageType.INFO)
 					.title(I18NConstants.CREATE_BOOKMARK_TITLE__MODEL.fill(model))
-					.layout(new DefaultLayoutData(DisplayDimension.px(350), 100, DisplayDimension.px(200), 100,
+					.layout(new DefaultLayoutData(DisplayDimension.px(350), 100, DisplayDimension.px(300), 100,
 						Scrolling.AUTO))
 					.message(this::renderContents)
 					.buttons(MessageBox.button(ButtonType.CLOSE))
@@ -124,9 +123,9 @@ public class ShowBookmarkLinkCommandHandler extends PreconditionCommandHandler {
 		};
 	}
 
-	private BoundComponent targetView(LayoutComponent component) {
+	private LayoutComponent targetView(LayoutComponent component) {
 		if (((Config) getConfig()).shouldIncludeView()) {
-			return component instanceof BoundComponent ? (BoundComponent) component : null;
+			return component;
 		} else {
 			return null;
 		}

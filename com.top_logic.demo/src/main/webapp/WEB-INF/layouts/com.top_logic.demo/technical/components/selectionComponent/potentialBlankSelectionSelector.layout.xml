@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic/selector.template.xml"
 >
 	<arguments
@@ -23,5 +22,15 @@
 		<defaultSelectionProvider class="com.top_logic.model.search.providers.ListSelectionProviderByExpression">
 			<function>options -&gt; $options.filter(x -&gt; $x.get(`DemoTypes:DemoTypes.All#name`).stringContains("1"))</function>
 		</defaultSelectionProvider>
+		<selectionOnModelChange class="com.top_logic.model.search.providers.SelectionUpdaterByExpression">
+			<algorithm><![CDATA[model -> currentSelection -> {
+  options = $model.get(`tl.element:StructuredElementContainer#children`);
+  newOptions = $options.filter(x -> $x.get(`DemoTypes:DemoTypes.All#name`).stringContains("1")).union($currentSelection);
+  if ($currentSelection.size() < $newOptions.size(), {
+    info(#("Ihre Auswahl wurde nach Modellwechsel um die Standardauswahl erweitert."@de, "Your selection was expanded to include the standard selection after the model change."@en))
+  });
+  $newOptions;
+}]]></algorithm>
+		</selectionOnModelChange>
 	</arguments>
 </config:template-call>

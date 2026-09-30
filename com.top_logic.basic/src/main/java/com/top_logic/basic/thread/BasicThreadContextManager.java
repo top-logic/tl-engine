@@ -5,9 +5,9 @@
  */
 package com.top_logic.basic.thread;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.DefaultInteractionContext;
 import com.top_logic.basic.InteractionContext;
@@ -39,7 +39,7 @@ public class BasicThreadContextManager extends ThreadContextManager {
 	@Override
 	public InteractionContext internalNewInteraction(ServletContext servletContext, HttpServletRequest request,
 			HttpServletResponse response) {
-		return new DefaultInteractionContext();
+		return new DefaultInteractionContext(servletContext, request, response);
 	}
 
 	@Override

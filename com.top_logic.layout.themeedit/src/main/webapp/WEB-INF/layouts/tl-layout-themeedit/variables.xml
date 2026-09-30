@@ -15,7 +15,7 @@
 
 		<tableView name="${namePrefix}VariablesTable"
 			model="selection(${namePrefix}ThemeTable)"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			titleKey="${resPrefix}.variables.table.title"
 		>
 			<modelBuilder class="com.top_logic.layout.themeedit.browser.providers.VariableListModelBuilder"/>
@@ -83,8 +83,8 @@
 					titleKey="${resPrefix}.variables.editor.dialog.title"
 				>
 					<dialogInfo
-						height="400"
-						width="450"
+						height="500"
+						width="500"
 					>
 						<open-handler id="openVariableEditor"
 							disabledImage="theme:ICONS_BUTTON_EDIT_DISABLED"
@@ -103,9 +103,9 @@
 					</dialogInfo>
 					<components>
 						<form name="${namePrefix}VariablesEditor"
-							buttonComponent="${namePrefix}VariablesEditButtonBar"
+							buttonbar="true"
 							resetInvisible="true"
-							securityProviderClass="securityRoot"
+							securityObject="securityRoot"
 							titleKey="${resPrefix}.variables.editor.title"
 						>
 							<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
@@ -153,7 +153,6 @@
 								/>
 							</buttons>
 						</form>
-						<buttonbar name="${namePrefix}VariablesEditButtonBar"/>
 					</components>
 				</layout>
 				<layout name="${namePrefix}CreateVariableDialog"
@@ -162,16 +161,16 @@
 					<dialogInfo
 						defaultI18n="${resPrefix}.create.variable.dialog"
 						executability="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"
-						height="480"
+						height="580"
 						image="theme:ICON_PLUS"
-						width="600"
+						width="650"
 					/>
 					<components>
 						<form name="${namePrefix}CreateVariable"
-							buttonComponent="${namePrefix}CreateVariableButtonBar"
+							buttonbar="true"
 							model="selection(${namePrefix}VariablesTable)"
 							resetInvisible="true"
-							securityProviderClass="securityRoot"
+							securityObject="securityRoot"
 							titleKey="${resPrefix}.create.variable.title"
 						>
 							<modelBuilder class="com.top_logic.layout.themeedit.browser.providers.CreateThemeVariableFormBuilder"
@@ -213,7 +212,6 @@
 								/>
 							</buttons>
 						</form>
-						<buttonbar name="${namePrefix}CreateVariableButtonBar"/>
 					</components>
 				</layout>
 			</dialogs>
@@ -228,8 +226,8 @@
 				<button id="deleteThemeVariable"
 					class="com.top_logic.layout.themeedit.browser.providers.DeleteThemeVariableHandler"
 					clique="delete"
-					confirm="true"
 				>
+					<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 					<executability>
 						<rule class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"/>
 						<rule class="com.top_logic.layout.themeedit.browser.providers.NotInheritedThemeVariableRule"/>

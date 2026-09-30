@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import javax.mail.MessagingException;
-
 import junit.framework.Test;
+
+import jakarta.mail.MessagingException;
 
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
@@ -59,14 +59,14 @@ public class TestMailAttachment extends BasicTestCase {
 
 	public void testContentType()
 			throws MessagingException, IOException, InterruptedException {
-		Transaction createTx = _kb.beginTransaction();
+		Transaction createTx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TestMailFolderAwareWrapper wrapper = TestMailFolderAwareWrapper.newInstance(_kb, TestMailAttachment.class);
 		createTx.commit();
 
 		try {
 			checkContentType(wrapper);
 		} finally {
-			Transaction deleteTx = _kb.beginTransaction();
+			Transaction deleteTx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			wrapper.deleteWrapperAndFolder();
 			deleteTx.commit();
 		}
@@ -80,7 +80,7 @@ public class TestMailAttachment extends BasicTestCase {
 		List<Object> attachments = new ArrayList<>();
 		attachments.add(MailTestUtils.newAttachment("myFunnyAttachmentName", getImage()));
 
-		sendMail(subject, attachments, "MailWithAttachement");
+		sendMail(subject, attachments, "MailWithAttachment");
 		wrapper.fetchMails();
 		checkAttachment(wrapper);
 	}
@@ -104,9 +104,9 @@ public class TestMailAttachment extends BasicTestCase {
 		Wrapper[] contents = mailFolder.getContent().toArray(new Wrapper[0]);
 		for (Wrapper content : contents) {
 			IMAPMail mail = (IMAPMail) content;
-			Collection<Document> attachements = mail.getAttachements();
-			assertEquals(1, attachements.size());
-			Document attachment = attachements.iterator().next();
+			Collection<Document> attachments = mail.getAttachments();
+			assertEquals(1, attachments.size());
+			Document attachment = attachments.iterator().next();
 			assertEquals(IMAGE_CONTENT_TYPE, attachment.getContentType());
 		}
 	}

@@ -14,9 +14,7 @@ import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
-import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.knowledge.service.KBUtils;
-import com.top_logic.layout.form.FormContainer;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
@@ -107,23 +105,6 @@ public class MetaAttributeGUIHelper {
 	public static String internalID(TLStructuredTypePart attribute, TLObject object, String domain)
 			throws IllegalArgumentException {
 	    return internalID(ATT_PREFIX, attribute, object, domain);
-	}
-
-	/**
-	 * Creates a GUI ID for a {@link FormContainer} displaying the given {@link TLFormObject}.
-	 */
-	public static String getOverlayId(TLFormObject overlay) {
-		StringBuilder buffer = new StringBuilder();
-		if (overlay.isCreate()) {
-			buffer.append("create");
-			buffer.append(AttributeUpdateContainer.ID_SEPARATOR);
-			buffer.append(overlay.getDomain());
-		} else {
-			buffer.append("edit");
-			buffer.append(AttributeUpdateContainer.ID_SEPARATOR);
-			appendObjectId(buffer, overlay.getEditedObject());
-		}
-		return toFormId(buffer.toString());
 	}
 
 	private static void appendObjectId(StringBuilder buffer, TLObject object) {

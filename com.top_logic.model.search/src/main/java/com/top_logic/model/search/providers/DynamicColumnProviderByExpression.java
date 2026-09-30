@@ -19,25 +19,34 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.NonNullable;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.ValueInitializer;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.meta.form.CustomEditContext;
+import com.top_logic.element.meta.form.DefaultAttributeFormFactory;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.element.meta.form.FieldProviderAnnotation;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.component.ComponentUtil;
-import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.model.FieldMode;
+import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.initializer.UUIDInitializer;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.table.filter.AllCellsExist;
 import com.top_logic.layout.table.model.AbstractFieldProvider;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
+import com.top_logic.layout.table.model.ColumnContainer;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationProvider;
 import com.top_logic.layout.table.provider.ColumnInfo;
@@ -73,9 +82,13 @@ public class DynamicColumnProviderByExpression
 		Config.COLUMNS,
 		Config.COLUMN_LABEL,
 		Config.COLUMN_TYPE,
+		Config.COLUMN_MANDATORY,
+		Config.COLUMN_MULTIPLICITY,
 		Config.COLUMN_VISIBILITY,
 		Config.ACCESSOR,
 		Config.UPDATER,
+		Config.CAN_UPDATE,
+		Config.GROUP_LABEL,
 		Config.ANNOTATIONS,
 	})
 	public interface Config<I extends DynamicColumnProviderByExpression>
@@ -102,6 +115,16 @@ public class DynamicColumnProviderByExpression
 		String COLUMN_TYPE = "columnType";
 
 		/**
+		 * @see #getColumnMandatory()
+		 */
+		String COLUMN_MANDATORY = "columnMandatory";
+
+		/**
+		 * @see #getColumnMultiplicity()
+		 */
+		String COLUMN_MULTIPLICITY = "columnMultiplicity";
+
+		/**
 		 * @see #getColumnVisibility()
 		 */
 		String COLUMN_VISIBILITY = "columnVisibility";
@@ -115,6 +138,16 @@ public class DynamicColumnProviderByExpression
 		 * @see #getUpdater()
 		 */
 		String UPDATER = "updater";
+
+		/**
+		 * @see #getCanUpdate()
+		 */
+		String CAN_UPDATE = "canUpdate";
+
+		/**
+		 * @see #getGroupLabel()
+		 */
+		String GROUP_LABEL = "group-label";
 
 		/**
 		 * Common technical prefix that is added to each technical column name of all columns
@@ -160,13 +193,13 @@ public class DynamicColumnProviderByExpression
 		 * Optional function computing the column label.
 		 * 
 		 * <p>
-		 * The function expects two arguments. The first argument is one of the column objects as
-		 * returned by the {@link #getColumns()} function. The second argument is the component's
-		 * model.
+		 * The function expects two arguments. The first argument is the column object of the
+		 * current column as returned by the {@link #getColumns()} function. The second argument is
+		 * the component's model.
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>column -> model -> ...</code>
+		 * <code>column -> model -> $column.label()</code>
 		 * </pre>
 		 * 
 		 * <p>
@@ -188,28 +221,65 @@ public class DynamicColumnProviderByExpression
 		 * 
 		 * <p>
 		 * If all columns have the same value type, a model type literal can be given, e.g.
-		 * `tl.core:Integer`. If columns have different types, a function can be specified that
-		 * computes the column type.
+		 * <code>`tl.core:Integer`</code>. If columns have different types, a function can be
+		 * specified that computes the column type.
 		 * </p>
 		 * 
 		 * <p>
-		 * The type function expects two arguments. The first argument is one of the column objects
-		 * as returned by the {@link #getColumns()} function. The second argument is the component's
-		 * model.
+		 * The function expects two arguments. The first argument is the column object of the
+		 * current column as returned by the {@link #getColumns()} function. The second argument is
+		 * the component's model.
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>column -> model -> ...</code>
+		 * <code>column -> model -> `tl.core:Integer`</code>
 		 * </pre>
 		 * 
 		 * <p>
-		 * The result of the type function must be reference to a <i>TopLogic</i> type (a primitive
-		 * type such as `tl.core:Integer`, an enumeration or any other class type.
+		 * The result of the type function must be a reference to a <i>TopLogic</i> type (a
+		 * primitive type such as <code>`tl.core:Integer`</code>, an enumeration or any other class
+		 * type.
 		 * </p>
 		 */
 		@Name(COLUMN_TYPE)
 		@Mandatory
 		Expr getColumnType();
+
+		/**
+		 * Whether the column must contain a value.
+		 * 
+		 * <p>
+		 * The function expects two arguments. The first argument is the column object of the
+		 * current column as returned from the {@link #getColumns()} function. The second argument
+		 * is the component's model.
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>column -> model -> false</code>
+		 * </pre>
+		 */
+		@Name(COLUMN_MANDATORY)
+		@FormattedDefault("false")
+		@NonNullable
+		Expr getColumnMandatory();
+
+		/**
+		 * Whether the column can contain multiple values.
+		 * 
+		 * <p>
+		 * The function expects two arguments. The first argument is the column object of the
+		 * current column as returned by the {@link #getColumns()} function. The second argument is
+		 * the component's model.
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>column -> model -> false</code>
+		 * </pre>
+		 */
+		@Name(COLUMN_MULTIPLICITY)
+		@FormattedDefault("false")
+		@NonNullable
+		Expr getColumnMultiplicity();
 
 		/**
 		 * Function retrieving the column's value.
@@ -221,7 +291,7 @@ public class DynamicColumnProviderByExpression
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>row -> column -> model -> ...</code>
+		 * <code>row -> column -> model -> $row.get($column)</code>
 		 * </pre>
 		 * 
 		 * <p>
@@ -247,7 +317,7 @@ public class DynamicColumnProviderByExpression
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>row -> column -> value -> model -> ...</code>
+		 * <code>row -> column -> value -> model -> $row.set($column, $value)</code>
 		 * </pre>
 		 * 
 		 * <p>
@@ -259,10 +329,62 @@ public class DynamicColumnProviderByExpression
 		Expr getUpdater();
 
 		/**
+		 * Optional function to control field creation for editing in specific rows.
+		 * 
+		 * <p>
+		 * The function takes the row object as first argument, the column object as second
+		 * argument, and optionally the component's model as third argument:
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>row -> column -> model -> false</code>
+		 * </pre>
+		 * 
+		 * <p>
+		 * The function must return a boolean value indicating whether a field should be created for
+		 * the given row.
+		 * </p>
+		 * 
+		 * <p>
+		 * Only relevant if {@link #getUpdater()} is specified. In that case:
+		 * <ul>
+		 * <li>If no function is provided, fields are created for all rows</li>
+		 * <li>If a function is provided, it determines per row whether a field should be
+		 * created</li>
+		 * </ul>
+		 * If no updater is specified, this function is ignored and no fields are created.
+		 * </p>
+		 */
+		@Name(CAN_UPDATE)
+		@DynamicMode(fun = ShowIfUpdater.class, args = @Ref(UPDATER))
+		Expr getCanUpdate();
+
+		/**
 		 * The visibility of the created columns.
 		 */
 		@Name(COLUMN_VISIBILITY)
 		DisplayMode getColumnVisibility();
+
+		/**
+		 * Label of the group column.
+		 * 
+		 * <p>
+		 * When a group label is set, all dynamic columns are sorted into a group with this name.
+		 * </p>
+		 */
+		@Name(GROUP_LABEL)
+		@DisplayMinimized
+		ResKey getGroupLabel();
+
+		/**
+		 * Function that shows the field only if an updater is specified.
+		 */
+		class ShowIfUpdater extends Function1<FieldMode, Expr> {
+			@Override
+			public FieldMode apply(Expr updater) {
+				return updater != null ? FieldMode.ACTIVE : FieldMode.INVISIBLE;
+			}
+		}
 
 	}
 
@@ -279,6 +401,12 @@ public class DynamicColumnProviderByExpression
 	private QueryExecutor _accessor;
 
 	private QueryExecutor _updater;
+
+	private final QueryExecutor _canUpdate;
+
+	private final QueryExecutor _columnMandatory;
+
+	private final QueryExecutor _columnMultiplicity;
 
 	/**
 	 * Creates a {@link DynamicColumnProviderByExpression} from configuration.
@@ -297,7 +425,10 @@ public class DynamicColumnProviderByExpression
 		_columnLabel = config.getColumnLabel() == null ? null : QueryExecutor.compile(config.getColumnLabel());
 		_accessor = QueryExecutor.compile(config.getAccessor());
 		_updater = config.getUpdater() == null ? null : QueryExecutor.compile(config.getUpdater());
+		_canUpdate = QueryExecutor.compileOptional(config.getCanUpdate());
 		_columnType = QueryExecutor.compile(config.getColumnType());
+		_columnMandatory = QueryExecutor.compile(config.getColumnMandatory());
+		_columnMultiplicity = QueryExecutor.compile(config.getColumnMultiplicity());
 	}
 
 	@Override
@@ -308,14 +439,27 @@ public class DynamicColumnProviderByExpression
 
 		DisplayMode displayMode = getConfig().getColumnVisibility();
 
+		ColumnContainer<ColumnConfiguration> columnGroup = null;
+
 		List<String> dynamicColumnNames = new ArrayList<>();
-		String idPrefix = getConfig().getIdPrefix();
+		int id = 1;
 		for (Object columnModel : columns) {
 			if (columnModel == null) {
 				continue;
 			}
-			String columnName = idPrefix + "-" + id(columnModel);
-			ColumnConfiguration column = table.declareColumn(columnName);
+
+			if (id == 1 && withColumnGroup()) {
+				columnGroup = createColumnGroup(table);
+			}
+
+			String columnName = columnName(id(columnModel, id++));
+
+			ColumnConfiguration column;
+			if (columnGroup != null) {
+				column = columnGroup.declareColumn(columnName);
+			} else {
+				column = table.declareColumn(columnName);
+			}
 
 			dynamicColumnNames.add(columnName);
 
@@ -327,7 +471,10 @@ public class DynamicColumnProviderByExpression
 				labelKey = ResKey.text(MetaLabelProvider.INSTANCE.getLabel(label));
 			}
 
-			TLTypeContext baseType = new ConcreteTypeContext((TLType) _columnType.execute(columnModel, model));
+			boolean mandatory = SearchExpression.asBoolean(_columnMandatory.execute(columnModel, model));
+			boolean multiple = SearchExpression.asBoolean(_columnMultiplicity.execute(columnModel, model));
+			TLTypeContext baseType =
+				new ConcreteTypeContext((TLType) _columnType.execute(columnModel, model), mandatory, multiple);
 			if (!getConfig().getAnnotations().isEmpty()) {
 				baseType = new AnnotatedTypeContext(baseType, getConfig());
 			}
@@ -359,14 +506,16 @@ public class DynamicColumnProviderByExpression
 							return null;
 						}
 
+						if (!canUpdate(row, columnModel)) {
+							return null;
+						}
+
 						EditContext editContext = new CustomEditContext(type)
 							.setLabel(labelKey)
 							.setValue(accessor.getValue(row, columnName))
 							.setInTableContext(true);
 						FormMember field = fieldProvider.getFormField(editContext, columnName);
-						if (field instanceof FormField) {
-							((FormField) field).initializeField(editContext.getCorrectValues());
-						}
+						DefaultAttributeFormFactory.initLabel(field, editContext);
 						field.setStableIdSpecialCaseMarker(columnModel);
 						return field;
 					}
@@ -376,26 +525,45 @@ public class DynamicColumnProviderByExpression
 		}
 
 		if (displayMode.isDisplayed()) {
+			dynamicColumnNames.removeAll(table.getDefaultColumns());
 			table.setDefaultColumns(CollectionUtil.concat(table.getDefaultColumns(), dynamicColumnNames));
 		}
 	}
 
-	private String id(Object columnModel) {
-		if (columnModel instanceof TLObject) {
-			ObjectKey id = ((TLObject) columnModel).tId();
-			return id.getBranchContext() + "-" + id.getObjectName();
+	private boolean canUpdate(Object row, Object columnModel) {
+		if (_canUpdate == null) {
+			return true;
+		}
+		Object result = _canUpdate.execute(row, columnModel, _component.getModel());
+		return SearchExpression.asBoolean(result);
+	}
+
+	private boolean withColumnGroup() {
+		return getConfig().getGroupLabel() != null;
+	}
+
+	private ColumnConfiguration createColumnGroup(TableConfiguration table) {
+		ColumnConfiguration groupColumn = table.declareColumn(columnName("group"));
+		groupColumn.setColumnLabelKey(getConfig().getGroupLabel());
+		return groupColumn;
+	}
+
+	private String columnName(String suffix) {
+		return getConfig().getIdPrefix() + "-" + suffix;
+	}
+
+	private String id(Object columnModel, int localId) {
+		if (columnModel instanceof TLObject obj && !obj.tTransient()) {
+			ObjectKey id = obj.tId();
+			long rev = id.getHistoryContext();
+			return id.getBranchContext() + "-" + id.getObjectName() + (rev == Revision.CURRENT_REV ? "" : "-" + rev);
 		} else {
-			return columnModel.toString();
+			return Integer.toString(localId);
 		}
 	}
 
 	private Object label(Object columnModel, Object model) {
 		return _columnLabel == null ? columnModel : _columnLabel.execute(columnModel, model);
-	}
-
-	@Override
-	public void adaptDefaultColumn(ColumnConfiguration defaultColumn) {
-		// Ignore.
 	}
 
 	/**

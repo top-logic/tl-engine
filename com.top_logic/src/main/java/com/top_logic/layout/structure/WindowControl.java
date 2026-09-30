@@ -6,6 +6,7 @@
 package com.top_logic.layout.structure;
 
 import java.util.Map;
+import java.util.Objects;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.layout.DisplayDimension;
@@ -21,7 +22,7 @@ import com.top_logic.layout.layoutRenderer.WindowRenderer;
 public abstract class WindowControl<I extends WindowControl<?>> extends WrappingControl<I>
 		implements LayoutDataListener, MaximalityChangeListener {
 
-	private final WindowModel model;
+	private WindowModel _model;
 
 	/**
 	 * Creates a {@link WindowControl} based on the given {@link WindowModel} with the given parent.
@@ -32,95 +33,110 @@ public abstract class WindowControl<I extends WindowControl<?>> extends Wrapping
 	 */
 	protected WindowControl(WindowModel model, Map<String, ControlCommand> commandsByName) {
 		super(commandsByName);
-		if (model == null) {
-			throw new IllegalArgumentException("Model must not be 'null'.");
+		setWindowModel(model);
+	}
+
+	/**
+	 * Sets the given {@link WindowModel} as {@link #getWindowModel()}.
+	 * 
+	 * @param model
+	 *        New {@link WindowModel}.
+	 */
+	public void setWindowModel(WindowModel model) {
+		Objects.requireNonNull(model, "Window model must not be null.");
+
+		// Repaint control after window model change
+		requestRepaint();
+
+		if (_model != null) {
+			_model.removeListener(WindowModel.LAYOUT_DATA_PROPERTY, this);
 		}
-		this.model = model;
+		_model = model;
 		/* add listener directly during construction as otherwise events occurring in model are not
 		 * forwarded when the Control is not rendered. This is important especially for
 		 * DialogWindowControls as it deregisters itself when model is closed. (#6611) */
-		this.model.addListener(WindowModel.LAYOUT_DATA_PROPERTY, this);
+		_model.addListener(WindowModel.LAYOUT_DATA_PROPERTY, this);
 	}
 
 	/**
 	 * the {@link WindowModel} this control based on
 	 */
 	public final WindowModel getWindowModel() {
-		return model;
+		return _model;
 	}
 
 	@Override
 	public WindowModel getModel() {
-		return model;
+		return _model;
 	}
 
 	@Override
 	public final void setConstraint(LayoutData layoutData) {
-		model.setLayoutData(layoutData, false);
+		_model.setLayoutData(layoutData, false);
 	}
 
 	@Override
 	public final LayoutData getConstraint() {
-		return model.getLayoutData();
+		return _model.getLayoutData();
 	}
 
 	@Override
 	public void setSize(DisplayDimension width, DisplayDimension height) {
-		model.setLayoutData(model.getLayoutData().resized(width, height), true);
+		_model.setLayoutData(_model.getLayoutData().resized(width, height), true);
 	}
 
 	/**
 	 * This method returns the I18N of the title of this window.
 	 */
 	public final HTMLFragment getTitle() {
-		return model.getWindowTitle();
+		return _model.getWindowTitle();
 	}
 
 	/**
 	 * @see WindowModel#getBorderSize()
 	 */
 	public final int getLeftSize() {
-		return model.getBorderSize();
+		return _model.getBorderSize();
 	}
 
 	/**
 	 * @see WindowModel#getBorderSize()
 	 */
 	public final int getRightSize() {
-		return model.getBorderSize();
+		return _model.getBorderSize();
 	}
 
 	/**
 	 * @see WindowModel#getTitleBarHeight()
 	 */
 	public final int getTopSize() {
-		return model.getTitleBarHeight();
+		return _model.getTitleBarHeight();
 	}
 
 	/**
 	 * @see WindowModel#getBorderSize()
 	 */
 	public final int getBottomSize() {
-		return model.getBorderSize();
+		return _model.getBorderSize();
 	}
 
 	/**
 	 * @see WindowModel#isTitleBarShown()
 	 */
 	public final boolean isTitleBarShown() {
-		return model.isTitleBarShown();
+		return _model.isTitleBarShown();
 	}
 
 	@Override
-	protected void internalAttach() {
-		super.internalAttach();
-		model.addListener(WindowModel.MAXIMIZED_PROPERTY, this);
+	protected void attachRevalidated() {
+		super.attachRevalidated();
+		_model.addListener(WindowModel.MAXIMIZED_PROPERTY, this);
 	}
 
 	@Override
-	protected void internalDetach() {
-		model.removeListener(WindowModel.MAXIMIZED_PROPERTY, this);
-		super.internalDetach();
+	protected void detachInvalidated() {
+		_model.removeListener(WindowModel.MAXIMIZED_PROPERTY, this);
+		super.detachInvalidated();
 	}
 
 	@Override

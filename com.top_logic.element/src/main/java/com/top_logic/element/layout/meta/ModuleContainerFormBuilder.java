@@ -12,6 +12,7 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.meta.MetaElementTreeModelBuilder.ModuleContainer;
 import com.top_logic.element.layout.meta.ModuleContainerFormBuilder.EditModel;
+import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.model.util.TLModelNamingConvention;
@@ -27,7 +28,7 @@ public class ModuleContainerFormBuilder extends DeclarativeFormBuilder<ModuleCon
 	/**
 	 * Model of the displayed form.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	/**
 	 * Model of the displayed form.
@@ -71,7 +72,7 @@ public class ModuleContainerFormBuilder extends DeclarativeFormBuilder<ModuleCon
 		formModel.setName(name);
 		ResKey key = ResKey.fallback(TLModelNamingConvention.modelPartNameKey(name), ResKey.text(name));
 		formModel.setLabel(key);
-		formModel.setDescription(key.tooltip());
+		formModel.setDescription(new DefaultHtmlResKey(key.tooltip()));
 	}
 
 }

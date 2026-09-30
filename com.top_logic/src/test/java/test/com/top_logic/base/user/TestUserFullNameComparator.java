@@ -46,11 +46,11 @@ public class TestUserFullNameComparator extends BasicTestCase {
 
         DOUser wfm = DOUser.getInstance(
             new ExampleDataObject( attrNames,
-				new String[] { "Möller", "Wilfried", "wfm" }));
+				new String[] { "MÃ¶ller", "Wilfried", "wfm" }));
                         
         DOUser aum = DOUser.getInstance(
             new ExampleDataObject( attrNames,
-				new String[] { "Möller", "Auguste", "aum" }));
+				new String[] { "MÃ¶ller", "Auguste", "aum" }));
         
         DOUser anm = DOUser.getInstance(
              new ExampleDataObject( attrNames,
@@ -68,7 +68,7 @@ public class TestUserFullNameComparator extends BasicTestCase {
 		if (!list(Locale.getAvailableLocales()).contains(swedish)) {
 			fail("No test for usage of correct Locale available.");
 		}
-		/* In Sweden ö is an own letter at the end of the alphabet. */
+		/* In Sweden Ã¶ is an own letter at the end of the alphabet. */
 		testSort(swedish, list(alm, atm, anm, emy, aum, wfm));
 	}
 

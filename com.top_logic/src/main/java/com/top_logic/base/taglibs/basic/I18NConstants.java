@@ -5,6 +5,7 @@
  */
 package com.top_logic.base.taglibs.basic;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,7 +19,8 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey SCRIPT_RESOURCE_FILE = legacyKey("system.javascript.resources");
+	@CustomKey("system.javascript.resources")
+	public static ResKey SCRIPT_RESOURCE_FILE;
 
 	static {
 		initConstants(I18NConstants.class);

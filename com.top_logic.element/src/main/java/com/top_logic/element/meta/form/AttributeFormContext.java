@@ -404,10 +404,25 @@ public class AttributeFormContext extends FormContext {
 	 * @return A new {@link FormContainer} for the given {@link TLFormObject}.
 	 */
 	public FormContainer createFormContainerForOverlay(TLFormObject overlay) {
-		FormGroup result = new FormGroup(MetaAttributeGUIHelper.getOverlayId(overlay), getResources());
+		FormGroup result = new FormGroup(overlay.getFormId(), getResources());
 		overlay.initContainer(result);
 		result.set(OVERLAY, overlay);
 		return result;
+	}
+
+	/**
+	 * Determines whether a special {@link FormContainer} was created for the given overlay.
+	 * 
+	 * @param overlay
+	 *        The {@link TLFormObject} to check.
+	 * @return Whether a {@link FormContainer} was created via
+	 *         {@link #createFormContainerForOverlay(TLFormObject)}.
+	 * 
+	 * @see #createFormContainerForOverlay(TLFormObject)
+	 * @see TLFormObject#getFormContainer()
+	 */
+	public boolean hasOwnFormContainer(TLFormObject overlay) {
+		return overlay.internalContainer() != null;
 	}
 
 	/**

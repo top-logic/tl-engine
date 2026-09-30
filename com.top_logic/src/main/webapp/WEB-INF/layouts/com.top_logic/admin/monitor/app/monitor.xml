@@ -4,11 +4,11 @@
 <layout>
 	<components>
 		<component class="com.top_logic.util.monitor.ApplicationMonitorComponent"
-			buttonComponent="applMonitorButtons"
+			buttonbar="true"
 			name="applMonitor"
 			page="/jsp/layout/monitor/ApplicationMonitor.jsp"
 			resPrefix="util.maintenance."
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 		>
 			<buttons>
 				<include name="com.top_logic/license/license-buttons.xml"/>
@@ -66,9 +66,5 @@
 				</table>
 			</tables>
 		</component>
-
-		<buttonbar name="applMonitorButtons"
-			resPrefix="layouts.admin.technical.monitor.applMonitorButtons."
-		/>
 	</components>
 </layout>

@@ -59,8 +59,8 @@ public class CreateMigrationScriptTemplate extends XMain {
 	protected void doActualPerformance() throws Exception {
 		super.doActualPerformance();
 
-		String[] migrationModules = getMigrationModules();
-		if (migrationModules.length == 0) {
+		List<String> migrationModules = getMigrationModules();
+		if (migrationModules.isEmpty()) {
 			getProtocol().error(
 				"No migration modules configured, cannot create migration file (see com.top_logic.knowledge.service.migration.MigrationService.Config#getModules()).");
 			return;
@@ -98,7 +98,7 @@ public class CreateMigrationScriptTemplate extends XMain {
 		migration.setMigration(replayMigration);
 	}
 
-	private MigrationConfig newMigrationConfig(String[] migrationModules, File migrationFile) {
+	private MigrationConfig newMigrationConfig(List<String> migrationModules, File migrationFile) {
 		MigrationConfig migration = TypedConfiguration.newConfigItem(MigrationConfig.class);
 		for (String migrationModule : migrationModules) {
 			Version moduleVersion = getLargestVersion(migrationModule);
@@ -116,8 +116,8 @@ public class CreateMigrationScriptTemplate extends XMain {
 			return null;
 		}
 
-		Version[] allVersions = getAllVersions(getProtocol(), migrations);
-		return allVersions[allVersions.length - 1];
+		List<Version> allVersions = getAllVersions(getProtocol(), migrations);
+		return allVersions.get(allVersions.size() - 1);
 	}
 
 	@Override

@@ -13,9 +13,13 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.channel.ChannelSPI;
+import com.top_logic.layout.channel.linking.True;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.component.edit.EditMode;
+import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -40,6 +44,10 @@ public class SettingsComponent extends FormComponent implements EditMode, WithOu
 		@ClassDefault(SettingsComponent.class)
 		Class<? extends I> getImplementationClass();
 
+		@Override
+		@ItemDefault(True.class)
+		ModelSpec getEditMode();
+
 	}
 
 	/**
@@ -62,8 +70,17 @@ public class SettingsComponent extends FormComponent implements EditMode, WithOu
 		channels(LayoutComponent.MODEL_CHANNEL, EditMode.EDIT_MODE_SPI, WithOutputChannel.OUTPUT_SPI);
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return CHANNELS;
+	}
+
+	@Override
+	public FormContext createFormContext() {
+		FormContext result = super.createFormContext();
+		if (result != null) {
+			result.setImmutable(isInViewMode());
+		}
+		return result;
 	}
 
 	@Override
@@ -71,6 +88,18 @@ public class SettingsComponent extends FormComponent implements EditMode, WithOu
 		super.linkChannels(log);
 		EditMode.super.linkChannels(log);
 		WithOutputChannel.super.linkChannels(log);
+	}
+
+	@Override
+	public void handleComponentModeChange(boolean editMode) {
+		if (!hasFormContext()) {
+			return;
+		}
+		if (editMode) {
+			getFormContext().setImmutable(false);
+		} else {
+			getFormContext().setImmutable(true);
+		}
 	}
 
 }

@@ -21,7 +21,7 @@ import com.top_logic.util.Utils;
 /**
  * Reset the search input area to the state defined by a stored query.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ResetSearchCommandHandler extends AJAXCommandHandler {
 
@@ -65,11 +65,6 @@ public class ResetSearchCommandHandler extends AJAXCommandHandler {
 
         return HandlerResult.DEFAULT_RESULT;
 
-    }
-
-    @Override
-	public boolean needsConfirm() {
-        return true;
     }
 
     @Override

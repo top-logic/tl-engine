@@ -11,7 +11,6 @@ import com.top_logic.layout.component.TabComponent;
 import com.top_logic.layout.editor.LayoutTemplateUtils;
 import com.top_logic.mig.html.layout.I18NConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.mig.html.layout.tiles.component.InlinedTileComponent;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 
@@ -77,10 +76,6 @@ public class EditableComponentExecutability implements ExecutabilityRule {
 
 		if (component instanceof TabComponent) {
 			editedComponent = getSelectedCard((TabComponent) component);
-		} else if (component instanceof InlinedTileComponent) {
-			// Inlined components are not edited directly.
-			editedComponent =
-				LayoutTemplateUtils.getLayoutContextComponent(((InlinedTileComponent) component).getChild());
 		} else {
 			editedComponent = LayoutTemplateUtils.getLayoutContextComponent(component);
 		}

@@ -70,7 +70,7 @@ public class CreateTLEndReferenceProcessor extends AbstractConfiguredInstance<Cr
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
-			_util = context.get(Util.PROPERTY);
+			_util = context.getSQLUtils();
 			internalDoMigration(log, connection);
 		} catch (Exception ex) {
 			log.error("Creating part migration failed at " + getConfig().location(), ex);

@@ -104,7 +104,7 @@ public class TestDOXMLWriter extends BasicTestCase {
 
 		assertEquals("Schulte", theResultObject.getAttributeValue("Karl"));
 		assertEquals("Meier", theResultObject.getAttributeValue("Franz"));
-		assertEquals("Müller", theResultObject.getAttributeValue("Fritz"));
+		assertEquals("MÃ¼ller", theResultObject.getAttributeValue("Fritz"));
 
 		ExampleDataObject theInternalObject = (ExampleDataObject) theResultObject
 				.getAttributeValue("InternalObject");
@@ -129,7 +129,7 @@ public class TestDOXMLWriter extends BasicTestCase {
 		Map theMap = new HashMap();
 		theMap.put("Karl", "Schulte");
 		theMap.put("Franz", "Meier");
-		theMap.put("Fritz", "Müller");
+		theMap.put("Fritz", "MÃ¼ller");
 		theMap.put("InternalObject", this.createInternalDO());
 		return new TestingExampleDataObject(theMap);
 	}

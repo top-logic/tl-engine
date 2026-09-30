@@ -20,20 +20,20 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
-import com.top_logic.basic.config.annotation.defaults.ListDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.form.values.edit.InAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.AcceptableClassifiers;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.table.component.SelectableBuilderComponent;
 import com.top_logic.mig.html.ModelBuilder;
-import com.top_logic.mig.html.layout.ComponentResolver;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -59,10 +59,12 @@ public class TileListComponent extends SelectableBuilderComponent {
 		String CONTEXT_MENU_BUTTONS = "contextMenuButtons";
 
 		/**
-		 * All buttons on this component.
+		 * These commands are displayed in the burger menu of the tiles.
 		 */
 		@Options(fun = InAppImplementations.class)
+		@AcceptableClassifiers({ "list", "commons" })
 		@Name(CONTEXT_MENU_BUTTONS)
+		@Label("Tile context menu commands")
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> getContextMenuButtons();
 
 	}
@@ -98,10 +100,6 @@ public class TileListComponent extends SelectableBuilderComponent {
 		 */
 		@Name(NO_CARD_KEY)
 		ResKey getNoCardKey();
-
-		@Override
-		@ListDefault(SelectableContextTileResolver.class)
-		List<PolymorphicConfiguration<ComponentResolver>> getComponentResolvers();
 
 	}
 
@@ -184,8 +182,6 @@ public class TileListComponent extends SelectableBuilderComponent {
 			/**
 			 * Selects {@link #getBusinessObject()}. The {@link TileListComponent} has listener which steps
 			 * into the tile.
-			 * 
-			 * @see UpdateTileLayoutSelectionListener
 			 */
 			@Override
 			public void displayTile() {
@@ -212,7 +208,7 @@ public class TileListComponent extends SelectableBuilderComponent {
 				}
 				Resources resources = Resources.getInstance();
 				Object targetObject = getBusinessObject();
-				Map<String, Object> args = ContextMenuUtil.createArguments(targetObject);
+				Map<String, Object> args = ContextMenuUtil.createSingleObjectArguments(targetObject);
 				return () -> {
 					Menu menu = new Menu();
 					for (CommandHandler command : buttons) {

@@ -6,11 +6,17 @@
 package com.top_logic.layout.structure;
 
 import java.awt.Dimension;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.listener.EventType;
 import com.top_logic.basic.listener.NoBubblingEventType;
 import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.check.ChangeHandler;
+import com.top_logic.layout.form.FormHandler;
+import com.top_logic.layout.messagebox.AbstractDialog;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 
@@ -97,4 +103,17 @@ public interface DialogModel extends WindowModel, TypedAnnotatable {
 	 *         behavior is undetermined.
 	 */
 	Dimension getCustomizedSize();
+
+	/**
+	 * Returns a list of components which may have unsaved changes.
+	 */
+	default Collection<? extends ChangeHandler> getAffectedFormHandlers() {
+		AbstractDialog abstractDialog = AbstractDialog.getDialog(this);
+		if (abstractDialog instanceof FormHandler) {
+			FormHandler formHandler = (FormHandler) abstractDialog;
+			List<FormHandler> affectedFormHandlers = List.of(formHandler);
+			return affectedFormHandlers;
+		}
+		return Collections.emptyList();
+	}
 }

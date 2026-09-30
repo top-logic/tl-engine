@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
@@ -65,13 +65,6 @@ import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.Visibility;
 import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tool.boundsec.BoundChecker;
-import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundHelper;
-import com.top_logic.tool.boundsec.BoundObject;
-import com.top_logic.tool.boundsec.BoundRole;
-import com.top_logic.tool.boundsec.manager.AccessManager;
-import com.top_logic.util.TLContext;
 
 /**
  * Edit component for {@link com.top_logic.knowledge.wrap.Wrapper} objects.
@@ -251,79 +244,6 @@ public abstract class EditAttributedComponent extends EditComponent implements F
 	}
 
 	@Override
-	public boolean unCachedAllow(BoundCommandGroup aCmdGroup, BoundObject anObject) {
-		SecurityConfiguration theMAAB = this.getSecurityConfiguration(anObject, aCmdGroup);
-		
-		if (theMAAB == null) {
-			return super.unCachedAllow(aCmdGroup, anObject);
-		}
-		
-		// If a attribute is given we will check the attribute security
-		if (theMAAB.metaAttribute != null) {	// Check attribute security
-			if (!TLContext.isAdmin()) {
-				if (AttributeOperations.isClassified(theMAAB.metaAttribute)) {
-					TLContext theContext = TLContext.getContext();
-			        Set<BoundRole>         theRoles  = AccessManager.getInstance().getRoles(theContext == null ? null : theContext.getCurrentPersonWrapper(), theMAAB.boundObject);
-			        Set<BoundCommandGroup> theAccess = AttributeOperations.getAccess(theMAAB.metaAttribute, theRoles);
-	
-			        if (!theAccess.contains(aCmdGroup)) {
-			        	return false;
-			        }
-				}
-			}
-		}
-		
-		// If no BoundObject is given we will use the input parameter
-		if (theMAAB.boundObject == null) {
-			theMAAB.boundObject = anObject;
-		}
-		
-		// If a different BoundChecker is given we will dispatch the security check to it
-    	if (theMAAB.boundChecker != null && theMAAB.boundChecker != this) {
-    		return theMAAB.boundChecker.allow(aCmdGroup, anObject);
-    	}
-    	
-    	// If no BoundChecher is given we will let the default checker check the security
-    	if (theMAAB.boundChecker == null) {
-			return BoundHelper.getInstance().getDefaultChecker(getMainLayout(), theMAAB.boundObject, aCmdGroup) != null;
-    	}
-
-    	// Otherwise we use the normal security on the given BoundObject
-        return super.unCachedAllow(aCmdGroup, theMAAB.boundObject);
-	}
-	
-	/**
-	 * Get the configuration for the security check in {@link #unCachedAllow(BoundCommandGroup, BoundObject)}
-	 * 
-	 * @param anObject	the BoundObject
-	 * @param aBCG		the BoundCommandGroup
-	 * @return the security configuration
-	 */
-	protected SecurityConfiguration getSecurityConfiguration(BoundObject anObject, BoundCommandGroup aBCG) {
-		return null;
-	}
-	
-	/**
-	 * Security configuration for
-	 * {@link EditAttributedComponent#unCachedAllow(BoundCommandGroup, BoundObject)} consisting of -
-	 * an optional attribute (no fallback) - an optional BoundObject (fallback is usually the given
-	 * BoundObject in the checking method) - an optional BoundChecker (fallback is usually the
-	 * default checker for the BoudnObject in the checking method)
-	 * 
-	 * @author <a href="mailto:kbu@top-logic.com">kbu</a>
-	 */
-	public static class SecurityConfiguration {
-		public TLStructuredTypePart metaAttribute;
-		public BoundObject   boundObject;
-		public BoundChecker  boundChecker;
-		public SecurityConfiguration(TLStructuredTypePart aMetaAttribute, BoundObject aBoundObject, BoundChecker aBoundChecker) {
-			this.metaAttribute = aMetaAttribute;
-			this.boundObject   = aBoundObject;
-			this.boundChecker  = aBoundChecker;
-		}
-	}
-
-	@Override
 	protected Set<? extends TLStructuredType> getTypesToObserve() {
 		return Set.of(
 			TlModelFactory.getTLStructuredTypePartType(),
@@ -445,6 +365,7 @@ public abstract class EditAttributedComponent extends EditComponent implements F
 	 */
     public FormContext createFormContext(boolean newMode, Wrapper theAttributed) {
 		AttributeFormContext theContext = new AttributeFormContext(this.getResPrefix());
+		initFormContext(this, this, theContext);
 
         if (!newMode) {
             this.addAttributedConstraints(theAttributed, theContext);
@@ -470,7 +391,9 @@ public abstract class EditAttributedComponent extends EditComponent implements F
         this.hasFolderFields = false;
         if (theME != null) {
 			if (this.modifier.preModify(this, theME, theAttributed)) {
-				UpdateFactory overlay = formContext.editObject(theAttributed);
+				UpdateFactory overlay = theAttributed == null ? 
+					formContext.createObject(theME, null) :
+					formContext.editObject(theAttributed);
 
 				for (TLStructuredTypePart theMA : TLModelUtil.getMetaAttributes(theME)) {
                     String          theName    = theMA.getName();

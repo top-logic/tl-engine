@@ -7,18 +7,24 @@ package test.com.top_logic.model.search.expr;
 
 import static com.top_logic.model.search.expr.query.QueryExecutor.*;
 
-import java.text.DecimalFormatSymbols;
-import java.text.NumberFormat;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.zip.GZIPInputStream;
 
 import junit.framework.Test;
 
@@ -32,18 +38,27 @@ import com.top_logic.basic.config.Location;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.html.SafeHTML;
+import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.mime.MimeTypesModule;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.element.changelog.ChangeLogBuilder;
+import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.element.meta.MetaAttributeFactory;
 import com.top_logic.element.meta.MetaElementFactory;
+import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassProperty;
@@ -56,10 +71,15 @@ import com.top_logic.model.TLScope;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLTypePart;
+import com.top_logic.model.TransientObject;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.search.expr.CalendarField;
 import com.top_logic.model.search.expr.CalendarUpdate;
+import com.top_logic.model.search.expr.Fill;
+import com.top_logic.model.search.expr.FormatExpr;
 import com.top_logic.model.search.expr.I18NConstants;
+import com.top_logic.model.search.expr.KBQuery;
 import com.top_logic.model.search.expr.Literal;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.ToDate;
@@ -68,12 +88,16 @@ import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.ToSystemCalendar;
 import com.top_logic.model.search.expr.ToUserCalendar;
 import com.top_logic.model.search.expr.config.operations.Label;
+import com.top_logic.model.search.expr.config.operations.string.Localize;
 import com.top_logic.model.search.expr.parser.ParseException;
+import com.top_logic.model.search.expr.query.Args;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.supplier.SearchExpressionNow;
 import com.top_logic.model.search.expr.supplier.SearchExpressionToday;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
@@ -84,6 +108,293 @@ import com.top_logic.util.model.ModelService;
  */
 @SuppressWarnings("javadoc")
 public class TestSearchExpression extends AbstractSearchExpressionTest {
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		TLContext.getContext().setCurrentPerson(PersonManager.getManager().getRoot());
+	}
+
+	public void testKBSearchWithTransientObjects() {
+		with("TestSearchExpression-testKBSearchTransient.scenario.xml",
+			scenario -> {
+				TLObject a0 = scenario.getObject("a0");
+				assertEquals("A0", a0.tValueByName("name"));
+				TLObject a1 = scenario.getObject("a1");
+				assertEquals("A1", a1.tValueByName("name"));
+				TLObject a2 = scenario.getObject("a2");
+				assertEquals("A1", a2.tValueByName("name"));
+				assertNotNull(a2);
+
+				QueryExecutor search = QueryExecutor.compile(search(
+					"context -> all(`TestSearchExpression:A`).filter(x -> $x != $context).filter(x -> $x.get(`TestSearchExpression:A#name`) == $context.get(`TestSearchExpression:A#name`)).toSet()"));
+				assertEquals(set(), search.execute(a0));
+				assertEquals(set(a1), search.execute(a2));
+				assertEquals(set(a2), search.execute(a1));
+
+				TLClass tType = (TLClass) a0.tType();
+				TLObject transientObject = TransientObjectFactory.INSTANCE.createObject(tType);
+				transientObject.tUpdateByName("name", "A1");
+
+				assertEquals(set(a1, a2), search.execute(transientObject));
+
+				TLObject newPersistentObject =
+					DynamicModelService.getFactoryFor(tType.getModule().getName()).createObject(tType);
+				newPersistentObject.tUpdateByName("name", "A1");
+
+				assertEquals(set(a1, a2), search.execute(newPersistentObject));
+
+				// An unstored object need not report a table: it can never be stored in one. A form's
+				// editing buffer for an object being created is such an object.
+				assertEquals(set(a1, a2), search.execute(new WithoutTable(tType, "A1")));
+			});
+	}
+
+	/**
+	 * Unstored {@link TLObject} that has neither a handle nor a table, as an editing buffer for an
+	 * object being created has.
+	 */
+	private static class WithoutTable extends TransientObject {
+
+		private final TLStructuredType _type;
+
+		private final String _name;
+
+		WithoutTable(TLStructuredType type, String name) {
+			_type = type;
+			_name = name;
+		}
+
+		@Override
+		public TLStructuredType tType() {
+			return _type;
+		}
+
+		@Override
+		public Object tValue(TLStructuredTypePart part) {
+			return "name".equals(part.getName()) ? _name : null;
+		}
+
+		@Override
+		public MOStructure tTable() {
+			throw new UnsupportedOperationException("Not stored in any table.");
+		}
+	}
+
+	public void testKBSearch() {
+		with("TestSearchExpression-testKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a0 = scenario.getObject("a0");
+				assertNotNull(a0);
+				assertNotNull(
+					"Test should test delegating filter access to KB, therefore the name attribute must be a database column",
+					a0.tTable().getAttributeOrNull("name"));
+				TLObject a1 = scenario.getObject("a1");
+				assertNotNull(a1);
+				TLObject a2 = scenario.getObject("a2");
+				assertNotNull(a2);
+				SearchExpression search = search(
+					"x -> all(`TestSearchExpression:A`).filter(x -> $x.get(`TestSearchExpression:A#name`) == 'A0').singleElement() == $x");
+				assertTrue((Boolean) executeCompiled(search, a0));
+
+				QueryExecutor search1 = QueryExecutor.compile(search(
+					"name -> all(`TestSearchExpression:A`).filter(x -> $x.get(`TestSearchExpression:A#name`) == $name)"));
+				assertEquals(list(a0), search1.execute("A0"));
+				assertEquals(set(a1, a2), asSet(search1.execute("A1")));
+				assertEquals("Search must not fail using type-incompatible argument.", list(), search1.execute(list()));
+
+				TLObject a3 = scenario.getObject("a3");
+				assertNotNull(a3);
+				assertEquals(list(a3), search1.execute("true"));
+				assertEquals("Fuzzy match expected.", list(a3), execute(search(
+					"all(`TestSearchExpression:A`).filter(x -> $x.get(`TestSearchExpression:A#name`) == true)")));
+				assertEquals("Fuzzy match expected.", list(a3), search1.execute(true));
+			});
+	}
+
+	public void testReferenceKBSearch() {
+		with("TestSearchExpression-testReferenceKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a0 = scenario.getObject("a0");
+				assertNotNull(a0);
+				TLObject a1 = scenario.getObject("a1");
+				assertNotNull(a1);
+				TLObject a2 = scenario.getObject("a2");
+				assertNotNull(a2);
+
+				QueryExecutor search = QueryExecutor.compile(search(
+					"other -> all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#other`) == $other)"));
+				assertEquals(set(a1, a0), asSet(search.execute(a2)));
+				assertEquals(set(a2), asSet(search.execute((TLObject) null)));
+
+				SearchExpression searchNullAsLiteral = search(
+					"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#other`) == null)");
+				assertEquals(set(a2), executeAsSet(searchNullAsLiteral));
+
+			});
+	}
+
+	/**
+	 * TLScript only uses {@link Double} values, the {@link KnowledgeBase} also uses
+	 * {@link Integer}. This test tests usage of integer values together with {@link KBQuery}.
+	 */
+	public void testKBNumberTypes() {
+		with("TestSearchExpression-testFuzzyKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a4 = scenario.getObject("a4");
+				assertNotNull(a4);
+				TLObject a5 = scenario.getObject("a5");
+				assertNotNull(a5);
+
+				SearchExpression filterKB = search(
+					"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#int`) == 15)");
+				assertEquals(list(a4), execute(filterKB));
+
+				SearchExpression filterKBWithParam = search(
+					"intVal -> all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#int`) == $intVal)");
+				assertEquals(list(a4), execute(filterKBWithParam, 15));
+
+				SearchExpression filterInMemory = search(
+					"all -> $all.filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#int`) == 15)");
+				assertEquals(list(a4), execute(filterInMemory, list(a4, a5)));
+
+				SearchExpression filterInMemoryWithParam = search(
+					"all -> intVal -> $all.filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#int`) == $intVal)");
+				assertEquals(list(a4), execute(filterInMemoryWithParam, list(a4, a5), 15));
+
+			});
+		with("TestSearchExpression-testFuzzyKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a4 = scenario.getObject("a4");
+				assertNotNull(a4);
+				TLObject a5 = scenario.getObject("a5");
+				assertNotNull(a5);
+
+				SearchExpression filterKB = search(
+					"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#double`) == 16)");
+				assertEquals(list(a4), execute(filterKB));
+
+				SearchExpression filterKBWithParam = search(
+					"intVal -> all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#double`) == $intVal)");
+				assertEquals(list(a4), execute(filterKBWithParam, 16));
+
+				SearchExpression filterInMemory = search(
+					"all -> $all.filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#double`) == 16)");
+				assertEquals(list(a4), execute(filterInMemory, list(a4, a5)));
+
+				SearchExpression filterInMemoryWithParam = search(
+					"all -> intVal -> $all.filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#double`) == $intVal)");
+				assertEquals(list(a4), execute(filterInMemoryWithParam, list(a4, a5), 16));
+			});
+	}
+
+	/**
+	 * Order comparisons ({@code <}, {@code <=}, {@code >}, {@code >=}) on database columns are
+	 * delegated to the database.
+	 *
+	 * <p>
+	 * TL-Script normalizes numeric literals to {@link Double}; the literal is adapted back to the
+	 * column type (see {@code CompiledLiteral}) so that the comparison can be pushed to SQL. This
+	 * test verifies that the database-delegated comparison yields the same result as the in-memory
+	 * evaluation, including the boundary case and a non-integral literal against an integer column
+	 * (which is not value-preserving and therefore stays interpreted but must still be correct).
+	 * </p>
+	 */
+	public void testKBCompareOp() {
+		with("TestSearchExpression-testFuzzyKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a4 = scenario.getObject("a4"); // int = 15, double = 16
+				TLObject a5 = scenario.getObject("a5"); // int = 16, double = 18
+				assertNotNull(a4);
+				assertNotNull(a5);
+
+				String intAttr = "`TestSearchExpression:WithDatabaseColumns#int`";
+				String longAttr = "`TestSearchExpression:WithDatabaseColumns#long`";
+				String doubleAttr = "`TestSearchExpression:WithDatabaseColumns#double`";
+
+				// Integer column, integral literal: the Double literal is adapted to Integer and the
+				// comparison is delegated to the database. a4.int = 15, a5.int = 16.
+				assertCompareConsistent(set(a5), a4, a5, intAttr, "> 15");
+				assertCompareConsistent(set(a4, a5), a4, a5, intAttr, ">= 15");
+				assertCompareConsistent(set(a4), a4, a5, intAttr, "< 16");
+				assertCompareConsistent(set(a4, a5), a4, a5, intAttr, "<= 16");
+
+				// Long column: the literal is adapted to Long. a4.long = 100, a5.long = 200.
+				assertCompareConsistent(set(a5), a4, a5, longAttr, "> 150");
+				assertCompareConsistent(set(a4, a5), a4, a5, longAttr, ">= 100");
+
+				// Double column (no conversion needed, TL-Script literals are already Double).
+				assertCompareConsistent(set(a5), a4, a5, doubleAttr, "> 16");
+				assertCompareConsistent(set(a4, a5), a4, a5, doubleAttr, ">= 16");
+				assertCompareConsistent(set(a4), a4, a5, doubleAttr, "< 18");
+
+				// Non-integral literal against an integer column: not value-preserving, so it stays
+				// interpreted, but the result must still be correct.
+				assertCompareConsistent(set(a5), a4, a5, intAttr, "> 15.5");
+			});
+	}
+
+	/**
+	 * Comparisons on a {@code long} column with literals around the boundary of what a
+	 * {@code double} can represent exactly ({@code 2^53}).
+	 *
+	 * <p>
+	 * TL-Script literals are {@link Double}s, so the interpreted comparison against a {@code long}
+	 * column happens in {@code double}. {@code CompiledLiteral} only adapts a literal to an exact
+	 * {@code long} (delegating to SQL) within the double-safe range ({@code |value| <= 2^53-1}); a
+	 * larger literal would otherwise produce an exact SQL comparison that diverges from the
+	 * interpreted (lossy) one. This test verifies compiled == interpreted at and beyond that
+	 * boundary; in particular {@code == 2^53+1} must match both the {@code 2^53} and the
+	 * {@code 2^53+1} row (both round to {@code 2^53} as {@code double}).
+	 * </p>
+	 */
+	public void testLargeLongKBCompare() {
+		with("TestSearchExpression-testLargeLongKBCompare.scenario.xml",
+			scenario -> {
+				TLObject b0 = scenario.getObject("b0"); // long = 2^53-1
+				TLObject b1 = scenario.getObject("b1"); // long = 2^53
+				TLObject b2 = scenario.getObject("b2"); // long = 2^53+1
+				assertNotNull(b0);
+				assertNotNull(b1);
+				assertNotNull(b2);
+
+				List<TLObject> all = list(b0, b1, b2);
+				String longAttr = "`TestSearchExpression:WithDatabaseColumns#long`";
+
+				// Literal within the double-safe range: adapted to Long and delegated to SQL.
+				assertCompareConsistent(set(b0), all, longAttr, "== 9007199254740991");
+				assertCompareConsistent(set(b1, b2), all, longAttr, "> 9007199254740991");
+
+				// Literal beyond 2^53: not adapted, falls back to interpreted (double) evaluation.
+				// 2^53+1 is not double-representable and rounds to 2^53, so it matches both 2^53 rows.
+				assertCompareConsistent(set(b1, b2), all, longAttr, "== 9007199254740993");
+				assertCompareConsistent(set(b0), all, longAttr, "< 9007199254740992");
+			});
+	}
+
+	/**
+	 * Asserts that a comparison predicate yields the given result both when delegated to the database
+	 * (rooted in {@code all(...)}) and when evaluated in memory (rooted in a passed-in list).
+	 */
+	private void assertCompareConsistent(Set<?> expected, TLObject a4, TLObject a5, String attr, String op)
+			throws ParseException {
+		assertCompareConsistent(expected, list(a4, a5), attr, op);
+	}
+
+	/**
+	 * Asserts that a comparison predicate yields the given result both when delegated to the database
+	 * (rooted in {@code all(...)}) and when evaluated in memory (rooted in the given list).
+	 */
+	private void assertCompareConsistent(Set<?> expected, List<TLObject> all, String attr, String op)
+			throws ParseException {
+		Object kbResult = executeAsSet(search(
+			"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(" + attr + ") " + op + ")"));
+		assertEquals("Database-delegated result for '" + attr + " " + op + "'.", expected, kbResult);
+
+		Object inMemoryResult = asSet(execute(search(
+			"all -> $all.filter(x -> $x.get(" + attr + ") " + op + ")"), all));
+		assertEquals("In-memory result for '" + attr + " " + op + "'.", expected, inMemoryResult);
+	}
 
 	public void testSimpleSearch() {
 		with("TestSearchExpression-testSimpleSearch.scenario.xml",
@@ -332,7 +643,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 				TLClass localType;
 				TLClassProperty propertyX;
 				KnowledgeBase kb = kb();
-				try (Transaction tx = kb.beginTransaction()) {
+				try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 					TLModel model = ModelService.getInstance().getModel();
 					TLModule module = model.getModule("TestSearchExpression");
 					localType = MetaElementFactory.getInstance().createMetaElement(module, context, "Local", kb);
@@ -350,8 +661,8 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 				}
 
 				TLObject local;
-				try (Transaction tx = kb.beginTransaction()) {
-					local = ModelService.getInstance().getFactory().createObject(localType, null, null);
+				try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+					local = ModelService.getInstance().getFactory().createObject(localType);
 					local.tUpdateByName("name", "local");
 					local.tUpdateByName("x", 42);
 					tx.commit();
@@ -641,7 +952,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	private Object update(String expr, Object... args) throws ParseException {
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			Object result = execute(search(expr), args);
 			tx.commit();
 			return result;
@@ -815,6 +1126,56 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals("0042", execute(search("numberFormat('0000').format(42)")));
 	}
 
+	/**
+	 * Test for {@link FormatExpr} with null input.
+	 *
+	 * <p>
+	 * Formatting null should return null instead of throwing an exception.
+	 * </p>
+	 *
+	 * @see <a href="http://tl/trac/ticket/29053">Ticket #29053</a>
+	 */
+	public void testFormatNull() throws ParseException {
+		assertNull(execute(search("numberFormat('0000').format(null)")));
+		assertNull(execute(search("dateFormat('y/MM').format(null)")));
+		assertNull(execute(search("messageFormat('Value: {0}').format(null)")));
+	}
+
+	/**
+	 * Test for {@link FormatExpr} with list/collection input.
+	 *
+	 * <p>
+	 * For non-MessageFormat, formatting a list should format each element individually (flat-map
+	 * semantics). For MessageFormat, the list elements are used as format arguments.
+	 * </p>
+	 *
+	 * @see <a href="http://tl/trac/ticket/29053">Ticket #29053</a>
+	 */
+	public void testFormatList() throws ParseException {
+		// Non-MessageFormat: format each element individually
+		assertEquals(list("0001", "0002", "0003"),
+			execute(search("numberFormat('0000').format(list(1, 2, 3))")));
+
+		// Null elements in list are preserved as null
+		assertEquals(list("0001", null, "0003"),
+			execute(search("numberFormat('0000').format(list(1, null, 3))")));
+
+		// Empty list returns empty list
+		assertEquals(list(), execute(search("numberFormat('0000').format(list())")));
+
+		// MessageFormat: list elements are used as format arguments
+		assertEquals("a:X, b:Y",
+			execute(search("messageFormat('a:{0}, b:{1}').format(list('X', 'Y'))")));
+
+		// Multiple arguments: non-MessageFormat formats each individually
+		assertEquals(list("0001", "0002", "0003"),
+			execute(search("numberFormat('0000').format(1, 2, 3)")));
+
+		// Multiple arguments: MessageFormat uses them as placeholders
+		assertEquals("a:X, b:Y",
+			execute(search("messageFormat('a:{0}, b:{1}').format('X', 'Y')")));
+	}
+
 	public void testDateFormat() throws ParseException {
 		assertEquals("2019/08", execute(search("dateFormat('y/MM').format(dateTime(2019,8-1,1))")));
 	}
@@ -895,7 +1256,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	 * Test for {@link ToSystemCalendar}
 	 */
 	public void testSystemCalendar() throws ParseException {
-		assertEquals(NumberFormat.getInstance(TLContext.getLocale()).format(2019) + "-8-5",
+		assertEquals("2019-8-5",
 			execute(
 				search(
 					"{c=date(2019, 8 - 1, 5).toSystemCalendar(); " +
@@ -906,7 +1267,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	 * Test for {@link ToUserCalendar}
 	 */
 	public void testUserCalendar() throws ParseException {
-		assertEquals(NumberFormat.getInstance(TLContext.getLocale()).format(2019) + "-8-5T15:38:52.123",
+		assertEquals("2019-8-5T15:38:52.123",
 			execute(
 				search(
 					"{c=dateTime(" +
@@ -1109,9 +1470,6 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testHtml() {
-		// Decimal separator depends on Locale
-		char decimalSeparator = DecimalFormatSymbols.getInstance(TLContext.getLocale()).getDecimalSeparator();
-
 		with("TestSearchExpression-testHtml.scenario.xml",
 			scenario -> {
 				SearchExpression renderer = search(
@@ -1133,10 +1491,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 				{
 					assertEquals(
 						"<table>" +
-							"<tr><td>a4</td>" + "<td>8" + decimalSeparator + "9</td>" + "<td>D</td></tr>" +
-							"<tr><td>a3</td>" + "<td>8" + decimalSeparator + "9</td>" + "<td>C</td></tr>" +
-							"<tr><td>a5</td>" + "<td>8" + decimalSeparator + "9</td>" + "<td></td></tr>" +
-							"<tr class=\"critical\"><td>a1</td>" + "<td>42" + decimalSeparator + "13</td>"
+							"<tr><td>a4</td>" + "<td>8.9</td>" + "<td>D</td></tr>" +
+							"<tr><td>a3</td>" + "<td>8.9</td>" + "<td>C</td></tr>" +
+							"<tr><td>a5</td>" + "<td>8.9</td>" + "<td></td></tr>" +
+							"<tr class=\"critical\"><td>a1</td>" + "<td>42.13</td>"
 							+ "<td>A</td></tr>" +
 							"<tr><td>a2</td>" + "<td></td>" + "<td>B</td></tr>" +
 							"</table>",
@@ -1175,21 +1533,6 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		TagWriter buffer = new TagWriter();
 		execute(DummyDisplayContext.newInstance(), buffer, renderer, args);
 		return buffer.toString();
-	}
-
-	public void testHtmlSafety() throws ParseException {
-		try {
-			search("{{{<a href=\"javascript:alert();\">click</a>}}}");
-			fail("Expected error.");
-		} catch (I18NRuntimeException ex) {
-			assertEquals(com.top_logic.basic.html.I18NConstants.NO_JAVASCRIPT_ALLOWED,
-				Location.detail(ex.getErrorKey()));
-		}
-	}
-
-	public void testHtmlSafetyDynamic() throws ParseException {
-		SearchExpression expr = search("{{{<a href=\"{concat('java', 'script:alert();')}\">click</a>}}}");
-		assertFalse(render(expr).contains("javascript:"));
 	}
 
 	public void testDynamicValuesInURL() throws ParseException {
@@ -1243,6 +1586,17 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals(null, execute(expr, 0));
 	}
 
+	public void testSwitchLiteral() throws ParseException {
+		SearchExpression expr = search(
+			"""
+			switch (1) {
+				0: false;
+				1: true;
+			}
+			""");
+		assertEquals(Boolean.TRUE, execute(expr));
+	}
+	
 	public void testBlockComment() throws ParseException {
 		SearchExpression expr =
 			search("x -> /********/ $x /* foobar */ + /*/*/ 3");
@@ -1292,17 +1646,21 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testCreateSwitch() throws ParseException {
-		Object result = execute(search(
+		SearchExpression search = search(
 			"x -> switch($x) {" +
-				"'A': new(`TestSearchExpression:A`);" +
+				"'A': new(`TestSearchExpression:A`)..set(`TestSearchExpression:A#name`, 'foo');" +
 				"'B': new(`TestSearchExpression:B`);" +
 			"}" + 
-			"..set(`TestSearchExpression:A#name`, 'foo')" +
 			"..map(y -> if ($y.instanceOf(`TestSearchExpression:B`), $y.set(`TestSearchExpression:B#name`, 'foo-b')))"
-		), "B");
-
-		assertNotNull(result);
-		assertEquals("foo-b", ((TLObject) result).tValueByName("name"));
+		);
+		Object newB = execute(search, "B");
+		assertNotNull(newB);
+		assertEquals("foo-b", ((TLObject) newB).tValueByName("name"));
+		Object newA = execute(search, "A");
+		assertNotNull(newA);
+		assertEquals("foo", ((TLObject) newA).tValueByName("name"));
+		Object newC = execute(search, "C");
+		assertNull(newC);
 	}
 
 	public void testInstanceOf() throws ParseException {
@@ -1370,19 +1728,23 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testCopy() {
+		if (!kb().getHistoryManager().hasHistory()) {
+			// Test uses historic objects
+			return;
+		}
 		with("TestSearchExpression-testCopy.scenario.xml",
 			scenario -> {
 				TLObject orig = scenario.getObject("a1");
 
 				TLObject copy = (TLObject) execute(search("x -> $x.copy()"), orig);
-				checkCopy(orig, copy);
+				checkCopyA(orig, copy);
 
 				TLObject stable = stabilize(orig);
 
 				// The result must be the same, when using the stable version of the current
 				// original as input to the copy operation.
 				TLObject stableCopy = (TLObject) execute(search("x -> $x.copy()"), stable);
-				checkCopy(orig, stableCopy);
+				checkCopyA(orig, stableCopy);
 			});
 	}
 
@@ -1393,7 +1755,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		return stable;
 	}
 
-	private void checkCopy(TLObject orig, TLObject copy) {
+	private void checkCopyA(TLObject orig, TLObject copy) {
 		assertNotNull(copy);
 		assertNotEquals(orig, copy);
 		assertDifferent(orig, copy, "b");
@@ -1408,7 +1770,38 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals(value(orig, "b", "name"), value(copy, "b", "name"));
 	}
 
+	public void testCopyToSupertype() {
+		with("TestSearchExpression-testCopy.scenario.xml",
+			scenario -> {
+				// Object of type BSpecial
+				TLObject orig = scenario.getObject("b11");
+				assertTrue((Boolean) execute(search("x -> $x.type() == `TestSearchExpression:BSpecial`"), orig));
+
+				TLObject copy = (TLObject) execute(search(
+					"x -> $x.copy(constructor: orig -> $orig.instanceOf(`TestSearchExpression:BSpecial`) ? new(`TestSearchExpression:B`) : null)"),
+					orig);
+				assertTrue((Boolean) execute(search("x -> $x.type() == `TestSearchExpression:B`"), copy));
+
+				checkCopyFlat(orig, copy);
+			});
+	}
+
+	private void checkCopyFlat(TLObject orig, TLObject copy) {
+		for (TLStructuredTypePart part : orig.tType().getAllParts()) {
+			TLStructuredTypePart copyPart = copy.tType().getPart(part.getName());
+			if (copyPart == null || copyPart.isDerived()) {
+				continue;
+			}
+
+			assertEquals(orig.tValue(part), copy.tValue(copyPart));
+		}
+	}
+
 	public void testCopyFilter() {
+		if (!kb().getHistoryManager().hasHistory()) {
+			// Test uses historic objects
+			return;
+		}
 		with("TestSearchExpression-testCopy.scenario.xml",
 			scenario -> {
 				TLObject orig = scenario.getObject("a1");
@@ -1438,29 +1831,42 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testCopyConstructor() {
+		if (!kb().getHistoryManager().hasHistory()) {
+			// Test uses historic objects
+			return;
+		}
 		with("TestSearchExpression-testCopy.scenario.xml",
 			scenario -> {
 				TLObject orig = scenario.getObject("a1");
+				TLObject origB = (TLObject) orig.tValueByName("b");
+				origB.tUpdateByName("value", 42);
 
 				TLObject copy =
 					(TLObject) execute(search(
-						"x -> $x.copy(null, true, "  + 
-							"orig -> if ($orig.instanceOf(`TestSearchExpression:B`), " +
+						"x -> $x.copy(constructor: orig -> "  + 
+							"if ($orig.instanceOf(`TestSearchExpression:B`), " +
 								"new(`TestSearchExpression:C`) " + 
-							"..set(`TestSearchExpression:C#orig`, $orig) " +
+								"..set(`TestSearchExpression:C#orig`, $orig) " +
 							"))"),
 						orig);
 
 				checkCopyConstructor(orig, copy);
 
+				TLObject copyB = (TLObject) copy.tValueByName("b");
+				assertEquals(42, copyB.tValueByName("value"));
+
+				// Check that updates are visible in copy through derived attribute.
+				origB.tUpdateByName("value", 13);
+				assertEquals(13, copyB.tValueByName("value"));
+
 				TLObject stable = stabilize(orig);
 
 				TLObject stableCopy =
 					(TLObject) execute(search(
-						"x -> $x.copy(null, true, " +
-							"orig -> if ($orig.instanceOf(`TestSearchExpression:B`), " +
-							"new(`TestSearchExpression:C`) " +
-							"..set(`TestSearchExpression:C#orig`, $orig.inCurrent()) " +
+						"x -> $x.copy(constructor: orig -> " +
+							"if ($orig.instanceOf(`TestSearchExpression:B`), " +
+								"new(`TestSearchExpression:C`) " +
+								"..set(`TestSearchExpression:C#orig`, $orig.inCurrent()) " +
 							"))"),
 						stable);
 
@@ -1470,6 +1876,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 	private void checkCopyConstructor(TLObject orig, TLObject copy) {
 		assertEquals(value(orig, "b", "contents", 0), value(copy, "b", "contents", 0, "orig"));
+		assertNull(value(copy, "b", "contents", 0, "special"));
 	}
 
 	private void assertEmpty(Object value) {
@@ -1843,6 +2250,101 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 					".groupBy(s -> $s.subString(0, 1), l -> $l.groupBy(s -> $s.subString(1, 2)))"));
 	}
 
+	public void testStringQuote() throws ParseException {
+		assertEquals("\t\b\n\r\f\'\"\\", eval("'\\t\\b\\n\\r\\f\\'\\\"\\\\'"));
+	}
+
+	public void testTextBlock() throws ParseException {
+		assertEquals(
+			"	A\n" + 
+			"		B\n" +
+			"	C", 
+			(String) eval(
+			"	\"\"\"\n" +
+			"		A\n" + 
+			"			B\n" + 
+			"		C\n" + 
+			"	\"\"\""
+		));
+	}
+
+	public void testToJson() throws ParseException {
+		assertEquals(true, eval(
+			"{" +
+				"  testMap = {'name': 'John', 'city': 'New York'};" +
+				"  json = $testMap.toJson();" +
+				"  parsed = parseJson($json);" +
+				"  $parsed['name'] == 'John' && $parsed['city'] == 'New York';" +
+				"}"));
+
+		assertEquals(true, eval(
+			"{" +
+				"  testMap = {" +
+				"    'person': {" +
+				"      'name': 'Alice'," +
+				"      'details': {" +
+				"        'age': 28," +
+				"        'address': {" +
+				"          'street': '123 Main St'," +
+				"          'city': 'Boston'" +
+				"        }" +
+				"      }" +
+				"    }" +
+				"  };" +
+				"  json = $testMap.toJson();" +
+				"  parsed = parseJson($json);" +
+				"  $parsed['person']['details']['address']['city'] == 'Boston';" +
+				"}"));
+
+		assertEquals(true, eval(
+			"{" +
+				"  testMap = {" +
+				"    'fruits': ['apple', 'banana', 'orange']," +
+				"    'numbers': [1, 2, 3, 4, 5]" +
+				"  };" +
+				"  json = $testMap.toJson();" +
+				"  parsed = parseJson($json);" +
+				"  $parsed['fruits'][2] == 'orange' && $parsed['numbers'][3] == 4;" +
+				"}"));
+
+		assertEquals(null, eval(
+			"{" +
+				"  testMap = null;" +
+				"  $testMap.toJson();" +
+				"}"));
+
+		assertEquals(true, eval(
+			"{" +
+				"  testMap = null;" +
+				"  json = $testMap.toJson();" +
+				"  parsed = parseJson($json);" +
+				"  $parsed == null;" +
+				"}"));
+
+		assertEquals(true, eval(
+			"{" +
+				"  people = [" +
+				"    {'name': 'Alice', 'age': 28}," +
+				"    {'name': 'Bob', 'age': 32}," +
+				"    {'name': 'Charlie', 'age': 25}" +
+				"  ];" +
+				"  peopleByName = $people.indexBy(person -> $person['name']);" +
+				"  json = $peopleByName.toJson();" +
+				"  parsed = parseJson($json);" +
+				"  $parsed['Charlie']['age'] == 25 && $parsed['Alice']['age'] == 28;" +
+				"}"));
+	
+		assertEquals("\"Wert\"", eval(
+			"{" +
+				"  'Wert'.toJson();" +
+				"}"));
+
+		assertEquals("42", eval(
+			"{" +
+				"  42.toJson();" +
+				"}"));
+	}
+
 	public void testSubString() throws ParseException {
 		assertEquals("Bar", eval("'FooBar'.subString(3)"));
 		assertEquals("Bar", eval("'FooBar'.subString(from: 3)"));
@@ -1860,6 +2362,39 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 	public void testToUpperCase() throws ParseException {
 		assertEquals("FOOBAR", eval("'FooBar'.toUpperCase()"));
+	}
+
+	public void testTrim() throws ParseException {
+		assertEquals("Foo  Bar", eval("'  Foo  Bar  '.trim()"));
+		assertEquals("Foo  Bar", eval("trim('  Foo  Bar  ')"));
+		assertEquals("Foo\tBar", eval("s -> $s.trim()", " \t\r\nFoo\tBar\n\t "));
+		assertEquals("Foo", eval("s -> $s.trim()", " 　Foo  "));
+		assertEquals("", eval("' \t '.trim()"));
+		assertEquals("", eval("''.trim()"));
+		assertNull(eval("null.trim()"));
+		assertNull(eval("trim(null)"));
+		assertNull(eval("list().trim()"));
+		assertEquals("42", eval("42.trim()"));
+	}
+
+	public void testTrimStart() throws ParseException {
+		assertEquals("Foo  Bar  ", eval("'  Foo  Bar  '.trimStart()"));
+		assertEquals("Foo  Bar  ", eval("trimStart('  Foo  Bar  ')"));
+		assertEquals("Foo\tBar\n\t ", eval("s -> $s.trimStart()", " \t\r\nFoo\tBar\n\t "));
+		assertEquals("Foo ", eval("s -> $s.trimStart()", " 　Foo "));
+		assertEquals("", eval("' \t '.trimStart()"));
+		assertNull(eval("null.trimStart()"));
+		assertNull(eval("trimStart(null)"));
+	}
+
+	public void testTrimEnd() throws ParseException {
+		assertEquals("  Foo  Bar", eval("'  Foo  Bar  '.trimEnd()"));
+		assertEquals("  Foo  Bar", eval("trimEnd('  Foo  Bar  ')"));
+		assertEquals(" \t\r\nFoo\tBar", eval("s -> $s.trimEnd()", " \t\r\nFoo\tBar\n\t "));
+		assertEquals(" Foo", eval("s -> $s.trimEnd()", " Foo  "));
+		assertEquals("", eval("' \t '.trimEnd()"));
+		assertNull(eval("null.trimEnd()"));
+		assertNull(eval("trimEnd(null)"));
 	}
 
 	public void testConcat() throws ParseException {
@@ -1946,10 +2481,12 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals(list(3.0, 4.0, 5.0), execute(search("count(3, 6)")));
 		assertEquals(list(3.0, 4.0, 5.0), execute(search("count(3, 6, 0)")));
 		assertEquals(list(), execute(search("count(3, 3)")));
-		assertEquals(list(), execute(search("count(3, 2)")));
+		assertEquals(list(3.0), execute(search("count(3, 2)")));
 		assertEquals(list(3.0), execute(search("count(3, 4)")));
 		assertEquals(list(3.0, 7.0, 11.0), execute(search("count(3, 15, 4)")));
 		assertEquals(list(11.0, 7.0, 3.0), execute(search("count(11, 2, -4)")));
+		assertEquals(list(5.0, 4.0, 3.0), execute(search("count(5, 2)")));
+		assertEquals(list(0.0, 1.0, 2.0), execute(search("count(3)")));
 	}
 
 	public void testToList() throws ParseException {
@@ -2079,9 +2616,294 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals("", eval("resolveAlias('')"));
 	}
 
+	public void testMathFunctions() throws ParseException {
+		// Test mathAbs function
+		assertEquals(5.0, execute(search("mathAbs(-5)")));
+		assertEquals(5.0, execute(search("mathAbs(5)")));
+		assertEquals(0.0, execute(search("mathAbs(0)")));
+		assertEquals(3.14, execute(search("mathAbs(3.14)")));
+		assertEquals(3.14, execute(search("mathAbs(-3.14)")));
+
+		// Test mathAcos function
+		assertEquals(0.0, execute(search("mathAcos(1)")));
+		assertEquals(Math.PI, execute(search("mathAcos(-1)")));
+		assertEquals(Math.PI / 2, execute(search("mathAcos(0)")));
+
+		// Test mathAsin function
+		assertEquals(0.0, execute(search("mathAsin(0)")));
+		assertEquals(Math.PI / 2, execute(search("mathAsin(1)")));
+		assertEquals(-Math.PI / 2, execute(search("mathAsin(-1)")));
+
+		// Test mathAtan function
+		assertEquals(0.0, execute(search("mathAtan(0)")));
+		assertEquals(Math.PI / 4, (double) execute(search("mathAtan(1)")), 0.0001);
+		assertEquals(-Math.PI / 4, (double) execute(search("mathAtan(-1)")), 0.0001);
+
+		// Test mathAtan2 function
+		assertEquals(Math.PI / 4, (double) execute(search("mathAtan2(1, 1)")), 0.0001);
+		assertEquals(Math.PI / 2, execute(search("mathAtan2(1, 0)")));
+		assertEquals(0.0, execute(search("mathAtan2(0, 1)")));
+
+		// Test mathCbrt function
+		assertEquals(2.0, execute(search("mathCbrt(8)")));
+		assertEquals(3.0, execute(search("mathCbrt(27)")));
+		assertEquals(-2.0, execute(search("mathCbrt(-8)")));
+
+		// Test mathCopySign function
+		assertEquals(5.0, execute(search("mathCopySign(5, 1)")));
+		assertEquals(-5.0, execute(search("mathCopySign(5, -1)")));
+		assertEquals(-5.0, execute(search("mathCopySign(-5, -1)")));
+		assertEquals(5.0, execute(search("mathCopySign(-5, 1)")));
+
+		// Test mathCos function
+		assertEquals(1.0, execute(search("mathCos(0)")));
+		assertEquals(-1.0, (double) execute(search("mathCos(" + Math.PI + ")")), 0.0001);
+		assertEquals(0.0, (double) execute(search("mathCos(" + (Math.PI / 2) + ")")), 0.0001);
+
+		// Test mathCosh function
+		assertEquals(1.0, execute(search("mathCosh(0)")));
+		assertEquals(Math.cosh(1), execute(search("mathCosh(1)")));
+		assertEquals(Math.cosh(2), execute(search("mathCosh(2)")));
+
+		// Test mathExp function
+		assertEquals(1.0, execute(search("mathExp(0)")));
+		assertEquals(Math.E, execute(search("mathExp(1)")));
+		assertEquals(Math.exp(2), execute(search("mathExp(2)")));
+
+		// Test mathExpm1 function
+		assertEquals(0.0, execute(search("mathExpm1(0)")));
+		assertEquals(Math.E - 1, execute(search("mathExpm1(1)")));
+		assertEquals(Math.expm1(0.1), execute(search("mathExpm1(0.1)")));
+
+		// Test mathGetExponent function
+		assertEquals(3.0, execute(search("mathGetExponent(8)")));
+		assertEquals(4.0, execute(search("mathGetExponent(16)")));
+		assertEquals(0.0, execute(search("mathGetExponent(1)")));
+
+		// Test mathHypot function
+		assertEquals(5.0, execute(search("mathHypot(3, 4)")));
+		assertEquals(13.0, execute(search("mathHypot(5, 12)")));
+		assertEquals(0.0, execute(search("mathHypot(0, 0)")));
+
+		// Test mathIEEEremainder function
+		assertEquals(1.0, execute(search("mathIEEEremainder(5, 2)")));
+		assertEquals(0.0, execute(search("mathIEEEremainder(10, 5)")));
+		assertEquals(Math.IEEEremainder(7, 3), execute(search("mathIEEEremainder(7, 3)")));
+
+		// Test mathLog function
+		assertEquals(0.0, execute(search("mathLog(1)")));
+		assertEquals(1.0, execute(search("mathLog(" + Math.E + ")")));
+		assertEquals(Math.log(10), execute(search("mathLog(10)")));
+
+		// Test mathLog10 function
+		assertEquals(0.0, execute(search("mathLog10(1)")));
+		assertEquals(1.0, execute(search("mathLog10(10)")));
+		assertEquals(2.0, execute(search("mathLog10(100)")));
+
+		// Test mathLog1p function
+		assertEquals(0.0, execute(search("mathLog1p(0)")));
+		assertEquals(Math.log1p(0.1), execute(search("mathLog1p(0.1)")));
+		assertEquals(Math.log1p(1), execute(search("mathLog1p(1)")));
+
+		// Test mathNextAfter function
+		assertEquals(Math.nextAfter(1.0, 2.0), execute(search("mathNextAfter(1, 2)")));
+		assertEquals(Math.nextAfter(1.0, 0.0), execute(search("mathNextAfter(1, 0)")));
+
+		// Test mathNextUp function
+		assertEquals(Math.nextUp(1.0), execute(search("mathNextUp(1)")));
+		assertEquals(Math.nextUp(0.0), execute(search("mathNextUp(0)")));
+
+		// Test mathNextDown function
+		assertEquals(Math.nextDown(1.0), execute(search("mathNextDown(1)")));
+		assertEquals(Math.nextDown(0.0), execute(search("mathNextDown(0)")));
+
+		// Test mathPow function
+		assertEquals(8.0, execute(search("mathPow(2, 3)")));
+		assertEquals(1.0, execute(search("mathPow(5, 0)")));
+		assertEquals(25.0, execute(search("mathPow(5, 2)")));
+		assertEquals(0.25, execute(search("mathPow(2, -2)")));
+		assertEquals(2.0, execute(search("mathPow(4, 0.5)")));
+
+		// Test mathRandom function by testing that it returns a value in the expected range
+		Object randomValue = execute(search("mathRandom()"));
+		assertNotNull(randomValue);
+		assertTrue(randomValue instanceof Double);
+		double rand = (Double) randomValue;
+		assertTrue(rand >= 0.0 && rand < 1.0);
+		// Test that random can be used in expressions
+		Object scaledRandom = execute(search("mathRandom() * 100"));
+		assertNotNull(scaledRandom);
+		assertTrue(scaledRandom instanceof Double);
+		double scaled = (Double) scaledRandom;
+		assertTrue(scaled >= 0.0 && scaled < 100.0);
+		// Test random with offset
+		Object offsetRandom = execute(search("mathRandom() * 50 + 25"));
+		assertNotNull(offsetRandom);
+		assertTrue(offsetRandom instanceof Double);
+		double offset = (Double) offsetRandom;
+		assertTrue(offset >= 25.0 && offset < 75.0);
+
+		// Test mathRint function
+		assertEquals(2.0, execute(search("mathRint(2.3)")));
+		assertEquals(3.0, execute(search("mathRint(2.7)")));
+		assertEquals(2.0, execute(search("mathRint(2.5)")));
+		assertEquals(-2.0, execute(search("mathRint(-2.5)")));
+
+		// Test mathSignum function
+		assertEquals(1.0, execute(search("mathSignum(5)")));
+		assertEquals(-1.0, execute(search("mathSignum(-5)")));
+		assertEquals(0.0, execute(search("mathSignum(0)")));
+
+		// Test mathSin function
+		assertEquals(0.0, execute(search("mathSin(0)")));
+		assertEquals(1.0, (double) execute(search("mathSin(" + (Math.PI / 2) + ")")), 0.0001);
+		assertEquals(0.0, (double) execute(search("mathSin(" + Math.PI + ")")), 0.0001);
+
+		// Test mathSinh function
+		assertEquals(0.0, execute(search("mathSinh(0)")));
+		assertEquals(Math.sinh(1), execute(search("mathSinh(1)")));
+		assertEquals(Math.sinh(2), execute(search("mathSinh(2)")));
+
+		// Test mathSqrt function
+		assertEquals(4.0, execute(search("mathSqrt(16)")));
+		assertEquals(0.0, execute(search("mathSqrt(0)")));
+		assertEquals(1.0, execute(search("mathSqrt(1)")));
+		assertEquals(2.0, execute(search("mathSqrt(4)")));
+		assertEquals(3.0, execute(search("mathSqrt(9)")));
+		// Test that sqrt returns NaN for negative inputs
+		assertEquals("NaN", execute(search("mathSqrt(-1)")).toString());
+
+		// Test mathTan function
+		assertEquals(0.0, execute(search("mathTan(0)")));
+		assertEquals(1.0, (double) execute(search("mathTan(" + (Math.PI / 4) + ")")), 0.0001);
+		assertEquals(0.0, (double) execute(search("mathTan(" + Math.PI + ")")), 0.0001);
+
+		// Test mathTanh function
+		assertEquals(0.0, execute(search("mathTanh(0)")));
+		assertEquals(Math.tanh(1), execute(search("mathTanh(1)")));
+		assertEquals(Math.tanh(2), execute(search("mathTanh(2)")));
+
+		// Test mathToDegrees function
+		assertEquals(0.0, execute(search("mathToDegrees(0)")));
+		assertEquals(180.0, (double) execute(search("mathToDegrees(" + Math.PI + ")")), 0.0001);
+		assertEquals(90.0, (double) execute(search("mathToDegrees(" + (Math.PI / 2) + ")")), 0.0001);
+
+		// Test mathToRadians function
+		assertEquals(0.0, execute(search("mathToRadians(0)")));
+		assertEquals(Math.PI, (double) execute(search("mathToRadians(180)")), 0.0001);
+		assertEquals(Math.PI / 2, (double) execute(search("mathToRadians(90)")), 0.0001);
+
+		// Test mathUlp function
+		assertEquals(Math.ulp(1.0), execute(search("mathUlp(1)")));
+		assertEquals(Math.ulp(10.0), execute(search("mathUlp(10)")));
+		assertEquals(Math.ulp(0.0), execute(search("mathUlp(0)")));
+
+		// Test mathPi function
+		assertEquals(Math.PI, execute(search("mathPi()")));
+
+		// Test mathE function
+		assertEquals(Math.E, execute(search("mathE()")));
+	}
+
+	/**
+	 * Test for the <code>gzip()</code> function compressing binary data.
+	 */
+	public void testGzip() throws Exception {
+		Object result = execute(
+			search("binary(name: \"hello.txt\", data: \"Hello world!\", encoding: \"utf-8\").gzip()"));
+
+		assertInstanceof(result, BinaryDataSource.class);
+		BinaryDataSource data = (BinaryDataSource) result;
+		assertEquals("hello.txt.gz", data.getName());
+		assertEquals("application/gzip", data.getContentType());
+
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		data.deliverTo(buffer);
+		try (GZIPInputStream in = new GZIPInputStream(new ByteArrayInputStream(buffer.toByteArray()))) {
+			assertEquals("Hello world!", StreamUtilities.readAllFromStream(in, StandardCharsets.UTF_8));
+		}
+
+		// Explicit result name.
+		BinaryDataSource named = (BinaryDataSource) execute(search(
+			"binary(name: \"hello.txt\", data: \"Hello world!\", encoding: \"utf-8\").gzip(name: \"custom.gz\")"));
+		assertEquals("custom.gz", named.getName());
+
+		// A null input results in a null value.
+		assertNull(execute(search("gzip(null)")));
+	}
+
+	/**
+	 * Test for the <code>gunzip()</code> function decompressing GZIP-compressed binary data.
+	 */
+	public void testGunzip() throws Exception {
+		Object result = execute(search(
+			"binary(name: \"hello.txt\", data: \"Hello world!\", encoding: \"utf-8\").gzip().gunzip()"));
+
+		assertInstanceof(result, BinaryData.class);
+		BinaryData data = (BinaryData) result;
+		assertEquals("hello.txt", data.getName());
+		assertEquals(MimeTypesModule.getInstance().getMimeType("hello.txt"), data.getContentType());
+
+		try (InputStream in = data.getStream()) {
+			assertEquals("Hello world!", StreamUtilities.readAllFromStream(in, StandardCharsets.UTF_8));
+		}
+
+		// Explicit result name and content type.
+		BinaryDataSource named = (BinaryDataSource) execute(search(
+			"binary(name: \"hello.txt\", data: \"Hello world!\", encoding: \"utf-8\")"
+				+ ".gzip().gunzip(name: \"custom.data\", contentType: \"application/octet-stream\")"));
+		assertEquals("custom.data", named.getName());
+		assertEquals("application/octet-stream", named.getContentType());
+
+		// A null input results in a null value.
+		assertNull(execute(search("gunzip(null)")));
+	}
+
 	@FunctionalInterface
 	interface TestFun {
 		void accept(XMLInstanceImporter scenario) throws Exception;
+	}
+
+	/**
+	 * Test for ticket #29069: A derived attribute of type "General search expression"
+	 * (tl.model.search:Expr) can return a computed function (closure) with bound values.
+	 *
+	 * <p>
+	 * This test verifies that accessing a derived attribute that returns a closure works without
+	 * ClassCastException.
+	 * </p>
+	 */
+	public void testDerivedAttributeReturningClosure() {
+		with("TestSearchExpression-testDerivedClosure.scenario.xml", scenario -> {
+			TLObject e1 = scenario.getObject("e1");
+			assertNotNull(e1);
+			TLObject e2 = scenario.getObject("e2");
+			assertNotNull(e2);
+
+			// Get the derived attribute that returns a closure (function with bound 'factor')
+			Object multiplier1 = e1.tValueByName("multiplier");
+			assertNotNull("Derived attribute returning closure should not be null", multiplier1);
+			assertTrue("Derived attribute should return a SearchExpression (closure)",
+				multiplier1 instanceof SearchExpression);
+
+			Object multiplier2 = e2.tValueByName("multiplier");
+			assertNotNull("Derived attribute returning closure should not be null", multiplier2);
+			assertTrue("Derived attribute should return a SearchExpression (closure)",
+				multiplier2 instanceof SearchExpression);
+
+			// Apply the closures and verify they work correctly
+			// e1 has factor=3, so multiplier1(7) should return 21
+			Object result1 = eval("fun -> arg -> $fun.apply($arg)", multiplier1, 7.0);
+			assertEquals(21.0, result1);
+
+			// e2 has factor=5, so multiplier2(7) should return 35
+			Object result2 = eval("fun -> arg -> $fun.apply($arg)", multiplier2, 7.0);
+			assertEquals(35.0, result2);
+
+			// Test accessing the attribute via TL-Script expression
+			assertEquals(21.0, eval("e -> $e.get(`TestSearchExpression:E#multiplier`).apply(7)", e1));
+			assertEquals(35.0, eval("e -> $e.get(`TestSearchExpression:E#multiplier`).apply(7)", e2));
+		});
 	}
 
 	public void testEnumLiteralAccess() throws ParseException {
@@ -2104,21 +2926,69 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals(expected, label);
 	}
 
+	/** Test that {@link Label} of a constant is resolved in the locale of the executing session. */
+	public void testLabelOfConstantUsesSessionLocale() throws ParseException {
+		QueryExecutor executor = compile(kb(), model(), search("label(#(\"Offen\"@de, \"Pending\"@en))"));
+
+		assertEquals("Offen", executeIn(Locale.GERMAN, executor));
+		assertEquals("Pending", executeIn(Locale.ENGLISH, executor));
+	}
+
+	/**
+	 * Test that {@link Localize} of a constant is resolved in the locale of the executing session.
+	 */
+	public void testLocalizeOfConstantUsesSessionLocale() throws ParseException {
+		QueryExecutor executor = compile(kb(), model(), search("localize(#(\"Offen\"@de, \"Pending\"@en))"));
+
+		assertEquals("Offen", executeIn(Locale.GERMAN, executor));
+		assertEquals("Pending", executeIn(Locale.ENGLISH, executor));
+	}
+
+	/**
+	 * Test that {@link Fill} of a constant pattern formats in the locale of the executing session.
+	 */
+	public void testFillOfConstantUsesSessionLocale() throws ParseException {
+		QueryExecutor executor = compile(kb(), model(), search("fill(\"{0,number,#.#}\", 1.5)"));
+
+		assertEquals("1,5", executeIn(Locale.GERMAN, executor));
+		assertEquals("1.5", executeIn(Locale.ENGLISH, executor));
+	}
+
+	private Object executeIn(Locale locale, QueryExecutor executor) {
+		return TLContextManager.getSubSession()
+			.withLocale(locale, () -> executor.executeWith(null, null, Args.none()));
+	}
+
 	private void with(String scenarioName, TestFun test) {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		long startRev = kb.getHistoryManager().getLastRevision();
 		try {
 			XMLInstanceImporter scenario = scenario(scenarioName);
 			Throwable outer = null;
 			try {
 				test.accept(scenario);
-
-				// Roll back any implicitly started (and potentially failed) transactions.
-				PersistencyLayer.getKnowledgeBase().rollback();
 			} catch (Throwable e1) {
 				outer = e1;
 				throw e1;
 			} finally {
 				try {
-					drop(scenario);
+					// Roll back any implicitly started (and potentially failed) transactions.
+					kb.rollback();
+				} catch (Throwable e2) {
+					if (outer != null) {
+						outer.addSuppressed(e2);
+					}
+				}
+
+				try {
+					long stopRev = kb.getHistoryManager().getLastRevision();
+					if (stopRev > startRev) {
+						Collection<ChangeSet> changes = new ChangeLogBuilder(kb, ModelService.getApplicationModel())
+							.setStartRev(kb.getHistoryManager().getRevision(startRev + 1))
+							.setStopRev(kb.getHistoryManager().getRevision(stopRev)).build();
+
+						drop(changes);
+					}
 				} catch (Throwable e2) {
 					if (outer != null) {
 						outer.addSuppressed(e2);
@@ -2139,21 +3009,80 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		}
 	}
 
-	private void drop(XMLInstanceImporter scenario) {
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			for (TLObject x : scenario.getAllImportedObjects()) {
-				x.tDelete();
+	private void drop(Collection<ChangeSet> changes) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			ArrayList<ChangeSet> ordered = new ArrayList<>(changes);
+			Collections.sort(ordered,
+				Comparator.<ChangeSet> comparingLong(cs -> cs.getRevision().getCommitNumber()).reversed());
+			for (ChangeSet cs : ordered) {
+				cs.revert().apply();
 			}
 			tx.commit();
 		}
 	}
 
+	public void testXMLValid() throws ParseException {
+		// Valid well-formed XML
+		search("{{{<div><span>Hello</span></div>}}}");
+		search("{{{<div><p>Test</p><p>Test2</p></div>}}}");
+		search("{{{<div><span><b>Nested</b></span></div>}}}");
+		search("{{{<br/>}}}");
+		search("{{{<img src=\"test.png\"/>}}}");
+	}
+
+	public void testXMLMismatchedTags() throws ParseException {
+		try {
+			search("{{{<div><span>Hello</div></span>}}}");
+			fail("Expected error for mismatched tags.");
+		} catch (TopLogicException ex) {
+			assertEquals(
+				com.top_logic.model.search.expr.config.dom.I18NConstants.ERROR_MISMATCHED_TAGS__EXPECTED_ACTUAL,
+				Location.detail(ex.getErrorKey()).plain());
+		}
+	}
+
+	public void testXMLNoMatchingStartTag() throws ParseException {
+		try {
+			search("{{{<div>Hello</div></span>}}}");
+			fail("Expected error for end tag without start tag.");
+		} catch (TopLogicException ex) {
+			assertEquals(
+				com.top_logic.model.search.expr.config.dom.I18NConstants.ERROR_NO_MATCHING_START_TAG__NAME,
+				Location.detail(ex.getErrorKey()).plain());
+		}
+	}
+
+	public void testXMLMultipleUnclosedTags() throws ParseException {
+		try {
+			search("{{{<div><span><p>Hello}}}");
+			fail("Expected error for unclosed tag.");
+		} catch (TopLogicException ex) {
+			assertEquals(
+				com.top_logic.model.search.expr.config.dom.I18NConstants.ERROR_UNCLOSED_TAG__NAME,
+				Location.detail(ex.getErrorKey()).plain());
+		}
+	}
+
+	public void testXMLEmptyTags() throws ParseException {
+		// Empty tags should not require closing
+		search("{{{<div><br/><hr/>Text</div>}}}");
+		search("{{{<div><input type=\"text\"/></div>}}}");
+	}
+
+	public void testXMLNestedStructure() throws ParseException {
+		// Complex nested structure
+		search("{{{<div><ul><li><a href=\"#\">Link</a></li></ul></div>}}}");
+		search("{{{<table><tr><td>Cell1</td><td>Cell2</td></tr></table>}}}");
+	}
+
 	private Object value(TLObject obj, String name) {
-		return obj.tValue(((TLClass) obj.tType()).getPart(name));
+		return obj.tValue(obj.tType().getPart(name));
 	}
 
 	public static Test suite() {
-		return suite(TestSearchExpression.class, SafeHTML.Module.INSTANCE);
+		return suite(TestSearchExpression.class,
+			SafeHTML.Module.INSTANCE,
+			PersonManager.Module.INSTANCE);
 	}
 
 }

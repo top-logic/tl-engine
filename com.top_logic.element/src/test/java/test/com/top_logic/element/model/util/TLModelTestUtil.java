@@ -11,7 +11,6 @@ import com.top_logic.element.model.PersistentTLModel;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModel;
-import com.top_logic.util.model.Messages;
 
 /**
  * Utilities for {@link Test}s about the {@link TLModel}.
@@ -30,7 +29,7 @@ public class TLModelTestUtil {
 	}
 
 	private static TLModel createTLModelKO(KnowledgeBase knowledgeBase) {
-		Transaction transaction = knowledgeBase.beginTransaction(Messages.CREATING_TL_MODEL);
+		Transaction transaction = knowledgeBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			TLModel tlModel = PersistentTLModel.newInstance(knowledgeBase);
 			transaction.commit();

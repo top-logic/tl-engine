@@ -29,7 +29,7 @@ import com.top_logic.model.annotate.DisplayAnnotations;
 public class TimeFieldProvider extends AbstractFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();
@@ -42,8 +42,7 @@ public class TimeFieldProvider extends AbstractFieldProvider {
 	private void setConfiguredFormat(ComplexField field, EditContext editContext) {
 		Format format;
 		try {
-			format = DisplayAnnotations
-				.getConfiguredDateFormat(editContext.getAnnotation(com.top_logic.model.annotate.ui.Format.class));
+			format = DisplayAnnotations.getConfiguredFormat(editContext);
 		} catch (ConfigurationException ex) {
 			Logger.error("Invalid attribute definition for '" + editContext + "'.", ex, TimeFieldProvider.class);
 			format = null;

@@ -6,6 +6,7 @@
 package com.top_logic.element.meta.kbbased.storage;
 
 
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
@@ -17,11 +18,14 @@ import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.meta.AssociationStorage;
 import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
+import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
@@ -31,7 +35,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
-import com.top_logic.model.annotate.persistency.AllTables;
+import com.top_logic.model.annotate.persistency.LinkTables;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.model.export.SinglePreloadContribution;
 import com.top_logic.model.v5.AssociationNavigationPreload;
@@ -65,16 +69,6 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 
 		/** see {@link #getTable()} */
 		void setTable(String tableName);
-
-		/**
-		 * All table that can be used to store link objects.
-		 */
-		class LinkTables extends AllTables {
-			@Override
-			protected String getBaseTable() {
-				return ApplicationObjectUtil.WRAPPER_ATTRIBUTE_ASSOCIATION_BASE;
-			}
-		}
 
 		/**
 		 * The sort order attribute in {@link #getTable()}.
@@ -151,21 +145,106 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 	 *        Whether the reference is a composition.
 	 * @param historyType
 	 *        The history type of the value of the reference.
+	 * @param unversioned
+	 *        Whether reference values must be stored unversioned.
 	 * @return The storage configuration.
 	 */
-	protected static <C extends LinkStorageConfig> C defaultConfig(Class<C> configType, boolean composite, HistoryType historyType) {
+	protected static <C extends LinkStorageConfig> C defaultConfig(Class<C> configType, boolean composite,
+			HistoryType historyType, DeletionPolicy deletionPolicy, boolean unversioned) {
 		C result = TypedConfiguration.newConfigItem(configType);
 		switch (historyType) {
 			case CURRENT:
 				if (composite) {
-					result.setTable(ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION);
+					switch (deletionPolicy) {
+						case CLEAR_REFERENCE:
+							if (unversioned) {
+								result.setTable(
+									ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION_UNVERSIONED);
+							} else {
+								result.setTable(
+									ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION);
+							}
+							break;
+						case DELETE_REFERER:
+							if (unversioned) {
+								result.setTable(
+									ApplicationObjectUtil.STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION_UNVERSIONED);
+							} else {
+								result.setTable(
+									ApplicationObjectUtil.STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION);
+							}
+							break;
+						case STABILISE_REFERENCE:
+							// This an unsupported combination of settings.
+							break;
+						case VETO:
+							if (unversioned) {
+								result.setTable(
+									ApplicationObjectUtil.STRUCTURE_CHILD_VETO_ASSOCIATION_UNVERSIONED);
+							} else {
+								result.setTable(
+									ApplicationObjectUtil.STRUCTURE_CHILD_VETO_ASSOCIATION);
+							}
+							break;
+					}
+				} else {
+					switch (deletionPolicy) {
+						case CLEAR_REFERENCE:
+							if (unversioned) {
+								result.setTable(
+									ApplicationObjectUtil.WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED);
+							} else {
+								result.setTable(
+									ApplicationObjectUtil.WRAPPER_ATTRIBUTE_ASSOCIATION);
+							}
+							break;
+						case DELETE_REFERER:
+							if (unversioned) {
+								result.setTable(
+									ApplicationObjectUtil.WRAPPER_DELETE_REFERER_ASSOCIATION_UNVERSIONED);
+							} else {
+								result.setTable(
+									ApplicationObjectUtil.WRAPPER_DELETE_REFERER_ASSOCIATION);
+							}
+							break;
+						case STABILISE_REFERENCE:
+							if (unversioned) {
+								result.setTable(
+									ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED);
+							} else {
+								result.setTable(
+									ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION);
+							}
+							break;
+						case VETO:
+							if (unversioned) {
+								result.setTable(
+									ApplicationObjectUtil.WRAPPER_VETO_ASSOCIATION_UNVERSIONED);
+							} else {
+								result.setTable(
+									ApplicationObjectUtil.WRAPPER_VETO_ASSOCIATION);
+							}
+							break;
+					}
 				}
 				break;
 			case HISTORIC:
-				result.setTable(ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION);
+				if (unversioned) {
+					result.setTable(
+						ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED);
+				} else {
+					result.setTable(
+						ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION);
+				}
 				break;
 			case MIXED:
-				result.setTable(ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION);
+				if (unversioned) {
+					result.setTable(
+						ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED);
+				} else {
+					result.setTable(
+						ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION);
+				}
 				break;
 
 		}
@@ -177,6 +256,12 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 		super.init(attribute);
 		initStorageMapping(attribute);
 		initReference(attribute);
+
+		if (!monomophicTable()) {
+			checkKeyAttributes(attribute,
+				WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR,
+				DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+		}
 	}
 
 	/**
@@ -201,6 +286,30 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 		_incomingQuery = LinkStorageUtil.createIncomingQuery(attribute, this);
 		_preload = new SinglePreloadContribution(new AssociationNavigationPreload(getOutgoingQuery()));
 		_reversePreload = new SinglePreloadContribution(new AssociationNavigationPreload(getIncomingQuery()));
+	}
+
+	@Override
+	public ObjectKey getBaseObjectId(Map<String, Object> row) {
+		return (ObjectKey) row.get(DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+	}
+
+	@Override
+	public String getBaseObjectColumn() {
+		return DBKnowledgeAssociation.REFERENCE_SOURCE_NAME;
+	}
+
+	@Override
+	public String getStorageColumn() {
+		return DBKnowledgeAssociation.REFERENCE_DEST_NAME;
+	}
+
+	@Override
+	public ObjectKey getPartId(Map<String, Object> row) {
+		if (monomophicTable()) {
+			return getAttribute().getDefinition().tId();
+		} else {
+			return (ObjectKey) row.get(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR);
+		}
 	}
 
 	@Override

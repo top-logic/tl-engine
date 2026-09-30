@@ -181,52 +181,7 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 				}
 			}
 
-			// Check that the specified security component allows the target model.
-			BoundComponent securityComponent = getSecurityComponent(targetComponent);
-			if (securityComponent == null) {
-				return ExecutableState.EXECUTABLE;
-			}
-
-			if (!allow(securityComponent, model)) {
-				return ExecutableState.NO_EXEC_PERMISSION;
-			}
-
 			return ExecutableState.EXECUTABLE;
-		}
-
-		private boolean allow(BoundComponent securityComponent, Object model) {
-			BoundCommandGroup handlerGroup = _handler.getCommandGroup();
-			return securityComponent.allowPotentialModel(handlerGroup, model);
-		}
-
-		private BoundComponent getSecurityComponent(LayoutComponent targetComponent) {
-			if (targetComponent == null) {
-				return null;
-			}
-			LayoutComponent dialog = getDialog(targetComponent);
-			if (dialog == null) {
-				return null;
-			}
-			DialogInfo dialogInfo = dialog.getDialogInfo();
-			ComponentName securityComponentName = dialogInfo.getSecurityComponentName();
-			if (securityComponentName != null) {
-				LayoutComponent result = dialog.getComponentByName(securityComponentName);
-				if (!(result instanceof BoundComponent)) {
-					Logger.warn("Security component '" + securityComponentName + "' not a bound component at "
-						+ dialogInfo.location(), OpenModalDialogCommandHandler.class);
-					return null;
-				}
-				return (BoundComponent) result;
-			}
-			return null;
-		}
-
-		private LayoutComponent getDialog(LayoutComponent targetComponent) {
-			// Note: The dialog could be defined on another component, therefore
-			// targetComponent.getDialog(...) is not sufficient.
-			ComponentName componentName = _handler.getOpenToDialogName();
-			LayoutComponent dialogComponent = targetComponent.getComponentByName(componentName);
-			return dialogComponent == null ? null : dialogComponent.getDialogTopLayout();
 		}
 	}
 
@@ -259,10 +214,6 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
                          Object model, Map<String, Object> someArguments) {
 		/* init the component */
 		LayoutComponent dialog = this.getDialog(aComponent, someArguments);
-		if (dialog == null) {
-		    throw new NullPointerException("Failed to getDialog()");
-		}
-
 		transferModel(dialog, model);
 
 		this.beforeOpening(aContext, aComponent, someArguments, dialog);
@@ -280,6 +231,32 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 
 		return HandlerResult.DEFAULT_RESULT;
     }
+
+	@Override
+	protected BoundChecker getChecker(LayoutComponent component, Map<String, Object> arguments) {
+		LayoutComponent dialog = getDialog(component, arguments);
+		if (dialog != null) {
+			DialogInfo dialogInfo = dialog.getDialogInfo();
+			ComponentName securityComponentName = dialogInfo.getSecurityComponentName();
+			if (securityComponentName != null) {
+				LayoutComponent result = dialog.getComponentByName(securityComponentName);
+				if (result instanceof BoundChecker checker) {
+					// The explicitly configured check context.
+					return checker;
+				}
+				Logger.warn("Security component '" + securityComponentName + "' not a bound component at "
+					+ dialogInfo.location(), OpenModalDialogCommandHandler.class);
+			}
+		}
+
+		// By default the dialog that is opened.
+		if (dialog instanceof BoundChecker checker) {
+			return checker;
+		}
+
+		// As last fall-back the context in which the dialog was defined.
+		return super.getChecker(component, arguments);
+	}
 
 	/**
 	 * Transfers the model on which this open handler operates to a configured
@@ -357,7 +334,11 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 	 *         component.
 	 */
 	protected LayoutComponent getDialog(LayoutComponent component, Map<String, Object> someArguments) {
-		return component.getComponentByName(_dialogName);
+		LayoutComponent result = component.getComponentByName(_dialogName);
+		if (result == null) {
+			throw new IllegalStateException("Dialog '" + _dialogName + "' not found.");
+		}
+		return result;
     }
 
     /**
@@ -410,7 +391,7 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
     /**
      * the dialog name this handler can open.
      */
-    public ComponentName getOpenToDialogName() {
+	public final ComponentName getOpenToDialogName() {
 		return this._dialogName;
     }
 

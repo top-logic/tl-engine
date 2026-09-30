@@ -264,9 +264,9 @@ public class MOAttributeImpl extends AbstractDBAttribute {
 		this.binary = value;
 	}
     
-    @Override
-	public MOAttribute copy() {
-		MOAttributeImpl copy = new MOAttributeImpl(getName(), typeRef(getMetaObject()));
+	@Override
+	public MOAttribute copy(String newName, MetaObject newType) {
+		MOAttributeImpl copy = new MOAttributeImpl(newName, newType);
 		copy.initFrom(this);
 		copy.setStorage(getStorage());
 		return copy;

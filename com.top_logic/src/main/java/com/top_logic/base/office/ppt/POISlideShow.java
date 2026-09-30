@@ -41,7 +41,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 /**
  * Interface for generic access to power point interfaces from POI. 
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class POISlideShow<S, M> {
 
@@ -193,7 +193,7 @@ public abstract class POISlideShow<S, M> {
 	/**
 	 * Simple visitor for powerpoint, which checks, if the visited shape has a text frame.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public abstract static class PPTVisitor<S> {
 
@@ -304,7 +304,7 @@ public abstract class POISlideShow<S, M> {
 	/**
 	 * Visitor for extracting text from a shape (used by {@link POISlideShow#getValuesFromDoc()}.
 	 * 
-	 * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class GetVisitor<S> extends PPTVisitor<S> {
 
@@ -331,7 +331,7 @@ public abstract class POISlideShow<S, M> {
 	/**
 	 * Visitor for extracting text from a shape (used by {@link POISlideShow#getFields()}.
 	 * 
-	 * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class SetVisitor<S> extends PPTVisitor<S> {
 
@@ -364,7 +364,7 @@ public abstract class POISlideShow<S, M> {
 	/**
 	 * POI power point implementation based on HSLF (for PPT files). 
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class StandardSlideShow extends POISlideShow<HSLFShape, HSLFSheet> {
 
@@ -440,7 +440,7 @@ public abstract class POISlideShow<S, M> {
 	/**
 	 * POI power point implementation based on XSLF (for PPTX files). 
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class XMLBasedSlideShow extends POISlideShow<XSLFShape, XSLFSheet> {
 

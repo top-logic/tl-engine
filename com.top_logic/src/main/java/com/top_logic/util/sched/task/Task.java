@@ -42,7 +42,7 @@ import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
  * #14112 for details.
  * </p>
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface Task extends Batch {
 	

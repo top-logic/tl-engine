@@ -1,0 +1,36 @@
+<h2>Syntax</h2>
+<pre>	<code>revertChanges($changes)</code>
+</pre>
+<h2>Description</h2>
+<p>Reverts the given changes (<code class="hljs inlineCode">tl.changelog:ChangeSet</code>) inside the caller's active transaction. The order of the entries in the given list is irrelevant: the function sorts them internally by revision in descending order and reverts the youngest change first.</p>
+<p><strong>The function does not open or commit a transaction itself.</strong> The surrounding script is responsible for commit and rollback handling.</p>
+<p>The returned list contains the problems (resource keys) that were raised during the revert. An empty list means every revert ran without conflict.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>changes</td>
+   <td>List of <code class="hljs inlineCode">tl.changelog:ChangeSet</code></td>
+   <td>The changes to be undone. May also be a single ChangeSet.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> List of resource keys</p>
+<p>List of problems raised during the revert; empty when all reverts ran cleanly.</p>
+<h2>Examples</h2>
+<h3>Example 1</h3>
+<pre>	<code>revertChanges($project.changeLog())</code>
+</pre>
+<p>Restores a project and all its sub-objects to the state they had before the first recorded change in the log. The surrounding script must commit the transaction afterwards.</p>

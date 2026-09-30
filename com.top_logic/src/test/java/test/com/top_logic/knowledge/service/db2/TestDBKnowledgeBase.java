@@ -389,10 +389,10 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 
 	public void testCommitTransactionOnRollbackOfCommittedNestedTransaction() throws InterruptedException,
 			DataObjectException {
-		Transaction outer = kb().beginTransaction();
+		Transaction outer = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject b1 = newB("b1");
 
-		Transaction inner = kb().beginTransaction();
+		Transaction inner = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject b2 = newB("b2");
 		inner.commit();
 		inner.rollback();
@@ -405,10 +405,10 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 
 	public void testFailTransactionOnRollbackEmptyUnommittedNestedTransaction() throws InterruptedException,
 			DataObjectException {
-		Transaction outer = kb().beginTransaction();
+		Transaction outer = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject b1 = newB("b1");
 
-		Transaction inner = kb().beginTransaction();
+		Transaction inner = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		inner.rollback();
 
 		try {
@@ -423,9 +423,9 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 
 	public void testFailEmptyTransactionOnRollbackEmptyUnommittedNestedTransaction() throws InterruptedException,
 			DataObjectException {
-		Transaction outer = kb().beginTransaction();
+		Transaction outer = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
-		Transaction inner = kb().beginTransaction();
+		Transaction inner = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		inner.rollback();
 
 		try {
@@ -447,7 +447,7 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 				ThreadContext.inSystemContext(getClass(), new InContext() {
 					@Override
 					public void inContext() {
-						Transaction tx = kb().beginTransaction();
+						Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 						assertNotNull(tx);
 
 						CommitContext context = kb().createCommitContext();
@@ -477,7 +477,7 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 		start.acquire();
 		try {
 			// Thread should have done an auto-rollback. Try to commit a transaction.
-			Transaction tx = kb().beginTransaction();
+			Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			newB("b1");
 			tx.commit();
 		} finally {
@@ -908,12 +908,12 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 	 * Tests that current object is found after an failed deletion of an historic object.
 	 */
 	public void testSearchCurrentAfterFailedHistoricObjectDeletion() throws DataObjectException {
-		Transaction createTx = kb().beginTransaction();
+		Transaction createTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e1 = newE("e1");
 		commit(createTx);
 		KnowledgeItem historicE1 = HistoryUtils.getKnowledgeItem(createTx.getCommitRevision(), e1);
 		try {
-			Transaction deleteTx = kb().beginTransaction();
+			Transaction deleteTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			historicE1.delete();
 			deleteTx.commit();
 		} catch (IllegalStateException ex) {
@@ -928,18 +928,18 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 	 * Tests that object can be modified after an failed deletion of an historic object.
 	 */
 	public void testChangeCurrentAfterFailedHistoricObjectDeletion() throws DataObjectException {
-		Transaction createTx = kb().beginTransaction();
+		Transaction createTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e1 = newE("e1");
 		commit(createTx);
 		KnowledgeItem historicE1 = HistoryUtils.getKnowledgeItem(createTx.getCommitRevision(), e1);
 		try {
-			Transaction deleteTx = kb().beginTransaction();
+			Transaction deleteTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			historicE1.delete();
 			deleteTx.commit();
 		} catch (IllegalStateException ex) {
 			// expected
 		}
-		Transaction changeTx = kb().beginTransaction();
+		Transaction changeTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		e1.setAttributeValue(A1_NAME, "new A1 value");
 		commit(changeTx);
 		assertEquals("new A1 value", e1.getAttributeValue(A1_NAME));
@@ -949,16 +949,16 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 	 * Tests that historic objects which were changed after its revision can not be deleted.
 	 */
 	public void testDeleteHistoricObject1() throws DataObjectException {
-		Transaction createTx = kb().beginTransaction();
+		Transaction createTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e1 = newE("e1");
 		commit(createTx);
-		Transaction changeTx = kb().beginTransaction();
+		Transaction changeTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		e1.setAttributeValue(A1_NAME, "new a1 value");
 		commit(changeTx);
 
 		try {
 			KnowledgeItem historicE1 = HistoryUtils.getKnowledgeItem(createTx.getCommitRevision(), e1);
-			Transaction deleteTx = kb().beginTransaction();
+			Transaction deleteTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			historicE1.delete();
 			deleteTx.commit();
 			fail("Historic objects '" + historicE1 + "' can not be deleted");
@@ -972,12 +972,12 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 	 * Tests that historic objects can not be deleted.
 	 */
 	public void testDeleteHistoricObject() throws DataObjectException {
-		Transaction createTx = kb().beginTransaction();
+		Transaction createTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e1 = newE("e1");
 		commit(createTx);
 		KnowledgeItem historicE1 = HistoryUtils.getKnowledgeItem(createTx.getCommitRevision(), e1);
 		try {
-			Transaction deleteTx = kb().beginTransaction();
+			Transaction deleteTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			historicE1.delete();
 			deleteTx.commit();
 			fail("Historic objects '" + historicE1 + "' can not be deleted");
@@ -992,13 +992,13 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 	 * Tests that historic associations can not be deleted.
 	 */
 	public void testDeleteHistoricAssociation() throws DataObjectException {
-		Transaction createTx = kb().beginTransaction();
+		Transaction createTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e1 = newE("e1");
 		KnowledgeAssociation association = newAB(e1, e1);
 		commit(createTx);
 		KnowledgeItem historicAssociation = HistoryUtils.getKnowledgeItem(createTx.getCommitRevision(), association);
 		try {
-			Transaction deleteTx = kb().beginTransaction();
+			Transaction deleteTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			historicAssociation.delete();
 			deleteTx.commit();
 			fail("Historic objects '" + historicAssociation + "' can not be deleted");
@@ -1010,7 +1010,7 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testGetIncomingAssociationsHistoric() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e1 = newE("e1");
 		KnowledgeObject e2 = newE("e2");
 		KnowledgeObject b1 = newB("b1");
@@ -1033,7 +1033,7 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testGetOutgoingAssociations() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e1 = newE("e1");
 		KnowledgeObject e2 = newE("e2");
 		KnowledgeObject b1 = newB("b1");
@@ -1048,7 +1048,7 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 		assertEquals(set(bc1), toSet(b1.getOutgoingAssociations()));
 		assertEquals(set(ab2), toSet(e2.getOutgoingAssociations()));
 
-		Transaction deleteTx = kb().beginTransaction();
+		Transaction deleteTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		ab1.delete();
 		assertEquals(set(), toSet(e1.getOutgoingAssociations()));
 		assertEquals(set(), toSet(e1.getOutgoingAssociations(AB_NAME)));
@@ -1060,7 +1060,7 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testGetIncomingAssociations() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e1 = newE("e1");
 		KnowledgeObject e2 = newE("e2");
 		KnowledgeObject b1 = newB("b1");
@@ -1075,7 +1075,7 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 		assertEquals(set(), toSet(b1.getIncomingAssociations()));
 		assertEquals(set(ab1), toSet(e2.getIncomingAssociations()));
 
-		Transaction deleteTx = kb().beginTransaction();
+		Transaction deleteTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		ab2.delete();
 		assertEquals(set(bc1), toSet(e1.getIncomingAssociations()));
 		assertEquals(set(), toSet(e1.getIncomingAssociations(AB_NAME)));
@@ -1091,7 +1091,7 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 			// This test uses branches, but there is no multiple branch support.
 			return;
 		}
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e1 = newE("e1");
 		KnowledgeObject e2 = newE("e1");
 		KnowledgeObject b1 = newB("b1");
@@ -1124,7 +1124,7 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 	}
 
 	private void testGetAllAssociations(boolean inTx) throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e1 = newE("e1");
 		KnowledgeObject e2 = newE("e2");
 		KnowledgeObject b1 = newB("b1");
@@ -1150,7 +1150,7 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 
 			Transaction deleteTx = null;
 			if (!inTx) {
-				deleteTx = kb().beginTransaction();
+				deleteTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			}
 			e2.delete();
 			bc1.delete();
@@ -1181,7 +1181,7 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 	}
 
 	private void testGetAllKnowledgeObjects(boolean inTx) throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e1 = newE("e1");
 		KnowledgeObject e2 = newE("e1");
 		KnowledgeObject b1 = newB("b1");
@@ -1201,7 +1201,7 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 			assertEquals(set(u1), toSet(allU));
 		}
 		{
-			Transaction deleteTx = kb().beginTransaction();
+			Transaction deleteTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			e2.delete();
 			b1.delete();
 			commit(deleteTx);

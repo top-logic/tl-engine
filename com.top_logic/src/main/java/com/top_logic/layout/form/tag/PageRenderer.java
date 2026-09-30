@@ -10,11 +10,14 @@ import static com.top_logic.mig.html.HTMLUtil.*;
 
 import java.io.IOException;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.component.SaveScrollPosition;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.mig.html.HTMLUtil;
 
 /**
@@ -27,47 +30,52 @@ public abstract class PageRenderer {
 	/**
 	 * CSS class of the outermost div.
 	 */
-	protected static final String PAGE_CSS_CLASS = "fptPage";
+	protected static final String PAGE_CSS_CLASS = "tl-form-page";
 
 	/**
 	 * CSS class of the header div.
 	 */
-	protected static final String HEADER_CSS_CLASS = "fptHeader";
+	protected static final String HEADER_CSS_CLASS = "tl-form-page__header";
 
 	/**
 	 * CSS class of the title div.
 	 */
-	protected static final String TITLE_CSS_CLASS = "fptTitle";
+	protected static final String TITLE_CSS_CLASS = "tl-form-page__title";
 
 	/**
 	 * CSS class of the title content div.
 	 */
-	protected static final String TITLE_CONTENT_CSS_CLASS = "fptTitleContent";
+	protected static final String TITLE_CONTENT_CSS_CLASS = "tl-form-page__title-content";
 
 	/**
 	 * CSS class of the subtitle div.
 	 */
-	protected static final String SUBTITLE_CSS_CLASS = "fptSubtitle";
+	protected static final String SUBTITLE_CSS_CLASS = "tl-form-page__subtitle";
 
 	/**
 	 * CSS class of the subtitle content div.
 	 */
-	protected static final String SUBTITLE_CONTENT_CSS_CLASS = "fptSubtitleContent";
+	protected static final String SUBTITLE_CONTENT_CSS_CLASS = "tl-form-page__subtitle-content";
+
+	/**
+	 * CSS class for text in title and subtitle.
+	 */
+	protected static final String TITLE_TEXT_CSS_CLASS = "tl-form-page__title-text";
 
 	/**
 	 * CSS class of the icon bar div.
 	 */
-	protected static final String ICONBAR_CSS_CLASS = "fptIconBar";
+	protected static final String ICONBAR_CSS_CLASS = "tl-form-page__icon-bar";
 
 	/**
 	 * CSS class of the body div.
 	 */
-	protected static final String BODY_CSS_CLASS = "fptBody";
+	protected static final String BODY_CSS_CLASS = "tl-form-page__body";
 
 	/**
 	 * CSS class of the body content div.
 	 */
-	protected static final String BODY_CONTENT_CSS_CLASS = "fptBodyContent";
+	protected static final String BODY_CONTENT_CSS_CLASS = "tl-form-page__body-content";
 
 	/**
 	 * Writes the complete page consisting of header and body.
@@ -178,11 +186,14 @@ public abstract class PageRenderer {
 	 * @see #writeSubtitleContent(DisplayContext, TagWriter, PageControl)
 	 */
 	public final void writeSubTitle(DisplayContext context, TagWriter out, PageControl pageControl) throws IOException {
-		beginSubTitle(out);
-		{
-			writeSubtitleContent(context, out, pageControl);
+		HTMLFragment subtitleContent = pageControl.getSubtitleContent();
+		if (subtitleContent != Fragments.empty()) {
+			beginSubTitle(out);
+			{
+				writeSubtitleContent(context, out, pageControl);
+			}
+			endSubTitle(out);
 		}
-		endSubTitle(out);
 	}
 
 	/**
@@ -222,7 +233,11 @@ public abstract class PageRenderer {
 	 * @see #writeTitle(DisplayContext, TagWriter, PageControl)
 	 */
 	public void writeTitleContent(DisplayContext context, TagWriter out, PageControl pageControl) throws IOException {
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(CLASS_ATTR, TITLE_TEXT_CSS_CLASS);
+		out.endBeginTag();
 		pageControl.getTitleContent().write(context, out);
+		out.endTag(SPAN);
 	}
 
 	/**
@@ -240,7 +255,11 @@ public abstract class PageRenderer {
 	 * @see #writeSubTitle(DisplayContext, TagWriter, PageControl)
 	 */
 	public void writeSubtitleContent(DisplayContext context, TagWriter out, PageControl pageControl) throws IOException {
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(CLASS_ATTR, TITLE_TEXT_CSS_CLASS);
+		out.endBeginTag();
 		pageControl.getSubtitleContent().write(context, out);
+		out.endTag(SPAN);
 	}
 
 	/**
@@ -417,7 +436,7 @@ public abstract class PageRenderer {
 	 */
 	protected void writeBodyContentAttributes(TagWriter out, String containerId) throws IOException {
 		String scrollContainerId = getScrollContainerId(containerId);
-		out.writeAttribute(CLASS_ATTR, BODY_CONTENT_CSS_CLASS);
+		out.writeAttribute(CLASS_ATTR, BODY_CONTENT_CSS_CLASS + " " + FormConstants.OVERFLOW_AUTO_CLASS);
 		out.writeAttribute(ID_ATTR, scrollContainerId);
 		out.beginAttribute(ONSCROLL_ATTR);
 		SaveScrollPosition.writePushScrollPositionScript(out, scrollContainerId);

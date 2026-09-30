@@ -38,7 +38,7 @@
 		<param name="tableFilterProvider"
 			value=""
 		/>
-		<param name="securityProvider"
+		<param name="securityObject"
 			value="securityRoot"
 		/>
 	</params>
@@ -46,13 +46,13 @@
 	<layout name="${namePrefix}SearchResultChartDetails">
 		<components>
 			<component class="${componentClass}"
-				buttonComponent="${namePrefix}AttributedSearchResultChartDetailsButtons"
+				buttonbar="true"
 				metaElement="${metaElement}"
 				metaElementBuilder="${builderClass}"
 				model="selection(${masters})"
 				name="${namePrefix}ReportingSearchResultChartDetails"
 				resPrefix="${resourcePrefix}"
-				securityProviderClass="${securityProvider}"
+				securityObject="${securityObject}"
 				selectable="false"
 			>
 				<table
@@ -69,12 +69,14 @@
 				<buttons>
 					<button id="exportExcel"
 						class="com.top_logic.layout.table.export.ExcelExportHandler"
-						downloadNameKey="${downloadNameKey}"
 						templateName="${templateName}"
-					/>
+					>
+						<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+							downloadName="${downloadNameKey}"
+						/>
+					</button>
 				</buttons>
 			</component>
-			<buttonbar name="${namePrefix}AttributedSearchResultChartDetailsButtons"/>
 		</components>
 	</layout>
 </template>

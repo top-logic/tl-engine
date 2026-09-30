@@ -24,8 +24,17 @@ public class MaintenanceWindowTimer extends Thread {
     /** The time after that the maintenance mode shall be entered. */
     private final long delay;
 
-    /** Time when this timer was started. */
-    private long started = 0;
+    /**
+     * Time when this timer was created.
+     *
+     * <p>
+     * Assigned here and not in {@link #doRun()}, so that {@link #getFinishedTime()} is valid from
+     * the moment the timer exists. The creator announces the maintenance window immediately after
+     * {@link #start()}, and a listener reacting to that announcement would otherwise ask for the
+     * finish time before the new thread had run its first statement.
+     * </p>
+     */
+    private final long started;
 
 
     /**
@@ -34,6 +43,7 @@ public class MaintenanceWindowTimer extends Thread {
     public MaintenanceWindowTimer(long milliseconds) {
         super(THREAD_NAME);
         this.delay = milliseconds;
+        this.started = System.currentTimeMillis();
     }
 
 
@@ -54,7 +64,6 @@ public class MaintenanceWindowTimer extends Thread {
      */
     public void doRun() {
 		MaintenanceWindowManager mwm = MaintenanceWindowManager.getInstance();
-        started = System.currentTimeMillis();
         try {
             Thread.sleep(delay);
             Person contextUser = mwm.getChangingUser();
@@ -76,9 +85,8 @@ public class MaintenanceWindowTimer extends Thread {
      * Note: the value returned by this method may be inaccurate for few milliseconds due to
      * system speed and error of measurement.
      *
-     * @return the time left until the maintenance window mode will be entered, if the task
-     *         is running and is currently waiting for the delay; a negative value if the
-     *         task wasn't started yet or if it is already finished
+     * @return the time left until the maintenance window mode will be entered; a negative value
+     *         if the delay has already elapsed
      */
     public long getTimeLeft() {
         return delay - (System.currentTimeMillis() - started);
@@ -89,12 +97,12 @@ public class MaintenanceWindowTimer extends Thread {
      * Note: the value returned by this method may be inaccurate for few milliseconds due to
      * system speed and error of measurement.
      *
-     * @return the time when the maintenance window mode will be entered, if the task is
-     *         running and is currently waiting for the delay, a negative value if the task
-     *         wasn't started yet.
+     * @return the time when the maintenance window mode will be entered. Valid as soon as this
+     *         timer exists, see {@link MaintenanceWindowManager#getFinishedTime()} for the
+     *         "no window announced" case.
      */
     public long getFinishedTime() {
-        return started <= 0 ? -1 : started + delay;
+        return started + delay;
     }
 
 }

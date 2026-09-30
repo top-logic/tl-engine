@@ -22,7 +22,7 @@
 		/>
 		<basic:image
 			altKey="demo.imageTag.altText"
-			srcKey="theme:ICONS_INFO"
+			srcKey="theme:ICONS_DIALOG_QUESTION"
 			tooltipKey="demo.imageTag.tooltip"
 		/>
 	</layout:body>

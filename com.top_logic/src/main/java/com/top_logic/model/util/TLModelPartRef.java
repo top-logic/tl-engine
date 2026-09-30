@@ -5,16 +5,20 @@
  */
 package com.top_logic.model.util;
 
+import java.util.Collection;
 import java.util.regex.Pattern;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
+import com.top_logic.basic.config.CommaSeparatedListValueProvider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
+import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.OptionMapping;
@@ -22,15 +26,21 @@ import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.config.AbstractModelPartMapping;
+import com.top_logic.model.config.TypeRef;
 import com.top_logic.model.resources.TLPartScopedResourceProvider;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Textual reference to a {@link TLModelPart} that can be safely used in configurations.
- *
+ * 
+ * @see TypeRef
+ * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Format(TLModelPartRef.TLModelPartRefValueProvider.class)
@@ -81,28 +91,56 @@ public class TLModelPartRef {
 	 * Resolves a referenced type.
 	 */
 	public TLModelPart resolve() {
-		return TLModelUtil.resolveModelPart(qualifiedName());
+		return resolve(ModelService.getApplicationModel());
+	}
+
+	/**
+	 * Resolves a referenced type.
+	 */
+	public TLModelPart resolve(TLModel model) {
+		return TLModelUtil.resolveModelPart(model, qualifiedName());
 	}
 
 	/**
 	 * Resolves a referenced type.
 	 */
 	public TLType resolveType() {
-		return TLModelUtil.findType(qualifiedName());
+		return resolveType(ModelService.getApplicationModel());
+	}
+
+	/**
+	 * Resolves a referenced type in the given model.
+	 */
+	public TLType resolveType(TLModel model) {
+		return TLModelUtil.findType(model, qualifiedName());
 	}
 
 	/**
 	 * Resolves a referenced type.
 	 */
 	public TLTypePart resolvePart() {
-		return TLModelUtil.findPart(qualifiedName());
+		return resolvePart(ModelService.getApplicationModel());
+	}
+
+	/**
+	 * Resolves a referenced type in the given model.
+	 */
+	public TLTypePart resolvePart(TLModel model) {
+		return TLModelUtil.findPart(model, qualifiedName());
 	}
 
 	/**
 	 * Resolves the referenced type to a {@link TLClass}.
 	 */
 	public TLClass resolveClass() throws ConfigurationException {
-		TLType result = resolveType();
+		return resolveClass(ModelService.getApplicationModel());
+	}
+
+	/**
+	 * Resolves the referenced type to a {@link TLClass} in the given model.
+	 */
+	public TLClass resolveClass(TLModel model) throws ConfigurationException {
+		TLType result = resolveType(model);
 		if (result instanceof TLClass) {
 			return (TLClass) result;
 		} else {
@@ -134,6 +172,25 @@ public class TLModelPartRef {
 		return _qualifiedName.equals(other._qualifiedName);
 	}
 
+	/**
+	 * {@link ConfigurationValueProvider} for a list of {@link TLModelPartRef}s referencing
+	 * {@link TLModelPart}s.
+	 */
+	public static class CommaSeparatedTLModelPartRefs extends CommaSeparatedListValueProvider<TLModelPartRef> {
+
+		@Override
+		protected TLModelPartRef parseSingleValue(String propertyName, CharSequence propertyValue,
+				String singlePropertyValue) throws ConfigurationException {
+			return TLModelPartRefValueProvider.INSTANCE.getValue(propertyName, singlePropertyValue);
+		}
+
+		@Override
+		protected String formatSingleValue(TLModelPartRef singleConfigValue) {
+			return TLModelPartRefValueProvider.INSTANCE.getSpecification(singleConfigValue);
+		}
+
+
+	}
 	/**
 	 * {@link ConfigurationValueProvider} for {@link TLModelPartRef}s referencing
 	 * {@link TLModelPart}s.
@@ -261,6 +318,16 @@ public class TLModelPartRef {
 				return null;
 			}
 			return arg.resolveType();
+		}
+	}
+
+	/**
+	 * {@link GenericFunction} retrieving all {@link TLModule}s.
+	 */
+	public static class AllModules extends Function0<Collection<TLModule>> {
+		@Override
+		public Collection<TLModule> apply() {
+			return ModelService.getApplicationModel().getModules();
 		}
 	}
 

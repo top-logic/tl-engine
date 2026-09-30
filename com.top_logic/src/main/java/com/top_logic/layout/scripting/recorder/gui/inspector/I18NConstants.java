@@ -51,6 +51,8 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResPrefix FIELD_VALUE;
 
+	public static ResPrefix FIELD_PLACEHOLDER;
+
 	public static ResPrefix FIELD_OPTIONS;
 
 	public static ResPrefix TABLE_CELL_VALUE;

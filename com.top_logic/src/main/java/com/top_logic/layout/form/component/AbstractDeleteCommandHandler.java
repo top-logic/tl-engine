@@ -11,8 +11,9 @@ import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
@@ -22,12 +23,15 @@ import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.component.edit.CanLock;
 import com.top_logic.layout.form.component.edit.EditMode;
 import com.top_logic.layout.form.model.FormContext;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRuleManager;
@@ -51,13 +55,13 @@ import com.top_logic.util.error.TopLogicException;
  *           <ul>
  *           <li>Update or acquire a lock for the deletion, see {@link LockHandler#updateLock()}, if
  *           the component supports locking.</li>
- *           <li>{@link #beginTransaction(Object)}</li>
+ *           <li>{@link #beginTransaction(Object, ResKey)}</li>
  *           <li>{@link #deleteObject(LayoutComponent, Object, Map)}</li>
  *           <li>{@link #commit(Transaction, Object)}</li>
  *           <li>{@link #updateComponent(LayoutComponent, Object)}</li>
  *           </ul>
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractDeleteCommandHandler extends AbstractCommandHandler implements TransactionHandler {
 
@@ -65,8 +69,8 @@ public abstract class AbstractDeleteCommandHandler extends AbstractCommandHandle
 	public interface Config extends AbstractCommandHandler.Config {
 
 		@Override
-		@BooleanDefault(true)
-		boolean getConfirm();
+		@ItemDefault(DefaultDeleteConfirmation.class)
+		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 		@Override
 		@FormattedDefault(SimpleBoundCommandGroup.DELETE_NAME)
@@ -168,7 +172,11 @@ public abstract class AbstractDeleteCommandHandler extends AbstractCommandHandle
 	}
 
 	private void doApplyChanges(LayoutComponent component, Object model, Map<String, Object> arguments) {
-		try (Transaction tx = beginTransaction(model)) {
+		ResKey customMessage = getCustomCommitMessage(arguments);
+		ResKey message = customMessage == null
+			? I18NConstants.DELETED__MODEL.fill(MetaLabelProvider.INSTANCE.getLabel(model))
+			: customMessage;
+		try (Transaction tx = beginTransaction(model, message)) {
 			if (model instanceof Iterable) {
 				deleteObjects(component, (Iterable<?>) model, arguments);
 			} else {
@@ -233,7 +241,6 @@ public abstract class AbstractDeleteCommandHandler extends AbstractCommandHandle
 		// to be selected). As the persistent events are sent via the ModelEventForwarder it is
 		// necessary to process the global events.
 		component.getMainLayout().processGlobalEvents();
-        component.invalidateButtons();
 
 		closeDialog(component);
     }

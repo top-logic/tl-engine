@@ -12,8 +12,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.func.And;
-import com.top_logic.element.layout.meta.ActiveIf;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.mode.ActiveIf;
 import com.top_logic.model.form.definition.ContainerProperties;
 import com.top_logic.model.form.implementation.FormEditorTemplateProvider;
 

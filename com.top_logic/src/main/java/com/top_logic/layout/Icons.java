@@ -34,8 +34,6 @@ public class Icons extends IconsBase {
 	@DefaultValue("false")
 	public static ThemeVar<Boolean> HIDE_APP_TITLE_ON_LOGIN_PAGE;
 
-	public static ThemeImage V;
-
 	@DefaultValue("true")
 	public static ThemeVar<Boolean> GROUP_BORDER;
 
@@ -53,6 +51,12 @@ public class Icons extends IconsBase {
 	 */
 	@DefaultValue("300")
 	public static ThemeVar<Integer> FILTER_DIALOG_WIDTH;
+
+	/**
+	 * Filter dialog height.
+	 */
+	@DefaultValue("200")
+	public static ThemeVar<Integer> FILTER_DIALOG_HEIGHT;
 
 	/**
 	 * Height of a header row of tables with fixed columns in pixels.

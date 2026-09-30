@@ -61,7 +61,7 @@ public class FilterComponentUtil {
         startDateField.setMandatory(true);
         startDateField.addConstraint(new ComparisonDependency(ComparisonDependency.LOWER_OR_EQUALS_TYPE, endDateField));
         if (aStartDate != null) {
-            startDateField.setValue(aStartDate);
+			startDateField.initializeField(aStartDate);
         }
         aFormContext.addMember(startDateField);
 
@@ -69,7 +69,7 @@ public class FilterComponentUtil {
         endDateField.setMandatory(true);
         endDateField.addConstraint(new ComparisonDependency(ComparisonDependency.GREATER_OR_EQUALS_TYPE, startDateField));
 		if (anEndDate != null) {
-            endDateField.setValue(anEndDate);
+			endDateField.initializeField(anEndDate);
         }
         aFormContext.addMember(endDateField);
     }

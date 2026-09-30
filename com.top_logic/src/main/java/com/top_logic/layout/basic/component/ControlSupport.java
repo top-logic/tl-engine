@@ -11,6 +11,7 @@ import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
+import com.top_logic.basic.Logger;
 import com.top_logic.layout.CommandListener;
 import com.top_logic.layout.ControlScope;
 import com.top_logic.layout.DisplayContext;
@@ -231,9 +232,21 @@ public class ControlSupport implements AJAXSupport, ControlScope {
 				}
 			}
 
+			// This is a workaround. If ESCAPE or ENTER keys are pressed, do not reload the page!
+			if (arguments.containsValue("keypress")) {
+				if ((Integer) arguments.get("scancode") == 27 ||
+					(Integer) arguments.get("scancode") == 13) {
+					return HandlerResult.DEFAULT_RESULT;
+				}
+			}
+
 			HandlerResult result = new HandlerResult();
-			result.addErrorMessage(I18NConstants.ERROR_TARGET_CONTROL_NOT_FOUND);
+			result.addErrorMessage(
+				I18NConstants.ERROR_TARGET_CONTROL_NOT_FOUND__ID_CMD_ARGS.fill(listenerId, commandName, arguments));
 	        getFrameScope().addClientAction(JSSnipplet.createPageReload());
+
+			Logger.warn("Target control " + listenerId + " not found executing command '" + commandName
+				+ "' with arguments: " + arguments, ControlSupport.class);
 			return result;
         }
     }

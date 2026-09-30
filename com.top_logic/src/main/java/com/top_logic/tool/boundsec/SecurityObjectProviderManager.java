@@ -20,20 +20,20 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.tool.boundsec.securityObjectProvider.PathSecurityObjectProvider;
 import com.top_logic.tool.boundsec.securityObjectProvider.SecurityObjectProviderFormat;
 
 /**
- * The {@link SecurityObjectProviderManager} manages the {@link SecurityObjectProvider}s and their
- * aliases to comfort up layout configuration.
+ * Manages the available security object providers and their aliases for use in layout configuration.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
+@Label("Security object providers")
 public class SecurityObjectProviderManager extends ManagedClass {
 
-	private static final String DEFAULT_PROVIDER_ALIAS = "default";
 	/** Prefix to denote path in SecurityObjectProvider configuration. */
     public static final String PATH_SECURITY_OBJECT_PROVIDER = "path:";
     
@@ -135,10 +135,6 @@ public class SecurityObjectProviderManager extends ManagedClass {
 			}
 			providers.put(provider.getName(), securityObjectProvider);
 		}
-		if (!providers.containsKey(DEFAULT_PROVIDER_ALIAS)) {
-			context.error(
-				"No default SecurityObjectProvider configured: Missing configuration '" + DEFAULT_PROVIDER_ALIAS + "'");
-		}
 		return providers;
 	}
 
@@ -151,17 +147,6 @@ public class SecurityObjectProviderManager extends ManagedClass {
 		return Module.INSTANCE.getImplementationInstance();
     }
 
-	/**
-	 * Returns the "default" {@link SecurityObjectProvider}.
-	 */
-	public final SecurityObjectProvider getDefaultSecurityObjectProvider() {
-		try {
-			return getSecurityObjectProvider(DEFAULT_PROVIDER_ALIAS);
-		} catch (ConfigurationException ex) {
-			throw new ConfigurationError("No default SecurityObjectProvider configured.");
-		}
-	}
-
     /**
 	 * Gets the (default) instance of the given security object provider.
 	 * 
@@ -173,11 +158,8 @@ public class SecurityObjectProviderManager extends ManagedClass {
 	 * @param key
 	 *        The name of the security object provider to get (may be an alias)
 	 * @return The requested security object provider. Never <code>null</code>.
-	 * 
-	 * @throws ConfigurationException
-	 *         If the configured provider cannot be instantiated.
 	 */
-	public SecurityObjectProvider getSecurityObjectProvider(String key) throws ConfigurationException {
+	public SecurityObjectProvider getSecurityObjectProvider(String key) {
 		SecurityObjectProvider existingProvider = _providers.get(key);
 		if (existingProvider != null) {
 			return existingProvider;
@@ -185,10 +167,14 @@ public class SecurityObjectProviderManager extends ManagedClass {
 		return MapUtil.putIfAbsent(_providers, key, newProvider(key));
     }
 
-	private SecurityObjectProvider newProvider(String key) throws ConfigurationException {
-		PolymorphicConfiguration<? extends SecurityObjectProvider> config =
-			SecurityObjectProviderFormat.INSTANCE.getValue(key, key);
-		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+	private SecurityObjectProvider newProvider(String key) {
+		try {
+			PolymorphicConfiguration<? extends SecurityObjectProvider> config =
+				SecurityObjectProviderFormat.INSTANCE.getValue(key, key);
+			return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+		} catch (ConfigurationException ex) {
+			throw new ConfigurationError(ex);
+		}
 	}
 
 	boolean hasSecurityObjectProvider(String key) {

@@ -15,18 +15,30 @@ import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.element.meta.AttributeException;
+import com.top_logic.element.meta.AttributeUpdate;
+import com.top_logic.element.meta.AttributeUpdateContainer;
+import com.top_logic.element.meta.AttributeUpdateContainer.Handle;
+import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocator;
+import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.ValueListener;
 import com.top_logic.model.ModelKind;
+import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
+import com.top_logic.model.search.expr.trace.ScriptTracer;
 import com.top_logic.model.search.persistency.attribute.AbstractExpressionAttribute;
+import com.top_logic.model.util.Pointer;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
@@ -38,6 +50,7 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp
+@Label("Calculation via TL-Script")
 public class AttributeByExpression<C extends AttributeByExpression.Config<?>> extends AbstractExpressionAttribute<C> {
 
 	/**
@@ -47,6 +60,8 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 	public interface Config<I extends AttributeByExpression<?>> extends AbstractExpressionAttribute.Config<I> {
 		// Pure marker interface.
 	}
+
+	private ScriptTracer _analyzer;
 
 	/**
 	 * Creates a {@link AttributeByExpression} from configuration.
@@ -59,6 +74,57 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 	@CalledByReflection
 	public AttributeByExpression(InstantiationContext context, C config) {
 		super(context, config);
+	}
+
+	@Override
+	public void init(TLStructuredTypePart attribute) {
+		super.init(attribute);
+
+		// Definer's-rights: a computed value must not apply the invoking user's model security (its
+		// result would otherwise be user-dependent, breaking caching/indexing/determinism); access to
+		// the value is controlled by the read grant on the computed attribute itself. Applied both to
+		// the value expression and to the tracing analyzer that evaluates the same computation. (The
+		// locator variant does the same in AttributeValueLocatorByExpression; a macro keeps security.)
+		UpdateSecurityVisitor.disableSecurity(getExpr());
+
+		_analyzer = ScriptTracer.compile(attribute.getModel(), getConfig().getExpr());
+		_analyzer.disableSecurity();
+	}
+
+	@Override
+	public void initUpdate(TLObject object, TLStructuredTypePart attribute, AttributeUpdate update) {
+		super.initUpdate(object, attribute, update);
+		
+		TLFormObject overlay = update.getOverlay();
+		AttributeUpdateContainer updateContainer = overlay.getScope();
+		
+		class Observer implements ValueListener, Sink<Pointer> {
+			private List<Handle> _handles = new ArrayList<>();
+
+			@Override
+			public void add(Pointer pointer) {
+				_handles.add(updateContainer.addValueListener(pointer.object(), pointer.attribute(), this));
+			}
+
+			@Override
+			public void valueChanged(FormField field, Object oldValue, Object newValue) {
+				_handles.forEach(Handle::release);
+
+				Object result = _analyzer.execute(attribute.tKnowledgeBase(), x -> {
+					// empty - setting up listeners happens after the update
+				}, updateContainer, overlay);
+
+				overlay.tUpdate(attribute, convertAndCheck(overlay, attribute, result));
+
+				listen();
+			}
+
+			public Object listen() {
+				return _analyzer.execute(attribute.tKnowledgeBase(), this, updateContainer, overlay);
+			}
+		}
+		
+		new Observer().listen();
 	}
 
 	@Override
@@ -83,7 +149,8 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 		}
 		if (mandatory && collection.isEmpty()) {
 			throw new TopLogicException(
-				I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR_OBJ.fill(attribute,
+				I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR_OBJ.fill(
+					TLModelUtil.qualifiedName(attribute),
 					object));
 		}
 		return collection;
@@ -95,9 +162,7 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 			TLPrimitive primitiveType = (TLPrimitive) type;
 			StorageMapping<?> mapping = primitiveType.getStorageMapping();
 
-			// Normalize value.
-			Object storage = mapping.getStorageObject(element);
-			return mapping.getBusinessObject(storage);
+			return mapping.normalizeValue(element);
 		} else {
 			checkValue(object, attribute, type, mandatory, element);
 			return element;
@@ -116,7 +181,8 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 				throw new TopLogicException(
 					I18NConstants.ERROR_SCRIPT_RESULT_OF_INCOMPATIBLE_TYPE__ATTR_EXPECTED_ACTUAL.fill(
 						TLModelUtil.qualifiedName(attribute),
-						type, element instanceof TLObject ? ((TLObject) element).tType() : element));
+						type, element instanceof TLClassifier ? element
+							: element instanceof TLObject ? ((TLObject) element).tType() : element));
 			}
 		}
 	}
@@ -151,7 +217,8 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 					return c.iterator().next();
 				default:
 					throw new TopLogicException(
-						I18NConstants.ERROR_SCRIPT_RESULT_IS_COLLECTION__ATTR_VALUE.fill(attribute, result));
+						I18NConstants.ERROR_SCRIPT_RESULT_IS_COLLECTION__ATTR_VALUE
+							.fill(TLModelUtil.qualifiedName(attribute), result));
 			}
 		} else {
 			return result;

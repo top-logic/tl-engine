@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.DisplayContext;
@@ -41,9 +42,15 @@ public final class EvalContext {
 
 	private Renderer<Object> _renderer = ResourceRenderer.INSTANCE;
 
+	private boolean _interactive;
+
+	private SecurityFilterReport _securityReport;
+
 	/**
 	 * Creates a {@link EvalContext}.
 	 * 
+	 * @param interactive
+	 *        See {@link #isInteractive()}
 	 * @param kb
 	 *        See {@link #getKnowledgeBase()}.
 	 * @param displayContext
@@ -51,11 +58,40 @@ public final class EvalContext {
 	 * @param out
 	 *        See {@link #getOut()}.
 	 */
-	public EvalContext(KnowledgeBase kb, TLModel model, DisplayContext displayContext, TagWriter out) {
+	public EvalContext(boolean interactive, KnowledgeBase kb, TLModel model, DisplayContext displayContext, TagWriter out) {
+		_interactive = interactive;
 		_kb = kb;
 		_model = model;
 		_displayContext = displayContext;
 		_out = out;
+	}
+
+	/**
+	 * Whether evaluation occurs in an interactive context (where the user has entered the script
+	 * being executed).
+	 * 
+	 * <p>
+	 * In an interactive context, additional security constraints apply for certain script
+	 * functions.
+	 * </p>
+	 */
+	public boolean isInteractive() {
+		return _interactive;
+	}
+
+	/**
+	 * Refuses a call of the function with the given name, if it happens in an
+	 * {@link #isInteractive() interactive} context and the current user is not an administrator.
+	 *
+	 * @param functionName
+	 *        The name of the called function, for the error message.
+	 * @throws TopLogicException
+	 *         If the call is not allowed.
+	 */
+	public void checkAdmin(String functionName) throws TopLogicException {
+		if (isInteractive() && !ThreadContext.isAdmin()) {
+			throw new TopLogicException(I18NConstants.PERMISSION_DENIED__NAME.fill(functionName));
+		}
 	}
 
 	/**
@@ -178,6 +214,32 @@ public final class EvalContext {
 	}
 
 	/**
+	 * The report collecting the objects that the security filter removes from the result of an
+	 * execution.
+	 *
+	 * <p>
+	 * The value is <code>null</code> unless a caller {@link #setSecurityReport(SecurityFilterReport)
+	 * attaches} a report.
+	 * </p>
+	 *
+	 * @see SecurityFilterReport
+	 */
+	public SecurityFilterReport getSecurityReport() {
+		return _securityReport;
+	}
+
+	/**
+	 * Updates the value of {@link #getSecurityReport()}.
+	 *
+	 * @param securityReport
+	 *        The report to fill while filtering the result of an execution that uses this context.
+	 *        <code>null</code> switches the recording off.
+	 */
+	public void setSecurityReport(SecurityFilterReport securityReport) {
+		_securityReport = securityReport;
+	}
+
+	/**
 	 * The {@link KnowledgeBase} to search in.
 	 */
 	public KnowledgeBase getKnowledgeBase() {
@@ -196,9 +258,10 @@ public final class EvalContext {
 	 */
 	@FrameworkInternal
 	public final EvalContext snapshot() {
-		EvalContext result = new EvalContext(_kb, _model, null, null);
+		EvalContext result = new EvalContext(_interactive, _kb, _model, null, null);
 		result._vars.putAll(_vars);
 		result._renderer = _renderer;
+		result._securityReport = _securityReport;
 		return result;
 	}
 

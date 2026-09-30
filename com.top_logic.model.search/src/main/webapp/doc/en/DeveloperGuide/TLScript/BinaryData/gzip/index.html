@@ -1,0 +1,58 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>$input.gzip()</code></pre>
+
+<h2>Description</h2>
+
+<p>Compresses the given binary data using the GZIP compression format. The result is a binary value with content type <code>application/gzip</code>.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>Binary data</td>
+			<td>The binary data to be compressed.</td>
+			<td>yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>name</td>
+			<td>String</td>
+			<td>The name of the resulting binary value.</td>
+			<td>no</td>
+			<td>The name of the input with the suffix <code>.gz</code> appended.</td>
+		</tr>
+		<tr>
+			<td>level</td>
+			<td>Number</td>
+			<td>The compression level (0 for no compression up to 9 for best compression).</td>
+			<td>no</td>
+			<td>9</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><strong>type:</strong> Binary data</p>
+
+<p>The GZIP-compressed contents of the input.</p>
+
+<h2>Example</h2>
+
+<pre>
+<code>binary(name: "hello.txt", data: "Hello world!", encoding: "utf-8").gzip()</code></pre>
+
+<p>Returns a binary value named "hello.txt.gz" containing the compressed contents of the text file.</p>

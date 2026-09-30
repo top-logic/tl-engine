@@ -29,9 +29,10 @@
 	<config name="${name}"
 		type="${type}"
 	>
-		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
-			<script expr="new(`${type}`, transient: true)"/>
-		</model>
+		<model class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+			function="output -> if ($output == null, new(`${type}`, transient: true), $output.copy())"
+			input="output(self())"
+		/>
 		<buttons>
 			<button id="updateOutput"
 				class="com.top_logic.model.search.providers.CommandHandlerByExpression"

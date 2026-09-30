@@ -16,7 +16,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Actualize the search results.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class RefreshSearchHandler extends AbstractCommandHandler {
 
@@ -37,9 +37,9 @@ public class RefreshSearchHandler extends AbstractCommandHandler {
 			Map<String, Object> arguments) {
 		SearchComponent searchComponent = (SearchComponent) component;
 		SearchExpressionEditor selectedSearchEditor = searchComponent.getActiveSearchExpressionEditor();
-		return selectedSearchEditor.search(expr -> {
+		return selectedSearchEditor.search((expr, src) -> {
 			if (expr != null) {
-				return searchComponent.execute(expr, false);
+				return searchComponent.execute(expr, false, src);
 			}
 			return HandlerResult.DEFAULT_RESULT;
 		});

@@ -22,7 +22,7 @@ public abstract class TestDataSourceAdapter extends BasicTestCase {
 	
     /** DemoData used for Streamning */
     public static final byte DATA[] = 
-		("der krümmungsgrad der banana beträgt 1,5cm " + TestDataSourceAdapter.class.getName()).getBytes();
+		("der krÃ¼mmungsgrad der banana betrÃ¤gt 1,5cm " + TestDataSourceAdapter.class.getName()).getBytes();
 
     private DataSourceAdaptor dataSourceAdaptor;
 	
@@ -48,7 +48,7 @@ public abstract class TestDataSourceAdapter extends BasicTestCase {
         } catch (DatabaseAccessException expected) { /* expected */ }
 		
 		// ok now lets create an entry
-        String text = "der krümmungsgrad der banana beträgt 1,5cm";
+        String text = "der krÃ¼mmungsgrad der banana betrÃ¤gt 1,5cm";
 		String theString = dataSourceAdaptor.createContainer(text, text);
 		assertNotNull(theString);
 	}

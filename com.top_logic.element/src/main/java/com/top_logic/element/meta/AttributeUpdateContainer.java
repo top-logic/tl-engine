@@ -5,8 +5,8 @@
  */
 package com.top_logic.element.meta;
 
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -21,6 +21,7 @@ import com.top_logic.element.meta.form.overlay.ObjectConstructor;
 import com.top_logic.element.meta.form.overlay.ObjectCreation;
 import com.top_logic.element.meta.form.overlay.ObjectEditing;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
+import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -29,6 +30,8 @@ import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.factory.TLFactory;
+import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.util.Resources;
 
 /**
@@ -38,11 +41,11 @@ import com.top_logic.util.Resources;
  *
  * @author <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */
-public class AttributeUpdateContainer {
+public class AttributeUpdateContainer implements OverlayLookup {
 	/** Separates IDs of attribute and object. */
 	public static final String ID_SEPARATOR = "_";
 
-	private static final int FIRST_CREATE_ID = 1;
+	private static final int FIRST_ID = 1;
 
 	private AttributeFormContext _form;
 
@@ -50,7 +53,9 @@ public class AttributeUpdateContainer {
 
 	final Map<String, ObjectCreation> _creates;
 
-	private int _nextCreateId = FIRST_CREATE_ID;
+	private int _nextObjId = FIRST_ID;
+
+	private int _nextCreateId = FIRST_ID;
 
 	/**
 	 * Default CTor. Set up fields.
@@ -60,8 +65,8 @@ public class AttributeUpdateContainer {
 	 */
 	public AttributeUpdateContainer(AttributeFormContext form) {
 		_form = form;
-		_edits = new HashMap<>();
-		_creates = new HashMap<>();
+		_edits = new LinkedHashMap<>();
+		_creates = new LinkedHashMap<>();
 	}
 
 	/**
@@ -153,7 +158,7 @@ public class AttributeUpdateContainer {
 	 * @see #newObject(TLStructuredType, TLObject)
 	 */
 	public TLFormObject createObject(TLStructuredType type, String domain, TLObject container) {
-		return createObject(type, domain, container, DefaultObjectConstructor.INSTANCE);
+		return createObject(type, domain, container, DefaultObjectConstructor.getPersistentInstance());
 	}
 
 	/**
@@ -227,7 +232,7 @@ public class AttributeUpdateContainer {
 	 * @see #createObject(TLStructuredType, String, TLObject)
 	 */
 	public TLFormObject newObject(TLStructuredType type, TLObject container) {
-		return newObject(type, container, DefaultObjectConstructor.INSTANCE);
+		return newObject(type, container, DefaultObjectConstructor.getPersistentInstance());
 	}
 
 	/**
@@ -252,7 +257,7 @@ public class AttributeUpdateContainer {
 	 */
 	public TLFormObject newObject(TLStructuredType type, TLObject container, ObjectConstructor constructor) {
 		while (true) {
-			String domain = newDomain();
+			String domain = newCreateID();
 			if (_creates.get(domain) != null) {
 				continue;
 			}
@@ -261,8 +266,22 @@ public class AttributeUpdateContainer {
 		}
 	}
 
-	private String newDomain() {
-		return Integer.toString(_nextCreateId++);
+	/**
+	 * Creates a new local object ID for usage in forms.
+	 */
+	public String newObjectID() {
+		return "obj_" + Integer.toString(_nextObjId++);
+	}
+
+	/**
+	 * Creates a new local create object ID for usage in forms.
+	 * 
+	 * <p>
+	 * Note: The IDs are separate from object IDs to keep compatibility with recorded test scripts.
+	 * </p>
+	 */
+	public String newCreateID() {
+		return "create_" + Integer.toString(_nextCreateId++);
 	}
 
 	private TLFormObject allocateCreateOverlay(TLStructuredType type, String domain, TLObject container,
@@ -270,7 +289,28 @@ public class AttributeUpdateContainer {
 		ObjectCreation newOverlay = new ObjectCreation(this, type, domain, constructor);
 		_creates.put(domain, newOverlay);
 		newOverlay.initContainer(container);
+
+		TLFactory.setupDefaultValues(container, newOverlay, type);
+
 		return newOverlay;
+	}
+
+	/**
+	 * Retrieves the existing form overlay for the given object.
+	 *
+	 * @param object
+	 *        The base object to find an overlay for.
+	 *
+	 * @return The object itself if already a form object, otherwise the existing overlay from
+	 *         edits, or {@code null} if no overlay exists.
+	 */
+	@Override
+	public TLFormObject getExistingOverlay(TLObject object) {
+		if (object instanceof TLFormObject) {
+			return (TLFormObject) object;
+		}
+
+		return _edits.get(object);
 	}
 
 	/**
@@ -283,11 +323,7 @@ public class AttributeUpdateContainer {
 	 *         {@link AttributeUpdate}s for its attributes to display.
 	 */
 	public TLFormObject editObject(TLObject object) {
-		if (object instanceof TLFormObject) {
-			return (TLFormObject) object;
-		}
-
-		FormObjectOverlay existingOverlay = _edits.get(object);
+		TLFormObject existingOverlay = getExistingOverlay(object);
 		if (existingOverlay != null) {
 			return existingOverlay;
 		}
@@ -342,7 +378,8 @@ public class AttributeUpdateContainer {
 
 		_edits.clear();
 		_creates.clear();
-		_nextCreateId = FIRST_CREATE_ID;
+		_nextObjId = FIRST_ID;
+		_nextCreateId = FIRST_ID;
 	}
 
 	private void dropFields(TLFormObject overlay) {
@@ -524,6 +561,11 @@ public class AttributeUpdateContainer {
 		return allOverlays();
 	}
 
+	@Override
+	public Iterable<? extends TLObject> getOverlays() {
+		return getAllOverlays();
+	}
+
 	private Iterable<FormObjectOverlay> allOverlays() {
 		return new Iterable<>() {
 			@Override
@@ -548,7 +590,10 @@ public class AttributeUpdateContainer {
 					if (_createIt.hasNext()) {
 						_next = _createIt.next();
 					} else if (_editIt.hasNext()) {
-						_next = _editIt.next();
+						ObjectEditing nextEdit = _editIt.next();
+						if (nextEdit.getEditedObject().tValid()) {
+							_next = nextEdit;
+						}
 					} else {
 						return false;
 					}
@@ -655,9 +700,15 @@ public class AttributeUpdateContainer {
 		for (ObjectCreation create : _creates.values()) {
 			create.create();
 		}
+
+		Modification deletes = Modification.NONE;
 		for (FormObjectOverlay overlay : allOverlays()) {
-			overlay.store(this);
+			Modification deletion = overlay.store(this);
+
+			deletes = deletes.andThen(deletion);
 		}
+
+		deletes.execute();
     }
 
 	/**

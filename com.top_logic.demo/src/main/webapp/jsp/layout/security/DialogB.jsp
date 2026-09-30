@@ -2,7 +2,7 @@
 %> <%@taglib uri="layout"   prefix="layout"
 %><layout:html>
 	<layout:head/>
-	
+
 	<layout:body>
 		Dialog B
 	</layout:body>

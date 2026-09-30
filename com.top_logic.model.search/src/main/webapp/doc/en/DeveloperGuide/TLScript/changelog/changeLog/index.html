@@ -1,0 +1,110 @@
+<h2>Syntax</h2>
+<pre>	<code>$object.changeLog([maxEntries[, includeSubtree[, startRev[, stopRev[, author[, includeTechnical[, excludedModules]]]]]]])</code>
+	<code>changeLog()</code>
+</pre>
+<h2>Description</h2>
+<p>Returns the list of changes (<code class="hljs inlineCode">tl.changelog:ChangeSet</code>) affecting the given business object.</p>
+<p>When <code class="hljs inlineCode">includeSubtree</code> is set (the default), changes to objects that were in the composition subtree of the given object at the time of the change are also included. When set to <code class="hljs inlineCode">false</code>, only changes to the object itself are returned.</p>
+<p>When <code class="hljs inlineCode">object</code> is omitted or <code class="hljs inlineCode">null</code>, the global application change log is returned (no subtree filter). In that case, <code class="hljs inlineCode">maxEntries</code> should typically be used to keep the result size manageable.</p>
+<p>The optional <code class="hljs inlineCode">startRev</code> and <code class="hljs inlineCode">stopRev</code> parameters narrow the analyzed revision range. Each may be passed as either a revision object or as a numeric commit number. By default the entire history (from revision <code class="hljs inlineCode">1</code> up to the latest revision) is analyzed.</p>
+<p>The optional <code class="hljs inlineCode">author</code> parameter restricts the result to changes committed by the given account.</p>
+<p>The optional <code class="hljs inlineCode">includeTechnical</code> flag controls whether change sets that represent a purely technical change (one that does not reflect in the model) are also reported.</p>
+<p>The optional <code class="hljs inlineCode">excludedModules</code> parameter is a collection of modules whose changes must not be regarded. Each element may be either a <code class="hljs inlineCode">TLModule</code> reference or a module name as a string.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Business object</td>
+   <td>The business object whose change history shall be returned. Passing <code class="hljs inlineCode">null</code> or omitting the argument returns the global application change log.</td>
+   <td>no</td>
+   <td>null</td>
+  </tr>
+  <tr>
+   <td>maxEntries</td>
+   <td>Integer</td>
+   <td>Limits the number of returned entries, newest first. A value less than or equal to 0 means unlimited.</td>
+   <td>no</td>
+   <td>0</td>
+  </tr>
+  <tr>
+   <td>includeSubtree</td>
+   <td>Boolean</td>
+   <td>Whether the entire composition subtree is considered (<code class="hljs inlineCode">true</code>) or only the object itself (<code class="hljs inlineCode">false</code>).</td>
+   <td>no</td>
+   <td>true</td>
+  </tr>
+  <tr>
+   <td>startRev</td>
+   <td>Revision or Integer</td>
+   <td>First revision to analyze. Either a revision object or a commit number.</td>
+   <td>no</td>
+   <td>1 (initial revision)</td>
+  </tr>
+  <tr>
+   <td>stopRev</td>
+   <td>Revision or Integer</td>
+   <td>Last revision to analyze. Either a revision object or a commit number.</td>
+   <td>no</td>
+   <td>latest revision</td>
+  </tr>
+  <tr>
+   <td>author</td>
+   <td><code class="hljs inlineCode">tl.accounts:Person</code> or business object with <code class="hljs inlineCode">account</code> reference</td>
+   <td>Restricts the result to changes committed by the given account.</td>
+   <td>no</td>
+   <td>null (no author filter)</td>
+  </tr>
+  <tr>
+   <td>includeTechnical</td>
+   <td>Boolean</td>
+   <td>Whether change sets that represent a purely technical change (with no effect on the model) are also reported.</td>
+   <td>no</td>
+   <td>false</td>
+  </tr>
+  <tr>
+   <td>excludedModules</td>
+   <td>Collection of <code class="hljs inlineCode">TLModule</code> or string</td>
+   <td>Modules whose changes must not be regarded. Each element may be either a <code class="hljs inlineCode">TLModule</code> reference or a module name as a string.</td>
+   <td>no</td>
+   <td>empty</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> List of <code class="hljs inlineCode">tl.changelog:ChangeSet</code></p>
+<p>The list of changes in ascending revision order.</p>
+<h2>Examples</h2>
+<h3>Example 1</h3>
+<pre>	<code>$project.changeLog()</code>
+</pre>
+<p>Returns every change to the project and to every contained sub-object.</p>
+<h3>Example 2</h3>
+<pre>	<code>$project.changeLog(10, false)</code>
+</pre>
+<p>Returns the ten most recent changes made directly to the project object (without sub-objects).</p>
+<h3>Example 3</h3>
+<pre>	<code>changeLog(null, 50)</code>
+</pre>
+<p>Returns the 50 most recent changes of the entire application, with no subtree restriction.</p>
+<h3>Example 4</h3>
+<pre>	<code>changeLog(author: $account, includeTechnical: true)</code>
+</pre>
+<p>Returns all changes (including purely technical ones) committed by the given account.</p>
+<h3>Example 5</h3>
+<pre>	<code>$project.changeLog(0, true, 1000, 2000)</code>
+</pre>
+<p>Returns all changes to the project (including its subtree) committed between revisions 1000 and 2000.</p>
+<h3>Example 6</h3>
+<pre>	<code>changeLog(excludedModules: [`tl.accounts`, "tl.legacy"])</code>
+</pre>
+<p>Returns the global change log without any changes from the modules <code class="hljs inlineCode">tl.accounts</code> and <code class="hljs inlineCode">tl.legacy</code>.</p>

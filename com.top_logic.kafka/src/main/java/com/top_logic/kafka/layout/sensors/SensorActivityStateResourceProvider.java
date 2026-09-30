@@ -15,7 +15,7 @@ import com.top_logic.layout.provider.EnumResourceProvider;
 /**
  * Provide matching images for the requested {@link SensorActivityState}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class SensorActivityStateResourceProvider extends AbstractResourceProvider {
 

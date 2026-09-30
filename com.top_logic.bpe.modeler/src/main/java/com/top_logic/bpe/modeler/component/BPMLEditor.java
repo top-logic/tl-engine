@@ -34,6 +34,7 @@ import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.component.Editor;
 import com.top_logic.layout.form.component.edit.EditMode;
@@ -74,19 +75,6 @@ public class BPMLEditor extends BoundComponent
 				selectionModel.clear();
 			}
 		}
-	};
-
-	private static final ComponentChannel.ChannelListener EDIT_MODE_LISTENER = new ComponentChannel.ChannelListener() {
-
-		@Override
-		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
-			BPMLEditor editor = (BPMLEditor) sender.getComponent();
-			BPMNDisplay display = editor.getBPMNDisplay();
-			if (display != null) {
-				display.setEditMode(((Boolean) newValue).booleanValue());
-			}
-		}
-
 	};
 
 	/**
@@ -233,8 +221,8 @@ public class BPMLEditor extends BoundComponent
 	}
 
 	@Override
-	public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-		Object newSelection = extractSelection(selectedObjects);
+	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+		Object newSelection = extractSelection(event.getNewSelection());
 
 		if (ScriptingRecorder.isRecordingActive()) {
 			if (newSelection == null) {
@@ -250,7 +238,7 @@ public class BPMLEditor extends BoundComponent
 	}
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return CHANNELS;
 	}
 
@@ -272,7 +260,14 @@ public class BPMLEditor extends BoundComponent
 		Editor.super.linkChannels(log);
 
 		selectionChannel().addListener(ON_SELECTION_CHANGE);
-		editModeChannel().addListener(EDIT_MODE_LISTENER);
+	}
+
+	@Override
+	public void handleComponentModeChange(boolean editMode) {
+		BPMNDisplay display = getBPMNDisplay();
+		if (display != null) {
+			display.setEditMode(editMode);
+		}
 	}
 
 	/**

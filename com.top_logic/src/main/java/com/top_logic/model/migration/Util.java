@@ -8,6 +8,7 @@ package com.top_logic.model.migration;
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.io.StringWriter;
+import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -28,14 +29,13 @@ import javax.xml.stream.XMLStreamException;
 
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.annotation.FrameworkInternal;
-import com.top_logic.basic.col.TypedAnnotatable;
-import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ConfigBuilder;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -51,6 +51,7 @@ import com.top_logic.basic.db.sql.SQLColumnDefinition;
 import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.db.sql.SQLFactory;
 import com.top_logic.basic.db.sql.SQLLiteral;
+import com.top_logic.basic.db.sql.SQLOrder;
 import com.top_logic.basic.db.sql.SQLParameter;
 import com.top_logic.basic.db.sql.SQLQuery.Parameter;
 import com.top_logic.basic.io.character.CharacterContents;
@@ -60,16 +61,18 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.BasicTypes;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.schema.config.DBColumnType;
+import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.service.db2.DestinationReference;
 import com.top_logic.knowledge.service.db2.PersistentIdFactory;
 import com.top_logic.knowledge.service.db2.RowLevelLockingSequenceManager;
 import com.top_logic.knowledge.service.db2.SourceReference;
-import com.top_logic.knowledge.service.migration.MigrationContext;
+import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.util.OrderedLinkUtil;
 import com.top_logic.knowledge.util.OrderedLinkUtil.IndexRangeTooShort;
 import com.top_logic.knowledge.wrap.list.FastList;
@@ -118,7 +121,9 @@ import com.top_logic.model.migration.data.Type;
 import com.top_logic.model.migration.data.TypeGeneralization;
 import com.top_logic.model.migration.data.TypePart;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.model.v5.transform.ModelLayout;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.model.TL5Types;
 
 /**
  * Utility class for migration processors updating the {@link TLModel}.
@@ -168,21 +173,83 @@ public class Util {
 
 	private long _nextId = 0;
 
+	private int _lastInc = 1;
+
+	private long _lastIncTime;
+
 	private long _revCreate = -1;
 
 	private boolean _branchSupport;
 
 	/**
-	 * {@link Property} to resolve an instance of {@link Util} from a {@link MigrationContext}.
+	 * Whether the table {@link ApplicationObjectUtil#META_ATTRIBUTE_OBJECT_TYPE} has a column
+	 * {@link TLAssociationEnd#HISTORY_TYPE_ATTR}.
+	 * 
+	 * <p>
+	 * The column {@link TLAssociationEnd#HISTORY_TYPE_ATTR} was introduced in TL 7.5.0 with #27215.
+	 * {@link MigrationProcessor} creating {@link TLStructuredTypePart} <b>before</b> #27215 can not
+	 * set an history type.
+	 * </p>
 	 */
-	public static final Property<Util> PROPERTY =
-		TypedAnnotatable.propertyDynamic(Util.class, "util", c -> new Util((MigrationContext) c));
+	private boolean _historyColumn;
+
+	/**
+	 * Whether the table {@link ApplicationObjectUtil#META_ATTRIBUTE_OBJECT_TYPE} has a column
+	 * {@link TLStructuredTypePart#ABSTRACT_ATTR}.
+	 * 
+	 * <p>
+	 * The column {@link TLAssociationEnd#ABSTRACT_ATTR} was introduced with #27999.
+	 * {@link MigrationProcessor} creating {@link TLStructuredTypePart} <b>before</b> #27999 can not
+	 * set "abstract".
+	 * </p>
+	 */
+	private boolean _abstractColumn;
+
+	private boolean _deletionColumn;
 
 	/**
 	 * Creates a {@link Util}.
 	 */
-	public Util(MigrationContext context) {
-		_branchSupport = context.hasBranchSupport();
+	public Util(Log log, PooledConnection connection, boolean withBranchSupport) {
+		_branchSupport = withBranchSupport;
+		
+		String metaAttributeTable = SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
+		try {
+			DatabaseMetaData metaData = connection.getMetaData();
+			String catalog = connection.getCatalog();
+			String schemaPattern = connection.getSQLDialect().getCurrentSchema(connection);
+			try (ResultSet columns = metaData.getColumns(catalog, schemaPattern, metaAttributeTable, "%")) {
+				while (columns.next()) {
+					String columnName = columns.getString("COLUMN_NAME");
+					if (SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR).equals(columnName)) {
+						setHistoryColumn(true);
+					} 
+					else if (SQLH.mangleDBName(TLAssociationEnd.DELETION_POLICY_ATTR).equals(columnName)) {
+						setDeletionColumn(true);
+					}
+					else if (SQLH.mangleDBName(TLStructuredTypePart.ABSTRACT_ATTR).equals(columnName)) {
+						setAbstractColumn(true);
+					}
+				}
+			}
+			if (!hasHistoryColumn()) {
+				log.info("No column '" + SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR) + "' found in table '"
+						+ metaAttributeTable
+						+ "'. This is ok if database belongs to a migration before TopLogic version 7.5.0.");
+			}
+			if (!hasDeletionColumn()) {
+				log.info("No column '" + SQLH.mangleDBName(TLAssociationEnd.DELETION_POLICY_ATTR) + "' found in table '"
+					+ metaAttributeTable
+					+ "'. This is ok if database belongs to a migration before TopLogic version 7.9.0.");
+			}
+			if (!hasAbstractColumn()) {
+				log.info("No column '" + SQLH.mangleDBName(TLStructuredTypePart.ABSTRACT_ATTR) + "' found in table '"
+						+ metaAttributeTable
+						+ "'. This is ok if database belongs to a migration before TopLogic version 7.9.0.");
+			}
+		} catch (SQLException ex) {
+			throw new KnowledgeBaseException("Unable to analyse table " + metaAttributeTable + ".", ex);
+		}
 	}
 
 	/**
@@ -190,11 +257,28 @@ public class Util {
 	 */
 	public TLID newID(PooledConnection con) throws SQLException {
 		if (_nextId == _stopId) {
+			long now = System.currentTimeMillis();
+
+			// The number of ID chunks consumed in the next minute.
+			int chunksAllocated =
+				(int) Math.min(1024, Math.max(1, (60 * 1000 * _lastInc) / Math.max(1, now - _lastIncTime)));
+			if (chunksAllocated > 1) {
+				// Limit increase of allocation speed.
+				if (chunksAllocated > _lastInc * 2) {
+					chunksAllocated = _lastInc * 2;
+				}
+
+				Logger.info("Allocating " + chunksAllocated + " identifier chunks at once due to high demand.",
+					Util.class);
+			}
+			_lastInc = chunksAllocated;
+			_lastIncTime = now;
+
 			DBHelper sqlDialect = con.getSQLDialect();
 			long nextChunk = new RowLevelLockingSequenceManager().nextSequenceNumber(sqlDialect, con,
-				sqlDialect.retryCount(), DBKnowledgeBase.ID_SEQ);
+				sqlDialect.retryCount(), DBKnowledgeBase.ID_SEQ, chunksAllocated);
 			_stopId = 1 + nextChunk * PersistentIdFactory.CHUNK_SIZE;
-			_nextId = _stopId - PersistentIdFactory.CHUNK_SIZE;
+			_nextId = _stopId - PersistentIdFactory.CHUNK_SIZE * chunksAllocated;
 		}
 		return LongID.valueOf(_nextId++);
 	}
@@ -254,7 +338,9 @@ public class Util {
 			ConfigurationItem config) {
 		StringWriter storageMappingBuffer = new StringWriter();
 		try {
-			new ConfigurationWriter(storageMappingBuffer).write(rootTag, staticType, config);
+			try (ConfigurationWriter w = new ConfigurationWriter(storageMappingBuffer)) {
+				w.write(rootTag, staticType, config);
+			}
 		} catch (XMLStreamException ex) {
 			throw new RuntimeException(ex);
 		}
@@ -378,13 +464,13 @@ public class Util {
 	 *        Qualified name of the type of the {@link TLProperty}.
 	 */
 	public TypePart createTLProperty(Log log, PooledConnection con, QualifiedPartName name,
-			QualifiedTypeName target, boolean isMandatory, boolean isMultiple, boolean bag,
+			QualifiedTypeName target, boolean isMandatory, boolean isAbstract, boolean isMultiple, boolean bag,
 			boolean ordered, AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws SQLException, MigrationException {
 		return createTLProperty(log, con,
 			TLContext.TRUNK_ID, name.getModuleName(), name.getTypeName(),
 			name.getPartName(), target.getModuleName(),
-			target.getTypeName(), isMandatory, isMultiple, bag,
+			target.getTypeName(), isMandatory, isAbstract, isMultiple, bag,
 			ordered, toString(annotations));
 	}
 
@@ -405,7 +491,7 @@ public class Util {
 	public TypePart createTLProperty(Log log, PooledConnection con,
 			long branch, String module, String className,
 			String partName, String targetModule,
-			String targetType, boolean mandatory, boolean multiple, boolean bag,
+			String targetType, boolean mandatory, boolean isAbstract, boolean multiple, boolean bag,
 			boolean ordered, String annotations)
 			throws SQLException, MigrationException {
 		Boolean bagValue;
@@ -427,15 +513,17 @@ public class Util {
 		Boolean navigate = null;
 		HistoryType historyType = null;
 
+		// Only defined for association ends.
+		DeletionPolicy deletionPolicy = null;
+
 		return createTLStructuredTypePart(log, con, branch, module, className, partName, partID,
 			targetModule, targetType, TLStructuredTypeColumns.CLASS_PROPERTY_IMPL, endID, definitionID,
-			mandatory, composite, aggregate, multiple, bagValue,
-			orderedValue, navigate, historyType, annotations);
+			mandatory, isAbstract, composite, aggregate, multiple, bagValue,
+			orderedValue, navigate, historyType, deletionPolicy, annotations);
 	}
 
 	/**
 	 * Creates a new {@link TLAssociationEnd}.
-	 * 
 	 * @param assEnd
 	 *        Name of the {@link TLAssociationEnd} to create.
 	 * @param target
@@ -443,20 +531,19 @@ public class Util {
 	 */
 	public TypePart createTLAssociationEnd(Log log,
 			PooledConnection con, QualifiedPartName assEnd,
-			QualifiedTypeName target, boolean mandatory, boolean composite, boolean aggregate,
+			QualifiedTypeName target, boolean mandatory, boolean isAbstract, boolean composite, boolean aggregate,
 			boolean multiple, boolean bag, boolean ordered, boolean navigate,
-			HistoryType historyType, AnnotatedConfig<TLAttributeAnnotation> annotations)
+			HistoryType historyType, DeletionPolicy deletionPolicy, AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws SQLException, MigrationException {
 		return createTLAssociationEnd(log, con,
 			TLContext.TRUNK_ID, assEnd.getModuleName(), assEnd.getTypeName(),
 			assEnd.getPartName(), target.getModuleName(),
-			target.getTypeName(), mandatory, composite, aggregate, multiple, bag, ordered, navigate,
-			historyType, toString(annotations));
+			target.getTypeName(), mandatory, isAbstract, composite, aggregate, multiple, bag, ordered, navigate,
+			historyType, deletionPolicy, toString(annotations));
 	}
 
 	/**
 	 * Creates a new {@link TLAssociationEnd}.
-	 * 
 	 * @param moduleName
 	 *        Name of the {@link TLModule} of the {@link TLAssociationEnd} to create.
 	 * @param ownerName
@@ -467,9 +554,9 @@ public class Util {
 	public TypePart createTLAssociationEnd(Log log, PooledConnection con,
 			long branch, String moduleName, String ownerName,
 			String partName, String targetModule,
-			String targetTypeName, boolean mandatory, boolean composite, boolean aggregate,
+			String targetTypeName, boolean mandatory, boolean isAbstract, boolean composite, boolean aggregate,
 			boolean multiple, boolean bag, boolean ordered, boolean navigate,
-			HistoryType historyType, String annotations)
+			HistoryType historyType, DeletionPolicy deletionPolicy, String annotations)
 			throws SQLException, MigrationException {
 		Objects.requireNonNull(historyType);
 		TLID partID = newID(con);
@@ -478,8 +565,8 @@ public class Util {
 
 		return createTLStructuredTypePart(log, con, branch, moduleName, ownerName, partName, partID,
 			targetModule, targetTypeName, TLStructuredTypeColumns.ASSOCIATION_END_IMPL, endID, definitionID,
-			mandatory, composite, aggregate, multiple, bag,
-			ordered, navigate, historyType, annotations);
+			mandatory, isAbstract, composite, aggregate, multiple, bag,
+			ordered, navigate, historyType, deletionPolicy, annotations);
 	}
 
 	private Reference internalCreateTLReference(Log log, PooledConnection con,
@@ -493,26 +580,32 @@ public class Util {
 		String targetTable = null;
 		TLID targetID = IdentifierUtil.nullIdForMandatoryDatabaseColumns();
 		Boolean isMandatory = null;
-		Boolean isMultiple = null;
+		Boolean isAbstract = null;
 		Boolean composite = null;
 		Boolean aggregate = null;
-		Boolean ordered = null;
+		Boolean isMultiple = null;
 		Boolean bag = null;
+		Boolean ordered = null;
 		Boolean navigate = null;
+
+		// Defined only for association ends.
 		HistoryType historyType = null;
+
+		// Defined only for association ends.
+		DeletionPolicy deletionPolicy = null;
 		return (Reference) createTLStructuredTypePart(log, con, branch, moduleName, ownerName, partName, partID,
 			targetTable, targetID, TLStructuredTypeColumns.REFERENCE_IMPL, endID, definitionID,
-			isMandatory, composite, aggregate, isMultiple, bag,
-			ordered, navigate, historyType, annotations);
+			isMandatory, isAbstract, composite, aggregate, isMultiple, bag,
+			ordered, navigate, historyType, deletionPolicy, annotations);
 	}
 
 	private TypePart createTLStructuredTypePart(Log log, PooledConnection con,
 			long branch, String moduleName, String ownerName, String partName,
 			TLID partID, String targetModule,
 			String targetTypeName, String impl, TLID endID,
-			TLID definitionID, Boolean mandatory, Boolean composite, Boolean aggregate,
+			TLID definitionID, Boolean mandatory, Boolean isAbstract, Boolean composite, Boolean aggregate,
 			Boolean multiple, Boolean bag, Boolean ordered, Boolean navigate,
-			HistoryType historyType, String annotations)
+			HistoryType historyType, DeletionPolicy deletionPolicy, String annotations)
 			throws SQLException, MigrationException {
 		Type targetType = getTLTypeOrFail(con, branch, targetModule, targetTypeName);
 		if (targetType == null) {
@@ -521,17 +614,17 @@ public class Util {
 		}
 
 		return createTLStructuredTypePart(log, con, branch, moduleName, ownerName, partName, partID,
-			targetType.getTable(), targetType.getID(), impl, endID, definitionID, mandatory, composite, aggregate, multiple,
-			bag, ordered, navigate, historyType, annotations);
+			targetType.getTable(), targetType.getID(), impl, endID, definitionID, mandatory, isAbstract, composite,
+			aggregate, multiple, bag, ordered, navigate, historyType, deletionPolicy, annotations);
 	}
 
 	private TypePart createTLStructuredTypePart(Log log, PooledConnection con,
 			long branch, String moduleName, String ownerName, String partName,
 			TLID partID, String targetTable,
 			TLID targetID, String impl, TLID endID,
-			TLID definitionID, Boolean mandatory, Boolean composite, Boolean aggregate,
+			TLID definitionID, Boolean mandatory, Boolean isAbstract, Boolean composite, Boolean aggregate,
 			Boolean multiple, Boolean bag, Boolean ordered, Boolean navigate,
-			HistoryType historyType, String annotations)
+			HistoryType historyType, DeletionPolicy deletionPolicy, String annotations)
 			throws SQLException, MigrationException {
 		DBHelper sqlDialect = con.getSQLDialect();
 
@@ -544,48 +637,9 @@ public class Util {
 		int ownerOrder = newAttributeOrder(con, branch, ownerID);
 		Long revCreate = getRevCreate(con);
 
-		try {
-			internalCreateProperty(con, branch, partName, partID, targetTable, targetID, impl, endID, definitionID,
-				mandatory, composite, aggregate, multiple, bag, ordered, navigate, historyType, annotations, sqlDialect,
-				ownerClass, ownerOrder, revCreate);
-		} catch (SQLException ex) {
-			if (historyType == null) {
-				throw ex;
-			}
-			StringBuilder noHistoryTypeColumn = new StringBuilder();
-			noHistoryTypeColumn.append("Unable to create structured type part '");
-			noHistoryTypeColumn.append(partName);
-			noHistoryTypeColumn.append("' in type '");
-			noHistoryTypeColumn.append(toString(ownerClass));
-			noHistoryTypeColumn.append("' with history type '");
-			noHistoryTypeColumn.append(historyType.getExternalName());
-			noHistoryTypeColumn.append(
-				"'. If the migration is a migration before TopLogic version 7.5.0 this can be correct as the column '");
-			noHistoryTypeColumn.append(SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR));
-			noHistoryTypeColumn.append(
-				"' holding the history type was introduced in TopLogic 7.5.0. Try to create part without value for the history type column. Check correct value of history column for the part after migration has been finished.");
-			log.info(noHistoryTypeColumn.toString(), Protocol.WARN);
-			/* The column HISTORY_TYPE was introduced in TL 7.5.0 with #27215. MigrationProcessors
-			 * creating TLStructuredTypePart *before* #27215 can not set an history type. Try again
-			 * with "null" history type. */
-			HistoryType noHistoryColumn = null;
-			try {
-				internalCreateProperty(con, branch, partName, partID, targetTable, targetID, impl, endID, definitionID,
-					mandatory, composite, aggregate, multiple, bag, ordered, navigate, noHistoryColumn, annotations,
-					sqlDialect, ownerClass, ownerOrder, revCreate);
-				StringBuilder createdWithoutHistoryTypeColumn = new StringBuilder();
-				createdWithoutHistoryTypeColumn.append("Create structured type part '");
-				createdWithoutHistoryTypeColumn.append(partName);
-				createdWithoutHistoryTypeColumn.append("' in type '");
-				createdWithoutHistoryTypeColumn.append(toString(ownerClass));
-				createdWithoutHistoryTypeColumn.append("' without history type.");
-				log.info(createdWithoutHistoryTypeColumn.toString(), Protocol.WARN);
-			} catch (SQLException fallbackEx) {
-				/* It seems that the HISTORY_COLUMN is not the problem. Throw the original error. */
-				ex.setNextException(fallbackEx);
-				throw ex;
-			}
-		}
+		internalCreateProperty(log, con, branch, partName, partID, targetTable, targetID, impl, endID,
+			definitionID, mandatory, isAbstract, composite, aggregate, multiple, bag, ordered, navigate, historyType,
+			deletionPolicy, annotations, sqlDialect, ownerClass, ownerOrder, revCreate);
 
 		TypePart typePart;
 		if (TLStructuredTypeColumns.REFERENCE_IMPL.equals(impl)) {
@@ -617,11 +671,38 @@ public class Util {
 
 	}
 
-	private void internalCreateProperty(PooledConnection con, long branch, String partName, TLID partID,
-			String targetTable, TLID targetID, String impl, TLID endID, TLID definitionID, Boolean mandatory,
-			Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered, Boolean navigate,
-			HistoryType historyType, String annotations, DBHelper sqlDialect, Type ownerClass, int ownerOrder,
-			Long revCreate) throws SQLException {
+	private void internalCreateProperty(Log log, PooledConnection con, long branch, String partName,
+			TLID partID, String targetTable, TLID targetID, String impl, TLID endID, TLID definitionID,
+			Boolean mandatory, Boolean isAbstract, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
+			Boolean ordered, Boolean navigate, HistoryType historyType, DeletionPolicy deletionPolicy, String annotations,
+			DBHelper sqlDialect, Type ownerClass, int ownerOrder, Long revCreate) throws SQLException {
+		if (!hasHistoryColumn()) {
+			/* There is no history column, therefore a potentially given history type can not be
+			 * set. */
+			if (historyType != null) {
+				StringBuilder noHistoryTypeColumn = new StringBuilder();
+				noHistoryTypeColumn.append("Unable to create structured type part '");
+				noHistoryTypeColumn.append(partName);
+				noHistoryTypeColumn.append("' in type '");
+				noHistoryTypeColumn.append(toString(ownerClass));
+				noHistoryTypeColumn.append("' with history type '");
+				noHistoryTypeColumn.append(historyType.getExternalName());
+				noHistoryTypeColumn.append(
+					"' as there is no column '");
+				noHistoryTypeColumn.append(SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR));
+				noHistoryTypeColumn.append(
+					"' holding the history type. If the migration is a migration before TopLogic version 7.5.0 this is correct as the column was introduced in TopLogic 7.5.0. Create part without value for the history type column. Check correct value of history column for the part after migration has been finished.");
+				log.info(noHistoryTypeColumn.toString(), Protocol.WARN);
+
+				historyType = null;
+			}
+		}
+		if (!hasDeletionColumn() && deletionPolicy != null) {
+			log.info(
+				"Cannot set deletion policy of '" + toString(ownerClass) + "#" + partName + "' to '" + deletionPolicy
+				+ "', since references do not yet have the corresponding property.", Protocol.WARN);
+			deletionPolicy = null;
+		}
 		CompiledStatement createProperty = query(
 			parameters(
 				branchParamDef(),
@@ -637,13 +718,15 @@ public class Util {
 				parameterDef(DBType.ID, "endID"),
 				parameterDef(DBType.ID, "definitionID"),
 				parameterDef(DBType.BOOLEAN, "mandatory"),
+				parameterDef(DBType.BOOLEAN, "abstract"),
 				parameterDef(DBType.BOOLEAN, "multiple"),
 				parameterDef(DBType.BOOLEAN, "composite"),
 				parameterDef(DBType.BOOLEAN, "aggregate"),
 				parameterDef(DBType.BOOLEAN, "ordered"),
 				parameterDef(DBType.BOOLEAN, "bag"),
 				parameterDef(DBType.BOOLEAN, "navigate"),
-				parameterDef(DBType.STRING, "historyType")),
+				parameterDef(DBType.STRING, "historyType"),
+				parameterDef(DBType.STRING, "deletionPolicy")),
 			insert(
 				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
 				listWithoutNull(
@@ -662,13 +745,16 @@ public class Util {
 					refID(TLReference.END_ATTR),
 					refID(TLStructuredTypePart.DEFINITION_ATTR),
 					SQLH.mangleDBName(TLStructuredTypePart.MANDATORY_ATTR),
+					hasAbstractColumn() ? SQLH.mangleDBName(TLStructuredTypePart.ABSTRACT_ATTR) : null,
 					SQLH.mangleDBName(TLStructuredTypePart.MULTIPLE_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.COMPOSITE_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.AGGREGATE_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.ORDERED_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.BAG_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR),
-					historyType == null ? null : SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR)),
+					historyType == null ? null : SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR),
+					deletionPolicy == null ? null : SQLH.mangleDBName(TLAssociationEnd.DELETION_POLICY_ATTR)
+				),
 				listWithoutNull(
 					branchParamOrNull(),
 					parameter(DBType.ID, "identifier"),
@@ -685,17 +771,23 @@ public class Util {
 					parameter(DBType.ID, "endID"),
 					parameter(DBType.ID, "definitionID"),
 					parameter(DBType.BOOLEAN, "mandatory"),
+					hasAbstractColumn() ? parameter(DBType.BOOLEAN, "abstract") : null,
 					parameter(DBType.BOOLEAN, "multiple"),
 					parameter(DBType.BOOLEAN, "composite"),
 					parameter(DBType.BOOLEAN, "aggregate"),
 					parameter(DBType.BOOLEAN, "ordered"),
 					parameter(DBType.BOOLEAN, "bag"),
 					parameter(DBType.BOOLEAN, "navigate"),
-					historyType == null ? null : parameter(DBType.STRING, "historyType")))).toSql(sqlDialect);
+					historyType == null ? null : parameter(DBType.STRING, "historyType"),
+					deletionPolicy == null ? null : parameter(DBType.STRING, "deletionPolicy")
+				))).toSql(sqlDialect);
 
 		createProperty.executeUpdate(con, branch, partID, revCreate, annotations, partName, impl,
-			ownerClass.getID(), ownerOrder, targetTable, targetID, endID, definitionID, mandatory, multiple,
-			composite, aggregate, ordered, bag, navigate, historyType == null ? null : historyType.getExternalName());
+			ownerClass.getID(), ownerOrder, targetTable, targetID, endID, definitionID, mandatory,
+			isAbstract, multiple, composite, aggregate, ordered, bag, navigate,
+			historyType == null ? null : historyType.getExternalName(),
+			deletionPolicy == null ? null : deletionPolicy.getExternalName()
+		);
 	}
 
 	private List<OrderValue> getOrders(PooledConnection con, long branch, TLID ownerId,
@@ -722,7 +814,7 @@ public class Util {
 						column(
 							refID(ownerRef)),
 						parameter(DBType.ID, "ownerID"))),
-				orders(order(false, column(SQLH.mangleDBName(orderAttribute)))))).toSql(con.getSQLDialect());
+				orders(order(column(SQLH.mangleDBName(orderAttribute)))))).toSql(con.getSQLDialect());
 		List<OrderValue> attributeOrders = new ArrayList<>();
 		try (ResultSet dbResult = selectMaxOrder.executeQuery(con, branch, ownerId)) {
 			while (dbResult.next()) {
@@ -822,6 +914,11 @@ public class Util {
 	 */
 	public Module getTLModule(PooledConnection connection, long branch, String moduleName)
 			throws SQLException, MigrationException {
+		if (TL5Types.ENUM_PROTOCOL.equals(moduleName)) {
+			/* In old XML files the legacy notation "enum:..." instead of "tl5.enum:..." is used.
+			 * Such a module does not exist. */
+			moduleName = ModelLayout.TL5_ENUM_MODULE;
+		}
 		DBHelper sqlDialect = connection.getSQLDialect();
 
 		String identifierAlias = "id";
@@ -873,6 +970,14 @@ public class Util {
 
 	/**
 	 * Fetches an existing {@link TLType} from the database.
+	 */
+	public Type getTLTypeOrNull(PooledConnection con, QualifiedTypeName typeName)
+			throws SQLException, MigrationException {
+		return getTLTypeOrNull(con, TLContext.TRUNK_ID, typeName.getModuleName(), typeName.getTypeName());
+	}
+
+	/**
+	 * Fetches an existing {@link TLType} from the database.
 	 * 
 	 * @throws MigrationException
 	 *         When no such type exists.
@@ -886,12 +991,39 @@ public class Util {
 
 	/**
 	 * Fetches an existing {@link TLType} from the database.
+	 */
+	public Type getTLTypeOrNull(PooledConnection connection, long branch, String moduleName,
+			String typeName) throws SQLException, MigrationException {
+		Module module = getTLModule(connection, branch, moduleName);
+		if (module == null) {
+			return null;
+		}
+		return getTLTypeOrNull(connection, module, typeName);
+	}
+
+	/**
+	 * Fetches an existing {@link TLType} from the database.
 	 * 
 	 * @throws MigrationException
 	 *         When no such type exists.
 	 */
 	public Type getTLTypeOrFail(PooledConnection connection, Module module, String typeName)
 			throws SQLException, MigrationException {
+		return notNull(getTLTypeOrNull(connection, module, typeName), module, typeName);
+	}
+
+	private Type notNull(Type result, Module module, String typeName) throws MigrationException {
+		if (result == null) {
+			throw new MigrationException(
+				"No such type: " + TLModelUtil.qualifiedName(module.getModuleName(), typeName));
+		}
+		return result;
+	}
+
+	/**
+	 * Fetches an existing {@link TLType} from the database.
+	 */
+	public Type getTLTypeOrNull(PooledConnection connection, Module module, String typeName) throws SQLException {
 		Type tlClass = getTLClass(connection, module, typeName);
 		if (tlClass != null) {
 			return tlClass;
@@ -904,7 +1036,7 @@ public class Util {
 		if (enumType != null) {
 			return enumType;
 		}
-		throw new MigrationException("No such type: " + TLModelUtil.qualifiedName(module.getModuleName(), typeName));
+		return null;
 	}
 
 	private Type getTLDataType(PooledConnection connection, Module module, String dataTypeName)
@@ -1135,7 +1267,6 @@ public class Util {
 
 	/**
 	 * Creates a new {@link TLReference}.
-	 * 
 	 * @param reference
 	 *        Qualified name of the reference to create.
 	 * @param target
@@ -1143,20 +1274,19 @@ public class Util {
 	 */
 	public Reference createTLReference(Log log,
 			PooledConnection con, QualifiedPartName reference,
-			QualifiedTypeName target, boolean mandatory, boolean composite, boolean aggregate,
+			QualifiedTypeName target, boolean mandatory, boolean isAbstract, boolean composite, boolean aggregate,
 			boolean multiple, boolean bag, boolean ordered, boolean navigate,
-			HistoryType historyType, AnnotatedConfig<TLAttributeAnnotation> annotations)
+			HistoryType historyType, DeletionPolicy deletionPolicy, AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws SQLException, MigrationException {
 		return createTLReference(log, con,
 			TLContext.TRUNK_ID, reference.getModuleName(), reference.getTypeName(),
 			reference.getPartName(), target.getModuleName(),
-			target.getTypeName(), mandatory, composite, aggregate, multiple, bag, ordered, navigate,
-			historyType, toString(annotations));
+			target.getTypeName(), mandatory, isAbstract, composite, aggregate, multiple, bag, ordered, navigate,
+			historyType, deletionPolicy, toString(annotations));
 	}
 
 	/**
 	 * Creates a new {@link TLReference}.
-	 * 
 	 * @param moduleName
 	 *        Name of the module of the reference to create.
 	 * @param ownerName
@@ -1171,25 +1301,26 @@ public class Util {
 	public Reference createTLReference(Log log, PooledConnection con,
 			long branch, String moduleName, String ownerName,
 			String partName, String targetModule,
-			String targetTypeName, boolean mandatory, boolean composite, boolean aggregate,
+			String targetTypeName, boolean mandatory, boolean isAbstract, boolean composite, boolean aggregate,
 			boolean multiple, boolean bag, boolean ordered, boolean navigate,
-			HistoryType historyType, String annotations)
+			HistoryType historyType, DeletionPolicy deletionPolicy, String annotations)
 			throws SQLException, MigrationException {
 		Objects.requireNonNull(historyType);
 
 		Type associationType = createTLStructuredType(con, branch, moduleName,
 			TLStructuredTypeColumns.syntheticAssociationName(ownerName, partName), null, null, null, true);
 
-		createTLAssociationEnd(log, con, branch, associationType.getModule().getModuleName(),
-			associationType.getTypeName(), TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, moduleName, ownerName,
-			false, false, false, true, false,
-			false, false, HistoryType.CURRENT, null);
+		createTLAssociationEnd(log, con, branch,
+			associationType.getModule().getModuleName(), associationType.getTypeName(),
+			TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME,
+			moduleName, ownerName, false, false, false,
+			false, true, false, false, false, HistoryType.CURRENT, DeletionPolicy.CLEAR_REFERENCE, null);
 
 		TypePart targetEnd = createTLAssociationEnd(log, con, branch,
-			associationType.getModule().getModuleName(),
-			associationType.getTypeName(), partName, targetModule, targetTypeName, mandatory, composite, aggregate,
-			multiple, bag, ordered,
-			navigate, historyType, null);
+			associationType.getModule().getModuleName(), associationType.getTypeName(),
+			partName,
+			targetModule, targetTypeName, mandatory, isAbstract, composite,
+			aggregate, multiple, bag, ordered, navigate, historyType, deletionPolicy, null);
 
 		Reference reference =
 			internalCreateTLReference(log, con, branch, moduleName, ownerName, partName, targetEnd.getID(),
@@ -1401,14 +1532,14 @@ public class Util {
 	/**
 	 * The column name of the {@link ReferencePart#name} aspect of the given reference attribute.
 	 */
-	public String refID(String reference) {
+	public static String refID(String reference) {
 		return ReferencePart.name.getReferenceAspectColumnName(SQLH.mangleDBName(reference));
 	}
 
 	/**
 	 * The column name of the {@link ReferencePart#type} aspect of the given reference attribute.
 	 */
-	public String refType(String reference) {
+	public static String refType(String reference) {
 		return ReferencePart.type.getReferenceAspectColumnName(SQLH.mangleDBName(reference));
 	}
 
@@ -1513,7 +1644,7 @@ public class Util {
 		for (int i = orders.size(); i >= 0; i--) {
 			int insertOrder;
 			try {
-				insertOrder = OrderedLinkUtil.getInsertOrder(orders, orders.size(), OrderValue::getOrder);
+				insertOrder = OrderedLinkUtil.getInsertOrder(orders, i, OrderValue::getOrder);
 			} catch (IndexRangeTooShort ex) {
 				continue;
 			}
@@ -1545,7 +1676,7 @@ public class Util {
 		Type ownerType = getTLTypeOrFail(connection, branch, module, type);
 		TypePart part = getTLTypePart(connection, ownerType, partName);
 		if (part == null) {
-			throw new MigrationException("No part " + partName + " found in " + toString(ownerType) + ".");
+			throw new MigrationException("No part '" + partName + "' found in '" + toString(ownerType) + "'.");
 		}
 		return part;
 	}
@@ -1620,7 +1751,7 @@ public class Util {
 						parameter(DBType.ID, "owner")),
 					eqBranch()),
 				orders(
-					order(false, column(SQLH.mangleDBName(ApplicationObjectUtil.OWNER_REF_ORDER_ATTR))))))
+					order(column(SQLH.mangleDBName(ApplicationObjectUtil.OWNER_REF_ORDER_ATTR))))))
 						.toSql(sqlDialect);
 
 		List<TypePart> searchResult = new ArrayList<>();
@@ -1671,7 +1802,7 @@ public class Util {
 						parameter(DBType.ID, "owner")),
 					eqBranch()),
 				orders(
-					order(false, column(FastListElement.ORDER_DB_NAME))))).toSql(sqlDialect);
+					order(column(FastListElement.ORDER_DB_NAME))))).toSql(sqlDialect);
 
 		List<TypePart> searchResult = new ArrayList<>();
 		try (ResultSet dbResult =
@@ -1716,6 +1847,9 @@ public class Util {
 			table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
 			and(
 				eqBranch(),
+				eqSQL(
+					column(BasicTypes.REV_MAX_DB_NAME),
+					literal(DBType.LONG, Revision.CURRENT_REV)),
 				eqSQL(
 					column(refID(ApplicationObjectUtil.META_ELEMENT_ATTR)),
 					parameter(DBType.ID, "owner")),
@@ -1820,33 +1954,35 @@ public class Util {
 	}
 
 	/**
-	 * Retrieves the generalization links for the given {@link TLClass}.
+	 * Retrieves the {@link TypeGeneralization} links where the given {@link TLClass} is in the
+	 * source end.
 	 */
 	public List<TypeGeneralization> getTLClassGeneralizationLinks(PooledConnection connection, Type specialization)
 			throws SQLException {
-		return getTLClassGeneralizationsOrSpecializations(connection, specialization, false);
+		return getGeneralizationLinks(connection, specialization, false);
 	}
 
 	/**
-	 * Retrieves the specialization links for the given {@link TLClass}.
+	 * Retrieves the {@link TypeGeneralization} links where the given {@link TLClass} is in the
+	 * destination end.
 	 */
 	public List<TypeGeneralization> getTLClassSpecializationLinks(PooledConnection connection, Type generalization)
 			throws SQLException {
-		return getTLClassGeneralizationsOrSpecializations(connection, generalization, true);
+		return getGeneralizationLinks(connection, generalization, true);
 	}
 
-	private List<TypeGeneralization> getTLClassGeneralizationsOrSpecializations(PooledConnection connection,
-			Type source, boolean getDestination) throws SQLException {
+	private List<TypeGeneralization> getGeneralizationLinks(PooledConnection connection, Type type, boolean backwards)
+			throws SQLException {
 		DBHelper sqlDialect = connection.getSQLDialect();
 
 		String givenColumn;
-		String otherColumn;
-		if (getDestination) {
-			givenColumn = refID(SourceReference.REFERENCE_SOURCE_NAME);
-			otherColumn = refID(DestinationReference.REFERENCE_DEST_NAME);
-		} else {
+		String resultColumn;
+		if (backwards) {
 			givenColumn = refID(DestinationReference.REFERENCE_DEST_NAME);
-			otherColumn = refID(SourceReference.REFERENCE_SOURCE_NAME);
+			resultColumn = refID(SourceReference.REFERENCE_SOURCE_NAME);
+		} else {
+			givenColumn = refID(SourceReference.REFERENCE_SOURCE_NAME);
+			resultColumn = refID(DestinationReference.REFERENCE_DEST_NAME);
 		}
 
 		String identifierAlias = "id";
@@ -1859,7 +1995,7 @@ public class Util {
 			selectDistinct(
 				columns(
 					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
-					columnDef(otherColumn, NO_TABLE_ALIAS, otherAlias),
+					columnDef(resultColumn, NO_TABLE_ALIAS, otherAlias),
 					columnDef(SQLH.mangleDBName(TLStructuredTypeColumns.META_ELEMENT_GENERALIZATIONS__ORDER),
 						NO_TABLE_ALIAS, orderAlias)),
 				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS)),
@@ -1871,19 +2007,57 @@ public class Util {
 
 		List<TypeGeneralization> searchResult = new ArrayList<>();
 		try (ResultSet dbResult =
-			selectTLStructuredTypePart.executeQuery(connection, source.getBranch(), source.getID())) {
+			selectTLStructuredTypePart.executeQuery(connection, type.getBranch(), type.getID())) {
 			while (dbResult.next()) {
 				TypeGeneralization generalization = BranchIdType.newInstance(TypeGeneralization.class,
-					source.getBranch(),
+					type.getBranch(),
 					LongID.valueOf(dbResult.getLong(identifierAlias)),
 					ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS);
-				if (getDestination) {
-					generalization.setSource(source.getID());
-					generalization.setDestination(LongID.valueOf(dbResult.getLong(otherAlias)));
-				} else {
+				if (backwards) {
 					generalization.setSource(LongID.valueOf(dbResult.getLong(otherAlias)));
-					generalization.setDestination(source.getID());
+					generalization.setDestination(type.getID());
+				} else {
+					generalization.setSource(type.getID());
+					generalization.setDestination(LongID.valueOf(dbResult.getLong(otherAlias)));
 				}
+				generalization.setOrder(dbResult.getInt(orderAlias));
+				searchResult.add(generalization);
+			}
+		}
+		return searchResult;
+	}
+
+	private Set<TypeGeneralization> getAllTLClassGeneralizations(PooledConnection connection) throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+
+		String sourceColumn = refID(SourceReference.REFERENCE_SOURCE_NAME);
+		String destColumn = refID(DestinationReference.REFERENCE_DEST_NAME);
+
+		String identifierAlias = "id";
+		String sourceAlias = "source";
+		String destAlias = "dest";
+		String orderAlias = "order";
+		CompiledStatement selectTLStructuredTypePart = query(
+			selectDistinct(
+				columns(
+					branchColumnDef(),
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME, NO_TABLE_ALIAS, identifierAlias),
+					columnDef(sourceColumn, NO_TABLE_ALIAS, sourceAlias),
+					columnDef(destColumn, NO_TABLE_ALIAS, destAlias),
+					columnDef(SQLH.mangleDBName(TLStructuredTypeColumns.META_ELEMENT_GENERALIZATIONS__ORDER),
+						NO_TABLE_ALIAS, orderAlias)),
+				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS)),
+				SQLFactory.literalTrueLogical())).toSql(sqlDialect);
+
+		Set<TypeGeneralization> searchResult = new HashSet<>();
+		try (ResultSet dbResult = selectTLStructuredTypePart.executeQuery(connection)) {
+			while (dbResult.next()) {
+				TypeGeneralization generalization = BranchIdType.newInstance(TypeGeneralization.class,
+					dbResult.getLong(BasicTypes.BRANCH_DB_NAME),
+					LongID.valueOf(dbResult.getLong(identifierAlias)),
+					ApplicationObjectUtil.META_ELEMENT_GENERALIZATIONS);
+				generalization.setSource(LongID.valueOf(dbResult.getLong(sourceAlias)));
+				generalization.setDestination(LongID.valueOf(dbResult.getLong(destAlias)));
 				generalization.setOrder(dbResult.getInt(orderAlias));
 				searchResult.add(generalization);
 			}
@@ -1905,6 +2079,44 @@ public class Util {
 		if (type.getTable().equals(TlModelFactory.KO_NAME_TL_PRIMITIVE)) {
 			// no generalizations for primitives
 			return Collections.emptyList();
+		}
+		throw new IllegalArgumentException("No TLType: " + type.getTable());
+	}
+
+	/**
+	 * Retrieves the {@link TLID local id} for the given {@link TLType} and all inherited
+	 * specialisations.
+	 */
+	public Set<TLID> getTransitiveSpecializations(PooledConnection connection, Type type) throws SQLException {
+		if (type.getTable().equals(TlModelFactory.KO_NAME_TL_ENUMERATION)) {
+			// no specializations for enumerations
+			return Collections.singleton(type.getID());
+		}
+		if (type.getTable().equals(ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE)) {
+			Set<TypeGeneralization> allGeneralisations = getAllTLClassGeneralizations(connection);
+			Set<TLID> allSpecialisations = new HashSet<>();
+			allSpecialisations.add(type.getID());
+			while (true) {
+				boolean foundNew = false;
+				for (TypeGeneralization gen : allGeneralisations) {
+					if (gen.getBranch() != type.getBranch()) {
+						// foreign branch.
+						continue;
+					}
+					if (allSpecialisations.contains(gen.getDestination())) {
+						boolean isNew = allSpecialisations.add(gen.getSource());
+						foundNew |= isNew;
+					}
+				}
+				if (!foundNew) {
+					break;
+				}
+			}
+			return allSpecialisations;
+		}
+		if (type.getTable().equals(TlModelFactory.KO_NAME_TL_PRIMITIVE)) {
+			// no specializations for primitives
+			return Collections.singleton(type.getID());
 		}
 		throw new IllegalArgumentException("No TLType: " + type.getTable());
 	}
@@ -2064,7 +2276,7 @@ public class Util {
 			Collection<Class<? extends TLAnnotation>> toRemove) throws ConfigurationException {
 		AnnotatedConfig newAnnotations;
 		if (persistentAnnotations.isEmpty()) {
-			newAnnotations = TypedConfiguration.newConfigItem(AnnotatedConfig.class);
+			newAnnotations = TypedConfiguration.newConfigItem(AnnotationConfigs.class);
 		} else {
 			newAnnotations = (AnnotatedConfig) TypedConfiguration.fromString(persistentAnnotations);
 			for (Class<? extends TLAnnotation> annotationType : toRemove) {
@@ -2169,7 +2381,7 @@ public class Util {
 					eqSQL(
 						column(SQLH.mangleDBName(TLModule.NAME_ATTR)),
 						parameter(DBType.STRING, "name"))),
-				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME)))))
+				orders(orderDescending(column(BasicTypes.REV_MAX_DB_NAME)))))
 					.toSql(con.getSQLDialect());
 
 		try (ResultSet result = sql.executeQuery(con, branch, moduleName)) {
@@ -2344,7 +2556,7 @@ public class Util {
 					eqSQL(
 						column(SQLH.mangleDBName(PersistentType.NAME_ATTR)),
 						parameter(DBType.STRING, "name"))),
-				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME))))).toSql(con.getSQLDialect());
+				orders(orderDescending(column(BasicTypes.REV_MAX_DB_NAME))))).toSql(con.getSQLDialect());
 
 		try (ResultSet result = sql.executeQuery(con, module.getBranch(), module.getID(), typeName)) {
 			if (result.next()) {
@@ -2512,7 +2724,7 @@ public class Util {
 					eqSQL(
 						column(SQLH.mangleDBName(PersistentType.NAME_ATTR)),
 						parameter(DBType.STRING, "name"))),
-				orders(order(true, column(BasicTypes.REV_MAX_DB_NAME))))).toSql(con.getSQLDialect());
+				orders(orderDescending(column(BasicTypes.REV_MAX_DB_NAME))))).toSql(con.getSQLDialect());
 
 		try (ResultSet result = sql.executeQuery(con, owner.getBranch(), owner.getID(), partName)) {
 			if (result.next()) {
@@ -2624,12 +2836,12 @@ public class Util {
 			throw new MigrationException("Can not move part before itself: " + part);
 		}
 		List<TypePart> parts = getTLStructuredTypeParts(con, structuredType);
-		int partIndex = findPart(parts, part, structuredType);
+		int partIndex = findPartIndex(parts, part, structuredType);
 		int beforeIndex;
 		if (before == null) {
 			beforeIndex = parts.size();
 		} else {
-			beforeIndex = findPart(parts, before, structuredType);
+			beforeIndex = findPartIndex(parts, before, structuredType);
 		}
 		if (partIndex == beforeIndex - 1) {
 			// Already at correct position.
@@ -2657,7 +2869,7 @@ public class Util {
 
 	}
 
-	private int findPart(List<? extends TypePart> parts, String part, Type owner) throws MigrationException {
+	private int findPartIndex(List<? extends TypePart> parts, String part, Type owner) throws MigrationException {
 		for (int i = 0; i < parts.size(); i++) {
 			if (part.equals(parts.get(i).getPartName())) {
 				return i;
@@ -2732,33 +2944,34 @@ public class Util {
 		if (classifier.equals(before)) {
 			throw new MigrationException("Can not move classifier before itself: " + classifier);
 		}
-		List<TypePart> tlClassifiers = getTLClassifiers(con, enumType);
-		int classifierIndex = findPart(tlClassifiers, classifier, enumType);
+		List<TypePart> classifiers = getTLClassifiers(con, enumType);
+		int currentIndex = findPartIndex(classifiers, classifier, enumType);
 		int beforeIndex;
 		if (before == null) {
-			beforeIndex = tlClassifiers.size();
+			beforeIndex = classifiers.size();
 		} else {
-			beforeIndex = findPart(tlClassifiers, before, enumType);
+			beforeIndex = findPartIndex(classifiers, before, enumType);
 		}
-		if (classifierIndex == beforeIndex - 1) {
+		if (currentIndex == beforeIndex - 1) {
 			// Already at correct position.
 			return;
 		}
-		TypePart movedClassifier = tlClassifiers.get(classifierIndex);
+		TypePart movedClassifier = classifiers.get(currentIndex);
 		// First move classifier away to avoid duplicate-key constraint.
-		updateTLClassifierSortOrder(con, movedClassifier, tlClassifiers.size());
+		updateTLClassifierSortOrder(con, movedClassifier, Integer.MAX_VALUE);
 		int targetOrder;
-		if (classifierIndex < beforeIndex) {
-			targetOrder = beforeIndex == tlClassifiers.size() ? beforeIndex : tlClassifiers.get(beforeIndex).getOrder() - 1;
-			for (int i = classifierIndex + 1; i < beforeIndex; i++) {
-				TypePart tlClassifier = tlClassifiers.get(i);
+		if (currentIndex < beforeIndex) {
+			targetOrder =
+				beforeIndex == classifiers.size() ? beforeIndex : classifiers.get(beforeIndex).getOrder() - 1;
+			for (int i = currentIndex + 1; i < beforeIndex; i++) {
+				TypePart tlClassifier = classifiers.get(i);
 				updateTLClassifierSortOrder(con, tlClassifier, tlClassifier.getOrder() - 1);
 			}
 		} else {
-			assert beforeIndex < classifierIndex;
-			targetOrder = tlClassifiers.get(beforeIndex).getOrder();
-			for (int i = beforeIndex; i < classifierIndex; i++) {
-				TypePart tlClassifier = tlClassifiers.get(i);
+			assert beforeIndex < currentIndex;
+			targetOrder = classifiers.get(beforeIndex).getOrder();
+			for (int i = currentIndex - 1; i >= beforeIndex; i--) {
+				TypePart tlClassifier = classifiers.get(i);
 				updateTLClassifierSortOrder(con, tlClassifier, tlClassifier.getOrder() + 1);
 			}
 		}
@@ -2836,6 +3049,13 @@ public class Util {
 			throw new MigrationException(
 				"No enumeration with name '" + enumName + "' found in module " + toString(module));
 		}
+		
+		TypePart existing = getTLClassifier(con, enumeration, classifierName);
+		if (existing != null) {
+			throw new MigrationException(
+				"Classifier '" + toString(existing) + "' already exists.");
+		}
+		
 		List<OrderValue> orders = getOrders(con, branch, enumeration.getID(), FastListElement.ORDER_DB_NAME,
 			PersistentTypePart.NAME_ATTR, TlModelFactory.KO_NAME_TL_CLASSIFIER, FastListElement.OWNER_ATTRIBUTE);
 		int sortOrder;
@@ -3002,11 +3222,11 @@ public class Util {
 	 * Updates a {@link TLProperty}.
 	 */
 	public void updateTLProperty(PooledConnection con, TypePart part, Type newType, Type newOwner,
-			String newName, Boolean mandatory, Boolean multiple, Boolean bag,
+			String newName, Boolean mandatory, Boolean isAbstract, Boolean multiple, Boolean bag,
 			Boolean ordered, AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws SQLException {
-		updateTLStructuredTypePart(con, part, newType, newOwner, newName, mandatory, null, null, multiple, bag,
-			ordered, null, null, toString(annotations), null);
+		updateTLStructuredTypePart(con, part, newType, newOwner, newName, mandatory, isAbstract, null, null, multiple,
+			bag, ordered, null, null, null, toString(annotations), null);
 	}
 
 	/**
@@ -3018,11 +3238,13 @@ public class Util {
 	 * </p>
 	 * 
 	 * @see #updateTLReference(PooledConnection, Reference, Type, Type, String, Boolean, Boolean,
-	 *      Boolean, Boolean, Boolean, Boolean, Boolean, HistoryType, AnnotatedConfig, TypePart)
+	 *      Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, HistoryType, DeletionPolicy,
+	 *      AnnotatedConfig, TypePart)
 	 */
 	public void updateInverseReference(PooledConnection con, Reference inverseReference,
-			String newName, Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
-			Boolean ordered, Boolean navigate, HistoryType historyType,
+			String newName, Boolean mandatory, Boolean isAbstract, Boolean composite, Boolean aggregate,
+			Boolean multiple, Boolean bag,
+			Boolean ordered, Boolean navigate, HistoryType historyType, DeletionPolicy deletionPolicy,
 			AnnotatedConfig<TLAttributeAnnotation> annotations, TypePart newEnd)
 			throws SQLException {
 		TLID endID = null;
@@ -3039,10 +3261,10 @@ public class Util {
 				ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE);
 
 		updateTLStructuredTypePart(con, associationEnd, null, null, null,
-			mandatory, composite, aggregate, multiple, bag, ordered, navigate, historyType,
+			mandatory, isAbstract, composite, aggregate, multiple, bag, ordered, navigate, historyType, deletionPolicy,
 			null, null);
 		updateTLStructuredTypePart(con, inverseReference, null, null, newName,
-			null, null, null, null, null, null, null, null,
+			null, null, null, null, null, null, null, null, null, null,
 			toString(annotations), newEnd);
 	}
 
@@ -3050,11 +3272,13 @@ public class Util {
 	 * Updates a {@link TLReference}.
 	 * 
 	 * @see #updateInverseReference(PooledConnection, Reference, String, Boolean, Boolean, Boolean,
-	 *      Boolean, Boolean, Boolean, Boolean, HistoryType, AnnotatedConfig, TypePart)
+	 *      Boolean, Boolean, Boolean, Boolean, Boolean, HistoryType, DeletionPolicy,
+	 *      AnnotatedConfig, TypePart)
 	 */
 	public void updateTLReference(PooledConnection con, Reference reference, Type newType, Type newOwner,
-			String newName, Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
-			Boolean ordered, Boolean navigate, HistoryType historyType,
+			String newName, Boolean mandatory, Boolean isAbstract, Boolean composite, Boolean aggregate,
+			Boolean multiple, Boolean bag,
+			Boolean ordered, Boolean navigate, HistoryType historyType, DeletionPolicy deletionPolicy,
 			AnnotatedConfig<TLAttributeAnnotation> annotations, TypePart newEnd)
 			throws SQLException, MigrationException {
 
@@ -3073,10 +3297,10 @@ public class Util {
 
 		// Name of the association end is the name as the reference.
 		updateTLStructuredTypePart(con, associationEnd, newType, null, newName,
-			mandatory, composite, aggregate, multiple, bag, ordered, navigate, historyType,
+			mandatory, isAbstract, composite, aggregate, multiple, bag, ordered, navigate, historyType, deletionPolicy,
 			null, null);
 		updateTLStructuredTypePart(con, reference, null, newOwner, newName,
-			null, null, null, null, null, null, null, null,
+			null, null, null, null, null, null, null, null, null, null,
 			toString(annotations), newEnd);
 
 		if (newOwner != null || newType != null || newName != null) {
@@ -3109,10 +3333,9 @@ public class Util {
 			}
 			if (newOwner != null) {
 				// owner of the association is part of the name of the association and the target
-				// type
-				// of the other end.
+				// type of the other end.
 				updateTLStructuredTypePart(con, otherPart, newOwner, null, null, null, null, null, null, null, null,
-					null, null, null, null);
+					null, null, null, null, null, null);
 			}
 			if (newType != null) {
 				// new type is the new owner of the inverse reference, if exists.
@@ -3141,10 +3364,12 @@ public class Util {
 
 	/**
 	 * Updates the given {@link TLStructuredTypePart}.
+	 * @param deletionPolicy TODO
 	 */
 	public void updateTLStructuredTypePart(PooledConnection con, BranchIdType part, Type newType, Type newOwner,
-			String name, Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
-			Boolean ordered, Boolean navigate, HistoryType historyType, String annotations, TypePart newEnd)
+			String name, Boolean mandatory, Boolean isAbstract, Boolean composite, Boolean aggregate, Boolean multiple,
+			Boolean bag, Boolean ordered, Boolean navigate, HistoryType historyType, DeletionPolicy deletionPolicy,
+			String annotations, TypePart newEnd)
 			throws SQLException {
 		List<Parameter> parameterDefs = new ArrayList<>();
 		List<String> columns = new ArrayList<>();
@@ -3182,6 +3407,12 @@ public class Util {
 			columns.add(SQLH.mangleDBName(TLStructuredTypePart.MANDATORY_ATTR));
 			parameters.add(parameter(DBType.BOOLEAN, "mandatory"));
 			arguments.add(mandatory);
+		}
+		if (isAbstract != null) {
+			parameterDefs.add(parameterDef(DBType.BOOLEAN, "abstract"));
+			columns.add(SQLH.mangleDBName(TLStructuredTypePart.ABSTRACT_ATTR));
+			parameters.add(parameter(DBType.BOOLEAN, "abstract"));
+			arguments.add(isAbstract);
 		}
 		if (composite != null) {
 			parameterDefs.add(parameterDef(DBType.BOOLEAN, "composite"));
@@ -3225,6 +3456,12 @@ public class Util {
 			parameters.add(parameter(DBType.STRING, "historyType"));
 			arguments.add(historyType.getExternalName());
 		}
+		if (deletionPolicy != null) {
+			parameterDefs.add(parameterDef(DBType.STRING, "deletionPolicy"));
+			columns.add(SQLH.mangleDBName(TLAssociationEnd.DELETION_POLICY_ATTR));
+			parameters.add(parameter(DBType.STRING, "deletionPolicy"));
+			arguments.add(deletionPolicy.getExternalName());
+		}
 		if (annotations != null) {
 			parameterDefs.add(parameterDef(DBType.STRING, "annotations"));
 			columns.add(SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE));
@@ -3240,9 +3477,10 @@ public class Util {
 		if (columns.isEmpty()) {
 			return;
 		}
+		
 		CompiledStatement sql = query(parameterDefs,
 		update(
-			table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
+			table(SQLH.mangleDBName(part.getTable())),
 			and(
 				eqBranch(),
 				eqSQL(
@@ -3325,6 +3563,68 @@ public class Util {
 					parameter(DBType.ID, "identifier"))),
 			columns,
 			parameters)).toSql(con.getSQLDialect());
+
+		sql.executeUpdate(con, arguments.toArray());
+	}
+
+	/**
+	 * Updates the given {@link TLEnumeration}.
+	 */
+	public void updateTLEnumeration(PooledConnection con, Type type, Module newModule, String newName,
+			AnnotatedConfig<TLTypeAnnotation> annotations) throws SQLException {
+		updateTLEnumeration(con, type, newModule, newName, toString(annotations));
+	}
+
+	/**
+	 * Updates the given {@link TLEnumeration}.
+	 */
+	public void updateTLEnumeration(PooledConnection con, Type type, Module newModule, String newName,
+			String annotations) throws SQLException {
+		List<Parameter> parameterDefs = new ArrayList<>();
+		List<String> columns = new ArrayList<>();
+		List<SQLExpression> parameters = new ArrayList<>();
+		List<Object> arguments = new ArrayList<>();
+
+		parameterDefs.add(branchParamDef());
+		parameterDefs.add(parameterDef(DBType.ID, "identifier"));
+		arguments.add(type.getBranch());
+		arguments.add(type.getID());
+		if (newModule != null) {
+			columns.add(refType(ApplicationObjectUtil.META_ELEMENT_SCOPE_REF));
+			parameters.add(literalString(newModule.getTable()));
+
+			parameterDefs.add(parameterDef(DBType.ID, "moduleID"));
+			columns.add(refID(ApplicationObjectUtil.META_ELEMENT_SCOPE_REF));
+			parameters.add(parameter(DBType.ID, "moduleID"));
+			columns.add(refID(TLClass.MODULE_ATTR));
+			parameters.add(parameter(DBType.ID, "moduleID"));
+			arguments.add(newModule.getID());
+		}
+		if (newName != null) {
+			parameterDefs.add(parameterDef(DBType.STRING, "name"));
+			columns.add(SQLH.mangleDBName(PersistentType.NAME_ATTR));
+			parameters.add(parameter(DBType.STRING, "name"));
+			arguments.add(newName);
+		}
+		if (annotations != null) {
+			parameterDefs.add(parameterDef(DBType.STRING, "annotations"));
+			columns.add(SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE));
+			parameters.add(parameter(DBType.STRING, "annotations"));
+			arguments.add(annotations);
+		}
+		if (columns.isEmpty()) {
+			return;
+		}
+		CompiledStatement sql = query(parameterDefs,
+			update(
+				table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_ENUMERATION)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(BasicTypes.IDENTIFIER_DB_NAME),
+						parameter(DBType.ID, "identifier"))),
+				columns,
+				parameters)).toSql(con.getSQLDialect());
 
 		sql.executeUpdate(con, arguments.toArray());
 	}
@@ -3540,10 +3840,32 @@ public class Util {
 			throw new MigrationException("Type '" + toString(type) + "' has parts: " + toString(tlTypeParts));
 		}
 		toDelete.addAll(tlTypeParts);
+
 		toDelete.addAll(getGeneralizations(connection, type));
 		toDelete.addAll(getSpecializations(connection, type));
-	
+
 		deleteModelParts(connection, toDelete);
+
+		// Delete associations of forwards references.
+		for (TypePart part : tlTypeParts) {
+			if (part instanceof Reference ref) {
+				Type association = getTLTypeOrNull(connection, ref.getOwner().getModule(),
+					TLStructuredTypeColumns.syntheticAssociationName(ref.getOwner().getTypeName(), ref.getPartName()));
+				if (association != null) {
+					deleteTLType(connection, association, false);
+				}
+			}
+		}
+
+		// Not necessary: Delete references of ends. The migration must have produced an explicit
+		// delete of potentially existing reverse references pointing to deleted classes.
+	}
+
+	/**
+	 * Whether branch support is enabled.
+	 */
+	public boolean hasBranches() {
+		return _branchSupport;
 	}
 
 	/**
@@ -3618,8 +3940,15 @@ public class Util {
 	 * A select column returning the object's branch.
 	 */
 	public SQLColumnDefinition branchColumnDef() {
+		return branchColumnDef(NO_TABLE_ALIAS);
+	}
+
+	/**
+	 * A select column returning the object's branch.
+	 */
+	public SQLColumnDefinition branchColumnDef(String tableAlias) {
 		if (_branchSupport) {
-			return columnDef(BasicTypes.BRANCH_DB_NAME);
+			return columnDef(column(tableAlias, BasicTypes.BRANCH_DB_NAME));
 		} else {
 			return columnDef(trunkBranch(), BasicTypes.BRANCH_DB_NAME);
 		}
@@ -3629,8 +3958,15 @@ public class Util {
 	 * A select column returning the object's branch.
 	 */
 	public SQLColumnDefinition branchColumnDefOrNull() {
+		return branchColumnDefOrNull(NO_TABLE_ALIAS);
+	}
+
+	/**
+	 * A select column returning the object's branch.
+	 */
+	public SQLColumnDefinition branchColumnDefOrNull(String tableAlias) {
 		if (_branchSupport) {
-			return columnDef(BasicTypes.BRANCH_DB_NAME);
+			return columnDef(column(tableAlias, BasicTypes.BRANCH_DB_NAME));
 		} else {
 			return null;
 		}
@@ -3640,11 +3976,34 @@ public class Util {
 	 * The branch of the object.
 	 */
 	public SQLExpression branchColumnRef() {
+		return branchColumnRef(NO_TABLE_ALIAS);
+	}
+
+	/**
+	 * The branch of the object.
+	 */
+	public SQLExpression branchColumnRef(String tableAlias) {
 		if (_branchSupport) {
-			return column(SQLH.mangleDBName(BasicTypes.BRANCH_DB_NAME));
+			return column(tableAlias, SQLH.mangleDBName(BasicTypes.BRANCH_DB_NAME));
 		} else {
 			return trunkBranch();
 		}
+	}
+
+	/**
+	 * An order expression for the branch column, or <code>null</code>, if no branches are
+	 * supported.
+	 */
+	public SQLOrder branchOrderOrNull() {
+		return branchOrderOrNull(NO_TABLE_ALIAS);
+	}
+
+	/**
+	 * An order expression for the branch column, or <code>null</code>, if no branches are
+	 * supported.
+	 */
+	public SQLOrder branchOrderOrNull(String tableAlias) {
+		return _branchSupport ? order(branchColumnRef(tableAlias)) : null;
 	}
 
 	/**
@@ -3652,6 +4011,111 @@ public class Util {
 	 */
 	public int getBranchIndexInc() {
 		return _branchSupport ? 1 : 0;
+	}
+
+	/**
+	 * Whether the table {@link ApplicationObjectUtil#META_ATTRIBUTE_OBJECT_TYPE} has a column
+	 * {@link TLAssociationEnd#HISTORY_TYPE_ATTR}.
+	 */
+	public boolean hasHistoryColumn() {
+		return _historyColumn;
+	}
+
+	/**
+	 * Sets value of {@link #hasHistoryColumn()}.
+	 */
+	public void setHistoryColumn(boolean historyColumn) {
+		_historyColumn = historyColumn;
+	}
+
+	/**
+	 * Whether the model already has the column that stores the deletion policy for association
+	 * ends.
+	 * 
+	 * @see TLAssociationEnd#getDeletionPolicy()
+	 */
+	public boolean hasDeletionColumn() {
+		return _deletionColumn;
+	}
+
+	/**
+	 * @see #hasDeletionColumn()
+	 */
+	public void setDeletionColumn(boolean value) {
+		_deletionColumn = value;
+	}
+
+	/**
+	 * Whether the table {@link ApplicationObjectUtil#META_ATTRIBUTE_OBJECT_TYPE} has a column
+	 * {@link TLStructuredTypePart#ABSTRACT_ATTR}.
+	 */
+	public boolean hasAbstractColumn() {
+		return _abstractColumn;
+	}
+
+	/**
+	 * Sets value of {@link #hasAbstractColumn()}.
+	 */
+	public void setAbstractColumn(boolean abstractColumn) {
+		_abstractColumn = abstractColumn;
+	}
+
+	/**
+	 * Looks up all identifiers of potential subclasses of the given type.
+	 */
+	public Collection<TLID> getImplementationIds(PooledConnection connection, Type type) throws SQLException {
+		Set<TLID> result = new HashSet<>();
+		result.add(type.getID());
+		List<Type> worklist = new ArrayList<>();
+		worklist.add(type);
+
+		for (int n = 0; n < worklist.size(); n++) {
+			List<TypeGeneralization> specializationLinks = getTLClassSpecializationLinks(connection, worklist.get(n));
+			for (TypeGeneralization link : specializationLinks) {
+				TLID specializationId = link.getSource();
+				if (result.add(specializationId)) {
+					worklist
+						.add(BranchIdType.newInstance(Type.class, type.getBranch(), specializationId, type.getTable()));
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Resolves a model part based on its qualified name.
+	 * 
+	 * @see TLModelUtil#resolveModelPart(String)
+	 */
+	public BranchIdType getModelPartOrFail(PooledConnection connection, long branch, String qualifiedName)
+			throws SQLException, MigrationException {
+		int partSeparatorIndex = qualifiedName.lastIndexOf(TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR);
+		if (partSeparatorIndex < 0) {
+			return resolveModuleOrType(connection, branch, qualifiedName);
+		}
+		String scopeName = qualifiedName.substring(0, partSeparatorIndex);
+		String partName = qualifiedName.substring(partSeparatorIndex + 1);
+
+		int moduleSep = scopeName.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR);
+		if (moduleSep >= 0) {
+			String moduleName = scopeName.substring(0, moduleSep);
+			String typeName = scopeName.substring(moduleSep + 1);
+			return getTLTypePartOrFail(connection, branch, moduleName, typeName, partName);
+		} else {
+			throw new UnsupportedOperationException("Resolving singletons during migration not implemented.");
+		}
+	}
+
+	private BranchIdType resolveModuleOrType(PooledConnection connection, long branch, String qualifiedName)
+			throws SQLException, MigrationException {
+		int moduleSep = qualifiedName.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR);
+		if (moduleSep >= 0) {
+			String moduleName = qualifiedName.substring(0, moduleSep);
+			String typeName = qualifiedName.substring(moduleSep + 1);
+			return getTLTypeOrFail(connection, branch, moduleName, typeName);
+		} else {
+			return getTLModuleOrFail(connection, qualifiedName);
+		}
 	}
 
 }

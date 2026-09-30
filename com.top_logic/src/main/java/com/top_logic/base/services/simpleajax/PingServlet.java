@@ -7,10 +7,11 @@ package com.top_logic.base.services.simpleajax;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import com.top_logic.util.AbstractTopLogicServlet;
 
 /**
  * This Servlet is needed for the Benchmark AJAX Test.
@@ -18,12 +19,12 @@ import javax.servlet.http.HttpServletResponse;
  * 
  * @author    <a href=mailto:dna@top-logic.com>dna</a>
  */
-public class PingServlet extends HttpServlet {
+public class PingServlet extends AbstractTopLogicServlet {
 
     /**
       * This Method only delivers the actual server time in ms since 1970.
       * 
-      * @see javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
+      * @see jakarta.servlet.http.HttpServlet#doGet(jakarta.servlet.http.HttpServletRequest, jakarta.servlet.http.HttpServletResponse)
       */
     @Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) 

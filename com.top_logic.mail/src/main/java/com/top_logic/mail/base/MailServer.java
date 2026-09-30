@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.event.MessageCountEvent;
-import javax.mail.event.MessageCountListener;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.event.MessageCountEvent;
+import jakarta.mail.event.MessageCountListener;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
@@ -29,7 +29,6 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.dob.DataObjectException;
@@ -44,14 +43,14 @@ import com.top_logic.mail.proxy.MailReceiverService;
 import com.top_logic.mail.proxy.exchange.ExchangeMail;
 
 /**
- * {@link ManagedClass} for creating model instances for received mails.
- * 
+ * Turns mails received from the mail server into model instances.
+ *
  * <p>
  * All mail folders are located on the mail server in the {@link MailServer#getRootFolderName() root
  * folder}.
  * </p>
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 @Label("Mail processor")
 @ServiceDependencies({
@@ -193,7 +192,7 @@ public class MailServer extends KBBasedManagedClass<MailServer.Config> implement
 		if (!_actived) {
 			return;
 		}
-		Transaction tx = kb().beginTransaction(Messages.INITIALISING_ROOT_FOLDER);
+		Transaction tx = kb().beginTransaction(I18NConstants.INITIALISING_ROOT_FOLDER);
 		try {
 			getRootFolder();
 		} catch (Exception ex) {
@@ -216,7 +215,7 @@ public class MailServer extends KBBasedManagedClass<MailServer.Config> implement
 
 		int messageCnt = messages.length;
 		if (messageCnt > 0) {
-			Transaction tx = kb().beginTransaction();
+			Transaction tx = kb().beginTransaction(I18NConstants.RECEIVED_MESSAGES);
 			try {
 				for (int position = 0; position < messageCnt; position++) {
 					Message message = messages[position];

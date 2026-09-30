@@ -15,6 +15,7 @@ import javax.crypto.SecretKey;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleUtil;
@@ -30,6 +31,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 @ServiceDependencies({
 	ThreadContextManager.Module.class
 })
+@Label("Encryption service")
 public class EncryptionService extends ManagedClass {
 
 	/**
@@ -51,7 +53,7 @@ public class EncryptionService extends ManagedClass {
 	/**
 	 * Configuration for {@link EncryptionService}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<EncryptionService> {
 		/**

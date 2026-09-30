@@ -10,6 +10,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.config.algorithm.GenericAlgorithmConfig;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.TLObject;
 
 /**
  * This interface defines how an algorithm has to be implemented
@@ -37,11 +38,11 @@ public abstract class MetaAttributeAlgorithm {
      * Starting with the given {@link Wrapper} perform a calculation.
      * Any possible mechanism is allowed here.
      * 
-     * @param anAttributedObject the object to use for evaluation the data for calculation.
+     * @param baseObject the object to use for evaluation the data for calculation.
      * @return any value, even <code>null</code>
      * @throws AttributeException when the performing of the algorithm is unsuccessful
      */
-    public abstract Object calculate(Wrapper anAttributedObject) throws AttributeException;
+    public abstract Object calculate(TLObject baseObject) throws AttributeException;
     
 }
 

@@ -18,6 +18,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.bpe.bpml.model.Collaboration;
+import com.top_logic.bpe.execution.engine.InitialProcessSetupService;
+import com.top_logic.bpe.util.Updater;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Transaction;
@@ -91,8 +93,10 @@ public class BPMLUpdateCommand extends PreconditionCommandHandler {
 					updateCollaborationInTransaction(origCollaboration, new StreamSource(in),
 						form.isUpdateBPMLExtensions());
 				} catch (IOException | XMLStreamException | KnowledgeBaseException ex) {
-					throw new TopLogicException(I18NConstants.ERROR_IMPORT_FAILED, ex)
-						.initDetails(ResKey.text(ex.getMessage()));
+					throw new TopLogicException(
+						com.top_logic.bpe.execution.engine.I18NConstants.ERROR_IMPORT_FAILED__DETAILS
+							.fill(ex.getMessage()),
+						ex).initDetails(ResKey.text(ex.getMessage()));
 				}
 
 				component.closeDialog();
@@ -110,7 +114,7 @@ public class BPMLUpdateCommand extends PreconditionCommandHandler {
 	public static void updateCollaborationInTransaction(Collaboration collaboration, Source source,
 			boolean updateExtensions) throws XMLStreamException {
 		KnowledgeBase kb = collaboration.tKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx = kb.beginTransaction(I18NConstants.UPDATED_WORKFLOW)) {
 			updateCollaboration(collaboration, source, updateExtensions);
 			tx.commit();
 		}
@@ -130,9 +134,11 @@ public class BPMLUpdateCommand extends PreconditionCommandHandler {
 	 */
 	public static void updateCollaboration(Collaboration collaboration, Source source, boolean updateExtensions)
 			throws XMLStreamException {
+		// Importing a process model runs with definer's rights, see
+		// AbstractModelBinding#usesSecurity().
 		ModelBinding binding =
-			new ApplicationModelBinding(collaboration.tKnowledgeBase(), ModelService.getApplicationModel());
-		Collaboration newCollaboration = BPMLUploadCommand.importBPML(source, binding);
+			new ApplicationModelBinding(collaboration.tKnowledgeBase(), ModelService.getApplicationModel(), false);
+		Collaboration newCollaboration = InitialProcessSetupService.importBPML(source, binding);
 		new Updater(collaboration, newCollaboration, updateExtensions).update();
 	}
 

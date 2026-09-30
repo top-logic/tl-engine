@@ -15,7 +15,7 @@ import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
 /**
  * All available {@link StructuredText} editor features.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class StructuredEditorConfigOptions extends Function0<Set<String>> {
 

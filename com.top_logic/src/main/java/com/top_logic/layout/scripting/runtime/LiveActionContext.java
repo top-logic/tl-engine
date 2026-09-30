@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.scripting.runtime;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.scripting.action.ApplicationAction;

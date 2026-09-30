@@ -28,8 +28,11 @@
 		<param name="createCommandGroups"
 			optional="true"
 		/>
-		<param name="securityProvider"
-			value="default"
+		<param name="securityObject"
+			optional="true"
+		/>
+		<param name="isSecurityMaster"
+			optional="true"
 		/>
 		<param name="resPrefix"
 			optional="true"
@@ -52,10 +55,11 @@
 		detailComponentName="${detailComponentName}"
 		dialogName="${dialogName}"
 		forms="${forms}"
+		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"
 		namePrefix="${namePrefix}"
 		resPrefix="${resPrefix}"
-		securityProvider="${securityProvider}"
+		securityObject="${securityObject}"
 		titleKey="${titleKey}"
 		typeOptions="${typeOptions}"
 		z_legacy_newModelAction="${newModelAction}"

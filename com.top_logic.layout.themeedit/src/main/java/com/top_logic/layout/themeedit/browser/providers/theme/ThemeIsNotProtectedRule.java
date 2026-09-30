@@ -16,7 +16,7 @@ import com.top_logic.tool.execution.ExecutableState;
 /**
  * Prevent execution if {@link ThemeConfig} is protected.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ThemeIsNotProtectedRule implements ExecutabilityRule {
 

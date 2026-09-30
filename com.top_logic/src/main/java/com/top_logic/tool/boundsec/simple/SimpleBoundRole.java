@@ -8,7 +8,6 @@ package com.top_logic.tool.boundsec.simple;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.StringID;
 import com.top_logic.basic.TLID;
-import com.top_logic.model.TLModule;
 import com.top_logic.tool.boundsec.BoundRole;
 
 /**
@@ -24,8 +23,6 @@ public class SimpleBoundRole implements BoundRole {
     /** name of the role */
 	private String name;
 
-	private TLModule _scope;
-    
     /** Construct an new SimpleBoundCommand */
 	public SimpleBoundRole(String anID) {
 		name = anID;
@@ -72,35 +69,6 @@ public class SimpleBoundRole implements BoundRole {
     @Override
 	public String getName() {
         return name;
-    }
-    
-    /**
-     * @see com.top_logic.tool.boundsec.BoundRole#getScope()
-     */
-    @Override
-	public TLModule getScope() {
-		return _scope;
-    }
-    
-    @Override
-	public void bind(TLModule scope) throws IllegalStateException, IllegalArgumentException {
-		if (this._scope != null && this._scope != scope) {
-            throw new IllegalStateException("Role already bound to another object!");
-        }
-        
-		if (scope == null) {
-            throw new IllegalArgumentException("Cannot bind to null object");
-        }
-        
-		this._scope = scope;
-    }
-    
-    /**
-     * @see com.top_logic.tool.boundsec.BoundRole#unbind()
-     */
-    @Override
-	public void unbind() {
-		this._scope = null;
     }
     
 }

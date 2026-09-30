@@ -46,7 +46,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * A {@link ControlCommand} for deleting graph parts.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DeleteGraphPartCommand extends ControlCommand {
 
@@ -135,7 +135,7 @@ public class DeleteGraphPartCommand extends ControlCommand {
 	}
 
 	private DefaultLayoutData getDialogLayout() {
-		return new DefaultLayoutData(dim(500, PIXEL), 100, dim(50, PIXEL), 100, Scrolling.AUTO);
+		return new DefaultLayoutData(dim(500, PIXEL), 100, dim(150, PIXEL), 100, Scrolling.AUTO);
 	}
 
 	private DisplayValue getDialogMessage(GraphPart graphPart) {

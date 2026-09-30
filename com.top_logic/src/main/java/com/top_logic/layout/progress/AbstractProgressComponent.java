@@ -53,7 +53,7 @@ import com.top_logic.util.TLContext;
  * {@link ProgressInfo#getProgress() progress}. When the {@link ProgressInfo} is finished, the
  * dialog this component lives in, will disappear.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  * 
  * @deprecated Use {@link ProgressDialog}.
  */
@@ -258,8 +258,6 @@ public abstract class AbstractProgressComponent extends FormComponent {
 				}
 				try {
 					_progressComponent.finishParent();
-				} catch (ThreadDeath ex) {
-					throw ex;
 				} catch (Throwable ex) {
 					InfoService.logError(I18NConstants.PROGRESS_FAILED, "Progress failed in '"
 						+ _progressComponent.getName() + "': " + _progressComponent.getLocation(), ex,

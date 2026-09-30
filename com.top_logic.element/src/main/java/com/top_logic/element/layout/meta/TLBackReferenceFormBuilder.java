@@ -26,6 +26,7 @@ import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.func.Function2;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.element.meta.kbbased.KBBasedMetaAttribute;
@@ -34,7 +35,7 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.AssociationReference.CurrentDefault;
 import com.top_logic.layout.LabelProvider;
-import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
+import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
@@ -44,6 +45,7 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayT
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
+import com.top_logic.layout.form.values.edit.mode.ActiveIf;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLModelPart;
@@ -59,7 +61,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * Editor for backwards {@link TLReference}s
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 
@@ -154,6 +156,10 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 		HistoryType getHistoryType();
 
 		@Override
+		@Hidden
+		DeletionPolicy getDeletionPolicy();
+
+		@Override
 		@Derived(fun = ResolveTypeKind.class, args = { @Ref(COMPOSITE_PROPERTY), @Ref(RESOLVED_TYPE) })
 		TLTypeKind getTypeKind();
 
@@ -226,7 +232,7 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 
 			@Override
 			public OptionModel<TLReference> apply(TLStructuredType targetType) {
-				return new DefaultListOptionModel<>(getAllForwardReferences(targetType));
+				return new LazyListOptionModel<>(() -> getAllForwardReferences(targetType));
 			}
 
 			private List<TLReference> getAllForwardReferences(TLStructuredType targetType) {
@@ -242,11 +248,21 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 				while (objectsByAttribute.hasNext()) {
 					KnowledgeItem next = objectsByAttribute.next();
 					TLObject wrapper = next.getWrapper();
-					if (wrapper instanceof TLAssociationEnd) {
-						TLReference reference = ((TLAssociationEnd) wrapper).getReference();
-						if (reference != null) {
-							references.add(reference);
+					if (wrapper instanceof TLAssociationEnd end) {
+						TLReference reference = end.getReference();
+						if (reference == null) {
+							// No implementation for the end
+							continue;
 						}
+						if (reference.isBackwards()) {
+							// No Back reference for a back reference!
+							continue;
+						}
+						if (reference.getOpposite() != null) {
+							// There is already a back reference for the reference.
+							continue;
+						}
+						references.add(reference);
 					}
 				}
 
@@ -267,7 +283,7 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 	/**
 	 * @see TLStructuredTypePartFormBuilder.EditModel
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface EditModel extends TLReferenceFormBuilder.EditModel {
 

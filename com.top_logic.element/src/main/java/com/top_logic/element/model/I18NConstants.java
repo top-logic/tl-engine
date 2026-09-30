@@ -5,8 +5,9 @@
  */
 package com.top_logic.element.model;
 
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
-import com.top_logic.layout.ResPrefix;
 
 /**
  * {@link I18NConstantsBase} for this package.
@@ -18,7 +19,15 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResPrefix ROLE_DESCRIPTION = legacyPrefix("role.description.");
+	/**
+	 * @en Undefined type ''{0}'' in module in attribute ''{1}'' at ''{2}''.
+	 */
+	public static ResKey3 ERROR_UNDEFINED_ATTRIBUTE_TYPE__TYPE_ATTR_LOCATION;
+
+	/**
+	 * @en Model service started.
+	 */
+	public static ResKey MODEL_SERVIVE_STARTUP;
 
 	static {
 		initConstants(I18NConstants.class);

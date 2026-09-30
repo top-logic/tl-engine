@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -26,7 +27,6 @@ import test.com.top_logic.element.meta.OrderedListHelper;
 import test.com.top_logic.element.meta.TestMetaElementFactory;
 import test.com.top_logic.element.util.ElementWebTestSetup;
 
-import com.top_logic.basic.config.ConfigurationErrorProtocol;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.StreamUtilities;
@@ -36,40 +36,36 @@ import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.dob.ex.DuplicateAttributeException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.config.AttributeConfig;
+import com.top_logic.element.config.PartConfig;
 import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.config.annotation.TLValidityCheck;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.LegacyTypeCodes;
-import com.top_logic.element.meta.MetaAttributeFactory;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.element.meta.ValidityCheck;
 import com.top_logic.element.meta.kbbased.PersistentObjectImpl;
 import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
 import com.top_logic.element.model.DynamicModelService;
-import com.top_logic.element.model.ModelResolver;
+import com.top_logic.element.model.diff.apply.ApplyModelPatch;
+import com.top_logic.element.model.diff.config.CreateStructuredTypePart;
 import com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.list.FastListElement;
-import com.top_logic.model.TLAssociation;
-import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.Visibility;
 import com.top_logic.model.impl.generated.TlModelFactory;
@@ -131,7 +127,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 			KnowledgeBaseException, NoSuchAttributeException {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
-		Transaction tx1 = kb.beginTransaction();
+		Transaction tx1 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TLModel tlModel = ModelService.getApplicationModel();
 		TLModule module =
 			TLModelUtil.makeModule(tlModel, TestKBBasedMetaAttributes.class.getName() + ".testChangeConfiguration");
@@ -139,7 +135,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		thisME.setAbstract(true);
 		tx1.commit();
 
-		Transaction tx2 = kb.beginTransaction();
+		Transaction tx2 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
 		AttributeConfig config = TypedConfiguration.newConfigItem(AttributeConfig.class);
 		config.setName("s1");
@@ -150,7 +146,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		createAttribute(kb, thisME, config);
 		tx2.commit();
 		
-		Transaction tx3 = kb.beginTransaction();
+		Transaction tx3 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TLStructuredTypePart metaAttribute = MetaElementUtil.getLocalMetaAttribute(thisME, "s1");
 		assertTrue(DisplayAnnotations.isHidden(metaAttribute));
 		metaAttribute.setAnnotation(DisplayAnnotations.readOnly());
@@ -159,7 +155,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		assertFalse(DisplayAnnotations.isEditable(metaAttribute));
 		assertFalse(DisplayAnnotations.isHidden(metaAttribute));
 
-		Transaction tx4 = kb.beginTransaction();
+		Transaction tx4 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		metaAttribute.setAnnotation(DisplayAnnotations.newVisibility(Visibility.EDITABLE));
 		metaAttribute.setAnnotation(DisplayAnnotations.newCreateVisibility(Visibility.READ_ONLY));
 		tx4.commit();
@@ -171,7 +167,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 	public void testRevert() throws DuplicateAttributeException, KnowledgeBaseException, NoSuchAttributeException {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
-		Transaction tx1 = kb.beginTransaction();
+		Transaction tx1 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TLModel tlModel = ModelService.getApplicationModel();
 		TLModule module = TLModelUtil.makeModule(tlModel, TestKBBasedMetaAttributes.class.getName() + ".testRevert");
 		TLClass superME = TestMetaElementFactory.addME(module, "Foo.Super");
@@ -181,11 +177,11 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		MetaElementUtil.setSuperMetaElement(thisME, superME);
 		tx1.commit();
 
-		Transaction tx2 = kb.beginTransaction();
+		Transaction tx2 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		createAttribute(kb, superME, "s1", TypeSpec.STRING_TYPE, 6.0, false);
 		tx2.commit();
 
-		Transaction tx3 = kb.beginTransaction();
+		Transaction tx3 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		createAttribute(kb, thisME, "s2", TypeSpec.STRING_TYPE, 6.0, false);
 		tx3.commit();
 
@@ -194,7 +190,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		assertNotNull(MetaElementUtil.getMetaAttributeOrNull(thisME, "s2"));
 
 		// Revert creation of attribute in thisME
-		Transaction tx4 = kb.beginTransaction();
+		Transaction tx4 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KBUtils.revert(kb, tx2.getCommitRevision(), kb.getHistoryManager().getTrunk());
 		tx4.commit();
 
@@ -202,7 +198,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		assertNull(MetaElementUtil.getMetaAttributeOrNull(thisME, "s2"));
 
 		// Revert creation of attribute in superME
-		Transaction tx5 = kb.beginTransaction();
+		Transaction tx5 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KBUtils.revert(kb, tx1.getCommitRevision(), kb.getHistoryManager().getTrunk());
 		tx5.commit();
 
@@ -210,7 +206,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		assertNull(MetaElementUtil.getMetaAttributeOrNull(thisME, "s2"));
 
 		// Revert deletions of attributes
-		Transaction tx6 = kb.beginTransaction();
+		Transaction tx6 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KBUtils.revert(kb, tx1.getCommitRevision(), kb.getHistoryManager().getTrunk(), tx3.getCommitRevision(), kb
 			.getHistoryManager().getTrunk());
 		tx6.commit();
@@ -226,7 +222,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
      */
     public void testCompleteScenario() throws Exception {
         // INIT STUFF
-        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
         assertNotNull("KB is null!", theKB);
         
         
@@ -236,7 +232,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
         
         // SETUP
         
-        Transaction tx = theKB.beginTransaction();
+        Transaction tx = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
         
         // Create a three step hierarchy MetaElements and add them to the list (holder)
 		TLModel tlModel = ModelService.getApplicationModel();
@@ -562,7 +558,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
      */
     public void testBinaryAttribute() throws Exception {
         // INIT STUFF
-        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
         assertNotNull("KB is null!", theKB);
         
 		AttributedStructuredElementWrapper theSE = OrderedListHelper.getAttributedWrapper();
@@ -699,10 +695,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 
 	static TLStructuredTypePart createAttribute(KnowledgeBase kb, TLClass me, AttributeConfig config)
 			throws DuplicateAttributeException {
-		ModelResolver modelResolver = new ModelResolver(ConfigurationErrorProtocol.INSTANCE, me.getModel(), DynamicModelService.getInstance());
-		TLProperty result = modelResolver.createProperty(me, config);
-		modelResolver.complete();
-		return result;
+		return createStructuredTypePart(me, config);
 	}
 
 	public static AttributeConfig propertyConfig(String name, String dataTypeName, double sortOder, boolean mandatory) {
@@ -722,6 +715,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 	}
 
 	public static ReferenceConfig referenceConfig(String name, String typeSpec, double sortOder, boolean multiple) {
+		assertNotNull(typeSpec);
 		ReferenceConfig config = TypedConfiguration.newConfigItem(ReferenceConfig.class);
 		config.setName(name);
 		config.setTypeSpec(typeSpec);
@@ -843,7 +837,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
      */
     public void testSimpleCollection() throws Exception {
         // INIT STUFF
-        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
         assertNotNull(theKB);
         
 		AttributedStructuredElementWrapper theAttributed = OrderedListHelper.getAttributedWrapper();
@@ -943,7 +937,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
      */
     public void testSimpleList() throws Exception {
         // INIT STUFF
-        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+        KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
         assertNotNull(theKB);
         
 		AttributedStructuredElementWrapper theAttributed = OrderedListHelper.getAttributedWrapper();
@@ -1067,41 +1061,20 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		return true;
 	}
 
-	public static TLReference createReference(TLClass tlClass, ReferenceConfig referenceConfig)
-			throws DuplicateAttributeException, ConfigurationException {
-		TLType destinationType = ModelResolver.lookupAttributeType(tlClass, referenceConfig);
-		return createReference(tlClass, referenceConfig, destinationType);
+	public static TLReference createReference(TLClass tlClass, ReferenceConfig referenceConfig) {
+		return (TLReference) createStructuredTypePart(tlClass, referenceConfig);
 	}
 
-	public static TLReference createReference(TLClass tlClass, ReferenceConfig referenceConfig,
-			TLType destinationType) {
-		
-		TLReference reference = addReference(tlClass, referenceConfig.getName(), destinationType);
-		ModelResolver modelResolver = new ModelResolver(new AssertProtocol(), tlClass.getModel(), DynamicModelService.getInstance());
-		modelResolver.installConfiguration(reference, referenceConfig);
-		modelResolver.complete();
+	public static TLStructuredTypePart createStructuredTypePart(TLClass owner, PartConfig partConfig) {
+		CreateStructuredTypePart createPartConfig = TypedConfiguration.newConfigItem(CreateStructuredTypePart.class);
+		createPartConfig.setType(TLModelUtil.qualifiedName(owner));
+		createPartConfig.setPart(partConfig);
 
-		return reference;
-	}
+		ApplyModelPatch.applyPatch(new AssertProtocol(), owner.getModel(), DynamicModelService.getInstance(),
+			Arrays.asList(createPartConfig));
 
-	public static TLReference addReference(TLClass tlClass, String referenceName, TLType destinationType) {
-		String associationName = tlClass.getName() + "$" + referenceName + "$association";
-		MetaAttributeFactory maFactory = MetaAttributeFactory.getInstance();
-		TLModule module = ((TLClass) tlClass).getModule();
-
-		// create associations
-		TLAssociation association = TLModelUtil.addAssociation(module, module, associationName);
-
-		// create source end
-		TLAssociationEnd sourceEnd = TLModelUtil.addEnd(association, "self", tlClass);
-		sourceEnd.setMultiple(true);
-	
-		// create dest end
-		TLAssociationEnd destEnd = TLModelUtil.addEnd(association, referenceName, destinationType);
-
-		// add dest reference to type
-		TLReference destRef = TLModelUtil.addReference(tlClass, referenceName, destEnd);
-		return destRef;
+		TLStructuredTypePart newPart = owner.getPartOrFail(partConfig.getName());
+		return newPart;
 	}
 
     /** 

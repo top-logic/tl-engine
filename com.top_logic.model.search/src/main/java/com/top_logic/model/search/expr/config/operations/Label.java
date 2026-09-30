@@ -29,7 +29,7 @@ import com.top_logic.util.TLContextManager;
  */
 public class Label extends GenericMethod {
 
-	/** Creates an {@link Label}. */
+	/** Creates a {@link Label}. */
 	Label(String name, SearchExpression[] arguments) {
 		super(name, arguments);
 	}
@@ -52,6 +52,15 @@ public class Label extends GenericMethod {
 
 	private String getLabel(Object object) {
 		return MetaLabelProvider.INSTANCE.getLabel(object);
+	}
+
+	/**
+	 * A {@link Label} depends on the locale of the current session and on the current state of the
+	 * labeled object, so it cannot be evaluated at compile time.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
 	}
 
 	/** {@link MethodBuilder} creating {@link Label}. */

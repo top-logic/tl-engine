@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="text"
+		model="selection(com.top_logic.demo/technical/components/undoRedo/projectsTable.layout.xml#Table)"
+		type="tl.demo.projectManagement:Note"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/newNoteDialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.undoRedo-notes-name">
+			<en>Notes (opt-out)</en>
+			<de>Notizen (Opt-out)</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="project -> $project.get(`tl.demo.projectManagement:ProjectScope#notes`)"
+		/>
+		<buttons>
+			<button id="undoRedo_notes_invalidate"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+			/>
+			<button id="undoRedo_notes_delete"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

@@ -7,14 +7,13 @@ package com.top_logic.model.search.expr;
 
 import java.util.List;
 
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
-import com.top_logic.model.search.expr.config.operations.MethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -50,14 +49,13 @@ public class Throw extends GenericMethod {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		ResKey message = toResKey(arguments[0]);
 		if (message != null) {
-			TopLogicException problem = new ScriptAbort(message);
+			TopLogicException problem = new ScriptAbort(message, arguments[2]);
 			problem.initSeverity(ErrorSeverity.WARNING);
-			if (arguments.length > 1) {
-				ResKey details = toResKey(arguments[1]);
-				if (details != null) {
-					problem.initDetails(details);
-				}
+			ResKey details = toResKey(arguments[1]);
+			if (details != null) {
+				problem.initDetails(details);
 			}
+
 			throw problem;
 		}
 		return null;
@@ -75,9 +73,17 @@ public class Throw extends GenericMethod {
 	}
 
 	/**
-	 * {@link MethodBuilder} creating {@link Throw}.
+	 * {@link AbstractSimpleMethodBuilder} creating a {@link Throw} function.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<Throw> {
+
+		/** Description of parameters for a {@link Throw}. */
+		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("message")
+			.optional("details")
+			.optional("value")
+			.build();
+
 		/**
 		 * Creates a {@link Builder}.
 		 */
@@ -86,11 +92,13 @@ public class Throw extends GenericMethod {
 		}
 
 		@Override
-		public Throw build(Expr expr, SearchExpression[] args)
-				throws ConfigurationException {
-			checkArgs(expr, args, 1, 2);
-			return new Throw(getName(), args);
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
 		}
 
+		@Override
+		public Throw build(Expr expr, SearchExpression[] args) {
+			return new Throw(getConfig().getName(), args);
+		}
 	}
 }

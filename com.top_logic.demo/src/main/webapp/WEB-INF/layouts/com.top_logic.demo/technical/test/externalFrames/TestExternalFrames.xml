@@ -4,5 +4,5 @@
 	name="testExternalFrameAccess"
 	page="/jsp/test/layout/TestExternalFrames.jsp"
 	resPrefix="layouts.layoutdemo.test.TestExternalFrames.testExternalFrameAccess"
-	securityProviderClass="securityRoot"
+	securityObject="securityRoot"
 />

@@ -102,6 +102,10 @@ public final class CheckerProxyHandler extends CommandHandlerProxy {
 		MainLayout mainlayout = ComponentInstantiationContext.getMainLayout(context);
 		ComponentName checkerName = config.getName();
 		LayoutComponent checkerComponent = mainlayout.getComponentByName(checkerName);
+		if (checkerComponent == null) {
+			context.error("Configured security component '" + checkerName + "' does not exist at " + config.location());
+			return null;
+		}
 		BoundCheckerComponent checker;
 		if (checkerComponent instanceof BoundCheckerComponent) {
 			checker = (BoundCheckerComponent) checkerComponent;
@@ -125,8 +129,8 @@ public final class CheckerProxyHandler extends CommandHandlerProxy {
 		// Note: This handler is only inserted, if the legacy option "openButtonSecComp" is given.
 		// In these cases, the command's target model is not used and therefore must not be used for
 		// computing the base model for security checks.
-		BoundObject currentObject = _checker.getCurrentObject(getCommandGroup(), _checker.getModel());
-		return _checker.allow(getCommandGroup(), currentObject);
+		BoundObject currentObject = _checker.getSecurityObject(getCommandGroup(), _checker.getModel());
+		return BoundChecker.allowCommandOnSecurityObject(_checker, getCommandGroup(), currentObject);
 	}
 
 	@Override

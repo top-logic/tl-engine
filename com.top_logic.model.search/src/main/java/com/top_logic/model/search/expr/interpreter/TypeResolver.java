@@ -67,6 +67,7 @@ import com.top_logic.model.search.expr.Sort;
 import com.top_logic.model.search.expr.StringContains;
 import com.top_logic.model.search.expr.StringEndsWith;
 import com.top_logic.model.search.expr.StringStartsWith;
+import com.top_logic.model.search.expr.Try;
 import com.top_logic.model.search.expr.TupleExpression;
 import com.top_logic.model.search.expr.TupleExpression.Coord;
 import com.top_logic.model.search.expr.Union;
@@ -497,6 +498,11 @@ public class TypeResolver extends DescendingVisitor<TLType, TLType> {
 	@Override
 	protected TLType composeSort(Sort expr, TLType arg, TLType listResult, TLType keyFunResult) {
 		return setType(expr, listResult);
+	}
+
+	@Override
+	protected TLType composeTry(Try expr, TLType arg, TLType tryResult, TLType catchResult) {
+		return setType(expr, tryResult);
 	}
 
 }

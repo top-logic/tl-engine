@@ -4,12 +4,11 @@
 	<components>
 		<!-- component to edit structured elements -->
 		<component class="com.top_logic.element.layout.structured.MandatorAdminComponent$NewMandatorComponent"
-			buttonComponent="newMandatorButtons"
+			buttonbar="true"
 			model="null()"
 			name="newMandator"
 			page="/jsp/element/mandator/NewMandator.jsp"
 			resPrefix="cos.mandator.create."
 		/>
-		<buttonbar name="newMandatorButtons"/>
 	</components>
 </layout>

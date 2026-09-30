@@ -135,7 +135,7 @@ public class DeepCopy {
 			return null;
 		}
 		TLClass type = type(orig);
-		TLObject copy = createNew(context, type);
+		TLObject copy = createNew(type, context);
 		_copyByOrig.put(orig, copy);
 		for (TLStructuredTypePart part : type.getAllParts()) {
 			if (!isComposite(part)) {
@@ -177,8 +177,8 @@ public class DeepCopy {
 		return true;
 	}
 
-	private TLObject createNew(TLObject context, TLClass type) {
-		return _factory.createObject(type, context, null);
+	private TLObject createNew(TLClass type, TLObject context) {
+		return _factory.createObject(type, context);
 	}
 
 	private TLClass type(TLObject orig) {

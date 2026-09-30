@@ -30,7 +30,7 @@ import com.top_logic.tool.export.ExportAware;
 /**
  * A WrapperTable that allows export to Excel.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractReportTableComponent extends TableComponent implements ExportAware {
 
@@ -168,11 +168,6 @@ public abstract class AbstractReportTableComponent extends TableComponent implem
 		public boolean supportsModel(Object aModel, LayoutComponent aComponent) {
             return (aModel instanceof Collection);
         }
-        
-		@Override
-		public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-			return true;
-		}
 
 		@Override
 		public Object retrieveModelFromListElement(LayoutComponent contextComponent, Object listElement) {

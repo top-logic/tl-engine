@@ -18,6 +18,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.io.binary.BinaryDataSource;
@@ -57,6 +58,7 @@ import com.top_logic.util.TLContextManager;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Scripting recorder")
 public abstract class ScriptingRecorder extends ConfiguredManagedClass<ScriptingRecorder.Config> {
 
 	/**
@@ -343,36 +345,40 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 	protected abstract boolean hasVetoImpl(FollowupActionRecording followupActionRecording);
 
 	/**
-	 * Pause the ScriptingRecorder temporarily.
+	 * Pause the {@link ScriptingRecorder} temporarily.
 	 * 
 	 * <p>
-	 * To continue the recording use {@link #resume()}
+	 * To continue the recording use {@link #resume()}.
 	 * </p>
+	 * 
+	 * @return Whether the {@link ScriptingRecorder} was running before.
 	 */
-	public static void pause() {
-		getInstance().pauseImpl();
+	public static boolean pause() {
+		return getInstance().pauseImpl();
 	}
 
 	/**
 	 * @see #pause()
 	 */
-	protected abstract void pauseImpl();
+	protected abstract boolean pauseImpl();
 
 	/**
-	 * Resume the ScriptingRecorder if it is paused.
+	 * Resume the {@link ScriptingRecorder} if it is paused.
 	 * 
 	 * <p>
-	 * To pause the recording use {@link #pause()}
+	 * To pause the recording use {@link #pause()}.
 	 * </p>
+	 * 
+	 * @return Whether the {@link ScriptingRecorder} was paused before.
 	 */
-	public static void resume() {
-		getInstance().resumeImpl();
+	public static boolean resume() {
+		return getInstance().resumeImpl();
 	}
 
 	/**
 	 * @see #resume()
 	 */
-	protected abstract void resumeImpl();
+	protected abstract boolean resumeImpl();
 
 	/**
 	 * Whether resource lookup should not log missing keys or auto-generate labels from keys, but

@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic/treetable.template.xml"
 >
 	<arguments
@@ -32,5 +31,19 @@
 			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
 			rootNode="x -> $x[1].inRevision($x[0])"
 		/>
+		<configurationProviders>
+			<column-customizations>
+				<column name="name">
+					<css-classes>
+						<cell-class-by-expression>
+							<css-classes><![CDATA[value -> $value.length() < 3 ? "tl-info" : null]]></css-classes>
+						</cell-class-by-expression>
+					</css-classes>
+				</column>
+			</column-customizations>
+		</configurationProviders>
+		<selectionFilter class="com.top_logic.model.search.providers.ScriptedFilter">
+			<predicate>x -&gt; !$x.get(`DemoTypes:A#name`).stringEndsWith("-final")</predicate>
+		</selectionFilter>
 	</arguments>
 </config:template-call>

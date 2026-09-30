@@ -10,18 +10,15 @@
 		<dependency name="Ticket_26117_security_object"
 			module="tl"
 		/>
-		<dependency name="Ticket_26460_remove_TLStructuredType_part"
+		<dependency name="Ticket_26746_Added_password_type"
 			module="tl-element"
 		/>
 	</dependencies>
-	<processors>
+	<!-- Must be done before all other migrations, otherwise, the persistent schema cannot be read by other processors. -->
+	<pre-processors>
 		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
 			transform="/WEB-INF/kbase/migration/tl-element/Ticket_25881_Remove_model_annotations_from_tables.xslt"
 		>
 		</processor>
-	</processors>
-	<migration>
-		<type-mapping class=""/>
-	</migration>
-	<post-processors/>
+	</pre-processors>
 </migration>

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -34,6 +34,24 @@ public interface TLAssociationEndBase extends com.top_logic.model.TLStructuredTy
 	 * </p>
 	 */
 	String COMPOSITE_ATTR = "composite";
+
+	/**
+	 * Part <code>deletionPolicy</code> of <code>TLAssociationEnd</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:DeletionPolicy</code> in configuration.
+	 * </p>
+	 */
+	String DELETION_POLICY_ATTR = "deletionPolicy";
+
+	/**
+	 * Part <code>endIndex</code> of <code>TLAssociationEnd</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Integer</code> in configuration.
+	 * </p>
+	 */
+	String END_INDEX_ATTR = "endIndex";
 
 	/**
 	 * Part <code>historyType</code> of <code>TLAssociationEnd</code>

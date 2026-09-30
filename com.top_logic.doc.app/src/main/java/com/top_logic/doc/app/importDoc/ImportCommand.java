@@ -20,7 +20,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
-import javax.activation.MimetypesFileTypeMap;
+import jakarta.activation.MimetypesFileTypeMap;
 
 import org.apache.commons.io.IOUtils;
 import org.jsoup.nodes.Document;
@@ -141,7 +141,7 @@ public class ImportCommand {
 		}
 		String pageName = getFuturePagePath(formatter.extractFullPath(doc));
 		htmlContents = formatter.formatTracWiki(pageName, doc);
-		Page newPage = createPage(getPage(), name, guessTitle(name, doc), htmlContents, null);
+		Page newPage = createPage(getPage(), name, guessTitle(name, doc), htmlContents, Collections.emptyMap());
 		resolveLinks(formatter, Collections.singletonList(newPage));
 		formatter.showMessages();
 	}
@@ -311,7 +311,8 @@ public class ImportCommand {
 			}
 		}
 		if (newPage == null) {
-			newPage = createPage(parent, name, guessTitle(name, null), "", null);
+			newPage =
+				createPage(parent, name, guessTitle(name, null), StringServices.EMPTY_STRING, Collections.emptyMap());
 		}
 		return newPage;
 	}

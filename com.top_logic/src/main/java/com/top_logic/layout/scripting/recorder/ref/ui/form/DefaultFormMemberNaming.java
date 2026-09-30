@@ -117,19 +117,19 @@ public class DefaultFormMemberNaming extends AbstractFormMemberNaming<DefaultFor
 				}
 			} else {
 				StringBuilder msg = new StringBuilder();
-				msg.append("Form member not found, ");
+				msg.append("Form member not found: " + _name.getPath().get(_bestIndex + 1));
 				if (_bestIndex != -1) {
-					msg.append("best match was '");
+					msg.append(" Best match was '");
 					msg.append(_bestMatch);
 					msg.append("' for step ");
 					msg.append(_bestIndex);
 					msg.append(" (");
 					msg.append(_name.getPath().get(_bestIndex));
-					msg.append(")");
+					msg.append(").");
 				} else {
-					msg.append("no best match found");
+					msg.append(" No best match found.");
 				}
-				msg.append(", candidates were '");
+				msg.append(" Candidates were '");
 				msg.append(_candidates);
 				msg.append("'.");
 				throw ApplicationAssertions.fail(_name, msg.toString());

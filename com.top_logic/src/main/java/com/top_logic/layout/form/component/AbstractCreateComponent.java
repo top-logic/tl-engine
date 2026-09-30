@@ -14,11 +14,9 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
@@ -30,6 +28,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
@@ -102,19 +101,12 @@ public class AbstractCreateComponent extends FormComponent {
 		 *             {@link #getButtons() button}.
 		 */
 		@Deprecated
-		@Mandatory
 		@Name(CREATE_HANDLER)
 		String getCreateHandler();
 
-		/**
-		 * The {@link com.top_logic.tool.boundsec.CommandHandler.Config#getId()} of the
-		 * {@link CommandHandler} that aborts the create operation.
-		 * 
-		 * @deprecated Use {@link #getCancelAction()} instead.
-		 */
-		@Deprecated
-		@StringDefault(CancelHandler.COMMAND_ID)
-		String getCancelHandler();
+		@Override
+		@FormattedDefault(CancelHandler.COMMAND_ID)
+		ConfigBase<? extends CommandHandler> getCancelAction();
 
 		@Override
 		default void modifyIntrinsicCommands(CommandRegistry registry) {
@@ -243,40 +235,6 @@ public class AbstractCreateComponent extends FormComponent {
 		}
 		return getCommandById(getCreateHandler());
     }
-    
-    @Override
-	public CommandHandler getCancelCommand() {
-		CommandHandler configuredCommand = super.getCancelCommand();
-		if (configuredCommand != null) {
-			return configuredCommand;
-		}
-		return getCommandById(getCancelHandler());
-    }
-    
-	/**
-	 * @deprecated Configure a {@link Config#getCancelAction() cancel command} instead. It will be
-	 *             registered as dialog close command, too.
-	 */
-	@Deprecated
-    @Override
-	protected String getDefaultCloseDialogHandlerName() {
-		return getCancelHandler();
-    }
-
-	@Override
-	protected void registerDialogCloseCommand() {
-		if (getCancelCommand() != null) {
-			registerCommandHandler(getCancelCommand(), getButtonComponent() != null);
-			return;
-		}
-		super.registerDialogCloseCommand();
-	}
-
-	/** @deprecated Use {@link #getCancelCommand()} instead. */
-	@Deprecated
-	protected final String getCancelHandler() {
-		return ((Config) getConfig()).getCancelHandler();
-    }
 
     /**
      * @see com.top_logic.mig.html.layout.LayoutComponent#becomingVisible()
@@ -288,22 +246,26 @@ public class AbstractCreateComponent extends FormComponent {
     }
 
     /**
-     * Handle the UI part of creating a new object.
-     * 
-     * This method will invalidate the parent parts and notify about model creation.
-     * Moreover the {@link #setNewModel(LayoutComponent, Object)} will be called to
-     * set the model into the dialog parent component.
-     * 
-     * @param    aNewObject    The new created object.
-     * @see      #setNewModel(LayoutComponent, Object)
-     * @see      AbstractCreateCommandHandler
-     */
+	 * Handle the UI part of creating a new object.
+	 * 
+	 * This method will invalidate the parent parts and notify about model creation. Moreover the
+	 * {@link #setNewModel(LayoutComponent, Object)} will be called to set the model into the dialog
+	 * parent component.
+	 * 
+	 * @param aNewObject
+	 *        The new created object.
+	 * @see #setNewModel(LayoutComponent, Object)
+	 * @see AbstractCreateCommandHandler
+	 * 
+	 * @deprecated Configure {@link WithPostCreateActions.Config#getPostCreateActions()} on the
+	 *             apply command.
+	 */
+    @Deprecated
     public void handleNew(Object aNewObject) {
         
         if (this.openedAsDialog()) {
 			LayoutComponent dialogParent = this.getDialogParent();
     
-			dialogParent.invalidateButtons();
 			dialogParent.fireModelCreatedEvent(aNewObject, this);
     
 			boolean modelSetToParent = this.setNewModel(dialogParent, aNewObject);
@@ -384,12 +346,8 @@ public class AbstractCreateComponent extends FormComponent {
         
         @Override
 		public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> someArguments) {
-            HandlerResult theResult  = new HandlerResult();
-            FormComponent theComp    = (FormComponent) aComponent;
-
-            this.performCloseDialog(theComp, theResult);
-
-            return theResult;
+			aComponent.closeDialog();
+			return HandlerResult.DEFAULT_RESULT;
         }
         
         @Override

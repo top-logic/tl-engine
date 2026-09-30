@@ -133,10 +133,12 @@ import com.top_logic.layout.basic.control.IconControl;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.codeedit.control.CodeEditorControl;
 import com.top_logic.layout.component.configuration.ExternalLink;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.folder.FolderControl;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.Constraint;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -166,6 +168,7 @@ import com.top_logic.layout.form.control.DisplayImageControl;
 import com.top_logic.layout.form.control.DownloadControl;
 import com.top_logic.layout.form.control.DropDownControl;
 import com.top_logic.layout.form.control.FractionSelectControl;
+import com.top_logic.layout.form.control.ImageUploadControl;
 import com.top_logic.layout.form.control.IntegerInputControl;
 import com.top_logic.layout.form.control.MegaMenuControl;
 import com.top_logic.layout.form.control.OpenCalendarControl.OpenCalendar;
@@ -214,6 +217,9 @@ import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.template.ExpandableTextInputFormFieldControlProvider;
 import com.top_logic.layout.form.template.FormTemplateConstants;
 import com.top_logic.layout.form.template.TextInputControlProvider;
+import com.top_logic.layout.form.template.model.MemberStyle;
+import com.top_logic.layout.form.template.model.Templates;
+import com.top_logic.layout.form.template.model.internal.TemplateControlProvider;
 import com.top_logic.layout.form.util.FormFieldValueMapping;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.image.gallery.GalleryImage;
@@ -226,11 +232,13 @@ import com.top_logic.layout.messagebox.ProgressDialog;
 import com.top_logic.layout.provider.BooleanLabelProvider;
 import com.top_logic.layout.provider.DateTimeLabelProvider;
 import com.top_logic.layout.provider.DefaultLabelProvider;
+import com.top_logic.layout.provider.ImageButtonControlProvider;
 import com.top_logic.layout.provider.LabelResourceProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.resources.NestedResourceView;
 import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.DefaultPopupDialogModel;
+import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.filter.FirstCharacterFilterProvider;
 import com.top_logic.layout.table.model.AbstractFieldProvider;
@@ -268,6 +276,7 @@ import com.top_logic.mig.html.SelectionModelFilter;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -1040,7 +1049,7 @@ public class TestControlsForm extends FormComponent {
 			}
 		});
 
-		doubleField.setValue(Math.PI);
+		doubleField.initializeField(Math.PI);
 
 		final ComplexField longField =
 			FormFactory.newLongField("long", null, /* immutable */false);
@@ -1059,7 +1068,7 @@ public class TestControlsForm extends FormComponent {
 			}
 		});
 
-		longField.setValue(42L);
+		longField.initializeField(42L);
 
         List<String> formats = Arrays.asList(new String[] { // See Javadoc for DecimalFormat
                 "000,000.000", "###,###.###########", "###,###", "0.000###E00", "\u00A4 ###,###.##", 
@@ -1222,7 +1231,10 @@ public class TestControlsForm extends FormComponent {
 			}
 		});
 		controlsGroup.addMember(coloredSelectControl);
-		controlsGroup.addMember(FormFactory.newSelectField("selectControl", abcdOptions()));
+		SelectField field = FormFactory.newSelectField("selectControl", abcdOptions());
+		field.setEmptyLabel("Choose or leave it!");
+		field.setEmptyLabelImmutable("You didn't choose!");
+		controlsGroup.addMember(field);
 		addSelectControlWithContextMenu(controlsGroup);
 		controlsGroup.addMember(FormFactory.newSelectField("selectControlAsList", abcdOptions()));
 		controlsGroup.addMember(FormFactory.newSelectField("selectControlAsListMandatory",
@@ -1660,11 +1672,11 @@ public class TestControlsForm extends FormComponent {
 		addSelectionPartControlFieldsSingle(context);
 		addSelectionPartControlFieldsMultiple(context);
 
-		final Command onOk = createAlertCommand("Es wurde OK gedrückt.");
-		final Command onCancel = createAlertCommand("Es wurde Cancel gedrückt.");
-		final Command onYes = createAlertCommand("Es wurde Yes gedrückt.");
-		final Command onNo = createAlertCommand("Es wurde No gedrückt.");
-		final Command onContinue = createAlertCommand("Es wurde Continue gedrückt.");
+		final Command onOk = createAlertCommand("Es wurde OK gedrÃ¼ckt.");
+		final Command onCancel = createAlertCommand("Es wurde Cancel gedrÃ¼ckt.");
+		final Command onYes = createAlertCommand("Es wurde Yes gedrÃ¼ckt.");
+		final Command onNo = createAlertCommand("Es wurde No gedrÃ¼ckt.");
+		final Command onContinue = createAlertCommand("Es wurde Continue gedrÃ¼ckt.");
 		
 		FormGroup messagesGroup = new FormGroup("messages", I18NConstants.MESSAGES);
 		messagesGroup.setResources(PlainKeyResources.INSTANCE);
@@ -1734,6 +1746,9 @@ public class TestControlsForm extends FormComponent {
 		context.addMember(createConfigurationGroup());
 
 		addOpenCalendarControl(controlsGroup);
+
+		context.addMember(testDynamicGroups());
+
 		return context;
 	}
 
@@ -1929,11 +1944,11 @@ public class TestControlsForm extends FormComponent {
 			}
 
 			@Override
-			public Menu getContextMenu(Object obj) {
+			public Menu getContextMenu(Object directTarget, Object model) {
 				Command command = new Command() {
 					@Override
 					public HandlerResult executeCommand(DisplayContext context) {
-						InfoService.showInfo(Fragments.text("Option: " + obj));
+						InfoService.showInfo(Fragments.text("Option: " + model));
 						return HandlerResult.DEFAULT_RESULT;
 					}
 				};
@@ -1979,7 +1994,7 @@ public class TestControlsForm extends FormComponent {
 			com.top_logic.layout.table.component.Icons.EXPORT_GRID_DISABLED);
 		exportModel.setNotExecutable(com.top_logic.tool.execution.I18NConstants.ERROR_DISABLED);
 		commands.add(exportModel);
-		commands.add(simpleCommandModel("Löschen", null, null));
+		commands.add(simpleCommandModel("LÃ¶schen", null, null));
 		PopupMenuField popupMenuField = DefaultPopupMenuField.newField("openPopupMenu", commands);
 		popupMenuField.setLabel("Open command menu");
 		controlsGroup.addMember(popupMenuField);
@@ -2006,7 +2021,7 @@ public class TestControlsForm extends FormComponent {
 			@Override
 			protected HandlerResult internalExecuteCommand(DisplayContext context) {
 				MessageBox.confirm(getWindowScope(), MessageType.CONFIRM, "Kommando '" + label
-					+ "' wird ausgeführt.", MessageBox.button(ButtonType.OK));
+					+ "' wird ausgefÃ¼hrt.", MessageBox.button(ButtonType.OK));
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		};
@@ -2033,7 +2048,7 @@ public class TestControlsForm extends FormComponent {
 	private void addOpenCalendarControl(FormGroup controlsGroup) {
 		Date initialDate = null;
 		ComplexField displayField = FormFactory.newDateField("displayDate", initialDate, FormFactory.IMMUTABLE);
-		displayField.setLabel(Resources.getInstance().getString(I18NConstants.DISPLAY_SELECTED_DATE));
+		displayField.setLabel(I18NConstants.DISPLAY_SELECTED_DATE);
 		displayField.setControlProvider(ValueDisplay.INSTANCE);
 		ComplexField editField = FormFactory.newDateField("openCalendar", initialDate, !FormFactory.IMMUTABLE);
 		editField.setControlProvider(OpenCalendar.INSTANCE);
@@ -2432,7 +2447,9 @@ public class TestControlsForm extends FormComponent {
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
 				if (isPictureOrNull(newValue)) {
-					pictureField.setValue(newValue);
+					Collection<?> collection = (Collection<?>) newValue;
+					pictureField
+						.setValue(collection == null || collection.isEmpty() ? null : collection.iterator().next());
 				}
 			}
 
@@ -2440,13 +2457,17 @@ public class TestControlsForm extends FormComponent {
 		imageGroup.addMember(pictureField);
 		imageGroup.addMember(pictureInputField);
 
+		DataField imageUploadField = FormFactory.newDataField("imageUploadField");
+		imageUploadField.setControlProvider((model, style) -> new ImageUploadControl((DataField) model));
+		imageGroup.addMember(imageUploadField);
+
 	}
 
 	boolean isPictureOrNull(Object value) {
-		if (value == null) {
-			return true;
-		}
-		return ImageDataUtil.isSupportedImageFilename(((BinaryDataSource) value).getName());
+		Collection<?> collection = (Collection<?>) value;
+
+		return collection == null || collection.isEmpty() || ImageDataUtil
+			.isSupportedImageFilename(((BinaryDataSource) collection.iterator().next()).getName());
 	}
 
 	private void addButtonControls(FormGroup context) {
@@ -2562,16 +2583,35 @@ public class TestControlsForm extends FormComponent {
 	}
 
 	private FormMember createTextInputWithPlaceholder() {
+		FormGroup group = new FormGroup("placeholder", PlainKeyResources.INSTANCE);
+		group.setControlProvider(
+			new TemplateControlProvider(
+				Templates.fieldsetBoxDirect(
+					Templates.label(),
+					Templates.items(
+						Templates.self()),
+					ConfigKey.field(group)),
+				DefaultFormFieldControlProvider.INSTANCE));
+
+		TemplateControlProvider fieldBox = new TemplateControlProvider(
+			Templates.descriptionBox(
+				Templates.fragment(Templates.labelWithColon(), Templates.error()),
+				Templates.self(MemberStyle.DIRECT),
+				LabelPosition.DEFAULT),
+			DefaultFormFieldControlProvider.INSTANCE);
+
+		StringField fallbackField = FormFactory.newStringField("fallback");
+		fallbackField.setControlProvider(fieldBox);
+		group.addMember(fallbackField);
+
 		StringField field = FormFactory.newStringField("textInputWithPlaceholder");
-		field.setControlProvider(new ControlProvider() {
-			@Override
-			public Control createControl(Object model, String style) {
-				TextInputControl control = new TextInputControl((FormField) model);
-				control.setPlaceHolder("enter value");
-				return control;
-			}
-		});
-		return field;
+		field.setControlProvider(fieldBox);
+		group.addMember(field);
+
+		fallbackField.addValueListener((src, before, after) -> field.setPlaceholder(after));
+		fallbackField.setValue("default value");
+
+		return group;
 	}
 
 	private FormMember createTextInputWithContextMenu() {
@@ -2588,11 +2628,11 @@ public class TestControlsForm extends FormComponent {
 			}
 
 			@Override
-			public Menu getContextMenu(Object obj) {
+			public Menu getContextMenu(Object directTarget, Object model) {
 				return Menu.create(
-					option(obj, "Option 1"),
-					option(obj, "Option 2"),
-					option(obj, "Option 3"));
+					option(model, "Option 1"),
+					option(model, "Option 2"),
+					option(model, "Option 3"));
 			}
 
 			private CommandModel option(Object obj, String value) {
@@ -2779,14 +2819,14 @@ public class TestControlsForm extends FormComponent {
 		FormGroup mkRow() {
 			FormGroup row = new FormGroup("row-" + _ids.createNewID(), PlainKeyResources.INSTANCE);
 			CommandField addRow = new ADD_ROW("addRow");
-			addRow.setLabel("+");
+			addRow.setLabel("Add row");
 			row.addMember(addRow);
 			FormArray values = new FormArray("values", ResPrefix.NONE);
 			row.addMember(values);
 			FormMember value = mkValue();
 			values.addMember(value);
 			CommandField addValue = new ADD_VALUE("addValue");
-			addValue.setLabel("+");
+			addValue.setLabel("Add value");
 			row.addMember(addValue);
 			return row;
 		}
@@ -2805,7 +2845,7 @@ public class TestControlsForm extends FormComponent {
 			group.addMember(valueInput);
 
 			CommandField removeValue = new REMOVE_VALUE("removeValue");
-			removeValue.setLabel("-");
+			removeValue.setLabel("Remove value");
 			group.addMember(removeValue);
 			return group;
 		}
@@ -2877,6 +2917,68 @@ public class TestControlsForm extends FormComponent {
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		};
+	}
+
+	private FormMember testDynamicGroups() {
+		FormGroup group = new FormGroup("testDynamicGroups", PlainKeyResources.INSTANCE);
+		group.setLabel("Dynamic Groups");
+
+		FormGroup dynamicContent = new FormGroup("dynamicContent", PlainKeyResources.INSTANCE);
+		group.addMember(dynamicContent);
+
+		CommandField add = new CommandField("add") {
+			int _nextId = 1;
+
+			@Override
+			public HandlerResult executeCommand(DisplayContext context1) {
+				int id = _nextId++;
+				FormGroup inner = new FormGroup("inner-" + id, PlainKeyResources.INSTANCE);
+				inner.setLabel("Group " + id);
+
+				CommandField remove = new CommandField("remove") {
+					@Override
+					public HandlerResult executeCommand(DisplayContext context2) {
+						inner.getParent().removeMember(inner);
+						return HandlerResult.DEFAULT_RESULT;
+					}
+				};
+				remove.setControlProvider(ImageButtonControlProvider.INSTANCE);
+				remove.setImage(com.top_logic.layout.table.control.Icons.DELETE_TOOLBAR);
+				inner.addMember(remove);
+
+				StringField prop1 = FormFactory.newStringField("prop1");
+				StringField prop2 = FormFactory.newStringField("prop2");
+
+				inner.addMember(prop1);
+				inner.addMember(prop2);
+
+				dynamicContent.addMember(inner);
+
+				Templates.template(inner, Templates.fieldsetBox(
+					Templates.horizontalBox(
+						Templates.span(Templates.css(FormConstants.FLEXIBLE2_CSS_CLASS), Templates.label()),
+						Templates.span(Templates.css(FormConstants.FIXED_RIGHT2_CSS_CLASS),
+							Templates.member("remove"))),
+					Templates.verticalBox(
+						Templates.fieldBox("prop1"),
+						Templates.fieldBox("prop2")),
+					ConfigKey.none()));
+
+				return HandlerResult.DEFAULT_RESULT;
+			}
+		};
+		add.setControlProvider(ImageButtonControlProvider.INSTANCE);
+		add.setImage(com.top_logic.layout.table.control.Icons.ADD_ROW);
+		group.addMember(add);
+
+		Templates.template(group, Templates.fieldsetBox(
+			Templates.horizontalBox(
+				Templates.span(Templates.css(FormConstants.FLEXIBLE2_CSS_CLASS), Templates.label()),
+				Templates.span(Templates.css(FormConstants.FIXED_RIGHT2_CSS_CLASS), Templates.member("add"))),
+			Templates.member("dynamicContent"),
+			ConfigKey.none()));
+
+		return group;
 	}
 
 	private FormMember testLengthConstraint() {
@@ -3431,7 +3533,7 @@ public class TestControlsForm extends FormComponent {
 	}
 
 	private void addTestSelectionControlMultiTreeUnordered(FormGroup controlsGroup) {
-		// See Ticket #3546: Automatische Sortierung in SelectField lässt sich nicht ausschalten.
+		// See Ticket #3546: Automatische Sortierung in SelectField lÃ¤sst sich nicht ausschalten.
 		controlsGroup.addMember(FormFactory.newSelectField("selectionControlMultiTreeUnordered", createOptionTree(), true, false));
 	}
 
@@ -3444,7 +3546,10 @@ public class TestControlsForm extends FormComponent {
 	}
 
 	private void addTestSelectionControl(FormGroup controlsGroup) {
-		controlsGroup.addMember(FormFactory.newSelectField("selectionControl", createOptionList()));
+		SelectField field = FormFactory.newSelectField("selectionControl", createOptionList());
+		field.setEmptyLabel("Choose or leave it!");
+		field.setEmptyLabelImmutable("You didn't choose!");
+		controlsGroup.addMember(field);
 	}
 
 	private void addDelayedDblClickTestSelectionControl(FormGroup controlsGroup) {
@@ -3497,7 +3602,7 @@ public class TestControlsForm extends FormComponent {
 	}
 
 	private void addTestSelectionControlTree(FormGroup controlsGroup) {
-		// See Ticket #3959: Baum-Selektion für SelectField mit Einfachselektion.
+		// See Ticket #3959: Baum-Selektion fÃ¼r SelectField mit Einfachselektion.
 		SelectField selection = createSingleSelectField("selectionControlTree", null);
 		controlsGroup.addMember(selection);
 	}
@@ -3526,7 +3631,7 @@ public class TestControlsForm extends FormComponent {
 	}
 
 	private void addTestSelectionControlTreeCustomLabel(FormGroup controlsGroup) {
-		// See Ticket #3959: Baum-Selektion für SelectField mit Einfachselektion.
+		// See Ticket #3959: Baum-Selektion fÃ¼r SelectField mit Einfachselektion.
 		SelectField selection = createSingleSelectField("selectionControlTreeCustomLabel", new LabelProvider() {
 
 			@Override
@@ -3748,7 +3853,7 @@ public class TestControlsForm extends FormComponent {
 			partA.setControlProvider(new ControlProvider() {
 				@Override
 				public Control createControl(Object model, String style) {
-					return new SelectionPartControl(selectionModel, currentPartName);
+					return SelectionPartControl.createSelectionPartControl(selectionModel, currentPartName);
 				}
 			});
 			testGroup.addMember(partA);
@@ -3759,14 +3864,14 @@ public class TestControlsForm extends FormComponent {
 
 		SelectionListener displayUpdate = new SelectionListener() {
 			@Override
-			public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
+			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 				if (displayUpdateDisabled.get()) {
 					return;
 				}
 
 				selectionUpdateDisabled.set(true);
 				try {
-					ArrayList sorted = new ArrayList(selectedObjects);
+					ArrayList sorted = new ArrayList(event.getNewSelection());
 					Collections.sort(sorted);
 					selectionDisplay.setValue(StringServices.join(sorted, ", "));
 				} finally {

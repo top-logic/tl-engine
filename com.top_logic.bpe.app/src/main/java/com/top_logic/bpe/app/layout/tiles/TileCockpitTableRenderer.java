@@ -32,7 +32,7 @@ public class TileCockpitTableRenderer extends DefaultTableRenderer {
 	@Override
 	public String computeTHClass(Column column) {
 		String thClass = TABLE_HEADER_CELL_CSS_CLASS;
-		String cssClasses = addGroupClasses(column, thClass);
+		String cssClasses = addGroupThClasses(column, thClass);
 
 		String bpeTHClass = "bpeTileCockpitTH";
 		cssClasses = CssUtil.joinCssClasses(cssClasses, bpeTHClass);
@@ -40,8 +40,8 @@ public class TileCockpitTableRenderer extends DefaultTableRenderer {
 		return cssClasses;
 	}
 
-	private static String addGroupClasses(Column column, String cellClass) {
-		return CssUtil.joinCssClasses(cellClass, column.getCssClasses());
+	private static String addGroupThClasses(Column column, String cellClass) {
+		return CssUtil.joinCssClasses(cellClass, column.getCssHeaderClasses());
 	}
 
 }

@@ -72,7 +72,8 @@ public class CheckUnusedAccountsTask<C extends CheckUnusedAccountsTask.Config<?>
             @Override
 			public Void run() {
                 Logger.info("Checking unused accounts...", CheckUnusedAccountsTask.class);
-				try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+				try (Transaction transaction =
+					PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.REMOVED_UNUSED_ACCOUNTS)) {
 					int[] result = _unusedAccountsChecker.checkUnusedAccounts(false);
                     if (result[0] > 0 || result[1] > 0 || result[2] > 0) {
                         transaction.commit();

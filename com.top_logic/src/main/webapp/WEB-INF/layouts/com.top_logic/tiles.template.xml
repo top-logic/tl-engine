@@ -5,7 +5,7 @@
 	groups="commons"
 	usable-in-context="com.top_logic.mig.html.layout.tiles.IsNotInTileContext"
 >
-	<properties extends="com.top_logic.layout.structure.ToolbarOptions">
+	<properties extends="com.top_logic.layout.structure.OptionalToolbarOptions">
 		<property name="component"
 			type="com.top_logic.mig.html.layout.LayoutComponent$Config"
 		>
@@ -27,6 +27,7 @@
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"
+		toolbar="${toolbar}"
 	>
 		<title class="com.top_logic.mig.html.layout.tiles.breadcrumb.RootTileBreadcrumbControlProvider">
 			<renderer class="com.top_logic.layout.tree.breadcrumb.DefaultBreadcrumbRenderer">

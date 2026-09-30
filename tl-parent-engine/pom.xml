@@ -1,19 +1,17 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>com.top-logic</groupId>
-		<version>7.9.0-SNAPSHOT</version>
+		<version>8.0.0-SNAPSHOT</version>
 		<artifactId>tl-parent-all</artifactId>
-		
-		<relativePath>../tl-parent-all</relativePath>
+		<relativePath>..</relativePath>
 	</parent>
 
 	<artifactId>tl-parent-engine</artifactId>
 	
+  	<name>${project.artifactId}</name>
 	<description>Aggregator module that builds all projects of the TopLogice application engine runtime.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
@@ -38,6 +36,8 @@
 		<module>../com.top_logic.ajax.client</module>
 		<module>../com.top_logic.client.diagramjs</module>
 		<module>../com.top_logic.graph.diagramjs.client</module>
+		<module>../com.top_logic.graphic.blocks.client</module>
+		<module>../com.top_logic.react.flow.client</module>
 
 		<!-- TopLogic -->
 		<module>../com.top_logic</module>
@@ -73,13 +73,28 @@
 		<module>../com.top_logic.graph.diagramjs.server</module>
 		<module>../com.top_logic.graph.layouter</module>
 		<module>../com.top_logic.graph.server</module>
+		<module>../com.top_logic.graphic.blocks</module>
+		<module>../com.top_logic.graphic.blocks.server</module>
+		<module>../com.top_logic.react.flow.common</module>
+		<module>../com.top_logic.react.flow.server</module>
+		<module>../com.top_logic.dev.tools</module>
 		<module>../com.top_logic.ide.jetty</module>
 		<module>../com.top_logic.importer</module>
 		<module>../com.top_logic.kafka</module>
 		<module>../com.top_logic.kafka.server</module>
+		<module>../com.top_logic.kafka.sync</module>
 		<module>../com.top_logic.layout.codeedit</module>
+		<module>../com.top_logic.layout.configedit</module>
 		<module>../com.top_logic.layout.formeditor</module>
 		<module>../com.top_logic.layout.icons</module>
+		<module>../com.top_logic.layout.react</module>
+		<module>../com.top_logic.layout.view</module>
+		<module>../com.top_logic.layout.view.agent</module>
+		<module>../com.top_logic.layout.view.contact</module>
+		<module>../com.top_logic.layout.view.selfservice</module>
+		<module>../com.top_logic.layout.react.chartjs</module>
+		<module>../com.top_logic.layout.react.codeedit</module>
+		<module>../com.top_logic.layout.react.wysiwyg</module>
 		<module>../com.top_logic.layout.scripting.template</module>
 		<module>../com.top_logic.layout.themeedit</module>
 		<module>../com.top_logic.layout.wysiwyg</module>
@@ -88,6 +103,7 @@
 		<module>../com.top_logic.mail</module>
 		<module>../tl-mail-smtp</module>
 		<module>../com.top_logic.model.search</module>
+		<module>../com.top_logic.model.search.react</module>
 		<module>../com.top_logic.model.wysiwyg</module>
 		<module>../com.top_logic.monitoring</module>
 		<module>../com.top_logic.office</module>
@@ -100,8 +116,6 @@
 		<module>../com.top_logic.security.auth.pac4j</module>
 		<module>../com.top_logic.storage.azure</module>
 		<module>../com.top_logic.template</module>
-		<module>../com.top_logic.themes.dezent</module>
-		<module>../com.top_logic.themes.modern</module>
 		<module>../com.top_logic.themes.core</module>
 		<module>../com.top_logic.umljs</module>
 		<module>../com.top_logic.xio</module>
@@ -114,6 +128,7 @@
 		<module>../tl-service-jms</module>
 		<module>../tl-service-jms-activemq</module>
 		<module>../tl-service-jms-ibmmq</module>
+		<module>../tl-security-selfservice</module>
 
 		<!-- Migration utilities -->
 		<module>../com.top_logic.migrate.tl</module>
@@ -143,6 +158,8 @@
 
 		<!-- Demos -->
 		<module>../com.top_logic.demo</module>
+		<module>../com.top_logic.demo.react</module>
+		<module>../com.top_logic.demo.react.corporate</module>
 		<module>../com.top_logic.kafka.demo</module>
 		<module>../test.com.top_logic.kafka.demo</module>
 	</modules>
@@ -152,8 +169,7 @@
 			<plugin>
 		        <groupId>com.top-logic</groupId>
 		        <artifactId>tl-maven-plugin</artifactId>
-		        <version>${tl.version}</version>
-		        
+
 		        <executions>
 					<execution>
 						<id>index-javadoc</id>

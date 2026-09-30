@@ -13,7 +13,7 @@
 			<layout horizontal="true">
 				<components>
 					<tableView name="TLServiceList"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 						titleKey="tl.services.table.title"
 					>
 						<modelBuilder class="com.top_logic.layout.admin.component.TLServiceConfigListModelBuilder"/>
@@ -81,7 +81,7 @@
 						applyCommand="storeCustomServiceConfig"
 						editCommand="customEdit"
 						model="selection(TLServiceList)"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 						showMaximize="true"
 						titleKey="tl.services.editor.title"
 					>
@@ -107,7 +107,6 @@
 							<button id="storeCustomServiceConfig"
 								class="com.top_logic.layout.admin.component.TLSaveServiceConfigHandler"
 								clique="save"
-								group="Create"
 								image="theme:SAVE_SERVICE_CONFIGURATION"
 							/>
 

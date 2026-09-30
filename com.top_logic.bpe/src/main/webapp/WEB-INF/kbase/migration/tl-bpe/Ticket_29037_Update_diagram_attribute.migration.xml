@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29037_Update_diagram_attribute"
+		module="tl-bpe"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_29073_added_derived_to_tlassociationend"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_28298_update_account"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_28710_Missing_migrations"
+			module="tl-bpe"
+		/>
+	</dependencies>
+	<processors>
+		<add-annotations name="tl.bpe.bpml:Collaboration#diagram">
+			<annotations>
+				<size-constraint/>
+			</annotations>
+		</add-annotations>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

@@ -10,7 +10,7 @@ import java.lang.reflect.Field;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;

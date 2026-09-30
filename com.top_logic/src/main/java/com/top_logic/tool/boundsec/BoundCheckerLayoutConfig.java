@@ -5,6 +5,7 @@
  */
 package com.top_logic.tool.boundsec;
 
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -12,7 +13,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public interface BoundCheckerLayoutConfig extends SecurityConfiguration {
+public interface BoundCheckerLayoutConfig extends ConfigurationItem {
 
 	// marker interface
 

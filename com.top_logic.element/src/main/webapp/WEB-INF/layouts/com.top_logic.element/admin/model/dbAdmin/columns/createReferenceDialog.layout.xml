@@ -19,7 +19,7 @@
 	</dialogInfo>
 
 	<form name="Form"
-		buttonComponent="Buttons"
+		buttonbar="true"
 	>
 		<titleKey>
 			<de>Neue Referenz</de>
@@ -77,6 +77,4 @@
 			</button>
 		</buttons>
 	</form>
-
-	<buttonbar name="Buttons"/>
 </layout>

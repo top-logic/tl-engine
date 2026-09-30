@@ -2,18 +2,18 @@
 
 <settings>
 	<icon name="ICON_CLIPBOARD_LIST"
-		value="css:bi bi-clipboard-fill"
+		value="css:fa-solid fa-clipboard"
 	/>
 	<icon name="ICON_PEN_FANCY"
-		value="css:bi bi-pencil-square"
+		value="css:fa-solid fa-square-pen"
 	/>
 	<icon name="ICON_PLAY"
-		value="css:bi bi-play-fill"
+		value="css:fa-solid fa-play"
 	/>
 	<icon name="ICON_QRCODE"
-		value="css:bi bi-qr-code"
+		value="css:fa-solid fa-qrcode"
 	/>
 	<icon name="ICON_TH_LIST"
-		value="css:bi bi-table"
+		value="css:fa-solid fa-tablet"
 	/>
 </settings>

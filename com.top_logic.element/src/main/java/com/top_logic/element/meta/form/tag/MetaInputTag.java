@@ -6,7 +6,7 @@
 package com.top_logic.element.meta.form.tag;
 
 
-import javax.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -26,6 +26,8 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.AnnotationContainer;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.annotate.ui.BinaryDisplay;
+import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
@@ -330,21 +332,17 @@ public class MetaInputTag extends AbstractMetaTag implements AnnotationLookup {
 	}
 
 	/**
+	 * Sets the presentation of binary attributes.
+	 */
+	public void setBinaryDisplay(BinaryPresentation presentation) {
+		_localAnnotations = _localAnnotations.with(BinaryDisplay.display(presentation));
+	}
+
+	/**
 	 * The presentation of a boolean attribute.
 	 */
 	public void setBooleanDisplay(BooleanPresentation value) {
 		_localAnnotations = _localAnnotations.with(BooleanDisplay.display(value));
-	}
-
-	/**
-	 * @deprecated Use {@link #setReferenceDisplay(ReferencePresentation)},
-	 *             {@link #setClassificationDisplay(ClassificationPresentation)}, or
-	 *             {@link #setBooleanDisplay(BooleanPresentation)}.
-	 */
-	public void setRadioHorizontal(boolean value) {
-		setReferenceDisplay(value ? ReferencePresentation.RADIO_INLINE : ReferencePresentation.POP_UP);
-		setClassificationDisplay(
-			value ? ClassificationPresentation.RADIO_INLINE : ClassificationPresentation.DROP_DOWN);
 	}
 
 }

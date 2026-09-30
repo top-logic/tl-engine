@@ -49,7 +49,7 @@ public class TestWrapperListMetaAttribute extends BasicTestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		object = Setup.newStructuredElementObject("o");
 		object2 = Setup.newStructuredElementObject("o2");
 		object3 = Setup.newGenericObject("o3");
@@ -61,7 +61,7 @@ public class TestWrapperListMetaAttribute extends BasicTestCase {
 	
 	@Override
 	protected void tearDown() throws Exception {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		object.tDelete();
 		object2.tDelete();
 		object3.tDelete();
@@ -132,7 +132,7 @@ public class TestWrapperListMetaAttribute extends BasicTestCase {
 		setList1Value(object, list(v1, v1, v2));
 		assertEquals(list(v1, v1, v2), getListValue(object));
 
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			List<Object> listValueLive = getListValueLive(object);
 			listValueLive.add(listValueLive.remove(1));
 			// Check in transaction
@@ -155,7 +155,7 @@ public class TestWrapperListMetaAttribute extends BasicTestCase {
 		setList1Value(object, list(v1, v2, v1, v3));
 		assertEquals(list(v1, v2, v1, v3), getListValue(object));
 
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			getListValueLive(object).remove(1);
 			// Check in transaction
 			assertEquals(list(v1, v1, v3), getListValue(object));
@@ -185,7 +185,7 @@ public class TestWrapperListMetaAttribute extends BasicTestCase {
 		setList1Value(object, list(v1, v2, v1));
 		assertEquals(list(v1, v2, v1), getListValue(object));
 
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			getListValueLive(object).add(v3);
 			// Check in transaction
 			assertEquals(list(v1, v2, v1, v3), getListValue(object));
@@ -231,7 +231,7 @@ public class TestWrapperListMetaAttribute extends BasicTestCase {
 		setList1Value(object, list(v1, v1, v2));
 		assertEquals(list(v1, v1, v2), getListValue(object));
 
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			getListValueLive(object).clear();
 			// Check in transaction
 			assertEquals(list(), getListValue(object));
@@ -264,28 +264,28 @@ public class TestWrapperListMetaAttribute extends BasicTestCase {
 	}
 
 	private void addListValue(Wrapper target, Wrapper value) {
-		try (Transaction tx2 = kb().beginTransaction()) {
+		try (Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			AttributeOperations.addValue(target, Setup.LIST_1_ATTR, value);
 			tx2.commit();
 		}
 	}
 	
 	private void removeListValue(Wrapper target, Wrapper value) throws KnowledgeBaseException {
-		try (Transaction tx2 = kb().beginTransaction()) {
+		try (Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			AttributeUtil.removeValue(target, Setup.LIST_1_ATTR, value);
 			tx2.commit();
 		}
 	}
 	
 	private void setList1Value(Wrapper target, List<?> newValue) throws KnowledgeBaseException {
-		try (Transaction tx2 = kb().beginTransaction()) {
+		try (Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			target.setValue(Setup.LIST_1_ATTR, newValue);
 			tx2.commit();
 		}
 	}
 
 	private void setList2Value(Wrapper target, List<?> newValue) throws KnowledgeBaseException {
-		try (Transaction tx2 = kb().beginTransaction()) {
+		try (Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			target.setValue(Setup.LIST_2_ATTR, newValue);
 			tx2.commit();
 		}

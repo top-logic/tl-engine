@@ -8,10 +8,10 @@ package com.top_logic.base.taglibs.basic;
 import static com.top_logic.basic.xml.TagUtil.*;
 import static com.top_logic.mig.html.HTMLConstants.*;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.JspWriter;
-import javax.servlet.jsp.tagext.Tag;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspWriter;
+import jakarta.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.TagSupport;
 
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.util.ResKey;

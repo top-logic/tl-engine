@@ -22,7 +22,7 @@ import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.element.structured.StructuredElementFactory;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 
 /**
@@ -177,8 +177,8 @@ public class TestStructuredElementTreeModel extends BasicTestCase {
 	}
 
 	private void createStructuredElementHierarchy() throws KnowledgeBaseException {
-		KnowledgeBase knowledgeBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
-		Transaction transaction = knowledgeBase.beginTransaction();
+		KnowledgeBase knowledgeBase = PersistencyLayer.getKnowledgeBase();
+		Transaction transaction = knowledgeBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			root = ((StructuredElementFactory) DynamicModelService.getFactoryFor("projElement")).getRoot();
 			projects = new ArrayList<>();
@@ -206,8 +206,8 @@ public class TestStructuredElementTreeModel extends BasicTestCase {
 	}
 
 	private void removeStructuredElementHierarchy() throws KnowledgeBaseException {
-		KnowledgeBase knowledgeBase = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
-		Transaction transaction = knowledgeBase.beginTransaction();
+		KnowledgeBase knowledgeBase = PersistencyLayer.getKnowledgeBase();
+		Transaction transaction = knowledgeBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			for (StructuredElement project : projects) {
 				removeSubProjectStructure(project);

@@ -15,7 +15,7 @@ import com.top_logic.basic.config.annotation.TagName;
  * A json object consists of several properties. Json properties are written in key/value pairs.
  * Keys must be {@link String}'s and values are from {@link JSONValue} type.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 @TagName(JSONObject.TAG_NAME)
 public interface JSONObject extends JSONValue {

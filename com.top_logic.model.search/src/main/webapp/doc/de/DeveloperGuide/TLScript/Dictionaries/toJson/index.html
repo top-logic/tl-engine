@@ -1,0 +1,53 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$input.toJson()</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Wandelt eine Map oder eine andere unterstützte Datenstruktur in einen JSON-formatierten Text um. Der erzeugte JSON-String kann mit der Funktion <code class="cursor-pointer codespan">parseJson()</code> wieder in die ursprüngliche Datenstruktur zurückgewandelt werden.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>Map/Liste/Zeichenkette/Zahl/Wahrheitswert</td>
+			<td>Die Datenstruktur, die in einen JSON-String umgewandelt werden soll.</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Zeichenkette</p>
+
+<p> </p>
+
+<p>Eine Zeichenkette, die die Eingabedatenstruktur im JSON-Format darstellt.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Beispiel 1</h3>
+
+<pre>
+	<code>person = {"name": "Anna", "alter": 42, "aktiv": true};
+$person.toJson()</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> <code class="hljs inlineCode">{"name":"Anna","alter":42,"aktiv":true}</code></p>
+
+<p>Die Map <code class="hljs inlineCode"><code class="cursor-pointer codespan">$person</code></code> wird in einen JSON-String umgewandelt. Schlüssel und Zeichenkettenwerte werden in doppelte Anführungszeichen gesetzt, während Zahlen und Wahrheitswerte ohne Anführungszeichen dargestellt werden.</p>

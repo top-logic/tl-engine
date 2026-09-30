@@ -22,6 +22,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ControlRenderer;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.layoutRenderer.LayoutControlAdapterRenderer;
 import com.top_logic.layout.layoutRenderer.LayoutControlRenderer;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -195,7 +196,7 @@ public class MediaQueryControl extends LayoutControlAdapter {
 		@Override
 		public void appendControlCSSClasses(Appendable out, LayoutControlAdapter control) throws IOException {
 			super.appendControlCSSClasses(out, control);
-			out.append("cMediaQuery");
+			out.append("cMediaQuery " + FormConstants.OVERFLOW_AUTO_CLASS);
 		}
 
 	}
@@ -213,7 +214,30 @@ public class MediaQueryControl extends LayoutControlAdapter {
 	 *        The actual content view.
 	 */
 	public MediaQueryControl(HTMLFragment view) {
-		this(view, SIZE_RANGE_CSS_PREFIX, DEFAULT_MAX_COLUMNS, "null");
+		this(view, SIZE_RANGE_CSS_PREFIX, DEFAULT_MAX_COLUMNS, breakpoints(DEFAULT_MAX_COLUMNS));
+	}
+
+	private static String breakpoints(int maxColumns) {
+		int formPadding = Icons.FORM_PADDING.get().intValue();
+		int labelWidth = Icons.FORM_LABEL_WIDTH.get().intValue();
+		int labelPadding = Icons.FORM_LABEL_PADDING.get().intValue();
+		int inputMinWidth = Icons.FORM_INPUT_MIN_WIDTH.get().intValue();
+		int columnGap = Icons.FORM_COLUMN_GAP.get().intValue();
+		int cellWidth = labelWidth + labelPadding + inputMinWidth;
+
+		StringBuilder buffer = new StringBuilder();
+		buffer.append('[');
+
+		for (int n = 0; n <= maxColumns; n++) {
+			if (n > 0) {
+				buffer.append(',');
+			}
+
+			int minWidth = formPadding + cellWidth * (n + 1) + columnGap * n;
+			buffer.append(minWidth);
+		}
+		buffer.append(']');
+		return buffer.toString();
 	}
 
 	/**
@@ -233,7 +257,11 @@ public class MediaQueryControl extends LayoutControlAdapter {
 		super(view);
 		_cssPrefix = cssPrefix;
 		_maxColumns = maxColumns;
-		_sizesConst = sizesConst;
+		if (sizesConst.equals("null")) {
+			_sizesConst = breakpoints(maxColumns);
+		} else {
+			_sizesConst = sizesConst;
+		}
 	}
 
 	/**

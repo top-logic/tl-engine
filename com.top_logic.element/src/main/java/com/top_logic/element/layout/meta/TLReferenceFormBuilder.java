@@ -22,6 +22,7 @@ import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.func.Function2;
 import com.top_logic.basic.shared.string.StringServicesShared;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.element.layout.meta.TLPropertyFormBuilder.PropertyModel;
@@ -31,6 +32,8 @@ import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
+import com.top_logic.layout.form.values.edit.mode.ActiveIf;
+import com.top_logic.layout.form.values.edit.mode.HideImmutableIf;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLEnumeration;
@@ -49,7 +52,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * Editor for {@link TLReference}s
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 
@@ -69,11 +72,13 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 		ReferenceModel.MULTIPLE_PROPERTY,
 		ReferenceModel.ORDERED_PROPERTY,
 		ReferenceModel.BAG_PROPERTY,
+		ReferenceModel.ABSTRACT_PROPERTY,
 		ReferenceModel.COMPOSITE_PROPERTY,
 		ReferenceModel.AGGREGATE_PROPERTY,
 		ReferenceModel.NAVIGATE_PROPERTY,
 
 		ReferenceModel.HISTORY_TYPE_PROPERTY,
+		ReferenceModel.DELETION_POLICY_PROPERTY,
 
 		ReferenceModel.LABEL,
 		ReferenceModel.DESCRIPTION,
@@ -133,6 +138,25 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 		@ComplexDefault(CurrentDefault.class)
 		@DynamicMode(fun = ActiveIf.class, args = @Ref({ EDIT_MODEL, EditModel.CREATING }))
 		HistoryType getHistoryType();
+
+		@Override
+		@DynamicMode(fun = CurrentAndCreating.class, args = {
+			@Ref(HISTORY_TYPE_PROPERTY),
+			@Ref({ EDIT_MODEL, EditModel.CREATING })
+		})
+		DeletionPolicy getDeletionPolicy();
+
+		/**
+		 * {@link FieldMode} of {@link ReferenceModel#getDeletionPolicy()}.
+		 */
+		class CurrentAndCreating extends Function2<FieldMode, HistoryType, Boolean> {
+			@Override
+			public FieldMode apply(HistoryType arg1, Boolean creating) {
+				return arg1 == HistoryType.CURRENT ? 
+					(Utils.isTrue(creating) ? FieldMode.ACTIVE : FieldMode.IMMUTABLE)
+					: FieldMode.DISABLED;
+			}
+		}
 
 		@Override
 		@FormattedDefault(ReferenceKind.Names.FORWARDS_NAME)
@@ -260,7 +284,7 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 	/**
 	 * @see TLStructuredTypePartFormBuilder.EditModel
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface EditModel extends TLStructuredTypePartFormBuilder.EditModel {
 
@@ -307,6 +331,7 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 		referenceModel.setNavigate(reference.getEnd().canNavigate());
 		referenceModel.setKind(TLMetaModelUtil.getReferenceKind(reference));
 		referenceModel.setHistoryType(reference.getHistoryType());
+		referenceModel.setDeletionPolicy(reference.getDeletionPolicy());
 
 		TLReference inverse = TLModelUtil.getOtherEnd(reference.getEnd()).getReference();
 		if (inverse != null) {

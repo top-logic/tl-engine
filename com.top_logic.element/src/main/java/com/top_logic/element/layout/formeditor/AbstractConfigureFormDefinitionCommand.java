@@ -9,8 +9,11 @@ import java.util.Map;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.formeditor.builder.ConfiguredDynamicFormBuilder;
 import com.top_logic.element.layout.formeditor.builder.FormDefinitionUtil;
@@ -35,6 +38,7 @@ import com.top_logic.layout.scripting.action.ApplicationAction;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.DialogModel;
+import com.top_logic.layout.table.component.BuilderComponent;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.TLLayout;
@@ -44,6 +48,7 @@ import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Command to change the view of a {@link FormComponent} by editing the underlying
@@ -153,7 +158,7 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 		ScriptingRecorder.annotateAsDontRecord(no);
 		return MessageBox.newBuilder(MessageType.CONFIRM)
 			.message(Fragments.htmlSource(com.top_logic.mig.html.layout.I18NConstants.STORE_FOR_MODEL))
-			.layout(DisplayDimension.px(400), DisplayDimension.px(200))
+			.layout(DisplayDimension.px(400), DisplayDimension.px(300))
 			.buttons(yes, no)
 			.confirm(context.getWindowScope());
 	}
@@ -201,7 +206,7 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 	protected static void updateStandardForm(FormComponent component, FormDefinition formDefintion,
 			TLStructuredType type) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(I18NConstants.UPDATED_STANDARD_FORM__COMP.fill(component.getTitleKey()));
 
 		TLFormDefinition formAnnotation = TypedConfiguration.newConfigItem(TLFormDefinition.class);
 		formAnnotation.setForm(formDefintion);
@@ -239,9 +244,8 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
-		try (Transaction tx = kb.beginTransaction()) {
-			FormsTemplateParameter arguments = (FormsTemplateParameter) layout.getArguments();
-			Map<TLModelPartRef, TypedFormDefinition> forms = arguments.getForms();
+		try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			Map<TLModelPartRef, TypedFormDefinition> forms = getFormDefinitions(layout);
 
 			TypedFormDefinition typedForm = TypedConfiguration.newConfigItem(TypedFormDefinition.class);
 			TLModelPartRef typeRef = TLModelPartRef.ref(type);
@@ -250,7 +254,7 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 
 			forms.put(typeRef, typedForm);
 
-			LayoutTemplateUtils.storeLayout(scope, layout.getTemplateName(), arguments);
+			LayoutTemplateUtils.storeLayout(scope, layout.getTemplateName(), layout.getArguments());
 
 			tx.commit();
 		} catch (ConfigurationException exception) {
@@ -260,6 +264,32 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 		LayoutTemplateUtils.replaceComponent(scope, component);
 
 		return true;
+	}
+
+	static Map<TLModelPartRef, TypedFormDefinition> getFormDefinitions(TLLayout layout) throws ConfigurationException {
+		ConfigurationItem arguments = layout.getArguments();
+
+		FormsTemplateParameter argumentsWithForms;
+		if (arguments instanceof FormsTemplateParameter) {
+			argumentsWithForms = (FormsTemplateParameter) arguments;
+		} else {
+			PropertyDescriptor modelBuilderProperty =
+				arguments.descriptor().getProperty(BuilderComponent.MODEL_BUILDER_ELEMENT);
+			if (modelBuilderProperty == null) {
+				throw errorNoFormsTemplate(layout);
+			}
+			Object modelBuilder = arguments.value(modelBuilderProperty);
+			if (!(modelBuilder instanceof FormsTemplateParameter)) {
+				throw errorNoFormsTemplate(layout);
+			}
+			argumentsWithForms = (FormsTemplateParameter) modelBuilder;
+		}
+		Map<TLModelPartRef, TypedFormDefinition> forms = argumentsWithForms.getForms();
+		return forms;
+	}
+
+	private static TopLogicException errorNoFormsTemplate(TLLayout layout) {
+		throw new TopLogicException(I18NConstants.ERROR_TEMPLATE_WITHOUT_FORMS__LAYOUT.fill(layout.getTemplateName()));
 	}
 
 	/**
@@ -277,7 +307,11 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 	protected ApplicationAction createAction(LayoutComponent component, FormDefinition formDefinition,
 			String type, boolean standardForm) {
 		ConfigureFormDefinitionAction action = TypedConfiguration.newConfigItem(ConfigureFormDefinitionAction.class);
-		action.setFormDefinition(formDefinition);
+		/* As the form definition is part of the original configuration, it cannot be part of the
+		 * action. A configuration item can only have one container, so a copy of the form
+		 * definition must be stored. */
+		FormDefinition formCopy = ConfigCopier.copy(formDefinition);
+		action.setFormDefinition(formCopy);
 		action.setLayoutComponent(component.getName());
 		action.setType(type);
 		action.setStandardForm(standardForm);

@@ -5,11 +5,11 @@
  */
 package com.top_logic.basic.thread;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpSessionBindingListener;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSessionBindingListener;
 
 import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
@@ -18,6 +18,7 @@ import com.top_logic.basic.SimpleSessionContext;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -28,11 +29,12 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ComputationEx2;
 
 /**
- * Manager for the creation of {@link ThreadContext}.
- * 
+ * Manages the creation of {@link ThreadContext}s for interactions and background computations.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @ServiceDependencies(SecureRandomService.Module.class)
+@Label("Thread context management")
 public abstract class ThreadContextManager extends ManagedClass {
 
 	/**
@@ -547,7 +549,15 @@ public abstract class ThreadContextManager extends ManagedClass {
 		return newInteraction(servletContext, request, response);
 	}
 
-	private String systemContextId(Class<?> caller) {
+	/**
+	 * Creates the context id for a {@link SubSessionContext} when the system executes some
+	 * operations.
+	 * 
+	 * @param caller
+	 *        Class that sets the context id.
+	 */
+	@FrameworkInternal
+	public static String systemContextId(Class<?> caller) {
 		return SessionContext.SYSTEM_ID_PREFIX + caller.getName();
 	}
 
@@ -565,7 +575,28 @@ public abstract class ThreadContextManager extends ManagedClass {
 		interaction.installSubSessionContext(subsession);
 		return interaction;
 	}
-	
+
+	/**
+	 * Sets up an {@link InteractionContext} with the given subsession and servlet components.
+	 *
+	 * @param sessionContext
+	 *        Sub-session context to bind to the interaction.
+	 * @param servletContext
+	 *        Web application context for servlet container communication.
+	 * @param request
+	 *        HTTP request that initiated this interaction.
+	 * @param response
+	 *        HTTP response for sending content back to client.
+	 * @return The created and installed interaction context.
+	 */
+	public static InteractionContext setupInteractionContext(SubSessionContext sessionContext,
+			ServletContext servletContext, HttpServletRequest request, HttpServletResponse response) {
+		InteractionContext context = getManager().newInteraction(servletContext, request, response);
+		context.installSubSessionContext(sessionContext);
+		getManager().setInteraction(context);
+		return context;
+	}
+
 	/**
 	 * Notifies that the given session is going out of scope.
 	 * 
@@ -686,6 +717,21 @@ final class Remover implements InteractionContext {
 	@Override
 	public void addUnboundListener(UnboundListener l) {
 		fail();
+	}
+
+	@Override
+	public HttpServletRequest asRequest() {
+		throw fail();
+	}
+
+	@Override
+	public ServletContext asServletContext() {
+		throw fail();
+	}
+
+	@Override
+	public HttpServletResponse asResponse() {
+		throw fail();
 	}
 
 }

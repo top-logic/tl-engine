@@ -24,10 +24,12 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.filt.DOAttributeComparator;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeException;
@@ -43,7 +45,11 @@ import com.top_logic.knowledge.service.db2.IndexedLinkQuery;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.composite.CompositeStorage;
+import com.top_logic.model.composite.ContainerStorage;
+import com.top_logic.model.composite.LinkTable;
 import com.top_logic.util.Utils;
 import com.top_logic.util.error.TopLogicException;
 
@@ -53,7 +59,8 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp(classifiers = TLStorage.REFERENCE_CLASSIFIER)
-public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> {
+@Label("Unsorted storage in separate table")
+public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> implements CompositeStorage {
 
 	private AssociationSetQuery<KnowledgeAssociation> _outgoingQuery;
 
@@ -177,7 +184,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> {
 					if (found) {
 						Logger.warn("Found multiple KAs for value - removing", this);
 					}
-					DBKnowledgeAssociation.clearDestinationAndRemoveLink(theKAs.currentKA());
+					DBKnowledgeAssociation.clearReferencesAndRemoveLink(theKAs.currentKA());
 					found = true;
 				}
 			}
@@ -365,7 +372,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> {
 		while (theKAs.hasNext()) {
 			try {
 				if (theToRem.contains(WrapperFactory.getWrapper(theKAs.nextKO()))) {
-					DBKnowledgeAssociation.clearDestinationAndRemoveLink(theKAs.currentKA());
+					DBKnowledgeAssociation.clearReferencesAndRemoveLink(theKAs.currentKA());
 				}
 			} catch (DataObjectException ex) {
 				throw new KnowledgeBaseRuntimeException(ex);
@@ -402,7 +409,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> {
 			AbstractWrapper.resolveLinks(aMetaAttributed, getOutgoingQuery()).iterator();
 		while (theKAs.hasNext()) {
 			try {
-				DBKnowledgeAssociation.clearDestinationAndRemoveLink(theKAs.next());
+				DBKnowledgeAssociation.clearReferencesAndRemoveLink(theKAs.next());
 			} catch (DataObjectException dox) {
 				Logger.warn("Cannot remove KA fom KB", this);
 			}
@@ -513,6 +520,11 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> {
 		}
 	}
 
+	@Override
+	public ContainerStorage getContainerStorage(TLReference reference) {
+		return new LinkTable(getTable());
+	}
+
 	/**
 	 * Creates a configuration for {@link SetStorage}.
 	 *
@@ -520,10 +532,14 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> {
 	 *        Whether the reference is a composition.
 	 * @param historyType
 	 *        The history type of the value of the reference.
+	 * @param deletionPolicy
+	 *        The deletion policy of the reference.
+	 * @param unversioned
+	 *        Whether reference values must be stored unversioned.
 	 * @return The {@link SetStorage} configuration.
 	 */
-	public static Config<?> setConfig(boolean composite, HistoryType historyType) {
-		return defaultConfig(Config.class, composite, historyType);
+	public static Config<?> setConfig(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy, boolean unversioned) {
+		return defaultConfig(Config.class, composite, historyType, deletionPolicy, unversioned);
 	}
 
 	/**
@@ -579,7 +595,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> {
 					// _base.remove() does *not* remove the association itself, but only sets the
 					// source attribute to null.
 					_base.remove();
-					DBKnowledgeAssociation.clearDestinationAndRemoveLink(_last.getValue());
+					DBKnowledgeAssociation.clearReferencesAndRemoveLink(_last.getValue());
 				}
 
 			};
@@ -608,7 +624,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> {
 				return false;
 			}
 			/* Delete link. The magic of the live links automatically "modifies" this set. */
-			DBKnowledgeAssociation.clearDestinationAndRemoveLink(link);
+			DBKnowledgeAssociation.clearReferencesAndRemoveLink(link);
 			return true;
 
 		}

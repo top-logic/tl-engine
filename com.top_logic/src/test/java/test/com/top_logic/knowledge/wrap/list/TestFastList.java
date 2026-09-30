@@ -144,7 +144,7 @@ public class TestFastList extends BasicTestCase {
     
     public void testMultiSelect() throws Exception {
         KnowledgeBase kBase = kb();
-        Transaction t = kBase.beginTransaction();
+        Transaction t = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
         
 		FastList list = newList("Some Name", null, "TESTING", FastList.MULTI_SELECT);
         assertEquals("Some Name"   , list.getName());
@@ -406,7 +406,7 @@ public class TestFastList extends BasicTestCase {
 	}
 
 	private void cleanupKB() {
-		Transaction t = kb().beginTransaction();
+		Transaction t = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		for (FastList list : _scheduledForDeletion) {
 			if (!list.tValid()) {
 				continue;
@@ -425,7 +425,7 @@ public class TestFastList extends BasicTestCase {
 	 */
     public void testDuplicateNames() throws Exception {
 		KnowledgeBase kb = kb();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		String name = "testDuplicateNames";
 		newList(name, null, "TESTING", !FastList.MULTI_SELECT);
 		try {

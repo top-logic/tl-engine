@@ -31,7 +31,7 @@ import com.top_logic.model.annotate.TLI18NKey;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Test that applying a changed configuration to an exisint in-app model works as expected.
+ * Test that applying a changed configuration to an existing in-app model works as expected.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -51,7 +51,7 @@ public class TestModelConfigurationChange extends BasicTestCase {
 
 			// Make an dynamic change to the model that the test can be sure that the exiting in-app
 			// model is updated and the DB was not cleared in between.
-			try (Transaction tx = module.tHandle().getKnowledgeBase().beginTransaction()) {
+			try (Transaction tx = module.tHandle().getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 				TLI18NKey i18n = TypedConfiguration.newConfigItem(TLI18NKey.class);
 				i18n.setValue(ResKey.forTest("dynamic.change"));
 				A.setAnnotation(i18n);

@@ -8,10 +8,9 @@ package com.top_logic.layout.component;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import com.top_logic.knowledge.service.Revision;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -35,8 +34,8 @@ public class ComponentUtil {
 	 * @return Whether the object still can be processed.
 	 */
 	public static boolean isValid(Object obj) {
-		if (obj instanceof Wrapper) {
-			return ((Wrapper) obj).tValid();
+		if (obj instanceof TLObject) {
+			return ((TLObject) obj).tValid();
 		} else {
 			return true;
 		}
@@ -56,7 +55,7 @@ public class ComponentUtil {
 	 * Whether the given object is from a stable revision.
 	 */
 	public static boolean isHistoric(Object anObject) {
-		return anObject instanceof Wrapper && !WrapperHistoryUtils.isCurrent((Wrapper) anObject);
+		return anObject instanceof TLObject anTlObject && !WrapperHistoryUtils.isCurrent(anTlObject);
 	}
 
 	/**
@@ -64,7 +63,7 @@ public class ComponentUtil {
 	 * stable version was deleted.
 	 */
 	public static Object getCurrent(Object anObject) {
-		return WrapperHistoryUtils.getWrapper(Revision.CURRENT, (Wrapper) anObject);
+		return WrapperHistoryUtils.getCurrent((TLObject) anObject);
 	}
 
 	/**

@@ -36,6 +36,7 @@ import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.MultiFileManager;
 import com.top_logic.basic.col.GCQueue;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.core.workspace.ModuleLayoutConstants;
 import com.top_logic.basic.util.StopWatch;
 
@@ -59,8 +60,8 @@ public class IDEFileSystemCache extends FileSystemCache {
 	/**
 	 * Creates a {@link IDEFileSystemCache}.
 	 */
-	public IDEFileSystemCache() {
-		super();
+	public IDEFileSystemCache(InstantiationContext context, Config config) {
+		super(context, config);
 	}
 
 	@Override
@@ -150,7 +151,7 @@ public class IDEFileSystemCache extends FileSystemCache {
 
 	private void addPathByEventKind(Set<Path> creations, Set<Path> changes, Set<Path> deletions, Path path,
 			Kind<?> kind) {
-		if (kind != null) {
+		if (kind != null && !isHidden(path)) {
 			if (kind == ENTRY_CREATE) {
 				if (Files.isDirectory(path)) {
 					walkAndRegisterDirectories(path);
@@ -163,6 +164,31 @@ public class IDEFileSystemCache extends FileSystemCache {
 				deletions.add(path);
 			}
 		}
+	}
+
+	/**
+	 * Whether the given path is a hidden resource, i.e. it or one of its directories below the
+	 * containing root path starts with a dot.
+	 *
+	 * <p>
+	 * Such a path is not indexed by this cache and not visible through the {@link FileManager}, so a
+	 * change to it is not a change of a resource and must not be reported as one. A path outside all
+	 * root paths has no resource name at all and is dropped when the resource name is computed.
+	 * </p>
+	 */
+	private boolean isHidden(Path path) {
+		int rootIndex = getIndexOfRootPath(path);
+		if (rootIndex < 0) {
+			return false;
+		}
+
+		for (Path name : getPathFromRoot(path, rootIndex)) {
+			if (name.toString().startsWith(".")) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private WatchKey poll() {
@@ -295,8 +321,13 @@ public class IDEFileSystemCache extends FileSystemCache {
 					Files.walk(creation).filter(Files::isRegularFile).forEach(path -> {
 						addFileToCache(path, indexOfRootFile);
 					});
-				} catch (IOException exception) {
-					Logger.error("Path " + creation + " can not be accessed.", exception, this);
+				} catch (IOException ex) {
+					// Do not log an error, since this can happen during normal operation if e.g. a
+					// theme is created and immediately deleted. The addition can then be processed
+					// after the deletion.
+					Logger.info("Path " + creation
+						+ " can (no longer) be accessed (was potentially deleted in the meantime): " + ex.getMessage(),
+						IDEFileSystemCache.class);
 				}
 			}
 		}
@@ -349,14 +380,14 @@ public class IDEFileSystemCache extends FileSystemCache {
 			List<Path> files = _fileCache.get(normalizedPath);
 			if (files != null) {
 				files.remove(deletion.normalize());
-				if (files.isEmpty() || !Files.isRegularFile(files.get(0))) {
-					/* As the path is deleted, it can not be inspected to check whether it is a
-					 * directory. */
-					/* It can not be ensured that the removed path represents a regular file.
-					 * Therefore it may be a directory an potential children may be removed. */
-					removeChildResources(normalizedPath, deletion);
-				}
 			}
+
+			/* As the path is deleted, it can not be inspected to check whether it is a
+			 * directory. */
+			/* It can not be ensured that the removed path represents a regular file. Therefore it
+			 * may be a directory a potential child may have been removed. */
+			// Even if the directory was not cached a child may have been cached.
+			removeChildResources(normalizedPath, deletion);
 		}
 	}
 

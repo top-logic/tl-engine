@@ -7,14 +7,14 @@ package com.top_logic.mail.proxy;
 
 import java.io.IOException;
 
-import javax.mail.BodyPart;
-import javax.mail.Flags;
-import javax.mail.Flags.Flag;
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Part;
+import jakarta.mail.BodyPart;
+import jakarta.mail.Flags;
+import jakarta.mail.Flags.Flag;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
+import jakarta.mail.Part;
 
 import com.top_logic.base.mail.MailHelper;
 import com.top_logic.basic.Logger;
@@ -25,7 +25,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Message provided by a mail server.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractMailServerMessage implements MailMessage {
 
@@ -38,7 +38,7 @@ public abstract class AbstractMailServerMessage implements MailMessage {
     private boolean     isInitialized = false;
     private String      body;
     private String      bodyContentType;
-    private Attachements attachements;
+    private Attachments attachments;
 
     /** 
      * Create a new instance out of the given message.
@@ -231,11 +231,11 @@ public abstract class AbstractMailServerMessage implements MailMessage {
             parseContent(aPart.getContent(), contentType);
         }
         else {
-            if (this.attachements == null) {
-                this.attachements = new Attachements();
+            if (this.attachments == null) {
+                this.attachments = new Attachments();
             }
             
-            this.attachements.addAttachement(aPart);
+            this.attachments.addAttachment(aPart);
         }
     }
     
@@ -299,24 +299,24 @@ public abstract class AbstractMailServerMessage implements MailMessage {
     }
     
     @Override
-	public boolean hasAttachements() throws TopLogicException {
+	public boolean hasAttachments() throws TopLogicException {
         if (! this.isInitialized) {
             if (! this.initialize()) {
                 return false;
             }
         }
         
-        return this.attachements != null;
+        return this.attachments != null;
     }
 
     @Override
-	public Attachements getAttachements() throws TopLogicException {
+	public Attachments getAttachments() throws TopLogicException {
         if (! this.isInitialized) {
             if (! this.initialize()) {
                 return null;
             }
         }
-        return this.attachements;
+        return this.attachments;
     }
 
     /**

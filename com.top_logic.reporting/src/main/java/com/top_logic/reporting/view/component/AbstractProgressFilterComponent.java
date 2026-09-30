@@ -14,6 +14,9 @@ import org.apache.poi.ss.formula.eval.NotImplementedException;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.table.component.TableComponent;
@@ -44,6 +47,11 @@ public abstract class AbstractProgressFilterComponent<T extends FilterVO> extend
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	public interface Config extends AbstractFilterComponent.Config {
+
+		@Override
+		@ItemDefault
+		@ImplementationClassDefault(FilterSecurityObjectProvider.class)
+		PolymorphicConfiguration<? extends SecurityObjectProvider> getSecurityObject();
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -76,13 +84,6 @@ public abstract class AbstractProgressFilterComponent<T extends FilterVO> extend
 		super(context, config);
 	}
 	
-
-
-	@Override
-	protected SecurityObjectProvider getDefaultSecurityObjectProvider() {
-		return FilterSecurityObjectProvider.INSTANCE;
-	}
-
 	@Override
 	protected boolean supportsInternalModel(Object anObject) {
 		throw new NotImplementedException("Must be implemented?");

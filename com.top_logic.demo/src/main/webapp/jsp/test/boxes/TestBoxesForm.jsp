@@ -6,8 +6,6 @@
 %><layout:html>
 	<layout:head/>
 	<layout:body>
-		
-
 		<form:form>
 			Testing cells within a `form` tag.
 			

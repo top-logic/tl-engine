@@ -6,7 +6,7 @@
 package com.top_logic.element;
 
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.util.StartStopListener;

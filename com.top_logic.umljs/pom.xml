@@ -5,11 +5,12 @@
     <relativePath>../tl-parent-core</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-umljs</artifactId>
-  <description>JavaSCript library for UML diagram rendering.</description>
+	<name>${project.artifactId}</name>
+	<description>JavaScript library for UML diagram rendering.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

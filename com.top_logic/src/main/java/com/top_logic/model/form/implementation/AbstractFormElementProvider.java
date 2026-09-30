@@ -50,16 +50,13 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	 * CSS class rendered for an input cell.
 	 */
 	protected static String inputCellCSS(FormEditorContext context) {
-		String labelCSS = context.getLabelPlacement().cssClass();
+		String labelCSS = context.getLabelPosition().cssClass(context.isInEditMode());
 		String rfInputCell = ReactiveFormCSS.RF_INPUT_CELL;
 		if (labelCSS != null) {
 			rfInputCell = rfInputCell + " " + labelCSS;
 		}
 		return rfInputCell;
 	}
-
-	/** The context of the form. */
-	private InstantiationContext _context;
 
 	private String _id;
 
@@ -72,8 +69,6 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	 */
 	public AbstractFormElementProvider(InstantiationContext context, T config) {
 		super(context, config);
-
-		_context = context;
 	}
 	
 	/**
@@ -207,15 +202,6 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	 */
 	protected HTMLTemplateFragment getIdAttribute() {
 		return getID() != null ? attr(HTMLConstants.DATA_ATTRIBUTE_PREFIX + "id", getID()) : empty();
-	}
-
-	/**
-	 * Returns the {@link InstantiationContext}.
-	 * 
-	 * @return The {@link InstantiationContext}.
-	 */
-	public InstantiationContext getContext() {
-		return _context;
 	}
 
 	@Override

@@ -57,11 +57,6 @@ public class ReportingSearchDetailComponent extends AttributedSearchResultCompon
 		return someResources.getString(I18NConstants.CHART_DETAILS_TAB);
     }
 
-    @Override
-    public ResKey hideReason(Object potentialModel) {
-		return null;
-    }
-
     public static void showDetailDialog(ReportingSearchDetailComponent aDetail, AttributedSearchResultSet aResult) {
         aDetail.setModel(aResult);
     }

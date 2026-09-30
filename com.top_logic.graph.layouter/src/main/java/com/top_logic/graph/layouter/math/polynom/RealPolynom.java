@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Representation of a mathmatical polynom using coefficients.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class RealPolynom {
 	private List<Double> _coefficients;

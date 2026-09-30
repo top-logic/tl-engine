@@ -23,6 +23,7 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.mig.html.layout.Expandable;
 import com.top_logic.reporting.flex.search.handler.CreateReportCommand;
+import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 
@@ -89,7 +90,7 @@ public class NewStoredConfigChartReportComponent extends AbstractCreateComponent
 
 	@Override
 	public boolean isExpanded() {
-		return allow(CommandGroupRegistry.resolve(QueryUtils.PUBLISH_NAME));
+		return BoundChecker.allowCommand(this, CommandGroupRegistry.resolve(QueryUtils.PUBLISH_NAME), getModel());
     }
 	
 	/** Format version of stored reports using chart-config */

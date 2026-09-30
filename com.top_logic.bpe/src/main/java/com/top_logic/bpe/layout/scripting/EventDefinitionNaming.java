@@ -12,7 +12,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.bpe.bpml.model.Event;
 import com.top_logic.bpe.bpml.model.Named;
 import com.top_logic.bpe.bpml.model.impl.TimerEventDefinitionImpl;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ui.BreadcrumbStrings;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -21,7 +21,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class EventDefinitionNaming
-		extends AbstractModelNamingScheme<TimerEventDefinitionImpl, EventDefinitionNaming.EventDefinitionName> {
+		extends AbstractGlobalModelNamingScheme<TimerEventDefinitionImpl, EventDefinitionNaming.EventDefinitionName> {
 
 	/**
 	 * {@link ModelName} of the {@link EventDefinitionNaming}.

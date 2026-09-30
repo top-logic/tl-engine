@@ -25,6 +25,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
@@ -58,7 +59,8 @@ import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.service.openapi.client.authentication.ClientSecret;
 import com.top_logic.service.openapi.client.authentication.NoSecurityEnhancement;
 import com.top_logic.service.openapi.client.authentication.SecurityEnhancer;
-import com.top_logic.service.openapi.client.authentication.SecurityEnhancerVisitor;
+import com.top_logic.service.openapi.client.authentication.config.ClientAuthentication;
+import com.top_logic.service.openapi.client.authentication.config.ClientAuthentications;
 import com.top_logic.service.openapi.client.registry.conf.MethodDefinition;
 import com.top_logic.service.openapi.client.registry.conf.ParameterDefinition;
 import com.top_logic.service.openapi.client.registry.conf.ResponseForStatusCodes;
@@ -73,8 +75,6 @@ import com.top_logic.service.openapi.client.registry.impl.response.DispatchingRe
 import com.top_logic.service.openapi.client.registry.impl.response.ResponseChecker;
 import com.top_logic.service.openapi.client.registry.impl.response.ResponseHandler;
 import com.top_logic.service.openapi.client.registry.impl.response.ResponseHandlerFactory;
-import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.AuthenticationConfigs;
 
 /**
  * Service allowing to configure client end-points for external APIs that can be called through
@@ -95,7 +95,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 	 * Configuration options for {@link ServiceMethodRegistry}.
 	 */
 	public interface Config<I extends ServiceMethodRegistry>
-			extends ConfiguredManagedClass.Config<I>, AuthenticationConfigs {
+			extends ConfiguredManagedClass.Config<I>, ClientAuthentications {
 
 		/** @see #getMethodDefinitions() */
 		String METHOD_DEFINITIONS = "method-definitions";
@@ -114,14 +114,14 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 		Map<String, MethodDefinition> getMethodDefinitions();
 
 		/**
-		 * {@link AuthenticationConfig}s that can be used to authenticate requests in
+		 * {@link ClientAuthentication}s that can be used to authenticate requests in
 		 * {@link #getMethodDefinitions()}.
 		 */
 		@Override
-		Map<String, AuthenticationConfig> getAuthentications();
+		Map<String, ClientAuthentication.Config<?>> getAuthentications();
 
 		/**
-		 * Configuration of the secrets that can be used to deliver to the Open API server.
+		 * Configuration of the secrets that can be used to deliver to the <i>OpenAPI</i> server.
 		 */
 		@Key(ClientSecret.DOMAIN)
 		@Name(SECRETS)
@@ -191,6 +191,17 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 		return new BasicHttpContext();
 	}
 
+	/**
+	 * Creates the {@link HttpClientBuilder} for the client that executes the actual request.
+	 *
+	 * @implNote Extension point for tests to customize the underlying transport, e.g. to install a
+	 *           {@link org.apache.hc.client5.http.io.HttpClientConnectionManager} that routes
+	 *           requests to an in-process server.
+	 */
+	protected HttpClientBuilder createClientBuilder() {
+		return HttpClients.custom();
+	}
+
 	private ServiceMethodBuilder createBuilder(MethodDefinition method) {
 		String methodName = method.getName();
 		String baseUrl = method.getBaseUrl();
@@ -252,7 +263,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 					modifier.buildRequest(request, call);
 				}
 
-				try (final CloseableHttpClient httpclient = enhancer.enhanceClient(HttpClients.custom()).build()) {
+				try (final CloseableHttpClient httpclient = enhancer.enhanceClient(createClientBuilder()).build()) {
 					enhancer.enhanceRequest(httpclient, request);
 					return httpclient.execute(request, _requestContext, response -> {
 						try {
@@ -435,8 +446,8 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 	private SecurityEnhancer securityEnhancer(MethodDefinition method) {
 		SecurityEnhancer enhancer = NoSecurityEnhancement.INSTANCE;
 		for (String authenticationName : method.getAuthentication()) {
-			AuthenticationConfig authentication = getConfig().getAuthentications().get(authenticationName);
-			enhancer = enhancer.andThen(authentication.visit(SecurityEnhancerVisitor.INSTANCE, this));
+			ClientAuthentication.Config<?> authentication = getConfig().getAuthentications().get(authenticationName);
+			enhancer = enhancer.andThen(TypedConfigUtil.createInstance(authentication).createSecurityEnhancer(this));
 		}
 		return enhancer;
 	}

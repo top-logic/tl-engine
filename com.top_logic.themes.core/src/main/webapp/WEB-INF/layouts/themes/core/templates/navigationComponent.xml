@@ -19,6 +19,7 @@
 			>
 				<logoutView class="com.top_logic.layout.component.configuration.LogoutView"
 					image="theme:IMAGE_BUTTONS_LOGOUT22"
+					login-image="theme:IMAGE_BUTTONS_LOGIN"
 				/>
 			</decorator>
 			<contentRenderer class="com.top_logic.layout.tree.renderer.ReadOnlyNavigationRenderer"

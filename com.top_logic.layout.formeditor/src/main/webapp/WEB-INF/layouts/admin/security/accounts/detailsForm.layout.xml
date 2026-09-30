@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic.element/form.template.xml"
 >
 	<arguments name="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithForm.template.i18n.detail"
@@ -30,14 +29,15 @@
 				<executability>
 					<rule-by-expression decision="account -> $account != null"/>
 				</executability>
-				<confirmMessage key="dynamic.8baeb646-37f2-428c-b8e7-4fd4bfcc766d">
-					<en>Are you sure they want to delete {0}'s personal settings?</en>
-					<de>Sind Sie sicher, dass Sie die persönlichen Einstellungen von {0} löschen wollen?</de>
-				</confirmMessage>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+					<confirmMessage key="dynamic.8baeb646-37f2-428c-b8e7-4fd4bfcc766d">
+						<en>Are you sure they want to delete {0}'s personal settings?</en>
+						<de>Sind Sie sicher, dass Sie die persönlichen Einstellungen von {0} löschen wollen?</de>
+					</confirmMessage>
+				</confirmation>
 			</button>
 			<button id="ID_d9a27df8_9c83_4318_9d56_53c2185a9543"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
-				confirm="false"
 				target="model(self())"
 			>
 				<resourceKey key="dynamic.5ef11993-7c72-4b2d-b8fb-24ffbea6e619">
@@ -49,6 +49,12 @@
 						<decision>contact -&gt; if ($contact.get(`Contacts:PersonContact#account`) == null, null, #("Der Benutzer kann nicht gelöscht werden, weil sein Zugang noch aktiv ist."@de,"The user cannot be deleted because their account is still active."@en))</decision>
 					</rule-by-expression>
 				</executability>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+					<confirmMessage key="dynamic.6f6ff59d-c794-4418-92f5-02ba4d3f3ca9">
+						<en>Do you really want to delete the user "{0}"?</en>
+						<de>Wollen Sie den Benutzer "{0}" wirklich löschen?</de>
+					</confirmMessage>
+				</confirmation>
 			</button>
 			<button id="ID_2fa7a149_7d10_46c9_90e1_b5e4db8b1378"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
@@ -74,15 +80,48 @@
 						<decision>account -&gt; if ($account.get(`tl.accounts:Person#admin`) == true, #("Ein Administrator kann nicht gelöscht werden."@de, "An administrator cannot be deleted."@en), null)</decision>
 					</rule-by-expression>
 				</executability>
-				<confirmMessage key="dynamic.68a3e9b3-08ee-4821-8dc7-457c78ef32f5">
-					<en>Do you really want to delete the account "{0}"? "{0}" will then no longer be able to log in.</en>
-					<de>Möchten Sie den Zugang "{0}" wirklich löschen? "{0}" kann sich dann nicht mehr einloggen.</de>
-				</confirmMessage>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+					<confirmMessage key="dynamic.68a3e9b3-08ee-4821-8dc7-457c78ef32f5">
+						<en>Do you really want to delete the account "{0}"? "{0}" will then no longer be able to log in.</en>
+						<de>Möchten Sie den Zugang "{0}" wirklich löschen? "{0}" kann sich dann nicht mehr einloggen.</de>
+					</confirmMessage>
+				</confirmation>
+			</button>
+			<button id="ID_d76c3212_847c_4a23_abb5_65f0074ca835"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				clique="delete"
+				operation="account -> $account.set(`tl.accounts:Person#mfaSecret`, null)"
+			>
+				<resourceKey key="dynamic.74a048ee-bbbd-4211-99f9-f6a10bb2824a">
+					<en>Reset multi-factor authentication</en>
+					<de>Multi-Faktor-Authentifizierung zurücksetzen</de>
+				</resourceKey>
+				<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					function="contact -> $contact.get(`Contacts:PersonContact#account`)"
+					input="model(self())"
+				/>
+				<executability>
+					<rule-by-expression decision="account -> $account != null"/>
+					<rule-by-expression decision="currentUser().get(`tl.accounts:Person#admin`)"/>
+				</executability>
+				<commitMessage key="dynamic.db6b6baf-eccd-4c21-9060-8c9bab4343eb">
+					<en>Multi-factor authentication deactivated</en>
+					<de>Multi-Faktor-Authentifizierung deaktiviert</de>
+				</commitMessage>
 			</button>
 		</buttons>
 		<dialogs>
 			<layout-reference resource="admin/security/accounts/changePassword/dialog.layout.xml"/>
 			<layout-reference resource="admin/security/accounts/newAccount2/dialog.layout.xml"/>
 		</dialogs>
+		<editExecutability>
+			<anonymous-account-disabled>
+				<account expression="contact -> $contact.get(`Contacts:PersonContact#account`)"/>
+				<message key="dynamic.3b5115de-b1a6-4529-9f74-ee51069286ee">
+					<en>The anonymous account cannot be edited.</en>
+					<de>Der anonyme Zugang kann nicht bearbeitet werden.</de>
+				</message>
+			</anonymous-account-disabled>
+		</editExecutability>
 	</arguments>
 </config:template-call>

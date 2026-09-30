@@ -17,7 +17,7 @@
 			graphDrop="com.top_logic.graph.diagramjs.server.TLTypeDrop"
 			isSecurityMaster="true"
 			name="Viewer"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			showMinimize="false"
 			titleKey="model.graph.viewer.title"
 			toolbar="true"
@@ -43,9 +43,9 @@
 							createOpenerButtons="false"
 							defaultI18n="element.meta.attribute.edit.displayDialog_createMetaAttr"
 							executability="Always"
-							height="430"
+							height="530"
 							openerClique="internal"
-							width="550"
+							width="600"
 						/>
 					</inject>
 				</include>
@@ -65,9 +65,9 @@
 							createOpenerButtons="false"
 							defaultI18n="element.meta.metaElementTree.newType"
 							executability="Always"
-							height="430"
+							height="530"
 							openerClique="internal"
-							width="550"
+							width="600"
 						/>
 					</inject>
 				</include>
@@ -87,9 +87,9 @@
 							createOpenerButtons="false"
 							defaultI18n="element.meta.metaElementTree.newEnumeration"
 							executability="Always"
-							height="430"
+							height="530"
 							openerClique="internal"
-							width="550"
+							width="600"
 						/>
 					</inject>
 				</include>
@@ -138,7 +138,7 @@
 						defaultFor="tl.model:TLClass"
 						model="selection(Viewer)"
 						resPrefix="model.graph.type.editor"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 						toolbar="false"
 					>
 						<layoutInfo size="300px"/>
@@ -174,9 +174,9 @@
 							<button id="deleteDisplayType"
 								class="com.top_logic.tool.boundsec.CommandSequence"
 								clique="delete"
-								confirm="true"
 								group="Delete"
 							>
+								<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 								<executability>
 									<reference rule-id="ComponentIsVisible"/>
 								</executability>
@@ -195,7 +195,7 @@
 						applyCommand="applyTLStructuredTypePart"
 						model="selection(Viewer)"
 						resPrefix="model.graph.attribute.editor"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 						toolbar="false"
 					>
 						<tabInfo label="element.meta.ReferenceTab"/>
@@ -221,11 +221,11 @@
 								<inject>
 									<dialogInfo
 										defaultI18n="model.graph.backReference.create.dialog"
-										height="430"
+										height="530"
 										openButtonSecComp="createBackReferenceTypePartForm"
 										openerClique="createMenu"
 										openerCommandGroup="Create"
-										width="550"
+										width="600"
 									>
 										<executability>
 											<rule class="com.top_logic.graph.diagramjs.server.util.IsReferenceRule"/>
@@ -251,10 +251,10 @@
 							<button id="deleteAttribute"
 								class="com.top_logic.tool.boundsec.CommandSequence"
 								clique="delete"
-								confirm="true"
 								group="Delete"
 								resourceKey="element.meta.attribute.edit.attRemove"
 							>
+								<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 								<executability>
 									<reference rule-id="ComponentIsVisible"/>
 								</executability>
@@ -273,7 +273,7 @@
 						applyCommand="applyTLModule"
 						model="selection(Viewer)"
 						resPrefix="model.graph.module.editor"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 						toolbar="false"
 					>
 						<tabInfo label="element.meta.ModuleTab"/>
@@ -298,9 +298,9 @@
 							<button id="deleteModule"
 								class="com.top_logic.tool.boundsec.CommandSequence"
 								clique="delete"
-								confirm="true"
 								group="Delete"
 							>
+								<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 								<executability>
 									<reference rule-id="ComponentIsVisible"/>
 								</executability>
@@ -315,7 +315,7 @@
 						applyCommand="applyTLEnumeration"
 						model="selection(Viewer)"
 						resPrefix="model.graph.enumeration.editor"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 						toolbar="false"
 					>
 						<tabInfo label="element.meta.EnumerationTab"/>
@@ -340,9 +340,9 @@
 							<button id="deleteEnumeration"
 								class="com.top_logic.tool.boundsec.CommandSequence"
 								clique="delete"
-								confirm="true"
 								group="Delete"
 							>
+								<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 								<executability>
 									<reference rule-id="ComponentIsVisible"/>
 								</executability>
@@ -360,7 +360,7 @@
 					<editor name="InheritanceEditor"
 						model="selection(Viewer)"
 						resPrefix="model.graph.inheritance.editor"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 						toolbar="false"
 					>
 						<tabInfo label="element.meta.InheritanceTab"/>
@@ -373,9 +373,9 @@
 							<button id="deleteInheritance"
 								class="com.top_logic.tool.boundsec.CommandSequence"
 								clique="delete"
-								confirm="true"
 								group="Delete"
 							>
+								<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 								<executability>
 									<reference rule-id="ComponentIsVisible"/>
 								</executability>

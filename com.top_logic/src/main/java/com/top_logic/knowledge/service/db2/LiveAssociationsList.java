@@ -9,6 +9,7 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
@@ -628,6 +629,9 @@ public abstract class LiveAssociationsList<T extends TLObject> extends Associati
 			return element;
 		}
 
+		@Override
+		public abstract void sort(Comparator<? super T> c);
+
 		/**
 		 * Updates the indexes of the items in the given cache list in reaction to an upcoming
 		 * insert of the given item.
@@ -743,11 +747,11 @@ public abstract class LiveAssociationsList<T extends TLObject> extends Associati
 		/**
 		 * Setter for {@link #order(TLObject)}
 		 */
-		protected void setOrder(T item, int orderingValue) {
+		protected void setOrder(TLObject item, int orderingValue) {
 			setOrder(item, Integer.valueOf(orderingValue));
 		}
 
-		private void setOrder(T item, Object orderingValue) {
+		private void setOrder(TLObject item, Object orderingValue) {
 			try {
 				item.tHandle().setAttributeValue(_orderAttribute, orderingValue);
 			} catch (DataObjectException ex) {
@@ -758,11 +762,11 @@ public abstract class LiveAssociationsList<T extends TLObject> extends Associati
 		/**
 		 * The order value of the given {@link TLObject}
 		 */
-		protected int order(T item) {
+		protected int order(TLObject item) {
 			return ((Number) orderValue(item)).intValue();
 		}
 
-		private Object orderValue(T item) {
+		private Object orderValue(TLObject item) {
 			try {
 				return item.tHandle().getAttributeValue(_orderAttribute);
 			} catch (NoSuchAttributeException ex) {

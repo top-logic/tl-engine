@@ -22,7 +22,7 @@ import com.top_logic.graph.diagramjs.model.DiagramJSGraphModel;
  * {@link EventHandler} for clicking diagramJS components. Updates the selected {@link GraphPart}
  * property of the {@link DiagramJSGraphModel}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class ClickEventHandler implements EventHandler {
 

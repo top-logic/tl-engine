@@ -20,15 +20,13 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import com.top_logic.base.accesscontrol.ApplicationPages;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -36,9 +34,10 @@ import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.NoProtocol;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.col.DescendantDFSIterator;
+import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -88,7 +87,7 @@ import com.top_logic.layout.processor.LayoutModelConstants;
 import com.top_logic.layout.structure.PopupDialogControl;
 import com.top_logic.layout.structure.PopupDialogModel;
 import com.top_logic.layout.tabbar.TabInfo.TabConfig;
-import com.top_logic.layout.window.OpenWindowCommand;
+import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.mig.html.layout.WithGotoConfiguration.GotoTarget;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
@@ -96,16 +95,11 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundLayout;
-import com.top_logic.tool.boundsec.CheckerProxyHandler;
-import com.top_logic.tool.boundsec.CheckerProxyHandler.Config;
-import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler.ExecutabilityConfig;
-import com.top_logic.tool.boundsec.CommandHandlerFactory;
-import com.top_logic.tool.boundsec.CommandReferenceConfig;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLResKeyUtil;
 import com.top_logic.util.error.TopLogicException;
@@ -589,7 +583,7 @@ public class LayoutUtils {
 
 	/**
 	 * Appends the full URL of the host of the application to the given output, e.g.
-	 * https://aps.top-logic.com:8080.
+	 * https://apps.top-logic.com:8080.
 	 * 
 	 * <p>
 	 * When a value for the alias {@link AliasManager#HOST} is present, it is used.
@@ -715,115 +709,6 @@ public class LayoutUtils {
 	}
 
 	/**
-	 * The given {@link LayoutComponent.Config} is inspected and the {@link BoundCommandGroup} of
-	 * all commands for the configured components are added to the given output collection.
-	 * 
-	 * @param out
-	 *        The {@link Collection} to add {@link BoundCommandGroup}s to.
-	 * @param config
-	 *        The {@link LayoutComponent} configuration to get {@link BoundCommandGroup}s for.
-	 */
-	public static void addCommandGroups(Collection<? super BoundCommandGroup> out, LayoutComponent.Config config) {
-		SimpleCommandRegistry registry = new SimpleCommandRegistry();
-		config.modifyIntrinsicCommands(registry);
-		addIntrinsicGroups(out, registry.getButtons());
-		addIntrinsicGroups(out, registry.getCommands());
-		if (config.getDefaultAction() != null) {
-			addConfiguredGroup(out, config.getDefaultAction(), config);
-		}
-		if (config.getCancelAction() != null) {
-			addConfiguredGroup(out, config.getCancelAction(), config);
-		}
-		config.getButtons().forEach(handlerConfig -> {
-			addConfiguredGroup(out, handlerConfig, config);
-		});
-		config.getCommands().forEach(handlerConfig -> {
-			addConfiguredGroup(out, handlerConfig, config);
-		});
-		config.getWindows().forEach(template -> {
-			addConfiguredGroup(out, OpenWindowCommand.createWindowOpenHandler(template), config);
-		});
-		config.getDialogs().forEach(dialog -> {
-			// Ignore error, because it is also reported during instantiation of the component.
-			Log log = NoProtocol.INSTANCE;
-			dialog = LayoutUtils.resolveComponentReference(log, dialog);
-			if (dialog == null) {
-				return;
-			}
-			PolymorphicConfiguration<? extends CommandHandler> handlerConfig =
-				OpenModalDialogCommandHandler.createDialogOpenHandler(log, config, dialog);
-			if (handlerConfig != null) {
-				addConfiguredGroup(out, handlerConfig, config);
-			}
-		});
-		Set<BoundCommandGroup> additionalGroups = new HashSet<>();
-		config.addAdditionalCommandGroups(additionalGroups);
-		out.addAll(additionalGroups);
-	}
-
-	private static void addConfiguredGroup(Collection<? super BoundCommandGroup> out,
-			PolymorphicConfiguration<? extends CommandHandler> handlerConfig, LayoutComponent.Config layoutConfig) {
-		if (handlerConfig instanceof CommandHandler.Config) {
-			addGroup(out, (CommandHandler.Config) handlerConfig);
-		} else if (handlerConfig instanceof CommandReferenceConfig) {
-			String handlerId = ((CommandReferenceConfig) handlerConfig).getCommandId();
-			addGroup(out, registeredHandler(handlerId));
-		} else if (handlerConfig instanceof CheckerProxyHandler.Config) {
-			Config checkerConfig = (CheckerProxyHandler.Config) handlerConfig;
-			ComponentName checkerName = checkerConfig.getName();
-			if (checkerName != null && !checkerName.equals(layoutConfig.getName())) {
-				/* The given layout component is not used for security checking, but the component
-				 * with the checker name. Therefore the command group of the command is not relevant
-				 * for the given component. */
-				return;
-			}
-			addConfiguredGroup(out, checkerConfig.getCommand(), layoutConfig);
-		} else {
-			throw failUnexpectedConfigType(handlerConfig);
-		}
-	}
-
-	private static IllegalArgumentException failUnexpectedConfigType(
-			PolymorphicConfiguration<? extends CommandHandler> handlerConfig) {
-		StringBuilder error = new StringBuilder();
-		error.append("Unexpected handler configuration. Only ");
-		error.append(CommandHandler.Config.class.getName());
-		error.append(", ");
-		error.append(CommandReferenceConfig.class.getName());
-		error.append(", and ");
-		error.append(CheckerProxyHandler.Config.class);
-		error.append(" are supported: ");
-		error.append(handlerConfig);
-		return new IllegalArgumentException(error.toString());
-	}
-
-	private static void addGroup(Collection<? super BoundCommandGroup> out, CommandHandler.Config handler) {
-		CommandGroupReference group = handler.getGroup();
-		if (group == null) {
-			out.add(SimpleBoundCommandGroup.READ);
-		} else {
-			BoundCommandGroup resolvedGroup = group.resolve();
-			if (resolvedGroup != null) {
-				out.add(resolvedGroup);
-			}
-		}
-	}
-
-	private static void addGroup(Collection<? super BoundCommandGroup> out, CommandHandler handler) {
-		if (handler != null) {
-			out.add(handler.getCommandGroup());
-		}
-	}
-
-	private static void addIntrinsicGroups(Collection<? super BoundCommandGroup> out, List<String> commandIds) {
-		commandIds.forEach(commandId -> addGroup(out, registeredHandler(commandId)));
-	}
-
-	private static CommandHandler registeredHandler(String commandId) {
-		return CommandHandlerFactory.getInstance().getHandler(commandId);
-	}
-    
-	/**
 	 * Gets the {@link ResKey} for the "tabber" of the given layout component.
 	 * 
 	 * @deprecated Use {@link LayoutComponent#getTitleKey()}.
@@ -851,7 +736,7 @@ public class LayoutUtils {
 					// do not use stored item as it is potentially modified.
 					item = TypedConfiguration.copy(item);
 				} catch (ConfigurationException ex) {
-					Logger.error("Unable to create configuration definied in " + resource, ex);
+					Logger.error("Unable to create configuration defined in " + resource, ex);
 				}
 			}
 			return item;
@@ -939,10 +824,21 @@ public class LayoutUtils {
 			throw new IllegalArgumentException("Path " + relativeOverlayPath + " is not a regular file.");
 		}
 		String fileName = file.toString();
-		String overlayedName = fileName.substring(0,
-			fileName.length() - LayoutModelConstants.LAYOUT_XML_OVERLAY_FILE_SUFFIX.length())
-			+ LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX;
+		String overlayedName = baseName(fileName);
 		return normalizeFileName(relativeOverlayPath.resolveSibling(overlayedName)).toString();
+	}
+
+	/**
+	 * Computes from the resource name that represents an
+	 * {@link LayoutModelConstants#LAYOUT_XML_OVERLAY_FILE_SUFFIX layout overlay} the name of the
+	 * {@link LayoutModelConstants#LAYOUT_XML_FILE_SUFFIX layout file} for which the given one is an
+	 * overlay.
+	 */
+	public static String baseName(String overlayName) {
+		String overlayedName = overlayName.substring(0,
+			overlayName.length() - LayoutModelConstants.LAYOUT_XML_OVERLAY_FILE_SUFFIX.length())
+			+ LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX;
+		return overlayedName;
 	}
 
 	/**
@@ -1176,7 +1072,42 @@ public class LayoutUtils {
 				}
 			}
 		}
+		Mapping<CompoundSecurityLayout.Config, CompoundSecurityLayout.Config> securityLayoutMapping =
+			createSecurityLayoutMapping(layoutTrees.values());
+		layoutTrees.values().forEach(tree -> tree.setSecurityDefiningLayouts(securityLayoutMapping));
 		return layoutTrees;
+	}
+
+	private static Mapping<CompoundSecurityLayout.Config, CompoundSecurityLayout.Config> createSecurityLayoutMapping(
+			Collection<LayoutConfigTree> values) {
+		Map<ComponentName, CompoundSecurityLayout.Config> securityLayouts = new HashMap<>();
+		for (LayoutConfigTree tree : values) {
+			DescendantDFSIterator<LayoutConfigTreeNode> descendantIter = new DescendantDFSIterator<>(tree, tree.getRoot(), true);
+			while (descendantIter.hasNext()) {
+				LayoutConfigTreeNode node = descendantIter.next();
+				Config componentConf = node.getConfig();
+				if (componentConf instanceof CompoundSecurityLayout.Config secLayout) {
+					securityLayouts.put(secLayout.getName(), secLayout);
+				}
+			}
+		}
+		return new Mapping<>() {
+
+			@Override
+			public CompoundSecurityLayout.Config map(CompoundSecurityLayout.Config secLayout) {
+				ComponentName securityId = secLayout.getSecurityId();
+				if (securityId == null) {
+					return secLayout;
+				}
+				CompoundSecurityLayout.Config delegateConf = securityLayouts.get(securityId);
+				if (delegateConf == null) {
+					Logger.error("No security layout with id '" + securityId + "' found in '" + secLayout + "'.",
+						LayoutUtils.class);
+					return secLayout;
+				}
+				return map(delegateConf);
+			}
+		};
 	}
 
 	private static LayoutConfigTree createLayoutTree(InstantiationContext context, String resource) {
@@ -1288,9 +1219,9 @@ public class LayoutUtils {
 	public static void writeConfiguration(LayoutComponent.Config config, File file) throws Exception {
 		try (OutputStream outputStream = new FileOutputStream(file)) {
 			try (Writer out = new OutputStreamWriter(outputStream, StringServices.CHARSET_UTF_8)) {
-				ConfigurationWriter confWriter = new ConfigurationWriter(out);
-
-				confWriter.write(LayoutComponent.Config.COMPONENT, LayoutComponent.Config.class, config);
+				try (ConfigurationWriter confWriter = new ConfigurationWriter(out)) {
+					confWriter.write(LayoutComponent.Config.COMPONENT, LayoutComponent.Config.class, config);
+				}
 			}
 
 			XMLPrettyPrinter.normalizeFile(file);

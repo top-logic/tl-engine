@@ -5,20 +5,21 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>ext-org-mozilla-pdfjs</artifactId>
   
-  <description>PDF.js version 2.0.943 - a general-purpose, web standards-based platform for parsing and rendering PDFs.</description>
+	<name>${project.artifactId}</name>
+	<description>PDF.js version 4.9.155 - a general-purpose, web standards-based platform for parsing and rendering PDFs.</description>
   <url>https://mozilla.github.io/pdf.js/</url>
   
   <licenses>
   	<license>
   		<name>Apache-2.0 (Apache License (v 2.0))</name>
-  		<url>https://github.com/mozilla/pdf.js/blob/v2.0.943/LICENSE</url>
-  		<comments>https://github.com/mozilla/pdf.js/blob/v2.0.943/AUTHORS</comments>
+  		<url>https://github.com/mozilla/pdf.js/blob/v4.9.155/LICENSE</url>
+  		<comments>https://github.com/mozilla/pdf.js/blob/v4.9.155/AUTHORS</comments>
   	</license>
   </licenses>
   
-  <dependencies/>
+  <dependencies />
 </project>

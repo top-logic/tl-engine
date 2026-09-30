@@ -38,6 +38,7 @@ import com.top_logic.model.impl.util.TLCharacteristicsCopier;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.util.TLTypeUsage;
 import com.top_logic.model.visit.DefaultDescendingTLModelVisitor;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Default implementation of {@link TLModel}.
@@ -169,19 +170,23 @@ public class TLModelImpl extends AbstractTLModelPart implements TLModel {
 	public TLReference addReference(TLClass tlClass, String name, TLAssociationEnd end) {
 		TLClassPart part = (TLClassPart) tlClass.getPart(name);
 		if (end != null) {
-			/* TLModelImpl hierarchy is used in ModelReader which analyses a stream. Therefore it
-			 * may be that the end is not present at reference creation time. The reference must
-			 * later be filled with a correct end. */
+			/* TLModelImpl hierarchy is used in ModelReader which analyzes a stream. Therefore it is
+			 * possible that the end is not yet present at reference creation time. The reference
+			 * must be filled later on with a correct end. */
 			TLReference reference = end.getReference();
 			if (reference != null) {
-				throw new IllegalArgumentException("Association end '" + end + "' already implemented by '"
-					+ reference.getOwner() + "' in attribute '" + reference.getName() + "'.");
+				throw new IllegalArgumentException(
+					"Association end '" + end + "' already implemented by '" + reference + "'.");
 			}
 		}
 		TLReference result = new TLReferenceImpl((TLModelImpl) tlClass.getModel(), name);
 		result.setEnd(end);
 		if (part != null) {
-			TLCharacteristicsCopier.copyCharacteristics(part, result);
+			if (part.getOwner() == tlClass) {
+				throw new TopLogicException(
+					com.top_logic.model.I18NConstants.DUPLICATE_ATTRIBUTE__NAME_CLASS.fill(name, tlClass));
+			}
+			TLCharacteristicsCopier.copyOverrideCharacteristics(part, result);
 		}
 		tlClass.getLocalClassParts().add(result);
 		result.updateDefinition();
@@ -247,6 +252,16 @@ public class TLModelImpl extends AbstractTLModelPart implements TLModel {
 		error.append("': ");
 		error.append(part);
 		throw new IllegalArgumentException(error.toString());
+	}
+
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		switch (part.getName()) {
+			case MODULES_ATTR:
+				return getModules();
+			default:
+				return super.tValue(part);
+		}
 	}
 
 }

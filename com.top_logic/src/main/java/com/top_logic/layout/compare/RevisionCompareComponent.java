@@ -74,7 +74,7 @@ public class RevisionCompareComponent extends RevisionSelectComponent implements
 
 					@Override
 					public void write(DisplayContext context, TagWriter out, Object value) throws IOException {
-						new SelectionPartControl(getSelectionModel(), value).write(context, out);
+						SelectionPartControl.createSelectionPartControl(getSelectionModel(), value).write(context, out);
 					}
 
 				});

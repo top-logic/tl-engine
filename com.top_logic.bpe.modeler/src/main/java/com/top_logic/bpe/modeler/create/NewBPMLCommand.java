@@ -16,7 +16,7 @@ import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Participant;
-import com.top_logic.bpe.modeler.upload.BPMLUploadCommand;
+import com.top_logic.bpe.execution.engine.InitialProcessSetupService;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -55,7 +55,8 @@ public class NewBPMLCommand extends AbstractCreateCommandHandler {
 		BinaryContent data = new ClassRelativeBinaryContent(NewBPMLCommand.class, "default-diagram.bpmn.xml");
 		Collaboration collaboration;
 		try {
-			collaboration = BPMLUploadCommand.importCollaboration(DefaultDisplayContext.getDisplayContext(), kb, data);
+			collaboration =
+				InitialProcessSetupService.importBPML(DefaultDisplayContext.getDisplayContext(), kb, data);
 		} catch (XMLStreamException | IOException ex) {
 			throw reportProblem(ex);
 		}

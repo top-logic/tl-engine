@@ -15,7 +15,7 @@
 			value="true"
 		/>
 		<param name="selectionModelFactory">
-			<selectionModelFactory class="com.top_logic.element.layout.grid.GridComponent$DefaultMultiSelectionModelFactory"/>
+			<selectionModelFactory multiple="true"/>
 		</param>
 		<param name="defaultColumns"
 			value="name,date,float,long,string,structure"
@@ -43,8 +43,11 @@
 				<buttons>
 					<button id="exportExcelGrid"
 						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-						exportNameKey="/sTypes_Demo.xlsx"
-					/>
+					>
+						<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+							downloadName="/sTypes_Demo.xlsx"
+						/>
+					</button>
 				</buttons>
 				<modelBuilder class="com.top_logic.element.layout.TypeInstanceListModelBuilder"
 					meta-elements="DemoTypes:DemoTypes.Root, DemoTypes:DemoTypes.All"

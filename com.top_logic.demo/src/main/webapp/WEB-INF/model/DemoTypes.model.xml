@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+<model
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
 	<module name="DemoTypes">
 		<annotations>
 			<display-group value="demo"/>
@@ -8,29 +11,8 @@
 				implementation-package="com.top_logic.demo.model.types.wrap"
 				interface-package="com.top_logic.demo.model.types"
 			/>
-			<roles>
-				<role name="DemoTypes.Navigation"/>
-				<role name="DemoTypes.Selection"/>
-				<role name="DemoTypes.Administrator"/>
-				<role name="DemoTypes.BAdministrator"/>
-				<role name="DemoTypes.BooleanAdministrator"/>
-				<role name="DemoTypes.StringAdministrator"/>
-				<role name="DemoTypes.DateAdministrator"/>
-				<role name="DemoTypes.Responsible"/>
-			</roles>
 			<singletons>
-				<singleton type="Root">
-					<role-assignments>
-						<role-assignment
-							group="demoTypeAdministrators"
-							role="DemoTypes.Administrator"
-						/>
-						<role-assignment
-							group="demoTypeBAdministrators"
-							role="DemoTypes.BAdministrator"
-						/>
-					</role-assignments>
-				</singleton>
+				<singleton type="Root"/>
 			</singletons>
 		</annotations>
 		<datatype name="DemoTime"
@@ -187,22 +169,22 @@
 		</enum>
 		<interface name="AChild">
 			<generalizations>
-				<generalization type="tl.element:StructuredElement"/>
+				<generalization type="DemoTypesChild"/>
 			</generalizations>
 		</interface>
 		<interface name="BChild">
 			<generalizations>
-				<generalization type="tl.element:StructuredElement"/>
+				<generalization type="DemoTypesChild"/>
 			</generalizations>
 		</interface>
 		<interface name="BNotUnderAChild">
 			<generalizations>
-				<generalization type="tl.element:StructuredElement"/>
+				<generalization type="DemoTypesChild"/>
 			</generalizations>
 		</interface>
 		<interface name="CChild">
 			<generalizations>
-				<generalization type="tl.element:StructuredElement"/>
+				<generalization type="DemoTypesChild"/>
 			</generalizations>
 		</interface>
 		<interface name="DemoTypes.All">
@@ -216,7 +198,12 @@
 			<attributes>
 				<property name="name"
 					mandatory="true"
-					type="tl.core:String"
+					type="tl.core:Name"
+				/>
+				<reference name="parent"
+					kind="backwards"
+					override="true"
+					type="DemoTypesContainer"
 				/>
 			</attributes>
 		</interface>
@@ -225,7 +212,7 @@
 				<generalization type="DemoTypes.All"/>
 			</generalizations>
 			<annotations>
-				<instance-presentation icon="theme:model.DemoTypes.A"/>
+				<instance-presentation icon="css:fa-solid fa-stopwatch"/>
 				<main-properties properties="name,boolean,string,float,date"/>
 				<legacy-qualified-name qualified-name="DemoTypes.A"/>
 				<dynamic-icon>
@@ -234,7 +221,7 @@
   icon = $x.get(`DemoTypes:A#icon`);
   important = $x.get(`DemoTypes:A#float`) >= 0.9;
   if ($important, {
-    $icon == null ? "css:fas fa-beer demo-red" : $icon + " demo-red";
+    $icon == null ? "css:fas fa-beer tl-danger" : $icon + " tl-danger";
   }, {
     $icon;
   })
@@ -308,7 +295,11 @@
 				/>
 				<property name="offset"
 					type="DemoVec"
-				/>
+				>
+					<annotations>
+						<label-position value="above-value"/>
+					</annotations>
+				</property>
 				<property name="timeUnit"
 					type="DemoTime"
 				/>
@@ -493,7 +484,17 @@
 				/>
 				<property name="color"
 					type="tl.util:Color"
-				/>
+				>
+					<annotations>
+						<storage-algorithm>
+							<primitive-storage>
+								<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+									application-type="java.awt.Color"
+								/>
+							</primitive-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
 				<property name="icon"
 					type="tl.core:Icon"
 				>
@@ -537,7 +538,15 @@
 				</property>
 				<property name="dateTime"
 					type="tl.core:DateTime"
-				/>
+				>
+					<annotations>
+						<dynamic-label>
+							<label config:interface="com.top_logic.layout.ScriptFunction3"
+								class="com.top_logic.demo.model.annotations.LabelWithTimeZone"
+							/>
+						</dynamic-label>
+					</annotations>
+				</property>
 				<property name="binary"
 					type="tl.core:Binary"
 				>
@@ -565,6 +574,16 @@
 						<format>
 							<format-ref format-id="decimal"/>
 						</format>
+						<css-class>
+							<cell-class-by-expression>
+								<css-classes><![CDATA[value -> switch {
+    $value >= 0.9: "tl-danger";
+    $value >= 0.7: "tl-warning";
+    $value >= 0.4: "tl-success";
+    default: null;
+}]]></css-classes>
+							</cell-class-by-expression>
+						</css-class>
 					</annotations>
 				</property>
 				<property name="floatPercent"
@@ -665,6 +684,23 @@
 				<property name="long"
 					type="tl.core:Long"
 				/>
+				<property name="intConstraint"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<default-value>
+							<int value="0"/>
+						</default-value>
+						<value-range
+							max="16"
+							min="0"
+						/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.IntegerInputTagProvider"/>
+						<column-info>
+							<editControlProvider class="com.top_logic.layout.form.control.IntegerInputControl$Provider"/>
+						</column-info>
+					</annotations>
+				</property>
 				<property name="longConstraint"
 					type="tl.core:Long"
 				>
@@ -673,6 +709,10 @@
 							max="10.0"
 							min="-10.0"
 						/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.IntegerInputTagProvider"/>
+						<column-info>
+							<editControlProvider class="com.top_logic.layout.form.control.IntegerInputControl$Provider"/>
+						</column-info>
 					</annotations>
 				</property>
 				<reference name="responsible"
@@ -704,7 +744,7 @@
 					type="tl.core:Text"
 				>
 					<annotations>
-						<css-class value="myClass"/>
+						<css-class value="tl-info"/>
 						<size-constraint upper-bound="128000"/>
 					</annotations>
 				</property>
@@ -773,13 +813,36 @@
 						<storage-algorithm>
 							<set-storage table="hasDemoTypesCAttValue"/>
 						</storage-algorithm>
+						<options>
+							<treeoptions-by-expression
+								parents="node -> $node.referers(`tl.element:StructuredElementContainer#children`).singleElement()"
+								rootNode="`DemoTypes#ROOT`"
+							>
+								<children><![CDATA[node -> $node
+    .get(`tl.element:StructuredElementContainer#children`)
+    .filter(child -> !$child.instanceOf(`DemoTypes:X`))]]></children>
+							</treeoptions-by-expression>
+						</options>
 					</annotations>
 				</reference>
 				<reference name="typedSetUnordered"
 					kind="forwards"
 					multiple="true"
 					type="C"
-				/>
+				>
+					<annotations>
+						<options>
+							<treeoptions-by-expression
+								parents="node -> $node.container()"
+								rootNode="`DemoTypes#ROOT`"
+							>
+								<children><![CDATA[node -> $node
+    .get(`tl.element:StructuredElementContainer#children`)
+    .filter(child -> !$child.instanceOf(`DemoTypes:X`))]]></children>
+							</treeoptions-by-expression>
+						</options>
+					</annotations>
+				</reference>
 				<reference name="webFolder"
 					composite="true"
 					kind="forwards"
@@ -942,7 +1005,6 @@
 				>
 					<annotations>
 						<code-editor-language value="ace/mode/xml"/>
-						<render-whole-line/>
 					</annotations>
 				</property>
 				<property name="json"
@@ -1034,13 +1096,79 @@
 				<property name="time"
 					type="tl.core:Time"
 				/>
+				<property name="style"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[[
+"tl-info",
+"tl-success",
+"tl-warning",
+"tl-danger",
+"tl-debug",
+"tl-accent-1",
+"tl-accent-2",
+"tl-accent-3",
+"tl-info tl-lighter",
+"tl-success tl-lighter",
+"tl-warning tl-lighter",
+"tl-danger tl-lighter",
+"tl-debug tl-lighter",
+"tl-accent-1 tl-lighter",
+"tl-accent-2 tl-lighter",
+"tl-accent-3 tl-lighter"
+]]]></function>
+							</options-by-expression>
+						</options>
+						<css-class>
+							<cell-class-by-expression css-classes="value -> $value"/>
+						</css-class>
+					</annotations>
+				</property>
+				<property name="duration"
+					type="tl.core:Duration"
+				/>
+				<property name="durationShort"
+					type="tl.core:Duration"
+				>
+					<annotations>
+						<format>
+							<definition class="com.top_logic.layout.form.format.CustomDurationFormat"
+								pattern="mm:ss"
+							/>
+						</format>
+					</annotations>
+				</property>
+				<property name="binary2"
+					type="tl.core:Binary"
+				>
+					<annotations>
+						<binary-display presentation="image-upload"/>
+						<dimensions height="200px"/>
+					</annotations>
+				</property>
+				<reference name="responsibleContact"
+					kind="forwards"
+					navigate="true"
+					type="Contacts:PersonContact"
+				/>
+				<property name="htmlDescription"
+					type="tl.model.wysiwyg:Html"
+				>
+					<annotations>
+						<sort-order value="500.0"/>
+						<render-whole-line value="true"/>
+					</annotations>
+				</property>
 			</attributes>
 		</interface>
 		<class name="A">
 			<generalizations>
 				<generalization type="DemoTypes.A"/>
 				<generalization type="RootChild"/>
-				<generalization type="tl.element:StructuredElementContainer"/>
+				<generalization type="DemoTypesContainer"/>
 				<generalization type="BChild"/>
 				<generalization type="BNotUnderAChild"/>
 				<generalization type="CChild"/>
@@ -1065,7 +1193,6 @@
 							type="DemoTypes.C"
 						/>
 						<generalization type="C"/>
-						<generalization type="tl.element:StructuredElement"/>
 					</generalizations>
 				</class>
 			</types>
@@ -1154,7 +1281,7 @@
 			<generalizations>
 				<generalization type="DemoTypes.B"/>
 				<generalization type="AChild"/>
-				<generalization type="tl.element:StructuredElementContainer"/>
+				<generalization type="DemoTypesContainer"/>
 				<generalization type="CChild"/>
 			</generalizations>
 			<annotations>
@@ -1175,7 +1302,7 @@
 			<generalizations>
 				<generalization type="DemoTypes.B"/>
 				<generalization type="RootChild"/>
-				<generalization type="tl.element:StructuredElementContainer"/>
+				<generalization type="DemoTypesContainer"/>
 			</generalizations>
 			<annotations>
 				<instance-presentation icon="theme:ICON_PIGGY_BANK_DEMO_FUCHSIA"/>
@@ -1197,6 +1324,7 @@
 			</generalizations>
 			<annotations>
 				<legacy-qualified-name qualified-name="DemoTypes.C.All"/>
+				<main-properties properties="name,stringInBAndC,dependentDate,enumInBAndC,genericInBAndC,isAssignable"/>
 			</annotations>
 			<attributes>
 				<property name="stringInBAndC"
@@ -1250,7 +1378,7 @@
 				<generalization type="DemoTypes.C.All"/>
 				<generalization type="AChild"/>
 				<generalization type="BChild"/>
-				<generalization type="tl.element:StructuredElementContainer"/>
+				<generalization type="DemoTypesContainer"/>
 				<generalization type="CChild"/>
 			</generalizations>
 			<annotations>
@@ -1305,7 +1433,6 @@
 				<generalization type="BChild"/>
 				<generalization type="BNotUnderAChild"/>
 				<generalization type="CChild"/>
-				<generalization type="tl.element:StructuredElement"/>
 			</generalizations>
 			<annotations>
 				<instance-presentation icon="theme:ICON_SEEDLING_DEMO_GREEN"/>
@@ -1316,7 +1443,7 @@
 				<generalization type="DemoTypes.All"/>
 			</generalizations>
 			<annotations>
-				<instance-presentation icon="theme:ICON_HANDSHAKE_DEMO_BLUE"/>
+				<instance-presentation icon="css:fas fa-handshake tl-info"/>
 				<legacy-qualified-name qualified-name="DemoTypes.X"/>
 				<main-properties properties="name,boolean,string,float,date"/>
 			</annotations>
@@ -2008,6 +2135,16 @@
 								</expression-evaluation>
 							</derived-storage>
 						</storage-algorithm>
+						<css-class>
+							<cell-class-by-expression>
+								<css-classes><![CDATA[value -> switch {
+    $value >= 0.9: "tl-danger";
+    $value >= 0.7: "tl-warning";
+    $value >= 0.4: "tl-success";
+    default: null;
+}]]></css-classes>
+							</cell-class-by-expression>
+						</css-class>
 					</annotations>
 				</property>
 				<property name="floatPercent"
@@ -2170,14 +2307,26 @@
 						</storage-algorithm>
 					</annotations>
 				</property>
+				<property name="intConstraint"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="intConstraint"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
 				<property name="longConstraint"
 					type="tl.core:Long"
 				>
 					<annotations>
-						<value-range
-							max="10.0"
-							min="-10.0"
-						/>
 						<storage-algorithm>
 							<derived-storage>
 								<expression-evaluation>
@@ -2614,7 +2763,6 @@
 			<generalizations>
 				<generalization type="DemoTypes.X"/>
 				<generalization type="AChild"/>
-				<generalization type="tl.element:StructuredElement"/>
 			</generalizations>
 			<annotations>
 				<table name="GenericObject"/>
@@ -2627,7 +2775,7 @@
 				<generalization type="BNotUnderAChild"/>
 			</generalizations>
 			<annotations>
-				<instance-presentation icon="theme:ICON_LOCK_DEMO_FUCHSIA"/>
+				<instance-presentation icon="css:fas fa-lock tl-accent-1"/>
 				<delete-constraints>
 					<delete-constraint expr="x->if($x.get(`DemoTypes:P#protected`), #('Objekt geschützt.'@de, 'Object protected.'@en))"/>
 				</delete-constraints>
@@ -2643,7 +2791,7 @@
 				<generalization type="P"/>
 			</generalizations>
 			<annotations>
-				<instance-presentation icon="theme:ICON_LOCK_DEMO_FUCHSIA"/>
+				<instance-presentation icon="css:fas fa-lock tl-accent-1"/>
 				<delete-constraints>
 					<delete-constraint expr="x->if($x.get(`DemoTypes:PP#moreProtected`), #'model.demo.demoTypes.errorObjectSpeciallyProtected__name'.fill($x.get(`DemoTypes:PP#name`)))"/>
 				</delete-constraints>
@@ -2659,7 +2807,7 @@
 				<generalization type="P"/>
 			</generalizations>
 			<annotations>
-				<instance-presentation icon="theme:ICON_LOCK_DEMO_FUCHSIA"/>
+				<instance-presentation icon="css:fas fa-lock tl-accent-1"/>
 				<delete-constraints override="true">
 					<custom-constraint class="com.top_logic.demo.model.annotations.DemoDeleteConstraint"/>
 				</delete-constraints>
@@ -2672,7 +2820,7 @@
 		</class>
 		<interface name="DemoTypes.Root">
 			<generalizations>
-				<generalization type="tl.element:StructuredElement"/>
+				<generalization type="DemoTypes.All"/>
 			</generalizations>
 			<annotations>
 				<legacy-qualified-name qualified-name="DemoTypes.Root"/>
@@ -2681,7 +2829,7 @@
 		<class name="Root">
 			<generalizations>
 				<generalization type="DemoTypes.Root"/>
-				<generalization type="tl.element:StructuredElementContainer"/>
+				<generalization type="DemoTypesContainer"/>
 			</generalizations>
 			<annotations>
 				<table name="DemoTypes"/>
@@ -2689,6 +2837,7 @@
 			<attributes>
 				<property name="name"
 					mandatory="true"
+					override="true"
 					type="tl.core:String"
 				>
 					<annotations>
@@ -2710,8 +2859,31 @@
 		</class>
 		<interface name="RootChild">
 			<generalizations>
-				<generalization type="tl.element:StructuredElement"/>
+				<generalization type="DemoTypesChild"/>
 			</generalizations>
+		</interface>
+		<interface name="DemoTypesChild">
+			<generalizations>
+				<generalization type="DemoTypes.All"/>
+			</generalizations>
+		</interface>
+		<interface name="DemoTypesContainer">
+			<generalizations>
+				<generalization type="DemoTypes.All"/>
+				<generalization type="tl.element:StructuredElementContainer"/>
+			</generalizations>
+			<attributes>
+				<reference name="children"
+					override="true"
+					type="DemoTypes.All"
+				>
+					<annotations>
+						<storage-algorithm>
+							<list-storage table="hasDemoStructureChild"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
 		</interface>
 	</module>
 </model>

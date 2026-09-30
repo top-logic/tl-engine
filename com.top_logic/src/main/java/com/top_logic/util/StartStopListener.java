@@ -5,8 +5,8 @@
  */
 package com.top_logic.util;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextListener;
 
 import com.top_logic.basic.version.Version;
 
@@ -35,7 +35,6 @@ public class StartStopListener extends AbstractStartStopListener implements Serv
     @Override
 	protected void initSubClassHook(ServletContext aContext) throws Exception {
         this.initPersons();
-        this.initLogEntryConfiguration();
     }
     
     /**
@@ -47,7 +46,7 @@ public class StartStopListener extends AbstractStartStopListener implements Serv
     @Deprecated
     protected void initPersons() {
 //        TokenContext     theTokenCtxt   = null;
-//        KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+//        KnowledgeBase theKB = KnowledgeBaseFactory.getDefaultKnowledgeBase();
 //        theKB.begin();
 //        try {
 //            long start = System.currentTimeMillis();
@@ -97,7 +96,4 @@ public class StartStopListener extends AbstractStartStopListener implements Serv
 	protected void exitSubClassHook(ServletContext context) {
     }
 
-    @Deprecated
-    protected void initLogEntryConfiguration() {
-    }
 }

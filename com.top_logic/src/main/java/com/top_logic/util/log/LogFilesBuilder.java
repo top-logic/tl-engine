@@ -45,11 +45,6 @@ public class LogFilesBuilder implements ListModelBuilder {
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent aComponent, Object anObject) {
-		return anObject instanceof File;
-	}
-
-	@Override
 	public Collection<?> getModel(Object businessModel, LayoutComponent aComponent) {
 		BasicFileLog logger = BasicFileLog.getInstance();
 		File logDir = logger.getBasicPath();

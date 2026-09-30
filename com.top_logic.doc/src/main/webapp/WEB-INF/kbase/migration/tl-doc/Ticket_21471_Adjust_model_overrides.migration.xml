@@ -13,11 +13,17 @@
 		<dependency name="Ticket_25835_Rename_RenderInputBeforeLabelAnnotation"
 			module="tl-element"
 		/>
+		<dependency name="Ticket_26970_Update_stored_table_definition"
+			module="tl-contact"
+		/>
 		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
 			module="tl-model-search"
 		/>
 		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
 			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_23110_create_module_tl_model_i18n"
+			module="tl-model-wysiwyg"
 		/>
 	</dependencies>
 	<processors>

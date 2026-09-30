@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.top_logic.basic.ArrayUtil;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.InlineSet;
@@ -723,7 +724,11 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 	 */
 	static long getLastUpdate(AbstractDBKnowledgeItem item) {
 		MOAttribute attribute = item.revMinAttribute();
-		return longValue(attribute.getStorage().getApplicationValue(attribute, item, item, item.getLocalValues()));
+		Object revMin = attribute.getStorage().getApplicationValue(attribute, item, item, item.getLocalValues());
+		if (revMin == null) {
+			return Revision.CURRENT_REV;
+		}
+		return longValue(revMin);
 	}
     
     /*package protected*/ final void setLastUpdateLocal(Long revMin) {
@@ -1115,6 +1120,9 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 		DBContext before = kb.installContext(ImmutableDBContext.INSTANCE);
 		try {
 			return attribute.getStorage().getCacheValue(attribute, this, oldValues);
+		} catch (Exception ex) {
+			Logger.error("Failed to access old value of column '" + attribute + "'.", ex, DBKnowledgeItem.class);
+			return null;
 		} finally {
 			kb.installContext(before);
 		}
@@ -1151,7 +1159,8 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 			initAttribute(attributeName, localValues, entry.getValue());
 			initialSetAttributes = InlineSet.add(String.class, initialSetAttributes, attributeName);
 		}
-		for (MOAttribute attr : tTable().getAttributes()) {
+		MOKnowledgeItem table = tTable();
+		for (MOAttribute attr : table.getAttributes()) {
 			MODefaultProvider defaultProvider = attr.getDefaultProvider();
 			if (defaultProvider != null && !InlineSet.contains(initialSetAttributes, attr.getName())) {
 				initAttribute(attr, localValues, defaultProvider.createDefault(attr));
@@ -1159,7 +1168,8 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 			if (attr.isInitial()) {
 				Object initialAttributeValue = getApplicationValue(attr, localValues);
 				if (initialAttributeValue == null) {
-					throw new DataObjectException("No non null value for initial attribute '" + attr + "' set.");
+					throw new DataObjectException(
+						"No non null value for initial attribute '" + table.getName() + "." + attr + "' set.");
 				}
 			}
 		}

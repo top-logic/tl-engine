@@ -318,7 +318,7 @@ public class SchemaSetup implements ConfiguredInstance<SchemaConfiguration> {
 	 * Creates a {@link DBTable} for the given {@link MOClass}
 	 * 
 	 * @param type
-	 *        the {@link MOClass} to create {@link DBTable} for.
+	 *        The {@link MOClass} to create {@link DBTable} for.
 	 */
 	public static DBTable createTable(MOClass type) {
 		DBTable result = createDBTable(type);
@@ -330,6 +330,28 @@ public class SchemaSetup implements ConfiguredInstance<SchemaConfiguration> {
 		}
 
 		return result;
+	}
+
+	/**
+	 * Creates a {@link DBColumn} for the given {@link DBAttribute}
+	 * 
+	 * @param attribute
+	 *        The {@link DBAttribute} to create {@link DBColumn} for.
+	 */
+	public static DBColumn createColumn(DBAttribute attribute) {
+		DBType dbType = attribute.getSQLType();
+		int dbSize = attribute.getSQLSize();
+		int dbPrec = attribute.getSQLPrecision();
+		boolean dbMandatory = attribute.isSQLNotNull();
+		boolean binary = attribute.isBinary();
+
+		DBColumn column = DBSchemaFactory.createColumn(attribute.getDBName());
+		column.setType(dbType);
+		column.setBinary(binary);
+		column.setMandatory(dbMandatory);
+		column.setSize(dbSize);
+		column.setPrecision(dbPrec);
+		return column;
 	}
 
 	/**
@@ -345,21 +367,7 @@ public class SchemaSetup implements ConfiguredInstance<SchemaConfiguration> {
 
 		List<DBAttribute> attrs = dbMapping.getDBAttributes();
 		for (int n = 0, cnt = attrs.size(); n < cnt; n++) {
-			DBAttribute attr = attrs.get(n);
-
-			DBType dbType = attr.getSQLType();
-			int dbSize = attr.getSQLSize();
-			int dbPrec = attr.getSQLPrecision();
-			boolean dbMandatory = attr.isSQLNotNull();
-			boolean binary = attr.isBinary();
-
-			DBColumn column = DBSchemaFactory.createColumn(attr.getDBName());
-			column.setType(dbType);
-			column.setBinary(binary);
-			column.setMandatory(dbMandatory);
-			column.setSize(dbSize);
-			column.setPrecision(dbPrec);
-
+			DBColumn column = createColumn(attrs.get(n));
 			result.getColumns().add(column);
 		}
 
@@ -530,7 +538,7 @@ public class SchemaSetup implements ConfiguredInstance<SchemaConfiguration> {
 	/**
 	 * Looks up the {@link IndexColumnsStrategy} for the given type.
 	 */
-	private static IndexColumnsStrategy getIndexStrategy(MOClass self) {
+	public static IndexColumnsStrategy getIndexStrategy(MOClass self) {
 		IndexColumnsStrategyAnnotation annotation = self.getAnnotation(IndexColumnsStrategyAnnotation.class);
 		if (annotation == null) {
 			MOClass superclass = self.getSuperclass();

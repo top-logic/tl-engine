@@ -36,7 +36,7 @@ import com.top_logic.layout.scripting.template.excel.ExcelActionRegistry.Config;
 /**
  * Accessing class to one row in the excel sheet.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ExcelRow {
 

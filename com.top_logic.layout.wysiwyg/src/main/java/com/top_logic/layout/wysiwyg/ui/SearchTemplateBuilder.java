@@ -13,7 +13,7 @@ import com.top_logic.mig.html.HTMLConstants;
 /**
  * Base class for algorithms constructing object search dialogs.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class SearchTemplateBuilder extends TemplateBuilder {
 

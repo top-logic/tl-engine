@@ -6,20 +6,25 @@
 package com.top_logic.element.meta.kbbased.storage;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
+import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AssociationStorage;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.kbbased.AttributeUtil;
+import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
 import com.top_logic.element.meta.kbbased.storage.LinkStorage.LinkStorageConfig;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
@@ -28,6 +33,9 @@ import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.composite.CompositeStorage;
+import com.top_logic.model.composite.ContainerStorage;
+import com.top_logic.model.composite.LinkTable;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.model.export.SinglePreloadContribution;
 import com.top_logic.model.v5.AssociationNavigationPreload;
@@ -38,7 +46,9 @@ import com.top_logic.model.v5.AssociationNavigationPreload;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp(classifiers = TLStorage.REFERENCE_CLASSIFIER)
-public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> extends TLItemStorage<C> implements AssociationStorage {
+@Label("Storage in separate table")
+public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> extends TLItemStorage<C>
+		implements AssociationStorage, CompositeStorage {
 
 	/**
 	 * Configuration options for {@link SingletonLinkStorage}.
@@ -76,10 +86,15 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 	 *        Whether the reference is a composition.
 	 * @param historyType
 	 *        The history type of the value of the reference.
+	 * @param deletionPolicy
+	 *        The deletion policy of the reference.
+	 * @param unversioned
+	 *        Whether reference values must be stored unversioned.
 	 * @return The storage configuration.
 	 */
-	public static Config<?> singletonLinkConfig(boolean composite, HistoryType historyType) {
-		return LinkStorage.defaultConfig(Config.class, composite, historyType);
+	public static Config<?> singletonLinkConfig(boolean composite, HistoryType historyType,
+			DeletionPolicy deletionPolicy, boolean unversioned) {
+		return LinkStorage.defaultConfig(Config.class, composite, historyType, deletionPolicy, unversioned);
 	}
 
 	@Override
@@ -90,6 +105,36 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 
 		_preload = new SinglePreloadContribution(new AssociationNavigationPreload(getOutgoingQuery()));
 		_reversePreload = new SinglePreloadContribution(new AssociationNavigationPreload(getIncomingQuery()));
+
+		if (!monomophicTable()) {
+			checkKeyAttributes(attribute,
+				WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR,
+				DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+		}
+	}
+
+	@Override
+	public ObjectKey getBaseObjectId(Map<String, Object> row) {
+		return (ObjectKey) row.get(DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+	}
+
+	@Override
+	public String getBaseObjectColumn() {
+		return DBKnowledgeAssociation.REFERENCE_SOURCE_NAME;
+	}
+
+	@Override
+	public String getStorageColumn() {
+		return DBKnowledgeAssociation.REFERENCE_DEST_NAME;
+	}
+
+	@Override
+	public ObjectKey getPartId(Map<String, Object> row) {
+		if (monomophicTable()) {
+			return getAttribute().getDefinition().tId();
+		} else {
+			return (ObjectKey) row.get(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR);
+		}
 	}
 
 	@Override
@@ -112,8 +157,8 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 	}
 
 	@Override
-	protected void storeReferencedTLObject(TLObject object, TLStructuredTypePart attribute, Object value)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
+	protected void storeReferencedTLObject(TLObject object, TLStructuredTypePart attribute, Object oldValue,
+			Object newValue) throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
 		try {
 			// get old association if existing
 			KnowledgeAssociation link = null;
@@ -125,18 +170,18 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 
 			// delete it
 			if (link != null) {
-				DBKnowledgeAssociation.clearDestinationAndRemoveLink(link);
+				DBKnowledgeAssociation.clearReferencesAndRemoveLink(link);
 			}
 
 			// create new association
-			if (value != null) {
-				LinkStorageUtil.createWrapperAssociation(attribute, object, (TLObject) value, this);
+			if (newValue != null) {
+				LinkStorageUtil.createWrapperAssociation(attribute, object, (TLObject) newValue, this);
 			}
 		} catch (DataObjectException e) {
 			Logger.error("Problem setting attribute " + this
-				+ " to value " + value, e, this);
+				+ " to value " + newValue, e, this);
 			throw new AttributeException("Problem setting attribute " + this
-				+ " to value " + value, e);
+				+ " to value " + newValue, e);
 		}
 	}
 
@@ -173,6 +218,11 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 	@Override
 	public AssociationSetQuery<KnowledgeAssociation> getOutgoingQuery() {
 		return _outgoingQuery;
+	}
+
+	@Override
+	public ContainerStorage getContainerStorage(TLReference reference) {
+		return new LinkTable(getTable());
 	}
 
 }

@@ -27,10 +27,18 @@
 		>
 			<open-handler id="openScriptRecorder"
 				class="com.top_logic.layout.window.OpenWindowCommand"
-				executability="com.top_logic.layout.debug.ScriptingEnabledExecutability"
+				executability="com.top_logic.layout.debug.ScriptingEnabledExecutability, RootOnly"
 				image="theme:IMAGE_BUTTONS_SCRIPT_RECORDER22"
 				resourceKey="menu.Recorder"
 			/>
 		</windowInfo>
+	</window>
+	<window template="com.top_logic/admin/technical/layoutInspector/inspector.xml">
+		<windowInfo
+			createOpenerButtons="false"
+			multiWindow="false"
+			openHandlerClass="com.top_logic.layout.inspector.OpenSeparateInspectorWindowCommandHandler"
+			openHandlerName="openInspector"
+		/>
 	</window>
 </template>

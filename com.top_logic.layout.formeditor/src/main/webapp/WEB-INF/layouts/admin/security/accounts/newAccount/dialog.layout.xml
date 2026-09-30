@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic.model.search/transaction.template.xml"
 >
 	<arguments
@@ -59,46 +58,6 @@
 							<de>Nutzerdaten</de>
 						</label>
 					</group>
-					<foreign-objects
-						items="x -> $x.get(`Contacts:PersonContact#account`)"
-						label="`Contacts:PersonContact`"
-						type="tl.accounts:Person"
-					>
-						<layout>
-							<field
-								attribute="name"
-								fullQualifiedName="tl.accounts:Person#name"
-								type="tl.core:String"
-								visibility="read-only"
-							/>
-							<field
-								attribute="timezone"
-								fullQualifiedName="tl.accounts:Person#timeZone"
-								type="tl.util:TimeZone"
-							/>
-							<field
-								attribute="country"
-								fullQualifiedName="tl.accounts:Person#country"
-								type="tl.util:Country"
-							/>
-							<field
-								attribute="language"
-								fullQualifiedName="tl.accounts:Person#language"
-								type="tl.util:Language"
-							/>
-							<field
-								attribute="restrictedUser"
-								fullQualifiedName="tl.accounts:Person#restrictedUser"
-								type="tl.core:Boolean"
-							/>
-							<field
-								attribute="authDeviceID"
-								fullQualifiedName="tl.accounts:Person#authDeviceID"
-								type="tl.core:String"
-								visibility="read-only"
-							/>
-						</layout>
-					</foreign-objects>
 					<group>
 						<field
 							attribute="email"
@@ -125,30 +84,14 @@
 							fullQualifiedName="Contacts:Contact.Person#fax"
 							type="tl.core:String"
 						/>
-						<label key="dynamic.10c2421b-b394-4ddc-bad2-d07e2c18b5a3">
-							<en>Contact details</en>
-							<de>Kontaktdaten</de>
-						</label>
-					</group>
-					<group>
-						<field
-							attribute="position"
-							fullQualifiedName="Contacts:Contact.Person#position"
-							type="tl.core:String"
-						/>
-						<field
-							attribute="boss"
-							fullQualifiedName="Contacts:Contact.Person#boss"
-							type="PersonContact"
-						/>
 						<field
 							attribute="company"
 							fullQualifiedName="Contacts:Contact.Person#company"
 							type="Contacts:Contact.Company"
 						/>
-						<label key="dynamic.ac4eddd9-e1ec-4e8e-87e8-0e0ef7186334">
-							<en>Organization</en>
-							<de>Organisation</de>
+						<label key="dynamic.10c2421b-b394-4ddc-bad2-d07e2c18b5a3">
+							<en>Contact details</en>
+							<de>Kontaktdaten</de>
 						</label>
 					</group>
 					<group>
@@ -173,8 +116,6 @@
 			class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
 			clique="apply"
 			closeDialog="true"
-			confirm="false"
-			confirmMessage=""
 			group="Write"
 			image="theme:ICONS_BUTTON_OK"
 		>
@@ -182,9 +123,6 @@
 				<en>Create user</en>
 				<de>Benutzer anlegen</de>
 			</resourceKey>
-			<postCreateActions>
-				<setModel target="selection(dialogParent())"/>
-			</postCreateActions>
 			<operation><![CDATA[form -> {
     contact = $form.copy(null, true, x->new(`Contacts:PersonContact`));
     login = $form.get(`tl.contact.ui:CreateAccount#login`);
@@ -193,13 +131,14 @@
         $account.set(`tl.accounts:Person#name`, $login);
         $account.set(`tl.accounts:Person#contact`, $contact);
         $account.set(`tl.accounts:Person#authDeviceID`, "dbSecurity");
-        group = new(`tl.accounts:Group`);
-        $group.set(`tl.accounts:Group#name`, $login);
-        $group.set(`tl.accounts:Group#isSystem`, true);
-        $account.set(`tl.accounts:Person#representativeGroup`, $group);
     });
     $contact;
 }]]></operation>
+			<postCreateActions>
+				<setModel target="selection(dialogParent())">
+					<input/>
+				</setModel>
+			</postCreateActions>
 		</transactionHandler>
 	</arguments>
 </config:template-call>

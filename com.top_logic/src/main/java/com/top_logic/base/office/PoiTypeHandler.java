@@ -9,30 +9,37 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Workbook;
 
 import com.top_logic.base.office.excel.POITypeSupporter;
+import com.top_logic.base.office.excel.handler.POITypeProvider;
 
 /**
- * A type handler for setting special values in cells.
+ * An algorithm setting a Java value to an Excel cell.
  * 
- * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+ * <p>
+ * Instances of this class are registered to the configuration of {@link POITypeProvider}.
+ * </p>
+ * 
+ * @see com.top_logic.base.office.excel.handler.POITypeProvider.Config#getTypeHandlers()
  */
 public interface PoiTypeHandler {
 
-    /** 
-     * Returns the class this handler is used for.
-     * 
-     * @return the class this handler is used for.
-     */
+    /**
+	 * The value type, this handler is used for.
+	 */
     Class<?> getHandlerClass();
     
-    /** 
-     * This method is called to set the value in the cell.
-     * 
-     * @param    aCell        The cell to set the value in
-     * @param    aWorkbook    The workbook is needed for styling the cells.
-     * @param    aValue       The value to set
-     * @param    aSupport     The supporter calling this method.
-     * @return   the width of the cell.
-     */
-    int setValue(Cell aCell, Workbook aWorkbook, Object aValue, POITypeSupporter aSupport);
+    /**
+	 * Sets the given value to the given cell.
+	 * 
+	 * @param cell
+	 *        The cell to set the value in
+	 * @param workbook
+	 *        The workbook is needed for styling the cells.
+	 * @param value
+	 *        The value to set
+	 * @param support
+	 *        The supporter calling this method.
+	 * @return The width of the cell resulting cell in characters.
+	 */
+	int setValue(Cell cell, Workbook workbook, Object value, POITypeSupporter support);
     
 }

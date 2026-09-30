@@ -14,7 +14,7 @@
 		horizontal="true"
 	>
 		<tableView name="${namePrefix}ThemeTable"
-			securityProviderClass="securityRoot"
+			securityObject="securityRoot"
 			titleKey="${resPrefix}.themes.table.title"
 		>
 			<layoutInfo size="350px"/>
@@ -43,16 +43,16 @@
 				>
 					<dialogInfo
 						defaultI18n="${resPrefix}.themes.create.dialog"
-						height="350"
+						height="450"
 						image="theme:ICON_PLUS"
-						width="450"
+						width="500"
 					/>
 
 					<components>
 						<form name="${namePrefix}CreateTheme"
-							buttonComponent="${namePrefix}CreateThemeButtonBar"
+							buttonbar="true"
 							resetInvisible="true"
-							securityProviderClass="securityRoot"
+							securityObject="securityRoot"
 						>
 							<modelBuilder class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeFormBuilder"
 								create="true"
@@ -67,7 +67,6 @@
 								/>
 							</buttons>
 						</form>
-						<buttonbar name="${namePrefix}CreateThemeButtonBar"/>
 					</components>
 				</layout>
 			</dialogs>
@@ -75,11 +74,11 @@
 				<button id="deleteTheme"
 					class="com.top_logic.layout.themeedit.browser.providers.theme.DeleteThemeHandler"
 					clique="delete"
-					confirm="true"
 					group="Delete"
 					resourceKey="${resPrefix}.themes.delete"
 					target="selection(self())"
 				>
+					<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 					<executability>
 						<rule class="com.top_logic.tool.execution.EmptyTableModelDisabledRule"/>
 						<rule class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotExtendedRule"/>

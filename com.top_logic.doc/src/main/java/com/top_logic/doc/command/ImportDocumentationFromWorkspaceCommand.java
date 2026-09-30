@@ -15,6 +15,8 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.doc.export.DocumentationImporter;
 import com.top_logic.doc.export.TLDocExportImportConstants;
 import com.top_logic.event.infoservice.InfoService;
+import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandGroupReference;
@@ -58,7 +60,11 @@ public class ImportDocumentationFromWorkspaceCommand extends AbstractImportExpor
 			.showInfo(I18NConstants.NO_IMPORT_FILES, I18NConstants.NO_IMPORT_FILES__LANGUAGE__PATH
 				.fill(locale.getDisplayLanguage(ThreadContext.getLocale()),
 					TLDocExportImportConstants.ROOT_RELATIVE_PATH)));
-		importer.doImport(NoProtocol.INSTANCE);
+
+		KBUtils.inTransaction(PersistencyLayer.getKnowledgeBase(), () -> {
+			importer.doImport(NoProtocol.INSTANCE);
+		});
+
 		return HandlerResult.DEFAULT_RESULT;
 	}
 

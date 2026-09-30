@@ -16,7 +16,7 @@
 		<open-handler id="ID_fffd7138_04d8_47bb_8e92_8b88a5835b69"
 			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
 			clique=""
-			confirm="false"
+			confirmation=""
 			disabledImage=""
 			group=""
 			image="css:far fa-question-circle"

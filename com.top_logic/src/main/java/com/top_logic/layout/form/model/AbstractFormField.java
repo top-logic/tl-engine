@@ -220,6 +220,8 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 */
     private boolean fireChangedEvent = true;
 
+	private Object _placeholder;
+
     /**
 	 * Creates a new field with given parameters.
 	 * 
@@ -480,6 +482,20 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 		}
     }
 
+	@Override
+	public Object getPlaceholder() {
+		return _placeholder;
+	}
+
+	@Override
+	public void setPlaceholder(Object newValue) {
+		Object oldValue = _placeholder;
+		_placeholder = newValue;
+		if (!Utils.equals(newValue, oldValue)) {
+			notifyListeners(PLACEHOLDER_PROPERTY, this, oldValue, newValue);
+		}
+	}
+
 	/**
 	 * Calling this method indicates that the new value is not a programmatic
 	 * update, but comes from the GUI.
@@ -544,6 +560,24 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 		fireValueChanged(oldValue);
     }
     
+	@Override
+	protected void notifyDisplayModeChanged(int oldDisplayMode, int newDisplayMode) {
+		// Clear/restore error when making field inactive/reactivating field. Since restoring the
+		// error is only possible if the field does not contain user input that cannot be parsed,
+		// this only happens for fields that have no illegal input.
+		if (state != ILLEGAL_INPUT_STATE) {
+			if (newDisplayMode == ACTIVE_MODE) {
+				// Restore a potential error.
+				check();
+			} else {
+				// Clear error because the user can no longer change the value to fix the error.
+				clearError();
+			}
+		}
+
+		super.notifyDisplayModeChanged(oldDisplayMode, newDisplayMode);
+	}
+
     @Override
 	public Object getDefaultValue() {
     	return this.defaultValue;
@@ -666,7 +700,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
     	assert 
     		(! newHasError) || 
     		(state == ILLEGAL_INPUT_STATE) || 
-    		(state == ILLEGAL_VALUE_STATE);
+				(state == ILLEGAL_VALUE_STATE) : "Invalid state: " + state;
     	
     	boolean errorTextChanged = !StringServices.equals(newError, oldError);
     	if (newHasError != oldHasError || errorTextChanged)
@@ -1049,8 +1083,10 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 */
     private final boolean checkValue(Object aValue) throws CheckException {
     	boolean success = true;
-        for (Iterator<Constraint> it = InlineList.iterator(Constraint.class, this.constraints); it.hasNext(); ) {
-    		success &= it.next().check(aValue);
+		if (isActive()) {
+			for (Iterator<Constraint> it = InlineList.iterator(Constraint.class, this.constraints); it.hasNext();) {
+				success &= it.next().check(aValue);
+			}
     	}
     	
     	// Note: Must not explicitly check for the mandatory property, because there are

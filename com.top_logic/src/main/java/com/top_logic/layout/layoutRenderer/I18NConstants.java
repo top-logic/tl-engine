@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.layoutRenderer;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
@@ -18,13 +19,17 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey CLOSE_DIALOG = legacyKey("close");
+	@CustomKey("close")
+	public static ResKey CLOSE_DIALOG;
 
-	public static ResKey GUI_INSPECTOR = legacyKey("menu.GuiInspector");
+	@CustomKey("menu.GuiInspector")
+	public static ResKey GUI_INSPECTOR;
 
-	public static ResKey MAXIMIZE_DIALOG = legacyKey("maximise");
+	@CustomKey("maximise")
+	public static ResKey MAXIMIZE_DIALOG;
 
-	public static ResKey RESTORE_DIALOG = legacyKey("restore");
+	@CustomKey("restore")
+	public static ResKey RESTORE_DIALOG;
 
 	static {
 		initConstants(I18NConstants.class);

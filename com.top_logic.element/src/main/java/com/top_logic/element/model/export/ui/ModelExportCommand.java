@@ -138,11 +138,12 @@ public class ModelExportCommand extends AbstractDownloadHandler {
 
 		TypedConfiguration.minimize(config);
 
-		ConfigurationWriter writer = new ConfigurationWriter(out);
-		if (!StringServices.isEmpty(namespace)) {
-			writer.setNamespace("", namespace);
+		try (ConfigurationWriter writer = new ConfigurationWriter(out)) {
+			if (!StringServices.isEmpty(namespace)) {
+				writer.setNamespace("", namespace);
+			}
+			writer.write(ElementSchemaConstants.ROOT_ELEMENT, ModelConfig.class, config);
 		}
-		writer.write(ElementSchemaConstants.ROOT_ELEMENT, ModelConfig.class, config);
 	}
 
 	@Override

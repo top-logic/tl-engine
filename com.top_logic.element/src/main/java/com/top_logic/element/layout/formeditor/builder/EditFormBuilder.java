@@ -134,12 +134,8 @@ public class EditFormBuilder extends ConfiguredDynamicFormBuilder {
 			.build();
 		
 		FormEditorUtil.createAttributes(context, typedForm.getFormDefinition());
+		formContext.set(TOP_LEVEL_OBJECT, object);
 		return formContext;
-	}
-
-	@Override
-	public TLStructuredType getType(FormComponent component, TLObject object) {
-		return object.tType();
 	}
 
 	@Override

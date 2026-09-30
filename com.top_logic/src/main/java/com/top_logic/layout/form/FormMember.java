@@ -13,6 +13,7 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.SetBuilder;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.listener.EventType;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.IdentifierSource;
 import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.basic.Focusable;
@@ -24,6 +25,8 @@ import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.scripting.recorder.ref.NamedModel;
 import com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef;
+import com.top_logic.util.Resources;
+import com.top_logic.util.css.CssUtil;
 
 
 /**
@@ -84,6 +87,26 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	static final Property<Object> STABLE_ID_SPECIAL_CASE_CONTEXT_PROPERTY =
 		TypedAnnotatable.property(Object.class, "context");
 
+	/**
+	 * Type of the <code>active</code> property.
+	 * 
+	 * The value transmitted to the client in response to a change of this property is a
+	 * {@link com.top_logic.base.services.simpleajax.XMLValueConstants#BOOLEAN_ELEMENT}.
+	 * 
+	 * @see #isActive()
+	 * @see ActivePropertyListener
+	 */
+	EventType<ActivePropertyListener, FormMember, Boolean> ACTIVE_PROPERTY =
+			new EventType<>("immutable") {
+		
+		@Override
+		public Bubble dispatch(ActivePropertyListener listener, FormMember sender, Boolean oldValue,
+				Boolean newValue) {
+			return listener.handleActiveChanged(sender, oldValue, newValue);
+		}
+		
+	};
+	
 	/**
 	 * Type of the <code>immutable</code> property.
 	 * 
@@ -229,6 +252,7 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 		.add(TOOLTIP_PROPERTY)
 		.add(LABEL_PROPERTY)
 		.add(CLASS_PROPERTY)
+		.add(ACTIVE_PROPERTY)
 		.add(DISABLED_PROPERTY)
 		.add(IMMUTABLE_PROPERTY)
 		.add(ADDED_TO_PARENT)
@@ -361,6 +385,21 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	public String setLabel(String label);
 	
 	/**
+	 * Explicitly sets the label for this member.
+	 * 
+	 * @see #setLabel(String)
+	 */
+	default void setLabel(ResKey key) {
+		String internationalized;
+		if (key != null) {
+			internationalized = Resources.getInstance().getString(key);
+		} else {
+			internationalized = null;
+		}
+		setLabel(internationalized);
+	}
+
+	/**
 	 * Whether this {@link FormMember} has an explicitly set label or the default mechanism leads to
 	 * an internationalised text.
 	 * 
@@ -379,6 +418,21 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	void setTooltip(String newTooltip);
 
 	/**
+	 * Explicitly sets the tooltip for this member.
+	 * 
+	 * @see #setTooltip(String)
+	 */
+	default void setTooltip(ResKey key) {
+		String internationalized;
+		if (key != null) {
+			internationalized = Resources.getInstance().getString(key);
+		} else {
+			internationalized = null;
+		}
+		setTooltip(internationalized);
+	}
+
+	/**
 	 * HTML fragment to render inside the tooltip caption, see {@link #getTooltip()}.
 	 */
 	String getTooltipCaption();
@@ -389,14 +443,27 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	void setTooltipCaption(String aTooltipCaption);
 
 	/**
+	 * Explicitly sets the tooltip caption for this member.
+	 * 
+	 * @see #setTooltipCaption(String)
+	 */
+	default void setTooltipCaption(ResKey key) {
+		String internationalized;
+		if (key != null) {
+			internationalized = Resources.getInstance().getString(key);
+		} else {
+			internationalized = null;
+		}
+		setTooltipCaption(internationalized);
+	}
+
+	/**
 	 * The current custom CSS class names of this {@link FormMember}.
 	 * 
-	 * @return the (space-separated) CSS classes associated with this member, or
-	 *         <code>null</code>, if there are no custom CSS classes for this
-	 *         member.
+	 * @return the (space-separated) CSS classes associated with this member, or <code>null</code>,
+	 *         if there are no custom CSS classes for this member.
 	 * 
-	 * @see #CLASS_PROPERTY for the property event being fired, if this
-	 *      property changes.
+	 * @see #CLASS_PROPERTY for the property event being fired, if this property changes.
 	 */
 	public String getCssClasses();
 
@@ -408,86 +475,45 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	/**
 	 * Adds a single CSS class to the {@link #getCssClasses()} of this {@link FormMember}.
 	 *
-	 * @param cssClass
+	 * @param newClasses
 	 *        The new CSS class to add (must not contain spaces).
 	 * @return Whether the given CSS class was newly added (was not already set).
 	 */
-	default boolean addCssClass(String cssClass) {
-		if (StringServices.isEmpty(cssClass)) {
+	default boolean addCssClass(String newClasses) {
+		if (StringServices.isEmpty(newClasses)) {
 			return false;
 		}
 
-		String cssClasses = getCssClasses();
-		if (StringServices.isEmpty(cssClasses)) {
-			setCssClasses(cssClass);
-		} else {
-			int lastIndex = 0;
-			boolean testAgain = true;
-			while (testAgain) {
-				int index = cssClasses.indexOf(' ', lastIndex);
-				if (index < 0) {
-					index = cssClasses.length();
-					testAgain = false;
-				}
-				if (cssClasses.substring(lastIndex, index).equals(cssClass)) {
-					return false;
-				}
-				lastIndex = index + 1;
-			}
-
-			setCssClasses(cssClasses + " " + cssClass);
+		String before = getCssClasses();
+		String after = CssUtil.joinCssClassesUnique(before, newClasses);
+		if (StringServices.equals(before, after)) {
+			return false;
 		}
+
+		setCssClasses(after);
 		return true;
 	}
 
 	/**
 	 * Removes a single CSS class from the {@link #getCssClasses()} of this {@link FormMember}.
 	 *
-	 * @param cssClass
+	 * @param removedClass
 	 *        The single CSS class to remove (must not contain spaces).
 	 * @return Whether the given CSS class was set on this member before (was actually removed).
 	 */
-	default boolean removeCssClass(String cssClass) {
-		if (StringServices.isEmpty(cssClass)) {
+	default boolean removeCssClass(String removedClass) {
+		if (StringServices.isEmpty(removedClass)) {
 			return false;
 		}
 
-		String cssClasses = getCssClasses();
-		if (StringServices.isEmpty(cssClasses)) {
-			return false;
-		} else {
-			int startIndex = 0;
-			boolean testAgain = true;
-			while (testAgain) {
-				int sepPos = cssClasses.indexOf(' ', startIndex);
-				int stopIndex;
-				if (sepPos < 0) {
-					stopIndex = cssClasses.length();
-					testAgain = false;
-				} else {
-					stopIndex = sepPos;
-				}
-				if (cssClasses.substring(startIndex, stopIndex).equals(cssClass)) {
-					if (startIndex == 0) {
-						if (stopIndex == cssClasses.length()) {
-							setCssClasses(null);
-						} else {
-							setCssClasses(cssClasses.substring(stopIndex + 1, cssClasses.length()));
-						}
-					} else {
-						if (stopIndex == cssClasses.length()) {
-							setCssClasses(cssClasses.substring(0, startIndex - 1));
-						} else {
-							setCssClasses(cssClasses.substring(0, startIndex)
-								+ cssClasses.substring(stopIndex + 1, cssClasses.length()));
-						}
-					}
-					return true;
-				}
-				startIndex = sepPos + 1;
-			}
+		String before = getCssClasses();
+		String after = CssUtil.removeCssClasses(before, removedClass);
+		if (StringServices.equals(before, after)) {
 			return false;
 		}
+
+		setCssClasses(after);
+		return true;
 	}
     
     /**
@@ -717,7 +743,7 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	 * 
 	 * <p>
 	 * The context object of the resulting {@link ContextMenuProvider} (the argument to
-	 * {@link ContextMenuProvider#getContextMenu(Object)}) is always this {@link FormMember}
+	 * {@link ContextMenuProvider#getContextMenu(Object, Object)}) is always this {@link FormMember}
 	 * instance.
 	 * </p>
 	 */

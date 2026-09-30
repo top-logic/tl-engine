@@ -8,6 +8,7 @@ package com.top_logic.demo.layout.demo;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.io.IOException;
+import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.io.binary.BinaryDataSource;
@@ -24,7 +25,6 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.HiddenField;
 import com.top_logic.layout.form.template.ControlProvider;
-import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.error.TopLogicException;
@@ -49,11 +49,13 @@ public class DisplaySelectedPDFBuilder implements ModelBuilder {
 	@Override
 	public Object getModel(Object businessModel, LayoutComponent aComponent) {
 		FormContext context = new FormContext(aComponent);
+		String bodyClass = aComponent.getConfig().getBodyClass();
+		context.addCssClass(bodyClass);
 		FormField uploadField = addUploadField(context);
 		FormField displayField = addDisplayField(context, uploadField);
-		template(context, div(
+		template(context,
 			div(fieldBox(uploadField.getName()),
-				div(member(displayField.getName())))));
+				member(displayField.getName())));
 		return context;
 	}
 
@@ -67,11 +69,7 @@ public class DisplaySelectedPDFBuilder implements ModelBuilder {
 
 					@Override
 					public void write(DisplayContext context, TagWriter out) throws IOException {
-						out.beginBeginTag(HTMLConstants.DIV);
-						out.writeAttribute(HTMLConstants.STYLE_ATTR, "position:relative; height:600px;");
-						out.endBeginTag();
 						DisplayPDFControl.CONTROL_PROVIDER.createControl(model, style).write(context, out);
-						out.endTag(HTMLConstants.DIV);
 					}
 				});
 			}
@@ -80,17 +78,27 @@ public class DisplaySelectedPDFBuilder implements ModelBuilder {
 			
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
-				if (newValue == null) {
-					displayField.setValue(newValue);
-					return;
+				BinaryDataSource newPDF = null;
+
+				if (newValue instanceof List<?> list && !list.isEmpty()) {
+					Object firstElement = list.get(0);
+					if (firstElement instanceof BinaryDataSource) {
+						newPDF = (BinaryDataSource) firstElement;
+					}
+				} else if (newValue instanceof BinaryDataSource) {
+					newPDF = (BinaryDataSource) newValue;
 				}
-				BinaryDataSource newPDF = (BinaryDataSource) newValue;
-				String name = newPDF.getName();
-				if (!name.endsWith(".pdf")) {
-					field.setValue(oldValue);
-					throw new TopLogicException(ResKey.text(fc.getResources().getStringResource("onlyPDF")));
+				
+				if (newPDF != null && !newPDF.getName().endsWith(".pdf")) {
+					rejectInvalidInput(fc, field, oldValue);
 				}
+
 				displayField.setValue(newPDF);
+			}
+
+			private void rejectInvalidInput(FormContext fc, FormField field, Object oldValue) {
+				field.setValue(oldValue);
+				throw new TopLogicException(ResKey.text(fc.getResources().getStringResource("onlyPDF")));
 			}
 		});
 		fc.addMember(displayField);

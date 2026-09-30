@@ -424,7 +424,7 @@
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ResourceModelNaming$Name"
 				css-class=""
 				image="css:far fa-meh"
-				label="#(&quot;Abweichung innerhalb der Toleranz&quot;@de, &quot;Deviation within tolerance&quot;@en"
+				label="#(&quot;Abweichung innerhalb der Toleranz&quot;@de, &quot;Deviation within tolerance&quot;@en)"
 				link=""
 				tooltip="#(&quot;Beste Bewertung weicht mehr als 25% vom Durchschnitt ab: {0}%&quot;@de, &quot;Best rating deviates more than 25% from the average: {0}%&quot;@en)/d50.0"
 				type=""

@@ -65,7 +65,7 @@ public class ListFormGroupBuilder extends FormGroupBuilder {
 		FormField valueField = createListEntryField(contentGroup);
 
 		valueField.setMandatory(true);
-		valueField.setValue(value);
+		valueField.initializeField(value);
 		valueField.addValueListener(createValueListener(elementGroup));
 
 		return valueField;

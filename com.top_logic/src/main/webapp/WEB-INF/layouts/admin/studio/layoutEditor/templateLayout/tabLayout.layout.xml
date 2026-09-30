@@ -7,7 +7,6 @@
 >
 	<arguments
 		helpID=""
-		securityDomain="SecurityStructure"
 		tabIcon=""
 	>
 		<tabLabel key="dynamic.fc425578-3b09-4c7b-97c7-59d340ddf78e">

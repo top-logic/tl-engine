@@ -14,7 +14,7 @@ import com.top_logic.layout.tree.model.AbstractTreeTableModel;
 /**
  * {@link InspectorTreeNode} in case model is actually an array of objects.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class InspectorArrayNode extends InspectorTreeNode {
 

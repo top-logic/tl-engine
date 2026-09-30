@@ -9,7 +9,6 @@ import java.util.Collection;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AbstractStorageBase;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
@@ -46,11 +45,8 @@ public abstract class CollectionStorage<C extends CollectionStorage.Config<?>> e
 		}
 
 		switch (update.getUpdateType()) {
-			case TYPE_SET_COLLECTION:
-				checkSetValues(update.getObject(), update.getAttribute(), update.getCollectionSetUpdate());
-				return;
-			case TYPE_SET_SIMPLE:
-				checkSetValue(update.getObject(), update.getAttribute(), update.getSimpleSetUpdate());
+			case TYPE_EDIT:
+				checkSetValue(update.getObject(), update.getAttribute(), update.getEditedValue());
 				return;
 			default: // other types are not allowed for collections
 				return;
@@ -71,25 +67,6 @@ public abstract class CollectionStorage<C extends CollectionStorage.Config<?>> e
 	protected abstract void checkRemoveValue(TLObject object, TLStructuredTypePart attribute, Object collectionRemoveUpdate) throws TopLogicException;
 
 	@Override
-	public Object getUpdateValue(AttributeUpdate update) throws NoSuchAttributeException,
-			IllegalArgumentException, AttributeException {
-		TLStructuredTypePart attribute = update.getAttribute();
-		try {
-			// Do the check
-			checkUpdate(update);
-
-			switch (update.getUpdateType()) {
-				case TYPE_SET_COLLECTION:
-					return update.getCollectionSetUpdate();
-				default: // other types are not allowed for collections
-					throw new IllegalArgumentException("Invalid update for " + attribute);
-			}
-		} catch (Exception e) {
-			throw new IllegalArgumentException("Invalid update for " + attribute);
-		}
-	}
-
-	@Override
 	public void update(AttributeUpdate update) throws AttributeException {
 		try {
 			if (update == null || update.isDisabled() || !update.isChanged()) {
@@ -103,8 +80,8 @@ public abstract class CollectionStorage<C extends CollectionStorage.Config<?>> e
 			}
 
 			switch (update.getUpdateType()) {
-				case TYPE_SET_COLLECTION:
-					setAttributeValue(object, attribute, update.getCollectionSetUpdate());
+				case TYPE_EDIT:
+					setAttributeValue(object, attribute, update.getEditedValue());
 					break;
 				default: // other types are not allowed for collections
 					break;

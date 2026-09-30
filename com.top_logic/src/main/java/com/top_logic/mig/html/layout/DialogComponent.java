@@ -21,7 +21,8 @@ import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandHandlerCommand;
-import com.top_logic.layout.basic.DirtyHandling;
+import com.top_logic.layout.basic.check.ChangeHandler;
+import com.top_logic.layout.basic.check.ChildrenCheckScope;
 import com.top_logic.layout.form.component.AbstractCreateCommandHandler;
 import com.top_logic.layout.scripting.action.ActionFactory;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
@@ -31,6 +32,7 @@ import com.top_logic.layout.structure.LayoutControlFactory;
 import com.top_logic.layout.structure.LayoutData;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -71,13 +73,8 @@ public class DialogComponent extends AbstractDialogModel {
 				return HandlerResult.DEFAULT_RESULT;
 			} else {
 				Map<String, Object> emptyArgs = Collections.<String,Object>emptyMap();
-				boolean dirty = DirtyHandling.getInstance().checkDirty(context, closeHandler, targetComponent, emptyArgs);
-				if (dirty) {
-					return HandlerResult.DEFAULT_RESULT;
-				} else {
-					closeLocally();
-					return CommandHandlerUtil.handleCommand(closeHandler, context, targetComponent, emptyArgs);
-				}
+				closeLocally();
+				return CommandHandlerUtil.handleCommand(closeHandler, context, targetComponent, emptyArgs);
 			}
 		}
 
@@ -108,8 +105,8 @@ public class DialogComponent extends AbstractDialogModel {
 		private static final Filter<? super Object> IS_CLOSE_DIALOG_HANDLER;
 		static {
 			Filter<? super Object> isCloseHandler = createClassFilter(CloseModalDialogCommandHandler.class);
-			Filter<? super Object> isCreateHandler = createClassFilter(AbstractCreateCommandHandler.class);
-			IS_CLOSE_DIALOG_HANDLER = and(isCloseHandler, not(isCreateHandler));
+			Filter<? super Object> isNotCreateHandler = not(createClassFilter(AbstractCreateCommandHandler.class));
+			IS_CLOSE_DIALOG_HANDLER = and(isCloseHandler, isNotCreateHandler);
 		}
 		
 		private CloseModalDialogCommandHandler closeHandler;
@@ -122,13 +119,10 @@ public class DialogComponent extends AbstractDialogModel {
 				return false;
 			}
 			
-			Collection commands = component.getCommands();
-			if (commands != null) {
-				Object closeHandler = FilterUtil.findFirst(IS_CLOSE_DIALOG_HANDLER, commands);
-				if (closeHandler != null) {
-					this.closeHandler = (CloseModalDialogCommandHandler) closeHandler;
-					this.targetComponent = component;
-				}
+			CommandHandler handler = FilterUtil.findFirst(IS_CLOSE_DIALOG_HANDLER, component.getCommands());
+			if (handler != null) {
+				this.closeHandler = (CloseModalDialogCommandHandler) handler;
+				this.targetComponent = component;
 			}
 			return true;
 		}
@@ -242,5 +236,11 @@ public class DialogComponent extends AbstractDialogModel {
 	@Override
 	public boolean isClosed() {
 		return this.closedLocally;
+	}
+
+	@Override
+	public Collection<? extends ChangeHandler> getAffectedFormHandlers() {
+		LayoutComponent dialogContents = getContentComponent();
+		return new ChildrenCheckScope(dialogContents).getAffectedFormHandlers();
 	}
 }

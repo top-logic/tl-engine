@@ -5,11 +5,12 @@
     <relativePath>../tl-parent-gwt</relativePath>
     <groupId>com.top-logic</groupId>
 	<artifactId>tl-parent-gwt</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-graph-diagramjs-client</artifactId>
-  <description>GWT-based client library for displaying the TopLogic model as UML.</description>
+	<name>${project.artifactId}</name>
+	<description>GWT-based client library for displaying the TopLogic model as UML.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
   
   <properties>
@@ -35,7 +36,6 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-ajax-client</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
@@ -47,7 +47,6 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-client-diagramjs</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
@@ -59,7 +58,6 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-graph-diagramjs</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
@@ -68,28 +66,24 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-graph-common</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-common-remote</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-common-json</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-basic-shared</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>

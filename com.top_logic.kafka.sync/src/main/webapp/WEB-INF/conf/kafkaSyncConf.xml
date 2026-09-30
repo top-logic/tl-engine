@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Main configuration file -->
+
+<root>
+	<alias>
+		<entry name="%DATA_CHANGE_CONSUMER_GROUP_NAME%" value="${env:kafka_kb_consumer_group:kb-consumer-group-1}"/>
+		
+		<entry name="%DATA_CHANGE_TOPIC%" value="DATA_CHANGE"/>
+		<entry name="%DATA_CHANGE_TOPIC_PRODUCER%" value="%DATA_CHANGE_TOPIC%" />
+		<entry name="%DATA_CHANGE_TOPIC_CONSUMER%" value="%DATA_CHANGE_TOPIC%" />
+	</alias>
+</root>

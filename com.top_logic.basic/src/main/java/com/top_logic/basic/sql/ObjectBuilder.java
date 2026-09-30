@@ -26,7 +26,7 @@ import com.top_logic.basic.Logger;
  * template class (handed over during instanciation) and fills this with the
  * values taken from a result set.
  *
- * @author  Michael Gänsler
+ * @author  Michael GÃ¤nsler
  */
 public class ObjectBuilder {
 

@@ -146,8 +146,6 @@ public class FormGroupControl extends AbstractCompositeControl<FormGroupControl>
 	 */
 	private static class ToggleCollapsed extends ControlCommand {
 
-		private static final ResKey COLLAPSED_COMMAND_NOT_POSSIBLE = I18NConstants.ERROR_CANNOT_COLLAPSE_GROUP;
-
 		public ToggleCollapsed() {
 			super("toggleCollapsed");
 		}
@@ -159,7 +157,7 @@ public class FormGroupControl extends AbstractCompositeControl<FormGroupControl>
 			if (!groupControl.isCollapsible()) {
 				HandlerResult result = new HandlerResult();
 				FormGroup group = groupControl.getFormGroup();
-				result.addErrorMessage(COLLAPSED_COMMAND_NOT_POSSIBLE, group.getLabel());
+				result.addErrorMessage(I18NConstants.ERROR_CANNOT_COLLAPSE_GROUP.fill(group.getLabel()));
 				return result;
 			}
 			container.setCollapsed(!container.isCollapsed());

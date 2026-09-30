@@ -12,8 +12,7 @@
 MandatorAdminComponent.NewMandatorComponent theComponent = (MandatorAdminComponent.NewMandatorComponent) MainLayout.getComponent(pageContext);
 %><%@page import="com.top_logic.element.layout.structured.MandatorAdminComponent"
 %><layout:html>
-	<layout:head>
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:form>
 			<h2>

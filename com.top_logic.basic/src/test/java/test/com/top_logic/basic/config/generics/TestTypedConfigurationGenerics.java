@@ -26,7 +26,7 @@ import com.top_logic.basic.config.annotation.Name;
  * Assert {@link PropertyDescriptor} element type for inherited properties with a generic return
  * type.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TestTypedConfigurationGenerics extends TestCase {
 
@@ -53,7 +53,7 @@ public class TestTypedConfigurationGenerics extends TestCase {
 	/**
 	 * Base class for a single type variable.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Test<A> extends ConfigurationItem {
 
@@ -82,7 +82,7 @@ public class TestTypedConfigurationGenerics extends TestCase {
 	/**
 	 * Direct sub interface. Sets the type variable.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface TestDirect extends Test<String> {
 		// Marker interface.
@@ -91,7 +91,7 @@ public class TestTypedConfigurationGenerics extends TestCase {
 	/**
 	 * Delegates the type variable.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface TestTransitivityDelegates<B> extends Test<B> {
 		// Marker interface.
@@ -100,7 +100,7 @@ public class TestTypedConfigurationGenerics extends TestCase {
 	/**
 	 * Leaf of the sub interface tree which sets the type variable.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface TestTransitivityLeaf extends TestTransitivityDelegates<String> {
 		// Marker interface.
@@ -109,7 +109,7 @@ public class TestTypedConfigurationGenerics extends TestCase {
 	/**
 	 * Base class for a multiple type variable.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface TestMultipleTypeVariable<A, B, C> extends ConfigurationItem {
 
@@ -145,7 +145,7 @@ public class TestTypedConfigurationGenerics extends TestCase {
 	/**
 	 * Direct sub interface. Sets the type variables.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface TestMultipleTypeVariableDirect extends TestMultipleTypeVariable<String, Double, Integer> {
 		// Marker interface.
@@ -154,7 +154,7 @@ public class TestTypedConfigurationGenerics extends TestCase {
 	/**
 	 * Delegates the type variables.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface TestMultipleTypeVariableTransitivityDelegates<A, B> extends TestMultipleTypeVariable<A, B, String> {
 		// Marker interface.
@@ -163,7 +163,7 @@ public class TestTypedConfigurationGenerics extends TestCase {
 	/**
 	 * Leaf of the sub interface tree which sets the type variables.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface TestMultipleTypeVariableTransitivityLeaf extends TestMultipleTypeVariableTransitivityDelegates<Double, Integer> {
 		// Marker interface.

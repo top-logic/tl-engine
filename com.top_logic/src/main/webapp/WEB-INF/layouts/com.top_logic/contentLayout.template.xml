@@ -4,10 +4,15 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="internal"
 >
-	<properties extends="com.top_logic.layout.editor.config.LayoutTemplateParameters">
+	<properties extends="com.top_logic.layout.editor.config.LayoutTemplateParameters, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig">
 		<annotations>
 			<display-inherited value="APPEND"/>
 		</annotations>
+
+		<property name="pageTitle"
+			instance-type="com.top_logic.layout.basic.page.PageTitleResolver"
+			type="PolymorphicConfiguration"
+		/>
 
 		<property name="components"
 			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
@@ -25,9 +30,15 @@
 	</properties>
 
 	<layout name="InnerLayout"
+		buttonbar="${buttonbar}"
 		components="${components}"
 		horizontal="${horizontal}"
 		resizable="${resizable}"
 		resizeMode="instant"
-	/>
+		securityObject="${securityObject}"
+	>
+		<component-resolvers>
+			<component-resolver>${pageTitle}</component-resolver>
+		</component-resolvers>
+	</layout>
 </config:template>

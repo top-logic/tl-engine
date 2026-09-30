@@ -5,6 +5,9 @@
  */
 package com.top_logic.mig.html.layout.tiles.component;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -22,8 +25,11 @@ import com.top_logic.mig.html.layout.SingleLayoutContainer;
 import com.top_logic.mig.html.layout.tiles.InlinedTileFactory;
 import com.top_logic.mig.html.layout.tiles.TileFactory;
 import com.top_logic.mig.html.layout.tiles.TileInfo;
+import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundChecker;
-import com.top_logic.tool.boundsec.BoundCheckerDelegate;
+import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.SecurityObjectProvider;
+import com.top_logic.tool.boundsec.SecurityObjectProviderConfig;
 
 /**
  * {@link SingleLayoutContainer} that offers tiles for multiple business objects in the "parent
@@ -39,14 +45,15 @@ import com.top_logic.tool.boundsec.BoundCheckerDelegate;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class InlinedTileComponent extends SingleLayoutContainer implements Selectable, BoundCheckerDelegate {
+public class InlinedTileComponent extends SingleLayoutContainer implements Selectable, LayoutContainerBoundChecker {
 
 	/**
 	 * Typed configuration interface definition for {@link InlinedTileComponent}.
 	 * 
 	 * @author <a href="mailto:dbu@top-logic.com">dbu</a>
 	 */
-	public interface Config extends SingleLayoutContainer.Config {
+	public interface Config
+			extends SingleLayoutContainer.Config, TileListComponent.ContextMenuButtons, SecurityObjectProviderConfig {
 
 		/**
 		 * Configuration element for setting a {@link #getModelBuilder()}.
@@ -89,7 +96,9 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 
 	private ModelBuilder _builder;
 
-	private final BoundChecker _boundCheckerDelegate = new LayoutContainerBoundChecker<>(this);
+	private final List<CommandHandler> _contextMenuButtons;
+
+	private final SecurityObjectProvider _securityObjectProvider;
 
 	/**
 	 * Create a {@link InlinedTileComponent}.
@@ -102,6 +111,38 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 	public InlinedTileComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 		_builder = context.getInstance(config.getModelBuilder());
+		_contextMenuButtons = config.getContextMenuButtons()
+			.stream()
+			.map(buttonConf -> AbstractCommandHandler.getInstance(context, buttonConf))
+			.collect(Collectors.toList());
+		_securityObjectProvider = config.resolveSecurityObject(context);
+	}
+
+	@Override
+	public SecurityObjectProvider getSecurityObjectProvider() {
+		return _securityObjectProvider;
+	}
+
+	@Override
+	public ResKey hideReason() {
+		ResKey technicalReason = super.hideReason();
+		if (technicalReason != null) {
+			return technicalReason;
+		}
+
+		ResKey securityReason = BoundChecker.hideReasonForSecurity(this, internalModel());
+		if (securityReason != null) {
+			return securityReason;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Commands to show in the context menu.
+	 */
+	public List<CommandHandler> getContextMenuButtons() {
+		return _contextMenuButtons;
 	}
 
 	/**
@@ -124,16 +165,6 @@ public class InlinedTileComponent extends SingleLayoutContainer implements Selec
 	 */
 	public Object getGUIModel() {
 		return _builder.getModel(getModel(), this);
-	}
-
-	@Override
-	public BoundChecker getDelegate() {
-		return _boundCheckerDelegate;
-	}
-
-	@Override
-	public ResKey hideReason() {
-		return hideReason(internalModel());
 	}
 
 }

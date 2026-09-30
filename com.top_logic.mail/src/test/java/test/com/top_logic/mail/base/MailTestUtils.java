@@ -9,9 +9,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import javax.activation.DataSource;
-import javax.mail.Folder;
-import javax.mail.MessagingException;
+import jakarta.activation.DataSource;
+import jakarta.mail.Folder;
+import jakarta.mail.MessagingException;
 
 import test.com.top_logic.basic.ReflectionUtils;
 

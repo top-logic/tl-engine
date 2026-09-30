@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28336_migrate_command_confirmation"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
+			table="TemplateLayouts"
+			column="arguments"
+			transform="classpath:/com/top_logic/layout/tools/ticket28336/UpgradeConfirmMessages.xslt"
+		/>
+	</processors>
+</migration>

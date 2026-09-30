@@ -11,7 +11,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
- * Configuration of a secret for Open API communication.
+ * Configuration of a secret for <i>OpenAPI</i> communication.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

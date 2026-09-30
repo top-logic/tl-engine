@@ -39,6 +39,7 @@ import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
@@ -260,6 +261,7 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 			copyIfDifferent(config::isAggregate, config::setAggregate, model.getEnd().isAggregate());
 			copyIfDifferent(config::isComposite, config::setComposite, model.getEnd().isComposite());
 			copyIfDifferent(config::getHistoryType, config::setHistoryType, model.getEnd().getHistoryType());
+			copyIfDifferent(config::getDeletionPolicy, config::setDeletionPolicy, model.getEnd().getDeletionPolicy());
 			copyIfDifferent(config::getKind, config::setKind, kind(model));
 			if (TLModelUtil.getEnds(model.getEnd().getOwner()).size() == 2) {
 				TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(model.getEnd());
@@ -305,6 +307,7 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 			copyIfDifferent(config::isAggregate, config::setAggregate, model.isAggregate());
 			copyIfDifferent(config::isComposite, config::setComposite, model.isComposite());
 			copyIfDifferent(config::getHistoryType, config::setHistoryType, model.getHistoryType());
+			copyIfDifferent(config::getDeletionPolicy, config::setDeletionPolicy, model.getDeletionPolicy());
 		}
 		return config;
 	}
@@ -314,18 +317,48 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 		extractPartAspectConfig(config, model);
 		boolean override = model.isOverride();
 		copyIfDifferent(config::isOverride, config::setOverride, override);
+		copyIfDifferent(config::isAbstract, config::setAbstract, model.isAbstract());
 
 		TLType valueType = model.getType();
 		TLModule module = model.getOwner().getModule();
 		config.setTypeSpec(typeRef(module, valueType));
 
+		boolean modelMandatory = model.isMandatory();
 		if (!override) {
-			copyIfDifferent(config::getMandatory, config::setMandatory, model.isMandatory());
+			copyIfDifferent(config::getMandatory, config::setMandatory, modelMandatory);
 			copyIfDifferent(config::isMultiple, config::setMultiple, model.isMultiple());
 			copyIfDifferent(config::isOrdered, config::setOrdered, model.isOrdered());
 			copyIfDifferent(config::isBag, config::setBag, model.isBag());
+		} else if (model instanceof TLClassPart) {
+			setMandatoryForOverride(config, (TLClassPart) model, modelMandatory);
 		}
 		return override;
+	}
+
+	/**
+	 * Sets {@link PartConfig#getMandatory()} for the given overriding part.
+	 * 
+	 * @implNote It is checked whether all directly overridden parts have the same "mandatory"
+	 *           value. If this is the case and the value matches the specified "mandatory" value,
+	 *           nothing is set to avoid setting the configuration property unnecessarily.
+	 */
+	private void setMandatoryForOverride(PartConfig config, TLClassPart model, boolean modelMandatory) {
+		Boolean allOverriddenMandatory = null;
+		for (TLClassPart overridden : TLModelUtil.getOverriddenParts(model)) {
+			boolean mandatory = overridden.isMandatory();
+			if (allOverriddenMandatory == null) {
+				allOverriddenMandatory = mandatory;
+			} else {
+				if (allOverriddenMandatory.booleanValue() != mandatory) {
+					// Some overridden attributes are mandatory and some not. Set local value!
+					allOverriddenMandatory = null;
+					break;
+				}
+			}
+		}
+		if (allOverriddenMandatory == null || allOverriddenMandatory.booleanValue() != modelMandatory) {
+			config.setMandatory(modelMandatory);
+		}
 	}
 
 	private String typeRef(TLModule ownerModule, TLType type) {

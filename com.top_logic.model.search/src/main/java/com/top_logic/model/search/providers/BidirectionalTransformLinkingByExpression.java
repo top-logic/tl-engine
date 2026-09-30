@@ -6,7 +6,6 @@
 package com.top_logic.model.search.providers;
 
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -54,7 +53,8 @@ public class BidirectionalTransformLinkingByExpression
 		 * The transformation back to obtain the value for the input channel.
 		 * 
 		 * <p>
-		 * The function receives the value of the transformed channel as first argument.
+		 * The function receives the value of the transformed channel as first argument and the old
+		 * channel value as second argument.
 		 * </p>
 		 */
 		Expr getInverseFunction();
@@ -62,7 +62,7 @@ public class BidirectionalTransformLinkingByExpression
 
 	private final BiFunction<Object, Object, Object> _transform;
 
-	private final Function<Object, Object> _inverseTransform;
+	private final BiFunction<Object, Object, Object> _inverseTransform;
 
 	/**
 	 * Creates a {@link BidirectionalTransformLinkingByExpression} from configuration.
@@ -79,7 +79,7 @@ public class BidirectionalTransformLinkingByExpression
 		QueryExecutor inverseTransform = QueryExecutor.compile(config.getInverseFunction());
 
 		_transform = (input, oldValue) -> transform.execute(input, oldValue);
-		_inverseTransform = input -> inverseTransform.execute(input);
+		_inverseTransform = (input, oldValue) -> inverseTransform.execute(input, oldValue);
 	}
 
 	@Override
@@ -99,7 +99,7 @@ public class BidirectionalTransformLinkingByExpression
 	}
 
 	@Override
-	protected Function<Object, ?> inverseTransformation() {
+	protected BiFunction<Object, Object, ?> inverseTransformation() {
 		return _inverseTransform;
 	}
 

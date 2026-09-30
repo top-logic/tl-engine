@@ -1,0 +1,69 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$color.colorValues()</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Zerlegt eine Farbe in ihre Komponenten.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Obligatorisch</th>
+			<th>Standard</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">color</code></td>
+			<td>Farbe</td>
+			<td>Die zu analysierende Farbe</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> JSON-Objekt mit den Farbeigenschaften</p>
+
+<p>Das Analyseergebnis enthält die folgenden Eigenschaften:</p>
+
+<ul>
+	<li><code class="hljs inlineCode">r</code> der Rotwert.</li>
+	<li><code class="hljs inlineCode">g</code> der Grünwert.</li>
+	<li><code class="hljs inlineCode">b</code> der Blauwert.</li>
+	<li><code class="hljs inlineCode">a</code> der Alpha-Wert.</li>
+	<li><code class="hljs inlineCode">h</code> der Farbwinkel.</li>
+	<li><code class="hljs inlineCode">s</code> Die Sättigung.</li>
+	<li><code class="hljs inlineCode">l</code> Die Farbigkeit.</li>
+</ul>
+
+<h2>Beispiele</h2>
+
+<h3>CSS-Farbe analysieren</h3>
+
+<pre>
+	<code>"red".colorValues()</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span></p>
+
+<pre>
+<code class="language-json">{
+    r: 255,
+    g: 0,
+    b: 0,
+    a: 255, 
+    h: 0,
+    s: 100,
+    l: 50
+}</code></pre>

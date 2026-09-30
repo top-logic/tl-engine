@@ -6,7 +6,10 @@
 package com.top_logic.tool.boundsec.assistent.commandhandler;
 
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultConfirmation;
 
 
 /**
@@ -23,8 +26,8 @@ public class ConfirmedCancelAssistentCommandHandler extends CancelAssistentComma
 	 */
 	public interface Config extends CancelAssistentCommandHandler.Config {
 		@Override
-		@BooleanDefault(true)
-		boolean getConfirm();
+		@ItemDefault(DefaultConfirmation.class)
+		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 	}
 
     public ConfirmedCancelAssistentCommandHandler(InstantiationContext context, Config config) {

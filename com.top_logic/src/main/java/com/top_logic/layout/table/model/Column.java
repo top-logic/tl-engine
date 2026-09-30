@@ -14,11 +14,14 @@ import java.util.List;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.table.CellRenderer;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
-import com.top_logic.layout.table.renderer.IDColumnCellRenderer;
+import com.top_logic.layout.table.renderer.IDColumnTableCellRenderer;
+import com.top_logic.layout.tree.renderer.NoResourceProvider;
+import com.top_logic.layout.tree.renderer.TreeCellRenderer;
 import com.top_logic.util.Resources;
 import com.top_logic.util.css.CssUtil;
 
@@ -52,6 +55,11 @@ public class Column {
 	 */
 	private String _cssClasses;
 
+	/**
+	 * @see #getCssHeaderClasses()
+	 */
+	private String _cssHeaderClasses;
+
 	private int _size;
 
 	private int _index;
@@ -83,17 +91,37 @@ public class Column {
 		_parts = mkParts(config.getDeclaredColumns());
 		_size = mkSize(_parts);
 		_visible = config.isVisible();
-		_renderer = createColumnCellRenderer(header, name, config);
+		_renderer = createCellRenderer(header, name, config);
 	}
 
-	private CellRenderer createColumnCellRenderer(Header header, String name, ColumnConfiguration config) {
+	private CellRenderer createCellRenderer(Header header, String name, ColumnConfiguration config) {
 		TableConfiguration tableConfiguration = header.getTableConfiguration();
 
+		CellRenderer cellRenderer = config.finalCellRenderer();
 		if (name.equals(tableConfiguration.getIDColumn())) {
-			return new IDColumnCellRenderer(tableConfiguration, config);
+			return toIdColumn(cellRenderer, tableConfiguration);
 		} else {
-			return config.finalCellRenderer();
+			return cellRenderer;
 		}
+	}
+
+	/**
+	 * Upgrades a regular table column to an ID column with type image display and toggle buttons in
+	 * case of a tree table.
+	 */
+	public static CellRenderer toIdColumn(CellRenderer cellRenderer, TableConfiguration tableConfig) {
+		CellRenderer idCellRenderer = new IDColumnTableCellRenderer(cellRenderer, tableConfig.getRowObjectResourceProvider());
+
+		if (tableConfig.isTree()) {
+			return toTreeColumn(idCellRenderer);
+		}
+
+		return idCellRenderer;
+	}
+
+	private static CellRenderer toTreeColumn(CellRenderer cellRenderer) {
+		return new TreeCellRenderer(NoResourceProvider.INSTANCE, cellRenderer,
+			TreeCellRenderer.DEFAULT_INDENT_CHARS);
 	}
 
 	private static int mkSize(List<Column> parts) {
@@ -192,6 +220,13 @@ public class Column {
 	 */
 	public String getCssClasses() {
 		return _cssClasses;
+	}
+
+	/**
+	 * The space-separated CSS classes to assign to header cells of this column (group).
+	 */
+	public String getCssHeaderClasses() {
+		return _cssHeaderClasses;
 	}
 
 	/**
@@ -333,6 +368,7 @@ public class Column {
 		Column parent = getParent();
 		ColumnConfiguration config = getConfig();
 		String ownClass = config.getCssClass();
+		_cssHeaderClasses = config.getCssHeaderClass();
 		if (parent == null) {
 			_firstColumnClass = config.getCssClassGroupFirst();
 			_lastColumnClass = config.getCssClassGroupLast();
@@ -462,7 +498,7 @@ public class Column {
 
 		// By default use the label also as tooltip to make the column label readable, if the colum
 		// width is to small.
-		return getLabel(tableConfiguration);
+		return TagUtil.encodeXML(getLabel(tableConfiguration));
 	}
 
 }

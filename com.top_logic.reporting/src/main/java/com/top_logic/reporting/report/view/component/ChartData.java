@@ -20,7 +20,7 @@ import org.jfree.chart.JFreeChart;
  * This object will be used by the {@link ExtendedProducerChartComponent} to get a mapping between
  * the light weighted JFreeChart model and the values represented in the different chart elements.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ChartData<T> {
 

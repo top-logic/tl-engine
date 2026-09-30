@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
+	<properties extends="com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.mig.html.DefaultSelectionModelFactory$UIOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.layout.WithChannelConfigs">
 		<annotations>
 			<display-order>
 				<value>
 					<property name="name"/>
 					<property name="model"/>
 					<property name="modelBuilder"/>
+					<property name="selectionFilter"/>
 
 					<property name="rootVisible"/>
 					<property name="showOnlySelectableNodes"/>
 					<property name="defaultSelection"/>
+					<property name="defaultSelectionProvider"/>
 					<property name="expandRoot"/>
 					<property name="expandSelected"/>
+					<property name="revealSelection"/>
 					<property name="multiSelection"/>
 					<property name="adjustSelectionWhenCollapsing"/>
 					<property name="isSecurityMaster"/>
 
+					<property name="toolbar"/>
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
 					<property name="showPopOut"/>
@@ -28,6 +32,8 @@
 					<property name="dragSource"/>
 					<property name="dropTargets"/>
 					<property name="buttons"/>
+					<property name="goto-targets"/>
+					<property name="additional-channels"/>
 				</value>
 			</display-order>
 		</annotations>
@@ -58,23 +64,9 @@
 			default="false"
 			type="boolean"
 		/>
-		<property name="multiSelection"
-			type="boolean"
-		/>
-		<property name="securityObject"
-			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
-			type="com.top_logic.basic.config.PolymorphicConfiguration"
-		/>
-		<!-- Only for compatibility with legacy usages of this template. -->
-		<property name="securityProviderClass"
-			default="securityRoot"
-			type="String"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
-			<hidden/>
-		</property>
 		<property name="buttons"
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			instance-type="com.top_logic.tool.boundsec.CommandHandler"
 			type="List"
 		>
 			<acceptable-classifiers value="tree, commons"/>
@@ -106,6 +98,7 @@
 	<treeView name="Tree"
 		adjustSelectionWhenCollapsing="${adjustSelectionWhenCollapsing}"
 		defaultSelection="${defaultSelection}"
+		defaultSelectionProvider="${defaultSelectionProvider}"
 		dialogs="${dialogs}"
 		dragSource="${dragSource}"
 		dropTargets="${dropTargets}"
@@ -115,20 +108,24 @@
 		model="${model}"
 		modelBuilder="${modelBuilder}"
 		partnerGroup="${partnerGroup}"
+		revealSelection="${revealSelection}"
 		rootVisible="${rootVisible}"
 		securityObject="${securityObject}"
-		securityProviderClass="${securityProviderClass}"
 		selection="${selection}"
+		selection-filter="${selectionFilter}"
 		show-only-selectable-nodes="${showOnlySelectableNodes}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"
 		titleKey="${name}"
+		toolbar="${toolbar}"
 	>
 		<selectionModelFactory multiple="${multiSelection}"/>
 		<buttons>
 			${buttons}
 			<include name="templates/editComponentCommands.xml"/>
 		</buttons>
+		<goto-targets>${goto-targets}</goto-targets>
+		<additional-channels>${additional-channels}</additional-channels>
 	</treeView>
 </config:template>

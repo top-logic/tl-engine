@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path=""
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo > Typendemo"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.demo.model.types.util.TypeGenerator$GenerateDemoTypes"
+			command-label="Generieren..."
+			command-name="generateTypes"
+			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Name des generierten Wurzelelementes"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="TestDialogHomepage"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Generieren"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Ok"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path="TestDialogHomepage"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+				<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+				/>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Strukturen > Typendemo > Tabelle"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+			command-label="Persönliche Einstellungen"
+			command-name="showCurrentPersonDialog"
+			component-implementation-comment="com.top_logic.layout.component.TabComponent"
+			component-name="mainTabbar.layout.xml#mainTabber"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+			command-label="Bearbeiten"
+			command-name="customEdit"
+			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+			component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Startseite beim Logout setzen"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Profil bearbeiten"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+				value="true"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.meta.form.component.DefaultApplyAttributedCommandHandler"
+			command-label="Übernehmen"
+			command-name="storeAttributes"
+			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+			component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+			comment="Logout user when dialog is opened"
+			template="script:Nutzer/Nutzer abmelden.xml"
+			template-name-comment="Nutzer abmelden"
+		/>
+	</actions>
+</action>

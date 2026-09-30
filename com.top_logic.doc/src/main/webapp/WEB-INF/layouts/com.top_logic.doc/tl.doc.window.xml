@@ -17,12 +17,9 @@
 				>
 					<layoutInfo size="250px"/>
 					<layoutControl>
-						<layoutInfo size="30px"/>
+						<layoutInfo size="32px"/>
 						<componentControlProvider class="com.top_logic.layout.structure.LayoutViewProvider">
-							<view class="com.top_logic.layout.component.configuration.SimpleHTMLViewConfiguration"
-								cssClass="margin5"
-								tag="div"
-							>
+							<view class="com.top_logic.layout.component.configuration.SimpleHTMLViewConfiguration">
 								<content-view class="com.top_logic.layout.component.configuration.SimpleHTMLViewConfiguration"
 									cssClass="tlDocSearchContainer"
 									tag="div"
@@ -47,21 +44,25 @@
 						name="${namePrefix}Tree"
 						resPrefix="%LAYOUT_RESPREFIX%Tree."
 						rootVisible="false"
-						securityProviderClass="securityRoot"
+						securityObject="securityRoot"
 					>
 						<layoutInfo size="400"/>
+						<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+							<script expr="`tl.doc#ROOT`"/>
+						</model>
 						<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"
 							structureName="tl.doc"
 						/>
 					</component>
 				</layout>
-				<component class="com.top_logic.doc.component.ExternalWindowDocViewerComponent"
+				<component class="com.top_logic.element.layout.structured.AdminElementComponent"
 					applyCommand=""
 					deleteCommand=""
 					model="selection(${namePrefix}Tree)"
 					name="${namePrefix}Detail"
 					page="/jsp/tl.doc/tl.doc.page.edit.jsp"
 					resPrefix="%LAYOUT_RESPREFIX%Detail."
+					securityObject=""
 				>
 					<goto-targets>
 						<goto-target

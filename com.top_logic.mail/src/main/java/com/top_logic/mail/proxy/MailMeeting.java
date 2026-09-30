@@ -14,7 +14,7 @@ import java.util.Properties;
  * This interface should allow an easy access to meeting information as they are stored
  * on the server.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface MailMeeting extends MailServerMessage {
 

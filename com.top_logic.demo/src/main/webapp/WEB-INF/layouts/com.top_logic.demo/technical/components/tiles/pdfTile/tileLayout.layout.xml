@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/tiles/documentTile.template.xml"
+>
+	<arguments
+		document="model -> $model.referers(`test.tiles:Product#releases`).get(`test.tiles:Product#pdf`)"
+		helpID="ID_0f068a18_bdbd_4af6_8e4e_fbbd71ffd390"
+		model="selection(com.top_logic.demo/technical/components/tiles/releasesTileLayout.layout.xml#Table)"
+		tileName="ID_6bbf3443_ef46_4cc7_ab40_9037a2447d52"
+	>
+		<name key="dynamic.b856f799-ae72-429e-9306-84c7180d27db">
+			<en>PDF tile</en>
+			<de>PDF Kachel</de>
+		</name>
+	</arguments>
+</config:template-call>

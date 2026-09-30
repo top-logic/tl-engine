@@ -6,7 +6,6 @@ import java.util.List;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.meta.TypeSpec;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
@@ -53,7 +52,7 @@ public class ToString extends GenericMethod {
 			}
 			return result.toString();
 		} else {
-			return toString(base);
+			return asString(base);
 		}
 	}
 
@@ -63,18 +62,8 @@ public class ToString extends GenericMethod {
 				append(result, element);
 			}
 		} else {
-			result.append(toString(arg));
+			result.append(asString(arg));
 		}
-	}
-
-	/**
-	 * Converts a value to a string / label.
-	 */
-	public static String toString(Object arg) {
-		if (arg == null) {
-			return "";
-		}
-		return MetaLabelProvider.INSTANCE.getLabel(arg);
 	}
 
 	@Override

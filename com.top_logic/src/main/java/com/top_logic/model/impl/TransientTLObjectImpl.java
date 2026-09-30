@@ -7,23 +7,30 @@ package com.top_logic.model.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOClassImpl;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.knowledge.service.Revision;
+import com.top_logic.knowledge.service.db2.PersistentObject;
+import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.model.ModelKind;
-import com.top_logic.model.TLAssociationEnd;
+import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
+import com.top_logic.model.fallback.StorageWithFallback;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Transient {@link TLObject} implementation.
@@ -38,13 +45,23 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	private Map<TLStructuredTypePart, Object> _values = new HashMap<>();
 
+	private Map<TLStructuredTypePart, Set<TLObject>> _referers = new HashMap<>();
+
+	private TLObject _context;
+
 	/**
 	 * Creates a {@link TransientTLObjectImpl}.
 	 * 
+	 * @param type
+	 *        The type of this object.
+	 * @param context
+	 *        The container of this object, see {@link #tContainer()}.
+	 * 
 	 * @see TransientObjectFactory
 	 */
-	TransientTLObjectImpl(TLStructuredType type) {
+	protected TransientTLObjectImpl(TLStructuredType type, TLObject context) {
 		_type = type;
+		_context = context;
 	}
 
 	@Override
@@ -53,61 +70,245 @@ public class TransientTLObjectImpl extends TransientObject {
 	}
 
 	@Override
-	public Object tValue(TLStructuredTypePart part) {
-		return directValue(part);
+	public TLObject tContainer() {
+		return _context;
 	}
 
-	private Object directValue(TLStructuredTypePart part) {
-		return _values.get(part);
+	/**
+	 * A transient object is part of the {@link #tContainer() container} it was created in and
+	 * dies with it: it is valid while that container is valid, or while it has no container at
+	 * all.
+	 * 
+	 * @implNote A transient container that itself was created in a container chains the check up
+	 *           to the first object that has none.
+	 */
+	@Override
+	public boolean tValid() {
+		TLObject container = tContainer();
+		return container == null || container.tValid();
 	}
 
 	@Override
-	public void tUpdate(TLStructuredTypePart part, Object newValue) {
-		Object oldValue = directUpdate(part, newValue);
-		if (part.getModelKind() == ModelKind.REFERENCE) {
-			TLAssociationEnd updatedEnd = ((TLReference) part).getEnd();
-			TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(updatedEnd);
-			TLReference otherRef = otherEnd.getReference();
-			if (otherRef != null) {
-				for (Object oldTarget : collection(oldValue)) {
-					((TransientTLObjectImpl) oldTarget).directRemove(otherRef, this);
-				}
-				for (Object newTarget : collection(newValue)) {
-					((TransientTLObjectImpl) newTarget).directAdd(otherRef, this);
+	public Object tValue(TLStructuredTypePart part) {
+		Object directValue = directValue(part);
+		if (directValue == null) {
+			// Value may not be set yet.
+			return TLModelUtil.getEmptyValue(part);
+		}
+		return directValue;
+	}
+
+	private Object directValue(TLStructuredTypePart accessPart) {
+		TLStructuredTypePart resolvedPart = resolvePart(accessPart);
+		if (resolvedPart == null) {
+			// Do not require type check for access.
+			return null;
+		}
+		StorageDetail storageImplementation = resolvedPart.getStorageImplementation();
+		if (storageImplementation instanceof StorageWithFallback) {
+			return storageImplementation.getAttributeValue(this, resolvedPart);
+		}
+		if (resolvedPart.isDerived()) {
+			if (resolvedPart.getModelKind() == ModelKind.REFERENCE && ((TLReference) resolvedPart).isBackwards()) {
+				// Find forwards reference.
+				TLReference backwards = (TLReference) resolvedPart;
+				TLReference forwards = backwards.getOppositeEnd().getReference();
+				return tReferers(forwards);
+			} else {
+				if (resolvedPart.getName().equals(PersistentObject.T_TYPE_ATTR)) {
+					return tType();
+				} else {
+					return storageImplementation.getAttributeValue(this, resolvedPart);
 				}
 			}
 		}
-	}
 
-	@Override
-	public void tAdd(TLStructuredTypePart part, Object value) {
-		if (part.getModelKind() == ModelKind.REFERENCE) {
-			checkNonNull(value);
-			mkCollection(part).add(value);
-
-			TLAssociationEnd updatedEnd = ((TLReference) part).getEnd();
-			TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(updatedEnd);
-			TLReference otherRef = otherEnd.getReference();
-			if (otherRef != null) {
-				((TransientTLObjectImpl) value).directAdd(otherRef, this);
+		TLStructuredTypePart storagePart = resolvedPart.getDefinition();
+		Object storedValue = _values.get(storagePart);
+		if (storedValue instanceof Collection<?> coll) {
+			if (containsInvalid(coll)) {
+				storedValue = removeInvalids(coll);
+				_values.put(storagePart, storedValue);
 			}
 		} else {
-			super.tAdd(part, value);
+			if (!ComponentUtil.isValid(storedValue)) {
+				storedValue = null;
+				_values.put(storagePart, storedValue);
+			}
+		}
+
+		return storedValue;
+	}
+
+	private static <T> Collection<T> removeInvalids(Collection<? extends T> coll) {
+		// Filter out invalid entries.
+		Collection<T> copy = coll instanceof Set ? new HashSet<>() : new ArrayList<>();
+		for (T entry : coll) {
+			if (ComponentUtil.isValid(entry)) {
+				copy.add(entry);
+			}
+		}
+		return copy;
+	}
+
+	private static boolean containsInvalid(Collection<?> coll) {
+		for (Object test : coll) {
+			if (!ComponentUtil.isValid(test)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public void tUpdate(TLStructuredTypePart accessPart, Object newValue) {
+		TLStructuredTypePart resolvedPart = resolvePart(accessPart);
+		checkExists(accessPart, resolvedPart);
+
+		StorageDetail storageImplementation = resolvedPart.getStorageImplementation();
+		if (storageImplementation instanceof StorageWithFallback) {
+			// Symmetric to directValue(): An explicitly set value of a fallback attribute is not
+			// stored in the fallback attribute itself but in its underlying storage attribute, from
+			// where it is read again as explicit value.
+			((StorageWithFallback) storageImplementation).setExplicitValue(this, resolvedPart, newValue);
+			return;
+		}
+
+		checkDerived(resolvedPart);
+		newValue = ensureMultiplicity(resolvedPart, newValue);
+		Object oldValue = directUpdate(resolvedPart, newValue);
+		if (resolvedPart.getModelKind() == ModelKind.REFERENCE) {
+			TLReference forwards = (TLReference) resolvedPart;
+			for (Object oldTarget : collection(oldValue)) {
+				// Note: Non-transient objects may have been assigned to transient ones (the
+				// other way around is not possible).
+				if (oldTarget instanceof TransientTLObjectImpl) {
+					((TransientTLObjectImpl) oldTarget).removeReferer(forwards, this);
+				}
+			}
+			for (Object newTarget : collection(newValue)) {
+				// Note: Non-transient objects may have been assigned to transient ones (the
+				// other way around is not possible).
+				if (newTarget instanceof TransientTLObjectImpl) {
+					((TransientTLObjectImpl) newTarget).addReferer(forwards, this);
+				}
+			}
+		}
+	}
+
+	private void addReferer(TLReference ref, TransientTLObjectImpl referer) {
+		_referers.computeIfAbsent(ref.getDefinition(), x -> new HashSet<>()).add(referer);
+	}
+
+	private void removeReferer(TLReference ref, TransientTLObjectImpl referer) {
+		Set<TLObject> referers = _referers.get(ref.getDefinition());
+		if (referers != null) {
+			referers.remove(referer);
 		}
 	}
 
 	@Override
-	public void tRemove(TLStructuredTypePart part, Object value) {
-		if (part.getModelKind() == ModelKind.REFERENCE) {
-			checkNonNull(value);
-			mkCollection(part).remove(value);
+	public Set<? extends TLObject> tReferers(TLReference ref) {
+		TLStructuredTypePart definition = ref.getDefinition();
+		Set<TLObject> result = _referers.get(definition);
+		if (result == null) {
+			return Collections.emptySet();
+		}
 
-			TLAssociationEnd updatedEnd = ((TLReference) part).getEnd();
-			TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(updatedEnd);
-			TLReference otherRef = otherEnd.getReference();
-			if (otherRef != null) {
-				((TransientTLObjectImpl) value).directRemove(otherRef, this);
+		if (containsInvalid(result)) {
+			result = (Set<TLObject>) removeInvalids(result);
+			_referers.put(definition, result);
+		}
+
+		return Collections.unmodifiableSet(result);
+	}
+
+	/**
+	 * Converts the give value to the collection-type of this attribute.
+	 * 
+	 * <p>
+	 * Note: A collection passed from the outside must never directly stored, since it may be
+	 * modified by the caller later on.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note: If the resulting value is a collection, it must be a modifiable one, since this
+	 * implementation modifies the internal collections, if values are added or removed.
+	 * </p>
+	 *
+	 * @param part
+	 *        The attribute that is updated.
+	 * @param newValue
+	 *        The value passed to the setter of the given attribute.
+	 * @return The value to actually store in this object.
+	 */
+	private Object ensureMultiplicity(TLStructuredTypePart part, Object newValue) {
+		if (part.isMultiple()) {
+			Collection<Object> result;
+			if (part.isOrdered()) {
+				if (newValue instanceof List<?>) {
+					return new ArrayList<Object>((List<?>) newValue);
+				}
+				// Create mutable collection to be able to support tAdd and tRemove.
+				result = new ArrayList<>();
+			} else {
+				if (newValue instanceof Set<?>) {
+					return new HashSet<Object>((Set<?>) newValue);
+				}
+				// Create mutable collection to be able to support tAdd and tRemove.
+				result = new HashSet<>();
 			}
+			if (newValue instanceof Collection<?>) {
+				result.addAll((Collection<?>) newValue);
+			} else if (newValue == null) {
+				// Nothing to add.
+			} else {
+				throw new IllegalArgumentException("Multiple attribute '" + part
+					+ "' expects a collection, but a single value was given: " + newValue);
+			}
+			return result;
+		} else {
+			return CollectionUtilShared.getSingleValueFrom(newValue);
+		}
+	}
+
+	@Override
+	public void tAdd(TLStructuredTypePart accessPart, Object value) {
+		TLStructuredTypePart resolvedPart = resolvePart(accessPart);
+		checkExists(accessPart, resolvedPart);
+		checkDerived(resolvedPart);
+		if (resolvedPart.getModelKind() == ModelKind.REFERENCE) {
+			checkNonNull(value);
+			mkCollection(resolvedPart).add(value);
+
+			// Note: Non-transient objects may have been assigned to transient ones (the
+			// other way around is not possible).
+			if (value instanceof TransientTLObjectImpl) {
+				TLReference forwards = (TLReference) resolvedPart;
+				((TransientTLObjectImpl) value).addReferer(forwards, this);
+			}
+		} else {
+			super.tAdd(resolvedPart, value);
+		}
+	}
+
+	@Override
+	public void tRemove(TLStructuredTypePart accessPart, Object value) {
+		TLStructuredTypePart resolvedPart = resolvePart(accessPart);
+		checkExists(accessPart, resolvedPart);
+		checkDerived(resolvedPart);
+		if (resolvedPart.getModelKind() == ModelKind.REFERENCE) {
+			checkNonNull(value);
+			mkCollection(resolvedPart).remove(value);
+
+			// Note: Non-transient objects may have been assigned to transient ones (the
+			// other way around is not possible).
+			if (value instanceof TransientTLObjectImpl) {
+				TLReference forwards = (TLReference) resolvedPart;
+				((TransientTLObjectImpl) value).removeReferer(forwards, this);
+			}
+		} else {
+			super.tRemove(resolvedPart, value);
 		}
 	}
 
@@ -128,48 +329,17 @@ public class TransientTLObjectImpl extends TransientObject {
 	}
 
 	private Object directUpdate(TLStructuredTypePart part, Object newValue) {
-		return _values.put(part, newValue);
-	}
-
-	private void directAdd(TLReference ref, TransientTLObjectImpl other) {
-		Object oldValue = directValue(ref);
-		if (ref.isMultiple()) {
-			if (oldValue != null) {
-				@SuppressWarnings("unchecked")
-				Collection<Object> oldCollection = (Collection<Object>) oldValue;
-				oldCollection.add(other);
-			} else {
-				Collection<Object> newCollection;
-				newCollection = createCollection(ref);
-				newCollection.add(other);
-				directUpdate(ref, newCollection);
-			}
-		} else {
-			assert oldValue == null : "Must only add to a null singleton reference '" + ref + "', was: " + oldValue;
-			directUpdate(ref, other);
-		}
+		return _values.put(part.getDefinition(), newValue);
 	}
 
 	private Collection<Object> createCollection(TLReference ref) {
 		Collection<Object> newCollection;
-		if (ref.isOrdered()) {
+		if (ref.isOrdered() || ref.isBag()) {
 			newCollection = new ArrayList<>();
 		} else {
 			newCollection = new HashSet<>();
 		}
 		return newCollection;
-	}
-
-	private void directRemove(TLReference ref, TransientTLObjectImpl other) {
-		Object oldValue = directValue(ref);
-		if (ref.isMultiple()) {
-			boolean success = ((Collection<?>) oldValue).remove(other);
-			assert success : "Value '" + other + "' was not found in multiple reference '" + ref + "', values: "
-				+ oldValue;
-		} else {
-			assert oldValue == other : "Removed value was not stored in singleton reference.";
-			directUpdate(ref, null);
-		}
 	}
 
 	private static Collection<?> collection(Object value) {
@@ -180,16 +350,52 @@ public class TransientTLObjectImpl extends TransientObject {
 		}
 	}
 	
-	@Override
-	public Object tSetData(String property, Object value) {
-		Object oldValue = tGetData(property);
-		tUpdateByName(property, value);
-		return oldValue;
+	private static void checkDerived(TLStructuredTypePart part) {
+		if (part.isDerived()) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_CANNOT_MODIFY_DERIVED_ATTRIBUTE__ATTR.fill(TLModelUtil.qualifiedName(part)));
+		}
 	}
 
-	@Override
-	public Object tGetData(String property) {
-		return tValueByName(property);
+	/**
+	 * Resolves the given part to this object's concrete type.
+	 *
+	 * <p>
+	 * This is required when a part from a supertype is passed (e.g., an abstract attribute from a
+	 * base class), but this object is of a subtype that provides a concrete override.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note: Write methods should call
+	 * {@link #checkExists(TLStructuredTypePart, TLStructuredTypePart)} with the result of this
+	 * methods, while read methods should return <code>null</code>, if no attribute is found.
+	 * </p>
+	 * 
+	 * @return The attribute visible from this type, or <code>null</code>, if the given attribute is
+	 *         not part of this type.
+	 */
+	private TLStructuredTypePart resolvePart(TLStructuredTypePart part) {
+		TLStructuredTypePart resolvedPart = tType().getPart(part.getName());
+		if (resolvedPart != null && resolvedPart.getDefinition().equals(part.getDefinition())) {
+			return resolvedPart;
+		}
+		return null;
+	}
+
+	/**
+	 * Check to be called after {@link #resolvePart(TLStructuredTypePart)}
+	 *
+	 * @param accessPart
+	 *        The original part, with which the method was called.
+	 * @param resolvedPart
+	 *        The result of the resolution.
+	 */
+	private void checkExists(TLStructuredTypePart accessPart, TLStructuredTypePart resolvedPart) {
+		if (resolvedPart == null) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_HAS_NO_PART__TYPE_PART.fill(TLModelUtil.qualifiedName(tType()),
+					TLModelUtil.qualifiedName(accessPart)));
+		}
 	}
 
 	@Override
@@ -206,4 +412,13 @@ public class TransientTLObjectImpl extends TransientObject {
 	public MOStructure tTable() {
 		return TRANSIENT;
 	}
+
+	/**
+	 * {@link IllegalArgumentException} to throw when for a {@link TLStructuredTypePart#isMultiple()
+	 * multiple} neither a {@link Collection} nor <code>null</code> is given.
+	 */
+	public static IllegalArgumentException errorNoCollection() {
+		return new IllegalArgumentException("Value must be a collection.");
+	}
+
 }

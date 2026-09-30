@@ -7,6 +7,7 @@ package com.top_logic.model.annotate.ui;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.form.model.DataField;
 import com.top_logic.model.annotate.StringAnnotation;
@@ -24,6 +25,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
 @TagName(TLAcceptedTypes.TAG_NAME)
 @TargetType(TLTypeKind.BINARY)
 @InApp
+@Label("Accepted file types")
 public interface TLAcceptedTypes extends StringAnnotation, TLAttributeAnnotation, TLTypeAnnotation {
 
 	/** The shortcut XML tag for this {@link ConfigurationItem} type. */
@@ -31,6 +33,11 @@ public interface TLAcceptedTypes extends StringAnnotation, TLAttributeAnnotation
 
 	/**
 	 * Comma separated list of accepted file types.
+	 * 
+	 * <p>
+	 * An accepted file type can either be a MIME type like <code>image/*</code> or
+	 * <code>image/jpeg</code>, or a file pattern such as <code>*.xml</code>.
+	 * </p>
 	 * 
 	 * @see DataField#getAcceptedTypes()
 	 */

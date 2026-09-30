@@ -177,9 +177,7 @@ public class ListEditor implements Editor {
 			CommandField sortButton = button(list, LIST_SORT, Icons.SORT_ELEMENTS, openSortDialog);
 			sortButton.setControlProvider(Buttons.SORT_BUTTON);
 			sortButton.setNotExecutableImage(Icons.SORT_ELEMENTS_DISABLED);
-			sortButton.setLabel(Resources.getInstance().getString(
-				I18NConstants.OPEN_SORT_DIALOG__PROPERTY.fill(
-					Labels.propertyLabel(valueModel))));
+			sortButton.setLabel(I18NConstants.OPEN_SORT_DIALOG__PROPERTY.fill(Labels.propertyLabel(valueModel)));
 			ScriptingRecorder.annotateAsDontRecord(sortButton);
 			bindExecutability(sortButton, map(members(content), new Mapping<List<?>, ExecutableState>() {
 				@Override
@@ -344,7 +342,9 @@ public class ListEditor implements Editor {
 				});
 			}
 			return div(
-				fieldsetBox(span(label(), htmlTemplate(errorBox)), content, ConfigKey.field(member))
+				fieldsetBox(
+					span(css("fieldSetBoxContainer"), label(), htmlTemplate(errorBox)),
+					content, ConfigKey.field(member))
 					.setInitiallyCollapsed(minimized)
 					.setInitializer(initializer));
 		}
@@ -629,8 +629,8 @@ public class ListEditor implements Editor {
 			}
 		}
 
-		private String createTooltipText(ConfigurationItem configuration) {
-			return Resources.getInstance().getString(ResKey.forConfig(configuration).tooltipOptional());
+		private ResKey createTooltipText(ConfigurationItem configuration) {
+			return ResKey.forConfig(configuration).tooltipOptional();
 		}
 	}
 

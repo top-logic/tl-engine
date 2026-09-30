@@ -32,7 +32,12 @@ public class IsInTileContext implements Predicate<LayoutComponent> {
 
 	@Override
 	public boolean test(LayoutComponent t) {
+		LayoutComponent dialogTopLayout = t.getDialogTopLayout();
 		do {
+			if (t == dialogTopLayout) {
+				// Do not leave a dialog.
+				return false;
+			}
 			t = t.getParent();
 			if (t == null ) {
 				break;

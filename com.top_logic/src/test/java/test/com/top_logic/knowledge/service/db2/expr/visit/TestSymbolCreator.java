@@ -17,6 +17,7 @@ import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.meta.TypeSystem;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.SetExpression;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.expr.sym.AttributeSymbol;
 import com.top_logic.knowledge.service.db2.expr.sym.ItemSymbol;
@@ -170,10 +171,9 @@ public class TestSymbolCreator extends AbstractDBKnowledgeBaseTest {
 	}
 	
 	private void computeSymbols(SetExpression expr) {
-		TypeSystem typeSystem = (TypeSystem) kb().getMORepository();
 		ExpressionCompileProtocol log = new ExpressionCompileProtocol(new AssertProtocol());
 		
-		computeSymbols(typeSystem, log, expr);
+		computeSymbols(KBUtils.typeSystem(kb()), log, expr);
 	}
 
 	public static void computeSymbols(TypeSystem typeSystem, ExpressionCompileProtocol log, SetExpression expr) {

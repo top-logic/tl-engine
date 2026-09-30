@@ -12,7 +12,9 @@ import static java.util.Objects.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,6 +39,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.LocaleValueProvider;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -48,12 +51,13 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.tools.resources.ResourceFile;
 
 /**
- * The class {@link ResourcesModule} manages {@link I18NBundle}s.
- * 
+ * Manages the internationalization resource bundles ({@link I18NBundle}s) of the application.
+ *
  * @since 5.7.4
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Internationalization resources")
 public class ResourcesModule extends ConfiguredManagedClass<ResourcesModule.Config> {
 
 	/** Flag indicating that the key was found and no default was given. */
@@ -423,6 +427,15 @@ public class ResourcesModule extends ConfiguredManagedClass<ResourcesModule.Conf
 	 */
 	public final Config getConfiguration() {
 		return getConfig();
+	}
+
+	/**
+	 * The bundle for writing to the application log.
+	 * 
+	 * @see #getLogLocale()
+	 */
+	public I18NBundle getLogBundle() {
+		return getBundle(getLogLocale());
 	}
 
 	/**
@@ -965,7 +978,7 @@ public class ResourcesModule extends ConfiguredManagedClass<ResourcesModule.Conf
 				if (propertiesData != null) {
 					try (InputStream in = propertiesData.getStream()) {
 						if (in != null) {
-							result.load(in);
+							result.load(new InputStreamReader(in, StandardCharsets.UTF_8));
 							Logger.debug("Loading I18N properties " + resourceName + ".", DefaultBundle.class);
 						}
 					}
@@ -987,7 +1000,7 @@ public class ResourcesModule extends ConfiguredManagedClass<ResourcesModule.Conf
 				while (messages.hasMoreElements()) {
 					URL url = messages.nextElement();
 					try (InputStream in = url.openStream()) {
-						result.load(in);
+						result.load(new InputStreamReader(in, StandardCharsets.UTF_8));
 					}
 				}
 			} catch (IOException ex) {

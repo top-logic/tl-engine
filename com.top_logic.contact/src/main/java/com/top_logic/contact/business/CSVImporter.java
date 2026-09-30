@@ -23,7 +23,7 @@ import com.top_logic.basic.io.SimpleCSVTokenizer;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.sched.BatchImpl;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.layout.progress.ProgressInfo;
 
 /**
@@ -204,7 +204,7 @@ public abstract class CSVImporter extends BatchImpl implements ProgressInfo {
             // We have to commit the last pending updates. Before this will
 			// happen a subclass may want to add some additional information
             beforeLastCommitHook();
-            KnowledgeBase theKB = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase();
+            KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
             if(!theKB.commit()) {
             	logWarn("Failed to commit", null);
             }

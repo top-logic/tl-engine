@@ -6,7 +6,6 @@
 package com.top_logic.layout.channel;
 
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -17,7 +16,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public class BidirectionalTransformingChannel extends TransformingChannel {
 
-	private final Function<Object, ?> _inverseTransform;
+	private final BiFunction<Object, Object, ?> _inverseTransform;
 
 	/**
 	 * Creates a {@link TransformingChannel}.
@@ -33,7 +32,7 @@ public class BidirectionalTransformingChannel extends TransformingChannel {
 	 */
 	public BidirectionalTransformingChannel(LayoutComponent component, ComponentChannel source,
 			BiFunction<Object, Object, ?> transform,
-			Function<Object, ?> inverseTransform) {
+			BiFunction<Object, Object, ?> inverseTransform) {
 		super(component, source, transform);
 
 		_inverseTransform = inverseTransform;
@@ -44,7 +43,7 @@ public class BidirectionalTransformingChannel extends TransformingChannel {
 		super.storeValue(newValue, oldValue);
 
 		for (ComponentChannel source : sources()) {
-			source.set(_inverseTransform.apply(newValue));
+			source.set(_inverseTransform.apply(newValue, oldValue));
 		}
 	}
 

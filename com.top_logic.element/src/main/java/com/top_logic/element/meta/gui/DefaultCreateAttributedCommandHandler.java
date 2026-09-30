@@ -32,7 +32,7 @@ import com.top_logic.util.error.TopLogicException;
  * {@link CommandHandler} to create a {@link TLObject} with a
  * {@link AbstractWrapperResolver#createNewWrapper(String) certain type name}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class DefaultCreateAttributedCommandHandler extends AbstractCreateAttributedCommandHandler {
 
@@ -40,7 +40,7 @@ public class DefaultCreateAttributedCommandHandler extends AbstractCreateAttribu
 	 * Command handler may need information when not called by
 	 * {@link DefaultCreateAttributedComponent}.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config extends AbstractCreateAttributedCommandHandler.Config {
 
@@ -117,10 +117,9 @@ public class DefaultCreateAttributedCommandHandler extends AbstractCreateAttribu
 		super(context, config);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public Object createObject(LayoutComponent component, Object createContext, FormContainer formContainer,
-			@SuppressWarnings("rawtypes") Map someValues) {
+			Map<String, Object> someValues) {
 
 		Map<String, Object> theMap = extractValues(formContainer, (Wrapper) createContext);
 
@@ -158,7 +157,7 @@ public class DefaultCreateAttributedCommandHandler extends AbstractCreateAttribu
 	}
 
 	@Override
-	protected Map<String, Object> extractValues(FormContainer aContainer, Wrapper anAttributed) {
+	protected Map<String, Object> extractValues(FormContainer aContainer, TLObject anAttributed) {
 		Map<String, Object> values = super.extractValues(aContainer, anAttributed);
 
 		if (aContainer.hasMember(DefaultCreateAttributedComponent.ELEMENT_TYPE)) {

@@ -44,6 +44,7 @@ import com.top_logic.layout.table.dnd.TableDragSource;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.NoPrepare;
 import com.top_logic.layout.table.model.TableConfiguration;
+import com.top_logic.layout.table.tree.TreeTableExpandCollapseAll;
 import com.top_logic.layout.tree.component.TreeModelBuilder;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel;
@@ -96,8 +97,8 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 	 */
 	private final Collection<CommandHandler> _allCommands =
 		Arrays.<CommandHandler> asList(
-			CommandHandlerFactory.getInstance().getHandler(TreeGridExpandCollapseAll.EXPAND_ID),
-			CommandHandlerFactory.getInstance().getHandler(TreeGridExpandCollapseAll.COLLAPSE_ID));
+			CommandHandlerFactory.getInstance().getHandler(TreeTableExpandCollapseAll.EXPAND_ID),
+			CommandHandlerFactory.getInstance().getHandler(TreeTableExpandCollapseAll.COLLAPSE_ID));
 
 	/**
 	 * Commands when <em>not</em> {@link #canExpandAll()}.
@@ -109,11 +110,13 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 	 */
 	private final Collection<CommandHandler> _restrictedCommands =
 		Arrays.<CommandHandler> asList(
-			CommandHandlerFactory.getInstance().getHandler(TreeGridExpandCollapseAll.COLLAPSE_ID));
+			CommandHandlerFactory.getInstance().getHandler(TreeTableExpandCollapseAll.COLLAPSE_ID));
 
 	private boolean _rootVisible;
 
 	private boolean _expandSelectedNode;
+
+	private boolean _revealSelection = true;
 
 	private boolean _expandRoot;
 	
@@ -229,6 +232,16 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 	}
 
 	/**
+	 * Returns true if the ancestors of a newly selected node should be expanded to make the
+	 * selection visible.
+	 *
+	 * @see TreeViewConfig#getRevealSelection()
+	 */
+	public boolean revealSelection() {
+		return _revealSelection;
+	}
+
+	/**
 	 * Returns true if collapsing of a node should adjust selection.
 	 * 
 	 * @see TreeViewConfig#adjustSelectionWhenCollapsing()
@@ -256,6 +269,13 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 	 */
 	public void setExpandSelected(boolean expandSelected) {
 		_expandSelectedNode = expandSelected;
+	}
+
+	/**
+	 * Sets the value of {@link #revealSelection()}.
+	 */
+	public void setRevealSelection(boolean revealSelection) {
+		_revealSelection = revealSelection;
 	}
 
 	/**
@@ -472,6 +492,7 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 			}
 
 			table = FormFactory.newTreeTableField(GridComponent.FIELD_TABLE, grid.getConfigKey(), _treeModel);
+			table.setStableIdSpecialCaseContext(grid);
 		}
 
 		/**
@@ -558,15 +579,15 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 		protected void setSelection(SelectionModel selectionModel, Set<List<?>> selectedPaths) {
 			Set<GridTreeTableNode> selectectedTreeNodes = formGroupsToTreeNodes(selectedPaths);
 
-			SelectionUtil.setSelection(selectionModel, selectectedTreeNodes);
-
 			for (GridTreeTableNode selectedNode : selectectedTreeNodes) {
 				if (expandSelectedNode()) {
 					TreeUIModelUtil.expandSelfAndParents(getTreeModel(), selectedNode);
-				} else {
+				} else if (revealSelection()) {
 					TreeUIModelUtil.expandParents(getTreeModel(), selectedNode);
 				}
 			}
+
+			SelectionUtil.setSelection(selectionModel, selectectedTreeNodes);
 		}
 
 		private Set<GridTreeTableNode> formGroupsToTreeNodes(Set<List<?>> paths) {
@@ -624,7 +645,7 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 		}
 
 		void updateRowModel(Object rowModel) {
-			if (supportsRow(_grid, rowModel)) {
+			if (!supportsRow(_grid, rowModel).shouldRemove()) {
 				updateNewParents(rowModel);
 
 				for (GridTreeTableNode node : getTableRows(toGridRow(rowModel))) {

@@ -95,18 +95,18 @@ public class TestPOIPowerpointX extends BasicTestCase {
 			theResult.put(POIPowerpointXUtil.PREFIX_PICTURE + "CENTER_VERTICAL", getTestImage2File());
 			Object[][] table = new Object[][] {
 				{ "42", new HyperlinkDefinition("http://www.top-logic.com", "Link to TL"), "34%", "250 TEUR", "5",
-					"Risiko 1", getTestImageFile(), "Maﬂnahme 1",
+					"Risiko 1", getTestImageFile(), "Ma√ünahme 1",
 				"30.04.2012" },
 				{ "48", new HyperlinkDefinition(1, "Link to slide 1"), "25%", "150 TEUR", "3", "Risiko 2", "2",
-					"Maﬂnahme 2", "28.04.2012" },
+					"Ma√ünahme 2", "28.04.2012" },
 					{ "", new HyperlinkDefinition("http://www.top-logic.com"), "", "", "", "", "3", getTestImageFile(),
 					"29.04.2012" },
 					{ "49", new HyperlinkDefinition(1), "10%", "10 TEUR", "Chance", "Risiko 3", "", "", "Aus is" },
 					{ "42", new HyperlinkDefinition("http://www.top-logic.com", "Link to TL"), "34%", "250 TEUR", "5",
-						"Risiko 1", getTestImageFile(), "Maﬂnahme 1",
+						"Risiko 1", getTestImageFile(), "Ma√ünahme 1",
 						"30.04.2012" },
 					{ "48", new HyperlinkDefinition(1, "Link to slide 1"), "25%", "150 TEUR", "3", "Risiko 2", "2",
-						"Maﬂnahme 2", "28.04.2012" },
+						"Ma√ünahme 2", "28.04.2012" },
 					{ "", new HyperlinkDefinition("http://www.top-logic.com"), "", "", "", "", "3", getTestImageFile(),
 						"29.04.2012" },
 					{ "49", new HyperlinkDefinition(1), "10%", "10 TEUR", "Chance", "Risiko 3", "", "", "Aus is" },
@@ -122,7 +122,7 @@ public class TestPOIPowerpointX extends BasicTestCase {
 				Map<String, Object> values = new HashMap<>();
 
 				values.put(POIPowerpointXUtil.PREFIX_PICTURE + "SLIDE_PIC", getTestImageFile());
-				values.put(POIPowerpointXUtil.PREFIX_VALUE + "SLIDE_TITLE", "Ein Titel f¸r Kopie " + outerCounter);
+				values.put(POIPowerpointXUtil.PREFIX_VALUE + "SLIDE_TITLE", "Ein Titel f√ºr Kopie " + outerCounter);
 				slideData.add(new OfficeExportValueHolder("TestPoiPowerPointSlide.pptx", "dummyname.pptx", values,
 					true));
 
@@ -132,7 +132,7 @@ public class TestPOIPowerpointX extends BasicTestCase {
 					Map<String, Object> innerValues = new HashMap<>();
 
 					innerValues.put(POIPowerpointXUtil.PREFIX_PICTURE + "SLIDE_PIC", getTestImageFile());
-					innerValues.put(POIPowerpointXUtil.PREFIX_VALUE + "SLIDE_TITLE", "Ein Titel f¸r innere Kopie "
+					innerValues.put(POIPowerpointXUtil.PREFIX_VALUE + "SLIDE_TITLE", "Ein Titel f√ºr innere Kopie "
 						+ innerCounter);
 					innerValues.put(POIPowerpointXUtil.PREFIX_VALUE + "SLIDE_HYPERLINK",
 						new HyperlinkDefinition("http://www.top-logic.com", "Hyperlink"));

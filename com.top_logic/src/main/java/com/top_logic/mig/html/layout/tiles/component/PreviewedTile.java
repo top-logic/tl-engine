@@ -8,10 +8,9 @@ package com.top_logic.mig.html.layout.tiles.component;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.mig.html.layout.tiles.TileLayout;
 
 /**
- * {@link TileLayout} that has a configured {@link TilePreview}.
+ * Configuration for a tile that has a configured {@link TilePreview}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -23,7 +22,7 @@ public interface PreviewedTile extends ConfigurationItem {
 	String PREVIEW_NAME = "preview";
 
 	/**
-	 * The {@link TilePreview} that is used to create a peview for this tile.
+	 * The {@link TilePreview} that is used to create a preview for this tile.
 	 */
 	@Name(PREVIEW_NAME)
 	PolymorphicConfiguration<? extends TilePreview> getPreview();

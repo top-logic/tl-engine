@@ -73,8 +73,8 @@ public final class ComputedMOAttribute extends AbstractMOAttribute {
 	}
 
 	@Override
-	public MOAttribute copy() {
-		ComputedMOAttribute copy = new ComputedMOAttribute(getName(), typeRef(getMetaObject()));
+	public MOAttribute copy(String newName, MetaObject newType) {
+		ComputedMOAttribute copy = new ComputedMOAttribute(newName, newType);
 		copy.initFrom(this);
 		copy.setStorage(getStorage());
 		return copy;

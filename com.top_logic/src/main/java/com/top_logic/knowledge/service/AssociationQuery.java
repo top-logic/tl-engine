@@ -32,7 +32,7 @@ import com.top_logic.model.TLObject;
 
 /**
  * Query that describes a set of {@link KnowledgeItem}s for
- * {@link KABasedCacheManager#resolveLinks(KnowledgeObject, AbstractAssociationQuery)} lookup} in a
+ * {@link KABasedCacheManager#resolveLinks(KnowledgeObject, AbstractAssociationQuery) lookup} in a
  * {@link KABasedCacheManager}.
  * 
  * @param <T>

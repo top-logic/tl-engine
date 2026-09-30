@@ -701,6 +701,13 @@ public class TestConfiguredInstance extends AbstractTypedConfigurationTestCase {
 		enclosingConfig.getMapOfPolymorphicConfigs().put(name, newConfig);
 	}
 
+	public void testInstanceType() {
+		assertEquals(A.class, TypedConfiguration.getConfigurationDescriptor(A.AConfig.class).getInstanceType());
+		assertEquals(Object.class,
+			TypedConfiguration.getConfigurationDescriptor(PolymorphicConfiguration.class).getInstanceType());
+		assertNull(TypedConfiguration.getConfigurationDescriptor(ConfigurationItem.class).getInstanceType());
+	}
+
 	@Override
 	protected AssertProtocol createProtocol() {
 		return new AssertProtocol("Ticket #5785");

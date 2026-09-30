@@ -1,4 +1,5 @@
-<%@page import="com.top_logic.layout.structure.OrientationAware.Orientation"
+<%@page import="com.top_logic.model.annotate.LabelPosition"
+%><%@page import="com.top_logic.layout.structure.OrientationAware.Orientation"
 %><%@page trimDirectiveWhitespaces="true"
 %><%@page import="com.top_logic.layout.renderers.ButtonComponentButtonRenderer"
 %><%@page import="com.top_logic.layout.form.control.ImageLinkButtonRenderer"
@@ -20,10 +21,6 @@
 			
 			.smaller input {
 				background-color: red;
-			}
-			
-			td.demoImportantGroup {
-				background-color: #FFDDDD;
 			}
 		</style>
 	</layout:head>
@@ -135,10 +132,11 @@
 				<!-- Another view for the same field model. Both display the same value. -->
 				<form:inputCell name="textInputControl"/>
 
-				<form:inputCell name="textInputWithPlaceholder"/>
 				<form:inputCell name="textInputWithContextMenu"/>
 
 				<form:inputCell name="structuredText"/>
+
+				<form:custom name="placeholder"/>
 
 				<form:groupCell
 					personalizationName="codeEditorGroup"
@@ -658,7 +656,7 @@
 						</form:description>
 					</form:descriptionCell>
 				</form:group>
-				
+
 				<form:group name="selectionControlGroup"
 					firstColumnWidth="27em"
 				>
@@ -1105,7 +1103,7 @@
 
 				<form:ifExists name="folderField">
 					<form:descriptionCell
-						labelAbove="true"
+						labelPosition="<%=LabelPosition.ABOVE%>"
 						wholeLine="true"
 					>
 						<form:description>
@@ -1116,7 +1114,7 @@
 				</form:ifExists>
 
 				<form:descriptionCell
-					labelAbove="true"
+					labelPosition="<%=LabelPosition.ABOVE%>"
 					wholeLine="true"
 				>
 					<form:description>
@@ -1125,7 +1123,7 @@
 					<form:tablelist name="tableListField"/>
 				</form:descriptionCell>
 
-				<form:descriptionCell labelAbove="true">
+				<form:descriptionCell labelPosition="<%=LabelPosition.ABOVE%>">
 					<form:description>
 						<form:label name="displayImageControl"/>
 						Upload of images is expected:
@@ -1346,6 +1344,15 @@
 						</form:description>
 						<form:custom name="pictureField"/>
 					</form:descriptionCell>
+					
+					<form:hr key="imageUploadField"/>
+					
+					<form:descriptionCell>
+						<form:description>
+							<form:label name="imageUploadField"/>
+						</form:description>
+						<form:custom name="imageUploadField"/>
+					</form:descriptionCell>
 
 					<form:hr key="galleryField"/>
 					<form:cell>
@@ -1468,7 +1475,7 @@
 
 			<form:group name="messages"
 				collapsible="true"
-				cssClass="demoImportantGroup"
+				cssClass="tl-accent-1"
 			>
 				<form:cell wholeLine="true">
 					Note: This group should have a red background due to a custom CSS class.
@@ -1613,6 +1620,8 @@
 					<form:input name="switchStateField"/>
 				</form:descriptionCell>
 			</form:group>
+
+			<form:custom name="testDynamicGroups"/>
 		</form:form>
 	</layout:body>
 </layout:html>

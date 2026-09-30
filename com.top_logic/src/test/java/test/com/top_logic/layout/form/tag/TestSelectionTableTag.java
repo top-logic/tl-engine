@@ -19,6 +19,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.tag.SelectionTableTag;
+import com.top_logic.layout.form.tag.TableTag;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.model.NoDefaultColumnAdaption;
 import com.top_logic.layout.table.model.SetTableResPrefix;
@@ -106,7 +107,7 @@ public class TestSelectionTableTag extends AbstractLayoutTest {
 	}
 
 	private void assertColumns(String... expectedColumnNames) {
-		TableControl tableControl = (TableControl) _selectionTableTag.createControl(_selectField);
+		TableControl tableControl = TableTag.table(_selectionTableTag.createControl(_selectField));
 		tableControl.setSelectable(false);
 		List<String> actualColumns = tableControl.getViewModel().getColumnNames();
 		assertEquals(expectedColumnNames.length, actualColumns.size());
@@ -116,7 +117,7 @@ public class TestSelectionTableTag extends AbstractLayoutTest {
 	}
 
 	private void assertResourcePrefix(ResourceView resourceView) {
-		TableControl tableControl = (TableControl) _selectionTableTag.createControl(_selectField);
+		TableControl tableControl = TableTag.table(_selectionTableTag.createControl(_selectField));
 		assertEquals(resourceView, getTableResourcePrefix(tableControl));
 	}
 

@@ -44,7 +44,7 @@ try {
 		</body>
 	</basic:html>
 	<%
-	} finally {
-	DefaultDisplayContext.teardownDisplayContext(request, displayContext);
+} finally {
+	DefaultDisplayContext.teardownDisplayContext(request);
 }
 %>

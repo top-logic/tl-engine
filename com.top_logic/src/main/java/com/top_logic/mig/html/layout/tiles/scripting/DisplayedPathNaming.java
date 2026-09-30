@@ -16,7 +16,6 @@ import com.top_logic.layout.scripting.recorder.ref.ObjectAspectNaming.ObjectAspe
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.tiles.RootTileComponent;
-import com.top_logic.mig.html.layout.tiles.component.TileContainerComponent;
 
 /**
  * {@link ObjectAspectName0} to get the {@link RootTileComponent#displayedPath() displayed path} of
@@ -37,7 +36,7 @@ public interface DisplayedPathNaming extends ObjectAspectName0<List<ComponentNam
 	}
 
 	/**
-	 * Creates a new {@link DisplayedPathNaming} for the given {@link TileContainerComponent}.
+	 * Creates a new {@link DisplayedPathNaming} for the given {@link RootTileComponent}.
 	 */
 	static DisplayedPathNaming createName(RootTileComponent rootTile) {
 		return ObjectAspectNaming.buildNameFromModelNames(DisplayedPathNaming.class,

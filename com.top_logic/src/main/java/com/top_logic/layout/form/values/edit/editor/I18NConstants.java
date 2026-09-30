@@ -79,6 +79,32 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_NO_TITLE_PROPERTY_IN_DESCRIPTOR__DESCRIPTOR_PROPERTY;
 
+	/**
+	 * @en No value set
+	 */
+	public static ResKey TOKEN_FIELD_NO_VALUE;
+
+	/**
+	 * @en Reset token
+	 */
+	public static ResKey CLEAR_TOKEN_FIELD_LABEL;
+
+	/**
+	 * @en Update token
+	 */
+	public static ResKey UPDATE_TOKEN_DIALOG_TITLE;
+
+	/**
+	 * @en You update the configuration with the token displayed. Make sure you copy it now. The
+	 *     token will no longer be visible afterwards!
+	 */
+	public static ResKey UPDATE_TOKEN_DIALOG_MESSAGE;
+
+	/**
+	 * @en Token
+	 */
+	public static ResKey UPDATE_TOKEN_DIALOG_TOKEN_FIELD_LABEL;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

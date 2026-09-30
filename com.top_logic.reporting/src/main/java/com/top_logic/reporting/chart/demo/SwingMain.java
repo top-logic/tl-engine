@@ -87,7 +87,7 @@ public class SwingMain {
         ValueAxis rangeAxis3 = new NumberAxis("Hotdogs");
         customizeValueAxis(dataset, 2, rangeAxis3, AXIS_FULL, bottomMargin, topMargin);
         
-        /* Create the category axis and set the label position to 45°. */
+        /* Create the category axis and set the label position to 45Â°. */
         CategoryAxis categoryAxis = new CategoryAxis();
         categoryAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_45);
         
@@ -187,7 +187,7 @@ public class SwingMain {
         ValueAxis rangeAxis1 = new NumberAxis("TEUR");
         customizeValueAxis(dataset, 0, rangeAxis1, AXIS_FULL, bottomMargin, topMargin);
         
-        /* Create the category axis and set the label position to 45°. */
+        /* Create the category axis and set the label position to 45Â°. */
         CategoryAxis categoryAxis = new CategoryAxis();
         categoryAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_45);
         
@@ -382,8 +382,8 @@ public class SwingMain {
      * @param args An array with arguments.
      */
     public static void main(String[] args) throws Exception {
-        JFreeChart chart1 = createChart1("Generische Überleitungsschaukel"); 
-        JFreeChart chart2 = createChart2("Generische Überleitungsschaukel"); 
+        JFreeChart chart1 = createChart1("Generische Ãœberleitungsschaukel"); 
+        JFreeChart chart2 = createChart2("Generische Ãœberleitungsschaukel"); 
         writeChart(chart1, "swingMap", PATH, "swing1.png", PATH + "swing1.html", 
                    "SwingChart with tooltips and urls", 600, 400);
         writeChart(chart2, "swingMap", PATH, "swing2.png", PATH + "swing2.html", 

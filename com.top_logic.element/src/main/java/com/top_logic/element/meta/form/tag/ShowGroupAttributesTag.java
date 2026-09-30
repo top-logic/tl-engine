@@ -11,11 +11,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.BodyTagSupport;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.BodyTagSupport;
+import jakarta.servlet.jsp.tagext.TagSupport;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.meta.search.AttributedSearchComponent;
 import com.top_logic.element.layout.meta.search.SearchFilterSupport;
@@ -64,7 +65,7 @@ public class ShowGroupAttributesTag extends AbstractTag implements ControlBodyTa
 
 	private String _firstColumnWidth;
 
-	private Boolean _labelAbove;
+	private LabelPosition _labelPosition;
 
 	private boolean _splitControls;
 
@@ -111,9 +112,20 @@ public class ShowGroupAttributesTag extends AbstractTag implements ControlBodyTa
 	 * 
 	 * @param labelAbove
 	 *        If <code>true</code> the label is rendered above the input.
+	 * @deprecated Use {@link #setLabelPosition(LabelPosition)}
 	 */
+	@Deprecated
+	@CalledFromJSP
 	public void setLabelAbove(boolean labelAbove) {
-		_labelAbove = labelAbove;
+		_labelPosition = labelAbove ? LabelPosition.ABOVE : LabelPosition.INLINE;
+	}
+
+	/**
+	 * The default {@link LabelPosition} for all attributes.
+	 */
+	@CalledFromJSP
+	public void setLabelPosition(LabelPosition labelPosition) {
+		_labelPosition = labelPosition;
 	}
 
 	/**
@@ -185,12 +197,12 @@ public class ShowGroupAttributesTag extends AbstractTag implements ControlBodyTa
 				} else {
 					groupTag.setTitleKeySuffix(this.legend, I18NConstants.GROUP_ADDITIONAL_ATTRIBUTES);
 				}
-			if (_labelAbove != null) {
-				groupTag.setLabelAbove(_labelAbove);
-			}
-			if (_columns != null) {
-				groupTag.setColumns(_columns);
-			}
+				if (_labelPosition != null) {
+					groupTag.setLabelPosition(_labelPosition);
+				}
+				if (_columns != null) {
+					groupTag.setColumns(_columns);
+				}
 
 				containerTag = groupTag;
 			} else {

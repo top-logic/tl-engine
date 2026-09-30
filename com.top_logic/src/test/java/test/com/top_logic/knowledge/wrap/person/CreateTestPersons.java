@@ -47,7 +47,7 @@ public abstract class CreateTestPersons extends ThreadContextSetup {
 
 	@Override
 	protected void doSetUp() throws Exception {
-		try (Transaction createTX = kb().beginTransaction()) {
+		try (Transaction createTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			_createdPersons.addAll(createPersons());
 			createTX.commit();
 		}
@@ -60,7 +60,7 @@ public abstract class CreateTestPersons extends ThreadContextSetup {
 
 	@Override
 	protected void doTearDown() throws Exception {
-		try (Transaction createTX = kb().beginTransaction()) {
+		try (Transaction createTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			KBUtils.deleteAll(_createdPersons);
 			createTX.commit();
 		}

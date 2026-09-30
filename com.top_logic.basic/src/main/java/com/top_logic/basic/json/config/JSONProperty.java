@@ -12,7 +12,7 @@ import com.top_logic.basic.config.annotation.Name;
 /**
  * A json property consists of a key and {@link JSONValue} value.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface JSONProperty extends ConfigurationItem {
 

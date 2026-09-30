@@ -1,19 +1,18 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-core</artifactId>
-		<version>7.9.0-SNAPSHOT</version>
+		<version>8.0.0-SNAPSHOT</version>
 
 		<relativePath>../tl-parent-core</relativePath>
 	</parent>
 
 	<artifactId>tl-parent-app</artifactId>
 
+	<name>${project.artifactId}</name>
 	<description>Parent module for TopLogic applications.</description>
 
 	<organization>
@@ -97,7 +96,6 @@
 			    <dependency>
 					<groupId>com.top-logic</groupId>
 					<artifactId>tl-license-professional</artifactId>
-					<version>7.7.0</version>
 			    </dependency>
 	  		</dependencies>
 	  	</profile>
@@ -225,7 +223,6 @@
 			<plugin>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-maven-plugin</artifactId>
-				<version>7.9.0-SNAPSHOT</version>
 
 				<executions>
 					<execution>
@@ -292,12 +289,12 @@
 					<dependency>
 						<groupId>com.top-logic</groupId>
 						<artifactId>tl-ide-jetty</artifactId>
-						<version>${tl.version}</version>
+						<version>8.0.0-SNAPSHOT</version>
 					</dependency>
 					<dependency>
 						<groupId>com.top-logic</groupId>
 						<artifactId>tl-basic-logging-log4j</artifactId>
-						<version>${tl.version}</version>
+						<version>8.0.0-SNAPSHOT</version>
 					</dependency>
 				</dependencies>
 			</plugin>

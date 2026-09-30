@@ -12,11 +12,11 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 
 /**
- * {@link AbstractModelNamingScheme} for {@link ResourceModelNaming.Name}.
+ * {@link AbstractGlobalModelNamingScheme} for {@link ResourceModelNaming.Name}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class ResourceModelNaming extends AbstractModelNamingScheme<Resource, ResourceModelNaming.Name> {
+public class ResourceModelNaming extends AbstractGlobalModelNamingScheme<Resource, ResourceModelNaming.Name> {
 
 	/**
 	 * {@link ModelName} for {@link Resource}.

@@ -15,7 +15,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.io.BinaryContent;
@@ -247,7 +247,7 @@ public abstract class FileManager {
 	 * 
 	 * @param name
 	 *        The name of the resource (including its path relative to the web application root).
-	 * @return A handle for the requested resource, nor <code>null</code>, if the resource does not
+	 * @return A handle for the requested resource, or <code>null</code>, if the resource does not
 	 *         exist.
 	 */
 	public abstract BinaryData getDataOrNull(String name);

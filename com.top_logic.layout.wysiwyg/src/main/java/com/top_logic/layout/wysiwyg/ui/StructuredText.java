@@ -11,13 +11,17 @@ import static java.util.Collections.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.annotation.Binding;
+import com.top_logic.basic.config.json.JsonBinding;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.tools.NameBuilder;
+import com.top_logic.basic.util.WithEmptiness;
 import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.knowledge.searching.FullTextBuBuffer;
 import com.top_logic.knowledge.searching.FullTextSearchable;
@@ -25,9 +29,11 @@ import com.top_logic.knowledge.searching.FullTextSearchable;
 /**
  * Structure containing used images and the source code for a HTML attribute.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
-public class StructuredText implements FullTextSearchable {
+@Binding(StructuredTextValueBinding.class)
+@JsonBinding(StructuredTextJsonBinding.class)
+public class StructuredText implements FullTextSearchable, WithEmptiness {
 
 	private String _sourceCode;
 
@@ -62,6 +68,20 @@ public class StructuredText implements FullTextSearchable {
 		return _sourceCode;
 	}
 
+	/**
+	 * Whether this text has no {@link #getSourceCode() source code}.
+	 *
+	 * <p>
+	 * An empty {@link StructuredText} is treated like <code>null</code> and the empty string in
+	 * TL-Script (see {@link WithEmptiness}). This matches the emptiness definition used by the HTML
+	 * attribute storage and the mandatory-field constraint.
+	 * </p>
+	 */
+	@Override
+	public boolean isEmpty() {
+		return StringServices.isEmpty(_sourceCode);
+	}
+
 	@Override
 	public void generateFullText(FullTextBuBuffer buffer) {
 		Document document = Jsoup.parse(getSourceCode());
@@ -72,7 +92,7 @@ public class StructuredText implements FullTextSearchable {
 	 * @see #getSourceCode()
 	 */
 	public void setSourceCode(String sourceCode) {
-		_sourceCode = sourceCode;
+		_sourceCode = Objects.requireNonNull(sourceCode);
 	}
 
 	/**
@@ -86,7 +106,7 @@ public class StructuredText implements FullTextSearchable {
 	 * @see #getImages()
 	 */
 	public void setImages(Map<String, BinaryData> images) {
-		_images = images;
+		_images = Objects.requireNonNull(images);
 	}
 
 	/**
@@ -113,8 +133,8 @@ public class StructuredText implements FullTextSearchable {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((_images == null) ? 0 : _images.hashCode());
-		result = prime * result + ((_sourceCode == null) ? 0 : _sourceCode.hashCode());
+		result = prime * result + _images.hashCode();
+		result = prime * result + _sourceCode.hashCode();
 		return result;
 	}
 
@@ -127,15 +147,9 @@ public class StructuredText implements FullTextSearchable {
 		if (getClass() != obj.getClass())
 			return false;
 		StructuredText other = (StructuredText) obj;
-		if (_images == null) {
-			if (other._images != null)
-				return false;
-		} else if (!_images.equals(other._images))
+		if (!_images.equals(other._images))
 			return false;
-		if (_sourceCode == null) {
-			if (other._sourceCode != null)
-				return false;
-		} else if (!_sourceCode.equals(other._sourceCode))
+		if (!_sourceCode.equals(other._sourceCode))
 			return false;
 		return true;
 	}
@@ -154,7 +168,7 @@ public class StructuredText implements FullTextSearchable {
 	/** If the {@link StructuredText} is null, the empty {@link String} is returned. */
 	public static String getSourceCodeNullSafe(StructuredText structuredText) {
 		if (structuredText == null) {
-			return "";
+			return StringServices.EMPTY_STRING;
 		}
 		return structuredText.getSourceCode();
 	}

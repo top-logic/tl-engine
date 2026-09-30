@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<sidebar>
+		<header>
+			<text label="Application"/>
+		</header>
+		<header-collapsed>
+			<text label="A"/>
+		</header-collapsed>
+		<footer>
+			<view-ref view="sidebar-item-content.view.xml"/>
+		</footer>
+		<footer-collapsed>
+			<text label="?"/>
+		</footer-collapsed>
+		<nav-item id="only"
+			label="Only"
+		>
+			<panel/>
+		</nav-item>
+	</sidebar>
+</view>

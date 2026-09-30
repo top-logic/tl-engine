@@ -30,7 +30,7 @@ import com.top_logic.model.util.TLModelUtil;
  * Default component to create an {@link Wrapper} object which is <b>NO</b>
  * {@link StructuredElement}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  * 
  * @deprecated Use {@link AbstractCreateComponent} with {@link CreateFormBuilder}
  */
@@ -40,7 +40,7 @@ public class DefaultCreateAttributedComponent extends CreateAttributedComponent 
 	/**
 	 * Relevant information for creating an {@link Wrapper}. 
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config extends CreateAttributedComponent.Config, TypeReferenceConfig {
 

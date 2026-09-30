@@ -6,6 +6,8 @@
 package com.top_logic.basic;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,8 +16,9 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.core.workspace.ModuleLayoutConstants;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
@@ -49,6 +52,7 @@ import com.top_logic.basic.vars.VariableExpander;
  *
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
+@Label("Alias management")
 public abstract class AliasManager extends ManagedClass implements Reloadable {
 
 	/**
@@ -66,6 +70,9 @@ public abstract class AliasManager extends ManagedClass implements Reloadable {
 
 	/** Alias for the host of the application. Potential value: "http://apps.top-logic.com:8080" */
 	public static final String HOST = "%HOST%";
+
+	/** Well-known alias holding the local name of the host of the application.. */
+	public static final String LOCAL_HOST_NAME = "%LOCAL_HOST_NAME%";
 
 	private Map<String, String> _baseAliases;
 
@@ -86,23 +93,41 @@ public abstract class AliasManager extends ManagedClass implements Reloadable {
 		super.startUp();
 
 		fetchConfiguredAliases();
-		Map<String, String> baseAliases;
+		Map<String, String> baseAliases = createProgrammaticAliases();
+		setBaseAliases(baseAliases);
+
+		ReloadableManager.getInstance().addReloadable(this);
+	}
+
+	/**
+	 * Creates programmatic aliases.
+	 */
+	protected Map<String, String> createProgrammaticAliases() {
+		Map<String, String> aliases = new HashMap<>();
 		if (ServletContextService.Module.INSTANCE.isActive()) {
 			ServletContextService contextService = ServletContextService.getInstance();
 			ServletContext context = contextService.getServletContext();
 			String applicationPath = contextService.getApplication().getPath();
 
-			baseAliases = new HashMap<>();
-			baseAliases.put(APP_CONTEXT, context.getContextPath());
-			baseAliases.put(APP_ROOT, applicationPath);
+			aliases.put(APP_CONTEXT, context.getContextPath());
+			aliases.put(APP_ROOT, applicationPath);
 		} else {
-			baseAliases = new HashMap<>();
-			baseAliases.put(APP_CONTEXT, "");
-			baseAliases.put(APP_ROOT, new File(ModuleLayoutConstants.WEBAPP_DIR).getAbsolutePath());
+			aliases.put(APP_CONTEXT, "");
+			aliases.put(APP_ROOT, new File(ModuleLayoutConstants.WEBAPP_DIR).getAbsolutePath());
 		}
-		setBaseAliases(baseAliases);
+		addLocalHostName(aliases);
+		return aliases;
+	}
 
-		ReloadableManager.getInstance().addReloadable(this);
+	private void addLocalHostName(Map<String, String> aliases) {
+		String hostName;
+		try {
+			hostName = InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException ex) {
+			Logger.error("Unable to find host name of this machine", ex, AliasManager.class);
+			hostName = "localhost";
+		}
+		aliases.put(LOCAL_HOST_NAME, hostName);
 	}
 
 	@Override

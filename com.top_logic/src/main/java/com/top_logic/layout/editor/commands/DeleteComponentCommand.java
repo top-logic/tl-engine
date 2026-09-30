@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.BufferingProtocol;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -42,7 +43,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.InDesignModeExecutable;
-import com.top_logic.tool.execution.UniqueToolbarCommandRule;
+import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -85,12 +86,12 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 		FindLinkedComponentsVisitor visitor = new FindLinkedComponentsVisitor();
 		editedComponent.acceptVisitorRecursively(visitor);
 
-		Set<String> linkedLayoutKeys = getLinkedLayoutKeys(visitor);
-		Set<String> visitedLayoutKeys = getVisitedLayoutKeys(visitor);
+		Set<LayoutComponent> linkedComponents = getLinkedComponents(visitor);
+		Set<LayoutComponent> visitedComponents = getVisitedComponents(visitor);
 
-		linkedLayoutKeys.removeAll(visitedLayoutKeys);
+		linkedComponents.removeAll(visitedComponents);
 
-		if (linkedLayoutKeys.isEmpty()) {
+		if (linkedComponents.isEmpty()) {
 			Identifiers newIdentifiers;
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
@@ -99,8 +100,9 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 				ScriptingRecorder.pause();
 			}
 
-			try (Transaction tx = kb.beginTransaction()) {
-				newIdentifiers = deleteComponents(editedComponent, visitedLayoutKeys);
+			try (Transaction tx =
+				kb.beginTransaction(I18NConstants.DELETED_COMPONENT__NAME.fill(editedComponent.getTitleKey()))) {
+				newIdentifiers = deleteComponents(editedComponent, visitedComponents);
 				tx.commit();
 			}
 
@@ -111,8 +113,19 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 
 			return HandlerResult.DEFAULT_RESULT;
 		} else {
-			return HandlerResult.error(I18NConstants.OUTER_REFERENCES_DELETION_ERROR);
+			return HandlerResult.error(I18NConstants.OUTER_REFERENCES_DELETION_ERROR__LAYOUTS
+				.fill(linkedComponents.stream().map(DeleteComponentCommand::componentName)
+					.collect(Collectors.joining(", "))));
 		}
+	}
+
+	private static String componentName(LayoutComponent component) {
+		String scope = LayoutTemplateUtils.getNonNullNameScope(component);
+		String name = scope + "#" + component.getName().localName();
+
+		ResKey labelKey = LayoutUtils.getLabelKey(component);
+		String label = StringServices.nonEmpty(Resources.getInstance().getString(labelKey, null));
+		return label == null ? name : label + " (" + name + ")";
 	}
 
 	private void recordDeletion(LayoutComponent component, Identifiers newIdentifiers) {
@@ -122,7 +135,7 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 		CommandActionWithIdentifiers action = ActionFactory.newApplicationAction(CommandActionWithIdentifiers.class,
 			CommandActionOpWithIdentifiers.class);
 		Map<String, Boolean> singletonMap = Collections.singletonMap(CONFIRMED_KEY, Boolean.TRUE);
-		ActionFactory.setCommandParameters(action, component.getName(), getID(), singletonMap);
+		ActionFactory.setCommandParameters(action, component, getID(), singletonMap);
 		action.setIdentifiers(newIdentifiers);
 		ScriptingRecorder.recordAction(action);
 	}
@@ -135,7 +148,7 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 		return I18NConstants.DELETE_COMPONENT_CONFIRMATION__NAME.fill(LayoutUtils.getLabel(editedComponent));
 	}
 
-	private Identifiers deleteComponents(LayoutComponent component, Set<String> visitedLayoutKeys)
+	private Identifiers deleteComponents(LayoutComponent component, Set<LayoutComponent> toDelete)
 			throws TopLogicException {
 		String rootLayoutKey = LayoutTemplateUtils.getNonNullNameScope(component);
 		LayoutComponent parent = component.getParent();
@@ -151,7 +164,7 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 				ex);
 		}
 
-		deleteComponents(visitedLayoutKeys);
+		deleteComponents(toDelete);
 		try {
 			replaceParent(component, parentLayoutKey);
 		} catch (ConfigurationException ex) {
@@ -180,9 +193,15 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 		}
 	}
 
-	private void deleteComponents(Set<String> visitedLayoutKeys) {
-		visitedLayoutKeys.stream()
-			.forEach(visitedLayoutKey -> LayoutTemplateUtils.deletePersistentTemplateLayout(visitedLayoutKey));
+	private void deleteComponents(Set<LayoutComponent> toDelete) {
+		toDelete.stream().forEach(c -> {
+			String layoutKey = LayoutTemplateUtils.getNonNullNameScope(c);
+			LayoutTemplateUtils.deletePersistentTemplateLayout(layoutKey);
+
+			if (LayoutExportUtils.existsLayoutInFilesystem(layoutKey)) {
+				LayoutStorage.getInstance().markLayoutAsDeleted(layoutKey);
+			}
+		});
 	}
 
 	private Identifiers updateParent(String rootLayoutKey, String parentLayoutKey) throws ConfigurationException {
@@ -194,29 +213,27 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 		return newIdentifiers;
 	}
 
-	private Set<String> getVisitedLayoutKeys(FindLinkedComponentsVisitor visitor) {
+	private Set<LayoutComponent> getVisitedComponents(FindLinkedComponentsVisitor visitor) {
 		return visitor
 			.getLinkedComponentsByComponent()
 			.keySet()
 			.stream()
-			.map(comp -> LayoutTemplateUtils.getNonNullNameScope(comp))
 			.collect(Collectors.toSet());
 	}
 
-	private Set<String> getLinkedLayoutKeys(FindLinkedComponentsVisitor visitor) {
+	private Set<LayoutComponent> getLinkedComponents(FindLinkedComponentsVisitor visitor) {
 		return visitor
 			.getLinkedComponentsByComponent()
 			.values()
 			.stream()
 			.flatMap(linkedComponents -> linkedComponents.stream())
-			.map(comp -> LayoutTemplateUtils.getNonNullNameScope(comp))
 			.collect(Collectors.toSet());
 	}
 
 	@Override
 	protected ExecutabilityRule intrinsicExecutability() {
-		return CombinedExecutabilityRule.combine(InDesignModeExecutable.INSTANCE, new UniqueToolbarCommandRule(this),
-			EditableComponentExecutability.INSTANCE);
+		return CombinedExecutabilityRule.combine(InDesignModeExecutable.INSTANCE,
+			EditableComponentExecutability.INSTANCE, super.intrinsicExecutability());
 	}
 
 	@Override

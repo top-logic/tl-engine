@@ -31,7 +31,7 @@ public class ObjectEditing extends FormObjectOverlay {
 	 *        See {@link #getEditedObject()}.
 	 */
 	public ObjectEditing(AttributeUpdateContainer scope, TLObject base) {
-		super(scope, base.tType());
+		super(scope, base.tType(), scope.newObjectID());
 		_base = base;
 	}
 
@@ -61,7 +61,7 @@ public class ObjectEditing extends FormObjectOverlay {
 	}
 
 	@Override
-	protected Object defaultValue(TLStructuredTypePart part) {
+	public Object defaultValue(TLStructuredTypePart part) {
 		return _base.tValue(part);
 	}
 

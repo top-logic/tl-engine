@@ -19,10 +19,10 @@ import com.top_logic.layout.basic.ThemeImage;
 @SuppressWarnings("javadoc")
 public class Icons extends IconsBase {
 
-	@DefaultValue("400px")
+	@DefaultValue("460px")
 	public static ThemeVar<DisplayDimension> TYPE_GENERATOR_WIDTH;
 
-	@DefaultValue("210px")
+	@DefaultValue("300px")
 	public static ThemeVar<DisplayDimension> TYPE_GENERATOR_HEIGHT;
 
 }

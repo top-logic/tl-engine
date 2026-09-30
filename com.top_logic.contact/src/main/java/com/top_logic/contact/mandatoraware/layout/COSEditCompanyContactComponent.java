@@ -123,7 +123,7 @@ public class COSEditCompanyContactComponent extends EditCompanyContactComponent 
         	Format    fkeyFormat = new FillParseAndCleanFormat(10, StringServices.START_POSITION_HEAD, '0');
         	FormField fkeyField  = FormFactory.newComplexField(fkeyIdentifier, fkeyFormat, true, false, false, new StringLengthConstraint(0, 10));
         	fkeyField.addConstraint(DigitsOnlyConstraint.INSTANCE);
-        	fkeyField.setValue(theOrig.getValue());
+			fkeyField.initializeField(theOrig.getValue());
         	fkeyField.setLabel(theOrig.getLabel());
         	fkeyField.setExampleValue("8979879800");
         	fc.addMember(fkeyField);

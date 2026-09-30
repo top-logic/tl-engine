@@ -7,10 +7,10 @@ package com.top_logic.mig.html.layout;
 
 import java.io.IOException;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -67,6 +67,13 @@ public class SimpleComponent extends LayoutComponent {
     
     protected boolean useResources;
 
+	/**
+	 * Reason why this component must not be displayed.
+	 * 
+	 * @see #setHideReason(ResKey)
+	 */
+	protected ResKey _hideReason;
+
     public SimpleComponent(InstantiationContext context, Config atts) throws ConfigurationException  {
         super(context, atts);
         content      = atts.getContent();
@@ -87,5 +94,21 @@ public class SimpleComponent extends LayoutComponent {
 		HTMLUtil.endDiv(out);
 
     }
+
+	/**
+	 * Sets a reason why this component must be hidden. May be <code>null</code> to show this
+	 * component.
+	 */
+	public void setHideReason(ResKey reason) {
+		_hideReason = reason;
+	}
+
+	@Override
+	public ResKey hideReason() {
+		if (_hideReason != null) {
+			return _hideReason;
+		}
+		return super.hideReason();
+	}
 
 }

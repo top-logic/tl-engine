@@ -370,6 +370,14 @@ BAL = {
 			"<iframe src='" + escape(url) + "' width='0' height='0' frameborder='0' scrolling='no'></iframe>";
 	},
 	
+	convertPixelToRem: function(px) {
+		return parseFloat(px) / parseFloat(getComputedStyle(document.documentElement).fontSize);
+	},
+	
+	convertRemToPixel: function(rem) {
+		return parseFloat(rem) * parseFloat(getComputedStyle(document.documentElement).fontSize);
+	},
+	
     getEffectiveWidth: function(element) {
         var paddingLeft   = BAL.getComputedStyleInt(element, "paddingLeft");
         var paddingRight  = BAL.getComputedStyleInt(element, "paddingRight");
@@ -607,28 +615,29 @@ BAL = {
 		return new BAL.Coordinates(x, y);
 	},
 	
+	getWheelScrollFactor: function(event) {
+			switch(event.deltaMode) {
+				case WheelEvent.DOM_DELTA_PIXEL: {
+					return 1;
+				}
+				case WheelEvent.DOM_DELTA_LINE: {
+					const el = document.createElement('div');
+					el.style.fontSize = 'initial';
+					el.style.display = 'none';
+					document.body.appendChild(el);
+					const fontSize = window.getComputedStyle(el).fontSize;
+					document.body.removeChild(el);
+					return fontSize ? parseInt(fontSize) : 1;
+				}
+				case WheelEvent.DOM_DELTA_PAGE: {
+					var pixelPerPage = 450; /*randomely chosen*/
+					return pixelPerPage;
+				}
+			}
+		},
+	
 	getEventMouseScrollDelta: function(event) {
-		var pixelMode = 0;
-		var lineMode = 1;
-		var pageMode = 2;
-		var pixelPerLine = 30; /*randomely chosen*/
-		var pixelPerPage = 450; /*randomely chosen*/
-		
-		var deltaModeFactor = 0;
-		switch(event.deltaMode) {
-			case pixelMode: {
-				deltaModeFactor = 1;
-				break;
-			}
-			case lineMode: {
-				deltaModeFactor = pixelPerLine;
-				break;
-			}
-			case pageMode: {
-				deltaModeFactor = pixelPerPage;
-				break;
-			}
-		}
+		var deltaModeFactor = this.getWheelScrollFactor(event);
 		return event.deltaY * deltaModeFactor;
 	},
 	
@@ -1060,6 +1069,15 @@ BAL = {
 	disableSelection: function(element) {
 		// There is no browser independent way to suppress text selection.
 		return false;
+	},
+	
+	removeAndDisableSelection: function(element) {
+		// new Function because there is a function in bal-ff.js that overrides the one above
+		window.getSelection().empty();
+		element.onselectstart = (event) => {
+			event.preventDefault();
+		};
+		return true;
 	},
   
 	/** <<function>>
@@ -1968,6 +1986,11 @@ BAL = {
                 if (href != null && href.length > 0) {
                     return true;
                 }
+            }
+            // Elements with an explicit tabindex >= 0 are developer-intended focus targets
+            // (e.g. React combobox widgets rendered as <div role="combobox" tabindex="0">).
+            if (element.hasAttribute("tabindex") && element.tabIndex >= 0) {
+                return true;
             }
             return false;
         },

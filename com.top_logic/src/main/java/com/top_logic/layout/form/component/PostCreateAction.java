@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.form.component;
 
+import java.util.Collection;
+import java.util.List;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
@@ -15,6 +18,8 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
@@ -22,8 +27,15 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DefaultRefVisitor;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -32,8 +44,18 @@ import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.channel.linking.impl.DirectLinking;
 import com.top_logic.layout.channel.linking.ref.ComponentRef;
 import com.top_logic.layout.channel.linking.ref.NamedComponent;
+import com.top_logic.layout.component.ObjectRevealer;
+import com.top_logic.layout.component.WithCommitMessage;
+import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.component.edit.EditMode;
+import com.top_logic.layout.form.component.edit.EditMode.EditorMode;
+import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
+import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Plug-in for an {@link AbstractCreateCommandHandler} for specifying common action to be done after
@@ -85,13 +107,13 @@ public interface PostCreateAction {
 	 * @see PostCreateAction.SetModel.Config#getTarget()
 	 */
 	@InApp
-	class SetModel extends AbstractConfiguredInstance<SetModel.Config> implements PostCreateAction {
+	class SetModel extends WithTransform<SetModel.Config> {
 
 		/**
 		 * Configuration options for {@link PostCreateAction.SetModel}.
 		 */
 		@TagName(Config.TAG_NAME)
-		public interface Config extends PolymorphicConfiguration<SetModel> {
+		public interface Config extends WithTransform.Config<SetModel> {
 
 			/**
 			 * Short-cut tag name for configuring a {@link SetModel} action.
@@ -159,7 +181,7 @@ public interface PostCreateAction {
 		}
 
 		@Override
-		public void handleNew(LayoutComponent component, Object newModel) {
+		public void internalHandleNew(LayoutComponent component, Object newModel) {
 			ChannelLinking.updateModel(getConfig().getTarget(), component, newModel);
 		}
 	}
@@ -169,7 +191,6 @@ public interface PostCreateAction {
 	 */
 	@InApp
 	class SetEditMode extends AbstractConfiguredInstance<SetEditMode.Config> implements PostCreateAction {
-
 		/**
 		 * Configuration options for {@link PostCreateAction.SetEditMode}.
 		 */
@@ -182,6 +203,12 @@ public interface PostCreateAction {
 			@Mandatory
 			@DefaultContainer
 			ComponentRef getComponentRef();
+
+			/**
+			 * The mode to set on the {@link #getComponentRef() target component}.
+			 */
+			@FormattedDefault(EditMode.EDIT_MODE_NAME)
+			EditorMode getMode();
 		}
 
 		/**
@@ -195,11 +222,36 @@ public interface PostCreateAction {
 		public void handleNew(LayoutComponent component, Object newModel) {
 			LayoutComponent editComponent =
 				DefaultRefVisitor.resolveReference(getConfig().getComponentRef(), component);
-			if (editComponent instanceof EditMode) {
-				((EditMode) editComponent).setEditMode();
+			if (editComponent instanceof EditMode editor) {
+				getConfig().getMode().apply(editor);
 			}
 		}
+	}
 
+	/**
+	 * {@link PostCreateAction} storing the form context of the context component back its model.
+	 */
+	@InApp
+	class FormApply implements PostCreateAction {
+		@Override
+		public void handleNew(LayoutComponent component, Object newModel) {
+			if (component instanceof FormHandler form && form.hasFormContext()) {
+				FormContext formContext = form.getFormContext();
+				if (formContext != null) {
+					boolean ok = formContext.checkAll();
+					if (!ok) {
+						HandlerResult error = AbstractApplyCommandHandler.createErrorResult(formContext);
+
+						TopLogicException ex = new TopLogicException(error.getErrorMessage());
+						ex.initDetails(error.getEncodedErrors().get(0));
+						ex.initSeverity(ErrorSeverity.WARNING);
+						throw ex;
+					}
+
+					formContext.store();
+				}
+			}
+		}
 	}
 
 	/**
@@ -210,13 +262,13 @@ public interface PostCreateAction {
 	 * </p>
 	 */
 	@InApp
-	class DeliverAsDownload extends AbstractConfiguredInstance<DeliverAsDownload.Config> implements PostCreateAction {
+	class DeliverAsDownload extends WithTransform<DeliverAsDownload.Config> {
 
 		/**
 		 * Configuration options for {@link PostCreateAction.DeliverAsDownload}.
 		 */
 		@TagName("deliverAsDownload")
-		public interface Config extends PolymorphicConfiguration<DeliverAsDownload> {
+		public interface Config extends WithTransform.Config<DeliverAsDownload> {
 			// Pure marker interface.
 		}
 
@@ -228,8 +280,9 @@ public interface PostCreateAction {
 		}
 
 		@Override
-		public void handleNew(LayoutComponent component, Object newModel) {
-			BinaryDataSource data = (BinaryDataSource) CollectionUtil.getSingleValueFrom(newModel);
+		public void internalHandleNew(LayoutComponent component, Object newModel) {
+			BinaryDataSource data =
+				(BinaryDataSource) CollectionUtil.getSingleValueFrom(newModel);
 			if (data != null) {
 				DefaultDisplayContext.getDisplayContext().getWindowScope().deliverContent(data);
 			}
@@ -284,15 +337,19 @@ public interface PostCreateAction {
 
 	/**
 	 * Jumps to a specified component by switching tabs, opening dialogs, selecting tiles.
+	 * 
+	 * <p>
+	 * The component receives the command result as new model.
+	 * </p>
 	 */
 	@InApp
-	class ShowComponent extends AbstractConfiguredInstance<ShowComponent.Config> implements PostCreateAction {
+	class ShowComponent extends WithTransform<ShowComponent.Config> {
 
 		/**
 		 * Configuration options for {@link ShowComponent}.
 		 */
 		@TagName("showComponent")
-		public interface Config extends PolymorphicConfiguration<ShowComponent> {
+		public interface Config extends WithTransform.Config<ShowComponent> {
 			/**
 			 * The component to show.
 			 */
@@ -311,15 +368,244 @@ public interface PostCreateAction {
 		}
 
 		@Override
-		public void handleNew(LayoutComponent component, Object newModel) {
+		public void internalHandleNew(LayoutComponent component, Object newModel) {
 			LayoutComponent targetComponent =
 				DefaultRefVisitor.resolveReference(getConfig().getTargetComponent(), component);
 			if (targetComponent == null) {
 				Logger.error("Cannot resolve component: " + getConfig().getTargetComponent(), ShowComponent.class);
 				return;
 			}
-			targetComponent.setModel(newModel);
-			targetComponent.makeVisible();
+			/**
+			 * Uses GotoHandler to properly navigate to the target component. This approach prevents
+			 * display issues that occurred with the previous implementation
+			 * (targetComponent.setModel/makeVisible) when this action was triggered from within
+			 * another GoTo component. The GotoHandler ensures proper component visibility even when
+			 * the originating GoTo component is being closed.
+			 */
+			GotoHandler goTo = (GotoHandler) CommandHandlerFactory.getInstance().getHandler(GotoHandler.COMMAND);
+			goTo.executeGoto(DefaultDisplayContext.getDisplayContext(), component, targetComponent.getName(), newModel);
 		}
 	}
+
+	/**
+	 * Makes the created object visible in a component.
+	 *
+	 * <p>
+	 * In a tree, the ancestors of the object are expanded so that it is displayed; in a tree or
+	 * table, the row of the object is scrolled into the viewport. This is useful e.g. to reveal a
+	 * newly created object in a tree that shows it, without changing which node is expanded on
+	 * selection.
+	 * </p>
+	 */
+	@InApp
+	@Label("Show object in component")
+	class RevealObject extends AbstractConfiguredInstance<RevealObject.Config> implements PostCreateAction {
+
+		/**
+		 * Configuration options for {@link RevealObject}.
+		 */
+		@TagName("reveal")
+		public interface Config extends PolymorphicConfiguration<RevealObject> {
+			/**
+			 * The component in which the object is revealed.
+			 *
+			 * <p>
+			 * If not set, the object is revealed in the component the action is executed on.
+			 * </p>
+			 */
+			@Name("target-component")
+			@DefaultContainer
+			ComponentRef getTargetComponent();
+		}
+
+		/**
+		 * Creates a {@link RevealObject}.
+		 */
+		public RevealObject(InstantiationContext context, Config config) {
+			super(context, config);
+		}
+
+		@Override
+		public void handleNew(LayoutComponent component, Object newModel) {
+			LayoutComponent target = component;
+			ComponentRef targetRef = getConfig().getTargetComponent();
+			if (targetRef != null) {
+				target = DefaultRefVisitor.resolveReference(targetRef, component);
+				if (target == null) {
+					Logger.error("Cannot resolve component: " + targetRef, RevealObject.class);
+					return;
+				}
+			}
+			if (target instanceof ObjectRevealer) {
+				reveal((ObjectRevealer) target, newModel);
+			}
+		}
+
+		/**
+		 * Reveals all objects contained in the given model.
+		 *
+		 * <p>
+		 * A model may be a single object or a collection of objects (e.g. a multiple selection);
+		 * every contained object is revealed. A caller that delivers a business-object path (such as
+		 * a tree selection from root to the selected node) and wants only the selected node revealed
+		 * must reduce the path to that object before handing it to this action.
+		 * </p>
+		 */
+		private static void reveal(ObjectRevealer revealer, Object model) {
+			if (model instanceof Collection<?>) {
+				for (Object element : (Collection<?>) model) {
+					reveal(revealer, element);
+				}
+			} else if (model != null) {
+				revealer.revealObject(model);
+			}
+		}
+	}
+
+	/**
+	 * Closes the dialog where the executed command was defined in.
+	 */
+	@InApp
+	class CloseDialog extends AbstractConfiguredInstance<CloseDialog.Config> implements PostCreateAction {
+		/**
+		 * Configuration options for {@link CloseDialog}.
+		 */
+		@TagName(Config.TAG_NAME)
+		public interface Config extends PolymorphicConfiguration<CloseDialog> {
+			/**
+			 * Short-cut tag name for configuring a {@link CloseDialog} action.
+			 */
+			String TAG_NAME = "close-dialog";
+		}
+
+		/**
+		 * Creates a {@link PostCreateAction.CloseDialog} from configuration.
+		 * 
+		 * @param context
+		 *        The context for instantiating sub configurations.
+		 * @param config
+		 *        The configuration.
+		 */
+		@CalledByReflection
+		public CloseDialog(InstantiationContext context, Config config) {
+			super(context, config);
+		}
+
+		@Override
+		public void handleNew(LayoutComponent component, Object newModel) {
+			component.closeDialog();
+		}
+	}
+
+	/**
+	 * Performs actions in a transaction context.
+	 */
+	@InApp
+	public class InTransaction extends AbstractConfiguredInstance<InTransaction.Config<?>>
+			implements PostCreateAction {
+
+		private final List<PostCreateAction> _actions;
+
+		private CommandHandler _command;
+
+		/**
+		 * Configuration options for {@link InTransaction}.
+		 */
+		@TagName(Config.TAG_NAME)
+		@DisplayOrder({
+			Config.COMMIT_MESSAGE,
+			Config.POST_CREATE_ACTIONS,
+		})
+		public interface Config<I extends InTransaction>
+				extends PolymorphicConfiguration<I>, WithPostCreateActions.Config, WithCommitMessage {
+
+			/**
+			 * Short-cut tag name for configuring a {@link InTransaction} action.
+			 */
+			String TAG_NAME = "in-transaction";
+
+		}
+
+		/**
+		 * Creates a {@link InTransaction} from configuration.
+		 * 
+		 * @param context
+		 *        The context for instantiating sub configurations.
+		 * @param config
+		 *        The configuration.
+		 */
+		@CalledByReflection
+		public InTransaction(InstantiationContext context, Config<?> config) {
+			super(context, config);
+			_actions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
+			context.resolveReference(InstantiationContext.OUTER, CommandHandler.class, c -> _command = c);
+		}
+
+		@Override
+		public void handleNew(LayoutComponent component, Object model) {
+			ResKey message = getConfig().buildCommandMessage(component, _command, model);
+
+			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(message)) {
+				WithPostCreateActions.processCreateActions(_actions, component, model);
+
+				tx.commit();
+			}
+		}
+	}
+
+	/**
+	 * Base class for {@link PostCreateAction} that can transform their input model.
+	 */
+	abstract class WithTransform<C extends WithTransform.Config<?>> extends AbstractConfiguredInstance<C>
+			implements PostCreateAction {
+
+		/**
+		 * Configuration options for {@link PostCreateAction.WithTransform}.
+		 */
+		@Abstract
+		public interface Config<I extends WithTransform<?>> extends PolymorphicConfiguration<I> {
+			/**
+			 * The input value for this UI action.
+			 * 
+			 * <p>
+			 * If not given, the command result is used as input by default.
+			 * </p>
+			 */
+			@NonNullable
+			@ImplementationClassDefault(CommandResult.class)
+			@ItemDefault
+			PolymorphicConfiguration<ValueTransformation> getInput();
+		}
+
+		private ValueTransformation _tx;
+
+		/**
+		 * Creates a {@link WithTransform} from configuration.
+		 * 
+		 * @param context
+		 *        The context for instantiating sub configurations.
+		 * @param config
+		 *        The configuration.
+		 */
+		@CalledByReflection
+		public WithTransform(InstantiationContext context, C config) {
+			super(context, config);
+
+			_tx = ValueTransformation.getInstance(context, config.getInput());
+		}
+
+		@Override
+		public final void handleNew(LayoutComponent component, Object newModel) {
+			internalHandleNew(component, _tx.transform(component, newModel));
+		}
+
+		/**
+		 * Implementation of {@link #handleNew(LayoutComponent, Object)} with a potentially
+		 * transformed model.
+		 */
+		protected abstract void internalHandleNew(LayoutComponent component, Object newModel);
+
+	}
+
+
 }

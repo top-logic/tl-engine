@@ -27,7 +27,6 @@ import com.top_logic.tool.boundsec.conditional.Success;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.InDesignModeExecutable;
-import com.top_logic.tool.execution.UniqueToolbarCommandRule;
 
 /**
  * Opens a dialog that allows you to split the view horizontally or vertically into several
@@ -128,7 +127,6 @@ public class EditLayoutCommand extends PreconditionCommandHandler {
 
 	@Override
 	protected ExecutabilityRule intrinsicExecutability() {
-		return CombinedExecutabilityRule.combine(InDesignModeExecutable.INSTANCE, new UniqueToolbarCommandRule(this),
-			super.intrinsicExecutability());
+		return CombinedExecutabilityRule.combine(InDesignModeExecutable.INSTANCE, super.intrinsicExecutability());
 	}
 }

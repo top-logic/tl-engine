@@ -13,7 +13,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey.Builder;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -21,7 +21,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
 /**
  * {@link ModelNamingScheme} of {@link ResKey} values.
  */
-public class ResKeyNaming extends AbstractModelNamingScheme<ResKey, ResKeyNaming.Name> {
+public class ResKeyNaming extends AbstractGlobalModelNamingScheme<ResKey, ResKeyNaming.Name> {
 
 	/**
 	 * Script value representing a custom {@link ResKey} value.

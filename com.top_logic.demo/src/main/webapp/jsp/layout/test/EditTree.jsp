@@ -5,9 +5,7 @@
 %><%@taglib uri="basic" prefix="basic"
 %><%@page import="com.top_logic.layout.form.control.DefaultButtonRenderer"
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:form>
 			<basic:fieldset>

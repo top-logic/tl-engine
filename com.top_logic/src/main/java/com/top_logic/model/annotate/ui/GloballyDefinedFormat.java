@@ -10,9 +10,11 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.format.FormatConfig;
@@ -27,10 +29,13 @@ import com.top_logic.model.annotate.ui.FormatBase.FormatLabel;
 import com.top_logic.model.annotate.ui.FormatBase.FormatOptions;
 
 /**
- * {@link FormFactory} using a globally defined format registered in the {@link FormatterService}.
+ * {@link FormFactory} using a pre-defined format from the application configuration from
+ * configuration section "{@link FormatterService}".
  * 
  * @see com.top_logic.model.annotate.ui.Format
  */
+@InApp
+@Label("Pre-defined format from application configuration")
 public class GloballyDefinedFormat<C extends GloballyDefinedFormat.Config<?>> extends AbstractConfiguredInstance<C>
 		implements FormatFactory {
 

@@ -23,7 +23,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
  * and at the methods provided by PosMailServer
  * 
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface MailFolderAware extends Wrapper {
 

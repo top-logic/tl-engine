@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-fragment
+	xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee/web-fragment_3_0.xsd"
+	id="tl-layout-view-agent"
+	version="3.0"
+	metadata-complete="true"
+>
+	<name>tl-layout-view-agent</name>
+
+	<servlet>
+		<servlet-name>AgentServlet</servlet-name>
+		<servlet-class>com.top_logic.layout.view.agent.AgentServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>AgentServlet</servlet-name>
+		<url-pattern>/agent-api/*</url-pattern>
+	</servlet-mapping>
+
+</web-fragment>

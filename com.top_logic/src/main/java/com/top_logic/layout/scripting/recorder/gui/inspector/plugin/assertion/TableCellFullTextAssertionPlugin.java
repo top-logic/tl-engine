@@ -36,7 +36,7 @@ public class TableCellFullTextAssertionPlugin extends SingleValueAssertionPlugin
 	 *        Is not allowed to be null.
 	 */
 	public TableCellFullTextAssertionPlugin(TableCell model) {
-		super(model, true, "tableCellFullText");
+		super(model, false, "tableCellFullText");
 	}
 
 	@Override

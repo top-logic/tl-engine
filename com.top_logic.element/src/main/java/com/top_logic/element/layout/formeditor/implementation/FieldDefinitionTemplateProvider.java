@@ -43,10 +43,11 @@ import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLCreateVisibility;
+import com.top_logic.model.annotate.TLDynamicVisibility;
 import com.top_logic.model.annotate.TLVisibility;
 import com.top_logic.model.annotate.Visibility;
+import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.form.definition.FormVisibility;
-import com.top_logic.model.form.definition.LabelPlacement;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormMode;
@@ -164,7 +165,7 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 				if (member != null) {
 					HTMLTemplateFragment result =
 						createFieldTemplate(context, member, part, AttributeFormFactory.getAttributeUpdate(member),
-							context.getLabelPlacement());
+							context.getLabelPosition());
 					_member = member;
 					return result;
 				}
@@ -213,13 +214,13 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 			switch (visibility) {
 				case EDITABLE:
 				case MANDATORY: {
-					setDisabled(attributeContext, type, part, model, false);
+					setDisabled(attributeContext, type, part, model, domain, false);
 					break;
 				}
 				case HIDDEN:
 				case DISABLED:
 				case READ_ONLY: {
-					setDisabled(attributeContext, type, part, model, true);
+					setDisabled(attributeContext, type, part, model, domain, true);
 					break;
 				}
 				case DEFAULT:
@@ -231,9 +232,9 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	private static void setDisabled(AttributeFormContext attributeContext, TLStructuredType type,
-			TLStructuredTypePart part, TLObject model, boolean disabled) {
+			TLStructuredTypePart part, TLObject model, String domain, boolean disabled) {
 		TLFormObject overlay =
-			model == null ? attributeContext.createObject(type, null) : attributeContext.editObject(model);
+			model == null ? attributeContext.createObject(type, domain) : attributeContext.editObject(model);
 		AttributeUpdate update = overlay.getUpdate(part);
 		if (update != null) {
 			update.setDisabled(disabled);
@@ -241,12 +242,13 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	static HTMLTemplateFragment createFieldTemplate(FormEditorContext context, FormMember member,
-			TLStructuredTypePart part, AttributeUpdate update, LabelPlacement labelPlacement) {
+			TLStructuredTypePart part, AttributeUpdate update, LabelPosition defaultLabelPosition) {
 		String memberName = member.getName();
-		LabelPosition labelPosition = AttributeOperations.labelPosition(part, update);
+		LabelPosition labelPosition = AttributeOperations.labelPositionOrNull(part, update);
+		if (labelPosition == null) {
+			labelPosition = defaultLabelPosition;
+		}
 		switch (labelPosition) {
-			case DEFAULT:
-				return fieldBox(memberName, labelPlacement);
 			case AFTER_VALUE:
 				return fieldBoxInputFirst(memberName);
 			case HIDE_LABEL:
@@ -255,8 +257,9 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 				} else {
 					return fieldBoxNoLabel(memberName);
 				}
+			default:
+				return fieldBox(memberName, labelPosition);
 		}
-		throw LabelPosition.noSuchPosition(labelPosition);
 	}
 
 	private static FormMember createFormMember(AttributeFormContext formContext, FormContainer contentGroup,
@@ -271,50 +274,55 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 
 	static FormVisibility calculateVisibility(TLStructuredTypePart part, FormVisibility formVisibility,
 			FormMode formMode) throws UnreachableAssertion {
-		if (formVisibility != FormVisibility.DEFAULT || part == null) {
+		if (formVisibility != FormVisibility.DEFAULT) {
 			return formVisibility;
 		}
-		if (formMode == FormMode.DESIGN) {
+
+		if (part == null) {
 			return FormVisibility.DEFAULT;
 		}
-		boolean isMandatoryModel = part.isMandatory();
+
+		if (formMode == FormMode.DESIGN) {
+			return FormVisibility.EDITABLE;
+		}
+
 		if (formMode == FormMode.CREATE) {
-			return createFormVisibility(part, isMandatoryModel);
+			return createFormVisibility(part);
 		} else {
-			return editFormVisibility(part, isMandatoryModel);
+			return editFormVisibility(part);
 		}
 	}
 
-	private static FormVisibility createFormVisibility(TLStructuredTypePart part, boolean isMandatoryModel) {
+	private static FormVisibility createFormVisibility(TLStructuredTypePart part) {
 		TLCreateVisibility createVisibility = DisplayAnnotations.getCreateVisibilityAnnotation(part);
 		if (createVisibility != null) {
-			return formVisiblity(createVisibility.getValue(), isMandatoryModel);
+			return formVisiblity(part, createVisibility.getValue());
 		} else {
-			return editFormVisibility(part, isMandatoryModel);
+			return editFormVisibility(part);
 		}
 	}
 
-	private static FormVisibility editFormVisibility(TLStructuredTypePart part, boolean isMandatoryModel) {
+	private static FormVisibility editFormVisibility(TLStructuredTypePart part) {
+		TLDynamicVisibility dynamicAnotation = TLAnnotations.getAnnotation(part, TLDynamicVisibility.class);
+		if (dynamicAnotation != null) {
+			// Do not change, the visibility is completely controlled by the model.
+			return null;
+		}
+
 		TLVisibility visibility = DisplayAnnotations.getVisibilityAnnotation(part);
 		if (visibility != null) {
-			return formVisiblity(visibility.getValue(), isMandatoryModel);
+			return formVisiblity(part, visibility.getValue());
 		} else {
-			if (isMandatoryModel) {
-				return FormVisibility.MANDATORY;
-			} else {
-				return FormVisibility.DEFAULT;
-			}
+			return defaultFormVisibility(part);
 		}
 	}
 
-	private static FormVisibility formVisiblity(Visibility annotatedVisibility, boolean isMandatoryModel) {
+	private static FormVisibility formVisiblity(TLStructuredTypePart part, Visibility annotatedVisibility) {
 		switch (annotatedVisibility) {
+			case DEFAULT:
+				return defaultFormVisibility(part);
 			case EDITABLE:
-				if (isMandatoryModel) {
-					return FormVisibility.MANDATORY;
-				} else {
-					return FormVisibility.EDITABLE;
-				}
+				return FormVisibility.EDITABLE;
 			case MANDATORY:
 				return FormVisibility.MANDATORY;
 			case HIDDEN:
@@ -323,6 +331,16 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 				return FormVisibility.READ_ONLY;
 		}
 		throw new UnreachableAssertion("Unexpected visibility " + annotatedVisibility);
+	}
+
+	private static FormVisibility defaultFormVisibility(TLStructuredTypePart part) {
+		if (part.isDerived()) {
+			return FormVisibility.READ_ONLY;
+		} else if (part.isMandatory()) {
+			return FormVisibility.MANDATORY;
+		} else {
+			return FormVisibility.DEFAULT;
+		}
 	}
 
 	@Override

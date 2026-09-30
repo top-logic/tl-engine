@@ -32,22 +32,15 @@ public class CumulatedEventReader<E> extends AbstractEventReader<E> {
 
 	@Override
 	public E readEvent() {
-		if (currentReader == null) {
-			return null;
-		}
-		E readEvent = currentReader.readEvent();
-		if (readEvent != null) {
-			return readEvent;
-		} else {
-			currentReader.close();
-			if (readers.hasNext()) {
-				currentReader = readers.next();
-				return readEvent();
-			} else {
-				currentReader = null;
-				return null;
+		while (currentReader != null) {
+			E readEvent = currentReader.readEvent();
+			if (readEvent != null) {
+				return readEvent;
 			}
+			currentReader.close();
+			currentReader = readers.hasNext() ? readers.next() : null;
 		}
+		return null;
 	}
 
 	@Override

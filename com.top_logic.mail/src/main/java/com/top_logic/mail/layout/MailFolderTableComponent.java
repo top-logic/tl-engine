@@ -18,7 +18,7 @@ import com.top_logic.mig.html.layout.decoratedTabBar.DecorationValueProviderDele
  * 
  * The display will result in a table of mails and mail folders contained in this folder.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  *
  */
 public class MailFolderTableComponent extends TableComponent implements DecorationValueProvider {

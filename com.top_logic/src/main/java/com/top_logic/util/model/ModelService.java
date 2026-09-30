@@ -35,7 +35,10 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.exception.ErrorSeverity;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.format.configured.FormatterService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -47,6 +50,7 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
@@ -55,6 +59,10 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.event.CommitChecker;
 import com.top_logic.knowledge.service.event.CommitVetoException;
+import com.top_logic.knowledge.service.event.Modification;
+import com.top_logic.knowledge.service.event.ModificationListener;
+import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.values.edit.AllQualifiedTLTypeNames;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLClass;
@@ -71,15 +79,20 @@ import com.top_logic.model.annotate.TLSize;
 import com.top_logic.model.annotate.TLUpdateMode;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.annotate.util.ConstraintCheck;
+import com.top_logic.model.annotate.util.ConstraintCheck.ConstraintType;
+import com.top_logic.model.cache.TLModelCacheService;
+import com.top_logic.model.cache.TLModelOperations;
 import com.top_logic.model.config.EnumConfig;
 import com.top_logic.model.config.ScopeConfig;
 import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.filter.ModelFilterConfig;
 import com.top_logic.model.impl.TLModelImpl;
+import com.top_logic.model.initializer.TLObjectInitializer;
 import com.top_logic.model.internal.PersistentQuery;
 import com.top_logic.model.internal.PersistentType;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.list.ListInitializationUtil;
 import com.top_logic.util.model.check.AttributeChecker;
@@ -91,7 +104,7 @@ import com.top_logic.util.model.check.StringSizeCheck;
 /**
  * Provides the business model, this application is working on.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 @ServiceDependencies({
 	PersistencyLayer.Module.class,
@@ -100,7 +113,9 @@ import com.top_logic.util.model.check.StringSizeCheck;
 	AttributeSettings.Module.class,
 	FormatterService.Module.class,
 })
-public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>> implements CommitChecker {
+@Label("Application model")
+public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
+		implements CommitChecker, ModificationListener {
 
 	/**
 	 * Configuration options for {@link ModelService}
@@ -226,6 +241,7 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 	protected void startUpInContext() throws ConfigurationException, KnowledgeBaseException {
 		KnowledgeBase kb = kb();
 		kb.addCommitChecker(this);
+		kb.addModificationListener(this);
 
 		_model = fetchModel(kb);
 		_queries = initQueries();
@@ -264,7 +280,7 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 			throw new IOError(ex);
 		}
 
-		Transaction tx = kb().beginTransaction(Messages.CREATING_CLASSIFICATIONS);
+		Transaction tx = kb().beginTransaction(I18NConstants.CREATING_CLASSIFICATIONS);
 		initEnums(enumScope);
 		tx.commit();
 	}
@@ -278,12 +294,48 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 
 	@Override
 	protected void shutDown() {
+		kb().removeModificationListener(this);
 		kb().removeCommitChecker(this);
 
 		_model = null;
 		_queries = null;
 
 		super.shutDown();
+	}
+
+	@Override
+	public Modification createModification(KnowledgeBase kb, Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
+			Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
+			Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
+
+		return applyInitializers(createdObjects);
+	}
+
+	private Modification applyInitializers(Map<ObjectKey, ? extends KnowledgeItem> createdObjects) {
+		TLModelOperations operations = TLModelCacheService.getOperations();
+		Modification result = Modification.NONE;
+		for (KnowledgeItem created : createdObjects.values()) {
+			TLObject object = created.getWrapper();
+			TLStructuredType type = object.tType();
+			if (type == null) {
+				continue;
+			}
+			List<TLObjectInitializer> initializers = operations.getInitializers(type);
+			if (initializers.isEmpty()) {
+				continue;
+			}
+			result = result.andThen(() -> {
+				for (TLObjectInitializer initializer : initializers) {
+					initializer.initializeObject(object);
+				}
+			});
+		}
+		return result;
+	}
+
+	@Override
+	public Modification notifyUpcomingDeletion(KnowledgeBase kb, KnowledgeItem item) {
+		return Modification.NONE;
 	}
 
 	@Override
@@ -300,12 +352,12 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 		};
 		checkConstraints(problems, objectsToCheck);
 
-		TopLogicException ex = null;
+		I18NRuntimeException ex = null;
 		for (ResKey message : allProblems) {
 			ex = new TopLogicException(message, ex);
 		}
 		if (ex != null) {
-			throw ex;
+			throw new TopLogicException(I18NConstants.CONSTRAINTS_VIOLATED, ex).initSeverity(ErrorSeverity.ERROR);
 		}
 	}
 
@@ -475,7 +527,9 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 					.getConstraints()) {
 					ConstraintCheck check =
 						SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(checkConfig);
-					checks.add(new AttributeChecker(check, attribute));
+					if (check.type() == ConstraintType.ERROR) {
+						checks.add(new AttributeChecker(check, attribute));
+					}
 				}
 			}
 		}
@@ -567,7 +621,7 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 	/**
 	 * Module definition for the {@link ModelService}.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class Module extends TypedRuntimeModule<ModelService> {
 
@@ -600,6 +654,33 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 	 */
 	public <T extends TLModelPart> List<T> filterModel(Collection<? extends T> modelParts) {
 		return getConfig().getModelFilter().filterModel(modelParts);
+	}
+
+	/**
+	 * Creates a group instance.
+	 * 
+	 * <p>
+	 * This method is a workaround for creating object in <code>tl-core</code> code that require a
+	 * model type in <code>tl-element</code>.
+	 * </p>
+	 */
+	public Group createGroup() {
+		KnowledgeObject item = PersistencyLayer.getKnowledgeBase().createKnowledgeObject(Group.OBJECT_NAME);
+		return (Group) WrapperFactory.getWrapper(item);
+	}
+
+	/**
+	 * Creates a group for storing representatives for an account.
+	 * 
+	 * <p>
+	 * This method is a workaround for creating object in <code>tl-core</code> code that require a
+	 * model type in <code>tl-element</code>.
+	 * </p>
+	 * 
+	 * @see Person#getRepresentativeGroup()
+	 */
+	public Group createRepresentativeGroup() {
+		return createGroup();
 	}
 
 }

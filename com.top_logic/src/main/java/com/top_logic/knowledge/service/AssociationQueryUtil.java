@@ -148,7 +148,19 @@ public class AssociationQueryUtil {
 			ObjectKey referencedKey = link.getReferencedKey(reference);
 			keys.add(referencedKey);
 		}
-		return BulkIdLoad.load(kb, keys);
+		List<KnowledgeItem> result = BulkIdLoad.load(kb, keys);
+		if (result.size() < keys.size()) {
+			/* Some referenced objects no longer exist. In contrast to the bulk load, which silently
+			 * drops unresolvable keys, this is reported as a dangling reference, consistently with
+			 * the single-link navigation path (KnowledgeAssociationImpl.checkResult, reached via
+			 * KnowledgeAssociation.getDestinationObject()/getSourceObject()). */
+			for (KnowledgeItem resolved : result) {
+				keys.remove(resolved.tId());
+			}
+			throw new KnowledgeBaseRuntimeException(
+				new InvalidLinkException("Dangling references to no longer existing objects: " + keys));
+		}
+		return result;
 	}
 
 	/**

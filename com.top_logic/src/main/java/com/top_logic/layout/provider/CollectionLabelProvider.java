@@ -19,7 +19,7 @@ import com.top_logic.layout.LabelProvider;
 /**
  * Display the content of a collection using the {@link LabelProvider inner provider}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CollectionLabelProvider implements LabelProvider {
 

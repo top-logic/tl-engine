@@ -20,6 +20,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
+import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.MessageBox.MessageType;
@@ -85,6 +86,9 @@ public class ShowSimilarExecutable extends AbstractWebfolderAction {
 
 	@Override
 	protected ExecutableState calculateExecutability() {
+		if (!ComponentUtil.isValid(getContentObject())) {
+			return ExecutableState.NO_EXEC_INVALID;
+		}
 		return ExecutableState.EXECUTABLE;
 	}
 

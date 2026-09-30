@@ -26,7 +26,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Handler to delete a stylesheet for a given ThemeConfig.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DeleteStylesheetHandler extends AbstractCommandHandler {
 

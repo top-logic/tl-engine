@@ -14,6 +14,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.top_logic.util.error.TopLogicException;
+
 /**
  * {@link Format} parsing the hexcode of a color (#rrggbb) into the corresponding {@link Color}
  * object.
@@ -380,11 +382,11 @@ public class ColorFormat extends Format {
 	/**
 	 * Parses the given color definition.
 	 */
-	public static Color parseColor(String colorSpec) {
+	public static Color parseColor(String colorSpec) throws TopLogicException {
 		try {
 			return (Color) ColorFormat.INSTANCE.parseObject(colorSpec);
 		} catch (ParseException ex) {
-			throw new IllegalArgumentException("Not a color spec: " + colorSpec, ex);
+			throw new TopLogicException(I18NConstants.ERROR_INVALID_COLOR_FORMAT__VALUE.fill(colorSpec));
 		}
 	}
 

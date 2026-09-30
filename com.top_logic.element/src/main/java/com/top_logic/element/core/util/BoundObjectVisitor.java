@@ -13,7 +13,7 @@ import com.top_logic.tool.boundsec.BoundObject;
 /**
  * Collect all elements, where the defined bound checker allows the defined command group.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class BoundObjectVisitor extends AllElementVisitor {
 
@@ -56,7 +56,7 @@ public class BoundObjectVisitor extends AllElementVisitor {
         if (anElement instanceof BoundObject) {
             BoundObject theObject = (BoundObject) anElement;
 
-            if (this.checker.allow(this.commandGroup, theObject)) {
+            if (BoundChecker.allowCommandOnSecurityObject(this.checker, this.commandGroup, theObject)) {
                 super.onVisit(anElement, aDepth);
             }
 

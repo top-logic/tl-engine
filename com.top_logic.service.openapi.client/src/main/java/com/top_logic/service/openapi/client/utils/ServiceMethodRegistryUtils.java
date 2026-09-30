@@ -14,7 +14,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.json.JSON;
-import com.top_logic.model.search.expr.ToString;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 
 /**
@@ -56,20 +56,20 @@ public class ServiceMethodRegistryUtils {
 	public static String serializeArgument(Object value) {
 		String stringValue;
 		if (value instanceof Date) {
-			// Guess Open API type "date" or "date-time"
+			// Guess OpenAPI type "date" or "date-time"
 			stringValue = XmlDateTimeFormat.INSTANCE.format(value);
 		} else if (value instanceof Calendar) {
-			// Guess Open API type "date" or "date-time"
+			// Guess OpenAPI type "date" or "date-time"
 			stringValue = XmlDateTimeFormat.INSTANCE.format(((Calendar) value).getTime());
 		} else if (value instanceof Map) {
-			// Guess Open API type "object"
+			// Guess OpenAPI type "object"
 			stringValue = JSON.toString(value);
 		} else if (value instanceof Number) {
 			stringValue = ((Number) value).toString();
 		} else if (value instanceof Boolean) {
 			stringValue = ((Boolean) value).toString();
 		} else {
-			stringValue = ToString.toString(value);
+			stringValue = SearchExpression.asString(value);
 		}
 		return stringValue;
 	}

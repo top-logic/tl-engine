@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.table.provider;
 
+import java.text.Format;
 import java.util.Comparator;
 
 import com.top_logic.basic.Logger;
@@ -104,6 +105,8 @@ public class PrimitiveColumn extends ColumnInfo {
 		if (pattern != null) {
 			ExcelCellRenderer excelRenderer = new FormattedValueExcelRenderer(pattern);
 			column.setExcelRenderer(excelRenderer);
+		} else {
+			super.setExcelRenderer(column);
 		}
 	}
 
@@ -141,7 +144,7 @@ public class PrimitiveColumn extends ColumnInfo {
 
 			case INT:
 			case FLOAT: {
-				column.setCssClass("tblRight");
+				column.addCssClass("tblRight");
 				column.setComparator(NULL_SAFE_NUMBER_COMPARATOR);
 				column.setDescendingComparator(NULL_SAFE_NUMBER_COMPARATOR_DESCENDING);
 
@@ -295,6 +298,8 @@ public class PrimitiveColumn extends ColumnInfo {
 				{
 					BooleanPresentation booleanDisplay = DisplayAnnotations.getBooleanDisplay(getTypeContext());
 					switch (booleanDisplay) {
+						// A switch names the same two values as a check box, so both read alike.
+						case SWITCH:
 						case CHECKBOX: {
 							if (_tristate) {
 								column.setResourceProvider(BooleanResourceProvider.INSTANCE);
@@ -328,7 +333,14 @@ public class PrimitiveColumn extends ColumnInfo {
 			case DATE:
 			case FLOAT:
 			case INT:
-				// No special Renderer
+				try {
+					Format format = DisplayAnnotations.getConfiguredFormat(getTypeContext());
+					if (format != null) {
+						column.setLabelProvider(new FormatLabelProvider(format));
+					}
+				} catch (ConfigurationException ex) {
+					Logger.error("Cannot instantiate format.", ex, PrimitiveColumn.class);
+				}
 				break;
 		}
 	}

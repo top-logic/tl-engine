@@ -66,6 +66,7 @@ import com.top_logic.layout.tree.model.TreeTableModel;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.layout.tree.model.TreeUIModelUtil;
 import com.top_logic.model.TLObject;
+import com.top_logic.tool.export.DefaultExcelCellRenderer;
 import com.top_logic.tool.export.ExcelExportSupport;
 
 /**
@@ -386,8 +387,7 @@ public class CompareService<CI extends CompareInfo> extends DecorateService<CI> 
 	 */
 	public TableConfigurationProvider getCompareTableProvider(TableConfiguration tableConfig, boolean isTreeTable) {
 		TableConfigurationProvider decorationColumn = getCompareColumnProvider(isTreeTable);
-		return new OverlayCompareTableProvider<>(this, tableConfig, decorationColumn, _excelExportSupport,
-			isTreeTable);
+		return new OverlayCompareTableProvider<>(this, tableConfig, decorationColumn, isTreeTable);
 	}
 
 	/**
@@ -412,7 +412,7 @@ public class CompareService<CI extends CompareInfo> extends DecorateService<CI> 
 			createDecorationInfoColumn(accessor,
 				new CompareInfoRenderer(_detailDecorator, Context.TABLE),
 				I18NConstants.CHANGE_INFO_COLUMN_LABEL,
-				new CompareInfoExcelRenderer(_excelExportSupport.defaultExcelCellRenderer()));
+				new CompareInfoExcelRenderer(DefaultExcelCellRenderer.INSTANCE));
 		return decorationColumn;
 	}
 

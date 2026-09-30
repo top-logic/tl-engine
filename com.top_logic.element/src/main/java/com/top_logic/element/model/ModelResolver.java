@@ -18,16 +18,19 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.col.factory.CollectionFactory;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.AssociationConfig;
 import com.top_logic.element.config.AssociationConfig.EndConfig;
@@ -42,9 +45,10 @@ import com.top_logic.element.config.ObjectTypeConfig;
 import com.top_logic.element.config.PartConfig;
 import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.element.config.ReferenceConfig.ReferenceKind;
-import com.top_logic.element.config.RoleAssignment;
 import com.top_logic.element.config.SingletonConfig;
 import com.top_logic.element.config.annotation.TLSingletons;
+import com.top_logic.element.config.annotation.TLStorage;
+import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.element.meta.kbbased.KBBasedMetaAttribute;
 import com.top_logic.element.meta.kbbased.PersistentAssociation;
 import com.top_logic.element.meta.schema.HolderType;
@@ -78,8 +82,6 @@ import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
-import com.top_logic.model.annotate.security.RoleConfig;
-import com.top_logic.model.annotate.security.TLRoleDefinitions;
 import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.model.config.EnumConfig;
 import com.top_logic.model.config.EnumConfig.ClassifierConfig;
@@ -89,9 +91,6 @@ import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
-import com.top_logic.tool.boundsec.wrap.Group;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -105,6 +104,7 @@ public class ModelResolver {
 		AttributeConfig.NAME,
 		AttributeConfig.OVERRIDE,
 		AttributeConfig.TYPE_SPEC,
+		AttributeConfig.ABSTRACT_PROPERTY,
 		AttributeConfig.MANDATORY,
 		ReferenceConfig.END,
 		ReferenceConfig.KIND,
@@ -412,7 +412,7 @@ public class ModelResolver {
 				TLType targetType;
 				try {
 					targetType = lookupAttributeType(type, endConfig);
-				} catch (ConfigurationException ex) {
+				} catch (TopLogicException ex) {
 					log().error("Unable to determine target type for association end: " + ex.getMessage(), ex);
 					return;
 				}
@@ -528,26 +528,28 @@ public class ModelResolver {
 		TLType sourceType;
 		try {
 			sourceType = lookupAttributeType(type, referenceConfig);
-		} catch (ConfigurationException ex) {
+		} catch (TopLogicException ex) {
 			log().error("Unable to determine target type for back reference: " + ex.getMessage(), ex);
 			return;
 		}
 
-		String associationName = TLStructuredTypeColumns.syntheticAssociationName(type.getName(), otherEndName);
+		String associationName = TLStructuredTypeColumns.syntheticAssociationName(sourceType.getName(), otherEndName);
 		TLModule module = type.getModule();
 
 		TLType associationType = module.getType(associationName);
 		TLAssociationEnd sourceEnd;
 		if (associationType == null) {
+			log().error("No association " + TLModelUtil.qualifiedName(module.getName(), associationName)
+					+ " found for overridden backward reference found. The forwards reference must also be overridden in order to be symetrical.");
 			TLAssociation association = TLModelUtil.addAssociation(module, type.getScope(), associationName);
 
 			// Add source end
-			TLAssociationEnd targetEnd = TLModelUtil.addEnd(association, otherEndName, type);
-			targetEnd.setMultiple(true);
-
-			// Create destination end
 			sourceEnd =
-				TLModelUtil.addEnd(association, TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, sourceType);
+					TLModelUtil.addEnd(association, TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, sourceType);
+			sourceEnd.setMultiple(true);
+
+			// Create destination end *after* self reference
+			TLModelUtil.addEnd(association, otherEndName, type);
 		} else {
 			List<TLAssociationEnd> ends = TLModelUtil.getEnds((TLAssociation) associationType);
 			if (ends.isEmpty()) {
@@ -566,9 +568,8 @@ public class ModelResolver {
 			addReference(type, referenceConfig, sourceEnd);
 		} catch (IllegalArgumentException ex) {
 			log().error(
-				"In back reference '" + referenceConfig.getName()
-						+ "', associtiation end could not be implemented by reference in type '"
-						+ TLModelUtil.qualifiedName(type) + "' in '" + referenceConfig.location() + "'.",
+				"Cannot install back reference '" + TLModelUtil.qualifiedName(type) + "#" + referenceConfig.getName()
+					+ "' to association end at " + referenceConfig.location() + ".",
 				ex);
 			return;
 		}
@@ -586,7 +587,7 @@ public class ModelResolver {
 		TLType sourceType;
 		try {
 			sourceType = lookupAttributeType(type, referenceConfig);
-		} catch (ConfigurationException ex) {
+		} catch (TopLogicException ex) {
 			log().error("Unable to determine target type for back reference: " + ex.getMessage(), ex);
 			return;
 		}
@@ -659,28 +660,87 @@ public class ModelResolver {
 	}
 
 	private void createForwardsRef(TLClass type, ReferenceConfig referenceConfig) {
-		String associationName = TLStructuredTypeColumns.syntheticAssociationName(type.getName(), referenceConfig.getName());
+		String referenceName = referenceConfig.getName();
+		String associationName = TLStructuredTypeColumns.syntheticAssociationName(type.getName(), referenceName);
 		TLModule module = type.getModule();
 
 		TLType associationType = module.getType(associationName);
 		if (associationType == null) {
+			TLReference orig;
+			if (referenceConfig.isOverride()) {
+				TLStructuredTypePart overriding = type.getPart(referenceName);
+				if (overriding == null) {
+					log().info(
+						"Type '" + type + "' does not inherit a reference '" + referenceName
+							+ "', therefore it may not declare an override.",
+						Log.WARN);
+					orig = null;
+				} else if (overriding.getModelKind() != ModelKind.REFERENCE) {
+					log().error(
+						"Type '" + type + "' inherits a '" + overriding.getModelKind()
+							+ "' named '" + referenceName + "' which cannot be overridden as reference.");
+					orig = null;
+				} else {
+					orig = (TLReference) overriding.getDefinition();
+				}
+			} else {
+				orig = null;
+			}
+
 			TLAssociation association = TLModelUtil.addAssociation(module, type.getScope(), associationName);
+
+			HistoryType historyType;
+			DeletionPolicy deletionPolicy;
+			boolean composite;
+			boolean canNavigate;
+			if (orig == null) {
+				historyType = referenceConfig.getHistoryType();
+				deletionPolicy = referenceConfig.getDeletionPolicy();
+				composite = referenceConfig.isComposite();
+				canNavigate = referenceConfig.canNavigate();
+			} else {
+				historyType = orig.getHistoryType();
+				deletionPolicy = orig.getDeletionPolicy();
+				composite = orig.isComposite();
+				canNavigate = orig.getEnd().canNavigate();
+			}
+
+			boolean isCurrent = historyType == HistoryType.CURRENT;
 
 			// Add source end
 			TLAssociationEnd sourceEnd = TLModelUtil.addEnd(association, TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME, type);
-			sourceEnd.setMultiple(true);
-
+			sourceEnd.setMultiple(!composite);
+			sourceEnd.setAggregate(composite);
+			sourceEnd.setAbstract(referenceConfig.isAbstract());
+			
 			// Create destination end
 			TLType targetType;
 			try {
 				targetType = lookupAttributeType(type, referenceConfig);
-			} catch (ConfigurationException | TopLogicException ex) {
+			} catch (TopLogicException ex) {
 				log().error("Unable to determine target type " + referenceConfig.getTypeSpec() + " for reference "
-						+ TLModelUtil.qualifiedTypePartName(type, referenceConfig.getName()),
+					+ TLModelUtil.qualifiedTypePartName(type, referenceName),
 					ex);
 				return;
 			}
-			TLAssociationEnd destEnd = TLModelUtil.addEnd(association, referenceConfig.getName(), targetType);
+			TLAssociationEnd destEnd = TLModelUtil.addEnd(association, referenceName, targetType);
+
+			if (isCurrent) {
+				// Only current references may be composites
+				destEnd.setComposite(composite);
+			} else {
+				destEnd.setComposite(false);
+			}
+			destEnd.setAggregate(false);
+			destEnd.setNavigate(canNavigate);
+			destEnd.setHistoryType(historyType);
+			destEnd.setDeletionPolicy(deletionPolicy);
+			applyMultiplicity(referenceConfig, destEnd);
+
+			if (orig != null) {
+				sourceEnd.setDefinition(orig.getEnd());
+				destEnd.setDefinition(orig.getOppositeEnd());
+			}
 
 			// Add destination reference
 			addReference(type, referenceConfig, destEnd);
@@ -857,9 +917,14 @@ public class ModelResolver {
 					if (moduleName == null) {
 						moduleName = getModule().getName();
 					}
-					TLClass superType = (TLClass)
-					lookupType(getScope(), superScopeRef, moduleName, superTypeName);
-					if (superType != null && !superTypes.contains(superType)) {
+					TLClass superType = (TLClass) lookupType(getScope(), superScopeRef, moduleName, superTypeName);
+					if (superType == null) {
+						Logger.error(
+							"Generalization '" + moduleName + ":" + superTypeName + "' not found for type '" + type + "'.",
+							ModelResolver.class);
+						continue;
+					}
+					if (!superTypes.contains(superType)) {
 						superTypes.add(superType);
 					}
 				}
@@ -904,31 +969,21 @@ public class ModelResolver {
 	public void installConfiguration(TLStructuredTypePart part, PartConfig config) {
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			TLReference reference = (TLReference) part;
-			EndAspect endConfig = (EndAspect) config;
 			TLAssociationEnd end = reference.getEnd();
+			EndAspect endConfig = (EndAspect) config;
 
 			if (TLModelUtil.isForwardReference(reference)) {
-				if (endConfig.getHistoryType() == HistoryType.CURRENT) {
-					// Only current references may be composites
-					end.setComposite(endConfig.isComposite());
-				} else {
-					end.setComposite(false);
-				}
-				end.setAggregate(false);
-				applyMultiplicity(config, end);
+				// Defaults already applied.
 			} else {
 				TLAssociationEnd forwardsEnd = TLModelUtil.getOtherEnd(end);
 				boolean backOfComposition = forwardsEnd.isComposite();
 				if (backOfComposition) {
-					end.setMultiple(false);
+					// Makes no sense to change multiplicity.
 				} else {
 					applyMultiplicity(config, end);
 				}
-				end.setAggregate(backOfComposition);
+				end.setNavigate(endConfig.canNavigate());
 			}
-
-			end.setNavigate(endConfig.canNavigate());
-			end.setHistoryType(endConfig.getHistoryType());
 		} else {
 			applyMultiplicity(config, part);
 		}
@@ -937,6 +992,7 @@ public class ModelResolver {
 
 	private static void applyMultiplicity(PartConfig config, TLStructuredTypePart part) {
 		part.setMandatory(config.getMandatory());
+		part.setAbstract(config.isAbstract());
 
 		boolean multiple = config.isMultiple();
 		part.setMultiple(multiple);
@@ -949,7 +1005,7 @@ public class ModelResolver {
 	/**
 	 * Retrieves the target type specified by an {@link AttributeConfig}.
 	 */
-	public static TLType lookupAttributeType(TLStructuredType owner, PartConfig config) throws ConfigurationException {
+	public static TLType lookupAttributeType(TLStructuredType owner, PartConfig config) throws TopLogicException {
 		String typeSpec = config.getTypeSpec();
 		if (typeSpec.isEmpty()) {
 			return null;
@@ -957,15 +1013,24 @@ public class ModelResolver {
 		int moduleSep = typeSpec.indexOf(TLModelUtil.QUALIFIED_NAME_SEPARATOR);
 
 		if (moduleSep >= 0) {
-			return TLModelUtil.findType(owner.getModel(), typeSpec);
+			try {
+				return TLModelUtil.findType(owner.getModel(), typeSpec);
+			} catch (TopLogicException ex) {
+				throw new TopLogicException(I18NConstants.ERROR_UNDEFINED_ATTRIBUTE_TYPE__TYPE_ATTR_LOCATION
+					.fill(typeSpec,
+						owner.getModule().getName() + TLModelUtil.QUALIFIED_NAME_SEPARATOR + owner.getName()
+								+ TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + config.getName(),
+						config.location()),
+					ex);
+			}
 		}
 
 		TLType type = owner.getModule().getType(typeSpec);
 		if (type == null) {
-			throw new ConfigurationException(
-				"Undefined type '" + typeSpec + "' in module '" + owner.getModule().getName()
-					+ "' used in attribute '" + owner + TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + config.getName()
-					+ "' at '" + config.location() + "'.");
+			throw new TopLogicException(I18NConstants.ERROR_UNDEFINED_ATTRIBUTE_TYPE__TYPE_ATTR_LOCATION
+				.fill(typeSpec, owner.getModule().getName() + TLModelUtil.QUALIFIED_NAME_SEPARATOR + owner.getName()
+						+ TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + config.getName(),
+					config.location()));
 		}
 		return type;
 	}
@@ -983,12 +1048,12 @@ public class ModelResolver {
 	 * Instantiates the given {@link ModuleConfig} in the current {@link #getModel()}.
 	 */
 	public TLModule createModule(ModuleConfig moduleConf) {
+		autoExtendTLObject(moduleConf);
+
 		String moduleName = moduleConf.getName();
 		TLModule module = TLModelUtil.makeModule(_model, moduleName);
 
 		setupScope(module, module, moduleConf);
-
-		scheduleRoleCreation(module);
 
 		TLSingletons singletons = module.getAnnotation(TLSingletons.class);
 		if (singletons != null) {
@@ -996,31 +1061,15 @@ public class ModelResolver {
 				scheduleSingletonCreation(module, singleton);
 			}
 		}
-		DynamicModelService.addTLObjectExtension(moduleConf);
 		
 		return module;
 	}
 
-	private void scheduleRoleCreation(TLModule module) {
-		if (getFactory() == null) {
-			return;
-		}
-
-		_schedule.createRole(() -> {
-			TLRoleDefinitions roleDefinitions = module.getAnnotation(TLRoleDefinitions.class);
-			if (roleDefinitions == null) {
-				return;
-			}
-
-			Collection<RoleConfig> roleConfigs = roleDefinitions.getRoles();
-			if (roleConfigs.isEmpty()) {
-				return;
-			}
-
-			for (RoleConfig roleConfig : roleConfigs) {
-				createRole(module, roleConfig);
-			}
-		});
+	/**
+	 * Add {@link TLObject} extensions to all classes without generalizations.
+	 */
+	protected void autoExtendTLObject(ModuleConfig moduleConf) {
+		DynamicModelService.addTLObjectExtension(moduleConf);
 	}
 
 	private void scheduleSingletonCreation(TLModule module, SingletonConfig singleton) {
@@ -1056,51 +1105,8 @@ public class ModelResolver {
 			return;
 		}
 
-		root = getFactory().createObject(type, null, null);
+		root = getFactory().createObject(type);
 		module.addSingleton(name, root);
-
-		setupRoles(module, singleton);
-	}
-	
-	private void setupRoles(TLModule module, SingletonConfig singleton) {
-		for (RoleAssignment assignment : singleton.getRoleAssignments()) {
-			for (String roleName : assignment.getRoles()) {
-				BoundedRole role = BoundedRole.getDefinedRole(module, roleName);
-				if (role == null) {
-					log().error("Role '" + roleName + "' used in assignment at '" + assignment.location()
-							+ "' is not defined.");
-				}
-
-				Group group = Group.getGroupByName(assignment.getGroup());
-				if (group == null) {
-					log().error("Reference to undefined group '" + assignment.getGroup() + "' in assignment at '"
-						+ assignment.location() + "'.");
-				}
-
-				BoundedRole.assignRole(module.getSingleton(singleton.getName()), group, role);
-			}
-		}
-	}
-
-	/**
-	 * Creates the {@link BoundedRole} from the given configuration in the given {@link TLModule}.
-	 */
-	public BoundedRole createRole(TLModule scope, RoleConfig role) {
-		String name = role.getName();
-		BoundedRole existingRole = BoundedRole.getDefinedRole(scope, name);
-		if (existingRole != null) {
-			log().info("Role '" + name + "' already exists in module '" + scope + "'.");
-			return existingRole;
-		}
-
-		BoundedRole newRole = BoundedRole.createBoundedRole(name, scope.tHandle().getKnowledgeBase());
-		newRole.setIsSystem(true);
-
-		newRole.setValue(BoundedRole.ATTRIBUTE_DESCRIPTION,
-			Resources.getInstance().getString(I18NConstants.ROLE_DESCRIPTION.key(name), ""));
-
-		newRole.bind(scope);
-		return newRole;
 	}
 
 	/**
@@ -1119,12 +1125,7 @@ public class ModelResolver {
 			throw new IllegalArgumentException("Type must not be null!");
 		}
 
-		TLType contentType;
-		try {
-			contentType = lookupAttributeType(type, config);
-		} catch (ConfigurationException ex) {
-			throw new ConfigurationError(ex);
-		}
+		TLType contentType = lookupAttributeType(type, config);
 
 		String partName = config.getName();
 		TLProperty newProperty = TLModelUtil.addProperty(type, partName, contentType);
@@ -1138,46 +1139,91 @@ public class ModelResolver {
 
 	private void configureClassPart(TLClassPart classPart, PartConfig partConfig) {
 		boolean isDeclaredOverride = partConfig.isOverride();
-		checkOverrideDeclaration(classPart, isDeclaredOverride);
+		boolean isActualOverride = classPart.isOverride();
 		if (isDeclaredOverride) {
+			if (isActualOverride) {
+				checkStorageImplementation(partConfig, classPart);
+			} else {
+				errorNoOverride(classPart);
+			}
 			checkOverride(partConfig, classPart);
+			if (partConfig.getMandatory()) {
+				classPart.setMandatory(true);
+			} else if (partConfig.valueSet(partConfig.descriptor().getProperty(PartConfig.MANDATORY))) {
+				log().error(
+					"Mandatory can not be set to false in overridden attribute " + qualifiedName(classPart) + ".");
+			}
+			classPart.setAbstract(partConfig.isAbstract());
+
 			addTypePartAnnotations(classPart, true, partConfig);
 		} else {
+			if (isActualOverride) {
+				errorUndeclaredOverride(classPart);
+			}
 			installConfiguration(classPart, partConfig);
 		}
 	}
 
-	private void checkOverrideDeclaration(TLClassPart classPart, boolean isDeclaredOverride) {
-		boolean isActualOverride = classPart.isOverride();
-		if (isActualOverride && !isDeclaredOverride) {
-			TLClassPart conflict = getFirst(getOverriddenParts(classPart));
-			errorUndeclaredOverride(classPart, conflict);
-		}
-		if (isDeclaredOverride && !isActualOverride) {
-			errorNoOverride(classPart);
-		}
-	}
-
-	private void errorUndeclaredOverride(TLClassPart override, TLClassPart conflict) {
+	private void errorUndeclaredOverride(TLClassPart classPart) {
+		TLClassPart conflict = getFirst(getOverriddenParts(classPart));
 		String message = "Override failed. Undeclared override of part '" + qualifiedName(conflict)
-			+ "' through " + qualifiedName(override) + ".";
+			+ "' through " + qualifiedName(classPart) + ".";
 		log().error(message, new ConfigurationError(message));
 	}
 
 	private void errorNoOverride(TLClassPart classPart) {
 		String message = "Override failed. " + qualifiedName(classPart)
-			+ "' is declared to be an override, but is not overriding anything.";
+			+ "' is declared to be an override, but is not overriding anything (" + qualifiedName(classPart.getOwner())
+			+ " extends " + classPart.getOwner().getGeneralizations().stream().map(TLModelUtil::qualifiedName)
+				.collect(Collectors.joining(", "))
+			+ ".)";
 		log().error(message, new ConfigurationError(message));
 	}
 
-	private void checkOverride(PartConfig referenceConfig, TLClassPart classPart) {
-		for (PropertyDescriptor property : referenceConfig.descriptor().getProperties()) {
+	private void checkOverride(PartConfig partConfig, TLClassPart classPart) {
+		for (PropertyDescriptor property : partConfig.descriptor().getProperties()) {
 			String propertyName = property.getPropertyName();
-			if (referenceConfig.valueSet(property) && !PROPERTIES_FOR_OVERRIDES.contains(propertyName)) {
-				errorPropertyNotAllowedInOverride(classPart, propertyName, referenceConfig.value(property));
+			if (partConfig.valueSet(property) && !PROPERTIES_FOR_OVERRIDES.contains(propertyName)) {
+				errorPropertyNotAllowedInOverride(classPart, propertyName, partConfig.value(property));
 			}
 		}
 	}
+
+	private void checkStorageImplementation(PartConfig partConfig, TLClassPart classPart) {
+		TLStorage storageAnnotation = partConfig.getAnnotation(TLStorage.class);
+		if (partConfig.isAbstract() && storageAnnotation != null) {
+			String message = "Storage implementation (" + TLStorage.TAG_NAME + ") is not allowed for abstract '"
+					+ classPart + "': " + partConfig;
+			log().error(message);
+		}
+
+		if (getOverriddenParts(classPart).stream().allMatch(TLStructuredTypePart::isAbstract)) {
+			// its ok when no storage implementation is given because there is a default.
+			return;
+		}
+		if (storageAnnotation != null) {
+			StorageImplementation storage = TypedConfigUtil.createInstance(storageAnnotation.getImplementation());
+			assert storage != null : "Implementation is mandatory in configuration '" + partConfig + "'.";
+			if (!storage.isReadOnly()) {
+				String message = "Storage implementation (" + TLStorage.TAG_NAME
+						+ ") is only allowed for derived storages in overridden property '" + classPart + "': "
+						+ partConfig;
+				log().error(message);
+			}
+		}
+		if (partConfig instanceof ReferenceConfig) {
+			if (((ReferenceConfig) partConfig).getKind() == ReferenceKind.BACKWARDS) {
+				String message = "Re-declaration of non-abstract backwards reference '" + classPart + "' not allowed.";
+				log().error(message);
+			}
+		}
+		if (partConfig.isAbstract()) {
+			String message =
+				"Part '" + classPart + "' can not be declared abstract, because it overrides a non-abstract part.";
+			log().error(message);
+		}
+	}
+
 
 	private void errorPropertyNotAllowedInOverride(TLClassPart classPart, String propertyName, Object value) {
 		String message = "Override failed. Property '" + propertyName + "' is not allowed in overrides."

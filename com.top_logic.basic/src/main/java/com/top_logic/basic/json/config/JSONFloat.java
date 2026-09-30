@@ -10,7 +10,7 @@ import com.top_logic.basic.config.annotation.TagName;
 /**
  * {@link JSONValue} primitive for a float value.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 @TagName(JSONFloat.TAG_NAME)
 public interface JSONFloat extends JSONValue {

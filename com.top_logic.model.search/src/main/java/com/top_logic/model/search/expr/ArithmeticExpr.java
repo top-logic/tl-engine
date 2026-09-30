@@ -131,7 +131,7 @@ public class ArithmeticExpr extends BinaryOperation implements WithFlatMapSemant
 		if (right == null) {
 			return left;
 		}
-		return ToString.toString(left) + ToString.toString(right);
+		return asString(left) + asString(right);
 	}
 
 	private Object addResKey(Object left, Object right) {
@@ -149,13 +149,13 @@ public class ArithmeticExpr extends BinaryOperation implements WithFlatMapSemant
 			if (left instanceof ResKey) {
 				leftPart = instance.getString((ResKey) left);
 			} else {
-				leftPart = ToString.toString(left);
+				leftPart = asString(left);
 			}
 			String rightPart;
 			if (right instanceof ResKey) {
 				rightPart = instance.getString((ResKey) right);
 			} else {
-				rightPart = ToString.toString(right);
+				rightPart = asString(right);
 			}
 			builder.add(locale, leftPart + rightPart);
 		}

@@ -19,8 +19,6 @@ import com.top_logic.layout.table.model.TableConfigurationFactory;
 import com.top_logic.layout.table.model.TableConfigurationProvider;
 import com.top_logic.layout.table.tree.TreeTableAccessor;
 import com.top_logic.layout.tree.renderer.NoResourceProvider;
-import com.top_logic.tool.export.ExcelCellRenderer;
-import com.top_logic.tool.export.ExcelExportSupport;
 
 /**
  * {@link TableConfigurationProvider} for comparison table, whereby differences will be shown as
@@ -44,15 +42,12 @@ public class OverlayCompareTableProvider<CI extends CompareInfo> extends Abstrac
 	 * @param decorationColumn
 	 *        {@link TableConfigurationProvider} providing additional modification, e.g. like adding
 	 *        a column for the {@link CompareInfo}.
-	 * @param excelExport
-	 *        {@link ExcelExportSupport} to get default {@link ExcelCellRenderer}:
-	 *        {@link ExcelExportSupport#defaultExcelCellRenderer()}.
 	 * @param isTreeTable
 	 *        Whether the displayed table is a tree table.
 	 */
 	public OverlayCompareTableProvider(CompareService<CI> compareService, TableConfigurationProvider origTable,
-			TableConfigurationProvider decorationColumn, ExcelExportSupport excelExport, boolean isTreeTable) {
-		this(compareService, TableConfigurationFactory.build(origTable), decorationColumn, excelExport, isTreeTable);
+			TableConfigurationProvider decorationColumn, boolean isTreeTable) {
+		this(compareService, TableConfigurationFactory.build(origTable), decorationColumn, isTreeTable);
 	}
 
 	/**
@@ -65,15 +60,12 @@ public class OverlayCompareTableProvider<CI extends CompareInfo> extends Abstrac
 	 * @param decorationColumn
 	 *        {@link TableConfigurationProvider} providing additional modification, e.g. like adding
 	 *        a column for the {@link CompareInfo}.
-	 * @param excelExport
-	 *        {@link ExcelExportSupport} to get default {@link ExcelCellRenderer}:
-	 *        {@link ExcelExportSupport#defaultExcelCellRenderer()}.
 	 * @param isTreeTable
 	 *        Whether the displayed table is a tree table.
 	 */
 	public OverlayCompareTableProvider(CompareService<CI> compareService, TableConfiguration origTable,
-			TableConfigurationProvider decorationColumn, ExcelExportSupport excelExport, boolean isTreeTable) {
-		super(compareService, excelExport, isTreeTable);
+			TableConfigurationProvider decorationColumn, boolean isTreeTable) {
+		super(compareService, isTreeTable);
 		_origTable = origTable;
 		_decoratorProvider = decorationColumn;
 	}

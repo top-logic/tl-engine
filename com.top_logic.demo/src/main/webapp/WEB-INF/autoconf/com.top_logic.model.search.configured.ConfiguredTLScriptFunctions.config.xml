@@ -92,6 +92,35 @@
  });
 }]]></implementation>
 					</configured-script>
+					<configured-script name="withOptionsBaseOptions"
+						implementation="count($obj.get(`test.optionprovider:WithOptions#min`), $obj.get(`test.optionprovider:WithOptions#max`) + 1)"
+					>
+						<label key="dynamic.417fc37d-9a6f-4584-a646-3260395368d7">
+							<en>Options for "Object with options"</en>
+							<de>Optionen für "Objekt mit Optionen"</de>
+						</label>
+						<description key="dynamic.cc4a221e-d388-4e98-bfbd-e4a6c674f705">
+							<en><![CDATA[<p>Creates the basic option list for an "object with options".</p>
+
+<p>The result is a list with the numbers from "min" to "max+1".</p>
+]]></en>
+							<de><![CDATA[<p>Erstellt die Basis Optionslist für eine "Objekt mit Optionen".</p>
+
+<p>Das Ergebnis is eine Liste mit den Zahlen von "min" bis "max+1".</p>
+]]></de>
+						</description>
+						<parameters>
+							<parameter name="obj"
+								mandatory="true"
+								type="test.optionprovider:WithOptions"
+							>
+								<description key="dynamic.986e7335-ee0b-4ea1-bf57-d812d55e43c7">
+									<en>The "Object with options" for which the basic option list is required.</en>
+									<de>Das "Objekt mit Optionen" für das die Basis Optionsliste benötigt wird.</de>
+								</description>
+							</parameter>
+						</parameters>
+					</configured-script>
 				</scripts>
 			</instance>
 		</config>

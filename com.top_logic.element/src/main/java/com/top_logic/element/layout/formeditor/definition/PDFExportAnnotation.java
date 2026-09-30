@@ -17,6 +17,8 @@ import com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder.EditModel;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.annotate.AnnotationInheritance;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.config.TLTypeAnnotation;
@@ -35,6 +37,7 @@ import com.top_logic.model.util.TLModelPartRef.BuildRef;
  */
 @TagName("export-definition")
 @TargetType(value = { TLTypeKind.REF, TLTypeKind.COMPOSITION })
+@AnnotationInheritance(Policy.INHERIT)
 @InApp
 public interface PDFExportAnnotation extends TLTypeAnnotation, FormContextDefinition {
 

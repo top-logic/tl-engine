@@ -9,8 +9,11 @@ import java.util.List;
 
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.col.Sink;
+import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.configured.QueryExecutorMethod;
+import com.top_logic.model.search.configured.TracingScriptMethod;
 import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.DynamicGet;
 import com.top_logic.model.search.expr.EvalContext;
@@ -23,7 +26,7 @@ import com.top_logic.model.util.Pointer;
  * {@link Rewriter} replacing expressions accessing model properties with those that create an
  * access trace in the context variable {@link TracingAccessRewriter#TRACE}.
  */
-final class TracingAccessRewriter extends Rewriter<Void> {
+public final class TracingAccessRewriter extends Rewriter<Void> {
 
 	/**
 	 * Singleton {@link TracingAccessRewriter} instance.
@@ -36,6 +39,12 @@ final class TracingAccessRewriter extends Rewriter<Void> {
 	 */
 	public static final NamedConstant TRACE = new NamedConstant("trace");
 
+	/**
+	 * Variable identifier in the {@link EvalContext} that contains the
+	 * {@link AttributeUpdateContainer} during an evaluation.
+	 */
+	public static final NamedConstant UPDATE_CONTAINER = new NamedConstant("updateContainer");
+
 	private TracingAccessRewriter() {
 		// Singleton constructor.
 	}
@@ -43,20 +52,29 @@ final class TracingAccessRewriter extends Rewriter<Void> {
 	@Override
 	public SearchExpression visitAccess(Access expr, Void arg) {
 		SearchExpression self = descendPart(expr, arg, expr.getSelf());
-		return new TracingAccess(self, expr.getPart());
+		return new TracingAccess(self, expr.getPart(), expr.usesSecurity());
 	}
 
 	@Override
 	public SearchExpression visitGenericMethod(GenericMethod expr, Void arg) {
-		if (expr instanceof DynamicGet) {
-			List<SearchExpression> argumentsList = descendParts(expr, arg, expr.getArguments());
+		if (expr instanceof DynamicGet dynamicGet) {
+			List<SearchExpression> argumentsList = descendParts(expr, arg, dynamicGet.getArguments());
 			SearchExpression[] arguments = argumentsList.toArray(new SearchExpression[0]);
-			return new TracingDynamicGet(expr.getName(), null, arguments);
+			return new TracingDynamicGet(dynamicGet.getName(), arguments, dynamicGet.usesSecurity());
+		} else if (expr instanceof QueryExecutorMethod queryMethod) {
+			List<SearchExpression> argumentsList = descendParts(queryMethod, arg, queryMethod.getArguments());
+			SearchExpression[] arguments = argumentsList.toArray(new SearchExpression[0]);
+
+			return new TracingScriptMethod(queryMethod.getName(), arguments, queryMethod.usesSecurity());
 		} else {
 			return super.visitGenericMethod(expr, arg);
 		}
 	}
 
+	/**
+	 * Marks the combination of {@link TLObject self} and {@link TLStructuredTypePart part} as
+	 * relevant for the trace.
+	 */
 	public static void traceAccess(EvalContext definitions, TLObject self, TLStructuredTypePart part) {
 		@SuppressWarnings("unchecked")
 		Sink<Pointer> trace = (Sink<Pointer>) definitions.getVar(TRACE);

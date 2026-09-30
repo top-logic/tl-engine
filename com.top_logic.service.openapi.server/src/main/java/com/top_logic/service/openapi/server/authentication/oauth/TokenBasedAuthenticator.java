@@ -10,9 +10,10 @@ import java.net.URI;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.ParseException;
@@ -29,10 +30,13 @@ import com.nimbusds.oauth2.sdk.util.URLUtils;
 
 import com.top_logic.base.accesscontrol.AuthorizationUtil;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.NamedConstant;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.common.authentication.oauth.TokenStorage;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
-import com.top_logic.service.openapi.server.authentication.I18NConstants;
+import com.top_logic.service.openapi.server.authentication.impl.I18NConstants;
 
 /**
  * {@link Authenticator} using a token and checks its validity by delegating to a validation
@@ -42,18 +46,23 @@ import com.top_logic.service.openapi.server.authentication.I18NConstants;
  */
 public abstract class TokenBasedAuthenticator implements Authenticator {
 
-	private static final TokenStorage<String, String> TOKENS = new TokenStorage<>();
+	private static final NamedConstant NO_ACCOUNT = new NamedConstant("'No account' replacement");
+
+	private static final TokenStorage<String, Object> TOKENS = new TokenStorage<>();
 
 	@Override
-	public void authenticate(HttpServletRequest req, HttpServletResponse resp)
-			throws AuthenticationFailure, IOException {
+	public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
+			throws AuthenticationFailure {
 		AccessToken token = parseAccessToken(req);
 		String tokenString = token.getValue();
 
-		String validToken = TOKENS.getValidToken(tokenString);
-		if (validToken != null) {
+		Object storedAccount = TOKENS.getValidToken(tokenString);
+		if (storedAccount != null) {
 			// Valid token available
-			return;
+			if (storedAccount == NO_ACCOUNT) {
+				return null;
+			}
+			return (Person) storedAccount;
 		}
 		HTTPResponse response = sendInspectRequest(token);
 		TokenIntrospectionResponse tokenResponse = parseInspectResponse(response);
@@ -65,12 +74,58 @@ public abstract class TokenBasedAuthenticator implements Authenticator {
 			throw failInactiveToken();
 		}
 		Date expirationTime = successResponse.getExpirationTime();
-		if (expirationTime == null || expirationTime.before(new Date())) {
-			throw failExpiredToken(expirationTime);
+		long maxExpirationTime = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1);
+		if (expirationTime == null) {
+			expirationTime = new Date(maxExpirationTime);
+		} else {
+			if (expirationTime.getTime() < System.currentTimeMillis()) {
+				throw failExpiredToken(expirationTime);
+			}
+			
+			if (expirationTime.getTime() > maxExpirationTime) {
+				expirationTime = new Date(maxExpirationTime);
+			}
+		}
+
+		Person account;
+		String accountName = findAccountName(successResponse, req, resp);
+		if (accountName == null) {
+			account = null;
+		} else {
+			account = accountByName(accountName);
+			if (account == null) {
+				throw new AuthenticationFailure(I18NConstants.NO_SUCH_ACCOUNT__USER.fill(accountName));
+			}
 		}
 		// Cache token for later reuse
-		TOKENS.storeToken(tokenString, tokenString, expirationTime);
+		TOKENS.storeToken(tokenString, account != null ? account : NO_ACCOUNT, expirationTime);
+
+		return account;
 	}
+
+	private Person accountByName(String accountName) {
+		return ThreadContextManager.inSystemInteraction(TokenBasedAuthenticator.class,
+			() -> Person.byName(accountName));
+	}
+
+	/**
+	 * Finds the name of the {@link Person} for which the request was authenticated.
+	 * 
+	 * <p>
+	 * May be <code>null</code> when the request is not executed in user context.
+	 * </p>
+	 *
+	 * @param introspectionResponse
+	 *        Response of the OIDC server to the access token introspection request.
+	 * @param req
+	 *        Request that requires authentication.
+	 * @param resp
+	 *        Response corresponding to the given request.
+	 * @throws AuthenticationFailure
+	 *         when authentication is not possible.
+	 */
+	protected abstract String findAccountName(TokenIntrospectionSuccessResponse introspectionResponse,
+			HttpServletRequest req, HttpServletResponse resp) throws AuthenticationFailure;
 
 	private AuthenticationFailure failExpiredToken(Date expirationTime) {
 		AuthenticationFailure ex =
@@ -104,9 +159,14 @@ public abstract class TokenBasedAuthenticator implements Authenticator {
 		}
 	}
 
-	private HTTPResponse sendInspectRequest(AccessToken token) throws IOException {
+	private HTTPResponse sendInspectRequest(AccessToken token) throws AuthenticationFailure {
 		Request request = new TokenIntrospectionRequest(getIntrospectionURI(), getClientAuth(), token);
-		return request.toHTTPRequest().send();
+		try {
+			return request.toHTTPRequest().send();
+		} catch (IOException ex) {
+			throw new AuthenticationFailure(I18NConstants.ERROR_TOKEN_INTROSPECTION_FAILED__MSG.fill(ex.getMessage()),
+				ex);
+		}
 	}
 
 	private AuthenticationFailure handleIntrospectionError(TokenIntrospectionErrorResponse errorResponse)
@@ -144,7 +204,7 @@ public abstract class TokenBasedAuthenticator implements Authenticator {
 	/**
 	 * The {@link URI} of the token introspection endpoint.
 	 */
-	protected abstract URI getIntrospectionURI();
+	protected abstract URI getIntrospectionURI() throws AuthenticationFailure;
 
 	/**
 	 * The client authentication for the introspection endpoint.

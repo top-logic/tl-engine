@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.kbbased.AbstractWrapperResolver;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
@@ -30,7 +31,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * Provide {@link Wrapper}s as defined by the configuration for list and grid components.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class WrapperListModelBuilder<C extends WrapperListModelBuilder.Config> extends AbstractConfiguredInstance<C>
 		implements ListModelBuilder {
@@ -38,7 +39,7 @@ public class WrapperListModelBuilder<C extends WrapperListModelBuilder.Config> e
 	/**
 	 * Configuration for getting attributes from an {@link AbstractWrapperResolver} (factory).
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config extends PolymorphicConfiguration<WrapperListModelBuilder<?>> {
 
@@ -89,7 +90,11 @@ public class WrapperListModelBuilder<C extends WrapperListModelBuilder.Config> e
 	}
 
 	@Override
-	public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
+	public ElementUpdate supportsListElement(LayoutComponent contextComponent, Object listElement) {
+		return ElementUpdate.fromDecision(shouldDisplay(contextComponent, listElement));
+	}
+
+	private boolean shouldDisplay(LayoutComponent contextComponent, Object listElement) {
 		if (listElement instanceof TLObject) {
 			TLObject wrapper = (TLObject) listElement;
 			return _types.contains(wrapper.tType());

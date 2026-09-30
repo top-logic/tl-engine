@@ -4,7 +4,7 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="commons"
 >
-	<properties extends="com.top_logic.layout.form.component.SelectorComponent$UIOptions, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
+	<properties extends="com.top_logic.layout.form.component.SelectorComponent$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
 		<annotations>
 			<display-order>
 				<value>
@@ -23,15 +23,18 @@
 					<property name="defaultSelection"/>
 					<property name="isSecurityMaster"/>
 
+					<property name="toolbar"/>
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
 					<property name="showPopOut"/>
 
 					<property name="defaultSelectionProvider"/>
+					<property name="selectionOnModelChange"/>
 
 					<property name="securityObject"/>
 
 					<property name="buttons"/>
+					<property name="onSelectionChange"/>
 				</value>
 			</display-order>
 		</annotations>
@@ -41,22 +44,14 @@
 		</property>
 		<property name="buttons"
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			instance-type="com.top_logic.tool.boundsec.CommandHandler"
 			type="List"
 		>
 			<acceptable-classifiers value="selector"/>
 		</property>
-		<property name="securityObject"
-			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
-			type="com.top_logic.basic.config.PolymorphicConfiguration"
+		<property name="onSelectionChange"
+			instance-type="com.top_logic.layout.component.OnSelectionChangeHandler"
 		/>
-		<!-- Note: Only for compatibility with legacy uses of this template. -->
-		<property name="securityProviderClass"
-			default="securityRoot"
-			type="String"
-		>
-			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
-			<hidden/>
-		</property>
 	</properties>
 
 	<selector name="Selector"
@@ -67,17 +62,19 @@
 		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"
 		multiple="${multiple}"
+		onSelectionChange="${onSelectionChange}"
 		optionBuilder="${optionBuilder}"
 		optionLabelProvider="${optionLabelProvider}"
 		partnerGroup="${partnerGroup}"
 		presentation="${presentation}"
 		securityObject="${securityObject}"
-		securityProviderClass="${securityProviderClass}"
 		selection="${selection}"
+		selectionOnModelChange="${selectionOnModelChange}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"
 		titleKey="${titleKey}"
+		toolbar="${toolbar}"
 		types="${types}"
 	>
 		<buttons>

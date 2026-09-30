@@ -15,14 +15,16 @@
 }
 
 .tlDocCreateDialog {
-	padding: 10px;
+	margin: 0 var(--spacing-03);
+}
+
+
+.tlDocCreateDialog .rf_cell {
+    margin-bottom: var(--spacing-03);
 }
 
 div.tlDocSearchContainer {
 	display: table;
 	width: 100%;
-}
-
-.margin5 {
-	margin: 5px;
+	margin-top: 4px;
 }

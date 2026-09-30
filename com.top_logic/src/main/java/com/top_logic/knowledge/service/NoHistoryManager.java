@@ -73,6 +73,12 @@ public class NoHistoryManager implements HistoryManager {
 		public HistoryManager getHistoryManager() {
 			return NoHistoryManager.this;
 		}
+
+		/** "TRUNK" */
+		@Override
+		public String toString() {
+			return "TRUNK";
+		}
 	}
 	
 	private final Branch trunk = new Trunk();
@@ -128,6 +134,11 @@ public class NoHistoryManager implements HistoryManager {
 
 	@Override
 	public long getLastRevision() {
+		return Revision.CURRENT_REV;
+	}
+
+	@Override
+	public long getFirstRevision() {
 		return Revision.CURRENT_REV;
 	}
 

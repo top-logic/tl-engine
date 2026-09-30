@@ -16,7 +16,7 @@ import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.AbstractGlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -41,7 +41,7 @@ public final class FilterFormOwner implements FormHandler {
 	/**
 	 * {@link ModelNamingScheme} for {@link FilterFormOwner}.
 	 */
-	public static class Naming extends AbstractModelNamingScheme<FilterFormOwner, Naming.Name> {
+	public static class Naming extends AbstractGlobalModelNamingScheme<FilterFormOwner, Naming.Name> {
 
 		/**
 		 * {@link ModelName} for {@link FilterFormOwner}.

@@ -30,7 +30,7 @@
 						clique="delete" 
 						resourceKey="tl.command.delete" 
 						group="Delete" 
-						confirm="true"
+						confirmation="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"
 					>
 						<executability>
 							<reference rule-id="GeneralDelete"/>
@@ -44,15 +44,6 @@
 	</services>
 
 	<configs>
-		<config config:interface="com.top_logic.base.security.SecurityConfiguration">
-			<layout>
-				<domain-mapper class="com.top_logic.element.layout.admin.StructureDomainMapper" />
-			</layout>
-		</config>
-		
-		<config config:interface="com.top_logic.base.accesscontrol.ExternalAuthentication"
-			isEnabled="false"
-		/>
 	</configs>
 	
 </application>

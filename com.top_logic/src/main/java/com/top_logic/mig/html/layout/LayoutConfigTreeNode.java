@@ -8,7 +8,6 @@ package com.top_logic.mig.html.layout;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -17,6 +16,7 @@ import com.top_logic.layout.tree.model.AbstractTLTreeNode;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 
@@ -144,17 +144,11 @@ public class LayoutConfigTreeNode extends AbstractTLTreeNode<LayoutConfigTreeNod
 	public Set<BoundCommandGroup> getCommandGroups() {
 		Set<BoundCommandGroup> groups = _commandGroups;
 		if (groups == null) {
-			groups = findCommandGroups();
+			groups = new CommandGroupExtractor().visit(getConfig()).getResult();
 			_commandGroups = groups;
 		}
 		return groups;
 
-	}
-
-	private Set<BoundCommandGroup> findCommandGroups() {
-		Set<BoundCommandGroup> out = new HashSet<>();
-		LayoutUtils.addCommandGroups(out, getConfig());
-		return Collections.unmodifiableSet(out);
 	}
 
 	/**
@@ -164,7 +158,15 @@ public class LayoutConfigTreeNode extends AbstractTLTreeNode<LayoutConfigTreeNod
 	 */
 	public PersBoundComp getSecurityComponent() {
 		if (!_securityComponentInitialized) {
-			_securityComponent = SecurityComponentCache.getSecurityComponent(getConfig());
+			Config config = getConfig();
+			ComponentName securityId;
+			if (config instanceof CompoundSecurityLayout.Config securityConfig) {
+				securityId = getModel().getSecurityDefiningLayout(securityConfig).getName();
+			} else {
+				securityId = config.getName();
+			}
+
+			_securityComponent = SecurityComponentCache.getSecurityComponent(securityId);
 			_securityComponentInitialized = true;
 		}
 		return _securityComponent;

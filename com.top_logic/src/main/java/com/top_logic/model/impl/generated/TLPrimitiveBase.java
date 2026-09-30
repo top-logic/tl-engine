@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -16,5 +16,41 @@ public interface TLPrimitiveBase extends com.top_logic.model.TLType {
 	 * Name of type <code>TLPrimitive</code>
 	 */
 	String TL_PRIMITIVE_TYPE = "TLPrimitive";
+
+	/**
+	 * Part <code>binary</code> of <code>TLPrimitive</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String BINARY_ATTR = "binary";
+
+	/**
+	 * Part <code>dbPrecision</code> of <code>TLPrimitive</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Integer</code> in configuration.
+	 * </p>
+	 */
+	String DB_PRECISION_ATTR = "dbPrecision";
+
+	/**
+	 * Part <code>dbSize</code> of <code>TLPrimitive</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Integer</code> in configuration.
+	 * </p>
+	 */
+	String DB_SIZE_ATTR = "dbSize";
+
+	/**
+	 * Part <code>dbType</code> of <code>TLPrimitive</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:DBType</code> in configuration.
+	 * </p>
+	 */
+	String DB_TYPE_ATTR = "dbType";
 
 }

@@ -5,12 +5,11 @@
  */
 package com.top_logic.element.layout.grid;
 
-import static java.util.stream.Collectors.*;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,6 +33,7 @@ import com.top_logic.layout.table.dnd.TableDragSource;
 import com.top_logic.layout.table.model.EditableRowTableModel;
 import com.top_logic.layout.table.model.ObjectTableModel;
 import com.top_logic.layout.table.model.TableConfiguration;
+import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.ListModelBuilderProxy;
 import com.top_logic.mig.html.SelectionModel;
@@ -41,7 +41,6 @@ import com.top_logic.mig.html.SelectionUtil;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.export.AccessContext;
 import com.top_logic.tool.boundsec.CommandHandler;
-import com.top_logic.util.Utils;
 
 /**
  * {@link GridBuilder} that creates a regular grid without hierarchy. 
@@ -145,6 +144,7 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 			EditableRowTableModel tableModel = createTable(grid, tableConfiguration, availableColumns);
 			_tableField = FormFactory.newTableField(GridComponent.FIELD_TABLE, grid.getConfigKey());
 			_tableField.setTableModel(tableModel);
+			_tableField.setStableIdSpecialCaseContext(grid);
 		}
 
 		private ObjectTableModel createTable(GridComponent grid, TableConfiguration tableConfiguration, String[] availableColumns) {
@@ -301,35 +301,43 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 
 	@Override
 	public boolean handleTLObjectCreations(GridComponent grid, Stream<? extends TLObject> creations) {
-		Collection<? extends TLObject> relevantCreations = creations
-			.filter(newObject -> isRelevantCreation(grid, newObject))
-			.collect(toUnmodifiableList());
-		if (relevantCreations.isEmpty()) {
-			return false;
-		}
-		handleNewRelevantObjects(grid, relevantCreations);
-		return true;
-	}
+		List<TLObject> relevantCreations = null;
 
-	private boolean isRelevantCreation(GridComponent grid, TLObject newObject) {
-		if (grid.getRowGroup(newObject) != null) {
-			return false;
+		for (Iterator<? extends TLObject> it = creations.iterator(); it.hasNext();) {
+			TLObject newObject = it.next();
+			if (grid.getRowGroup(newObject) != null) {
+				continue;
+			}
+			ElementUpdate updateDecision = supportsListElement(grid, newObject);
+			switch (updateDecision) {
+				case ADD:
+					if (relevantCreations == null) {
+						// newObject is the first object to add to list.
+						if (!grid.isVisible()) {
+							/* Grid is not visible. No incremental update possible: Recreate
+							 * list. */
+							grid.invalidate();
+							return true;
+						}
+						relevantCreations = new ArrayList<>();
+					}
+					relevantCreations.add(newObject);
+					continue;
+				case UNKNOWN:
+					grid.invalidate();
+					return true;
+				case NO_CHANGE:
+				case REMOVE:
+					continue;
+			}
+			throw new IllegalArgumentException("Uncovered case: " + updateDecision);
 		}
-		if (!supportsListElement(grid, newObject)) {
-			return false;
-		}
-		if (!Utils.equals(grid.getModel(), retrieveModelFromListElement(grid, newObject))) {
-			return false;
-		}
-		return true;
-	}
 
-	private void handleNewRelevantObjects(GridComponent grid, Collection<? extends TLObject> creations) {
-		if (grid.isVisible()) {
-			grid.getHandler().addNewRows(creations);
-		} else {
-			grid.invalidate();
+		if (relevantCreations == null) {
+			return false;
 		}
+		grid.getHandler().addNewRows(relevantCreations);
+		return true;
 	}
 
 	@Override
@@ -338,7 +346,7 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 	}
 
 	@Override
-	public boolean supportsRow(GridComponent grid, Object row) {
+	public ElementUpdate supportsRow(GridComponent grid, Object row) {
 		return supportsListElement(grid, row);
 	}
 

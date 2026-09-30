@@ -94,7 +94,7 @@ public class CompanyContactTest extends BasicTestCase {
     
     protected static AddressHolder createAnAddress () {
         AddressHolder theAddress = new AddressHolder();
-        theAddress.setProperty(AddressHolder.STREET,"Rüsselheimer Strasse 22");
+        theAddress.setProperty(AddressHolder.STREET,"RÃ¼sselheimer Strasse 22");
         theAddress.setProperty(AddressHolder.ZIP_CODE,"60326");
         theAddress.setProperty(AddressHolder.CITY,"Frankfurt");
         theAddress.setProperty(AddressHolder.COUNTRY,"DE");

@@ -33,6 +33,7 @@ import com.top_logic.basic.col.TupleFactory;
 import com.top_logic.basic.col.TupleFactory.Tuple;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.db.sql.Batch;
@@ -89,6 +90,7 @@ import com.top_logic.util.TLContext;
 	ApplicationConfig.Module.class,
 	ConnectionPoolRegistry.Module.class
 })
+@Label("Change journal")
 public class JournalManager extends ManagedClass {
 
 	private static final String MESSAGE_COLUMN = "MESSAGE";
@@ -197,7 +199,7 @@ public class JournalManager extends ManagedClass {
 	/**
 	 * Configuration for the data source of the {@link JournalManager}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<JournalManager> {
 		/**
@@ -1227,7 +1229,7 @@ public class JournalManager extends ManagedClass {
 	/**
 	 * Module for {@link JournalManager}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public static final class Module extends TypedRuntimeModule<JournalManager> {
 		/**

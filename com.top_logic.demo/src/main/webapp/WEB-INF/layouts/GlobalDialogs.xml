@@ -3,31 +3,32 @@
 <template>
 	<layout-reference resource="export/exportDialog.layout.xml"/>
 	<layout-reference resource="export/gridExportDialog.layout.xml"/>
+	<layout-reference resource="admin/myLatestChanges/dialog.layout.xml"/>
 	<layout-reference resource="admin/security/accounts/userSettings/dialog.layout.xml"/>
 	<layout-reference resource="admin/security/accounts/defaultFor/dialog.layout.xml"/>
 	<securityLayout name="globalDialogDemoTypesTop"
-		securityDomain="DemoTypes"
 		titleKey="demo.globalDialogs.DemoTypes.show.tabber"
 	>
 		<dialogInfo
 			createOpenerButtons="false"
 			executability="Always"
-			height="500"
+			height="600"
 			openerCommandGroup="Read"
-			width="680"
+			width="730"
 		/>
 
 		<components>
 			<include name="com.top_logic.demo/structure/demoTypes/detail/editStructureDetail.xml"
+				buttonbar="true"
 				defaultFor="DemoTypes:DemoTypes.A,DemoTypes:DemoTypes.B,DemoTypes:DemoTypes.C.All,DemoTypes:DemoTypes.L"
 				master=""
 				namePrefix="globalDialog"
+				securityObject="model(DemoTypes:DemoTypes.All)"
 				structure="DemoTypes"
 			/>
 		</components>
 	</securityLayout>
 	<securityLayout name="globalDialogDemoPlainTop"
-		securityDomain="DemoPlain"
 		titleKey="demo.DemoPlain.edit.dialog.tabber"
 	>
 		<components>
@@ -36,16 +37,16 @@
 				metaElementName="DemoPlain.All"
 				modifier="com.top_logic.demo.edit.DemoFormContextModificator"
 				namePrefix="globalDialogPlain"
+				securityObject="model(DemoPlain:DemoPlain.All)"
 			/>
 		</components>
 		<dialogInfo
 			createOpenerButtons="false"
 			executability="Always"
-			height="500"
+			height="600"
 			openerCommandGroup="Read"
-			width="680"
+			width="730"
 		/>
 	</securityLayout>
 	<layout-reference resource="reporting/flex/chart/chartDetailsDialog.layout.xml"/>
-	<layout-reference resource="admin/loginMessageDialog.layout.xml"/>
 </template>

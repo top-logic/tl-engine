@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import com.top_logic.base.config.i18n.InternationalizedUtil;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -32,7 +33,6 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.config.customization.AnnotationCustomizations;
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.basic.util.ResKey;
@@ -45,7 +45,7 @@ import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
-import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.basic.CommandBuilder;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
@@ -59,8 +59,12 @@ import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.template.AbstractFormFieldControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.template.model.internal.TemplateControlProvider;
+import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
+import com.top_logic.layout.form.values.Listener;
+import com.top_logic.layout.form.values.ListenerBinding;
 import com.top_logic.layout.form.values.Value;
+import com.top_logic.layout.form.values.Values;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
@@ -194,8 +198,8 @@ public class InternationalizationEditor implements Editor {
 
 		boolean minimized = Fields.displayMinimized(editorFactory, property);
 		Resources resources = Resources.getInstance();
-		boolean propertyMandatory = isMandatory(editorFactory, property);
-		boolean currentlyMandatory = propertyMandatory && model.getValue() == null;
+		Value<Boolean> propertyMandatory = isMandatory(editorFactory, model);
+		boolean currentlyMandatory = model.getValue() == null && propertyMandatory.get();
 		
 		Map<String, ResKey> derivedKeyDefinitions = getDerivedResourceDefinition(editorFactory, model);
 		ArrayList<String> suffixes = new ArrayList<>(derivedKeyDefinitions.keySet());
@@ -299,7 +303,14 @@ public class InternationalizationEditor implements Editor {
 		}
 		ConfigKey key = ConfigKey.derived(ConfigKey.field(container), "derivedResourcesDisplayed");
 		boolean initiallyVisible;
-		Boolean personalizedVal = PersonalConfiguration.getPersonalConfiguration().getBoolean(key.get());
+		Boolean personalizedVal;
+		/* Start if statement for debugging */
+		if (key.get() != null) {
+			personalizedVal = PersonalConfiguration.getPersonalConfiguration().getBoolean(key.get());
+		} else {
+			personalizedVal = null;
+		}
+		/* End if statement for debugging */
 		if (personalizedVal != null) {
 			initiallyVisible = personalizedVal.booleanValue();
 		} else {
@@ -313,7 +324,7 @@ public class InternationalizationEditor implements Editor {
 
 	private void displayDerivedCommand(FormGroup container, List<? extends FormMember> members,
 			ConfigKey configKey, boolean initiallyVisible) {
-		Command command = new Command() {
+		CommandBuilder builder = model -> new Command() {
 
 			boolean _membersVisible = initiallyVisible;
 
@@ -323,16 +334,15 @@ public class InternationalizationEditor implements Editor {
 				for (FormMember derivedMember : members) {
 					derivedMember.setVisible(_membersVisible);
 				}
-				CommandModel button = context.get(Command.EXECUTING_CONTROL).getModel();
 				Resources resources = context.getResources();
 				if (_membersVisible) {
-					button.setImage(Icons.HIDE_DERIVED_RESOURCES);
-					button.setLabel(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES));
-					button.setTooltip(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES.tooltipOptional()));
+					model.setImage(Icons.HIDE_DERIVED_RESOURCES);
+					model.setLabel(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES));
+					model.setTooltip(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES.tooltipOptional()));
 				} else {
-					button.setImage(Icons.DISPLAY_DERIVED_RESOURCES);
-					button.setLabel(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES));
-					button.setTooltip(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltipOptional()));
+					model.setImage(Icons.DISPLAY_DERIVED_RESOURCES);
+					model.setLabel(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES));
+					model.setTooltip(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltipOptional()));
 				}
 				PersonalConfiguration.getPersonalConfiguration().setBooleanValue(configKey.get(), _membersVisible);
 				return HandlerResult.DEFAULT_RESULT;
@@ -342,25 +352,33 @@ public class InternationalizationEditor implements Editor {
 			derivedMember.setVisible(initiallyVisible);
 		}
 		ThemeImage icon = initiallyVisible ? Icons.HIDE_DERIVED_RESOURCES : Icons.DISPLAY_DERIVED_RESOURCES;
-		CommandField button = button(container, DISPLAY_DERIVED_FIELD, icon, command);
+		CommandField button = button(container, DISPLAY_DERIVED_FIELD, icon, builder);
 		/* Let the user display the derived resources, also when they can not be changed. */
 		button.setInheritDeactivation(false);
-		Resources resources = Resources.getInstance();
 		if (initiallyVisible) {
-			button.setLabel(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES));
-			button.setTooltip(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES.tooltipOptional()));
+			button.setLabel(I18NConstants.HIDE_DERIVED_RESOURCES);
+			button.setTooltip(I18NConstants.HIDE_DERIVED_RESOURCES.tooltipOptional());
 		} else {
-			button.setLabel(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES));
-			button.setTooltip(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltipOptional()));
+			button.setLabel(I18NConstants.DISPLAY_DERIVED_RESOURCES);
+			button.setTooltip(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltipOptional());
 		}
 
 	}
 
 
-	static boolean isMandatory(AnnotationCustomizations customizations, PropertyDescriptor property) {
-		return property.isMandatory() || !property.isNullable()
-			|| customizations.getAnnotation(property, Mandatory.class) != null
-			|| customizations.getAnnotation(property, NonNullable.class) != null;
+	static Value<Boolean> isMandatory(EditorFactory editorFactory, ValueModel model) {
+		PropertyDescriptor property = model.getProperty();
+		boolean staticMandatory = property.isMandatory() || !property.isNullable()
+				|| editorFactory.getAnnotation(property, Mandatory.class) != null
+				|| editorFactory.getAnnotation(property, NonNullable.class) != null;
+		if (staticMandatory) {
+			return Values.literal(Boolean.TRUE);
+		}
+		DerivedProperty<Boolean> dynamicMandatory = Fields.mandatoryProperty(editorFactory.formOptions(property));
+		if (dynamicMandatory != null) {
+			return dynamicMandatory.getValue(model.getModel());
+		}
+		return Values.literal(Boolean.FALSE);
 	}
 
 	/**
@@ -470,15 +488,17 @@ public class InternationalizationEditor implements Editor {
 		return ResKey.builder(key);
 	}
 
-	static class ValueBinding implements ValueListener, ConfigurationListener {
+	static class ValueBinding implements ValueListener, ConfigurationListener, Listener {
 
-		private final boolean _mandatory;
+		private final Value<Boolean> _mandatory;
 
 		private final ValueModel _model;
 
 		private final FormGroup _group;
 
-		public ValueBinding(boolean mandatory, ValueModel model, FormGroup group) {
+		private ListenerBinding _mandatoryListenerBinding = ListenerBinding.NONE;
+
+		public ValueBinding(Value<Boolean> mandatory, ValueModel model, FormGroup group) {
 			_mandatory = mandatory;
 			_model = model;
 			_group = group;
@@ -491,7 +511,8 @@ public class InternationalizationEditor implements Editor {
 		}
 
 		private void initValues() {
-			updateUI((ResKey) _model.getValue());
+			ResKey newValue = (ResKey) _model.getValue();
+			updateUI(newValue, FormField::initializeField);
 		}
 
 		@Override
@@ -503,24 +524,27 @@ public class InternationalizationEditor implements Editor {
 		}
 
 		private void updateMandatory() {
-			if (_mandatory) {
-				boolean fieldMandatory = _model.getValue() == null;
-				for (Iterator<FormField> it = _group.getFields(); it.hasNext();) {
-					FormField input = it.next();
-					String suffix = input.get(SUFFIX);
-					if (suffix != null) {
-						// Just a derived resource
-						continue;
-					}
-					input.setMandatory(fieldMandatory);
+			boolean fieldMandatory = _model.getValue() == null && _mandatory.get();
+			for (Iterator<FormField> it = _group.getFields(); it.hasNext();) {
+				FormField input = it.next();
+				String suffix = input.get(SUFFIX);
+				if (suffix != null) {
+					// Just a derived resource
+					continue;
 				}
+				input.setMandatory(fieldMandatory);
 			}
+		}
+
+		@Override
+		public void handleChange(Value<?> sender) {
+			updateMandatory();
 		}
 
 		@Override
 		public void onChange(ConfigurationChange change) {
 			unbindValueListeners();
-			updateUI((ResKey) change.getNewValue());
+			updateUI((ResKey) change.getNewValue(), FormField::setValue);
 			updateMandatory();
 			bindValueListeners();
 		}
@@ -545,15 +569,15 @@ public class InternationalizationEditor implements Editor {
 			_model.setValue(literal.build());
 		}
 
-		private void updateUI(ResKey newValue) {
+		private void updateUI(ResKey newValue, BiConsumer<FormField, String> fieldUpdater) {
 			if (newValue == null) {
 				clearUI();
 			} else {
-				setUI(newValue);
+				updateFields(newValue, fieldUpdater);
 			}
 		}
 
-		private void setUI(ResKey newValue) {
+		private void updateFields(ResKey newValue, BiConsumer<FormField, String> fieldUpdater) {
 			for (Iterator<FormField> it = _group.getFields(); it.hasNext();) {
 				FormField field = it.next();
 				Locale locale = field.get(LOCALE);
@@ -568,7 +592,7 @@ public class InternationalizationEditor implements Editor {
 					text = ResKeyUtil.translateWithoutFallback(locale, newValue.suffix(suffix));
 				}
 				if (text != null) {
-					field.setValue(text);
+					fieldUpdater.accept(field, text);
 				}
 			}
 		}
@@ -593,10 +617,13 @@ public class InternationalizationEditor implements Editor {
 
 		private void bindModelListener() {
 			_model.getModel().addConfigurationListener(_model.getProperty(), this);
+			_mandatoryListenerBinding = _mandatory.addListener(this);
 		}
 
 		private void unbindModelListener() {
 			_model.getModel().removeConfigurationListener(_model.getProperty(), this);
+			_mandatoryListenerBinding.close();
+			_mandatoryListenerBinding = ListenerBinding.NONE;
 		}
 	}
 

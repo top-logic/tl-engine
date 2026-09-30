@@ -5,17 +5,24 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-element</artifactId>
-  <description>The TopLogic dynamic model implementation.</description>
+	<name>${project.artifactId}</name>
+	<description>The TopLogic dynamic model implementation.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic-db-schema</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
@@ -30,4 +37,28 @@
       <artifactId>tl-core</artifactId>
     </dependency>
   </dependencies>
+  
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-maven-plugin</artifactId>
+				<version>${tl.version}</version>
+	
+				<executions>
+					<execution>
+						<id>generate-binding</id>
+						<goals>
+							<goal>generate-java</goal>
+						</goals>
+						
+						<configuration>
+							<modules>tl.changelog</modules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+  
 </project>

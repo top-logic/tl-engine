@@ -267,9 +267,6 @@ public class DirectoryLocalTestCollector {
 			error(result, qualifiedClassName, message, ex);
 		} catch (Throwable ex) {
 			error(result, qualifiedClassName, "Unexpected exception: " + ex.getMessage(), ex);
-			if (ex instanceof ThreadDeath) {
-				throw (ThreadDeath) ex;
-			}
 		}
 	}
 

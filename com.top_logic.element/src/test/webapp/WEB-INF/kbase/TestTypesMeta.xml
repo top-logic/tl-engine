@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- the following are only demo-objects, do not plain copy to other modules  -->
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+	<metaobjects>
+		<metaobject object_name="Product" super_class="StructuredElement" />
+		<metaobject object_name="ProductType" super_class="StructuredElement" />
+		<metaobject object_name="ProductVersion" super_class="StructuredElement" />
+		
+		<association super_class="hasWrapperAttValueBaseAssociation" object_name="otherHasWrapperAttValue" />
+		
+		<metaobject object_name="BElement" super_class="StructuredElement">
+		<attributes>
+			<reference att_name="historicRef"
+				target-type="StructuredElement"
+				mandatory="false"
+				monomorphic="false"
+				history-type="historic"
+			/>
+		</attributes>
+		</metaobject>
+
+		<metaobject object_name="AElement" super_class="StructuredElement">
+			<attributes>
+				<reference att_name="composite"
+					is-container="true"
+					monomorphic="true"
+					target-type="CompositePart"
+				/>
+			</attributes>
+		</metaobject>
+	
+		<association
+			object_name="hasSimpleRefAttValue"
+			super_class="hasWrapperAttValue"
+		/>
+	
+		<association
+			object_name="hasExternAttValue"
+			super_class="hasWrapperAttValue"
+		/>
+	
+		<association
+			object_name="hasWeightedRefAttValue" 
+			super_class="hasWrapperAttValue"
+		>
+			<attributes>
+			<mo_attribute
+				att_name="weight" 
+				att_type="Double"
+				mandatory="true"
+			/>
+			</attributes>
+		</association>
+
+		<metaobject
+			object_name="CompositePart"
+			super_class="AttributedObject"
+		>
+			<annotations>
+				<key-attributes attributes="container,reference"/>
+			</annotations>
+			<attributes>
+				<reference
+					att_name="container"
+					branch-global="false"
+					deletion-policy="delete-referer"
+					target-type="AElement"
+				/>
+				<reference
+					att_name="reference"
+					branch-global="false"
+					deletion-policy="delete-referer"
+					history-type="current"
+					monomorphic="true"
+					target-type="MetaAttribute"
+				/>
+				<mo_attribute
+					att_name="sortOrder"
+					att_type="Integer"
+					mandatory="false"
+				/>
+			</attributes>
+		</metaobject>
+	
+		<metaobject
+			object_name="PreloadTest"
+			super_class="AttributedObject"
+		>
+			<attributes>
+				<reference
+					att_name="inline"
+					target-type="PreloadTest"
+				/>
+				<reference
+					att_name="inlineReverse"
+					target-type="PreloadTest"
+				/>
+				<reference
+					att_name="containerSet"
+					target-type="PreloadTest"
+				/>
+				<reference
+					att_name="containerList"
+					target-type="PreloadTest"
+				/>
+				<mo_attribute
+					att_name="listOrder"
+					att_type="Integer"
+					mandatory="false"
+				/>
+			</attributes>
+		</metaobject>
+	</metaobjects>
+</objectlist>

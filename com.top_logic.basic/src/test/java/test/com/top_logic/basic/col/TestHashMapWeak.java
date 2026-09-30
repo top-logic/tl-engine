@@ -73,7 +73,6 @@ public class TestHashMapWeak extends AbstractTestMap {
             hmw.put(key, new BigValue(key));
         }
         rt.gc();
-        rt.runFinalization();
         Thread.sleep(100);
         // In fact we want some Object to have gone !
         int size = hmw.size();
@@ -109,14 +108,12 @@ public class TestHashMapWeak extends AbstractTestMap {
         Runtime     rt        = Runtime.getRuntime();
 
         rt.gc();
-        rt.runFinalization();
         Thread.sleep(100);
         // Shoud still be there since we still refer to it.
         assertTrue(hmw.containsKey(testKey));
         testValue = null;
         int size  = hmw.size();
         rt.gc();
-        rt.runFinalization();
         Thread.sleep(100);
         assertTrue(hmw.size() < size);
     }
@@ -142,14 +139,12 @@ public class TestHashMapWeak extends AbstractTestMap {
         assertTrue(hmw.containsValue(testValue));
 
         rt.gc();
-        rt.runFinalization();
         Thread.sleep(100);
         // Shoud still be there since we still refer to it.
         assertTrue(hmw.containsValue(testValue));
         testValue = null;
         int size  = hmw.size();
         rt.gc();
-        rt.runFinalization();
         Thread.sleep(100);
         assertTrue(hmw.size() < size);
     }
@@ -166,7 +161,6 @@ public class TestHashMapWeak extends AbstractTestMap {
             hmw.put(key, new BigValue(key));
         }
         rt.gc();
-        rt.runFinalization();
         Thread.sleep(100);
         // In fact we want some Object to have gone !
         int size = hmw.size();
@@ -185,7 +179,6 @@ public class TestHashMapWeak extends AbstractTestMap {
             hmw.put(key, new BigValue(key));
         }
         rt.gc();
-        rt.runFinalization();
         Thread.sleep(100);
         // In fact we want some Object to have gone !
         int size = hmw.size();

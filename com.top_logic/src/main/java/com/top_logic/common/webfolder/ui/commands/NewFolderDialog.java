@@ -12,7 +12,7 @@ import java.util.List;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Logger;
 import com.top_logic.common.webfolder.WebFolderUtils;
-import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.layout.DisplayContext;
@@ -21,7 +21,6 @@ import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
-import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.control.IconControl;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.component.ComponentUtil;
@@ -30,17 +29,17 @@ import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.StringField;
-import com.top_logic.layout.form.tag.Icons;
 import com.top_logic.layout.messagebox.AbstractFormPageDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.SimpleFormDialog;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
 /**
  * New folder dialog providing the {@link StringField} for identifying the name of the new folder.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class NewFolderDialog extends AbstractFormPageDialog {
 
@@ -61,7 +60,7 @@ public class NewFolderDialog extends AbstractFormPageDialog {
 	 * 
 	 * When creating a new {@link WebFolder} will be created in the folder defined in this instance.
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class NewFolderCommand implements Command {
 	    
@@ -103,7 +102,9 @@ public class NewFolderDialog extends AbstractFormPageDialog {
 	                if (this.folder.hasChild(theName)) {
 						theResult.addError(I18NConstants.ERROR_FOLDER_EXISTS__NAME.fill(theName));
 					} else {
-	                    Transaction theTX = KnowledgeBaseFactory.getInstance().getDefaultKnowledgeBase().beginTransaction();
+						Transaction theTX =
+							PersistencyLayer.getKnowledgeBase()
+								.beginTransaction(I18NConstants.CREATED_FOLDER__NAME.fill(theName));
 	                    try {
 							WebFolder subFolder = folder.createSubFolder(theName);
 							FormField descriptionField = theContext.getField(WebFolder.DESCRIPTION);
@@ -142,7 +143,7 @@ public class NewFolderDialog extends AbstractFormPageDialog {
      */
 	public NewFolderDialog(WebFolder webFolder) {
 		super(I18NConstants.NEW_FOLDER_DIALOG, DisplayDimension.dim(400, DisplayUnit.PIXEL),
-			DisplayDimension.dim(310, DisplayUnit.PIXEL));
+			DisplayDimension.dim(400, DisplayUnit.PIXEL));
 		this.webFolder = webFolder;
     }
 
@@ -155,6 +156,8 @@ public class NewFolderDialog extends AbstractFormPageDialog {
     protected void fillFormContext(FormContext context) {
 		StringField nameField = FormFactory.newStringField(FOLDER_NAME_FIELD, "", false);
 		StringField descriptionField = WebFolderUtils.createDescriptionField(FOLDER_DESCRIPTION_FIELD, 5);
+
+		nameField.setMandatory(true);
 
         context.addMember(nameField);
 		context.addMember(descriptionField);
@@ -176,24 +179,33 @@ public class NewFolderDialog extends AbstractFormPageDialog {
 
 	@Override
 	protected IconControl createTitleIcon() {
-		return IconControl.iconTheme(ThemeImage.typeIconLarge(WebFolder.OBJECT_NAME));
+		return IconControl.iconTheme(Icons.NEW_FOLDER);
 	}
 
 	@Override
 	protected IconControl createTitleIconOverlay() {
-		return IconControl.icon(Icons.PLUS48);
+		return IconControl.icon(com.top_logic.layout.form.tag.Icons.PLUS48);
 	}
 
 	@Override
 	protected HTMLFragment createBodyContent() {
-		HTMLFragment nameInput = input(FOLDER_NAME_FIELD);
-		HTMLFragment errorName = error(member(FOLDER_NAME_FIELD));
-		HTMLFragment nameWithError = concat(nameInput, nbsp(), errorName);
-
-		HTMLFragment descriptionInput = input(FOLDER_DESCRIPTION_FIELD);
-
-		return div(label(FOLDER_NAME_FIELD), div(nameWithError), label(FOLDER_DESCRIPTION_FIELD),
-			div(descriptionInput));
+		return div(ReactiveFormCSS.RF_COLUMNS_LAYOUT + " cols1",
+			div(ReactiveFormCSS.RF_INPUT_CELL,
+				div(ReactiveFormCSS.RF_LABEL,
+					label(FOLDER_NAME_FIELD),
+					error(member(FOLDER_NAME_FIELD))
+				),
+				div(input(FOLDER_NAME_FIELD))
+			),
+			
+			div(ReactiveFormCSS.RF_INPUT_CELL,
+				div(ReactiveFormCSS.RF_LABEL,
+					label(FOLDER_DESCRIPTION_FIELD),
+					error(member(FOLDER_DESCRIPTION_FIELD))
+				),
+				div(input(FOLDER_DESCRIPTION_FIELD))
+			)
+		);
 	}
 
 }

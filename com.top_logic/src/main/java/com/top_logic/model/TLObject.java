@@ -5,9 +5,11 @@
  */
 package com.top_logic.model;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.IdentifierUtil;
@@ -26,6 +28,7 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.model.impl.generated.TLObjectBase;
 
 /**
@@ -104,7 +107,21 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 	 * @return The objects that contain this one in the given reference.
 	 */
 	default Set<? extends TLObject> tReferers(TLReference ref) {
-		return ref.getReferers(this);
+		if (!ref.isAbstract()) {
+			return ref.getReferers(this);
+		}
+		Set<TLReference> overrides = TLModelCacheService.getOperations().getDirectConcreteOverrides(ref);
+		switch (overrides.size()) {
+			case 0:
+				return Collections.emptySet();
+			case 1:
+				return overrides.iterator().next().getReferers(this);
+			default:
+				return overrides.stream()
+					.map(reference -> reference.getReferers(this))
+					.flatMap(Set::stream)
+					.collect(Collectors.toSet());
+		}
 	}
 
 	/**
@@ -253,8 +270,9 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 	 * Check if the object is valid.
 	 * 
 	 * <p>
-	 * An object is valid if it is {@link #tTransient()}, or its persistent item
-	 * {@link KnowledgeItem#isAlive() is alive}.
+	 * A {@link #tTransient() transient} object is valid while the {@link #tContainer() container}
+	 * it was created in is valid, or it has no container at all. A persistent object is valid
+	 * while its item {@link KnowledgeItem#isAlive() is alive}.
 	 * </p>
 	 * 
 	 * @return Whether the object can be legally accessed.
@@ -312,6 +330,13 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 	/**
 	 * Date of the last modification of the internal storage.
 	 * 
+	 * <p>
+	 * Only changes of the object's own row are reflected. Values stored in separate tables, such as
+	 * references stored in link tables or translations of internationalized attributes, are not
+	 * covered. The last change of the object as a whole is available through the TL-Script
+	 * function {@code modifiedRevision()}.
+	 * </p>
+	 * 
 	 * @see #tLastModifier()
 	 */
 	default Date tLastModificationDate() {
@@ -321,6 +346,13 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 	/**
 	 * Time-stamp of the last modification of the internal storage.
 	 * 
+	 * <p>
+	 * Only changes of the object's own row are reflected. Values stored in separate tables, such as
+	 * references stored in link tables or translations of internationalized attributes, are not
+	 * covered. The last change of the object as a whole is available through the TL-Script
+	 * function {@code modifiedRevision()}.
+	 * </p>
+	 * 
 	 * @see #tLastModificationDate()
 	 */
 	default long tLastModificationTime() {
@@ -329,6 +361,13 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 
 	/**
 	 * Author of the last modification of the internal storage.
+	 * 
+	 * <p>
+	 * Only changes of the object's own row are reflected. Values stored in separate tables, such as
+	 * references stored in link tables or translations of internationalized attributes, are not
+	 * covered. The last change of the object as a whole is available through the TL-Script
+	 * function {@code modifiedRevision()}.
+	 * </p>
 	 * 
 	 * @see #tLastModificationDate()
 	 */

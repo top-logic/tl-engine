@@ -56,7 +56,8 @@
 						/>
 						<property name="content"
 							mandatory="false"
-							type="tl.model.i18n:I18NHtml">
+							type="tl.model.i18n:I18NHtml"
+						>
 							<annotations>
 								<wysiwyg templates="function_templates">
 									<template-files>
@@ -81,7 +82,16 @@
 						<reference name="children"
 							override="true"
 							type="Page"
-						/>
+						>
+							<annotations>
+								<storage-algorithm>
+									<inline-list-storage
+										container-column="parent"
+										order-column="sortOrder"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
 						<reference name="parent"
 							kind="backwards"
 							override="true"

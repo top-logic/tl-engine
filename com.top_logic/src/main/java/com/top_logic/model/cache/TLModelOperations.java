@@ -7,28 +7,52 @@ package com.top_logic.model.cache;
 
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
+import com.google.common.collect.ImmutableSet;
+
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.TooltipProvider;
 import com.top_logic.layout.provider.icon.IconProvider;
 import com.top_logic.layout.provider.icon.ProxyIconProvider;
 import com.top_logic.layout.provider.icon.StaticIconProvider;
+import com.top_logic.mig.html.SimpleTooltipProvider;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLNamed;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.InstancePresentation;
 import com.top_logic.model.annotate.TLSortOrder;
+import com.top_logic.model.annotate.persistency.LinkTables;
+import com.top_logic.model.annotate.ui.TLDynamicColor;
 import com.top_logic.model.annotate.ui.TLDynamicIcon;
+import com.top_logic.model.annotate.ui.TLIDColumn;
+import com.top_logic.model.annotate.ui.TLLabel;
+import com.top_logic.model.annotate.ui.TLTooltip;
+import com.top_logic.model.annotate.ui.ValueColorProvider;
+import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.composite.CompositeStorage;
+import com.top_logic.model.composite.ContainerStorage;
+import com.top_logic.model.composite.LinkTable;
+import com.top_logic.model.composite.SourceTable;
+import com.top_logic.model.composite.TargetTable;
+import com.top_logic.model.initializer.TLObjectInitializer;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -205,6 +229,58 @@ public class TLModelOperations {
 	}
 
 	/**
+	 * Computes the parts that override the given part, i.e. the {@link TLStructuredTypePart} that
+	 * have the same {@link TLStructuredTypePart#getDefinition()} and whose owner is a
+	 * specialisation of the owner of the given part.
+	 */
+	public Set<TLStructuredTypePart> getOverrides(TLStructuredTypePart part) {
+		TLStructuredType owner = part.getOwner();
+		if (owner.getModelKind() != ModelKind.CLASS) {
+			return Collections.emptySet();
+		}
+
+		return computeOverrides((TLClass) owner, part);
+	}
+
+	/**
+	 * Computes the result for {@link #getOverrides(TLStructuredTypePart)} in case the owner of the
+	 * part is a {@link TLClass}.
+	 */
+	protected Set<TLStructuredTypePart> computeOverrides(TLClass owner, TLStructuredTypePart part) {
+		String partName = part.getName();
+		Set<TLStructuredTypePart> allParts = Collections.emptySet();
+
+		Set<TLClass> specializations = getSubClasses(owner);
+		for (TLClass specialization : specializations) {
+			if (specialization == owner) {
+				// part
+				continue;
+			}
+			for (TLStructuredTypePart localPart : specialization.getLocalParts()) {
+				if (localPart.getName().equals(partName)) {
+					switch (allParts.size()) {
+						case 0: {
+							allParts = Collections.singleton(localPart);
+							break;
+						}
+						case 1: {
+							allParts = new HashSet<>(allParts);
+							allParts.add(localPart);
+							break;
+						}
+						default: {
+							allParts.add(localPart);
+							break;
+						}
+					}
+					break;
+				}
+			}
+		}
+		return allParts;
+	}
+
+	/**
 	 * The global {@link TLClass}es in the given {@link TLModel}.
 	 * <p>
 	 * "Global" means, it is either defined directly in the scope of a {@link TLModule} or
@@ -268,6 +344,312 @@ public class TLModelOperations {
 			type = TLModelUtil.getPrimaryGeneralization(type);
 		}
 		return null;
+	}
+
+	/**
+	 * Retrieves the {@link ValueColorProvider} for a given {@link TLType}.
+	 * 
+	 * @see TLDynamicColor#getColorProvider()
+	 */
+	public ValueColorProvider getColorProvider(TLType type) {
+		return computeColorProvider(type);
+	}
+
+	/**
+	 * Builds the {@link ValueColorProvider} the {@link TLDynamicColor} annotation of the given type
+	 * configures, {@link ValueColorProvider#NONE} for a type without that annotation.
+	 * 
+	 * @see #getColorProvider(TLType)
+	 */
+	protected ValueColorProvider computeColorProvider(TLType type) {
+		TLDynamicColor annotation = type.getAnnotation(TLDynamicColor.class);
+		if (annotation == null) {
+			return ValueColorProvider.NONE;
+		}
+		return TypedConfigUtil.createInstance(annotation.getColorProvider());
+	}
+
+	/**
+	 * Retrieves the {@link TooltipProvider} for a given {@link TLType}.
+	 */
+	public TooltipProvider getTooltipProvider(TLType type) {
+		return computeTooltipProvider(type);
+	}
+
+	/**
+	 * Looks up the first {@link TLTooltip} annotation in the primary generalization hierarchy and
+	 * builds an {@link TooltipProvider} for the given type.
+	 */
+	protected TooltipProvider computeTooltipProvider(TLType type) {
+		while (type != null) {
+			TLTooltip annotation = type.getAnnotation(TLTooltip.class);
+			if (annotation != null) {
+				TooltipProvider provider = TypedConfigUtil.createInstance(annotation.getTooltipProvider());
+				return provider;
+			}
+
+			type = TLModelUtil.getPrimaryGeneralization(type);
+		}
+
+		return SimpleTooltipProvider.INSTANCE;
+	}
+
+	/**
+	 * Retrieves the {@link LabelProvider} for a given {@link TLType}.
+	 */
+	public LabelProvider getLabelProvider(TLType type) {
+		return computeLabelProvider(type);
+	}
+
+	/**
+	 * Looks up the first {@link TLLabel} annotation in the primary generalization hierarchy and
+	 * builds an {@link LabelProvider} for the given type.
+	 */
+	protected LabelProvider computeLabelProvider(final TLType type) {
+		TLType anchestorType = type;
+		while (anchestorType != null) {
+			TLLabel annotation = anchestorType.getAnnotation(TLLabel.class);
+			if (annotation != null) {
+				LabelProvider provider = TypedConfigUtil.createInstance(annotation.getLabelProvider());
+				return provider;
+			}
+
+			if (anchestorType instanceof TLStructuredType structuredType) {
+				TLIDColumn idColumn = structuredType.getAnnotation(TLIDColumn.class);
+				if (idColumn != null) {
+					TLStructuredTypePart idColumnPart = structuredType.getPart(idColumn.getValue());
+
+					if (idColumnPart != null) {
+						return new IDColumnLabelProvider(idColumnPart);
+					}
+				}
+			}
+
+			anchestorType = TLModelUtil.getPrimaryGeneralization(anchestorType);
+		}
+
+		if (type instanceof TLStructuredType structuredType) {
+			TLStructuredTypePart namePart = structuredType.getPart(TLNamed.NAME_ATTRIBUTE);
+			if (namePart != null) {
+				return new IDColumnLabelProvider(namePart);
+			}
+		}
+
+		return new SimpleLabelProvider(type);
+	}
+
+	/**
+	 * Determines which storage strategies exists for composition references with the given target
+	 * type.
+	 */
+	public CompositionStorages getCompositionStorages(TLClass type) {
+		Set<TargetTable> targets = new HashSet<>();
+		Set<SourceTable> sources = new HashSet<>();
+		Set<LinkTable> links = new HashSet<>();
+		doForAllCompositionReferences(type.getModel(), reference -> {
+			TLType targetType = reference.getType();
+			if (!TLModelUtil.isCompatibleType(targetType, type)) {
+				return;
+			}
+			CompositeStorage storage = (CompositeStorage) reference.getStorageImplementation();
+			ContainerStorage container = storage.getContainerStorage(reference);
+			if (container instanceof SourceTable) {
+				sources.add((SourceTable) container);
+			} else if (container instanceof TargetTable) {
+				targets.add((TargetTable) container);
+			} else {
+				links.add((LinkTable) container);
+			}
+
+		});
+		return CompositionStoragesImpl.newInstance(links, sources, targets);
+
+	}
+
+	/**
+	 * Navigates through the given {@link TLModel} and executes the given callback for all composite
+	 * references of non abstract {@link TLClass}.
+	 *
+	 * @param model
+	 *        The {@link TLModel} to navigate.
+	 * @param callback
+	 *        Handler for the visited {@link TLReference}.
+	 */
+	protected void doForAllCompositionReferences(TLModel model, Consumer<TLReference> callback) {
+		for (TLModule module : model.getModules()) {
+			for (TLType type : module.getTypes()) {
+				if (type.getModelKind() != ModelKind.CLASS) {
+					continue;
+				}
+				TLClass tlClass = (TLClass) type;
+				if (tlClass.isAbstract()) {
+					continue;
+				}
+				for (TLModelPart part : tlClass.getAllParts()) {
+					if (part.getModelKind() != ModelKind.REFERENCE) {
+						continue;
+					}
+					TLReference reference = (TLReference) part;
+					if (reference.isAbstract()) {
+						continue;
+					}
+					if (!reference.getEnd().isComposite()) {
+						continue;
+					}
+					callback.accept(reference);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Determines the first overrides of the given abstract part which are not abstract.
+	 *
+	 * @param <T>
+	 *        implementation type of the part.
+	 * @param part
+	 *        Abstract {@link TLStructuredTypePart} to get overrides for.
+	 * 
+	 * @throws IllegalArgumentException
+	 *         if the given part is not {@link TLStructuredTypePart#isAbstract()}.
+	 */
+	public <T extends TLStructuredTypePart> Set<T> getDirectConcreteOverrides(T part) {
+		if (!part.isAbstract()) {
+			throw new IllegalArgumentException(
+				"Direct overrides just exist for abstract parts: " + TLModelUtil.qualifiedName(part));
+		}
+		TLStructuredType owner = part.getOwner();
+		if (owner instanceof TLClass) {
+			Set<TLStructuredTypePart> result = new HashSet<>();
+			collectDirectConcreteOverrides(result::add, (TLClass) owner, part.getName());
+			@SuppressWarnings("unchecked") // All overrides are of the same type.
+			Set<T> typeSafe = (Set<T>) result;
+			return typeSafe;
+		} else {
+			return Collections.emptySet();
+		}
+	}
+
+	/**
+	 * Navigates (recursively) throw the specialization hierarchy of the given type and adds the
+	 * first non-abstract parts with the given name to the given sink.
+	 */
+	protected void collectDirectConcreteOverrides(Consumer<? super TLStructuredTypePart> sink, TLClass type,
+			String name) {
+		for (TLClass specialization : type.getSpecializations()) {
+			TLStructuredTypePart part = specialization.getPart(name);
+			if (part.getOwner() == specialization) {
+				// locally overridden
+				if (part.isAbstract()) {
+					collectDirectConcreteOverrides(sink, specialization, name);
+				} else {
+					sink.accept(part);
+				}
+			} else {
+				// not locally defined;
+				collectDirectConcreteOverrides(sink, specialization, name);
+			}
+		}
+	}
+
+	/**
+	 * The {@link TLObjectInitializer}s that are attached to the given type or any supertype.
+	 */
+	public List<TLObjectInitializer> getInitializers(TLStructuredType type) {
+		return TLAnnotations.getInitializers(type);
+	}
+
+	/**
+	 * Collection of exiting storage strategies for a composition references.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface CompositionStorages {
+
+		/**
+		 * All {@link TargetTable} strategies.
+		 */
+		Set<TargetTable> storedInTarget();
+
+		/**
+		 * All {@link SourceTable} strategies.
+		 */
+		Set<SourceTable> storedInSource();
+
+		/**
+		 * All {@link LinkTables} strategies.
+		 */
+		Set<LinkTable> storedInLink();
+
+	}
+
+	/**
+	 * Simple implementation of {@link CompositionStorages}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	protected static class CompositionStoragesImpl implements CompositionStorages {
+
+		private final Set<LinkTable> _links;
+
+		private final Set<SourceTable> _sources;
+
+		private final Set<TargetTable> _targets;
+
+		/**
+		 * Creates a {@link CompositionStoragesImpl} with empty {@link #storedInLink()},
+		 * {@link #storedInSource()} and {@link #storedInTarget()}.
+		 */
+		public CompositionStoragesImpl() {
+			this(new HashSet<>(), new HashSet<>(), new HashSet<>());
+		}
+
+		/**
+		 * Creates a {@link CompositionStoragesImpl} with the given values for
+		 * {@link #storedInLink()}, {@link #storedInSource()} and {@link #storedInTarget()}.
+		 */
+		public CompositionStoragesImpl(Set<LinkTable> links, Set<SourceTable> sources, Set<TargetTable> targets) {
+			_links = links;
+			_sources = sources;
+			_targets = targets;
+		}
+
+		/**
+		 * Creates a new {@link CompositionStorages} instance with unmodifiable versions of the
+		 * given values.
+		 */
+		public static CompositionStorages newInstance(Set<LinkTable> links, Set<SourceTable> sources,
+				Set<TargetTable> targets) {
+			return new CompositionStoragesImpl(minimizeAndStabilize(links), minimizeAndStabilize(sources),
+				minimizeAndStabilize(targets));
+		}
+
+		private static <T> Set<T> minimizeAndStabilize(Set<T> in) {
+			switch (in.size()) {
+				case 0:
+					return Collections.emptySet();
+				case 1:
+					return Collections.singleton(in.iterator().next());
+				default:
+					return ImmutableSet.copyOf(in);
+			}
+		}
+
+		@Override
+		public Set<TargetTable> storedInTarget() {
+			return _targets;
+		}
+
+		@Override
+		public Set<SourceTable> storedInSource() {
+			return _sources;
+		}
+
+		@Override
+		public Set<LinkTable> storedInLink() {
+			return _links;
+		}
+
 	}
 
 }

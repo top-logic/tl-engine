@@ -20,20 +20,20 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
-import test.com.top_logic.TLTestSetup;
+import test.com.top_logic.ModuleLicenceTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.base.office.POIUtil;
 import com.top_logic.base.office.excel.ExcelAccess;
 import com.top_logic.base.office.excel.ExcelValue;
+import com.top_logic.base.office.excel.handler.POITypeProvider;
 import com.top_logic.basic.FileManager;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
@@ -192,13 +192,8 @@ public class TestPOIMisc extends AbstractPOIExcelTest {
     }
     
     public static Test suite () {
-		return TLTestSetup.createTLTestSetup(new TestSuite(TestPOIMisc.class));
+		return ModuleLicenceTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestPOIMisc.class,
+				POITypeProvider.Module.INSTANCE));
     }
-
-    public static void main(String[] args) {
-        Logger.configureStdout();
-        junit.textui.TestRunner.run(suite ());
-    }
-
-
 }

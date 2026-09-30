@@ -43,6 +43,7 @@ import com.top_logic.layout.table.renderer.CellControlRenderer;
 import com.top_logic.layout.table.renderer.UniformCellRenderer;
 import com.top_logic.model.export.EmptyPreloadContribution;
 import com.top_logic.model.export.PreloadContribution;
+import com.top_logic.tool.export.DefaultExcelCellRenderer;
 import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.tool.export.ExcelExportSupport;
 import com.top_logic.tool.export.pdf.PDFRenderer;
@@ -322,6 +323,9 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	protected abstract void copyDefaultColumnWidth(String aWidth);
 
+	/**
+	 * Checks whether this {@link ColumnConfiguration} is classified by the given classifier.
+	 */
 	public final boolean isClassifiedBy(String aClassifier) {
 		Collection<String> theClassifiers = getClassifiers();
 		return theClassifiers == null ? false : theClassifiers.contains(aClassifier);
@@ -347,14 +351,23 @@ public abstract class ColumnConfiguration extends ColumnBase
 	protected abstract void copyAccessor(Accessor accessor);
 
 	/**
-	 * The CSS class of this column.
+	 * The CSS class to use on content cells of this column.
 	 * 
 	 * @return may be <code>null</code> if no class was set.
+	 * 
+	 * @see #getCssHeaderClass()
 	 */
 	public abstract String getCssClass();
 
 	/**
-	 * CSS class to use on cells the column that appears first in this group.
+	 * The CSS class of this column's header.
+	 * 
+	 * @return may be <code>null</code> if no class was set.
+	 */
+	public abstract String getCssHeaderClass();
+
+	/**
+	 * CSS class to use on cells of the column that appear first in this group.
 	 * 
 	 * <p>
 	 * Identical to {@link #getCssClass()} for elementary columns.
@@ -375,7 +388,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 	protected abstract void copyCssClassGroupFirst(String cssClass);
 
 	/**
-	 * CSS class to use on cells the column that appears last in this group.
+	 * CSS class to use on cells of the column that appear last in this group.
 	 * 
 	 * <p>
 	 * Identical to {@link #getCssClass()} for elementary columns.
@@ -457,7 +470,26 @@ public abstract class ColumnConfiguration extends ColumnBase
 	
 	public abstract CellExistenceTester getCellExistenceTester();
 	
-	public abstract ExcelCellRenderer getExcelRenderer();
+	/**
+	 * The {@link ExcelCellRenderer} that is finally used to export this column in the given
+	 * {@link ExcelExportSupport}.
+	 * 
+	 * @see #internalExcelRenderer()
+	 */
+	public ExcelCellRenderer getExcelRenderer() {
+		ExcelCellRenderer renderer = internalExcelRenderer();
+		if (renderer != null) {
+			return renderer;
+		}
+		return DefaultExcelCellRenderer.INSTANCE;
+	}
+
+	/**
+	 * The configured {@link ExcelCellRenderer} or <code>null</code>, if none is specified.
+	 * 
+	 * @see #getExcelRenderer()
+	 */
+	public abstract ExcelCellRenderer internalExcelRenderer();
 
 	/**
 	 * The renderer for cell decorations.
@@ -485,14 +517,55 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	public abstract String getDefaultColumnWidth();
 
-	protected abstract Collection<String> getClassifiers();
+	/**
+	 * Classifiers of this column.
+	 *
+	 * @return The collection of classifiers of this column. May be empty. Must not be modified.
+	 * 
+	 * @see #setClassifiers(Collection)
+	 */
+	public abstract Collection<String> getClassifiers();
 
+	/** Adds the given CSS class(es) to this column. */
+	public void addCssClass(String cssClass) {
+		setCssClass(CssUtil.joinCssClassesUnique(getCssClass(), cssClass));
+	}
+
+	/** Removes the given CSS class(es) from this column. */
+	public void removeCssClass(String cssClass) {
+		setCssClass(CssUtil.removeCssClasses(getCssClass(), cssClass));
+	}
+
+	/**
+	 * @see #getCssClass()
+	 */
 	public abstract void setCssClass(String cssClass);
 
 	/**
 	 * @see #getCssClass()
 	 */
 	protected abstract void copyCssClass(String cssClass);
+
+	/**
+	 * @see #getCssHeaderClass()
+	 */
+	public abstract void setCssHeaderClass(String cssClass);
+
+	/** Adds the given CSS class(es) to the {@link #getCssHeaderClass()} of this column. */
+	public void addCssHeaderClass(String cssClass) {
+		setCssHeaderClass(CssUtil.joinCssClassesUnique(getCssHeaderClass(), cssClass));
+	}
+
+	/** Removes the given CSS class(es) from the {@link #getCssHeaderClass()} of this column. */
+	public void removeCssHeaderClass(String cssClass) {
+		setCssHeaderClass(CssUtil.removeCssClasses(getCssHeaderClass(), cssClass));
+	}
+
+	/**
+	 * @see #getCssHeaderClass()
+	 */
+	protected abstract void copyCssHeaderClass(String cssClass);
+
 
 	public abstract void setDescendingComparator(Comparator descendingComparator);
 
@@ -518,6 +591,12 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	protected abstract void copySelectable(boolean selectable);
 
+	/**
+	 * Sets the classifiers for this {@link ColumnConfiguration}.
+	 * 
+	 * @see #getClassifiers()
+	 * @see #isClassifiedBy(String)
+	 */
 	public abstract void setClassifiers(Collection<String> classifiers);
 
 	/**
@@ -564,7 +643,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 	public abstract void setExcelRenderer(ExcelCellRenderer renderer);
 
 	/**
-	 * @see ColumnConfiguration#getExcelRenderer()
+	 * @see ColumnConfiguration#internalExcelRenderer()
 	 */
 	protected abstract void copyExcelRenderer(ExcelCellRenderer renderer);
 
@@ -786,18 +865,6 @@ public abstract class ColumnConfiguration extends ColumnBase
 			customRenderer = newResourceRenderer(getResourceProvider());
 		}
 		return customRenderer;
-	}
-
-	/**
-	 * Returns a {@link Renderer} that is finally used to export this column in the given
-	 * {@link ExcelExportSupport}.
-	 */
-	public ExcelCellRenderer finalExcelCellRenderer(ExcelExportSupport excelExport) {
-		ExcelCellRenderer renderer = getExcelRenderer();
-		if (renderer == null) {
-			renderer = excelExport.defaultExcelCellRenderer();
-		}
-		return renderer;
 	}
 
 	@Override
@@ -1105,6 +1172,22 @@ public abstract class ColumnConfiguration extends ColumnBase
 				return self.getCssClass();
 			}
 		},
+		new ColumnConfiguration.Property(ColumnConfig.CSS_HEADER_CLASS) {
+			@Override
+			public void set(ColumnConfiguration self, Object value) {
+				self.setCssHeaderClass((String) value);
+			}
+
+			@Override
+			public void copy(ColumnConfiguration self, Object value) {
+				self.copyCssHeaderClass((String) value);
+			}
+
+			@Override
+			public Object get(ColumnConfiguration self) {
+				return self.getCssHeaderClass();
+			}
+		},
 		new ColumnConfiguration.Property(ColumnConfig.CSS_CLASS_GROUP_FIRST) {
 			@Override
 			public void set(ColumnConfiguration self, Object value) {
@@ -1215,7 +1298,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 
 			@Override
 			public Object get(ColumnConfiguration self) {
-				return self.getExcelRenderer();
+				return self.internalExcelRenderer();
 			}
 		},
 		new ColumnConfiguration.Property(ColumnConfig.SORT_KEY_PROVIDER) {

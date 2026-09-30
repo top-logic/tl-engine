@@ -6,19 +6,21 @@
 package com.top_logic.model.instance.importer.schema;
 
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 
 /**
- * {@link RefConf Reference} to a pre-existing instance in the target application of an import.
+ * {@link ValueConf Reference} to a pre-existing instance in the target application of an import.
  * 
- * @see AttributeValueConf#getReferences()
+ * @see AttributeValueConf#getCollectionValue()
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @TagName("global-ref")
-public interface GlobalRefConf extends RefConf {
+public interface GlobalRefConf extends ValueConf {
 
 	/**
 	 * The {@link InstanceResolver} kind the {@link #getId()} is made for.
@@ -38,11 +40,11 @@ public interface GlobalRefConf extends RefConf {
 	 * Identifier of the object being referenced.
 	 * 
 	 * <p>
-	 * The syntax of the identifier may vary from {@link #getKind() type} to {@link #getKind()
-	 * type}.
+	 * The syntax of the identifier depends on the {@link InstanceResolver} used to create this ID
+	 * and may vary from {@link #getKind() type} to {@link #getKind() type}.
 	 * </p>
 	 * 
-	 * @see InstanceResolver#resolve(String, String)
+	 * @see InstanceResolver#resolve(I18NLog, Object, String, String)
 	 */
 	@Mandatory
 	String getId();
@@ -51,5 +53,21 @@ public interface GlobalRefConf extends RefConf {
 	 * @see #getId()
 	 */
 	void setId(String value);
+
+	/**
+	 * When set, defines the ID to reference the same object locally during the same import.
+	 * 
+	 * <p>
+	 * Setting this property makes resolving the same object multiple times more efficient during
+	 * re-import.
+	 * </p>
+	 */
+	@Nullable
+	String getLocalId();
+
+	/**
+	 * @see #getLocalId()
+	 */
+	void setLocalId(String value);
 
 }

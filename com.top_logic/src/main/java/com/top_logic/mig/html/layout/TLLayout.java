@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.layout.editor.DatabaseLayoutCache;
+import com.top_logic.layout.editor.DynamicComponentService;
 
 /**
  * General application layout part.
@@ -45,7 +46,14 @@ public interface TLLayout {
 	LayoutComponent.Config get() throws ConfigurationException;
 
 	/**
-	 * Name of the template from which it origins.
+	 * Name of the in-app template from that is used for this layout.
+	 * 
+	 * <p>
+	 * The template can be resolved by the {@link DynamicComponentService} through
+	 * {@link DynamicComponentService#getComponentDefinition(String)}.
+	 * </p>
+	 * 
+	 * @see #getArguments()
 	 * 
 	 * @throws UnsupportedOperationException
 	 *         if {@link #hasTemplate()} is false.
@@ -53,7 +61,9 @@ public interface TLLayout {
 	String getTemplateName();
 
 	/**
-	 * Values for the template properties.
+	 * Values for the in-app template parameters.
+	 * 
+	 * @see #getTemplateName()
 	 * 
 	 * @throws UnsupportedOperationException
 	 *         if {@link #hasTemplate()} is false.
@@ -70,10 +80,10 @@ public interface TLLayout {
 	 * 
 	 * @param stream
 	 *        To write into.
-	 * @param isFinal
+	 * @param markFinal
 	 *        Whether the layout must not be enhanced with overlays, when it is de-serialized.
 	 * @throws IOException
 	 *         if the configuration could not be written.
 	 */
-	void writeTo(OutputStream stream, boolean isFinal) throws IOException;
+	void writeTo(OutputStream stream, boolean markFinal) throws IOException;
 }

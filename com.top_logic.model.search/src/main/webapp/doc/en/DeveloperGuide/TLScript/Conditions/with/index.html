@@ -1,0 +1,97 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$input.with($func)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Applies the function <code class="hljs inlineCode">func</code> to the entire input value <code class="hljs inlineCode">input</code> and returns the result of this function. Unlike <a class="tlObject" data-custom="true" href="?page=map&amp;uuid=c382824b-adb0-468c-8508-c4297b61bb3d">map()</a> or <a class="tlObject" data-custom="true" href="?page=foreach&amp;uuid=5c0582a6-75c9-4683-9c25-0442737f7d08">foreach()</a>, which apply a function to each element of a set, <code class="hljs inlineCode">with()</code> applies the function to the complete result of the previous expression in the chain.</p>
+
+<p>This makes it possible to use the result of a complex expression multiple times without having to break the chain or convert the expression into a block. The function <code class="hljs inlineCode">func</code> receives the entire result as an argument and can access it as required.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>parameter name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Input</td>
+			<td>Any</td>
+			<td>The input value that is passed in full to the function. This is typically the result of the previous expression in a method chain.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>func</td>
+			<td>Function</td>
+			<td>The function that is to be applied to the entire input value. This function receives a parameter (the input value) and can use it multiple times.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><strong>Type:</strong> Any</p>
+
+<p>The result of the evaluation of the function <code class="hljs inlineCode">func</code>. The return type depends on what the <code class="hljs inlineCode">func</code> function returns.</p>
+
+<h2>Examples</h2>
+
+<h3>Calculation of statistics on a list</h3>
+
+<pre>
+	<code>list(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30)
+  .filter(x -&gt; $x &gt; 5)
+  .with(largeNumbers -&gt; {
+    "count": $largeNumbers.size(),
+    "sum": $largeNumbers.sum(),
+    "average": $largeNumbers.sum() / $largeNumbers.size(),
+    "min": $largeNumbers.min(),
+    "max": $largeNumbers.max(),
+    "doubled": $largeNumbers.map(x -&gt; $x * 2)
+  })</code>
+</pre>
+
+<p><strong>Output: </strong>An object with the calculated statistics: <code>{count=9.0, sum=130.0, average=14.444444444444445, min=6.0, max=30.0, doubled=[12.0, 14.0, 16.0, 18.0, 20.0, 30.0, 40.0, 50.0, 60.0]}</code>.</p>
+
+<h3>Conditional processing</h3>
+
+<pre>
+	<code>$data
+  .filter(item -&gt; $item.equals("active"))
+  .with(activeItems -&gt; 
+      if($activeItems.size() &gt; 0,
+          {"status": "success", "data": $activeItems},
+          {"status": "empty", "message": "Keine aktiven Einträge gefunden"}
+      )
+  )</code>
+</pre>
+
+<p><strong>Output: </strong>Depending on the result, either a success object with the active entries or a message object if no active entries were found.</p>
+
+<h3>Transformation with reference to the original</h3>
+
+<pre>
+	<code>$customers
+  .filter(c -&gt; $c["orders"].size() &gt; 5)
+  .with(topCustomers -&gt; {
+      "customers": $topCustomers,
+      "summary": "Top-Kunden: " + $topCustomers.size() + " Kunden mit mehr als 5 Bestellungen",
+      "averageOrders": $topCustomers.map(c -&gt; $c["orders"].size()).sum() / $topCustomers.size()
+  })</code>
+</pre>
+
+<p><strong>Output: </strong>An object containing both the filtered customer list and a summary and calculated average values based on these customers.</p>
+
+<p></p>

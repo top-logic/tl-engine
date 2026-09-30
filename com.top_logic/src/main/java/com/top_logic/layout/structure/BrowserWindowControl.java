@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.binary.Hex;
 
@@ -46,6 +46,7 @@ import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataProxy;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
 import com.top_logic.layout.AbstractDisplayValue;
@@ -59,6 +60,7 @@ import com.top_logic.layout.ErrorPage;
 import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.KeyEvent;
 import com.top_logic.layout.KeyEventDispatcher;
+import com.top_logic.layout.LayoutContext;
 import com.top_logic.layout.NoModification;
 import com.top_logic.layout.URLBuilder;
 import com.top_logic.layout.URLParser;
@@ -72,6 +74,7 @@ import com.top_logic.layout.basic.ConstantDisplayValue;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.ControlRenderer;
 import com.top_logic.layout.basic.ControlValidator;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.FragmentRenderer;
 import com.top_logic.layout.basic.KeyCodeHandler;
 import com.top_logic.layout.basic.fragments.Fragments;
@@ -85,6 +88,7 @@ import com.top_logic.layout.servlet.CacheControl;
 import com.top_logic.layout.window.WindowManager;
 import com.top_logic.mig.html.layout.CommandDispatcher;
 import com.top_logic.mig.html.layout.ComponentName;
+import com.top_logic.mig.html.layout.DialogSupport;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -209,7 +213,10 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 	private final List<DialogWindowControl> dialogsToClose = new ArrayList<>();
 	private final List<DialogWindowControl> dialogsToOpen = new ArrayList<>();
 	
-	private final List<PopupDialogControl> popupDialogsToClose = new ArrayList<>();
+	/**
+	 * Client-side IDs of popup dialogs that must be removed from view.
+	 */
+	private final List<String> popupDialogsToClose = new ArrayList<>();
 	private final List<PopupDialogControl> popupDialogsToOpen = new ArrayList<>();
 
 	private final WindowScope opener;
@@ -237,6 +244,21 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 
 	private final TimerControl _timerControl;
 
+	private final DialogSupport _dialogSupport;
+
+	/**
+	 * The current page title.
+	 *
+	 * @see #setPageTitle(String)
+	 */
+	private String _pageTitle = "";
+
+	/**
+	 * Whether {@link #_pageTitle} has changed since the last client revalidation and must be
+	 * pushed to the browser.
+	 */
+	private boolean _pageTitleDirty;
+
 	/**
 	 * @param opener
 	 *        the opener of this window. my be <code>null</code> if this window is the main window
@@ -258,11 +280,32 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		_downloadSurvivingTime = config.getDownloadSurvivingTime();
 		_downloadModification = config.getDownloadModification();
 		_name = name;
+		_dialogSupport = new DialogSupport(this);
 	}
 
 	@Override
 	public ComponentName getName() {
 		return _name;
+	}
+
+	@Override
+	public String getPageTitle() {
+		return _pageTitle;
+	}
+
+	@Override
+	public void setPageTitle(String title) {
+		String normalized = title == null ? "" : title;
+		if (normalized.equals(_pageTitle)) {
+			return;
+		}
+		_pageTitle = normalized;
+		_pageTitleDirty = true;
+	}
+
+	@Override
+	public DialogSupport getDialogSupport() {
+		return _dialogSupport;
 	}
 
 	@Override
@@ -293,6 +336,11 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		
 		if (dialogs.contains(aDialog)) {
 			Logger.warn("Dialog '" + aDialog + "' is  already open.", this);
+			return;
+		}
+		if (dialogsToClose.remove(aDialog)) {
+			// Dialog was first requested to close and then to re-open again.
+			addDialog(aDialog);
 			return;
 		}
 
@@ -326,10 +374,21 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 			return;
 		}
 
+		if (!isAttached() || isRepaintRequested()) {
+			/* The client-side view of this window is created from scratch and would not display the
+			 * popup: BrowserWindowRenderer writes an empty popup anchor and open popups are never
+			 * re-rendered (in contrast to dialogs, which are written by writeDialogs()).
+			 * Registering the popup would leave it in the list of open popups without ever being
+			 * written, i.e. without an ID, see unregisterAndClosePopupDialog(). Note: While a
+			 * repaint is requested, this control is still attached. */
+			aPopupDialog.getModel().setClosed();
+			return;
+		}
+
 		aPopupDialog.initParent(this);
-		
+
 		popupDialogsToOpen.add(aPopupDialog);
-		popupDialogs.add(aPopupDialog);		
+		popupDialogs.add(aPopupDialog);
 	}
 
 	/*package protected*/ void unregisterDialog(DialogWindowControl aDialog) {
@@ -354,7 +413,6 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 
 	private void removeDialog(DialogWindowControl dialog) {
 		dialogs.remove(dialog);
-		dropLayerScope(dialog);
 		disableTopmostDialog(false);
 		// dialogs are in general points of no return in history
 		pop();
@@ -410,7 +468,20 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 			popupDialogs.get(i).getModel().setClosed();
 		}
 		popupDialogs.remove(popupIndex);
-		popupDialogsToClose.add(aDialog);
+		if (aDialog.isAttached()) {
+			popupDialogsToClose.add(aDialog.getID());
+		} else {
+			// The popup was detached without being unregistered here. Therefore, it has no ID and
+			// there is no client-side view that could be removed.
+			Logger.warn("Closing popup dialog '" + aDialog + "' that is no longer attached.",
+				BrowserWindowControl.class);
+		}
+
+		// Early detach (removed from UI during final validation). This is necessary to unregister
+		// commands within the dialog from command model registry before final validation.
+		// Otherwise, those commands may get validated but are still bound to potentially deleted
+		// objects.
+		aDialog.detach();
 	}
 	
 	/**
@@ -435,7 +506,7 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		int size = popupDialogs.size();
 		for(int i = 0; i < size; i++) {
 			PopupDialogControl popup = popupDialogs.get(i);
-			if(popup.getID().equals(popupID)) {
+			if (popup.isAttached() && popup.getID().equals(popupID)) {
 				// Note: The popup is removed from the currently open popups list: This prevents
 				// marshalling a close request back to the client, because the popup is already
 				// removed from the client-side view.
@@ -457,6 +528,42 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 	}
 
 	/**
+	 * Drops all open popup dialogs, because the client-side view of this control is created from
+	 * scratch and does not display them.
+	 *
+	 * <p>
+	 * In contrast to {@link #unregisterAllPopupDialogs()}, the popup models are only
+	 * {@link PopupDialogModel#setClosed() closed} during the command phase: The client-side view is
+	 * also re-created while rendering a complete page ({@link MainLayout#writeBody}). Notifying the
+	 * models there would let their listeners request repaints during rendering, where updates are no
+	 * longer evaluated.
+	 * </p>
+	 *
+	 * @see LayoutContext#isInCommandPhase()
+	 */
+	private void discardPopupDialogs() {
+		boolean closeModels = isInCommandPhase();
+		for (int i = popupDialogs.size() - 1; i >= 0; i--) {
+			// Note: The popup is removed from the currently open popups list before it is closed:
+			// This prevents marshalling a close request back to the client, because the popup is
+			// dropped from the client-side view anyway.
+			PopupDialogControl popup = popupDialogs.remove(i);
+			if (closeModels) {
+				popup.getModel().setClosed();
+			}
+			popup.detach();
+		}
+	}
+
+	private static boolean isInCommandPhase() {
+		if (!DefaultDisplayContext.hasDisplayContext()) {
+			return false;
+		}
+		LayoutContext layoutContext = DefaultDisplayContext.getDisplayContext().getLayoutContext();
+		return layoutContext != null && layoutContext.isInCommandPhase();
+	}
+
+	/**
 	 * This method unregisters all open popup dialogs, and marks them as removable from the gui
 	 */
 	private final void unregisterAndCloseAllPopupDialogs() {
@@ -467,19 +574,18 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 	}
 
 	/**
-	 * This method brings the visible popup dialogs in sync with the popup dialogs which were opened (and
-	 * closed, resp.) on server side.
+	 * Brings the visible popup dialogs in sync with the popup dialogs which are open (and closed,
+	 * resp.) on server side.
 	 * 
 	 * @param actions
-	 *            may be <code>null</code>. If <code>actions != null</code>
-	 *            {@link ClientAction} to bring the client in sync will be added to.
+	 *        The action quey to add necessary client actions to.
 	 */
 	protected void updatePopupDialogs(UpdateQueue actions) {
 		// Closed popup dialogs
 		int size = popupDialogsToClose.size();
 		for (int i = 0; i < size; i++) {
-			PopupDialogControl popupDialog = popupDialogsToClose.get(i);
-			actions.add(new ElementReplacement(popupDialog.getID(), Fragments.empty()));
+			String popupDialogId = popupDialogsToClose.get(i);
+			actions.add(new ElementReplacement(popupDialogId, Fragments.empty()));
 		}
 
 		// Opened popup dialogs
@@ -518,7 +624,6 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 
 	private void dropIncrementalPopupUpdates() {
 		popupDialogsToOpen.clear();
-		popupDialogsToClose.forEach(PopupDialogControl::detach);
 		popupDialogsToClose.clear();
 	}
 
@@ -573,6 +678,7 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 
 	private void dropIncrementalDialogUpdates() {
 		dialogsToClose.forEach(DialogWindowControl::detach);
+		dialogsToClose.forEach(this::dropLayerScope);
 		dialogsToClose.clear();
 		dialogsToOpen.clear();
 	}
@@ -642,7 +748,11 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		if (!dialogsToClose.isEmpty() || !dialogsToOpen.isEmpty() || !popupDialogsToClose.isEmpty() || !popupDialogsToOpen.isEmpty()) {
 			return true;
 		}
-		
+
+		if (_pageTitleDirty) {
+			return true;
+		}
+
 		if (hasDownloads()) {
 			return true;
 		} else {
@@ -662,6 +772,18 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 
 		updateDialogs(context, actions);
 		updatePopupDialogs(actions);
+		if (_pageTitleDirty) {
+			final String title = _pageTitle;
+			actions.add(new JSSnipplet(new AbstractDisplayValue() {
+				@Override
+				public void append(DisplayContext renderContext, Appendable out) throws IOException {
+					out.append("document.title = ");
+					TagUtil.writeJsString(out, title);
+					out.append(';');
+				}
+			}));
+			_pageTitleDirty = false;
+		}
 		if (hasDownloads()) {
 			for (int index = 0, size = downloadActions.size(); index < size; index++) {
 				actions.add(downloadActions.get(index));
@@ -712,12 +834,23 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 	@Override
 	protected void attachRevalidated() {
 		super.attachRevalidated();
+
+		/* Note: Popups cannot be added while the client-side view is (re-)created, they are
+		 * rejected by openPopupDialog(). */
+
 		/* Drop updates for dialogs and popups that are potentially added in detached state. */
 		dropIncrementalUpdates();
 	}
-	
+
 	@Override
 	protected void detachInvalidated() {
+		/* The client-side view of all popups is dropped together with the view of this control:
+		 * BrowserWindowRenderer writes an empty popup anchor and open popups are never re-rendered
+		 * (in contrast to dialogs, which are written by writeDialogs()). Therefore, the popups must
+		 * be closed here. Otherwise, they would stay in the list of open popups in detached state,
+		 * i.e. without an ID, see unregisterAndClosePopupDialog(). */
+		discardPopupDialogs();
+
 		/* Drop updates to ensure controls are detached. */
 		dropIncrementalUpdates();
 

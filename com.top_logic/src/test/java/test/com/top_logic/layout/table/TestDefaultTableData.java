@@ -26,6 +26,7 @@ import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.DelegatingCommandModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.table.DefaultTableData;
@@ -86,9 +87,9 @@ public class TestDefaultTableData extends AbstractLayoutTest {
 		}
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			_calledCount++;
-			_selectionChanges.add(new Pair<>(oldSelection, newSelection));
+			_selectionChanges.add(new Pair<>(event.getOldSelection(), event.getNewSelection()));
 		}
 
 		/**

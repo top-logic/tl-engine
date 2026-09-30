@@ -7,10 +7,10 @@ package com.top_logic.element.meta.form.tag;
 
 import java.io.IOException;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
-import javax.servlet.jsp.tagext.Tag;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.PageContext;
+import jakarta.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.TagSupport;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.xml.TagWriter;
@@ -41,7 +41,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * This tag lifes in a meta element group.
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class GroupedMetaInputTag extends MetaInputTag {
 

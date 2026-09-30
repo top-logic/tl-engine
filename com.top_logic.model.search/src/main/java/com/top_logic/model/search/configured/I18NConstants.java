@@ -14,9 +14,14 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en Unable to resolve configured script {0}.
+	 * @en Unable to resolve the configured script ''{0}''.
 	 */
 	public static ResKey1 ERROR_RESOLVING_SCRIPT__NAME;
+
+	/**
+	 * @en The configured script ''{0}'' does not exist.
+	 */
+	public static ResKey1 ERROR_NO_SUCH_SCRIPT__NAME;
 
 	static {
 		initConstants(I18NConstants.class);

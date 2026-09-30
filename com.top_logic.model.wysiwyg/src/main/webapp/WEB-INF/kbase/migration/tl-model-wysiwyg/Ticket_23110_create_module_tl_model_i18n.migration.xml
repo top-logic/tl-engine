@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_23110_create_module_tl_model_i18n"
+		module="tl-model-wysiwyg"
+	/>
+	<dependencies>
+		<dependency name="Ticket_24085_layout_db_storage"
+			module="tl"
+		/>
+		<dependency name="Ticket_23110_create_module_tl_model_i18n"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor">
+	      <schema>
+	        <metaobject
+	          object_name="HTMLAttributeStorage"
+	          super_class="Item"
+	        >
+	          <annotations>
+	            <annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
+	              <implementation-factory class="com.top_logic.knowledge.service.db2.StaticKnowledgeObjectFactory"/>
+	            </annotation>
+	          </annotations>
+	          <reference
+	            att_name="object"
+	            branch-global="false"
+	            by-value="true"
+	            deletion-policy="delete-referer"
+	            history-type="current"
+	            is-container="false"
+	            mandatory="true"
+	            monomorphic="false"
+	            target-type="Object"
+	          />
+	          <reference
+	            att_name="metaAttribute"
+	            branch-global="false"
+	            by-value="true"
+	            deletion-policy="delete-referer"
+	            history-type="current"
+	            is-container="false"
+	            mandatory="true"
+	            monomorphic="true"
+	            target-type="MetaAttribute"
+	          />
+	          <mo_attribute
+	            att_name="filename"
+	            att_type="String"
+	            mandatory="true"
+	          />
+	          <mo_attribute
+	            att_name="content-type"
+	            att_type="String"
+	            mandatory="true"
+	          />
+	          <mo_attribute
+	            att_name="data"
+	            att_type="Blob"
+	            mandatory="true"
+	          />
+	          <mo_attribute
+	            att_name="hash"
+	            att_type="String"
+	            mandatory="true"
+	          />
+	          <index>
+	            <mo_index name="file"
+	              unique="true"
+	            >
+	              <index-parts>
+	                <index_part name="object"
+	                  part="name"
+	                />
+	                <index_part name="metaAttribute"
+	                  part="name"
+	                />
+	                <index_part name="filename"/>
+	              </index-parts>
+	            </mo_index>
+	          </index>
+	        </metaobject>
+	        <metaobject
+	          object_name="I18NHTMLAttributeStorage"
+	          super_class="HTMLAttributeStorage"
+	        >
+	          <mo_attribute
+	            att_name="lang"
+	            att_type="String"
+	            db_size="10"
+	            mandatory="true"
+	          />
+	          <index>
+	            <mo_index name="file"
+	              unique="true"
+	            >
+	              <index-parts>
+	                <index_part name="object"
+	                  part="name"
+	                />
+	                <index_part name="metaAttribute"
+	                  part="name"
+	                />
+	                <index_part name="lang"/>
+	                <index_part name="filename"/>
+	              </index-parts>
+	            </mo_index>
+	          </index>
+	        </metaobject>
+	      </schema>
+	    </processor>
+	
+	  <create-datatype name="tl.model.i18n:I18NHtml"
+	    db_type="clob"
+	    kind="String"
+	  >
+	    <annotations>
+	      <config-type value="I18N_HTML"/>
+	      <storage-algorithm>
+	        <implementation class="com.top_logic.model.wysiwyg.i18n.I18NStructuredTextAttributeStorage"/>
+	      </storage-algorithm>
+	      <render-whole-line/>
+	    </annotations>
+	    <storage-mapping class="com.top_logic.model.wysiwyg.i18n.I18NStructuredTextAttributeStorageMapping"/>
+	  </create-datatype>
+	</processors>
+</migration>

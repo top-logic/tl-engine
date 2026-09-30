@@ -203,7 +203,6 @@ public class ReportSelectorComponent extends FormComponent implements ReportCons
 			thePublishGroup.setVisible(false);
 			theSelectionField.setVisible(false);
 			this.showPublishingGroup = false;
-			this.invalidateButtons();
 			return false;
 		}
 		this.monitorChanges = false;

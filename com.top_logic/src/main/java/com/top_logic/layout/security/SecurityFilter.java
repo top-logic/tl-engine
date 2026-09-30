@@ -140,7 +140,7 @@ public class SecurityFilter implements Filter<Object> {
 	}
 
 	private boolean selectableByDelegate(BoundChecker securityDelegate, BoundObject bo) {
-		return securityDelegate.allow(bo);
+		return BoundChecker.allowShowSecurityObject(securityDelegate, bo);
 	}
 
 	private boolean selectableByRole(BoundObject bo, Collection<BoundedRole> roles) {

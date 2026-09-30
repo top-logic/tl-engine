@@ -218,6 +218,12 @@
         <rtexprvalue>true</rtexprvalue>
     </attribute>
 	<attribute>
+		<name>labelPosition</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+		<description>Where to place the label.</description>
+	</attribute>
+	<attribute>
 		<name>labelAbove</name>
 		<required>false</required>
 		<rtexprvalue>true</rtexprvalue>
@@ -706,6 +712,12 @@
         <rtexprvalue>true</rtexprvalue>
         <description>Image of the overlay image to display over the header area image.</description>
     </attribute>
+	<attribute>
+		<name>labelPosition</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+		<description>Where to place the label.</description>
+	</attribute>
 	<attribute>
 		<name>labelAbove</name>
 		<required>false</required>
@@ -2189,6 +2201,12 @@
 			<description>Number of (maximal) columns of the GroupCell.</description>
 		</attribute>
 		<attribute>
+			<name>labelPosition</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Where to place the label.</description>
+		</attribute>
+		<attribute>
 			<name>labelAbove</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -2315,6 +2333,12 @@
 			<description>The CSS width of the first column of the cell. By default its the cell for the label.</description>
 		</attribute>
 		<attribute>
+			<name>labelPosition</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Where to place the label.</description>
+		</attribute>
+		<attribute>
 			<name>labelAbove</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
@@ -2433,6 +2457,12 @@
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
 			<description>The CSS width of the first column of the cell. By default its the cell for the label.</description>
+		</attribute>
+		<attribute>
+			<name>labelPosition</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Where to place the label.</description>
 		</attribute>
 		<attribute>
 			<name>labelFirst</name>

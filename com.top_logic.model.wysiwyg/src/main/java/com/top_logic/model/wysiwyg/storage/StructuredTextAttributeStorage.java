@@ -8,30 +8,64 @@ package com.top_logic.model.wysiwyg.storage;
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 import static com.top_logic.layout.wysiwyg.ui.StructuredText.*;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.exception.I18NException;
+import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.util.Utils;
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.element.meta.AssociationStorageDescriptor;
+import com.top_logic.element.meta.DefaultAssociationStorageDescriptor;
 import com.top_logic.element.meta.kbbased.storage.AbstractStorage;
+import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
+import com.top_logic.layout.wysiwyg.ui.StructuredTextUtil;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.access.WithStorageAttribute;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link AbstractStorage} to store source code and images for a HTML attribute.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class StructuredTextAttributeStorage<C extends StructuredTextAttributeStorage.Config<?>>
-		extends CommonStructuredTextAttributeStorage<C> {
+		extends CommonStructuredTextAttributeStorage<C> implements ColumnStorage {
+
+	private static final Collection<? extends Class<?>> COMPATIBLE_TYPES =
+		Arrays.asList(StructuredText.class, HTMLFragment.class, CharSequence.class);
+
+	/**
+	 * Configuration options for {@link StructuredTextAttributeStorage}.
+	 */
+	@TagName("structured-text-storage")
+	public interface Config<I extends StructuredTextAttributeStorage<?>>
+			extends CommonStructuredTextAttributeStorage.Config<I>, WithStorageAttribute {
+		// Pure sum interface.
+	}
 
 	/** Name of the database table storing the images. */
-	private static final String HTML_ATTRIBUTE_STORAGE = "HTMLAttributeStorage";
+	public static final String HTML_ATTRIBUTE_STORAGE = "HTMLAttributeStorage";
+
+	private String _storageAttribute;
+
+	private List<DefaultAssociationStorageDescriptor> _storageDescriptors =
+		Collections.singletonList(newImageDescriptor(HTML_ATTRIBUTE_STORAGE));
 
 	/**
 	 * @param context
@@ -42,6 +76,23 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 	 */
 	public StructuredTextAttributeStorage(InstantiationContext context, C config) {
 		super(context, config);
+		_storageAttribute = config.getStorageAttribute();
+	}
+
+	@Override
+	public void init(TLStructuredTypePart attribute) {
+		super.init(attribute);
+
+		if (_storageAttribute == null) {
+			// Default, if no database column is defined.
+			_storageAttribute = attribute.getName();
+		}
+		_storageDescriptors.forEach(descriptor -> descriptor.checkKeyAttributes(attribute));
+	}
+
+	@Override
+	public String getStorageAttribute() {
+		return _storageAttribute;
 	}
 
 	@Override
@@ -69,21 +120,43 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 		// The collection is copied to avoid ConcurrentModificationExceptions.
 		Set<KnowledgeItem> cachedImages = set(fetchImages(object));
 
-		StructuredText structuredText = (StructuredText) value;
+		StructuredText structuredText;
+		if (value == null) {
+			structuredText = null;
+		} else if (value instanceof StructuredText) {
+			structuredText = (StructuredText) value;
+		} else if (value instanceof HTMLFragment fragment) {
+			structuredText = toStructuredText(fragment);
+		} else if (value instanceof CharSequence text) {
+			structuredText = StructuredTextUtil.fromCommonMark(text);
+		} else {
+			throw new IllegalArgumentException(
+				"Unsupported application type " + value.getClass().getName() + ". Allowed: " + COMPATIBLE_TYPES);
+		}
 
 		Map<String, BinaryData> images = getImagesNullSafe(structuredText);
 		Set<String> filenames = images.keySet();
-		boolean imagesUpdated = updateImages(cachedImages, images);
-		boolean imagesAdded = addImages(object, attribute, cachedImages, structuredText, filenames);
-		boolean imagesRemoved = removeImages(cachedImages, filenames);
+		updateImages(cachedImages, images);
+		addImages(object, attribute, cachedImages, structuredText, filenames);
+		removeImages(cachedImages, filenames);
 
-		boolean imagesChanged = imagesAdded || imagesUpdated || imagesRemoved;
-		boolean sourceCodeChanged = updateSourceCode(object, attribute, getSourceCodeNullSafe(structuredText));
+		updateSourceCode(object, getSourceCodeNullSafe(structuredText));
+	}
 
-		if (imagesChanged || sourceCodeChanged) {
-			/* As an updated attribute does not affect the TLObject itself, Lucene will not create a
-			 * new index. Thats why the owner has to be touched. */
-			object.tTouch();
+	private StructuredText toStructuredText(HTMLFragment fragment) {
+		try (StringWriter stringOut = new StringWriter()) {
+			try (TagWriter out = new TagWriter(stringOut)) {
+				fragment.write(DefaultDisplayContext.getDisplayContext(), out);
+			}
+			String source = stringOut.toString();
+			try {
+				SafeHTML.getInstance().check(source);
+			} catch (I18NException ex) {
+				throw new TopLogicException(com.top_logic.layout.wysiwyg.ui.I18NConstants.UNSAFE_HTML_ERROR, ex);
+			}
+			return StructuredTextUtil.fromCodeWithInlinedImages(source);
+		} catch (IOException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_CREATING_STRUCTURED_TEXT__INPUT.fill(fragment), ex);
 		}
 	}
 
@@ -92,27 +165,21 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 	}
 
 	private String getSourceCode(TLObject owner, TLStructuredTypePart attribute) {
-		return (String) owner.tGetData(attribute.getName());
+		return (String) owner.tGetData(_storageAttribute);
 	}
 
-	private boolean updateSourceCode(TLObject owner, TLStructuredTypePart attribute, String sourceCode) {
+	private void updateSourceCode(TLObject owner, String sourceCode) {
 		// Do not store empty value.
-		sourceCode = StringServices.nonEmpty(sourceCode);
-		Object formerValue = owner.tSetData(attribute.getName(), sourceCode);
-		return Utils.equals(formerValue, sourceCode);
+		owner.tSetData(_storageAttribute, StringServices.nonEmpty(sourceCode));
 	}
 
-	private boolean addImages(TLObject self, TLStructuredTypePart attribute, Set<KnowledgeItem> cachedImages,
+	private void addImages(TLObject self, TLStructuredTypePart attribute, Set<KnowledgeItem> cachedImages,
 			StructuredText structuredText, Set<String> filenames) {
 		Set<String> possibleToBeAdded = new HashSet<>(filenames);
 		Set<String> cachedFilenames = getFileNames(cachedImages);
 
 		possibleToBeAdded.removeAll(cachedFilenames);
-		if (possibleToBeAdded.isEmpty()) {
-			return false;
-		}
 		addImages(self, attribute, structuredText, possibleToBeAdded);
-		return true;
 	}
 
 
@@ -125,8 +192,8 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 	}
 
 	@Override
-	protected Class<?> getApplicationValueType() {
-		return StructuredText.class;
+	protected Collection<? extends Class<?>> getApplicationValueTypes() {
+		return COMPATIBLE_TYPES;
 	}
 
 	@Override
@@ -140,6 +207,11 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 			return StringServices.isEmpty(((StructuredText) value).getSourceCode());
 		}
 		return super.isEmpty(value);
+	}
+
+	@Override
+	public List<? extends AssociationStorageDescriptor> getStorageDescriptors() {
+		return _storageDescriptors;
 	}
 
 }

@@ -14,9 +14,12 @@ import com.top_logic.layout.I18NConstantsBase;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey ERROR_IMPORT_FAILED;
-
 	public static ResKey ERROR_NO_DATA;
+
+	/**
+	 * @en Updated workflow.
+	 */
+	public static ResKey UPDATED_WORKFLOW;
 
 	static {
 		initConstants(I18NConstants.class);

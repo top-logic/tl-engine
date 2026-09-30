@@ -28,6 +28,10 @@ import com.top_logic.basic.config.format.RegExpValueProvider;
  */
 public class RegExpReplacement extends AbstractConfiguredInstance<RegExpReplacement.Config> implements Mapping<String, String> {
 
+	private Pattern _pattern;
+
+	private String _replacement;
+
 	/**
 	 * Typed configuration interface definition for {@link RegExpReplacement}.
 	 * 
@@ -73,6 +77,9 @@ public class RegExpReplacement extends AbstractConfiguredInstance<RegExpReplacem
 	 */
 	public RegExpReplacement(InstantiationContext context, Config config) {
 		super(context, config);
+
+		_pattern = getConfig().getSearchPattern();
+		_replacement = getConfig().getReplacement();
 	}
 
 	@Override
@@ -81,7 +88,7 @@ public class RegExpReplacement extends AbstractConfiguredInstance<RegExpReplacem
 			return input;
 		}
 
-		return getConfig().getSearchPattern().matcher(input).replaceAll(getConfig().getReplacement());
+		return _pattern.matcher(input).replaceAll(_replacement);
 	}
 
 }

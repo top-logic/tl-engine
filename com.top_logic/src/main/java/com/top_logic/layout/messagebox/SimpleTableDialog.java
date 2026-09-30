@@ -13,6 +13,7 @@ import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ResPrefix;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.form.tag.TableTag;
 import com.top_logic.layout.form.template.ControlProvider;
@@ -33,8 +34,7 @@ import com.top_logic.mig.html.HTMLConstants;
 public abstract class SimpleTableDialog extends SimpleFormDialog {
 
 	private static final Document TEMPLATE = DOMUtil.parseThreadSafe(
-				"<div class='layoutControl'"
-			+		" style='overflow:auto'"	
+		"<div class='layoutControl " + FormConstants.OVERFLOW_AUTO_CLASS + "'"
             +		" xmlns='" + HTMLConstants.XHTML_NS + "'"
             +		" xmlns:t='" + FormTemplateConstants.TEMPLATE_NS + "'"
             +		" xmlns:p='" + FormPatternConstants.PATTERN_NS + "'"

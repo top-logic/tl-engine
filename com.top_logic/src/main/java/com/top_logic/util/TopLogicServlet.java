@@ -6,23 +6,29 @@
 package com.top_logic.util;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.util.concurrent.TimeUnit;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletResponse;
-import javax.servlet.ServletResponseWrapper;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.ServletResponseWrapper;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
+import org.apache.commons.codec.digest.MessageDigestAlgorithms;
 
 import com.top_logic.base.accesscontrol.ApplicationPages;
-import com.top_logic.base.accesscontrol.LoginPageServlet;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLInteractionContext;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.base.multipart.MultipartRequest;
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.Logger;
@@ -31,26 +37,69 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.io.binary.scan.UploadGuardRequest;
+import com.top_logic.basic.io.binary.scan.UploadRejectedException;
+import com.top_logic.basic.logging.LogConfigurator;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.RunnableEx2;
+import com.top_logic.event.infoservice.InfoService;
+import com.top_logic.event.infoservice.InfoServiceXMLStringConverter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ProcessingInfo;
 import com.top_logic.layout.ProcessingKind;
 import com.top_logic.layout.URLPathBuilder;
 import com.top_logic.layout.admin.component.PerformanceMonitor;
+import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.util.filter.CompressionFilter;
 import com.top_logic.util.filter.CompressionServletResponseWrapper;
 
 /**
- * This is the upper class for Dispatcher- and LoginPageServlet. It provides
- * the main functionality to forward requests to other system components.
+ * {@link AbstractTopLogicServlet} that checks that a valid session exists for the request.
  * 
- * TODO refactor into Filters
- *
- *                                      invalidate
- * @author    <a href="mailto:karsten.buch@top-logic.com">Karsten Buch</a>
+ * <p>
+ * Every request entering a {@link TopLogicServlet} is wrapped into an {@link UploadGuardRequest},
+ * so that uploaded files are inspected once per request, no matter which servlet or control
+ * consumes them. The wrapped request is the one the {@link DisplayContext} of the interaction hands
+ * out, see {@link DisplayContext#asRequest()}.
+ * </p>
+ * 
+ * <p>
+ * When an upload is rejected, the request is answered with the status
+ * {@link #SC_UNPROCESSABLE_CONTENT} and the rejection message rendered as an info area item by
+ * {@link InfoServiceXMLStringConverter#renderItemBox(DisplayContext, HTMLFragment)}.
+ * The upload clients display that response body in their info area.
+ * </p>
+ * 
+ * @see UploadRejectedException
  */
-public class TopLogicServlet extends HttpServlet {
+public class TopLogicServlet extends AbstractTopLogicServlet {
+
+	/**
+	 * Status code answering a request whose upload was refused.
+	 * 
+	 * <p>
+	 * The request was syntactically well-formed and the content type is supported, but the
+	 * transmitted content could not be processed.
+	 * </p>
+	 */
+	public static final int SC_UNPROCESSABLE_CONTENT = 422;
+
+	/**
+	 * The name of log mark for the session id.
+	 * <p>
+	 * <em>When the value is changed, the Log4j configuration files have to be updated, as they use
+	 * the value.</em>
+	 * </p>
+	 * <p>
+	 * The value of this constant is used in Log4J configuration files to extract and log the
+	 * session id with every log statement.
+	 * </p>
+	 */
+	private static final String TL_SESSION_ID_LOG_MARK = "tl-session-id";
+
+	private static final String TEST_SESSION = "testSession";
 
 	/**
 	 * Servlet-parameter for enabling adaptive compression.
@@ -60,21 +109,26 @@ public class TopLogicServlet extends HttpServlet {
     /** Used when logging without actual session*/
     public static final String NO_SESSION = "*** No Session ***";
 
+	/**
+	 * Request parameter to indicate that the session check is currently processed.
+	 * 
+	 * @see #initSessionCheck(HttpServletRequest, HttpServletResponse)
+	 * @see #processSessionCheck(HttpServletRequest)
+	 */
+	public static final String SESSION_CHECK = "sessionCheckInProgress";
+
     /** Default {@link #maxServiceTime} if nothing else is configured */
-    public static final long MAX_SERVICE_TIME = 1000 * 2; // 2 Seconds
+	public static final long MAX_SERVICE_TIME = TimeUnit.SECONDS.toMillis(2);
     
     /** Subclasses may configure there maximal Service time here  */
     public static final String MAX_SERVICE_ATTR = TopLogicServlet.class.getName() + "maxServiceTime";
 
-    /** Special handling when we are called just once */
-    public static final Integer COUNT1 = Integer.valueOf(1);
-    
     /** When this amount of milli-seconds is exceeded a warning will be logged. */
     protected long maxServiceTime;
 
     /** Always use gzip compression, if possible */
 	private boolean alwaysZip;
-	
+
 	/**
 	 * Configuration for {@link TopLogicServlet}.
 	 */
@@ -132,9 +186,9 @@ public class TopLogicServlet extends HttpServlet {
 	/**
 	 * Validate request and set context information for current thread.
 	 * 
-	 * @param aRequest
+	 * @param request
 	 *        The send request.
-	 * @param aResponse
+	 * @param response
 	 *        The send response.
 	 * 
 	 * @throws ServletException
@@ -143,19 +197,41 @@ public class TopLogicServlet extends HttpServlet {
 	 *         If an input or output error is detected.
 	 */
 	@Override
-	public final void service(final HttpServletRequest aRequest, final HttpServletResponse aResponse) throws IOException, ServletException {
-		setCachePolicy(aResponse);
+	public final void service(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		/* The type parameters are necessary here. Without them, Eclipse reports an error. */
+		TopLogicServlet.<IOException, ServletException> withSessionIdLogMark(request,
+			() -> serviceWithLogMark(request, response));
+	}
 
-		final TLSessionContext session = this.getSession(aRequest, aResponse);
+	private void serviceWithLogMark(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		if (rejectUnparsableRequest(request, response)) {
+			return;
+		}
+
+		setCachePolicy(response);
+
+		boolean cookieCheck = isCookieCheckRequired();
+		if (cookieCheck && !processSessionCheck(request)) {
+			this.forwardToPage(ApplicationPages.getInstance().getNoCookiePage(), request, response);
+			return;
+		}
+
+		TLSessionContext session = this.getSession(request, response);
 		if (session == null) {
-			// User has no session.
-			redirectToLogout(aRequest, aResponse);
+
+			if (cookieCheck && initSessionCheck(request, response)) {
+				return;
+			}
+
+			handleNoSession(request, response);
 			return;
 		}
 
 		TLSubSessionContext subession = TLContextManager.getSubSession();
 		if (subession == null) {
-			enterContext(session, aRequest, aResponse);
+			enterContext(session, request, response);
 			return;
 		}
 
@@ -165,13 +241,129 @@ public class TopLogicServlet extends HttpServlet {
 			Logger.error(
 				"Enforcing logout due to session missmatch: " + subession.getPerson() + " vs. "
 					+ session.getOriginalUser(), TopLogicServlet.class);
-			invalidateSession(aRequest);
-			redirectToLogout(aRequest, aResponse);
+			invalidateSession(request);
+			redirectTo(ApplicationPages.getInstance().getTriggerLogoutPage(), request, response);
 			return;
 		}
 
 		// Recursive call, through a request dispatcher include call.
-		inContext(aRequest, aResponse);
+		inContext(request, response);
+	}
+
+	/**
+	 * Answers a request whose parameters cannot be parsed with the status
+	 * {@link HttpServletResponse#SC_BAD_REQUEST}.
+	 *
+	 * <p>
+	 * The parameters are read once, before any other processing. A servlet container that refuses
+	 * a malformed query string or form body (e.g. an incomplete percent escape as in
+	 * <code>?q=50%</code>) reports this with a {@link RuntimeException} on the first parameter
+	 * access. Such a request is a client error: it is logged as a single warning without stack
+	 * trace and answered with the container's plain error page. A container that silently drops
+	 * malformed parameters instead passes the check.
+	 * </p>
+	 *
+	 * @return Whether the request was rejected and must not be processed any further.
+	 */
+	private boolean rejectUnparsableRequest(HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
+		try {
+			request.getParameterMap();
+			return false;
+		} catch (RuntimeException ex) {
+			Logger.warn("Rejecting request with unparsable parameters '" + request.getRequestURI() + "': "
+				+ ex.getMessage(), TopLogicServlet.class);
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+			return true;
+		}
+	}
+
+	/**
+	 * Callback for subclasses to handle requests for which no session exist.
+	 * 
+	 * @param request
+	 *        Request handled in {@link #service(HttpServletRequest, HttpServletResponse)}.
+	 * @param response
+	 *        Request handled in {@link #service(HttpServletRequest, HttpServletResponse)}.
+	 * @throws ServletException
+	 *         If the request could not be handled.
+	 * @throws IOException
+	 *         If an input or output error is detected.
+	 */
+	protected void handleNoSession(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		// Nothing to do here
+	}
+
+	/**
+	 * Whether a request without a valid session must pass the check that the browser accepts
+	 * cookies.
+	 *
+	 * <p>
+	 * The check costs a redirect round-trip and stores a one-shot marker on the session, which
+	 * {@link #processSessionCheck(HttpServletRequest)} consumes and whose session it then
+	 * invalidates.
+	 * </p>
+	 *
+	 * <p>
+	 * That is only ever right for a top-level navigation. An endpoint answering
+	 * {@code XMLHttpRequest}s should return {@code false}: a redirect to an HTML page is of no use
+	 * to its caller, and the check cannot fail there for its intended reason anyway, since such a
+	 * request follows a page that was already loaded with a session, and thus with cookies.
+	 * </p>
+	 *
+	 * @return Whether to run the check; {@code true} by default. A servlet returning {@code false}
+	 *         must answer {@link #handleNoSession(HttpServletRequest, HttpServletResponse)} in a way
+	 *         its caller understands, because that is where a request without a session then ends.
+	 */
+	protected boolean isCookieCheckRequired() {
+		return true;
+	}
+
+	/** Sets a log mark with the session id while executing the runnable. */
+	public static <E1 extends Throwable, E2 extends Throwable> void withSessionIdLogMark(HttpServletRequest request,
+			RunnableEx2<E1, E2> runnable) throws E1, E2 {
+		LogConfigurator logConfigurator = LogConfigurator.getInstance();
+		String oldLogMark = logConfigurator.getLogMark(TL_SESSION_ID_LOG_MARK);
+		logConfigurator.addLogMark(TL_SESSION_ID_LOG_MARK, getSessionIdForLog(request));
+		try {
+			runnable.run();
+		} finally {
+			if (oldLogMark == null) {
+				logConfigurator.removeLogMark(TL_SESSION_ID_LOG_MARK);
+			} else {
+				logConfigurator.addLogMark(TL_SESSION_ID_LOG_MARK, oldLogMark);
+			}
+		}
+	}
+
+	private static String getSessionIdForLog(HttpServletRequest request) {
+		if (request == null) {
+			/* This happens in tests. */
+			return null;
+		}
+		String sessionId = getSessionId(request);
+		if (StringServices.isEmpty(sessionId) || sessionId.equals(NO_SESSION)) {
+			return null;
+		}
+		return hashSessionIdForLog(sessionId);
+	}
+
+	/**
+	 * The session id in a form in which it can be logged.
+	 * <p>
+	 * The session id must not be logged directly. That would be a security hole. It would allow a
+	 * reader of the log to take over the session.
+	 * </p>
+	 */
+	public static String hashSessionIdForLog(String rawSessionId) {
+		try {
+			MessageDigest digester = MessageDigest.getInstance(MessageDigestAlgorithms.SHA3_256);
+			byte[] digest = digester.digest(rawSessionId.getBytes(StandardCharsets.UTF_8));
+			return "S(" + Base64.getEncoder().encodeToString(digest) + ") ";
+		} catch (NoSuchAlgorithmException exception) {
+			throw new RuntimeException(exception);
+		}
 	}
 
 	/**
@@ -219,6 +411,8 @@ public class TopLogicServlet extends HttpServlet {
 			// so it is logged here, too
 			Logger.error("Internal error.", ex, TopLogicServlet.class);
 			throw new RuntimeException(ex);
+		} catch (UploadRejectedException ex) {
+			answerUploadRejected(ex, aResponse);
 		} catch (RuntimeException ex) {
 			// so it is logged here, too
 			Logger.error("Internal error.", ex, TopLogicServlet.class);
@@ -230,10 +424,47 @@ public class TopLogicServlet extends HttpServlet {
 		}
 	}
 
+	/**
+	 * Answers a request whose upload was refused by the {@link UploadGuardRequest}.
+	 * 
+	 * <p>
+	 * A refused upload is a regular outcome of a request and not a malfunction of the application,
+	 * therefore it is logged at info level. The response carries the status
+	 * {@link #SC_UNPROCESSABLE_CONTENT} and, as body, the rejection message rendered as an info
+	 * area item, which the upload clients display in the info area of the top-level window.
+	 * </p>
+	 * 
+	 * @param ex
+	 *        The rejection reported by the {@link UploadGuardRequest}.
+	 * @param response
+	 *        The response to the request that transmitted the refused upload.
+	 */
+	private void answerUploadRejected(UploadRejectedException ex, HttpServletResponse response) {
+		Logger.info("Upload refused: " + Resources.getInstance().getString(ex.getErrorKey()), TopLogicServlet.class);
+
+		if (response.isCommitted()) {
+			return;
+		}
+
+		try {
+			response.setStatus(SC_UNPROCESSABLE_CONTENT);
+			response.setContentType(HTMLConstants.CONTENT_TYPE_TEXT_HTML_UTF_8);
+
+			DisplayContext context = DefaultDisplayContext.getDisplayContext();
+			response.getWriter().write(
+				InfoServiceXMLStringConverter.renderItemBox(context, InfoService.errorItem(InfoService.messages(ex))));
+		} catch (IOException problem) {
+			Logger.debug("Problem answering a refused upload.", problem, TopLogicServlet.class);
+		}
+	}
+
 	private void enterContext(final TLSessionContext sessionContext, final HttpServletRequest rawRequest,
 			final HttpServletResponse rawResponse) throws IOException {
 		// The per-thread context has not yet been set up. This is the first hit of the request
 		// to a servlet.
+
+		/* Inspect uploaded files once for the whole request. */
+		final HttpServletRequest request = UploadGuardRequest.guard(rawRequest);
 
 		/* Compress response if configured */
 		final HttpServletResponse wrappedResponse;
@@ -255,21 +486,14 @@ public class TopLogicServlet extends HttpServlet {
 		boolean errorOccurred = true;
 		try {
 			/* Ensure a consistent handling of multi-part and simple requests. */
-			final HttpServletRequest wrappedRequest;
-			if ((!(rawRequest instanceof MultipartRequest)) && MultipartRequest.isMultipartContent(rawRequest)) {
-				wrappedRequest = new MultipartRequest(rawRequest);
-			} else {
-				wrappedRequest = rawRequest;
-			}
-
-			TLContextManager.inInteraction(sessionContext, getServletContext(), wrappedRequest, wrappedResponse,
+			TLContextManager.inInteraction(sessionContext, getServletContext(), request, wrappedResponse,
 				new InContext() {
 				@Override
 				public void inContext() {
 					long start = System.currentTimeMillis();
-					TopLogicServlet.this.inContext(wrappedRequest, wrappedResponse);
+						TopLogicServlet.this.inContext(request, wrappedResponse);
 					doPerformanceMeasuring(start, TLContextManager.getInteraction());
-					logTiming(wrappedRequest, start);
+						logTiming(request, start);
 				}
 			});
 			errorOccurred = false;
@@ -355,21 +579,6 @@ public class TopLogicServlet extends HttpServlet {
     }
 
     /**
-	 * Forwards the request to the configured logout page.
-	 * 
-	 * @exception ServletException
-	 *            If an error in {@link HttpServlet} occurs.
-	 * @exception IOException
-	 *            If I/O operation fails.
-	 * 
-	 * @see com.top_logic.base.accesscontrol.ApplicationPages.Config#getLogoutPage()
-	 */
-	protected void redirectToLogout(HttpServletRequest req, HttpServletResponse res)
-			throws IOException, ServletException {
-		redirectTo(ApplicationPages.getInstance().getLogoutPage(), req, res);
-    }    
-
-	/**
 	 * Redirects the client to the given page.
 	 *
 	 * @param aRequest
@@ -385,29 +594,12 @@ public class TopLogicServlet extends HttpServlet {
 	 */
 	protected void redirectTo(String aPage, HttpServletRequest aRequest, HttpServletResponse aResponse)
 			throws IOException, ServletException {
-		URLPathBuilder url = URLPathBuilder.newEmptyBuilder();
-		url.appendRaw(aRequest.getContextPath());
-		url.appendRaw(aPage);
-		LoginPageServlet.appendCustomParameters(url, aRequest);
+		URLPathBuilder url = createRedirectURL(aPage, aRequest);
 
 		aResponse.sendRedirect(url.getURL());
     }
 
-	/**
-     * Forward the request to the given page.
-     *
-     * @param        aRequest            The send request.
-     * @param        aResponse           The send response.
-     * @param        aPage               The page to be forwarded to.
-     * @exception    IOException         If I/O operation fails.
-     * @exception    ServletException    If an error in servlet occures.
-     */
-	protected void forwardPage(String aPage, HttpServletRequest aRequest, HttpServletResponse aResponse)
-			throws IOException, ServletException {
-		getServletContext().getRequestDispatcher(aPage).forward(aRequest, aResponse);
-    }
-
-    /** Set the Cache policy at teh Response.
+	/** Set the Cache policy at teh Response.
      * 
      * Some Subclasses override this to set theire own cache Policy
      */
@@ -474,4 +666,116 @@ public class TopLogicServlet extends HttpServlet {
 			return session.getId();
 		}
 	}
+
+	/**
+	 * Whether the browser returned the session id it was given, which it can only do by storing the
+	 * cookie carrying it.
+	 *
+	 * <p>
+	 * This is the whole question the cookie check asks. It is answered by the request itself, and
+	 * it stays answered when the session behind the id has meanwhile ended - what the check is
+	 * about is the browser, not the session.
+	 * </p>
+	 *
+	 * @implNote Reading the answer off the request rather than off the marker
+	 *           {@link #initSessionCheck(HttpServletRequest, HttpServletResponse)} leaves behind is
+	 *           what lets the check tolerate a request its first half did not send: a reload of the
+	 *           parameter's URL, or a sibling window whose check consumed the marker first. The
+	 *           price is a client that returns a session id but never stores the replacement - it
+	 *           is sent to the start page again for every request instead of being told once that
+	 *           cookies cannot be set. A browser stores the cookie, a script may not.
+	 */
+	private static boolean cookieReturned(HttpServletRequest request) {
+		return request.isRequestedSessionIdFromCookie();
+	}
+
+	/**
+	 * 
+	 * Checks whether cookies can be set.
+	 * 
+	 * <p>
+	 * This method is the second part of the check whether cookies can be set.
+	 * </p>
+	 * 
+	 * <p>
+	 * The question is whether the browser sent back the session that
+	 * {@link #initSessionCheck(HttpServletRequest, HttpServletResponse)} gave it, so only a request
+	 * that carries no session cookie fails. The marker set there is consumed if it is still
+	 * present, but it is not what decides: the parameter outlives the check in the address bar, so
+	 * the page carrying it can be loaded again long after the marker was consumed - by the user, or
+	 * by a reload the server requested - and such a request must neither be told that cookies are
+	 * impossible nor lose a session that is not the test's.
+	 * </p>
+	 *
+	 * @return <code>true</code> if cookies are enabled.
+	 * 
+	 * @see #initSessionCheck(HttpServletRequest, HttpServletResponse)
+	 */
+	private boolean processSessionCheck(HttpServletRequest request) {
+		if (request.getParameter(TopLogicServlet.SESSION_CHECK) == null) {
+			// Not the second half of a check.
+			return true;
+		}
+
+		HttpSession session = request.getSession(false);
+		if (session != null && session.getAttribute(TEST_SESSION) instanceof Boolean) {
+			// The session created for the check has served its purpose and must not linger as a
+			// session of its own.
+			session.removeAttribute(TEST_SESSION);
+			session.invalidate();
+		}
+
+		// The marker of this particular check need not be there to answer the question: the
+		// parameter outlives the check in the address bar, so the page carrying it can be loaded
+		// again long after the marker was consumed - by the user, or by a reload the server
+		// requested. Such a request must neither be told that cookies are impossible nor lose a
+		// session that is not the test's.
+		return cookieReturned(request);
+	}
+
+	/**
+	 * Initializes the check whether cookies can be set.
+	 * 
+	 * <p>
+	 * This method is the first part of the check whether cookies can be set.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method creates a session and sets a cookie. The method
+	 * {@link #processSessionCheck(HttpServletRequest)} checks whether the cookie can be read.
+	 * </p>
+	 *
+	 * <p>
+	 * A request that already returned a session id starts no check at all: the browser has shown
+	 * that it keeps what it is given, whether or not the session behind the id still exists. That
+	 * happens whenever somebody is logged out without their HTTP session being invalidated - the
+	 * maintenance mode, an administrator terminating a session - and the check would then mark a
+	 * session it did not create.
+	 * </p>
+	 * 
+	 * @return <code>true</code> iff a redirect was sent.
+	 * 
+	 * @see #processSessionCheck(HttpServletRequest)
+	 */
+	private boolean initSessionCheck(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		if (cookieReturned(request)) {
+			// Nothing to check: the browser stores cookies. Starting a check anyway would cost a
+			// redirect round-trip and, worse, attach the check's marker to a session it did not
+			// create - a session without a login is not this check's to discard.
+			return false;
+		}
+
+		if (request.getParameter(TopLogicServlet.SESSION_CHECK) == null) {
+			HttpSession testSession = request.getSession(true);
+			testSession.setAttribute(TEST_SESSION, true);
+
+			URLPathBuilder url = createRedirectURL(getEntryPage(request), request);
+			url.appendParameter(TopLogicServlet.SESSION_CHECK, "true");
+
+			response.sendRedirect(url.getURL());
+			return true;
+		}
+		return false;
+	}
+
 }

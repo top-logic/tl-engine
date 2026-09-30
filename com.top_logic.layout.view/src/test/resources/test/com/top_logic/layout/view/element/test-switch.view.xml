@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+  <channels>
+    <channel name="selectedPart"/>
+  </channels>
+
+  <switch input="selectedPart">
+    <case test="p -> $p != null &amp;&amp; $p.instanceOf(`tl.model:TLClass`)">
+      <form input="selectedPart">
+        <field attribute="name"/>
+      </form>
+    </case>
+    <default>
+      <form input="selectedPart">
+        <field attribute="name"/>
+      </form>
+    </default>
+  </switch>
+</view>

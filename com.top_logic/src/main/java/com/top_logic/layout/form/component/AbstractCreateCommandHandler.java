@@ -48,7 +48,7 @@ import com.top_logic.util.error.TopLogicException;
  *           </p>
  * 
  *           <ul>
- *           <li>{@link #beginTransaction(Object)}</li>
+ *           <li>{@link #beginTransaction(Object, ResKey)}</li>
  *           <li>{@link #createObject(LayoutComponent, Object, FormContainer, Map)}</li>
  *           <li>{@link #commit(Transaction, Object)}</li>
  *           <li>{@link #afterCommit(LayoutComponent, Object)}</li>
@@ -130,9 +130,19 @@ public abstract class AbstractCreateCommandHandler extends AbstractFormCommandHa
 	@Override
 	protected final HandlerResult applyChanges(LayoutComponent component, FormContext formContext, Object model,
 			Map<String, Object> arguments) {
+		ResKey customMessage = getCustomCommitMessage(arguments);
+		ResKey message = customMessage == null
+			? I18NConstants.CREATED_OBJECT
+			: customMessage;
 		{
-			try (Transaction tx = beginTransaction(model)) {
+			try (Transaction tx = beginTransaction(model, message)) {
 				Object newObject = createObject(component, model, formContext, arguments);
+
+				if (customMessage == null && tx.getState() == Transaction.STATE_OPEN) {
+					tx.setCommitMessage(CommitMessages.forObject(
+						I18NConstants.CREATED_TYPED__TYPE_MODEL,
+						I18NConstants.CREATED__MODEL, newObject));
+				}
 
 				commit(tx, model);
 
@@ -219,7 +229,6 @@ public abstract class AbstractCreateCommandHandler extends AbstractFormCommandHa
 	@Override
 	protected void onInvalidInput(LayoutComponent component, FormContext formContext, HandlerResult result) {
 		super.onInvalidInput(component, formContext, result);
-		component.invalidateButtons();
 		result.setCloseDialog(false);
 	}
 

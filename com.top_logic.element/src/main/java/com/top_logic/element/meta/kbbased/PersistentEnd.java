@@ -8,6 +8,7 @@ package com.top_logic.element.meta.kbbased;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AssociationQuery;
@@ -131,6 +132,16 @@ public class PersistentEnd extends ConfiguredAttributeImpl implements TLAssociat
 	}
 
 	@Override
+	public DeletionPolicy getDeletionPolicy() {
+		return (DeletionPolicy) tGetData(PersistentReference.DELETION_POLICY_ATTR);
+	}
+
+	@Override
+	public void setDeletionPolicy(DeletionPolicy value) {
+		tSetData(PersistentReference.DELETION_POLICY_ATTR, value);
+	}
+
+	@Override
 	public boolean isOrdered() {
 		return tGetDataBooleanValue(PersistentReference.ORDERED_ATTR);
 	}
@@ -138,6 +149,16 @@ public class PersistentEnd extends ConfiguredAttributeImpl implements TLAssociat
 	@Override
 	public void setOrdered(boolean value) {
 		tSetDataBoolean(PersistentReference.ORDERED_ATTR, value);
+	}
+
+	@Override
+	public boolean isAbstract() {
+		return tGetDataBooleanValue(ABSTRACT_ATTR);
+	}
+
+	@Override
+	public void setAbstract(boolean value) {
+		tSetDataBoolean(ABSTRACT_ATTR, value);
 	}
 
 	@Override

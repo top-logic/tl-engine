@@ -15,6 +15,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.element.layout.create.CreateTypeOptions;
@@ -33,12 +34,14 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
+import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.conditional.CommandStep;
 import com.top_logic.tool.boundsec.conditional.Failure;
 import com.top_logic.tool.boundsec.conditional.PreconditionCommandHandler;
 import com.top_logic.tool.boundsec.conditional.Success;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
  * Base class for {@link CommandHandler}s starting a create operation in a {@link GridComponent}.
@@ -54,6 +57,10 @@ public abstract class AbstractGridCreateHandler extends PreconditionCommandHandl
 	 * Configuration options for {@link AbstractGridCreateHandler}.
 	 */
 	public interface Config extends PreconditionCommandHandler.Config {
+
+		@Override
+		@FormattedDefault(SimpleBoundCommandGroup.CREATE_NAME)
+		CommandGroupReference getGroup();
 
 		/**
 		 * Whether the user can choose from concrete sub-types of the create type.

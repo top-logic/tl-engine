@@ -11,12 +11,14 @@ import static com.top_logic.basic.config.misc.TypedConfigUtil.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Protocol;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -43,12 +45,10 @@ import com.top_logic.element.model.diff.config.AddAnnotations;
 import com.top_logic.element.model.diff.config.AddGeneralization;
 import com.top_logic.element.model.diff.config.CreateClassifier;
 import com.top_logic.element.model.diff.config.CreateModule;
-import com.top_logic.element.model.diff.config.CreateRole;
 import com.top_logic.element.model.diff.config.CreateSingleton;
 import com.top_logic.element.model.diff.config.CreateStructuredTypePart;
 import com.top_logic.element.model.diff.config.CreateType;
 import com.top_logic.element.model.diff.config.Delete;
-import com.top_logic.element.model.diff.config.DeleteRole;
 import com.top_logic.element.model.diff.config.DiffElement;
 import com.top_logic.element.model.diff.config.MakeAbstract;
 import com.top_logic.element.model.diff.config.MakeConcrete;
@@ -59,7 +59,13 @@ import com.top_logic.element.model.diff.config.RemoveAnnotation;
 import com.top_logic.element.model.diff.config.RemoveGeneralization;
 import com.top_logic.element.model.diff.config.RenamePart;
 import com.top_logic.element.model.diff.config.SetAnnotations;
+import com.top_logic.element.model.diff.config.UpdateAbstract;
+import com.top_logic.element.model.diff.config.UpdateBag;
+import com.top_logic.element.model.diff.config.UpdateDeletionPolicy;
+import com.top_logic.element.model.diff.config.UpdateHistoryType;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
+import com.top_logic.element.model.diff.config.UpdateMultiplicity;
+import com.top_logic.element.model.diff.config.UpdateOrdered;
 import com.top_logic.element.model.diff.config.UpdatePartType;
 import com.top_logic.element.model.diff.config.UpdateStorageMapping;
 import com.top_logic.element.model.diff.config.visit.DiffVisitor;
@@ -97,6 +103,7 @@ import com.top_logic.element.model.migration.model.UpdateTLAnnotations;
 import com.top_logic.element.model.migration.model.UpdateTLAssociationEndProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLClassProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLDataTypeProcessor;
+import com.top_logic.element.model.migration.model.UpdateTLEnumerationProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLPropertyProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLReferenceProcessor;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -122,18 +129,15 @@ import com.top_logic.model.TLTypePart;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
-import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.model.config.EnumConfig;
 import com.top_logic.model.config.EnumConfig.ClassifierConfig;
 import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.factory.TLFactory;
-import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -153,7 +157,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	 * The priority of a patch element is higher, if the returned number is smaller.
 	 * </p>
 	 */
-	static final class DiffPriority implements DiffVisitor<Integer, Void, RuntimeException> {
+	static final class DiffPriority implements DiffVisitor<Priority, Void, RuntimeException>, Comparator<DiffElement> {
 
 		/**
 		 * Singleton {@link ApplyModelPatch.DiffPriority} instance.
@@ -165,123 +169,171 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 
 		@Override
-		public Integer visit(CreateModule diff, Void arg) throws RuntimeException {
-			return 10;
+		public Priority visit(CreateModule diff, Void arg) throws RuntimeException {
+			return Priority.CREATE_MODULE;
 		}
 
 		@Override
-		public Integer visit(CreateSingleton diff, Void arg) throws RuntimeException {
-			return 100;
+		public Priority visit(CreateSingleton diff, Void arg) throws RuntimeException {
+			return Priority.CREATE_SINGLETONS;
 		}
 
 		@Override
-		public Integer visit(CreateRole diff, Void arg) throws RuntimeException {
-			return 110;
+		public Priority visit(CreateType diff, Void arg) throws RuntimeException {
+			return Priority.CREATE_TYPE;
 		}
 
 		@Override
-		public Integer visit(CreateType diff, Void arg) throws RuntimeException {
-			return 20;
-		}
-
-		@Override
-		public Integer visit(CreateStructuredTypePart diff, Void arg) throws RuntimeException {
-			return 30;
-		}
-
-		@Override
-		public Integer visit(CreateClassifier diff, Void arg) throws RuntimeException {
-			return 30;
-		}
-
-		@Override
-		public Integer visit(UpdateStorageMapping diff, Void arg) throws RuntimeException {
-			return 30;
-		}
-
-		@Override
-		public Integer visit(UpdatePartType diff, Void arg) throws RuntimeException {
-			return 31;
-		}
-
-		@Override
-		public Integer visit(Delete diff, Void arg) throws RuntimeException {
-			if (diff.getName().indexOf('#') > 0) {
-				// A part (type part or singleton).
-				return 2;
+		public Priority visit(CreateStructuredTypePart diff, Void arg) throws RuntimeException {
+			if (diff.getPart().isOverride()) {
+				return Priority.CREATE_TYPE_PART_OVERRIDE;
 			}
-			if (diff.getName().indexOf(':') > 0) {
-				// A type.
-				return 4;
+			return Priority.CREATE_TYPE_PART;
+		}
+
+		@Override
+		public Priority visit(CreateClassifier diff, Void arg) throws RuntimeException {
+			return Priority.CREATE_TYPE_PART;
+		}
+
+		@Override
+		public Priority visit(UpdateStorageMapping diff, Void arg) throws RuntimeException {
+			return Priority.UPDATE_STORAGE_MAPPING;
+		}
+
+		@Override
+		public Priority visit(UpdatePartType diff, Void arg) throws RuntimeException {
+			return Priority.UPDATE_TYPE_PART_TYPE;
+		}
+
+		@Override
+		public Priority visit(Delete diff, Void arg) throws RuntimeException {
+			switch (diff.getKind()) {
+				case REFERENCE:
+					if (diff.getBackwards()) {
+						return Priority.DELETE_BACKWARDS_REF;
+					} else {
+						return Priority.DELETE_REF;
+					}
+
+				case END:
+				case CLASSIFIER:
+				case PROPERTY:
+				case OBJECT:
+					return Priority.DELETE_TYPE_PART;
+
+				case ASSOCIATION:
+				case CLASS:
+				case DATATYPE:
+				case ENUMERATION:
+					return Priority.DELETE_TYPE;
+
+				case MODULE:
+					return Priority.DELETE_MODULE;
+
+				case MODEL:
+					throw new UnreachableAssertion("Cannot delete the whole model.");
 			}
-			// A module.
-			return 6;
+
+			throw new UnreachableAssertion("No such kind: " + diff.getKind());
 		}
 
 		@Override
-		public Integer visit(DeleteRole diff, Void arg) throws RuntimeException {
-			return 5;
+		public Priority visit(AddAnnotations diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_ANNOTATIONS;
 		}
 
 		@Override
-		public Integer visit(AddAnnotations diff, Void arg) throws RuntimeException {
-			return 40;
+		public Priority visit(SetAnnotations diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_ANNOTATIONS;
 		}
 
 		@Override
-		public Integer visit(SetAnnotations diff, Void arg) throws RuntimeException {
-			return 40;
+		public Priority visit(RemoveAnnotation diff, Void arg) throws RuntimeException {
+			return Priority.REMOVE_ANNOTATION;
 		}
 
 		@Override
-		public Integer visit(RemoveAnnotation diff, Void arg) throws RuntimeException {
-			return 1;
+		public Priority visit(AddGeneralization diff, Void arg) throws RuntimeException {
+			return Priority.CREATE_OR_MOVE_GENERALISATION;
 		}
 
 		@Override
-		public Integer visit(AddGeneralization diff, Void arg) throws RuntimeException {
-			return 25;
+		public Priority visit(RemoveGeneralization diff, Void arg) throws RuntimeException {
+			return Priority.REMOVE_GENERALISATION;
 		}
 
 		@Override
-		public Integer visit(RemoveGeneralization diff, Void arg) throws RuntimeException {
-			// Must occur before removing types, because removing types removes specializations.
-			return 3;
+		public Priority visit(MoveGeneralization diff, Void arg) throws RuntimeException {
+			return Priority.CREATE_OR_MOVE_GENERALISATION;
 		}
 
 		@Override
-		public Integer visit(MoveGeneralization diff, Void arg) throws RuntimeException {
-			return 25;
+		public Priority visit(MakeAbstract diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_TYPE_ABSTRACT;
 		}
 
 		@Override
-		public Integer visit(MakeAbstract diff, Void arg) throws RuntimeException {
-			return 27;
+		public Priority visit(MakeConcrete diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_TYPE_ABSTRACT;
 		}
 
 		@Override
-		public Integer visit(MakeConcrete diff, Void arg) throws RuntimeException {
-			return 27;
+		public Priority visit(UpdateMandatory diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_TYPE_PART_MANDATORY;
 		}
 
 		@Override
-		public Integer visit(UpdateMandatory diff, Void arg) throws RuntimeException {
-			return 40;
+		public Priority visit(UpdateMultiplicity diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_TYPE_PART_MULTIPLE;
 		}
 
 		@Override
-		public Integer visit(MoveClassifier diff, Void arg) throws RuntimeException {
-			return 30;
+		public Priority visit(UpdateOrdered diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_TYPE_PART_ORDERED;
 		}
 
 		@Override
-		public Integer visit(MoveStructuredTypePart diff, Void arg) throws RuntimeException {
-			return 30;
+		public Priority visit(UpdateAbstract diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_TYPE_PART_ABSTRACT;
 		}
 
 		@Override
-		public Integer visit(RenamePart diff, Void arg) throws RuntimeException {
-			return 30;
+		public Priority visit(UpdateBag diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_TYPE_PART_BAG;
+		}
+
+		@Override
+		public Priority visit(UpdateDeletionPolicy diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_REFERENCE_DELETION_POLICY;
+		}
+
+		@Override
+		public Priority visit(UpdateHistoryType diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_REFERENCE_HISTORY_TYPE;
+		}
+
+		@Override
+		public Priority visit(MoveClassifier diff, Void arg) throws RuntimeException {
+			return Priority.MOVE_TYPE_PART;
+		}
+
+		@Override
+		public Priority visit(MoveStructuredTypePart diff, Void arg) throws RuntimeException {
+			return Priority.MOVE_TYPE_PART;
+		}
+
+		@Override
+		public Priority visit(RenamePart diff, Void arg) throws RuntimeException {
+			return Priority.RENAME;
+		}
+
+		/**
+		 * Compares {@link DiffElement} by their {@link Priority}.
+		 */
+		@Override
+		public int compare(DiffElement o1, DiffElement o2) {
+			return o1.visit(this, null).compareTo(o2.visit(this, null));
 		}
 	}
 
@@ -351,12 +403,8 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	 */
 	public static <E extends DiffElement> List<E> sortByPriority(Collection<E> patch) {
 		List<E> elements = new ArrayList<>(patch);
-		Collections.sort(elements, ApplyModelPatch::compareByPriority);
+		Collections.sort(elements, DiffPriority.INSTANCE);
 		return elements;
-	}
-
-	private static int compareByPriority(DiffElement d1, DiffElement d2) {
-		return Integer.compare(d1.visit(DiffPriority.INSTANCE, null), d2.visit(DiffPriority.INSTANCE, null));
 	}
 
 	@Override
@@ -610,25 +658,6 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	}
 
 	@Override
-	public Void visit(CreateRole diff, Void arg) throws RuntimeException {
-		TLModule module;
-		RoleConfig config = diff.getRole();
-		try {
-			module = TLModelUtil.findModule(getModel(), diff.getModule());
-		} catch (TopLogicException ex) {
-			log().info(
-				"Merge conflict: Adding role '" + config.getName() + "' to module '"
-						+ diff.getModule() + "': " + ex.getMessage(),
-				Log.WARN);
-			return null;
-		}
-
-		log().info("Creating role '" + diff.getRole().getName() + " in module '" + diff.getModule() + "'.");
-		createRole(module, config);
-		return null;
-	}
-
-	@Override
 	public Void visit(CreateType diff, Void arg) throws RuntimeException {
 		TLModule module;
 		try {
@@ -685,7 +714,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 		List<ExtendsConfig> generalizations = type.getGeneralizations();
 		if (generalizations.isEmpty()) {
-			newClass.setPrimaryGeneralization(qTypeName(TlModelFactory.TL_MODEL_STRUCTURE, TLObject.TL_OBJECT_TYPE));
+			newClass.setWithoutPrimaryGeneralization(true);
 		} else {
 			/* Generalizations are created later. */
 			newClass.setWithoutPrimaryGeneralization(true);
@@ -752,10 +781,13 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 	@Override
 	protected void addEnumType(TLModule module, TLScope scope, EnumConfig config) {
-		super.addEnumType(module, scope, config);
+		// Note: The processor for the enum creation must be generated before the processors of the
+		// classifiers (which happens from the super call below).
 		if (createProcessors()) {
 			addEnumProcessor(module.getName(), config);
 		}
+
+		super.addEnumType(module, scope, config);
 	}
 
 	private void addEnumProcessor(String moduleName, EnumConfig type) {
@@ -817,11 +849,6 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		
 		log().info("Adding part '" + partName + " to type '" + type + "'.");
 		addPart(type, diff.getPart());
-
-		// Apply order, since create API has no order attribute.
-		String beforeName = diff.getBefore();
-		schedule().reorderProperties(() -> movePart(type, partName, beforeName));
-		
 		return null;
 	}
 
@@ -916,9 +943,11 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		if (createProcessors()) {
 			CreateTLPropertyProcessor.Config config = newConfigItem(CreateTLPropertyProcessor.Config.class);
 			config.setType(getQualifiedTypeName(owner.getModule().getName(), attributeConfig.getTypeSpec()));
-			fillPartProcessor(config, TLModelUtil.qualifiedName(owner), attributeConfig);
+			String qOwnerName = TLModelUtil.qualifiedName(owner);
+			fillPartProcessor(config, qOwnerName, attributeConfig);
 
 			addProcessor(config);
+			addOverride(qOwnerName, attributeConfig);
 		}
 		return property;
 	}
@@ -935,16 +964,35 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			if (referenceConfig.getKind() == ReferenceKind.BACKWARDS) {
 				CreateInverseTLReferenceProcessor.Config inverseConf =
 					newConfigItem(CreateInverseTLReferenceProcessor.Config.class);
-				inverseConf.setInverseReference(qTypePartName(targetType, referenceConfig.getInverseReference()));
+				String inverseReference = referenceConfig.getInverseReference();
+				if (StringServices.isEmpty(inverseReference)) {
+					if (referenceConfig.isOverride()) {
+						TLReference inverseRef = TLModelUtil.getOtherEnd(associationEnd).getReference();
+						if (inverseRef == null) {
+							log().info(
+								"Override of a backwards reference without inverse-reference: " + referenceConfig,
+								Protocol.WARN);
+						} else {
+							inverseReference = inverseRef.getName();
+						}
+					} else {
+						log().info("Non override backwards reference without inverse-reference annotation: "
+								+ referenceConfig,
+							Protocol.WARN);
+					}
+				}
+				inverseConf.setInverseReference(qTypePartName(targetType, inverseReference));
 				config = inverseConf;
 			} else {
 				CreateTLReferenceProcessor.Config refConf = newConfigItem(CreateTLReferenceProcessor.Config.class);
 				refConf.setType(targetType);
 				config = refConf;
 			}
-			fillEndAspectProcessor(config, TLModelUtil.qualifiedName(owner), referenceConfig);
+			String qOwnerName = TLModelUtil.qualifiedName(owner);
+			fillEndAspectProcessor(config, qOwnerName, referenceConfig);
 
 			addProcessor(config);
+			addOverride(qOwnerName, referenceConfig);
 		}
 		return reference;
 	}
@@ -956,9 +1004,11 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		if (createProcessors()) {
 			CreateTLAssociationEndProcessor.Config config = newConfigItem(CreateTLAssociationEndProcessor.Config.class);
 			config.setType(getQualifiedTypeName(owner.getModule().getName(), endConfig.getTypeSpec()));
-			fillEndAspectProcessor(config, TLModelUtil.qualifiedName(owner), endConfig);
+			String qOwnerName = TLModelUtil.qualifiedName(owner);
+			fillEndAspectProcessor(config, qOwnerName, endConfig);
 
 			addProcessor(config);
+			addOverride(qOwnerName, endConfig);
 		}
 		return end;
 	}
@@ -969,6 +1019,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		copyIfSet(part, EndAspect.AGGREGATE_PROPERTY, config::setAggregate);
 		copyIfSet(part, EndAspect.NAVIGATE_PROPERTY, config::setNavigate);
 		copyIfSet(part, EndAspect.HISTORY_TYPE_PROPERTY, config::setHistoryType);
+		copyIfSet(part, EndAspect.DELETION_POLICY_PROPERTY, config::setDeletionPolicy);
 		fillPartProcessor(config, qOwnerName, part);
 	}
 
@@ -979,16 +1030,20 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		config.setName(qPartName);
 		copyIfSet(part, PartConfig.MULTIPLE_PROPERTY, config::setMultiple);
 		copyIfSet(part, PartConfig.ORDERED_PROPERTY, config::setOrdered);
+		copyIfSet(part, PartConfig.ABSTRACT_PROPERTY, config::setAbstract);
 		copyIfSet(part, PartConfig.MANDATORY, config::setMandatory);
 		copyIfSet(part, PartConfig.BAG_PROPERTY, config::setBag);
 		copyAnnotations(part, config);
+	}
+
+	private void addOverride(String qOwnerName, PartConfig part) {
 		if (part.isOverride()) {
 			TLStructuredType owner = (TLStructuredType) resolvePart(qOwnerName);
 			TLStructuredTypePart createdPart = owner.getPartOrFail(part.getName());
 			TLStructuredTypePart definition = createdPart.getDefinition();
 
 			MarkTLTypePartOverride.Config overrideConf = newConfigItem(MarkTLTypePartOverride.Config.class);
-			overrideConf.setName(qPartName);
+			overrideConf.setName(qTypePartName(qOwnerName, part.getName()));
 			overrideConf.setDefinition(qTypePartName(definition));
 			addProcessor(overrideConf);
 		}
@@ -1073,13 +1128,36 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 	@Override
 	public Void visit(Delete diff, Void arg) throws RuntimeException {
+		if (deleteDirectly(diff)) {
+			processDelete(diff);
+		} else {
+			schedule().cleanup(() -> processDelete(diff));
+		}
+		return null;
+	}
+
+	private boolean deleteDirectly(Delete diff) {
+		if (diff.getKind() == null) {
+			return true;
+		}
+		switch (diff.getKind()) {
+			case PROPERTY:
+			case REFERENCE:
+				return true;
+			default:
+				return false;
+		}
+
+	}
+
+	private void processDelete(Delete diff) {
 		TLObject part;
 		try {
 			part = resolveQName(diff.getName());
 		} catch (TopLogicException ex) {
 			log().info(
 				"Merge conflict: Deleting '" + diff.getName() + "' but it does not exist.", Log.INFO);
-			return null;
+			return;
 		}
 		
 		if (part instanceof TLClass) {
@@ -1088,13 +1166,13 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				try (CloseableIterator<TLObject> it = directInstances(type)) {
 					if (it.hasNext()) {
 						log().info("Merge conflict deleting '" + type + "': Instances exist.");
-						return null;
+						return;
 					}
 				}
 			}
 		}
 		
-		log().info("Deleting '" + diff.getName() + "'.");
+		log().info("Deleting part with name '" + diff.getName() + "': " + part);
 		if (part instanceof TLModelPart) {
 			TLModelUtil.deleteRecursive((TLModelPart) part);
 		} else {
@@ -1111,63 +1189,61 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 
 		if (createProcessors()) {
-			if (part instanceof TLModule) {
-				DeleteTLModuleProcessor.Config config = newConfigItem(DeleteTLModuleProcessor.Config.class);
-				config.setName(diff.getName());
-				addProcessor(config);
-			} else if (part instanceof TLClass) {
-				DeleteTLClassProcessor.Config config = newConfigItem(DeleteTLClassProcessor.Config.class);
-				config.setName(qTypeName(diff.getName()));
-				addProcessor(config);
-			} else if (part instanceof TLEnumeration) {
-				DeleteTLEnumerationProcessor.Config config = newConfigItem(DeleteTLEnumerationProcessor.Config.class);
-				config.setName(qTypeName(diff.getName()));
-				addProcessor(config);
-			} else if (part instanceof TLPrimitive) {
-				DeleteTLDatatypeProcessor.Config config = newConfigItem(DeleteTLDatatypeProcessor.Config.class);
-				config.setName(qTypeName(diff.getName()));
-				addProcessor(config);
-			} else if (part instanceof TLProperty) {
-				DeleteTLPropertyProcessor.Config config = newConfigItem(DeleteTLPropertyProcessor.Config.class);
-				config.setName(qTypePartName(diff.getName()));
-				addProcessor(config);
-			} else if (part instanceof TLReference) {
-				DeleteTLReferenceProcessor.Config config = newConfigItem(DeleteTLReferenceProcessor.Config.class);
-				config.setName(qTypePartName(diff.getName()));
-				addProcessor(config);
-			} else {
-				log().info(
-					"No deletion supported for '" + diff.getName() + "' of type '" + part.getClass().getName() + "'.");
+			switch (diff.getKind()) {
+				case MODULE: {
+					DeleteTLModuleProcessor.Config config = newConfigItem(DeleteTLModuleProcessor.Config.class);
+					config.setName(diff.getName());
+					addProcessor(config);
+					break;
+				}
+				case CLASS: {
+					DeleteTLClassProcessor.Config config = newConfigItem(DeleteTLClassProcessor.Config.class);
+					config.setName(qTypeName(diff.getName()));
+					addProcessor(config);
+					break;
+				}
+				case ENUMERATION: {
+					DeleteTLEnumerationProcessor.Config config =
+						newConfigItem(DeleteTLEnumerationProcessor.Config.class);
+					config.setName(qTypeName(diff.getName()));
+					addProcessor(config);
+					break;
+				}
+				case DATATYPE: {
+					DeleteTLDatatypeProcessor.Config config = newConfigItem(DeleteTLDatatypeProcessor.Config.class);
+					config.setName(qTypeName(diff.getName()));
+					addProcessor(config);
+					break;
+				}
+				case CLASSIFIER:
+				case PROPERTY: {
+					DeleteTLPropertyProcessor.Config config = newConfigItem(DeleteTLPropertyProcessor.Config.class);
+					config.setName(qTypePartName(diff.getName()));
+					addProcessor(config);
+					break;
+				}
+				case REFERENCE: {
+					DeleteTLReferenceProcessor.Config config;
+					if (diff.getBackwards()) {
+						config = newConfigItem(DeleteTLReferenceProcessor.InverseConfig.class);
+					} else {
+						config = newConfigItem(DeleteTLReferenceProcessor.Config.class);
+					}
+					config.setName(qTypePartName(diff.getName()));
+					addProcessor(config);
+					break;
+				}
+				case ASSOCIATION:
+				case END:
+				case MODEL:
+					log().info(
+						"No deletion supported for '" + diff.getName() + "' of type '" + part.getClass().getName()
+							+ "'.");
+					break;
+				default:
+					break;
 			}
 		}
-		return null;
-	}
-
-	@Override
-	public Void visit(DeleteRole diff, Void arg) throws RuntimeException {
-		TLModule module;
-		try {
-			module = TLModelUtil.findModule(diff.getModule());
-		} catch (TopLogicException ex) {
-			log().info(
-				"Merge conflict: Deleting role '" + diff.getRole() + "' in module '" + diff.getModule()
-						+ "': " + ex.getMessage(),
-				Log.INFO);
-			return null;
-		}
-
-		BoundedRole role = BoundedRole.getDefinedRole(module, diff.getRole());
-		if (role == null) {
-			log().info(
-				"Merge conflict: Deleting role '" + diff.getRole() + "' in module '" + diff.getModule()
-					+ "', but role does not exist.",
-				Log.INFO);
-			return null;
-		}
-
-		log().info("Deleting role '" + diff.getRole() + "' in module '" + diff.getModule() + "'.");
-		role.tDelete();
-		return null;
 	}
 
 	@Override
@@ -1206,6 +1282,250 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
 						+ part.getClass().getName() + "' possible.");
 			}
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(UpdateMultiplicity diff, Void arg) throws RuntimeException {
+		TLStructuredTypePart part;
+		try {
+			part = (TLStructuredTypePart) resolveQName(diff.getPart());
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Updating multiple state of '" + diff.getPart() + "' to '" + diff.isMultiple()
+					+ "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		log().info("Updating multiple state of '" + diff.getPart() + "' to '" + diff.isMultiple() + "'.");
+		if (part.isMultiple() == diff.isMultiple()) {
+			log().info("Attribute '" + diff.getPart() + "' multiplicity is already set to '" + diff.isMultiple()
+				+ "', ignoring.");
+			return null;
+		}
+
+		if (!diff.isMultiple()) {
+			log().info("Setting multiple attribute '" + diff.getPart()
+				+ "' to non-multiple may lead to data inconsistencies. Additional migration operations may be required.",
+				Log.WARN);
+		}
+
+		part.setMultiple(diff.isMultiple());
+
+		if (createProcessors()) {
+			if (part instanceof TLProperty) {
+				UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setMultiple(diff.isMultiple());
+				addProcessor(config);
+			} else if (part instanceof TLReference) {
+				UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setMultiple(diff.isMultiple());
+				addProcessor(config);
+			} else if (part instanceof TLAssociationEnd) {
+				UpdateTLAssociationEndProcessor.Config config =
+					newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setMultiple(diff.isMultiple());
+				addProcessor(config);
+			} else {
+				throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
+					+ part.getClass().getName() + "' possible.");
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(UpdateOrdered diff, Void arg) throws RuntimeException {
+		TLStructuredTypePart part;
+		try {
+			part = (TLStructuredTypePart) resolveQName(diff.getPart());
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Updating ordered state of '" + diff.getPart() + "' to '" + diff.isOrdered()
+					+ "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		log().info("Updating ordered state of '" + diff.getPart() + "' to '" + diff.isOrdered() + "'.");
+		if (part.isOrdered() == diff.isOrdered()) {
+			log().info("Attribute '" + diff.getPart() + "' ordered state is already set to '" + diff.isOrdered()
+				+ "', ignoring.");
+			return null;
+		}
+
+		if (diff.isOrdered()) {
+			log().info("Setting unordered attribute '" + diff.getPart()
+				+ "' to ordered may lead to data inconsistencies. Additional migration operations may be required.",
+				Log.WARN);
+		}
+
+		part.setOrdered(diff.isOrdered());
+
+		if (createProcessors()) {
+			if (part instanceof TLProperty) {
+				UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setOrdered(diff.isOrdered());
+				addProcessor(config);
+			} else if (part instanceof TLReference) {
+				UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setOrdered(diff.isOrdered());
+				addProcessor(config);
+			} else if (part instanceof TLAssociationEnd) {
+				UpdateTLAssociationEndProcessor.Config config =
+					newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setOrdered(diff.isOrdered());
+				addProcessor(config);
+			} else {
+				throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
+					+ part.getClass().getName() + "' possible.");
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(UpdateBag diff, Void arg) throws RuntimeException {
+		TLStructuredTypePart part;
+		try {
+			part = (TLStructuredTypePart) resolveQName(diff.getPart());
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Updating bag state of '" + diff.getPart() + "' to '" + diff.isBag()
+					+ "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		log().info("Updating bag state of '" + diff.getPart() + "' to '" + diff.isBag() + "'.");
+		if (part.isBag() == diff.isBag()) {
+			log().info("Attribute '" + diff.getPart() + "' bag state is already set to '" + diff.isBag()
+				+ "', ignoring.");
+			return null;
+		}
+
+		if (!diff.isBag()) {
+			log().info("Setting bag attribute '" + diff.getPart()
+				+ "' to unique may lead to data inconsistencies. Additional migration operations may be required.",
+				Log.WARN);
+		}
+
+		part.setBag(diff.isBag());
+
+		if (createProcessors()) {
+			if (part instanceof TLProperty) {
+				UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setBag(diff.isBag());
+				addProcessor(config);
+			} else if (part instanceof TLReference) {
+				UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setBag(diff.isBag());
+				addProcessor(config);
+			} else if (part instanceof TLAssociationEnd) {
+				UpdateTLAssociationEndProcessor.Config config =
+					newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setBag(diff.isBag());
+				addProcessor(config);
+			} else {
+				throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
+					+ part.getClass().getName() + "' possible.");
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(UpdateAbstract diff, Void arg) throws RuntimeException {
+		TLStructuredTypePart part;
+		try {
+			part = (TLStructuredTypePart) resolveQName(diff.getPart());
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Updating abstract state of '" + diff.getPart() + "' to '" + diff.isAbstract()
+						+ "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		log().info("Updating abstract state of '" + diff.getPart() + "' to '" + diff.isAbstract() + "'.");
+		part.setAbstract(diff.isAbstract());
+
+		if (createProcessors()) {
+			if (part instanceof TLProperty) {
+				UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setAbstract(diff.isAbstract());
+				addProcessor(config);
+			} else if (part instanceof TLReference) {
+				UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setAbstract(diff.isAbstract());
+				addProcessor(config);
+			} else if (part instanceof TLAssociationEnd) {
+				UpdateTLAssociationEndProcessor.Config config =
+					newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setAbstract(diff.isAbstract());
+				addProcessor(config);
+			} else {
+				throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
+						+ part.getClass().getName() + "' possible.");
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(UpdateHistoryType diff, Void arg) throws RuntimeException {
+		TLReference part;
+		try {
+			part = (TLReference) resolveQName(diff.getPart());
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Updating history type of '" + diff.getPart() + "' to '" + diff.getHistoryType()
+						+ "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		log().info("Updating history type of '" + diff.getPart() + "' to '" + diff.getHistoryType() + "'.");
+		part.setHistoryType(diff.getHistoryType());
+
+		if (createProcessors()) {
+			UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+			config.setName(qTypePartName(diff.getPart()));
+			config.setHistoryType(diff.getHistoryType());
+			addProcessor(config);
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(UpdateDeletionPolicy diff, Void arg) throws RuntimeException {
+		TLReference part;
+		try {
+			part = (TLReference) resolveQName(diff.getPart());
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Updating deletion policy of '" + diff.getPart() + "' to '" + diff.getDeletionPolicy()
+						+ "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		log().info("Updating deletion policy of '" + diff.getPart() + "' to '" + diff.getDeletionPolicy() + "'.");
+		part.setDeletionPolicy(diff.getDeletionPolicy());
+
+		if (createProcessors()) {
+			UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+			config.setName(qTypePartName(diff.getPart()));
+			config.setDeletionPolicy(diff.getDeletionPolicy());
+			addProcessor(config);
 		}
 		return null;
 	}
@@ -1309,7 +1629,16 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	private void movePart(TLClassPart part, TLStructuredTypePart before) {
 		List<TLClassPart> localParts = part.getOwner().getLocalClassParts();
 		localParts.remove(part);
-		int index = before == null ? localParts.size() : localParts.indexOf(before);
+		int index;
+		if (before == null) {
+			index = localParts.size();
+		} else {
+			index = localParts.indexOf(before);
+			if (index < 0) {
+				log().info("Part '" + before + "' not found for adjusting order of '" + part + "'.", Log.WARN);
+				index = localParts.size();
+			}
+		}
 		localParts.add(index, part);
 
 		if (createProcessors()) {
@@ -1476,24 +1805,45 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		part.setName(diff.getNewName());
 
 		if (createProcessors()) {
-			QualifiedPartName oldName = qTypePartName(diff.getPart());
-			QualifiedPartName newName =
-				qTypePartName(qTypeName(oldName.getModuleName(), oldName.getTypeName()), diff.getNewName());
 			if (part instanceof TLProperty) {
 				UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
+				QualifiedPartName oldName = qTypePartName(diff.getPart());
 				config.setName(oldName);
-				config.setNewName(newName);
+				config.setNewName(renameAttribute(oldName, diff));
 				addProcessor(config);
 			} else if (part instanceof TLReference) {
 				UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+				QualifiedPartName oldName = qTypePartName(diff.getPart());
 				config.setName(oldName);
-				config.setNewName(newName);
+				config.setNewName(renameAttribute(oldName, diff));
 				addProcessor(config);
 			} else if (part instanceof TLAssociationEnd) {
 				UpdateTLAssociationEndProcessor.Config config =
 					newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
+				QualifiedPartName oldName = qTypePartName(diff.getPart());
 				config.setName(oldName);
-				config.setNewName(newName);
+				config.setNewName(renameAttribute(oldName, diff));
+				addProcessor(config);
+			} else if (part instanceof TLPrimitive) {
+				UpdateTLDataTypeProcessor.Config config =
+					newConfigItem(UpdateTLDataTypeProcessor.Config.class);
+				QualifiedTypeName oldName = qTypeName(diff.getPart());
+				config.setName(oldName);
+				config.setNewName(renameType(oldName, diff));
+				addProcessor(config);
+			} else if (part instanceof TLClass) {
+				UpdateTLClassProcessor.Config config =
+					newConfigItem(UpdateTLClassProcessor.Config.class);
+				QualifiedTypeName oldName = qTypeName(diff.getPart());
+				config.setName(oldName);
+				config.setNewName(renameType(oldName, diff));
+				addProcessor(config);
+			} else if (part instanceof TLEnumeration) {
+				UpdateTLEnumerationProcessor.Config config =
+					newConfigItem(UpdateTLEnumerationProcessor.Config.class);
+				QualifiedTypeName oldName = qTypeName(diff.getPart());
+				config.setName(oldName);
+				config.setNewName(renameType(oldName, diff));
 				addProcessor(config);
 			} else {
 				throw new UnsupportedOperationException("No rename for '" + diff.getPart() + "' of type '"
@@ -1502,6 +1852,18 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 
 		return null;
+	}
+
+	private QualifiedPartName renameAttribute(QualifiedPartName oldName, RenamePart diff) {
+		QualifiedPartName newName =
+			qTypePartName(qTypeName(oldName.getModuleName(), oldName.getTypeName()), diff.getNewName());
+		return newName;
+	}
+
+	private QualifiedTypeName renameType(QualifiedTypeName oldName, RenamePart diff) {
+		QualifiedTypeName newName =
+			qTypeName(oldName.getModuleName(), diff.getNewName());
+		return newName;
 	}
 
 	@Override

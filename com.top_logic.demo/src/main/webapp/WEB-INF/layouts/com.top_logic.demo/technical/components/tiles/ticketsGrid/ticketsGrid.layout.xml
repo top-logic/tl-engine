@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic.element/grid.template.xml"
 >
 	<arguments
@@ -16,7 +15,6 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="release->all(`test.tiles:Ticket`).filter(t -> $t.get(`test.tiles:Ticket#planedIn`).containsElement($release))"
-			supportsElement="element->$element.instanceOf(`test.tiles:Ticket`)"
 			supportsModel="true"
 		>
 			<modelForElement><![CDATA[t -> model -> {

@@ -58,7 +58,7 @@ public class TestStringOrdering extends BasicTestCase {
 			}
 		} catch (AssertionFailedError ex) {
 			if (ConnectionPoolRegistry.getDefaultConnectionPool().getSQLDialect() instanceof H2Helper) {
-				BasicTestCase.assertContains("Lists differ at index 2. Element expected '‰c', element actual 'ba'",
+				BasicTestCase.assertContains("Lists differ at index 2. Element expected '√§c', element actual 'ba'",
 					ex.getMessage());
 			} else {
 				throw ex;
@@ -79,7 +79,7 @@ public class TestStringOrdering extends BasicTestCase {
 		} catch (AssertionFailedError ex) {
 			if (ConnectionPoolRegistry.getDefaultConnectionPool().getSQLDialect() instanceof H2Helper) {
 				// Known bug.
-				BasicTestCase.assertContains("Lists differ at index 2. Element expected '‰c', element actual 'ba'",
+				BasicTestCase.assertContains("Lists differ at index 2. Element expected '√§c', element actual 'ba'",
 					ex.getMessage());
 			} else {
 				throw ex;
@@ -97,7 +97,7 @@ public class TestStringOrdering extends BasicTestCase {
 	}
 
 	private List<String> getNaturalValues() {
-		return asList("aa", "Ab", "‰c", "ƒd", "·e", "¡f", "ba", "Bb");
+		return asList("aa", "Ab", "√§c", "√Ñd", "√°e", "√Åf", "ba", "Bb");
 	}
 
 	private void doTestOrdering(boolean binaryColumn, boolean binary) throws SQLException {

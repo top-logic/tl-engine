@@ -1,0 +1,7280 @@
+/*
+ * Styles for React-based controls provided by the tl-layout-react module.
+ *
+ * Uses the same design tokens as coreButtons.css so that React controls
+ * integrate visually with the rest of the TL UI.
+ */
+
+/* ===========================================================================
+   Shape, elevation and overlay tokens
+   ---------------------------------------------------------------------------
+   Every rounding, every drop shadow and every backdrop of this sheet reads a
+   token of the UI theme (see tl-react-theme.config.xml), written without a
+   fallback: a token the theme is missing is a defect to fix in the theme, not
+   something a stylesheet quietly papers over.
+
+   Rounding comes in two tiers:
+
+     - --corner-radius, the control tier: buttons, input fields, toggles,
+       cells, small chips, handles, drop markers, scrollbar thumbs.
+     - --border-radius-02, the surface tier: panels, cards, windows, menus,
+       drop-down popups, flyouts, the snackbar, tooltips, form groups.
+
+   Shapes are not rounding: a circle stays 50% and a pill stays 999px, so both
+   keep their shape in a theme that squares every corner off.
+
+   Elevation comes in three steps, each a shadow token:
+
+     - --shadow-raised, a surface lifted off the page: an elevated app bar or
+       card, the edge of a frozen table column.
+     - --shadow-menu, a popup opened from a control: menus, drop-downs,
+       flyouts, colour and icon palettes, tooltips.
+     - --shadow-dialog, a layer covering the page: windows, drawers, the
+       snackbar, the sidebar drawer.
+
+   --overlay is the backdrop such a layer dims the page with.
+   =========================================================================== */
+
+/* --- Viewport-filling layout ------------------------------------------- */
+
+/* The view page is a full-viewport application: every scrollable region lives inside
+   the control tree (content areas, drawers, dialogs). The page itself never scrolls.
+   Clipping overflow here keeps a component that momentarily exceeds the viewport from
+   widening the mobile layout viewport, which would make the whole page pannable and
+   shift position:fixed overlays (app bar, drawer) partly off-screen. */
+html, body {
+	height: 100%;
+	margin: 0;
+	overflow: hidden;
+}
+
+.is-control {
+	height: 100%;
+}
+
+.is-control > .tlStack {
+	height: 100%;
+}
+
+/* --- Fill contract ------------------------------------------------------ */
+
+/* A control that fills takes the height its flex container offers instead of growing with its
+   content, so a virtualized child (e.g. a TableViewControl) bounds its scroll viewport and
+   scrolls internally rather than overflowing an outer scroller. Which controls carry the class is
+   decided in the control tree (see useFill / useFillHost of the React bridge): a container
+   hosting a filling child fills in turn, so the request reaches up to the first box that is
+   bounded anyway - the viewport-high mount point above, a tab-content region, a scrolling panel
+   body. */
+.tlFill {
+	flex: 1;
+	min-height: 0;
+}
+
+/* --- Bounded width ------------------------------------------------------ */
+
+/* A layout container (a stack, a grid) limited to a maximum width, which travels as an inline
+   length because it is a value rather than a kind of layout. The container takes the width its
+   own container offers - without the explicit width, the auto margins would shrink it to its
+   content instead of stretching it - up to that maximum, and the space left over is split between
+   its two sides. Only the width is bounded: the container keeps taking part in the fill contract,
+   whose classes decide its height. */
+.tlBounded {
+	box-sizing: border-box;
+	width: 100%;
+	margin-inline: auto;
+}
+
+/* --- Repeated items ----------------------------------------------------- */
+
+/* Wrapper a container (a stack, a grid) puts around each of its children while it repeats them,
+   carrying the position of the item as --tl-item-index next to the class the container is
+   configured with. An application stylesheet composes a per-item value from that position, e.g. a
+   staggered entrance animation. The wrapper stays transparent for the layout of the container: it
+   passes the space it is given on to the item. */
+.tlItem {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+}
+
+/* A wrapper around a filling item fills in turn, so that the fill contract survives the wrapper
+   and the item's height still resolves against the container. */
+.tlItem:has(> .tlFill) {
+	flex: 1;
+}
+
+/* --- React mount point ------------------------------------------------- */
+
+[data-react-module] {
+	width: 100%;
+	height: 100%;
+}
+
+/* --- Visually hidden text ----------------------------------------------- */
+
+/* Text that names a control for assistive technology without taking up space on screen: it is
+   clipped to a one-pixel box, since "display: none" or "visibility: hidden" would drop it from
+   the accessibility tree as well and it would then name nothing. */
+.tlVisuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* --- Drag shield -------------------------------------------------------- */
+
+/* Covers the viewport from the moment a drag gesture moves until the pointer is released (see the
+   bridge's startPointerDrag). It carries the cursor of the gesture, so the cursor keeps naming the
+   drag wherever the pointer goes, and it keeps hover effects and text selection off the page. The
+   gesture itself is routed to its handle by pointer capture, not by this element. Above every
+   other layer (dialog backdrop and menus at 10000, snackbar at 11000). */
+.tlDragShield {
+	position: fixed;
+	inset: 0;
+	z-index: 12000;
+	user-select: none;
+}
+
+/* --- TLCounter ---------------------------------------------------------- */
+
+.tlCounter {
+	padding: var(--spacing-04);
+	font-family: var(--font-family);
+}
+
+.tlCounter__title {
+	margin: 0 0 var(--spacing-03) 0;
+}
+
+.tlCounter__controls {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+}
+
+.tlCounter__button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	font-size: 1.25rem;
+	cursor: pointer;
+	border-radius: var(--corner-radius);
+	border: none;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	color: var(--button-secondary);
+}
+
+button.tlCounter__button:hover {
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+	color: var(--text-on-color);
+}
+
+button.tlCounter__button:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+.tlCounter__value {
+	font-size: 2rem;
+	min-width: 3.75rem;
+	text-align: center;
+	color: var(--text-primary);
+}
+
+.tlCounter__description {
+	margin-top: var(--spacing-03);
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+}
+
+/* --- TLTabBar ---------------------------------------------------------- */
+
+/* A tab bar always fills its container, so the tab strip stays pinned and only the tab content
+   scrolls (see its fill declaration). */
+.tlReactTabBar {
+	display: flex;
+	flex-direction: column;
+	font-family: var(--font-family);
+}
+
+.tlReactTabBar__tabs {
+	display: flex;
+	gap: var(--spacing-02);
+	border-bottom: 1px solid var(--border-subtle-01);
+	padding: 0 var(--spacing-03);
+	/* Keep the tab strip pinned while the content scrolls. */
+	flex-shrink: 0;
+}
+
+.tlReactTabBar__tab {
+	padding: var(--spacing-03) var(--spacing-04);
+	border: none;
+	border-bottom: 2px solid transparent;
+	background: transparent;
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-secondary);
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.tlReactTabBar__tabIcon {
+	margin-right: var(--spacing-03);
+}
+
+.tlReactTabBar__tab:hover {
+	color: var(--text-primary);
+	border-bottom-color: var(--border-subtle-01);
+}
+
+.tlReactTabBar__tab:focus {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlReactTabBar__tab--active {
+	color: var(--text-primary);
+	border-bottom-color: var(--button-primary);
+	font-weight: bold;
+}
+
+/* ===========================================================================
+   Spacing model.
+
+   Containers never introduce padding - everything flushes to the container
+   border by default. Breathing room is explicit:
+
+     - The explicit <inset> element (.tlInset) is dropped into a view
+       wherever content would otherwise glue to the border (e.g. a form in a
+       tab or dialog, a stack/grid of cards, or explanatory text in a dialog).
+     - A form grid (.tlFormLayout) is a plain layout and does not pad itself.
+       A form that needs room sets with-inset="true", which wraps it in the same
+       .tlInset, or sits in an <inset>.
+     - The dashboard layout pads itself (its outer inset == its tile gap).
+     - A card sets a reduced --page-inset, which every inset inside it picks up.
+
+   Simple layouts (<stack>, <grid>) and chrome containers (sidebar content, tab
+   content, split panes, panel body, dialog body) do NOT pad. A <panel> (dark
+   toolbar) flushes; a <card> (rounded border) must live inside a dashboard or a
+   <padding> so its border has room. No enforcement - build views per the
+   documented convention.
+   =========================================================================== */
+
+/* ===========================================================================
+   Overlay surfaces.
+
+   A popup floating above the page - a menu, a toolbar drop-down, a sidebar
+   group flyout, a field's option list - reads as elevated through three
+   themed tokens, never through literal colours:
+
+     - background: --layer-02, the elevated surface. It equals --layer-01 on a
+       light theme and is the lighter of the two on a dark one, where a popup
+       painted in the page's own colour disappears into it.
+     - border: --border-strong, so the edge stays visible where surface and
+       page are close in luminance.
+     - box-shadow: --shadow-menu, the theme's own popup shadow.
+
+   A field's option list keeps --field as its background instead, staying the
+   colour of the input it belongs to.
+   =========================================================================== */
+:root {
+	--page-inset: var(--spacing-04);
+}
+
+/* An inset passes the space it is given on to its content: a bounded flex column, so that content
+   which fills resolves its height against the inset - the inset then carries .tlFill and asks its
+   own container for that height (see the fill contract above). Around content of its own size the
+   inset is exactly as high as that content plus the padding, so it does not claim the height of a
+   container it shares with others. */
+.tlInset {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	padding: var(--page-inset);
+}
+
+.tlReactTabBar__content {
+	/* Flush: content owns its inset (see spacing model above). */
+	/* Own scroll region: fill the space left by the tab strip and scroll the
+	   tab content here, rather than letting it push the whole tab bar (and an
+	   ancestor scroller, e.g. the sidebar) past the viewport. */
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	/* Lay the active content out as a bounded flex column. Children that opt to
+	   fill (a nested tab-bar, a fill panel) then resolve their height against this
+	   box; content-sized children keep their natural height and overflow-scroll
+	   here exactly as before. Without this, block flow lets a fill-ready child
+	   grow to its content height and a virtualized table never bounds its
+	   viewport (see TableViewControl). */
+	display: flex;
+	flex-direction: column;
+}
+
+/* --- TLAudioRecorder --------------------------------------------------- */
+
+.tlAudioRecorder {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	font-family: var(--font-family);
+}
+
+.tlAudioRecorder__button {
+	position: relative;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+}
+
+button.tlAudioRecorder__button:hover {
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+}
+
+button.tlAudioRecorder__button:hover .tlAudioRecorder__icon {
+	background: var(--text-on-color);
+}
+
+button.tlAudioRecorder__button:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+button.tlAudioRecorder__button:disabled {
+	cursor: default;
+	background: none;
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+}
+
+button.tlAudioRecorder__button:disabled .tlAudioRecorder__icon {
+	background: var(--text-disabled);
+}
+
+/* Icon: filled red circle (record) */
+.tlAudioRecorder__icon {
+	display: block;
+	width: 0.75rem;
+	height: 0.75rem;
+	border-radius: 50%;
+	background: var(--button-danger);
+}
+
+/* Icon: white square (stop) */
+.tlAudioRecorder__icon--stop {
+	border-radius: 2px;
+	background: var(--text-on-color);
+}
+
+/* Recording state */
+.tlAudioRecorder__button--recording {
+	background: var(--button-danger);
+	box-shadow: inset 0px 0px 0px 2px var(--button-danger);
+}
+
+button.tlAudioRecorder__button--recording:hover {
+	background: var(--button-danger-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-danger-hover);
+}
+
+/* Ripple rings animation during recording */
+.tlAudioRecorder__button--recording::before,
+.tlAudioRecorder__button--recording::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	border: 2px solid var(--button-danger);
+	animation: tlAudioRecorderRipple 2s ease-out infinite;
+	pointer-events: none;
+}
+
+.tlAudioRecorder__button--recording::after {
+	animation-delay: 1s;
+}
+
+@keyframes tlAudioRecorderRipple {
+	0%   { transform: scale(1); opacity: 0.6; }
+	100% { transform: scale(2); opacity: 0; }
+}
+
+/* Uploading state: wobble animation */
+.tlAudioRecorder__button--uploading {
+	animation: tlAudioRecorderWobble 0.5s ease-in-out infinite;
+}
+
+@keyframes tlAudioRecorderWobble {
+	0%, 100% { transform: rotate(0deg); }
+	25%      { transform: rotate(-10deg); }
+	75%      { transform: rotate(10deg); }
+}
+
+.tlAudioRecorder__status {
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-secondary);
+}
+
+.tlAudioRecorder__status--error {
+	color: var(--text-error);
+}
+
+/* --- TLAudioPlayer ----------------------------------------------------- */
+
+.tlAudioPlayer {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	font-family: var(--font-family);
+}
+
+.tlAudioPlayer__button {
+	position: relative;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+}
+
+button.tlAudioPlayer__button:hover {
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+}
+
+button.tlAudioPlayer__button:hover .tlAudioPlayer__icon {
+	border-left-color: #42be65;
+}
+
+button.tlAudioPlayer__button:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+button.tlAudioPlayer__button:disabled {
+	cursor: default;
+	background: none;
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+}
+
+button.tlAudioPlayer__button:disabled .tlAudioPlayer__icon {
+	border-left-color: var(--text-disabled);
+}
+
+/* Icon: play triangle (right-pointing) */
+.tlAudioPlayer__icon {
+	display: block;
+	width: 0;
+	height: 0;
+	border-top: 0.4rem solid transparent;
+	border-bottom: 0.4rem solid transparent;
+	border-left: 0.65rem solid #198038;
+	margin-left: 0.1rem;
+}
+
+/* Icon: pause (two vertical bars) */
+.tlAudioPlayer__icon--pause {
+	width: 0.35rem;
+	height: 0.7rem;
+	margin-left: 0;
+	border-top: none;
+	border-bottom: none;
+	border-left: 0.15rem solid var(--text-on-color);
+	border-right: 0.15rem solid var(--text-on-color);
+	background: transparent;
+}
+
+/* Playing state */
+.tlAudioPlayer__button--playing {
+	background: #198038;
+	box-shadow: inset 0px 0px 0px 2px #198038;
+}
+
+button.tlAudioPlayer__button--playing:hover {
+	background: #24a148;
+	box-shadow: inset 0px 0px 0px 2px #24a148;
+}
+
+button.tlAudioPlayer__button--playing:hover .tlAudioPlayer__icon--pause {
+	border-left-color: var(--text-on-color);
+	border-right-color: var(--text-on-color);
+}
+
+/* Loading state: spinning border */
+.tlAudioPlayer__button--loading {
+	box-shadow: none;
+	border: 2px solid var(--button-disabled);
+	border-top-color: #198038;
+	animation: tlAudioPlayerSpin 0.8s linear infinite;
+}
+
+@keyframes tlAudioPlayerSpin {
+	to { transform: rotate(360deg); }
+}
+
+/* --- TLDownload -------------------------------------------------------- */
+
+.tlDownload {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	font-family: var(--font-family);
+	height: 2rem;
+}
+
+.tlDownload--empty {
+	color: var(--text-disabled);
+}
+
+/* File name label */
+.tlDownload__fileName {
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-primary);
+	max-width: 20rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlDownload__fileName--empty {
+	color: var(--text-disabled);
+	font-style: italic;
+}
+
+/* Download button */
+.tlDownload__downloadBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	cursor: pointer;
+	background: transparent;
+	color: var(--button-secondary);
+	padding: 0;
+}
+
+button.tlDownload__downloadBtn:hover {
+	background: var(--button-secondary-hover);
+	color: var(--text-on-color);
+}
+
+button.tlDownload__downloadBtn:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+button.tlDownload__downloadBtn:disabled {
+	cursor: default;
+	color: var(--text-disabled);
+}
+
+/* Downloading state: spinning icon */
+.tlDownload__downloadBtn--downloading .tlDownload__downloadIcon {
+	animation: tlDownloadSpin 0.8s linear infinite;
+}
+
+@keyframes tlDownloadSpin {
+	to { transform: rotate(360deg); }
+}
+
+/* Clear button */
+.tlDownload__clearBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 1.5rem;
+	height: 1.5rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	cursor: pointer;
+	background: transparent;
+	color: var(--text-secondary);
+	padding: 0;
+}
+
+button.tlDownload__clearBtn:hover {
+	background: var(--button-danger-hover);
+	color: var(--text-on-color);
+}
+
+button.tlDownload__clearBtn:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+/* --- TLFileUpload ------------------------------------------------------ */
+
+.tlFileUpload {
+	display: inline-flex;
+	align-items: center;
+	height: 2rem;
+}
+
+.tlFileUpload__button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	cursor: pointer;
+	background: transparent;
+	color: var(--button-secondary);
+	padding: 0;
+}
+
+button.tlFileUpload__button:hover {
+	background: var(--button-secondary-hover);
+	color: var(--text-on-color);
+}
+
+button.tlFileUpload__button:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+button.tlFileUpload__button:disabled {
+	cursor: default;
+	color: var(--text-disabled);
+}
+
+.tlFileUpload__button--uploading .tlFileUpload__icon {
+	animation: tlUploadSpin 0.8s linear infinite;
+}
+
+@keyframes tlUploadSpin {
+	to { transform: rotate(360deg); }
+}
+
+.tlFileUpload__status--error {
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-error);
+	margin-left: var(--spacing-02);
+}
+
+.tlFileUpload--dragover {
+	outline: 2px dashed var(--focus);
+	outline-offset: 2px;
+	border-radius: var(--corner-radius);
+}
+
+/* --- TLPhotoCapture ---------------------------------------------------- */
+
+.tlPhotoCapture {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--spacing-03);
+	font-family: var(--font-family);
+}
+
+.tlPhotoCapture__controls {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-03);
+}
+
+.tlPhotoCapture__cameraBtn {
+	position: relative;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+}
+
+button.tlPhotoCapture__cameraBtn:hover {
+	background: var(--button-secondary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary-hover);
+}
+
+button.tlPhotoCapture__cameraBtn:hover .tlPhotoCapture__cameraIcon {
+	border-color: var(--text-on-color);
+}
+
+button.tlPhotoCapture__cameraBtn:hover .tlPhotoCapture__cameraIcon::before {
+	background: var(--text-on-color);
+}
+
+button.tlPhotoCapture__cameraBtn:focus {
+	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
+	outline: none;
+}
+
+button.tlPhotoCapture__cameraBtn:disabled {
+	cursor: default;
+	background: none;
+	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
+}
+
+button.tlPhotoCapture__cameraBtn:disabled .tlPhotoCapture__cameraIcon {
+	border-color: var(--text-disabled);
+}
+
+button.tlPhotoCapture__cameraBtn:disabled .tlPhotoCapture__cameraIcon::before {
+	background: var(--text-disabled);
+}
+
+/* Camera icon: rectangle with circle lens */
+.tlPhotoCapture__cameraIcon {
+	display: block;
+	width: 0.9rem;
+	height: 0.65rem;
+	border: 1.5px solid var(--button-secondary);
+	border-radius: 2px;
+	position: relative;
+}
+
+.tlPhotoCapture__cameraIcon::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 0.3rem;
+	height: 0.3rem;
+	border-radius: 50%;
+	background: var(--button-secondary);
+	transform: translate(-50%, -50%);
+}
+
+/* Active camera state */
+.tlPhotoCapture__cameraBtn--active {
+	background: var(--button-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
+}
+
+.tlPhotoCapture__cameraBtn--active .tlPhotoCapture__cameraIcon {
+	border-color: var(--text-on-color);
+}
+
+.tlPhotoCapture__cameraBtn--active .tlPhotoCapture__cameraIcon::before {
+	background: var(--text-on-color);
+}
+
+button.tlPhotoCapture__cameraBtn--active:hover {
+	background: var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
+}
+
+/* Uploading state: wobble animation on camera button */
+.tlPhotoCapture__cameraBtn--uploading {
+	animation: tlPhotoCaptureWobble 0.5s ease-in-out infinite;
+}
+
+@keyframes tlPhotoCaptureWobble {
+	0%, 100% { transform: rotate(0deg); }
+	25%      { transform: rotate(-10deg); }
+	75%      { transform: rotate(10deg); }
+}
+
+/* Fullscreen overlay */
+.tlPhotoCapture__overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 10000;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	outline: none;
+}
+
+.tlPhotoCapture__overlayBackdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.85);
+}
+
+.tlPhotoCapture__overlayContent {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+}
+
+.tlPhotoCapture__overlayVideo {
+	flex: 1 1 0;
+	min-height: 0;
+	width: 100%;
+	object-fit: contain;
+	background: #000;
+}
+
+.tlPhotoCapture__overlayVideo--mirrored {
+	transform: scaleX(-1);
+}
+
+/* Toolbar: three buttons centered at bottom */
+.tlPhotoCapture__overlayToolbar {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1.5rem;
+	padding: 1.5rem 1rem;
+	background: rgba(0, 0, 0, 0.6);
+	flex-shrink: 0;
+}
+
+/* Mirror & close buttons: 3rem circles */
+.tlPhotoCapture__mirrorBtn,
+.tlPhotoCapture__overlayCloseBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 3rem;
+	height: 3rem;
+	border: 2px solid rgba(255, 255, 255, 0.5);
+	border-radius: 50%;
+	background: transparent;
+	color: rgba(255, 255, 255, 0.8);
+	cursor: pointer;
+	padding: 0;
+}
+
+button.tlPhotoCapture__mirrorBtn:hover,
+button.tlPhotoCapture__overlayCloseBtn:hover {
+	background: rgba(255, 255, 255, 0.15);
+	color: #fff;
+	border-color: rgba(255, 255, 255, 0.8);
+}
+
+button.tlPhotoCapture__mirrorBtn:focus-visible,
+button.tlPhotoCapture__overlayCloseBtn:focus-visible {
+	box-shadow: 0 0 0 2px var(--focus);
+	outline: none;
+}
+
+.tlPhotoCapture__mirrorBtn--active {
+	background: rgba(255, 255, 255, 0.2);
+	border-color: #fff;
+	color: #fff;
+}
+
+/* Capture button: large 4.5rem circle with red inner disc */
+.tlPhotoCapture__overlayCaptureBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 4.5rem;
+	height: 4.5rem;
+	border: 4px solid #fff;
+	border-radius: 50%;
+	background: transparent;
+	cursor: pointer;
+	padding: 0;
+}
+
+button.tlPhotoCapture__overlayCaptureBtn:hover {
+	background: rgba(255, 255, 255, 0.1);
+}
+
+button.tlPhotoCapture__overlayCaptureBtn:focus-visible {
+	box-shadow: 0 0 0 2px var(--focus);
+	outline: none;
+}
+
+.tlPhotoCapture__overlayCaptureIcon {
+	display: block;
+	width: 3rem;
+	height: 3rem;
+	border-radius: 50%;
+	background: var(--button-danger);
+}
+
+button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureIcon {
+	transform: scale(0.9);
+}
+
+.tlPhotoCapture__status {
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-secondary);
+}
+
+.tlPhotoCapture__status--error {
+	color: var(--text-error);
+}
+
+/* --- TLImage ----------------------------------------------------------- */
+
+/* The box is as wide as the picture unless a size option says otherwise, and never wider than the
+   space available. */
+.tlImage {
+	display: block;
+	position: relative;
+	width: fit-content;
+	max-width: 100%;
+}
+
+.tlImage__image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: var(--corner-radius);
+}
+
+.tlImage--fit-cover .tlImage__image {
+	object-fit: cover;
+}
+
+.tlImage--fit-contain .tlImage__image {
+	object-fit: contain;
+}
+
+/* Holds the space a size option reserves while there is no picture to show. */
+.tlImage__placeholder {
+	width: 100%;
+	height: 100%;
+}
+
+/* --- TLPdfViewer ------------------------------------------------------- */
+
+.tlPdfViewer {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+	font-family: var(--font-family);
+}
+
+.tlPdfViewer__frame {
+	flex: 1 1 auto;
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+	border: none;
+}
+
+.tlPdfViewer__placeholder {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-secondary);
+}
+
+/* --- TLFieldList ------------------------------------------------------- */
+
+.tlFieldList {
+	font-family: var(--font-family);
+}
+
+.tlFieldList__title {
+	margin: 0 0 var(--spacing-04) 0;
+	color: var(--text-primary);
+}
+
+.tlFieldList__fields {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-04);
+}
+
+.tlFieldList__item {
+	padding-bottom: var(--spacing-03);
+	border-bottom: 1px solid var(--border-subtle-01);
+}
+
+/* --- TLValueList ------------------------------------------------------- */
+
+/* The values of a multi-valued field. Read-only they read as one text - the separator between them
+   is written out, so that what is on screen is what is copied - or as one value per line where a
+   value is a text of several lines. Edited, each value takes a row with the button that removes it. */
+.tlValueList {
+	font-family: var(--font-family);
+	color: var(--text-primary);
+	min-width: 0;
+}
+
+.tlValueList--inline {
+	display: inline;
+}
+
+.tlValueList--block .tlValueList__item {
+	display: block;
+}
+
+/* Each value stands on a line of its own, so the line break is what separates them and the
+   separator text is not read. The separator is written out all the same, so that a display which
+   squeezes such a list into one line - a table cell - has it to show. */
+.tlValueList--block .tlValueList__separator {
+	display: none;
+}
+
+.tlValueList__separator {
+	color: var(--text-secondary);
+	white-space: pre;
+}
+
+/* Edit mode: the rows and the button appending a value follow each other vertically. The edited
+   list is a block container while the displayed one is inline text, so the element itself carries
+   the distinction and the layout modifier keeps its one meaning - how the values read. */
+div.tlValueList {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--spacing-02);
+	width: 100%;
+}
+
+.tlValueList__row {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	width: 100%;
+	min-width: 0;
+	/* The drop indicator of a dragged value is drawn as a border, so reserve its space on both edges
+	   to keep the rows from jumping while a value is dragged across them. */
+	border-top: 2px solid transparent;
+	border-bottom: 2px solid transparent;
+}
+
+.tlValueList__row--dragging {
+	opacity: 0.4;
+}
+
+.tlValueList__row--dragOver-before {
+	border-top-color: var(--interactive);
+}
+
+.tlValueList__row--dragOver-after {
+	border-bottom-color: var(--interactive);
+}
+
+.tlValueList__row > .tlValueList__item {
+	display: block;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.tlValueList__handle,
+.tlValueList__remove,
+.tlValueList__add {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: none;
+	padding: var(--spacing-01) var(--spacing-02);
+	min-height: 1.5rem;
+	color: var(--icon-primary);
+	font-size: var(--body-compact-01-font-size);
+	line-height: 1;
+	cursor: pointer;
+}
+
+.tlValueList__handle:hover,
+.tlValueList__remove:hover,
+.tlValueList__add:hover {
+	background-color: var(--layer-hover);
+}
+
+.tlValueList__handle:focus-visible,
+.tlValueList__remove:focus-visible,
+.tlValueList__add:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -1px;
+}
+
+.tlValueList__remove:hover {
+	color: var(--support-error);
+}
+
+/* The grip the value is dragged by; the arrow keys move the value while it has the focus. */
+.tlValueList__handle {
+	color: var(--text-secondary);
+	cursor: grab;
+}
+
+.tlValueList__handle:active {
+	cursor: grabbing;
+}
+
+/* --- TLPanel ----------------------------------------------------------- */
+
+.tlPanel {
+	font-family: var(--font-family);
+}
+
+.tlPanel__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	/* A panel header is local chrome, not global chrome: it uses a light surface
+	   so it reads as content and does not visually merge with the dark app bar
+	   (which is the single accent-colored bar). A faint tint against the white
+	   content makes it read clearly as a header bar; it is applied uniformly to
+	   every panel header (standalone or split) so identical tables/panels look
+	   the same regardless of the surrounding layout. Delineated by a bottom border. */
+	background-color: var(--layer-02);
+	color: var(--text-primary);
+	border-bottom: 1px solid var(--border-subtle);
+	gap: var(--spacing-02);
+	padding: var(--spacing-02) var(--spacing-03);
+	box-sizing: border-box;
+	flex-shrink: 0;
+}
+
+.tlPanel__title {
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	color: var(--text-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
+.tlPanel__titleContent {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	flex: 1;
+}
+
+/* Card appearance: a bordered, rounded panel reading as one self-contained entry of a list
+   (e.g. a comment). The tinted header visually binds byline and content together; compact
+   insets keep the entry tight - insets inside pick up the reduced inset via --page-inset. */
+.tlPanel--card {
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02);
+	overflow: hidden;
+	/* Same insets as the panel header, so header and content align on the token grid. */
+	--page-inset: var(--spacing-02) var(--spacing-03);
+}
+
+/* Hover-revealed actions: the toolbar stays invisible (but keyboard-reachable) until the
+   pointer is over the panel or one of the buttons holds focus. */
+.tlPanel--hoverActions > .tlPanel__header > .tlPanel__toolbar {
+	opacity: 0;
+	transition: opacity 0.15s ease-in-out;
+}
+
+.tlPanel--hoverActions:hover > .tlPanel__header > .tlPanel__toolbar,
+.tlPanel--hoverActions > .tlPanel__header > .tlPanel__toolbar:focus-within {
+	opacity: 1;
+}
+
+.tlPanel__toolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	flex-shrink: 0;
+	margin-left: auto;
+	/* The slot reserves the height of one control row - the height a toolbar button is sized
+	   by - whether or not it holds a command. A header is therefore equally tall in either
+	   case: the headers of neighbouring panels line up, and a command that becomes executable
+	   does not move the header it appears in. */
+	min-height: var(--tl-size-control);
+}
+
+/* Who gives way when the header is too narrow: a toolbar that can collapse absorbs the shrink
+   (it drops button labels and folds commands into its overflow menu), and the title truncates
+   only once the toolbar is down to its overflow trigger. A toolbar that cannot collapse keeps
+   its width, so there the title yields first. */
+.tlPanel__header:has(> .tlPanel__toolbar > .tlToolbar--collapsible) > .tlPanel__toolbar {
+	flex-shrink: var(--tl-toolbar-shrink-priority);
+	/* Stated explicitly: the automatic minimum size would be the toolbar's natural width, which
+	   is exactly the width the toolbar is meant to give up again. */
+	min-width: var(--tl-toolbar-trigger-size);
+}
+
+.tlPanel__actionButton {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--icon-primary);
+	cursor: pointer;
+	padding: 0;
+	flex-shrink: 0;
+}
+
+button.tlPanel__actionButton:hover {
+	background: var(--layer-hover);
+}
+
+button.tlPanel__actionButton:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlPanel__actionButton svg {
+	width: 1rem;
+	height: 1rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+/* The body of a panel is where the fill chain ends (see the fill contract above): it is bounded by
+   the panel - it takes the space the panel has left over and scrolls what does not fit into it -
+   and is therefore the box a filling child resolves its height against. A child can only do that in
+   a flex container, so the body is a column: a child carrying .tlFill takes the height the body
+   offers, and any other child keeps the height of its content. */
+.tlPanel__content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	overflow: auto;
+	position: relative;
+}
+
+/* Content that does not fill keeps the height of what it contains: standing taller than the body it
+   overflows and the body scrolls it, rather than being squeezed into the body and clipping. */
+.tlPanel__content > :not(.tlFill) {
+	flex-shrink: 0;
+}
+
+.tlPanel--fullLine {
+	grid-column: 1 / -1;
+}
+
+.tlPanel--maximized {
+	background: var(--background);
+}
+
+/* --- TLSplitPanel ------------------------------------------------------ */
+
+.tlSplitPanel__splitter {
+	flex-shrink: 0;
+	background: var(--border-subtle);
+}
+
+.tlSplitPanel__splitter--horizontal {
+	width: 4px;
+	cursor: col-resize;
+}
+
+.tlSplitPanel__splitter--vertical {
+	height: 4px;
+	cursor: row-resize;
+}
+
+.tlSplitPanel__splitter:hover,
+.tlSplitPanel__splitter:active {
+	background: var(--border-interactive);
+}
+
+.tlSplitPanel--allCollapsed > .tlSplitPanel__child {
+	overflow: hidden;
+}
+
+/* --- Collapsed panel in horizontal split ------------------------------- */
+
+.tlSplitPanel__child--collapsedHorizontal .tlPanel__header {
+	flex-direction: column-reverse;
+	justify-content: start;
+	align-items: center;
+	height: 100%;
+	padding: var(--spacing-02);
+}
+
+.tlSplitPanel__child--collapsedHorizontal .tlPanel__title {
+	display: block;
+	width: 0;
+	overflow: visible;
+	white-space: nowrap;
+	transform: rotate(90deg);
+}
+
+.tlSplitPanel__child--collapsedHorizontal .tlPanel__toolbar {
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.tlSplitPanel__child--collapsedHorizontal .tlPanel__actionButton {
+	margin-left: 0;
+}
+
+/* --- TLSidebar --------------------------------------------------------- */
+
+.tlSidebar {
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+	height: 100%;
+	font-family: var(--font-family);
+}
+
+.tlSidebar__nav {
+	display: flex;
+	flex-direction: column;
+	width: 16rem;
+	flex-shrink: 0;
+	border-right: 1px solid var(--border-subtle);
+	background: var(--layer-01);
+	overflow-y: auto;
+	overflow-x: hidden;
+	transition: width 0.2s ease;
+}
+
+.tlSidebar--collapsed .tlSidebar__nav {
+	width: 2.5rem;
+}
+
+.tlSidebar__content {
+	flex: 1;
+	overflow: auto;
+	position: relative;
+	/* Flush: the active view's content owns its inset (see spacing model). */
+	display: flex;
+	flex-direction: column;
+}
+
+.tlSidebar__content > * {
+	flex: 1 1 0%;
+	min-height: 0;
+}
+
+.tlSidebar__headerSlot,
+.tlSidebar__footerSlot {
+	flex-shrink: 0;
+	/* Inset like the items below, so the rail chrome lines up with the item labels
+	   instead of sitting against the rail edge. */
+	padding: var(--spacing-03) var(--spacing-04);
+	border-bottom: 1px solid var(--border-subtle);
+	overflow: hidden;
+}
+
+.tlSidebar__footerSlot {
+	border-bottom: none;
+	border-top: 1px solid var(--border-subtle);
+}
+
+.tlSidebar__headerSlot--collapsed,
+.tlSidebar__footerSlot--collapsed {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	/* The rail is icon width: a child that takes the full width centres its own content
+	   as well, so the chrome sits under the item icons whatever control fills the slot. */
+	text-align: center;
+	padding: var(--spacing-02);
+	overflow: hidden;
+}
+
+.tlSidebar__items {
+	flex: 1;
+	overflow-y: auto;
+	overflow-x: hidden;
+	/* Keep a swipe that reaches the end of the item list from chaining into an outer
+	   scroll region (page panning in mobile drawer mode). */
+	overscroll-behavior: contain;
+	padding: var(--spacing-02) 0;
+}
+
+/* Shared base for interactive sidebar items */
+.tlSidebar__item {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	width: 100%;
+	padding: var(--spacing-03) var(--spacing-04);
+	border: none;
+	border-left: 3px solid transparent;
+	background: transparent;
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+	font-family: var(--font-family);
+	cursor: pointer;
+	text-align: left;
+}
+
+button.tlSidebar__item:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlSidebar__item:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+/* An item offered, but out of reach: greyed out and unresponsive to the pointer. */
+.tlSidebar__item--disabled,
+button.tlSidebar__item:disabled,
+button.tlSidebar__item:disabled:hover,
+button.tlSidebar__flyoutItem:disabled,
+button.tlSidebar__flyoutItem:disabled:hover {
+	background: transparent;
+	color: var(--text-disabled);
+	cursor: default;
+}
+
+/* Navigation item */
+.tlSidebar__navItem--active {
+	background: var(--layer-selected);
+	border-left-color: var(--button-primary);
+	color: var(--text-primary);
+	font-weight: 600;
+}
+
+button.tlSidebar__navItem--active:hover {
+	background: var(--layer-selected-hover);
+}
+
+/* Header item */
+.tlSidebar__headerItem {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-03) var(--spacing-04);
+	border-left: 3px solid transparent;
+	color: var(--text-primary);
+	font-size: var(--label-01-font-size);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+/* Separator */
+.tlSidebar__separator {
+	border: none;
+	border-top: 1px solid var(--border-subtle);
+	margin: var(--spacing-02) var(--spacing-04);
+}
+
+.tlSidebar__chevron {
+	margin-left: auto;
+	flex-shrink: 0;
+	transition: transform 0.2s ease;
+}
+
+.tlSidebar__chevron--open {
+	transform: rotate(180deg);
+}
+
+.tlSidebar__groupChildren {
+	padding-left: var(--spacing-04);
+}
+
+/* Icon */
+.tlSidebar__icon {
+	flex-shrink: 0;
+	width: 1rem;
+	text-align: center;
+	font-size: 1rem;
+}
+
+/* Label */
+.tlSidebar__label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Badge */
+.tlSidebar__badge {
+	margin-left: auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.25rem;
+	height: 1.25rem;
+	padding: 0 var(--spacing-02);
+	border-radius: 999px;
+	background: var(--button-primary);
+	color: var(--text-on-color);
+	font-size: 0.6875rem;
+	font-weight: 600;
+	line-height: 1;
+	flex-shrink: 0;
+}
+
+.tlSidebar__iconWrap {
+	position: relative;
+	display: inline-flex;
+}
+
+.tlSidebar__badge--collapsed {
+	position: absolute;
+	top: -0.375rem;
+	right: -0.5rem;
+	margin-left: 0;
+	min-width: 0.875rem;
+	height: 0.875rem;
+	padding: 0 0.1875rem;
+	font-size: 0.5625rem;
+}
+
+/* --- Collapsed mode: center icon-only items --- */
+
+.tlSidebar--collapsed .tlSidebar__item,
+.tlSidebar--collapsed .tlSidebar__headerItem {
+	justify-content: center;
+	padding: var(--spacing-03) 0;
+	border-left: 3px solid transparent;
+	gap: 0;
+}
+
+.tlSidebar--collapsed .tlSidebar__navItem--active {
+	background: var(--layer-selected);
+	border-left-color: var(--button-primary);
+}
+
+.tlSidebar--collapsed .tlSidebar__separator {
+	margin: var(--spacing-02) var(--spacing-02);
+}
+
+/* Collapse toggle button */
+.tlSidebar__collapseBtn {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	height: 2.5rem;
+	border: none;
+	border-top: 1px solid var(--border-subtle);
+	background: transparent;
+	color: var(--text-secondary);
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+button.tlSidebar__collapseBtn:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlSidebar__collapseBtn:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+/* Group flyout (collapsed-mode popover) */
+.tlSidebar__group {
+	position: relative;
+}
+
+.tlSidebar__flyout {
+	position: fixed;
+	z-index: 1000;
+	min-width: 12rem;
+	background: var(--layer-02);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--border-radius-02);
+	box-shadow: var(--shadow-menu);
+	padding: var(--spacing-02) 0;
+	overflow-y: auto;
+	max-height: 20rem;
+}
+
+.tlSidebar__flyoutHeader {
+	padding: var(--spacing-03) var(--spacing-04);
+	color: var(--text-primary);
+	font-size: var(--label-01-font-size);
+	font-weight: 600;
+	border-bottom: 1px solid var(--border-subtle);
+	margin-bottom: var(--spacing-02);
+}
+
+.tlSidebar__flyoutItem {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	width: 100%;
+	padding: var(--spacing-03) var(--spacing-04);
+	border: none;
+	background: transparent;
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+	font-family: var(--font-family);
+	cursor: pointer;
+	text-align: left;
+}
+
+button.tlSidebar__flyoutItem:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlSidebar__flyoutItem:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlSidebar__flyoutItem--active {
+	color: var(--text-primary);
+	font-weight: 600;
+}
+
+.tlSidebar__flyoutSectionHeader {
+	padding: var(--spacing-02) var(--spacing-04);
+	color: var(--text-primary);
+	font-size: var(--label-01-font-size);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+/* --- Drawer backdrop (only used in mobile drawer mode; hidden on desktop). ---------- */
+
+.tlSidebar__backdrop {
+	display: none;
+}
+
+/* --- Drawer toggle (mobile hamburger contributed via the sidebar's drawer-open-slot-name) -- */
+
+.tlDrawerToggle {
+	display: none; /* desktop: hidden; mobile @media rules below override */
+	align-items: center;
+	justify-content: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+	border-radius: var(--corner-radius);
+}
+
+button.tlDrawerToggle:hover {
+	background: rgba(255, 255, 255, 0.12);
+}
+
+button.tlDrawerToggle:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+/* --- Responsive: sidebar becomes an off-canvas drawer on small viewports ---- */
+
+@media (max-width: 768px) {
+	.tlDrawerToggle {
+		display: inline-flex;
+	}
+
+	/* Turn the nav rail into a fixed off-canvas panel that slides in from the left.
+	 * Width is intentionally NOT set here: it inherits from the desktop base rules
+	 * (.tlSidebar--collapsed gives 2.5rem, default gives 16rem). That way crossing the
+	 * @media boundary from a collapsed desktop rail does NOT change the width — the
+	 * rail just slides off-canvas at its current 2.5rem width, instead of first
+	 * expanding to 16rem and then animating. Width is overridden to 16rem only when
+	 * the drawer is explicitly open (below). Both width and transform are in the
+	 * transition list so opening from a collapsed-preference state grows + slides
+	 * smoothly, and closing shrinks + slides back.
+	 */
+	.tlSidebar__nav {
+		position: fixed;
+		top: 3.5rem; /* below the app bar */
+		left: 0;
+		bottom: 0;
+		transform: translateX(-100%);
+		transition: transform 0.2s ease, width 0.2s ease;
+		z-index: 50;
+		box-shadow: none;
+		/* Touch scrolling inside the drawer must not chain into page panning. */
+		overscroll-behavior: contain;
+		touch-action: pan-y;
+	}
+
+	.tlSidebar.tlSidebar--drawerOpen .tlSidebar__nav {
+		transform: translateX(0);
+		width: 16rem; /* full drawer regardless of desktop collapsed preference */
+		box-shadow: var(--shadow-dialog);
+	}
+
+	/* Backdrop only when drawer is open. Clicking closes the drawer (handled in TLSidebar.tsx). */
+	.tlSidebar--drawerOpen .tlSidebar__backdrop {
+		display: block;
+		position: fixed;
+		top: 3.5rem;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: var(--overlay);
+		z-index: 49;
+		cursor: pointer;
+	}
+
+	/* In-rail collapse arrow is meaningless on mobile; the AppBar hamburger replaces it. */
+	.tlSidebar__collapseBtn {
+		display: none;
+	}
+
+	/* Content takes full width regardless of nav state. */
+	.tlSidebar__content {
+		width: 100%;
+	}
+}
+
+/* --- TLStack --------------------------------------------------------------- */
+
+.tlStack {
+	display: flex;
+	font-family: var(--font-family);
+}
+
+.tlStack--column { flex-direction: column; }
+.tlStack--row    { flex-direction: row; }
+
+.tlStack--gap-compact { gap: var(--spacing-02); }
+.tlStack--gap-default { gap: var(--spacing-04); }
+.tlStack--gap-loose   { gap: var(--spacing-06); }
+
+.tlStack--align-start   { align-items: flex-start; }
+.tlStack--align-center  { align-items: center; }
+.tlStack--align-end     { align-items: flex-end; }
+.tlStack--align-stretch { align-items: stretch; }
+
+/* Distribution of the free space along the direction of the stack. */
+.tlStack--justify-start         { justify-content: flex-start; }
+.tlStack--justify-center        { justify-content: center; }
+.tlStack--justify-end           { justify-content: flex-end; }
+.tlStack--justify-space-between { justify-content: space-between; }
+.tlStack--justify-space-around  { justify-content: space-around; }
+.tlStack--justify-space-evenly  { justify-content: space-evenly; }
+
+.tlStack--wrap { flex-wrap: wrap; }
+
+/* First child fills the remaining main-axis space (input-with-adornment row). */
+.tlStack--grow-first.tlStack--row > *:first-child { flex: 1 1 auto; min-width: 0; }
+.tlStack--grow-first.tlStack--column > *:first-child { flex: 1 1 auto; min-height: 0; }
+
+/* --- TLTileStack ----------------------------------------------------------- */
+
+/* Positioning context for the covered frames below. */
+.tlTileStack {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+/* One frame of the drill-down stack, as a bounded flex column so that a filling frame content
+   resolves its height against it. */
+.tlTileStack__frame {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+/* A frame that another frame covers keeps its layout box - taken out of the flow at the size of
+   the stack - so that it survives being covered as the user left it, scroll offsets of its tables
+   and forms included. Invisible and, being invisible, neither clickable nor focusable. */
+.tlTileStack__frame--covered {
+	position: absolute;
+	inset: 0;
+	visibility: hidden;
+}
+
+/* The frame change as a transition an application animates: the frame pushed carries
+   `tlTileStack__frame--entering` while it arrives, a copy of the frame popped carries
+   `tlTileStack__frame--exiting` while it leaves, and the root says which way the stack moved
+   (`tlTileStack--forward` / `tlTileStack--backward`). The engine only places the copy - a picture
+   over the stack, taking no place in the layout and no input; the movement is the application's. */
+.tlTileStack__frame--exiting {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+/* --- TLWizard -------------------------------------------------------------- */
+
+/* A multi-step flow: the indicator pinned above, the step content below it. */
+.tlWizard {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	width: 100%;
+	font-family: var(--font-family);
+}
+
+.tlWizard__header {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-03);
+	padding: var(--spacing-04);
+	/* Keep the indicator in place while the step content scrolls. */
+	flex-shrink: 0;
+	border-bottom: 1px solid var(--border-subtle-01);
+}
+
+.tlWizard__counter {
+	color: var(--text-secondary);
+	font-size: var(--label-01-font-size);
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+/* The bar stands for a length walked, so it is given one instead of taking the width of the page. */
+.tlWizard__progress {
+	display: flex;
+	max-width: 24rem;
+}
+
+.tlWizard__progress > * {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.tlWizard__steps {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-02) var(--spacing-05);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: tlWizardStep;
+}
+
+.tlWizard__stepItem {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	counter-increment: tlWizardStep;
+	font-size: var(--body-compact-01-font-size);
+}
+
+/* The position of the step, drawn as a disc in front of its name. */
+.tlWizard__stepItem::before {
+	content: counter(tlWizardStep);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 1.5rem;
+	height: 1.5rem;
+	border-radius: 999px;
+	background-color: var(--layer-active);
+	color: var(--text-secondary);
+	font-size: var(--label-01-font-size);
+	font-variant-numeric: tabular-nums;
+}
+
+.tlWizard__stepItem--done::before {
+	background-color: var(--interactive);
+	color: var(--text-on-color);
+}
+
+.tlWizard__stepItem--current::before {
+	background-color: var(--button-primary);
+	color: var(--text-on-color);
+}
+
+.tlWizard__stepName,
+.tlWizard__stepButton {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	font-family: var(--font-family);
+	font-size: inherit;
+	white-space: nowrap;
+}
+
+.tlWizard__stepName {
+	color: var(--text-secondary);
+}
+
+.tlWizard__stepItem--current .tlWizard__stepName {
+	color: var(--text-primary);
+	font-weight: bold;
+}
+
+.tlWizard__stepButton {
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: var(--link-primary);
+	cursor: pointer;
+}
+
+.tlWizard__stepButton:hover {
+	text-decoration: underline;
+}
+
+.tlWizard__stepButton:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+/* The region holding the step content, bounded so that a filling step resolves its height here. It
+   positions the copy of the step leaving, which lies over the one arriving while it fades out. */
+.tlWizard__body {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.tlWizard__step {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+/* The step change, as the engine draws it by default: the arriving step slides in from the side the
+   wizard moved towards, the one left behind fades out over it. An application restyles the change by
+   redefining these four rules; the classes (and the direction modifier on the root) are what it
+   addresses, so it can also drop the movement and keep only the fade, or animate something else
+   entirely. */
+.tlWizard__step--entering {
+	animation: tlWizardEnterForward 0.2s ease-out;
+}
+
+.tlWizard--backward .tlWizard__step--entering {
+	animation-name: tlWizardEnterBackward;
+}
+
+/* A picture of the step left behind: it neither takes input nor is read out, and it takes no place
+   in the layout, so the step arriving sits where it will stay. */
+.tlWizard__step--exiting {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	animation: tlWizardLeaveForward 0.2s ease-out forwards;
+}
+
+.tlWizard--backward .tlWizard__step--exiting {
+	animation-name: tlWizardLeaveBackward;
+}
+
+@keyframes tlWizardEnterForward {
+	from { opacity: 0; transform: translateX(12px); }
+	to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes tlWizardEnterBackward {
+	from { opacity: 0; transform: translateX(-12px); }
+	to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes tlWizardLeaveForward {
+	from { opacity: 1; transform: translateX(0); }
+	to   { opacity: 0; transform: translateX(-12px); }
+}
+
+@keyframes tlWizardLeaveBackward {
+	from { opacity: 1; transform: translateX(0); }
+	to   { opacity: 0; transform: translateX(12px); }
+}
+
+/* --- TLGrid ---------------------------------------------------------------- */
+
+.tlGrid {
+	display: grid;
+	font-family: var(--font-family);
+}
+
+/* The gap is also published as a custom property, because the responsive column template has to
+   compute with it: bounding the number of auto-fit columns means raising the column minimum to the
+   width a row of that many columns leaves for one of them, gaps taken off. */
+.tlGrid--gap-compact { --tlGrid-gap: var(--spacing-02); gap: var(--tlGrid-gap); }
+.tlGrid--gap-default { --tlGrid-gap: var(--spacing-04); gap: var(--tlGrid-gap); }
+.tlGrid--gap-loose   { --tlGrid-gap: var(--spacing-06); gap: var(--tlGrid-gap); }
+
+/* --- TLColumns ------------------------------------------------------------- */
+
+/* A wrapping flex row of columns, each column growing by its weight. The flex basis of a column
+   (set inline, since it computes with the configured breakpoint) is the width the breakpoint
+   leaves over the current container width, scaled up steeply: while the container is at least as
+   wide as the breakpoint that term is negative and therefore clamped to zero, so the row shares
+   its width by the grow factors; once the container is narrower the term turns positive and
+   exceeds the row, so every column wraps onto a line of its own. The columns align at the top and
+   keep the height of their content, so a short side column does not stretch to a long main one. */
+.tlColumns {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	font-family: var(--font-family);
+}
+
+.tlColumns--gap-compact { gap: var(--spacing-02); }
+.tlColumns--gap-default { gap: var(--spacing-04); }
+.tlColumns--gap-loose   { gap: var(--spacing-06); }
+
+/* The minimum keeps wide content (a long word, a table) from claiming more than the weighted
+   share; the maximum clamps the basis of a stacked column to the width of the row. */
+.tlColumns__column {
+	min-width: 0;
+	max-width: 100%;
+}
+
+/* --- TLDeckPane ------------------------------------------------------------ */
+
+/* Shows one child at a time and takes its size from that child: a column flex box that states no
+   size of its own, so a deck standing inline - in an app bar, beside a breadcrumb - is as wide and
+   as high as the content it shows. A deck showing a filling child carries .tlFill (see the fill
+   contract above) and is then a bounded flex container the child's height resolves against. */
+.tlDeckPane {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+}
+
+/* --- TLOverlay ------------------------------------------------------------- */
+
+/* The base gives the overlay its height and the surrounding layout its width; every layer covers
+   exactly that area. */
+.tlOverlay {
+	position: relative;
+	display: inline-block;
+	max-width: 100%;
+}
+
+.tlOverlay__layer {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	/* The free space of a layer belongs to the base below it; what the layer shows takes the
+	   pointer back. */
+	pointer-events: none;
+}
+
+.tlOverlay__layer > * {
+	pointer-events: auto;
+}
+
+.tlOverlay__layer--fill { align-items: stretch; justify-content: stretch; }
+.tlOverlay__layer--top-left { align-items: flex-start; justify-content: flex-start; }
+.tlOverlay__layer--top { align-items: flex-start; justify-content: center; }
+.tlOverlay__layer--top-right { align-items: flex-start; justify-content: flex-end; }
+.tlOverlay__layer--left { align-items: center; justify-content: flex-start; }
+.tlOverlay__layer--center { align-items: center; justify-content: center; }
+.tlOverlay__layer--right { align-items: center; justify-content: flex-end; }
+.tlOverlay__layer--bottom-left { align-items: flex-end; justify-content: flex-start; }
+.tlOverlay__layer--bottom { align-items: flex-end; justify-content: center; }
+.tlOverlay__layer--bottom-right { align-items: flex-end; justify-content: flex-end; }
+
+/* --- TLCard ---------------------------------------------------------------- */
+
+/* The overflow clip keeps the content inside the rounded corners. It also drops the card's
+   automatic minimum height in a flex container to zero, so the minimum is set to the content's
+   height explicitly: a card sharing a column with a filling control keeps its full content instead
+   of giving up height to it. */
+.tlCard {
+	border-radius: var(--border-radius-02);
+	font-family: var(--font-family);
+	background: var(--layer-01);
+	overflow: hidden;
+	min-height: min-content;
+}
+
+.tlCard--outlined {
+	border: 1px solid var(--border-subtle);
+}
+
+.tlCard--elevated {
+	box-shadow: var(--shadow-raised);
+}
+
+.tlCard__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--spacing-03) var(--spacing-04);
+	border-bottom: 1px solid var(--border-subtle);
+}
+
+.tlCard__title {
+	font-weight: 600;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	color: var(--text-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlCard__headerActions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+.tlCard__body--pad-none    { padding: 0; }
+.tlCard__body--pad-compact { padding: var(--spacing-03); }
+.tlCard__body--pad-default { padding: var(--spacing-04); }
+
+/* --- TLAppBar -------------------------------------------------------------- */
+
+.tlAppBar {
+	display: flex;
+	align-items: center;
+	height: 3.5rem;
+	padding: 0 var(--spacing-03);
+	gap: var(--spacing-02);
+	font-family: var(--font-family);
+	flex-shrink: 0;
+	box-sizing: border-box;
+}
+
+/* Übergang bis Welle 4 (Shell): die AppBar ist keine Markenfläche, sie liest die Flächen des Design Systems. */
+.tlAppBar--primary { background: var(--tl-surface-layer); color: var(--tl-text-primary); }
+
+.tlAppBar--surface {
+	background: var(--layer-01);
+	color: var(--text-primary);
+	border-bottom: 1px solid var(--border-subtle);
+}
+
+.tlAppBar--elevated {
+	box-shadow: var(--shadow-raised);
+}
+
+.tlAppBar__leading {
+	flex-shrink: 0;
+}
+
+.tlAppBar__title {
+	flex: 0 1 auto;
+	margin: 0;
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlAppBar__children {
+	display: flex;
+	align-items: center;
+	flex: 1 1 auto;
+	min-width: 0;
+	gap: var(--spacing-02);
+	overflow: hidden;
+}
+
+.tlAppBar__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+/* Without a command the actions toolbar renders nothing. The wrapper then leaves the bar alone
+   instead of contributing a gap between the content and the bar's trailing end. */
+.tlAppBar__actions:empty {
+	display: none;
+}
+
+/* Who gives way when the bar is too narrow: a toolbar that can collapse absorbs the shrink (it
+   drops button labels and folds commands into its overflow menu), and the title truncates only
+   once the toolbar is down to its overflow trigger. */
+.tlAppBar__actions:has(> .tlToolbar--collapsible) {
+	flex-shrink: var(--tl-toolbar-shrink-priority);
+	/* Stated explicitly: the automatic minimum size would be the toolbar's natural width, which
+	   is exactly the width the toolbar is meant to give up again. */
+	min-width: var(--tl-toolbar-trigger-size);
+}
+
+.tlAppBar__trailing {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+/* An actions area ahead of the trailing one has already claimed the free space; a second automatic
+   margin would split it between the two and strand the actions mid-bar. A wrapper showing nothing
+   claims nothing, so the trailing area keeps its own margin then. */
+.tlAppBar__actions:not(:empty) + .tlAppBar__trailing {
+	margin-left: 0;
+}
+
+/* --- Controls placed on the primary (accent) app bar -------------------- */
+/* The primary app bar has a dark accent background; its title inherits the
+   on-accent (white) color. Text elements and buttons bring their own
+   foreground (primary-text / accent-blue), which is nearly unreadable on the
+   accent background - the account name beside the avatar above all. Re-map
+   them to on-accent colors. */
+
+/* The re-mapping reaches the text through the custom property its tone fills, and only where the
+   text follows the default tone: a text that states a tone of its own - an error, a success -
+   keeps it, because the rule does not match its tone class. */
+.tlAppBar--primary .tlText--tone-primary {
+	--tlText-tone: var(--tl-text-primary);
+}
+
+/* A click region hovers with the generic layer-hover, which is a light surface - under the
+   on-accent text above it that leaves nothing to read. On the accent bar it hovers and opens in the
+   accent's own darker shades instead. */
+.tlAppBar--primary .tlMenuRegion--click:hover {
+	background: var(--tl-surface-interactive-hover);
+}
+
+.tlAppBar--primary .tlMenuRegion--click[aria-expanded="true"] {
+	background: var(--tl-surface-interactive-active);
+}
+
+/* --- TLBreadcrumb ---------------------------------------------------------- */
+
+.tlBreadcrumb {
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+}
+
+.tlBreadcrumb__list {
+	display: flex;
+	align-items: center;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	gap: var(--spacing-01);
+}
+
+.tlBreadcrumb__entry {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+}
+
+.tlBreadcrumb__separator {
+	color: var(--text-secondary);
+	flex-shrink: 0;
+}
+
+.tlBreadcrumb__item {
+	border: none;
+	background: transparent;
+	padding: 0;
+	color: var(--link-primary);
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	cursor: pointer;
+}
+
+.tlBreadcrumb__item:hover {
+	text-decoration: underline;
+}
+
+.tlBreadcrumb__item:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+.tlBreadcrumb__current {
+	color: var(--text-primary);
+}
+
+/* --- TLBottomBar ----------------------------------------------------------- */
+
+.tlBottomBar {
+	display: flex;
+	align-items: stretch;
+	height: 3.5rem;
+	border-top: 1px solid var(--border-subtle);
+	background: var(--layer-01);
+	font-family: var(--font-family);
+	flex-shrink: 0;
+}
+
+.tlBottomBar__item {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.125rem;
+	border: none;
+	background: transparent;
+	color: var(--text-secondary);
+	cursor: pointer;
+	padding: var(--spacing-02) 0;
+	font-family: var(--font-family);
+	min-width: 0;
+}
+
+.tlBottomBar__item:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+button.tlBottomBar__item:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+.tlBottomBar__item--active {
+	color: var(--button-primary);
+}
+
+.tlBottomBar__iconWrap {
+	position: relative;
+	display: inline-flex;
+}
+
+.tlBottomBar__icon {
+	font-size: 1.25rem;
+}
+
+.tlBottomBar__badge {
+	position: absolute;
+	top: -0.375rem;
+	right: -0.5rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0.875rem;
+	height: 0.875rem;
+	padding: 0 0.1875rem;
+	border-radius: 999px;
+	background: var(--button-primary);
+	color: var(--text-on-color);
+	font-size: 0.5625rem;
+	font-weight: 600;
+	line-height: 1;
+}
+
+.tlBottomBar__label {
+	font-size: 0.6875rem;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
+}
+
+/* --- TLDialog (overlay-only) ----------------------------------------------- */
+
+/* The backdrop dims the page with the overlay token and blurs what is behind it by the surface
+   blur of the theme, which is none unless a theme asks for one. */
+.tlDialog__backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 10000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--overlay);
+	backdrop-filter: blur(var(--surface-blur));
+	outline: none;
+}
+
+/* The dialog change as a transition an application animates: the backdrop of a dialog opening
+   carries `tlDialog__backdrop--entering` while it arrives, and a copy of the backdrop of a dialog
+   closed carries `tlDialog__backdrop--exiting` while it leaves. The copy keeps the fixed position
+   of what it copies and therefore covers the page, so it has to let everything through: the page
+   stays usable while it fades, and a dialog still open below it keeps its input. The engine ships
+   no animation for either class. */
+.tlDialog__backdrop--exiting {
+	pointer-events: none;
+}
+
+/* --- TLDialogManager ------------------------------------------------------- */
+
+.tlDialogManager {
+	/* Container for stacked dialogs; no visual styles. */
+}
+
+/* --- TLWindow -------------------------------------------------------------- */
+
+.tlWindow {
+	position: relative;
+	background: var(--layer-01);
+	border-radius: var(--border-radius-02);
+	box-shadow: var(--shadow-dialog);
+	display: flex;
+	flex-direction: column;
+	/* The configured width is a preference: the window never grows beyond the viewport
+	   (minus a small margin), so wide dialogs stay fully visible on narrow screens.
+	   The maximized state overrides this inline with the full viewport width. */
+	max-width: calc(100vw - 2 * var(--spacing-04));
+	max-height: 80vh;
+	font-family: var(--font-family);
+	outline: none;
+	overflow: hidden;
+}
+
+.tlWindow__header {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-04);
+	border-bottom: 1px solid var(--border-subtle);
+	flex-shrink: 0;
+	cursor: grab;
+	user-select: none;
+}
+
+.tlWindow__header:active {
+	cursor: grabbing;
+}
+
+.tlWindow__title {
+	flex: 1;
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	color: var(--text-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlWindow__toolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+}
+
+.tlWindow__closeBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--text-secondary);
+	cursor: pointer;
+	padding: 0;
+	flex-shrink: 0;
+}
+
+button.tlWindow__closeBtn:not(:disabled):hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlWindow__closeBtn:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+button.tlWindow__closeBtn:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlWindow__maximizeBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--text-secondary);
+	cursor: pointer;
+	padding: 0;
+	flex-shrink: 0;
+}
+
+button.tlWindow__maximizeBtn:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlWindow__maximizeBtn:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlWindow__header--maximized {
+	cursor: default;
+}
+
+.tlWindow__body {
+	flex: 1;
+	overflow-y: auto;
+	/* Content wider than the (viewport-clamped) window scrolls inside the body instead
+	   of being clipped by the window's rounded-corner overflow. */
+	overflow-x: auto;
+	/* Flush: a dialog is a container too - its content owns its inset (a form with
+	   with-inset, or an <inset> around explanatory text). */
+}
+
+/* The footer consists of a single collapsing toolbar, which states its natural width and gives
+   it up again down to its overflow trigger. Nothing else competes for the width, so the toolbar
+   takes the whole shrink and the footer never overflows. */
+.tlWindow__footer {
+	display: flex;
+	justify-content: flex-end;
+	padding: var(--spacing-03) var(--spacing-04);
+	border-top: 1px solid var(--border-subtle);
+	flex-shrink: 0;
+	min-width: 0;
+}
+
+/* A toolbar without a command renders nothing, leaving the strip empty: a window whose footer
+   carries neither an action nor a button-bar command shows no footer at all. */
+.tlWindow__footer:empty {
+	display: none;
+}
+
+/* Resize handles */
+.tlWindow__resizeHandle {
+	position: absolute;
+}
+
+.tlWindow__resizeHandle--n {
+	top: -3px; left: 8px; right: 8px; height: 6px;
+	cursor: ns-resize;
+}
+
+.tlWindow__resizeHandle--s {
+	bottom: -3px; left: 8px; right: 8px; height: 6px;
+	cursor: ns-resize;
+}
+
+.tlWindow__resizeHandle--e {
+	top: 8px; bottom: 8px; right: -3px; width: 6px;
+	cursor: ew-resize;
+}
+
+.tlWindow__resizeHandle--w {
+	top: 8px; bottom: 8px; left: -3px; width: 6px;
+	cursor: ew-resize;
+}
+
+.tlWindow__resizeHandle--ne {
+	top: -3px; right: -3px; width: 12px; height: 12px;
+	cursor: nesw-resize;
+}
+
+.tlWindow__resizeHandle--nw {
+	top: -3px; left: -3px; width: 12px; height: 12px;
+	cursor: nwse-resize;
+}
+
+.tlWindow__resizeHandle--se {
+	bottom: -3px; right: -3px; width: 12px; height: 12px;
+	cursor: nwse-resize;
+}
+
+.tlWindow__resizeHandle--sw {
+	bottom: -3px; left: -3px; width: 12px; height: 12px;
+	cursor: nesw-resize;
+}
+
+/* --- TLDrawer -------------------------------------------------------------- */
+
+.tlDrawer {
+	position: fixed;
+	z-index: 9000;
+	background: var(--layer-01);
+	box-shadow: var(--shadow-dialog);
+	display: flex;
+	flex-direction: column;
+	transition: transform 0.25s ease;
+	font-family: var(--font-family);
+}
+
+.tlDrawer--left, .tlDrawer--right { top: 0; bottom: 0; }
+.tlDrawer--left   { left: 0;  transform: translateX(-100%); }
+.tlDrawer--right  { right: 0; transform: translateX(100%); }
+.tlDrawer--bottom { left: 0; right: 0; bottom: 0; transform: translateY(100%); }
+
+.tlDrawer--left.tlDrawer--open   { transform: translateX(0); }
+.tlDrawer--right.tlDrawer--open  { transform: translateX(0); }
+.tlDrawer--bottom.tlDrawer--open { transform: translateY(0); }
+
+/* The size is a preference: a side drawer never grows wider than the viewport, a
+   bottom drawer never taller. */
+.tlDrawer--narrow { width: 16rem; max-width: 100vw; }
+.tlDrawer--medium { width: 24rem; max-width: 100vw; }
+.tlDrawer--wide   { width: 36rem; max-width: 100vw; }
+.tlDrawer--bottom.tlDrawer--narrow { width: auto; height: 16rem; max-height: 100vh; }
+.tlDrawer--bottom.tlDrawer--medium { width: auto; height: 24rem; max-height: 100vh; }
+.tlDrawer--bottom.tlDrawer--wide   { width: auto; height: 36rem; max-height: 100vh; }
+
+/* Anchored in the element it is rendered in instead of the viewport: the drawer covers only that
+   element, leaving the surrounding chrome (app bar, sidebar, the title of the enclosing panel)
+   visible. Its layer lies above the container's own content - including a sticky table header -
+   and below the window, dialog and snackbar layers, which keep covering the page as a whole. */
+.tlDrawer--container {
+	position: absolute;
+	z-index: 10;
+}
+
+/* The extent is capped at the container, not at the viewport. */
+.tlDrawer--container.tlDrawer--narrow,
+.tlDrawer--container.tlDrawer--medium,
+.tlDrawer--container.tlDrawer--wide { max-width: 100%; }
+.tlDrawer--container.tlDrawer--bottom.tlDrawer--narrow,
+.tlDrawer--container.tlDrawer--bottom.tlDrawer--medium,
+.tlDrawer--container.tlDrawer--bottom.tlDrawer--wide { max-height: 100%; }
+
+.tlDrawer__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--spacing-03) var(--spacing-04);
+	border-bottom: 1px solid var(--border-subtle);
+	flex-shrink: 0;
+}
+
+.tlDrawer__title {
+	font-weight: 600;
+	font-size: var(--heading-compact-02-font-size);
+	color: var(--text-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlDrawer__closeBtn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--text-secondary);
+	cursor: pointer;
+	padding: 0;
+}
+
+button.tlDrawer__closeBtn:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlDrawer__closeBtn:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlDrawer__body {
+	flex: 1;
+	overflow-y: auto;
+	/* Touch scrolling inside the drawer must not chain into page panning. */
+	overscroll-behavior: contain;
+	padding: var(--spacing-04);
+}
+
+/* --- TLSnackbar ------------------------------------------------------------ */
+
+.tlSnackbar {
+	position: fixed;
+	bottom: var(--spacing-04);
+	left: 50%;
+	transform: translateX(-50%) translateY(0);
+	z-index: 11000;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-03) var(--spacing-04);
+	border-radius: var(--border-radius-02);
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	box-shadow: var(--shadow-dialog);
+	animation: tlSnackbarSlideUp 0.2s ease;
+	max-width: min(40rem, calc(100vw - 2 * var(--spacing-04)));
+}
+
+.tlSnackbar--exiting {
+	animation: tlSnackbarFadeOut 0.2s ease forwards;
+}
+
+.tlSnackbar--info    { background: var(--background-inverse); color: var(--text-inverse); }
+.tlSnackbar--success { background: var(--support-success); color: #fff; }
+.tlSnackbar--warning { background: var(--support-warning); color: #000; }
+.tlSnackbar--error   { background: var(--support-error); color: #fff; }
+
+.tlSnackbar__message {
+	flex: 1;
+	/* Carries block content when the message consists of a summary and a list of details. */
+	display: block;
+}
+
+/* Summary line of a message that carries several detail messages. */
+.tlSnackbar__title {
+	font-weight: 600;
+}
+
+/* One detail message per line, so it is clear where one ends and the next begins. */
+.tlSnackbar__message ul {
+	margin: var(--spacing-02) 0 0;
+	padding-inline-start: var(--spacing-05);
+}
+
+.tlSnackbar__message li + li {
+	margin-top: var(--spacing-02);
+}
+
+.tlSnackbar__action {
+	border: none;
+	background: transparent;
+	color: inherit;
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	font-weight: 600;
+	cursor: pointer;
+	text-decoration: underline;
+	white-space: nowrap;
+}
+
+.tlSnackbar__action:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+
+@keyframes tlSnackbarSlideUp {
+	from { transform: translateX(-50%) translateY(1rem); opacity: 0; }
+	to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+}
+
+@keyframes tlSnackbarFadeOut {
+	from { opacity: 1; }
+	to   { opacity: 0; }
+}
+
+/* --- TLAppShell ------------------------------------------------------------ */
+
+.tlAppShell {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+/* Bounded flex column: the content control resolves its height against this region, so a filling
+   one spans it and scrolls internally while the app bar stays put. */
+.tlAppShell__content {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Notice area between header and content. Carries neither padding nor border of its own, so it
+   collapses to zero height while every notice inside it is hidden (a hidden TLNoticeBar renders
+   nothing at all). */
+.tlAppShell__notices {
+	display: flex;
+	flex-direction: column;
+	flex: 0 0 auto;
+}
+
+/* Several notices stack flush: they are full-width bars, and the gap a stack puts between its
+   children would show the page through as a stripe between two announcements. */
+.tlAppShell__notices .tlStack {
+	gap: 0;
+}
+
+/* --- TLNoticeBar (system-wide notice) ------------------------------------- */
+
+.tlNoticeBar {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-02) var(--spacing-05);
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	text-align: center;
+}
+
+.tlNoticeBar--info    { background: var(--background-inverse); color: var(--text-inverse); }
+.tlNoticeBar--warning { background: var(--support-warning); color: #000; }
+.tlNoticeBar--error   { background: var(--support-error); color: #fff; }
+
+/* A notice offering an action is a button spanning the whole bar, as its tooltip announces. */
+.tlNoticeBar--clickable {
+	cursor: pointer;
+}
+
+/* Tabular figures keep the count-down from jittering as the digits change every second. */
+.tlNoticeBar__countdown {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.tlAppShell .tlBreadcrumb {
+	padding: var(--spacing-02) var(--spacing-05);
+}
+
+/* --- TLAdaptiveDetail (responsive master-detail) --------------------------- */
+
+.tlAdaptiveDetail {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+	/* The anchor a drawer presentation positions its detail in, and the clip that keeps the
+	   drawer's closed state off the screen. The clip forbids scrolling altogether (unlike
+	   overflow: hidden, which still scrolls programmatically), so the parked drawer, which lies
+	   outside this box, can never be scrolled into view - e.g. by a focus moving into it. */
+	position: relative;
+	overflow: clip;
+}
+
+.tlAdaptiveDetail__content {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.tlAdaptiveDetail__breadcrumb {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-02);
+	padding: var(--spacing-02) var(--spacing-04);
+	border-bottom: 1px solid var(--border-color);
+	flex: 0 0 auto;
+}
+
+.tlAdaptiveDetail__crumb {
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	padding: 0;
+	font: inherit;
+	color: var(--link-color);
+}
+
+.tlAdaptiveDetail__crumb--current {
+	cursor: default;
+	color: inherit;
+	font-weight: 600;
+}
+
+.tlAdaptiveDetail__sep {
+	color: var(--text-muted);
+}
+
+/* --- TLMenu ---------------------------------------------------------------- */
+
+/* Placeholder rendered in place of a view that could not be loaded. */
+.tlViewError {
+	margin: var(--spacing-05);
+	padding: var(--spacing-05);
+	border: 1px solid var(--support-error);
+	border-left-width: var(--spacing-03);
+	border-radius: var(--border-radius-02);
+	background: var(--layer-01);
+	overflow: auto;
+}
+
+.tlViewError__title {
+	font-weight: 600;
+	color: var(--support-error);
+}
+
+.tlViewError__view {
+	font-family: var(--font-family-mono);
+}
+
+.tlViewError__detail {
+	font-family: var(--font-family-mono);
+	font-size: 0.875em;
+	white-space: pre-wrap;
+	color: var(--text-secondary);
+}
+
+.tlMenu {
+	z-index: 10000;
+	min-width: 10rem;
+	/* A menu offering many entries (e.g. the element types of a container) stays within the
+	   viewport and scrolls instead of being cut off. */
+	max-height: 70vh;
+	overflow-y: auto;
+	background: var(--layer-02);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--border-radius-02);
+	box-shadow: var(--shadow-menu);
+	padding: var(--spacing-02) 0;
+	font-family: var(--font-family);
+	outline: none;
+}
+
+.tlMenu__item {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	width: 100%;
+	padding: var(--spacing-03) var(--spacing-04);
+	border: none;
+	background: transparent;
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+	font-family: var(--font-family);
+	cursor: pointer;
+	text-align: left;
+}
+
+button.tlMenu__item:hover,
+.tlMenu__item--focused {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+button.tlMenu__item:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlMenu__item--disabled {
+	color: var(--text-disabled);
+	cursor: default;
+}
+
+button.tlMenu__item--disabled:hover {
+	background: transparent;
+	color: var(--text-disabled);
+}
+
+/* The entry whose command is in force, e.g. the current theme among the offered ones. */
+.tlMenu__item--active {
+	font-weight: 600;
+}
+
+.tlMenu__separator {
+	border: none;
+	border-top: 1px solid var(--border-subtle);
+	margin: var(--spacing-02) var(--spacing-04);
+}
+
+/* A caption above a group of entries: set in the secondary text colour and a smaller size so it
+   reads as a heading of the entries rather than as one of them. */
+.tlMenu__header {
+	padding: var(--spacing-02) var(--spacing-04) var(--spacing-01);
+	font-size: var(--label-01-font-size);
+	font-weight: 600;
+	color: var(--text-secondary);
+	white-space: nowrap;
+	cursor: default;
+	user-select: none;
+}
+
+.tlMenu__icon {
+	flex-shrink: 0;
+	width: 1rem;
+	text-align: center;
+	font-size: 1rem;
+}
+
+.tlMenu__label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* --- TLMenuRegion ---------------------------------------------------------- */
+
+/* A right-click region is pure pass-through: it adds no box of its own, so the content it wraps
+   lays out exactly as it would without the region. */
+.tlMenuRegion {
+	display: contents;
+}
+
+/* A click region is the visible trigger of a drop-down, so it does become a box: an inline row
+   carrying the affordances of a control. */
+.tlMenuRegion--click {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	padding: var(--spacing-02) var(--spacing-03);
+	border-radius: var(--border-radius-02);
+	cursor: pointer;
+	user-select: none;
+}
+
+.tlMenuRegion--click:hover {
+	background: var(--layer-hover);
+}
+
+.tlMenuRegion--click:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+/* --- User menu ------------------------------------------------------------- */
+
+/* The account name beside the avatar. It yields before the work area does: at narrow widths the
+   avatar alone identifies the session. */
+.tlUserMenu__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 12rem;
+}
+
+@media (max-width: 640px) {
+	.tlUserMenu__name {
+		display: none;
+	}
+}
+
+/* --- TLTableView ----------------------------------------------------------- */
+
+/* The table always fills (see the fill contract above): inside a flex column, .tlFill sizes it
+   from the height its container offers, and its flex basis takes precedence over the height set
+   here. The height applies to a container laying the table out as a block, which then gives it
+   its own definite height. */
+.tlTableView {
+	display: flex;
+	flex-direction: column;
+	/* Anchor for the preview of the dragged frozen-column boundary, which spans header and rows. */
+	position: relative;
+	width: 100%;
+	height: 100%;
+	font-family: var(--font-family);
+	overflow: hidden;
+}
+
+/* The filter bar above the column headings: the criteria the table offers under a name as chips on
+   the left, the search over the displayed columns and saving the current criteria on the right. It
+   sits outside both scrollers, so it takes no part in the header/body column alignment; its own
+   height is fixed by its content, so the headings do not move when a chip is added or removed. */
+.tlTableView__filterBar {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-03);
+	padding: var(--spacing-03);
+	background: var(--layer-01);
+	border-bottom: 1px solid var(--border-subtle);
+	box-sizing: border-box;
+}
+
+.tlTableView__filterChips {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-02);
+	min-width: 0;
+}
+
+.tlTableView__chip {
+	display: inline-flex;
+	align-items: center;
+	max-width: 100%;
+	height: 1.75rem;
+	padding-right: var(--spacing-02);
+	border: 1px solid var(--border-subtle);
+	border-radius: 999px;
+	background: var(--layer-02);
+	color: var(--text-primary);
+	font-size: var(--body-compact-01-font-size);
+	box-sizing: border-box;
+}
+
+.tlTableView__chip:hover {
+	background: var(--layer-hover);
+}
+
+/* The criteria the table is filtered by right now. Clicking it again withdraws them. */
+.tlTableView__chip--active,
+.tlTableView__chip--active:hover {
+	border-color: var(--interactive);
+	background: var(--interactive);
+	color: var(--text-on-color);
+}
+
+.tlTableView__chipLabel {
+	height: 100%;
+	padding: 0 var(--spacing-03);
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: pointer;
+}
+
+.tlTableView__chipRemove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 2px;
+	border: none;
+	background: none;
+	color: inherit;
+	font-size: 0.875rem;
+	line-height: 1;
+	opacity: 0.7;
+	cursor: pointer;
+}
+
+.tlTableView__chipRemove:hover {
+	opacity: 1;
+}
+
+/* Search and saving keep to the right end of the bar, whatever number of chips precedes them. */
+.tlTableView__search {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	flex: 0 1 16rem;
+	min-width: 8rem;
+	margin-left: auto;
+	padding: 0 var(--spacing-03);
+	border: 1px solid var(--border-strong);
+	background: var(--field);
+	color: var(--text-secondary);
+	box-sizing: border-box;
+}
+
+.tlTableView__searchInput,
+.tlTableView__saveInput {
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 2rem;
+	border: none;
+	background: transparent;
+	color: var(--text-primary);
+	font-family: inherit;
+	font-size: var(--body-compact-01-font-size);
+}
+
+.tlTableView__searchInput:focus,
+.tlTableView__saveInput:focus {
+	outline: none;
+}
+
+/* Naming a filter to save happens in place of the save button, so the bar keeps its height. */
+.tlTableView__saveForm {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	flex-shrink: 0;
+}
+
+.tlTableView__saveInput {
+	width: 10rem;
+	padding: 0 var(--spacing-03);
+	border: 1px solid var(--border-strong);
+	background: var(--field);
+	box-sizing: border-box;
+}
+
+.tlTableView__barButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+	cursor: pointer;
+}
+
+.tlTableView__barButton:hover:not(:disabled) {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+.tlTableView__barButton:disabled {
+	color: var(--text-disabled);
+	cursor: default;
+}
+
+/* The header row, with the column selection button over its right edge above the body's vertical
+   scrollbar wherever no pinned column offers it a heading of its own. The button must not take
+   width from the header: a header narrower than the body keeps its last 2rem permanently out of
+   view, so the last column's heading stays cut off however far the user scrolls. Overlaying instead
+   keeps every heading complete; only while the table is scrolled fully right does the button cover
+   the tail of the last column - which is why it is opaque. */
+.tlTableView__headerArea {
+	position: relative;
+	display: flex;
+	flex-shrink: 0;
+	align-items: stretch;
+}
+
+.tlTableView__header {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	border-bottom: 2px solid var(--border-subtle);
+}
+
+.tlTableView__columnsButton {
+	position: absolute;
+	top: 0;
+	right: 0;
+	/* Leaves the header's bottom border uncovered, so the line runs through below the button. */
+	bottom: 2px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	padding: 0;
+	border: none;
+	/* Opaque: while the table is scrolled, a column label may pass underneath. */
+	background: var(--layer-01);
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+	cursor: pointer;
+	box-sizing: border-box;
+}
+
+.tlTableView__columnsButton:hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+/* In the heading of the rightmost pinned column the button is part of that cell: it takes the
+   cell's own background (which follows hover and selection) and centers in the column's width,
+   leaving the columns the full table width. */
+.tlTableView__columnsButton--inCell {
+	position: static;
+	margin: 0 auto;
+	height: 2rem;
+	background: transparent;
+}
+
+.tlTableView__headerRow {
+	display: flex;
+}
+
+.tlTableView__headerCell {
+	display: flex;
+	align-items: center;
+	padding: 0 var(--spacing-03);
+	height: 2.5rem;
+	font-size: var(--body-compact-01-font-size);
+	font-weight: 600;
+	color: var(--text-primary);
+	user-select: none;
+	overflow: hidden;
+	min-width: 0;
+	box-sizing: border-box;
+	border-right: 1px solid var(--border-subtle);
+}
+
+.tlTableView__headerCell:last-child {
+	border-right: none;
+}
+
+.tlTableView__headerCell--sortable {
+	cursor: pointer;
+}
+
+.tlTableView__headerCell--sortable:hover {
+	background: var(--layer-hover);
+}
+
+/* The only part of a heading that gives way when the column is narrower than its content: the
+   label ends in an ellipsis, so the funnel, the sort mark and the resize handle stay reachable. */
+.tlTableView__headerLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+}
+
+/* Opens the column's filter. Keeps its room next to a label that is running out of it. */
+.tlTableView__filterButton {
+	flex-shrink: 0;
+}
+
+.tlTableView__sortIndicator {
+	margin-left: var(--spacing-02);
+	font-size: 0.625rem;
+	color: var(--text-secondary);
+	flex-shrink: 0;
+}
+
+.tlTableView__sortPriority {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0.875rem;
+	height: 0.875rem;
+	margin-left: 2px;
+	padding: 0 2px;
+	border-radius: 999px;
+	background: var(--text-secondary);
+	color: var(--text-on-color);
+	font-size: 0.5625rem;
+	font-weight: 600;
+	line-height: 1;
+	vertical-align: middle;
+}
+
+.tlTableView__body {
+	flex: 1;
+	overflow-y: auto;
+	overflow-x: auto;
+}
+
+/* Must not clip: an ancestor with a clipping overflow between a sticky cell and the scroll container
+   turns the row into the cell's scroll context, and a frozen cell would scroll away with the row
+   instead of sticking to the left edge. Each cell clips its own content anyway. */
+.tlTableView__row {
+	display: flex;
+	border-bottom: 1px solid var(--border-subtle);
+	box-sizing: border-box;
+	cursor: pointer;
+}
+
+.tlTableView__row:hover {
+	background: var(--layer-hover);
+}
+
+.tlTableView__row--selected {
+	background: var(--layer-selected);
+}
+
+.tlTableView__row--selected:hover {
+	background: var(--layer-selected-hover);
+}
+
+/* The row the keyboard cursor is on. The ring is drawn on the cells rather than on the row itself:
+   the frozen and the pinned cells are sticky and opaque, so they would paint over a ring belonging
+   to the row, leaving it visible only in the part that scrolls. Every cell carries the top and the
+   bottom edge, the first and the last cell of the row close it at the sides. Inset shadows keep the
+   cells' size, so no row moves as the cursor passes. */
+.tlTableView__row--cursor .tlTableView__cell {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus);
+}
+
+.tlTableView__row--cursor .tlTableView__cell:first-child {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset 2px 0 0 var(--focus);
+}
+
+.tlTableView__row--cursor .tlTableView__cell:last-child {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset -2px 0 0 var(--focus);
+}
+
+/* The cells marking the edge of the frozen and of the pinned area keep the shadow that marks it. */
+.tlTableView__row--cursor .tlTableView__cell--frozenLast {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), var(--shadow-raised);
+}
+
+.tlTableView__row--cursor .tlTableView__cell--frozenLast:first-child {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset 2px 0 0 var(--focus),
+		var(--shadow-raised);
+}
+
+.tlTableView__row--cursor .tlTableView__cell--pinnedEndFirst {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), var(--shadow-raised);
+}
+
+.tlTableView__row--cursor .tlTableView__cell--pinnedEndFirst:last-child {
+	box-shadow: inset 0 2px 0 var(--focus), inset 0 -2px 0 var(--focus), inset -2px 0 0 var(--focus),
+		var(--shadow-raised);
+}
+
+.tlTableView__cell {
+	display: flex;
+	align-items: center;
+	padding: 0 var(--spacing-03);
+	overflow: hidden;
+	min-width: 0;
+	box-sizing: border-box;
+	border-right: 1px solid var(--border-subtle);
+	/* A cell reads as one line: the row is of a fixed height, so a value that wrapped would be cut
+	   through the middle of its letters. The display controls within the cell inherit this. */
+	white-space: nowrap;
+}
+
+/* The root element of a read-only value control spans the cell, so a value wider than its column
+   is cut off at the column edge and ends in an ellipsis that says so. */
+.tlTableView__cell > span {
+	display: block;
+	width: 100%;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* A value that points somewhere - a web address, an e-mail address, a phone number - is the link
+   there. It ends in an ellipsis like any other value, but it stays as wide as the text it reads
+   as: a link stretched over the cell would follow the address on a click anywhere in the cell,
+   where the user is aiming at the row. The text input's full width is therefore given up: as an
+   item of the flex layout the cell is, the link is then as wide as its text and shrinks with the
+   column on its own. */
+.tlTableView__cell > a {
+	width: auto;
+	max-width: 100%;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* A business object shown with its icon is a flex row of its own. In a cell it is the block-level
+   one the rule for the cell's root span asks for - that rule is the more specific of the two and
+   would otherwise decide the display - so the object spans the column and its label is cut off at
+   the column edge. */
+.tlTableView__cell > .tlResourceCell {
+	display: flex;
+}
+
+/* A value shown beside an adornment - the language button of an internationalized text - sits in a
+   row with it. The row follows the width of the column instead of the width its content asks for,
+   so that the value within it is the part that gives way. */
+.tlTableView__cell > .tlStack--row {
+	width: 100%;
+	min-width: 0;
+}
+
+.tlTableView__cell > .tlStack--grow-first.tlStack--row > *:first-child {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* A text of several lines is written with its line breaks where there is the height for them; in a
+   cell it reads as the one line the row is high. The control carries the wrapping as a class of
+   its own, which the white space inherited from the cell does not reach. */
+.tlTableView__cell .tlReactTextInput--immutable.tlReactTextInput--multiline {
+	white-space: nowrap;
+}
+
+/* The chips of a multi-valued selection follow each other in one row and are cut off at the column
+   edge, rather than wrapping into lines the row has no height for. */
+.tlTableView__cell > .tlDropdownSelect--immutable {
+	flex-wrap: nowrap;
+	overflow: hidden;
+	width: 100%;
+}
+
+/* Each chip keeps the width its label asks for, so a row of them is cut off at the column edge
+   instead of every chip being squeezed to nothing. */
+.tlTableView__cell > .tlDropdownSelect--immutable > * {
+	flex-shrink: 0;
+}
+
+/* A multi-valued text of several lines stands one value per line where there is the height for it;
+   in a cell the values read as one line with the separator between them. */
+.tlTableView__cell .tlValueList--block .tlValueList__item,
+.tlTableView__cell .tlValueList--block .tlValueList__separator {
+	display: inline;
+}
+
+/* Remove cell padding when it contains an editable input — the input provides its own.
+   Element-qualified so the rules match only real form controls, not the read-only
+   display spans that carry the same base class. */
+.tlTableView__cell:has(input.tlReactTextInput, textarea.tlReactTextInput, input.tlReactNumberInput, input.tlReactDatePicker, select.tlReactSelect) {
+	padding: 0;
+}
+
+/* Inline-edit inputs inside table cells: Excel-style, cell = input */
+.tlTableView__cell input.tlReactTextInput,
+.tlTableView__cell textarea.tlReactTextInput,
+.tlTableView__cell input.tlReactNumberInput,
+.tlTableView__cell input.tlReactDatePicker,
+.tlTableView__cell select.tlReactSelect,
+.tlTableView__cell input.tlReactTextInput:focus,
+.tlTableView__cell textarea.tlReactTextInput:focus,
+.tlTableView__cell input.tlReactNumberInput:focus,
+.tlTableView__cell input.tlReactDatePicker:focus,
+.tlTableView__cell select.tlReactSelect:focus {
+	border: none;
+	border-radius: 0;
+	background: transparent;
+	padding: 0 var(--spacing-03);
+	min-height: 0;
+	height: 100%;
+	outline: none;
+}
+
+/* The row of a cell input spans the cell, so the input inside it still fills the cell; the link
+   beside it keeps the horizontal padding the input gave up. */
+.tlTableView__cell .tlReactTextInput__row {
+	height: 100%;
+}
+
+.tlTableView__cell .tlReactTextInput__open {
+	padding-right: var(--spacing-03);
+}
+
+/* Excel-style focus: highlight the entire cell only when an input is focused */
+.tlTableView__cell:has(.tlReactTextInput:focus, .tlReactNumberInput:focus, .tlReactDatePicker:focus, .tlReactSelect:focus) {
+	outline: 2px solid var(--focus);
+	outline-offset: -1px;
+	z-index: 1;
+}
+
+/* Error state: red cell border */
+.tlTableView__cell:has(.tlReactTextInput--error, .tlReactNumberInput--error, .tlReactDatePicker--error, .tlReactSelect--error) {
+	outline: 2px solid var(--support-error);
+	outline-offset: -1px;
+	z-index: 1;
+}
+
+/* Warning state: yellow cell border (only when no error) */
+.tlTableView__cell:has(.tlReactTextInput--warning, .tlReactNumberInput--warning, .tlReactDatePicker--warning, .tlReactSelect--warning) {
+	outline: 2px solid var(--support-warning);
+	outline-offset: -1px;
+	z-index: 1;
+}
+
+.tlTableView__cell:last-child {
+	border-right: none;
+}
+
+/* The text control states how it is drawn as roles rather than as font and color values: what the
+   text is for (the variant), what its color means (the tone), and the shape it takes. Every text
+   carries a class per role, so an application stylesheet and a theme both reach a role as a whole.
+   The color of the tone travels as the custom property --tlText-tone, which the text color is taken
+   from and which a pill without a color of its own is tinted with - one declaration per tone. */
+.tlText {
+	--tlText-tone: var(--text-primary);
+	color: var(--tlText-tone);
+}
+
+/* --- What the text is for -------------------------------------------------- */
+
+.tlText--display {
+	font-family: var(--font-family-display);
+	font-size: var(--display-01-font-size);
+	line-height: var(--display-01-line-height);
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.tlText--headline {
+	font-family: var(--font-family-display);
+	font-size: var(--heading-04-font-size);
+	line-height: var(--heading-04-line-height);
+	font-weight: 600;
+}
+
+.tlText--title {
+	font-family: var(--font-family-display);
+	font-size: var(--heading-03-font-size);
+	line-height: var(--heading-03-line-height);
+	font-weight: 600;
+}
+
+.tlText--body {
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
+}
+
+.tlText--label {
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
+	font-weight: 600;
+}
+
+.tlText--caption {
+	font-size: var(--label-01-font-size);
+	line-height: var(--label-01-line-height);
+}
+
+/* --- What the color of the text means -------------------------------------- */
+
+.tlText--tone-primary {
+	--tlText-tone: var(--text-primary);
+}
+
+.tlText--tone-secondary {
+	--tlText-tone: var(--text-secondary);
+}
+
+.tlText--tone-helper {
+	--tlText-tone: var(--text-helper);
+}
+
+.tlText--tone-accent {
+	--tlText-tone: var(--text-accent);
+}
+
+.tlText--tone-success {
+	--tlText-tone: var(--text-success);
+}
+
+.tlText--tone-warning {
+	--tlText-tone: var(--text-warning);
+}
+
+.tlText--tone-error {
+	--tlText-tone: var(--text-error);
+}
+
+.tlText--tone-on-color {
+	--tlText-tone: var(--text-on-color);
+}
+
+/* --- The shape the text takes ---------------------------------------------- */
+
+.tlText--placeholder {
+	font-style: italic;
+	color: var(--text-helper);
+}
+
+/* Single-line truncation with an ellipsis (opt-in via the text element's overflow="ellipsis"). */
+.tlText--ellipsis {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Emphasized text, e.g. the author name in a byline (opt-in via css-class="tlText--strong"). */
+.tlText--strong {
+	font-weight: 600;
+}
+
+/* --- TLResourceCell --------------------------------------------------------- */
+
+/* A business object drawn as its icon followed by its label. The two belong together and read as
+   one line, with the icon centered on the text and held off it by a gap. The object gives way to
+   whatever holds it - a tree node, a table cell, a pill - instead of pushing it wider. */
+.tlResourceCell {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	max-width: 100%;
+	min-width: 0;
+}
+
+/* The label is the part of the object that gives way: the ellipsis of the surroundings - the tree
+   node content, the pill - ends at the flex row the object is, so the label carries the cut-off
+   itself. The white space is the one inherited from tree, table or pill, so a place that wraps
+   keeps wrapping. */
+.tlResourceLabel {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* --- TLHtml ---------------------------------------------------------------- */
+
+/* Ready-made HTML - an agent answer, a generated report - inserted into the page around it. The
+   fragment brings its own structure but no typography, so the block gives it the theme's text
+   color and font and spaces the elements a fragment is made of. The margins at its edges are
+   dropped, so the content aligns with whatever stands above and below it. */
+.tlHtml--inline {
+	color: var(--text-primary);
+	font-size: var(--body-compact-01-font-size);
+	line-height: 1.5;
+	overflow-wrap: break-word;
+}
+
+.tlHtml--inline > :first-child {
+	margin-top: 0;
+}
+
+.tlHtml--inline > :last-child {
+	margin-bottom: 0;
+}
+
+.tlHtml--inline p {
+	margin: var(--spacing-03) 0;
+}
+
+.tlHtml--inline h1,
+.tlHtml--inline h2,
+.tlHtml--inline h3,
+.tlHtml--inline h4,
+.tlHtml--inline h5,
+.tlHtml--inline h6 {
+	margin: var(--spacing-05) 0 var(--spacing-03) 0;
+	line-height: 1.3;
+	font-weight: 600;
+}
+
+.tlHtml--inline ul,
+.tlHtml--inline ol {
+	margin: var(--spacing-03) 0;
+	padding-left: var(--spacing-06);
+}
+
+.tlHtml--inline li {
+	margin: var(--spacing-01) 0;
+}
+
+.tlHtml--inline a {
+	color: var(--link-primary);
+	text-decoration: underline;
+}
+
+/* A picture wider than the column it stands in is scaled down rather than pushing the page sideways. */
+.tlHtml--inline img {
+	max-width: 100%;
+	height: auto;
+}
+
+.tlHtml--inline table {
+	margin: var(--spacing-03) 0;
+	border-collapse: collapse;
+}
+
+.tlHtml--inline td,
+.tlHtml--inline th {
+	padding: var(--spacing-02) var(--spacing-03);
+	border: 1px solid var(--border-subtle);
+	text-align: left;
+}
+
+.tlHtml--inline th {
+	background: var(--layer);
+	font-weight: 600;
+}
+
+.tlHtml--inline code {
+	padding: 0 var(--spacing-02);
+	border-radius: var(--corner-radius);
+	background: var(--layer);
+	font-family: var(--font-family-mono);
+	font-size: 0.9em;
+}
+
+.tlHtml--inline pre {
+	padding: var(--spacing-03) var(--spacing-05);
+	border-radius: var(--border-radius-02);
+	background: var(--layer);
+	overflow-x: auto;
+}
+
+.tlHtml--inline blockquote {
+	margin-left: 0;
+	padding-left: var(--spacing-05);
+	border-left: 3px solid var(--border-interactive);
+	color: var(--text-secondary);
+}
+
+/* A document is read on a page of its own: it fills the space the element is given, keeps the
+   styles it brings along, and stands on the white surface those styles assume. The minimum height
+   keeps it readable where the space is not measured out but flows with the page. */
+.tlHtml--document {
+	position: relative;
+	display: flex;
+	width: 100%;
+	height: 100%;
+	min-height: 24rem;
+	overflow: hidden;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02);
+	background: #ffffff;
+}
+
+.tlHtml__frame {
+	flex: 1 1 auto;
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+	border: none;
+}
+
+/* The print button stands on the document rather than beside it, so the frame keeps the whole
+   space; its own surface lifts it off whatever the document shows underneath. */
+.tlHtml__print {
+	position: absolute;
+	top: var(--spacing-03);
+	right: var(--spacing-03);
+	background: var(--layer-01);
+	box-shadow: var(--shadow-raised);
+}
+
+/* A thumbnail is a picture of a document: a box in the proportions the page is laid out in, with
+   the page scaled down into it. The ratio arrives as an inline style from the configured page size,
+   and the overflow keeps a page taller than the box inside it, cut off at the bottom as paper is.
+   The surface is the white a document's own styles assume, like the one a document is read on. */
+.tlHtml--thumbnail {
+	position: relative;
+	display: block;
+	width: 100%;
+	overflow: hidden;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02);
+	background: #ffffff;
+}
+
+/* The page inside a thumbnail keeps the size it is written for and is scaled from its top left
+   corner, both set as inline styles from the configured size and the measured box. It is looked at
+   rather than used, so a click on it reaches whatever carries the preview. */
+.tlHtml__page {
+	position: absolute;
+	top: 0;
+	left: 0;
+	border: none;
+	pointer-events: none;
+}
+
+/* A fragment that is not shown says why in its place, in the box a failed view is reported in. */
+.tlHtml__error {
+	padding: var(--spacing-03) var(--spacing-05);
+	border: 1px solid var(--support-error);
+	border-left-width: var(--spacing-03);
+	border-radius: var(--border-radius-02);
+	background: var(--layer-01);
+	color: var(--support-error);
+}
+
+/* --- TLJobStatus (what a long-running job reports) ------------------------- */
+
+.tlJobStatus {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-02);
+	min-width: 0;
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-primary);
+}
+
+.tlJobStatus__header {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+}
+
+.tlJobStatus__state {
+	font-weight: 600;
+}
+
+/* Tabular figures keep the elapsed time from jittering as its digits change every second. */
+.tlJobStatus__elapsed {
+	color: var(--text-secondary);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+/* The request to stop stands at the end of the header line, apart from what the job reports. */
+.tlJobStatus__cancel {
+	margin-left: auto;
+	padding: var(--spacing-01) var(--spacing-03);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--corner-radius);
+	background: transparent;
+	color: var(--text-primary);
+	font-family: inherit;
+	font-size: var(--label-01-font-size);
+	cursor: pointer;
+}
+
+.tlJobStatus__cancel:hover {
+	background: var(--layer-hover);
+}
+
+.tlJobStatus__phases {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-01);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.tlJobStatus__phase {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	font-size: var(--label-01-font-size);
+}
+
+/* Every step carries a marker saying where it stands. The states are the engine's, the symbols a
+   default an application replaces with its own. */
+.tlJobStatus__phase::before {
+	content: '';
+	flex: 0 0 auto;
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background-color: var(--border-strong);
+}
+
+.tlJobStatus__phase--done::before {
+	background-color: var(--support-success);
+}
+
+.tlJobStatus__phase--active::before {
+	background-color: var(--interactive);
+	animation: tlJobStatusPulse 1.4s ease-in-out infinite;
+}
+
+/* A step the job has not reached recedes, so the eye finds the one it is at. */
+.tlJobStatus__phase--pending {
+	color: var(--text-secondary);
+}
+
+.tlJobStatus__phase--pending::before {
+	background-color: var(--border-subtle);
+}
+
+@keyframes tlJobStatusPulse {
+	0%, 100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.4;
+	}
+}
+
+/* Without motion the marker of the active step simply stands in its color. */
+@media (prefers-reduced-motion: reduce) {
+	.tlJobStatus__phase--active::before {
+		animation: none;
+	}
+}
+
+.tlJobStatus__message {
+	color: var(--text-secondary);
+	font-size: var(--label-01-font-size);
+}
+
+.tlJobStatus__error {
+	color: var(--text-error);
+}
+
+.tlTableView__checkboxCell {
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.tlTableView__checkbox {
+	cursor: pointer;
+	width: 1rem;
+	height: 1rem;
+	accent-color: var(--interactive);
+}
+
+.tlTableView__resizeHandle {
+	position: absolute;
+	top: 0;
+	right: -2px;
+	width: 5px;
+	height: 100%;
+	cursor: col-resize;
+	z-index: 1;
+}
+
+/* The heading in front of the first pinned one keeps its handle inside the cell: the pinned
+   heading sticks above it (z-index 2) and would swallow the 2px reaching across the border. The
+   last frozen heading keeps its handle inside for the same reason: the grip of the frozen boundary
+   lies on that border above it (z-index 3) and would swallow the part reaching across. */
+.tlTableView__headerCell:has(+ .tlTableView__headerCell--pinnedEndFirst) .tlTableView__resizeHandle,
+.tlTableView__headerCell--frozenLast .tlTableView__resizeHandle {
+	right: 0;
+}
+
+.tlTableView__resizeHandle:hover,
+.tlTableView__resizeHandle:active {
+	background: var(--interactive);
+	opacity: 0.3;
+}
+
+.tlTableView__headerCell[draggable] {
+	cursor: grab;
+}
+
+.tlTableView__headerCell[draggable]:active {
+	cursor: grabbing;
+}
+
+.tlTableView__headerCell--dragOver-left {
+	border-left: 2px solid var(--interactive);
+}
+
+.tlTableView__headerCell--dragOver-right {
+	border-right: 2px solid var(--interactive);
+}
+
+/* -- Row drag and drop -- */
+
+.tlTableView__row[draggable="true"] {
+	cursor: grab;
+}
+
+.tlTableView__row[draggable="true"]:active {
+	cursor: grabbing;
+}
+
+/* The table accepts the running drag, which hovers no single row of it. */
+.tlTableView--dragover {
+	outline: 2px dashed var(--focus);
+	outline-offset: -2px;
+	border-radius: var(--corner-radius);
+}
+
+.tlTableView__row--dragOver-onto {
+	background: var(--layer-selected-hover);
+	outline: 2px solid var(--interactive);
+	outline-offset: -2px;
+}
+
+.tlTableView__row--dragOver-before {
+	box-shadow: inset 0 2px 0 0 var(--interactive);
+}
+
+.tlTableView__row--dragOver-after {
+	box-shadow: inset 0 -2px 0 0 var(--interactive);
+}
+
+/* The target under the running drag refuses it: the table as a whole, or a single row. */
+.tlTableView--dropRefused {
+	outline: 2px dashed var(--support-error);
+	outline-offset: -2px;
+	border-radius: var(--corner-radius);
+	cursor: not-allowed;
+}
+
+.tlTableView__row--dropRefused {
+	outline: 2px solid var(--support-error);
+	outline-offset: -2px;
+	cursor: not-allowed;
+}
+
+/* Why the target under the running drag refuses it, next to the pointer (left/top set by the
+   table), above every other layer like a tooltip. */
+.tlTableView__dropHint {
+	position: fixed;
+	z-index: 13000;
+	max-width: min(400px, calc(100vw - 2 * var(--spacing-05)));
+	padding: var(--spacing-02) var(--spacing-04);
+	border-radius: var(--border-radius-02);
+	background: var(--support-error);
+	color: var(--text-on-color);
+	box-shadow: var(--shadow-menu);
+	pointer-events: none;
+}
+
+/* -- Frozen columns -- */
+
+.tlTableView__headerCell--frozen,
+.tlTableView__cell--frozen {
+	background: var(--layer-01);
+}
+
+.tlTableView__row:hover .tlTableView__cell--frozen {
+	background: var(--layer-hover);
+}
+
+.tlTableView__row--selected .tlTableView__cell--frozen {
+	background: var(--layer-selected);
+}
+
+.tlTableView__row--selected:hover .tlTableView__cell--frozen {
+	background: var(--layer-selected-hover);
+}
+
+.tlTableView__headerCell--frozenLast,
+.tlTableView__cell--frozenLast {
+	box-shadow: var(--shadow-raised);
+	clip-path: inset(0 -4px 0 0);
+}
+
+/* -- Columns pinned to the end of the table --
+   They stick to the right edge while the columns in front of them scroll past underneath, so their
+   background is opaque, exactly like a frozen column's. */
+
+.tlTableView__headerCell--pinnedEnd,
+.tlTableView__cell--pinnedEnd {
+	background: var(--layer-01);
+}
+
+.tlTableView__row:hover .tlTableView__cell--pinnedEnd {
+	background: var(--layer-hover);
+}
+
+.tlTableView__row--selected .tlTableView__cell--pinnedEnd {
+	background: var(--layer-selected);
+}
+
+.tlTableView__row--selected:hover .tlTableView__cell--pinnedEnd {
+	background: var(--layer-selected-hover);
+}
+
+/* The leftmost of the pinned cells carries the shadow marking the edge the columns pass under. */
+.tlTableView__headerCell--pinnedEndFirst,
+.tlTableView__cell--pinnedEndFirst {
+	box-shadow: var(--shadow-raised);
+	clip-path: inset(0 0 0 -4px);
+}
+
+/* -- A column offering a command on every row: the button is ghost and small, carrying its own
+   frame under the pointer and keyboard focus, so the column needs none of its own. */
+
+.tlTableView__cell.tlRowCommandCell,
+.tlTableView__headerCell.tlRowCommandCell {
+	padding: 0;
+	justify-content: center;
+}
+
+/* Grip to drag the boundary of the frozen area to another column. Sits above the sticky header cells
+   (z-index 2) and stops at the header's bottom border, so the line below it stays unbroken. It
+   reaches to the right of the boundary only, leaving the border-side resize handle of the last
+   frozen column to that column. When no column is frozen, the grip waits at the left edge of the
+   table, where it can pull a frozen area out. */
+.tlTableView__frozenSplitter {
+	position: absolute;
+	top: 0;
+	bottom: 2px;
+	z-index: 3;
+	width: 7px;
+	cursor: col-resize;
+}
+
+.tlTableView__frozenSplitter::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	width: 1px;
+	background: var(--interactive);
+	opacity: 0;
+}
+
+.tlTableView__frozenSplitter:hover::after,
+.tlTableView__frozenSplitter--active::after {
+	opacity: 1;
+}
+
+/* Preview of the dragged boundary, spanning header and rows. */
+.tlTableView__frozenPreview {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	z-index: 4;
+	width: 2px;
+	margin-left: -1px;
+	background: var(--interactive);
+	pointer-events: none;
+}
+
+/* -- Tree table -- */
+
+.tlTableView__treeCell {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	height: 100%;
+}
+
+.tlTableView__treeToggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+	border: none;
+	background: none;
+	padding: 0;
+	cursor: pointer;
+	color: var(--text-secondary);
+	font-size: 12px;
+	border-radius: var(--corner-radius);
+}
+
+.tlTableView__treeToggle:hover {
+	background-color: var(--layer-hover);
+}
+
+.tlTableView__treeToggleSpacer {
+	display: inline-block;
+	width: 20px;
+	flex-shrink: 0;
+}
+
+/* The value of a tree column's cell, sharing the cell with the expand toggle and the indent: it
+   ends in an ellipsis where the column runs out of room, exactly as the value of any other cell
+   does. Being the box the value is clipped in is also what lets the tooltip tell that the value is
+   not fully readable, and what keeps the toggle's glyph out of that tooltip. */
+.tlTableView__treeValue {
+	/* Shrinks with the column, but never grows: what follows it in a group header row - the size of
+	   the group - stays next to the value instead of being pushed to the cell's edge. */
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* A group header row: the group value, its size, and the columns' aggregates. */
+.tlTableView__row--group {
+	background-color: var(--layer);
+	font-weight: 600;
+}
+
+.tlTableView__groupCount {
+	margin-left: var(--spacing-03);
+	font-weight: 400;
+	color: var(--text-secondary);
+}
+
+/* Marks the column header the rows are grouped by. */
+.tlTableView__groupMark {
+	margin-left: var(--spacing-02);
+	color: var(--text-secondary);
+	flex-shrink: 0;
+}
+
+/* --- TLColumnSelect ---------------------------------------------------- */
+
+.tlColumnSelect {
+	display: flex;
+	flex-direction: column;
+	padding: var(--spacing-03) 0;
+}
+
+.tlColumnSelect__groupBy {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
+	border: none;
+	border-radius: var(--corner-radius);
+	background: none;
+	cursor: pointer;
+	color: var(--text-secondary);
+}
+
+.tlColumnSelect__groupBy:hover {
+	background-color: var(--layer-hover);
+}
+
+.tlColumnSelect__groupBy--active {
+	color: var(--link-primary);
+}
+
+.tlColumnSelect__search {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	margin: 0 var(--spacing-05) var(--spacing-03);
+	padding: 0 var(--spacing-03);
+	border: 1px solid var(--border-strong);
+	background: var(--field);
+	color: var(--text-secondary);
+}
+
+.tlColumnSelect__searchInput {
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 2rem;
+	border: none;
+	background: transparent;
+	color: var(--text-primary);
+	font-family: inherit;
+	font-size: var(--body-compact-01-font-size);
+}
+
+.tlColumnSelect__searchInput:focus {
+	outline: none;
+}
+
+.tlColumnSelect__list {
+	display: flex;
+	flex-direction: column;
+}
+
+/* Scrolls within a height of its own, so narrowing the list by a search leaves the dialog - and
+   with it the buttons under the pointer - exactly where it was. */
+.tlColumnSelect__list--fixed {
+	height: 50vh;
+	overflow-y: auto;
+}
+
+.tlColumnSelect__row {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-02) var(--spacing-05);
+	font-size: var(--body-compact-01-font-size);
+	/* The drop indicator is drawn as a border, so reserve its space on both edges to keep the
+	   rows from jumping while dragging across them. */
+	border-top: 2px solid transparent;
+	border-bottom: 2px solid transparent;
+}
+
+.tlColumnSelect__row:hover {
+	background: var(--layer-hover);
+}
+
+.tlColumnSelect__row--dragOver-before {
+	border-top-color: var(--interactive);
+}
+
+.tlColumnSelect__row--dragOver-after {
+	border-bottom-color: var(--interactive);
+}
+
+.tlColumnSelect__handle {
+	flex-shrink: 0;
+	color: var(--text-secondary);
+	cursor: grab;
+}
+
+.tlColumnSelect__label {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	flex: 1 1 auto;
+	min-width: 0;
+	cursor: pointer;
+}
+
+.tlColumnSelect__label > span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* --- TLFormLayout ------------------------------------------------------ */
+
+.tlFormLayout {
+	display: grid;
+	gap: var(--spacing-03);
+	font-family: var(--font-family);
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.tlFormLayout--empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 4rem;
+}
+
+/* A form hosting a filling region is a column: the filling child takes the height the form is
+   offered (the form itself carries .tlFill and asks its own container for it - see the fill
+   contract above), while every other child keeps the height of its content. */
+.tlFormLayout--fill {
+	display: flex;
+	flex-direction: column;
+}
+
+.tlFormLayout--fill > :not(.tlFill) {
+	flex-shrink: 0;
+}
+
+.tlFormLayout__noModel {
+	color: var(--text-secondary);
+	font-style: italic;
+	margin: 0;
+}
+
+/* --- TLFormGroup ------------------------------------------------------- */
+
+.tlFormGroup {
+	display: grid;
+	grid-template-columns: subgrid;
+	grid-template-rows: auto 1fr;
+}
+
+.tlFormGroup--fullLine {
+	grid-column: 1 / -1;
+}
+
+.tlFormGroup--collapsed > .tlFormGroup__body {
+	display: none;
+}
+
+.tlFormGroup--border-subtle {
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--border-radius-02);
+	padding: var(--spacing-03);
+}
+
+.tlFormGroup--border-outlined {
+	border: 1px solid var(--border-strong);
+	border-radius: var(--border-radius-02);
+	padding: var(--spacing-03);
+}
+
+.tlFormGroup--border-none {
+	border: none;
+	padding: 0;
+}
+
+.tlFormGroup__header {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	padding-bottom: var(--spacing-03);
+	border-bottom: 1px solid var(--border-subtle);
+	margin-bottom: var(--spacing-03);
+}
+
+.tlFormGroup--border-none > .tlFormGroup__header {
+	border-bottom: none;
+}
+
+.tlFormGroup--collapsed > .tlFormGroup__header {
+	padding-bottom: 0;
+	border-bottom: none;
+	margin-bottom: 0;
+}
+
+.tlFormGroup__title {
+	font-weight: 600;
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	color: var(--text-primary);
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlFormGroup__collapseToggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.5rem;
+	height: 1.5rem;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	color: var(--text-secondary);
+	border-radius: var(--border-radius-02);
+	flex-shrink: 0;
+}
+
+.tlFormGroup__collapseToggle:hover {
+	background: var(--layer-hover);
+}
+
+.tlFormGroup__chevron {
+	transition: transform 0.15s ease;
+}
+
+.tlFormGroup__chevron--collapsed {
+	transform: rotate(-90deg);
+	transition: transform 0.15s ease;
+}
+
+.tlFormGroup__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+.tlFormGroup__body {
+	grid-column: 1 / -1;
+	display: grid;
+	grid-template-columns: subgrid;
+	gap: var(--spacing-03);
+}
+
+/* When fullLine, body defines its own responsive grid instead of subgrid */
+.tlFormGroup--fullLine > .tlFormGroup__body {
+	grid-template-columns: inherit;
+}
+
+/* --- TLRelativeTime ---------------------------------------------------- */
+
+.tlRelativeTime {
+	color: var(--text-secondary);
+	font-family: var(--font-family);
+	font-size: 0.8125rem;
+	white-space: nowrap;
+	cursor: default;
+}
+
+/* --- TLFileChips ------------------------------------------------------- */
+
+.tlFileChips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-03);
+	align-items: center;
+	min-height: 1.75rem;
+	border-radius: var(--corner-radius);
+	font-family: var(--font-family);
+}
+
+.tlFileChips--dragover {
+	outline: 2px dashed var(--interactive);
+	outline-offset: 2px;
+}
+
+.tlFileChip {
+	display: inline-flex;
+	align-items: center;
+	border: 1px solid var(--border-subtle);
+	border-radius: 999px;
+	background: var(--layer-01);
+	overflow: hidden;
+}
+
+.tlFileChip__main {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.25rem 0.625rem;
+	border: none;
+	background: none;
+	font: inherit;
+	font-size: 0.8125rem;
+	color: inherit;
+	cursor: pointer;
+}
+
+.tlFileChip__main:disabled {
+	cursor: default;
+}
+
+/* Keyboard focus: the chip buttons sit inside a clipping pill (overflow: hidden), so the
+   focus ring is drawn inset to stay visible. */
+.tlFileChip__main:focus-visible,
+.tlFileChip__remove:focus-visible,
+.tlFileChips__add:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+.tlFileChip__main:not(:disabled):hover {
+	background: var(--layer-hover);
+}
+
+.tlFileChip__icon {
+	flex: none;
+	color: var(--text-secondary);
+}
+
+.tlFileChip__name {
+	max-width: 16rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlFileChip__size {
+	color: var(--text-secondary);
+	font-size: 0.75rem;
+}
+
+.tlFileChip__remove {
+	display: inline-flex;
+	align-items: center;
+	align-self: stretch;
+	padding: 0 0.5rem;
+	border: none;
+	border-left: 1px solid var(--border-subtle);
+	background: none;
+	color: var(--text-secondary);
+	cursor: pointer;
+}
+
+.tlFileChip__remove:hover {
+	background: var(--layer-hover);
+	color: var(--support-error);
+}
+
+.tlFileChips__add {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.25rem 0.625rem;
+	border: 1px dashed var(--border-subtle);
+	border-radius: 999px;
+	background: none;
+	font: inherit;
+	font-size: 0.8125rem;
+	color: var(--text-secondary);
+	cursor: pointer;
+}
+
+.tlFileChips__add:not(:disabled):hover {
+	border-color: var(--interactive);
+	color: var(--interactive);
+}
+
+.tlFileChips__add--uploading {
+	cursor: progress;
+}
+
+/* --- TLFormField ------------------------------------------------------- */
+
+.tlFormField {
+	display: grid;
+	gap: var(--spacing-02);
+	align-self: start;
+	position: relative;
+	font-family: var(--font-family);
+}
+
+.tlFormField--fullLine {
+	grid-column: 1 / -1;
+}
+
+/* Label after the input — for a checkbox, whose label states what ticking it means, so the two
+   belong on one line. The markup has the label first, hence the explicit order. */
+.tlFormField--after {
+	grid-template-columns: auto 1fr;
+	align-items: center;
+	gap: var(--spacing-03);
+}
+
+.tlFormField--after > .tlFormField__input {
+	grid-column: 1;
+	grid-row: 1;
+	flex: 0 0 auto;
+}
+
+.tlFormField--after > .tlFormField__label {
+	grid-column: 2;
+	grid-row: 1;
+}
+
+/* Side-by-side label layout */
+.tlFormField--side {
+	grid-template-columns: minmax(6rem, 10rem) 1fr;
+	grid-template-rows: auto auto auto;
+	align-items: start;
+}
+
+.tlFormField--side > .tlFormField__label {
+	grid-column: 1;
+	grid-row: 1;
+	padding-top: 0.375rem;
+}
+
+.tlFormField--side > .tlFormField__input {
+	grid-column: 2;
+	grid-row: 1;
+}
+
+.tlFormField--side > .tlFormField__error {
+	grid-column: 2;
+	grid-row: 2;
+}
+
+.tlFormField--side > .tlFormField__helpText {
+	grid-column: 2;
+	grid-row: 3;
+}
+
+/* Stacked label layout */
+.tlFormField--top {
+	grid-template-columns: 1fr;
+}
+
+/* Label-less layout: the input spans the full field width */
+.tlFormField--hidden {
+	grid-template-columns: 1fr;
+}
+
+/* Read-only: compact, no extra chrome */
+.tlFormField--readonly {
+	gap: 0;
+}
+
+.tlFormField--readonly > .tlFormField__error,
+.tlFormField--readonly > .tlFormField__helpText {
+	display: none;
+}
+
+/* Dirty indicator dot next to label */
+.tlFormField__dirtyDot {
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--layer-accent);
+	margin-left: 2px;
+	vertical-align: middle;
+}
+
+/* Label area */
+.tlFormField__label {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-01);
+	color: var(--text-secondary);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
+}
+
+.tlFormField__labelText {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tlFormField__required {
+	color: var(--text-error);
+	font-weight: 600;
+	flex-shrink: 0;
+}
+
+.tlFormField__helpIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	color: var(--text-helper);
+	flex-shrink: 0;
+}
+
+.tlFormField__helpIcon:hover {
+	color: var(--text-primary);
+}
+
+/* Input wrapper */
+.tlFormField__input {
+	min-width: 0;
+}
+
+/* Error area */
+.tlFormField__error {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--spacing-01);
+	color: var(--text-error);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
+}
+
+.tlFormField__errorIcon {
+	flex-shrink: 0;
+	margin-top: 1px;
+}
+
+/* Warning area */
+.tlFormField__warnings {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-01);
+}
+
+.tlFormField__warning {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--spacing-01);
+	color: var(--support-warning);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
+}
+
+.tlFormField__warningIcon {
+	flex-shrink: 0;
+	margin-top: 1px;
+}
+
+.tlFormField--side .tlFormField__warnings {
+	grid-column: 2;
+}
+
+/* Help text */
+.tlFormField__helpText {
+	color: var(--text-helper);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
+}
+
+/* -- TLTreeView ----------------------------------------------------------- */
+
+.tlTreeView {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--text-primary);
+  outline: none;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.tlTreeView__node {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding-right: var(--spacing-03);
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+
+.tlTreeView__node:hover {
+  background: var(--layer-hover);
+}
+
+.tlTreeView__node--selected {
+  background: var(--layer-selected);
+  border-left-color: var(--interactive);
+}
+
+.tlTreeView__node--selected:hover {
+  background: var(--layer-selected-hover);
+}
+
+.tlTreeView__node--focused {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.tlTreeView__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-secondary);
+  border-radius: var(--corner-radius);
+}
+
+.tlTreeView__toggle:hover {
+  background: var(--layer-hover);
+  color: var(--text-primary);
+}
+
+.tlTreeView__toggleSpacer {
+  display: inline-block;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.tlTreeView__chevron--right::before,
+.tlTreeView__chevron--down::before {
+  display: inline-block;
+  font-size: 12px;
+}
+
+.tlTreeView__chevron--right::before {
+  content: '\25B6';
+}
+
+.tlTreeView__chevron--down::before {
+  content: '\25BC';
+}
+
+.tlTreeView__spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-subtle);
+  border-top-color: var(--interactive);
+  border-radius: 50%;
+  animation: tlTreeSpin 0.6s linear infinite;
+}
+
+@keyframes tlTreeSpin {
+  to { transform: rotate(360deg); }
+}
+
+.tlTreeView__content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tlTreeView__node--drop-above {
+  box-shadow: inset 0 2px 0 0 var(--interactive);
+}
+
+.tlTreeView__node--drop-within {
+  outline: 2px solid var(--interactive);
+  outline-offset: -2px;
+  background: var(--layer-hover);
+}
+
+.tlTreeView__node--drop-below {
+  box-shadow: inset 0 -2px 0 0 var(--interactive);
+}
+
+.tlTreeView__node--no-drop {
+  cursor: not-allowed;
+}
+
+/* --- Simple input controls --------------------------------------------- */
+
+/* Shared base for text, number, date inputs and native select */
+.tlReactTextInput,
+.tlReactNumberInput,
+.tlReactDatePicker,
+.tlReactSelect {
+	display: block;
+	width: 100%;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--corner-radius);
+	background-color: var(--field);
+	padding: var(--spacing-02) var(--spacing-03);
+	min-height: 2rem;
+	box-sizing: border-box;
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+	color: var(--text-primary);
+	line-height: 1.4;
+}
+
+.tlReactTextInput:focus,
+.tlReactNumberInput:focus,
+.tlReactDatePicker:focus,
+.tlReactSelect:focus {
+	outline: 2px solid var(--focus);
+	outline-offset: -1px;
+	border-color: var(--focus);
+}
+
+.tlReactTextInput:disabled,
+.tlReactNumberInput:disabled,
+.tlReactDatePicker:disabled,
+.tlReactSelect:disabled {
+	opacity: 0.6;
+	cursor: default;
+	background-color: var(--field-disabled);
+}
+
+.tlReactTextInput::placeholder,
+.tlReactNumberInput::placeholder,
+.tlReactDatePicker::placeholder {
+	color: var(--text-secondary);
+	font-style: italic;
+}
+
+/* Immutable (read-only) state for text-like inputs */
+.tlReactTextInput--immutable,
+.tlReactNumberInput--immutable,
+.tlReactDatePicker--immutable,
+.tlReactSelect--immutable {
+	display: inline;
+	border: none;
+	background: none;
+	padding: 0;
+	min-height: auto;
+	color: var(--text-primary);
+	font-family: var(--font-family);
+	font-size: var(--body-compact-01-font-size);
+}
+
+/* A read-only text of several lines keeps the line breaks and the indentation it was written with.
+   The display carries this as a rule of its own rather than as a style on the element, so that a
+   context which grants a value only one line - a table cell - can say so. */
+.tlReactTextInput--immutable.tlReactTextInput--multiline {
+	white-space: pre-wrap;
+}
+
+/* A single-line input, with room beside it for the link that opens what it holds (url, e-mail,
+   phone). The row is there whether or not the link is, so that the input keeps its place - and
+   with it the focus - when a value starts or stops pointing somewhere. Without the link it adds
+   nothing: the input stretches over the full row, which takes the input's own height. */
+.tlReactTextInput__row {
+	position: relative;
+	display: flex;
+	align-items: stretch;
+	width: 100%;
+	min-width: 0;
+}
+
+.tlReactTextInput__row > .tlReactTextInput {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.tlReactTextInput__open {
+	display: flex;
+	flex: 0 0 auto;
+	align-self: center;
+	align-items: center;
+	margin-left: var(--spacing-02);
+	color: var(--link-primary);
+	text-decoration: none;
+	line-height: 1;
+}
+
+/* The icon an input carries ahead of what is typed - the magnifier of a search box. It is drawn on
+   the left edge of the input, which reserves room for it through --withIcon, so that the icon reads
+   as being inside the field rather than beside it. It answers no pointer: a click goes through to
+   the input under it. */
+.tlReactTextInput__icon {
+	position: absolute;
+	left: var(--spacing-03);
+	top: 50%;
+	transform: translateY(-50%);
+	color: var(--text-helper);
+	pointer-events: none;
+	line-height: 1;
+}
+
+.tlReactTextInput--withIcon {
+	padding-left: calc(var(--spacing-03) + 1.25em);
+}
+
+/* The button that empties the input, drawn over its right edge. It is a button without a button's
+   chrome: the input keeps its own border, and only the icon is seen. --clearable reserves the room
+   it needs, so that text never runs under it. */
+.tlReactTextInput--clearable {
+	padding-right: calc(var(--spacing-03) + 1.25em);
+}
+
+.tlReactTextInput__clear {
+	position: absolute;
+	right: var(--spacing-02);
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-01);
+	border: none;
+	border-radius: var(--corner-radius);
+	background: none;
+	color: var(--text-helper);
+	cursor: pointer;
+	line-height: 1;
+}
+
+.tlReactTextInput__clear:hover {
+	background-color: var(--layer-hover);
+	color: var(--icon-primary);
+}
+
+.tlReactTextInput__clear:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 0;
+	color: var(--icon-primary);
+}
+
+.tlReactTextInput__clear:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+.tlReactTextInput__open:hover,
+.tlReactTextInput__open:focus {
+	color: var(--link-primary-hover);
+}
+
+/* The value itself is the link while the field is only displayed */
+.tlReactTextInput--link {
+	color: var(--link-primary);
+	text-decoration: underline;
+}
+
+.tlReactTextInput--link:hover,
+.tlReactTextInput--link:focus {
+	color: var(--link-primary-hover);
+}
+
+/* Native select arrow spacing */
+.tlReactSelect {
+	appearance: auto;
+	cursor: pointer;
+}
+
+/* --- Checkbox --------------------------------------------------------- */
+
+.tlReactCheckbox {
+	width: 1rem;
+	height: 1rem;
+	accent-color: var(--interactive);
+	cursor: pointer;
+	margin: 0;
+	vertical-align: middle;
+}
+
+.tlReactCheckbox:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+/* A boolean drawn as a switch: the input itself is the track, its ::before the knob, so the whole
+   shape stays the one focusable element the box is. A pill and a circle keep their shape, which is
+   why both are written literally rather than taken from a radius token. */
+.tlReactCheckbox--switch {
+	appearance: none;
+	-webkit-appearance: none;
+	width: 2.25rem;
+	height: 1.25rem;
+	position: relative;
+	flex: none;
+	padding: 0;
+	border: none;
+	border-radius: 999px;
+	background-color: var(--border-strong);
+	transition: background-color 120ms ease-in-out;
+}
+
+.tlReactCheckbox--switch::before {
+	content: "";
+	position: absolute;
+	top: 0.125rem;
+	left: 0.125rem;
+	width: 1rem;
+	height: 1rem;
+	border-radius: 50%;
+	background-color: var(--icon-on-color);
+	box-shadow: var(--shadow-raised);
+	transition: transform 120ms ease-in-out;
+}
+
+.tlReactCheckbox--switch:checked {
+	background-color: var(--interactive);
+}
+
+/* The knob travels the track less its own width and the inset on both sides. */
+.tlReactCheckbox--switch:checked::before {
+	transform: translateX(1rem);
+}
+
+/* The knob jumps to its position where motion is unwelcome; where it stands still says the same. */
+@media (prefers-reduced-motion: reduce) {
+	.tlReactCheckbox--switch,
+	.tlReactCheckbox--switch::before {
+		transition: none;
+	}
+}
+
+/* A ring rather than an outline, so that the focus outline is still visible on a rejected value. */
+.tlReactCheckbox--switch.tlReactCheckbox--error {
+	box-shadow: 0 0 0 2px var(--support-error);
+}
+
+.tlReactCheckbox--switch.tlReactCheckbox--warning {
+	box-shadow: 0 0 0 2px var(--support-warning);
+}
+
+/* --- TLSlider ----------------------------------------------------------- */
+
+/* A number set by dragging a handle along a track, with the value written beside it: the two read
+   as one field, so the track takes the room the text leaves. */
+.tlSlider {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	width: 100%;
+}
+
+/* The track, drawn by the pseudo elements below; the input itself only carries the room they need
+   and the focus the whole control takes. */
+.tlSlider__input {
+	appearance: none;
+	-webkit-appearance: none;
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 1rem;
+	margin: 0;
+	padding: 0;
+	background-color: transparent;
+	cursor: pointer;
+}
+
+.tlSlider__input:disabled {
+	cursor: default;
+}
+
+/* The value as text. Figures of the same width, so that the text does not jump while the handle
+   travels. */
+.tlSlider__value {
+	flex: none;
+	color: var(--text-primary);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+	min-width: 3ch;
+}
+
+/* A field that is only read shows the value alone: there is nothing to drag. */
+.tlSlider--immutable {
+	color: var(--text-primary);
+	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
+}
+
+/* The track. A capsule keeps its shape in a theme that squares every corner off, which is why the
+   radius is written literally rather than taken from a radius token. */
+.tlSlider__input::-webkit-slider-runnable-track {
+	height: 0.25rem;
+	border-radius: 999px;
+	background-color: var(--border-subtle);
+}
+
+.tlSlider__input::-moz-range-track {
+	height: 0.25rem;
+	border-radius: 999px;
+	background-color: var(--border-subtle);
+}
+
+/* The handle, a circle standing on the middle of the track: the offset is half the handle less
+   half the track. */
+.tlSlider__input::-webkit-slider-thumb {
+	appearance: none;
+	-webkit-appearance: none;
+	width: 1rem;
+	height: 1rem;
+	margin-top: -0.375rem;
+	border: none;
+	border-radius: 50%;
+	background-color: var(--interactive);
+	box-shadow: var(--shadow-raised);
+	transition: box-shadow 120ms ease-in-out;
+}
+
+.tlSlider__input::-moz-range-thumb {
+	width: 1rem;
+	height: 1rem;
+	border: none;
+	border-radius: 50%;
+	background-color: var(--interactive);
+	box-shadow: var(--shadow-raised);
+	transition: box-shadow 120ms ease-in-out;
+}
+
+/* The focus is shown on the handle, the part the keyboard moves. */
+.tlSlider__input:focus-visible {
+	outline: none;
+}
+
+.tlSlider__input:focus-visible::-webkit-slider-thumb {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+.tlSlider__input:focus-visible::-moz-range-thumb {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+.tlSlider__input:disabled::-webkit-slider-runnable-track {
+	background-color: var(--field-disabled);
+}
+
+.tlSlider__input:disabled::-moz-range-track {
+	background-color: var(--field-disabled);
+}
+
+.tlSlider__input:disabled::-webkit-slider-thumb {
+	background-color: var(--button-disabled);
+	box-shadow: none;
+}
+
+.tlSlider__input:disabled::-moz-range-thumb {
+	background-color: var(--button-disabled);
+	box-shadow: none;
+}
+
+/* A rejected value is marked on the handle and on the text, the two parts that carry it. */
+.tlSlider--error .tlSlider__input::-webkit-slider-thumb {
+	background-color: var(--support-error);
+}
+
+.tlSlider--error .tlSlider__input::-moz-range-thumb {
+	background-color: var(--support-error);
+}
+
+.tlSlider--error .tlSlider__value {
+	color: var(--text-error);
+}
+
+.tlSlider--warning .tlSlider__input::-webkit-slider-thumb {
+	background-color: var(--support-warning);
+}
+
+.tlSlider--warning .tlSlider__input::-moz-range-thumb {
+	background-color: var(--support-warning);
+}
+
+.tlSlider--warning .tlSlider__value {
+	color: var(--text-warning);
+}
+
+/* The handle takes its state at once where motion is unwelcome; where it stands says the same. */
+@media (prefers-reduced-motion: reduce) {
+	.tlSlider__input::-webkit-slider-thumb {
+		transition: none;
+	}
+
+	.tlSlider__input::-moz-range-thumb {
+		transition: none;
+	}
+}
+
+/* --- TLBooleanChoice -------------------------------------------------------- */
+
+/* A boolean offered as a choice: radio buttons in a row, or a select.
+   Both classes in the selector, so that this wins over the rule making a control in a table cell a
+   block: as a block the options would flow as text and wrap onto a second line the row is not high
+   enough to show. */
+.tlBooleanChoice.tlBooleanChoice--radio {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+}
+
+/* One option: a radio and the label naming it, which refers to the radio by id and is therefore a
+   sibling, not a wrapper. The container states its display, being a plain inline element. */
+.tlBooleanChoice__option {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	cursor: pointer;
+	font-size: var(--body-compact-01-font-size);
+}
+
+/* Enough distance to tell the options apart, little enough for two of them to fit a table cell. */
+.tlBooleanChoice__option + .tlBooleanChoice__option {
+	margin-left: 0.75rem;
+}
+
+.tlBooleanChoice__option input {
+	width: 1rem;
+	height: 1rem;
+	margin: 0;
+	accent-color: var(--interactive);
+	cursor: pointer;
+}
+
+.tlBooleanChoice__option input:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+.tlBooleanChoice--error .tlBooleanChoice__label,
+.tlBooleanChoice--error.tlReactSelect {
+	color: var(--support-error);
+}
+
+/* --- TLToolbar ------------------------------------------------------------- */
+
+.tlToolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	flex-shrink: 0;
+}
+
+:root {
+	/* Width of an icon-only toolbar trigger, such as the overflow menu's "...". A collapsing
+	   toolbar never shrinks below it, so its overflow menu stays reachable. */
+	--tl-toolbar-trigger-size: 2rem;
+
+	/* Weight with which the wrapper of a collapsing toolbar takes a shrink, so that the toolbar
+	   gives way before the title beside it. The share of a shrink an item takes is proportional
+	   to its flex shrink factor times its flex base size, so the title beside the toolbar keeps a
+	   share of its own; at this weight that share stays below Chrome's layout unit of 1/64 px for
+	   any bar or header up to a few thousand pixels wide, and a title is cut only once the
+	   toolbar is down to its trigger. (A single layout unit of overflow already costs a whole
+	   character, because an ellipsis replaces the last character that no longer fits.) */
+	--tl-toolbar-shrink-priority: 100000;
+}
+
+/* A toolbar that collapses states its full natural width (as an inline style set by TLToolbar),
+   which is what its host sizes itself from, and gives that width up again down to its overflow
+   trigger. The content sits at the end the toolbar collapses towards, so the space it has given
+   up is at the far end from what is still visible. */
+.tlToolbar--collapsible {
+	flex-shrink: 1;
+	min-width: var(--tl-toolbar-trigger-size);
+	justify-content: flex-end;
+}
+
+/* Compact presentation: a labeled command button collapses to its icon, which is also its
+   accessible name and tooltip. Buttons without an icon keep their label. The dropdown of a menu
+   group is portaled out of the toolbar, so its entries keep their labels.
+   Übergang bis Welle 3 (Toolbar): die Regel liest die Klassen der Paket-Komponente tl-button. */
+.tlToolbar--compact .tl-button:has(> .tl-button__icon) {
+	width: var(--tl-size-control);
+	flex-shrink: 0;
+	padding: 0;
+}
+
+.tlToolbar--compact .tl-button:has(> .tl-button__icon) > .tl-button__label {
+	display: none;
+}
+
+.tlToolbar__separator {
+	display: block;
+	width: 1px;
+	height: 1rem;
+	background: var(--border-subtle);
+	flex-shrink: 0;
+}
+
+.tlToolbar__group--inline {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+}
+
+/* An item whose button is currently hidden renders empty - drop it from the flex layout so
+   it does not contribute gap and the visible buttons stay flush with the toolbar edge. */
+.tlToolbar__item:empty {
+	display: none;
+}
+
+.tlToolbar__group--menu {
+	position: relative;
+}
+
+.tlToolbar__menuTrigger {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	height: 2rem;
+	padding: 0 var(--spacing-03);
+	border: none;
+	border-radius: var(--corner-radius);
+	background: transparent;
+	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
+	color: var(--button-secondary);
+	font-family: var(--font-family);
+	font-weight: bold;
+	font-size: var(--heading-compact-02-font-size);
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+button.tlToolbar__menuTrigger:hover {
+	background: var(--layer-hover);
+}
+
+button.tlToolbar__menuTrigger:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+/* Compact, square icon-only trigger (e.g. the burger overflow menu). */
+.tlToolbar__menuTrigger--icon {
+	gap: 0;
+	width: var(--tl-toolbar-trigger-size);
+	padding: 0;
+	justify-content: center;
+}
+
+.tlToolbar__menuIcon {
+	display: inline-flex;
+	align-items: center;
+	font-size: var(--heading-compact-03-font-size);
+	line-height: 1;
+}
+
+/* The menu trigger visually mirrors a secondary button, so on the accent-colored
+   primary app bar it needs the same on-accent foreground the sibling buttons get -
+   otherwise its accent-blue text/outline is unreadable on the accent background.
+   (Panel toolbars are now light surfaces and use the default secondary styling.) */
+.tlAppBar--primary .tlToolbar__menuTrigger {
+	color: var(--tl-text-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--tl-text-primary);
+}
+
+.tlAppBar--primary button.tlToolbar__menuTrigger:not(:disabled):hover {
+	background: var(--tl-surface-interactive-hover);
+}
+
+.tlAppBar--primary button.tlToolbar__menuTrigger[aria-expanded="true"] {
+	background: var(--tl-surface-interactive-active);
+}
+
+/* The icon-only burger is a plain icon button: no outline box, on any surface. */
+.tlToolbar__menuTrigger--icon,
+.tlAppBar--primary .tlToolbar__menuTrigger--icon {
+	box-shadow: none;
+}
+
+.tlReactCheckbox:disabled,
+.tlReactCheckbox--immutable {
+	opacity: 0.6;
+	cursor: default;
+}
+
+/* --- Error / Warning states for simple inputs ----------------------------- */
+
+/* Error — red border, persists through focus */
+.tlReactTextInput--error,
+.tlReactNumberInput--error,
+.tlReactDatePicker--error,
+.tlReactSelect--error {
+	border-color: var(--support-error);
+}
+
+.tlReactTextInput--error:focus,
+.tlReactNumberInput--error:focus,
+.tlReactDatePicker--error:focus,
+.tlReactSelect--error:focus {
+	outline-color: var(--support-error);
+	border-color: var(--support-error);
+}
+
+/* Warning — yellow border, only when no error */
+.tlReactTextInput--warning,
+.tlReactNumberInput--warning,
+.tlReactDatePicker--warning,
+.tlReactSelect--warning {
+	border-color: var(--support-warning);
+}
+
+.tlReactTextInput--warning:focus,
+.tlReactNumberInput--warning:focus,
+.tlReactDatePicker--warning:focus,
+.tlReactSelect--warning:focus {
+	outline-color: var(--support-warning);
+	border-color: var(--support-warning);
+}
+
+/* Checkbox error/warning — best-effort via accent-color */
+.tlReactCheckbox--error {
+	accent-color: var(--support-error);
+}
+
+.tlReactCheckbox--warning {
+	accent-color: var(--support-warning);
+}
+
+/* --- TLDropdownSelect -------------------------------------------------- */
+
+.tlDropdownSelect {
+	display: flex;
+	align-items: flex-start;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--corner-radius);
+	background-color: var(--field);
+	padding: var(--spacing-02) var(--spacing-03);
+	min-height: 2rem;
+	cursor: pointer;
+	box-sizing: border-box;
+	/* Same field typography as the text-like inputs, instead of the inherited body size. */
+	font-size: var(--body-compact-01-font-size);
+}
+
+.tlDropdownSelect:focus {
+	outline: 2px solid var(--focus);
+	outline-offset: -1px;
+}
+
+.tlDropdownSelect--open {
+	border-color: var(--focus);
+}
+
+.tlDropdownSelect--disabled {
+	opacity: 0.6;
+	cursor: default;
+	background-color: var(--field-disabled);
+}
+
+.tlDropdownSelect--immutable {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	flex-wrap: wrap;
+	border: none;
+	background: none;
+	padding: 0;
+	min-height: auto;
+	cursor: default;
+}
+
+/* Chip area */
+.tlDropdownSelect__chips {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--spacing-02);
+	flex: 1;
+	min-width: 0;
+}
+
+.tlDropdownSelect__placeholder {
+	color: var(--text-secondary);
+	font-style: italic;
+}
+
+.tlDropdownSelect__empty {
+	color: var(--text-secondary);
+}
+
+/* The value of a single select: shown plainly, the way the read-only display shows it. */
+.tlDropdownSelect__value {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	min-width: 0;
+	max-width: 100%;
+}
+
+.tlDropdownSelect__valueLabel {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Individual chip of a multi-select */
+.tlDropdownSelect__chip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	background-color: var(--layer-hover);
+	border-radius: 999px;
+	padding: 2px var(--spacing-03) 2px var(--spacing-02);
+	max-width: 100%;
+}
+
+.tlDropdownSelect__chipLabel {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tlDropdownSelect__chipRemove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--text-secondary);
+	font-size: 14px;
+	padding: 0 2px;
+	line-height: 1;
+}
+
+.tlDropdownSelect__chipRemove:hover {
+	color: var(--text-primary);
+}
+
+/* Controls area (clear, arrow) */
+.tlDropdownSelect__controls {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	flex-shrink: 0;
+	margin-left: var(--spacing-02);
+}
+
+.tlDropdownSelect__clearAll {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: var(--text-secondary);
+	font-size: 16px;
+	padding: 0 2px;
+	line-height: 1;
+}
+
+.tlDropdownSelect__clearAll:hover {
+	color: var(--text-primary);
+}
+
+.tlDropdownSelect__arrow {
+	color: var(--text-secondary);
+	font-size: 10px;
+}
+
+/* Read-only value */
+.tlOptionValue {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+}
+
+/* Dropdown (fixed position to escape overflow:hidden) */
+.tlDropdownSelect__dropdown {
+	position: fixed;
+	background-color: var(--field);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--border-radius-02);
+	box-shadow: var(--shadow-menu);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	z-index: 10000;
+}
+
+/* Search wrapper */
+.tlDropdownSelect__searchWrapper {
+	display: flex;
+	align-items: center;
+	padding: var(--spacing-02) var(--spacing-03);
+	border-bottom: 1px solid var(--border-subtle);
+}
+
+.tlDropdownSelect__searchIcon {
+	margin-right: var(--spacing-02);
+	font-size: 14px;
+	color: var(--text-secondary);
+}
+
+.tlDropdownSelect__search {
+	flex: 1;
+	border: none;
+	outline: none;
+	background: transparent;
+	font-size: inherit;
+	font-family: var(--font-family);
+	color: var(--text-primary);
+}
+
+/* Option list */
+.tlDropdownSelect__list {
+	overflow-y: auto;
+	max-height: 250px;
+}
+
+/* Single option */
+.tlDropdownSelect__option {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-02) var(--spacing-03);
+	cursor: pointer;
+	color: var(--text-secondary);
+	line-height: 2rem;
+	white-space: nowrap;
+}
+
+.tlDropdownSelect__option:hover,
+.tlDropdownSelect__option--highlighted {
+	background-color: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+.tlDropdownSelect__optionLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Option image / icon */
+.tlOptionImage {
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+	object-fit: contain;
+}
+
+.tlOptionIcon {
+	font-size: 20px;
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Loading / Error / No results */
+.tlDropdownSelect__loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-05);
+}
+
+.tlDropdownSelect__spinner {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	border: 2px solid var(--border-subtle);
+	border-top-color: var(--focus);
+	border-radius: 50%;
+	animation: tlDropdownSelectSpin 0.8s linear infinite;
+}
+
+@keyframes tlDropdownSelectSpin {
+	to { transform: rotate(360deg); }
+}
+
+.tlDropdownSelect__error {
+	padding: var(--spacing-04);
+	text-align: center;
+	color: var(--text-secondary);
+}
+
+.tlDropdownSelect__error a {
+	color: var(--link-primary);
+}
+
+.tlDropdownSelect__noResults {
+	padding: var(--spacing-04) var(--spacing-03);
+	text-align: center;
+	color: var(--text-secondary);
+	font-style: italic;
+}
+
+/* Drag handle for reorderable chips */
+.tlDropdownSelect__dragHandle {
+	cursor: grab;
+	color: var(--text-secondary);
+	font-size: 10px;
+	line-height: 1;
+	letter-spacing: -3px;
+	user-select: none;
+	flex-shrink: 0;
+	padding-right: 2px;
+}
+
+.tlDropdownSelect__dragHandle:active {
+	cursor: grabbing;
+}
+
+/* Chip being dragged */
+.tlDropdownSelect__chip--dragging {
+	opacity: 0.4;
+}
+
+/* Drop indicator: left border highlight */
+.tlDropdownSelect__chip--dropBefore {
+	box-shadow: -2px 0 0 0 var(--interactive);
+}
+
+/* Drop indicator: right border highlight */
+.tlDropdownSelect__chip--dropAfter {
+	box-shadow: 2px 0 0 0 var(--interactive);
+}
+
+/* --- TLOptionChips ------------------------------------------------------ */
+
+/* A cloud of toggles: every option is on screen and wraps onto as many lines as it needs. */
+.tlOptionChips {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-02);
+}
+
+/* One option, switched on and off by a click. A pill keeps its shape in a theme that squares
+   every corner off, so the radius is a literal rather than one of the radius tokens. */
+.tlOptionChips__chip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	max-width: 100%;
+	padding: 2px var(--spacing-03);
+	border: 1px solid var(--border-subtle);
+	border-radius: 999px;
+	background-color: var(--layer);
+	color: var(--text-primary);
+	font-family: inherit;
+	font-size: var(--label-01-font-size);
+	line-height: 1.5;
+	cursor: pointer;
+}
+
+.tlOptionChips__chip:not(:disabled):hover {
+	background-color: var(--layer-hover);
+}
+
+.tlOptionChips__chip:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+/* An option that is on is filled, so that on and off are told apart by more than a border. */
+.tlOptionChips__chip--selected {
+	border-color: var(--interactive);
+	background-color: var(--interactive);
+	color: var(--text-on-color);
+}
+
+.tlOptionChips__chip--selected:not(:disabled):hover {
+	background-color: var(--interactive);
+}
+
+.tlOptionChips__chip:disabled {
+	border-color: var(--button-disabled);
+	background-color: var(--button-disabled);
+	color: var(--text-disabled);
+	cursor: default;
+}
+
+.tlOptionChips__chipLabel {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* A rejected value is marked on the cloud as a whole: no single option is at fault. */
+.tlOptionChips--error {
+	box-shadow: 0 0 0 2px var(--support-error);
+}
+
+.tlOptionChips--warning {
+	box-shadow: 0 0 0 2px var(--support-warning);
+}
+
+/* --- TLSegmentedChoice -------------------------------------------------- */
+
+/* A bar of segments reading as one control: the marker stands under the selected segment, so the
+   bar is positioned inline and the segments sit above the marker. */
+.tlSegmentedChoice {
+	position: relative;
+	display: inline-flex;
+	align-items: stretch;
+	max-width: 100%;
+	padding: 2px;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--corner-radius);
+	background-color: var(--layer);
+}
+
+/* The slider marking the selected segment. Its offset and width are measured from that segment, so
+   only the transition between the two positions is stated here. */
+.tlSegmentedChoice__marker {
+	position: absolute;
+	top: 2px;
+	bottom: 2px;
+	border-radius: var(--corner-radius);
+	background-color: var(--interactive);
+	box-shadow: var(--shadow-raised);
+	transition: left 160ms ease-in-out, width 160ms ease-in-out;
+	pointer-events: none;
+}
+
+/* The marker jumps to its position where motion is unwelcome; where it stands says the same. */
+@media (prefers-reduced-motion: reduce) {
+	.tlSegmentedChoice__marker {
+		transition: none;
+	}
+}
+
+.tlSegmentedChoice__segment {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-02);
+	padding: var(--spacing-01) var(--spacing-03);
+	border: none;
+	border-radius: var(--corner-radius);
+	background-color: transparent;
+	color: var(--text-secondary);
+	font-family: inherit;
+	font-size: var(--label-01-font-size);
+	line-height: 1.5;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.tlSegmentedChoice__segment:not(:disabled):hover {
+	color: var(--text-primary);
+}
+
+.tlSegmentedChoice__segment:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: -2px;
+}
+
+/* The selected segment reads on the marker below it. A field taking several values has no marker,
+   so its selected segments carry the fill themselves. */
+.tlSegmentedChoice__segment--selected {
+	color: var(--text-on-color);
+}
+
+.tlSegmentedChoice[role="group"] .tlSegmentedChoice__segment--selected {
+	background-color: var(--interactive);
+}
+
+.tlSegmentedChoice__segment:disabled {
+	color: var(--text-disabled);
+	cursor: default;
+}
+
+.tlSegmentedChoice__segmentLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tlSegmentedChoice--error {
+	box-shadow: 0 0 0 2px var(--support-error);
+}
+
+.tlSegmentedChoice--warning {
+	box-shadow: 0 0 0 2px var(--support-warning);
+}
+
+/* A field that only displays its value is the label it holds, with no bar around it. */
+.tlSegmentedChoice--immutable {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+	padding: 0;
+	border: none;
+	background: none;
+}
+
+/* --- TLColorInput ------------------------------------------------------ */
+
+.tlColorInput {
+  display: inline-block;
+  position: relative;
+}
+
+.tlColorInput--immutable {
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--corner-radius);
+  cursor: default;
+}
+
+.tlColorInput--noColor {
+  background-image:
+    linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(-45deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+}
+
+.tlColorInput__swatch {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 2px solid var(--border-strong);
+  border-radius: var(--corner-radius);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+
+.tlColorInput__swatch:hover {
+  box-shadow: 0 0 0 2px var(--focus);
+}
+
+.tlColorInput__swatch:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.tlColorInput__swatch:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  border-color: var(--border-subtle);
+}
+
+.tlColorInput__swatch:disabled:hover {
+  box-shadow: none;
+}
+
+.tlColorInput__swatch--noColor {}
+
+.tlColorInput__swatch--noColor::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  width: 2px;
+  height: calc(100% + 4px);
+  background: var(--support-error);
+  transform: rotate(45deg);
+  transform-origin: center;
+}
+
+/* Popup */
+
+.tlColorInput__popup {
+  position: fixed;
+  z-index: 9000;
+  background: var(--layer-02);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-02);
+  box-shadow: var(--shadow-menu);
+  width: 480px;
+  overflow: hidden;
+}
+
+.tlColorInput__tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--layer-01);
+}
+
+.tlColorInput__tab {
+  flex: 1;
+  padding: var(--spacing-03) var(--spacing-04);
+  border: none;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: var(--body-compact-01-font-size);
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tlColorInput__tab:hover {
+  color: var(--text-primary);
+  background: var(--layer-hover);
+}
+
+.tlColorInput__tab--active {
+  color: var(--text-primary);
+  font-weight: 600;
+  border-bottom-color: var(--focus);
+}
+
+.tlColorInput__body {
+  display: flex;
+  padding: var(--spacing-04);
+  gap: var(--spacing-04);
+}
+
+/* Palette */
+
+.tlColorInput__palette {
+  display: grid;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.tlColorInput__paletteCell {
+  width: 33px;
+  height: 33px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--corner-radius);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.tlColorInput__paletteCell:hover {
+  transform: scale(1.15);
+  box-shadow: var(--shadow-raised);
+  z-index: 1;
+  position: relative;
+}
+
+.tlColorInput__paletteCell--empty {
+  background-image:
+    linear-gradient(45deg, #eee 25%, transparent 25%),
+    linear-gradient(-45deg, #eee 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #eee 75%),
+    linear-gradient(-45deg, transparent 75%, #eee 75%);
+  background-size: 6px 6px;
+  background-position: 0 0, 0 3px, 3px -3px, -3px 0;
+  border: 1px dashed var(--border-subtle);
+  cursor: default;
+}
+
+.tlColorInput__paletteCell--empty:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Mixer */
+
+.tlColorInput__mixer {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.tlColorInput__svField {
+  width: 192px;
+  height: 192px;
+  position: relative;
+  border-radius: var(--corner-radius);
+  cursor: crosshair;
+  overflow: hidden;
+}
+
+.tlColorInput__svField::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, #fff, transparent);
+}
+
+.tlColorInput__svField::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent, #000);
+}
+
+.tlColorInput__svHandle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.tlColorInput__hueSlider {
+  width: 24px;
+  height: 192px;
+  position: relative;
+  border-radius: var(--corner-radius);
+  cursor: pointer;
+  background: linear-gradient(to bottom,
+    #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+}
+
+.tlColorInput__hueHandle {
+  position: absolute;
+  left: -3px;
+  width: 30px;
+  height: 8px;
+  border: 2px solid #fff;
+  border-radius: var(--corner-radius);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+  transform: translateY(-50%);
+  pointer-events: none;
+  background: transparent;
+}
+
+/* Control panel */
+
+.tlColorInput__controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-03);
+  flex: 1;
+  min-width: 170px;
+}
+
+.tlColorInput__previewRow {
+  display: flex;
+  gap: var(--spacing-03);
+  align-items: center;
+}
+
+.tlColorInput__previewLabel {
+  font-size: var(--label-01-font-size);
+  color: var(--text-secondary);
+  width: 3.5rem;
+  flex-shrink: 0;
+}
+
+.tlColorInput__previewSwatch {
+  width: 100%;
+  height: 28px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--corner-radius);
+}
+
+.tlColorInput__paletteArea {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-03);
+  flex-shrink: 0;
+}
+
+.tlColorInput__paletteReset {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: var(--label-01-font-size);
+  color: var(--link-primary);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.tlColorInput__paletteReset:hover {
+  text-decoration: underline;
+}
+
+.tlColorInput__divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: var(--spacing-02) 0;
+}
+
+.tlColorInput__inputRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-03);
+}
+
+.tlColorInput__inputLabel {
+  font-size: var(--label-01-font-size);
+  color: var(--text-secondary);
+  width: 3.5rem;
+  flex-shrink: 0;
+}
+
+.tlColorInput__input {
+  flex: 1;
+  min-width: 0;
+  height: 2rem;
+  padding: 0 var(--spacing-03);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--corner-radius);
+  font-family: var(--font-family);
+  font-size: var(--body-compact-01-font-size);
+  color: var(--text-primary);
+  background: var(--layer-02);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.tlColorInput__input:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus);
+}
+
+.tlColorInput__input--error {
+  border-color: var(--support-error);
+}
+
+.tlColorInput__actions {
+  display: flex;
+  gap: var(--spacing-03);
+  justify-content: flex-end;
+  padding: var(--spacing-03) var(--spacing-04) var(--spacing-04);
+}
+
+.tlColorInput__btn {
+  flex: 1;
+  height: 2rem;
+  border: none;
+  border-radius: var(--corner-radius);
+  font-family: var(--font-family);
+  font-size: var(--body-compact-01-font-size);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tlColorInput__btn--ok {
+  background: var(--button-primary);
+  color: var(--text-on-color);
+}
+
+.tlColorInput__btn--ok:hover {
+  background: var(--button-primary-hover);
+}
+
+.tlColorInput__btn--cancel {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.tlColorInput__btn--cancel:hover {
+  background: var(--layer-hover);
+}
+
+.tlColorInput__btn--reset {
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--label-01-font-size);
+  font-weight: normal;
+  border: 1px solid var(--border-subtle);
+  flex: none;
+  padding: 0 var(--spacing-03);
+}
+
+.tlColorInput__btn--reset:hover {
+  background: var(--layer-hover);
+}
+
+/* --- TLIconSelect ------------------------------------------------------ */
+
+.tlIconSelect {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tlIconSelect__swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--corner-radius);
+  background: var(--layer-02);
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text-primary);
+  transition: box-shadow 0.15s, border-color 0.15s;
+  padding: 0;
+}
+
+.tlIconSelect__swatch:hover {
+  box-shadow: 0 0 0 2px var(--focus);
+  border-color: var(--focus);
+}
+
+.tlIconSelect__swatch:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.tlIconSelect__swatch--empty {
+  color: var(--text-placeholder);
+  font-size: 14px;
+}
+
+.tlIconSelect__swatch:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.tlIconSelect__swatch:disabled:hover {
+  box-shadow: none;
+  border-color: var(--border-subtle);
+}
+
+.tlIconSelect--immutable .tlIconSelect__swatch {
+  cursor: default;
+  border-color: transparent;
+  background: transparent;
+}
+
+.tlIconSelect--immutable .tlIconSelect__swatch:hover {
+  box-shadow: none;
+}
+
+/* Popup */
+
+.tlIconSelect__popup {
+  position: fixed;
+  z-index: 9000;
+  background: var(--layer-02);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-02);
+  box-shadow: var(--shadow-menu);
+  width: 420px;
+  height: 400px;
+  min-width: 280px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  resize: both;
+}
+
+.tlIconSelect__tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--layer-01);
+}
+
+.tlIconSelect__tab {
+  flex: 1;
+  padding: var(--spacing-03) var(--spacing-04);
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tlIconSelect__tab:hover {
+  color: var(--text-primary);
+  background: var(--layer-hover);
+}
+
+.tlIconSelect__tab--active {
+  color: var(--text-primary);
+  font-weight: 600;
+  border-bottom-color: var(--focus);
+}
+
+/* Search */
+
+.tlIconSelect__searchWrapper {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-03);
+  border-bottom: 1px solid var(--border-subtle);
+  gap: var(--spacing-03);
+}
+
+.tlIconSelect__searchIcon {
+  color: var(--text-placeholder);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.tlIconSelect__search {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.tlIconSelect__search::placeholder {
+  color: var(--text-placeholder);
+}
+
+.tlIconSelect__resetBtn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 16px;
+  padding: 2px 4px;
+  border-radius: var(--corner-radius);
+  line-height: 1;
+}
+
+.tlIconSelect__resetBtn:hover {
+  color: var(--support-error);
+  background: var(--layer-hover);
+}
+
+/* Icon grid */
+
+.tlIconSelect__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 2px;
+  padding: var(--spacing-03);
+  flex: 1;
+  min-height: 80px;
+  overflow-y: scroll;
+  align-content: start;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.tlIconSelect__grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tlIconSelect__grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tlIconSelect__grid::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--corner-radius);
+}
+
+.tlIconSelect__grid::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.tlIconSelect__iconCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--corner-radius);
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text-primary);
+  transition: background 0.1s;
+}
+
+.tlIconSelect__iconCell:hover {
+  background: var(--layer-hover);
+}
+
+.tlIconSelect__iconCell--selected {
+  background: #d0e2ff;
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.tlIconSelect__noResults {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+  grid-column: 1 / -1;
+}
+
+.tlIconSelect__loading {
+  padding: 32px;
+  text-align: center;
+  grid-column: 1 / -1;
+}
+
+.tlIconSelect__spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border-subtle);
+  border-top-color: var(--focus);
+  border-radius: 50%;
+  animation: tlIconSelectSpin 0.8s linear infinite;
+}
+
+@keyframes tlIconSelectSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Advanced tab: edit area */
+
+.tlIconSelect__advancedArea {
+  padding: var(--spacing-03);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-03);
+}
+
+.tlIconSelect__editRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-03);
+}
+
+.tlIconSelect__editLabel {
+  font-size: var(--label-01-font-size);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  min-width: 50px;
+}
+
+.tlIconSelect__editInput {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 var(--spacing-03);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--corner-radius);
+  font-size: 13px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  color: var(--text-primary);
+  background: var(--layer-02);
+  transition: border-color 0.15s;
+}
+
+.tlIconSelect__editInput:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus);
+  outline: none;
+}
+
+.tlIconSelect__previewArea {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-04);
+}
+
+.tlIconSelect__previewIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--corner-radius);
+  font-size: 24px;
+  background: var(--layer-01);
+}
+
+.tlIconSelect__previewLabel {
+  font-size: var(--label-01-font-size);
+  color: var(--text-secondary);
+}
+
+/* Actions */
+
+.tlIconSelect__actions {
+  display: flex;
+  gap: var(--spacing-03);
+  justify-content: flex-end;
+  padding: var(--spacing-03) var(--spacing-04) var(--spacing-04);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.tlIconSelect__btn {
+  height: 28px;
+  padding: 0 var(--spacing-04);
+  border: none;
+  border-radius: var(--corner-radius);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tlIconSelect__btn--ok {
+  background: var(--button-primary);
+  color: var(--text-on-color);
+}
+
+.tlIconSelect__btn--ok:hover {
+  background: var(--button-primary-hover);
+}
+
+.tlIconSelect__btn--cancel {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.tlIconSelect__btn--cancel:hover {
+  background: var(--layer-hover);
+}
+
+.tlIconSelect__btn--clear {
+  background: transparent;
+  color: var(--support-error);
+  border: 1px solid var(--support-error);
+  margin-right: auto;
+}
+
+.tlIconSelect__btn--clear:hover {
+  background: var(--support-error);
+  color: var(--text-on-color);
+}
+
+/*
+ * Rich tooltip popover (see tooltip-host.ts / TooltipPopover.tsx).
+ * Visually aligned with the legacy .tooltip styles in themes.core/core.css.
+ */
+@keyframes tl-tooltip-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.tl-tooltip-popover {
+  --tl-tt-padding: var(--spacing-02);
+  background-color: var(--background-inverse);
+  color: var(--text-inverse);
+  border-radius: var(--border-radius-02);
+  filter: drop-shadow(var(--shadow-menu));
+  max-width: 500px;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.5;
+  z-index: 9999999999999999;
+  cursor: text;
+  user-select: text;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  animation: tl-tooltip-in 140ms ease-out;
+}
+.tl-tooltip-caption {
+  padding: calc(var(--tl-tt-padding) / 2) 12px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.tl-tooltip-body {
+  overflow-y: auto;
+  white-space: normal;
+  overflow-wrap: break-word;
+  padding: var(--tl-tt-padding) 0.75rem;
+  line-height: 1.5;
+  text-align: left;
+  color: inherit;
+}
+.tl-tooltip-body * {
+  color: inherit;
+  line-height: 1.5;
+}
+.tl-tooltip-body p:first-child { margin-top: 0; }
+.tl-tooltip-body p:last-child  { margin-bottom: 0; }
+.tl-tooltip-body :is(ol, ul) {
+  padding-left: 0.75rem;
+}
+.tl-tooltip-arrow {
+  fill: var(--background-inverse);
+}
+/* --- Dashboard --- */
+.tlDashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+  /* The dashboard layout pads itself - the outer inset matches the tile gap. */
+  padding: var(--page-inset);
+}
+.tlDashboard__grid {
+  width: 100%;
+}
+.tlDashboard__tile {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  /* The tile has a definite height (grid rows) - what does not fit scrolls. */
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-02);
+  background: var(--layer-01);
+}
+.tlDashboard__tile > *:not(.tlDashboard__overlay, .tlDashboard__tileAction) {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+/* The name and the keyboard operation of a tile that is an entry point: out of sight, in the tab
+   order. The pointer is answered by the tile around it, so the button stays out of its way. */
+.tlDashboard__tileAction {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  opacity: 0;
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* The whole tile is the surface the user presses. */
+.tlDashboard__tile--action { cursor: pointer; }
+.tlDashboard:not(.tlDashboard--edit) .tlDashboard__tile--action:not(.tlDashboard__tile--disabled):hover {
+  border-color: var(--border-interactive);
+  box-shadow: var(--shadow-raised);
+}
+.tlDashboard__tile--action:has(> .tlDashboard__tileAction:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+/* A tile whose action is refused keeps its resting look - what it shows stays readable. */
+.tlDashboard__tile--disabled { cursor: default; }
+.tlDashboard--edit .tlDashboard__tile { cursor: move; }
+.tlDashboard__tile--dragging { opacity: 0.4; }
+.tlDashboard__overlay {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  cursor: move;
+  z-index: 5;
+}
+.tlDashboard__tile--dropBefore::before,
+.tlDashboard__tile--dropAfter::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  width: 8px;
+  background: var(--color-drop-zone);
+  border-radius: var(--corner-radius);
+  box-shadow: 0 0 12px 2px var(--color-drop-zone),
+              0 0 24px 4px var(--color-drop-zone);
+  pointer-events: none;
+  z-index: 10;
+}
+.tlDashboard__tile--dropBefore::before { left: -10px; }
+.tlDashboard__tile--dropAfter::after { right: -10px; }
+
+button.tlToolbar__menuTrigger[aria-expanded="true"] {
+	background: var(--layer-active);
+}
+
+.tlToolbar__chevron {
+	width: 0.75rem;
+	height: 0.75rem;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	flex-shrink: 0;
+}
+
+.tlToolbar__dropdown[hidden] {
+	display: none;
+}
+
+.tlToolbar__dropdown {
+	position: absolute;
+	top: calc(100% + var(--spacing-02));
+	right: 0;
+	z-index: 10000;
+	min-width: 10rem;
+	background: var(--layer-02);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--border-radius-02);
+	box-shadow: var(--shadow-menu);
+	padding: var(--spacing-02) 0;
+}
+
+/* Ein Menüeintrag füllt seine Zeile; der Button darin ist ghost und streckt sich. */
+.tlToolbar__dropdownItem {
+	display: grid;
+}
+
+/* An entry whose button is currently hidden renders empty - drop it, so the menu does not offer
+   (and a screen reader does not announce) blank entries. */
+.tlToolbar__dropdownItem:empty {
+	display: none;
+}
+
+/* Übergang bis Welle 3 (Menu): ein Menüeintrag füllt seine Zeile und ist linksbündig; die
+   Menu-Komponente ersetzt den Button hier. Farben und Zustände trägt der Button selbst (ghost). */
+.tlToolbar__dropdownItem > .tl-button {
+	width: 100%;
+	justify-content: flex-start;
+}
+
+.tlToolbar__dropdownSeparator {
+	border: none;
+	border-top: 1px solid var(--border-subtle);
+	margin: var(--spacing-02) var(--spacing-04);
+}
+
+/* --- TLPanel button bar ---------------------------------------------------- */
+
+.tlPanel__buttonBar {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: var(--spacing-03);
+	padding: var(--spacing-03) var(--spacing-04);
+	border-top: 1px solid var(--border-subtle);
+	flex-shrink: 0;
+}
+
+/* --- Element picker: click an element in this window to report it -------- */
+
+.tlPick--active,
+.tlPick--active * {
+	cursor: crosshair !important;
+}
+
+#tl-pick-highlight {
+	position: fixed;
+	pointer-events: none;
+	z-index: 10000;
+	border: 2px solid var(--border-interactive);
+	background: rgba(38, 128, 235, 0.12);
+	box-sizing: border-box;
+}
+
+/* The button bar control always exists (as the target for reactive command rebuilds), but
+   while it holds no visible button it must not take up space or draw its separator. */
+.tlPanel__buttonBar:not(:has(button)) {
+	display: none;
+}
+
+/* Scroll anchor (<anchor>): a layout-transparent wrapper marking its content as a scroll
+   target for <scroll-link>. On navigation the target briefly flashes a focus ring, so the
+   jump is perceptible - and so a click that needs no scroll (target already visible) still
+   gives feedback. */
+.tlAnchor--flash {
+	border-radius: var(--corner-radius);
+	animation: tlAnchorFlash 1.2s ease-out;
+}
+
+@keyframes tlAnchorFlash {
+	from {
+		box-shadow: 0 0 0 3px var(--focus);
+	}
+
+	to {
+		box-shadow: 0 0 0 3px transparent;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.tlAnchor--flash {
+		animation-duration: 0.6s;
+	}
+}
+
+/* --- TLCalendar --------------------------------------------------------- */
+
+.tlCalendar {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	font-family: var(--font-family);
+	color: var(--text-primary);
+	background: var(--layer-01);
+}
+
+/* Category palette (event background colors). */
+.tlCalEvent--default { --cal-ev-bg: #4589ff; }
+.tlCalEvent--c0 { --cal-ev-bg: #4589ff; }
+.tlCalEvent--c1 { --cal-ev-bg: #24a148; }
+.tlCalEvent--c2 { --cal-ev-bg: #ee538b; }
+.tlCalEvent--c3 { --cal-ev-bg: #8a3ffc; }
+.tlCalEvent--c4 { --cal-ev-bg: #ff832b; }
+.tlCalEvent--c5 { --cal-ev-bg: #007d79; }
+.tlCalEvent--c6 { --cal-ev-bg: #d12771; }
+.tlCalEvent--c7 { --cal-ev-bg: #1192e8; }
+
+/* Toolbar */
+.tlCalToolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-04);
+	padding: var(--spacing-03) var(--spacing-04);
+	border-bottom: 1px solid var(--border-subtle-01);
+	flex: none;
+}
+.tlCalNav { display: flex; gap: var(--spacing-02); }
+.tlCalTitle {
+	flex: 1;
+	font-size: var(--heading-03-font-size);
+	font-weight: 600;
+	text-align: center;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.tlCalGranularity { display: flex; gap: 2px; }
+.tlCalBtn {
+	appearance: none;
+	border: 1px solid var(--border-subtle-01);
+	background: var(--layer-01);
+	color: var(--text-primary);
+	font-family: inherit;
+	font-size: .8125rem;
+	padding: 4px 10px;
+	border-radius: var(--corner-radius);
+	cursor: pointer;
+	line-height: 1.4;
+}
+.tlCalBtn:hover { background: var(--layer-hover); }
+.tlCalBtn:focus-visible { outline: 2px solid var(--focus); outline-offset: -1px; }
+.tlCalBtn--icon { width: 32px; display: inline-flex; align-items: center; justify-content: center; }
+.tlCalBtn--active {
+	background: var(--button-primary);
+	border-color: var(--button-primary);
+	color: var(--text-on-color);
+}
+
+.tlCalBody { flex: 1; min-height: 0; display: flex; overflow: hidden; }
+
+/* ---- Time grid ---- */
+.tlCalTimeGrid { display: flex; flex-direction: column; flex: 1; min-height: 0; user-select: none; }
+.tlCalGutter { width: 56px; flex: none; box-sizing: border-box; }
+
+.tlCalTimeHeader { display: flex; border-bottom: 1px solid var(--border-subtle-01); flex: none; }
+.tlCalDayHead {
+	flex: 1;
+	text-align: center;
+	padding: 4px 2px;
+	cursor: pointer;
+	border-left: 1px solid var(--border-subtle);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+}
+.tlCalDayHead:hover { background: var(--layer-hover); }
+.tlCalDayName { font-size: .75rem; color: var(--text-secondary); text-transform: uppercase; }
+.tlCalDayNum { font-size: 1.1rem; font-weight: 600; line-height: 1; }
+.tlCalDayHead--nonworking { background: var(--layer); }
+.tlCalDayHead--today .tlCalDayNum {
+	background: var(--button-primary);
+	color: var(--text-on-color);
+	border-radius: 50%;
+	width: 1.6em; height: 1.6em;
+	display: inline-flex; align-items: center; justify-content: center;
+}
+
+.tlCalAllDayRow { display: flex; border-bottom: 1px solid var(--border-subtle-01); flex: none; min-height: 22px; max-height: 88px; overflow-y: auto; }
+.tlCalAllDayLabel { display: flex; align-items: center; justify-content: flex-end; padding-right: 4px; font-size: .7rem; color: var(--text-secondary); }
+.tlCalAllDayCell { flex: 1; border-left: 1px solid var(--border-subtle); padding: 2px; display: flex; flex-direction: column; gap: 2px; }
+.tlCalAllDayEvent {
+	background: var(--cal-ev-bg, #4589ff);
+	color: #fff;
+	font-size: .75rem;
+	padding: 1px 6px;
+	border-radius: var(--corner-radius);
+	cursor: pointer;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tlCalScroll { flex: 1; min-height: 0; overflow-y: auto; }
+.tlCalTimeBody { position: relative; display: flex; }
+.tlCalHourAxis { width: 56px; flex: none; position: relative; }
+.tlCalHourLabel { position: absolute; right: 6px; transform: translateY(-50%); font-size: .7rem; color: var(--text-secondary); }
+.tlCalColumns { flex: 1; display: grid; position: relative; }
+.tlCalCol { position: relative; border-left: 1px solid var(--border-subtle); }
+.tlCalCol--nonworking { background: var(--layer); }
+.tlCalHourLine { position: absolute; left: 0; right: 0; border-top: 1px solid var(--border-subtle); pointer-events: none; }
+.tlCalWorkBand { position: absolute; left: 0; right: 0; background: rgba(127, 127, 127, 0.09); pointer-events: none; }
+.tlCalNowLine { position: absolute; left: 0; right: 0; height: 2px; background: #da1e28; z-index: 5; pointer-events: none; }
+.tlCalNowLine::before { content: ''; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: #da1e28; }
+
+.tlCalEvent {
+	position: absolute;
+	box-sizing: border-box;
+	background: var(--cal-ev-bg, #4589ff);
+	color: #fff;
+	border-radius: var(--corner-radius);
+	padding: 2px 5px;
+	font-size: .72rem;
+	overflow: hidden;
+	cursor: pointer;
+	z-index: 2;
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35) inset;
+	display: flex;
+	flex-direction: column;
+	line-height: 1.15;
+}
+.tlCalEventTime { font-size: .68rem; opacity: .85; }
+.tlCalEventTitle { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tlCalEvent--selected { outline: 2px solid var(--focus); outline-offset: 1px; z-index: 4; }
+.tlCalEvent--dragging { opacity: .7; }
+.tlCalEvent--preview { background: var(--button-primary); opacity: .4; z-index: 6; }
+.tlCalResizeHandle { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; cursor: ns-resize; }
+.tlCalCreateInput {
+	width: 100%;
+	min-width: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	padding: 0;
+	outline: none;
+	user-select: text;
+}
+.tlCalCreateInput::placeholder { color: inherit; opacity: .7; }
+
+/* ---- Month grid ---- */
+.tlCalMonth { display: flex; flex-direction: column; flex: 1; min-height: 0; user-select: none; }
+.tlCalMonthHead { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--border-subtle-01); flex: none; }
+.tlCalMonthWeekday { text-align: center; padding: 4px; font-size: .75rem; color: var(--text-secondary); text-transform: uppercase; }
+.tlCalMonthBody { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.tlCalMonthWeek { flex: 1; position: relative; min-height: 0; overflow: hidden; }
+.tlCalMonthDays { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(7, 1fr); }
+.tlCalMonthCell { border-left: 1px solid var(--border-subtle); border-top: 1px solid var(--border-subtle); cursor: pointer; }
+.tlCalMonthCell--other { background: var(--layer); color: var(--text-disabled); }
+.tlCalMonthCell--nonworking { background: var(--layer); }
+.tlCalMonthDayNum { padding: 2px 6px; font-size: .8rem; display: inline-block; cursor: pointer; }
+.tlCalMonthDayNum--today {
+	background: var(--button-primary);
+	color: var(--text-on-color);
+	border-radius: 50%;
+	width: 1.6em; height: 1.6em; padding: 0;
+	display: inline-flex; align-items: center; justify-content: center;
+}
+.tlCalMonthOverlay {
+	position: absolute;
+	left: 0; right: 0; top: 24px; bottom: 0;
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	grid-auto-rows: 19px;
+	gap: 2px;
+	padding: 0 2px;
+	pointer-events: none;
+}
+.tlCalMonthCreate { margin: 0 4px; opacity: 1; }
+.tlCalMonthBar {
+	background: var(--cal-ev-bg, #4589ff);
+	color: #fff;
+	font-size: .72rem;
+	padding: 1px 6px;
+	border-radius: var(--corner-radius);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: pointer;
+	pointer-events: auto;
+	align-self: center;
+}
+.tlCalChip {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: .72rem;
+	padding: 0 4px;
+	border-radius: var(--corner-radius);
+	cursor: pointer;
+	pointer-events: auto;
+	overflow: hidden;
+}
+.tlCalChip:hover { background: var(--layer-hover); }
+.tlCalChipDot { width: 8px; height: 8px; border-radius: 50%; background: var(--cal-ev-bg, #4589ff); flex: none; }
+.tlCalChipTime { color: var(--text-secondary); flex: none; }
+.tlCalChipTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tlCalMore { font-size: .7rem; color: var(--link-primary); cursor: pointer; pointer-events: auto; padding: 0 4px; }
+
+/* ---- Year grid ---- */
+.tlCalYear {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: var(--spacing-05);
+	padding: var(--spacing-05);
+	align-content: start;
+}
+.tlCalMini { border: 1px solid var(--border-subtle-01); border-radius: var(--corner-radius); padding: 8px; }
+.tlCalMiniTitle { text-align: center; font-weight: 600; margin-bottom: 6px; cursor: pointer; }
+.tlCalMiniTitle:hover { color: var(--link-primary); }
+.tlCalMiniGrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
+.tlCalMiniWd { text-align: center; font-size: .65rem; color: var(--text-secondary); }
+.tlCalMiniDay {
+	text-align: center;
+	font-size: .72rem;
+	padding: 2px 0;
+	cursor: pointer;
+	border-radius: var(--corner-radius);
+	position: relative;
+}
+.tlCalMiniDay:hover { background: var(--layer-hover); }
+.tlCalMiniDay--other { color: var(--text-disabled); }
+.tlCalMiniDay--nonworking { color: var(--text-secondary); }
+.tlCalMiniDay--event { font-weight: 700; }
+.tlCalMiniDay--event::after {
+	content: '';
+	position: absolute;
+	left: 50%; bottom: 1px;
+	transform: translateX(-50%);
+	width: 4px; height: 4px;
+	border-radius: 50%;
+	background: var(--button-primary);
+}
+.tlCalMiniDay--today { background: var(--button-primary); color: var(--text-on-color); }
+.tlCalMiniDay--today.tlCalMiniDay--event::after { background: #fff; }

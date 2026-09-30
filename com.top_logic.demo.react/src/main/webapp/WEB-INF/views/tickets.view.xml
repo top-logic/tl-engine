@@ -73,6 +73,17 @@
 	ticket dropped onto one of its rows gets a comment by that person, and the person dropped
 	on arrives on the dropPerson channel that the drop's script reads.
 	
+	Rules restrict where a ticket may be dragged and dropped. The <executability> of both lists'
+	<drag> and <drop> admits only a logged-in user, so an anonymous session can neither pick a
+	ticket up there nor drop one. The <row-executability> of the Closed list's <drag> decides per
+	row: a closed ticket can be picked up only by somebody who has commented on it, so a closed
+	ticket the logged-in user never took part in stays where it is - it offers no drag, and a
+	selection including it cannot be dragged as a whole. The <refuse-if> of the Involve list
+	decides over the person hovered and the dragged tickets together: a person who has already
+	commented on one of the tickets is refused, and while the tickets are dragged over that
+	person, the pointer shows that no drop is possible and the reason names the person and the
+	ticket. The server checks a drop once more when it is made, so a refused drop changes nothing.
+	
 	The first list groups its tickets by status, the second one shows them flat, so both
 	presentations of the same rows are on screen at once. A group header is a collapsible row
 	standing for no ticket: clicking it collapses the group and leaves the selection alone. The
@@ -194,6 +205,12 @@
 									<en>Generate samples</en>
 									<de>Beispiele erzeugen</de>
 								</label>
+								<executability>
+									<model-access
+										operation="Create"
+										type="demo.tickets:Ticket"
+									/>
+								</executability>
 								<with-transaction>
 									<execute-script function="x -> { areas = ['Login', 'Export', 'Layout', 'Import']; other = all(`tl.accounts:Person`).filter(p -> $p != currentUser()).firstElement(); count(8).foreach(i -> { t = new(`demo.tickets:Ticket`, transient: false); $t.set(`demo.tickets:Ticket#name`, $areas[$i % 4] + ' ' + ($i + 1)); $t.set(`demo.tickets:Ticket#status`, if($i % 4 == 3, `demo.tickets:TicketStatus#closed`, `demo.tickets:TicketStatus#open`)); count($i % 3).foreach(j -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#content`, 'Comment ' + ($j + 1) + '.'); $c.set(`demo.tickets:Comment#author`, if($i % 2 == 0, currentUser(), $other)); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); }); $t; }); }"/>
 								</with-transaction>
@@ -206,7 +223,7 @@
 									<en>New</en>
 									<de>Neu</de>
 								</label>
-								<execute-script function="x -> new(`demo.tickets:Ticket`, transient: true)"/>
+								<create-transient type="demo.tickets:Ticket"/>
 								<open-dialog
 									bind-input-to="model"
 									dialog-view="tickets-create.view.xml"
@@ -230,9 +247,7 @@
 									<null-input-disabled/>
 									<disabled-if expr="t -> if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, #('Closed tickets cannot be deleted.'@en, 'Geschlossene Tickets können nicht gelöscht werden.'@de), null)"/>
 								</executability>
-								<with-transaction>
-									<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
-								</with-transaction>
+								<delete-object/>
 								<write-channel name="ticket"/>
 							</generic-command>
 							<generic-command name="closeTicket"
@@ -337,8 +352,15 @@
 								selection="ticket"
 								types="demo.tickets:Ticket"
 							>
-								<drag/>
+								<drag>
+									<executability>
+										<authenticated-only/>
+									</executability>
+								</drag>
 								<drop accept="demo.tickets:Ticket">
+									<executability>
+										<authenticated-only/>
+									</executability>
 									<with-transaction>
 										<execute-script function="tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`))"/>
 									</with-transaction>
@@ -425,8 +447,18 @@
 								selection="ticket"
 								types="demo.tickets:Ticket"
 							>
-								<drag/>
+								<drag>
+									<executability>
+										<authenticated-only/>
+									</executability>
+									<row-executability>
+										<disabled-if expr="t -> $t.get(`demo.tickets:Ticket#comments`).filter(c -> $c.get(`demo.tickets:Comment#author`) == currentUser()).size() == 0"/>
+									</row-executability>
+								</drag>
 								<drop accept="demo.tickets:Ticket">
+									<executability>
+										<authenticated-only/>
+									</executability>
 									<with-transaction>
 										<execute-script function="tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`))"/>
 									</with-transaction>
@@ -453,6 +485,7 @@
 									target="row"
 									target-channel="dropPerson"
 								>
+									<refuse-if>person -&gt; tickets -&gt; { commented = $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == $person).size() &gt; 0).firstElement(); if($commented == null, null, #('{0} has already commented on the ticket "{1}".'@en, '{0} hat das Ticket "{1}" bereits kommentiert.'@de).fill(label($person), label($commented))); }</refuse-if>
 									<with-transaction>
 										<execute-script function="person -> tickets -> $tickets.foreach(t -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#author`, $person); $c.set(`demo.tickets:Comment#content`, &quot;Please have a look.&quot;); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); })">
 											<inputs>

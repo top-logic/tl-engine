@@ -20,6 +20,7 @@ import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.upload.UploadSupport;
+import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -76,9 +77,9 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 	 */
 	public ReactBinaryFieldControl(ReactContext context, FieldModel model) {
 		super(context, model, "TLBinaryField");
-		// The base constructor seeded VALUE with the raw BinaryData; drop it (not JSON-serializable)
+		// The base constructor seeded the value with the raw BinaryData; drop it (not JSON-serializable)
 		// and emit the download/upload display state instead.
-		putState(VALUE, null);
+		putState(FieldState.VALUE__PROP, null);
 		putState(STATUS, "idle");
 		putState(UploadSupport.MAX_UPLOAD_SIZE, UploadSupport.maxUploadSize());
 		updateDataState(currentData());
@@ -103,7 +104,7 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
-		// Do not emit the raw BinaryData as VALUE; refresh the download display state instead.
+		// Do not emit the raw BinaryData as value; refresh the download display state instead.
 		_dataRevision++;
 		updateDataState(newValue instanceof BinaryData ? (BinaryData) newValue : null);
 	}

@@ -239,7 +239,10 @@ public abstract class AbstractSearchExpressionTest extends BasicTestCase {
 		return KBSetup.getKBTest(test, ServiceTestSetup.createStarterFactoryForModules(modules));
 	}
 
-	private static BasicRuntimeModule<?>[] getModules(BasicRuntimeModule<?>... additionalModules) {
+	/**
+	 * The service modules a test of a {@link SearchExpression} needs, followed by the given ones.
+	 */
+	protected static BasicRuntimeModule<?>[] getModules(BasicRuntimeModule<?>... additionalModules) {
 		ArrayList<BasicRuntimeModule<?>> modules = new ArrayList<>();
 
 		modules.add(SearchBuilder.Module.INSTANCE);

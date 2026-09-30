@@ -1,9 +1,8 @@
 import {
   React, useTLState, TLChild, rootClassName, useI18N, tooltipProps, TOOLTIP_ATTR, FieldLabelContext, fieldLabel,
-  focusFieldInput,
+  focusFieldInput, ThemeIcon,
 } from 'tl-react-bridge';
 import type { TLCellProps, ChildDescriptor } from 'tl-react-bridge';
-import FontIcon from './FontIcon';
 import { FormLayoutContext } from './FormLayoutContext';
 
 const { useContext, useState, useCallback, useMemo } = React;
@@ -143,7 +142,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
       </div>
       {!readOnly && hasError && (
         <div className="tlFormField__error" role="alert">
-          <FontIcon image={errorIcon} className="tlFormField__errorIcon" />
+          <ThemeIcon encoded={errorIcon} className="tlFormField__errorIcon" />
           <span>{error}</span>
         </div>
       )}
@@ -151,7 +150,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
         <div className="tlFormField__warnings" aria-live="polite">
           {warnings.map((msg, i) => (
             <div key={i} className="tlFormField__warning">
-              <FontIcon image={warningIcon} className="tlFormField__warningIcon" />
+              <ThemeIcon encoded={warningIcon} className="tlFormField__warningIcon" />
               <span>{msg}</span>
             </div>
           ))}

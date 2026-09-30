@@ -1,6 +1,5 @@
-import { React, useTLState, useTLUpload, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
 import { buttonClassName, useButtonDefaults } from './button/ButtonDefaults';
 import type { ButtonAppearance } from './button/ButtonDefaults';
 

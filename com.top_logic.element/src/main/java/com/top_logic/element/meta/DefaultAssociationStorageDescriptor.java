@@ -45,7 +45,7 @@ public class DefaultAssociationStorageDescriptor implements AssociationStorageDe
 
 	@Override
 	public ObjectKey getBaseObjectId(Map<String, Object> row) {
-		return (ObjectKey) row.get(baseObjectCol());
+		return (ObjectKey) row.get(getBaseObjectColumn());
 	}
 
 	@Override
@@ -58,12 +58,8 @@ public class DefaultAssociationStorageDescriptor implements AssociationStorageDe
 		return _storageCol;
 	}
 
-	/**
-	 * The name of the column that stores the base object.
-	 * 
-	 * @see #getBaseObjectId(Map)
-	 */
-	public String baseObjectCol() {
+	@Override
+	public String getBaseObjectColumn() {
 		return _baseObjectCol;
 	}
 
@@ -77,16 +73,16 @@ public class DefaultAssociationStorageDescriptor implements AssociationStorageDe
 	}
 
 	/**
-	 * Checks whether the {@link #getTable()} has {@link #baseObjectCol()} and {@link #partCol()} as
-	 * key attributes.
+	 * Checks whether the {@link #getTable()} has {@link #getBaseObjectColumn()} and
+	 * {@link #partCol()} as key attributes.
 	 */
 	public void checkKeyAttributes(TLStructuredTypePart attribute) {
-		checkKeyAttributes(attribute, partCol(), baseObjectCol());
+		checkKeyAttributes(attribute, partCol(), getBaseObjectColumn());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(baseObjectCol(), partCol(), _storageCol, _table);
+		return Objects.hash(getBaseObjectColumn(), partCol(), _storageCol, _table);
 	}
 
 	@Override
@@ -98,7 +94,8 @@ public class DefaultAssociationStorageDescriptor implements AssociationStorageDe
 		if (getClass() != obj.getClass())
 			return false;
 		DefaultAssociationStorageDescriptor other = (DefaultAssociationStorageDescriptor) obj;
-		return Objects.equals(baseObjectCol(), other.baseObjectCol()) && Objects.equals(partCol(), other.partCol())
+		return Objects.equals(getBaseObjectColumn(), other.getBaseObjectColumn())
+				&& Objects.equals(partCol(), other.partCol())
 				&& Objects.equals(_storageCol, other._storageCol) && Objects.equals(_table, other._table);
 	}
 

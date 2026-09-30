@@ -21,6 +21,7 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.model.ModelFactory;
 import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
@@ -137,6 +138,37 @@ public class TestSubtreeChangeLog extends TestWithModelExtension {
 
 		Collection<ChangeSet> log = log(root);
 		assertContains(log, child);
+	}
+
+	/**
+	 * With a limited number of entries, the latest change of an object is found, even if many
+	 * unrelated commits happened afterwards.
+	 */
+	public void testLatestChangeLongAgo() {
+		TLObject root = createNode(null, "root");
+		Revision renamed = renameInRevision(root, "root-2");
+
+		TLObject unrelated = createNode(null, "unrelated");
+		for (int n = 0; n < 50; n++) {
+			rename(unrelated, "unrelated-" + n);
+		}
+
+		Collection<ChangeSet> log = new ChangeLogBuilder(_kb, ModelService.getApplicationModel())
+			.setFilter(new SubtreeFilter(root))
+			.setNumberEntries(1)
+			.build();
+		assertEquals(1, log.size());
+		ChangeSet cs = log.iterator().next();
+		assertEquals(renamed.getCommitNumber(), cs.getRevision().getCommitNumber());
+		assertContains(log, root);
+	}
+
+	private Revision renameInRevision(TLObject node, String newName) {
+		try (Transaction tx = beginTX()) {
+			node.tUpdateByName("name", newName);
+			tx.commit();
+			return tx.getCommitRevision();
+		}
 	}
 
 	private TLObject createNode(TLObject parent, String name) {

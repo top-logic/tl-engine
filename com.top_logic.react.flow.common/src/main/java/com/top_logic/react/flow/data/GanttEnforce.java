@@ -53,22 +53,4 @@ public enum GanttEnforce implements de.haumacher.msgbuf.data.ProtocolEnum {
 	public static GanttEnforce readGanttEnforce(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		return valueOfProtocol(in.nextString());
 	}
-
-	/** Writes this instance to the given binary output. */
-	public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		switch (this) {
-			case NONE: out.value(1); break;
-			case STRICT: out.value(2); break;
-			default: out.value(0);
-		}
-	}
-
-	/** Reads a new instance from the given binary reader. */
-	public static GanttEnforce readGanttEnforce(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		switch (in.nextInt()) {
-			case 1: return NONE;
-			case 2: return STRICT;
-			default: return NONE;
-		}
-	}
 }

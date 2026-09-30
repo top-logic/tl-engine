@@ -902,15 +902,16 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * <p>
 	 * An attribute-level options generator (e.g. supported locales) takes precedence over the
 	 * provider's configured option source; otherwise the configured option source is used, falling
-	 * back to the attribute's structural options.
+	 * back to the attribute's structural options. Either way, only options the current user may read
+	 * are offered.
 	 * </p>
 	 */
 	private OptionSource optionSourceFor(TLStructuredTypePart part, SelectControlProvider provider) {
 		OptionProvider options = provider.getConfiguredOptions();
 		if (options != null && AttributeOperations.getOptions(part) == null) {
 			OptionProvider configured = options;
-			return (self, overlays, dependencies) -> AttributeOptions
-				.toList(configured.getOptions(SimpleEditContext.createContext(self, part)));
+			return (self, overlays, dependencies) -> AttributeOptions.readable(
+				AttributeOptions.toList(configured.getOptions(SimpleEditContext.createContext(self, part))));
 		}
 		return (self, overlays, dependencies) -> AttributeOptions.optionsFor(self, part, overlays, dependencies);
 	}

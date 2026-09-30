@@ -14,6 +14,8 @@ import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -58,7 +60,7 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 		refresh();
 		if (TranslationService.isActive()) {
 			// Defer auto-translation to field commit (blur); see #onCommit.
-			putState(COMMIT_ON_BLUR, Boolean.TRUE);
+			putState(TypingFieldState.COMMIT_ON_BLUR__PROP, Boolean.TRUE);
 		}
 	}
 
@@ -107,11 +109,11 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 		if (_editable) {
 			// Show the user-locale value; if it is empty, offer the best available translation as a
 			// placeholder so a value set only in another language is not hidden.
-			putState(VALUE, emptyToNull(userText));
+			putState(FieldState.VALUE__PROP, emptyToNull(userText));
 			setPlaceholder(isEmpty(userText) ? fallbackValue(resKey) : null);
 		} else {
 			// View mode: fall back to the best available translation so an existing value shows.
-			putState(VALUE, isEmpty(userText) ? fallbackValue(resKey) : userText);
+			putState(FieldState.VALUE__PROP, isEmpty(userText) ? fallbackValue(resKey) : userText);
 			setPlaceholder(null);
 		}
 	}

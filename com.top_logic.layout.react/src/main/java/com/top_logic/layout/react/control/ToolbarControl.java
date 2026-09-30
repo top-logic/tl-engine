@@ -7,6 +7,7 @@ package com.top_logic.layout.react.control;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.top_logic.layout.react.state.WindowState;
 
 /**
  * Base class for {@link ReactControl}s that support toolbar buttons in their header area.
@@ -18,9 +19,6 @@ import java.util.List;
  * </p>
  */
 public abstract class ToolbarControl extends ReactControl {
-
-	/** State key for toolbar buttons. */
-	protected static final String TOOLBAR_BUTTONS = "toolbarButtons";
 
 	private final List<ReactControl> _toolbarButtons = new ArrayList<>();
 
@@ -36,7 +34,7 @@ public abstract class ToolbarControl extends ReactControl {
 	 */
 	protected ToolbarControl(com.top_logic.layout.react.ReactContext context, String controlId, String reactModule) {
 		super(context, controlId, reactModule);
-		putState(TOOLBAR_BUTTONS, _toolbarButtons);
+		putState(WindowState.TOOLBAR_BUTTONS__PROP, _toolbarButtons);
 	}
 
 	/**
@@ -44,7 +42,7 @@ public abstract class ToolbarControl extends ReactControl {
 	 */
 	public void addToolbarButton(ReactControl button) {
 		_toolbarButtons.add(button);
-		putState(TOOLBAR_BUTTONS, _toolbarButtons);
+		putState(WindowState.TOOLBAR_BUTTONS__PROP, _toolbarButtons);
 		if (isAttached()) {
 			button.attach();
 		}
@@ -58,7 +56,7 @@ public abstract class ToolbarControl extends ReactControl {
 	public boolean removeToolbarButton(ReactControl button) {
 		boolean removed = _toolbarButtons.remove(button);
 		if (removed) {
-			putState(TOOLBAR_BUTTONS, _toolbarButtons);
+			putState(WindowState.TOOLBAR_BUTTONS__PROP, _toolbarButtons);
 			button.cleanupTree();
 		}
 		return removed;

@@ -56,7 +56,7 @@ public class AvatarElement implements UIElement {
 		String SIZE = "size";
 
 		/**
-		 * Channel whose value is displayed; the avatar derives initials and color from the value's
+		 * Channel whose value is displayed; the avatar derives initials and category color from the value's
 		 * label.
 		 */
 		@Name(INPUT)
@@ -80,7 +80,8 @@ public class AvatarElement implements UIElement {
 		ChannelRef getImage();
 
 		/**
-		 * Diameter of the circle.
+		 * Diameter of the circle: {@code small}, {@code medium} (the default), {@code large} or
+		 * {@code x-large}.
 		 */
 		@Name(SIZE)
 		AvatarSize getSize();

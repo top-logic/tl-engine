@@ -3,6 +3,54 @@
    https://git.top-logic.com/TopLogic/tl-design-system/wiki */
 /* Components, one section per file under src/components/. */
 
+/* --- avatar/avatar.css --- */
+/* Avatar — docs/skalen.md „Avatar: die Farbe ist eine Kategorie“.
+   Ein Kreis für eine Person oder ein Objekt: das Bild, wo es eines gibt; sonst die Initialen auf
+   einer der acht Kategorien, die der Name bestimmt; ohne Namen die neutrale Fläche. Farbe ist eine
+   Rolle mit denselben zwei Tokens wie die Pill — kein Farbwert aus dem Namen, kein Inline-Style.
+   Vier Größen aus der Maßskala; die Initialen tragen die Typo-Klasse ihrer Größe (von außen). */
+
+.tl-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  box-sizing: border-box;
+  width: var(--tl-size-avatar-md);
+  height: var(--tl-size-avatar-md);
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-round);
+  background: var(--tl-surface-interactive-selected);
+  color: var(--tl-text-primary);
+  overflow: hidden;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* Das Bild füllt den Kreis und wird beschnitten, nicht verzerrt. */
+.tl-avatar__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* --- Größen ---------------------------------------------------------------- */
+
+.tl-avatar--sm { width: var(--tl-size-avatar-sm); height: var(--tl-size-avatar-sm); }
+.tl-avatar--lg { width: var(--tl-size-avatar-lg); height: var(--tl-size-avatar-lg); }
+.tl-avatar--xl { width: var(--tl-size-avatar-xl); height: var(--tl-size-avatar-xl); }
+
+/* --- Kategorien -------------------------------------------------------------- */
+
+.tl-avatar--category-1 { background: var(--tl-category-1-subtle); border-color: var(--tl-category-1-border); }
+.tl-avatar--category-2 { background: var(--tl-category-2-subtle); border-color: var(--tl-category-2-border); }
+.tl-avatar--category-3 { background: var(--tl-category-3-subtle); border-color: var(--tl-category-3-border); }
+.tl-avatar--category-4 { background: var(--tl-category-4-subtle); border-color: var(--tl-category-4-border); }
+.tl-avatar--category-5 { background: var(--tl-category-5-subtle); border-color: var(--tl-category-5-border); }
+.tl-avatar--category-6 { background: var(--tl-category-6-subtle); border-color: var(--tl-category-6-border); }
+.tl-avatar--category-7 { background: var(--tl-category-7-subtle); border-color: var(--tl-category-7-border); }
+.tl-avatar--category-8 { background: var(--tl-category-8-subtle); border-color: var(--tl-category-8-border); }
+
 /* --- button/button.css --- */
 /* Button — docs/skalen.md „Button: vier Erscheinungen, eine Tönung, keine Größe“.
    Vier Erscheinungen (--primary, --secondary, --ghost, --link), eine Tönung (--danger),
@@ -144,17 +192,26 @@
   cursor: progress;
 }
 
-.tl-button:disabled {
+/* Deaktiviert bleibt die Schaltfläche für den Zeiger erreichbar: ihr Tooltip nennt den Grund, warum
+   sie nicht ausführbar ist. Den Klick verschluckt der native disabled-Zustand; Zeigen und Drücken
+   ändern ihr Aussehen nicht, auch nicht bei Tönung oder Link. */
+.tl-button:disabled,
+.tl-button:disabled:hover,
+.tl-button:disabled:active {
   background: var(--tl-surface-disabled);
   border-color: var(--tl-border-disabled);
   color: var(--tl-text-disabled);
+  text-decoration: none;
   cursor: default;
-  pointer-events: none;
 }
 
 /* Ghost und Link haben in Ruhe keine Fläche — auch deaktiviert nicht; sonst wird eine Menüspalte zu grauen Kästen. */
 .tl-button--ghost:disabled,
-.tl-button--link:disabled {
+.tl-button--ghost:disabled:hover,
+.tl-button--ghost:disabled:active,
+.tl-button--link:disabled,
+.tl-button--link:disabled:hover,
+.tl-button--link:disabled:active {
   background: transparent;
   border-color: transparent;
 }
@@ -221,3 +278,58 @@
 .tl-pill--category-6 { background: var(--tl-category-6-subtle); border-color: var(--tl-category-6-border); }
 .tl-pill--category-7 { background: var(--tl-category-7-subtle); border-color: var(--tl-category-7-border); }
 .tl-pill--category-8 { background: var(--tl-category-8-subtle); border-color: var(--tl-category-8-border); }
+
+/* --- progress/progress.css --- */
+/* Progress — docs/skalen.md „Progress: ein Anteil, kein Urteil“.
+   Ein Anteil zwischen 0 und 1 als Balken, daneben optional eine Beschriftung. Die Spur ist die
+   vertiefte Fläche, die Füllung die Marke; eine Tönung gibt es nicht — ob etwas scheiterte, sagt
+   der Text. Die Breite der Füllung ist Daten, kein Gestaltungswert: das Control setzt sie als Anteil
+   in Prozent, das Stylesheet kennt keine Breite. Unbestimmt ist ein Zustand (aria-busy), keine Klasse:
+   die Füllung wandert über die Spur
+   und ruht ohne Bewegung in ihrer Mitte — der globale Reduced-Motion-Schalter beendet die Animation
+   nach einem Durchlauf, und der Fill-Mode lässt sie auf die Ruhelage zurückfallen. */
+
+.tl-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-width: 0;
+}
+
+.tl-progress__track {
+  flex: 1 1 auto;
+  min-width: var(--tl-size-control);
+  height: var(--tl-size-progress);
+  overflow: hidden;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-interactive-selected);
+}
+
+.tl-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+  transition: width var(--tl-duration-base) var(--tl-easing-standard);
+}
+
+.tl-progress__label {
+  flex: 0 0 auto;
+  color: var(--tl-text-secondary);
+  white-space: nowrap;
+}
+
+/* --- Unbestimmt -------------------------------------------------------------- */
+
+/* Anteile der Spur, keine Maße: die Füllung ist zwei Fünftel breit und ruht bei drei Vierteln. */
+.tl-progress[aria-busy="true"] .tl-progress__fill {
+  width: calc(0.4 * 100%);
+  transform: translateX(calc(0.75 * 100%));
+  transition: none;
+  animation: tl-progress-sweep var(--tl-duration-loop) var(--tl-easing-standard) infinite;
+}
+
+@keyframes tl-progress-sweep {
+  from { transform: translateX(calc(-1 * 100%)); }
+  to { transform: translateX(calc(2.5 * 100%)); }
+}

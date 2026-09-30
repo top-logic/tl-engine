@@ -8,12 +8,18 @@ package com.top_logic.tl.ai.core.execution;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.TransactionScope;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * Tests for {@link ExecutionRecorder} outside a running application: events are forwarded
@@ -81,5 +87,22 @@ public class TestExecutionRecorder extends TestCase {
 		recorder.onEvent(new AgentEvent.RunCompleted("run-3", 1, now, StopReason.ERROR, TokenUsage.EMPTY));
 
 		assertEquals(StopReason.ERROR, recorder.result().stopReason());
+	}
+
+	/**
+	 * A delegation the parent waits for writes the parent's transcript before its child asks for an
+	 * approval - the turn on the user's screen is the parent's (#598). A detached subagent does not:
+	 * the parent turn it came from has ended, and the subagent records its own transcript.
+	 */
+	public void testWaitedForDelegationCheckpointsTheParent() {
+		AtomicInteger parentCheckpoints = new AtomicInteger();
+		ToolContext parent = new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE);
+		parent.executionHandle().setCheckpoint(parentCheckpoints::incrementAndGet);
+
+		parent.forDelegation(TransactionScope.NOOP).executionHandle().checkpoint();
+		assertEquals(1, parentCheckpoints.get());
+
+		parent.forDetachedSubagent(TransactionScope.NOOP, new CancellationToken()).executionHandle().checkpoint();
+		assertEquals("A detached subagent does not write its parent's transcript", 1, parentCheckpoints.get());
 	}
 }

@@ -29,6 +29,27 @@ public final class InteractionRecorder {
 	}
 
 	/**
+	 * Records a pending interaction of the run behind {@code handle}, after writing down what the
+	 * run has recorded so far (#598).
+	 *
+	 * <p>
+	 * The run is about to park its thread on a person, and a restart during that wait must not take
+	 * the turn with it - see {@link ExecutionHandle#checkpoint()}. The checkpoint is queued on the
+	 * store's writer before the interaction row, so it is written by the time the wait begins.
+	 * </p>
+	 *
+	 * @see #begin(AgentExecution, InteractionType, String, String, String, String)
+	 */
+	public static String begin(ExecutionHandle handle, InteractionType type,
+			String requestId, String header, String prompt, String payload) {
+		if (handle == null) {
+			return null;
+		}
+		handle.checkpoint();
+		return begin(handle.get(), type, requestId, header, prompt, payload);
+	}
+
+	/**
 	 * Records a pending interaction and returns its {@code requestId} handle, or <code>null</code>
 	 * when recording is off (or the row could not be persisted).
 	 *

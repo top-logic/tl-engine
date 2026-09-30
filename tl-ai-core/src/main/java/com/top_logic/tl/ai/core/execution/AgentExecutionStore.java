@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -51,6 +52,7 @@ import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.session.persist.InterruptedTranscript;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
 import com.top_logic.util.model.ModelService;
@@ -394,6 +396,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 						execution.setStopReason(StopReason.ERROR.name());
 						execution.setErrorMessage(ORPHANED_RUN_ERROR);
 						execution.setEndedAt(now);
+						closeInterruptedTranscript(execution);
 						count++;
 					}
 					tx.commit();
@@ -410,6 +413,89 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			Logger.warn("Could not fail orphaned running agent executions at startup: "
 				+ ex.getMessage(), ex, AgentExecutionStore.class);
 			return 0;
+		}
+	}
+
+	/**
+	 * Rewrites the checkpointed transcript of a swept run as a turn that ended (#598).
+	 *
+	 * <p>
+	 * The checkpoint is what the chat shows of the run - the user's message and everything the
+	 * agent did before the process ended - but it was written while the run was still waiting or
+	 * working. See {@link InterruptedTranscript}. A transcript that cannot be read is left as it is:
+	 * the row is still failed, and a damaged transcript is no reason to lose the rest of the sweep.
+	 * </p>
+	 */
+	private static void closeInterruptedTranscript(AgentExecution execution) {
+		String transcript = execution.getTranscript();
+		if (transcript == null || transcript.isEmpty()) {
+			return;
+		}
+		try {
+			execution.setTranscript(InterruptedTranscript.close(transcript));
+		} catch (IOException | RuntimeException ex) {
+			Logger.warn("Could not close the transcript of interrupted run " + execution.getRunId()
+				+ ": " + ex.getMessage(), ex, AgentExecutionStore.class);
+		}
+	}
+
+	/**
+	 * Writes what a running run has recorded so far, so that a process ending in the middle of it
+	 * does not take the turn with it (#598).
+	 *
+	 * <p>
+	 * The final transcript is written by
+	 * {@link #finishExecution(AgentExecution, ExecutionStatus, StopReason, String, TokenUsage, String, String)
+	 * finishExecution}, which a run cut off by a restart never reaches - and the one moment a run is
+	 * most likely to be cut off is while it waits for a person, which can take the rest of the
+	 * day. Without a checkpoint the conversation came back from a restart without the user's own
+	 * message.
+	 * </p>
+	 *
+	 * <p>
+	 * Does not wait: the agent thread calls this at every message boundary and must not be slowed
+	 * by a commit. The write is queued on the writer thread, behind whatever the run wrote before
+	 * and ahead of its {@code finishExecution}, so a checkpoint can never overwrite the final
+	 * transcript; a row that has ended anyway (the sweep, a second finish) is left alone. The
+	 * {@code transcript} supplier is asked on the writer thread, when the write is carried out, so
+	 * that a caller can coalesce: while one checkpoint is queued, a further boundary need not queue
+	 * another, the queued one will write the later state. Best-effort: a failure is logged and the
+	 * run goes on.
+	 * </p>
+	 *
+	 * @param execution
+	 *        The running execution.
+	 * @param transcript
+	 *        The run's transcript at the moment the write is carried out; returning
+	 *        <code>null</code> writes nothing.
+	 * @return Whether the write was queued; {@code false} when the store is not running, in which
+	 *         case {@code transcript} is never asked.
+	 */
+	public boolean checkpointTranscript(AgentExecution execution, Supplier<String> transcript) {
+		ThreadPoolExecutor writer = _writer;
+		if (writer == null) {
+			return false;
+		}
+		try {
+			writer.execute(() -> ThreadContextManager.inSystemInteraction(AgentExecutionStore.class, () -> {
+				try {
+					String json = transcript.get();
+					if (json == null || execution.getEndedAt() != null) {
+						return;
+					}
+					try (Transaction tx = beginTx("Checkpoint agent execution " + execution.getRunId())) {
+						execution.setTranscript(json);
+						tx.commit();
+					}
+				} catch (RuntimeException ex) {
+					Logger.warn("Failed to checkpoint the transcript of agent run " + execution.getRunId()
+						+ ": " + ex.getMessage(), ex, AgentExecutionStore.class);
+				}
+			}));
+			return true;
+		} catch (RejectedExecutionException ex) {
+			// The store is shutting down; the run is about to be cut off anyway.
+			return false;
 		}
 	}
 

@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.execution;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
@@ -110,22 +111,22 @@ public final class AgentRunner {
 		// would otherwise serialize an empty log. This closes that gap for every caller.
 		AgentEventListener downstream = withTranscriptRecording(listener, log);
 
-		AgentEventListener effectiveListener = downstream;
-		ExecutionRecorder recorder = null;
-		if (session != null) {
-			recorder = new ExecutionRecorder(session, agentName, parentExecution,
-				context.executionHandle(), downstream);
-			effectiveListener = recorder;
-		} else {
-			Logger.info("Agent run of '" + agentName + "' not recorded: no session given.",
-				AgentRunner.class);
-		}
-
 		// Entry points may start the run's turn before invoking the loop (chat records the
 		// user message first); an open current turn belongs to this run, not to history.
 		int turnsBefore = log != null
 			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
 			: 0;
+
+		AgentEventListener effectiveListener = downstream;
+		ExecutionRecorder recorder = null;
+		if (session != null) {
+			recorder = new ExecutionRecorder(session, agentName, parentExecution,
+				context.executionHandle(), downstream, checkpointOf(log, turnsBefore));
+			effectiveListener = recorder;
+		} else {
+			Logger.info("Agent run of '" + agentName + "' not recorded: no session given.",
+				AgentRunner.class);
+		}
 
 		// The numbering belongs to the conversation, not to this run: the model reads its own earlier
 		// answers back, markers and all, so a run that restarted at 1 handed out numbers that already
@@ -205,22 +206,22 @@ public final class AgentRunner {
 
 		AgentEventListener downstream = withTranscriptRecording(listener, log);
 
-		AgentEventListener effectiveListener = downstream;
-		ExecutionRecorder recorder = null;
-		if (session != null) {
-			recorder = new ExecutionRecorder(session, agentName, parentExecution,
-				context.executionHandle(), downstream);
-			effectiveListener = recorder;
-		} else {
-			Logger.info("Agent run of '" + agentName + "' not recorded: no session given.",
-				AgentRunner.class);
-		}
-
 		// Callers may seed the run's first turn (e.g. the subagent's user message) before the loop;
 		// an open current turn belongs to this run, not to history.
 		int turnsBefore = log != null
 			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
 			: 0;
+
+		AgentEventListener effectiveListener = downstream;
+		ExecutionRecorder recorder = null;
+		if (session != null) {
+			recorder = new ExecutionRecorder(session, agentName, parentExecution,
+				context.executionHandle(), downstream, checkpointOf(log, turnsBefore));
+			effectiveListener = recorder;
+		} else {
+			Logger.info("Agent run of '" + agentName + "' not recorded: no session given.",
+				AgentRunner.class);
+		}
 
 		// The numbering belongs to the conversation, not to this run: the model reads its own earlier
 		// answers back, markers and all, so a run that restarted at 1 handed out numbers that already
@@ -271,6 +272,20 @@ public final class AgentRunner {
 		return listener == null
 			? transcriptRecorder
 			: new CompositeAgentEventListener(transcriptRecorder, listener);
+	}
+
+	/**
+	 * The run's transcript while it is still going, for the recorder to checkpoint (#598), or
+	 * <code>null</code> when the run keeps no log.
+	 *
+	 * <p>
+	 * The same slice of the log that {@link #transcriptOf(ConversationLog, int)} writes at the end,
+	 * open turn included - which is the point: the open turn is the one a restart would otherwise
+	 * lose.
+	 * </p>
+	 */
+	private static Supplier<String> checkpointOf(ConversationLog log, int turnsBefore) {
+		return log == null ? null : () -> transcriptOf(log, turnsBefore);
 	}
 
 	/**

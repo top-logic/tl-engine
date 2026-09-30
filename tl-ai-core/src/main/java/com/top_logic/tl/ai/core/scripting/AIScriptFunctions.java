@@ -901,10 +901,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * The transcript is the serialized per-run conversation log (as produced by
-	 * {@link ConversationLogSerializer}). It is written at run finalization, so it is {@code null}
-	 * while the run is still {@code RUNNING} and becomes available once the run reaches any terminal
-	 * state - including {@code ERROR} and {@code CANCELLED}, where the partial log is the most
-	 * useful diagnostic. For the agent's final answer alone, use {@link #agentRunResult(Object)}.
+	 * {@link ConversationLogSerializer}). While the run is still {@code RUNNING}, it holds what the
+	 * run had recorded when it last started a tool call, asked for an approval or finished an
+	 * iteration, and it is {@code null} before that. The complete transcript is written once the run
+	 * reaches any terminal state, including {@code ERROR} and {@code CANCELLED}, where the partial
+	 * log is the most useful diagnostic. For the agent's final answer alone, use
+	 * {@link #agentRunResult(Object)}.
 	 * </p>
 	 *
 	 * @param handle

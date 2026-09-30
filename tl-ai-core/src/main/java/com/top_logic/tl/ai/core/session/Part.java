@@ -183,7 +183,17 @@ public sealed interface Part {
 		/** User denied this tool call. */
 		DENIED,
 		/** Approval request timed out without a response. */
-		TIMED_OUT
+		TIMED_OUT,
+		/**
+		 * The process ended while the request was open (#598).
+		 *
+		 * <p>
+		 * Written by the startup sweep, never by a person: nobody can answer the request any more,
+		 * because the run that asked is gone. Distinct from {@link #TIMED_OUT}, which says the user
+		 * had the chance and let it pass.
+		 * </p>
+		 */
+		INTERRUPTED
 	}
 
 	/**
@@ -270,6 +280,16 @@ public sealed interface Part {
 	enum SystemEventType {
 		/** Agent run was cancelled by the user. */
 		CANCELLED,
+		/**
+		 * The process ended before the run finished (#598).
+		 *
+		 * <p>
+		 * Written by the startup sweep onto the last turn of a run it found still running. Nobody
+		 * asked for it, unlike {@link #CANCELLED}, and the run cannot be continued: no agent loop
+		 * survives a restart.
+		 * </p>
+		 */
+		INTERRUPTED,
 		/** Approval mode was changed during the run. */
 		APPROVAL_MODE_CHANGED,
 		/** LLM model was switched during the run. */
@@ -278,7 +298,7 @@ public sealed interface Part {
 		 * Results of background subagents were handed to the model at the start of a turn.
 		 *
 		 * <p>
-		 * The odd one out: the other three record something that happened <em>around</em> the
+		 * The odd one out: the others record something that happened <em>around</em> the
 		 * conversation, while this one records conversation content. Its {@code details} are
 		 * verbatim the text the model was shown, which is why
 		 * {@code ConversationLogReplay} rebuilds a user message from it instead of skipping it

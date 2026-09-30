@@ -1567,10 +1567,11 @@ public class ChatServlet extends TopLogicServlet {
 			// A run in flight is the first of them, and it is the only one that can answer for a
 			// window other than the one that started the run: the open turn - the user's message,
 			// what the agent has said so far, its steps, the approval it is parked on - lives in
-			// the ConversationLog of the run's own window, and is written to the database only when
-			// the run ends. A second tab, a reloaded page and a new login all load the conversation
-			// from what is persisted, which stops at the previous turn, and were then shown a
-			// transcript that ended before the question they were looking at (issue #512).
+			// the ConversationLog of the run's own window. The database has it complete only when
+			// the run ends - before that, only as far as its last checkpoint: the run's start and
+			// every wait for a person (#598). A second tab, a reloaded page and a new login all load
+			// the conversation from what is persisted, and were then shown a transcript that ended
+			// before what they were looking at (issue #512).
 			ChatProcessor.AIProcessingState running = runInFlight(person, sessionId);
 			String messagesJson = null;
 			if (running != null) {

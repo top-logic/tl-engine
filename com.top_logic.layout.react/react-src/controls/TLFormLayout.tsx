@@ -88,7 +88,7 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   if (noModelMessage) {
     return (
       <div id={controlId} className={rootClassName(state, 'tl-form-layout')} ref={containerRef}>
-        <p className="tl-form-layout__empty tl-type-body">{noModelMessage}</p>
+        <div className="tl-form-layout__empty tl-type-body">{noModelMessage}</div>
       </div>
     );
   }

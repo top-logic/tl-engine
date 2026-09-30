@@ -20,6 +20,7 @@
   border-radius: var(--tl-radius-md);
   color: var(--tl-text-primary);
 }
+.tl-alert[hidden] { display: none; }
 
 .tl-alert--error { background: var(--tl-status-error-subtle); border-color: var(--tl-status-error-border); }
 .tl-alert--warning { background: var(--tl-status-warning-subtle); border-color: var(--tl-status-warning-border); }
@@ -56,6 +57,7 @@
   text-transform: uppercase;
   user-select: none;
 }
+.tl-avatar[hidden] { display: none; }
 
 /* Das Bild füllt den Kreis und wird beschnitten, nicht verzerrt. */
 .tl-avatar__image {
@@ -100,6 +102,7 @@
   background: var(--tl-surface-brand);
   color: var(--tl-text-on-brand);
 }
+.tl-badge[hidden] { display: none; }
 
 /* --- button/button.css --- */
 /* Button — docs/skalen.md „Button: vier Erscheinungen, eine Tönung, keine Größe“.
@@ -130,6 +133,7 @@
     border-color var(--tl-duration-fast) var(--tl-easing-standard),
     color var(--tl-duration-fast) var(--tl-easing-standard);
 }
+.tl-button[hidden] { display: none; }
 
 .tl-button__icon {
   flex-shrink: 0;
@@ -238,10 +242,6 @@
   background: var(--tl-surface-brand-subtle-hover);
 }
 
-.tl-button[aria-busy="true"] {
-  cursor: progress;
-}
-
 .tl-button:disabled {
   background: var(--tl-surface-disabled);
   border-color: var(--tl-border-disabled);
@@ -255,6 +255,22 @@
 .tl-button--link:disabled {
   background: transparent;
   border-color: transparent;
+}
+
+/* Beschäftigt steht nach disabled: ein Knopf, der hochlädt, ist beides, und bei gleicher Spezifität
+   gewinnt die spätere Regel. Das Icon pulsiert wie der Skeleton; der globale Reduced-Motion-Schalter
+   aus base.css beendet den Puls nach einem Durchlauf, und ohne Fill-Mode ruht das Icon bei opacity 1. */
+.tl-button[aria-busy="true"] {
+  cursor: progress;
+}
+
+.tl-button[aria-busy="true"] .tl-button__icon {
+  animation: tl-button-busy var(--tl-duration-loop) var(--tl-easing-standard) infinite alternate;
+}
+
+@keyframes tl-button-busy {
+  from { opacity: 1; }
+  to { opacity: 0.4; }
 }
 
 /* --- choice/choice.css --- */
@@ -278,6 +294,8 @@
   background: var(--tl-surface-field);
   cursor: pointer;
 }
+.tl-checkbox[hidden] { display: none; }
+.tl-radio[hidden] { display: none; }
 
 .tl-checkbox {
   border-radius: var(--tl-radius-sm);
@@ -390,6 +408,7 @@
   color: var(--tl-text-primary);
   cursor: pointer;
 }
+.tl-choice[hidden] { display: none; }
 
 .tl-choice:has(:disabled) {
   color: var(--tl-text-disabled);
@@ -401,6 +420,7 @@
   flex-wrap: wrap;
   column-gap: var(--tl-space-control-gap);
 }
+.tl-choice-group[hidden] { display: none; }
 
 /* --- Segmente ----------------------------------------------------------------- */
 
@@ -413,6 +433,7 @@
   border-radius: var(--tl-radius-sm);
   background: var(--tl-surface-field);
 }
+.tl-segmented[hidden] { display: none; }
 
 .tl-segmented__segment {
   flex: 1 1 auto;
@@ -458,6 +479,7 @@
   flex-wrap: wrap;
   gap: var(--tl-space-xs);
 }
+.tl-chip-group[hidden] { display: none; }
 
 .tl-chip {
   display: inline-flex;
@@ -471,6 +493,7 @@
   color: var(--tl-text-primary);
   cursor: pointer;
 }
+.tl-chip[hidden] { display: none; }
 
 .tl-chip:where(:not(:disabled)):hover {
   background: var(--tl-surface-interactive-hover);
@@ -537,6 +560,7 @@
   background: var(--tl-surface-field);
   color: var(--tl-text-primary);
 }
+.tl-field[hidden] { display: none; }
 
 .tl-field::placeholder {
   color: var(--tl-text-placeholder);
@@ -577,6 +601,7 @@
   display: block;
   min-width: 0;
 }
+.tl-field-group[hidden] { display: none; }
 
 .tl-field-group__icon,
 .tl-field-group__action {
@@ -628,6 +653,7 @@
   overflow: hidden;
   color: var(--tl-text-primary);
 }
+.tl-field-value[hidden] { display: none; }
 
 .tl-field-value > * {
   min-width: 0;
@@ -671,6 +697,7 @@ a.tl-field-value:hover {
   gap: var(--tl-space-2xs);
   min-width: 0;
 }
+.tl-form-field[hidden] { display: none; }
 
 .tl-form-field--side {
   grid-template-columns: minmax(var(--tl-size-field-label-min), var(--tl-size-field-label-max)) minmax(0, 1fr);
@@ -778,6 +805,7 @@ a.tl-field-value:hover {
   gap: var(--tl-space-sm);
   min-width: 0;
 }
+.tl-form-group[hidden] { display: none; }
 
 .tl-form-group--separator {
   padding-top: var(--tl-space-sm);
@@ -850,6 +878,7 @@ a.tl-field-value:hover {
   gap: var(--tl-space-md);
   min-width: 0;
 }
+.tl-form-layout[hidden] { display: none; }
 
 .tl-form-layout__empty {
   color: var(--tl-text-secondary);
@@ -873,6 +902,7 @@ a.tl-field-value:hover {
   display: grid;
   gap: var(--tl-space-sm);
 }
+.tl-field-list[hidden] { display: none; }
 
 .tl-field-list__title {
   margin: 0;
@@ -898,6 +928,8 @@ a.tl-field-value:hover {
   align-items: center;
   gap: var(--tl-space-control-gap);
 }
+/* Jeder Block, der display setzt, setzt auch [hidden]: sonst schlägt seine Klasse die Regel des Browsers. */
+.tl-upload[hidden] { display: none; }
 
 .tl-file-upload {
   display: inline-flex;
@@ -906,6 +938,7 @@ a.tl-field-value:hover {
   min-width: 0;
   border-radius: var(--tl-radius-sm);
 }
+.tl-file-upload[hidden] { display: none; }
 
 .tl-file-upload[data-tl-state~="dragover"] {
   outline: var(--tl-border-width-md) dashed var(--tl-border-interactive);
@@ -940,6 +973,7 @@ a.tl-field-value:hover {
   color: var(--tl-text-primary);
   white-space: nowrap;
 }
+.tl-pill[hidden] { display: none; }
 
 .tl-pill__icon {
   flex-shrink: 0;
@@ -999,6 +1033,7 @@ a.tl-field-value:hover {
   gap: var(--tl-space-xs);
   min-width: 0;
 }
+.tl-progress[hidden] { display: none; }
 
 .tl-progress__track {
   flex: 1 1 auto;
@@ -1055,6 +1090,7 @@ a.tl-field-value:hover {
   gap: var(--tl-space-xs);
   cursor: pointer;
 }
+.tl-select[hidden] { display: none; }
 
 .tl-select__values {
   display: flex;
@@ -1228,6 +1264,7 @@ a.tl-field-value:hover {
   background: var(--tl-surface-interactive-selected);
   animation: tl-skeleton-pulse var(--tl-duration-loop) var(--tl-easing-standard) infinite alternate;
 }
+.tl-skeleton[hidden] { display: none; }
 
 @keyframes tl-skeleton-pulse {
   from { opacity: 1; }

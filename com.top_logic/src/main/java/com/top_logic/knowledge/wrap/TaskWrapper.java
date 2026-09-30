@@ -515,11 +515,6 @@ public abstract class TaskWrapper extends AbstractWrapper implements Task {
 	}
 
 	@Override
-	public boolean isRunOnStartup() {
-		return task.isRunOnStartup();
-	}
-
-	@Override
 	public boolean isPersistent() {
 		return task.isPersistent();
 	}

@@ -24,8 +24,6 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.sched.BatchImpl;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
@@ -75,19 +73,7 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 	 * Configuration options for {@link TaskImpl}.
 	 */
 	public interface Config<I extends TaskImpl<?>> extends Task.Config<I> {
-
-		/**
-		 * @see #isRunOnStartup()
-		 */
-		static final String RUN_ON_START_UP_PROPERTY = "run-on-startup";
-
-		/**
-		 * Whether this task can run during system startup.
-		 */
-		@BooleanDefault(true)
-		@Name(RUN_ON_START_UP_PROPERTY)
-		boolean isRunOnStartup();
-
+		// No additional properties.
 	}
 
 	private final class RunRequest {
@@ -159,8 +145,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 
 	private final boolean _maintenanceModeSafe;
 
-	private final boolean _runOnStartup;
-
 	private final boolean _blockingAllowed;
 
 	private final boolean _blockedByDefault;
@@ -195,7 +179,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
-		_runOnStartup = true;
 		_blockingAllowed = Config.DEFAULT_BLOCKING_ALLOWED;
 		_blockedByDefault = Config.DEFAULT_BLOCKED_BY_DEFAULT_VALUE;
     }
@@ -241,7 +224,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
-		_runOnStartup = true;
 		_blockingAllowed = Config.DEFAULT_BLOCKING_ALLOWED;
 		_blockedByDefault = Config.DEFAULT_BLOCKED_BY_DEFAULT_VALUE;
    }
@@ -277,7 +259,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
-		_runOnStartup = true;
 		_blockingAllowed = Config.DEFAULT_BLOCKING_ALLOWED;
 		_blockedByDefault = Config.DEFAULT_BLOCKED_BY_DEFAULT_VALUE;
 	}
@@ -324,7 +305,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
-		_runOnStartup = true;
 		_blockingAllowed = Config.DEFAULT_BLOCKING_ALLOWED;
 		_blockedByDefault = Config.DEFAULT_BLOCKED_BY_DEFAULT_VALUE;
     }
@@ -452,8 +432,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 
 		_schedulingAlgorithm =
 			createLegacySchedule(daytype, date, daymask, hour, minute, interval, stopHour, stopMinute);
-		_runOnStartup = Boolean.parseBoolean(prop.getProperty("runOnStartup", "true").trim());
-		setRunOnStartup(_runOnStartup);
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
@@ -519,7 +497,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		}
 		_schedulingAlgorithm = SchedulingAlgorithmCombinator.combine(context, config.getSchedules());
 
-		_runOnStartup = config.isRunOnStartup();
 		_needsMaintenanceMode = config.isNeedingMaintenanceMode();
 		if (config.getMaintenanceModeDelay() < 0) {
 			throw new IllegalArgumentException("Maintenance mode delay must not be negative.");
@@ -663,30 +640,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		return getClass().getName() + "(" + getName() + ")";
     }
 
-    /** 
-     * Avoid this task to be run on system startup.
-     * 
-     * @param    aFlag    <code>false</code> to avoid running on system startup.
-     */
-    public void setRunOnStartup(boolean aFlag) {
-		if (!aFlag) {
-			long now = now();
-			long nextRun = calcNextShed(now);
-			long currentTimeMillis = System.currentTimeMillis();
-			if (nextRun == SchedulingAlgorithm.NO_SCHEDULE) {
-				return;
-			}
-			if (nextRun <= currentTimeMillis) {
-				// Make the scheduler assuming this task has been run now.
-				lastSched = currentTimeMillis;
-				long postponedRun = calcNextShed(now);
-				Logger.info("Task '" + getName() + "' was configured to not run on startup."
-					+ " Its next run is therefore postponed from " + new Date(nextRun) + " to "
-					+ new Date(postponedRun) + ".", TaskImpl.class);
-			}
-        }
-    }
-
 	/**
 	 * The current time.
 	 */
@@ -754,11 +707,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 	}
 
 	@Override
-	public boolean isRunOnStartup() {
-		return _runOnStartup;
-	}
-
-	@Override
 	public boolean isPersistent() {
 		return !isNodeLocal();
 	}
@@ -812,8 +760,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		_log = createLog(scheduler);
 		getLog().setEventQueue(scheduler.getTaskUpdateQueue());
 		onAttachToScheduler();
-
-		setRunOnStartup(_runOnStartup);
 	}
 
 	@Override

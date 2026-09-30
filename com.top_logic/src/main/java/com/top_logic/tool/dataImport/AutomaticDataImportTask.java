@@ -88,7 +88,6 @@ public class AutomaticDataImportTask<C extends AutomaticDataImportTask.Config<?>
      */
     public AutomaticDataImportTask() {
         super(TASK_NAME);
-        setRunOnStartup(false);
         abortOnWarnings = false;
         abortOnErrors = true;
         importer = DummyDataImporter.INSTANCE;
@@ -113,7 +112,6 @@ public class AutomaticDataImportTask<C extends AutomaticDataImportTask.Config<?>
      */
     public AutomaticDataImportTask(Properties aProp) {
         super(aProp);
-        setRunOnStartup(false);
         String theValue = aProp.getProperty(PROPERTY_ABORT_ON_WARNINGS);
         abortOnWarnings = theValue == null ? false : theValue.trim().equalsIgnoreCase("true");
         theValue = aProp.getProperty(PROPERTY_ABORT_ON_ERRORS);

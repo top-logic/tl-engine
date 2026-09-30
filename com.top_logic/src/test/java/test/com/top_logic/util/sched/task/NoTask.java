@@ -120,11 +120,6 @@ public final class NoTask implements Task {
 	}
 
 	@Override
-	public boolean isRunOnStartup() {
-		throw fail();
-	}
-
-	@Override
 	public boolean isPersistent() {
 		throw fail();
 	}

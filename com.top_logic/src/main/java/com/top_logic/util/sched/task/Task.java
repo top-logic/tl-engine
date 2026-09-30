@@ -304,11 +304,6 @@ public interface Task extends Batch {
 	public boolean isMaintenanceModeSafe();
 
 	/**
-	 * <code>false</code> to avoid running on system startup.
-	 */
-	public boolean isRunOnStartup();
-
-	/**
 	 * Whether {@link TaskResult results} of this {@link Task} are persisted.
 	 * 
 	 * <p>

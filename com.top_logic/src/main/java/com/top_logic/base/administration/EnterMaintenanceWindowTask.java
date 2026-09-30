@@ -50,8 +50,6 @@ public class EnterMaintenanceWindowTask<C extends EnterMaintenanceWindowTask.Con
      */
     public EnterMaintenanceWindowTask() {
         super(TASK_NAME);
-        setRunOnStartup(false);
-
     }
 
     /**
@@ -60,7 +58,6 @@ public class EnterMaintenanceWindowTask<C extends EnterMaintenanceWindowTask.Con
     public EnterMaintenanceWindowTask(long delay) {
         super(TASK_NAME);
         this.delay = (delay < 0 ? 0 : delay);
-        setRunOnStartup(false);
     }
 
     /**
@@ -71,7 +68,6 @@ public class EnterMaintenanceWindowTask<C extends EnterMaintenanceWindowTask.Con
      */
     public EnterMaintenanceWindowTask(Properties aProp) {
         super(aProp);
-        setRunOnStartup(false);
         try {
             long theDelay = Long.parseLong(aProp.getProperty("delay", "0"));
             this.delay = (theDelay < 0 ? 0 : theDelay);

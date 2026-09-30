@@ -26,7 +26,8 @@ import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Test for calling {@link HtmlFunctions#text(String, Object)} from TL-Script.
+ * Test for calling {@link HtmlFunctions#text(String, Object)} and
+ * {@link HtmlFunctions#images(StructuredText)} from TL-Script.
  */
 @SuppressWarnings("javadoc")
 public class TestHtmlFunctionsScript extends AbstractSearchExpressionTest {
@@ -59,6 +60,17 @@ public class TestHtmlFunctionsScript extends AbstractSearchExpressionTest {
 				SOURCE, logo);
 
 		assertEquals("<p><img src=\"" + REF_ID_PREFIX + LOGO + "\"></p>", text.getSourceCode());
+		assertEquals(Map.of(LOGO, logo), text.getImages());
+	}
+
+	public void testRoundTrip() throws Exception {
+		BinaryData logo = image(LOGO);
+		StructuredText original = HtmlFunctions.text(SOURCE, List.of(logo));
+		StructuredText text = (StructuredText) execute(
+			search("text -> htmlText('<div>' + htmlSource($text) + '</div>', images: htmlImages($text))"),
+			original);
+
+		assertEquals("<div><p><img src=\"" + REF_ID_PREFIX + LOGO + "\"></p></div>", text.getSourceCode());
 		assertEquals(Map.of(LOGO, logo), text.getImages());
 	}
 

@@ -20,6 +20,7 @@ import com.top_logic.ai.chat.api.ChatPreferencesStore;
 import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.chat.layout.WelcomeName;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -442,14 +443,7 @@ public final class ChatViewBinding {
 			return;
 		}
 		tracker.setUserName(person.getName());
-		String fullName = person.getFullName();
-		if (fullName == null || fullName.isBlank()) {
-			tracker.setWelcomeName(person.getName());
-			return;
-		}
-		String trimmed = fullName.trim();
-		int separator = trimmed.indexOf(' ');
-		tracker.setWelcomeName(separator < 0 ? trimmed : trimmed.substring(0, separator));
+		tracker.setWelcomeName(WelcomeName.of(person));
 	}
 
 	/**

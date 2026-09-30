@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import type { TLCellProps } from './types';
 import { getComponent } from './registry';
+import { wrapRoot } from './root-wrapper';
 import { connect, subscribe, unsubscribe } from './sse-client';
 import { setI18NApiBase, setI18NWindowName } from './i18n';
 import { createScope, registerScope, addBinding, pageScope, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
@@ -166,7 +167,7 @@ export function mount(
   };
 
   flushSync(() => {
-    root.render(React.createElement(Wrapper));
+    root.render(wrapRoot(React.createElement(Wrapper)));
   });
 }
 
@@ -264,13 +265,17 @@ let _lastWindowName = '';
 
 /**
  * Returns the current state of the enclosing TopLogic control.
+ *
+ * @typeParam T The type of the state: the state message of the component (e.g. `ButtonStateJson`
+ *        for `TLButton`), see the types exported from 'tl-react-bridge'. The state is not checked
+ *        at runtime; the type states what the server side of the control sends.
  */
-export function useTLState(): Record<string, unknown> {
+export function useTLState<T extends object = Record<string, unknown>>(): T {
   const ctx = useContext(TLControlContext);
   if (!ctx) {
     throw new Error('useTLState must be used inside a TLReact-mounted component.');
   }
-  return useSyncExternalStore(ctx.store.subscribeStore, ctx.store.getSnapshot);
+  return useSyncExternalStore(ctx.store.subscribeStore, ctx.store.getSnapshot) as T;
 }
 
 /**

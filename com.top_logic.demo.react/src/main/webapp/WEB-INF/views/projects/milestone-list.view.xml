@@ -35,7 +35,11 @@
 				<executability>
 					<null-input-disabled/>
 				</executability>
-				<execute-script function="x -> new(`tl.demo.projectManagement:Milestone`, transient: true)"/>
+				<create-transient
+					container="project"
+					reference="milestones"
+					type="tl.demo.projectManagement:Milestone"
+				/>
 				<open-dialog
 					bind-input-to="model"
 					dialog-view="demo/create-milestone.view.xml"
@@ -63,9 +67,7 @@
 					<null-input-disabled/>
 				</executability>
 				<confirm expr="m -> #('Delete milestone {0}?'@en, 'Meilenstein {0} löschen?'@de).fill($m.get(`tl.demo.projectManagement:Milestone#name`))"/>
-				<with-transaction>
-					<execute-script function="m -> { $m.delete(); null; }"/>
-				</with-transaction>
+				<delete-object/>
 				<write-channel name="milestone"/>
 			</generic-command>
 		</commands>

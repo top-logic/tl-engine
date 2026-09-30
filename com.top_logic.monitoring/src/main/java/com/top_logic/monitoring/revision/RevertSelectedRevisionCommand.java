@@ -22,6 +22,7 @@ import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.ItemEvent;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -95,7 +96,7 @@ public class RevertSelectedRevisionCommand extends ConfirmCommandHandler {
 			return HandlerResult.error(I18NConstants.COMMIT_ON_MULTIPLE_BRANCHES.fill(ex._branch1, ex._branch2));
 		}
 		Revision startRevision = hm.getRevision(revision);
-		Revision stopRevision = hm.getRevision(revision - 1);
+		Revision stopRevision = HistoryUtils.getPreviousRevision(hm, revision);
 		try {
 			KBUtils.revert(_kb, startRevision, branch, stopRevision, branch);
 		} catch (RuntimeException ex) {

@@ -12,12 +12,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static com.top_logic.element.model.copy.I18NConstants.ERROR_CREATE_PERMISSION_DENIED__TYPE;
+import static com.top_logic.element.model.copy.I18NConstants.ERROR_PERSIST_PERMISSION_DENIED__TYPE;
+
 import junit.framework.Test;
 
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.dob.identifier.ObjectKey;
@@ -698,9 +702,36 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		// A user without the CREATE right on the (top-level) Project type may not copy it, mirroring
 		// new(Project): allocating the copy is denied (create condition 1 against the security root).
 		becomeUser(_other);
-		assertPermissionDenied(() -> {
+		assertDenied(ERROR_CREATE_PERMISSION_DENIED__TYPE, () -> {
 			try (Transaction tx = beginTx()) {
 				execute(search("p -> $p.copy()"), _p1);
+				tx.rollback();
+			}
+		});
+	}
+
+	/**
+	 * Persisting a transient object with {@code copy(transient: false)} creates the object: it
+	 * requires the CREATE permission on the type and is refused with the create message, not the
+	 * copy message.
+	 */
+	public void testPersistTransientRequiresCreatePermission() throws Exception {
+		String script = "new(`TestTLScriptSecurity:Project`, transient: true).copy(transient: false)";
+
+		// Admin bypasses the create check -> the transient object is persisted.
+		becomeUser(_root);
+		try (Transaction tx = beginTx()) {
+			TLObject persisted = (TLObject) execute(search(script));
+			assertFalse(persisted.tTransient());
+			assertEquals("Project", persisted.tType().getName());
+			tx.rollback();
+		}
+
+		// A user without the CREATE right on the (top-level) Project type may not persist it.
+		becomeUser(_other);
+		assertDenied(ERROR_PERSIST_PERMISSION_DENIED__TYPE, () -> {
+			try (Transaction tx = beginTx()) {
+				execute(search(script));
 				tx.rollback();
 			}
 		});
@@ -1245,6 +1276,25 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		} catch (Throwable ex) {
 			if (hasCause(ex, TopLogicException.class)) {
 				return;
+			}
+			throw new AssertionError("Expected a permission-denial TopLogicException, but got: " + ex, ex);
+		}
+		fail("Expected a permission denial, but the operation succeeded.");
+	}
+
+	/**
+	 * Asserts that the given action fails with a {@link TopLogicException} reporting the given
+	 * message.
+	 */
+	private void assertDenied(ResKey1 expectedMessage, ThrowingAction action) {
+		try {
+			action.run();
+		} catch (Throwable ex) {
+			for (Throwable current = ex; current != null; current = current.getCause()) {
+				if (current instanceof TopLogicException) {
+					assertEquals(expectedMessage.getKey(), ((TopLogicException) current).getErrorKey().getKey());
+					return;
+				}
 			}
 			throw new AssertionError("Expected a permission-denial TopLogicException, but got: " + ex, ex);
 		}

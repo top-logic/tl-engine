@@ -52,22 +52,4 @@ public enum GanttEndpoint implements de.haumacher.msgbuf.data.ProtocolEnum {
 	public static GanttEndpoint readGanttEndpoint(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		return valueOfProtocol(in.nextString());
 	}
-
-	/** Writes this instance to the given binary output. */
-	public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		switch (this) {
-			case START: out.value(1); break;
-			case END: out.value(2); break;
-			default: out.value(0);
-		}
-	}
-
-	/** Reads a new instance from the given binary reader. */
-	public static GanttEndpoint readGanttEndpoint(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		switch (in.nextInt()) {
-			case 1: return START;
-			case 2: return END;
-			default: return START;
-		}
-	}
 }

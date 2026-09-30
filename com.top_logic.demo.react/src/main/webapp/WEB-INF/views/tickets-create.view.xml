@@ -18,19 +18,24 @@
 		>
 			<field attribute="name"/>
 			<commands>
-				<generic-command placement="BUTTON_BAR">
+				<generic-command
+					input="model"
+					placement="BUTTON_BAR"
+				>
 					<label>
 						<en>Create closed</en>
 						<de>Geschlossen anlegen</de>
 					</label>
 					<store-form-state/>
 					<with-transaction>
-						<execute-script function="obj -> { created = $obj.copy(transient: false); $created.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`); $created; }"/>
+						<persist-transient/>
+						<execute-script function="created -> { $created.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`); $created; }"/>
 					</with-transaction>
 					<write-channel name="selection"/>
 					<close-dialog/>
 				</generic-command>
 				<generic-command key="ENTER"
+					input="model"
 					placement="BUTTON_BAR"
 				>
 					<label>
@@ -38,9 +43,7 @@
 						<de>Anlegen</de>
 					</label>
 					<store-form-state/>
-					<with-transaction>
-						<execute-script function="obj -> $obj.copy(transient: false)"/>
-					</with-transaction>
+					<persist-transient/>
 					<write-channel name="selection"/>
 					<close-dialog/>
 				</generic-command>

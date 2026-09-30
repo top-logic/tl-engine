@@ -30,7 +30,11 @@
 				<executability>
 					<null-input-disabled/>
 				</executability>
-				<execute-script function="x -> new(`tl.demo.projectManagement:Note`, transient: true)"/>
+				<create-transient
+					container="project"
+					reference="notes"
+					type="tl.demo.projectManagement:Note"
+				/>
 				<open-dialog
 					bind-input-to="model"
 					dialog-view="demo/create-note.view.xml"

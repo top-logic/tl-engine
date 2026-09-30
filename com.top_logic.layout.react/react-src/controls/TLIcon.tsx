@@ -1,6 +1,5 @@
-import { React, useTLState, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, rootClassName, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
 
 /**
  * A theme icon rendered on its own, in one of the four size steps of the design system

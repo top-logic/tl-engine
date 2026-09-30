@@ -1,9 +1,9 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope,
   useCloseOnOutsidePress, FillBarrier, rootClassName, tooltipProps,
+  ThemeIcon,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
 
 const { useCallback, useState, useEffect, useRef } = React;
 

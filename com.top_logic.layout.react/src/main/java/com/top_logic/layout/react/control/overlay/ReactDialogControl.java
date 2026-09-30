@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.overlay;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.state.DialogState;
 
 /**
  * Pure overlay control providing backdrop, focus trap, Escape key, and backdrop-click handling.
@@ -22,17 +23,8 @@ public class ReactDialogControl extends ReactControl {
 
 	private static final String REACT_MODULE = "TLDialog";
 
-	private static final String CLOSE_ON_BACKDROP = "closeOnBackdrop";
-
-	/** Client state field telling whether the user can dismiss this dialog. */
-	public static final String CLOSABLE = "closable";
-
 	/** The {@link ReactCommandHandler} dismissing this dialog. */
 	public static final String CLOSE_COMMAND = "close";
-
-	private static final String OPEN = "open";
-
-	private static final String CHILD = "child";
 
 	private Runnable _closeHandler;
 
@@ -55,9 +47,9 @@ public class ReactDialogControl extends ReactControl {
 	public ReactDialogControl(ReactContext context, boolean closeOnBackdrop, Runnable closeHandler) {
 		super(context, null, REACT_MODULE);
 		_closeHandler = closeHandler;
-		putState(CLOSE_ON_BACKDROP, closeOnBackdrop);
-		putState(OPEN, false);
-		putState(CLOSABLE, _closable);
+		putState(DialogState.CLOSE_ON_BACKDROP__PROP, closeOnBackdrop);
+		putState(DialogState.OPEN__PROP, false);
+		putState(DialogState.CLOSABLE__PROP, _closable);
 	}
 
 	/**
@@ -68,7 +60,7 @@ public class ReactDialogControl extends ReactControl {
 			return;
 		}
 		_open = true;
-		putState(OPEN, true);
+		putState(DialogState.OPEN__PROP, true);
 		if (isAttached() && _child != null) {
 			_child.attach();
 		}
@@ -85,7 +77,7 @@ public class ReactDialogControl extends ReactControl {
 			_child.detach();
 		}
 		_open = false;
-		putState(OPEN, false);
+		putState(DialogState.OPEN__PROP, false);
 	}
 
 	/**
@@ -99,7 +91,7 @@ public class ReactDialogControl extends ReactControl {
 			_child.detach();
 		}
 		_child = child;
-		putState(CHILD, child);
+		putState(DialogState.CHILD__PROP, child);
 		if (child != null && _open && isAttached()) {
 			child.attach();
 		}
@@ -131,7 +123,7 @@ public class ReactDialogControl extends ReactControl {
 			return;
 		}
 		_closable = closable;
-		putState(CLOSABLE, closable);
+		putState(DialogState.CLOSABLE__PROP, closable);
 	}
 
 	/**

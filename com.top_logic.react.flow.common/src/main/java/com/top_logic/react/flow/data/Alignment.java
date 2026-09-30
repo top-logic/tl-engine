@@ -64,26 +64,4 @@ public enum Alignment implements de.haumacher.msgbuf.data.ProtocolEnum {
 	public static Alignment readAlignment(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		return valueOfProtocol(in.nextString());
 	}
-
-	/** Writes this instance to the given binary output. */
-	public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		switch (this) {
-			case START: out.value(1); break;
-			case MIDDLE: out.value(2); break;
-			case STOP: out.value(3); break;
-			case STRECH: out.value(4); break;
-			default: out.value(0);
-		}
-	}
-
-	/** Reads a new instance from the given binary reader. */
-	public static Alignment readAlignment(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		switch (in.nextInt()) {
-			case 1: return START;
-			case 2: return MIDDLE;
-			case 3: return STOP;
-			case 4: return STRECH;
-			default: return START;
-		}
-	}
 }

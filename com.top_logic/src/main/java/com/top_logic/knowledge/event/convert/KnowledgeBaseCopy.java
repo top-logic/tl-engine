@@ -8,6 +8,7 @@ package com.top_logic.knowledge.event.convert;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.ChangeSetReader;
 import com.top_logic.knowledge.event.EventWriter;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.ReaderConfig;
 import com.top_logic.knowledge.service.ReaderConfigBuilder;
@@ -47,7 +48,7 @@ public class KnowledgeBaseCopy implements Runnable {
 	 * {@link KnowledgeBase}.
 	 */
 	public final void convert() {
-		Revision firstRevision = sourceKb.getHistoryManager().getRevision(Revision.FIRST_REV);
+		Revision firstRevision = HistoryUtils.getInitialRevision(sourceKb.getHistoryManager());
 		convert(firstRevision, Revision.CURRENT);
 	}
 

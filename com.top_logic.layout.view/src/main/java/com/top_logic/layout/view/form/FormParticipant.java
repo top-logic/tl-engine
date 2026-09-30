@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.form;
 
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Participant in a form's editing lifecycle.
@@ -29,6 +30,23 @@ public interface FormParticipant {
 	 * @return {@code true} if valid, {@code false} if validation errors exist.
 	 */
 	boolean validate();
+
+	/**
+	 * Ensures that the current user may write all changes {@link #applyState()} would write.
+	 *
+	 * <p>
+	 * Called by {@link FormControl} for all participants before any of them persists or applies its
+	 * state, so a refused save leaves the buffered changes of every participant in place.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If the current user is not allowed to write one of the changes.
+	 *
+	 * @see TLObjectOverlay#checkApply()
+	 */
+	default void checkApplyState() {
+		// Default no-op for participants whose state is fully managed by the main overlay.
+	}
 
 	/**
 	 * Applies buffered overlay changes to the underlying base objects.

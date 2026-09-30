@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
@@ -164,8 +165,11 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 			if (useSecurity()
 					&& !ModelAccessRights.getInstance().isAllowedCreate(TLContext.currentUser(), classType, context)) {
 				// Mirror new(type): allocating a copy requires the CREATE permission on the copied
-				// type.
-				throw new TopLogicException(I18NConstants.ERROR_CREATE_PERMISSION_DENIED__TYPE.fill(classType));
+				// type. Persisting a transient object is the creation of that object, not a copy of
+				// it, so it is refused with the create wording.
+				ResKey1 message = orig.tTransient() ? I18NConstants.ERROR_PERSIST_PERMISSION_DENIED__TYPE
+					: I18NConstants.ERROR_CREATE_PERMISSION_DENIED__TYPE;
+				throw new TopLogicException(message.fill(classType));
 			}
 			return _factory.createObject(classType, context);
 		}

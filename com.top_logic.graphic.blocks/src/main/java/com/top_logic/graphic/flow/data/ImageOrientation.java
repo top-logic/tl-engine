@@ -88,34 +88,4 @@ public enum ImageOrientation implements de.haumacher.msgbuf.data.ProtocolEnum {
 	public static ImageOrientation readImageOrientation(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		return valueOfProtocol(in.nextString());
 	}
-
-	/** Writes this instance to the given binary output. */
-	public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		switch (this) {
-			case NORMAL: out.value(1); break;
-			case FLIP_H: out.value(2); break;
-			case ROTATE_180: out.value(3); break;
-			case FLIP_V: out.value(4); break;
-			case FLIP_H_ROTATE_270: out.value(5); break;
-			case ROTATE_90: out.value(6); break;
-			case FLIP_H_ROTATE_90: out.value(7); break;
-			case ROTATE_270: out.value(8); break;
-			default: out.value(0);
-		}
-	}
-
-	/** Reads a new instance from the given binary reader. */
-	public static ImageOrientation readImageOrientation(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		switch (in.nextInt()) {
-			case 1: return NORMAL;
-			case 2: return FLIP_H;
-			case 3: return ROTATE_180;
-			case 4: return FLIP_V;
-			case 5: return FLIP_H_ROTATE_270;
-			case 6: return ROTATE_90;
-			case 7: return FLIP_H_ROTATE_90;
-			case 8: return ROTATE_270;
-			default: return NORMAL;
-		}
-	}
 }

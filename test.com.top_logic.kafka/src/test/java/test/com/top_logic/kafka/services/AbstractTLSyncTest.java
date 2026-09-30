@@ -27,6 +27,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.kafka.KafkaTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.model.AbstractTLModelTest;
+import test.com.top_logic.util.sched.model.TaskTestUtil;
 
 import com.top_logic.basic.util.Computation;
 import com.top_logic.dob.ex.UnknownTypeException;
@@ -271,6 +272,11 @@ public abstract class AbstractTLSyncTest extends AbstractTLModelTest {
 		KBDataProducerTask task = (KBDataProducerTask) Scheduler.getSchedulerInstance().getTaskByName(producerTaskName);
 		if (task == null) {
 			throw new IllegalStateException("No task with name " + producerTaskName + " available.");
+		}
+		if (task.getLog() == null) {
+			/* The test runs the task itself: The Scheduler does not dispatch tasks in a test that
+			 * does not boot the application, and therefore does not create the log of the task. */
+			TaskTestUtil.initTaskLog(task);
 		}
 		return task;
 	}

@@ -245,6 +245,41 @@ public class TestReactValueListControl extends TestCase {
 	}
 
 	/**
+	 * The values of a disabled field are shown as inactive inputs, not as displayed values.
+	 */
+	public void testDisabled() {
+		AbstractFieldModel model = new AbstractFieldModel(Arrays.asList("T1", "T2"));
+		model.setDisabled(true);
+		ValueList list = list(model, FieldSpec.of(String.class, "Texts"));
+
+		assertEquals(Boolean.TRUE, list.disabledOf(0));
+		assertEquals(Boolean.TRUE, list.disabledOf(1));
+		assertEquals(Boolean.FALSE, list.editableOf(0));
+	}
+
+	/**
+	 * Disabling and enabling the field disables and enables its values with it, also where the
+	 * field is not editable either way.
+	 */
+	public void testDisabledFollows() {
+		AbstractFieldModel model = new AbstractFieldModel(Arrays.asList("T1", "T2"));
+		model.setEditable(false);
+		ValueList list = list(model, FieldSpec.of(String.class, "Texts"));
+		assertEquals(Boolean.FALSE, list.disabledOf(0));
+
+		model.setDisabled(true);
+
+		assertEquals(Boolean.TRUE, list.disabledOf(0));
+		assertEquals(Boolean.TRUE, list.disabledOf(1));
+
+		model.setEditable(true);
+		model.setDisabled(false);
+
+		assertEquals(Boolean.FALSE, list.disabledOf(0));
+		assertEquals(Boolean.TRUE, list.editableOf(0));
+	}
+
+	/**
 	 * An unordered collection is written back as a list in the order its values are displayed in,
 	 * so that a value keeps the position it was entered at.
 	 */
@@ -329,6 +364,11 @@ public class TestReactValueListControl extends TestCase {
 		/** Whether the control at the given position can be changed. */
 		Object editableOf(int index) {
 			return elements().get(index).scriptingScalarState().get(FieldState.EDITABLE__PROP);
+		}
+
+		/** Whether the control at the given position is shown as an inactive input. */
+		Object disabledOf(int index) {
+			return elements().get(index).scriptingScalarState().get(FieldState.DISABLED__PROP);
 		}
 
 		/** Enters the given text into the control at the given position, as its client does. */

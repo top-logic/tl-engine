@@ -129,11 +129,13 @@ public class ReactValueListControl extends ReactFormFieldControl {
 		List<Object> values = ListElementFieldModel.elementsOf(getFieldModel());
 		int count = values.size();
 		boolean editable = getFieldModel().isEditable();
+		boolean disabled = getFieldModel().isDisabled();
 
 		int kept = Math.min(count, _elementModels.size());
 		for (int n = 0; n < kept; n++) {
 			ListElementFieldModel element = _elementModels.get(n);
 			element.setEditable(editable);
+			element.setDisabled(disabled);
 			element.syncValue(values.get(n));
 		}
 		if (count == _elementModels.size()) {
@@ -151,7 +153,7 @@ public class ReactValueListControl extends ReactFormFieldControl {
 			dropped.add(_elementControls.remove(last));
 		}
 		for (int n = _elementModels.size(); n < count; n++) {
-			createElement(n, values.get(n), editable);
+			createElement(n, values.get(n), editable, disabled);
 		}
 		putState(ELEMENTS, new ArrayList<>(_elementControls));
 		for (ReactControl control : dropped) {
@@ -159,14 +161,32 @@ public class ReactValueListControl extends ReactFormFieldControl {
 		}
 	}
 
-	private void createElement(int index, Object value, boolean editable) {
+	private void createElement(int index, Object value, boolean editable, boolean disabled) {
 		ListElementFieldModel elementModel = new ListElementFieldModel(getFieldModel(), index, value);
 		elementModel.setEditable(editable);
+		elementModel.setDisabled(disabled);
 		ReactControl control = _elementProvider.createField(getReactContext(), _elementSpec, elementModel);
 		_elementModels.add(elementModel);
 		_elementControls.add(control);
 		if (isAttached()) {
 			control.attach();
+		}
+	}
+
+	/**
+	 * Passes the disabled state on to the single values, so a disabled list shows each of them as
+	 * an inactive input.
+	 */
+	@Override
+	protected void setDisabled(boolean disabled) {
+		super.setDisabled(disabled);
+		// Called from the super constructor, before the elements exist; the reconciliation at the
+		// end of the constructor sets their initial state.
+		if (_elementModels == null) {
+			return;
+		}
+		for (ListElementFieldModel element : _elementModels) {
+			element.setDisabled(disabled);
 		}
 	}
 

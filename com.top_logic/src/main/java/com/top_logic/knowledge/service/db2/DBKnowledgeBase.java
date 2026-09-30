@@ -1142,6 +1142,27 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		return getLastLocalRevision();
     }
 
+	/**
+	 * The smallest commit number in the revision table, <code>0</code> if the table is empty.
+	 *
+	 * <p>
+	 * The value is not cached, because compacting the history changes it in the database.
+	 * </p>
+	 */
+	@Override
+	public long getFirstRevision() {
+		MOKnowledgeItemImpl revisionType = getRevisionType();
+		String getMinRevStatement =
+			"SELECT min(" + dbHelper.columnRef(RevisionType.getRevisionAttribute(revisionType).getDBName()) + ") "
+				+ "FROM " + dbHelper.tableRef(revisionType.getDBName());
+		PooledConnection readConnection = connectionPool.borrowReadConnection();
+		try {
+			return fetchCommitNumber(readConnection, getMinRevStatement);
+		} finally {
+			connectionPool.releaseReadConnection(readConnection);
+		}
+	}
+
 	private long getLastRevisionId() {
 		MOKnowledgeItemImpl revisionType = getRevisionType();
 		String getMaxRevStatement = 
@@ -1150,7 +1171,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		
     	PooledConnection readConnection = connectionPool.borrowReadConnection();
     	try {
-    		return fetchLongValue(readConnection, getMaxRevStatement);
+    		return fetchCommitNumber(readConnection, getMaxRevStatement);
 		} finally {
 			connectionPool.releaseReadConnection(readConnection);
 		}
@@ -4042,21 +4063,37 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
         
 	}
 
-	/*package protected*/ long fetchLongValue(PooledConnection connection, String fetchSource) {
+	/**
+	 * Fetches a single commit number with the given query.
+	 * 
+	 * <p>
+	 * A failed query is retried, if the database reports a transient failure.
+	 * </p>
+	 * 
+	 * @param connection
+	 *        The connection to execute the query on.
+	 * @param fetchSource
+	 *        An SQL query without parameters, whose result consists of a single row with a single
+	 *        column holding a commit number, e.g. the minimum or maximum commit number of the
+	 *        revision table.
+	 * @return The commit number in the first column of the first result row, <code>0</code> if the
+	 *         query has no result or the value is SQL <code>NULL</code> (e.g. an aggregate over an
+	 *         empty revision table).
+	 */
+	/*package protected*/ long fetchCommitNumber(PooledConnection connection, String fetchSource) {
 		int retry = dbHelper.retryCount();
 		while (true) {
 			try {
-				long maxRevision;
-				// Lookup the maximum commit number from the revision table.
+				long commitNumber;
 				try (PreparedStatement getStmt = connection.prepareStatement(fetchSource);
 						ResultSet result = getStmt.executeQuery()) {
 					if (result.next()) {
-						maxRevision = result.getLong(1);
+						commitNumber = result.getLong(1);
 					} else {
-						maxRevision = 0;
+						commitNumber = 0;
 					}
 				}
-				return maxRevision;
+				return commitNumber;
 			} catch (SQLException ex) {
 				if (dbHelper.canRetry(ex)) {
 					connection.closeConnection(ex);
@@ -4066,7 +4103,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 				}
 				
 				throw (KnowledgeBaseRuntimeException) 
-					new KnowledgeBaseRuntimeException("Could not determine the commit number maximum.").initCause(ex);
+					new KnowledgeBaseRuntimeException("Could not determine the commit number.").initCause(ex);
 			}
 		}
 	}

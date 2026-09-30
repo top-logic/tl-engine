@@ -330,6 +330,13 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 	/**
 	 * Date of the last modification of the internal storage.
 	 * 
+	 * <p>
+	 * Only changes of the object's own row are reflected. Values stored in separate tables, such as
+	 * references stored in link tables or translations of internationalized attributes, are not
+	 * covered. The last change of the object as a whole is available through the TL-Script
+	 * function {@code modifiedRevision()}.
+	 * </p>
+	 * 
 	 * @see #tLastModifier()
 	 */
 	default Date tLastModificationDate() {
@@ -339,6 +346,13 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 	/**
 	 * Time-stamp of the last modification of the internal storage.
 	 * 
+	 * <p>
+	 * Only changes of the object's own row are reflected. Values stored in separate tables, such as
+	 * references stored in link tables or translations of internationalized attributes, are not
+	 * covered. The last change of the object as a whole is available through the TL-Script
+	 * function {@code modifiedRevision()}.
+	 * </p>
+	 * 
 	 * @see #tLastModificationDate()
 	 */
 	default long tLastModificationTime() {
@@ -347,6 +361,13 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 
 	/**
 	 * Author of the last modification of the internal storage.
+	 * 
+	 * <p>
+	 * Only changes of the object's own row are reflected. Values stored in separate tables, such as
+	 * references stored in link tables or translations of internationalized attributes, are not
+	 * covered. The last change of the object as a whole is available through the TL-Script
+	 * function {@code modifiedRevision()}.
+	 * </p>
 	 * 
 	 * @see #tLastModificationDate()
 	 */

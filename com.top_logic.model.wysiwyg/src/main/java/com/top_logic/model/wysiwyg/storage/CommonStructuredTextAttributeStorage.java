@@ -108,15 +108,14 @@ public abstract class CommonStructuredTextAttributeStorage<C extends CommonStruc
 	 * Updates the {@link BinaryData}, hash and content type of those images contained in both
 	 * collections.
 	 */
-	protected boolean updateImages(Set<KnowledgeItem> oldImages, Map<String, BinaryData> newImages) {
+	protected void updateImages(Set<KnowledgeItem> oldImages, Map<String, BinaryData> newImages) {
 		if (oldImages.isEmpty()) {
-			return false;
+			return;
 		}
 		Set<KnowledgeItem> possibleToBeUpdated = set(oldImages);
 
 		possibleToBeUpdated.removeIf(oldImage -> newImages.get(getFileName(oldImage)) == null);
 
-		boolean someImageChanged = false;
 		for (KnowledgeItem oldImage : possibleToBeUpdated) {
 			String oldFilename = getFileName(oldImage);
 			String oldHash = getHash(oldImage);
@@ -128,18 +127,15 @@ public abstract class CommonStructuredTextAttributeStorage<C extends CommonStruc
 				setHash(oldImage, newHash);
 				setData(oldImage, newBinaryData);
 				setContentType(oldImage, newBinaryData.getContentType());
-				someImageChanged = true;
 			}
 		}
-		return someImageChanged;
 	}
 
 	/** Removes those old images, whose file names are not in the new file names {@link Set}. */
-	protected boolean removeImages(Set<KnowledgeItem> oldImages, Set<String> newFileNames) {
+	protected void removeImages(Set<KnowledgeItem> oldImages, Set<String> newFileNames) {
 		Set<KnowledgeItem> possibleToBeRemoved = set(oldImages);
 		possibleToBeRemoved.removeIf(oldImage -> newFileNames.contains(getFileName(oldImage)));
 		getKnowledgeBase().deleteAll(possibleToBeRemoved);
-		return !possibleToBeRemoved.isEmpty();
 	}
 
 	/** The file names of the given images. */

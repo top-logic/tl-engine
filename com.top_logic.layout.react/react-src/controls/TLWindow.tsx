@@ -2,7 +2,7 @@ import {
   React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding,
   useFocusTrap, FillBarrier, startPointerDrag, rootClassName, tooltipProps,
 } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, WindowStateJson } from 'tl-react-bridge';
 import { ButtonDefaults } from './button/ButtonDefaults';
 
 const { useCallback, useEffect, useRef, useState } = React;
@@ -93,15 +93,15 @@ const RESIZE_CURSORS: Record<ResizeDir, string> = {
  * forget the remembered one - the way back from a size the user no longer wants.
  */
 const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
+  const state = useTLState<Partial<WindowStateJson>>();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
 
-  const title = (state.title as string) ?? '';
-  const serverWidth = (state.width as string) ?? '32rem';
-  const serverHeight = (state.height as string | null) ?? null;
-  const customWidth = typeof state.customWidth === 'number' ? state.customWidth : null;
-  const customHeight = typeof state.customHeight === 'number' ? state.customHeight : null;
+  const title = state.title ?? '';
+  const serverWidth = state.width ?? '32rem';
+  const serverHeight = state.height ?? null;
+  const customWidth = state.customWidth ?? null;
+  const customHeight = state.customHeight ?? null;
   const viewport = useViewportSize();
   const customFits = customWidth != null && customHeight != null
     && customWidth <= maxWindowWidth(viewport.width)

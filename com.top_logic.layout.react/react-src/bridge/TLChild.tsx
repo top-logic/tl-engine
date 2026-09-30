@@ -1,17 +1,15 @@
 import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { getComponent } from './registry';
+import type { ChildControlJson } from '../state/control-state';
 import { createChildContext, unmount, TLControlContext } from './tl-react-bridge';
 
 /**
- * Descriptor for a server-defined child control, as sent in the parent's state.
+ * Descriptor for a server-defined child control, as sent in the parent's state: a
+ * {@link ChildControlJson}, which always carries its ID, its component and its state object.
  */
-export interface ChildDescriptor {
-  controlId: string;
-  module: string;
-  state: Record<string, unknown>;
-  /** Source .view.xml path when this child is a view boundary; stamped as data-view-source. */
-  viewSource?: string;
-}
+export type ChildDescriptor = Omit<Partial<ChildControlJson>, 'state'>
+  & Required<Pick<ChildControlJson, 'controlId' | 'module'>>
+  & { state: Record<string, unknown> };
 
 /**
  * Generic component that renders a server-described child control.

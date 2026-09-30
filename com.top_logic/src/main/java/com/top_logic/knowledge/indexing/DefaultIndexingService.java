@@ -104,11 +104,7 @@ public abstract class DefaultIndexingService
 			return;
 		}
 
-		for (ObjectKey key : event.getCreatedObjectKeys()) {
-			this.index(sender.resolveObjectKey(key));
-		}
-
-		for (ObjectKey key : event.getUpdatedObjectKeys()) {
+		for (ObjectKey key : keysToIndex(event)) {
 			this.index(sender.resolveObjectKey(key));
 		}
 
@@ -116,6 +112,24 @@ public abstract class DefaultIndexingService
 			this.remove(key);
 		}
     }
+
+	/**
+	 * The keys of the objects whose index entries must be built for the given event.
+	 * 
+	 * <p>
+	 * These are the objects created or updated in the given event. Objects deleted in the given
+	 * event must not be reported.
+	 * </p>
+	 * 
+	 * @param event
+	 *        The committed change.
+	 * @return The keys of the objects to (re-)index.
+	 */
+	protected Collection<ObjectKey> keysToIndex(UpdateEvent event) {
+		List<ObjectKey> result = new ArrayList<>(event.getCreatedObjectKeys());
+		result.addAll(event.getUpdatedObjectKeys());
+		return result;
+	}
 
     /**
      * @see com.top_logic.knowledge.indexing.IndexingService#getKnowledgeBase()

@@ -363,7 +363,7 @@ Two actions branch the chain by a TL-Script function over its current value. `<i
     <write-channel name="ticket"/>
   </then>
   <else>
-    <execute-script function="x -> new(`demo.tickets:Ticket`, transient: true)"/>
+    <create-transient type="demo.tickets:Ticket"/>
     <open-dialog bind-input-to="model" dialog-view="tickets-create.view.xml"/>
   </else>
 </if>
@@ -390,6 +390,49 @@ Two actions branch the chain by a TL-Script function over its current value. `<i
 - `<if>` reads its condition in the fuzzy sense of TL-Script, so an object stands for a true condition and nothing (`null`, an empty list, an empty text) for a false one. A `<case match="…">` holds a TL-Script expression without parameters and matches when the switch value equals its value under the TL-Script comparison (`==`), so a classifier is written as `` `module:Enumeration#literal` ``, a text as `'text'` and a number as the number it is. A `<case test="…">` holds a predicate that is called with the switch value and read in the same fuzzy sense as an `<if>` condition; a case configures exactly one of the two. Without a `value` function the switch value is the chain's own value, so `<switch><case test="t -> $t == null">` decides on what the chain carries.
 - A command whose chain applies the entered form values is disabled while the form has errors — a branch reports that for the actions of *all* its branches, taken or not, because the button's state cannot depend on the decision.
 - **`<executability>` guards the command with rules over its input**: `<visible-if expr="…"/>` hides the command while its predicate does not return `true`; `<disabled-if expr="…"/>` keeps it visible but disabled and takes the reason from its function — no value or `false` means executable, `true` disables it with a generic reason, a resource key or a text disables it with that reason, which the button shows as its tooltip. A rule that inspects objects beyond the input object needs those types in the command's `observed-types`, otherwise their changes do not re-evaluate it.
+
+## Creating and deleting objects: `<create-transient>`, `<persist-transient>`, `<delete-object>`
+
+Three actions perform the model operations of a create dialog and a delete button. Each enforces the model access right of its operation like the TL-Script function it corresponds to, and brings the matching executability rule itself (`ViewAction#getIntrinsicRule()`), so the command offering it is hidden or disabled before the operation would fail — no `<executability>` configuration for the right is needed. The rule decides on the *command's* input, not on the value the chain hands to the action (see `ModelAccessRule` and `ModelAccessPolicy` for hide vs. disable).
+
+- **`<create-transient type="…" [container="ch" reference="attr"]/>`** (`CreateTransientAction`) results in a transient object of the type — the draft the dialog edits, as `new(type, transient: true)` creates it; its input is ignored. Its rule is the right to create an object of the type: without `container` against the security root (refused → hidden), with `container` in the context of the channel's object and, with `reference`, together with Write on that reference (refused → disabled). `container`/`reference` serve the check only; the dialog gets the container through the `<open-dialog>` bindings.
+- **`<persist-transient [type="…"] [container="ch" reference="attr"]/>`** (`PersistTransientAction`) makes the transient object it receives persistent the way `$draft.copy(transient: false)` does (values and composition parts; a refusal reports a refused *creation*), in the context of the container if one is given, and with `reference` adds the created object to that reference of the container, the way `$container.add(reference, $created)` does including its Write check. It runs in a transaction of its own and results in the persistent object. Its rule is the same creation check; the created type is `type` if given, else the reference's type, else the type of the command input — so the dialog's Create button binds its input to the draft: `input="model"`.
+- **`<delete-object/>`** (`DeleteObjectAction`) deletes the object (or the objects of a collection) it receives the way `delete()` does, compositions included, in a transaction of its own, and results in `null`. Its rule is Delete on the command input (refused → disabled with "You may not delete this object.", hidden when no role may ever delete the type).
+
+A transaction nested in a `<with-transaction>` commits with it, so the actions compose with further script steps in one transaction. A command whose effect is a free script uses the general rule instead: `<model-access operation="…"/>` in `<executability>`; `<model-access operation="Create"/>` without a `type` checks the creation of an object of the command input's type.
+
+The opener and the dialog of a creation in a container:
+
+```xml
+<!-- opener, e.g. in the list toolbar -->
+<generic-command image="css:bi bi-plus-lg" placement="TOOLBAR">
+  <create-transient type="tl.demo.projectManagement:Milestone" container="selectedScope" reference="milestones"/>
+  <open-dialog bind-input-to="model" dialog-view="demo/create-milestone.view.xml">
+    <bind channel="container" to="selectedScope"/>
+    <bind channel="selection" to="selectedMilestone"/>
+  </open-dialog>
+</generic-command>
+
+<!-- dialog: the form edits the draft in "model" -->
+<generic-command image="css:bi bi-check-lg" input="model" placement="BUTTON_BAR">
+  <store-form-state/>
+  <persist-transient container="container" reference="milestones"/>
+  <write-channel name="selection"/>
+  <close-dialog/>
+</generic-command>
+```
+
+A top-level creation omits `container` and `reference` on both actions. Deleting the selected object:
+
+```xml
+<generic-command image="css:bi bi-trash" input="project">
+  <executability>
+    <null-input-disabled/>
+  </executability>
+  <delete-object/>
+  <write-channel name="project"/>
+</generic-command>
+```
 
 ## Unsaved changes are asked before a channel write, transitively
 
@@ -509,7 +552,7 @@ The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row
 
 `<overlay>` stacks content over a base: its **first child is the base**, every further child is a layer over it. The base gives the overlay its height; its width is what the surrounding layout grants, and a base sized relative to it (`width="100%"`) fills it. A base of fixed width wants a container that does not stretch its items (`<stack align="start">`), or the overlay is stretched past the base and anchors its layers to the free space beside it. A `<layer position="fill|top-left|top|top-right|left|center|right|bottom-left|bottom|bottom-right" css-class="…">` brings the position its content takes and a class of its own; a child written without a layer covers the base as a whole. A layer passes the pointer through wherever it shows nothing (`.tlOverlay__layer` is `pointer-events: none`, its content `auto`), so the base stays usable below the free space of a layer that only anchors a badge. Placement comes from the element, the look from application CSS on the layer's class — a badge pill, a caption scrim.
 
-`<avatar input="ch" image="photoCh" size="small|default|large|x-large"/>` shows the picture of the `image` channel circle-cropped, and the initials of the `input` value's label over a color derived from it while there is none. The picture follows its channel, so a photo replaced elsewhere appears without the avatar being built anew.
+`<avatar input="ch" image="photoCh" size="small|medium|large|x-large"/>` shows the picture of the `image` channel circle-cropped, and the initials of the `input` value's label while there is none, on one of the eight category roles of the design system (`tl-avatar--category-<n>`, derived from the label, the same two tokens a pill of that category reads). The four sizes are words (`medium` when absent); the client maps them to the classes `tl-avatar--sm|lg|xl` and the tokens `size-avatar-sm` to `size-avatar-xl`, and they do not follow the density; the initials carry the type class of their size. The picture follows its channel, so a photo replaced elsewhere appears without the avatar being built anew.
 
 ```xml
 <overlay>
@@ -539,7 +582,7 @@ The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row
 </overlay>
 ```
 
-The client classes an application styles against are `.tlImage` / `.tlImage__image`, `.tlOverlay` / `.tlOverlay__layer` / `.tlOverlay__layer--<anchor>` and `.tlAvatar--<size>` / `.tlAvatar__image`. The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
+The client classes an application styles against are `.tlImage` / `.tlImage__image`, `.tlOverlay` / `.tlOverlay__layer` / `.tlOverlay__layer--<anchor>` and `.tl-avatar` / `.tl-avatar--<size>` / `.tl-avatar--category-<n>` / `.tl-avatar__image` (design system, `avatar.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
 
 ## Content shown under one condition: `<visible-if>`
 
@@ -697,7 +740,7 @@ A fraction between 0 and 1 is displayed as a bar with an optional label beside i
 `<progress>` (`ProgressElement`) states the bar one of two ways, never both:
 
 - `<progress input="ch" fraction="x -> …"/>` — the filled part directly. Such a bar carries no label unless `label="x -> …"` gives it one.
-  A fraction expression that answers nothing at all leaves the bar without a share: the client sweeps a partial fill over the track (`tlProgress--indeterminate`) instead of filling a share of it, which is how a bar over an operation that does not know how far it has come is written — and an operation that learns its share later switches between the two displays by reporting a number again.
+  A fraction expression that answers nothing at all leaves the bar without a share: the client marks the bar `aria-busy` and the design-system stylesheet (`tl-progress`, `progress.css`) sweeps a partial fill over the track instead of filling a share of it, which is how a bar over an operation that does not know how far it has come is written — and an operation that learns its share later switches between the two displays by reporting a number again.
 - `<progress input="ch" done="x -> …" total="x -> …"/>` — the two counts the fraction is the ratio of, which are also the label (`3 / 7`) unless `label=` replaces it. A total of zero leaves the bar empty.
 
 Every expression is called with the current value of the `input` channel, which is optional: a bar counting the model as a whole needs none. The bar recomputes on a new channel value, on a change of the object the channel holds, and on a create / change / delete of an `observed-types` type — the last is what a bar counting all objects of a type needs, since no channel value changes when one is added. The observation is the shared `ChannelObjectObserver`, attached and detached with the control.
@@ -738,7 +781,7 @@ Work that takes longer than a request may take does not belong in the request. `
 - **Reading a snapshot** is `jobIsRunning($s)`, `jobIsFinished($s)`, `jobStatus($s)` (the texts `running`, `completed`, `failed`, `cancelled`, so a `<switch><case match="'completed'">` decides on it), `jobResult($s)` and `jobError($s)`. Each of them answers over no job at all as well, which is what the channel holds before the first start — so a start button guards itself with `input="job"` plus `<disabled-if expr="s -> jobIsRunning($s)"/>` and needs no case of its own for the time before the first run.
 - **Cancellation is cooperative.** `cancelable="true"` offers the reader a cancel button; pressing it marks the job and interrupts the worker. `sleep()` keeps the interrupt it was woken by, so a sleeping job wakes at once and ends at the next point it *reports* from — which is what makes a loop of `sleep` + `jobProgress` stop within one step. Every report a Java body makes on its `JobMonitor` checks the same way, and `JobMonitor.checkCancelled()` is that check on its own for a stretch of work that reports nothing. Only declare it for work that may be given up half-done: a cancelled job has done part of what it was started for.
 - **`<job-status input="job"/>`** (`JobStatusElement` → `ReactJobStatusControl` / `TLJobStatus`) is the display, bound to the channel alone and holding no state of its own. It shows the status, the declared steps as done / active / pending, the bar (determinate or indeterminate), the message, the elapsed time — counted in the browser, so it ticks without a server round trip and freezes when the job ends — and at the end the result or the error. A channel holding anything that is not a job state displays nothing. Every text is resolved for the reader on the server: the phases and the message by their `ResKey`, the result through `MetaLabelProvider`, so a body returning an i18n literal `#('…'@en, '…'@de)` is displayed in the reader's language.
-- **CSS hooks**: the BEM block `tlJobStatus` with the status modifier `tlJobStatus--running|completed|failed|cancelled` and the elements `__header`, `__state`, `__elapsed`, `__cancel`, `__phases`, `__phase` (`--done`, `--active`, `--pending`), `__bar`, `__message`, `__error`, `__result` (`tlReactControls.css`). An application restyles the display through these classes; the bar inside it is the shared `tlProgress` block.
+- **CSS hooks**: the BEM block `tlJobStatus` with the status modifier `tlJobStatus--running|completed|failed|cancelled` and the elements `__header`, `__state`, `__elapsed`, `__cancel`, `__phases`, `__phase` (`--done`, `--active`, `--pending`), `__bar`, `__message`, `__error`, `__result` (`tlReactControls.css`). An application restyles the display through these classes; the bar inside it is the design system's `tl-progress` (`progress.css`), addressed through its own classes `tl-progress__track|__fill|__label`, never through `tlJobStatus`.
 - **Demo**: `com.top_logic.demo.react/…/views/demo/long-job-demo.view.xml` — a three-phase job with a determinate loop, an indeterminate phase and a result written to a second channel, a failing job, and a standalone indeterminate `<progress>`, plus a chunked import creating 500 tickets in one pass and closing every second of them in a next one, and the chunked removal of what it created.
 
 ### Committing in chunks: `ChunkedScriptJobBody`

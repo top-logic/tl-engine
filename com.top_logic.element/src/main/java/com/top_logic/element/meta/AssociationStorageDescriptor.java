@@ -62,6 +62,18 @@ public interface AssociationStorageDescriptor {
 	ObjectKey getBaseObjectId(Map<String, Object> row);
 
 	/**
+	 * Name of the {@link MOReference} of the {@link #getTable() table} that holds the base object
+	 * of a row.
+	 * 
+	 * <p>
+	 * The {@link #getBaseObjectId(Map) base object ID} of a row is the value of this reference.
+	 * The reference allows to find all rows of the {@link #getTable() table} that store values for
+	 * a given base object.
+	 * </p>
+	 */
+	String getBaseObjectColumn();
+
+	/**
 	 * The ID of the attribute for which values are stored in the given row.
 	 */
 	ObjectKey getPartId(Map<String, Object> row);

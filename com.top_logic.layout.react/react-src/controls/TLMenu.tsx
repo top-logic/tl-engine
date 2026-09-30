@@ -1,22 +1,13 @@
-import { React, useTLState, useTLCommand, useCloseOnOutsidePress, useFocusTrap, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
+import { React, useTLState, useTLCommand, useCloseOnOutsidePress, useFocusTrap, rootClassName, ThemeIcon } from 'tl-react-bridge';
+import type { TLCellProps, MenuStateJson } from 'tl-react-bridge';
 
 const { useCallback, useEffect, useRef, useState } = React;
 
-interface MenuItem {
-  id: string;
-  label: string;
-  /** Encoded theme image, rendered through {@link ThemeIcon}. */
-  icon?: string;
-  disabled?: boolean;
-  /** Whether the effect of the command this entry renders is currently in force. */
-  active?: boolean;
-  /** Additional CSS classes declared on the command this entry renders. */
-  cssClasses?: string;
-  /** A header is a caption naming the entries beneath it; it is neither focusable nor selectable. */
-  type: 'item' | 'separator' | 'header';
-}
+/**
+ * An entry as the server describes it. Only an item is focused and chosen, and an item always
+ * carries its ID and label.
+ */
+type MenuItem = Partial<MenuStateJson.Entry> & Required<Pick<MenuStateJson.Entry, 'type' | 'id' | 'label'>>;
 
 /**
  * A popup menu triggered by an anchor element.
@@ -27,14 +18,14 @@ interface MenuItem {
  * - items: MenuItem[]
  */
 const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
+  const state = useTLState<Partial<MenuStateJson>>();
   const sendCommand = useTLCommand();
 
   const open = state.open === true;
-  const anchorId = state.anchorId as string;
-  const anchorX = state.anchorX as number | null | undefined;
-  const anchorY = state.anchorY as number | null | undefined;
-  const items = (state.items as MenuItem[]) ?? [];
+  const anchorId = state.anchorId;
+  const anchorX = state.anchorX;
+  const anchorY = state.anchorY;
+  const items = (state.items ?? []) as MenuItem[];
 
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });

@@ -19,6 +19,7 @@ import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
@@ -198,8 +199,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * <p>
 	 * The permission alone, independent of the form's lifecycle state: a form already in edit mode
 	 * still reports the permission that got it there. The Edit command combines this with its state
-	 * condition, and {@link #handleEdit()} rejects a transition the permission denies — so the same
-	 * decision governs the button and a command a client sends directly.
+	 * condition, and {@link #enterEditMode()} refuses a transition the permission denies — so the same
+	 * decision governs the button, a command a client sends directly, the initial edit mode, an object
+	 * switch of an auto-edit form, and the edit-mode channel.
 	 * </p>
 	 */
 	public ExecutableState editPermission() {
@@ -338,8 +340,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * <p>
 	 * When the channel value changes from outside (i.e., not triggered by this control):
 	 * <ul>
-	 * <li>If the channel becomes {@code true} and the form is not in edit mode, it enters edit
-	 * mode.</li>
+	 * <li>If the channel becomes {@code true} and the form is not in edit mode, it
+	 * {@link #enterEditMode() enters edit mode}; if that transition is refused, the form resets the
+	 * channel to {@code false}.</li>
 	 * <li>If the channel becomes {@code false} and the form is in edit mode, it cancels editing.</li>
 	 * </ul>
 	 * </p>
@@ -483,7 +486,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Set for forms configured with {@code initial-edit-mode} (and no edit-mode channel): such a
 	 * form is editable not only for its first object, but also after its input channel switches to
 	 * another object (e.g. a new-entry form whose channel is re-filled with a fresh transient
-	 * object after each submit).
+	 * object after each submit). Each entry is subject to the check of {@link #enterEditMode()}, so an
+	 * object the {@link #editPermission() edit permission} denies is displayed in view mode.
 	 * </p>
 	 *
 	 * @param autoEditMode
@@ -495,10 +499,31 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	/**
 	 * Enters edit mode by acquiring a lock, creating an overlay, and notifying listeners.
+	 *
+	 * <p>
+	 * Every transition into edit mode goes through this method, so it is the single place that checks
+	 * the {@link #editPermission() edit permission}. It refuses the transition when the form displays
+	 * no object, is already in edit mode, or the permission is denied for the displayed object. A
+	 * refused transition acquires no lock and creates no overlay; instead, the form writes its actual
+	 * mode to the {@link #setEditModeChannel(ViewChannel) edit-mode channel}, so that the channel
+	 * always mirrors the form's mode — a channel set to {@code true} while the transition is refused
+	 * is reset to {@code false}.
+	 * </p>
+	 *
+	 * <p>
+	 * The write-back is {@link ChannelNotificationScope#afterNotification(Runnable) deferred} until
+	 * the channel notification in progress has completed (it runs immediately outside any
+	 * notification). Writing from inside the notification would let the channel's remaining
+	 * listeners receive the outer, outdated value after the reset, so that a listener following the
+	 * reported values would end up with the refused mode.
+	 * </p>
+	 *
+	 * @return Whether this call started an edit session.
 	 */
-	public void enterEditMode() {
-		if (_editMode || _currentObject == null) {
-			return;
+	public boolean enterEditMode() {
+		if (_editMode || _currentObject == null || !editPermission().isExecutable()) {
+			ChannelNotificationScope.current().afterNotification(this::updateEditModeChannel);
+			return false;
 		}
 
 		// Acquire lock first -- if this fails, no overlay is created.
@@ -526,6 +551,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		}
 
 		setupEditSession();
+		return true;
 	}
 
 	/**
@@ -557,7 +583,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *
 	 * @return The base object with overlay changes applied, or {@code null} if no overlay exists.
 	 * @throws TopLogicException
-	 *         If any participant reports a validation error.
+	 *         If any participant reports a validation error, or if the current user is not allowed
+	 *         to write one of the changes, see {@link #checkWriteRights()}.
 	 */
 	public TLObject executeStoreState() {
 		validateOrThrow();
@@ -566,6 +593,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return null;
 		}
 
+		checkWriteRights();
 		for (FormParticipant participant : _participants) {
 			participant.applyState();
 		}
@@ -763,15 +791,38 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
+	 * Ensures that the current user may write all changes of this form: those of every
+	 * {@link FormParticipant} and those of the form's own overlay.
+	 *
+	 * <p>
+	 * Runs before anything is persisted or applied, so a refused save leaves all buffered changes in
+	 * place and the user can correct or cancel the edit.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If the current user is not allowed to write one of the changes.
+	 */
+	private void checkWriteRights() {
+		for (FormParticipant participant : _participants) {
+			participant.checkApplyState();
+		}
+		if (_overlay != null) {
+			_overlay.checkApply();
+		}
+	}
+
+	/**
 	 * Validates, lets participants apply, and commits form state in a KB transaction.
 	 *
 	 * <p>
-	 * Participants apply first (e.g. composition tables persist new objects and update reference
+	 * The {@link #checkWriteRights() write rights} of all changes are checked before anything is
+	 * persisted. Participants apply first (e.g. composition tables persist new objects and update reference
 	 * lists in the overlay), then {@link #executeStoreState()} validates and transfers overlay
 	 * changes to the base object.
 	 * </p>
 	 */
 	private void persistChanges() {
+		checkWriteRights();
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		Transaction tx = kb.beginTransaction(I18NConstants.FORM_SAVE);
 		try {
@@ -909,7 +960,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		if (_autoEditMode) {
 			// The form is configured to be editable whenever an object is available, so the
-			// object switch re-enters edit mode for the new object.
+			// object switch re-enters edit mode for the new object, if its edit permission allows.
 			enterEditMode();
 		}
 	}
@@ -935,11 +986,12 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Command that enters edit mode.
 	 *
 	 * <p>
-	 * Refused unless the form offers editing, i.e. it displays an object, is not already in edit
-	 * mode, and the user has the {@link #editPermission() permission to edit it} — the condition
-	 * under which {@link FormCommandModel#editCommand(FormControl) the Edit command} is executable.
-	 * The lifecycle commands are dispatched to this control directly, so they repeat the condition
-	 * instead of inheriting it from the toolbar button.
+	 * Refused when {@link #enterEditMode()} refuses the transition, i.e. unless the form displays an
+	 * object, is not already in edit mode, and the user has the {@link #editPermission() permission
+	 * to edit it} — the condition under which {@link FormCommandModel#editCommand(FormControl) the
+	 * Edit command} is executable. The lifecycle commands are dispatched to this control directly, so
+	 * the check in {@link #enterEditMode()} applies to them instead of the toolbar button's
+	 * executability.
 	 * </p>
 	 */
 	@ReactCommandHandler("formEdit")
@@ -954,7 +1006,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		if (!permission.isExecutable()) {
 			return HandlerResult.notExecutable(permission);
 		}
-		enterEditMode();
+		if (!enterEditMode()) {
+			return notExecutable();
+		}
 		return HandlerResult.DEFAULT_RESULT;
 	}
 

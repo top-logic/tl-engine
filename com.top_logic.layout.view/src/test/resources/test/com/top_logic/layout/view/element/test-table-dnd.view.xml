@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="dragAllowed"/>
+		<channel name="dropAllowed"/>
+	</channels>
+
+	<table>
+		<drag
+			input="dragAllowed"
+			type="tl.core:String"
+		>
+			<executability>
+				<null-input-disabled/>
+			</executability>
+			<row-executability>
+				<disabled-if expr="row -> $row == 'locked'"/>
+			</row-executability>
+		</drag>
+		<drop
+			accept="tl.core:String"
+			input="dropAllowed"
+			target="row"
+		>
+			<executability>
+				<null-input-disabled/>
+			</executability>
+			<target-executability>
+				<disabled-if expr="row -> $row == 'locked'"/>
+			</target-executability>
+			<execute-script function="rows -> $rows"/>
+		</drop>
+		<columns>
+			<computed-column name="value"
+				type="tl.core:String"
+			>
+				<value>row -&gt; $row</value>
+			</computed-column>
+		</columns>
+		<rows>['free', 'locked']</rows>
+	</table>
+</view>

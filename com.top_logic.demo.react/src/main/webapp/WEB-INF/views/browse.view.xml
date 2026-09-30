@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The page a visitor without an account may browse: an overview of the sales and purchases of
+	the chart demo data, as a dashboard of key figures above a table of all transactions.
+	
+	The page is an entry point marked anonymous (see the ViewConfig of demoReactConf.config.xml),
+	so it is shown although the application answers every other URL of a session without an account
+	with its login page, which links here. It stands on its own, outside the application shell: its
+	app bar holds the account area, whose Login button opens the login dialog; the login reloads the
+	page under the account logged in, which then sees the same page.
+	
+	All anonymous visitors share one account, so they are offered nothing that would store a
+	personal setting on it: the dashboard offers no layout editing, and the filter bar of the table
+	offers no saving of a filter. What they adjust - the width of a column, the sort order, a
+	filter - holds for the session only. A logged-in user is offered both commands.
+-->
+<view>
+	<channels>
+		<derived-channel name="salesCount"
+			expr="all(`demo.charts:Verkauf`).size()"
+		/>
+		<derived-channel name="salesTotal"
+			expr="all(`demo.charts:Verkauf`).map(t -> $t.get(`demo.charts:Transaktion#wert`)).sum()"
+		/>
+		<derived-channel name="purchaseCount"
+			expr="all(`demo.charts:Einkauf`).size()"
+		/>
+		<derived-channel name="purchaseTotal"
+			expr="all(`demo.charts:Einkauf`).map(t -> $t.get(`demo.charts:Transaktion#wert`)).sum()"
+		/>
+	</channels>
+	<app-shell>
+		<header>
+			<app-bar variant="flat">
+				<title>
+					<en>TopLogic React Demo</en>
+					<de>TopLogic React Demo</de>
+				</title>
+				<trailing>
+					<view-ref view="user-menu.view.xml"/>
+				</trailing>
+			</app-bar>
+		</header>
+		<content>
+			<split-panel orientation="vertical">
+				<panes>
+					<pane
+						size="45"
+						unit="%"
+					>
+						<!-- The panel toolbar is where the dashboard contributes its layout commands. -->
+						<panel>
+							<title>
+								<en>Overview</en>
+								<de>Übersicht</de>
+							</title>
+							<dashboard id="browse-overview">
+								<tile id="sales"
+									width="quarter"
+								>
+									<card>
+										<title>
+											<en>Sales</en>
+											<de>Verkäufe</de>
+										</title>
+										<text input="salesCount"/>
+									</card>
+								</tile>
+								<tile id="sales-total"
+									width="quarter"
+								>
+									<card>
+										<title>
+											<en>Revenue</en>
+											<de>Umsatz</de>
+										</title>
+										<text input="salesTotal"/>
+									</card>
+								</tile>
+								<tile id="purchases"
+									width="quarter"
+								>
+									<card>
+										<title>
+											<en>Purchases</en>
+											<de>Einkäufe</de>
+										</title>
+										<text input="purchaseCount"/>
+									</card>
+								</tile>
+								<tile id="purchase-total"
+									width="quarter"
+								>
+									<card>
+										<title>
+											<en>Costs</en>
+											<de>Kosten</de>
+										</title>
+										<text input="purchaseTotal"/>
+									</card>
+								</tile>
+							</dashboard>
+						</panel>
+					</pane>
+					<pane
+						size="55"
+						unit="%"
+					>
+						<panel>
+							<title>
+								<en>Transactions</en>
+								<de>Transaktionen</de>
+							</title>
+							<table
+								filter-bar="true"
+								personalization-key="demo-browse-transactions"
+								types="demo.charts:Transaktion"
+							>
+								<columns>
+									<column
+										attribute="datum"
+										width="140"
+									/>
+									<column
+										attribute="kategorie"
+										width="180"
+									/>
+									<column
+										attribute="wert"
+										width="140"
+									/>
+									<column attribute="beschreibung"/>
+								</columns>
+								<rows>all(`demo.charts:Transaktion`)</rows>
+							</table>
+						</panel>
+					</pane>
+				</panes>
+			</split-panel>
+		</content>
+	</app-shell>
+</view>

@@ -9,6 +9,7 @@ package com.top_logic.element.model.cache;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +31,7 @@ import com.top_logic.model.TLModule;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -55,6 +57,13 @@ public class ModelTables {
 	 * with a given name of the object's table.
 	 */
 	private final ConcurrentHashMap<TLStructuredType, Map<String, TLStructuredTypePart>> _columnBindingByType =
+		new ConcurrentHashMap<>();
+
+	/**
+	 * For each type, the {@link AssociationStorageDescriptor}s of its parts grouped by the table in
+	 * which they store values.
+	 */
+	private final ConcurrentHashMap<TLStructuredType, Map<MOStructure, List<AssociationStorageDescriptor>>> _separateStorageByType =
 		new ConcurrentHashMap<>();
 
 	/**
@@ -172,6 +181,47 @@ public class ModelTables {
 		}
 
 		return partByColumn;
+	}
+
+	/**
+	 * Determines the {@link AssociationStorageDescriptor}s of all parts of the given type, grouped
+	 * by the table in which they store values.
+	 * 
+	 * <p>
+	 * These are the tables besides the type's own table that may contain rows with values of an
+	 * instance of the given type. Parts with a read-only storage and
+	 * {@link TLAnnotations#isPersistentCache(TLStructuredTypePart) persistent cache} parts are not
+	 * considered.
+	 * </p>
+	 * 
+	 * @see SeparateTableStorage#getStorageDescriptors()
+	 */
+	public Map<MOStructure, List<AssociationStorageDescriptor>> lookupSeparateStorage(TLStructuredType type) {
+		Map<MOStructure, List<AssociationStorageDescriptor>> descriptorsByTable = _separateStorageByType.get(type);
+
+		if (descriptorsByTable == null) {
+			descriptorsByTable = new LinkedHashMap<>();
+			for (TLStructuredTypePart part : type.getAllParts()) {
+				StorageDetail storage = part.getStorageImplementation();
+				if (storage.isReadOnly() || TLAnnotations.isPersistentCache(part)) {
+					continue;
+				}
+				if (storage instanceof SeparateTableStorage separateStorage) {
+					for (AssociationStorageDescriptor descriptor : separateStorage.getStorageDescriptors()) {
+						MOStructure storageType =
+							(MOStructure) part.tKnowledgeBase().getMORepository().getType(descriptor.getTable());
+						List<AssociationStorageDescriptor> descriptors =
+							descriptorsByTable.computeIfAbsent(storageType, x -> new ArrayList<>());
+						if (!descriptors.contains(descriptor)) {
+							descriptors.add(descriptor);
+						}
+					}
+				}
+			}
+			descriptorsByTable = MapUtil.putIfAbsent(_separateStorageByType, type, descriptorsByTable);
+		}
+
+		return descriptorsByTable;
 	}
 
 }

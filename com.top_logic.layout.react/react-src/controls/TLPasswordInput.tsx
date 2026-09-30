@@ -1,5 +1,5 @@
-import { React, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
+import type { TLCellProps, PasswordInputStateJson } from 'tl-react-bridge';
 
 const { useCallback } = React;
 
@@ -10,11 +10,12 @@ const { useCallback } = React;
  * local value immediately while the server `valueChanged` is debounced and flushed on blur.
  * state.debounceMs names the span the value is held back, defaulting to VALUE_DEBOUNCE_MS.
  */
-const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLPasswordInput: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<Partial<PasswordInputStateJson>>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue, flushValue] = useTLFieldValue({
-    debounceMs: (state.debounceMs as number) ?? VALUE_DEBOUNCE_MS,
+    debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
   });
 
   const handleChange = useCallback(
@@ -32,7 +33,7 @@ const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const hasError = state.hasError === true;
   const hasWarnings = state.hasWarnings === true;
-  const errorMessage = state.errorMessage as string | undefined;
+  const errorMessage = state.errorMessage;
   const cls = [
     'tlReactTextInput',
     hasError ? 'tlReactTextInput--error' : '',
@@ -46,7 +47,6 @@ const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         value={(value as string) ?? ''}
         onChange={handleChange}
         onBlur={handleBlur}
-        disabled={state.disabled === true}
         className={rootClassName(state, cls)}
         aria-invalid={hasError || undefined}
         {...tooltipProps(hasError ? errorMessage : undefined)}

@@ -16,6 +16,7 @@ import com.top_logic.layout.react.control.overlay.DismissArguments;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl.Variant;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.SnackbarState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
@@ -125,15 +126,15 @@ public class TestReactSnackbarControl extends TestCase {
 	}
 
 	private static String content(ReactSnackbarControl snackbar) {
-		return (String) state(snackbar).get(ReactSnackbarControl.CONTENT);
+		return (String) state(snackbar).get(SnackbarState.CONTENT__PROP);
 	}
 
 	private static boolean visible(ReactSnackbarControl snackbar) {
-		return Boolean.TRUE.equals(state(snackbar).get(ReactSnackbarControl.VISIBLE));
+		return Boolean.TRUE.equals(state(snackbar).get(SnackbarState.VISIBLE__PROP));
 	}
 
 	private static int generation(ReactSnackbarControl snackbar) {
-		Object generation = state(snackbar).get(ReactSnackbarControl.GENERATION);
+		Object generation = state(snackbar).get(SnackbarState.GENERATION__PROP);
 		assertTrue("The client is told a generation: " + generation, generation instanceof Number);
 		return ((Number) generation).intValue();
 	}

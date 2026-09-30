@@ -21,6 +21,7 @@ import com.top_logic.layout.react.control.layout.ToolbarOverflow;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.react.control.overlay.ResizeArguments;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.WindowState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
@@ -43,7 +44,7 @@ public class TestReactWindowControl extends TestCase {
 
 	/** A window given neither actions nor a button bar has no footer. */
 	public void testAWindowWithoutCommandsHasNoFooter() {
-		assertNull("Nothing to show in the footer.", state(window()).get(ReactWindowControl.FOOTER));
+		assertNull("Nothing to show in the footer.", state(window()).get(WindowState.FOOTER__PROP));
 	}
 
 	/** Actions alone are shown in a footer toolbar the window builds, collapsing from its leading end. */
@@ -99,9 +100,9 @@ public class TestReactWindowControl extends TestCase {
 
 		Map<?, ?> state = state(window);
 		assertEquals("The configured width stays, so the client can fall back to it.", "400px",
-			state.get(ReactWindowControl.WIDTH));
-		assertEquals(998, ((Number) state.get(ReactWindowControl.CUSTOM_WIDTH)).intValue());
-		assertEquals(935, ((Number) state.get(ReactWindowControl.CUSTOM_HEIGHT)).intValue());
+			state.get(WindowState.WIDTH__PROP));
+		assertEquals(998, ((Number) state.get(WindowState.CUSTOM_WIDTH__PROP)).intValue());
+		assertEquals(935, ((Number) state.get(WindowState.CUSTOM_HEIGHT__PROP)).intValue());
 	}
 
 	/** Resetting the size forgets the remembered size, and the window takes its configured one. */
@@ -112,14 +113,14 @@ public class TestReactWindowControl extends TestCase {
 		window.executeCommand(ReactWindowControl.RESET_SIZE_COMMAND, Map.of());
 
 		Map<?, ?> state = state(window);
-		assertNull(state.get(ReactWindowControl.CUSTOM_WIDTH));
-		assertNull(state.get(ReactWindowControl.CUSTOM_HEIGHT));
-		assertEquals("400px", state.get(ReactWindowControl.WIDTH));
+		assertNull(state.get(WindowState.CUSTOM_WIDTH__PROP));
+		assertNull(state.get(WindowState.CUSTOM_HEIGHT__PROP));
+		assertEquals("400px", state.get(WindowState.WIDTH__PROP));
 	}
 
 	/** The client state of the window's footer toolbar. */
 	private Map<?, ?> footer(ReactWindowControl window) {
-		Object footer = state(window).get(ReactWindowControl.FOOTER);
+		Object footer = state(window).get(WindowState.FOOTER__PROP);
 		assertNotNull("The window shows a footer.", footer);
 		return (Map<?, ?>) ((Map<?, ?>) footer).get(STATE);
 	}

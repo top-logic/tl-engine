@@ -31,7 +31,14 @@
 		<dependency name="Issue_230_remove_module_tl_ai_chat"
 			module="tl-ai-core"
 		/>
-		<dependency name="Ticket_29221_Remove_security_domain"
+		<!--
+			The latest `tl` migration of 8.0.0-alpha8, the engine this migration was written for -
+			not Ticket_29221, which Issue_230 names. An application migration that depends on
+			Issue_230 and on a `tl` version after Ticket_29221 would otherwise have its dependency
+			moved up to this migration by MigrationUtil, which then counts it as already applied
+			and never runs it (#594).
+		-->
+		<dependency name="Ticket_29492_enlarge_layout_key"
 			module="tl"
 		/>
 		<dependency name="Ticket_29088_Add_PersistentView"

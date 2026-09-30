@@ -59,8 +59,8 @@ public class TestShardSelection extends TestCase {
 		assertEquals("2" + ShardSelection.SHARD_SEPARATOR + "4", shard.toString());
 		assertFalse(shard.isAll());
 		assertFalse(shard.includesNonScripted());
-		assertTrue(ShardSelection.parse("1" + ShardSelection.SHARD_SEPARATOR + "4").includesNonScripted());
-		assertTrue(ShardSelection.parse("1" + ShardSelection.SHARD_SEPARATOR + "1").includesNonScripted());
+		assertFalse(ShardSelection.parse("1" + ShardSelection.SHARD_SEPARATOR + "4").includesNonScripted());
+		assertFalse(ShardSelection.parse("1" + ShardSelection.SHARD_SEPARATOR + "1").includesNonScripted());
 		assertTrue(ShardSelection.ALL.includesNonScripted());
 		assertTrue(ShardSelection.NONE.includesNonScripted());
 	}
@@ -174,11 +174,7 @@ public class TestShardSelection extends TestCase {
 			collect(tree, scripted, nonScripted);
 			assertTrue(Collections.disjoint(scriptedUnion, scripted));
 			scriptedUnion.addAll(scripted);
-			if (shard == 1) {
-				assertEquals(nonScriptedAll, nonScripted);
-			} else {
-				assertEquals(Collections.emptySet(), nonScripted);
-			}
+			assertEquals(Collections.emptySet(), nonScripted);
 			assertNoUnitsAndNoEmptySetups(tree);
 		}
 		assertEquals(scriptedAll, scriptedUnion);
@@ -191,9 +187,20 @@ public class TestShardSelection extends TestCase {
 		assertEquals(nonScriptedAll, nonScripted);
 		assertNoUnitsAndNoEmptySetups(none);
 
+		// NONE and all shards together run each test exactly once.
+		assertEquals(createTree().countTestCases(), none.countTestCases() + shardCases(count));
+
 		Test all = ShardSelection.ALL.apply(createTree());
 		assertEquals(createTree().countTestCases(), all.countTestCases());
 		assertNoUnitsAndNoEmptySetups(all);
+	}
+
+	private static int shardCases(int count) {
+		int result = 0;
+		for (int shard = 1; shard <= count; shard++) {
+			result += ShardSelection.shard(shard, count).apply(createTree()).countTestCases();
+		}
+		return result;
 	}
 
 	private static TestSuite createTree() {

@@ -34,10 +34,15 @@ import test.com.top_logic.basic.TestUtils;
  * <dd>No scripted test runs, all other tests run.</dd>
  * <dt><code>i</code>{@value #SHARD_SEPARATOR}<code>n</code> (e.g. <code>2/4</code>)</dt>
  * <dd>The run is shard <code>i</code> (1-based) of <code>n</code> shards that together execute all
- * tests: Shard <code>i</code> runs the {@link ScriptedTestUnit}s assigned to it. Additionally,
- * shard 1 runs all tests that are not scripted (module independent tests and the module's
- * non-scripted tests). Shards 2 to <code>n</code> run nothing but their scripted units.</dd>
+ * scripted tests: Shard <code>i</code> runs nothing but the {@link ScriptedTestUnit}s assigned to
+ * it, neither module independent tests nor the module's tests that are not scripted.</dd>
  * </dl>
+ *
+ * <p>
+ * The values partition the tests: a run with {@value #NONE_VALUE} together with the runs of all
+ * shards <code>1/n</code> to <code>n/n</code> executes each test of {@value #ALL_VALUE} exactly
+ * once.
+ * </p>
  *
  * <p>
  * Scripted tests are distributed in {@link ScriptedTestUnit units}: the scripts directly contained
@@ -170,10 +175,11 @@ public final class ShardSelection {
 	}
 
 	/**
-	 * Whether this selection runs the tests that are not scripted.
+	 * Whether this selection runs the tests that are not scripted, which is the case for
+	 * {@link #ALL} and {@link #NONE} but not for a shard.
 	 */
 	public boolean includesNonScripted() {
-		return _count <= 0 || _shard == 1;
+		return _count <= 0;
 	}
 
 	/**

@@ -49,7 +49,8 @@ import com.top_logic.basic.tooling.ModuleLayoutConstants;
  * <dt>{@link #RECURSIVE_PROPERTY}</dt>
  * <dd>Whether a directory given in {@link #TARGET_PROPERTY} is searched recursively.</dd>
  * <dt>{@link ShardSelection#PROPERTY}</dt>
- * <dd>Which scripted tests run, see {@link ShardSelection}. With a directory in
+ * <dd>Whether all tests run, all tests except the scripted ones, or only the scripted tests of one
+ * shard, see {@link ShardSelection}. With a directory in
  * {@link #TARGET_PROPERTY}, the selection applies to the tests of that directory. With a single
  * file in {@link #TARGET_PROPERTY}, the selection is ignored.</dd>
  * <dt>{@link ScratchDirectory#PROPERTY}</dt>

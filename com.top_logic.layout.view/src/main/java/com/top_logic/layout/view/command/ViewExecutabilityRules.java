@@ -29,7 +29,7 @@ public class ViewExecutabilityRules {
 	 * Builds the combined executability rule for the given configured rules.
 	 *
 	 * @param ruleConfigs
-	 *        The configured rules (from {@link ViewCommand.Config#getExecutability()}).
+	 *        The configured rules (from {@link ExecutabilityConfig#getExecutability()}).
 	 * @param context
 	 *        The build-time context of the guarded command, passed to
 	 *        {@link ContextDependentRule#bind(ViewContext)}.

@@ -83,9 +83,19 @@ public class TransientPersonalConfiguration implements PersonalConfiguration {
     
 	/**
 	 * Stores the values of this {@link TransientPersonalConfiguration} back to the persistence.
+	 * 
+	 * <p>
+	 * The configuration of the {@link PersonManager#isAnonymous(Person) anonymous account} is never
+	 * stored: all visitors that did not log in share this account, so the settings of one visitor
+	 * must not become the settings of all others. Such a configuration keeps its pending changes.
+	 * </p>
 	 */
 	public void storeConfiguration(TLSubSessionContext subSession) {
 		if (!_modified) {
+			return;
+		}
+
+		if (PersonManager.getManager().isAnonymous(_person)) {
 			return;
 		}
 

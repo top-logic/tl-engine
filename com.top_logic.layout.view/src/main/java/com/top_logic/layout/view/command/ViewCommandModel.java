@@ -7,7 +7,6 @@ package com.top_logic.layout.view.command;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.Resources;
@@ -23,9 +22,7 @@ import com.top_logic.layout.react.dirty.StateHandler;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.ObservedTypes;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
@@ -47,30 +44,24 @@ import com.top_logic.tool.execution.ExecutableState;
  * reports for as long as it is attached.
  * </p>
  *
- * @see ChannelObjectObserver
+ * @see LiveExecutability
  */
-public class ViewCommandModel implements ViewChannel.ChannelListener, CommandModel {
+public class ViewCommandModel implements CommandModel {
 
 	private final ViewCommand _command;
 
 	private final ViewCommand.Config _config;
 
-	private final ViewChannel _inputChannel;
-
-	private final ViewExecutabilityRule _rule;
-
-	private final ChannelObjectObserver _inputObserver;
+	/**
+	 * The command's rule applied to its input channel, followed while this model is attached.
+	 */
+	private final LiveExecutability _executability;
 
 	/**
 	 * The dirty-tracked scope the command is displayed in, {@code null} for a command built outside
 	 * a view.
 	 */
 	private final DirtyChannel _scopeDirty;
-
-	/**
-	 * Stops the rules reporting changes again, {@code null} while this model is not attached.
-	 */
-	private Runnable _ruleObservation;
 
 	private ExecutableState _executableState;
 
@@ -113,14 +104,10 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 			ViewExecutabilityRule rule, DirtyChannel scopeDirty) {
 		_command = command;
 		_config = config;
-		_inputChannel = inputChannel;
-		_rule = rule;
 		_scopeDirty = scopeDirty;
 		_executableState = ExecutableState.EXECUTABLE;
-
-		List<ViewChannel> observedChannels = inputChannel == null ? List.of() : List.of(inputChannel);
-		Set<TLStructuredType> observedTypes = ObservedTypes.resolve(config.getObservedTypes());
-		_inputObserver = new ChannelObjectObserver(observedChannels, observedTypes, this::updateExecutableState);
+		_executability = new LiveExecutability(rule, inputChannel,
+			ObservedTypes.resolve(config.getObservedTypes()), this::updateExecutableState);
 	}
 
 	/**
@@ -185,7 +172,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 * Resolves the current input value from the channel.
 	 */
 	public Object resolveInput() {
-		return _inputChannel != null ? _inputChannel.get() : null;
+		return _executability.getInput();
 	}
 
 	@Override
@@ -328,7 +315,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 * @return The state the command's rules assign to that input.
 	 */
 	public ExecutableState executability(Object input) {
-		return _rule.isExecutable(input);
+		return _executability.getState(input);
 	}
 
 	/**
@@ -400,13 +387,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 *        a browser window, which follows the channel value alone.
 	 */
 	public void attach(ModelScope scope) {
-		if (_inputChannel != null) {
-			_inputChannel.addListener(this);
-		}
-		if (_rule instanceof ObservableRule observable) {
-			_ruleObservation = observable.observe(this::updateExecutableState);
-		}
-		_inputObserver.attach(scope);
+		_executability.attach(scope);
 		updateExecutableState();
 	}
 
@@ -422,14 +403,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 * Stops following the input.
 	 */
 	public void detach() {
-		if (_inputChannel != null) {
-			_inputChannel.removeListener(this);
-		}
-		if (_ruleObservation != null) {
-			_ruleObservation.run();
-			_ruleObservation = null;
-		}
-		_inputObserver.detach();
+		_executability.detach();
 	}
 
 	@Override
@@ -440,11 +414,6 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	@Override
 	public void removeStateChangeListener(Runnable listener) {
 		_stateChangeListeners.remove(listener);
-	}
-
-	@Override
-	public void handleNewValue(ViewChannel sender, Object oldValue, Object newValue) {
-		updateExecutableState();
 	}
 
 	private void updateExecutableState() {

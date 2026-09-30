@@ -3910,6 +3910,34 @@ button.tlMenu__item--disabled:hover {
 	box-shadow: inset 0 -2px 0 0 var(--interactive);
 }
 
+/* The target under the running drag refuses it: the table as a whole, or a single row. */
+.tlTableView--dropRefused {
+	outline: 2px dashed var(--support-error);
+	outline-offset: -2px;
+	border-radius: var(--corner-radius);
+	cursor: not-allowed;
+}
+
+.tlTableView__row--dropRefused {
+	outline: 2px solid var(--support-error);
+	outline-offset: -2px;
+	cursor: not-allowed;
+}
+
+/* Why the target under the running drag refuses it, next to the pointer (left/top set by the
+   table), above every other layer like a tooltip. */
+.tlTableView__dropHint {
+	position: fixed;
+	z-index: 13000;
+	max-width: min(400px, calc(100vw - 2 * var(--spacing-05)));
+	padding: var(--spacing-02) var(--spacing-04);
+	border-radius: var(--border-radius-02);
+	background: var(--support-error);
+	color: var(--text-on-color);
+	box-shadow: var(--shadow-menu);
+	pointer-events: none;
+}
+
 /* -- Frozen columns -- */
 
 .tlTableView__headerCell--frozen,

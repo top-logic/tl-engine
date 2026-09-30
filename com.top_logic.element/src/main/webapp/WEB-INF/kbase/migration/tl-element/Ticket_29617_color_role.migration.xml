@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29617_color_role"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_29590_multi_valued_datatypes"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<!-- The color annotation of an enumeration literal names a color role instead of a design token or a literal color value. -->
+		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_29617_color_role.transform.xslt"
+		/>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltColumnProcessor"
+			column="annotations"
+			table="FastListElt"
+			transform="/WEB-INF/kbase/migration/tl-element/Ticket_29617_color_role.transform.xslt"
+		/>
+	</processors>
+	<migration/>
+	<post-processors/>
+</migration>

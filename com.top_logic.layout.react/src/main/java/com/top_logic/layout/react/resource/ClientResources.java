@@ -16,6 +16,8 @@ import java.util.Set;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.NamedConfiguration;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Subtypes;
@@ -43,8 +45,16 @@ public class ClientResources extends ConfiguredManagedClass<ClientResources.Conf
 
 		/**
 		 * The registered client resources, contributed across modules.
+		 *
+		 * <p>
+		 * Entries are keyed by {@link ResourceConfig#getName() name}, so that a later module may
+		 * replace or remove a resource by naming it with a {@code config:operation} of
+		 * {@code update} or {@code remove}. A resource another entry still requires must not be
+		 * removed; the registry reports that as an error.
+		 * </p>
 		 */
 		@Name("resources")
+		@Key(NamedConfiguration.NAME_ATTRIBUTE)
 		@Subtypes({
 			@Subtype(tag = ModuleScriptConfig.TAG_NAME, type = ModuleScriptConfig.class),
 			@Subtype(tag = ScriptConfig.TAG_NAME, type = ScriptConfig.class),

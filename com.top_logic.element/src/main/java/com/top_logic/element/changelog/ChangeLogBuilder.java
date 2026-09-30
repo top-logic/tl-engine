@@ -92,7 +92,7 @@ public class ChangeLogBuilder {
 		_model = model;
 		_hm = kb.getHistoryManager();
 
-		_startRev = _hm.getRevision(1);
+		_startRev = _hm.getRevision(Revision.FIRST_REV);
 		_stopRev = toRevision(_hm.getLastRevision());
 	}
 
@@ -117,8 +117,8 @@ public class ChangeLogBuilder {
 		if (maxTime > 0) {
 			long startTime = System.currentTimeMillis() - maxTime;
 			Revision startRev = _hm.getRevisionAt(startTime);
-			if (startRev.getCommitNumber() < 1) {
-				startRev = _hm.getRevision(1);
+			if (startRev.getCommitNumber() < Revision.FIRST_REV) {
+				startRev = _hm.getRevision(Revision.FIRST_REV);
 			}
 			setStartRev(startRev);
 		}

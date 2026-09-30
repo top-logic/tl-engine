@@ -451,7 +451,7 @@ public class MigrateUtils {
 	protected ChangeSetReader createKnowledgeEventReader(final KnowledgeBase srcKB) {
 		ChangeSetReader eventReader;
 		{
-			Revision startRev = srcKB.getHistoryManager().getRevision(1L);
+			Revision startRev = srcKB.getHistoryManager().getRevision(Revision.FIRST_REV);
 			Revision stopRev = Revision.CURRENT;
 			final ReaderConfig readerConfig =
 				ReaderConfigBuilder.createComplexConfig(startRev, stopRev, null, null, true,

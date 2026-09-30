@@ -29,6 +29,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.util.TLContext;
 
 /**
  * A UI element that renders a responsive dashboard grid of {@link TileElement
@@ -39,6 +40,12 @@ import com.top_logic.layout.view.command.ViewCommandModel;
  * by {@link Config#getId() this element's id}. Unknown ids in the persisted
  * order are ignored; tiles not mentioned are appended in their configured
  * order.
+ * </p>
+ *
+ * <p>
+ * An anonymous session is offered neither the layout edit commands nor tile
+ * reordering: all anonymous visitors share one account, so there is no personal
+ * order to store for any of them.
  * </p>
  */
 @InApp
@@ -158,12 +165,17 @@ public class DashboardElement implements UIElement {
 			reactTiles.add(new Tile(t.getId(), t.getWidth(), t.getRowSpan(), t.createContentControl(context),
 				t.toAction(action)));
 		}
-		ReactDashboardControl control =
-			new ReactDashboardControl(context, _minColWidth, _rowHeight, reactTiles, this::storePersonalOrder);
+		// The shared anonymous account has no personal order of its own, so an anonymous session
+		// gets a dashboard that offers no rearranging at all.
+		boolean personalizable = !TLContext.isAnonymous();
+		ReactDashboardControl control = new ReactDashboardControl(context, _minColWidth, _rowHeight, reactTiles,
+			personalizable ? this::storePersonalOrder : null);
 
 		control.setCssClass(_cssClass);
 		followTileActions(context, control, actions);
-		contributeEditCommands(context, control);
+		if (personalizable) {
+			contributeEditCommands(context, control);
+		}
 
 		return control;
 	}

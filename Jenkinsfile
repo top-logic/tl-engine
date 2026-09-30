@@ -110,7 +110,7 @@ pipeline {
 
 	parameters {
 		string(name: 'REPO', defaultValue: '',
-			description: 'Git repository to build (used by the SCM definition of the job).')
+			description: 'Accepted for the build trigger; the repository is the one of the SCM definition of the job.')
 		string(name: 'BRANCH', defaultValue: '',
 			description: 'Branch to build, e.g. CWS/CWS_12345_topic or refs/heads/CWS/CWS_12345_topic.')
 		string(name: 'ADDITIONAL_BUILD_DESCRIPTION', defaultValue: '',
@@ -216,7 +216,7 @@ pipeline {
 		always {
 			junit testResults: '**/target/surefire-reports/TEST-*.xml', allowEmptyResults: true
 			recordIssues tools: [spotBugs()], enabledForFailure: true
-			logParser projectRulePath: LOG_RULES, useProjectRule: true,
+			logParser parsingRulesPath: '', projectRulePath: LOG_RULES, useProjectRule: true,
 				unstableOnWarning: true, failBuildOnError: true
 		}
 	}

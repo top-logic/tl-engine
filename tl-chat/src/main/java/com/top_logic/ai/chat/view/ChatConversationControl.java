@@ -41,6 +41,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.util.TLContext;
 
 /**
@@ -253,6 +254,13 @@ public class ChatConversationControl extends ReactControl {
 			addCleanupAction(() -> input.removeListener(listener));
 			_selection.apply();
 		}
+
+		// The browser reads the open chat's title from its own copy of the chat list; this is what
+		// tells it that copy is out of date (#596).
+		SessionListWatch sessions = new SessionListWatch(TlAiExecutionFactory.getAgentSessionType(),
+			ChatConversationControl::currentPerson, this::putState);
+		addAttachListener(() -> sessions.attach(context.getModelScope()));
+		addDetachListener(sessions::detach);
 
 		// What a conversation started here is about. Read only when one comes into being, so the
 		// browser has to report that - which it does through publishSession, whether or not this

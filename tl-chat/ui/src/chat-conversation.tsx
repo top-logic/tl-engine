@@ -1,7 +1,7 @@
 import { React, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import type { ApprovalRequest, Attachment, ContextFact, InteractionRequest } from './types'
-import { chatIdOf, readBootstrap, useChat } from './chat-store'
+import { chatIdOf, readBootstrap, useChat, useSessionsRevision } from './chat-store'
 import { Composer, plusMenuVisible } from './composer'
 import { createDraftReporter } from './draft'
 import type { ComposerApi, ReferenceCandidate } from './extensions'
@@ -396,6 +396,10 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   useEffect(() => {
     if (hasInput) actions.followChannel()
   }, [hasInput, actions])
+
+  // A chat renamed elsewhere - the session list's row menu, a script, another tab (#596).
+  useSessionsRevision(state, actions)
+
   const prevSelected = useRef(selected)
   const prevCorrections = useRef(corrections)
   useEffect(() => {

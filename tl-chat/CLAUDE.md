@@ -413,6 +413,15 @@ grouping) and tells the other windows; `aiSessionDelete` also asks a live run to
 chat out of every window that holds it. Both refuse a session the acting account neither owns nor
 administers.
 
+The browser store keeps its own copy of the chat list, and the conversation's header and the
+`App` rail read titles from it. The model events of such a write therefore reach the store through
+`SessionListWatch` on `<chat-conversation>`: it counts a created chat of the account, a chat whose
+title is not the one it saw last, and any deletion into the `sessionsRevision` state entry, and the
+element re-reads `GET /chat/sessions` whenever that count moves (`useSessionsRevision`). Not every
+update counts - a run writes its chat's bookkeeping several times per send, and counting those made
+one send cost four list reads instead of one. Opening a chat also takes the title its transcript load answers with,
+so a window that missed the count shows the current title as soon as the chat is opened (#596).
+
 An application makes the bundle loadable by declaring it on `ClientResources` - see
 `tl-ai-demo/src/main/webapp/WEB-INF/conf/tl-ai-demo.conf.config.xml`:
 

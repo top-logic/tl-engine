@@ -62,7 +62,7 @@ instead of replacing them.
 			</class>
 			<!-- Baseline for every class of a module. -->
 			<module name="tl.demo.projectManagement">
-				<grant inherit="true" operation="Read" roles="demo.react.ProjectReader"/>
+				<grant inherit="true" operation="Read" roles="demo.react.ProjectMember, demo.react.ProjectAdmin"/>
 			</module>
 			<!-- Grants on a module singleton, taking precedence over the class grants. -->
 			<singleton name="SecurityStructure#ROOT">

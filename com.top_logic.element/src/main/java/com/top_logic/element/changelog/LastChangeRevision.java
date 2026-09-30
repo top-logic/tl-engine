@@ -19,7 +19,6 @@ import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.db.sql.SQLQuery;
 import com.top_logic.basic.db.sql.SQLSelect;
-import com.top_logic.basic.db.sql.SQLTableReference;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
@@ -65,8 +64,10 @@ import com.top_logic.model.TLStructuredType;
  * </p>
  *
  * <p>
- * Only the object itself is considered, not the objects it contains through compositions: A change
- * of a part of a composition is not a change of its container, but adding or removing a part is.
+ * For a composition stored in a link table, adding or removing a part is a change of the
+ * container, but a change of a part itself is not. For a composition stored in the table of its
+ * parts (each part row references its container), every change of a part is also reported as a
+ * change of the container.
  * </p>
  *
  * <p>
@@ -85,21 +86,14 @@ import com.top_logic.model.TLStructuredType;
  *           column in that table referencing the owner of a row), a single aggregating query
  *           computes both the latest row creation ({@link BasicTypes#REV_MIN_DB_NAME}) and the
  *           latest row removal ({@link BasicTypes#REV_MAX_DB_NAME} plus one) of rows that belong
- *           to the object. For tables that store objects of their own (compositions stored
- *           in the table of the parts), only rows entering or leaving the object's reference
- *           count, which requires joining each row version with its predecessor and successor.
- *           A change of the order of such a composition is therefore not detected.
+ *           to the object. This applies to tables storing objects of their own (compositions
+ *           stored in the table of the parts) as well, where a new version of a part row is
+ *           a new version of a row belonging to the container.
  */
 public class LastChangeRevision {
 
 	/** Table alias of the row whose revision range is analyzed. */
 	private static final String ROW_ALIAS = "r";
-
-	/** Table alias of the previous version of the analyzed row. */
-	private static final String PREVIOUS_ALIAS = "p";
-
-	/** Table alias of the next version of the analyzed row. */
-	private static final String NEXT_ALIAS = "n";
 
 	/** Result column: latest revision in which a row of the object was created. */
 	private static final String LAST_CREATED = "lastCreated";
@@ -157,10 +151,9 @@ public class LastChangeRevision {
 				try {
 					for (Entry<MOStructure, List<AssociationStorageDescriptor>> entry : storage.entrySet()) {
 						MOStructure table = entry.getKey();
-						boolean objectTable = !modelTables.getClassesForTable(table).isEmpty();
 						for (DBAttribute baseColumn : baseColumns(table, entry.getValue())) {
 							long tableChange =
-								lastChange(connection, pool, table, baseColumn, objectTable, key, contextRevision);
+								lastChange(connection, pool, table, baseColumn, key, contextRevision);
 							lastChange = Math.max(lastChange, tableChange);
 						}
 					}
@@ -192,10 +185,9 @@ public class LastChangeRevision {
 	 * {@link Revision#FIRST_REV} if there is no such row.
 	 */
 	private static long lastChange(PooledConnection connection, ConnectionPool pool, MOStructure table,
-			DBAttribute baseColumn, boolean objectTable, ObjectKey key, long contextRevision)
+			DBAttribute baseColumn, ObjectKey key, long contextRevision)
 			throws SQLException {
 		DBTableMetaObject dbTable = table.getDBMapping();
-		String idColumn = dbColumn(table, BasicTypes.IDENTIFIER_ATTRIBUTE_NAME);
 		String revMinColumn = dbColumn(table, BasicTypes.REV_MIN_ATTRIBUTE_NAME);
 		String revMaxColumn = dbColumn(table, BasicTypes.REV_MAX_ATTRIBUTE_NAME);
 		String branchColumn = dbTable.multipleBranches() ? dbColumn(table, BasicTypes.BRANCH_ATTRIBUTE_NAME) : null;
@@ -215,35 +207,14 @@ public class LastChangeRevision {
 				where);
 		}
 
-		SQLTableReference from = table(dbTable, ROW_ALIAS);
-		SQLExpression created;
-		SQLExpression removed;
-		if (objectTable) {
-			/* The rows are objects on their own. A new version of such a row is not a change of the
-			 * object with the given key, unless the row starts or stops referencing it. */
-			from = leftJoin(from, table(dbTable, PREVIOUS_ALIAS),
-				and(
-					sameRow(idColumn, branchColumn, PREVIOUS_ALIAS),
-					eqSQL(column(PREVIOUS_ALIAS, revMaxColumn, NOT_NULL), sub(rowRevMin, literalLong(1))),
-					eqSQL(column(PREVIOUS_ALIAS, baseColumn), idParam)));
-			from = leftJoin(from, table(dbTable, NEXT_ALIAS),
-				and(
-					sameRow(idColumn, branchColumn, NEXT_ALIAS),
-					eqSQL(sub(column(NEXT_ALIAS, revMinColumn, NOT_NULL), literalLong(1)), rowRevMax),
-					eqSQL(column(NEXT_ALIAS, baseColumn), idParam)));
-			created = sqlCase(isNull(column(PREVIOUS_ALIAS, idColumn)), rowRevMin, literalNull(DBType.LONG));
-			removed = sqlCase(and(removedBefore, isNull(column(NEXT_ALIAS, idColumn))), rowRevMax,
-				literalNull(DBType.LONG));
-		} else {
-			created = rowRevMin;
-			removed = sqlCase(removedBefore, rowRevMax, literalNull(DBType.LONG));
-		}
+		SQLExpression created = rowRevMin;
+		SQLExpression removed = sqlCase(removedBefore, rowRevMax, literalNull(DBType.LONG));
 
 		SQLSelect select = select(
 			columns(
 				columnDef(max(created), LAST_CREATED),
 				columnDef(max(removed), LAST_REMOVED)),
-			from,
+			table(dbTable, ROW_ALIAS),
 			where);
 
 		SQLQuery<SQLSelect> query;
@@ -281,16 +252,6 @@ public class LastChangeRevision {
 			}
 		}
 		return result;
-	}
-
-	private static SQLExpression sameRow(String idColumn, String branchColumn, String otherAlias) {
-		SQLExpression sameId =
-			eqSQL(column(otherAlias, idColumn, NOT_NULL), column(ROW_ALIAS, idColumn, NOT_NULL));
-		if (branchColumn == null) {
-			return sameId;
-		}
-		return and(sameId,
-			eqSQL(column(otherAlias, branchColumn, NOT_NULL), column(ROW_ALIAS, branchColumn, NOT_NULL)));
 	}
 
 	private static String dbColumn(MOStructure table, String attributeName) {

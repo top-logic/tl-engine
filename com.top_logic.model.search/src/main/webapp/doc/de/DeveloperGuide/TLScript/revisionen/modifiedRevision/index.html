@@ -4,7 +4,12 @@
 <h2>Beschreibung</h2>
 <p>Ermittelt die Revision in der ein Fachobjekt das letzte mal geändert wurde.</p>
 <p>Eine Änderung ist die Änderung eines beliebigen gespeicherten Attributwerts des Objekts. Dazu gehören auch Werte, die nicht in der eigenen Tabellenzeile des Objekts gespeichert sind, wie z.B. Referenzen, die in Verknüpfungstabellen gespeichert sind, und Übersetzungen internationalisierter Attribute.</p>
-<p>Es wird nur das Objekt selbst betrachtet: Änderungen an Objekten, die über Kompositionen im gegebenen Objekt enthalten sind, sind keine Änderungen des gegebenen Objekts, das Hinzufügen oder Entfernen eines Teils einer Komposition hingegen schon. Um die Änderungen eines ganzen Kompositionsbaums zu finden, verwendet man die Funktion <a class="tlObject" data-custom="true" href="?page=changeLog&amp;uuid=489d4ea1-3820-4fe1-9d2f-b04830ff7077">changeLog</a>, z.B. <code class="hljs inlineCode">$object.changeLog(1, true)</code>.</p>
+<p>Kompositionen werden abhängig davon behandelt, wie ihre Teile gespeichert sind:</p>
+<ul>
+ <li>Teile, die in einer Verknüpfungstabelle gespeichert sind (der Standardfall): Das Hinzufügen eines Teils zur Komposition oder das Entfernen eines Teils gilt als Änderung des Containers, eine Änderung innerhalb eines Teils dagegen nicht.</li>
+ <li>Teile, die ihren Container in ihrer eigenen Tabellenzeile speichern: Jede Änderung eines solchen Teils gilt auch als Änderung des Containers.</li>
+</ul>
+<p>Um die Änderungen eines ganzen Kompositionsbaums zu finden, verwendet man die Funktion <a class="tlObject" data-custom="true" href="?page=changeLog&amp;uuid=489d4ea1-3820-4fe1-9d2f-b04830ff7077">changeLog</a>, z.B. <code class="hljs inlineCode">$object.changeLog(1, true)</code>.</p>
 <p>Für jede Tabelle, in der die Attribute des Objekttyps Werte speichern, führt die Funktion eine indizierte Datenbankabfrage aus. Sie kann in Tabellenspalten verwendet werden, ist aber nicht kostenlos: Sie ist dem Laden der vollständigen Änderungshistorie vorzuziehen, sollte aber nicht unnötig für große Mengen von Objekten ausgewertet werden.</p>
 <h3>Hinweise für Java-Entwickler</h3>
 <p>Der Java-Einstiegspunkt für diese Berechnung ist <code class="hljs inlineCode">com.top_logic.element.changelog.LastChangeRevision#of(TLObject)</code>. Im Gegensatz dazu berücksichtigen <code class="hljs inlineCode">TLObject#tLastModificationDate()</code>, <code class="hljs inlineCode">TLObject#tLastModificationTime()</code>, <code class="hljs inlineCode">TLObject#tLastModifier()</code> und das Lebenszyklus-Attribut <code class="hljs inlineCode">modified</code> nur Änderungen der eigenen Tabellenzeile des Objekts.</p>

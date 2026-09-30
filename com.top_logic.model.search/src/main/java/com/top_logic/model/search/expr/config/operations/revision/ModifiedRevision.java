@@ -28,10 +28,15 @@ import com.top_logic.model.search.expr.config.operations.changelog.ChangeLog;
  * <p>
  * A modification of an object is a change of any of its stored attribute values. This includes
  * values stored outside the object's own row, such as references stored in link tables and
- * translations of internationalized attributes. Changes of the objects contained in the given
- * object through compositions are not modifications of the given object, but adding a part to or
- * removing a part from a composition is. To find changes within a whole composition subtree, see
- * {@link ChangeLog}.
+ * translations of internationalized attributes.
+ * </p>
+ * 
+ * <p>
+ * For a composition stored in a link table, adding a part to or removing a part from the
+ * composition is a modification of the container, but a change of a part itself is not. For a
+ * composition stored in the table of its parts (each part row references its container), every
+ * change of a part is also a modification of the container. To find changes within a whole
+ * composition subtree, see {@link ChangeLog}.
  * </p>
  * 
  * @implNote The Java entry point for the computation is {@link LastChangeRevision#of(TLObject)}.

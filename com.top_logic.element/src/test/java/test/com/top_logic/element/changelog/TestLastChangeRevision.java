@@ -213,8 +213,8 @@ public class TestLastChangeRevision extends TestWithModelExtension {
 	}
 
 	/**
-	 * A composition stored in the table of its parts: Adding and removing parts moves the
-	 * container, a change of a part itself does not.
+	 * A composition stored in the table of its parts: Adding, reordering, moving, and removing
+	 * parts moves the container, and so does a change of a part itself.
 	 */
 	public void testInlineComposition() {
 		ANode container = inTX(() -> TestTypesFactory.getInstance().createANode());
@@ -223,8 +223,16 @@ public class TestLastChangeRevision extends TestWithModelExtension {
 
 		assertMoves(container, x -> container.addCompositeList1(p1));
 		assertMoves(container, x -> container.addCompositeList1(p2));
-		assertStays(container, p1, x -> p1.setName("p1-2"));
-		assertMoves(container, x -> container.removeCompositeList1(p1));
+		assertMoves(container, x -> p1.setName("p1-2"));
+		assertMoves(container, x -> container.setCompositeList1(list(p2, p1)));
+		assertEquals(list(p2, p1), container.getCompositeList1());
+		assertMoves(container, x -> {
+			container.removeCompositeList1(p1);
+			container.addCompositeList2(p1);
+		});
+		assertEquals(list(p2), container.getCompositeList1());
+		assertEquals(list(p1), container.getCompositeList2());
+		assertMoves(container, x -> container.removeCompositeList1(p2));
 	}
 
 	public void testHistoricObject() {

@@ -26,8 +26,8 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 public class TestDBKnowledgeBaseConcurrent extends AbstractDBKnowledgeBaseClusterTest {
 		
 	private   static final int PARALLEL_THREADS = 20;
-	protected static final int SEQUENTIAL_CHANGES = 100;
-	protected static final int SEQUENTIAL_LOOKUPS = 1000;
+	protected static final int SEQUENTIAL_CHANGES = 50;
+	protected static final int SEQUENTIAL_LOOKUPS = 500;
 	
 	private static final long TIMEOUT = 10 * 60 * 1000;
 

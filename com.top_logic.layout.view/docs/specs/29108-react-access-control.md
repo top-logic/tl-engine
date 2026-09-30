@@ -418,8 +418,11 @@ view layer.
    configuration in the view.
 4. **Commands say what they do, not which right they need.** An action that knows
    the model operation it performs brings the matching executability rule itself
-   (`ViewAction` intrinsic rule, combined by `generic-command` with its configured
-   `<executability>`):
+   (`ViewAction#getIntrinsicRule()`, combined by `generic-command` with its
+   configured `<executability>`; `with-transaction` forwards the rules of the
+   actions it wraps, while `if`/`switch` do not, since their branch is chosen only
+   when the chain runs). The rule decides on the command input, not on the value
+   handed along the chain:
    - an object-deleting action → Delete on the command input;
    - a draft-creating action for a create dialog (type, optionally container and
      composition reference) → Create on the type (plus Write on the composition),
@@ -429,10 +432,28 @@ view layer.
    Commands whose effect is a free script, and custom business operations, use
    one general rule: `<model-access operation="…"/>` on the command input, an
    attribute of it, a type, or a container's composition reference.
-5. **One presentation policy.** A right the user lacks on the *type* — no role
-   anywhere grants it — hides the element: the operation is never possible for
-   this user. A right the user lacks only on *this object* disables the element
-   and gives the reason.
+5. **One presentation policy.** How a refused element is displayed is derived
+   from what the refusal depends on (`ModelAccessPolicy`):
+   - **hidden** when the refusal depends on no concrete object — the check runs
+     against the security root (a creation without container, a check on a
+     `type`), the type grants the operation to no role at all, or the user is
+     restricted: the operation is never possible for this user;
+   - **disabled**, giving the reason that names the operation ("You may not
+     delete this object."), when the check on a concrete object — the object
+     operated on (the command input), or the container to create in — fails.
+
+   A rule overrides the derived display with `denied="hide"` or
+   `denied="disable"`. An empty object or container is nothing to check: the
+   rule answers executable and leaves a missing input to `<null-input-disabled/>`
+   and its kin.
+
+   ```xml
+   <model-access operation="Delete"/>                         <!-- the command input -->
+   <model-access operation="Write" attribute="secret"/>       <!-- one attribute of it -->
+   <model-access operation="Approve" object="selection"/>     <!-- custom command group -->
+   <model-access operation="Create" type="my.module:Project"/><!-- top level -->
+   <model-access operation="Create" container="project" reference="tasks"/>
+   ```
 6. **Typeless units keep their scope.** Navigation units, dashboards and admin
    areas have no model type; they stay gated by `<access-control scope>`
    (§1–§4).

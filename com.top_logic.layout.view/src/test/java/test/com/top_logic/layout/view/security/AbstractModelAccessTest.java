@@ -51,7 +51,8 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  * <ul>
  * <li>{@value #PROJECT}: a top-level type. The account in {@value #RESPONSIBLE} holds the role
- * {@value #ROLE_RESPONSIBLE} on the project, which grants read, write, create and delete. Writing
+ * {@value #ROLE_RESPONSIBLE} on the project, which grants read, write, create, delete and the custom
+ * command group {@value #FINISH}. Writing
  * {@value #SECRET} is denied for every role.</li>
  * <li>{@value #TASK}: the type of the composition {@value #TASKS} of a project. A task inherits the
  * role {@value #ROLE_RESPONSIBLE} from its project, with the same grants.</li>
@@ -97,6 +98,9 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Name of the {@link #CATEGORY} reference to the account holding {@link #ROLE_READER}. */
 	protected static final String READER = "reader";
+
+	/** Name of the custom command group granted on a {@link #PROJECT}. */
+	protected static final String FINISH = "Finish";
 
 	/** Role granting everything on a project and its tasks. */
 	protected static final String ROLE_RESPONSIBLE = MODULE + ".Responsible";

@@ -40,6 +40,11 @@
 							operation="Delete"
 							roles="TestViewModelAccess.Responsible"
 						/>
+						<!-- The responsible may finish a project (a custom command group). -->
+						<grant
+							operation="Finish"
+							roles="TestViewModelAccess.Responsible"
+						/>
 					</class>
 					<class name="TestViewModelAccess:Task">
 						<!-- The responsible of a project may do everything with its tasks. -->

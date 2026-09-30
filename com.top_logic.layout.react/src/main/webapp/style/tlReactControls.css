@@ -803,7 +803,7 @@ button.tlPhotoCapture__cameraBtn--active:hover {
 .tlPhotoCapture__overlay {
 	position: fixed;
 	inset: 0;
-	z-index: 10000;
+	z-index: var(--tl-layer-overlay);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -2387,7 +2387,7 @@ button.tlBottomBar__item:hover {
 .tlDialog__backdrop {
 	position: fixed;
 	inset: 0;
-	z-index: 10000;
+	z-index: var(--tl-layer-overlay);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -2599,7 +2599,7 @@ button.tlWindow__maximizeBtn:focus-visible {
 
 .tlDrawer {
 	position: fixed;
-	z-index: 9000;
+	z-index: var(--tl-layer-overlay);
 	background: var(--layer-01);
 	box-shadow: var(--shadow-dialog);
 	display: flex;
@@ -2700,7 +2700,7 @@ button.tlDrawer__closeBtn:focus-visible {
 	bottom: var(--spacing-04);
 	left: 50%;
 	transform: translateX(-50%) translateY(0);
-	z-index: 11000;
+	z-index: var(--tl-layer-toast);
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-03);
@@ -2917,7 +2917,7 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 
 .tlMenu {
-	z-index: 10000;
+	z-index: var(--tl-layer-popover);
 	min-width: 10rem;
 	/* A menu offering many entries (e.g. the element types of a container) stays within the
 	   viewport and scrolls instead of being cut off. */
@@ -5233,7 +5233,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 
 .tlColorInput__popup {
   position: fixed;
-  z-index: 9000;
+  z-index: var(--tl-layer-popover);
   background: var(--layer-02);
   border: 1px solid var(--border-subtle);
   border-radius: var(--border-radius-02);
@@ -5596,7 +5596,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 
 .tlIconSelect__popup {
   position: fixed;
-  z-index: 9000;
+  z-index: var(--tl-layer-popover);
   background: var(--layer-02);
   border: 1px solid var(--border-subtle);
   border-radius: var(--border-radius-02);
@@ -6045,7 +6045,7 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	position: absolute;
 	top: calc(100% + var(--spacing-02));
 	right: 0;
-	z-index: 10000;
+	z-index: var(--tl-layer-popover);
 	min-width: 10rem;
 	background: var(--layer-02);
 	border: 1px solid var(--border-strong);

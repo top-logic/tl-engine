@@ -1158,8 +1158,10 @@ a.tl-field-value:hover {
   color: var(--tl-text-primary);
 }
 
-/* Das Suchfeld trägt zusätzlich tl-field: Rahmen und Fokusring von dort. */
-.tl-select__search {
+/* Die Gruppe um das Suchfeld (tl-field-group mit Lupe) trägt den Abstand zur Liste: säße er am Feld,
+   würde die Gruppe um ihn höher und das absolut gesetzte Icon rutschte aus der Mitte des Feldes.
+   Das Suchfeld trägt zusätzlich tl-field: Rahmen und Fokusring von dort. */
+.tl-select__search-group {
   flex: 0 0 auto;
   margin-bottom: var(--tl-space-xs);
 }

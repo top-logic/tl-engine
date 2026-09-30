@@ -549,7 +549,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
     >
       {/* Search field - shown when options are loaded */}
       {(optionsLoaded || loadError) && (
-        <span className="tl-field-group">
+        <span className="tl-field-group tl-select__search-group">
           <span className="tl-field-group__icon" aria-hidden="true">
             <ThemeIcon encoded="css:fa-solid fa-magnifying-glass" className="tl-icon-sm" />
           </span>

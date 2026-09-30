@@ -1,8 +1,9 @@
-import { React, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import { ARG_OPTION, CMD_GOTO, OptionContent, ReadonlyValues } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
 import { fieldStateAttrs } from './form/fieldState';
+import type { DisabledFieldState } from './form/fieldState';
 
 const { useCallback, useMemo, useRef } = React;
 
@@ -23,7 +24,8 @@ const { useCallback, useMemo, useRef } = React;
  * The server hands this control the complete option list as soon as it is displayed - there is no
  * moment at which it could ask for it.
  */
-const TLOptionChips: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<Partial<DropdownSelectStateJson> & DisabledFieldState>();
   const labelProps = useFieldLabelProps(controlId, controlId);
   const sendCommand = useTLCommand();
 

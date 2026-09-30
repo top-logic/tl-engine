@@ -1,5 +1,7 @@
 // Bridge API
-export { register, getComponent } from './bridge/registry';
+export { register, replace, getComponent } from './bridge/registry';
+export { registerRootWrapper, DEFAULT_ROOT_WRAPPER_ORDER } from './bridge/root-wrapper';
+export type { RootWrapper, RootWrapperOptions } from './bridge/root-wrapper';
 export { connect, subscribe, unsubscribe } from './bridge/sse-client';
 export {
   mount,
@@ -45,6 +47,28 @@ export type {
   ReorderSide,
 } from './bridge/list-reorder';
 export type { TLCellProps } from './bridge/types';
+// The state contract of the replaceable components, generated from state.proto: one message per
+// component (e.g. ButtonStateJson for TLButton), read with useTLState<Partial<ButtonStateJson>>().
+export type {
+  ControlStateJson,
+  FieldStateJson,
+  TypingFieldStateJson,
+  ChildControlJson,
+  ButtonStateJson,
+  ToggleButtonStateJson,
+  CheckboxStateJson,
+  TextInputStateJson,
+  PasswordInputStateJson,
+  NumberInputStateJson,
+  DatePickerStateJson,
+  SelectStateJson,
+  DropdownSelectStateJson,
+  TabBarStateJson,
+  WindowStateJson,
+  DialogStateJson,
+  MenuStateJson,
+  SnackbarStateJson,
+} from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';
 export { rootClassName } from './bridge/css';
@@ -53,6 +77,7 @@ export type { KeyedTransitionOptions } from './bridge/transition';
 export { FILL_CLASS, useFill, useFillHost, FillProvider, FillBarrier } from './bridge/fill';
 export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';
+export { ThemeIcon } from './bridge/ThemeIcon';
 export type { ChildDescriptor } from './bridge/TLChild';
 
 // Re-export React so that control bundles use the SAME React instance.

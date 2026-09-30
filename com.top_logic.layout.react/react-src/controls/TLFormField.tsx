@@ -1,9 +1,8 @@
 import {
   React, useTLState, TLChild, rootClassName, useI18N, tooltipProps, TOOLTIP_ATTR, FieldLabelContext, fieldLabel,
-  focusFieldInput,
+  focusFieldInput, ThemeIcon,
 } from 'tl-react-bridge';
 import type { TLCellProps, ChildDescriptor } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
 import { buttonClassName } from './button/ButtonDefaults';
 import { FormLayoutContext } from './FormLayoutContext';
 

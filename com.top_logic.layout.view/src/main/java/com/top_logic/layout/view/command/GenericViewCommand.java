@@ -87,6 +87,15 @@ public class GenericViewCommand implements ViewCommand {
 	}
 
 	/**
+	 * The rules the actions of the chain {@link ViewAction#getIntrinsicRule() bring of their own},
+	 * combined.
+	 */
+	@Override
+	public ViewExecutabilityRule getIntrinsicRule() {
+		return ViewActions.intrinsicRule(_actions);
+	}
+
+	/**
 	 * Runs the configured chain, counting this command among the
 	 * {@link SuspendedCommands suspended commands} of its region for as long as the chain is held
 	 * by an action that has not settled it.

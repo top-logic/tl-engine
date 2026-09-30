@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, rootClassName, tooltipProps, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
 
 const { useCallback } = React;
 

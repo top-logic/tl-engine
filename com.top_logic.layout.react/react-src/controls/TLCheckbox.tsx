@@ -1,11 +1,12 @@
-import { React, useTLFieldValue, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
+import type { TLCellProps, CheckboxStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs } from './form/fieldState';
+import type { DisabledFieldState } from './form/fieldState';
 
 const { useCallback, useRef, useEffect } = React;
 
 /** The `display` a switch is drawn for; any other value is drawn as a box that is ticked. */
-const DISPLAY_SWITCH = 'switch';
+const DISPLAY_SWITCH: CheckboxStateJson.Display = 'switch';
 
 /**
  * A boolean field rendered via React: a box that is ticked, or — with `display` set to
@@ -21,7 +22,8 @@ const DISPLAY_SWITCH = 'switch';
  * read-only one keeps the brand fill when checked, and with it the contrast of its value.
  * `disabled` stays the inactive state, read from `state.disabled`.
  */
-const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLCheckbox: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<Partial<CheckboxStateJson> & DisabledFieldState>();
   const labelProps = useFieldLabelProps(controlId, controlId);
   const [value, setValue] = useTLFieldValue();
   const triState = state.triState === true;

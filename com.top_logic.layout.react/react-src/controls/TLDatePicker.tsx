@@ -1,6 +1,7 @@
-import { React, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
+import type { TLCellProps, DatePickerStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs } from './form/fieldState';
+import type { DisabledFieldState } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
@@ -11,7 +12,8 @@ const { useCallback } = React;
  * Which HTML input it is - a date, a time of day, or both - the server decides from the attribute's
  * type and states in `inputType`; the value is exchanged in the ISO form belonging to that input.
  */
-const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLDatePicker: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<Partial<DatePickerStateJson> & DisabledFieldState>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue] = useTLFieldValue();
@@ -26,14 +28,14 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
   if (state.editable === false) {
     // View mode: show the localized value (e.g. "01.06.2026") supplied by the server, falling
     // back to the ISO value if no localized form was emitted.
-    const display = (state.displayValue as string) ?? (value as string) ?? '';
+    const display = state.displayValue ?? (value as string) ?? '';
     return <FieldValue id={controlId} className={rootClassName(state)} text={display} />;
   }
 
   return (
     <span id={controlId}>
       <input
-        type={(state.inputType as string) ?? 'date'}
+        type={state.inputType ?? 'date'}
         value={(value as string) ?? ''}
         onChange={handleChange}
         disabled={state.disabled === true}

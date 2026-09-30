@@ -944,7 +944,17 @@ public class TestCollectionUtil extends BasicTestCase {
         testList = CollectionUtil.removeDuplicates(testList);
         assertEquals(testList.size(), 2);
     }
-    
+
+	/**
+	 * Tests that {@link CollectionUtil#removeDuplicates(List)} keeps the order of the first
+	 * occurrences.
+	 */
+	public void testRemoveDuplicatesKeepsOrder() {
+		List<String> testList = Arrays.asList("z", "b", "y", "b", "a", "z", "x", "c", "a", "w");
+		assertEquals(Arrays.asList("z", "b", "y", "a", "x", "c", "w"),
+			CollectionUtil.removeDuplicates(testList));
+	}
+
     /**
 	 * Tests {@link CollectionUtil#removeDuplicates(List)}.
 	 */

@@ -1,6 +1,7 @@
-import { React, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
+import type { TLCellProps, PasswordInputStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs } from './form/fieldState';
+import type { DisabledFieldState } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
@@ -12,11 +13,12 @@ const { useCallback } = React;
  * local value immediately while the server `valueChanged` is debounced and flushed on blur.
  * state.debounceMs names the span the value is held back, defaulting to VALUE_DEBOUNCE_MS.
  */
-const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLPasswordInput: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<Partial<PasswordInputStateJson> & DisabledFieldState>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue, flushValue] = useTLFieldValue({
-    debounceMs: (state.debounceMs as number) ?? VALUE_DEBOUNCE_MS,
+    debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
   });
 
   const handleChange = useCallback(
@@ -33,7 +35,7 @@ const TLPasswordInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   }
 
   const hasError = state.hasError === true;
-  const errorMessage = state.errorMessage as string | undefined;
+  const errorMessage = state.errorMessage;
 
   return (
     <span id={controlId}>

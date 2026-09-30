@@ -1,5 +1,5 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal, useFieldLabelProps } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal, useFieldLabelProps, ThemeIcon } from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import {
   ARG_OPTION,
   CMD_GOTO,
@@ -8,10 +8,10 @@ import {
   ReadonlyValues,
 } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
-import { ThemeIcon } from './icon/ThemeIcon';
 import { pillClassName } from './pill/TLPill';
 import { ProgressBar } from './TLProgress';
 import { fieldStateAttrs } from './form/fieldState';
+import type { DisabledFieldState } from './form/fieldState';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
 
@@ -154,7 +154,8 @@ function OptionRow({
  * `data-tl-state="highlighted"` on the option and `aria-activedescendant` on the search field. A
  * field that is not editable shows its values in `tl-select__values`.
  */
-const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<Partial<DropdownSelectStateJson> & DisabledFieldState>();
   const labelProps = useFieldLabelProps(controlId, controlId);
   const sendCommand = useTLCommand();
 
@@ -167,7 +168,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   const editable = state.editable !== false;
   const optionsLoaded = state.optionsLoaded === true;
   const allOptions = (state.options ?? []) as OptionDescriptor[];
-  const emptyOptionLabel = (state.emptyOptionLabel ?? '') as string;
+  const emptyOptionLabel = state.emptyOptionLabel ?? '';
 
   // Drag-and-drop is enabled only for custom-order multi-select editable fields
   const dragEnabled = customOrder && multiSelect && !disabled && editable;

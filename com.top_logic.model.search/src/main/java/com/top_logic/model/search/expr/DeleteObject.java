@@ -5,17 +5,12 @@
  */
 package com.top_logic.model.search.expr;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.knowledge.service.KBUtils;
-import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -26,7 +21,7 @@ import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link SearchExpression} creating a new object of a given {@link TLClass} type.
+ * {@link SearchExpression} deleting objects.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -61,34 +56,7 @@ public class DeleteObject extends GenericMethodWithSecurity implements WithFlatM
 
 	@Override
 	public Object evalFlatMap(EvalContext definitions, Collection<?> base, Void param) {
-		List<TLObject> forbidden;
-		Consumer<TLObject> collectForbidden;
-		if (usesSecurity()) {
-			ModelAccessRights accessRights = ModelAccessRights.getInstance();
-			Person user = TLContext.currentUser();
-			forbidden = new ArrayList<>();
-			collectForbidden = object -> {
-				if (!accessRights.isAllowed(user, object, SimpleBoundCommandGroup.DELETE)) {
-					forbidden.add(object);
-				}
-			};
-		} else {
-			forbidden = Collections.emptyList();
-			collectForbidden = object -> {
-				// ignore
-			};
-		}
-		List<TLObject> objects = base.stream()
-			.filter(TLObject.class::isInstance)
-			.map(TLObject.class::cast)
-			.peek(collectForbidden)
-			.toList();
-		
-		if (!forbidden.isEmpty()) {
-			throw new TopLogicException(I18NConstants.DELETE_PERMISSION_DENIED__OBJECT.fill(forbidden.get(0)));
-		}
-
-		KBUtils.deleteAll(objects);
+		deleteAll(base, usesSecurity());
 		return null;
 	}
 
@@ -96,14 +64,63 @@ public class DeleteObject extends GenericMethodWithSecurity implements WithFlatM
 	public Object evalDirect(EvalContext definitions, Object singletonValue, Void param) {
 		TLObject obj = asTLObject(singletonValue);
 		if (obj != null) {
-			if (usesSecurity()) {
-				if (!ModelAccessRights.getInstance().isAllowed(obj, SimpleBoundCommandGroup.DELETE)) {
-					throw new TopLogicException(I18NConstants.DELETE_PERMISSION_DENIED__OBJECT.fill(obj));
-				}
-			}
-			obj.tDelete();
+			delete(obj, usesSecurity());
 		}
 		return null;
+	}
+
+	/**
+	 * Deletes the given object or collection of objects the way the TL-Script function
+	 * {@code delete()} does.
+	 *
+	 * @param value
+	 *        A {@link TLObject}, or a collection of values of which the {@link TLObject}s are
+	 *        deleted. Other values are ignored.
+	 * @param withSecurity
+	 *        Whether the current user must hold the {@link SimpleBoundCommandGroup#DELETE delete}
+	 *        right on each deleted object. A refusal is reported before anything is deleted.
+	 * @throws TopLogicException
+	 *         With {@link I18NConstants#DELETE_PERMISSION_DENIED__OBJECT}, when the user may not
+	 *         delete one of the objects.
+	 */
+	public static void delete(Object value, boolean withSecurity) {
+		if (value instanceof Collection<?> collection) {
+			deleteAll(collection, withSecurity);
+		} else if (value instanceof TLObject obj) {
+			delete(obj, withSecurity);
+		}
+	}
+
+	private static void delete(TLObject obj, boolean withSecurity) {
+		if (withSecurity) {
+			checkDeletePermission(obj);
+		}
+		obj.tDelete();
+	}
+
+	private static void deleteAll(Collection<?> base, boolean withSecurity) {
+		List<TLObject> objects = base.stream()
+			.filter(TLObject.class::isInstance)
+			.map(TLObject.class::cast)
+			.toList();
+		if (withSecurity) {
+			objects.forEach(DeleteObject::checkDeletePermission);
+		}
+		KBUtils.deleteAll(objects);
+	}
+
+	/**
+	 * Checks that the current user may delete the given object.
+	 *
+	 * @throws TopLogicException
+	 *         With {@link I18NConstants#DELETE_PERMISSION_DENIED__OBJECT}, when the user may not
+	 *         delete it.
+	 */
+	public static void checkDeletePermission(TLObject obj) {
+		if (!ModelAccessRights.getInstance().isAllowed(TLContext.currentUser(), obj,
+			SimpleBoundCommandGroup.DELETE)) {
+			throw new TopLogicException(I18NConstants.DELETE_PERMISSION_DENIED__OBJECT.fill(obj));
+		}
 	}
 
 	/**

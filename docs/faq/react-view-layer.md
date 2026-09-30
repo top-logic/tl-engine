@@ -363,7 +363,7 @@ Two actions branch the chain by a TL-Script function over its current value. `<i
     <write-channel name="ticket"/>
   </then>
   <else>
-    <execute-script function="x -> new(`demo.tickets:Ticket`, transient: true)"/>
+    <create-transient type="demo.tickets:Ticket"/>
     <open-dialog bind-input-to="model" dialog-view="tickets-create.view.xml"/>
   </else>
 </if>
@@ -390,6 +390,49 @@ Two actions branch the chain by a TL-Script function over its current value. `<i
 - `<if>` reads its condition in the fuzzy sense of TL-Script, so an object stands for a true condition and nothing (`null`, an empty list, an empty text) for a false one. A `<case match="…">` holds a TL-Script expression without parameters and matches when the switch value equals its value under the TL-Script comparison (`==`), so a classifier is written as `` `module:Enumeration#literal` ``, a text as `'text'` and a number as the number it is. A `<case test="…">` holds a predicate that is called with the switch value and read in the same fuzzy sense as an `<if>` condition; a case configures exactly one of the two. Without a `value` function the switch value is the chain's own value, so `<switch><case test="t -> $t == null">` decides on what the chain carries.
 - A command whose chain applies the entered form values is disabled while the form has errors — a branch reports that for the actions of *all* its branches, taken or not, because the button's state cannot depend on the decision.
 - **`<executability>` guards the command with rules over its input**: `<visible-if expr="…"/>` hides the command while its predicate does not return `true`; `<disabled-if expr="…"/>` keeps it visible but disabled and takes the reason from its function — no value or `false` means executable, `true` disables it with a generic reason, a resource key or a text disables it with that reason, which the button shows as its tooltip. A rule that inspects objects beyond the input object needs those types in the command's `observed-types`, otherwise their changes do not re-evaluate it.
+
+## Creating and deleting objects: `<create-transient>`, `<persist-transient>`, `<delete-object>`
+
+Three actions perform the model operations of a create dialog and a delete button. Each enforces the model access right of its operation like the TL-Script function it corresponds to, and brings the matching executability rule itself (`ViewAction#getIntrinsicRule()`), so the command offering it is hidden or disabled before the operation would fail — no `<executability>` configuration for the right is needed. The rule decides on the *command's* input, not on the value the chain hands to the action (see `ModelAccessRule` and `ModelAccessPolicy` for hide vs. disable).
+
+- **`<create-transient type="…" [container="ch" reference="attr"]/>`** (`CreateTransientAction`) results in a transient object of the type — the draft the dialog edits, as `new(type, transient: true)` creates it; its input is ignored. Its rule is the right to create an object of the type: without `container` against the security root (refused → hidden), with `container` in the context of the channel's object and, with `reference`, together with Write on that reference (refused → disabled). `container`/`reference` serve the check only; the dialog gets the container through the `<open-dialog>` bindings.
+- **`<persist-transient [type="…"] [container="ch" reference="attr"]/>`** (`PersistTransientAction`) makes the transient object it receives persistent the way `$draft.copy(transient: false)` does (values and composition parts; a refusal reports a refused *creation*), in the context of the container if one is given, and with `reference` adds the created object to that reference of the container, the way `$container.add(reference, $created)` does including its Write check. It runs in a transaction of its own and results in the persistent object. Its rule is the same creation check; the created type is `type` if given, else the reference's type, else the type of the command input — so the dialog's Create button binds its input to the draft: `input="model"`.
+- **`<delete-object/>`** (`DeleteObjectAction`) deletes the object (or the objects of a collection) it receives the way `delete()` does, compositions included, in a transaction of its own, and results in `null`. Its rule is Delete on the command input (refused → disabled with "You may not delete this object.", hidden when no role may ever delete the type).
+
+A transaction nested in a `<with-transaction>` commits with it, so the actions compose with further script steps in one transaction. A command whose effect is a free script uses the general rule instead: `<model-access operation="…"/>` in `<executability>`; `<model-access operation="Create"/>` without a `type` checks the creation of an object of the command input's type.
+
+The opener and the dialog of a creation in a container:
+
+```xml
+<!-- opener, e.g. in the list toolbar -->
+<generic-command image="css:bi bi-plus-lg" placement="TOOLBAR">
+  <create-transient type="tl.demo.projectManagement:Milestone" container="selectedScope" reference="milestones"/>
+  <open-dialog bind-input-to="model" dialog-view="demo/create-milestone.view.xml">
+    <bind channel="container" to="selectedScope"/>
+    <bind channel="selection" to="selectedMilestone"/>
+  </open-dialog>
+</generic-command>
+
+<!-- dialog: the form edits the draft in "model" -->
+<generic-command image="css:bi bi-check-lg" input="model" placement="BUTTON_BAR">
+  <store-form-state/>
+  <persist-transient container="container" reference="milestones"/>
+  <write-channel name="selection"/>
+  <close-dialog/>
+</generic-command>
+```
+
+A top-level creation omits `container` and `reference` on both actions. Deleting the selected object:
+
+```xml
+<generic-command image="css:bi bi-trash" input="project">
+  <executability>
+    <null-input-disabled/>
+  </executability>
+  <delete-object/>
+  <write-channel name="project"/>
+</generic-command>
+```
 
 ## Unsaved changes are asked before a channel write, transitively
 

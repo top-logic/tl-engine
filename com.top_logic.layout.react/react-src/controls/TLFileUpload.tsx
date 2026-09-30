@@ -1,6 +1,5 @@
-import { React, useTLState, useTLUpload, useI18N, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useI18N, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { ThemeIcon } from './icon/ThemeIcon';
 import { buttonClassName } from './button/ButtonDefaults';
 
 const I18N_KEYS = {

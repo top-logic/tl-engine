@@ -1,11 +1,19 @@
 /**
+ * The `disabled` key a form field control sends (ReactFormFieldControl#DISABLED) for a field that
+ * is presented as an inactive input. The generated state types of the field controls do not declare
+ * it, so a control reading it types its state as the intersection with this interface.
+ */
+export interface DisabledFieldState {
+  disabled?: boolean;
+}
+
+/**
  * The state attributes of a form field, from the field model's state. Error wins over warning:
  * a field with an error shows no warning. The design system reads exactly these attributes
  * (tl-field, tl-checkbox, tl-choice-group); a class for a state does not exist.
  *
  * <p>`disabled` is not among these attributes: every control sets it on its element itself, from
- * `state.disabled`. No form control sends `disabled` today; every control reads it for forward
- * compatibility with the contract's `disabled` attribute.</p>
+ * `state.disabled` (see {@link DisabledFieldState}).</p>
  *
  * @param state the control state with the keys of ReactFormFieldControl
  * @param roleAllowsAria whether the element's role allows `aria-invalid` and `aria-required`

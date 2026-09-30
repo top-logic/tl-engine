@@ -91,7 +91,23 @@ public class Update extends SearchExpressionWithSecurity {
 		return null;
 	}
 
-	static void checkWritePermission(TLObject self, TLStructuredTypePart part) {
+	/**
+	 * Ensures that the current user may modify the given attribute of the given object.
+	 *
+	 * <p>
+	 * This is the write check of every model operation that modifies an attribute value, in
+	 * <i>TL-Script</i> as well as in an application writing edited values back to an object. The
+	 * decision is made by the {@link ModelAccessRights}.
+	 * </p>
+	 *
+	 * @param self
+	 *        The object to modify.
+	 * @param part
+	 *        The attribute of the given object to modify.
+	 * @throws TopLogicException
+	 *         If the current user is not allowed to modify the attribute.
+	 */
+	public static void checkWritePermission(TLObject self, TLStructuredTypePart part) {
 		ModelAccessRights accessRights = ModelAccessRights.getInstance();
 		if (!accessRights.isAllowed(TLContext.currentUser(), self, part, SimpleBoundCommandGroup.WRITE)) {
 			throw new TopLogicException(I18NConstants.WRITE_PERMISSION_DENIED__OBJECT_ATTRIBUTE.fill(self, part));

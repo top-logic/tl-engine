@@ -83,6 +83,15 @@ public class WithTransactionAction implements ViewAction {
 		return ViewActions.appliesFormState(_actions);
 	}
 
+	/**
+	 * The rules the actions run in the transaction {@link ViewAction#getIntrinsicRule() bring of
+	 * their own}, combined.
+	 */
+	@Override
+	public ViewExecutabilityRule getIntrinsicRule() {
+		return ViewActions.intrinsicRule(_actions);
+	}
+
 	@Override
 	public Object execute(ReactContext context, Object input) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();

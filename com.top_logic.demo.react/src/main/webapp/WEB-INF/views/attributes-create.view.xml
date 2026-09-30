@@ -60,15 +60,16 @@
 			<field attribute="watchers"/>
 			<field attribute="related"/>
 			<commands>
-				<generic-command placement="BUTTON_BAR">
+				<generic-command
+					input="model"
+					placement="BUTTON_BAR"
+				>
 					<label>
 						<en>Create</en>
 						<de>Anlegen</de>
 					</label>
 					<store-form-state/>
-					<with-transaction>
-						<execute-script function="obj -> $obj.copy(transient: false)"/>
-					</with-transaction>
+					<persist-transient/>
 					<write-channel name="selection"/>
 					<close-dialog/>
 				</generic-command>

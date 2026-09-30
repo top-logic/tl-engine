@@ -1,5 +1,6 @@
 import {
   React,
+  useTLState,
   useTLFieldValue,
   useTLSubmitOnEnter,
   rootClassName,
@@ -8,8 +9,9 @@ import {
   useFieldLabelProps,
   fieldInputId,
 } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, NumberInputStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs } from './form/fieldState';
+import type { DisabledFieldState } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
@@ -40,11 +42,12 @@ const { useCallback } = React;
  * sent, defaulting to VALUE_DEBOUNCE_MS; state.sendValueOnBlur overrides it, and this field sets
  * it, so the span matters here only where the server turns the blur behaviour off.
  */
-const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<Partial<NumberInputStateJson> & DisabledFieldState>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue, flushValue] = useTLFieldValue({
-    debounceMs: (state.debounceMs as number) ?? VALUE_DEBOUNCE_MS,
+    debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
     sendOnBlur: state.sendValueOnBlur === true,
   });
 
@@ -67,18 +70,18 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   }
 
   const hasError = state.hasError === true;
-  const errorMessage = state.errorMessage as string | undefined;
+  const errorMessage = state.errorMessage;
 
   return (
     <span id={controlId}>
       <input
         type="text"
-        inputMode={(state.inputMode as 'numeric' | 'decimal' | 'text' | undefined) ?? 'numeric'}
+        inputMode={state.inputMode ?? 'numeric'}
         value={text}
         onChange={handleChange}
         onBlur={handleBlur}
         onKeyDown={handleSubmitKey}
-        placeholder={(state.placeholder as string) ?? undefined}
+        placeholder={state.placeholder}
         disabled={state.disabled === true}
         className={rootClassName(state, 'tl-field tl-type-body')}
         {...fieldStateAttrs(state)}

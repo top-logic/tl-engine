@@ -162,13 +162,13 @@ pipeline {
 			steps {
 				script {
 					if (selection[KEY_MODE] == MODE_PARTIAL) {
-						maven("-T ${params.MAVEN_THREADS} install -pl ${selection[KEY_CHANGED]} -am" +
+						maven("-T ${identifier(params.MAVEN_THREADS)} install -pl ${selection[KEY_CHANGED]} -am" +
 							' -DskipTests=true -Dmaven.javadoc.skip=true -Dspotbugs.skip=true' +
 							' -Dtl.javadoc.aggregate=false', 0)
 					}
 					String modules = selection[KEY_MODE] == MODE_PARTIAL ? "-pl ${selection[KEY_CHANGED]} -amd" : ''
-					maven("-T ${params.MAVEN_THREADS} clean install spotbugs:spotbugs ${modules}" +
-						' -DskipTests=$SKIP_TESTS -Dspotbugs.skip=$SKIP_SPOTBUGS -Dmaven.test.failure.ignore=true' +
+					maven("-T ${identifier(params.MAVEN_THREADS)} clean install spotbugs:spotbugs ${modules}" +
+						" -DskipTests=${params.SKIP_TESTS} -Dspotbugs.skip=${params.SKIP_SPOTBUGS} -Dmaven.test.failure.ignore=true" +
 						" -Dtl.javadoc.aggregate=false -D${PROP_SCRIPTED}=${SCRIPTED_NONE}", 0)
 				}
 			}
@@ -297,8 +297,10 @@ void withSiteConfig(String command) {
 /**
  * Runs Maven with the options common to all invocations of the build.
  *
- * Parameters are referenced as shell variables, so that their values are not interpreted as part
- * of the script. The variable additionalOptions is deliberately unquoted: its value is a
+ * Boolean parameters and the validated DEFAULT_DB are inserted from params, which always holds
+ * their values (also in a build triggered before the job knew the parameters of this file). The
+ * free-text parameter additionalOptions is referenced as shell variable, so that its value is not
+ * interpreted as part of the script; it is deliberately unquoted: its value is a
  * whitespace-separated list of options.
  *
  * @param args
@@ -312,11 +314,21 @@ void maven(String args, int shard) {
 	withSiteConfig('mvn -B -e' +
 		" \"-DargLine=${TEST_ARG_LINE}\"" +
 		' -Dtl.developerMode=true -Dtl_developerMode=true' +
-		' -Dtl_test_onlyDefaultDB=$ONLY_DEFAULT_DB' +
-		' -Dtl_test_defaultKbUnversioned=$tl_test_defaultKbUnversioned' +
-		' -Dtl_test_defaultDB=$DEFAULT_DB' +
+		" -Dtl_test_onlyDefaultDB=${params.ONLY_DEFAULT_DB}" +
+		" -Dtl_test_defaultKbUnversioned=${params.tl_test_defaultKbUnversioned}" +
+		" -Dtl_test_defaultDB=${identifier(params.DEFAULT_DB)}" +
 		" -Dkafka_port=${KAFKA_PORT_BASE + portOffset}" +
 		" -Dzoo_keeper_port=${ZOO_KEEPER_PORT_BASE + portOffset}" +
 		' $additionalOptions ' +
 		args)
+}
+
+/**
+ * The given parameter value, if it is a plain identifier; fails the build otherwise.
+ */
+String identifier(String value) {
+	if (!(value ==~ /[A-Za-z0-9_]+/)) {
+		error("Invalid parameter value: '${value}'")
+	}
+	return value
 }

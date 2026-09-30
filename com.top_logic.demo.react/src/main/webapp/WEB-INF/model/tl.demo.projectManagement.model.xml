@@ -134,6 +134,10 @@
 				<property name="description"
 					type="tl.core:String"
 				/>
+				<reference name="members"
+					multiple="true"
+					type="tl.accounts:Person"
+				/>
 				<reference name="milestones"
 					composite="true"
 					kind="forwards"

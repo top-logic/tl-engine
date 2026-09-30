@@ -79,7 +79,7 @@ import {
   type TraceMode,
 } from './types'
 
-const { useCallback, useEffect, useMemo, useSyncExternalStore } = React
+const { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } = React
 
 /**
  * Without a frame for this long the stream counts as stale and is re-opened.
@@ -450,6 +450,12 @@ export interface ChatActions {
   selectSession(id: string): Promise<void>
   newChat(): void
   deleteSession(id: string): Promise<void>
+  /**
+   * Reads the chat list again, because the server said this account's chats changed - a rename in
+   * a session list, a script, another tab. The open chat's title is read from that list, so this
+   * is what makes the header follow a rename (#596).
+   */
+  reloadSessions(): Promise<void>
   send(text: string, attachments: Attachment[], options?: SendOptions): Promise<boolean>
   editSend(messageId: string, turnIndex: number, text: string, options?: SendOptions): Promise<boolean>
   regenerate(messageId: string, turnIndex: number): Promise<void>
@@ -583,6 +589,23 @@ function sameFacts(a: readonly ContextFact[], b: readonly ContextFact[]): boolea
         fact.stable === b[index].stable,
     )
   )
+}
+
+/**
+ * The chat list with `id` titled as the server just answered for it.
+ *
+ * Opening a chat reads its transcript, and that answer carries the title as the server has it now.
+ * The header reads the title from the list, so a list read before a rename would otherwise go on
+ * naming the chat by its old title every time it is opened (#596). The same list comes back when
+ * nothing differs, so an unchanged title costs no render.
+ */
+export function withTitle(sessions: SessionSummary[], id: string, title: string | undefined): SessionSummary[] {
+  if (!title) return sessions
+  const index = sessions.findIndex((session) => session.id === id)
+  if (index < 0 || sessions[index].title === title) return sessions
+  const next = sessions.slice()
+  next[index] = { ...sessions[index], title }
+  return next
 }
 
 /** Keeps the previous result while the inputs are unchanged, as `useMemo` does. */
@@ -1905,6 +1928,7 @@ export class ChatStore {
         if (choice !== this.choice) return
         this.patch({
           sessionId: id,
+          sessions: withTitle(this.state.sessions, id, detail.title),
           messages: turnsJsonToMessages(detail.turnsJson),
           feedback: detail.feedback ?? [],
           ...(detail.lastEffort ? { effort: detail.lastEffort } : {}),
@@ -1965,6 +1989,8 @@ export class ChatStore {
         }
         await this.refreshSessions()
       },
+
+      reloadSessions: () => this.refreshSessions(),
 
       /**
        * Sends a turn.
@@ -2455,4 +2481,23 @@ export function useChat(chatId: string, boot: ChatBootstrap): ChatHandle {
     [store, boot.windowId, boot.authenticated, boot.userName, boot.welcomeName, boot.language],
   )
   return { chat, actions: store.actions, runs: store.runs }
+}
+
+/**
+ * Re-reads the chat list whenever the element's control state says this account's chats changed.
+ *
+ * The server counts those changes into `sessionsRevision` - a rename in the session list, a
+ * script, another tab (`SessionListWatch`). The store reads its chat list, and with it the title the
+ * header shows, only on its own occasions otherwise, so a renamed chat kept its old title in an open
+ * conversation until the page was loaded again (#596). The count a mount starts with is no news: the
+ * store reads the list when it boots.
+ */
+export function useSessionsRevision(state: Record<string, unknown>, actions: ChatActions): void {
+  const revision = typeof state.sessionsRevision === 'number' ? state.sessionsRevision : 0
+  const seen = useRef(revision)
+  useEffect(() => {
+    if (seen.current === revision) return
+    seen.current = revision
+    void actions.reloadSessions()
+  }, [revision, actions])
 }

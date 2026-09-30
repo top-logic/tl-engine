@@ -1,6 +1,6 @@
 import { React, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
-import { chatIdOf, readBootstrap, useChat } from './chat-store'
+import { chatIdOf, readBootstrap, useChat, useSessionsRevision } from './chat-store'
 import { bundle } from './i18n'
 import { agentLabel, modelLabel } from './models'
 import { SessionRail } from './chrome'
@@ -60,6 +60,8 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   useEffect(() => preloadWorkingIndicator(workingIndicator), [workingIndicator])
   const chatId = chatIdOf(state, controlId)
   const { chat, actions, runs } = useChat(chatId, boot)
+  // A chat renamed elsewhere - a script, another tab (#596).
+  useSessionsRevision(state, actions)
   const labels = useMemo(() => bundle(chat.language), [chat.language])
   // Where this chat's requests go. Memoised, because the composer is `React.memo`d and a fresh
   // object on every render would defeat that.

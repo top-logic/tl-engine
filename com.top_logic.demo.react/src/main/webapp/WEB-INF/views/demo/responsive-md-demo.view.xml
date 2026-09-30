@@ -43,7 +43,7 @@
 								<en>New Project Scope</en>
 								<de>Neuer Projekt-Scope</de>
 							</label>
-							<execute-script function="x -> new(`tl.demo.projectManagement:ProjectScope`, transient: true)"/>
+							<create-transient type="tl.demo.projectManagement:ProjectScope"/>
 							<open-dialog
 								bind-input-to="model"
 								dialog-view="demo/create-project-scope.view.xml"
@@ -91,7 +91,11 @@
 									<executability>
 										<null-input-disabled/>
 									</executability>
-									<execute-script function="x -> new(`tl.demo.projectManagement:Milestone`, transient: true)"/>
+									<create-transient
+										container="selectedScope"
+										reference="milestones"
+										type="tl.demo.projectManagement:Milestone"
+									/>
 									<open-dialog
 										bind-input-to="model"
 										dialog-view="demo/create-milestone.view.xml"

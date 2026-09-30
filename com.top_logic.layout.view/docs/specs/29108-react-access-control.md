@@ -453,7 +453,13 @@ view layer.
    <model-access operation="Approve" object="selection"/>     <!-- custom command group -->
    <model-access operation="Create" type="my.module:Project"/><!-- top level -->
    <model-access operation="Create" container="project" reference="tasks"/>
+   <model-access operation="Create"/>                         <!-- the type of the transient command input -->
    ```
+
+   The actions knowing their model operation are `<delete-object/>`,
+   `<create-transient type="…" [container reference]/>` (the draft; checked before the
+   dialog opens) and `<persist-transient [type] [container reference]/>` (the dialog's
+   Create button, created type from its input unless given).
 6. **Typeless units keep their scope.** Navigation units, dashboards and admin
    areas have no model type; they stay gated by `<access-control scope>`
    (§1–§4).

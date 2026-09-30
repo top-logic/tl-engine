@@ -45,6 +45,8 @@ import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.layout.view.command.WithTransactionAction;
 import com.top_logic.layout.view.security.ModelAccessRule;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.util.Resources;
 import com.top_logic.tool.execution.ExecutableState;
@@ -259,8 +261,42 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	public void testInvalidConfig() throws ConfigurationException {
 		assertInvalid("<model-access operation='Create' reference='" + TASKS + "'/>");
 		assertInvalid("<model-access operation='Delete' container='" + CHANNEL + "' reference='" + TASKS + "'/>");
-		assertInvalid("<model-access operation='Create' container='" + CHANNEL + "'/>");
 		assertInvalid("<model-access operation='Write' type='" + qualified(PROJECT) + "' attribute='" + NAME + "'/>");
+		assertInvalid("<model-access operation='Create' attribute='" + NAME + "'/>");
+		assertInvalid("<model-access operation='Delete' object='" + CHANNEL + "' type='" + qualified(PROJECT) + "'/>");
+	}
+
+	/**
+	 * Without a type, a creation creates an object of the type of the (transient) command input.
+	 */
+	public void testCreateTypeOfInput() throws Exception {
+		ViewExecutabilityRule rule = rule("<model-access operation='Create'/>");
+		TLObject draft = TransientObjectFactory.INSTANCE.createObject(type(PROJECT));
+
+		becomeUser(_responsible);
+		assertSame("Checked against the security root.", ExecutableState.NOT_EXEC_HIDDEN, rule.isExecutable(draft));
+		assertSame("Nothing to check.", ExecutableState.EXECUTABLE, rule.isExecutable(null));
+
+		becomeUser(_root);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(draft));
+	}
+
+	/**
+	 * Without a type and a reference, a creation in a container creates an object of the type of the
+	 * command input.
+	 */
+	public void testCreateTypeOfInputInContainer() throws Exception {
+		ViewExecutabilityRule rule = rule("<model-access operation='Create' container='" + CHANNEL + "'/>");
+		TLObject draft = TransientObjectFactory.INSTANCE.createObject(type(TASK));
+		_channel.set(_project);
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(draft));
+
+		becomeUser(_roleless);
+		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE,
+			rule.isExecutable(draft));
+		assertSame("Nothing to check.", ExecutableState.EXECUTABLE, rule.isExecutable(null));
 	}
 
 	/**

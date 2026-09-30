@@ -61,6 +61,14 @@ import com.top_logic.tool.execution.ExecutableState;
  * </ul>
  *
  * <p>
+ * The operation {@code Create} is never checked on an object: an object that exists is not created.
+ * Without a {@link Config#getType() type} and a {@link Config#getReference() reference} to take the
+ * created type from, the object - the value of the {@link Config#getObject() object channel}, or the
+ * command input - is the (transient) object to be created, and the check is the creation of an object
+ * of its type: against the security root, or in the context of the container.
+ * </p>
+ *
+ * <p>
  * An empty object or container is nothing to check: the rule answers executable, so that it
  * composes with a rule like {@link NullInputDisabled} that decides about a missing input.
  * </p>
@@ -140,6 +148,12 @@ public class ModelAccessRule implements ViewExecutabilityRule, ContextDependentR
 		 * <p>
 		 * When unset, the operation is performed on the command input.
 		 * </p>
+		 *
+		 * <p>
+		 * For the operation {@code Create}, this is the (transient) object to be created: the check
+		 * is the creation of an object of its type, unless a {@link #getType() type} or a
+		 * {@link #getReference() reference} gives the created type.
+		 * </p>
 		 */
 		@Name(OBJECT)
 		@Nullable
@@ -175,7 +189,8 @@ public class ModelAccessRule implements ViewExecutabilityRule, ContextDependentR
 		 * Without a {@link #getContainer() container}, the operation is checked on the type instead
 		 * of an object, against the security root. In a creation in a container, it is the type of
 		 * the created object; there it defaults to the type of the {@link #getReference()
-		 * reference}.
+		 * reference}. For the operation {@code Create} without a type, the created type is taken
+		 * from the {@link #getObject() object} to be created.
 		 * </p>
 		 */
 		@Name(TYPE)
@@ -191,8 +206,9 @@ public class ModelAccessRule implements ViewExecutabilityRule, ContextDependentR
 		 * Channel holding the object in whose context an object is created.
 		 *
 		 * <p>
-		 * Only for the operation {@code Create}. Requires the {@link #getReference() reference} or
-		 * the {@link #getType() type} of the created object.
+		 * Only for the operation {@code Create}. The created type is the {@link #getType() type},
+		 * the type of the {@link #getReference() reference}, or the type of the
+		 * {@link #getObject() object} to be created, in this order.
 		 * </p>
 		 */
 		@Name(CONTAINER)
@@ -325,7 +341,8 @@ public class ModelAccessRule implements ViewExecutabilityRule, ContextDependentR
 	 * The rule checking the creation of an object.
 	 *
 	 * @param type
-	 *        The type of the created object, {@code null} for the type of the given reference.
+	 *        The type of the created object, {@code null} for the type of the given reference or,
+	 *        without a reference, the type of the (transient) command input to be created.
 	 * @param container
 	 *        The channel holding the object in whose context the object is created, {@code null} for
 	 *        a creation without context (checked against the security root).
@@ -355,20 +372,17 @@ public class ModelAccessRule implements ViewExecutabilityRule, ContextDependentR
 				return "A '" + Config.TAG_NAME + "' rule with a '" + Config.CONTAINER + "' checks a creation; its '"
 					+ Config.OPERATION + "' must be '" + SimpleBoundCommandGroup.CREATE.getID() + "'.";
 			}
-			if (config.getReference() == null && config.getType() == null) {
-				return "A '" + Config.TAG_NAME + "' rule with a '" + Config.CONTAINER + "' requires a '"
-					+ Config.REFERENCE + "' or a '" + Config.TYPE + "' of the created object.";
-			}
 		}
-		if (config.getAttribute() != null && (creationInContainer || config.getType() != null)) {
+		boolean create = SimpleBoundCommandGroup.CREATE.getID().equals(config.getOperation().id());
+		if (config.getAttribute() != null && (create || config.getType() != null)) {
 			return "The '" + Config.ATTRIBUTE + "' of a '" + Config.TAG_NAME
-				+ "' rule applies to a check on an object, not on a '" + Config.TYPE + "' or a '"
-				+ Config.CONTAINER + "'.";
+				+ "' rule applies to a check on an object, not on a '" + Config.TYPE + "' or a creation.";
 		}
-		if (config.getObject() != null && (creationInContainer || config.getType() != null)) {
+		if (config.getObject() != null
+			&& (config.getType() != null || config.getReference() != null)) {
 			return "The '" + Config.OBJECT + "' of a '" + Config.TAG_NAME
-				+ "' rule applies to a check on an object, not on a '" + Config.TYPE + "' or a '"
-				+ Config.CONTAINER + "'.";
+				+ "' rule is not checked when a '" + Config.TYPE + "' or a '" + Config.REFERENCE
+				+ "' gives what is checked.";
 		}
 		return null;
 	}
@@ -410,7 +424,7 @@ public class ModelAccessRule implements ViewExecutabilityRule, ContextDependentR
 			return ExecutableState.NOT_EXEC_HIDDEN;
 		}
 		if (_containerRef != null) {
-			return creationInContainer();
+			return creationInContainer(input);
 		}
 		if (_typeRef != null) {
 			TLClass type = type();
@@ -419,10 +433,18 @@ public class ModelAccessRule implements ViewExecutabilityRule, ContextDependentR
 			}
 			return ModelAccessPolicy.onType(operation, type, _denied);
 		}
-		Object value = _objectRef != null ? valueOf(_objectChannel) : input;
+		Object value = objectValue(input);
 		if (!(value instanceof TLObject object)) {
 			// Nothing to check.
 			return ExecutableState.EXECUTABLE;
+		}
+		if (ModelAccessPolicy.isCreate(operation)) {
+			TLClass createdType = classOf(object);
+			if (createdType == null) {
+				// Not an object of a class, nothing to check.
+				return ExecutableState.EXECUTABLE;
+			}
+			return ModelAccessPolicy.onType(operation, createdType, _denied);
 		}
 		TLStructuredTypePart attribute = null;
 		if (_attribute != null) {
@@ -436,7 +458,7 @@ public class ModelAccessRule implements ViewExecutabilityRule, ContextDependentR
 		return ModelAccessPolicy.onObject(operation, object, attribute, _denied);
 	}
 
-	private ExecutableState creationInContainer() {
+	private ExecutableState creationInContainer(Object input) {
 		if (!(valueOf(_containerChannel) instanceof TLObject container)) {
 			// Nothing to check.
 			return ExecutableState.EXECUTABLE;
@@ -456,12 +478,29 @@ public class ModelAccessRule implements ViewExecutabilityRule, ContextDependentR
 			if (type == null) {
 				return ExecutableState.NOT_EXEC_HIDDEN;
 			}
+		} else if (reference == null) {
+			if (!(objectValue(input) instanceof TLObject created) || (type = classOf(created)) == null) {
+				// No object to be created, nothing to check.
+				return ExecutableState.EXECUTABLE;
+			}
 		}
 		return ModelAccessPolicy.createIn(container, reference, type, _denied);
 	}
 
+	/**
+	 * The object the operation is performed on: the value of the object channel, or the command
+	 * input.
+	 */
+	private Object objectValue(Object input) {
+		return _objectRef != null ? valueOf(_objectChannel) : input;
+	}
+
 	private static Object valueOf(ViewChannel channel) {
 		return channel != null ? channel.get() : null;
+	}
+
+	private static TLClass classOf(TLObject object) {
+		return object.tType() instanceof TLClass clazz ? clazz : null;
 	}
 
 	private BoundCommandGroup operation() {

@@ -139,6 +139,28 @@ interface DropState {
   probe: string | null;
 }
 
+/** Distance in pixels between the pointer and the hint on a refused drop target. */
+const DROP_HINT_OFFSET = 16;
+
+/**
+ * Places the hint on a refused drop target below and right of the pointer at viewport position
+ * (`x`, `y`), or on the pointer's other side where the viewport has no room for it there.
+ */
+function placeDropHint(hint: HTMLElement, x: number, y: number): void {
+  const width = hint.offsetWidth;
+  const height = hint.offsetHeight;
+  let left = x + DROP_HINT_OFFSET;
+  if (left + width > window.innerWidth) {
+    left = x - DROP_HINT_OFFSET - width;
+  }
+  let top = y + DROP_HINT_OFFSET;
+  if (top + height > window.innerHeight) {
+    top = y - DROP_HINT_OFFSET - height;
+  }
+  hint.style.left = Math.max(0, left) + 'px';
+  hint.style.top = Math.max(0, top) + 'px';
+}
+
 const MIN_COL_WIDTH = 50;
 
 /**
@@ -347,6 +369,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   //    table for each pointer move is not needed to move one element. --
   const dragPointerRef = React.useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const dropHintRef = React.useRef<HTMLDivElement | null>(null);
+  const attachDropHint = React.useCallback((hint: HTMLDivElement | null) => {
+    dropHintRef.current = hint;
+    if (hint) {
+      placeDropHint(hint, dragPointerRef.current.x, dragPointerRef.current.y);
+    }
+  }, []);
 
   // -- Column context menu state --
   const [contextMenu, setContextMenu] = React.useState<{
@@ -703,8 +731,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     dragPointerRef.current = { x: event.clientX, y: event.clientY };
     const hint = dropHintRef.current;
     if (hint) {
-      hint.style.left = event.clientX + 'px';
-      hint.style.top = event.clientY + 'px';
+      placeDropHint(hint, event.clientX, event.clientY);
     }
     const target = dropTargetAt(event);
     const drag = runningDrag();
@@ -1224,8 +1251,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           drag runs, so the reason follows the pointer, placed in the document body so that neither
           the table's scrolling nor its clipping can hide it. */}
       {dropRefused && dropVerdict?.reason && createPortal(
-        <div ref={dropHintRef} className="tlTableView__dropHint" role="status"
-          style={{ left: dragPointerRef.current.x + 'px', top: dragPointerRef.current.y + 'px' }}>
+        <div ref={attachDropHint} className="tlTableView__dropHint" role="status">
           {dropVerdict.reason}
         </div>,
         document.body)}

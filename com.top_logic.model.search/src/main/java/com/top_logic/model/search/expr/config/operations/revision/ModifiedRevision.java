@@ -9,8 +9,8 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.knowledge.service.Revision;
-import com.top_logic.knowledge.service.db2.LifecycleStorageModified;
+import com.top_logic.element.changelog.LastChangeRevision;
+import com.top_logic.knowledge.objects.LifecycleAttributes;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.core.TlCoreFactory;
@@ -19,10 +19,26 @@ import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.changelog.ChangeLog;
 
 /**
- * Generic method determining the last update revision of a given {@link TLObject}, i.e. the
- * revision in which the object was modified the last time.
+ * Generic method determining the revision in which a given {@link TLObject} was modified the last
+ * time.
+ * 
+ * <p>
+ * A modification of an object is a change of any of its stored attribute values. This includes
+ * values stored outside the object's own row, such as references stored in link tables and
+ * translations of internationalized attributes. Changes of the objects contained in the given
+ * object through compositions are not modifications of the given object, but adding a part to or
+ * removing a part from a composition is. To find changes within a whole composition subtree, see
+ * {@link ChangeLog}.
+ * </p>
+ * 
+ * @implNote The Java entry point for the computation is {@link LastChangeRevision#of(TLObject)}.
+ *           In contrast, {@link TLObject#tLastModificationDate()},
+ *           {@link TLObject#tLastModificationTime()}, {@link TLObject#tLastModifier()} and the
+ *           life-cycle attribute {@link LifecycleAttributes#MODIFIED} only reflect changes of the
+ *           object's own row.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -51,19 +67,12 @@ public class ModifiedRevision extends GenericMethod {
 		if (tlObject == null) {
 			return null;
 		}
-		if (tlObject.tTransient()) {
-			return Revision.CURRENT;
-		}
-		Revision lastUpdate = LifecycleStorageModified.lastUpdateRevision(tlObject.tHandle());
-		if (lastUpdate == null) {
-			return null;
-		}
-		return lastUpdate;
+		return LastChangeRevision.of(tlObject);
 	}
 
 	/**
-	 * Each time a value in an object is set, the modified revision changes, so the value can not be
-	 * determined at compile time.
+	 * Each time a value of an object is changed, the modified revision changes, so the value can not
+	 * be determined at compile time.
 	 */
 	@Override
 	public boolean canEvaluateAtCompileTime(Object[] arguments) {

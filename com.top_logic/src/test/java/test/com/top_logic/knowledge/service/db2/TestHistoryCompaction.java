@@ -239,6 +239,9 @@ public class TestHistoryCompaction extends AbstractDBKnowledgeBaseTest {
 		ObjectKey flexibleKey = scenario._flexible.tId();
 		TLID doomedId = scenario._doomed.getObjectName();
 
+		assertTrue("Before the compaction, the history starts below the cut.",
+			kb().getFirstRevision() < cut);
+
 		HistoryCompaction compaction = newCompaction();
 		Report analysis = compaction.analyzeRevisions(0, cut, _log);
 		Report result = compaction.compactRevisions(0, cut, _log);
@@ -272,6 +275,11 @@ public class TestHistoryCompaction extends AbstractDBKnowledgeBaseTest {
 
 		// Older revisions are gone.
 		assertEquals("Revisions below the cut are deleted.", 0, countRevisionsBelow(cut));
+		assertEquals("The compaction revision is the first revision.", cut, kb().getFirstRevision());
+		assertSame("The compaction revision is preceded by the empty initial state.", Revision.INITIAL,
+			HistoryUtils.getPreviousRevision(kb(), cut));
+		assertEquals("A revision after the compaction revision keeps its predecessor.", cut,
+			HistoryUtils.getPreviousRevision(kb(), cut + 1).getCommitNumber());
 		assertEquals("No rows are valid before the cut.", 0, countRowsEndingBefore(type(D_NAME), cut));
 		assertEquals("No dynamic values are valid before the cut.", 0,
 			countRowsEndingBefore(kb().lookupType(AbstractFlexDataManager.FLEX_DATA), cut));

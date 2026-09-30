@@ -23,6 +23,7 @@ import com.top_logic.element.model.cache.ModelTables;
 import com.top_logic.knowledge.event.ChangeSetReader;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
@@ -162,7 +163,7 @@ public final class ChangeSetReverter {
 				TransientChangeSet entry =
 					new TransientChangeSet(analyzer::applyChanges, TransientChangeSet.CHANGES_ATTR);
 				entry.setRevision(revision);
-				entry.setParentRev(hm.getRevision(kbCS.getRevision() - 1));
+				entry.setParentRev(HistoryUtils.getPreviousRevision(hm, kbCS.getRevision()));
 				entry.setMessage(revision.getLog());
 				entry.setDate(new Date(revision.getDate()));
 

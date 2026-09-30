@@ -195,6 +195,10 @@
 				</label>
 				<executability>
 					<disabled-if expr="s -> if(jobIsRunning($s), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+					<model-access
+						operation="Create"
+						type="demo.tickets:Ticket"
+					/>
 				</executability>
 				<start-job
 					cancelable="true"
@@ -274,6 +278,10 @@
 				</label>
 				<executability>
 					<disabled-if expr="s -> if(jobIsRunning($s), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+					<model-access
+						operation="Delete"
+						type="demo.tickets:Ticket"
+					/>
 				</executability>
 				<start-job
 					cancelable="true"

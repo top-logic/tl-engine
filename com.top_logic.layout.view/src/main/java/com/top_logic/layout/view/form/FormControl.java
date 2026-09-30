@@ -25,6 +25,7 @@ import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.VetoListener;
+import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -109,6 +110,15 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	private final String _noModelMessage;
 
 	private ModelScope _modelScope;
+
+	/**
+	 * The object this control is registered for as {@link ModelListener} in {@link #_modelScope},
+	 * {@code null} if not registered.
+	 */
+	private TLObject _observedObject;
+
+	/** Whether this control was {@link #detach() detached} and has not been attached again. */
+	private boolean _suspended;
 
 	private ViewExecutabilityRule _editRule = ViewExecutabilityRule.ALWAYS_EXECUTABLE;
 
@@ -386,37 +396,69 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		if (_modelScope == scope) {
 			return;
 		}
-		if (isAttached()) {
-			deregisterModelListener();
-		}
+		deregisterModelListener();
 		_modelScope = scope;
-		if (isAttached()) {
-			registerModelListener();
-		}
-	}
-
-	@Override
-	protected void onAttach() {
 		registerModelListener();
 	}
 
+	/**
+	 * Starts observing the current object, and catches up with the changes it missed when this
+	 * control resumes.
+	 *
+	 * <p>
+	 * A control that is displayed again after a {@link #detach()} (a hidden sidebar section or tab
+	 * keeps its content for re-use) did not observe its object while it was hidden. What it displays
+	 * is therefore treated as unknown and the control reacts as to a change of its object, see
+	 * {@link #catchUp()}. The first attach is silent: the fields were just built from the object.
+	 * This is the resume behavior of {@link RowSourceObserver} for element lists.
+	 * </p>
+	 */
+	@Override
+	protected void onAttach() {
+		registerModelListener();
+		if (_suspended) {
+			_suspended = false;
+			catchUp();
+		}
+	}
+
+	/**
+	 * Stops observing the current object while this control is not displayed.
+	 *
+	 * @see #onAttach()
+	 */
 	@Override
 	protected void onDetach() {
 		deregisterModelListener();
+		_suspended = true;
 	}
 
+	/**
+	 * Registers this control as {@link ModelListener} for its current object, if displayed and not
+	 * yet registered.
+	 *
+	 * <p>
+	 * A transient object is not observed: its changes are not reported by a {@link ModelScope}.
+	 * </p>
+	 */
 	private void registerModelListener() {
-		if (_modelScope == null || _currentObject == null || _currentObject.tTransient()) {
+		if (!isAttached() || _observedObject != null || _modelScope == null || _currentObject == null
+			|| _currentObject.tTransient()) {
 			return;
 		}
 		_modelScope.addModelListener(_currentObject, this);
+		_observedObject = _currentObject;
 	}
 
+	/**
+	 * Removes the registration made by {@link #registerModelListener()}, if any.
+	 */
 	private void deregisterModelListener() {
-		if (_modelScope == null || _currentObject == null || _currentObject.tTransient()) {
+		if (_observedObject == null) {
 			return;
 		}
-		_modelScope.removeModelListener(_currentObject, this);
+		_modelScope.removeModelListener(_observedObject, this);
+		_observedObject = null;
 	}
 
 	@Override
@@ -426,13 +468,44 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		}
 		ModelChangeEvent.ChangeType change = event.getChange(_currentObject);
 		if (change == ModelChangeEvent.ChangeType.DELETED) {
-			onCurrentObjectDeleted();
+			onCurrentObjectChanged(true);
 		} else if (change == ModelChangeEvent.ChangeType.UPDATED) {
-			if (_editMode) {
-				followStoredChanges();
-			} else {
-				fireFormStateChanged();
-			}
+			onCurrentObjectChanged(false);
+		}
+	}
+
+	/**
+	 * Reacts to changes of the current object that happened while this control was not displayed.
+	 *
+	 * <p>
+	 * Which changes happened is unknown, so the current object is treated as changed whenever it is
+	 * one a {@link ModelScope} reports changes of: the values shown may stem from the object as well
+	 * as from objects associated with it, so no property of the object itself tells whether the
+	 * display is still current. A persistent object that is no longer {@link TLObject#tValid()
+	 * valid} was deleted meanwhile. A transient object is not observed while displayed either (see
+	 * {@link #registerModelListener()}), so there is nothing to catch up with.
+	 * </p>
+	 */
+	private void catchUp() {
+		if (_currentObject == null || _currentObject.tTransient()) {
+			return;
+		}
+		onCurrentObjectChanged(!_currentObject.tValid());
+	}
+
+	/**
+	 * Updates the display after the current object may have changed.
+	 *
+	 * @param deleted
+	 *        Whether the current object was deleted.
+	 */
+	private void onCurrentObjectChanged(boolean deleted) {
+		if (deleted) {
+			onCurrentObjectDeleted();
+		} else if (_editMode) {
+			followStoredChanges();
+		} else {
+			fireFormStateChanged();
 		}
 	}
 

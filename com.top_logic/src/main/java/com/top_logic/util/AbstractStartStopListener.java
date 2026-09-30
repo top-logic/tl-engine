@@ -40,6 +40,7 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.ModuleUtil.ModuleContext;
+import com.top_logic.basic.module.ModuleUtil.StartupPhase;
 import com.top_logic.basic.module.services.ServletContextService;
 import com.top_logic.basic.thread.LoggingExceptionHandler;
 import com.top_logic.basic.thread.ThreadContext;
@@ -254,23 +255,27 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 				public Exception run() {
 		    		try {
 						System.out.println("Starting module system ...");
-						ClusterManager.startUpClusterManager();
-						ClusterManager clusterManagerInstance = ClusterManager.getInstance();
+						// The module system is not running before the application has
+						// completely started.
+						try (StartupPhase startup = ModuleUtil.INSTANCE.beginStartup()) {
+							ClusterManager.startUpClusterManager();
+							ClusterManager clusterManagerInstance = ClusterManager.getInstance();
 
-						startTokenSystem(clusterManagerInstance);
-						try {
-							startupModuleSystem(Version.getApplicationVersion());
-							System.out.println("Module system started successfully");
+							startTokenSystem(clusterManagerInstance);
+							try {
+								startupModuleSystem(Version.getApplicationVersion());
+								System.out.println("Module system started successfully");
 
-							initApplication(ServletContextService.getInstance().getServletContext());
+								initApplication(ServletContextService.getInstance().getServletContext());
 
-							if (!ContainerDetector.getInstance().isTesting()) {
-								infoAndStarter(Version.getApplicationVersion());
+								if (!ContainerDetector.getInstance().isTesting()) {
+									infoAndStarter(Version.getApplicationVersion());
+								}
+							} catch (InvalidLicenceException e) {
+								return e.dropStack();
+							} finally {
+								releaseTokenSystem(clusterManagerInstance);
 							}
-						} catch (InvalidLicenceException e) {
-							return e.dropStack();
-						} finally {
-							releaseTokenSystem(clusterManagerInstance);
 						}
 
 						String message = TLContext.getContext().get(PASSWORD_INITIALIZATION_MESSAGE);
@@ -546,14 +551,9 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 
 	/**
 	 * Start {@link LockService} eventually {@link #aquireStartupContext()} and set
-	 * {@link NodeState#STARTUP}.
-	 * 
-	 * <p>
-	 * Marks the {@link ApplicationStartup} as not started.
-	 * </p>
+	 * {@link NodeState#STARTUP}
 	 */
 	protected final void startTokenSystem(ClusterManager cMgr) throws Exception {
-		ApplicationStartup.getInstance().begin();
 		ModuleUtil.INSTANCE.startUp(LockService.Module.INSTANCE);
 
         if (cMgr.isClusterMode()) {
@@ -565,18 +565,13 @@ public abstract class AbstractStartStopListener implements ServletContextListene
     }
 
 	/**
-	 * Set {@link NodeState#RUNNING}, eventually release {@link #_startupToken}, and complete the
-	 * {@link ApplicationStartup}.
+	 * Set {@link NodeState#RUNNING} and eventually release {@link #_startupToken}
 	 */
 	protected final void releaseTokenSystem(ClusterManager cmGr) {
-		try {
-			cmGr.setNodeState(NodeState.RUNNING);
-			if (_startupToken != null) {
-				_startupToken.unlock();
-				_startupToken = null;
-			}
-		} finally {
-			ApplicationStartup.getInstance().complete();
+		cmGr.setNodeState(NodeState.RUNNING);
+		if (_startupToken != null) {
+			_startupToken.unlock();
+			_startupToken = null;
 		}
 	}
 

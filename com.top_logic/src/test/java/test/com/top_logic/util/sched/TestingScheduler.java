@@ -15,9 +15,9 @@ import junit.framework.Test;
 
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.ReflectionUtils;
+import test.com.top_logic.basic.module.RunningModuleSystemSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
-import test.com.top_logic.util.ApplicationStartedSetup;
 import test.com.top_logic.util.sched.model.TestScheduler;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
@@ -213,14 +213,14 @@ public class TestingScheduler extends Scheduler {
 	 * {@link Scheduler} needed for tests, but not the {@link Scheduler} itself.
 	 * 
 	 * <p>
-	 * The tests run in a started application, so that a started {@link Scheduler} dispatches its
+	 * The tests run in a running module system, so that a started {@link Scheduler} dispatches its
 	 * tasks.
 	 * </p>
 	 * 
-	 * @see ApplicationStartedSetup
+	 * @see RunningModuleSystemSetup
 	 */
 	public static Test wrapSchedulerDependenciesSetup(Class<? extends Test> testClass) {
-		Test innerSetup = ServiceTestSetup.createSetup(ApplicationStartedSetup.setup(testClass),
+		Test innerSetup = ServiceTestSetup.createSetup(RunningModuleSystemSetup.setup(testClass),
 			MaintenanceWindowManager.Module.INSTANCE);
 		return KBSetup.getSingleKBTest(innerSetup);
 	}

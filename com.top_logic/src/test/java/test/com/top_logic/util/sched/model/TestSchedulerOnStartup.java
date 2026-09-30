@@ -5,15 +5,16 @@
  */
 package test.com.top_logic.util.sched.model;
 
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 
 import junit.framework.Test;
 
 import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.module.RunningModuleSystemSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
-import test.com.top_logic.util.ApplicationStartedSetup;
 import test.com.top_logic.util.sched.TestingScheduler;
 
 import com.top_logic.basic.CalledByReflection;
@@ -22,7 +23,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.module.ModuleUtil.StartupPhase;
 import com.top_logic.basic.module.RestartException;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.HistoryUtils;
@@ -83,32 +86,54 @@ public class TestSchedulerOnStartup extends BasicTestCase {
 	}
 
 	/**
-	 * The {@link Scheduler} does not dispatch while the application has not started, but when the
-	 * startup completes. A {@link Scheduler} shut down before does not start dispatching.
+	 * The {@link Scheduler} does not dispatch while services are being started, but when the
+	 * outermost start or restart has started all its services. A {@link Scheduler} shut down before
+	 * does not start dispatching.
 	 */
-	public void testDispatchStartsWhenApplicationHasStarted() throws RestartException {
+	public void testNoDispatchBeforeAllServicesStarted() throws RestartException {
 		Scheduler stopped;
 		Scheduler waiting;
-		ApplicationStartedSetup.resetStartup();
-		try {
+		try (StartupPhase phase = ModuleUtil.INSTANCE.beginStartup()) {
 			ModuleUtil.INSTANCE.restart(Scheduler.Module.INSTANCE, null);
 			stopped = scheduler();
-			assertEquals(SchedulingAlgorithm.NO_SCHEDULE, stopped.getDispatchStart());
-			assertNull(TestingScheduler.getThread(stopped));
+			assertNoDispatch(stopped);
 
 			ModuleUtil.INSTANCE.restart(Scheduler.Module.INSTANCE, null);
 			waiting = scheduler();
 			assertNotSame(stopped, waiting);
-			assertEquals(SchedulingAlgorithm.NO_SCHEDULE, waiting.getDispatchStart());
-			assertNull(TestingScheduler.getThread(waiting));
-		} finally {
-			ApplicationStartedSetup.completeStartup();
+			assertNoDispatch(waiting);
 		}
-		assertTrue(waiting.getDispatchStart() != SchedulingAlgorithm.NO_SCHEDULE);
-		assertTrue(TestingScheduler.getThread(waiting).isAlive());
+		assertDispatch(waiting);
+		assertNoDispatch(stopped);
+	}
 
-		assertEquals(SchedulingAlgorithm.NO_SCHEDULE, stopped.getDispatchStart());
-		assertNull(TestingScheduler.getThread(stopped));
+	/**
+	 * The {@link Scheduler} does not dispatch as long as no application has started its services,
+	 * but when the application services are active.
+	 */
+	public void testNoDispatchWithoutApplicationServices() throws RestartException {
+		ModuleUtil moduleUtil = ModuleUtil.INSTANCE;
+		Set<BasicRuntimeModule<?>> applicationServices = moduleUtil.getApplicationServices();
+		Scheduler waiting;
+		moduleUtil.setApplicationServices(null);
+		try {
+			moduleUtil.restart(Scheduler.Module.INSTANCE, null);
+			waiting = scheduler();
+			assertNoDispatch(waiting);
+		} finally {
+			moduleUtil.setApplicationServices(applicationServices);
+		}
+		assertDispatch(waiting);
+	}
+
+	private static void assertNoDispatch(Scheduler scheduler) {
+		assertEquals(SchedulingAlgorithm.NO_SCHEDULE, scheduler.getDispatchStart());
+		assertNull(TestingScheduler.getThread(scheduler));
+	}
+
+	private static void assertDispatch(Scheduler scheduler) {
+		assertTrue(scheduler.getDispatchStart() != SchedulingAlgorithm.NO_SCHEDULE);
+		assertTrue(TestingScheduler.getThread(scheduler).isAlive());
 	}
 
 	/**
@@ -255,7 +280,7 @@ public class TestSchedulerOnStartup extends BasicTestCase {
 
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(
-			ServiceTestSetup.createSetup(ApplicationStartedSetup.setup(TestSchedulerOnStartup.class),
+			ServiceTestSetup.createSetup(RunningModuleSystemSetup.setup(TestSchedulerOnStartup.class),
 				Scheduler.Module.INSTANCE));
 	}
 

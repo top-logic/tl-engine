@@ -75,7 +75,6 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.mig.html.HTMLFormatter;
-import com.top_logic.util.ApplicationStartup;
 import com.top_logic.util.sched.Scheduler.SchedulerConfig;
 import com.top_logic.util.sched.entry.SchedulerEntry;
 import com.top_logic.util.sched.entry.SchedulerEntryStorage;
@@ -301,9 +300,9 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	private Date startTime;
 
 	/**
-	 * Starts the dispatch thread, when the application has started.
+	 * Starts the dispatch thread, when the module system is running.
 	 * 
-	 * @see ApplicationStartup#whenStarted(Runnable)
+	 * @see ModuleUtil#whenRunning(Runnable)
 	 */
 	private final Runnable _startDispatch = this::startDispatch;
 
@@ -1784,8 +1783,8 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * The time at which this {@link Scheduler} started dispatching {@link Task}s.
 	 * 
 	 * <p>
-	 * The {@link Scheduler} starts dispatching, when the application has fully started, or
-	 * immediately with the service, if the application is already running.
+	 * The {@link Scheduler} starts dispatching, when all services have started, or immediately
+	 * with the service, if the module system is already {@link ModuleUtil#isRunning() running}.
 	 * </p>
 	 * 
 	 * @return The start time in milliseconds, or {@link SchedulingAlgorithm#NO_SCHEDULE}, if this
@@ -1900,10 +1899,11 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * Starts the service.
 	 * 
 	 * <p>
-	 * {@link Task}s are not dispatched while the application is still booting: The dispatch thread
-	 * starts, when the {@link ApplicationStartup} completes, or immediately, if the application
-	 * has already started. Without an application boot, e.g. when a test starts services, no task is
-	 * dispatched.
+	 * {@link Task}s are not dispatched before the module system is {@link ModuleUtil#isRunning()
+	 * running}: The dispatch thread starts, when the start or restart that includes this service
+	 * has started all services, and all services of the application are active. Without an
+	 * application that has started its services, e.g. when a test starts single services, no task
+	 * is dispatched.
 	 * </p>
 	 */
     @Override
@@ -1912,11 +1912,11 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		synchronized (_dispatchLock) {
 			_active = true;
 		}
-		ApplicationStartup startup = ApplicationStartup.getInstance();
-		if (!startup.isStarted()) {
-			logInfo("Dispatching tasks starts when the application has started.");
+		ModuleUtil moduleUtil = ModuleUtil.INSTANCE;
+		if (!moduleUtil.isRunning()) {
+			logInfo("Dispatching tasks starts when all services have started.");
 		}
-		startup.whenStarted(_startDispatch);
+		moduleUtil.whenRunning(_startDispatch);
 
         ReloadableManager.getInstance().addReloadable(this);
 
@@ -1934,7 +1934,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	@Override
 	protected void shutDown() {
-		ApplicationStartup.getInstance().cancel(_startDispatch);
+		ModuleUtil.INSTANCE.cancelWhenRunning(_startDispatch);
 		Thread thread;
 		synchronized (_dispatchLock) {
 			_active = false;

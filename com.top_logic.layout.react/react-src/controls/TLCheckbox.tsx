@@ -1,5 +1,6 @@
 import { React, useTLFieldValue, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { fieldStateAttrs } from './form/fieldState';
 
 const { useCallback, useRef, useEffect } = React;
 
@@ -12,6 +13,10 @@ const DISPLAY_SWITCH = 'switch';
  *
  * With `triState` the field has a third state for "no value": it renders as indeterminate, and a
  * click cycles through checked, unchecked and unset.
+ *
+ * Design system: `tl-checkbox`, with `tl-checkbox--switch` and `role="switch"` for the switch. The
+ * state is an attribute (see fieldStateAttrs), never a class. A field that is not editable keeps
+ * the same box, disabled.
  */
 const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
   const labelProps = useFieldLabelProps(controlId, controlId);
@@ -39,6 +44,8 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
     [setValue, triState, value]
   );
 
+  const cls = asSwitch ? 'tl-checkbox tl-checkbox--switch' : 'tl-checkbox';
+
   if (state.editable === false) {
     return (
       <input
@@ -49,24 +56,10 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
         role={asSwitch ? 'switch' : undefined}
         checked={value === true}
         disabled
-        className={rootClassName(
-          state,
-          ['tlReactCheckbox', 'tlReactCheckbox--immutable', asSwitch ? 'tlReactCheckbox--switch' : '']
-            .filter(Boolean)
-            .join(' ')
-        )}
+        className={rootClassName(state, cls)}
       />
     );
   }
-
-  const hasError = state.hasError === true;
-  const hasWarnings = state.hasWarnings === true;
-  const cls = [
-    'tlReactCheckbox',
-    asSwitch ? 'tlReactCheckbox--switch' : '',
-    hasError ? 'tlReactCheckbox--error' : '',
-    !hasError && hasWarnings ? 'tlReactCheckbox--warning' : '',
-  ].filter(Boolean).join(' ');
 
   return (
     <input
@@ -79,7 +72,7 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId, state }) => {
       onChange={handleChange}
       disabled={state.disabled === true}
       className={rootClassName(state, cls)}
-      aria-invalid={hasError || undefined}
+      {...fieldStateAttrs(state)}
       aria-checked={triState && value !== true && value !== false ? 'mixed' : value === true}
     />
   );

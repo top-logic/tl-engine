@@ -3446,12 +3446,12 @@ button.tlMenu__item--disabled:hover {
 	text-overflow: ellipsis;
 }
 
-/* A business object shown with its icon is a flex row of its own. In a cell it is the block-level
-   one the rule for the cell's root span asks for - that rule is the more specific of the two and
-   would otherwise decide the display - so the object spans the column and its label is cut off at
-   the column edge. */
-.tlTableView__cell > .tlResourceCell {
+/* A flex row of its own - a business object with its icon, a group of radios - stays one in a cell
+   rather than the block the more specific rule for the root span asks for, and does not wrap. */
+.tlTableView__cell > .tlResourceCell,
+.tlTableView__cell > .tl-choice-group {
 	display: flex;
+	flex-wrap: nowrap;
 }
 
 /* A value shown beside an adornment - the language button of an internationalized text - sits in a
@@ -4888,78 +4888,6 @@ button.tlMenu__item--disabled:hover {
   cursor: not-allowed;
 }
 
-/* --- Checkbox --------------------------------------------------------- */
-
-.tlReactCheckbox {
-	width: 1rem;
-	height: 1rem;
-	accent-color: var(--interactive);
-	cursor: pointer;
-	margin: 0;
-	vertical-align: middle;
-}
-
-.tlReactCheckbox:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 1px;
-}
-
-/* A boolean drawn as a switch: the input itself is the track, its ::before the knob, so the whole
-   shape stays the one focusable element the box is. A pill and a circle keep their shape, which is
-   why both are written literally rather than taken from a radius token. */
-.tlReactCheckbox--switch {
-	appearance: none;
-	-webkit-appearance: none;
-	width: 2.25rem;
-	height: 1.25rem;
-	position: relative;
-	flex: none;
-	padding: 0;
-	border: none;
-	border-radius: 999px;
-	background-color: var(--border-strong);
-	transition: background-color 120ms ease-in-out;
-}
-
-.tlReactCheckbox--switch::before {
-	content: "";
-	position: absolute;
-	top: 0.125rem;
-	left: 0.125rem;
-	width: 1rem;
-	height: 1rem;
-	border-radius: 50%;
-	background-color: var(--icon-on-color);
-	box-shadow: var(--shadow-raised);
-	transition: transform 120ms ease-in-out;
-}
-
-.tlReactCheckbox--switch:checked {
-	background-color: var(--interactive);
-}
-
-/* The knob travels the track less its own width and the inset on both sides. */
-.tlReactCheckbox--switch:checked::before {
-	transform: translateX(1rem);
-}
-
-/* The knob jumps to its position where motion is unwelcome; where it stands still says the same. */
-@media (prefers-reduced-motion: reduce) {
-	.tlReactCheckbox--switch,
-	.tlReactCheckbox--switch::before {
-		transition: none;
-	}
-}
-
-/* A ring rather than an outline, so that the focus outline is still visible on a rejected value. */
-.tlReactCheckbox--switch.tlReactCheckbox--error {
-	box-shadow: 0 0 0 2px var(--support-error);
-}
-
-.tlReactCheckbox--switch.tlReactCheckbox--warning {
-	box-shadow: 0 0 0 2px var(--support-warning);
-}
-
 /* --- TLSlider ----------------------------------------------------------- */
 
 /* A number set by dragging a handle along a track, with the value written beside it: the two read
@@ -5116,52 +5044,6 @@ button.tlMenu__item--disabled:hover {
 	}
 }
 
-/* --- TLBooleanChoice -------------------------------------------------------- */
-
-/* A boolean offered as a choice: radio buttons in a row, or a select.
-   Both classes in the selector, so that this wins over the rule making a control in a table cell a
-   block: as a block the options would flow as text and wrap onto a second line the row is not high
-   enough to show. */
-.tlBooleanChoice.tlBooleanChoice--radio {
-	display: inline-flex;
-	align-items: center;
-	flex-wrap: nowrap;
-	white-space: nowrap;
-}
-
-/* One option: a radio and the label naming it, which refers to the radio by id and is therefore a
-   sibling, not a wrapper. The container states its display, being a plain inline element. */
-.tlBooleanChoice__option {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	cursor: pointer;
-	font-size: var(--body-compact-01-font-size);
-}
-
-/* Enough distance to tell the options apart, little enough for two of them to fit a table cell. */
-.tlBooleanChoice__option + .tlBooleanChoice__option {
-	margin-left: 0.75rem;
-}
-
-.tlBooleanChoice__option input {
-	width: 1rem;
-	height: 1rem;
-	margin: 0;
-	accent-color: var(--interactive);
-	cursor: pointer;
-}
-
-.tlBooleanChoice__option input:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 1px;
-}
-
-.tlBooleanChoice--error .tlBooleanChoice__label,
-.tlBooleanChoice--error.tlReactSelect {
-	color: var(--support-error);
-}
-
 /* --- TLToolbar ------------------------------------------------------------- */
 
 .tlToolbar {
@@ -5297,12 +5179,6 @@ button.tlToolbar__menuTrigger:focus-visible {
 .tlToolbar__menuTrigger--icon,
 .tlAppBar--primary .tlToolbar__menuTrigger--icon {
 	box-shadow: none;
-}
-
-.tlReactCheckbox:disabled,
-.tlReactCheckbox--immutable {
-	opacity: 0.6;
-	cursor: default;
 }
 
 /* --- TLDropdownSelect -------------------------------------------------- */
@@ -5606,176 +5482,6 @@ button.tlToolbar__menuTrigger:focus-visible {
 /* Drop indicator: right border highlight */
 .tlDropdownSelect__chip--dropAfter {
 	box-shadow: 2px 0 0 0 var(--interactive);
-}
-
-/* --- TLOptionChips ------------------------------------------------------ */
-
-/* A cloud of toggles: every option is on screen and wraps onto as many lines as it needs. */
-.tlOptionChips {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--spacing-02);
-}
-
-/* One option, switched on and off by a click. A pill keeps its shape in a theme that squares
-   every corner off, so the radius is a literal rather than one of the radius tokens. */
-.tlOptionChips__chip {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	max-width: 100%;
-	padding: 2px var(--spacing-03);
-	border: 1px solid var(--border-subtle);
-	border-radius: 999px;
-	background-color: var(--layer);
-	color: var(--text-primary);
-	font-family: inherit;
-	font-size: var(--label-01-font-size);
-	line-height: 1.5;
-	cursor: pointer;
-}
-
-.tlOptionChips__chip:not(:disabled):hover {
-	background-color: var(--layer-hover);
-}
-
-.tlOptionChips__chip:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 1px;
-}
-
-/* An option that is on is filled, so that on and off are told apart by more than a border. */
-.tlOptionChips__chip--selected {
-	border-color: var(--interactive);
-	background-color: var(--interactive);
-	color: var(--text-on-color);
-}
-
-.tlOptionChips__chip--selected:not(:disabled):hover {
-	background-color: var(--interactive);
-}
-
-.tlOptionChips__chip:disabled {
-	border-color: var(--button-disabled);
-	background-color: var(--button-disabled);
-	color: var(--text-disabled);
-	cursor: default;
-}
-
-.tlOptionChips__chipLabel {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-/* A rejected value is marked on the cloud as a whole: no single option is at fault. */
-.tlOptionChips--error {
-	box-shadow: 0 0 0 2px var(--support-error);
-}
-
-.tlOptionChips--warning {
-	box-shadow: 0 0 0 2px var(--support-warning);
-}
-
-/* --- TLSegmentedChoice -------------------------------------------------- */
-
-/* A bar of segments reading as one control: the marker stands under the selected segment, so the
-   bar is positioned inline and the segments sit above the marker. */
-.tlSegmentedChoice {
-	position: relative;
-	display: inline-flex;
-	align-items: stretch;
-	max-width: 100%;
-	padding: 2px;
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--corner-radius);
-	background-color: var(--layer);
-}
-
-/* The slider marking the selected segment. Its offset and width are measured from that segment, so
-   only the transition between the two positions is stated here. */
-.tlSegmentedChoice__marker {
-	position: absolute;
-	top: 2px;
-	bottom: 2px;
-	border-radius: var(--corner-radius);
-	background-color: var(--interactive);
-	box-shadow: var(--shadow-raised);
-	transition: left 160ms ease-in-out, width 160ms ease-in-out;
-	pointer-events: none;
-}
-
-/* The marker jumps to its position where motion is unwelcome; where it stands says the same. */
-@media (prefers-reduced-motion: reduce) {
-	.tlSegmentedChoice__marker {
-		transition: none;
-	}
-}
-
-.tlSegmentedChoice__segment {
-	position: relative;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--spacing-02);
-	padding: var(--spacing-01) var(--spacing-03);
-	border: none;
-	border-radius: var(--corner-radius);
-	background-color: transparent;
-	color: var(--text-secondary);
-	font-family: inherit;
-	font-size: var(--label-01-font-size);
-	line-height: 1.5;
-	white-space: nowrap;
-	cursor: pointer;
-}
-
-.tlSegmentedChoice__segment:not(:disabled):hover {
-	color: var(--text-primary);
-}
-
-.tlSegmentedChoice__segment:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
-}
-
-/* The selected segment reads on the marker below it. A field taking several values has no marker,
-   so its selected segments carry the fill themselves. */
-.tlSegmentedChoice__segment--selected {
-	color: var(--text-on-color);
-}
-
-.tlSegmentedChoice[role="group"] .tlSegmentedChoice__segment--selected {
-	background-color: var(--interactive);
-}
-
-.tlSegmentedChoice__segment:disabled {
-	color: var(--text-disabled);
-	cursor: default;
-}
-
-.tlSegmentedChoice__segmentLabel {
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.tlSegmentedChoice--error {
-	box-shadow: 0 0 0 2px var(--support-error);
-}
-
-.tlSegmentedChoice--warning {
-	box-shadow: 0 0 0 2px var(--support-warning);
-}
-
-/* A field that only displays its value is the label it holds, with no bar around it. */
-.tlSegmentedChoice--immutable {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	padding: 0;
-	border: none;
-	background: none;
 }
 
 /* --- TLColorInput ------------------------------------------------------ */

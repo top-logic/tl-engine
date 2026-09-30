@@ -5,7 +5,8 @@
  *
  * @param state the control state with the keys of ReactFormFieldControl
  * @param ariaInvalidAllowed false for elements whose role does not allow aria-invalid (role="group"),
- *        which then carry data-tl-state="error"
+ *        which then carry data-tl-state="error"; such a role allows no aria-required either, so a
+ *        mandatory group carries none
  */
 export function fieldStateAttrs(
   state: { hasError?: unknown; hasWarnings?: unknown; mandatory?: unknown },
@@ -18,6 +19,6 @@ export function fieldStateAttrs(
   } else if (state.hasWarnings === true) {
     attrs['data-tl-state'] = 'warning';
   }
-  if (state.mandatory === true) attrs['aria-required'] = 'true';
+  if (ariaInvalidAllowed && state.mandatory === true) attrs['aria-required'] = 'true';
   return attrs;
 }

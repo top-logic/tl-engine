@@ -3644,13 +3644,6 @@ button.tlMenu__item--disabled:hover {
 
 /* --- The shape the text takes ---------------------------------------------- */
 
-/* A theme icon shown on its own, sitting on the text baseline of what it accompanies. */
-.tlIcon {
-	display: inline-flex;
-	align-items: center;
-	line-height: 1;
-}
-
 .tlText--placeholder {
 	font-style: italic;
 	color: var(--text-helper);
@@ -3853,68 +3846,6 @@ button.tlMenu__item--disabled:hover {
 	border-radius: var(--border-radius-02);
 	background: var(--layer-01);
 	color: var(--support-error);
-}
-
-/* A fraction displayed as a bar with an optional label beside it. The track carries the theme's
-   layer color, the filled part the interactive color, so the bar reads on a light and a dark
-   theme from the same declaration. */
-.tlProgress {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	min-width: 0;
-}
-
-.tlProgress__track {
-	flex: 1 1 auto;
-	min-width: 2rem;
-	height: 0.5rem;
-	overflow: hidden;
-	border-radius: 999px;
-	background-color: var(--layer-active);
-}
-
-.tlProgress__fill {
-	display: block;
-	height: 100%;
-	border-radius: 999px;
-	background-color: var(--interactive);
-	transition: width 0.2s ease-out;
-}
-
-.tlProgress__label {
-	flex: 0 0 auto;
-	color: var(--text-secondary);
-	font-size: var(--label-01-font-size);
-	font-variant-numeric: tabular-nums;
-	white-space: nowrap;
-}
-
-/* A bar that says something is going on without saying how far it has come: a partial fill sweeps
-   across the track instead of standing for a share of it. */
-.tlProgress--indeterminate .tlProgress__fill {
-	width: 40%;
-	transition: none;
-	animation: tlProgressSweep 1.4s ease-in-out infinite;
-}
-
-@keyframes tlProgressSweep {
-	from {
-		transform: translateX(-100%);
-	}
-
-	to {
-		transform: translateX(250%);
-	}
-}
-
-/* Without motion the bar still reads as busy: the fill rests in the middle of the track rather
-   than travelling over it. */
-@media (prefers-reduced-motion: reduce) {
-	.tlProgress--indeterminate .tlProgress__fill {
-		animation: none;
-		transform: translateX(75%);
-	}
 }
 
 /* --- TLJobStatus (what a long-running job reports) ------------------------- */
@@ -4576,43 +4507,6 @@ button.tlMenu__item--disabled:hover {
 .tlFormGroup--fullLine > .tlFormGroup__body {
 	grid-template-columns: inherit;
 }
-
-/* --- TLAvatar ---------------------------------------------------------- */
-
-.tlAvatar {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	flex: none;
-	width: 2rem;
-	height: 2rem;
-	border-radius: 50%;
-	color: #fff;
-	font-family: var(--font-family);
-	font-size: 0.75rem;
-	font-weight: 600;
-	letter-spacing: 0.02em;
-	user-select: none;
-}
-
-/* An avatar without a name - an anonymous session, or an empty channel. It keeps its circle and
-   fills it faintly, so that an avatar used as a menu trigger stays visible and clickable. */
-.tlAvatar--empty {
-	background: var(--layer-accent);
-	border: 1px solid var(--border-subtle);
-}
-
-/* The picture of the one the avatar represents, cropped to the circle. */
-.tlAvatar__image {
-	width: 100%;
-	height: 100%;
-	border-radius: 50%;
-	object-fit: cover;
-}
-
-.tlAvatar--small { width: 1.5rem; height: 1.5rem; font-size: 0.5625rem; }
-.tlAvatar--large { width: 3rem; height: 3rem; font-size: 1.125rem; }
-.tlAvatar--x-large { width: 4rem; height: 4rem; font-size: 1.5rem; }
 
 /* --- TLRelativeTime ---------------------------------------------------- */
 

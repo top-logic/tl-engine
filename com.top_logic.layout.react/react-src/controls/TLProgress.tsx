@@ -2,10 +2,13 @@ import { React, useTLState, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
- * Displays a fraction as a bar with an optional label beside it.
+ * Displays a fraction as a bar with an optional label beside it: `tl-progress` of the design
+ * system.
  *
- * A fraction of null is the indeterminate bar: the track carries a sweeping fill instead of a
- * share of it, and the bar reports itself as busy without a value.
+ * A fraction of null is the indeterminate bar: the bar reports itself as busy without a value, and
+ * the stylesheet answers that state with a sweeping fill instead of a share of the track. The width
+ * of the fill is data, not design: it is the same share `aria-valuenow` states, and the only thing
+ * set inline.
  */
 export function ProgressBar({
   id,
@@ -20,18 +23,11 @@ export function ProgressBar({
 }) {
   const indeterminate = typeof fraction !== 'number';
   const percent = indeterminate ? 0 : Math.round((fraction as number) * 100);
-  const classNames = ['tlProgress'];
-  if (indeterminate) {
-    classNames.push('tlProgress--indeterminate');
-  }
-  if (className) {
-    classNames.push(className);
-  }
 
   return (
     <div
       id={id}
-      className={classNames.join(' ')}
+      className={['tl-progress', className].filter(Boolean).join(' ')}
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
@@ -39,13 +35,10 @@ export function ProgressBar({
       aria-valuetext={label || undefined}
       aria-busy={indeterminate || undefined}
     >
-      <span className="tlProgress__track">
-        <span
-          className="tlProgress__fill"
-          style={indeterminate ? undefined : { width: percent + '%' }}
-        />
+      <span className="tl-progress__track">
+        <span className="tl-progress__fill" style={indeterminate ? undefined : { width: percent + '%' }} />
       </span>
-      {label && <span className="tlProgress__label">{label}</span>}
+      {label && <span className="tl-progress__label tl-type-label tl-nums">{label}</span>}
     </div>
   );
 }

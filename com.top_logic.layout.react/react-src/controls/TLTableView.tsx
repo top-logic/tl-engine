@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, runningDrag, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, runningDrag, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 
@@ -341,6 +341,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // accepted until the server says otherwise.
   const dropVerdict: DropVerdict | undefined = dropState?.probe ? dropVerdicts[dropState.probe] : undefined;
   const dropRefused = dropVerdict !== undefined && !dropVerdict.accepted;
+
+  // -- The pointer of the running drag over the table, in viewport coordinates, and the hint that
+  //    follows it. Moved directly in the DOM: dragover fires continuously, and re-rendering the
+  //    table for each pointer move is not needed to move one element. --
+  const dragPointerRef = React.useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const dropHintRef = React.useRef<HTMLDivElement | null>(null);
 
   // -- Column context menu state --
   const [contextMenu, setContextMenu] = React.useState<{
@@ -693,6 +699,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     // particular drop is possible is the server's answer, given once it arrives.
     if (!dragTypeAccepted(event.dataTransfer, dropAccepts)) {
       return;
+    }
+    dragPointerRef.current = { x: event.clientX, y: event.clientY };
+    const hint = dropHintRef.current;
+    if (hint) {
+      hint.style.left = event.clientX + 'px';
+      hint.style.top = event.clientY + 'px';
     }
     const target = dropTargetAt(event);
     const drag = runningDrag();
@@ -1209,10 +1221,14 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       onDrop={handleRootDrop}
     >
       {/* Why the target under the running drag refuses it. A native tooltip is not shown while a
-          drag runs, so the reason is displayed over the table. */}
-      {dropRefused && dropVerdict?.reason && (
-        <div className="tlTableView__dropHint" role="status">{dropVerdict.reason}</div>
-      )}
+          drag runs, so the reason follows the pointer, placed in the document body so that neither
+          the table's scrolling nor its clipping can hide it. */}
+      {dropRefused && dropVerdict?.reason && createPortal(
+        <div ref={dropHintRef} className="tlTableView__dropHint" role="status"
+          style={{ left: dragPointerRef.current.x + 'px', top: dragPointerRef.current.y + 'px' }}>
+          {dropVerdict.reason}
+        </div>,
+        document.body)}
       {/* Filter bar above the headings: the named criteria as chips, the cross-column search, and
           saving the current criteria under a name. Outside both scrollers, so it neither scrolls
           with the columns nor takes part in the header/body width alignment. */}

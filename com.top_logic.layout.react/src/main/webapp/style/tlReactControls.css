@@ -4132,14 +4132,13 @@ button.tlMenu__item--disabled:hover {
 	cursor: not-allowed;
 }
 
-/* Why the target under the running drag refuses it, shown over the bottom of the table. */
+/* Why the target under the running drag refuses it, next to the pointer (left/top set by the
+   table), above every other layer like a tooltip. */
 .tlTableView__dropHint {
-	position: absolute;
-	left: 50%;
-	bottom: var(--spacing-05);
-	transform: translateX(-50%);
-	z-index: 10;
-	max-width: calc(100% - 2 * var(--spacing-05));
+	position: fixed;
+	transform: translate(var(--spacing-05), var(--spacing-05));
+	z-index: 13000;
+	max-width: min(400px, calc(100vw - 2 * var(--spacing-05)));
 	padding: var(--spacing-02) var(--spacing-04);
 	border-radius: var(--border-radius-02);
 	background: var(--support-error);

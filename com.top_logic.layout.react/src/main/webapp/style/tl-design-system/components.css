@@ -243,8 +243,9 @@
 }
 
 /* Deaktiviert bleibt die Schaltfläche für den Zeiger erreichbar: ihr Tooltip nennt den Grund, warum
-   sie nicht ausführbar ist. Den Klick verschluckt der native disabled-Zustand; Zeigen und Drücken
-   ändern ihr Aussehen nicht, auch nicht bei Tönung oder Link. */
+   sie nicht ausführbar ist (#29675). Den Klick verschluckt der native disabled-Zustand; Zeigen und
+   Drücken ändern ihr Aussehen nicht, auch nicht bei Tönung oder Link. Der Zeiger steht mit :hover in
+   der Liste: über einem deaktivierten Knopf schlägt er den Fortschrittszeiger von aria-busy. */
 .tl-button:disabled,
 .tl-button:disabled:hover,
 .tl-button:disabled:active {

@@ -5,6 +5,8 @@
  */
 package test.com.top_logic.layout.view.form;
 
+import java.util.List;
+
 import junit.framework.Test;
 
 import test.com.top_logic.basic.BasicTestCase;
@@ -30,11 +32,13 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.form.AttributeFieldControl;
+import com.top_logic.layout.view.form.DynamicVisibility;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TLClass;
@@ -74,12 +78,22 @@ public class TestAttributeFieldDisabledMode extends BasicTestCase {
 	/** Name of the attribute whose mode the tests compute. */
 	private static final String TITLE = "title";
 
+	/** Name of the multi-valued attribute the value-list tests edit. */
+	private static final String ALIASES = "aliases";
+
+	/** Name of the attribute the {@link Lock} of the value-list tests depends on. */
+	private static final String LOCKED = "locked";
+
 	/** Name of the property {@link TLDynamicVisibility#getModeSelector()}. */
 	private static final String MODE_SELECTOR = "mode-selector";
 
 	private ReactContext _context;
 
 	private TLProperty _title;
+
+	private TLProperty _aliases;
+
+	private TLProperty _locked;
 
 	private FormControl _form;
 
@@ -95,9 +109,14 @@ public class TestAttributeFieldDisabledMode extends BasicTestCase {
 			TLModelUtil.addDatatype(module, module, "Text", Kind.STRING, directMapping(String.class));
 		TLClass ticketType = TLModelUtil.addClass(module, "Ticket");
 		_title = TLModelUtil.addProperty(ticketType, TITLE, text);
+		_aliases = TLModelUtil.addProperty(ticketType, ALIASES, text);
+		_aliases.setMultiple(true);
+		_aliases.setOrdered(true);
+		_locked = TLModelUtil.addProperty(ticketType, LOCKED, text);
 
 		IdentifiedObject ticket = new IdentifiedObject(ticketType);
 		ticket.tUpdateByName(TITLE, "Login fails");
+		ticket.tUpdateByName(ALIASES, List.of("A1", "A2"));
 
 		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		_form = new FormControl(_context, ticket, "no model", NoTokenHandling.INSTANCE);
@@ -109,6 +128,8 @@ public class TestAttributeFieldDisabledMode extends BasicTestCase {
 		_form = null;
 		_field = null;
 		_title = null;
+		_aliases = null;
+		_locked = null;
 		_context = null;
 
 		super.tearDown();
@@ -175,6 +196,103 @@ public class TestAttributeFieldDisabledMode extends BasicTestCase {
 
 		assertTrue(model().isEditable());
 		assertFalse(model().isDisabled());
+	}
+
+	/**
+	 * A value list that is locked while edited shows its values as inactive inputs, and as
+	 * read-only values once the form leaves edit mode.
+	 */
+	public void testValueListLockedThenView() {
+		Lock lock = createListField();
+		_form.enterEditMode();
+		assertElements(true, false);
+
+		lock(lock, true);
+		assertElements(false, true);
+
+		_form.executeCancel();
+		assertElements(false, false);
+	}
+
+	/**
+	 * A value list that is locked while edited and then saved shows its values as read-only
+	 * values.
+	 */
+	public void testValueListLockedThenSaved() {
+		Lock lock = createListField();
+		_form.enterEditMode();
+		lock(lock, true);
+
+		_form.executeSave();
+		assertFalse(_form.isEditMode());
+		assertElements(false, false);
+	}
+
+	/**
+	 * A value list that is edited while locked shows its values as inactive inputs, and as editable
+	 * inputs once unlocked.
+	 */
+	public void testValueListEditLockedThenUnlock() {
+		Lock lock = createListField();
+		lock(lock, true);
+		assertElements(false, false);
+
+		_form.enterEditMode();
+		assertElements(false, true);
+
+		lock(lock, false);
+		assertElements(true, false);
+
+		_form.executeCancel();
+		assertElements(false, false);
+	}
+
+	/**
+	 * Repeated edit sessions of a locked value list leave its values read-only in view mode.
+	 */
+	public void testValueListLockedRepeatedly() {
+		Lock lock = createListField();
+		_form.enterEditMode();
+		lock(lock, true);
+		_form.executeCancel();
+		_form.enterEditMode();
+		assertElements(false, true);
+		_form.executeCancel();
+
+		assertElements(false, false);
+	}
+
+	private Lock createListField() {
+		_aliases.setAnnotation(lockVisibility());
+		Lock lock = (Lock) DynamicVisibility.modeSelector(_aliases);
+		_field = new AttributeFieldControl(_context, _form, _form, ALIASES, null, false, null);
+		_field.createChromeControl();
+		_form.attach();
+		return lock;
+	}
+
+	private void lock(Lock lock, boolean locked) {
+		lock.setLocked(locked);
+		_form.notifyFieldChanged(_locked);
+	}
+
+	private void assertElements(boolean editable, boolean disabled) {
+		List<ReactControl> elements = _field.getInnerControl().displayedChildren();
+		assertEquals(2, elements.size());
+		for (ReactControl element : elements) {
+			FieldModel elementModel = ((ReactFormFieldControl) element).getFieldModel();
+			assertEquals("editable", editable, elementModel.isEditable());
+			assertEquals("disabled", disabled, elementModel.isDisabled());
+			assertEquals(Boolean.valueOf(editable), element.scriptingScalarState().get(FieldState.EDITABLE__PROP));
+			assertEquals(Boolean.valueOf(disabled), element.scriptingScalarState().get(FieldState.DISABLED__PROP));
+		}
+	}
+
+	private static TLDynamicVisibility lockVisibility() {
+		Lock.Config<?> selector = TypedConfiguration.newConfigItem(Lock.Config.class);
+		TLDynamicVisibility annotation = TypedConfiguration.newConfigItem(TLDynamicVisibility.class);
+		annotation.update(annotation.descriptor().getProperty(MODE_SELECTOR), selector);
+		return annotation;
 	}
 
 	private void createField(FormVisibility mode) {
@@ -249,6 +367,47 @@ public class TestAttributeFieldDisabledMode extends BasicTestCase {
 		public void traceDependencies(TLObject object, TLStructuredTypePart attribute, boolean editMode,
 				Sink<Pointer> trace, OverlayLookup overlays) {
 			// Depends on nothing.
+		}
+	}
+
+	/**
+	 * {@link ModeSelector} disabling a field while a lock is set, depending on the attribute
+	 * {@link #LOCKED}.
+	 */
+	public static class Lock extends AbstractConfiguredInstance<Lock.Config<?>> implements ModeSelector {
+
+		/**
+		 * Configuration options for {@link Lock}.
+		 */
+		public interface Config<I extends Lock> extends PolymorphicConfiguration<I> {
+			// No options.
+		}
+
+		private boolean _isLocked;
+
+		/**
+		 * Creates a {@link Lock} from configuration.
+		 */
+		public Lock(InstantiationContext context, Config<?> config) {
+			super(context, config);
+		}
+
+		/**
+		 * Sets or removes the lock.
+		 */
+		public void setLocked(boolean locked) {
+			_isLocked = locked;
+		}
+
+		@Override
+		public FormVisibility getMode(TLObject object, TLStructuredTypePart attribute, boolean editMode) {
+			return _isLocked ? FormVisibility.DISABLED : FormVisibility.DEFAULT;
+		}
+
+		@Override
+		public void traceDependencies(TLObject object, TLStructuredTypePart attribute, boolean editMode,
+				Sink<Pointer> trace, OverlayLookup overlays) {
+			trace.add(Pointer.create(object, object.tType().getPart(LOCKED)));
 		}
 	}
 

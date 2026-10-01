@@ -19,6 +19,7 @@ import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.io.blob.BlobStoreService;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -41,7 +42,8 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 	DataAccessService.Module.class,
 	ClusterManager.Module.class,
 	FlexDataManagerFactory.Module.class,
-	SchedulerService.Module.class })
+	SchedulerService.Module.class,
+	BlobStoreService.Module.class })
 @Label("Knowledge base factory")
 public class KnowledgeBaseFactory extends ManagedClass {
 

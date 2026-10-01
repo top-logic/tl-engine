@@ -48,6 +48,10 @@ public class TestMemorySizeFormat extends AbstractTypedConfigurationTestCase {
 		assertEquals(42L * 1024 * 1024 * 1024, MemorySizeFormat.INSTANCE.getValue("", "42g").longValue());
 		assertEquals(42L * 1024 * 1024 * 1024 * 1024, MemorySizeFormat.INSTANCE.getValue("", "42t").longValue());
 		assertEquals(42L * 1024 * 1024 * 1024 * 1024 * 1024, MemorySizeFormat.INSTANCE.getValue("", "42p").longValue());
+		assertEquals(42L, MemorySizeFormat.INSTANCE.getValue("", "42b").longValue());
+		assertEquals(64L * 1024, MemorySizeFormat.INSTANCE.getValue("", "64KB").longValue());
+		assertEquals(64L * 1024, MemorySizeFormat.INSTANCE.getValue("", "64 kB").longValue());
+		assertEquals(2L * 1024 * 1024, MemorySizeFormat.INSTANCE.getValue("", "2MB").longValue());
 	}
 
 	public void testSerialize() {

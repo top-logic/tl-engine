@@ -22,6 +22,13 @@ public class SimpleDBAttribute extends AbstractSimpleDBAttribute {
 	private int _dbIndex = -1;
 
 	/**
+	 * The size of the column, or <code>-1</code> for the default size of the DB type.
+	 * 
+	 * @see #getSQLSize()
+	 */
+	private final int _sqlSize;
+
+	/**
 	 * Creates a new {@link SimpleDBAttribute} with default {@link #isBinary() binary} from DB type.
 	 * 
 	 * @see SimpleDBAttribute#SimpleDBAttribute(MOAttribute, DBMetaObject, String, boolean, boolean)
@@ -46,7 +53,38 @@ public class SimpleDBAttribute extends AbstractSimpleDBAttribute {
 	 */
 	public SimpleDBAttribute(MOAttribute attribute, DBMetaObject dbType, String dbName, boolean binary,
 			boolean notNull) {
+		this(attribute, dbType, dbName, -1, binary, notNull);
+	}
+
+	/**
+	 * Creates a new {@link SimpleDBAttribute} with an explicit column size.
+	 * 
+	 * @param attribute
+	 *        See {@link #getAttribute()}.
+	 * @param dbType
+	 *        See {@link #getSQLType()}.
+	 * @param dbName
+	 *        See {@link #getDBName()}.
+	 * @param sqlSize
+	 *        See {@link #getSQLSize()}. <code>-1</code> means the default size of the given DB
+	 *        type.
+	 * @param binary
+	 *        See {@link #isBinary()}.
+	 * @param notNull
+	 *        See {@link #isSQLNotNull()}.
+	 */
+	public SimpleDBAttribute(MOAttribute attribute, DBMetaObject dbType, String dbName, int sqlSize,
+			boolean binary, boolean notNull) {
 		super(attribute, dbType, dbName, binary, notNull);
+		_sqlSize = sqlSize;
+	}
+
+	@Override
+	public int getSQLSize() {
+		if (_sqlSize < 0) {
+			return super.getSQLSize();
+		}
+		return _sqlSize;
 	}
 
 	@Override

@@ -59,6 +59,16 @@ public abstract class BinaryDataProxy extends AbstractBinaryData {
         return (proxied);
     }
     
+    /**
+	 * The {@link BinaryData} this proxy currently relays to, without creating it.
+	 * 
+	 * @return The proxied data, or <code>null</code> if it has not been created yet or has been
+	 *         dropped after a failure.
+	 */
+	protected final BinaryData getBinaryDataIfPresent() {
+		return proxied;
+	}
+
     /** 
      * Relay via {@link #getBinaryData()}
      */

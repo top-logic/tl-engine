@@ -17,11 +17,12 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueProvider;
 
 /**
- * {@link ConfigurationValueProvider} for memory size specifications like "128m", "64k", "10g".
+ * {@link ConfigurationValueProvider} for memory size specifications like "128m", "64k", "10g" or "64KB".
  * 
  * <p>
  * Supported qualifiers are "k" for kilobytes, "m" for megabytes, "g" gigabytes, "t" terrabytes, and
- * "p" petabytes. No qualifier means "bytes".
+ * "p" petabytes. No qualifier means "bytes". The qualifier may be followed by "b" (e.g. "64KB"),
+ * case is ignored.
  * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -29,7 +30,7 @@ import com.top_logic.basic.config.ConfigurationValueProvider;
 public class MemorySizeFormat extends AbstractConfigurationValueProvider<Long> {
 
 	private static final Pattern PATTERN =
-		Pattern.compile("([1-9][0-9]*|0)\\s*(k|m|g|t|p|)", Pattern.CASE_INSENSITIVE);
+		Pattern.compile("([1-9][0-9]*|0)\\s*(k|m|g|t|p|)b?", Pattern.CASE_INSENSITIVE);
 	
 	private static final BidiMap<String, Long> FACTOR = new BidiHashMap<>(
 		new MapBuilder<String, Long>()

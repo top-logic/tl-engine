@@ -61,7 +61,8 @@ import com.top_logic.util.Resources;
 
 /**
  * A {@link ViewCommand} asks about the unsaved changes its
- * {@link ViewCommand.Config#getCheckDirty() dirty check} names before it runs.
+ * {@link com.top_logic.layout.view.command.ViewCommand.Config#getCheckDirty() dirty check} names
+ * before it runs.
  *
  * <p>
  * The window displays a tab bar whose active tab holds a form. The form reports what it holds

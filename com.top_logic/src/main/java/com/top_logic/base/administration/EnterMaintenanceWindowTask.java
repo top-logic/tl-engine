@@ -10,8 +10,6 @@ import java.util.Properties;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
-import com.top_logic.basic.thread.ThreadContext;
-import com.top_logic.basic.util.Computation;
 import com.top_logic.util.sched.task.impl.TaskImpl;
 
 /**
@@ -50,8 +48,6 @@ public class EnterMaintenanceWindowTask<C extends EnterMaintenanceWindowTask.Con
      */
     public EnterMaintenanceWindowTask() {
         super(TASK_NAME);
-        setRunOnStartup(false);
-
     }
 
     /**
@@ -60,7 +56,6 @@ public class EnterMaintenanceWindowTask<C extends EnterMaintenanceWindowTask.Con
     public EnterMaintenanceWindowTask(long delay) {
         super(TASK_NAME);
         this.delay = (delay < 0 ? 0 : delay);
-        setRunOnStartup(false);
     }
 
     /**
@@ -71,7 +66,6 @@ public class EnterMaintenanceWindowTask<C extends EnterMaintenanceWindowTask.Con
      */
     public EnterMaintenanceWindowTask(Properties aProp) {
         super(aProp);
-        setRunOnStartup(false);
         try {
             long theDelay = Long.parseLong(aProp.getProperty("delay", "0"));
             this.delay = (theDelay < 0 ? 0 : theDelay);
@@ -101,16 +95,16 @@ public class EnterMaintenanceWindowTask<C extends EnterMaintenanceWindowTask.Con
     }
 
 
-    @Override
-    public void run() {
-        super.run(); // as wished by super class
-        ThreadContext.inSystemContext(EnterMaintenanceWindowTask.class, new Computation<Void>() {
-            @Override
-			public Void run() {
-                MaintenanceWindowManager.getInstance().enterMaintenanceWindow(getDelay());
-                return null;
-            }
-        });
-    }
+	@Override
+	public void run() {
+		super.run(); // as wished by super class
+		runWithResultProtocol(() -> MaintenanceWindowManager.getInstance().enterMaintenanceWindow(getDelay()));
+	}
+
+	@Override
+	public boolean isNodeLocal() {
+		// The maintenance window is cluster-wide; it must be announced only once.
+		return false;
+	}
 
 }

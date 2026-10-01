@@ -35,11 +35,11 @@ import com.top_logic.tool.boundsec.wrap.Group;
  *
  * <p>
  * The anonymous account represents a visitor that did not log in, while the default group is the
- * group named by {@link InitialGroupManager.Config#getDefaultGroup()} and therefore typically
- * carries the roles of an ordinary user. With model-based access rights, an anonymous visitor would
- * inherit whatever those roles grant. New accounts stay out of the default group since
- * {@link com.top_logic.knowledge.wrap.person.PersonGroupsInitializer} skips it for the anonymous
- * account; databases hold the membership created before.
+ * group named by {@link com.top_logic.base.services.InitialGroupManager.Config#getDefaultGroup()}
+ * and therefore typically carries the roles of an ordinary user. With model-based access rights, an
+ * anonymous visitor would inherit whatever those roles grant. New accounts stay out of the default
+ * group since {@link com.top_logic.knowledge.wrap.person.PersonGroupsInitializer} skips it for the
+ * anonymous account; databases hold the membership created before.
  * </p>
  *
  * @implNote Operates on the persistency layer only: the model service is not available in a

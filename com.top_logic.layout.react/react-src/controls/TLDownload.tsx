@@ -15,8 +15,8 @@ const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
 
   const hasData = !!state.hasData;
-  const dataRevision: number = state.dataRevision ?? 0;
-  const fileName: string = state.fileName ?? 'download';
+  const dataRevision: number = (state.dataRevision as number | undefined) ?? 0;
+  const fileName: string = (state.fileName as string | undefined) ?? 'download';
   const clearable: boolean = !!state.clearable;
 
   const [downloading, setDownloading] = React.useState(false);

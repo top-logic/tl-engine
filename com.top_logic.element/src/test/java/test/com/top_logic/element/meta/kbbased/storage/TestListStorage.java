@@ -8,6 +8,7 @@ package test.com.top_logic.element.meta.kbbased.storage;
 import static com.top_logic.knowledge.service.KBUtils.*;
 import static java.util.Collections.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Test;
@@ -119,8 +120,10 @@ public class TestListStorage extends BasicTestCase {
 	}
 
 	private void tearDownParentAndChildren() {
-		_children.forEach(TLObject::tDelete);
-		_parent.tDelete();
+		List<TLObject> all = new ArrayList<>(_children.size() + 1);
+		all.addAll(_children);
+		all.add(_parent);
+		deleteAll(all);
 	}
 
 	private TLObject instantiate(TLClass type) {

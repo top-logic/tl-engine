@@ -312,9 +312,12 @@ export const DOMActionProcessor = {
   functionCall(data: FunctionCallData): void {
     try {
       const args = JSON.parse(data.arguments) as unknown[];
+      // The global object addresses script objects by server-sent name.
+      const globals: object = window;
+      const globalsByName = globals as Record<string, unknown>;
       const ref = data.functionRef
-        ? (window as Record<string, unknown>)[data.functionRef] as Record<string, unknown>
-        : window as unknown as Record<string, unknown>;
+        ? globalsByName[data.functionRef] as Record<string, unknown> | undefined
+        : globalsByName;
       const fn = ref?.[data.functionName];
       if (typeof fn === 'function') {
         fn.apply(ref, args);

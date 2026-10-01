@@ -61,6 +61,39 @@ public interface ModelAccessRights {
 	}
 
 	/**
+	 * Whether objects of the given type are used by the application's own code only, so that no
+	 * user is expected to hold a role on them and their access definition is deliberately empty.
+	 *
+	 * @param type
+	 *        The type to check.
+	 * @return Whether the type is declared internal, see the configuration of the access rights.
+	 */
+	default boolean isInternal(TLClass type) {
+		return false;
+	}
+
+	/**
+	 * The relation leading from an object of the given type to the object whose access definition
+	 * decides access to it.
+	 * <p>
+	 * An object of a type with an access parent has no grants and no roles of its own: the access
+	 * checks ({@link #isAllowed(Person, TLObject, BoundCommandGroup)} and its variants) ask its
+	 * access parent instead, which may delegate further. A composition part gets its container as
+	 * access parent by default, unless a rule delivers a role on it or the configuration names
+	 * another parent.
+	 * </p>
+	 * 
+	 * @param type
+	 *        The type of the objects to access.
+	 * @return The relation to the access parent, <code>null</code> for a type deciding for itself.
+	 * @implSpec An implementation without a notion of access parents answers <code>null</code> for
+	 *           every type.
+	 */
+	default AccessParent getAccessParent(TLClass type) {
+		return null;
+	}
+
+	/**
 	 * Returns the roles of which the user must hold at least one <em>in addition</em> to the
 	 * object-level rights to perform the given command group on the given attribute. Relevant for
 	 * READ and WRITE command groups to implement attribute-level access restrictions.
@@ -163,6 +196,12 @@ public interface ModelAccessRights {
 	 * 2.3.6): the person must hold one of the roles granted the {@link SimpleBoundCommandGroup#CREATE
 	 * CREATE} command group on the type, checked on the given context object. When no context is
 	 * given (<code>null</code>), the check uses the global security root.
+	 * </p>
+	 * <p>
+	 * A type with an {@link #getAccessParent(TLClass) access parent} has no create grants of its
+	 * own: creating one of its objects in a context is writing that context, and creating one
+	 * without a context is not restricted, since the object is inaccessible until it is put into a
+	 * container, which is a write of the container.
 	 * </p>
 	 */
 	boolean isAllowedCreate(Person person, TLClass type, TLObject context);

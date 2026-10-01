@@ -15,7 +15,7 @@ const TLAudioPlayer: React.FC<TLCellProps> = ({ controlId }) => {
   const dataUrl = useTLDataUrl();
 
   const hasAudio = !!state.hasAudio;
-  const dataRevision: number = state.dataRevision ?? 0;
+  const dataRevision: number = (state.dataRevision as number | undefined) ?? 0;
 
   const [status, setStatus] = React.useState<PlayerStatus>(hasAudio ? 'idle' : 'disabled');
   const audioRef = React.useRef<HTMLAudioElement | null>(null);

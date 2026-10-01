@@ -36,7 +36,9 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.func.Function2;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
@@ -53,14 +55,18 @@ import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.provider.label.ClassLabelProvider;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
 import com.top_logic.layout.form.model.AbstractFieldModel;
+import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.values.edit.Labels;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -512,6 +518,65 @@ public class TestConfigEditorControl extends TestCase {
 	 * Test subclass that bypasses {@link com.top_logic.layout.form.values.edit.Labels} to avoid
 	 * requiring Resources/ThreadContextManager in unit tests.
 	 */
+	/**
+	 * A configuration whose {@link #getName() name} is hidden or disabled depending on two other
+	 * properties, and whose {@link #getItems() items} are hidden with the name.
+	 */
+	public interface DynamicModeConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getHide()}. */
+		String HIDE = "hide";
+
+		/** Property name for {@link #getItems()}. */
+		String ITEMS = "items";
+
+		/** Property name for {@link #getLock()}. */
+		String LOCK = "lock";
+
+		/** Property name for {@link #getName()}. */
+		String NAME = "name";
+
+		/** Whether {@link #getName()} is hidden. */
+		@Name(HIDE)
+		boolean getHide();
+
+		/** @see #getHide() */
+		void setHide(boolean value);
+
+		/** Whether {@link #getName()} is disabled. */
+		@Name(LOCK)
+		boolean getLock();
+
+		/** @see #getLock() */
+		void setLock(boolean value);
+
+		/** The property with a dynamic mode. */
+		@Name(NAME)
+		@DynamicMode(fun = NameMode.class, args = { @Ref(HIDE), @Ref(LOCK) })
+		String getName();
+
+		/** @see #getName() */
+		void setName(String value);
+
+		/** A collection with a dynamic mode. */
+		@Name(ITEMS)
+		@DynamicMode(fun = HideActiveIf.class, args = @Ref(HIDE))
+		List<ListItem> getItems();
+
+		/**
+		 * The mode of {@link DynamicModeConfig#getName()}.
+		 */
+		class NameMode extends Function2<FieldMode, Boolean, Boolean> {
+			@Override
+			public FieldMode apply(Boolean hide, Boolean lock) {
+				if (Boolean.TRUE.equals(hide)) {
+					return FieldMode.INVISIBLE;
+				}
+				return Boolean.TRUE.equals(lock) ? FieldMode.DISABLED : FieldMode.ACTIVE;
+			}
+		}
+	}
+
 	static class TestableConfigEditorControl extends ConfigEditorControl {
 
 		TestableConfigEditorControl(ReactContext context, ConfigurationItem config) {
@@ -1600,6 +1665,73 @@ public class TestConfigEditorControl extends TestCase {
 		// 3 rendered (count, enabled, label) + 1 inherited = at least 4 children (each wrapped in
 		// chrome); bindingOnly contributes none.
 		assertTrue("Should have at least 3 child controls", editor.getChildCount() >= 3);
+	}
+
+	/**
+	 * A property with a dynamic mode is hidden while its mode says so, and shown again once the
+	 * properties the mode is computed from change back.
+	 */
+	public void testDynamicModeHidesTheField() {
+		DynamicModeConfig config = TypedConfiguration.newConfigItem(DynamicModeConfig.class);
+		ReactFormFieldChromeControl chrome = (ReactFormFieldChromeControl) onlyField(config, DynamicModeConfig.NAME);
+		assertTrue("The field is shown while its mode is active.", chrome.isVisible());
+
+		config.setHide(true);
+		assertFalse("The field is hidden once its mode is invisible.", chrome.isVisible());
+
+		config.setHide(false);
+		assertTrue("The field is shown again once its mode is active again.", chrome.isVisible());
+	}
+
+	/**
+	 * The group of a collection property with a dynamic mode is hidden while its mode says so.
+	 */
+	public void testDynamicModeHidesACollectionGroup() {
+		DynamicModeConfig config = TypedConfiguration.newConfigItem(DynamicModeConfig.class);
+		ReactControl group = onlyField(config, DynamicModeConfig.ITEMS);
+		assertFalse("The group is shown while its mode is active.", group.isHidden());
+
+		config.setHide(true);
+		assertTrue("The group is hidden once its mode is invisible.", group.isHidden());
+	}
+
+	/**
+	 * A property with a dynamic mode accepts no input while its mode says so.
+	 */
+	public void testDynamicModeDisablesTheField() {
+		DynamicModeConfig config = TypedConfiguration.newConfigItem(DynamicModeConfig.class);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		new TestableConfigEditorControl(createTestContext(), config, Set.of(), false, index);
+		ConfigFieldModel field = index.lookup(config, config.descriptor().getProperty(DynamicModeConfig.NAME));
+		assertTrue(field.isEditable());
+
+		config.setLock(true);
+		assertFalse("A disabled field accepts no input.", field.isEditable());
+
+		config.setLock(false);
+		assertTrue("The field accepts input again once its mode is active again.", field.isEditable());
+	}
+
+	/**
+	 * A form built read-only stays read-only, whatever the dynamic mode says.
+	 */
+	public void testDynamicModeDoesNotMakeAReadOnlyFormEditable() {
+		DynamicModeConfig config = TypedConfiguration.newConfigItem(DynamicModeConfig.class);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		new TestableConfigEditorControl(createTestContext(), config, Set.of(), false, index, false);
+
+		assertFalse(index.lookup(config, config.descriptor().getProperty(DynamicModeConfig.NAME)).isEditable());
+	}
+
+	/**
+	 * The single control an editor showing only the given property of the given item consists of.
+	 */
+	private ReactControl onlyField(ConfigurationItem config, String propertyName) {
+		Set<PropertyDescriptor> others = new java.util.HashSet<>(config.descriptor().getProperties());
+		others.remove(config.descriptor().getProperty(propertyName));
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config, others);
+		assertEquals(1, editor.getChildCount());
+		return editor.getChildrenList().get(0);
 	}
 
 	/**

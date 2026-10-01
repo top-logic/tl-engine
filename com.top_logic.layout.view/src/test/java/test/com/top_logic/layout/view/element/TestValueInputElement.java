@@ -746,7 +746,7 @@ public class TestValueInputElement extends TestCase {
 	 * control selection reads from it.
 	 */
 	private static <T> StorageMapping<T> valuesOf(Class<?> applicationType) {
-		return new StorageMapping<T>() {
+		return new StorageMapping<>() {
 			@SuppressWarnings("unchecked")
 			@Override
 			public Class<T> getApplicationType() {

@@ -1,4 +1,4 @@
-import { styleTags, tags as t } from '@lezer/highlight';
+import { styleTags, tags as t } from 'tl-code-editor';
 
 export const highlighting = styleTags({
   Number: t.number,

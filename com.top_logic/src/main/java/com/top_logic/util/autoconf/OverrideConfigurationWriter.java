@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.admin.component;
+package com.top_logic.util.autoconf;
 
 import java.io.Writer;
 import java.util.Collection;

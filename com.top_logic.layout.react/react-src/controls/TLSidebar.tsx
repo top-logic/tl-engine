@@ -617,7 +617,7 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <div id={controlId} className={rootClassName(state, rootClass)}>
-      {state.drawerToggleContribution && (
+      {!!state.drawerToggleContribution && (
         <TLChild control={state.drawerToggleContribution} />
       )}
       {drawerOpen && (
@@ -625,13 +625,13 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
       )}
       <nav className="tlSidebar__nav" aria-label={i18n['js.sidebar.ariaLabel']}>
         {collapsed ? (
-          state.headerCollapsedContent && (
+          !!state.headerCollapsedContent && (
             <div className="tlSidebar__headerSlot tlSidebar__headerSlot--collapsed">
               <TLChild control={state.headerCollapsedContent} />
             </div>
           )
         ) : (
-          state.headerContent && (
+          !!state.headerContent && (
             <div className="tlSidebar__headerSlot">
               <TLChild control={state.headerContent} />
             </div>
@@ -660,13 +660,13 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
 
         {collapsed ? (
-          state.footerCollapsedContent && (
+          !!state.footerCollapsedContent && (
             <div className="tlSidebar__footerSlot tlSidebar__footerSlot--collapsed">
               <TLChild control={state.footerCollapsedContent} />
             </div>
           )
         ) : (
-          state.footerContent && (
+          !!state.footerContent && (
             <div className="tlSidebar__footerSlot">
               <TLChild control={state.footerContent} />
             </div>
@@ -687,7 +687,7 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
           the fill chain here. */}
       <div className="tlSidebar__content">
         <FillBarrier>
-          {state.activeContent && <TLChild control={state.activeContent} />}
+          {!!state.activeContent && <TLChild control={state.activeContent} />}
         </FillBarrier>
       </div>
     </div>

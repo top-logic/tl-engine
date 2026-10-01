@@ -7,6 +7,7 @@ package com.top_logic.layout.view.admin;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -48,6 +49,258 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Command group
 	 */
 	public static ResKey MATRIX_GROUP_COLUMN;
+
+	/**
+	 * @en Type
+	 */
+	public static ResKey COVERAGE_COLUMN_TYPE;
+
+	/**
+	 * @en Module
+	 */
+	public static ResKey COVERAGE_COLUMN_MODULE;
+
+	/**
+	 * @en Status
+	 */
+	public static ResKey COVERAGE_COLUMN_STATUS;
+
+	/**
+	 * @en Read roles
+	 */
+	public static ResKey COVERAGE_COLUMN_READ_ROLES;
+
+	/**
+	 * @en Role rules
+	 */
+	public static ResKey COVERAGE_COLUMN_ROLE_RULES;
+
+	/**
+	 * @en Role parents
+	 */
+	public static ResKey COVERAGE_COLUMN_ROLE_PARENTS;
+
+	/**
+	 * @en Access parent
+	 */
+	public static ResKey COVERAGE_COLUMN_ACCESS_PARENT;
+
+	/**
+	 * @en container (default)
+	 */
+	public static ResKey COVERAGE_ACCESS_PARENT_DEFAULT;
+
+	/**
+	 * @en container
+	 */
+	public static ResKey COVERAGE_ACCESS_PARENT_CONTAINER;
+
+	/**
+	 * @en Findings
+	 */
+	public static ResKey COVERAGE_COLUMN_FINDINGS;
+
+	/**
+	 * @en Role parent
+	 */
+	public static ResKey COVERAGE_RULE_KIND_ROLE_PARENT;
+
+	/**
+	 * @en Role rule
+	 */
+	public static ResKey COVERAGE_RULE_KIND_ROLE_RULE;
+
+	/**
+	 * @en The rule "{0}" is defined by the base configuration. It can be overridden by a rule of
+	 *     the same id, but not removed.
+	 */
+	public static ResKey1 ERROR_BASE_RULE_NOT_REMOVABLE__ID;
+
+	/**
+	 * @en Please select the type to edit the access definition of.
+	 */
+	public static ResKey ERROR_NO_TYPE_SELECTED;
+
+	/**
+	 * @en There is no rule to work on.
+	 */
+	public static ResKey ERROR_NO_RULE_SELECTED;
+
+	/**
+	 * @en There is no role parent rule with the id "{0}".
+	 */
+	public static ResKey1 ERROR_UNKNOWN_ROLE_PARENT_RULE__ID;
+
+	/**
+	 * @en There is no role rule with the id "{0}".
+	 */
+	public static ResKey1 ERROR_UNKNOWN_ROLE_RULE__ID;
+
+	/**
+	 * @en Please enter an id naming the rule.
+	 */
+	public static ResKey ERROR_MISSING_RULE_ID;
+
+	/**
+	 * @en Please select the type the rule applies to.
+	 */
+	public static ResKey ERROR_MISSING_RULE_TYPE;
+
+	/**
+	 * @en Please enter at least one step leading to the role parent.
+	 */
+	public static ResKey ERROR_MISSING_RULE_PATH;
+
+	/**
+	 * @en Please select at least one role the rule grants.
+	 */
+	public static ResKey ERROR_MISSING_RULE_ROLE;
+
+	/**
+	 * @en There are no access rights to store.
+	 */
+	public static ResKey ERROR_NO_ACCESS_RIGHTS_SELECTED;
+
+	/**
+	 * @en Please select the model element the access rights apply to.
+	 */
+	public static ResKey ERROR_MISSING_ACCESS_RIGHTS_NAME;
+
+	/**
+	 * @en Please select the operation each rule applies to.
+	 */
+	public static ResKey ERROR_MISSING_GRANT_OPERATION;
+
+	/**
+	 * @en The access rights cannot be stored: {0}
+	 */
+	public static ResKey1 ERROR_ACCESS_RIGHTS_INVALID__ERRORS;
+
+	/**
+	 * @en No role source: neither a role rule nor a role parent rule applies to the type, and no
+	 *     composition holds its objects, so no user can hold a role on them and every access is
+	 *     denied.
+	 */
+	public static ResKey COVERAGE_PROBLEM_NO_ROLE_SOURCE;
+
+	/**
+	 * @en No read grant: no role is granted the read operation on the type, so its objects are
+	 *     inaccessible to every user.
+	 */
+	public static ResKey COVERAGE_PROBLEM_NO_READ_GRANT;
+
+	/**
+	 * @en Dead grant: the operation "{0}" is granted to the roles {1}, but no rule delivers any of
+	 *     them on the type or on its role parents, so the grant never takes effect.
+	 */
+	public static ResKey2 COVERAGE_PROBLEM_DEAD_GRANT__OPERATION_ROLES;
+
+	/**
+	 * @en Make the target of a to-one reference of the type its access parent, so that the objects
+	 *     delegate every access decision to the object the reference points to ("Access
+	 *     rights…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_ACCESS_PARENT;
+
+	/**
+	 * @en Define a role parent rule, so that the objects inherit the roles of the object the
+	 *     rule leads to ("Role parent…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_ROLE_PARENT_RULE;
+
+	/**
+	 * @en Define a role rule assigning users a role on the objects directly ("Role rule…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_ROLE_RULE;
+
+	/**
+	 * @en Mark the type internal, if the application code alone uses it and no user needs access
+	 *     to its objects ("Mark internal").
+	 */
+	public static ResKey COVERAGE_SOLUTION_MARK_INTERNAL;
+
+	/**
+	 * @en Grant the read operation to a role on the type or on its module ("Access rights…",
+	 *     "Module access rights…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_READ_GRANT;
+
+	/**
+	 * @en Add a rule delivering one of the granted roles on the type or on its role parent
+	 *     ("Role rule…", "Role parent…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_DELIVER_ROLE;
+
+	/**
+	 * @en Grant the operation to a role that is delivered on the type instead, or drop the grant
+	 *     ("Access rights…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_CHANGE_GRANT;
+
+	/**
+	 * @en Shadowed rules: the type has an access parent, so the rules {0} applying to it have no
+	 *     effect.
+	 */
+	public static ResKey1 COVERAGE_PROBLEM_SHADOWED_RULES__RULES;
+
+	/**
+	 * @en Delete the shadowed rules, or restrict them to the types that decide for themselves
+	 *     ("Edit rule…", "Delete rule").
+	 */
+	public static ResKey COVERAGE_SOLUTION_REMOVE_SHADOWED_RULES;
+
+	/**
+	 * @en Drop the access parent of the type, so that the rules and its grants decide again
+	 *     ("Access rights…").
+	 */
+	public static ResKey COVERAGE_SOLUTION_REMOVE_ACCESS_PARENT;
+
+	/**
+	 * @en The type delegates every access decision to its access parent, the object reached through
+	 *     {0}: whether a user may read, write or export an object of the type is whether the user
+	 *     may do the same to that object, and creating or deleting one is writing it. The type needs
+	 *     no grants and no roles of its own.
+	 */
+	public static ResKey1 COVERAGE_DELEGATED__PARENT;
+
+	/**
+	 * @en The type delegates every access decision to its container, whichever composition holds
+	 *     the object ({0}): whether a user may read, write or export an object of the type is
+	 *     whether the user may do the same to its container, and creating or deleting one is
+	 *     writing the container. This is the default for a composition part without a role rule
+	 *     and without a role parent rule; the type needs no grants and no roles of its own.
+	 */
+	public static ResKey1 COVERAGE_DELEGATED_DEFAULT__CONTAINERS;
+
+	/**
+	 * @en The type delegates every access decision to its container, whichever composition holds
+	 *     the object ({0}): whether a user may read, write or export an object of the type is
+	 *     whether the user may do the same to its container, and creating or deleting one is
+	 *     writing the container. The type needs no grants and no roles of its own.
+	 */
+	public static ResKey1 COVERAGE_DELEGATED_CONTAINER__CONTAINERS;
+
+	/**
+	 * @en The type is marked as internal: it is used by the application code alone, so it is exempt
+	 *     from the check and no user gets access to its objects.
+	 */
+	public static ResKey COVERAGE_EXEMPT_INTERNAL;
+
+	/**
+	 * @en The type is excluded from access control: every user may access its objects, so it is
+	 *     exempt from the check.
+	 */
+	public static ResKey COVERAGE_EXEMPT_WITHOUT_SECURITY;
+
+	/**
+	 * @en The access definition could not be written to the file "{0}".
+	 */
+	public static ResKey1 ERROR_WRITING_ACCESS_DEFINITION__FILE;
+
+	/**
+	 * @en The access definition could not be read from the file "{0}".
+	 */
+	public static ResKey1 ERROR_READING_ACCESS_DEFINITION__FILE;
 
 	static {
 		initConstants(I18NConstants.class);

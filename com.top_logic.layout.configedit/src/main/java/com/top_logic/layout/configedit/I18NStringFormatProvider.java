@@ -23,21 +23,20 @@ import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
  *
  * <p>
  * The {@code impl} for a {@link ConfigControlService.FormatMapping} entry that claims a property
- * whose value provider produces a {@link ResKey}, e.g. {@link ResKey.ValueFormat}. Without that
- * claim, such a property would reach the built-in fallback, which can only offer the value's
- * <em>encoded</em> form as text - a single string carrying every language at once, in the
- * framework's own encoding. Nobody edits a translation that way; the same value in a model has an
- * input per language and machine translation between them, and a configured one should be no
- * different.
+ * whose value provider produces a {@link ResKey}, e.g.
+ * {@link com.top_logic.basic.util.ResKey.ValueFormat}. Without that claim, such a property would
+ * reach the built-in fallback, which can only offer the value's <em>encoded</em> form as text - a
+ * single string carrying every language at once, in the framework's own encoding. Nobody edits a
+ * translation that way; the same value in a model has an input per language and machine translation
+ * between them, and a configured one should be no different.
  * </p>
  *
  * <p>
  * Claiming the property is also what gives this control the value it needs: the claim makes
- * {@link ConfigControlService#createModel(com.top_logic.basic.config.ConfigurationItem,
- * com.top_logic.basic.config.PropertyDescriptor) createModel} hand out the typed
- * {@link ConfigFieldModel} over the {@link ResKey} itself, rather than the
- * {@link ConfigFormatFieldModel} over its encoded text - and a {@link ResKey} is exactly what
- * {@link ReactI18NStringInputControl} reads and writes.
+ * {@link ConfigControlService#createModel(com.top_logic.basic.config.ConfigurationItem, com.top_logic.basic.config.PropertyDescriptor)
+ * createModel} hand out the typed {@link ConfigFieldModel} over the {@link ResKey} itself, rather
+ * than the {@link ConfigFormatFieldModel} over its encoded text - and a {@link ResKey} is exactly
+ * what {@link ReactI18NStringInputControl} reads and writes.
  * </p>
  */
 public class I18NStringFormatProvider extends AbstractConfiguredInstance<I18NStringFormatProvider.Config>

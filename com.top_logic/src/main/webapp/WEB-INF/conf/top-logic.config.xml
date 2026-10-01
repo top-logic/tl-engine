@@ -1532,7 +1532,6 @@
 		<config service-class="com.top_logic.util.sched.Scheduler"
 			enabled="true">
 			<instance class="com.top_logic.util.sched.Scheduler"
-				dont-run-tasks-on-startup="true" 
 				polling-interval="600000"
 				max-tasktime="1200000" 
 				max-task="3">
@@ -1566,8 +1565,7 @@
 						</schedules>
 					</task>
 					<task class="com.top_logic.knowledge.wrap.person.RefreshUsersTask"
-						name="RefreshUsersTask"
-						run-on-startup="true" >
+						name="RefreshUsersTask" >
 						<schedules>
 							<on-startup/>
 							<periodically
@@ -1577,8 +1575,7 @@
 						</schedules>
 					</task>
 					<task class="com.top_logic.knowledge.monitor.CheckUnusedAccountsTask"
-						name="CheckUnusedAccountsTask"
-						run-on-startup="false" >
+						name="CheckUnusedAccountsTask" >
 						<checker
 							deleteDayCount="0"
 							excludeUIDs="root"
@@ -1590,7 +1587,6 @@
 					</task>
 					<task class="com.top_logic.util.sched.SchedulerClusterCleanupTask"
 						name="SchedulerClusterCleanupTask" 
-						run-on-startup="true" 
 						enabled="false"
 					>
 						<schedules>
@@ -1601,8 +1597,7 @@
 						</schedules>
 					</task>
 					<task class="com.top_logic.util.sched.TranslationServiceResetTask"
-						name="TranslationServiceResetTask" 
-						run-on-startup="false" >
+						name="TranslationServiceResetTask" >
 						<schedules>
 							<daily
 								time-of-day="00:01"

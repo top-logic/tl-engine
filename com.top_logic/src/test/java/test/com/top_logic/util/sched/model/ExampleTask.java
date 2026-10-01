@@ -151,4 +151,10 @@ public class ExampleTask extends TaskImpl {
     	}
     }
 
+	@Override
+	public boolean isNodeLocal() {
+		// Test task; runs on every node.
+		return true;
+	}
+
 }

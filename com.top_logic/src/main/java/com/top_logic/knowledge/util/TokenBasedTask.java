@@ -325,4 +325,11 @@ public abstract class TokenBasedTask<C extends TokenBasedTask.Config<?>> extends
         
         return (this.lockMillis);
     }
+
+	@Override
+	public boolean isNodeLocal() {
+		// Coordinates the nodes itself through its own cluster-wide lock.
+		return true;
+	}
+
 }

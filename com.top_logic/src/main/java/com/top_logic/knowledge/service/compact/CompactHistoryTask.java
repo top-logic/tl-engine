@@ -83,15 +83,6 @@ public class CompactHistoryTask<C extends CompactHistoryTask.Config<?>> extends 
 		@BooleanDefault(true)
 		boolean isNeedingMaintenanceMode();
 
-		/**
-		 * A schedule missed while the application was down must not start the compaction during
-		 * start-up, because the compaction discards history irrevocably and restarts the
-		 * persistency layer. The task therefore waits for its next schedule instead.
-		 */
-		@Override
-		@BooleanDefault(false)
-		boolean isRunOnStartup();
-
 	}
 
 	private final long _retentionPeriod;
@@ -146,6 +137,12 @@ public class CompactHistoryTask<C extends CompactHistoryTask.Config<?>> extends 
 		} catch (RuntimeException ex) {
 			getLog().taskEnded(ResultType.ERROR, ResultType.ERROR.getMessageI18N(), ex);
 		}
+	}
+
+	@Override
+	public boolean isNodeLocal() {
+		// Rewrites the persistent history; must run only once in the cluster.
+		return false;
 	}
 
 }

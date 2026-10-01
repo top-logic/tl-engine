@@ -87,7 +87,7 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 	 * this {@link Task}, and if it is not running, it is <code>null</code>.
 	 * </p>
 	 */
-	private static final String PROPERTY_CLUSTER_NAME = "clusterNode";
+	public static final String PROPERTY_CLUSTER_NAME = "clusterNode";
 
 	/**
 	 * The cluster node id to which this {@link TaskLogWrapper} currently belongs.
@@ -99,7 +99,7 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 	 * this {@link Task}, and if it is not running, it is <code>null</code>.
 	 * </p>
 	 */
-	private static final String PROPERTY_CLUSTER_ID = "clusterId";
+	public static final String PROPERTY_CLUSTER_ID = "clusterId";
 
 	private static final AssociationSetQuery<KnowledgeAssociation> RESULTS_QUERY =
 		AssociationQuery.createOutgoingQuery("results", ASSOCIATION_TYPE);
@@ -746,6 +746,21 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 	}
 
 	/**
+	 * Is the {@link #getClusterLockName()} set to the local cluster node, regardless of the
+	 * {@link #getClusterLockId()}?
+	 * <p>
+	 * The cluster node name is unique in the cluster and stays the same when the node is restarted,
+	 * whereas the node id changes with every start. So this is also true for a lock that an earlier
+	 * start of this node has left behind.
+	 * </p>
+	 * 
+	 * @see #hasClusterLock()
+	 */
+	public boolean isClusterLockOfThisNode() {
+		return StringServices.equals(getClusterLockName(), getCurrentClusterNodeName());
+	}
+
+	/**
 	 * Is the {@link #getClusterLockName()} or {@link #getClusterLockId()} set? If not, no one has
 	 * the lock.
 	 */
@@ -837,8 +852,12 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 			 * in this transaction and that is rolled back due to a concurrent commit from another
 			 * cluster node, the whole system startup transaction fails, causing the system startup
 			 * itself to fail. Therefore, don't lock (i.e. touch) any persistent objects, unless it
-			 * is sure that nobody else is currently changing that object. */
-			if (hasClusterLock()) {
+			 * is sure that nobody else is currently changing that object.
+			 * 
+			 * Tasks are not yet dispatched on this node, so a lock held by this node is left over
+			 * from an earlier start of it, which ended while the task was running. The node id of
+			 * that lock is outdated, therefore only the node name is compared. */
+			if (isClusterLockOfThisNode()) {
 				forceUncheckedMarkTaskAsInactive(task, I18NConstants.TASK_ACTIVE_ON_SHUTDOWN);
 			}
 			/* See startupNodeCleanLocal() for why this commit is always necessary, even if nothing

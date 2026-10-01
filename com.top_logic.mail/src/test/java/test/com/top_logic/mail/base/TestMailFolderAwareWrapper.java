@@ -12,6 +12,8 @@ import jakarta.mail.MessagingException;
 
 import junit.framework.AssertionFailedError;
 
+import test.com.top_logic.util.sched.model.TaskTestUtil;
+
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.StringID;
 import com.top_logic.dob.DataObjectException;
@@ -99,6 +101,11 @@ public class TestMailFolderAwareWrapper extends AbstractWrapper implements MailF
 	 */
 	public void fetchMails() throws InterruptedException {
 		Task mailDaemon = MailTestUtils.getMailServerDaemon();
+		if (mailDaemon.getLog() == null) {
+			/* The test runs the task itself: The Scheduler does not dispatch tasks in a test that
+			 * does not boot the application, and therefore does not create the log of the task. */
+			TaskTestUtil.initTaskLog(mailDaemon);
+		}
 		int retry = 10;
 		while (true) {
 			if (retry-- == 0) {
@@ -107,18 +114,9 @@ public class TestMailFolderAwareWrapper extends AbstractWrapper implements MailF
 			if (getMailFolder() != null) {
 				break;
 			}
-			if (!isAttachedToScheduler(mailDaemon)) {
-				/* Task is not yet attached to Scheduler; calling run() leads to NPE. */
-				Thread.sleep(1000);
-				continue;
-			}
 			mailDaemon.run();
 			Thread.sleep(1000);
 		}
-	}
-
-	private static boolean isAttachedToScheduler(Task task) {
-		return task.getLog() != null;
 	}
 
 }

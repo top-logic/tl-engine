@@ -34,7 +34,6 @@
 					<form:cell wholeLine="true">
 						<form:columns count="2">
 							<form:inputCell name="<%=TaskAccessor.IS_ENABLED%>"/>
-							<form:inputCell name="<%=TaskAccessor.RUN_ON_STARTUP%>"/>
 							<form:inputCell name="<%=TaskAccessor.PER_NODE%>"/>
 							<form:inputCell name="<%=TaskAccessor.PERSISTENT%>"/>
 							<form:inputCell name="<%=TaskAccessor.NEEDS_MAINTENANCE_MODE%>"/>

@@ -18,5 +18,19 @@
 				</declarations>
 			</instance>
 		</config>
+		<!--
+			The developer tools model holds the transient form objects of the model editor. They
+			are handled by the editor code only and never on behalf of a user through the access
+			check, so they carry no access definition on purpose.
+		-->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<module name="tl.devtools"
+						internal="true"
+					/>
+				</security-config>
+			</instance>
+		</config>
 	</services>
 </application>

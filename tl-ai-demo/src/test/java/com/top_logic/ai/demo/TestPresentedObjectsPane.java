@@ -32,6 +32,8 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.element.TableElement;
+import com.top_logic.layout.view.table.AttributeColumn;
+import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -127,8 +129,9 @@ public class TestPresentedObjectsPane extends TestCase {
 	private static List<String> attributes(TableElement.Config table) {
 		assertNotNull("The table names its columns.", table.getColumns());
 		List<String> result = new ArrayList<>();
-		for (TableElement.ColumnConfig column : table.getColumns().getColumns()) {
-			result.add(column.getAttribute());
+		for (PolymorphicConfiguration<? extends ColumnDeclaration> column : table.getColumns().getColumns()) {
+			assertTrue("An attribute column: " + column, column instanceof AttributeColumn.Config);
+			result.add(((AttributeColumn.Config) column).getAttribute());
 		}
 		return result;
 	}

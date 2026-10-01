@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.security;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -31,14 +32,14 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
-import com.top_logic.model.annotate.security.AccessGrant;
+import com.top_logic.model.annotate.security.AccessRevoke;
+import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
-import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -690,21 +691,68 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 
 	/**
 	 * Every role name that some Read, Write or Create grant of the given model security configuration
-	 * names.
+	 * names, and that no later revoke of the same entry takes back.
+	 *
+	 * <p>
+	 * The rules of an entry form a sequence that the engine applies in order, the rules of all
+	 * configuration layers appended (#29564): a {@code <grant>} adds roles to an operation, a
+	 * {@code <revoke>} removes them again, a {@code <revoke>} without roles removes every role. The
+	 * sequence is replayed here per entry, so that a role the application revokes from what the
+	 * framework granted on the same element does not count.
+	 * </p>
+	 *
+	 * <p>
+	 * A revoke only cancels a grant of its own entry. The engine also lets a type's revoke remove what
+	 * the type's module and generalizations granted, but which types those are is a question about the
+	 * model, not about this configuration - and the module's grant still reaches the module's other
+	 * types. Counting the role in that case errs on the side of no warning, which is the side a
+	 * warning that can be wrong must err on. For the same reason a grant passed on to the
+	 * specializations keeps counting when a revoke takes it back from the type alone.
+	 * </p>
 	 */
 	public static Set<String> rolesWithModelRights(SecurityConfigurationService.Config config) {
 		Set<String> result = new TreeSet<>();
 		for (SecurityConfigurationService.ModelAccessRights rights : config.getSecurityConfig().values()) {
-			for (Map.Entry<CommandGroupReference, AccessGrant> grant : rights.getGrants().entrySet()) {
-				if (!MODEL_RIGHTS_THAT_MATTER.contains(grant.getKey().id())) {
+			Map<String, Set<String>> effective = new HashMap<>();
+			Map<String, Set<String>> passedOn = new HashMap<>();
+			for (AccessRule rule : rights.getGrants()) {
+				String operation = rule.getOperation().id();
+				if (!MODEL_RIGHTS_THAT_MATTER.contains(operation)) {
 					continue;
 				}
-				for (RoleConfig role : grant.getValue().getRoles()) {
-					result.add(role.getName());
+				applyRule(rule, operation, effective);
+				if (rule.isInherit()) {
+					applyRule(rule, operation, passedOn);
 				}
 			}
+			effective.values().forEach(result::addAll);
+			passedOn.values().forEach(result::addAll);
 		}
 		return result;
+	}
+
+	/**
+	 * Applies one model access rule to the role names allowed per operation, as the engine's
+	 * {@code SecurityConfigurationService} does with the resolved roles.
+	 */
+	private static void applyRule(AccessRule rule, String operation, Map<String, Set<String>> rights) {
+		if (!(rule instanceof AccessRevoke)) {
+			Set<String> allowed = rights.computeIfAbsent(operation, unused -> new HashSet<>());
+			for (RoleConfig role : rule.getRoles()) {
+				allowed.add(role.getName());
+			}
+			return;
+		}
+		if (rule.getRoles().isEmpty()) {
+			rights.remove(operation);
+			return;
+		}
+		Set<String> allowed = rights.get(operation);
+		if (allowed != null) {
+			for (RoleConfig role : rule.getRoles()) {
+				allowed.remove(role.getName());
+			}
+		}
 	}
 
 	/**

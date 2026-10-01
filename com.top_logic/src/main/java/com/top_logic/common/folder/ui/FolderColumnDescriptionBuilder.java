@@ -167,6 +167,13 @@ public abstract class FolderColumnDescriptionBuilder {
 		return result;
 	}
 
+	/**
+	 * Configures the column holding the button for updating the content of a document.
+	 *
+	 * @param column
+	 *        The column to configure.
+	 * @return The configured column, visible only if writing is allowed.
+	 */
 	public ColumnConfiguration createUpdateColumn(ColumnConfiguration column) {
 		ColumnConfiguration result = this.createButtonColumn(column);
 		result.setVisible(this.allowWrite.isVisible());

@@ -999,7 +999,6 @@ com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.java: Missing docu
 com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.java: Missing documentation: com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.createDeleteColumn
 com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.java: Missing documentation: com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.createDownloadColumn
 com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.java: Missing documentation: com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.createKeywordsColumn
-com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.java: Missing documentation: com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.createLockColumn
 com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.java: Missing documentation: com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.createMailColumn
 com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.java: Missing documentation: com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.createNameColumn
 com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.java: Missing documentation: com.top_logic.common.folder.ui.FolderColumnDescriptionBuilder.createSimilarDocsColumn

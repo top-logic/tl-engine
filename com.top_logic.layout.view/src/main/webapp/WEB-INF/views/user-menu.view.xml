@@ -59,7 +59,7 @@
 			-->
 			<menu>
 				<avatar input="currentUser"/>
-				<text css-class="tlUserMenu__name"
+				<text css-class="tl-button__label"
 					input="currentUser"
 					overflow="ellipsis"
 				/>

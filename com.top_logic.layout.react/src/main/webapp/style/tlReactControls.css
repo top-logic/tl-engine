@@ -2690,23 +2690,6 @@ button.tlDrawer__closeBtn:focus-visible {
 	color: var(--text-secondary);
 }
 
-/* --- User menu ------------------------------------------------------------- */
-
-/* The account name beside the avatar. It yields before the work area does: at narrow widths the
-   avatar alone identifies the session. */
-.tlUserMenu__name {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	max-width: 12rem;
-}
-
-@media (max-width: 640px) {
-	.tlUserMenu__name {
-		display: none;
-	}
-}
-
 /* --- TLTableView ----------------------------------------------------------- */
 
 /* The table always fills (see the fill contract above): inside a flex column, .tlFill sizes it

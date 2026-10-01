@@ -1,22 +1,54 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <relativePath>../tl-parent-core/internal</relativePath>
-    <groupId>com.top-logic</groupId>
-    <artifactId>tl-parent-core-internal</artifactId>
-    <version>8.0.0-SNAPSHOT</version>
-  </parent>
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<relativePath>../tl-parent-core/internal</relativePath>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-core-internal</artifactId>
+		<version>8.0.0-SNAPSHOT</version>
+	</parent>
 
-  <artifactId>tl-storage-azure</artifactId>
+	<artifactId>tl-storage-azure</artifactId>
 	<name>${project.artifactId}</name>
-	<description>Adapter for storing binary content in Azure Blob Storage.</description>
+	<description>Blob store keeping binary content in Azure Blob Storage.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
-  <dependencies>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-basic</artifactId>
-    </dependency>
-  </dependencies>
+	<dependencies>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-basic</artifactId>
+		</dependency>
+		<dependency>
+			<!-- For reading the document repository of former versions during the data migration. -->
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.azure</groupId>
+			<artifactId>azure-storage-blob</artifactId>
+			<exclusions>
+				<!-- The store uses the HTTP client of the JDK instead of the Netty based default client. -->
+				<exclusion>
+					<groupId>com.azure</groupId>
+					<artifactId>azure-core-http-netty</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.azure</groupId>
+			<artifactId>azure-core-http-jdk-httpclient</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-basic</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 </project>

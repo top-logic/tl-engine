@@ -41,6 +41,7 @@
 		<bouncycastle.version>1.86</bouncycastle.version>
 		<batik.version>1.19</batik.version>
 		<awssdk.version>2.55.9</awssdk.version>
+		<azure-sdk.version>1.3.8</azure-sdk.version>
 		<testcontainers.version>2.0.5</testcontainers.version>
 		<tl.license.version>7.8.2</tl.license.version>
 		<!-- renovate: datasource=node-version depName=node -->
@@ -1230,6 +1231,13 @@
 				<groupId>software.amazon.awssdk</groupId>
 				<artifactId>bom</artifactId>
 				<version>${awssdk.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.azure</groupId>
+				<artifactId>azure-sdk-bom</artifactId>
+				<version>${azure-sdk.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>

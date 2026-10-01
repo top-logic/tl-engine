@@ -1,8 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!-- Main configuration file -->
+<!-- Settings of Azure blob stores, overridable through environment variables. -->
 <root>
 	<alias>
+		<!--
+			Connection string of the storage account; empty to give the account by name and key instead. The connection
+			string contains the account key, so it is given encrypted, or as plain text with the prefix "unencrypted:".
+		-->
+		<entry name="%AZURE_BLOB_CONNECTION_SECRET%" value="${env:tl_azure_blob_connection_string:unencrypted:}" />
+
+		<!-- URL of the blob service; empty for the default endpoint of the account in the Azure cloud. -->
+		<entry name="%AZURE_BLOB_ENDPOINT%"          value="${env:tl_azure_blob_endpoint:}" />
+		<entry name="%AZURE_BLOB_ACCOUNT_NAME%"      value="${env:tl_azure_blob_account_name:}" />
+		<!-- Account key, given encrypted, or as plain text with the prefix "unencrypted:". -->
+		<entry name="%AZURE_BLOB_ACCOUNT_SECRET%"    value="${env:tl_azure_blob_account_key:unencrypted:}" />
+
+		<entry name="%AZURE_BLOB_CONTAINER%"         value="${env:tl_azure_blob_container:}" />
+		<entry name="%AZURE_BLOB_PREFIX%"            value="${env:tl_azure_blob_prefix:}" />
 	</alias>
 
 	<properties>

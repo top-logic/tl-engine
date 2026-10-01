@@ -1,7 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<services/>
+	<services>
+		<!--
+			The module registers no blob store. An application adds an Azure store to the blob store service in its
+			own configuration, either with a connection string:
 
-	<configs/>
+			<config service-class="com.top_logic.basic.io.blob.BlobStoreService">
+				<instance>
+					<stores>
+						<store name="azure"
+							class="com.top_logic.storage.azure.AzureBlobStore"
+							connection-string="%AZURE_BLOB_CONNECTION_SECRET%"
+							container="%AZURE_BLOB_CONTAINER%"
+							prefix="%AZURE_BLOB_PREFIX%"
+						/>
+					</stores>
+				</instance>
+			</config>
+
+			or with account name and account key:
+
+						<store name="azure"
+							class="com.top_logic.storage.azure.AzureBlobStore"
+							endpoint="%AZURE_BLOB_ENDPOINT%"
+							account-name="%AZURE_BLOB_ACCOUNT_NAME%"
+							account-key="%AZURE_BLOB_ACCOUNT_SECRET%"
+							container="%AZURE_BLOB_CONTAINER%"
+							prefix="%AZURE_BLOB_PREFIX%"
+						/>
+
+			To make it the store for binary attributes that name no store, the application additionally sets
+			default-store="azure" on the instance.
+
+			An application whose former document repository was stored in Azure Blob Storage reads the documents
+			during the data migration with the reader com.top_logic.storage.azure.AzureRepositoryContentReader,
+			configured as reader of com.top_logic.knowledge.service.migration.processors.DocumentRepositoryConfig.
+		-->
+	</services>
+
+	<configs />
 </application>

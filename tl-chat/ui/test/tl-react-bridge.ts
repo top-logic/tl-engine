@@ -45,6 +45,16 @@ export function useTLState(): Record<string, unknown> {
   return controlState
 }
 
+/** The bridge's own composition: the component's classes, then the configured `cssClass`. */
+export function rootClassName(
+  state: Record<string, unknown>,
+  ...classes: (string | false | null | undefined)[]
+): string {
+  const configured = state.cssClass
+  const all = typeof configured === 'string' ? [...classes, configured] : classes
+  return all.filter(Boolean).join(' ')
+}
+
 const dispatch = async (name: string, args?: Record<string, unknown>): Promise<unknown> => {
   dispatched.push({ name, args })
   return undefined

@@ -127,6 +127,13 @@ describe('the list in a wide host', () => {
   })
 })
 
+describe('the css-class of the element', () => {
+  it('is written on the root after the classes of the list itself', () => {
+    mount(560, { cssClass: 'appRail' })
+    expect(list().className).toBe('tl-data-list is-collapsed is-drawer appRail')
+  })
+})
+
 describe('the list in a narrow host', () => {
   it('is a closed drawer: a strip in the flow, the arrow offering to open it', () => {
     mount(560)

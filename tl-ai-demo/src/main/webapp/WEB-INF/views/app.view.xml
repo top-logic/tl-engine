@@ -392,11 +392,11 @@
 								observed-types="tl.ai.execution:AgentTask"
 								search="false"
 							>
-								<css-class><![CDATA[t -> switch {
+								<row-css-class><![CDATA[t -> switch {
 									$t.get(`tl.ai.execution:AgentTask#status`) == "completed": "is-done";
 									$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": "is-running";
 									default: "is-pending";
-								}]]></css-class>
+								}]]></row-css-class>
 								<empty-text>
 									<en>Nothing planned yet</en>
 									<de>Noch nichts geplant</de>

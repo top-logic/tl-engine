@@ -47,7 +47,7 @@ import com.top_logic.util.TLContextManager;
  * ({@link TidResolver}), so a run cannot put an object on a page that its user may not see - and an
  * object they may not see is reported exactly like one that does not exist.</li>
  * <li><b>The window.</b> The value is written in the sub-session of the browser window the run
- * belongs to and under that window's request lock, the way
+ * belongs to and within that window's interaction, the way
  * {@link AgentViewRefreshService} reaches a window from the agent thread. A run without a window -
  * headless, TL-Script, the scheduler - has no channel at all, says so and does nothing.</li>
  * </ul>

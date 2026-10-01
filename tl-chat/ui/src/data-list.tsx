@@ -1,4 +1,4 @@
-import { React, useTLCommand, useTLState } from 'tl-react-bridge'
+import { React, rootClassName, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import { bundle, toLanguage } from './i18n'
 
@@ -286,9 +286,13 @@ export function TLDataList({ controlId }: TLCellProps) {
     <div
       id={controlId}
       ref={root}
-      className={`tl-data-list${isCollapsed ? ' is-collapsed' : ''}${drawer ? ' is-drawer' : ''}${
-        drawer && drawerOpen ? ' is-drawer-open' : ''
-      }`}
+      className={rootClassName(
+        state,
+        'tl-data-list',
+        isCollapsed && 'is-collapsed',
+        drawer && 'is-drawer',
+        drawer && drawerOpen && 'is-drawer-open',
+      )}
       onKeyDown={onDrawerKey}
     >
       {drawer && drawerOpen ? (

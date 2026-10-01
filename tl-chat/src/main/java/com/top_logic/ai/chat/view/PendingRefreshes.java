@@ -15,7 +15,7 @@ import com.top_logic.knowledge.wrap.person.Person;
  *
  * <p>
  * The whole point of this class is that <b>no change is ever forgotten</b>. A refresh takes time -
- * it enters every registered window's sub-session and waits for that window's request lock - and an
+ * it enters every registered window's sub-session and waits for that window's interaction - and an
  * agent writes throughout that time. A change that arrives while a refresh is running therefore
  * needs a refresh of its own, and the earlier shape of this bookkeeping had no way to say so: it
  * cleared the pending set before doing the work and refused to arm a second pass while the first

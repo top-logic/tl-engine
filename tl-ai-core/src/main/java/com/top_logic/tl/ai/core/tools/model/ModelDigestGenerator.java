@@ -7,9 +7,12 @@ package com.top_logic.tl.ai.core.tools.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
@@ -20,9 +23,13 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.TLModuleDisplayGroup;
+import com.top_logic.model.resources.TLTypePartResourceProvider;
+import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.model.visit.LabelVisitor;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.Resources;
 
 /**
  * Generates a compact text digest of a {@link TLModel} for an agent run.
@@ -32,14 +39,26 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * exploration tool calls. It uses a notation chosen for token efficiency.
  * </p>
  *
+ * <p>
+ * Next to the structure it carries what the elements <em>mean</em>: the description (tooltip
+ * resource) of a module, type or part, as a {@code //} comment - on the line after a module header,
+ * on the line before a type, at the end of a part's line. An element without a description gets no
+ * comment. The keys are the ones {@code listModules}, {@code listTypes} and {@code listTypeParts}
+ * read, so both answers agree, and the text is in the language of the account the run acts for.
+ * Whitespace inside a description is collapsed, so every element stays on one line. A description
+ * is never shortened: what an application states about an element - a unit, a constraint - is often
+ * in its second sentence. A description of a readable type is as readable as its name, so the
+ * scoping below covers the descriptions without a rule of its own.
+ * </p>
+ *
  * <h2>What the principal gets to see</h2>
  *
  * <p>
  * The digest is a <b>read surface</b>: it reaches the model in one piece and describes types the
  * principal may have no business knowing about. So it is scoped, and it is scoped the way the rest of
  * L2 is - against the rights of the run, not against a mode or a flag. {@link #generate(TLModel,
- * boolean, ModelSecurity)} is the only form; there is no argument-less one to forget, which is the
- * same shape {@code TidResolver.resolve} and {@code ExecutionResult.toJson} have carried since #289.
+ * boolean, ModelSecurity, Locale)} is the only form; there is no argument-less one to forget, which
+ * is the same shape {@code TidResolver.resolve} and {@code ExecutionResult.toJson} have carried since #289.
  * </p>
  *
  * <p>
@@ -72,6 +91,8 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  */
 public class ModelDigestGenerator {
 
+	private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+
 	/**
 	 * Generates a compact model digest of everything the given principal may read.
 	 *
@@ -83,10 +104,13 @@ public class ModelDigestGenerator {
 	 *        The rights of the run's principal. Mandatory: what a read surface discloses is decided
 	 *        against a principal, and a digest generated without one would have to name every type or
 	 *        none.
+	 * @param locale
+	 *        The language the descriptions are written in - the UI language of the run's account.
 	 * @return A text digest, or the empty string if the principal may read no type of any module the
 	 *         request asked for.
 	 */
-	public static String generate(TLModel model, boolean includeFramework, ModelSecurity security) {
+	public static String generate(TLModel model, boolean includeFramework, ModelSecurity security,
+			Locale locale) {
 		if (security == null) {
 			throw new IllegalStateException("A model digest is a read surface, and this call names no"
 				+ " principal to scope it for. Pass the ModelSecurity of the agent run.");
@@ -102,9 +126,10 @@ public class ModelDigestGenerator {
 			return "";
 		}
 
+		Resources resources = Resources.getInstance(locale);
 		StringBuilder body = new StringBuilder();
 		for (TLModule module : modules) {
-			appendModule(body, module, accessible);
+			appendModule(body, module, accessible, resources);
 		}
 		if (body.length() == 0) {
 			// Nothing survived the scoping. An empty preamble would tell the model there is a model
@@ -116,7 +141,7 @@ public class ModelDigestGenerator {
 		StringBuilder sb = new StringBuilder();
 		sb.append("# Application Model\n");
 		sb.append(
-			"// Notation: `name: Type` property · `name: -> Type` reference · `Type[]` collection · `(...)` modifiers: mandatory, derived, composite, override\n");
+			"// Notation: `name: Type` property · `name: -> Type` reference · `Type[]` collection · `(...)` modifiers: mandatory, derived, composite, override · `// text` description\n");
 		sb.append(
 			"// Type names: unqualified within the same module, else fully qualified. interface = abstract (no direct instances), class = instantiable.\n");
 		sb.append(body);
@@ -133,7 +158,8 @@ public class ModelDigestGenerator {
 	 * made, and a module the principal reads nothing of is not one it should be told about.
 	 * </p>
 	 */
-	private static void appendModule(StringBuilder sb, TLModule module, Set<TLClass> accessible) {
+	private static void appendModule(StringBuilder sb, TLModule module, Set<TLClass> accessible,
+			Resources resources) {
 		List<TLType> types = module.getTypes().stream()
 			.filter(t -> t.getModelKind() != ModelKind.ASSOCIATION
 				&& t.getModelKind() != ModelKind.DATATYPE)
@@ -160,27 +186,30 @@ public class ModelDigestGenerator {
 			sb.append(", ").append(enumCount).append(enumCount == 1 ? " enum" : " enums");
 		}
 		sb.append(")\n");
+		appendDescription(sb, resources, LabelVisitor.getModuleResourceKey(module));
 
 		// Enums first (compact one-liners), then interfaces, then classes
 		for (TLType type : types) {
 			if (type instanceof TLEnumeration) {
-				appendEnum(sb, (TLEnumeration) type);
+				appendEnum(sb, (TLEnumeration) type, resources);
 			}
 		}
 		for (TLType type : types) {
 			if (type instanceof TLClass tlClass && isInterface(tlClass)) {
-				appendStructuredType(sb, tlClass, "interface");
+				appendStructuredType(sb, tlClass, "interface", resources);
 			}
 		}
 		for (TLType type : types) {
 			if (type instanceof TLClass tlClass && !isInterface(tlClass)) {
-				appendStructuredType(sb, tlClass, "class");
+				appendStructuredType(sb, tlClass, "class", resources);
 			}
 		}
 	}
 
-	private static void appendEnum(StringBuilder sb, TLEnumeration enumeration) {
-		sb.append("\nenum ").append(enumeration.getName()).append(" { ");
+	private static void appendEnum(StringBuilder sb, TLEnumeration enumeration, Resources resources) {
+		sb.append("\n");
+		appendDescription(sb, resources, TLModelNamingConvention.getTypeLabelKey(enumeration));
+		sb.append("enum ").append(enumeration.getName()).append(" { ");
 		List<? extends TLClassifier> classifiers = enumeration.getClassifiers();
 		for (int i = 0; i < classifiers.size(); i++) {
 			if (i > 0) sb.append(", ");
@@ -189,8 +218,11 @@ public class ModelDigestGenerator {
 		sb.append(" }\n");
 	}
 
-	private static void appendStructuredType(StringBuilder sb, TLClass tlClass, String keyword) {
-		sb.append("\n").append(keyword).append(" ").append(tlClass.getName());
+	private static void appendStructuredType(StringBuilder sb, TLClass tlClass, String keyword,
+			Resources resources) {
+		sb.append("\n");
+		appendDescription(sb, resources, TLModelNamingConvention.getTypeLabelKey(tlClass));
+		sb.append(keyword).append(" ").append(tlClass.getName());
 
 		// Generalizations
 		List<TLClass> generalizations = tlClass.getGeneralizations();
@@ -213,12 +245,13 @@ public class ModelDigestGenerator {
 
 		sb.append(" {\n");
 		for (TLStructuredTypePart part : localParts) {
-			appendPart(sb, part, tlClass);
+			appendPart(sb, part, tlClass, resources);
 		}
 		sb.append("}\n");
 	}
 
-	private static void appendPart(StringBuilder sb, TLStructuredTypePart part, TLClass owner) {
+	private static void appendPart(StringBuilder sb, TLStructuredTypePart part, TLClass owner,
+			Resources resources) {
 		sb.append("  ").append(part.getName()).append(": ");
 
 		// Arrow prefix for references
@@ -251,7 +284,34 @@ public class ModelDigestGenerator {
 			sb.append(" (").append(String.join(", ", modifiers)).append(")");
 		}
 
+		String description = description(resources, TLTypePartResourceProvider.labelKey(part));
+		if (description != null) {
+			sb.append(" // ").append(description);
+		}
 		sb.append("\n");
+	}
+
+	/**
+	 * Appends the description of the element with the given label key as a comment line, or nothing
+	 * when it has none.
+	 */
+	private static void appendDescription(StringBuilder sb, Resources resources, ResKey labelKey) {
+		String description = description(resources, labelKey);
+		if (description != null) {
+			sb.append("// ").append(description).append("\n");
+		}
+	}
+
+	/**
+	 * The tooltip of the given label key on one line, or {@code null} when the element has none.
+	 */
+	private static String description(Resources resources, ResKey labelKey) {
+		String tooltip = resources.getString(labelKey.tooltip(), null);
+		if (tooltip == null) {
+			return null;
+		}
+		String oneLine = WHITESPACE.matcher(tooltip).replaceAll(" ").trim();
+		return oneLine.isEmpty() ? null : oneLine;
 	}
 
 	/**

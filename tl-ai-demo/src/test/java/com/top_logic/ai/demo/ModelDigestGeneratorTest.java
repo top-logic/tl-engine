@@ -5,6 +5,8 @@
  */
 package com.top_logic.ai.demo;
 
+import java.util.Locale;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -159,7 +161,7 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 	 * </p>
 	 */
 	private static String digest(TLModel model, boolean includeFramework) {
-		return ModelDigestGenerator.generate(model, includeFramework, ModelSecurity.UNCHECKED);
+		return ModelDigestGenerator.generate(model, includeFramework, ModelSecurity.UNCHECKED, Locale.ENGLISH);
 	}
 
 	/** */

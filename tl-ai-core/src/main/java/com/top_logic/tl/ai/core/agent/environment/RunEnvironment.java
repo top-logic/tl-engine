@@ -299,6 +299,14 @@ public class RunEnvironment {
 		return ZoneId.systemDefault();
 	}
 
+	/**
+	 * The UI language of the account the current run acts for - the language the environment block
+	 * states, for a tool that hands the model text from the application's resources.
+	 */
+	public static Locale runLocale() {
+		return localeOf(currentAccount());
+	}
+
 	/** The acting account's UI language, the session's or English when it states none. */
 	static Locale localeOf(Person account) {
 		if (account != null) {

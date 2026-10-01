@@ -98,6 +98,12 @@ import groovy.transform.Field
 @Field final int KAFKA_PORT_BASE = 47000
 @Field final int ZOO_KEEPER_PORT_BASE = 48000
 
+/**
+ * Threads of the SpotBugs run. SpotBugs is not on the critical path of the Test stage, so it runs
+ * with few threads and leaves the CPUs to the module tests and the scripted-test shards.
+ */
+@Field final int SPOTBUGS_THREADS = 1
+
 /** Port distance between the shards of one build. */
 @Field final int SHARD_PORT_OFFSET = 100
 
@@ -195,7 +201,7 @@ pipeline {
 					}
 					if (!params.SKIP_SPOTBUGS) {
 						branches['spotbugs'] = {
-							maven("-T ${identifier(params.MAVEN_THREADS)} spotbugs:spotbugs ${builtModules()}", 0)
+							maven("-T ${SPOTBUGS_THREADS} spotbugs:spotbugs ${builtModules()}", 0)
 						}
 					}
 					int shards = params.SKIP_TESTS || count(selection[KEY_SCRIPTED]) == 0 ? 0 : Integer.parseInt(params.SHARDS)

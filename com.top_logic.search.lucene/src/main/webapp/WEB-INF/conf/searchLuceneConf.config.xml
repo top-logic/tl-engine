@@ -79,11 +79,6 @@
 		</config>
 		<config service-class="com.top_logic.knowledge.indexing.DefaultIndexingService" >
 			<instance class="com.top_logic.knowledge.indexing.lucene.LuceneIndexingService">
-				<protocols>
-					<protocol value="knowledgerepository" />
-					<protocol value="knowledge" />
-					<protocol value="repository" />
-				</protocols>
 				<meta-objects>
 					<meta-object value="Document" />
 					<meta-object value="GenericObject" />

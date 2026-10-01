@@ -37,8 +37,7 @@ public class TestDocumentVersion extends AbstractDocumentTest {
 		Document document = getOrCreateChildDocument(TEST_NAME);
 		KnowledgeBase kb = document.getKnowledgeBase();
 
-		assertNotNull("Unable to get DAP when there is no physical resource for Document " + document,
-			document.getDAP());
+		assertNotNull("No content stored for Document " + document, document.getStoredContent());
 
 		assertEquals(1, document.getDocumentVersions().size());
 
@@ -54,8 +53,7 @@ public class TestDocumentVersion extends AbstractDocumentTest {
 
 		}
 
-		assertNotNull("Unable to get DAP even when there a physical resource for Document " + document,
-			document.getDAP());
+		assertNotNull("No content stored for Document " + document, document.getStoredContent());
 		{
 			List<? extends DocumentVersion> res = document.getDocumentVersions();
 			assertEquals(2, res.size());

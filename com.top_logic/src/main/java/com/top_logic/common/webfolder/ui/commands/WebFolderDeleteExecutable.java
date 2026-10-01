@@ -7,11 +7,9 @@ package com.top_logic.common.webfolder.ui.commands;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Named;
-import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.common.folder.FolderDefinition;
 import com.top_logic.common.folder.ui.commands.AbstractFolderDelete;
 import com.top_logic.common.webfolder.model.FolderContent;
-import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -92,12 +90,6 @@ public class WebFolderDeleteExecutable extends AbstractFolderDelete {
 	@Override
 	protected boolean isValid(Named aContent) {
 		return ComponentUtil.isValid(aContent);
-	}
-
-	@Override
-	protected boolean isLocked(BinaryDataSource contentObject) {
-		DataAccessProxy theDAP = ((Wrapper) contentObject).getDAP();
-		return LockExecutable.isLocked(theDAP);
 	}
 
 }

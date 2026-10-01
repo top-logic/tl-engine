@@ -20,7 +20,6 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.CreatePhysicalResource;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.knowledge.wrap.WebFolderFactory;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -80,20 +79,12 @@ public class TestCreateFolderHandler extends AbstractFolderTest {
 
 	}
 
-	// Test case was supposed to show broken concurrent lazy creation of webfolder's
-	// physical resource. Indeed it is broken by design, due to no synchronization takes
-	// place (and cannot be done at all). Unluckily the bug probably shows up in cluster mode
-	// only. In single node mode another design flaw covers the concurrent creation bug. Because
-	// the physical resource becomes cached after its creation in a transaction, another
-	// concurrent transaction would detect and use it as reference, regardless the first transaction
-	// will be rolled back or not.
+	/**
+	 * Tests concurrent creation of documents in an initially empty folder.
+	 */
 	public void testMultiThreadedDocumentCreationInInitiallyEmptyFolder() throws Exception {
 		final Barrier barrier = createBarrier(2);
 		final WebFolder webFolder = createEmptyWebFolder();
-
-		if (isLazyCreationEnabled()) {
-			assertFalse(webFolder.hasDAP());
-		}
 
 		parallelTest(2, new ExecutionFactory() {
 
@@ -108,7 +99,6 @@ public class TestCreateFolderHandler extends AbstractFolderTest {
 						TestingBinaryData newData = new TestingBinaryData(12345678, 2048);
 						webFolder.createOrUpdateDocument("TestDocument" + id, newData);
 						barrier.enter(0);
-						assertTrue(webFolder.hasDAP());
 						createSubFolderTX.commit();
 					}
 				};
@@ -131,10 +121,6 @@ public class TestCreateFolderHandler extends AbstractFolderTest {
 		createSubFolderTX.commit();
 
 		return subFolder;
-	}
-
-	private boolean isLazyCreationEnabled() {
-		return WebFolderFactory.getInstance().getCreateMode() == CreatePhysicalResource.DEFERRED;
 	}
 
     protected CreateFolderHandler getHandler() {

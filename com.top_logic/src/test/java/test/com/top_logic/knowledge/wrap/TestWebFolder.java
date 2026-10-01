@@ -24,9 +24,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.util.SystemContextThread;
-import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.dsa.util.MimeTypes;
-import com.top_logic.knowledge.objects.KOAttributes;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -36,7 +34,6 @@ import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.DocumentVersion;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.knowledge.wrap.WebFolderFactory;
-import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLObject;
 
 /**
@@ -60,15 +57,6 @@ public class TestWebFolder extends BasicTestCase {
 	/** This file should probably exist ... */
 	private static final String TEST_FILE =
 		ModuleLayoutConstants.SRC_TEST_DIR + "/test/com/top_logic/knowledge/wrap/TestWebFolder.java";
-
-	/** Base DSN (This directory is cleared before Testing). */
-	private static final String TEST_BASE = "file://tmp";
-
-	/** Base DSN for repository (This directory is cleared before Testing). */
-	private static final String TEST_KNOWLEDGE = "repository://";
-
-	/** DSN to locate some existing data */
-	private static final String TEST_URL = "webapp://";
 
 	/**
 	 * Constructor for a special test.
@@ -142,7 +130,7 @@ public class TestWebFolder extends BasicTestCase {
 			Document document;
 			Transaction tx1 = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			try {
-				_root = WebFolder.createFolder(_kb, ROOT, TestWebFolder.TEST_KNOWLEDGE);
+				_root = WebFolder.createFolder(_kb, ROOT);
 				{
 					_sub1 = _root.createSubFolder(SUB_1);
 					{
@@ -171,8 +159,7 @@ public class TestWebFolder extends BasicTestCase {
 			Transaction tx2 = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			try {
 				clone =
-					WebFolder.createFolder(_kb, "clone-" + _useSoftLinks + "-" + _useVersionLinks,
-						TestWebFolder.TEST_BASE);
+					WebFolder.createFolder(_kb, "clone-" + _useSoftLinks + "-" + _useVersionLinks);
 				WebFolder.copyContents(_root, clone, _useSoftLinks, _useVersionLinks);
 				tx2.commit();
 			} finally {
@@ -218,13 +205,13 @@ public class TestWebFolder extends BasicTestCase {
 	public void testDeleteRecursivly() {
 		KnowledgeBase kb = kb();
 		// Deleting empty folder
-		WebFolder emptyFolder = WebFolder.createFolder(kb, "ERNA", TEST_BASE);
+		WebFolder emptyFolder = WebFolder.createFolder(kb, "ERNA");
 		KnowledgeObject emptyFolder_KO = emptyFolder.tHandle();
 		assertNotNull(emptyFolder_KO);
 		assertTrue("Deleting empty Folder failed", WebFolder.deleteRecursively(emptyFolder));
 
 		// deleting folder containing document, folder with document, and empty folder
-		WebFolder folder = WebFolder.createFolder(kb, "ERNA", TEST_BASE);
+		WebFolder folder = WebFolder.createFolder(kb, "ERNA");
 		KnowledgeObject folder_KO = folder.tHandle();
 		assertNotNull(folder_KO);
 		WebFolder childFolder = createChildFolder(folder, "child");
@@ -250,7 +237,7 @@ public class TestWebFolder extends BasicTestCase {
 		KnowledgeBase kb = kb();
 		Transaction tx1 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
-		WebFolder theFolder = WebFolder.createFolder(kb, "ERNA", TEST_BASE);
+		WebFolder theFolder = WebFolder.createFolder(kb, "ERNA");
 		assertNotNull(theFolder);
 
 		theFolder = (WebFolder) assertSerializable(theFolder);
@@ -261,9 +248,6 @@ public class TestWebFolder extends BasicTestCase {
 		} catch (KnowledgeBaseException ex) {
 			fail("Error in commiting the knowledgebase for folder " + theFolder, ex);
 		}
-
-		String dsn = (String) theFolder.tHandle().getAttributeValue(KOAttributes.PHYSICAL_RESOURCE);
-		assertTrue("DSN was not saved correctly : " + dsn, dsn.startsWith(TEST_BASE));
 
 		Transaction tx2 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		createChildFolder(theFolder, "SUBFOLDER ERNA");
@@ -279,33 +263,21 @@ public class TestWebFolder extends BasicTestCase {
 			WebFolder.deleteRecursively(theFolder));
 	}
 
-	/** Tests .... */
+	/** Tests resolving a folder by its identifier. */
 	public void testGetInstance() throws Exception {
-		String theURL = TEST_URL;
-
 		KnowledgeBase kb = kb();
-		WebFolder theFolder1 = this.getFolder();
-		WebFolder theFolder2 = WebFolder.findFolderByDSN(kb, theURL);
-		assertNotNull("Unable to get folder via URL: " + theURL + " in " + kb, theFolder2);
-		assertEquals("Not from the right knowledge base!", kb, theFolder2.getKnowledgeBase());
-
-		assertTrue("Not the same WebFolder when requested via object and URL!", (theFolder1 == theFolder2));
-
-		WebFolder theFolder3 = WebFolder.getInstance(kb, KBUtils.getWrappedObjectName(theFolder1));
-		assertNotNull("Unable to get folder via ID: " + theURL + " in " + kb, theFolder3);
-
-		assertTrue("Not the same WebFolder when requested via object and ID!", (theFolder1 == theFolder3));
-
-		WebFolder theFolder4 = WebFolder.getInstance(kb, new DataAccessProxy(theURL));
-		assertNotNull("Unable to get folder via DataAccessProxy: " + theURL + " in " + kb, theFolder4);
-
-		assertTrue("Not the same WebFolder when requested via ID and DataAccessProxy!", (theFolder1 == theFolder4));
-	}
-
-	/** Tests .... */
-	public void testExistence() {
-		WebFolder theFolder1 = this.getFolder();
-		assertFalse("Folder should have entries!", theFolder1.isEmpty());
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+		WebFolder theFolder1 = WebFolder.createFolder(kb, "TestWebFolderGetInstance");
+		tx.commit();
+		try {
+			WebFolder theFolder2 = WebFolder.getInstance(kb, KBUtils.getWrappedObjectName(theFolder1));
+			assertNotNull("Unable to get folder via ID in " + kb, theFolder2);
+			assertTrue("Not the same WebFolder when requested via object and ID!", (theFolder1 == theFolder2));
+		} finally {
+			Transaction txDel = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+			theFolder1.tDelete();
+			txDel.commit();
+		}
 	}
 
 	/**
@@ -315,23 +287,9 @@ public class TestWebFolder extends BasicTestCase {
 	 *        name to use for creating Folder and Document.
 	 */
 	public void testUpload(String aName) throws Exception {
-		doTestUpload(aName, TEST_BASE);
-	}
-
-	public void testUpload2() throws Exception {
-		doTestUpload("TestWebFolderUpload2", TEST_KNOWLEDGE);
-	}
-
-	/**
-	 * Tests Uploading of a simple File
-	 * 
-	 * @param aName
-	 *        name to use for creating Folder and Document.
-	 */
-	public void doTestUpload(String aName, String aFolderBase) throws Exception {
 		KnowledgeBase theBase = kb();
 		Transaction tx1 = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
-		WebFolder theFolder1 = WebFolder.createFolder(theBase, aName, aFolderBase);
+		WebFolder theFolder1 = WebFolder.createFolder(theBase, aName);
 		tx1.commit();
 		{
 			aName = theFolder1.getName(); // may use different name ...
@@ -343,7 +301,8 @@ public class TestWebFolder extends BasicTestCase {
 			{
 				assertNotNull("WebFolder has no Name", theFolder2.getName());
 
-				assertNotNull("Folder not created!", this.getFolder(theFolder2.getDSN()));
+				assertSame("Folder not created!", theFolder2,
+					WebFolder.getInstance(theBase, KBUtils.getWrappedObjectName(theFolder2)));
 
 				Transaction tx3 = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 				Document theDocument = createDocument(theFolder2, aName + ".txt", this.getTestFile());
@@ -354,14 +313,9 @@ public class TestWebFolder extends BasicTestCase {
 					theDocument.update(this.getTestFile());
 					updateTx.commit();
 
-					Integer version = theDocument.getVersionNumber();
-					if (TEST_KNOWLEDGE.equals(aFolderBase)) {
-						assertEquals(Integer.valueOf(2), version);
-					}
+					assertEquals(2, theDocument.getVersionNumber());
 
 					assertNotNull("Document has no Name", theDocument.getName());
-
-					assertNotNull("Document not found in " + theBase + '!', this.getDocument(theDocument.getDSN()));
 
 					this.validateDocument(theDocument);
 
@@ -457,18 +411,16 @@ public class TestWebFolder extends BasicTestCase {
 	}
 
 	/**
-	 * Test a document based on a repository
+	 * Test renaming and updating a document in a folder.
 	 * 
 	 * @param folderName
 	 *        name to use for folder/document.
 	 */
-	public void testRepository(String folderName) throws Exception {
+	public void testDocument(String folderName) throws Exception {
 		KnowledgeBase theBase = kb();
 
-		assertTrue(TEST_KNOWLEDGE + " does not exists", new DataAccessProxy(TEST_KNOWLEDGE).exists());
-
 		Transaction createFolderTx = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
-		WebFolder folder = WebFolder.createFolder(theBase, folderName, TEST_KNOWLEDGE);
+		WebFolder folder = WebFolder.createFolder(theBase, folderName);
 		createFolderTx.commit();
 		try {
 			assertNotNull("Failed to create folder in " + theBase, folder);
@@ -478,14 +430,14 @@ public class TestWebFolder extends BasicTestCase {
 			createDocTx.commit();
 			try {
 				assertNotNull("No document returned from createDocument()!", document);
-
-				assertNotNull("Document not found in " + theBase + '!', this.getDocument(document.getDSN()));
+				assertEquals(1, document.getVersionNumber());
 
 				this.validateDocument(document);
 
 				Transaction renameTx = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
-				assertTrue("Cannot rename document in Repository", !document.rename("test01.txt"));
+				assertTrue("Cannot rename document", document.rename("test01.txt"));
 				renameTx.commit();
+				assertEquals("test01.txt", document.getName());
 
 				this.validateDocument(document);
 
@@ -509,27 +461,26 @@ public class TestWebFolder extends BasicTestCase {
 		}
 	}
 
-	/** Test a document based on a repository */
-	public void testRepository() throws Exception {
-		testRepository("TestWebFolderRepository");
+	/** Test renaming and updating a document in a folder. */
+	public void testDocument() throws Exception {
+		testDocument("TestWebFolderDocument");
 	}
 
-	/** Tests Repository with multipleThreads. */
-	public void testThreadRepository() throws Exception {
+	/** Tests documents with multipleThreads. */
+	public void testThreadDocument() throws Exception {
 		runMultiThreaded(new MultiThreadedTest() {
 			
 			@Override
 			public void executeTest(String nameSuffix) throws Exception {
-				testRepository("ReposUpload_" + nameSuffix);
+				testDocument("DocumentUpload_" + nameSuffix);
 			}
 		});
 	}
 
 
 	private void validateDocument(Document aDoc) throws Exception {
-		DataAccessProxy theProxy = aDoc.getDAP();
 		try (InputStream theOrig = this.getTestFile().getStream()) {
-			try (InputStream in2 = theProxy.getEntry()) {
+			try (InputStream in2 = aDoc.getStream()) {
 				assertTrue("Created file doesn't match the original one!",
 					FileUtilities.equalsStreamContents(theOrig, in2));
 			}
@@ -539,43 +490,6 @@ public class TestWebFolder extends BasicTestCase {
 
 	private BinaryData getTestFile() {
 		return BinaryDataFactory.createBinaryData(new File(TEST_FILE));
-	}
-
-	private WebFolder getFolder() {
-		return (this.getFolder(TEST_URL));
-	}
-
-	private WebFolder getFolder(String anURL) {
-		KnowledgeBase theBase = kb();
-		KnowledgeObject theObject = this.search(theBase, WebFolder.OBJECT_NAME, KOAttributes.PHYSICAL_RESOURCE, anURL);
-
-		assertNotNull("Unable to find folder: " + anURL + " in " + theBase, theObject);
-
-		WebFolder theFolder = (WebFolder) WrapperFactory.getWrapper(theObject);
-		assertNotNull("Unable to get folder via KnowledgeObject: " + anURL + " in " + theBase, theFolder);
-		assertEquals("Not from the right knowledge base!", theBase, theFolder.tHandle().getKnowledgeBase());
-
-		return (theFolder);
-	}
-
-	/** Used to find a Document matching the given DSN. */
-	protected Document getDocument(String aDSN) {
-		KnowledgeBase theBase = kb();
-		KnowledgeObject theObject = this.search(theBase, Document.OBJECT_NAME, KOAttributes.PHYSICAL_RESOURCE, aDSN);
-
-		assertNotNull("Unable to find document: " + aDSN + " in " + theBase, theObject);
-
-		Document theFolder = Document.getInstance(theObject);
-
-		assertNotNull("Unable to get document via KnowledgeObject: " + aDSN + " in " + theBase, theFolder);
-		assertEquals("Not from the right knowledge base!", theBase, theFolder.tHandle().getKnowledgeBase());
-
-		return (theFolder);
-	}
-
-	/** Used to fetch an Object By Attribute. */
-	protected KnowledgeObject search(KnowledgeBase aBase, String aType, String aKey, String anURL) {
-		return (KnowledgeObject) aBase.getObjectByAttribute(aType, aKey, anURL);
 	}
 
 	static Document createDocument(WebFolder folder, String docName, BinaryData content) {

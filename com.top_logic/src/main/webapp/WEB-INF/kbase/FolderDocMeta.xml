@@ -23,6 +23,8 @@
     <mo_attribute att_name="updateRevisionNumber" att_type="Long" mandatory="true"/>
 
 	<mo_attribute att_name="versionNumber" att_type="Integer" mandatory="false"/>
+	<!-- The content of the document in the revision of the row. -->
+	<binary-hybrid att_name="content" mandatory="false"/>
 </attributes>
 </metaobject>
 

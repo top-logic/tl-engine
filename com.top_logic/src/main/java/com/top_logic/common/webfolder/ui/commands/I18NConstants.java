@@ -41,8 +41,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 CONFIRM_DELETE_DOCUMENT__NAME;
 	public static ResKey1 CONFIRM_DELETE_LINK__NAME;
 
-	public static ResKey LOCK_NOT_POSSIBLE_BECAUSE_ALREADY_LOCKED;
-
 	/**
 	 * Resource prefix for elements in the dialog for creating a new folder.
 	 */
@@ -54,12 +52,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResPrefix UPDATE_DIALOG;
 	public static ResKey UPDATE_DOCUMENT;
 	public static ResKey UPLOAD_DOCUMENT_NO_DOCUMENT_SELECTED;
-
-	public static ResKey UPDATE_DIALOG_CLOSING_FAILED_BECAUSE_UNLOCKING_FAILED;
-
-	public static ResKey UPDATE_NOT_POSSIBLE_BECAUSE_LOCKED;
-
-	public static ResKey UPDATE_NOT_POSSIBLE_BECAUSE_LOCKING_FAILED;
 
 	/**
 	 * Resource prefix for elements in the dialog for uploading a document.
@@ -76,12 +68,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_FOLDER_CREATE__NAME;
 	public static ResKey1 ERROR_DOCUMENT_EXISTS__NAME;
 
-	public static ResKey MSG_NOT_LOCKED;
-	public static ResKey1 MSG_ALREADY_LOCKED__USER;
-
 	public static ResKey MSG_ALREADY_IN_CLIPBOARD;
-
-	public static ResKey MSG_DOCUMENT_LOCKED;
 
 	public static ResKey MSG_FOLDER_NOT_EMPTY;
 	

@@ -379,7 +379,7 @@ public final class BinaryContentMigration {
 		return filter == null ? literalTrueLogical() : filter;
 	}
 
-	private static String keyCondition(DBHelper sqlDialect, List<DBAttribute> keyColumns) {
+	static String keyCondition(DBHelper sqlDialect, List<DBAttribute> keyColumns) {
 		StringBuilder result = new StringBuilder();
 		for (DBAttribute keyColumn : keyColumns) {
 			if (result.length() > 0) {
@@ -390,7 +390,7 @@ public final class BinaryContentMigration {
 		return result.toString();
 	}
 
-	private static Object[] readKey(DBHelper sqlDialect, ResultSet rows, List<DBAttribute> keyColumns)
+	static Object[] readKey(DBHelper sqlDialect, ResultSet rows, List<DBAttribute> keyColumns)
 			throws SQLException {
 		Object[] key = new Object[keyColumns.size()];
 		for (int n = 0; n < key.length; n++) {
@@ -399,14 +399,14 @@ public final class BinaryContentMigration {
 		return key;
 	}
 
-	private static void bindKey(DBHelper sqlDialect, PreparedStatement statement, int offset,
+	static void bindKey(DBHelper sqlDialect, PreparedStatement statement, int offset,
 			List<DBAttribute> keyColumns, Object[] key) throws SQLException {
 		for (int n = 0; n < key.length; n++) {
 			sqlDialect.setFromJava(statement, key[n], offset + n, keyColumns.get(n).getSQLType());
 		}
 	}
 
-	private static int maxBatchSize(DBHelper sqlDialect, int parameters) {
+	static int maxBatchSize(DBHelper sqlDialect, int parameters) {
 		return Math.max(1, Math.min(MAX_BATCH_SIZE, sqlDialect.getMaxBatchSize(parameters)));
 	}
 

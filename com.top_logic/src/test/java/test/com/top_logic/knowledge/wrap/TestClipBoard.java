@@ -63,7 +63,7 @@ public class TestClipBoard extends BasicTestCase {
 	public void testMain() throws Exception {
 		assertTrue(!clip.contains(null));
 
-		Document doc = Document.createDocument("test doc 1", "none", kb);
+		Document doc = Document.createDocument("test doc 1", kb);
 		KnowledgeObject d1 = doc.tHandle();
 		kb.commit();
 

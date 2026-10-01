@@ -78,12 +78,6 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 		@Override
 		boolean getHasClipboardCommand();
 
-		/**
-		 * @see WebFolderUIFactory#getManualLocking()
-		 */
-		@Name(WebFolderUIFactory.Config.MANUAL_LOCKING)
-		Decision getManualLocking();
-
 	}
 
 	/**
@@ -140,7 +134,7 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 	protected Control createControlForContext(FormContext context) {
 		long maxUploadSize = getMaxUploadSize();
 		FileDropHandler fileDropHandler =
-			new FolderFileDropHandler(getManualLocking(), !context.isImmutable(), maxUploadSize);
+			new FolderFileDropHandler(!context.isImmutable(), maxUploadSize);
 		return getUIFactory().createControl(getBreadcrumbRenderer(), getFolderData(), context,
 			fileDropHandler);
     }
@@ -397,7 +391,7 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 	@Override
 	protected TableConfiguration getTableConfiguration(ExecutableState canAddToClipboard, ExecutableState canUpdate,
 			ExecutableState canDelete) {
-		WebFolderColumnDescriptionBuilder builder = new WebFolderColumnDescriptionBuilder(canAddToClipboard, canUpdate, canDelete, getManualLocking());
+		WebFolderColumnDescriptionBuilder builder = new WebFolderColumnDescriptionBuilder(canAddToClipboard, canUpdate, canDelete);
 		Config config = getConfig();
 		builder.setAnalysis(config.analyzeDocuments());
 		TableConfiguration columnDescriptions = builder.createWebFolderColumns();
@@ -422,21 +416,6 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 	 */
 	protected UploadExecutor createUploadExecutor(FolderData folderData) {
 		return new WebFolderUploadExecutor(getFolderSelection(), getMaxUploadSize());
-	}
-
-	/**
-	 * @see WebFolderUIFactory#getManualLocking()
-	 */
-	protected boolean getManualLocking() {
-		return getConfig().getManualLocking().toBoolean(getManualLockingDefault());
-	}
-
-	/**
-	 * The default value of {@link #getManualLocking()} which is used when it is not set in the
-	 * configuration of this component.
-	 */
-	protected boolean getManualLockingDefault() {
-		return getUIFactory().getManualLocking();
 	}
 
 	/**

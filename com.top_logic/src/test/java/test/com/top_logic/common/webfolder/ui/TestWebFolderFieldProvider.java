@@ -39,7 +39,7 @@ public class TestWebFolderFieldProvider extends BasicTestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		fieldProvider = new WebFolderFieldProvider(
-			ExecutableState.EXECUTABLE, ExecutableState.EXECUTABLE, ExecutableState.EXECUTABLE, true);
+			ExecutableState.EXECUTABLE, ExecutableState.EXECUTABLE, ExecutableState.EXECUTABLE);
 		AbstractMutableTLTreeModel<FolderNode> treeModel = new AbstractMutableTLTreeModel<>(
 			WebFolderTreeBuilder.INSTANCE,
 			new TransientFolderDefinition("TestRootUserObject"));
@@ -52,7 +52,7 @@ public class TestWebFolderFieldProvider extends BasicTestCase {
 	}
 
 	public void testGetLockFieldName() {
-		checkNameCreationAndRetrievalEquality(WebFolderAccessor.LOCK);
+		checkNameCreationAndRetrievalEquality(WebFolderAccessor.UPDATE);
 	}
 
 	public void testGetDeleteFieldName() {

@@ -153,10 +153,8 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 			ExecutableState canUpdate,
 			ExecutableState canDelete,
 			boolean withAnalysis, ResourceView resources) {
-		WebFolderUIFactory factory = WebFolderUIFactory.getInstance();
-		boolean manualLocking = factory.getManualLocking();
 		WebFolderColumnDescriptionBuilder descriptionBuilder =
-			new WebFolderColumnDescriptionBuilder(canAddToClipboard, canUpdate, canDelete, manualLocking);
+			new WebFolderColumnDescriptionBuilder(canAddToClipboard, canUpdate, canDelete);
 		descriptionBuilder.setAnalysis(withAnalysis);
 		TableConfiguration tableConfiguration = descriptionBuilder.createWebFolderColumns();
 		tableConfiguration.setResPrefix(resources);

@@ -5,32 +5,20 @@
  */
 package com.top_logic.knowledge.indexing;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
-import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.convert.FormatConverterFactory;
-import com.top_logic.convert.converters.FormatConverter;
 import com.top_logic.dob.DataObject;
-import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.identifier.ObjectKey;
-import com.top_logic.dsa.DataAccessProxy;
-import com.top_logic.dsa.ex.UnknownDBException;
-import com.top_logic.knowledge.objects.KOAttributes;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.searching.DefaultFullTextBuffer;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
@@ -38,7 +26,6 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.UpdateListener;
-import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 
@@ -61,12 +48,6 @@ public abstract class DefaultIndexingService
 	public static interface DefaultIndexingServiceConfig extends KBBasedManagedClass.Config<DefaultIndexingService> {
 		
 		/**
-		 * Set of DataSource names to be indexed.
-		 */
-		@ListBinding()
-		List<String> getProtocols();
-		
-		/**
 		 * Set of KO MetaObject names to index.
 		 */
 		@ListBinding()
@@ -81,8 +62,6 @@ public abstract class DefaultIndexingService
 		super(context, config);
 		Logger.info("Indexer listening for objects of the following types: "
 			+ StringServices.toString(config.getMetaObjects(), ", "), DefaultIndexingService.class);
-		Logger.info("Indexer listening for protocols: "
-			+ StringServices.toString(config.getProtocols(), ", "), DefaultIndexingService.class);
     }
 
 	@Override
@@ -261,80 +240,6 @@ public abstract class DefaultIndexingService
     }
     
     /**
-     * Index the full text of a KnowledgeObject. 
-     * <br/>
-     * The full text is resolved via the underlying indexing service 
-     * itself. By default only KOs will be indexed when their physical 
-     * resource is in the Set of Protocols to index. Null DSNs will be 
-     * ignored.
-     * 
-     * @param   aKO  a KnowledgeObject to be indexed
-     */
-    protected void indexKO(KnowledgeObject aKO) {
-        String dsn = null;
-        try {
-            // Has DataObject "aDoc" a physical resource? 
-            dsn = (String) aKO.getAttributeValue(KOAttributes.PHYSICAL_RESOURCE);
-            if (StringServices.isEmpty(dsn)) {
-                return;
-            }
-                
-            // Check the protocol
-            DataAccessProxy dsa;                
-            try {
-                dsa = new DataAccessProxy(dsn);
-            }
-            catch (UnknownDBException udbx) {
-                Logger.error("Unknown protocol for " + dsn, udbx, this);
-                return; // Protocol unknown, e.g. http
-            }
-			if (getConfig().getProtocols().contains(dsa.getProtocol())) {
-                return; // Protocol not supported
-            }
-
-            // Check if entry
-            boolean     isEntryAvailable;
-            InputStream theEntry = null;
-
-            try {
-                isEntryAvailable = dsa.isEntry(); 
-
-                if (isEntryAvailable) {
-                    theEntry         = dsa.getEntry();
-                    isEntryAvailable = theEntry.available() > 0;
-                }
-            } 
-            catch (java.io.IOException ioe) {
-                Logger.error("Failed to read the entry " + dsn, ioe, this);
-                isEntryAvailable = false;
-            }
-            finally {
-                if (theEntry != null) {
-                    try {
-                        theEntry.close();
-                    }
-                    catch (IOException ignored) {
-						Logger.error("Close failed: " + ignored.getMessage(), ignored, this);
-                    }
-                }
-            }
-            if (!isEntryAvailable) {
-                return; // Not an entry
-            }
-                
-            this.indexContent(createContent(aKO));
-        }
-        catch (NoSuchAttributeException nsax) {
-            Logger.error("index(" + aKO + ")' failed, no " + 
-                KOAttributes.PHYSICAL_RESOURCE, nsax, this);
-        }
-        catch (IndexException ie) {
-            Logger.error("index(" + aKO + ")' failed for '" + 
-                dsn + "'", ie, this);
-        }
-    }
-    
-    /**
 	 * Remove the document from this indexing service.
 	 * 
 	 * By default only KOs will be removed from the index since indexing is only done for KOs.
@@ -371,9 +276,13 @@ public abstract class DefaultIndexingService
 		return new WrapperContentObject(wrapper);
     }
     
-    public static ContentObject createContent(KnowledgeObject ko) {
-        return new PhysicalContentObject(ko);
-    }
+	/**
+	 * Creates the {@link ContentObject} of the given {@link KnowledgeObject}, see
+	 * {@link #createContent(Wrapper)}.
+	 */
+	public static ContentObject createContent(KnowledgeObject ko) {
+		return createContent((Wrapper) WrapperFactory.getWrapper(ko));
+	}
     
     public static ContentObject createContent(KnowledgeObject object, String content, String description) {
         return new DefaultContentObject(object, content, description);
@@ -487,118 +396,6 @@ public abstract class DefaultIndexingService
             }
             return null;
         }
-    }
-    
-    private static class PhysicalContentObject extends AbstractContentObject {
-        
-        private String content;
-        
-        public PhysicalContentObject(KnowledgeObject ko) {
-            super(ko);
-        }
-        
-        @Override
-		public String getDescription() {
-            return null;
-        }
-        
-        @Override
-		public String getContent() {
-            if (this.content == null) {
-                this.content = this.readContent();
-            }
-            return this.content;
-        }
-        
-		/**
-		 * Returns the content of the {@link KnowledgeObject} as content of a {@link Document}. For
-		 * this purpose the knowledge object's physical resource is read (if it happens to be a
-		 * document). The document is then transferred to pure ascii text.
-		 */
-		private String readContent() {
-			String theContent;
-			try {
-				String theURL = (String) this.getKnowledgeObject().getAttributeValue(KOAttributes.PHYSICAL_RESOURCE);
-
-				if (theURL == null) {
-					// if the URL is still null don't go any further
-					theContent = null;
-				} else {
-					theContent = getFilteredContent(theURL);
-				}
-				return theContent;
-			} catch (NoSuchAttributeException unreacheable) {
-				throw new UnreachableAssertion(unreacheable);
-			}
-		}
-
-		/**
-		 * Retrieves and filters the content of a resource
-		 * 
-		 * @param aDocumentDSN
-		 *        the physical resource of a knowledge object
-		 * @return the content of the given URL or null if URL is not supported
-		 * 
-		 * @throws IndexException
-		 *         if an error occurred
-		 */
-		private String getFilteredContent(String aDocumentDSN) throws IndexException {
-			try {
-
-				FormatConverterFactory theFactory = FormatConverterFactory.getInstance();
-
-				final DataAccessProxy theDap = new DataAccessProxy(aDocumentDSN);
-				final String mimetype = theDap.getMimeType();
-				FormatConverter theConverter = theFactory.getFormatConverter(mimetype);
-				if (theConverter != null) {
-					final StringBuffer convertedResult;
-					{
-						Reader theReader = theConverter.convert(theDap.getEntry(), mimetype);
-						try {
-							StringWriter writer = new StringWriter();
-							try {
-								StreamUtilities.copyReaderWriterContents(theReader, writer);
-								convertedResult = writer.getBuffer();
-							} finally {
-								writer.close();
-							}
-						} finally {
-							theReader.close();
-						}
-					}
-					parseStringContent(convertedResult);
-					return convertedResult.toString();
-				} else {
-					throw new IndexException("No converter for '" + mimetype + "' / '" + aDocumentDSN + "\'");
-				}
-			} catch (IndexException ix) {
-				throw ix;
-			} catch (Exception e) {
-				throw new IndexException(" failed to getFilteredContent() for '" + aDocumentDSN + "'.", e);
-			}
-
-		}
-        
-		/**
-		 * Removes from the given input non-printable characters.
-		 * 
-		 * @param input
-		 *        the input to be filtered
-		 */
-		private void parseStringContent(StringBuffer input) {
-
-			char theChar;
-			int theData;
-
-			// Search for non-printable characters and replace them
-			for (int index = 0, size = input.length(); index < size; index++) {
-				theChar = input.charAt(index);
-				theData = theChar;
-				if (!(((theData >= 32) && (theData < 128)) || ((theData >= 160) && (theData < 256)))) {
-					input.setCharAt(index, ' ');
-				}
-			}
-		}
     }
 
     public static final boolean isAvailable() {

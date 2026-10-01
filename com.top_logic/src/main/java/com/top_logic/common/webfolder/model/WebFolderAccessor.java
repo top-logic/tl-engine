@@ -43,7 +43,8 @@ public class WebFolderAccessor {
 
     public static final String CLIPBOARD = "_clipboard";
     
-    public static final String LOCK = "_lock";
+	/** Name of the column holding the command to update a document. */
+	public static final String UPDATE = "_lock";
     
     public static final String VERSION = "_version";
     
@@ -57,7 +58,7 @@ public class WebFolderAccessor {
     
 	public static final String[] DEFAULT_COLUMNS =
 		new String[] { WebFolder.NAME, DESCRIPTION, DOWNLOAD, TYPE, SIZE, DATE,
-			LOCK, VERSION, CLIPBOARD, SIMILAR_DOCUMENTS, KEYWORDS, DELETE };
+			UPDATE, VERSION, CLIPBOARD, SIMILAR_DOCUMENTS, KEYWORDS, DELETE };
 
     private static final Map<String, PropertyAccessor<? super FolderNode>> PROPERTIES = new MapBuilder<String, PropertyAccessor<? super FolderNode>>()
 		.put(WebFolder.NAME, SelfPropertyAccessor.INSTANCE)

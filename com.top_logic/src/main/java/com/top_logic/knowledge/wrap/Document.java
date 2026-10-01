@@ -22,16 +22,14 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.io.binary.AbstractBinaryData;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.convert.FormatConverterFactory;
 import com.top_logic.convert.converters.FormatConverter;
 import com.top_logic.dob.attr.NextCommitNumberFuture;
 import com.top_logic.dob.ex.NoSuchAttributeException;
-import com.top_logic.dob.util.MetaObjectUtils;
 import com.top_logic.dsa.DataAccessProxy;
-import com.top_logic.dsa.DatabaseAccessException;
-import com.top_logic.dsa.ex.UnknownDBException;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.knowledge.analyze.AnalyzeException;
 import com.top_logic.knowledge.analyze.AnalyzeService;
@@ -59,10 +57,17 @@ import com.top_logic.util.error.TopLogicException;
  * Wrapper for {@link com.top_logic.knowledge.objects.KnowledgeObject}s
  * of type Document.
  * 
- * TODO MGA/KHA support deleteKnowledgeObject().
+ * <p>
+ * The content of a document is stored in its binary attribute {@link #CONTENT}. Each
+ * {@link #update(BinaryData) update} stores the new content, increments the
+ * {@link #getVersionNumber() version number} and creates a {@link DocumentVersion}. Since documents
+ * are versioned, a historic revision of a document reads the content it had in that revision.
+ * </p>
  * 
- * Hereby, I declare the attribute "type" as free for use for 
- * whatever you need ... until somebody tells me that it is reserved. (dkh)
+ * <p>
+ * A document without stored content, whose physical resource names an external data source (e.g.
+ * a mail attachment), reads its content from that data source.
+ * </p>
  *
  * @author    <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
@@ -71,7 +76,13 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	/**
 	 * KOAttribute which stores the version number of the content.
 	 */
-	private static final String VERSION_NUMBER = "versionNumber";
+	public static final String VERSION_NUMBER = "versionNumber";
+
+	/**
+	 * KOAttribute which stores the content of the document together with its name, content type
+	 * and size.
+	 */
+	public static final String CONTENT = "content";
 
 	/**
 	 * Size of the document
@@ -82,7 +93,7 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	 * The number of the revision in which the content of this document was updated.
 	 * 
 	 * The value is stored explicit to ensure that the derived values are correct, also if someone
-	 * just triggers a noop update (e.g. by locking the document).
+	 * modifies other attributes of the document without updating its content.
 	 */
 	private static final String UPDATE_REVISION_NUMBER = "updateRevisionNumber";
 
@@ -141,12 +152,31 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	 * Method returns the content of the represented document.
 	 * 
 	 * @return The content of the document. Must be {@link InputStream#close() closed} after
-	 *         reading. May be <code>null</code> if the underlying {@link #getDAP()} is invalid.
+	 *         reading. May be <code>null</code> if the document has no content.
 	 */
-	public InputStream getContent() throws DatabaseAccessException {
+	public InputStream getContent() throws IOException {
+		BinaryData content = getStoredContent();
+		if (content != null) {
+			return content.getStream();
+		}
+		return getExternalContent();
+	}
+
+	/**
+	 * The content stored in the attribute {@link #CONTENT}, <code>null</code> if the document has
+	 * no stored content.
+	 */
+	public BinaryData getStoredContent() {
+		return (BinaryData) tGetData(CONTENT);
+	}
+
+	/**
+	 * The content of a document whose physical resource names an external data source.
+	 */
+	private InputStream getExternalContent() {
 		DataAccessProxy theDap = getDAP();
 		if (theDap != null && theDap.exists() && theDap.isEntry()) {
-			return dap.getEntry(String.valueOf(getVersionNumber()));
+			return theDap.getEntry(String.valueOf(getVersionNumber()));
 		} else {
 			return null;
 		}
@@ -180,7 +210,7 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
                 }
             }
             else {
-				Logger.info("Document does not exist yet: " + this + " | DAP: " + getDAP(), Document.class);
+				Logger.info("Document has no content yet: " + this, Document.class);
             }
         }
         catch (Exception ex) {
@@ -189,17 +219,19 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	}
 
 	/**
-	 * Updates this document.
+	 * Updates the content of this document.
 	 * 
-	 * This method takes care of the physical existence of the document. If it's not present in the
-	 * data source, it'll be created with the given data, if it exists, the entry will be updated
-	 * using the {@link DataAccessProxy#putEntry(InputStream)} method.
+	 * <p>
+	 * The given content is stored in the attribute {@link #CONTENT} with the name and content type
+	 * of this document. The {@link #getVersionNumber() version number} is incremented and a new
+	 * {@link DocumentVersion} is created. Must be called within a transaction.
+	 * </p>
 	 * 
 	 * @param data
-	 *        The provider for the {@link InputStream} to be used for updating the document.
+	 *        The new content of the document.
 	 * 
 	 * @return <code>true</code>, if updating succeeds, <code>false</code> if given parameter is
-	 *         <code>null</code> or an error occurred in updating.
+	 *         <code>null</code>.
 	 */
 	public boolean update(BinaryData data) {
 		if (data == null) {
@@ -210,60 +242,12 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 			throw new IllegalStateException("Unable to update historic element");
 		}
 
-		final DataAccessProxy theEntry = this.getDAP();
+		tSetData(CONTENT, new DocumentContent(data, getName(), getContentType()));
+		updateKOValues(getStoredContent().getSize());
+		tSetData(VERSION_NUMBER, Integer.valueOf(getVersionNumber() + 1));
 
-		if (theEntry == null) {
-			String theMessage = "Unable to get DAP for Document '" + this.tHandle() + "'!";
-
-			Logger.error(theMessage, Document.class);
-			return false;
-		}
-
-		try {
-			boolean isRepos;
-			if (theEntry.exists()) {
-				isRepos = theEntry.isRepository();
-				if (isRepos) {
-					theEntry.lock();
-				}
-				final InputStream stream = data.getStream();
-				try {
-					theEntry.putEntry(stream);
-				} finally {
-					stream.close();
-				}
-			} else {
-				DataAccessProxy theParent = theEntry.getParentProxy();
-				isRepos = theParent.isRepository();
-				String theName = theEntry.getName();
-
-				final InputStream stream = data.getStream();
-				try {
-					theParent.createEntry(theName, stream);
-				} finally {
-					stream.close();
-				}
-			}
-
-			updateKOValues(data.getSize());
-
-			if (isRepos) { // Unlock and care for DocumentVersion
-				theEntry.unlock();
-
-				/* Read the new number of versions and store it. Must first unlock the entry to get
-				 * correct number of versions */
-				final String[] repositoryVersions = theEntry.getVersions();
-				tSetData(VERSION_NUMBER, repositoryVersions == null ? 0 : repositoryVersions.length);
-
-				DocumentVersion.createDocumentVersion(this);
-			}
-			return true;
-		} catch (IOException ex) {
-			String theMessage = "Unable to access stream for update!";
-			Logger.error(theMessage, ex, Document.class);
-			return false;
-		}
-
+		DocumentVersion.createDocumentVersion(this);
+		return true;
 	}
 
 	/**
@@ -317,11 +301,7 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	}
 
 	/**
-	 * Updates this document.
-	 * 
-	 * This method takes care of the physical existence of the document. If it's not present in the
-	 * data source, it'll be created with the given input stream, if it exists, the entry will be
-	 * updated using the {@link DataAccessProxy#putEntry(InputStream)} method.
+	 * Updates the content of this document.
 	 * 
 	 * @param aStream
 	 *        The stream to be used for updating the document.
@@ -364,22 +344,6 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 		return DocumentVersion.getAllDocumentVersions(this);
     }
     
-    /**
-	 * Checking method, if the underlying DSA supports versioning of files.
-     * 
-     * @return    true, if versioning is supported by this document.
-     */
-	public boolean supportsVersions() {
-        try {
-            return (new DataAccessProxy(this.getDSN()).isRepository());
-        }
-        catch (UnknownDBException ex) {
-            Logger.info("Unable to check, if versions supported!", ex, this);
-
-            return (false);
-        }
-    }
-
 	/**
 	 * Returns the latest version number of this document.
 	 * 
@@ -396,70 +360,45 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	/**
 	 * Rename this document.
 	 * 
-	 * If the renaming fails, the reason can be seen in the logging files.
+	 * <p>
+	 * The stored content keeps the name it was stored with, until the next
+	 * {@link #update(BinaryData) update}. The {@link #getName() name} of the document is the name
+	 * of its content.
+	 * </p>
 	 * 
 	 * @param aName
 	 *        The new name of this document.
-	 * @return true, if renaming succeeds.
+	 * @return Always <code>true</code>.
 	 */
 	public boolean rename(String aName) {
-		if (!this.supportsVersions()) {
-			this.tHandle().setAttributeValue(NAME_ATTRIBUTE, aName);
-			return true;
-		} else {
-			return false;
-		}
+		this.tHandle().setAttributeValue(NAME_ATTRIBUTE, aName);
+		return true;
 	}
 
 	/**
-	 * Removes this document including its data source.
+	 * Removes this document.
 	 * 
-	 * @param force
-	 *        Whether to break locks before deletion.
+	 * <p>
+	 * Since documents are versioned, the content of historic revisions stays accessible.
+	 * </p>
 	 * 
 	 * @return true, if removing succeeds.
 	 */
-	public boolean delete(boolean force) {
-		removeDataSource(force);
-		removeKO();
-        return true;
-    }
-
-	private void removeDataSource(boolean force) {
-		// Note: In a versioned type, physical contents must not be deleted, because it is still
-		// possible to access historic versions.
-		if (!MetaObjectUtils.isVersioned(tHandle().tTable())) {
-			DataAccessProxy physicalResource = this.getDAP();
-			if (physicalResource.exists()) {
-				physicalResource.delete(force);
-			}
-		}
+	public boolean delete() {
+		tHandle().delete();
+		return true;
 	}
 
 	/**
-	 * Removes this {@link Document} object, leaving its data source untouched.
-	 */
-	public void removeLocal() {
-		removeKO();
-	}
-
-	private void removeKO() {
-		tHandle().delete();
-	}
-
-    /**
-	 * Whether this document has a physical representation.
-	 * 
-	 * @see DataAccessProxy#exists()
+	 * Whether this document has content.
 	 */
 	public boolean exists() {
-        DataAccessProxy theDAP = getDAP();
-		if (dap == null) {
-			return false;
+		if (getStoredContent() != null) {
+			return true;
 		}
-
-		return theDAP.exists();
-    }
+		DataAccessProxy theDAP = getDAP();
+		return theDAP != null && theDAP.exists();
+	}
 
     /**
      * Search for similar contents (information) within the system.
@@ -601,6 +540,20 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
         }
     }
 
+	/**
+	 * Create a new Document with the specified name and no content.
+	 * 
+	 * <p>
+	 * The content type of the document is computed from the name of the document. The content is
+	 * set by {@link #update(BinaryData)}.
+	 * </p>
+	 * 
+	 * @see #createDocument(String, String, KnowledgeBase, long)
+	 */
+	public static Document createDocument(String name, KnowledgeBase kb) {
+		return createDocument(name, null, kb, 0);
+	}
+
     /**
 	 * Create a new Document with the specified name, physical resource, and size 0.
 	 * 
@@ -640,7 +593,8 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	 * @param name
 	 *        the name to use for the email; must not be null
 	 * @param physicalResource
-	 *        the physical resource; must not be null
+	 *        the physical resource naming an external data source that holds the content,
+	 *        <code>null</code> for a document whose content is set by {@link #update(BinaryData)}
 	 * @param kb
 	 *        the KnowledgeBase in which to create the Email; must not be null
 	 * @param contentSize
@@ -688,28 +642,6 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
      */
 	public static Document getInstance(KnowledgeBase aBase, TLID anID) {
 		final KnowledgeObject ko = aBase.getKnowledgeObject(OBJECT_NAME, anID);
-		return getInstance(ko);
-    }
-
-    /**
-     * Creates a wrapper for a Document with the given DataAccessProxy.
-     *
-     * @param    aProxy    The DataAccessProxy of the Document.
-     * @throws   IllegalArgumentException    If the object is no Document.
-     */
-	public static Document getInstance(DataAccessProxy aProxy) {
-		return getInstance(getDefaultKnowledgeBase(), aProxy);
-    }
-
-    /**
-     * Creates a wrapper for a Document with the given URL.
-     *
-     * @param    aProxy    The DataAccessProxy of the Document.
-     * @throws   IllegalArgumentException    If the object is no Document.
-     */
-	public static Document getInstance(KnowledgeBase aBase, DataAccessProxy aProxy) {
-		KnowledgeObject ko =
-			(KnowledgeObject) aBase.getObjectByAttribute(OBJECT_NAME, KOAttributes.PHYSICAL_RESOURCE, aProxy.getPath());
 		return getInstance(ko);
     }
 
@@ -812,7 +744,6 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 
 	@Override
 	public String getContentType() {
-
 		try {
 			KnowledgeObject theObject = this.tHandle();
 
@@ -824,19 +755,23 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 			Logger.warn("Missing Dublin Core attribute in " + this, ex, Document.class);
 		}
 
-		String theType = null;
-		{
-			DataAccessProxy theDAP = this.getDAP();
+		return MimeTypes.getInstance().getMimeType(this.getName());
+	}
 
-			theType = MimeTypes.getInstance().getMimeType(theDAP);
+	/**
+	 * Returns the content of the {@link DocumentVersion} with the given version number.
+	 * 
+	 * @param versionNumber
+	 *        The {@link #getVersionNumber() version number} of the requested content.
+	 * @return The content of this document in the requested version, <code>null</code> if there
+	 *         is no such version.
+	 */
+	public BinaryData getVersionContent(int versionNumber) {
+		DocumentVersion version = DocumentVersion.getDocumentVersion(this, Integer.valueOf(versionNumber));
+		if (version == null) {
+			return null;
 		}
-
-		// Cannot find correct mime type via DAP, try it via name.
-		if (BinaryData.CONTENT_TYPE_OCTET_STREAM.equals(theType)) {
-			theType = MimeTypes.getInstance().getMimeType(this.getName());
-		}
-
-		return theType;
+		return version.getDocument();
 	}
 
 	private TopLogicException noData(Throwable cause) {
@@ -847,6 +782,45 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 			return new TopLogicException(Document.class, "dataUnavailable(name)",
 				new Object[] { getName() }, cause);
 		}
+	}
+
+	/**
+	 * Content of a {@link Document} stored with the name and content type of the document.
+	 */
+	private static final class DocumentContent extends AbstractBinaryData {
+
+		private final BinaryData _data;
+
+		private final String _name;
+
+		private final String _contentType;
+
+		DocumentContent(BinaryData data, String name, String contentType) {
+			_data = data;
+			_name = name;
+			_contentType = contentType;
+		}
+
+		@Override
+		public String getName() {
+			return _name;
+		}
+
+		@Override
+		public String getContentType() {
+			return _contentType;
+		}
+
+		@Override
+		public long getSize() {
+			return _data.getSize();
+		}
+
+		@Override
+		public InputStream getStream() throws IOException {
+			return _data.getStream();
+		}
+
 	}
 
 }

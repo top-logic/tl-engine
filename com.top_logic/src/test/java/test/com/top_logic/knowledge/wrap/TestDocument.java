@@ -5,7 +5,10 @@
  */
 package test.com.top_logic.knowledge.wrap;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import junit.framework.Test;
 
@@ -13,13 +16,16 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.io.FileUtilities;
+import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Document;
+import com.top_logic.knowledge.wrap.DocumentVersion;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 
 /**
@@ -168,21 +174,68 @@ public class TestDocument extends AbstractDocumentTest {
 	/* Test for OutputStream updateDocument() public void testUpdateDocument() throws Exception { } */
 
 	/**
-	 * Tests {@link Document#getDAP()}.
+	 * Tests that each update stores a new content version, and that the current and historic
+	 * revisions read their own content.
 	 */
-	public void testGetDAP() throws Exception {
-		assertNotNull("Unable to get DAP when there is no physical resource " +
-			"for Document " + _testDocument,
-			_testDocument.getDAP());
+	public void testContentVersions() throws Exception {
+		KnowledgeBase kb = KBSetup.getKnowledgeBase();
+		Document document = getOrCreateChildDocument("TestContentVersions.txt");
+		assertEquals(1, document.getVersionNumber());
+		assertEquals(_emptyContent.getSize(), document.getSize());
 
-		Transaction updateTx = _testDocument.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
-		assertTrue("Error in uploading new content to document " + _testDocument,
-			_testDocument.update(this.getData(TEST_FILE)));
-		updateTx.commit();
+		byte[] content2 = "Second version of the document.".getBytes(StandardCharsets.UTF_8);
+		byte[] content3 = "Third version of the document, a bit longer than the second one.".getBytes(StandardCharsets.UTF_8);
 
-		assertNotNull("Unable to get DAP even when there a physical resource " +
-			"for Document " + _testDocument,
-			_testDocument.getDAP());
+		Transaction tx2 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+		assertTrue(document.update(BinaryDataFactory.createBinaryData(content2, "application/octet-stream", "other.bin")));
+		tx2.commit();
+		Document revision2 = (Document) WrapperHistoryUtils.getWrapper(tx2.getCommitRevision(), document);
+
+		Transaction tx3 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+		assertTrue(document.update(BinaryDataFactory.createBinaryData(content3)));
+		tx3.commit();
+
+		assertEquals(3, document.getVersionNumber());
+		assertEquals(content3.length, document.getSize());
+		assertEquals("TestContentVersions.txt", document.getName());
+		assertEquals("text/plain", document.getContentType());
+		assertContent(content3, document);
+
+		BinaryData stored = document.getStoredContent();
+		assertEquals("The stored content has the name of the document.", document.getName(), stored.getName());
+		assertEquals("The stored content has the content type of the document.", document.getContentType(),
+			stored.getContentType());
+		assertEquals(content3.length, stored.getSize());
+
+		assertEquals(2, revision2.getVersionNumber());
+		assertEquals(content2.length, revision2.getSize());
+		assertContent(content2, revision2);
+
+		List<? extends DocumentVersion> versions = document.getDocumentVersions();
+		assertEquals(3, versions.size());
+		assertEquals(3, versions.get(0).getRevision());
+		assertContent(content3, versions.get(0).getDocument());
+		assertEquals(2, versions.get(1).getRevision());
+		assertContent(content2, versions.get(1).getDocument());
+		assertEquals(1, versions.get(2).getRevision());
+		assertEquals(_emptyContent.getSize(), versions.get(2).getDocument().getSize());
+
+		assertContent(content2, document.getVersionContent(2));
+		assertContent(content3, document.getVersionContent(3));
+		assertNull(document.getVersionContent(4));
+
+		Transaction deleteTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+		assertTrue(this._folder.remove(document));
+		deleteTx.commit();
+
+		assertContent(content2, revision2);
+	}
+
+	private static void assertContent(byte[] expected, BinaryData actual) throws IOException {
+		assertNotNull(actual);
+		try (InputStream in = actual.getStream()) {
+			assertEquals(expected, StreamUtilities.readStreamContents(in));
+		}
 	}
 
 	/**

@@ -7,27 +7,22 @@ package com.top_logic.common.webfolder.ui.commands;
 
 
 import com.top_logic.common.webfolder.model.FolderContent;
-import com.top_logic.common.webfolder.ui.WebFolderUIFactory;
-import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.TLContext;
-import com.top_logic.util.TLContextManager;
 
 /**
  * Provides a dialog for updating an existing document on the server. 
  * 
+ * <p>
+ * An update creates a new revision of the document.
+ * </p>
+ * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class UpdateExecutable extends AbstractWebfolderAction {
-
-    /** Update is not allowed, because document isn't locked. */
-	private static final ExecutableState NO_ACTION = ExecutableState.createDisabledState(I18NConstants.MSG_NOT_LOCKED);
-
-    private final boolean _manualLocking;
 
 	/**
 	 * Creates a {@link UpdateExecutable}.
@@ -37,68 +32,25 @@ public class UpdateExecutable extends AbstractWebfolderAction {
 	 * @throws IllegalArgumentException
 	 *         If given document is <code>null</code>.
 	 */
-	public UpdateExecutable(FolderContent node, boolean manualLocking) {
+	public UpdateExecutable(FolderContent node) {
     	super(node);
-		_manualLocking = manualLocking;
     }
 
     @Override
 	public HandlerResult executeCommand(DisplayContext aContext) {
         Document document = this.getDocument();
-		if (!getManualLocking()) {
-			boolean success = document.getDAP().lock();
-			if (!success) {
-				return HandlerResult.error(I18NConstants.UPDATE_NOT_POSSIBLE_BECAUSE_LOCKING_FAILED);
-			}
-			registerUnlockDocumentOnLogoutListener(document);
-		}
-		return new UpdateDialog(document, getManualLocking()).open(aContext);
+		return new UpdateDialog(document).open(aContext);
     }
-
-	private void registerUnlockDocumentOnLogoutListener(Document document) {
-		TLContextManager.getSubSession().addUnboundListener(new UnlockDocumentOnLogoutListener(document));
-	}
 
     @Override
     protected ExecutableState calculateExecutability() {
     	if (isLink()) {
     		return ExecutableState.NOT_EXEC_HIDDEN;
     	}
-		Document document = this.getDocument();
 		if (!ComponentUtil.isValid(getContentObject())) {
 			return ExecutableState.NO_EXEC_INVALID;
 		}
-		DataAccessProxy theDAP = document.getDAP();
-		if (LockExecutable.isLocked(theDAP)) {
-			return calculateExecutabilityWhenLocked(theDAP);
-		}
-		if (getManualLocking()) {
-			return UpdateExecutable.NO_ACTION;
-		}
 		return ExecutableState.EXECUTABLE;
-	}
-
-	private ExecutableState calculateExecutabilityWhenLocked(DataAccessProxy theDAP) {
-		if (TLContext.isAdmin()) {
-			return ExecutableState.EXECUTABLE;
-		}
-		String theName = LockExecutable.getLocker(theDAP);
-		String theUser = TLContext.getContext().getCurrentUserName();
-
-		if (theUser.equals(theName)) {
-			return ExecutableState.EXECUTABLE;
-		}
-		if (getManualLocking()) {
-			return ExecutableState.NOT_EXEC_HIDDEN;
-		}
-		return ExecutableState.createDisabledState(I18NConstants.UPDATE_NOT_POSSIBLE_BECAUSE_LOCKED);
-	}
-
-	/**
-	 * @see WebFolderUIFactory#getManualLocking()
-	 */
-	protected boolean getManualLocking() {
-		return _manualLocking;
 	}
 
 }

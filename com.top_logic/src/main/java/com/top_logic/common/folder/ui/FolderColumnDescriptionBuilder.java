@@ -167,7 +167,7 @@ public abstract class FolderColumnDescriptionBuilder {
 		return result;
 	}
 
-	public ColumnConfiguration createLockColumn(ColumnConfiguration column) {
+	public ColumnConfiguration createUpdateColumn(ColumnConfiguration column) {
 		ColumnConfiguration result = this.createButtonColumn(column);
 		result.setVisible(this.allowWrite.isVisible());
 		return result;

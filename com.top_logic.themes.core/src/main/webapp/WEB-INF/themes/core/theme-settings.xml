@@ -1616,18 +1616,6 @@
 	<icon name="com.top_logic.layout.form.decorator.Icons.UNCHANGED"
 		value="/misc/compare/unchanged.png"
 	/>
-	<icon name="com.top_logic.layout.form.model.Icons.DOC_LOCKED"
-		value="css:fa-solid fa-lock"
-	/>
-	<icon name="com.top_logic.layout.form.model.Icons.DOC_LOCKED_DISABLED"
-		expr="%com.top_logic.layout.form.model.Icons.DOC_LOCKED%"
-	/>
-	<icon name="com.top_logic.layout.form.model.Icons.DOC_UNLOCK"
-		value="css:fa-solid fa-unlock"
-	/>
-	<icon name="com.top_logic.layout.form.model.Icons.DOC_UNLOCK_DISABLED"
-		expr="%com.top_logic.layout.form.model.Icons.DOC_UNLOCK%"
-	/>
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.SELECT_SIBLINGS"
 		value="/icons/selectSiblings.png"
 	/>

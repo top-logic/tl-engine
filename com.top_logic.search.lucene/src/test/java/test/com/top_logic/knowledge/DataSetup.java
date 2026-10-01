@@ -7,6 +7,8 @@ package test.com.top_logic.knowledge;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +16,7 @@ import junit.framework.Test;
 
 import test.com.top_logic.basic.ThreadContextSetup;
 
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -81,8 +84,11 @@ public class DataSetup extends ThreadContextSetup {
 		}
 	}
 
-	private int addEntry(DataAccessProxy anEntry, KnowledgeBase kb) {
-		Document doc = Document.createDocument(anEntry.getPath(), anEntry.getPath(), kb);
+	private int addEntry(DataAccessProxy anEntry, KnowledgeBase kb) throws IOException {
+		Document doc = Document.createDocument(anEntry.getPath(), kb);
+		try (InputStream content = anEntry.getEntry()) {
+			doc.update(BinaryDataFactory.createFileBasedBinaryData(content));
+		}
 
 		KnowledgeObject docKO = doc.tHandle();
 		getKnowledgeObjects().add(docKO);

@@ -344,7 +344,7 @@
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+								tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -355,8 +355,8 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
 								<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
-										tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
+										tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 									/>
 									<path>
 										<named-member name="rows"/>
@@ -389,8 +389,8 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
 								<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
-										tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
+										tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 									/>
 									<path>
 										<named-member name="rows"/>
@@ -426,8 +426,8 @@
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
-									tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
+									tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 								/>
 								<path>
 									<named-member name="rows"/>
@@ -456,8 +456,8 @@
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
-									tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
+									tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 								/>
 								<path>
 									<named-member name="rows"/>
@@ -703,7 +703,7 @@
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+								tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -714,8 +714,8 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
 								<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
-										tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
+										tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 									/>
 									<path>
 										<named-member name="rows"/>
@@ -748,8 +748,8 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
 								<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
-										tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
+										tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 									/>
 									<path>
 										<named-member name="rows"/>
@@ -1018,7 +1018,7 @@
 							user-id="root"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+								tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -1029,8 +1029,8 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
 								<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
-										tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
+										tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 									/>
 									<path>
 										<named-member name="rows"/>
@@ -1063,8 +1063,8 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
 								<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
-										tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+										name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
+										tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 									/>
 									<path>
 										<named-member name="rows"/>
@@ -1101,8 +1101,8 @@
 						>
 							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
-									tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
+									tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 								/>
 								<path>
 									<named-member name="rows"/>
@@ -1156,8 +1156,8 @@
 						>
 							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
-									tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
+									tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 								/>
 								<path>
 									<named-member name="rows"/>
@@ -1187,8 +1187,8 @@
 								label="Ersetzen"
 							>
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
-									tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
+									tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 								/>
 							</model-name>
 						</action>
@@ -1234,8 +1234,8 @@
 						>
 							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
-									tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
+									tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 								/>
 								<path>
 									<named-member name="rows"/>
@@ -1327,8 +1327,8 @@
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
-									tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
+									tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 								/>
 								<path>
 									<named-member name="rows"/>
@@ -1358,8 +1358,8 @@
 						>
 							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsManualLockingFolder"
-									tab-path="Strukturen > Typendemo > 2 Dokumente (manuelle Sperren)"
+									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
+									tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
 								/>
 								<path>
 									<named-member name="rows"/>

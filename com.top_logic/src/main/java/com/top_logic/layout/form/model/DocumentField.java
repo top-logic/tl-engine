@@ -11,12 +11,9 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.io.binary.BinaryDataSource;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.DOMUtil;
-import com.top_logic.common.webfolder.ui.NotExecutableListener;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.ResourceView;
-import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.template.ControlProvider;
@@ -44,16 +41,6 @@ public class DocumentField extends CompositeField {
 	 */
 	public static final String TEMPLATE_FIELD = "template";
 
-	/**
-	 * Name of the {@link #getLockField()}.
-	 */
-	public static final String LOCK_FIELD = "lock";
-
-	/**
-	 * Name of the {@link #getUnlockField()}.
-	 */
-	public static final String UNLOCK_FIELD = "unlock";
-
 	private static final ResourceView RESOURCES = I18NConstants.DOCUMENT_FIELD;
 
 	/**
@@ -61,12 +48,8 @@ public class DocumentField extends CompositeField {
 	 * 
 	 * @param name
 	 *        See {@link #getName()}.
-	 * @param lockAction
-	 *        The action to lock the document.
-	 * @param unlockAction
-	 *        The action to unlock the document.
 	 */
-	public DocumentField(String name, Command lockAction, Command unlockAction) {
+	public DocumentField(String name) {
 		super(name, RESOURCES);
 
 		DataField documentField = FormFactory.newDataField(DOCUMENT_FIELD);
@@ -77,23 +60,6 @@ public class DocumentField extends CompositeField {
 		template.setCssClasses(FormConstants.FIXED_RIGHT_CSS_CLASS);
 		addMember(template);
 		template.setImmutable(true);
-
-		CommandField lock = FormFactory.newCommandField(LOCK_FIELD, lockAction);
-		lock.setLabel((ResKey) null);
-		lock.setImage(Icons.DOC_LOCKED);
-		lock.setNotExecutableImage(Icons.DOC_LOCKED_DISABLED);
-		lock.setCssClasses(FormConstants.FIXED_RIGHT_CSS_CLASS);
-		addMember(lock);
-
-		CommandField unlock = FormFactory.newCommandField(UNLOCK_FIELD, unlockAction);
-		unlock.setLabel((ResKey) null);
-		unlock.setImage(Icons.DOC_UNLOCK);
-		unlock.setNotExecutableImage(Icons.DOC_UNLOCK_DISABLED);
-		unlock.setCssClasses(FormConstants.FIXED_RIGHT_CSS_CLASS);
-		addMember(unlock);
-		
-		NotExecutableListener.createNotExecutableReasonKey(
-			com.top_logic.common.webfolder.ui.I18NConstants.FIELD_DISABLED, lock, unlock).addAsListener(this);
 	}
 
 	/**
@@ -162,20 +128,6 @@ public class DocumentField extends CompositeField {
 		return (DataField) getMember(TEMPLATE_FIELD);
 	}
 
-	/**
-	 * The field holding the lock action.
-	 */
-	public final CommandField getLockField() {
-		return (CommandField) getMember(LOCK_FIELD);
-	}
-
-	/**
-	 * The field holding the unlock action.
-	 */
-	public final CommandField getUnlockField() {
-		return (CommandField) getMember(UNLOCK_FIELD);
-	}
-
 	@Override
 	protected FormField getProxy() {
 		return getDocumentField();
@@ -212,8 +164,6 @@ public class DocumentField extends CompositeField {
 	    	+	">"
 	    	+		"<p:field name='" + DocumentField.DOCUMENT_FIELD + "' />"
 	    	+		"<p:field name='" + DocumentField.TEMPLATE_FIELD + "' />"
-	    	+		"<p:field name='" + DocumentField.LOCK_FIELD + "' />"
-	    	+		"<p:field name='" + DocumentField.UNLOCK_FIELD + "' />"
 			+ 		"<p:field name='" + DocumentField.DOCUMENT_FIELD + "'"
 			+			" style='" + FormTemplateConstants.STYLE_ERROR_VALUE + "' />"
 	        +	"</span>");

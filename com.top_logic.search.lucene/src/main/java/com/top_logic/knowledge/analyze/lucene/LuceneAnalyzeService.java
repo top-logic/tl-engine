@@ -41,14 +41,11 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.convert.FormatConverterFactory;
 import com.top_logic.convert.converters.FormatConverter;
 import com.top_logic.convert.converters.FormatConverterException;
-import com.top_logic.dob.ex.NoSuchAttributeException;
-import com.top_logic.dsa.DataAccessProxy;
-import com.top_logic.dsa.DatabaseAccessException;
-import com.top_logic.dsa.ex.UnknownDBException;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.knowledge.analyze.AnalyzeException;
 import com.top_logic.knowledge.analyze.AnalyzeService;
@@ -56,9 +53,9 @@ import com.top_logic.knowledge.analyze.DefaultAnalyzeService;
 import com.top_logic.knowledge.analyze.KnowledgeObjectResult;
 import com.top_logic.knowledge.analyze.KnowledgeObjectResultImpl;
 import com.top_logic.knowledge.indexing.lucene.LuceneIndex;
-import com.top_logic.knowledge.objects.KOAttributes;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.wrap.WrapperFactory;
 
 /**
  * Lucene implementation of the {@link AnalyzeService}.
@@ -321,7 +318,7 @@ public class LuceneAnalyzeService extends DefaultAnalyzeService<LuceneAnalyzeSer
 		double threshold = getConfig().getDefaultThresholdFeatureExtractor();
 
         // retrieve the document text
-        String theContent = this.getFilteredContent(this.getPhysicalResource(document));
+        String theContent = this.getFilteredContent(getBinaryContent(document));
         StringReader contentReader = new StringReader(theContent);
 		HashMap<String, Integer> countByKeyword = this.findKeywordsCounted(contentReader);
 		int wordCount = 0;
@@ -466,53 +463,40 @@ public class LuceneAnalyzeService extends DefaultAnalyzeService<LuceneAnalyzeSer
         return rankedResults;
     }
 
-    /**
-     * retrieves the filepath and name (= physical resource) of the object
-     *
-     * @param kObj the knowledge object whose filepath is to be retrieved
-     *
-     * @throws AnalyzeException in case of an error
-     */
-    private String getPhysicalResource(KnowledgeObject kObj)
-        throws AnalyzeException {
-            
-        try {
-            // return the physical resource of the object
-            return (String) kObj.getAttributeValue(KOAttributes.PHYSICAL_RESOURCE);
-        }
-        catch (NoSuchAttributeException noattr) {
-            AnalyzeException ex = new AnalyzeException(
-                                              KOAttributes.PHYSICAL_RESOURCE
-                                              + " is not an attribute of "
-                                              + kObj.getClass().getName()
-                                            );
-            Logger.error("getPhysicalResource: " + ex.toString(), noattr, this);
-            throw ex;
-        }
-    }
+	/**
+	 * The binary content of the given object, <code>null</code> if the object has no binary
+	 * content.
+	 */
+	private static BinaryData getBinaryContent(KnowledgeObject kObj) {
+		Object wrapper = WrapperFactory.getWrapper(kObj);
+		return wrapper instanceof BinaryData ? (BinaryData) wrapper : null;
+	}
 
 	/**
-	 * Retrieves and filters the content of a resource
+	 * Retrieves and filters the given content.
 	 * 
-	 * @param aDocumentURL
-	 *        the physical resource of a knowledge object
+	 * @param content
+	 *        The binary content of a knowledge object, <code>null</code> for no content.
 	 * 
 	 * @throws AnalyzeException
 	 *         in case of an error
 	 */
-	private String getFilteredContent(String aDocumentURL) throws AnalyzeException {
+	private String getFilteredContent(BinaryData content) throws AnalyzeException {
+		if (content == null) {
+			return "";
+		}
 
-		String mimeType = MimeTypes.getInstance().getMimeType(aDocumentURL);
+		String mimeType = content.getContentType();
 		FormatConverterFactory converterFactory = FormatConverterFactory.getInstance();
 		FormatConverter converter = converterFactory.getFormatConverter(mimeType);
 
-		String content;
+		String result;
 		if (converter != null) {
 			try {
-				content = getConvertedContent(aDocumentURL, converter, mimeType);
+				result = getConvertedContent(content, converter, mimeType);
 			}
 			catch (Exception ex) {
-				String theMessage = "Unable to filter content of resource '" + aDocumentURL + '\'';
+				String theMessage = "Unable to filter content of '" + content.getName() + '\'';
 				
 				if (ex instanceof FormatConverterException) {
 					Logger.warn(theMessage + " (reason is: " + ex.getMessage() + ")!", this);
@@ -521,24 +505,24 @@ public class LuceneAnalyzeService extends DefaultAnalyzeService<LuceneAnalyzeSer
 					Logger.warn(theMessage + "!", ex, this);
 				}
 				// If an error occured and UseSimpleFilter is set, try it...
-				content =  getSimpleContent(aDocumentURL);
+				result = getSimpleContent(content);
 			}
 		} else {
-			content = getSimpleContent(aDocumentURL);
+			result = getSimpleContent(content);
 		}
 
-		if (content == null) {
+		if (result == null) {
 			Logger.warn("FileContent was null, returning empty String...", this);
 			return "";
 		}
-		content = this.parseStringContent(content);
+		result = this.parseStringContent(result);
 
-		return content;
+		return result;
 	}
 
-	private String getConvertedContent(String documentURL, FormatConverter converter, String mimeType)
-			throws DatabaseAccessException, UnknownDBException, IOException {
-		try (InputStream input = new DataAccessProxy(documentURL).getEntry()) {
+	private String getConvertedContent(BinaryData content, FormatConverter converter, String mimeType)
+			throws IOException {
+		try (InputStream input = content.getStream()) {
 			try (Reader theReader = converter.convert(input, mimeType)) {
 				try (StringWriter writer = new StringWriter()) {
 					StreamUtilities.copyReaderWriterContents(theReader, writer);
@@ -548,12 +532,12 @@ public class LuceneAnalyzeService extends DefaultAnalyzeService<LuceneAnalyzeSer
 		}
 	}
 
-	private String getSimpleContent(String documentURL) {
+	private String getSimpleContent(BinaryData content) {
 		if (DEBUG) {
-			Logger.debug("Using simple filter for " + documentURL, LuceneAnalyzeService.class);
+			Logger.debug("Using simple filter for " + content.getName(), LuceneAnalyzeService.class);
 		}
 		try {
-			try (InputStream in = new DataAccessProxy(documentURL).getEntry()) {
+			try (InputStream in = content.getStream()) {
 		    	return this.readFileContent(in);
 			}
 		}

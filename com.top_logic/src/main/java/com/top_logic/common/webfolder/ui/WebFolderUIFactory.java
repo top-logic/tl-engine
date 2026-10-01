@@ -96,9 +96,6 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 		/** Property name of {@link #getBreadcrumbRenderer()}. */
 		String BREADCRUMB_RENDERER = "breadcrumb-renderer";
 
-		/** Property name of {@link #getManualLocking()}. */
-		String MANUAL_LOCKING = "manual-locking";
-
 		/** Configuration name for {@link #getMaxUploadSize()}. */
 		String MAX_UPLOAD_SIZE = "max-upload-size";
 
@@ -129,10 +126,6 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 		@ItemDefault
 		@ImplementationClassDefault(DefaultBreadcrumbRenderer.class)
 		PolymorphicConfiguration<BreadcrumbRenderer> getBreadcrumbRenderer();
-
-		/** @see WebFolderUIFactory#getManualLocking() */
-		@Name(MANUAL_LOCKING)
-		boolean getManualLocking();
 
 		/**
 		 * Maximum size of a single file that can be uploaded. A value of <code>0</code> means that
@@ -417,7 +410,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 
 		ArrayList<String> columns = CollectionUtil.toList(WebFolderAccessor.DEFAULT_COLUMNS);
 		if (!withUpdate) {
-			columns.remove(WebFolderAccessor.LOCK);
+			columns.remove(WebFolderAccessor.UPDATE);
 		}
 		if (!withDelete) {
 			columns.remove(WebFolderAccessor.DELETE);
@@ -509,25 +502,11 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	 */
 	public FolderControl createControl(final FolderField field) {
 		FileDropHandler fileDropHandler =
-			new FolderFileDropHandler(false, !field.isImmutable(), WebFolderUIFactory.getInstance().getMaxUploadSize());
+			new FolderFileDropHandler(!field.isImmutable(), WebFolderUIFactory.getInstance().getMaxUploadSize());
 		final FolderControl control =
 			createControl(field.getBreadcrumbRenderer(), field.getFolderData(), field, fileDropHandler);
 		control.addVisibilityListenerFor(field);
 		return control;
-	}
-
-	/**
-	 * Whether the locks are requested and released manually by the user.
-	 * <p>
-	 * If true, the user has to explicitly request the lock before the update button is executable.
-	 * </p>
-	 * <p>
-	 * If false, the locks are automatically requested and released when the user updates a
-	 * document.
-	 * </p>
-	 */
-	public boolean getManualLocking() {
-		return getConfig().getManualLocking();
 	}
 
 	/**

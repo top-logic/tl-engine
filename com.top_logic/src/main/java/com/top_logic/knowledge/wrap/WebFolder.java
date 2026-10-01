@@ -19,9 +19,7 @@ import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ConfigurationError;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.Named;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.MapBuilder;
@@ -32,11 +30,8 @@ import com.top_logic.common.folder.FolderDefinition;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.util.MetaObjectUtils;
-import com.top_logic.dsa.DataAccessProxy;
-import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.knowledge.objects.DCMetaData;
 import com.top_logic.knowledge.objects.InvalidLinkException;
-import com.top_logic.knowledge.objects.KOAttributes;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AssociationQuery;
@@ -45,7 +40,6 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.event.Modification;
-import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
@@ -72,6 +66,11 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * To append an object as link to this folder, use the {@link #add(TLObject) add} method, that will
  * do the correct handling automatically.
+ * </p>
+ * 
+ * <p>
+ * A folder is a plain object: its documents store their content themselves, a folder is not
+ * backed by a directory of a data source. Folders and documents can be renamed.
  * </p>
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
@@ -205,19 +204,6 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
         super(ko);
     }
 
-    /**
-     * Returns a string representation of this web folder.
-     *
-     * @return    A representation for debugging.
-     */
-    @Override
-	protected String toStringValues() {
-		String result = super.toStringValues();
-		result = result + ", DSN: " + this.getDSN();
-
-		return result;
-    }
-
 	/**
 	 * Checks, whether the folder has no children (including linked ones).
 	 * 
@@ -312,7 +298,6 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 			}
 		}
 
-		deleteFolderResource();
 		tDelete();
 		return true;
 	}
@@ -321,26 +306,9 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 		if (ownedContent instanceof WebFolder) {
 			return ((WebFolder) ownedContent).delete(force);
 		} else if (ownedContent instanceof Document) {
-			return removeDocument((Document) ownedContent, force);
+			return removeDocument((Document) ownedContent);
 		} else {
 			return false;
-		}
-	}
-
-	private void deleteFolderResource() {
-		try {
-			KnowledgeObject folderKO = this.tHandle();
-			// Note: In a versioned type, physical contents must not be deleted, because it is still
-			// possible to access a historic version.
-			if (!MetaObjectUtils.isVersioned(folderKO.tTable())) {
-				String resourceName = (String) folderKO.getAttributeValue(KOAttributes.PHYSICAL_RESOURCE);
-				if (!StringServices.isEmpty(resourceName)) {
-					DataAccessProxy resource = new DataAccessProxy(resourceName);
-					resource.delete(NOFORCE);
-				}
-			}
-		} catch (Exception ex) {
-			Logger.error("Physical deletion of folder '" + this + "' failed.", ex, this);
 		}
 	}
 
@@ -349,10 +317,8 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 	 * 
 	 * @param ownedDocument
 	 *        The document that is owned by this folder.
-	 * @param force
-	 *        Whether to break locks before removal.
 	 */
-	private boolean removeDocument(Document ownedDocument, boolean force) {
+	private boolean removeDocument(Document ownedDocument) {
 		Iterator<KnowledgeAssociation> links = getLinksTo(ownedDocument);
 		
 		assert links.hasNext() : "Document in no relation to folder, from which it should be removed";
@@ -375,64 +341,16 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 			// Document keeps alive.
 			return true;
 		} else {
-			return ownedDocument.delete(force);
-		}
-	}
-
-	/**
-	 * Retrieves the physical representation of this {@link WebFolder}. In contrast to
-	 * {@link #getDAP()}, it will create a physical representation if it does not exist yet.
-	 * Therefore this method must be called within transactions only.
-	 * 
-	 * @return physical representation of this {@link WebFolder}
-	 */
-	public DataAccessProxy createOrGetDAP() {
-		if (!hasDAP()) {
-			createDAP();
-		}
-		return getDAP();
-	}
-
-	/**
-	 * true, if this {@link WebFolder} has an attached physical representation, false
-	 *         otherwise
-	 */
-	public boolean hasDAP() {
-		return resolveDAP() != null;
-	}
-
-	private void createDAP() {
-		WebFolderFactory webFolderFactory = WebFolderFactory.getInstance();
-		if (webFolderFactory.getCreateMode() == CreatePhysicalResource.DEFERRED) {
-			this.setString(KOAttributes.PHYSICAL_RESOURCE, webFolderFactory.createUniqueFolderDSN());
+			return ownedDocument.delete();
 		}
 	}
 
 	private Document createDocument(String aName, BinaryData content) {
-		{
-			DataAccessProxy theDAP = this.createOrGetDAP();
-
-			if (!hasDAP()) { // At least show some reasonable message
-				throw new NullPointerException("No Datasource in " + this);
-			} else {
-				DataAccessProxy theProxy = theDAP.getChildProxy(aName);
-				String theDocDSN = theProxy.getPath();
-				KnowledgeBase kBase = this.getKnowledgeBase();
-
-				// Synchronized to avoid deadlocks with DBKB
-				// See testWebFolder.testThreadUpload()
-				synchronized (kBase) {
-					Document theDocument = Document.createDocument(aName, theDocDSN, kBase);
-					this.createLinkTo(theDocument, OWNER);
-
-					if (!theDocument.update(content)) {
-						theDocument.removeLocal();
-						throw new WrapperRuntimeException("Unable to store new document physically");
-					}
-					return theDocument;
-				}
-			}
-		}
+		KnowledgeBase kBase = this.getKnowledgeBase();
+		Document theDocument = Document.createDocument(aName, kBase);
+		this.createLinkTo(theDocument, OWNER);
+		theDocument.update(content);
+		return theDocument;
 	}
 
 	/**
@@ -485,13 +403,7 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
      * the new Subfolder is added as a child to the receiver
      */
 	public WebFolder createSubFolder(String aName) {
-		WebFolder subfolder;
-		if (WebFolderFactory.getInstance().getCreateMode() == CreatePhysicalResource.IMMEDIATE) {
-			subfolder = createFolder(getKnowledgeBase(), aName, getDSN());
-		}
-		else {
-			subfolder = createRootFolderNoDSN(getKnowledgeBase(), aName);
-		}
+		WebFolder subfolder = createFolder(getKnowledgeBase(), aName);
 		subfolder.setFolderType(WebFolderFactory.SUB_FOLDER);
 		createLinkTo(subfolder, OWNER);
         return subfolder;
@@ -548,31 +460,6 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 		}
 	}
 
-	/**
-	 * Get the physical representation of this {@link WebFolder}.
-	 * <p>
-	 * <b>Note:</b> It must be ensured with a prior call of {@link #hasDAP()}, that this
-	 * {@link WebFolder} has an attached physical resource. Within transactions
-	 * {@link #createOrGetDAP()} can be called as alternative to this method.
-	 * </p>
-	 * 
-	 * @return physical resource, never null
-	 * 
-	 * @see com.top_logic.knowledge.wrap.AbstractWrapper#getDAP()
-	 */
-	@Override
-	public DataAccessProxy getDAP() {
-		if (hasDAP()) {
-			return resolveDAP();
-		} else {
-			throw new DataObjectException("Physical resource of wrapper is not present!");
-		}
-	}
-
-	private DataAccessProxy resolveDAP() {
-		return super.getDAP();
-	}
-
 	private KnowledgeAssociation createLinkTo(TLObject newChild, LinkType linkType) {
 		{
 			KnowledgeBase kb = this.getKnowledgeBase();
@@ -585,106 +472,6 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 			return link;
 		}
 	}
-
-    /**
-     * Create a KnowledgeObject of type WebFolder, which has the given
-     * attributes and the access rights from this folder.
-     *
-     * @param    aName    The name of the WebFolder.
-     * @param    anDSN    The DSN to the WebFolder.
-     * @return   The new created WebFolder.
-     */
-	protected TLObject createWebFolderKO(String aName, String anDSN) {
-		return this.createKO(this.getKnowledgeBase(), OBJECT_NAME, aName, anDSN);
-    }
-
-	/**
-	 * Create a document entry in the data source represented by this WebFolder.
-	 * 
-	 * If the creation fails, the system expects, that the document already exists and tries to put
-	 * the content into the existing document.
-	 * 
-	 * @param aName
-	 *        The name of the document.
-	 * @param aStream
-	 *        The stream to be used for filling the data source. Must not be <code>null</code>.
-	 * @return The DSN of the document or null, if creation or update failes.
-	 */
-    protected DataAccessProxy createDocumentDAP(
-        String aName,
-			InputStream aStream) {
-        DataAccessProxy theDocument = null;
-        String theDSN = this.getDSN();
-
-        try {
-            DataAccessProxy theProxy;
-
-            theDocument = new DataAccessProxy(theDSN, aName);
-
-            if (!theDocument.exists()) {
-                if (Logger.isDebugEnabled(this)) {
-                    Logger.debug("Document " + aName + " doesn't exists, creating!", this);
-                }
-
-                theProxy = new DataAccessProxy(theDSN);
-                theDocument = new DataAccessProxy(theProxy.createEntry(aName, aStream));
-            }
-            else {
-                if (Logger.isDebugEnabled(this)) {
-                    Logger.debug("Document " + aName + " exists, updating!", this);
-                }
-
-                theDocument.putEntry(aStream);
-            }
-        }
-        catch (Exception ex) {
-            String theMessage =
-                "Unable to create new entry with name '"
-                    + aName
-                    + "' in data source '"
-                    + theDSN
-                    + "'!";
-
-            Logger.info(theMessage, ex, this);
-        }
-
-        return (theDocument);
-    }
-
-    /**
-     * Create a KnowledgeObject of given type, which has the given
-     * attributes and the access rights from this folder.
-     *
-     * @param    aType    The type of the new KnowledgeObject.
-     * @param    aName    The name of the Document.
-     * @param    aDSN     The DSN for the WebFolder
-     * @return   The new created KnowledgeObject.
-     */
-	protected TLObject createKO(
-        KnowledgeBase aBase,
-			String aType, String aName, String aDSN) {
-
-		TLObject theObject = WebFolder.createFolder(aBase, aType, aName, aDSN);
- 
-        if (Logger.isDebugEnabled(this)) {
-            Logger.debug(
-                "Created KnowledgeObject of type '" 
-                + aType + "' with DSN '" + aDSN + "'!", this);
-        }
-
-		return theObject;
-    }
-
-    /**
-     * Search for the WebFolder with the given DSN in the knowledge base.
-     *
-     * @param    aDSN  The DataSourceName of the folder (e.g. "file://folder")
-     * @return   The found folder or null, if nothing found.
-     */
-	public static WebFolder findFolderByDSN(KnowledgeBase aBase, String aDSN) {
-        KnowledgeObject theKO = (KnowledgeObject) aBase.getObjectByAttribute(OBJECT_NAME, KOAttributes.PHYSICAL_RESOURCE, aDSN);
-		return (WebFolder) WrapperFactory.getWrapper(theKO);
-    }
 
     /**
      * Creates a wrapper for a WebFolder with given ID.
@@ -705,189 +492,35 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 		return (WebFolder) WrapperFactory.getWrapper(anID, OBJECT_NAME, aBase);
     }
 
-    /**
-     * Creates a new WebFolder including the KO and the DS-Entry.
-     *
-     * Use one of the <code>getInstance()</code> methods in case
-     * you want to check for existance first.
-     *
-     * #deprecated The createFolder methods are dangerous and should not
-     * be used. getChildFolder is no real replacement yet.
-     *
-     * @param    aDSN    The complete ds-name of the new webfolder
-     */
-	public static WebFolder createRootFolder(String aDSN) {
-		return WebFolder.createRootFolder(getDefaultKnowledgeBase(), aDSN);
-    }
-
-    /**
-     * Creates a new WebFolder including the KO and the DS-Entry.
-     * 
-     * Use one of the <code>getInstance()</code> methods in case 
-     * you want to check for existance first.
-     *
-     * @param    aBase the KnowledgeBase used to create the Objects in.
-     * @param    aDSN  The complete ds-name of the new webfolder.
-     */
-	public static WebFolder createRootFolder(KnowledgeBase aBase, String aDSN) {
-		if (aBase == null) {
-		    throw new NullPointerException ("aKB");
-		}
-		else if (aDSN == null) {
-		    throw new NullPointerException ("aDSN");
-		}
-		
-		{
-		    DataAccessProxy theDSA = new DataAccessProxy(aDSN);
-		
-			return WebFolder.createFolder(aBase, WebFolder.OBJECT_NAME, theDSA.getName(), aDSN);
-		} 
-    }
-
-    /**
-	 * Creates a new WebFolder including the KO and a name.
+	/**
+	 * Creates a new {@link WebFolder} with the given name.
 	 * 
+	 * <p>
 	 * Use one of the <code>getInstance()</code> methods in case you want to check for existence
 	 * first.
-	 * 
-	 * @param aBase
-	 *        the KnowledgeBase used to create the Objects in.
-	 * @param aName
-	 *        The name of the new webfolder.
-	 */
-	public static WebFolder createRootFolderNoDSN(KnowledgeBase aBase, String aName) {
-		if (aBase == null) {
-		    throw new NullPointerException ("aKB");
-		}
-		else if (aName == null) {
-			throw new NullPointerException("aName");
-		}
-		
-		return WebFolder.createFolder(aBase, WebFolder.OBJECT_NAME, aName, null);
-    }
-
-    /**
-     * Creates a new wrapper for a WebFolder.
-     *
-     * #deprecated The createFolder methods are dangerous and should not
-     * be used. getChildFolder is no real replacement yet.
-     * 
-     * @param    aName    The name of the folder to be created.
-     * @param    aBase    The base within the data source to be used.
-     */
-	public static WebFolder createFolder(String aName, String aBase) {
-        return WebFolder.createFolder(WebFolder.getDefaultKnowledgeBase(), aName, aBase);
-    }
-
-    /**
-     * Creates a new wrapper for a WebFolder.
-     *
-     * @param    aName    The name of the folder to be created.
-     * @param    aBase    The base within the data source to be used (DSN).
-     *
-     * #deprecated The createFolder methods are dangerous and should not
-     * be used. getChildFolder is no real replacement yet.
-     */
-	public static WebFolder createFolder(KnowledgeBase aKBase, String aName, String aBase) {
-		return (WebFolder) WebFolder._createKO(aKBase, aName, aBase);
-    }
-
-    /**
-     * Creates a wrapper for a WebFolder with the given DSN.
-     *
-     * @param    aProxy    The DataAccessProxy of the WebFolder.
-     */
-	public static WebFolder getInstance(DataAccessProxy aProxy) {
-        return WebFolder.getInstance(WebFolder.getDefaultKnowledgeBase(), aProxy);
-    }
-
-    /**
-     * Creates a wrapper for a WebFolder with the given DSN.
-     *
-     * @param    aBase     The knowledge base to be used for finding object.
-     * @param    aProxy    The DataAccessProxy of the WebFolder.
-     */
-	public static WebFolder getInstance(KnowledgeBase aBase, DataAccessProxy aProxy) {
-        KnowledgeObject theKO = (KnowledgeObject) aBase.getObjectByAttribute(OBJECT_NAME, KOAttributes.PHYSICAL_RESOURCE, aProxy.getPath());
-
-        return (theKO != null) ? (WebFolder) WrapperFactory.getWrapper(theKO) : null;
-    }
-
-    /**
-     * Create a KnowledgeObject with with our type in the specified
-     * KnowledgeBase with a certain name and parent DSN.
-     *
-     * @param    aKB      The KnowledgeBase, must not be <code>null</code>
-     * @param    aName    The name, must not be <code>null</code>
-     * @param    aBase    The parent DSN, must not be <code>null</code>
-     * @return   The KnowledgeObject, never <code>null</code>
-     */
-	private static TLObject _createKO(KnowledgeBase aKB, String aName, String aBase) {
-        String theDSN = WebFolder.createDSN(aName, aBase);
-
-		return WebFolder.createFolder(aKB, OBJECT_NAME, aName, theDSN);
-    }
-
-	/**
-	 * Create a KnowledgeObject of given type, which has the given attributes.
-	 * <p>
-	 * This method was extracted from the corresponding instance method createKO.
 	 * </p>
 	 * 
-	 * @param aKB
-	 *        The KnowledgeBase to use
-	 * @param aType
-	 *        The type of the new KnowledgeObject.
-	 * @param aName
-	 *        The name of the Document.
-	 * @param aDSN
-	 *        The DSN for the WebFolder
-	 * 
-	 * @return The new created KnowledgeObject.
+	 * @param kb
+	 *        the KnowledgeBase used to create the folder in.
+	 * @param name
+	 *        The name of the new folder.
 	 */
-	private static WebFolder createFolder(KnowledgeBase aKB, String aType, String aName, String aDSN)
-	{
-		KnowledgeObject theObject;
-		{
-			theObject = aKB.createKnowledgeObject(aType);
-
-			theObject.setAttributeValue(NAME_ATTRIBUTE, aName);
-			theObject.setAttributeValue(KOAttributes.PHYSICAL_RESOURCE, aDSN);
-			if (MetaObjectUtils.hasAttribute(theObject.tTable(), DCMetaData.TITLE)) {
-				// Better use Datasource to find out about this, mmh.
-				String mimeType = MimeTypes.getInstance().getMimeType(aName);
-
-				theObject.setAttributeValue(DCMetaData.TITLE, aName);
-				if (mimeType != null) {
-					theObject.setAttributeValue(DCMetaData.FORMAT, mimeType);
-				}
-			}
+	public static WebFolder createFolder(KnowledgeBase kb, String name) {
+		if (kb == null) {
+			throw new NullPointerException("kb");
+		}
+		if (name == null) {
+			throw new NullPointerException("name");
 		}
 
+		KnowledgeObject theObject = kb.createKnowledgeObject(OBJECT_NAME);
+		theObject.setAttributeValue(NAME_ATTRIBUTE, name);
+		if (MetaObjectUtils.hasAttribute(theObject.tTable(), DCMetaData.TITLE)) {
+			theObject.setAttributeValue(DCMetaData.TITLE, name);
+		}
 		return (WebFolder) WrapperFactory.getWrapper(theObject);
-    }
+	}
 
-    /**
-     * Create a unique DSN which is currently not used for the given name.
-     *
-     * The method first tries to create a folder in the default data source
-     * with the given name. If there is already a folder with the name or
-     * the name is not allowed in the data source, the method creates another
-     * unique name.
-     *
-     * @param    aName The desired name of the folder.
-     * @param	  aBase baseName (of parent Folder)
-     *
-     * @return   The unique DSN for the folder.
-     */
-	protected static String createDSN(String aName, String aBase) {
-		{
-            DataAccessProxy theParent = new DataAccessProxy(aBase);
-            aName   = theParent.createNewEntryName(aName, null);
-            return  theParent.createContainer(aName);
-        } 
-    }
-    
 	/**
 	 * Recursively copies all contents from the given source folder to this folder.
 	 * 
@@ -976,13 +609,6 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 		});
 	}
 
-	@Override
-	protected void handleDelete() {
-		super.handleDelete();
-
-		deleteFolderResource();
-	}
-
 	/**
 	 * The owning {@link ContainerWrapper} of the given document, or <code>null</code>, if the given
 	 * document is not owned by any container.
@@ -1041,10 +667,6 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 		return new TopLogicException(WebFolder.class, "deleteFailed", cause);
 	}
 
-	private static TopLogicException errorCreateFailed(Throwable cause) {
-		return new TopLogicException(WebFolder.class, "createFolder", cause);
-	}
-
 	private static TopLogicException errorDeleteNonEmpty() {
 		return new TopLogicException(WebFolder.class, "deleteNonEmpty");
 	}
@@ -1091,8 +713,8 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 	 * Create a new Document with the given content in this folder.
 	 * 
 	 * <p>
-	 * If there is already a document in the data source, which has the given name, it'll be updated
-	 * with the content in the given stream.
+	 * If there is already a document in this folder, which has the given name, it'll be updated
+	 * with the given content.
 	 * </p>
 	 * 
 	 * @param aName
@@ -1120,8 +742,8 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 	 * Create a new Document with the given content in this folder.
 	 * 
 	 * <p>
-	 * If there is already a document in the data source, which has the given name, it'll be updated
-	 * with the content in the given stream.
+	 * If there is already a document in this folder, which has the given name, it'll be updated
+	 * with the given content.
 	 * </p>
 	 * 
 	 * @param aName

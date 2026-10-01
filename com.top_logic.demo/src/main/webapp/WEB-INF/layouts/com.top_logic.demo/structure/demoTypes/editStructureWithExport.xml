@@ -302,15 +302,14 @@
 								</inject>
 							</include>
 							<include name="commons/webfolder/documents.xml"
-								manual-locking="true"
 								model="selection(${namePrefix}VersionSelector)"
-								namePrefix="demoTypesDocumentsManualLocking"
+								namePrefix="demoTypesDocumentsSecondView"
 								securityObject="${securityObject}"
 							>
 								<inject>
 									<tabInfo
 										decorator="demoTypesDocumentsFolder"
-										label="${resPrefix}demoStructureDemoTypesDocumentsManualLocking.tab"
+										label="${resPrefix}demoStructureDemoTypesDocumentsSecondView.tab"
 									/>
 								</inject>
 							</include>

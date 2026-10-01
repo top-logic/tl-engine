@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29715_document_content"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29715_move_flex_binary_data"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<!-- The content of a document is stored in a binary attribute of the document. -->
+		<add-mo-attribute table="Document">
+			<mo_attribute config:interface="com.top_logic.dob.attr.HybridBinaryAttribute$Config"
+				att_name="content"
+				mandatory="false"
+			/>
+		</add-mo-attribute>
+		<!--
+			Copy the content of every revision of every document from the
+			document repository into the content attribute.
+		-->
+		<migrate-document-content>
+			<reader class="com.top_logic.knowledge.service.migration.processors.FileRepositoryContentReader"
+				attic="%ATTIC_PATH%"
+				path="%REPOSITORY_PATH%"
+			/>
+		</migrate-document-content>
+	</processors>
+	<post-processors/>
+</migration>

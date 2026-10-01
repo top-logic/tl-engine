@@ -385,7 +385,6 @@
 		
 		<config service-class="com.top_logic.common.webfolder.ui.WebFolderUIFactory">
 			<instance class="com.top_logic.common.webfolder.ui.WebFolderUIFactory"
-				manual-locking="false"
 				max-upload-size="0"
 				provide-zip-download="true"
 				zip-download-file-name-provider="com.top_logic.common.webfolder.ui.commands.ZipDownloadLabelProvider"
@@ -432,9 +431,7 @@
 		</config>
 	
 		<config service-class="com.top_logic.knowledge.wrap.WebFolderFactory">
-			<instance class="com.top_logic.knowledge.wrap.WebFolderFactory"
-				create-physical-resource="immediate"
-			/>
+			<instance class="com.top_logic.knowledge.wrap.WebFolderFactory"/>
 		</config>
 	
 		<config service-class="com.top_logic.tool.export.ExportQueueManager">

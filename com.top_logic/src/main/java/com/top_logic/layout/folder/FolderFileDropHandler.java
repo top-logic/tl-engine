@@ -18,10 +18,8 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.folder.model.FolderNode;
 import com.top_logic.common.webfolder.ui.I18NConstants;
-import com.top_logic.common.webfolder.ui.commands.LockExecutable;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.dnd.DnDFileUtilities;
@@ -38,9 +36,6 @@ import com.top_logic.layout.dnd.DnDFileUtilities;
  */
 public class FolderFileDropHandler implements FileDropHandler {
 
-	/** If manual locking by the user is necessary before uploading a file */
-	private boolean _manualLocking;
-
 	/** If the upload in the {@link FolderControl} is allowed/possible */
 	private boolean _uploadPossible;
 
@@ -50,15 +45,12 @@ public class FolderFileDropHandler implements FileDropHandler {
 	/**
 	 * Creates a new {@link FolderFileDropHandler}.
 	 * 
-	 * @param manualLocking
-	 *        If manual locking is necessary.
 	 * @param uploadPossible
 	 *        If upload with drag and drop is allowed.
 	 * @param maxSize
 	 *        Maximum size of documents that can be uploaded at once.
 	 */
-	public FolderFileDropHandler(boolean manualLocking, boolean uploadPossible, long maxSize) {
-		_manualLocking = manualLocking;
+	public FolderFileDropHandler(boolean uploadPossible, long maxSize) {
 		_uploadPossible = uploadPossible;
 		_maxSize = maxSize;
 	}
@@ -87,7 +79,6 @@ public class FolderFileDropHandler implements FileDropHandler {
 			// Map with folder names as keys and List of files per folder as value.
 			Map<String, List<BinaryData>> droppedElements = groupFiles(files);
 			List<ResKey> infoMessages = new ArrayList<>();
-			List<String> fileDuplicates = new ArrayList<>();
 			List<String> folderDuplicates = new ArrayList<>();
 
 			if (DnDFileUtilities.exceededUploadSize(droppedElements, getMaxUploadSize())) {
@@ -102,14 +93,14 @@ public class FolderFileDropHandler implements FileDropHandler {
 				// List of subFolders in the WebFolder
 				List<String> subFolders = getSubFolders(webFolder);
 				if (!subFolders.contains(element)) {
-					fileDuplicates.addAll(addFileToWebFolder(webFolder, folderFiles));
+					addFileToWebFolder(webFolder, folderFiles);
 				} else {
 					folderDuplicates.add(element);
 				}
 			}
 			tx.commit();
 
-			addDuplicateMessage(infoMessages, fileDuplicates, folderDuplicates);
+			addDuplicateMessage(infoMessages, folderDuplicates);
 
 			if (!infoMessages.isEmpty()) {
 				DnDFileUtilities.showInfoMessage(infoMessages);
@@ -119,25 +110,17 @@ public class FolderFileDropHandler implements FileDropHandler {
 	}
 
 	/**
-	 * Adds upload failed messages for folder and file duplicates to the info messages to show them
-	 * to the user.
+	 * Adds upload failed messages for folder duplicates to the info messages to show them to the
+	 * user.
 	 * 
 	 * @param infoMessages
 	 *        List of all infoMessages. The new message will be added to this list.
-	 * @param fileDuplicates
-	 *        Failed uploads of duplicate files.
 	 * @param folderDuplicates
 	 *        Failed uploads of duplicate folder.
 	 */
-	private void addDuplicateMessage(List<ResKey> infoMessages, List<String> fileDuplicates,
-			List<String> folderDuplicates) {
+	private void addDuplicateMessage(List<ResKey> infoMessages, List<String> folderDuplicates) {
 		if (!folderDuplicates.isEmpty()) {
 			ResKey message = I18NConstants.FOLDER_NAME_ALREADY_EXISTS__NAME.fill(String.join(", ", folderDuplicates));
-			infoMessages.add(message);
-		}
-
-		if (!fileDuplicates.isEmpty()) {
-			ResKey message = I18NConstants.FILE_NAME_ALREADY_EXISTS__NAME.fill(String.join(", ", fileDuplicates));
 			infoMessages.add(message);
 		}
 	}
@@ -180,9 +163,7 @@ public class FolderFileDropHandler implements FileDropHandler {
 	 *        All dropped files of one root folder.
 	 */
 	@SuppressWarnings("deprecation")
-	private List<String> addFileToWebFolder(WebFolder webFolder, List<BinaryData> droppedElementFiles) {
-
-		List<String> existingFiles = new ArrayList<>();
+	private void addFileToWebFolder(WebFolder webFolder, List<BinaryData> droppedElementFiles) {
 		for (BinaryData file : droppedElementFiles) {
 			int splitIndex = file.getName().lastIndexOf(':');
 			String filePath = "";
@@ -195,43 +176,8 @@ public class FolderFileDropHandler implements FileDropHandler {
 			List<String> filePathElements = list(filePath.split(":"));
 			filePathElements.removeAll(Arrays.asList(null, ""));
 			WebFolder currentFolder = createFilePath(webFolder, filePathElements);
-			Map<String, Document> webFolderFiles = getWebFolderFiles(currentFolder);
-			Document webFolderFile = webFolderFiles.get(fileName);
-			if (webFolderFile == null || (!_manualLocking || LockExecutable.isLocked(webFolderFile.getDAP()))) {
-				currentFolder.createOrUpdateDocument(fileName, file);
-			} else {
-				existingFiles.add(fileName);
-			}
-
+			currentFolder.createOrUpdateDocument(fileName, file);
 		}
-
-		return existingFiles;
-	}
-
-	/**
-	 * Creates a {@link Map} of all existing files of a {@link WebFolder} with the file names as the
-	 * keys.
-	 * 
-	 * <p>
-	 * Only objects of the type {@link Document} are added, to exclude folders.
-	 * <p>
-	 * Is used to compare uploaded files with existing files to avoid duplicates.
-	 * 
-	 * @param currentWebFolder
-	 *        The {@link WebFolder} whose files are to be added to the {@link Map}.
-	 * @return A {@link Map} of all files with their names as the keys.
-	 * @see #addFileToWebFolder(WebFolder, List)
-	 */
-	private Map<String, Document> getWebFolderFiles(WebFolder currentWebFolder) {
-		Map<String, Document> webFolderFiles = new HashMap<>();
-		Object[] objects = currentWebFolder.getContents().toArray();
-		for (Object object : objects) {
-			if (object.getClass() == Document.class) {
-				Document document = (Document) object;
-				webFolderFiles.put(document.getName(), document);
-			}
-		}
-		return webFolderFiles;
 	}
 
 	/**

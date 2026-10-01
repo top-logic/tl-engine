@@ -18,6 +18,7 @@ import jakarta.activation.DataSource;
 import jakarta.mail.Address;
 import jakarta.mail.internet.InternetAddress;
 
+import com.top_logic.base.mail.script.SendMail;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
@@ -233,9 +234,7 @@ public class MailHelper extends ConfiguredManagedClass<ConfiguredManagedClass.Co
                 Object theObject = theIt.next();
                 
                 if (theObject instanceof Document) {
-					DataAccessProxy theDAP = ((Document) theObject).getDAP();
-
-					aMail.addAttachment(theDAP);
+					aMail.addAttachment(SendMail.toDataHandler(theObject, String::valueOf).getDataSource());
                 }
                 else if (theObject instanceof DataAccessProxy) {
                     aMail.addAttachment((DataAccessProxy) theObject);

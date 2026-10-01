@@ -39,9 +39,6 @@ import com.top_logic.knowledge.wrap.WebFolder;
  */
 public abstract class AbstractDocumentTest extends BasicTestCase {
 
-	/** Base DSN (This directory is cleared before Testing) */
-	private static final String TEST_BASE = "repository://";
-
 	/** The folder to be used for tests. */
 	protected WebFolder _folder;
 
@@ -54,7 +51,7 @@ public abstract class AbstractDocumentTest extends BasicTestCase {
 		_emptyContent = new TestingBinaryData(0, 10);
 		KnowledgeBase kb = KBSetup.getKnowledgeBase();
 		final Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
-		this._folder = WebFolder.createFolder(kb, getClass().getSimpleName() + "_" + getName(), TEST_BASE);
+		this._folder = WebFolder.createFolder(kb, getClass().getSimpleName() + "_" + getName());
 		tx.commit();
 	}
 

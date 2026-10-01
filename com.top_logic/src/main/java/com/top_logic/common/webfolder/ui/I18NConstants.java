@@ -36,11 +36,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 DOC_VERSION_LABEL__DOCLABEL_VERSION;
 
 	/**
-	 * Key to show an error message when an uploaded file name already exists
-	 */
-	public static ResKey1 FILE_NAME_ALREADY_EXISTS__NAME;
-
-	/**
 	 * Key to show an error message when an uploaded folder name already exists
 	 */
 	public static ResKey1 FOLDER_NAME_ALREADY_EXISTS__NAME;

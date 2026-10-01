@@ -5,18 +5,12 @@
  */
 package com.top_logic.common.webfolder.ui;
 
-import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
-
-import java.util.List;
-
 import com.top_logic.common.folder.FolderFieldProvider;
 import com.top_logic.common.folder.model.FolderNode;
 import com.top_logic.common.webfolder.model.FolderContent;
 import com.top_logic.common.webfolder.model.ProxyFolderContent;
 import com.top_logic.common.webfolder.model.WebFolderAccessor;
 import com.top_logic.common.webfolder.ui.clipboard.ModifyClipboardExecutable;
-import com.top_logic.common.webfolder.ui.commands.LockExecutable;
-import com.top_logic.common.webfolder.ui.commands.UnlockExecutable;
 import com.top_logic.common.webfolder.ui.commands.UpdateExecutable;
 import com.top_logic.common.webfolder.ui.commands.VersionExecutable;
 import com.top_logic.common.webfolder.ui.commands.WebFolderDeleteExecutable;
@@ -29,10 +23,8 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.SingleSelectionModel;
 import com.top_logic.layout.basic.Command;
-import com.top_logic.layout.basic.CommandModelUtilities;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.FormMember;
-import com.top_logic.layout.form.model.AbstractButtonField;
 import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
@@ -47,12 +39,12 @@ import com.top_logic.tool.execution.ExecutableState;
  */
 public class WebFolderFieldProvider extends FolderFieldProvider {
 
-	private final boolean _manualLocking;
-
+	/**
+	 * Creates a {@link WebFolderFieldProvider}.
+	 */
 	public WebFolderFieldProvider(ExecutableState allowClipboard, ExecutableState allowWrite,
-			ExecutableState allowDelete, boolean manualLocking) {
+			ExecutableState allowDelete) {
 		super(allowClipboard, allowWrite, allowDelete);
-		_manualLocking = manualLocking;
 	}
 
     @Override
@@ -62,8 +54,8 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
     	if (aModel instanceof FolderNode) {
 
 			FolderNode node = (FolderNode) aModel;
-			if (WebFolderAccessor.LOCK.equals(aProperty)) {
-				return this.createLockField(fieldName, node);
+			if (WebFolderAccessor.UPDATE.equals(aProperty)) {
+				return this.createUpdateGroup(fieldName, node);
 			} else if (WebFolderAccessor.DELETE.equals(aProperty)) {
 				return this.createDeleteField(fieldName, node);
 			} else if (WebFolderAccessor.KEYWORDS.equals(aProperty)) {
@@ -187,69 +179,26 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
 		return WebFolderUIFactory.getInstance();
 	}
     
-	protected FormMember createLockField(String name, FolderNode node) {
+	/**
+	 * Creates the group holding the "update" button of a document.
+	 * 
+	 * @param name
+	 *        The name of the group.
+	 * @param node
+	 *        Never null.
+	 */
+	protected FormMember createUpdateGroup(String name, FolderNode node) {
 		if (!(node.getBusinessObject() instanceof Document)) {
 			return createHiddenField(name);
 		}
 		FormGroup group = new FormGroup(name, I18NConstants.TABLE);
-		if (getManualLocking()) {
-			fillUpdateGroupForManualLocking(group, node);
-		} else {
-			fillUpdateGroupForAutomaticLocking(group, node);
-		}
-		return group;
-	}
-
-	private void fillUpdateGroupForManualLocking(FormGroup group, FolderNode node) {
-		List<AbstractButtonField> fields = list();
-		CommandField lockField = createLockField(node);
-		fields.add(lockField);
-		if (getAllowWrite().isExecutable()) {
-			fields.add(createUnlockField(node));
-			fields.add(createUpdateField(node));
-			addExecutabilityListener(group, fields);
-		} else {
-			CommandModelUtilities.applyExecutability(getAllowWrite(), lockField);
-		}
-		group.addMembers(fields);
-	}
-
-	private void fillUpdateGroupForAutomaticLocking(FormGroup group, FolderNode node) {
 		if (getAllowWrite().isExecutable()) {
 			CommandField updateField = createUpdateField(node);
 			group.addMember(updateField);
-			addExecutabilityListener(group, list(updateField));
+			NotExecutableListener.createNotExecutableReasonKey(I18NConstants.FIELD_DISABLED, updateField)
+				.addAsListener(group);
 		}
-	}
-
-	private void addExecutabilityListener(FormGroup group, List<AbstractButtonField> fields) {
-		NotExecutableListener.createNotExecutableReasonKey(I18NConstants.FIELD_DISABLED, fields).addAsListener(group);
-	}
-
-	/**
-	 * Creates the "lock" button.
-	 * 
-	 * @param node
-	 *        Never null.
-	 * @return Is not allowed to be null.
-	 */
-	protected CommandField createLockField(FolderNode node) {
-		return createField("lockField", new LockExecutable(node),
-			com.top_logic.layout.form.model.Icons.DOC_LOCKED,
-			com.top_logic.layout.form.model.Icons.DOC_LOCKED_DISABLED);
-	}
-
-	/**
-	 * Creates the "unlock" button.
-	 * 
-	 * @param node
-	 *        Never null.
-	 * @return Is not allowed to be null.
-	 */
-	protected CommandField createUnlockField(FolderNode node) {
-		return createField("unlockField", new UnlockExecutable(node),
-			com.top_logic.layout.form.model.Icons.DOC_UNLOCK,
-			com.top_logic.layout.form.model.Icons.DOC_UNLOCK_DISABLED);
+		return group;
 	}
 
 	/**
@@ -260,7 +209,7 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
 	 * @return Is not allowed to be null.
 	 */
 	protected CommandField createUpdateField(FolderNode node) {
-		Command command = new UpdateExecutable(node, getManualLocking());
+		Command command = new UpdateExecutable(node);
 		return createField("updateField", command, com.top_logic.common.webfolder.ui.commands.Icons.DOC_COMMIT,
 			com.top_logic.common.webfolder.ui.commands.Icons.DOC_COMMIT_DISABLED);
 	}
@@ -309,13 +258,6 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
 			return new WebFolderDeleteExecutable((FolderNode) aModel);
 		}
 		return null;
-	}
-
-	/**
-	 * @see WebFolderUIFactory#getManualLocking()
-	 */
-	protected boolean getManualLocking() {
-		return _manualLocking;
 	}
 
 }

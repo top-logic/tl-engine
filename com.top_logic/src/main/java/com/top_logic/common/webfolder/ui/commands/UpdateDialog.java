@@ -5,17 +5,14 @@
  */
 package com.top_logic.common.webfolder.ui.commands;
 
-import static com.top_logic.basic.util.Utils.*;
 import static com.top_logic.layout.basic.fragments.Fragments.*;
 
 import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.common.webfolder.WebFolderUtils;
-import com.top_logic.common.webfolder.ui.WebFolderUIFactory;
 import com.top_logic.knowledge.gui.layout.upload.SimpleFileNameStrategy;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -43,7 +40,6 @@ import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.messagebox.AbstractFormPageDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.SimpleFormDialog;
-import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
@@ -129,9 +125,13 @@ public class UpdateDialog extends AbstractFormPageDialog {
 
 	private final CommandModel _updateButton;
 
-	private final boolean _manualLocking;
-
-	public UpdateDialog(Document aModel, boolean manualLocking) {
+	/**
+	 * Creates a {@link UpdateDialog}.
+	 * 
+	 * @param aModel
+	 *        The document to update.
+	 */
+	public UpdateDialog(Document aModel) {
 		super(I18NConstants.UPDATE_DIALOG, DisplayDimension.dim(500, DisplayUnit.PIXEL),
 			DisplayDimension.dim(400, DisplayUnit.PIXEL));
         
@@ -139,38 +139,7 @@ public class UpdateDialog extends AbstractFormPageDialog {
 		UpdateDialog.UpdateCommand updateCommand = new UpdateDialog.UpdateCommand(this, document, getDiscardClosure());
 		getDialogModel().setDefaultCommand(updateCommand);
 		_updateButton = MessageBox.forwardStyleButton(I18NConstants.UPDATE_DOCUMENT, updateCommand);
-		_manualLocking = manualLocking;
-		getDialogModel().addListener(DialogModel.CLOSED_PROPERTY, this::onDialogClose);
     }
-
-	/**
-	 * @param sender
-	 *        Ignored, but declared by the functional interface.
-	 * @param oldValue
-	 *        Ignored, but declared by the functional interface.
-	 * @param newValue
-	 *        Whether the dialog was closed.
-	 */
-	private void onDialogClose(Object sender, Boolean oldValue, Boolean newValue) {
-		if (!newValue) {
-			return;
-		}
-		if (_manualLocking) {
-			return;
-		}
-		unlockDocument();
-	}
-
-	private void unlockDocument() {
-		boolean success = document.getDAP().unlock();
-		if (!success) {
-			logError("Failed to release lock for document: " + debug(document));
-		}
-	}
-
-	private void logError(String message) {
-		Logger.error(message, THIS_CLASS);
-	}
 
 	Document getDocument() {
 		return document;
@@ -236,13 +205,6 @@ public class UpdateDialog extends AbstractFormPageDialog {
 
 	static TopLogicException errorUpdateFailed(BinaryData theItem, Throwable ex) {
 		return new TopLogicException(THIS_CLASS, "updateFailed(name)", new Object[] { theItem.getName() }, ex);
-	}
-
-	/**
-	 * @see WebFolderUIFactory#getManualLocking()
-	 */
-	protected boolean getManualLocking() {
-		return _manualLocking;
 	}
 
 }

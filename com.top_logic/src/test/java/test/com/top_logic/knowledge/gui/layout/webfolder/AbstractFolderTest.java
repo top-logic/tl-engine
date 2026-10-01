@@ -7,7 +7,6 @@ package test.com.top_logic.knowledge.gui.layout.webfolder;
 
 import test.com.top_logic.basic.BasicTestCase;
 
-import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WebFolder;
 
@@ -16,8 +15,6 @@ import com.top_logic.knowledge.wrap.WebFolder;
  * @author     <a href="mailto:mga@top-logic.com">mga</a>
  */
 public abstract class AbstractFolderTest extends BasicTestCase {
-
-	protected static final String PARENT_BASE = "repository://";
 
 	private WebFolder parent;
 
@@ -58,18 +55,9 @@ public abstract class AbstractFolderTest extends BasicTestCase {
 	protected WebFolder getParent() throws Exception {
 		WebFolder theFolder = parent;
         if (theFolder == null) {
-			String theName = this.getParentName();
-			DataAccessProxy theProxy = new DataAccessProxy(PARENT_BASE);
-			DataAccessProxy theFolderProxy = theProxy.getChildProxy(theName);
-			if (!theFolderProxy.exists()) {
-				theFolderProxy = theProxy.createContainerProxy(theName);
-			}
-			theFolder = WebFolder.getInstance(theProxy);
-			if (theFolder == null) {
-				Transaction createTX = WebFolder.getDefaultKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
-				theFolder = WebFolder.createFolder(theName, PARENT_BASE);
-				createTX.commit();
-			}
+			Transaction createTX = WebFolder.getDefaultKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+			theFolder = WebFolder.createFolder(WebFolder.getDefaultKnowledgeBase(), this.getParentName());
+			createTX.commit();
 
 			this.logSpace("Using folder " + theFolder);
 			parent = theFolder;

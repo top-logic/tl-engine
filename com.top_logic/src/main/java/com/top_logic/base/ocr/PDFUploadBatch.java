@@ -6,20 +6,18 @@
 package com.top_logic.base.ocr;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.LinkedList;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.io.FileUtilities;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.sched.BatchImpl;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
-import com.top_logic.dob.DataObjectException;
-import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.objects.DCMetaData;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.sched.Scheduler;
@@ -27,9 +25,8 @@ import com.top_logic.util.sched.Scheduler;
 /**
  * After an Upload the given Documents can be sheduled for an OCR.
  * 
- * This will (when using a repository) result in a new Version od
- * the same document. Per default we assume a User named "ocr" and
- * use it to lock() and commit() the Documents. OCR may take some time,
+ * This will result in a new Version of the same document. Per default
+ * we assume a User named "ocr" and use it to commit the Documents. OCR may take some time,
  * assume about 5 seconds per Page. So this Batch will serialize all
  * OCR jobs thus avoiding congestion with such (expensive) Jobs.
  * 
@@ -142,41 +139,11 @@ public abstract class PDFUploadBatch extends BatchImpl {
                     Logger.debug("uploading OCR Part(" + aDocument.getName(),
                             this);
                 }
-                InputStream theStream1 = new FileInputStream(tmpOut);
-                aDocument.update(theStream1);
-                theStream1.close();
-                if (tmpTxt.exists()) { // Optionally save .txt document, too
-                    DataAccessProxy docDAP   = aDocument.getDAP();
-                    DataAccessProxy parenDAP = docDAP.getParentProxy();
-                    // The origanl idea to index the .txt files does not
-                    // work since the Events are sent before we can save
-                    // the textfile, so this is not actually used :-(
-                    String txtName = docDAP.getName() + ".txt";
-                    DataAccessProxy textDAP = parenDAP.getChildProxy(txtName);
-
-					InputStream input = new FileInputStream(tmpTxt);
-                    try {
-						OutputStream txtOut;
-						if (!textDAP.exists())
-							txtOut = parenDAP.createEntry(txtName);
-						else
-							txtOut = textDAP.getEntryOutputStream();
-						try {
-							FileUtilities.copyStreamContents(input, txtOut);
-						} finally {
-							txtOut.close();
-						}
-					}
-					finally {
-					    input.close();
-					}
-                    if (!aDocument.getKnowledgeBase().commit()) {
-                        Logger.error("Failed commit document " + aDocument, this);
-                    }
-                    else {
-                    	Logger.info("OCRed document " + aDocument, this);
-                    }
-                }
+				try (Transaction tx = aDocument.getKnowledgeBase().beginTransaction()) {
+					aDocument.update(BinaryDataFactory.createBinaryData(tmpOut));
+					tx.commit();
+				}
+				Logger.info("OCRed document " + aDocument, this);
             } else {
                 Logger.error("Failed to OCR " + aDocument, this);
                 // uploadFileOrig(parameters,aFile, aParent, aName);
@@ -223,11 +190,6 @@ public abstract class PDFUploadBatch extends BatchImpl {
 				ocrContext = null;
             }
     
-            DataAccessProxy theDap = aDocument.getDAP();
-            if (theDap.isRepository()) {
-				if (!theDap.lock()) // Lock in repository with correct context
-					throw new DataObjectException("Cannot lock '" + theDap + "' for PDF Upload");
-            }
             boolean start = current == null || uploads.isEmpty() 
 				|| null == ocrContext; // must start with a different context.
             uploads.addLast(aDocument);

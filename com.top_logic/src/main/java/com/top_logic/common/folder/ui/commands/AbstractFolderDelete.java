@@ -6,7 +6,6 @@
 package com.top_logic.common.folder.ui.commands;
 
 import com.top_logic.basic.Named;
-import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.common.folder.FolderDefinition;
 import com.top_logic.common.webfolder.model.FolderContent;
@@ -28,9 +27,6 @@ import com.top_logic.tool.execution.ExecutableState;
  * @author <a href="mailto:fma@top-logic.com">fma</a>
  */
 public abstract class AbstractFolderDelete extends AbstractFolderAction {
-
-	private static final ExecutableState LOCKED = ExecutableState
-		.createDisabledState(I18NConstants.MSG_DOCUMENT_LOCKED);
 
 	private static final ExecutableState NOT_EMPTY = ExecutableState
 		.createDisabledState(I18NConstants.MSG_FOLDER_NOT_EMPTY);
@@ -84,14 +80,7 @@ public abstract class AbstractFolderDelete extends AbstractFolderAction {
 				return ExecutableState.EXECUTABLE;
 			}
 
-			if (content instanceof BinaryDataSource) {
-				if (isLocked((BinaryDataSource) content)) {
-					return LOCKED;
-				}
-				else {
-					return ExecutableState.EXECUTABLE;
-				}
-			} else if (content instanceof FolderDefinition) {
+			if (content instanceof FolderDefinition) {
 				if (((FolderDefinition) content).getContents().size() == 0) {
 					return ExecutableState.EXECUTABLE;
 				} else {
@@ -106,8 +95,6 @@ public abstract class AbstractFolderDelete extends AbstractFolderAction {
 		}
 	}
 
-
-	protected abstract boolean isLocked(BinaryDataSource contentObject);
 
 	protected abstract Command getCommand(final Named aContent, final FolderDefinition aFolder);
 

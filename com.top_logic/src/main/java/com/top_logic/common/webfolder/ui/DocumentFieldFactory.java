@@ -8,9 +8,6 @@ package com.top_logic.common.webfolder.ui;
 import java.util.Arrays;
 
 import com.top_logic.common.webfolder.model.DocumentContext;
-import com.top_logic.common.webfolder.model.FolderDocument;
-import com.top_logic.common.webfolder.ui.commands.LockExecutable;
-import com.top_logic.common.webfolder.ui.commands.UnlockExecutable;
 import com.top_logic.knowledge.gui.layout.upload.FileNameConstraint;
 import com.top_logic.knowledge.gui.layout.upload.SimpleFileNameStrategy;
 import com.top_logic.layout.form.model.DocumentField;
@@ -33,10 +30,7 @@ public class DocumentFieldFactory {
 	 */
 	public static DocumentField createDocumentField(String name, DocumentContext context) {
 
-		FolderDocument documentHandle = new FolderDocument(context.getFolder(), context.getDocument());
-
-		DocumentField result =
-			new DocumentField(name, new LockExecutable(documentHandle), new UnlockExecutable(documentHandle));
+		DocumentField result = new DocumentField(name);
 
 		if (context.getDocument() != null) {
 			result.initializeField(context.getDocument());

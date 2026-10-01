@@ -34,9 +34,6 @@
 		<param name="hasUploadCommand"
 			optional="true"
 		/>
-		<param name="manual-locking"
-			optional="true"
-		/>
 		<param name="modelBuilder">
 			<modelBuilder class="com.top_logic.common.webfolder.model.WebFolderAwareModelBuilder"/>
 		</param>
@@ -50,7 +47,6 @@
 				hasNewFolderCommand="${hasNewFolderCommand}"
 				hasUploadCommand="${hasUploadCommand}"
 				hasZipDownloadCommand="${hasZipDownloadCommand}"
-				manual-locking="${manual-locking}"
 				model="${model}"
 				name="${namePrefix}Folder"
 				resPrefix="${componentResPrefix}"

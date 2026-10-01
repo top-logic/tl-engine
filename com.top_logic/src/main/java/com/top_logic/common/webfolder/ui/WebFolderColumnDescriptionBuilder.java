@@ -35,15 +35,10 @@ public class WebFolderColumnDescriptionBuilder extends FolderColumnDescriptionBu
 	/**
 	 * Singleton {@link WebFolderColumnDescriptionBuilder} instance that is configured for full
 	 * access.
-	 * <p>
-	 * That includes the manual locking: {@link WebFolderUIFactory#getManualLocking()}.
-	 * </p>
 	 */
 	public static final WebFolderColumnDescriptionBuilder FULL_ACCESS_INSTANCE =
 		new WebFolderColumnDescriptionBuilder(ExecutableState.EXECUTABLE, ExecutableState.EXECUTABLE,
-			ExecutableState.EXECUTABLE, true);
-
-	private final boolean _manualLocking;
+			ExecutableState.EXECUTABLE);
 
 	private boolean _withAnalysis = DefaultAnalyzeService.isAvailable();
 
@@ -57,9 +52,8 @@ public class WebFolderColumnDescriptionBuilder extends FolderColumnDescriptionBu
 	 *        Whether content deletion is allowed.
 	 */
 	public WebFolderColumnDescriptionBuilder(ExecutableState canAddToClipboard, ExecutableState canUpdate,
-			ExecutableState canDelete, boolean manualLocking) {
+			ExecutableState canDelete) {
 		super(canAddToClipboard, canUpdate, canDelete);
-		_manualLocking = manualLocking;
     }
 
 	/**
@@ -86,7 +80,7 @@ public class WebFolderColumnDescriptionBuilder extends FolderColumnDescriptionBu
 		createTypeColumn(tableConfig.declareColumn(WebFolderAccessor.TYPE));
 		createSizeColumn(tableConfig.declareColumn(WebFolderAccessor.SIZE));
 		createDownloadColumn(tableConfig.declareColumn(WebFolderAccessor.DOWNLOAD));
-		createLockColumn(tableConfig.declareColumn(WebFolderAccessor.LOCK));
+		createUpdateColumn(tableConfig.declareColumn(WebFolderAccessor.UPDATE));
 		createVersionColumn(tableConfig.declareColumn(WebFolderAccessor.VERSION));
 		createClipboardColumn(tableConfig.declareColumn(WebFolderAccessor.CLIPBOARD));
 		createDeleteColumn(tableConfig.declareColumn(WebFolderAccessor.DELETE));
@@ -125,9 +119,9 @@ public class WebFolderColumnDescriptionBuilder extends FolderColumnDescriptionBu
 	}
 
 	public static void applyImmutableProperty(TableConfiguration aManager, boolean immutable) {
-		ColumnConfiguration lockColumn = aManager.getDeclaredColumn(WebFolderAccessor.LOCK);
-		if (lockColumn != null && (!lockColumn.isFrozen())) {
-			lockColumn.setVisible(!immutable);
+		ColumnConfiguration updateColumn = aManager.getDeclaredColumn(WebFolderAccessor.UPDATE);
+		if (updateColumn != null && (!updateColumn.isFrozen())) {
+			updateColumn.setVisible(!immutable);
 		}
 		ColumnConfiguration deleteColumn = aManager.getDeclaredColumn(WebFolderAccessor.DELETE);
 		if (deleteColumn != null && !deleteColumn.isFrozen()) {
@@ -149,14 +143,7 @@ public class WebFolderColumnDescriptionBuilder extends FolderColumnDescriptionBu
 	@Override
 	protected FieldProvider createFolderFieldProvider(ExecutableState allowClipboard, ExecutableState allowWrite,
 			ExecutableState allowDelete) {
-		return new WebFolderFieldProvider(allowClipboard, allowWrite, allowDelete, getManualLocking());
-	}
-
-	/**
-	 * @see WebFolderUIFactory#getManualLocking()
-	 */
-	protected boolean getManualLocking() {
-		return _manualLocking;
+		return new WebFolderFieldProvider(allowClipboard, allowWrite, allowDelete);
 	}
 
 }

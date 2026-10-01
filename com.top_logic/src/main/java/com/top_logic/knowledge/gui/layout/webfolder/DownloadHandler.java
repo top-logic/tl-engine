@@ -17,10 +17,12 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.io.binary.EmptyBinaryData;
 import com.top_logic.dsa.DataAccessProxy;
+import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.DocumentVersion;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
@@ -111,26 +113,27 @@ public class DownloadHandler extends AbstractDownloadHandler {
 	            if (theWrap instanceof DocumentVersion) {
 	                theWrap = ((DocumentVersion) theWrap).getDocument();
 	            } 
-	            // And a Wrap and a DAP and DibbeDabbeDub ;-)
-	            DataAccessProxy theDAP = theWrap.getDAP();
-	
-	            if (theDAP != null) {
-	                String theVersion = thePack.version;
-	    
-	                if (Logger.isDebugEnabled (this)) {
-	                    Logger.debug ("Downloading from " + theDAP, this);
-	                }
-	    
-	                if (StringServices.isEmpty(theVersion)) {
-	                    theData = theDAP.getEntry();
-	                }
-	                else {
-	                    theData = theDAP.getEntry(theVersion);
-	                }      
-	    			return BinaryDataFactory.createFileBasedBinaryData(theData);
+				if (theWrap instanceof Document) {
+					Document document = (Document) theWrap;
+					String theVersion = thePack.version;
+					BinaryData content;
+					if (StringServices.isEmpty(theVersion)) {
+						content = document;
+					} else {
+						content = document.getVersionContent(Integer.parseInt(theVersion));
+					}
+					return content != null ? content : EmptyBinaryData.INSTANCE;
+				}
+
+				DataAccessProxy theDAP = theWrap.getDAP();
+				if (theDAP != null) {
+					if (Logger.isDebugEnabled(this)) {
+						Logger.debug("Downloading from " + theDAP, this);
+					}
+					return BinaryDataFactory.createFileBasedBinaryData(theDAP.getEntry());
 				} else {
 					return EmptyBinaryData.INSTANCE;
-	            }
+				}
 	        }
     	}
     }

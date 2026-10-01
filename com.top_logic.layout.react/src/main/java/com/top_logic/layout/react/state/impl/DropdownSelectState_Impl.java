@@ -291,6 +291,12 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.DropdownSelectState setDisabled(boolean value) {
+		internalSetDisabled(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.DropdownSelectState setMandatory(boolean value) {
 		internalSetMandatory(value);
 		return this;

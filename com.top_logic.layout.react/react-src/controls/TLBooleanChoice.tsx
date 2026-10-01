@@ -1,5 +1,7 @@
 import { React, useTLFieldValue, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
 
@@ -14,9 +16,14 @@ interface BooleanOption {
  * The server states which presentation the attribute asks for and supplies the labelled options; a
  * tri-state field has a third option for "no value".
  *
- * A radio option's text names its radio through a `label` that refers to it by id. In a form field,
- * the field's label names the choice as a whole: the select, or the radio group (see
- * FieldLabelContext).
+ * A radio option's text names its radio through the `label` wrapping both, which also makes the
+ * text part of the radio's hit area. In a form field, the field's label names the choice as a whole:
+ * the select, or the radio group (see FieldLabelContext).
+ *
+ * Design system: radios are `tl-radio` in `tl-choice` labels within a `tl-choice-group`, the select
+ * is a `tl-field`; the state is an attribute (see fieldStateAttrs). A read-only field shows the
+ * label of its value as a `tl-field-value`; a disabled field renders the select, or every radio, as
+ * an inactive input (native `disabled`, see showsValueOnly).
  */
 const TLBooleanChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
   const labelProps = useFieldLabelProps(controlId, controlId);
@@ -24,8 +31,6 @@ const TLBooleanChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
   const options = (state.options as BooleanOption[]) ?? [];
   const asSelect = state.presentation === 'select';
   const disabled = state.disabled === true;
-  const hasError = state.hasError === true;
-  const hasWarnings = state.hasWarnings === true;
 
   // The value travels as a boolean or null; over the wire an option is addressed by its index, so
   // that "no value" is distinguishable from "not chosen".
@@ -39,29 +44,21 @@ const TLBooleanChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const current = options.findIndex((option) => option.value === (value ?? null));
 
-  if (state.editable === false) {
+  if (showsValueOnly(state)) {
     return (
-      <span id={controlId} className={rootClassName(state, 'tlBooleanChoice tlBooleanChoice--immutable')}>
-        {current >= 0 ? options[current].label : ''}
-      </span>
+      <FieldValue id={controlId} className={rootClassName(state)} text={current >= 0 ? options[current].label : ''} />
     );
   }
-
-  const cls = [
-    'tlBooleanChoice',
-    hasError ? 'tlBooleanChoice--error' : '',
-    !hasError && hasWarnings ? 'tlBooleanChoice--warning' : '',
-  ].filter(Boolean).join(' ');
 
   if (asSelect) {
     return (
       <select
         id={controlId}
         {...labelProps}
-        className={rootClassName(state, cls + ' tlReactSelect')}
+        className={rootClassName(state, 'tl-field tl-type-body')}
         value={current >= 0 ? String(current) : ''}
         disabled={disabled}
-        aria-invalid={hasError || undefined}
+        {...fieldStateAttrs(state)}
         onChange={(e) => handleSelect(Number(e.target.value))}
       >
         {current < 0 && <option value="" />}
@@ -73,24 +70,21 @@ const TLBooleanChoice: React.FC<TLCellProps> = ({ controlId, state }) => {
   }
 
   return (
-    <span id={controlId} className={rootClassName(state, cls + ' tlBooleanChoice--radio')} role="radiogroup"
-      aria-invalid={hasError || undefined} {...labelProps}>
-      {options.map((option, index) => {
-        const optionId = `${controlId}-option-${index}`;
-        return (
-          <span key={index} className="tlBooleanChoice__option">
-            <input
-              id={optionId}
-              type="radio"
-              name={controlId}
-              checked={current === index}
-              disabled={disabled}
-              onChange={() => handleSelect(index)}
-            />
-            <label htmlFor={optionId} className="tlBooleanChoice__label">{option.label}</label>
-          </span>
-        );
-      })}
+    <span id={controlId} className={rootClassName(state, 'tl-choice-group')} role="radiogroup"
+      {...fieldStateAttrs(state)} {...labelProps}>
+      {options.map((option, index) => (
+        <label key={index} className="tl-choice tl-type-body">
+          <input
+            type="radio"
+            className="tl-radio"
+            name={controlId}
+            checked={current === index}
+            disabled={disabled}
+            onChange={() => handleSelect(index)}
+          />
+          {option.label}
+        </label>
+      ))}
     </span>
   );
 };

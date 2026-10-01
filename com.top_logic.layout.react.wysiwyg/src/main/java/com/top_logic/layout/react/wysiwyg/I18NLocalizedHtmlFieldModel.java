@@ -109,6 +109,11 @@ public class I18NLocalizedHtmlFieldModel implements FieldModel, FieldModelListen
 	}
 
 	@Override
+	public boolean isDisabled() {
+		return _delegate.isDisabled();
+	}
+
+	@Override
 	public boolean isMandatory() {
 		return _delegate.isMandatory();
 	}
@@ -187,6 +192,13 @@ public class I18NLocalizedHtmlFieldModel implements FieldModel, FieldModelListen
 			for (FieldModelListener listener : _listeners) {
 				listener.onValueChanged(this, oldText, newText);
 			}
+		}
+	}
+
+	@Override
+	public void onDisabledChanged(FieldModel source, boolean disabled) {
+		for (FieldModelListener listener : _listeners) {
+			listener.onDisabledChanged(this, disabled);
 		}
 	}
 

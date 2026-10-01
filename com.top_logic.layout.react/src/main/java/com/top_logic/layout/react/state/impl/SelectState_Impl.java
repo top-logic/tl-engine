@@ -144,6 +144,12 @@ public class SelectState_Impl extends com.top_logic.layout.react.state.impl.Fiel
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.SelectState setDisabled(boolean value) {
+		internalSetDisabled(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.SelectState setMandatory(boolean value) {
 		internalSetMandatory(value);
 		return this;

@@ -184,7 +184,8 @@ and so makes the library component part of the form's edit and save cycle
 const state = useTLState<Partial<CheckboxStateJson>>();
 const [value, setValue] = useTLFieldValue();
 return <BrandCheckbox id={controlId} checked={value === true} onChange={setValue}
-  readOnly={state.editable === false} invalid={state.hasError === true}
+  readOnly={state.editable === false} disabled={state.disabled === true}
+  invalid={state.hasError === true}
   className={rootClassName(state)} />;
 ```
 
@@ -216,7 +217,7 @@ commands the component sends. The list in the header:
 | `TLSnackbar` | `SnackbarState` |
 
 The shared parts are `ControlState` (`hidden`, `cssClass`), `FieldState` (value, `editable`,
-`mandatory`, error and warning flags, label, placeholder, …), `TypingFieldState` (debounce, send on
+`disabled`, `mandatory`, error and warning flags, label, placeholder, …), `TypingFieldState` (debounce, send on
 blur) and `ChildControl` (a control embedded in the state of another one, rendered with
 `<TLChild control={…}/>`). The TypeScript types are generated into
 `com.top_logic.layout.react/react-src/state/control-state.ts`, named after the message with the
@@ -284,9 +285,11 @@ it generic and parameterized by configuration, not tailored to one view.
   TypeScript for every field; msgbuf cannot narrow an inherited field. Its shape is documented per
   message (a string for `TextInputState`, `true`/`false`/`null` for `CheckboxState`, a list of
   options for `DropdownSelectState`, …) — cast accordingly.
-- **Fields have no `disabled`.** The server never sends `disabled` for a field; a field that cannot
-  be edited (a form in view mode) has `editable: false`. Map that to the library's read-only or
-  disabled prop. `disabled` exists for buttons (`ButtonState`) and menu entries only.
+- **A field that cannot be edited is read-only or disabled.** A field that cannot be edited has
+  `editable: false`. Usually it displays its value only (a form in view mode) — map that to the
+  library's read-only prop. If it additionally has `disabled: true`, it is shown as an inactive
+  input (an attribute whose dynamic visibility computes "disabled" in edit mode) — map that to the
+  library's disabled prop. A field is never both editable and disabled.
 - **A partial adapter is legitimate.** An adapter maps what the library can express and documents
   what it drops (the example button ignores the appearance defaults of its container; the example
   checkbox has no tri-state and no switch presentation). The server state stays complete regardless.

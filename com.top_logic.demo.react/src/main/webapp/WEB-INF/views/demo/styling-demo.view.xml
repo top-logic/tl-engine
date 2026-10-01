@@ -512,6 +512,7 @@
 			mode-switch="false"
 			with-inset="true"
 		>
+			<field attribute="locked"/>
 			<field attribute="tags">
 				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
 					display="chips"

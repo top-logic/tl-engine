@@ -21,6 +21,9 @@ public interface FieldState extends com.top_logic.layout.react.state.ControlStat
 	/** @see #isEditable() */
 	String EDITABLE__PROP = "editable";
 
+	/** @see #isDisabled() */
+	String DISABLED__PROP = "disabled";
+
 	/** @see #isMandatory() */
 	String MANDATORY__PROP = "mandatory";
 
@@ -73,6 +76,18 @@ public interface FieldState extends com.top_logic.layout.react.state.ControlStat
 	 * @see #isEditable()
 	 */
 	com.top_logic.layout.react.state.FieldState setEditable(boolean value);
+
+	/**
+	 * Whether the field is shown as an inactive input. A disabled field accepts no input, but
+	 * presents its value in a visibly inactive input instead of displaying the value only. Only
+	 * set while {@link #isEditable()} is not.
+	 */
+	boolean isDisabled();
+
+	/**
+	 * @see #isDisabled()
+	 */
+	com.top_logic.layout.react.state.FieldState setDisabled(boolean value);
 
 	/**
 	 * Whether a value is required.

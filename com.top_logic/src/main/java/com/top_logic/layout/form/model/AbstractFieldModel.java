@@ -28,6 +28,8 @@ public class AbstractFieldModel implements FieldModel {
 
 	private boolean _editable = true;
 
+	private boolean _disabled;
+
 	private boolean _mandatory;
 
 	private boolean _nullable = true;
@@ -96,25 +98,75 @@ public class AbstractFieldModel implements FieldModel {
 		return !Objects.equals(_value, _defaultValue);
 	}
 
+	/**
+	 * Whether the value is currently editable.
+	 *
+	 * <p>
+	 * The effective editability combines the state set by {@link #setEditable(boolean)} with the
+	 * {@link #isDisabled() disabled} state: a disabled field is not editable, regardless of
+	 * {@link #setEditable(boolean)}.
+	 * </p>
+	 */
 	@Override
 	public boolean isEditable() {
-		return _editable;
+		return _editable && !_disabled;
 	}
 
 	/**
 	 * Sets the editability state.
 	 *
 	 * <p>
-	 * Fires {@link FieldModelListener#onEditabilityChanged(FieldModel, boolean)} if the state
-	 * changes.
+	 * The field is only {@link #isEditable() editable} if it is also not
+	 * {@link #isDisabled() disabled}. Fires
+	 * {@link FieldModelListener#onEditabilityChanged(FieldModel, boolean)} if the effective
+	 * editability changes.
 	 * </p>
 	 */
 	public void setEditable(boolean editable) {
 		if (_editable == editable) {
 			return;
 		}
+		boolean before = isEditable();
 		_editable = editable;
-		fireEditabilityChanged(editable);
+		handleEditabilityChange(before);
+	}
+
+	@Override
+	public boolean isDisabled() {
+		return _disabled;
+	}
+
+	/**
+	 * Sets the disabled state.
+	 *
+	 * <p>
+	 * A disabled field is not {@link #isEditable() editable}; the state set by
+	 * {@link #setEditable(boolean)} is kept and applies again when the field is no longer
+	 * disabled.
+	 * </p>
+	 *
+	 * <p>
+	 * Fires {@link FieldModelListener#onDisabledChanged(FieldModel, boolean)} if the state changes,
+	 * followed by {@link FieldModelListener#onEditabilityChanged(FieldModel, boolean)} if the
+	 * effective editability changes with it.
+	 * </p>
+	 */
+	public void setDisabled(boolean disabled) {
+		if (_disabled == disabled) {
+			return;
+		}
+		boolean before = isEditable();
+		_disabled = disabled;
+		fireDisabledChanged(disabled);
+		handleEditabilityChange(before);
+	}
+
+	private void handleEditabilityChange(boolean before) {
+		boolean after = isEditable();
+		if (before == after) {
+			return;
+		}
+		fireEditabilityChanged(after);
 		// Validation visibility depends on editable state.
 		fireValidationChanged();
 	}
@@ -157,7 +209,7 @@ public class AbstractFieldModel implements FieldModel {
 			return true;
 		}
 		// Model-level errors only visible when editable and revealed.
-		return _editable && _revealed && _modelError != null;
+		return isEditable() && _revealed && _modelError != null;
 	}
 
 	@Override
@@ -165,7 +217,7 @@ public class AbstractFieldModel implements FieldModel {
 		if (_error != null) {
 			return _error;
 		}
-		return (_editable && _revealed) ? _modelError : null;
+		return (isEditable() && _revealed) ? _modelError : null;
 	}
 
 	@Override
@@ -174,12 +226,12 @@ public class AbstractFieldModel implements FieldModel {
 			return true;
 		}
 		// Model-level warnings only visible when editable and revealed.
-		return _editable && _revealed && !_modelWarnings.isEmpty();
+		return isEditable() && _revealed && !_modelWarnings.isEmpty();
 	}
 
 	@Override
 	public List<ResKey> getWarnings() {
-		List<ResKey> visibleModelWarnings = (_editable && _revealed) ? _modelWarnings : Collections.emptyList();
+		List<ResKey> visibleModelWarnings = (isEditable() && _revealed) ? _modelWarnings : Collections.emptyList();
 		if (_warnings.isEmpty()) return visibleModelWarnings;
 		if (visibleModelWarnings.isEmpty()) return _warnings;
 		List<ResKey> combined = new ArrayList<>(_warnings);
@@ -296,6 +348,16 @@ public class AbstractFieldModel implements FieldModel {
 		FieldModelListener[] snapshot = _listeners.toArray(new FieldModelListener[0]);
 		for (FieldModelListener listener : snapshot) {
 			listener.onEditabilityChanged(this, editable);
+		}
+	}
+
+	/**
+	 * Fires {@link FieldModelListener#onDisabledChanged(FieldModel, boolean)}.
+	 */
+	protected void fireDisabledChanged(boolean disabled) {
+		FieldModelListener[] snapshot = _listeners.toArray(new FieldModelListener[0]);
+		for (FieldModelListener listener : snapshot) {
+			listener.onDisabledChanged(this, disabled);
 		}
 	}
 

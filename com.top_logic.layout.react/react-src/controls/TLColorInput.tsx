@@ -1,5 +1,6 @@
 import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { showsValueOnly } from './form/fieldState';
 import ColorPopup from './color/ColorPopup';
 
 const I18N_KEYS = { 'js.colorInput.chooseColor': 'Choose color' };
@@ -12,6 +13,8 @@ const { useState, useCallback, useRef } = React;
  * State from server:
  *  - value: string | null       - Current hex color ('#RRGGBB') or null
  *  - editable: boolean          - Whether the field is editable
+ *  - disabled: boolean          - Whether the field that is not editable shows an inactive swatch
+ *                                 button that opens no popup (see showsValueOnly) instead of the color
  *  - palette: (string | null)[] - Palette colors (flat, row-major)
  *  - paletteColumns: number     - Number of palette columns
  *  - defaultPalette: (string | null)[] - Default palette for reset
@@ -58,8 +61,8 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
     [sendCommand]
   );
 
-  // Immutable mode: just a colored span
-  if (!editable) {
+  // Read-only: just a colored span
+  if (showsValueOnly(state)) {
     return (
       <span
         id={controlId}

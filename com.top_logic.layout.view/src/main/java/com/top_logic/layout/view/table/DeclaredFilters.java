@@ -160,8 +160,8 @@ public class DeclaredFilters {
 	 *        The declarations to materialize, in the order the table offers them.
 	 * @param columns
 	 *        All columns of the table, whose filters translate the criteria.
-	 * @return One {@link NamedFilter.Origin#DECLARED} filter per declaration that materialized
-	 *         completely.
+	 * @return One {@link com.top_logic.table.NamedFilter.Origin#DECLARED} filter per declaration
+	 *         that materialized completely.
 	 */
 	public static List<NamedFilter> resolve(Log log, String table, List<Declaration> declarations,
 			List<? extends Column<?, ?>> columns) {

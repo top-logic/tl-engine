@@ -103,9 +103,17 @@
 					<!--
 						A project member - an account listed in the members of a project, by the role
 						rules below - works in that project without owning it: they read the project,
-						its milestones, notes and tickets; they create, edit and delete milestones and
-						notes, and write the project, which is what adding a milestone or a note to its
-						composition takes, except for its members and administrators.
+						its milestones, notes and tickets; they write the project, except for its members
+						and administrators, and therefore create, edit and delete its milestones and
+						notes.
+						
+						The milestones and the notes of a project have no access definition of their
+						own: their access parent is the project containing them, which makes the whole
+						access decision. Reading one is reading the project, and editing, creating or
+						deleting one is writing the project, since a part is created or deleted by
+						editing the whole. The tickets of a project decide for themselves: the role
+						rules below pass the project roles on to them, and the module grants decide what
+						these roles may do with a ticket.
 						
 						A project administrator - an account listed in the administrators of a project -
 						reads, writes, creates and deletes everything in that project, deletes the
@@ -167,40 +175,14 @@
 							roles="demo.react.ProjectAdmin"
 						/>
 					</part>
-					<class name="tl.demo.projectManagement:Milestone">
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="demo.react.ProjectMember"
-						/>
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="demo.react.ProjectMember"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="demo.react.ProjectMember"
-						/>
-					</class>
-					<class name="tl.demo.projectManagement:Note">
-						<grant
-							inherit="true"
-							operation="Create"
-							roles="demo.react.ProjectMember"
-						/>
-						<grant
-							inherit="true"
-							operation="Write"
-							roles="demo.react.ProjectMember"
-						/>
-						<grant
-							inherit="true"
-							operation="Delete"
-							roles="demo.react.ProjectMember"
-						/>
-					</class>
+					<class name="tl.demo.projectManagement:Milestone"
+						access-parent="container"
+						access-reference="tl.demo.projectManagement:ProjectScope#milestones"
+					/>
+					<class name="tl.demo.projectManagement:Note"
+						access-parent="container"
+						access-reference="tl.demo.projectManagement:ProjectScope#notes"
+					/>
 					<class name="tl.demo.projectManagement:Contributor">
 						<grant
 							inherit="true"
@@ -246,7 +228,8 @@
 						<!--
 							An account listed in the members of a project is a project member, and an
 							account listed in its administrators a project administrator, on that
-							project and, by inheritance, on its milestones, notes and tickets.
+							project and, by inheritance, on its tickets. The milestones and notes of the
+							project need no role of their own, since the project decides their access.
 						-->
 						<rule id="MembersOfProject"
 							inherit="true"
@@ -266,58 +249,6 @@
 								<step attribute="tl.demo.projectManagement:ProjectScope#admins"/>
 							</path>
 						</rule>
-						<inheritance-rule id="MembersOnMilestones"
-							inherit="true"
-							meta-element="tl.demo.projectManagement:Milestone"
-							role="demo.react.ProjectMember"
-							source-role="demo.react.ProjectMember"
-						>
-							<path>
-								<step
-									attribute="tl.demo.projectManagement:ProjectScope#milestones"
-									inverse="true"
-								/>
-							</path>
-						</inheritance-rule>
-						<inheritance-rule id="AdminsOnMilestones"
-							inherit="true"
-							meta-element="tl.demo.projectManagement:Milestone"
-							role="demo.react.ProjectAdmin"
-							source-role="demo.react.ProjectAdmin"
-						>
-							<path>
-								<step
-									attribute="tl.demo.projectManagement:ProjectScope#milestones"
-									inverse="true"
-								/>
-							</path>
-						</inheritance-rule>
-						<inheritance-rule id="MembersOnNotes"
-							inherit="true"
-							meta-element="tl.demo.projectManagement:Note"
-							role="demo.react.ProjectMember"
-							source-role="demo.react.ProjectMember"
-						>
-							<path>
-								<step
-									attribute="tl.demo.projectManagement:ProjectScope#notes"
-									inverse="true"
-								/>
-							</path>
-						</inheritance-rule>
-						<inheritance-rule id="AdminsOnNotes"
-							inherit="true"
-							meta-element="tl.demo.projectManagement:Note"
-							role="demo.react.ProjectAdmin"
-							source-role="demo.react.ProjectAdmin"
-						>
-							<path>
-								<step
-									attribute="tl.demo.projectManagement:ProjectScope#notes"
-									inverse="true"
-								/>
-							</path>
-						</inheritance-rule>
 						<inheritance-rule id="MembersOnTickets"
 							inherit="true"
 							meta-element="tl.demo.projectManagement:Ticket"
@@ -529,11 +460,21 @@
 							<en>Flat</en>
 							<de>Flach</de>
 						</label>
-						<length name="border-radius-02" value="0"/>
-						<length name="corner-radius" value="0"/>
-						<text name="shadow-dialog" value="none"/>
-						<text name="shadow-menu" value="none"/>
-						<text name="shadow-raised" value="none"/>
+						<length name="border-radius-02"
+							value="0"
+						/>
+						<length name="corner-radius"
+							value="0"
+						/>
+						<text name="shadow-dialog"
+							value="none"
+						/>
+						<text name="shadow-menu"
+							value="none"
+						/>
+						<text name="shadow-raised"
+							value="none"
+						/>
 					</theme>
 					<theme name="glass"
 						extends="default"
@@ -543,9 +484,15 @@
 							<en>Glass</en>
 							<de>Glas</de>
 						</label>
-						<text name="font-family-display" value="Georgia, serif"/>
-						<text name="shadow-glow" value="0 0 24px rgba(41,104,200,0.45)"/>
-						<length name="surface-blur" value="12px"/>
+						<text name="font-family-display"
+							value="Georgia, serif"
+						/>
+						<text name="shadow-glow"
+							value="0 0 24px rgba(41,104,200,0.45)"
+						/>
+						<length name="surface-blur"
+							value="12px"
+						/>
 					</theme>
 				</themes>
 			</instance>

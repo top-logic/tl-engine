@@ -15,7 +15,6 @@
 			<instance>
 				<task class="com.top_logic.bpe.execution.engine.BPETimeoutTask"
 					name="BPETimeoutTask" 
-					run-on-startup="true"
 				>
 					<schedules>
 						<periodically

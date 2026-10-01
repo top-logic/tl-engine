@@ -5,8 +5,8 @@ package com.top_logic.react.flow.data;
  *
  * <p>
  * Row heights are computed per-row from the maximum item intrinsic height plus padding, with
- * {@link #rowMinContentHeight} as a floor. The effective total height of a row is:
- * {@code max(rowMinContentHeight, max(item.intrinsicHeight in row)) + 2 * rowPadding}.
+ * {@link GanttRow#getMinContentHeight()} as a floor. The effective total height of a row is:
+ * {@code max(row.minContentHeight, max(item.intrinsicHeight in row)) + 2 * row.rowPadding}.
  * All items in the same row receive the same final content height so that neighbouring boxes
  * can grow together.
  * </p>

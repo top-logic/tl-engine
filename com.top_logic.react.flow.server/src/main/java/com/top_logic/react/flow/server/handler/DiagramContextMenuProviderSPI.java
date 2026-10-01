@@ -11,7 +11,7 @@ import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 /**
  * {@link ContextMenuProvider} that can be attached to diagram elements.
  * 
- * @see ContextMenuHandler
+ * @see com.top_logic.react.flow.server.control.FlowDiagramControl
  */
 public interface DiagramContextMenuProviderSPI extends DiagramContextMenuProvider, ContextMenuProvider {
 	// Pure sum interface.

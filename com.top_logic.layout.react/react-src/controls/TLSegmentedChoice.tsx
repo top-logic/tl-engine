@@ -1,24 +1,25 @@
 import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
-import { ARG_OPTION, CMD_GOTO, OptionImage, ReadonlyValue, withPill } from './selectOptions';
+import { ARG_OPTION, CMD_GOTO, OptionContent, ReadonlyValues } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 
-const { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = React;
-
-/** Where the marker stands: the offset and the width of the segment it is under. */
-interface MarkerPosition {
-  left: number;
-  width: number;
-}
+const { useCallback, useMemo, useRef } = React;
 
 /**
- * A select field whose options are the segments of one bar, the selected one marked by a slider
- * that moves to it.
+ * A select field whose options are the segments of one bar, the selected one filled.
  *
  * The bar reads as one control whose position is the value, which suits a few mutually exclusive
  * options that belong together as one setting. A field taking one value follows the radio-group
- * pattern: the arrow keys move the selection from segment to segment. A field taking several has
- * no single position to mark, so it drops the marker and fills every segment that is on.
+ * pattern: the arrow keys move the selection from segment to segment. A field taking several fills
+ * every segment that is on.
+ *
+ * Design system: `tl-segmented` with `tl-segmented__segment` buttons. Selected is an attribute -
+ * `aria-checked` in a radio group, `aria-pressed` in a group of several - and so is the field's
+ * state (see fieldStateAttrs). The label stands in a `tl-segmented__label`, which ends in an ellipsis
+ * where the segment is too narrow. A read-only field shows its values in `tl-select__values`, as the
+ * dropdown does; a disabled field renders the bar with every segment an inactive button (native
+ * `disabled`, see showsValueOnly).
  *
  * The server hands this control the complete option list as soon as it is displayed - there is no
  * moment at which it could ask for it.
@@ -32,54 +33,22 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
   const options = (state.options ?? []) as OptionDescriptor[];
   const multiSelect = state.multiSelect === true;
   const mandatory = state.mandatory === true;
-  const editable = state.editable !== false;
-  const hasError = state.hasError === true;
-  const hasWarnings = state.hasWarnings === true;
+  const disabled = state.disabled === true;
 
   // Tracks the latest selection so that a second click lands on what the first one produced, even
   // while the echo of the first has not arrived yet.
   const valueRef = useRef(value);
   valueRef.current = value;
 
-  const rootRef = useRef<HTMLDivElement | null>(null);
   const segmentRefs = useRef<(HTMLButtonElement | null)[]>([]);
-
-  const [marker, setMarker] = useState<MarkerPosition | null>(null);
 
   const selectedIds = useMemo(() => new Set(value.map((v) => v.value)), [value]);
 
-  /** The segment the marker stands under, or -1 while nothing is selected. */
+  /** The first selected segment, or -1 while nothing is selected. */
   const selectedIndex = useMemo(
     () => options.findIndex((o) => selectedIds.has(o.value)),
     [options, selectedIds]
   );
-
-  // The marker is measured rather than computed: the segments are as wide as their labels, and
-  // only the browser knows how wide that is.
-  const measureMarker = useCallback(() => {
-    if (multiSelect || selectedIndex < 0) {
-      setMarker(null);
-      return;
-    }
-    const segment = segmentRefs.current[selectedIndex];
-    if (!segment) {
-      setMarker(null);
-      return;
-    }
-    setMarker({ left: segment.offsetLeft, width: segment.offsetWidth });
-  }, [multiSelect, selectedIndex]);
-
-  useLayoutEffect(measureMarker, [measureMarker, options, editable]);
-
-  // A bar that is resized - by its container, by a font that arrives late - re-measures, so the
-  // marker keeps standing under its segment.
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root || typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(measureMarker);
-    observer.observe(root);
-    return () => observer.disconnect();
-  }, [measureMarker, editable]);
 
   const send = useCallback(
     (selection: OptionDescriptor[]) => {
@@ -91,6 +60,7 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
 
   const choose = useCallback(
     (option: OptionDescriptor) => {
+      if (disabled) return;
       const selection = valueRef.current;
       const selected = selection.some((v) => v.value === option.value);
       if (multiSelect) {
@@ -104,7 +74,7 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
         send([]);
       }
     },
-    [multiSelect, mandatory, send]
+    [disabled, multiSelect, mandatory, send]
   );
 
   /** Leads to the place the given option is displayed at. */
@@ -118,7 +88,7 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
   // The radio pattern: the arrows move the selection, so the bar is operated without the pointer.
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (multiSelect || options.length === 0) return;
+      if (multiSelect || disabled || options.length === 0) return;
       let step = 0;
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
         step = 1;
@@ -134,19 +104,12 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
       segmentRefs.current[next]?.focus();
       send([options[next]]);
     },
-    [multiSelect, options, selectedIndex, send]
+    [multiSelect, disabled, options, selectedIndex, send]
   );
 
-  if (!editable) {
+  if (showsValueOnly(state)) {
     return (
-      <div
-        id={controlId}
-        className={rootClassName(state, 'tlSegmentedChoice', 'tlSegmentedChoice--immutable')}
-      >
-        {value.map((v) => (
-          <ReadonlyValue key={v.value} option={v} onGoto={goto} />
-        ))}
-      </div>
+      <ReadonlyValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />
     );
   }
 
@@ -158,23 +121,11 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
     <div
       id={controlId}
       {...labelProps}
-      ref={rootRef}
       role={multiSelect ? 'group' : 'radiogroup'}
-      className={rootClassName(
-        state,
-        'tlSegmentedChoice',
-        hasError && 'tlSegmentedChoice--error',
-        !hasError && hasWarnings && 'tlSegmentedChoice--warning'
-      )}
+      className={rootClassName(state, 'tl-segmented')}
+      {...fieldStateAttrs(state, !multiSelect)}
       onKeyDown={handleKeyDown}
     >
-      {marker && (
-        <span
-          className="tlSegmentedChoice__marker"
-          style={{ left: marker.left, width: marker.width }}
-          aria-hidden="true"
-        />
-      )}
       {options.map((option, index) => {
         const selected = selectedIds.has(option.value);
         return (
@@ -188,18 +139,11 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
             aria-checked={multiSelect ? undefined : selected}
             aria-pressed={multiSelect ? selected : undefined}
             tabIndex={multiSelect || index === tabStop ? 0 : -1}
-            className={
-              'tlSegmentedChoice__segment' +
-              (selected ? ' tlSegmentedChoice__segment--selected' : '')
-            }
+            className="tl-segmented__segment tl-type-label"
+            disabled={disabled}
             onClick={() => choose(option)}
           >
-            {withPill(option.colorRole, (
-              <>
-                <OptionImage image={option.image} />
-                <span className="tlSegmentedChoice__segmentLabel">{option.label}</span>
-              </>
-            ))}
+            <OptionContent option={option} labelClassName="tl-segmented__label" />
           </button>
         );
       })}

@@ -36,11 +36,13 @@
 		<zookeeper.version>3.9.6</zookeeper.version>
 		<slf4j.version>2.0.20</slf4j.version>
 		<log4j.version>2.26.1</log4j.version>
-		<fasterxml.version>2.22.2</fasterxml.version>
+		<fasterxml.version>2.22.3</fasterxml.version>
 		<msgbuf.version>1.3.0</msgbuf.version>
 		<bouncycastle.version>1.86</bouncycastle.version>
 		<batik.version>1.19</batik.version>
 		<tl.license.version>7.8.2</tl.license.version>
+		<!-- renovate: datasource=node-version depName=node -->
+		<node.version>20.10.0</node.version>
 		
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -53,6 +55,21 @@
 		
 		<tl.layoutDir>${basedir}/src/main/webapp/WEB-INF/layouts</tl.layoutDir>
 		<tl.confDir>${basedir}/src/main/webapp/WEB-INF</tl.confDir>
+
+		<maven.javadoc.skip>false</maven.javadoc.skip>
+
+		<!-- 
+			Directory into which the framework modules write their JavaDoc to combine it into one tree. 
+			
+			With -Dtl.javadoc.aggregate=false, the "javadoc-module-local" profiles of tl-parent-build and 
+			tl-parent-engine keep the JavaDoc of each module in its own build directory and skip the index. 
+			The profiles are not declared here, because activating any profile of this POM deactivates its 
+			"full-build" profile, which is active by default.
+		-->
+		<tl.javadoc.aggregateDir>${basedir}/../tl-doc/javadoc</tl.javadoc.aggregateDir>
+		
+		<!-- Whether to skip indexing the combined JavaDoc tree in tl-parent-engine. -->
+		<tl.javadoc.skipIndex>${maven.javadoc.skip}</tl.javadoc.skipIndex>
 	</properties>
 
 	<developers>
@@ -901,7 +918,7 @@
 			<dependency>
 				<groupId>com.networknt</groupId>
 				<artifactId>json-schema-validator</artifactId>
-				<version>3.0.7</version>
+				<version>3.0.8</version>
 			</dependency>
 			<dependency>
 				<groupId>jakarta.servlet</groupId>
@@ -1989,7 +2006,7 @@
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
 				<artifactId>spotbugs-maven-plugin</artifactId>
-				<version>4.10.3.0</version>
+				<version>4.10.4.1</version>
 				<!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
 				<!-- <dependencies>
 					<dependency>
@@ -2041,7 +2058,7 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>3.5.6</version>
+					<version>3.6.0</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-jar-plugin</artifactId>

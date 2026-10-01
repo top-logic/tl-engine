@@ -57,7 +57,7 @@
 		value="/mimetypes/tl/TLAssociationEnd@containment@mandatory.png"
 	/>
 	<icon name="mime.TLAssociationEnd@containment@mandatory@multiple"
-		value="colored:tl-icon selection-invert"
+		value="/mimetypes/tl/TLAssociationEnd@containment@mandatory@multiple.png"
 	/>
 	<icon name="mime.TLAssociationEnd@containment@multiple"
 		value="/mimetypes/tl/TLAssociationEnd@containment@multiple.png"

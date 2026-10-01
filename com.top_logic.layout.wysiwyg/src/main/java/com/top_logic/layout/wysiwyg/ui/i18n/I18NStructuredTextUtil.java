@@ -203,6 +203,12 @@ public class I18NStructuredTextUtil {
 	/**
 	 * Links image sources to resolve the paths.
 	 * 
+	 * <p>
+	 * An image element refers to one of the given images either by its plain name or by its image
+	 * reference (see {@link #getImageRefID(String)}); both are stored as image reference. Images
+	 * no image element refers to are removed from the given map.
+	 * </p>
+	 * 
 	 * @param html
 	 *        HTML page.
 	 * @param imageMap
@@ -228,13 +234,20 @@ public class I18NStructuredTextUtil {
 	 *        {@link Element} with img tag.
 	 * @param imageMap
 	 *        Images to link.
-	 * @return Original value of src attribute.
+	 * @return The name of the linked image, <code>null</code> if the element refers to none of the
+	 *         given images.
 	 */
 	private static String linkImageSource(Element element, Map<String, BinaryData> imageMap) {
 		String name = getSrcValue(element);
 		if (imageMap.containsKey(name)) {
 			setSrcValue(element, getImageRefID(name));
 			return name;
+		}
+		if (isImageReference(name)) {
+			String imageID = getImageID(name);
+			if (imageMap.containsKey(imageID)) {
+				return imageID;
+			}
 		}
 
 		return null;

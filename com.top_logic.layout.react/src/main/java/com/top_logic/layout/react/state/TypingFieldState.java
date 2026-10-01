@@ -63,6 +63,9 @@ public interface TypingFieldState extends com.top_logic.layout.react.state.Field
 	com.top_logic.layout.react.state.TypingFieldState setEditable(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.TypingFieldState setDisabled(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.TypingFieldState setMandatory(boolean value);
 
 	@Override

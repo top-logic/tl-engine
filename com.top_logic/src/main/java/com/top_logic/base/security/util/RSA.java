@@ -7,8 +7,7 @@
 package com.top_logic.base.security.util;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.nio.charset.StandardCharsets;
 import java.util.StringTokenizer;
 
 import com.top_logic.basic.StringServices;
@@ -82,6 +81,18 @@ class RSA implements MessageCoder {
     /**
      * Encode the given message using the given public key.
      *
+     * <p>
+     * The UTF-8 bytes of the message are interpreted as an unsigned (big-endian) number. This
+     * number is split into blocks of {@link #blockBits(RSAKey)} bits, starting with the least
+     * significant bits. Each block is encrypted independently; the encrypted blocks are returned
+     * in that order (least significant block first).
+     * </p>
+     *
+     * <p>
+     * A number has no leading zeros, therefore leading U+0000 characters of the message are not
+     * preserved.
+     * </p>
+     *
      * @param    aKey          The public key to be used for encoding.
      * @param    aMessage      The message to be encoded.
      * @return   The encoded message.
@@ -91,46 +102,41 @@ class RSA implements MessageCoder {
             return (null);
         }
 
-        ArrayList  theCode   = new ArrayList ();
-        int        theLength = RSAKey.BITS - 20;
-        BigInteger theTemp   = new BigInteger (aMessage.getBytes ());
-        BigInteger theBlock  = new BigInteger ("0");
+		byte[] bytes = aMessage.getBytes(StandardCharsets.UTF_8);
+		int blockBits = blockBits(aKey);
 
-        while (BigInteger.valueOf (2).
-                          pow (theLength).
-                          compareTo (aKey.getN ()) != -1) {
-            theLength--;
-        }
+		// Skip leading zero bytes, the number representation does not preserve them.
+		int start = 0;
+		while (start < bytes.length && bytes[start] == 0) {
+			start++;
+		}
+		int valueBits = (bytes.length - start) * 8;
+		if (valueBits > 0) {
+			valueBits -= Integer.numberOfLeadingZeros(bytes[start] & 0xFF) - 24;
+		}
 
-        while (!theTemp.equals (BigInteger.valueOf (0))) {
-            for (int i = 1; i <= theLength; i++) {
-                theBlock = theBlock.shiftLeft (1);
-
-                if (theTemp.testBit (theLength - i))  {
-                    theBlock = theBlock.setBit (0);
-                }
-            }
-
-            theTemp = theTemp.shiftRight (theLength);
-
-            theCode.add (theBlock.modPow (aKey.getKey (),aKey.getN()));
-        }
-
-        BigInteger[] theResult = new BigInteger [theCode.size ()];
-        Iterator     theEnum   = theCode.iterator ();
-
-        for (int thePos = 0; theEnum.hasNext (); thePos++) {
-            theResult [thePos] = (BigInteger) theEnum.next ();
-        }
-
-        return (theResult);
+		int blockCount = (valueBits + blockBits - 1) / blockBits;
+		BigInteger[] result = new BigInteger[blockCount];
+		for (int block = 0; block < blockCount; block++) {
+			int lowBit = block * blockBits;
+			int highBit = Math.min(lowBit + blockBits, valueBits);
+			BigInteger chunk = bits(bytes, lowBit, highBit);
+			result[block] = chunk.modPow(aKey.getKey(), aKey.getN());
+		}
+		return result;
     }
 
     /**
      * Decode the given message using the given private key.
      *
+     * <p>
+     * Inverse of {@link #encode(RSAKey, String)}: The decrypted blocks are concatenated (the first
+     * block forming the least significant bits) and the resulting unsigned number is interpreted as
+     * the UTF-8 bytes of the message.
+     * </p>
+     *
      * @param    aPrivateKey    The private key to be used for decoding.
-     * @param    aCode          The message to be decoded (?)
+     * @param    aCode          The encrypted blocks as created by {@link #encode(RSAKey, String)}.
      * @return   The decoded message.
      */
     public String decode (RSAKey aPrivateKey, BigInteger[] aCode) {
@@ -138,21 +144,72 @@ class RSA implements MessageCoder {
             return (null);
         }
 
-        int        theLength = RSAKey.BITS - 20;
-        BigInteger theCode     = new BigInteger("0");
+		int blockBits = blockBits(aPrivateKey);
+		int totalBits = aCode.length * blockBits;
+		byte[] bytes = new byte[(totalBits + 7) / 8];
+		for (int block = 0; block < aCode.length; block++) {
+			BigInteger chunk = aCode[block].modPow(aPrivateKey.getKey(), aPrivateKey.getN());
+			orBits(bytes, chunk, block * blockBits);
+		}
 
-        while (BigInteger.valueOf (2).pow (theLength).
-                                      compareTo (aPrivateKey.getN ()) != -1) {
-            theLength--;
-        }
-
-        for (int thePos = 0; thePos < aCode.length; thePos++) {
-            theCode=theCode.add (aCode [thePos].modPow (aPrivateKey.getKey (),
-                                                        aPrivateKey.getN ()));
-        }
-
-        return (new String (theCode.toByteArray ()));
+		int start = 0;
+		while (start < bytes.length && bytes[start] == 0) {
+			start++;
+		}
+		return new String(bytes, start, bytes.length - start, StandardCharsets.UTF_8);
     }
+
+	/**
+	 * The number of message bits encrypted in a single block with the given key.
+	 *
+	 * <p>
+	 * The largest bit count not exceeding {@link RSAKey#BITS} - 20 for which every block value is
+	 * smaller than the modulus of the key.
+	 * </p>
+	 */
+	private static int blockBits(RSAKey aKey) {
+		int result = RSAKey.BITS - 20;
+		BigInteger n = aKey.getN();
+		while (BigInteger.ONE.shiftLeft(result).compareTo(n) >= 0) {
+			result--;
+		}
+		return result;
+	}
+
+	/**
+	 * The bits in the range [lowBit, highBit) of the unsigned big-endian number in the given bytes.
+	 *
+	 * <p>
+	 * Bit 0 is the least significant bit of the last byte.
+	 * </p>
+	 */
+	private static BigInteger bits(byte[] bytes, int lowBit, int highBit) {
+		int lowByte = lowBit / 8;
+		int highByte = (highBit - 1) / 8;
+		int last = bytes.length - 1;
+		BigInteger slice = new BigInteger(1, bytes, last - highByte, highByte - lowByte + 1);
+		int width = highBit - lowBit;
+		return slice.shiftRight(lowBit % 8).and(BigInteger.ONE.shiftLeft(width).subtract(BigInteger.ONE));
+	}
+
+	/**
+	 * Combines the given non-negative value shifted left by the given bit offset into the unsigned
+	 * big-endian number in the given bytes.
+	 *
+	 * <p>
+	 * Bits of the shifted value beyond the range of the given bytes are dropped.
+	 * </p>
+	 */
+	private static void orBits(byte[] bytes, BigInteger value, int offset) {
+		byte[] shifted = value.shiftLeft(offset % 8).toByteArray();
+		int last = bytes.length - 1 - offset / 8;
+		for (int n = shifted.length - 1, target = last; n >= 0 && target >= 0; n--, target--) {
+			byte b = shifted[n];
+			if (b != 0) {
+				bytes[target] |= b;
+			}
+		}
+	}
 
     /**
      * Returns the new created key pair to be used in this instance.

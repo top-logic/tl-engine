@@ -17,6 +17,7 @@
 			with-inset="true"
 		>
 			<field attribute="name"/>
+			<field attribute="locked"/>
 			<field attribute="string"/>
 			<field attribute="multiLine"/>
 			<field attribute="html"/>

@@ -19,6 +19,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.core.workspace.ModuleLayoutConstants;
+import com.top_logic.basic.tooling.Workspace;
 import com.top_logic.basic.util.I18NBundleSPI;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
@@ -48,6 +49,11 @@ public class IDEResources extends DefaultResourcesModule {
 
 		/**
 		 * The file to dump missing keys to.
+		 * 
+		 * <p>
+		 * A relative path is resolved against the module directory of the top-level web
+		 * application.
+		 * </p>
 		 */
 		@StringDefault("src/" + ModuleLayoutConstants.MAIN_ASPECT + "/" + ModuleLayoutConstants.WEBAPP_LOCAL_DIR_NAME
 				+ "/" + ModuleLayoutConstants.CONF_PATH + "/resources/missing.properties")
@@ -56,6 +62,11 @@ public class IDEResources extends DefaultResourcesModule {
 
 		/**
 		 * The file to dump all resolved keys to.
+		 * 
+		 * <p>
+		 * A relative path is resolved against the module directory of the top-level web
+		 * application.
+		 * </p>
 		 * 
 		 * @see #getDumpAllKeys()
 		 */
@@ -97,14 +108,22 @@ public class IDEResources extends DefaultResourcesModule {
 	protected void shutDown() {
 		super.shutDown();
 
-		addMappings(_allKeys, new File(config().getAllKeysFile()));
+		addMappings(_allKeys, resolve(config().getAllKeysFile()));
 	}
 
 	@Override
 	protected void newUnknownKey(I18NBundleSPI bundle, ResKey key) {
 		super.newUnknownKey(bundle, key);
 
-		addMappings(Collections.singletonMap(key.getKey(), ""), new File(config().getMissingKeysFile()));
+		addMappings(Collections.singletonMap(key.getKey(), ""), resolve(config().getMissingKeysFile()));
+	}
+
+	private static File resolve(String path) {
+		File file = new File(path);
+		if (file.isAbsolute()) {
+			return file;
+		}
+		return new File(Workspace.topLevelProjectDirectory(), path);
 	}
 
 	private Config config() {

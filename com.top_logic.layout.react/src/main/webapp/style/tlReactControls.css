@@ -111,23 +111,6 @@ html, body {
 	height: 100%;
 }
 
-/* --- Visually hidden text ----------------------------------------------- */
-
-/* Text that names a control for assistive technology without taking up space on screen: it is
-   clipped to a one-pixel box, since "display: none" or "visibility: hidden" would drop it from
-   the accessibility tree as well and it would then name nothing. */
-.tlVisuallyHidden {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	margin: -1px;
-	padding: 0;
-	border: 0;
-	overflow: hidden;
-	clip-path: inset(50%);
-	white-space: nowrap;
-}
-
 /* --- Drag shield -------------------------------------------------------- */
 
 /* Covers the viewport from the moment a drag gesture moves until the pointer is released (see the
@@ -258,7 +241,7 @@ button.tlCounter__button:focus {
      - The explicit <inset> element (.tlInset) is dropped into a view
        wherever content would otherwise glue to the border (e.g. a form in a
        tab or dialog, a stack/grid of cards, or explanatory text in a dialog).
-     - A form grid (.tlFormLayout) is a plain layout and does not pad itself.
+     - A form grid (.tl-form-layout) is a plain layout and does not pad itself.
        A form that needs room sets with-inset="true", which wraps it in the same
        .tlInset, or sits in an <inset>.
      - The dashboard layout pads itself (its outer inset == its tile gap).
@@ -628,63 +611,6 @@ button.tlDownload__clearBtn:focus {
 	outline: none;
 }
 
-/* --- TLFileUpload ------------------------------------------------------ */
-
-.tlFileUpload {
-	display: inline-flex;
-	align-items: center;
-	height: 2rem;
-}
-
-.tlFileUpload__button {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	width: 2rem;
-	height: 2rem;
-	border: none;
-	border-radius: var(--corner-radius);
-	cursor: pointer;
-	background: transparent;
-	color: var(--button-secondary);
-	padding: 0;
-}
-
-button.tlFileUpload__button:hover {
-	background: var(--button-secondary-hover);
-	color: var(--text-on-color);
-}
-
-button.tlFileUpload__button:focus {
-	box-shadow: inset 0px 0px 0px 2px var(--focus), inset 0px 0px 0px 3px var(--focus-inset);
-	outline: none;
-}
-
-button.tlFileUpload__button:disabled {
-	cursor: default;
-	color: var(--text-disabled);
-}
-
-.tlFileUpload__button--uploading .tlFileUpload__icon {
-	animation: tlUploadSpin 0.8s linear infinite;
-}
-
-@keyframes tlUploadSpin {
-	to { transform: rotate(360deg); }
-}
-
-.tlFileUpload__status--error {
-	font-size: var(--body-compact-01-font-size);
-	color: var(--text-error);
-	margin-left: var(--spacing-02);
-}
-
-.tlFileUpload--dragover {
-	outline: 2px dashed var(--focus);
-	outline-offset: 2px;
-	border-radius: var(--corner-radius);
-}
-
 /* --- TLPhotoCapture ---------------------------------------------------- */
 
 .tlPhotoCapture {
@@ -803,7 +729,7 @@ button.tlPhotoCapture__cameraBtn--active:hover {
 .tlPhotoCapture__overlay {
 	position: fixed;
 	inset: 0;
-	z-index: 10000;
+	z-index: var(--tl-layer-overlay);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -983,28 +909,6 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	align-items: center;
 	justify-content: center;
 	color: var(--text-secondary);
-}
-
-/* --- TLFieldList ------------------------------------------------------- */
-
-.tlFieldList {
-	font-family: var(--font-family);
-}
-
-.tlFieldList__title {
-	margin: 0 0 var(--spacing-04) 0;
-	color: var(--text-primary);
-}
-
-.tlFieldList__fields {
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-04);
-}
-
-.tlFieldList__item {
-	padding-bottom: var(--spacing-03);
-	border-bottom: 1px solid var(--border-subtle-01);
 }
 
 /* --- TLValueList ------------------------------------------------------- */
@@ -2387,7 +2291,7 @@ button.tlBottomBar__item:hover {
 .tlDialog__backdrop {
 	position: fixed;
 	inset: 0;
-	z-index: 10000;
+	z-index: var(--tl-layer-overlay);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -2599,7 +2503,7 @@ button.tlWindow__maximizeBtn:focus-visible {
 
 .tlDrawer {
 	position: fixed;
-	z-index: 9000;
+	z-index: var(--tl-layer-overlay);
 	background: var(--layer-01);
 	box-shadow: var(--shadow-dialog);
 	display: flex;
@@ -2700,7 +2604,7 @@ button.tlDrawer__closeBtn:focus-visible {
 	bottom: var(--spacing-04);
 	left: 50%;
 	transform: translateX(-50%) translateY(0);
-	z-index: 11000;
+	z-index: var(--tl-layer-toast);
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-03);
@@ -2917,7 +2821,7 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 
 .tlMenu {
-	z-index: 10000;
+	z-index: var(--tl-layer-popover);
 	min-width: 10rem;
 	/* A menu offering many entries (e.g. the element types of a container) stays within the
 	   viewport and scrolls instead of being cut off. */
@@ -3446,12 +3350,13 @@ button.tlMenu__item--disabled:hover {
 	text-overflow: ellipsis;
 }
 
-/* A business object shown with its icon is a flex row of its own. In a cell it is the block-level
-   one the rule for the cell's root span asks for - that rule is the more specific of the two and
-   would otherwise decide the display - so the object spans the column and its label is cut off at
-   the column edge. */
-.tlTableView__cell > .tlResourceCell {
+/* A flex row of its own - a value with its icon, a row of values, a group of radios - stays one in
+   a cell rather than the block the more specific rule for the root span asks for, and does not wrap. */
+.tlTableView__cell > .tl-field-value,
+.tlTableView__cell > .tl-select__values,
+.tlTableView__cell > .tl-choice-group {
 	display: flex;
+	flex-wrap: nowrap;
 }
 
 /* A value shown beside an adornment - the language button of an internationalized text - sits in a
@@ -3467,52 +3372,36 @@ button.tlMenu__item--disabled:hover {
 	text-overflow: ellipsis;
 }
 
-/* A text of several lines is written with its line breaks where there is the height for them; in a
-   cell it reads as the one line the row is high. The control carries the wrapping as a class of
-   its own, which the white space inherited from the cell does not reach. */
-.tlTableView__cell .tlReactTextInput--immutable.tlReactTextInput--multiline {
-	white-space: nowrap;
-}
-
-/* The chips of a multi-valued selection follow each other in one row and are cut off at the column
-   edge, rather than wrapping into lines the row has no height for. */
-.tlTableView__cell > .tlDropdownSelect--immutable {
-	flex-wrap: nowrap;
+/* The values of a multi-valued selection follow each other in one row (see above) and are cut off
+   at the column edge, rather than wrapping into lines the row has no height for. */
+.tlTableView__cell > .tl-select__values {
 	overflow: hidden;
 	width: 100%;
 }
 
-/* Each chip keeps the width its label asks for, so a row of them is cut off at the column edge
-   instead of every chip being squeezed to nothing. */
-.tlTableView__cell > .tlDropdownSelect--immutable > * {
+/* Each value keeps its label's width: a row of them is cut off at the column edge, not squeezed. */
+.tlTableView__cell > .tl-select__values > * {
 	flex-shrink: 0;
 }
 
-/* A multi-valued text of several lines stands one value per line where there is the height for it;
-   in a cell the values read as one line with the separator between them. */
+/* In a cell, a text of several values or of several lines reads as the one line the row is high. */
 .tlTableView__cell .tlValueList--block .tlValueList__item,
 .tlTableView__cell .tlValueList--block .tlValueList__separator {
 	display: inline;
 }
 
-/* Remove cell padding when it contains an editable input — the input provides its own.
-   Element-qualified so the rules match only real form controls, not the read-only
-   display spans that carry the same base class. */
-.tlTableView__cell:has(input.tlReactTextInput, textarea.tlReactTextInput, input.tlReactNumberInput, input.tlReactDatePicker, select.tlReactSelect) {
+.tlTableView__cell .tl-field-value--multiline {
+	flex-direction: row;
+	white-space: nowrap;
+}
+
+/* A cell holding an input (tl-field, not the read-only tl-field-value) leaves its padding to it. */
+.tlTableView__cell:has(.tl-field) {
 	padding: 0;
 }
 
 /* Inline-edit inputs inside table cells: Excel-style, cell = input */
-.tlTableView__cell input.tlReactTextInput,
-.tlTableView__cell textarea.tlReactTextInput,
-.tlTableView__cell input.tlReactNumberInput,
-.tlTableView__cell input.tlReactDatePicker,
-.tlTableView__cell select.tlReactSelect,
-.tlTableView__cell input.tlReactTextInput:focus,
-.tlTableView__cell textarea.tlReactTextInput:focus,
-.tlTableView__cell input.tlReactNumberInput:focus,
-.tlTableView__cell input.tlReactDatePicker:focus,
-.tlTableView__cell select.tlReactSelect:focus {
+.tlTableView__cell .tl-field {
 	border: none;
 	border-radius: 0;
 	background: transparent;
@@ -3522,32 +3411,27 @@ button.tlMenu__item--disabled:hover {
 	outline: none;
 }
 
-/* The row of a cell input spans the cell, so the input inside it still fills the cell; the link
-   beside it keeps the horizontal padding the input gave up. */
-.tlTableView__cell .tlReactTextInput__row {
+/* The group spans the cell, so its input fills the cell and keeps the room of icon and action. */
+.tlTableView__cell .tl-field-group {
 	height: 100%;
 }
 
-.tlTableView__cell .tlReactTextInput__open {
-	padding-right: var(--spacing-03);
-}
-
 /* Excel-style focus: highlight the entire cell only when an input is focused */
-.tlTableView__cell:has(.tlReactTextInput:focus, .tlReactNumberInput:focus, .tlReactDatePicker:focus, .tlReactSelect:focus) {
+.tlTableView__cell:has(.tl-field:focus) {
 	outline: 2px solid var(--focus);
 	outline-offset: -1px;
 	z-index: 1;
 }
 
 /* Error state: red cell border */
-.tlTableView__cell:has(.tlReactTextInput--error, .tlReactNumberInput--error, .tlReactDatePicker--error, .tlReactSelect--error) {
+.tlTableView__cell:has(.tl-field[aria-invalid="true"]) {
 	outline: 2px solid var(--support-error);
 	outline-offset: -1px;
 	z-index: 1;
 }
 
 /* Warning state: yellow cell border (only when no error) */
-.tlTableView__cell:has(.tlReactTextInput--warning, .tlReactNumberInput--warning, .tlReactDatePicker--warning, .tlReactSelect--warning) {
+.tlTableView__cell:has(.tl-field[data-tl-state~="warning"]) {
 	outline: 2px solid var(--support-warning);
 	outline-offset: -1px;
 	z-index: 1;
@@ -3659,29 +3543,6 @@ button.tlMenu__item--disabled:hover {
 /* Emphasized text, e.g. the author name in a byline (opt-in via css-class="tlText--strong"). */
 .tlText--strong {
 	font-weight: 600;
-}
-
-/* --- TLResourceCell --------------------------------------------------------- */
-
-/* A business object drawn as its icon followed by its label. The two belong together and read as
-   one line, with the icon centered on the text and held off it by a gap. The object gives way to
-   whatever holds it - a tree node, a table cell, a pill - instead of pushing it wider. */
-.tlResourceCell {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	max-width: 100%;
-	min-width: 0;
-}
-
-/* The label is the part of the object that gives way: the ellipsis of the surroundings - the tree
-   node content, the pill - ends at the flex row the object is, so the label carries the cut-off
-   itself. The white space is the one inherited from tree, table or pill, so a place that wraps
-   keeps wrapping. */
-.tlResourceLabel {
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
 }
 
 /* --- TLHtml ---------------------------------------------------------------- */
@@ -4361,153 +4222,6 @@ button.tlMenu__item--disabled:hover {
 	white-space: nowrap;
 }
 
-/* --- TLFormLayout ------------------------------------------------------ */
-
-.tlFormLayout {
-	display: grid;
-	gap: var(--spacing-03);
-	font-family: var(--font-family);
-	width: 100%;
-	box-sizing: border-box;
-}
-
-.tlFormLayout--empty {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	min-height: 4rem;
-}
-
-/* A form hosting a filling region is a column: the filling child takes the height the form is
-   offered (the form itself carries .tlFill and asks its own container for it - see the fill
-   contract above), while every other child keeps the height of its content. */
-.tlFormLayout--fill {
-	display: flex;
-	flex-direction: column;
-}
-
-.tlFormLayout--fill > :not(.tlFill) {
-	flex-shrink: 0;
-}
-
-.tlFormLayout__noModel {
-	color: var(--text-secondary);
-	font-style: italic;
-	margin: 0;
-}
-
-/* --- TLFormGroup ------------------------------------------------------- */
-
-.tlFormGroup {
-	display: grid;
-	grid-template-columns: subgrid;
-	grid-template-rows: auto 1fr;
-}
-
-.tlFormGroup--fullLine {
-	grid-column: 1 / -1;
-}
-
-.tlFormGroup--collapsed > .tlFormGroup__body {
-	display: none;
-}
-
-.tlFormGroup--border-subtle {
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--border-radius-02);
-	padding: var(--spacing-03);
-}
-
-.tlFormGroup--border-outlined {
-	border: 1px solid var(--border-strong);
-	border-radius: var(--border-radius-02);
-	padding: var(--spacing-03);
-}
-
-.tlFormGroup--border-none {
-	border: none;
-	padding: 0;
-}
-
-.tlFormGroup__header {
-	grid-column: 1 / -1;
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	padding-bottom: var(--spacing-03);
-	border-bottom: 1px solid var(--border-subtle);
-	margin-bottom: var(--spacing-03);
-}
-
-.tlFormGroup--border-none > .tlFormGroup__header {
-	border-bottom: none;
-}
-
-.tlFormGroup--collapsed > .tlFormGroup__header {
-	padding-bottom: 0;
-	border-bottom: none;
-	margin-bottom: 0;
-}
-
-.tlFormGroup__title {
-	font-weight: 600;
-	font-size: var(--heading-compact-02-font-size);
-	line-height: var(--heading-compact-02-line-height);
-	color: var(--text-primary);
-	flex: 1;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.tlFormGroup__collapseToggle {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 1.5rem;
-	height: 1.5rem;
-	padding: 0;
-	border: none;
-	background: none;
-	cursor: pointer;
-	color: var(--text-secondary);
-	border-radius: var(--border-radius-02);
-	flex-shrink: 0;
-}
-
-.tlFormGroup__collapseToggle:hover {
-	background: var(--layer-hover);
-}
-
-.tlFormGroup__chevron {
-	transition: transform 0.15s ease;
-}
-
-.tlFormGroup__chevron--collapsed {
-	transform: rotate(-90deg);
-	transition: transform 0.15s ease;
-}
-
-.tlFormGroup__actions {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-01);
-	flex-shrink: 0;
-	margin-left: auto;
-}
-
-.tlFormGroup__body {
-	grid-column: 1 / -1;
-	display: grid;
-	grid-template-columns: subgrid;
-	gap: var(--spacing-03);
-}
-
-/* When fullLine, body defines its own responsive grid instead of subgrid */
-.tlFormGroup--fullLine > .tlFormGroup__body {
-	grid-template-columns: inherit;
-}
-
 /* --- TLRelativeTime ---------------------------------------------------- */
 
 .tlRelativeTime {
@@ -4631,191 +4345,7 @@ button.tlMenu__item--disabled:hover {
 	cursor: progress;
 }
 
-/* --- TLFormField ------------------------------------------------------- */
-
-.tlFormField {
-	display: grid;
-	gap: var(--spacing-02);
-	align-self: start;
-	position: relative;
-	font-family: var(--font-family);
-}
-
-.tlFormField--fullLine {
-	grid-column: 1 / -1;
-}
-
-/* Label after the input — for a checkbox, whose label states what ticking it means, so the two
-   belong on one line. The markup has the label first, hence the explicit order. */
-.tlFormField--after {
-	grid-template-columns: auto 1fr;
-	align-items: center;
-	gap: var(--spacing-03);
-}
-
-.tlFormField--after > .tlFormField__input {
-	grid-column: 1;
-	grid-row: 1;
-	flex: 0 0 auto;
-}
-
-.tlFormField--after > .tlFormField__label {
-	grid-column: 2;
-	grid-row: 1;
-}
-
-/* Side-by-side label layout */
-.tlFormField--side {
-	grid-template-columns: minmax(6rem, 10rem) 1fr;
-	grid-template-rows: auto auto auto;
-	align-items: start;
-}
-
-.tlFormField--side > .tlFormField__label {
-	grid-column: 1;
-	grid-row: 1;
-	padding-top: 0.375rem;
-}
-
-.tlFormField--side > .tlFormField__input {
-	grid-column: 2;
-	grid-row: 1;
-}
-
-.tlFormField--side > .tlFormField__error {
-	grid-column: 2;
-	grid-row: 2;
-}
-
-.tlFormField--side > .tlFormField__helpText {
-	grid-column: 2;
-	grid-row: 3;
-}
-
-/* Stacked label layout */
-.tlFormField--top {
-	grid-template-columns: 1fr;
-}
-
-/* Label-less layout: the input spans the full field width */
-.tlFormField--hidden {
-	grid-template-columns: 1fr;
-}
-
-/* Read-only: compact, no extra chrome */
-.tlFormField--readonly {
-	gap: 0;
-}
-
-.tlFormField--readonly > .tlFormField__error,
-.tlFormField--readonly > .tlFormField__helpText {
-	display: none;
-}
-
-/* Dirty indicator dot next to label */
-.tlFormField__dirtyDot {
-	display: inline-block;
-	width: 6px;
-	height: 6px;
-	border-radius: 50%;
-	background: var(--layer-accent);
-	margin-left: 2px;
-	vertical-align: middle;
-}
-
-/* Label area */
-.tlFormField__label {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-01);
-	color: var(--text-secondary);
-	font-size: var(--body-compact-01-font-size);
-	line-height: var(--body-compact-01-line-height);
-}
-
-.tlFormField__labelText {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.tlFormField__required {
-	color: var(--text-error);
-	font-weight: 600;
-	flex-shrink: 0;
-}
-
-.tlFormField__helpIcon {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 1.25rem;
-	height: 1.25rem;
-	padding: 0;
-	border: none;
-	background: none;
-	cursor: pointer;
-	color: var(--text-helper);
-	flex-shrink: 0;
-}
-
-.tlFormField__helpIcon:hover {
-	color: var(--text-primary);
-}
-
-/* Input wrapper */
-.tlFormField__input {
-	min-width: 0;
-}
-
-/* Error area */
-.tlFormField__error {
-	display: flex;
-	align-items: flex-start;
-	gap: var(--spacing-01);
-	color: var(--text-error);
-	font-size: var(--body-compact-01-font-size);
-	line-height: var(--body-compact-01-line-height);
-}
-
-.tlFormField__errorIcon {
-	flex-shrink: 0;
-	margin-top: 1px;
-}
-
-/* Warning area */
-.tlFormField__warnings {
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-01);
-}
-
-.tlFormField__warning {
-	display: flex;
-	align-items: flex-start;
-	gap: var(--spacing-01);
-	color: var(--support-warning);
-	font-size: var(--body-compact-01-font-size);
-	line-height: var(--body-compact-01-line-height);
-}
-
-.tlFormField__warningIcon {
-	flex-shrink: 0;
-	margin-top: 1px;
-}
-
-.tlFormField--side .tlFormField__warnings {
-	grid-column: 2;
-}
-
-/* Help text */
-.tlFormField__helpText {
-	color: var(--text-helper);
-	font-size: var(--body-compact-01-font-size);
-	line-height: var(--body-compact-01-line-height);
-}
-
-/* -- TLTreeView ----------------------------------------------------------- */
+/* --- TLTreeView ------------------------------------------------------- */
 
 .tlTreeView {
   list-style: none;
@@ -4934,254 +4464,6 @@ button.tlMenu__item--disabled:hover {
 
 .tlTreeView__node--no-drop {
   cursor: not-allowed;
-}
-
-/* --- Simple input controls --------------------------------------------- */
-
-/* Shared base for text, number, date inputs and native select */
-.tlReactTextInput,
-.tlReactNumberInput,
-.tlReactDatePicker,
-.tlReactSelect {
-	display: block;
-	width: 100%;
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--corner-radius);
-	background-color: var(--field);
-	padding: var(--spacing-02) var(--spacing-03);
-	min-height: 2rem;
-	box-sizing: border-box;
-	font-family: var(--font-family);
-	font-size: var(--body-compact-01-font-size);
-	color: var(--text-primary);
-	line-height: 1.4;
-}
-
-.tlReactTextInput:focus,
-.tlReactNumberInput:focus,
-.tlReactDatePicker:focus,
-.tlReactSelect:focus {
-	outline: 2px solid var(--focus);
-	outline-offset: -1px;
-	border-color: var(--focus);
-}
-
-.tlReactTextInput:disabled,
-.tlReactNumberInput:disabled,
-.tlReactDatePicker:disabled,
-.tlReactSelect:disabled {
-	opacity: 0.6;
-	cursor: default;
-	background-color: var(--field-disabled);
-}
-
-.tlReactTextInput::placeholder,
-.tlReactNumberInput::placeholder,
-.tlReactDatePicker::placeholder {
-	color: var(--text-secondary);
-	font-style: italic;
-}
-
-/* Immutable (read-only) state for text-like inputs */
-.tlReactTextInput--immutable,
-.tlReactNumberInput--immutable,
-.tlReactDatePicker--immutable,
-.tlReactSelect--immutable {
-	display: inline;
-	border: none;
-	background: none;
-	padding: 0;
-	min-height: auto;
-	color: var(--text-primary);
-	font-family: var(--font-family);
-	font-size: var(--body-compact-01-font-size);
-}
-
-/* A read-only text of several lines keeps the line breaks and the indentation it was written with.
-   The display carries this as a rule of its own rather than as a style on the element, so that a
-   context which grants a value only one line - a table cell - can say so. */
-.tlReactTextInput--immutable.tlReactTextInput--multiline {
-	white-space: pre-wrap;
-}
-
-/* A single-line input, with room beside it for the link that opens what it holds (url, e-mail,
-   phone). The row is there whether or not the link is, so that the input keeps its place - and
-   with it the focus - when a value starts or stops pointing somewhere. Without the link it adds
-   nothing: the input stretches over the full row, which takes the input's own height. */
-.tlReactTextInput__row {
-	position: relative;
-	display: flex;
-	align-items: stretch;
-	width: 100%;
-	min-width: 0;
-}
-
-.tlReactTextInput__row > .tlReactTextInput {
-	flex: 1 1 auto;
-	min-width: 0;
-}
-
-.tlReactTextInput__open {
-	display: flex;
-	flex: 0 0 auto;
-	align-self: center;
-	align-items: center;
-	margin-left: var(--spacing-02);
-	color: var(--link-primary);
-	text-decoration: none;
-	line-height: 1;
-}
-
-/* The icon an input carries ahead of what is typed - the magnifier of a search box. It is drawn on
-   the left edge of the input, which reserves room for it through --withIcon, so that the icon reads
-   as being inside the field rather than beside it. It answers no pointer: a click goes through to
-   the input under it. */
-.tlReactTextInput__icon {
-	position: absolute;
-	left: var(--spacing-03);
-	top: 50%;
-	transform: translateY(-50%);
-	color: var(--text-helper);
-	pointer-events: none;
-	line-height: 1;
-}
-
-.tlReactTextInput--withIcon {
-	padding-left: calc(var(--spacing-03) + 1.25em);
-}
-
-/* The button that empties the input, drawn over its right edge. It is a button without a button's
-   chrome: the input keeps its own border, and only the icon is seen. --clearable reserves the room
-   it needs, so that text never runs under it. */
-.tlReactTextInput--clearable {
-	padding-right: calc(var(--spacing-03) + 1.25em);
-}
-
-.tlReactTextInput__clear {
-	position: absolute;
-	right: var(--spacing-02);
-	top: 50%;
-	transform: translateY(-50%);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: var(--spacing-01);
-	border: none;
-	border-radius: var(--corner-radius);
-	background: none;
-	color: var(--text-helper);
-	cursor: pointer;
-	line-height: 1;
-}
-
-.tlReactTextInput__clear:hover {
-	background-color: var(--layer-hover);
-	color: var(--icon-primary);
-}
-
-.tlReactTextInput__clear:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 0;
-	color: var(--icon-primary);
-}
-
-.tlReactTextInput__clear:disabled {
-	opacity: 0.6;
-	cursor: default;
-}
-
-.tlReactTextInput__open:hover,
-.tlReactTextInput__open:focus {
-	color: var(--link-primary-hover);
-}
-
-/* The value itself is the link while the field is only displayed */
-.tlReactTextInput--link {
-	color: var(--link-primary);
-	text-decoration: underline;
-}
-
-.tlReactTextInput--link:hover,
-.tlReactTextInput--link:focus {
-	color: var(--link-primary-hover);
-}
-
-/* Native select arrow spacing */
-.tlReactSelect {
-	appearance: auto;
-	cursor: pointer;
-}
-
-/* --- Checkbox --------------------------------------------------------- */
-
-.tlReactCheckbox {
-	width: 1rem;
-	height: 1rem;
-	accent-color: var(--interactive);
-	cursor: pointer;
-	margin: 0;
-	vertical-align: middle;
-}
-
-.tlReactCheckbox:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 1px;
-}
-
-/* A boolean drawn as a switch: the input itself is the track, its ::before the knob, so the whole
-   shape stays the one focusable element the box is. A pill and a circle keep their shape, which is
-   why both are written literally rather than taken from a radius token. */
-.tlReactCheckbox--switch {
-	appearance: none;
-	-webkit-appearance: none;
-	width: 2.25rem;
-	height: 1.25rem;
-	position: relative;
-	flex: none;
-	padding: 0;
-	border: none;
-	border-radius: 999px;
-	background-color: var(--border-strong);
-	transition: background-color 120ms ease-in-out;
-}
-
-.tlReactCheckbox--switch::before {
-	content: "";
-	position: absolute;
-	top: 0.125rem;
-	left: 0.125rem;
-	width: 1rem;
-	height: 1rem;
-	border-radius: 50%;
-	background-color: var(--icon-on-color);
-	box-shadow: var(--shadow-raised);
-	transition: transform 120ms ease-in-out;
-}
-
-.tlReactCheckbox--switch:checked {
-	background-color: var(--interactive);
-}
-
-/* The knob travels the track less its own width and the inset on both sides. */
-.tlReactCheckbox--switch:checked::before {
-	transform: translateX(1rem);
-}
-
-/* The knob jumps to its position where motion is unwelcome; where it stands still says the same. */
-@media (prefers-reduced-motion: reduce) {
-	.tlReactCheckbox--switch,
-	.tlReactCheckbox--switch::before {
-		transition: none;
-	}
-}
-
-/* A ring rather than an outline, so that the focus outline is still visible on a rejected value. */
-.tlReactCheckbox--switch.tlReactCheckbox--error {
-	box-shadow: 0 0 0 2px var(--support-error);
-}
-
-.tlReactCheckbox--switch.tlReactCheckbox--warning {
-	box-shadow: 0 0 0 2px var(--support-warning);
 }
 
 /* --- TLSlider ----------------------------------------------------------- */
@@ -5340,52 +4622,6 @@ button.tlMenu__item--disabled:hover {
 	}
 }
 
-/* --- TLBooleanChoice -------------------------------------------------------- */
-
-/* A boolean offered as a choice: radio buttons in a row, or a select.
-   Both classes in the selector, so that this wins over the rule making a control in a table cell a
-   block: as a block the options would flow as text and wrap onto a second line the row is not high
-   enough to show. */
-.tlBooleanChoice.tlBooleanChoice--radio {
-	display: inline-flex;
-	align-items: center;
-	flex-wrap: nowrap;
-	white-space: nowrap;
-}
-
-/* One option: a radio and the label naming it, which refers to the radio by id and is therefore a
-   sibling, not a wrapper. The container states its display, being a plain inline element. */
-.tlBooleanChoice__option {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	cursor: pointer;
-	font-size: var(--body-compact-01-font-size);
-}
-
-/* Enough distance to tell the options apart, little enough for two of them to fit a table cell. */
-.tlBooleanChoice__option + .tlBooleanChoice__option {
-	margin-left: 0.75rem;
-}
-
-.tlBooleanChoice__option input {
-	width: 1rem;
-	height: 1rem;
-	margin: 0;
-	accent-color: var(--interactive);
-	cursor: pointer;
-}
-
-.tlBooleanChoice__option input:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 1px;
-}
-
-.tlBooleanChoice--error .tlBooleanChoice__label,
-.tlBooleanChoice--error.tlReactSelect {
-	color: var(--support-error);
-}
-
 /* --- TLToolbar ------------------------------------------------------------- */
 
 .tlToolbar {
@@ -5523,528 +4759,6 @@ button.tlToolbar__menuTrigger:focus-visible {
 	box-shadow: none;
 }
 
-.tlReactCheckbox:disabled,
-.tlReactCheckbox--immutable {
-	opacity: 0.6;
-	cursor: default;
-}
-
-/* --- Error / Warning states for simple inputs ----------------------------- */
-
-/* Error — red border, persists through focus */
-.tlReactTextInput--error,
-.tlReactNumberInput--error,
-.tlReactDatePicker--error,
-.tlReactSelect--error {
-	border-color: var(--support-error);
-}
-
-.tlReactTextInput--error:focus,
-.tlReactNumberInput--error:focus,
-.tlReactDatePicker--error:focus,
-.tlReactSelect--error:focus {
-	outline-color: var(--support-error);
-	border-color: var(--support-error);
-}
-
-/* Warning — yellow border, only when no error */
-.tlReactTextInput--warning,
-.tlReactNumberInput--warning,
-.tlReactDatePicker--warning,
-.tlReactSelect--warning {
-	border-color: var(--support-warning);
-}
-
-.tlReactTextInput--warning:focus,
-.tlReactNumberInput--warning:focus,
-.tlReactDatePicker--warning:focus,
-.tlReactSelect--warning:focus {
-	outline-color: var(--support-warning);
-	border-color: var(--support-warning);
-}
-
-/* Checkbox error/warning — best-effort via accent-color */
-.tlReactCheckbox--error {
-	accent-color: var(--support-error);
-}
-
-.tlReactCheckbox--warning {
-	accent-color: var(--support-warning);
-}
-
-/* --- TLDropdownSelect -------------------------------------------------- */
-
-.tlDropdownSelect {
-	display: flex;
-	align-items: flex-start;
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--corner-radius);
-	background-color: var(--field);
-	padding: var(--spacing-02) var(--spacing-03);
-	min-height: 2rem;
-	cursor: pointer;
-	box-sizing: border-box;
-	/* Same field typography as the text-like inputs, instead of the inherited body size. */
-	font-size: var(--body-compact-01-font-size);
-}
-
-.tlDropdownSelect:focus {
-	outline: 2px solid var(--focus);
-	outline-offset: -1px;
-}
-
-.tlDropdownSelect--open {
-	border-color: var(--focus);
-}
-
-.tlDropdownSelect--disabled {
-	opacity: 0.6;
-	cursor: default;
-	background-color: var(--field-disabled);
-}
-
-.tlDropdownSelect--immutable {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	flex-wrap: wrap;
-	border: none;
-	background: none;
-	padding: 0;
-	min-height: auto;
-	cursor: default;
-}
-
-/* Chip area */
-.tlDropdownSelect__chips {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: var(--spacing-02);
-	flex: 1;
-	min-width: 0;
-}
-
-.tlDropdownSelect__placeholder {
-	color: var(--text-secondary);
-	font-style: italic;
-}
-
-.tlDropdownSelect__empty {
-	color: var(--text-secondary);
-}
-
-/* The value of a single select: shown plainly, the way the read-only display shows it. */
-.tlDropdownSelect__value {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	min-width: 0;
-	max-width: 100%;
-}
-
-.tlDropdownSelect__valueLabel {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-/* Individual chip of a multi-select */
-.tlDropdownSelect__chip {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	background-color: var(--layer-hover);
-	border-radius: 999px;
-	padding: 2px var(--spacing-03) 2px var(--spacing-02);
-	max-width: 100%;
-}
-
-.tlDropdownSelect__chipLabel {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.tlDropdownSelect__chipRemove {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	background: none;
-	border: none;
-	cursor: pointer;
-	color: var(--text-secondary);
-	font-size: 14px;
-	padding: 0 2px;
-	line-height: 1;
-}
-
-.tlDropdownSelect__chipRemove:hover {
-	color: var(--text-primary);
-}
-
-/* Controls area (clear, arrow) */
-.tlDropdownSelect__controls {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	flex-shrink: 0;
-	margin-left: var(--spacing-02);
-}
-
-.tlDropdownSelect__clearAll {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	background: none;
-	border: none;
-	cursor: pointer;
-	color: var(--text-secondary);
-	font-size: 16px;
-	padding: 0 2px;
-	line-height: 1;
-}
-
-.tlDropdownSelect__clearAll:hover {
-	color: var(--text-primary);
-}
-
-.tlDropdownSelect__arrow {
-	color: var(--text-secondary);
-	font-size: 10px;
-}
-
-/* Read-only value */
-.tlOptionValue {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-}
-
-/* Dropdown (fixed position to escape overflow:hidden) */
-.tlDropdownSelect__dropdown {
-	position: fixed;
-	background-color: var(--field);
-	border: 1px solid var(--border-strong);
-	border-radius: var(--border-radius-02);
-	box-shadow: var(--shadow-menu);
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-	z-index: 10000;
-}
-
-/* Search wrapper */
-.tlDropdownSelect__searchWrapper {
-	display: flex;
-	align-items: center;
-	padding: var(--spacing-02) var(--spacing-03);
-	border-bottom: 1px solid var(--border-subtle);
-}
-
-.tlDropdownSelect__searchIcon {
-	margin-right: var(--spacing-02);
-	font-size: 14px;
-	color: var(--text-secondary);
-}
-
-.tlDropdownSelect__search {
-	flex: 1;
-	border: none;
-	outline: none;
-	background: transparent;
-	font-size: inherit;
-	font-family: var(--font-family);
-	color: var(--text-primary);
-}
-
-/* Option list */
-.tlDropdownSelect__list {
-	overflow-y: auto;
-	max-height: 250px;
-}
-
-/* Single option */
-.tlDropdownSelect__option {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-03);
-	padding: var(--spacing-02) var(--spacing-03);
-	cursor: pointer;
-	color: var(--text-secondary);
-	line-height: 2rem;
-	white-space: nowrap;
-}
-
-.tlDropdownSelect__option:hover,
-.tlDropdownSelect__option--highlighted {
-	background-color: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-.tlDropdownSelect__optionLabel {
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-/* Option image / icon */
-.tlOptionImage {
-	width: 20px;
-	height: 20px;
-	flex-shrink: 0;
-	object-fit: contain;
-}
-
-.tlOptionIcon {
-	font-size: 20px;
-	width: 20px;
-	height: 20px;
-	flex-shrink: 0;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-}
-
-/* Loading / Error / No results */
-.tlDropdownSelect__loading {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: var(--spacing-05);
-}
-
-.tlDropdownSelect__spinner {
-	display: inline-block;
-	width: 20px;
-	height: 20px;
-	border: 2px solid var(--border-subtle);
-	border-top-color: var(--focus);
-	border-radius: 50%;
-	animation: tlDropdownSelectSpin 0.8s linear infinite;
-}
-
-@keyframes tlDropdownSelectSpin {
-	to { transform: rotate(360deg); }
-}
-
-.tlDropdownSelect__error {
-	padding: var(--spacing-04);
-	text-align: center;
-	color: var(--text-secondary);
-}
-
-.tlDropdownSelect__error a {
-	color: var(--link-primary);
-}
-
-.tlDropdownSelect__noResults {
-	padding: var(--spacing-04) var(--spacing-03);
-	text-align: center;
-	color: var(--text-secondary);
-	font-style: italic;
-}
-
-/* Drag handle for reorderable chips */
-.tlDropdownSelect__dragHandle {
-	cursor: grab;
-	color: var(--text-secondary);
-	font-size: 10px;
-	line-height: 1;
-	letter-spacing: -3px;
-	user-select: none;
-	flex-shrink: 0;
-	padding-right: 2px;
-}
-
-.tlDropdownSelect__dragHandle:active {
-	cursor: grabbing;
-}
-
-/* Chip being dragged */
-.tlDropdownSelect__chip--dragging {
-	opacity: 0.4;
-}
-
-/* Drop indicator: left border highlight */
-.tlDropdownSelect__chip--dropBefore {
-	box-shadow: -2px 0 0 0 var(--interactive);
-}
-
-/* Drop indicator: right border highlight */
-.tlDropdownSelect__chip--dropAfter {
-	box-shadow: 2px 0 0 0 var(--interactive);
-}
-
-/* --- TLOptionChips ------------------------------------------------------ */
-
-/* A cloud of toggles: every option is on screen and wraps onto as many lines as it needs. */
-.tlOptionChips {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--spacing-02);
-}
-
-/* One option, switched on and off by a click. A pill keeps its shape in a theme that squares
-   every corner off, so the radius is a literal rather than one of the radius tokens. */
-.tlOptionChips__chip {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	max-width: 100%;
-	padding: 2px var(--spacing-03);
-	border: 1px solid var(--border-subtle);
-	border-radius: 999px;
-	background-color: var(--layer);
-	color: var(--text-primary);
-	font-family: inherit;
-	font-size: var(--label-01-font-size);
-	line-height: 1.5;
-	cursor: pointer;
-}
-
-.tlOptionChips__chip:not(:disabled):hover {
-	background-color: var(--layer-hover);
-}
-
-.tlOptionChips__chip:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 1px;
-}
-
-/* An option that is on is filled, so that on and off are told apart by more than a border. */
-.tlOptionChips__chip--selected {
-	border-color: var(--interactive);
-	background-color: var(--interactive);
-	color: var(--text-on-color);
-}
-
-.tlOptionChips__chip--selected:not(:disabled):hover {
-	background-color: var(--interactive);
-}
-
-.tlOptionChips__chip:disabled {
-	border-color: var(--button-disabled);
-	background-color: var(--button-disabled);
-	color: var(--text-disabled);
-	cursor: default;
-}
-
-.tlOptionChips__chipLabel {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-/* A rejected value is marked on the cloud as a whole: no single option is at fault. */
-.tlOptionChips--error {
-	box-shadow: 0 0 0 2px var(--support-error);
-}
-
-.tlOptionChips--warning {
-	box-shadow: 0 0 0 2px var(--support-warning);
-}
-
-/* --- TLSegmentedChoice -------------------------------------------------- */
-
-/* A bar of segments reading as one control: the marker stands under the selected segment, so the
-   bar is positioned inline and the segments sit above the marker. */
-.tlSegmentedChoice {
-	position: relative;
-	display: inline-flex;
-	align-items: stretch;
-	max-width: 100%;
-	padding: 2px;
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--corner-radius);
-	background-color: var(--layer);
-}
-
-/* The slider marking the selected segment. Its offset and width are measured from that segment, so
-   only the transition between the two positions is stated here. */
-.tlSegmentedChoice__marker {
-	position: absolute;
-	top: 2px;
-	bottom: 2px;
-	border-radius: var(--corner-radius);
-	background-color: var(--interactive);
-	box-shadow: var(--shadow-raised);
-	transition: left 160ms ease-in-out, width 160ms ease-in-out;
-	pointer-events: none;
-}
-
-/* The marker jumps to its position where motion is unwelcome; where it stands says the same. */
-@media (prefers-reduced-motion: reduce) {
-	.tlSegmentedChoice__marker {
-		transition: none;
-	}
-}
-
-.tlSegmentedChoice__segment {
-	position: relative;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--spacing-02);
-	padding: var(--spacing-01) var(--spacing-03);
-	border: none;
-	border-radius: var(--corner-radius);
-	background-color: transparent;
-	color: var(--text-secondary);
-	font-family: inherit;
-	font-size: var(--label-01-font-size);
-	line-height: 1.5;
-	white-space: nowrap;
-	cursor: pointer;
-}
-
-.tlSegmentedChoice__segment:not(:disabled):hover {
-	color: var(--text-primary);
-}
-
-.tlSegmentedChoice__segment:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
-}
-
-/* The selected segment reads on the marker below it. A field taking several values has no marker,
-   so its selected segments carry the fill themselves. */
-.tlSegmentedChoice__segment--selected {
-	color: var(--text-on-color);
-}
-
-.tlSegmentedChoice[role="group"] .tlSegmentedChoice__segment--selected {
-	background-color: var(--interactive);
-}
-
-.tlSegmentedChoice__segment:disabled {
-	color: var(--text-disabled);
-	cursor: default;
-}
-
-.tlSegmentedChoice__segmentLabel {
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.tlSegmentedChoice--error {
-	box-shadow: 0 0 0 2px var(--support-error);
-}
-
-.tlSegmentedChoice--warning {
-	box-shadow: 0 0 0 2px var(--support-warning);
-}
-
-/* A field that only displays its value is the label it holds, with no bar around it. */
-.tlSegmentedChoice--immutable {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	padding: 0;
-	border: none;
-	background: none;
-}
-
 /* --- TLColorInput ------------------------------------------------------ */
 
 .tlColorInput {
@@ -6120,7 +4834,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 
 .tlColorInput__popup {
   position: fixed;
-  z-index: 9000;
+  z-index: var(--tl-layer-popover);
   background: var(--layer-02);
   border: 1px solid var(--border-subtle);
   border-radius: var(--border-radius-02);
@@ -6483,7 +5197,7 @@ button.tlToolbar__menuTrigger:focus-visible {
 
 .tlIconSelect__popup {
   position: fixed;
-  z-index: 9000;
+  z-index: var(--tl-layer-popover);
   background: var(--layer-02);
   border: 1px solid var(--border-subtle);
   border-radius: var(--border-radius-02);
@@ -6932,7 +5646,7 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	position: absolute;
 	top: calc(100% + var(--spacing-02));
 	right: 0;
-	z-index: 10000;
+	z-index: var(--tl-layer-popover);
 	min-width: 10rem;
 	background: var(--layer-02);
 	border: 1px solid var(--border-strong);

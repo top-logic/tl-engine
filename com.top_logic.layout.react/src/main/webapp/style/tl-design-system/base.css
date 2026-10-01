@@ -97,6 +97,22 @@ body {
   font-variant-numeric: tabular-nums slashed-zero;
 }
 
+/* Sichtbar nur für Screenreader: das Clipping verbirgt das Element, die absolute Lage nimmt es aus
+   dem Fluss, die Box von size-hidden hält einen langen Text davon ab, einen Rollbalken zu erzeugen —
+   1 px statt 0, damit Screenreader das Element nicht als leer überspringen. inset(50%) ist ein
+   Anteil, kein Maß, und darum kein Versehen. Ersetzt tlVisuallyHidden des Altbestands. */
+.tl-visually-hidden {
+  position: absolute;
+  width: var(--tl-size-hidden);
+  height: var(--tl-size-hidden);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 /* Der Ring gehört der Tastatur. Ein Mechanismus, außen, nur beim Tastaturfokus. */
 :where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):focus-visible {
   outline: var(--tl-focus-width) solid var(--tl-focus-ring);

@@ -40,7 +40,10 @@ public class ExcelSupplierImportTask extends TaskImpl {
 	@Override
 	public void run() {
 		super.run();
-		
+		runWithResultProtocol(this::importSuppliers);
+	}
+
+	private void importSuppliers() {
 		BinaryData importFile = this.getImportFile();
 		if (importFile != null) {
 			importBatch = new ExcelSupplier20060529Importer(importFile, this.doCreate, this.isDeltaImport, this.isSupplierImport,
@@ -77,5 +80,11 @@ public class ExcelSupplierImportTask extends TaskImpl {
 	public boolean signalStopHook() {
 		return importBatch.signalStop();
 	}
-	
+
+	@Override
+	public boolean isNodeLocal() {
+		// Imports into persistent data; must run only once in the cluster.
+		return false;
+	}
+
 }

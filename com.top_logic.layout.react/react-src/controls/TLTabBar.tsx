@@ -44,7 +44,7 @@ const TLTabBar: React.FC<TLCellProps> = ({ controlId }) => {
       </div>
       <div className="tlReactTabBar__content" role="tabpanel">
         <FillBarrier>
-          {state.activeContent && <TLChild control={state.activeContent} />}
+          {!!state.activeContent && <TLChild control={state.activeContent} />}
         </FillBarrier>
       </div>
     </div>

@@ -46,11 +46,29 @@ public interface FieldModel {
 	 * Whether the value is currently editable.
 	 *
 	 * <p>
-	 * Subsumes the legacy {@code immutable}, {@code disabled}, {@code frozen}, and {@code blocked}
-	 * states. Controls render non-editable state uniformly.
+	 * Only an editable field accepts user input. A field that is not editable is presented either
+	 * as a read-only value display or, if it is {@link #isDisabled() disabled}, as an inactive
+	 * input.
 	 * </p>
 	 */
 	boolean isEditable();
+
+	/**
+	 * Whether the field is presented as an inactive input.
+	 *
+	 * <p>
+	 * A disabled field is never {@link #isEditable() editable}: it accepts no user input and its
+	 * value is never written. The flag only decides the presentation of the non-editable field: an
+	 * input control that is visibly inactive instead of a read-only display of the value.
+	 * </p>
+	 *
+	 * <p>
+	 * Changes are reported through {@link FieldModelListener#onDisabledChanged(FieldModel, boolean)}.
+	 * </p>
+	 */
+	default boolean isDisabled() {
+		return false;
+	}
 
 	/**
 	 * Whether a value is required.
@@ -131,7 +149,7 @@ public interface FieldModel {
 	}
 
 	/**
-	 * Adds a listener for value, editability, and validation changes.
+	 * Adds a listener for value, editability, disabled state, and validation changes.
 	 */
 	void addListener(FieldModelListener listener);
 

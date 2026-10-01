@@ -74,6 +74,7 @@ public class IconElement implements UIElement {
 		/**
 		 * Optional additional CSS class appended to the size class of the icon.
 		 */
+		@Override
 		@Name(CSS_CLASS)
 		@Nullable
 		String getCssClass();

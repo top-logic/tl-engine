@@ -123,7 +123,7 @@ public class TestTreeElement extends TestCase {
 	}
 
 	/**
-	 * The {@link TreeElement.Config} of the test view.
+	 * The {@link com.top_logic.layout.view.element.TreeElement.Config} of the test view.
 	 */
 	private TreeElement.Config readTreeConfig() throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTreeElement.class);

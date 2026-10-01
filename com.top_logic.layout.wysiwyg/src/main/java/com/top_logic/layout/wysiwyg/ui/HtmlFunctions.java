@@ -50,6 +50,26 @@ public class HtmlFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * The images of the given structured text.
+	 *
+	 * <p>
+	 * Together with {@link #source(StructuredText)}, this gives the parts that
+	 * {@link #text(String, Object)} puts together again, e.g. to store a changed source with the
+	 * images of the original text.
+	 * </p>
+	 *
+	 * @param content
+	 *        The value of an HTML attribute.
+	 * @return A dictionary from the names the source uses for the images to the image data, empty
+	 *         for content without images.
+	 */
+	@Label("Images of structured text")
+	@SideEffectFree
+	public static Map<String, BinaryData> images(StructuredText content) {
+		return content == null ? new LinkedHashMap<>() : new LinkedHashMap<>(content.getImages());
+	}
+
+	/**
 	 * Structured text with the given HTML source and the images it shows, to store in an HTML
 	 * attribute.
 	 *
@@ -57,8 +77,10 @@ public class HtmlFunctions extends TLScriptFunctions {
 	 * An image element of the source shows one of the given images by naming it in its
 	 * <code>src</code> attribute, e.g. <code>&lt;img src="logo.png"/&gt;</code>. Such a reference
 	 * is stored as a link to the image of the structured text (the name with the prefix
-	 * {@link I18NStructuredTextUtil#REF_ID_PREFIX}). An image the source does not name is not
-	 * stored, an image element naming no given image stays as it is.
+	 * {@link I18NStructuredTextUtil#REF_ID_PREFIX}). A source that already uses such a link, e.g.
+	 * the {@link #source(StructuredText) source} of a stored structured text, refers to the given
+	 * image of that name as well. An image the source does not name is not stored, an image
+	 * element naming no given image stays as it is.
 	 * </p>
 	 *
 	 * @param source

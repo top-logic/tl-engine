@@ -37,6 +37,13 @@ public class CryptSupport extends ManagedClass {
      * returned. The key will be taken from the defined key pair in this
      * instance.
      *
+     * <p>
+     * The message is encoded as a number, therefore leading U+0000 characters
+     * are not preserved: {@link #decodeString(String)} returns the message
+     * without them. The message is encrypted in its UTF-8 representation,
+     * therefore an unpaired surrogate character is decoded as '?'.
+     * </p>
+     *
      * @param    aMessage      The message to be encoded.
      * @return   The encoded message.
      */
@@ -67,6 +74,11 @@ public class CryptSupport extends ManagedClass {
     /**
      * Encode the given message using the given key. If the given message is
      * null, null will be returned.
+     *
+     * <p>
+     * Leading U+0000 characters and unpaired surrogates are not preserved, see
+     * {@link #encodeString(String)}.
+     * </p>
      *
      * @param    aKey          The public key to be used for encoding.
      * @param    aMessage      The message to be encoded.

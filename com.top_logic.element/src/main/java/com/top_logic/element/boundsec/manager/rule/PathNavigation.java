@@ -78,7 +78,27 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 		return _relevantParts;
 	}
     
-	private boolean isInverse() {
+	/**
+	 * The {@link TLReference} this step navigates.
+	 *
+	 * @see #isInverse()
+	 */
+	public TLReference getReference() {
+		return _reference;
+	}
+
+	/**
+	 * Whether {@link #getReference()} is navigated backwards.
+	 *
+	 * <p>
+	 * A forward step reaches the values of the reference, a backwards step the objects referring to
+	 * the base object through it. The type reached by a step is therefore the reference's target
+	 * type in forward direction and its owner type in backwards direction.
+	 * </p>
+	 *
+	 * @see PathElementConfig#isInverse()
+	 */
+	public boolean isInverse() {
 		return getConfig().isInverse();
     }
     

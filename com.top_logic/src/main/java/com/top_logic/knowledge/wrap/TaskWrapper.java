@@ -92,15 +92,15 @@ public abstract class TaskWrapper extends AbstractWrapper implements Task {
     }
 
     protected TaskImpl createInnerTask(String aName, int aDaytype, int aDaymask, int anHour, int aMinute) {
-        return new TaskImpl(aName, aDaytype, aDaymask, anHour, aMinute);
+        return new InnerTask(aName, aDaytype, aDaymask, anHour, aMinute);
     }
 
     protected TaskImpl createInnerTask(String aName, int anHour, int aMinute, Date aDate) {
-        return new TaskImpl(aName, aDate, anHour, aMinute);
+        return new InnerTask(aName, aDate, anHour, aMinute);
     }
 
     protected TaskImpl createInnerTask(String aName, int aDaytype, int aDaymask, int anHour, int aMinute, long anInterval, int aStopHour, int aStopMinute) {
-        return new TaskImpl(aName, aDaytype, aDaymask, anHour, aMinute, anInterval, aStopHour, aStopMinute);
+        return new InnerTask(aName, aDaytype, aDaymask, anHour, aMinute, anInterval, aStopHour, aStopMinute);
     }
 
     /**
@@ -515,11 +515,6 @@ public abstract class TaskWrapper extends AbstractWrapper implements Task {
 	}
 
 	@Override
-	public boolean isRunOnStartup() {
-		return task.isRunOnStartup();
-	}
-
-	@Override
 	public boolean isPersistent() {
 		return task.isPersistent();
 	}
@@ -553,4 +548,33 @@ public abstract class TaskWrapper extends AbstractWrapper implements Task {
 	public boolean isBlockedByDefault() {
 		return task.isBlockedByDefault();
 	}
+
+	/**
+	 * The {@link Task} a {@link TaskWrapper} delegates to, holding the schedule stored in the
+	 * wrapped {@link KnowledgeObject}.
+	 */
+	@SuppressWarnings("deprecation")
+	private static final class InnerTask extends TaskImpl<TaskImpl.Config<?>> {
+
+		InnerTask(String name, int daytype, int daymask, int hour, int minute) {
+			super(name, daytype, daymask, hour, minute);
+		}
+
+		InnerTask(String name, Date when, int hour, int minute) {
+			super(name, when, hour, minute);
+		}
+
+		InnerTask(String name, int daytype, int daymask, int startHour, int startMinute, long interval,
+				int stopHour, int stopMinute) {
+			super(name, daytype, daymask, startHour, startMinute, interval, stopHour, stopMinute);
+		}
+
+		@Override
+		public boolean isNodeLocal() {
+			// A TaskWrapper subclass whose work must run only once in the cluster overrides this.
+			return true;
+		}
+
+	}
+
 }

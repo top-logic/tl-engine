@@ -8,6 +8,7 @@ package test.com.top_logic.layout.react.control;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import junit.framework.TestCase;
 
@@ -19,6 +20,7 @@ import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.listen.ModelScope;
 
@@ -113,6 +115,54 @@ public class TestReactFormFieldControl extends TestCase {
 		assertEquals("coerced", _field.state("value"));
 		assertTrue("The coerced value differs from the sent one and must reach the client.",
 			_queue.singleEvent(PatchEvent.class).getPatch().contains("coerced"));
+	}
+
+	/**
+	 * The initial state carries the disabled state of the model.
+	 */
+	public void testInitialDisabledState() {
+		assertEquals(Boolean.FALSE, _field.state(FieldState.DISABLED__PROP));
+
+		AbstractFieldModel disabledModel = new AbstractFieldModel("");
+		disabledModel.setDisabled(true);
+		TextControl disabledField = new TextControl(new TestReactContext(new CapturingQueue()), disabledModel);
+
+		assertEquals(Boolean.TRUE, disabledField.state(FieldState.DISABLED__PROP));
+		assertEquals(Boolean.FALSE, disabledField.state(FieldState.EDITABLE__PROP));
+	}
+
+	/**
+	 * A change of the disabled state of the model is pushed to the client together with the
+	 * editability it implies.
+	 */
+	public void testDisabledChangeIsPushed() {
+		_model.setDisabled(true);
+
+		assertEquals(Boolean.TRUE, _field.state(FieldState.DISABLED__PROP));
+		assertEquals(Boolean.FALSE, _field.state(FieldState.EDITABLE__PROP));
+		String patches = _queue.events().stream()
+			.filter(PatchEvent.class::isInstance)
+			.map(event -> ((PatchEvent) event).getPatch())
+			.collect(Collectors.joining());
+		assertTrue(patches, patches.contains("\"disabled\":true"));
+
+		_queue.clear();
+		_model.setDisabled(false);
+
+		assertEquals(Boolean.FALSE, _field.state(FieldState.DISABLED__PROP));
+		assertEquals(Boolean.TRUE, _field.state(FieldState.EDITABLE__PROP));
+		assertFalse("A state change must be pushed.", _queue.events().isEmpty());
+	}
+
+	/**
+	 * A value sent by a client for a disabled field is not written to the model.
+	 */
+	public void testDisabledFieldIgnoresClientValue() {
+		_model.setDisabled(true);
+
+		_field.executeClientCommand("valueChanged", Map.of("value", "typed"));
+
+		assertEquals("", _model.getValue());
 	}
 
 	/**

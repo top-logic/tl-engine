@@ -35,7 +35,7 @@ const TLAppBar: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <header id={controlId} className={rootClassName(state, className)}>
-      {leading && (
+      {!!leading && (
         <div className="tlAppBar__leading">
           <TLChild control={leading} />
         </div>
@@ -55,7 +55,7 @@ const TLAppBar: React.FC<TLCellProps> = ({ controlId }) => {
           </div>
         </ButtonDefaults>
       )}
-      {trailing && (
+      {!!trailing && (
         <div className="tlAppBar__trailing">
           <TLChild control={trailing} />
         </div>

@@ -12,9 +12,8 @@ import com.top_logic.basic.util.ResKey;
  * Strategy to inspect the content of an uploaded file before it is accepted.
  *
  * <p>
- * This is the content-level analogue of the file-name check
- * {@link com.top_logic.knowledge.gui.layout.upload.FileNameStrategy}: while the latter only sees
- * the file name, an {@link UploadContentChecker} receives the uploaded bytes and may reject them,
+ * This complements a check of the file name: while such a check only sees the name of the
+ * uploaded file, an {@link UploadContentChecker} receives the uploaded bytes and may reject them,
  * e.g. because a virus scanner classified them as malicious.
  * </p>
  *

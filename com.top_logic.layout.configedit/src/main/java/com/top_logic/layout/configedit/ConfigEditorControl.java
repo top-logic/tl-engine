@@ -18,7 +18,12 @@ import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.layout.form.model.FieldMode;
+import com.top_logic.layout.form.values.DerivedProperty;
+import com.top_logic.layout.form.values.ListenerBinding;
+import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.edit.Labels;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -43,6 +48,11 @@ import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
  * and MAP properties are rendered as collapsible sections containing nested editors for each
  * element - the same editor for all three, MAP differing only in the value's shape and in being
  * unordered. DERIVED and a COMPLEX property without a text form are skipped.
+ * </p>
+ *
+ * <p>
+ * A property with a {@link DynamicMode dynamic mode} is hidden or stops accepting input while its
+ * mode, computed from other properties of the item, says so.
  * </p>
  */
 public class ConfigEditorControl extends ReactFormLayoutControl {
@@ -219,6 +229,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 						createPolymorphicGroup(context, label, config, property, _editable);
 					polyGroup.setHeader(createGroupHeader(context, property));
 					addChild(polyGroup);
+					followMode(config, property, polyGroup, null);
 				} else {
 					ConfigurationAccess configAccess = property.getConfigurationAccess();
 					ConfigurationItem nested = configAccess.getConfig(config.value(property));
@@ -229,6 +240,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 							List.of(), List.of(nestedEditor));
 						group.setHeader(createGroupHeader(context, property));
 						addChild(group);
+						followMode(config, property, group, null);
 					}
 				}
 				continue;
@@ -247,6 +259,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 					List.of(), List.of(listEditor));
 				listGroup.setHeader(createGroupHeader(context, property));
 				addChild(listGroup);
+				followMode(config, property, listGroup, null);
 				continue;
 			}
 
@@ -272,6 +285,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				chrome.setTooltip(tooltip, label, true);
 			}
 			addChild(chrome);
+			followMode(config, property, chrome, model);
 		}
 	}
 
@@ -421,6 +435,56 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
 			|| kind == PropertyKind.LIST || kind == PropertyKind.ARRAY || kind == PropertyKind.MAP
 			|| (kind == PropertyKind.COMPLEX && ConfigControlService.hasTextForm(config, property));
+	}
+
+	/**
+	 * Lets the given display of a property follow the property's {@link DynamicMode dynamic mode},
+	 * if it has one.
+	 *
+	 * <p>
+	 * The mode is computed from other properties of the configuration, so it changes while the user
+	 * edits those: an {@link FieldMode#INVISIBLE invisible} or {@link FieldMode#BLOCKED blocked}
+	 * property is hidden, and the field of a property in a mode that does not accept input -
+	 * {@link FieldMode#DISABLED disabled} or immutable - stops accepting it. A group of an ITEM or a
+	 * collection property is only hidden: its nested editors decide their editability when they are
+	 * built.
+	 * </p>
+	 *
+	 * <p>
+	 * The subscription lasts as long as this editor, like the field model it may switch.
+	 * </p>
+	 *
+	 * @param config
+	 *        The configuration item holding the property.
+	 * @param display
+	 *        The control displaying the property - its field chrome or its group.
+	 * @param model
+	 *        The field model of the property, or {@code null} for a group.
+	 */
+	private void followMode(ConfigurationItem config, PropertyDescriptor property, ReactControl display,
+			ConfigFieldModel model) {
+		DerivedProperty<FieldMode> provider = ConfigPropertyOptions.modeProvider(_formModel, property);
+		if (provider == null) {
+			return;
+		}
+		Value<FieldMode> mode = provider.getValue(config);
+		applyMode(mode.get(), property, display, model);
+		ListenerBinding binding = mode.addListener(sender -> applyMode(mode.get(), property, display, model));
+		addCleanupAction(binding::close);
+	}
+
+	private void applyMode(FieldMode mode, PropertyDescriptor property, ReactControl display, ConfigFieldModel model) {
+		boolean hidden = mode == FieldMode.INVISIBLE || mode == FieldMode.BLOCKED;
+		if (display instanceof ReactFormFieldChromeControl chrome) {
+			// A field hides itself through its own visibility, which is what the client reads.
+			chrome.setVisible(!hidden);
+		} else {
+			display.setHidden(hidden);
+		}
+		if (model != null) {
+			boolean accepting = mode == null || mode == FieldMode.ACTIVE;
+			model.setEditable(_editable && !isReadOnly(property) && accepting);
+		}
 	}
 
 	/**

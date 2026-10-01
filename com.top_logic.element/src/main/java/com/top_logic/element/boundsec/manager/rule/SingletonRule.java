@@ -35,10 +35,14 @@ public class SingletonRule extends RoleRule {
 	 *        See {@link #getPath()}.
 	 * @param aResourceKey
 	 *        See {@link #getResourceKey()}.
+	 * @param id
+	 *        See {@link #getId()}.
+	 * @param configId
+	 *        See {@link #getConfigId()}.
 	 */
 	public SingletonRule(TLObject singleton, BoundRole aRole, List<PathElement> aPath, ResKey aResourceKey,
-			String id) {
-		super(aRole, aPath, aResourceKey, id);
+			String id, String configId) {
+		super(aRole, aPath, aResourceKey, id, configId);
 		_singleton = singleton;
 		_singletonType = getType(singleton);
 	}

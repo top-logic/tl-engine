@@ -229,7 +229,7 @@ public abstract class SelectionChannelBinding {
 			return selectedKeys.isEmpty();
 		}
 		if (value instanceof Collection<?> keys) {
-			return selectedKeys.equals(new LinkedHashSet<Object>(keys));
+			return selectedKeys.equals(new LinkedHashSet<>(keys));
 		}
 		return selectedKeys.size() == 1 && selectedKeys.contains(value);
 	}

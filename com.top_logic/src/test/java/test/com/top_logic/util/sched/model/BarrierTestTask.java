@@ -129,4 +129,10 @@ public class BarrierTestTask extends StateHandlingTask<BarrierTestTask.BarrierTe
 		}
 	}
 
+	@Override
+	public boolean isNodeLocal() {
+		// Test task; runs on every node.
+		return true;
+	}
+
 }

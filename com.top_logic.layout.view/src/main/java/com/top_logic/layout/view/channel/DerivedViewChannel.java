@@ -39,9 +39,10 @@ import com.top_logic.model.listen.ModelScope;
  * <p>
  * A {@link VetoForwarder} from every input channel to this channel makes the unsaved changes of a
  * form bound to the derived value block the write of the input the value is computed from: asking
- * an input reaches the {@link VetoListener}s registered on this channel. A bidirectional
- * {@link #set(Object)} writes the first input, and therefore passes the same forwarder - the
- * handlers of this channel are asked once, before the input is written.
+ * an input reaches the {@link com.top_logic.layout.view.channel.ViewChannel.VetoListener}s
+ * registered on this channel. A bidirectional {@link #set(Object)} writes the first input, and
+ * therefore passes the same forwarder - the handlers of this channel are asked once, before the
+ * input is written.
  * </p>
  *
  * <p>

@@ -33,8 +33,9 @@ import com.top_logic.table.filter.TextFilterState;
  * <p>
  * Like {@link TableViewStateCodec} the class is toolkit-neutral: it produces and consumes only
  * standard JSON value types, so a {@code NamedFilterStore} can hand the result to any JSON-based
- * personalization backend. All filters it produces are {@link NamedFilter.Origin#SAVED} ones,
- * which are the only ones stored per user.
+ * personalization backend. All filters it produces are
+ * {@link com.top_logic.table.NamedFilter.Origin#SAVED} ones, which are the only ones stored per
+ * user.
  * </p>
  */
 public final class NamedFilterCodec {

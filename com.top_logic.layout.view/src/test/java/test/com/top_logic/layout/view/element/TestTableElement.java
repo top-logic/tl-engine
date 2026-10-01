@@ -516,7 +516,8 @@ public class TestTableElement extends TestCase {
 	}
 
 	/**
-	 * Tests that the configured {@link UIElement.Config#getPersonalizationKey() personalization
+	 * Tests that the configured
+	 * {@link com.top_logic.layout.view.UIElement.Config#getPersonalizationKey() personalization
 	 * key} is the table's identity, so that a personalization survives adding or removing a column.
 	 */
 	public void testConfiguredTableId() throws Exception {
@@ -529,8 +530,8 @@ public class TestTableElement extends TestCase {
 
 	/**
 	 * Tests that a table without a configured
-	 * {@link UIElement.Config#getPersonalizationKey() personalization key} falls back to its
-	 * structural signature: its row types and its column attributes.
+	 * {@link com.top_logic.layout.view.UIElement.Config#getPersonalizationKey() personalization
+	 * key} falls back to its structural signature: its row types and its column attributes.
 	 */
 	public void testStructuralTableId() throws Exception {
 		TableElement.Config tableConfig = TypedConfiguration.copy(readTableConfig());

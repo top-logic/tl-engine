@@ -21,9 +21,10 @@ import com.top_logic.layout.view.form.StateHandler;
  * </p>
  *
  * <p>
- * Before the value is written, all {@link VetoListener}s are asked, and the handlers they object
- * with are collected into a single {@link ChannelVetoException}. A handler reachable over several
- * {@link VetoForwarder forwarding} paths is reported once.
+ * Before the value is written, all
+ * {@link com.top_logic.layout.view.channel.ViewChannel.VetoListener}s are asked, and the handlers
+ * they object with are collected into a single {@link ChannelVetoException}. A handler reachable
+ * over several {@link VetoForwarder forwarding} paths is reported once.
  * </p>
  */
 public class DefaultViewChannel implements ViewChannel {

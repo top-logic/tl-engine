@@ -12,10 +12,10 @@ import java.util.concurrent.CyclicBarrier;
 
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.ReflectionUtils;
+import test.com.top_logic.basic.module.RunningModuleSystemSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.util.sched.model.TestScheduler;
@@ -27,7 +27,6 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.merge.MergeConflictException;
@@ -212,19 +211,18 @@ public class TestingScheduler extends Scheduler {
 	/**
 	 * Wrap a setup around the given test class that starts the dependencies of the
 	 * {@link Scheduler} needed for tests, but not the {@link Scheduler} itself.
+	 * 
+	 * <p>
+	 * The tests run in a running module system, so that a started {@link Scheduler} dispatches its
+	 * tasks.
+	 * </p>
+	 * 
+	 * @see RunningModuleSystemSetup
 	 */
 	public static Test wrapSchedulerDependenciesSetup(Class<? extends Test> testClass) {
-		Test innerSetup = moduleSetup(testClass, MaintenanceWindowManager.Module.INSTANCE);
+		Test innerSetup = ServiceTestSetup.createSetup(RunningModuleSystemSetup.setup(testClass),
+			MaintenanceWindowManager.Module.INSTANCE);
 		return KBSetup.getSingleKBTest(innerSetup);
-	}
-
-	@SuppressWarnings("unused")
-	private static Test moduleSetup(Class<? extends Test> testClass, BasicRuntimeModule<?>... modules) {
-		if (!true) {
-			Test test = TestSuite.createTest(testClass, "testShutdown");
-			return ServiceTestSetup.createSetup(test, modules);
-		}
-		return ServiceTestSetup.createSetup(testClass, modules);
 	}
 
 	/**

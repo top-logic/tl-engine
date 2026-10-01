@@ -18,7 +18,8 @@ import { createContext, useContext, useLayoutEffect } from 'react';
  * with a focusable element inside its root gives that element the id {@link fieldInputId} builds.
  * The control keeps `id={controlId}` on its root element in any case.</li>
  * <li>The hook reports that id to the field, whose `label` refers to it (`htmlFor`), and returns
- * the `aria-labelledby` naming the element by the label text, to be spread onto the focusable
+ * the `aria-labelledby` naming the element by the label text - and the `aria-describedby` naming
+ * the field's error message and shown help text, if any -, to be spread onto the focusable
  * element.</li>
  * <li>Outside a field, and for every control nested deeper inside the input (e.g. the inputs of a
  * table row inside a field), the hook reports nothing and returns no props, so no control takes a
@@ -36,6 +37,12 @@ export interface FieldLabel {
   readonly labelId: string;
 
   /**
+   * The ids of the elements describing the input - the error message, the help text while it is
+   * shown -, separated by spaces, or `undefined` when nothing describes it.
+   */
+  readonly describedBy?: string;
+
+  /**
    * Receives the DOM id of the input control's focusable element, or `null` when the control no
    * longer states one.
    */
@@ -45,6 +52,7 @@ export interface FieldLabel {
 /** The props an input control puts on its focusable element, see {@link useFieldLabelProps}. */
 export interface FieldLabelProps {
   'aria-labelledby'?: string;
+  'aria-describedby'?: string;
 }
 
 /** Appended to a control's `controlId` to form the id of the focusable element inside it. */
@@ -69,16 +77,19 @@ export function fieldInputId(controlId: string): string {
 /**
  * Creates the label association of the form field with the given `controlId` for the input
  * control with the given `controlId`, reporting the id of the input's focusable element to
- * `setInputId`.
+ * `setInputId`. `describedBy` names the elements describing the input, see
+ * {@link FieldLabel.describedBy}.
  */
 export function fieldLabel(
   fieldControlId: string,
   inputControlId: string,
-  setInputId: (inputId: string | null) => void
+  setInputId: (inputId: string | null) => void,
+  describedBy?: string
 ): FieldLabel {
   return {
     controlId: inputControlId,
     labelId: fieldControlId + LABEL_ID_SUFFIX,
+    describedBy,
     setInputId,
   };
 }
@@ -88,7 +99,8 @@ export function fieldLabel(
  * `controlId` with the label of the form field around it, if the control is that field's input.
  *
  * @returns The props to spread onto the focusable element: `aria-labelledby` naming the label
- *          text, if the control is the input of a form field; no props otherwise.
+ *          text and, while something describes the input, `aria-describedby`, if the control is
+ *          the input of a form field; no props otherwise.
  */
 export function useFieldLabelProps(controlId: string, inputId: string): FieldLabelProps {
   const label = useContext(FieldLabelContext);
@@ -105,7 +117,9 @@ export function useFieldLabelProps(controlId: string, inputId: string): FieldLab
   if (own === null) {
     return NO_PROPS;
   }
-  return { 'aria-labelledby': own.labelId };
+  return own.describedBy === undefined
+    ? { 'aria-labelledby': own.labelId }
+    : { 'aria-labelledby': own.labelId, 'aria-describedby': own.describedBy };
 }
 
 /**

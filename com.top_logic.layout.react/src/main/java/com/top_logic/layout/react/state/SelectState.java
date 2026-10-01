@@ -103,6 +103,9 @@ public interface SelectState extends com.top_logic.layout.react.state.FieldState
 	com.top_logic.layout.react.state.SelectState setEditable(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.SelectState setDisabled(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.SelectState setMandatory(boolean value);
 
 	@Override

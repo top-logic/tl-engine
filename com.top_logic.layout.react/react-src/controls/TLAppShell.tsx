@@ -49,12 +49,12 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <div id={controlId} className={rootClassName(state, 'tlAppShell ' + fillClass)}>
-      {header && (
+      {!!header && (
         <div className="tlAppShell__header">
           <TLChild control={header} />
         </div>
       )}
-      {notices && (
+      {!!notices && (
         <div className="tlAppShell__notices">
           <TLChild control={notices} />
         </div>
@@ -64,7 +64,7 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
           <TLChild control={content} />
         </FillBarrier>
       </div>
-      {footer && (
+      {!!footer && (
         <div className="tlAppShell__footer">
           <TLChild control={footer} />
         </div>

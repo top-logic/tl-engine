@@ -13,8 +13,6 @@ import org.vectomatic.dom.svg.OMSVGMatrix;
 import org.vectomatic.dom.svg.OMSVGPoint;
 import org.vectomatic.dom.svg.OMSVGSVGElement;
 
-import com.google.gwt.dom.client.Element;
-
 import com.top_logic.react.flow.client.dom.DOMUtil;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.DragEdge;

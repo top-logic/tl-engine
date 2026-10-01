@@ -8,6 +8,7 @@ package com.top_logic.model.search.providers;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.thread.ThreadContext;
@@ -33,14 +34,39 @@ public class ScriptTask<C extends ScriptTask.Config<?>> extends TaskImpl<C> {
 	public interface Config<I extends ScriptTask<?>> extends TaskImpl.Config<I> {
 
 		/**
+		 * Configuration name for {@link #isNodeLocal()}.
+		 */
+		String NODE_LOCAL = "node-local";
+
+		/**
 		 * Script to execute with the configured {@link #getSchedules()}.
 		 */
 		@Mandatory
 		Expr getScript();
 
+		/**
+		 * Whether the script runs on every cluster node.
+		 * 
+		 * <p>
+		 * If not set, the script runs only once in the cluster at a time: One node executes it and
+		 * records the result, the other nodes skip the scheduled run. This is the right choice for a
+		 * script that modifies persistent data or has external effects such as sending mails.
+		 * </p>
+		 * 
+		 * <p>
+		 * If set, every cluster node executes the script independently. This is only suitable for a
+		 * script whose effects are local to the node, since a modification of persistent data would
+		 * be repeated by every node.
+		 * </p>
+		 */
+		@Name(NODE_LOCAL)
+		boolean isNodeLocal();
+
 	}
 
 	private QueryExecutor _script;
+
+	private final boolean _nodeLocal;
 
 	/**
 	 * Creates a {@link ScriptTask}.
@@ -49,6 +75,7 @@ public class ScriptTask<C extends ScriptTask.Config<?>> extends TaskImpl<C> {
 		super(context, config);
 
 		_script = QueryExecutor.compile(config.getScript());
+		_nodeLocal = config.isNodeLocal();
 
 		// The task runs periodically in a system context (see run()) without a logged-in user. It
 		// is backend logic that must operate on all data and must not be subject to a user's access
@@ -101,7 +128,7 @@ public class ScriptTask<C extends ScriptTask.Config<?>> extends TaskImpl<C> {
 
 	@Override
 	public boolean isNodeLocal() {
-		return false;
+		return _nodeLocal;
 	}
 
 }

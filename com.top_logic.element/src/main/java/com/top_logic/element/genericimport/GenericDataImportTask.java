@@ -192,8 +192,10 @@ public class GenericDataImportTask extends TaskImpl implements ProgressInfo, Gen
     @Override
 	public void run() {
         super.run();
-        init();
-        this.doImport();
+		runWithResultProtocol(() -> {
+			init();
+			doImport();
+		});
     }
 
     public void init() {
@@ -431,5 +433,12 @@ public class GenericDataImportTask extends TaskImpl implements ProgressInfo, Gen
 	public boolean isFinished() {
         return this.log.isFinished();
     }
+
+	@Override
+	public boolean isNodeLocal() {
+		// Imports into persistent data; must run only once in the cluster.
+		return false;
+	}
+
 }
 

@@ -393,6 +393,12 @@ public class I18NConstants extends I18NConstantsBase {
 	// -- Toolbar client-side i18n keys --
 
 	/**
+	 * @en Toolbar
+	 */
+	@CustomKey("js.toolbar.label")
+	public static ResKey JS_TOOLBAR_LABEL;
+
+	/**
 	 * @en More actions
 	 */
 	@CustomKey("js.toolbar.overflow")

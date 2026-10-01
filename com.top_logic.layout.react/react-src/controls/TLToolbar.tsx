@@ -6,6 +6,7 @@ import { useRovingMenu } from './menu/Menu';
 const { useCallback, useRef, useState, useEffect, useLayoutEffect, useMemo } = React;
 
 const I18N_KEYS = {
+  'js.toolbar.label': 'Toolbar',
   'js.toolbar.overflow': 'More actions',
 };
 
@@ -466,6 +467,7 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
         ref={rootRef}
         className={rootClassName(state, 'tl-toolbar')}
         role="toolbar"
+        aria-label={i18n['js.toolbar.label']}
         data-tl-overflow={collapsible ? overflowEnd : undefined}
         data-tl-compact={compact ? '' : undefined}
         style={toolbarStyle}

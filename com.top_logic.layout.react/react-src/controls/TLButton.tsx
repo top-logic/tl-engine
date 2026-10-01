@@ -52,8 +52,9 @@ export interface TLButtonProps {
  *
  * <p>Inside a menu ({@code ButtonDefaults.appearance} {@code menu-item}) the button is an entry
  * of that menu: it shows its label (with its icon, if it has one), takes the role
- * {@code menuitem} - {@code menuitemcheckbox} with {@code aria-checked} if it has a pressed state -
- * and joins the menu's roving tabindex.</p>
+ * {@code menuitem} and joins the menu's roving tabindex. An active button - the alternative in
+ * force - is marked there as the menu marks it: {@code aria-current} and strong text, instead of
+ * {@code aria-pressed}.</p>
  */
 const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, label, image, disabled, displayMode, appearance, danger }) => {
   const state = useTLState<Partial<ButtonStateJson>>();
@@ -64,7 +65,8 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const resolvedImage = image ?? state.image;
   const resolvedDisabled = disabled ?? state.disabled === true;
   // The button's command is the alternative currently in force (e.g. the active theme) or a
-  // pressed toggle; marked visually and reported to assistive technology as pressed.
+  // pressed toggle; marked visually and reported to assistive technology as pressed - in a menu as
+  // the current entry.
   const resolvedActive = state.active === true;
   const resolvedHidden = state.hidden === true;
   const tooltip = state.tooltip;
@@ -128,9 +130,6 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   // Part classes: an entry of a menu is drawn by the menu, a button by the button.
   const asMenuItem = resolvedAppearance === 'menu-item';
   const part = asMenuItem ? 'tl-menu' : 'tl-button';
-  // A pressed state, if the button has one: true when pressed, false when it can be pressed but
-  // is not, absent for a plain command. A button reports it as pressed, a menu entry as checked.
-  const pressed = resolvedActive ? true : state.active === false ? false : undefined;
 
   // An explicit tooltip is shown as it is. Otherwise the label serves as tooltip wherever the
   // button does not read it out: in icon-only mode always - which is also what names the button of
@@ -157,11 +156,11 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
       id={controlId}
       onClick={handleClick}
       disabled={resolvedDisabled}
-      className={rootClassName(state, buttonClassName({ appearance: resolvedAppearance, danger: resolvedDanger, small, icon, extra: cssClasses }))}
+      className={rootClassName(state, buttonClassName({ appearance: resolvedAppearance, danger: resolvedDanger, small, icon, current: resolvedActive, extra: cssClasses }))}
       {...tooltipProps}
-      {...menuItemProps(defaults, pressed)}
+      {...menuItemProps(defaults)}
       aria-pressed={!asMenuItem && resolvedActive ? true : undefined}
-      aria-checked={asMenuItem && pressed !== undefined ? pressed : undefined}
+      aria-current={asMenuItem && resolvedActive ? 'true' : undefined}
       aria-label={resolvedImage || iconOnly ? resolvedLabel : undefined}
     >
       {resolvedImage && mode !== 'label-only' && (

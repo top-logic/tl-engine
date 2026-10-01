@@ -1,4 +1,5 @@
 import { React } from 'tl-react-bridge';
+import { menuItemClassName } from '../menu/Menu';
 
 export type ButtonAppearance = 'primary' | 'secondary' | 'ghost' | 'link' | 'menu-item';
 
@@ -31,13 +32,14 @@ export function useButtonDefaults(): ButtonDefaultsValue {
 /**
  * The class list of a button: block, appearance, tone, size, shape, typography, passed-through
  * classes. `icon` is a button showing only an icon: a square of the control height. A `menu-item`
- * is an entry of a menu (tl-menu__item), which has no tone, size or shape of its own.
+ * is an entry of a menu (tl-menu__item, as MenuItem draws it), which has no tone, size or shape of
+ * its own; `current` marks the entry in force, which reads strong.
  */
 export function buttonClassName(opts: {
-  appearance: ButtonAppearance; danger?: boolean; small?: boolean; icon?: boolean; extra?: string;
+  appearance: ButtonAppearance; danger?: boolean; small?: boolean; icon?: boolean; current?: boolean; extra?: string;
 }): string {
   if (opts.appearance === 'menu-item') {
-    return ['tl-menu__item', 'tl-type-body', opts.extra ?? ''].filter(Boolean).join(' ');
+    return menuItemClassName(opts.current, opts.extra);
   }
   return ['tl-button', `tl-button--${opts.appearance}`, 'tl-type-body',
     opts.danger && opts.appearance !== 'link' ? 'tl-button--danger' : '',
@@ -47,11 +49,11 @@ export function buttonClassName(opts: {
 }
 
 /**
- * What an entry of a menu carries besides its classes: the role and the roving tabindex. A
- * button with a pressed state (`pressed` true or false) is a checkbox entry; outside a menu,
- * nothing.
+ * What an entry of a menu carries besides its classes: the role and the roving tabindex. An entry
+ * is a `menuitem`; a toggle, which always has a pressed state (`checked` true or false), is a
+ * `menuitemcheckbox`. Outside a menu, nothing.
  */
-export function menuItemProps(defaults: ButtonDefaultsValue, pressed?: boolean): { role?: string; tabIndex?: number } {
+export function menuItemProps(defaults: ButtonDefaultsValue, checked?: boolean): { role?: string; tabIndex?: number } {
   if (defaults.appearance !== 'menu-item') return {};
-  return { role: pressed === undefined ? 'menuitem' : 'menuitemcheckbox', tabIndex: -1 };
+  return { role: checked === undefined ? 'menuitem' : 'menuitemcheckbox', tabIndex: -1 };
 }

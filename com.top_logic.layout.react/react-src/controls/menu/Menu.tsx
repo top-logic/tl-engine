@@ -77,12 +77,21 @@ export const Menu: React.FC<MenuProps> = ({ open, anchor, onClose, placement, id
   );
 };
 
+/**
+ * The class list of a menu entry: block, typography - an entry in force (`current`, reported as
+ * `aria-current`) reads strong -, passed-through classes. Shared by MenuItem and every button that
+ * renders as an entry (ButtonDefaults `menu-item`), so the two cannot drift apart.
+ */
+export function menuItemClassName(current?: boolean, extra?: string): string {
+  return ['tl-menu__item', current ? 'tl-type-body-strong' : 'tl-type-body', extra ?? ''].filter(Boolean).join(' ');
+}
+
 export const MenuItem: React.FC<{ id?: string; icon?: string; label: string; disabled?: boolean; current?: boolean; className?: string; onSelect: () => void }> =
   ({ id, icon, label, disabled, current, className, onSelect }) => (
     <button
       type="button"
       id={id}
-      className={'tl-menu__item ' + (current ? 'tl-type-body-strong' : 'tl-type-body') + (className ? ' ' + className : '')}
+      className={menuItemClassName(current, className)}
       role="menuitem"
       aria-current={current ? 'true' : undefined}
       disabled={disabled}

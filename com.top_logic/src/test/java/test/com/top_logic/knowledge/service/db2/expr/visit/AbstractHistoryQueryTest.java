@@ -148,7 +148,7 @@ public abstract class AbstractHistoryQueryTest extends AbstractDBKnowledgeBaseCl
 		if (historyArgs.getStopRevision() == Revision.CURRENT_REV) {
 			after = EMPTY_SET;
 		} else {
-			after = LongRangeSet.range(historyArgs.getStopRevision() + 1, Revision.CURRENT_REV);
+			after = LongRangeSet.range(historyArgs.getStopRevision(), Revision.CURRENT_REV);
 		}
 		List<LongRange> noResultRange = union(before, after);
 		for (Entry<?, List<LongRange>> entry : historyResult.entrySet()) {

@@ -445,16 +445,58 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	public static Set<BoundRole> getLocalAndGlobalAndGroupRoles(TLObject context, Person person) {
 		Set<BoundRole> result = new HashSet<>();
 
+		Group representativeGroup = person.getRepresentativeGroup();
+		if (representativeGroup != null && addRolesFromMemo(result, context, person, representativeGroup)) {
+			return result;
+		}
+
 		// Note: The Group.getGroups() resolution does not deliver the representative group of a
 		// person. It also only resolves group membership of representative groups, not groups in
 		// general. Therefore, adding groups to groups will not have the desired effect.
-		addRoles(result, context, person.getRepresentativeGroup());
+		addRoles(result, context, representativeGroup);
 
 		for (Group group : Group.getGroups(person, true, true)) {
 			addRoles(result, context, group);
 		}
 
 		return result;
+	}
+
+	/**
+	 * Adds the roles the groups of the given person hold on the given object and its role parents
+	 * from the {@link RoleAssignmentMemo} of the current interaction.
+	 * <p>
+	 * The result is the same as from {@link #addRoles(Set, TLObject, Group)} for each group, but a
+	 * check over many objects does not issue queries per object.
+	 * </p>
+	 * 
+	 * @return Whether the roles could be determined from the memo. If not, nothing has been added.
+	 */
+	private static boolean addRolesFromMemo(Set<BoundRole> result, TLObject context, Person person,
+			Group representativeGroup) {
+		RoleAssignmentMemo memo = RoleAssignmentMemo.current(context.tKnowledgeBase());
+		if (memo == null) {
+			return false;
+		}
+		List<TLObject> roleHolders = new ArrayList<>();
+		roleHolders.add(context);
+		if (context instanceof BoundObject) {
+			BoundHelper.collectAllSecurityParents((BoundObject) context, roleHolders::add);
+		}
+		for (TLObject roleHolder : roleHolders) {
+			if (!memo.covers(roleHolder)) {
+				return false;
+			}
+		}
+
+		Collection<Group> groups = Group.getGroups(person, true, true);
+		for (TLObject roleHolder : roleHolders) {
+			memo.addRoles(result, roleHolder, representativeGroup);
+			for (Group group : groups) {
+				memo.addRoles(result, roleHolder, group);
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -506,7 +548,13 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 			secParent -> BoundedRole.addLocalRoles(result, secParent, owner));
 	}
 
-	private static void addLocalRoles(Collection<BoundRole> result, TLObject context, Group owner) {
+	/**
+	 * Adds the roles the given group holds directly on the given object.
+	 * 
+	 * @param owner
+	 *        The group holding the roles, <code>null</code> for all groups.
+	 */
+	static void addLocalRoles(Collection<BoundRole> result, TLObject context, Group owner) {
 		try (CloseableIterator<KnowledgeObject> it = queryAssignedRoles(context, owner)) {
 			while (it.hasNext()) {
 				result.add(((KnowledgeItem) it.next().getAttributeValue(ATTRIBUTE_ROLE)).getWrapper());

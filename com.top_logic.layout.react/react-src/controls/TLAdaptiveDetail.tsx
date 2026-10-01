@@ -54,7 +54,7 @@ const TLAdaptiveDetail: React.FC<TLCellProps> = ({ controlId }) => {
           })}
         </nav>
       )}
-      <div className="tlAdaptiveDetail__content">{content && <TLChild control={content} />}</div>
+      <div className="tlAdaptiveDetail__content">{!!content && <TLChild control={content} />}</div>
       {overlay ? <TLChild control={overlay} /> : null}
     </div>
   );

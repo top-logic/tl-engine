@@ -28,7 +28,7 @@ const { useState, useCallback, useEffect, useRef, useLayoutEffect } = React;
 
 interface ColorPopupProps {
   /** Ref to the anchor element for positioning. */
-  anchorRef: React.RefObject<HTMLButtonElement>;
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
   /** The confirmed (original) color, or null if no color is set. */
   currentColor: string | null;
   /** Palette colors (flat array, row-major). */

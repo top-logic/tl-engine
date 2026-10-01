@@ -7,9 +7,9 @@
 import { React, useTLState, useTLCommand, rootClassName, fieldInputId, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { CodeEditor } from 'tl-code-editor';
-import type { CodeEditorDiagnostic, CodeEditorHover } from 'tl-code-editor';
-import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
-import type { EditorView } from '@codemirror/view';
+import type {
+  CodeEditorDiagnostic, CodeEditorHover, CompletionContext, CompletionResult, EditorView,
+} from 'tl-code-editor';
 import { tlscript } from '../lang/tlscript-lang';
 
 const { useRef, useEffect, useCallback, useMemo } = React;

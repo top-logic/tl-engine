@@ -18,7 +18,7 @@ import java.util.function.ToIntFunction;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import test.com.top_logic.basic.TestUtils;
+import test.com.top_logic.basic.util.TestPruner.Decision;
 
 /**
  * Selection of the {@link ScriptedTestMarker scripted tests} that a test run executes, configured
@@ -370,8 +370,23 @@ public final class ShardSelection {
 		if (!isAll()) {
 			report(units, selected);
 		}
-		new Pruner(identitySet(selected), includesNonScripted()).prune(root);
+		Set<Test> selectedUnits = identitySet(selected);
+		boolean includeNonScripted = includesNonScripted();
+		new TestPruner(test -> decide(test, selectedUnits, includeNonScripted)).prune(root);
 		return root;
+	}
+
+	private static Decision decide(Test test, Set<Test> selectedUnits, boolean includeNonScripted) {
+		if (test instanceof ScriptedTestUnit) {
+			return selectedUnits.contains(test) ? Decision.INLINE : Decision.DROP;
+		}
+		if (test instanceof ScriptedTestMarker) {
+			return selectedUnits.contains(test) ? Decision.KEEP : Decision.DROP;
+		}
+		if (TestPruner.hasInnerTests(test)) {
+			return Decision.DESCEND;
+		}
+		return includeNonScripted ? Decision.KEEP : Decision.DROP;
 	}
 
 	private void report(List<Test> units, List<Test> selected) {
@@ -393,7 +408,7 @@ public final class ShardSelection {
 			units.add(test);
 			return;
 		}
-		Test inner = ScriptedTestUnit.innerTest(test);
+		Test inner = TestPruner.innerTest(test);
 		if (inner != null) {
 			collectUnits(inner, units);
 			return;
@@ -427,53 +442,6 @@ public final class ShardSelection {
 			return NONE_VALUE;
 		}
 		return _shard + SHARD_SEPARATOR + _count;
-	}
-
-	/**
-	 * Removes unselected tests from a test tree.
-	 */
-	private static final class Pruner {
-
-		private final Set<Test> _selectedUnits;
-
-		private final boolean _includeNonScripted;
-
-		Pruner(Set<Test> selectedUnits, boolean includeNonScripted) {
-			_selectedUnits = selectedUnits;
-			_includeNonScripted = includeNonScripted;
-		}
-
-		/**
-		 * Reduces the given test in place.
-		 *
-		 * @return Whether the given test must be kept in its parent.
-		 */
-		boolean prune(Test test) {
-			if (test instanceof ScriptedTestUnit || test instanceof ScriptedTestMarker) {
-				return _selectedUnits.contains(test);
-			}
-			Test inner = ScriptedTestUnit.innerTest(test);
-			if (inner != null) {
-				return prune(inner);
-			}
-			if (test instanceof TestSuite) {
-				TestSuite suite = (TestSuite) test;
-				List<Test> children = TestUtils.removeTestsFromSuite(suite);
-				for (Test child : children) {
-					if (child instanceof ScriptedTestUnit) {
-						if (_selectedUnits.contains(child)) {
-							for (Test content : TestUtils.removeTestsFromSuite((TestSuite) child)) {
-								suite.addTest(content);
-							}
-						}
-					} else if (prune(child)) {
-						suite.addTest(child);
-					}
-				}
-				return suite.testCount() > 0 || (children.isEmpty() && _includeNonScripted);
-			}
-			return _includeNonScripted;
-		}
 	}
 
 }

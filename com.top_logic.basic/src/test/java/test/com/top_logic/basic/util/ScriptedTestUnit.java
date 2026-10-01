@@ -7,11 +7,8 @@ package test.com.top_logic.basic.util;
 
 import java.util.Enumeration;
 
-import junit.extensions.TestDecorator;
 import junit.framework.Test;
 import junit.framework.TestSuite;
-
-import test.com.top_logic.basic.NamedTestDecorator;
 
 /**
  * Group of {@link ScriptedTestMarker scripted tests} that must run together in one JVM, because the
@@ -24,7 +21,7 @@ import test.com.top_logic.basic.NamedTestDecorator;
  * </p>
  *
  * <p>
- * A unit is a transient grouping node: {@link ShardSelection#apply(Test)} replaces each selected
+ * A unit is a transient grouping node: {@link ShardSelection#apply(int, Test)} replaces each selected
  * unit by its contents in the enclosing {@link TestSuite}, so that the executed test tree has the
  * same structure as without the grouping.
  * </p>
@@ -80,7 +77,7 @@ public class ScriptedTestUnit extends TestSuite {
 		if (test instanceof ScriptedTestMarker) {
 			return true;
 		}
-		Test inner = innerTest(test);
+		Test inner = TestPruner.innerTest(test);
 		if (inner != null) {
 			return containsScripted(inner);
 		}
@@ -92,25 +89,6 @@ public class ScriptedTestUnit extends TestSuite {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * The single test wrapped by the given decorator test, or <code>null</code> if the given test
-	 * is no decorator.
-	 * 
-	 * @see SingleTestWrapper
-	 */
-	static Test innerTest(Test test) {
-		if (test instanceof SingleTestWrapper) {
-			return ((SingleTestWrapper) test).getWrappedTest();
-		}
-		if (test instanceof TestDecorator) {
-			return ((TestDecorator) test).getTest();
-		}
-		if (test instanceof NamedTestDecorator) {
-			return ((NamedTestDecorator) test).getTest();
-		}
-		return null;
 	}
 
 }

@@ -56,6 +56,14 @@ import com.top_logic.basic.tooling.ModuleLayoutConstants;
  * <dt>{@link ShardSelection#MODULES_PROPERTY}</dt>
  * <dd>The modules whose scripted tests are distributed over the same shards, see
  * {@link ShardSelection#moduleOffset(String, String)}.</dd>
+ * <dt>{@link DBSelection#PROPERTY}</dt>
+ * <dd>Whether all tests run, only the tests bound to one worker database, or all tests except the
+ * ones bound to a worker database, see {@link DBSelection}. Applies like
+ * {@link ShardSelection#PROPERTY} to a directory in {@link #TARGET_PROPERTY} and is ignored for a
+ * single file.</dd>
+ * <dt>{@link DBSelection#WORKERS_PROPERTY}</dt>
+ * <dd>The databases that run their tests in separate runs, see
+ * {@link DBSelection#defaultWorkers()}.</dd>
  * <dt>{@link ScratchDirectory#PROPERTY}</dt>
  * <dd>The directory for temporary test files, see {@link ScratchDirectory}.</dd>
  * </dl>
@@ -122,6 +130,11 @@ public abstract class AbstractBasicTestAll {
 	private ShardSelection _scripted = ShardSelection.ALL;
 
 	/**
+	 * The database tests to run, parsed from {@link DBSelection#PROPERTY}.
+	 */
+	private DBSelection _db = DBSelection.ALL;
+
+	/**
 	 * Creates an {@link AbstractBasicTestAll} and prepares the system for tests.
 	 * <p>
 	 * Prints the Java version, enables assertions and configures the {@link Logger}.
@@ -156,13 +169,18 @@ public abstract class AbstractBasicTestAll {
 		} catch (RuntimeException | Error ex) {
 			String testName = getClass().getSimpleName();
 			String message = "Failed to build the test suite. Cause: " + ex.getMessage();
-			return SimpleTestFactory.newBrokenTest(testName, new RuntimeException(message, ex));
+			// A suite as root: A single test case as root is not reported by the JUnit platform,
+			// since its class is not the TestAll class selected by the test run.
+			TestSuite suite = new TestSuite(testName);
+			suite.addTest(SimpleTestFactory.newBrokenTest(testName, new RuntimeException(message, ex)));
+			return suite;
 		}
 	}
 
 	private Test getTests() {
 		ServiceLoader<TestCollector> testCollectors = ServiceLoader.load(TestCollector.class);
 		_scripted = ShardSelection.fromSystemProperty();
+		_db = DBSelection.fromSystemProperties();
 		String targetPath = getTargetPath();
 		if (isEmpty(targetPath)) {
 			return getAllTests(testCollectors);
@@ -177,7 +195,7 @@ public abstract class AbstractBasicTestAll {
 
 	private Test getAllTests(Iterable<TestCollector> collectors) {
 		TestSuite suite = new TestSuite("TestAll for " + MODULE_LAYOUT.getModuleDir().getName());
-		if (_scripted.includesNonScripted()) {
+		if (_scripted.includesNonScripted() && _db.includesUnbound()) {
 			suite.addTest(getInternalModuleIndependentTests(collectors));
 		}
 		suite.addTest(getInternalModuleSpecificTests(collectors));
@@ -253,6 +271,7 @@ public abstract class AbstractBasicTestAll {
 			}
 		}
 		_scripted.apply(ShardSelection.moduleOffset(MODULE_LAYOUT.getModuleDir().getName()), suite);
+		_db.apply(suite);
 		if (suite.countTestCases() == 0) {
 			String testName = "No tests in directory '" + createTestName(testDirectory) + "'.";
 			suite.addTest(SimpleTestFactory.newSuccessfulTest(testName));

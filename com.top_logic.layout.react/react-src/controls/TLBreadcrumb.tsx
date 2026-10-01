@@ -8,7 +8,7 @@ const I18N_KEYS = {
   'js.breadcrumb.label': 'Breadcrumb',
 };
 
-/** The glyph between two entries; decoration only, hidden from assistive technology. */
+/** The glyph between two entries; ThemeIcon renders a font glyph aria-hidden, so it is decoration only. */
 const SEPARATOR_ICON = 'css:fa-solid fa-chevron-right';
 
 interface BreadcrumbItem {
@@ -44,9 +44,7 @@ const TLBreadcrumb: React.FC<TLCellProps> = ({ controlId }) => {
           return (
             <li key={item.id} className="tl-breadcrumb__entry">
               {index > 0 && (
-                <span className="tl-breadcrumb__separator" aria-hidden="true">
-                  <ThemeIcon encoded={SEPARATOR_ICON} className="tl-icon-sm" />
-                </span>
+                <ThemeIcon encoded={SEPARATOR_ICON} className="tl-breadcrumb__separator tl-icon-sm" />
               )}
               {isLast ? (
                 <span className="tl-breadcrumb__current tl-type-body" aria-current="page">{item.label}</span>

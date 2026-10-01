@@ -16,10 +16,12 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpSessionBindingEvent;
 import jakarta.servlet.http.HttpSessionBindingListener;
 
+import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
@@ -260,14 +262,43 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	/**
 	 * Synthesizes pending model events for the given window.
 	 *
+	 * <p>
+	 * Nothing is synthesized while this registry's session has no live user: the session is no
+	 * longer registered with the {@link SessionService}, or the account it belongs to was deleted.
+	 * Delivering the events would evaluate the window's controls on behalf of a user who is no
+	 * longer logged in, or who no longer exists. The windows of such a session are told to reload
+	 * once the session is logged out, and are torn down once it is invalidated
+	 * ({@link #valueUnbound(HttpSessionBindingEvent)}); until then they only stop following the
+	 * model. A session without a login is registered with the anonymous account, so its windows
+	 * keep receiving events.
+	 * </p>
+	 *
 	 * @param windowId
 	 *        The window to synthesize events for.
 	 */
 	public void synthesizeModelEvents(String windowId) {
 		WindowEntry entry = _windows.get(windowId);
-		if (entry != null) {
-			entry.synthesizeModelEvents();
+		if (entry == null) {
+			return;
 		}
+		if (!hasLiveUser()) {
+			if (Logger.isDebugEnabled(ReactWindowRegistry.class)) {
+				Logger.debug("No model events for window '" + windowId + "': session '" + _sessionId
+					+ "' has no live user.", ReactWindowRegistry.class);
+			}
+			return;
+		}
+		entry.synthesizeModelEvents();
+	}
+
+	/**
+	 * Whether this registry's session is registered with the {@link SessionService} and belongs to
+	 * an account that still exists.
+	 */
+	private boolean hasLiveUser() {
+		// The user may be deleted: nothing but tValid() may be asked of it.
+		Person user = SessionService.getInstance().getUser(_sessionId);
+		return user != null && user.tValid();
 	}
 
 	/**
@@ -686,10 +717,12 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * Tells every window of the identified session to reload.
 	 *
 	 * <p>
-	 * Called when a session was logged out without being invalidated, which is how the maintenance
-	 * mode and an administrator terminating a session end one: the HTTP session stays alive, so
-	 * {@link #valueUnbound(HttpSessionBindingEvent)} never runs and the browser would keep showing
-	 * a user who is no longer logged in.
+	 * Called when a session was logged out. A session ended with
+	 * {@link SessionService#terminateSession(String)} is also invalidated, and
+	 * {@link #valueUnbound(HttpSessionBindingEvent)} reloads and tears down its windows anyway. A
+	 * session only dropped from the session table with
+	 * {@link SessionService#invalidateSession(String)} keeps its HTTP session, so without the
+	 * reload the browser would keep showing a user who is no longer logged in.
 	 * </p>
 	 *
 	 * @param sessionId
@@ -711,10 +744,10 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 *
 	 * <p>
 	 * A page becomes obsolete without the browser doing anything. Its session ends because an
-	 * administrator terminates it or the maintenance mode logs out everybody who may not stay: the
-	 * page then still shows the previous user and their content, while the first interaction merely
-	 * establishes a fresh anonymous session behind the scenes and appears to do nothing at all.
-	 * Or what the displayed tree was built from is discarded, as in {@link #rebuildWindows()}.
+	 * administrator terminates it, the maintenance mode logs out everybody who may not stay, or its
+	 * account is deleted: the page would then still show the previous user and their content, while
+	 * its first interaction would only be answered as stale. Or what the displayed tree was built
+	 * from is discarded, as in {@link #rebuildWindows()}.
 	 * Reloading brings the browser back with a page that shows the state as it now is.
 	 * </p>
 	 *

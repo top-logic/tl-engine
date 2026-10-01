@@ -110,13 +110,26 @@ public class StoreUserEventListener extends AbstractConfiguredInstance<StoreUser
 		Person theUser = anEvent.passiveUser();
 		Date theDate = anEvent.date();
 
-		String userName = theUser.getName();
-		if (isExcluded(userName)) {
-			return false;
-		}
-
 		KnowledgeBase kb = theUser.tKnowledgeBase();
-		UserSession theSession = UserSession.findUserSession(kb, userName, anEvent.sessionID());
+		UserSession theSession;
+		String userName;
+		if (theUser.tValid()) {
+			userName = theUser.getName();
+			if (isExcluded(userName)) {
+				return false;
+			}
+			theSession = UserSession.findUserSession(kb, userName, anEvent.sessionID());
+			if (theSession == null) {
+				return false;
+			}
+		} else {
+			// The account was deleted, its name is only available from the recorded session.
+			theSession = UserSession.findUserSession(kb, null, anEvent.sessionID());
+			if (theSession == null) {
+				return false;
+			}
+			userName = theSession.getUsername();
+		}
 		boolean theResult;
 		try (Transaction tx = kb.beginTransaction(I18NConstants.LOGGED_OUT_USER__USER.fill(userName))) {
 			theResult = theSession.endSession(theDate);

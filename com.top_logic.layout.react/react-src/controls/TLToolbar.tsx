@@ -1,6 +1,7 @@
-import { React, useTLState, TLChild, useCloseOnOutsidePress, useStandaloneKeyboardScope, useFocusTrap, useI18N, rootClassName, tooltipProps, createPortal, ThemeIcon } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useCloseOnOutsidePress, useFocusTrap, useI18N, rootClassName, tooltipProps, createPortal, ThemeIcon, usePopover, useMergeRefs, anchoredOverlayProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { ButtonDefaults, useButtonDefaults } from './button/ButtonDefaults';
+import { ButtonDefaults, useButtonDefaults, buttonClassName } from './button/ButtonDefaults';
+import { useRovingMenu } from './menu/Menu';
 
 const { useCallback, useRef, useState, useEffect, useLayoutEffect, useMemo } = React;
 
@@ -11,11 +12,11 @@ const I18N_KEYS = {
 /** Icon of the overflow menu trigger. */
 const OVERFLOW_ICON = 'css:bi bi-three-dots';
 
-/** Modifier class presenting every icon-carrying button by its icon alone. */
-const COMPACT_CLASS = 'tlToolbar--compact';
+/** Icon after the label of a labeled menu trigger. */
+const CHEVRON_ICON = 'css:fa-solid fa-chevron-down';
 
-/** Custom property stating the width of an icon-only toolbar trigger. */
-const TRIGGER_SIZE_PROPERTY = '--tl-toolbar-trigger-size';
+/** The groups of a toolbar without any: one array, so that it is the same in every render. */
+const NO_GROUPS: CliqueGroup[] = [];
 
 /** Tolerance (px) against sub-pixel rounding when comparing measured widths. */
 const EPSILON = 0.5;
@@ -86,15 +87,28 @@ interface ToolbarLayout {
 const INITIAL_LAYOUT: ToolbarLayout = { compact: false, overflowCount: 0, width: null };
 
 /**
+ * The pass of the measurement a render belongs to: `full` lays every unit out inline with labels,
+ * `compact` lays them out inline as icon buttons. Absent once the widths of the current groups are
+ * known.
+ */
+type MeasurePhase = 'full' | 'compact' | null;
+
+/** The widths read in the `full` pass, with the groups they were read for. */
+interface FullWidths {
+  groups: CliqueGroup[];
+  widths: number[];
+}
+
+/**
  * Renders the given items of a clique group inline (side by side).
  */
 const InlineGroup: React.FC<{ units: PlacedUnit[] }> = ({ units }) => {
   if (units.length === 0) return null;
 
   return (
-    <div className="tlToolbar__group tlToolbar__group--inline">
+    <div className="tl-toolbar__group">
       {units.map(placed => (
-        <span key={placed.index} className="tlToolbar__item" data-tlunit={placed.index}>
+        <span key={placed.index} data-tlunit={placed.index}>
           <TLChild control={placed.unit.item} />
         </span>
       ))}
@@ -103,64 +117,41 @@ const InlineGroup: React.FC<{ units: PlacedUnit[] }> = ({ units }) => {
 };
 
 /**
- * Renders a clique group as a dropdown menu.
+ * Renders a clique group as a dropdown menu: a tl-button opening a tl-menu, whose entries are the
+ * group's buttons, presented as menu items (ButtonDefaults `menu-item`).
  */
 const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitIndex?: number }> =
     ({ group, align = 'end', unitIndex }) => {
   const [open, setOpen] = useState(false);
-  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  // The trigger looks like the buttons beside it.
+  const inheritedAppearance = useButtonDefaults().appearance ?? 'ghost';
 
   const handleToggle = useCallback(() => {
     setOpen(prev => !prev);
   }, []);
+  const close = useCallback(() => setOpen(false), []);
 
-  // Position the dropdown relative to the trigger via fixed coordinates. The dropdown is
-  // rendered through a portal into document.body so it escapes any clipping ancestor (e.g. a
-  // scrollable split-panel child); fixed positioning then keeps it anchored to the trigger.
-  useLayoutEffect(() => {
-    if (!open) return;
-    const update = () => {
-      const t = triggerRef.current;
-      if (!t) return;
-      const r = t.getBoundingClientRect();
-      // Anchor the menu to the trigger edge the group grows away from: a trailing group opens
-      // to the left of its right edge, a leading one to the right of its left edge. Anchoring
-      // via a single edge avoids measuring the menu width and keeps it inside the viewport.
-      setMenuStyle(align === 'start'
-        ? {
-          position: 'fixed',
-          top: r.bottom + 4,
-          left: Math.max(8, r.left),
-          right: 'auto',
-        }
-        : {
-          position: 'fixed',
-          top: r.bottom + 4,
-          right: Math.max(8, window.innerWidth - r.right),
-          left: 'auto',
-        });
-    };
-    update();
-    window.addEventListener('resize', update);
-    window.addEventListener('scroll', update, true);
-    return () => {
-      window.removeEventListener('resize', update);
-      window.removeEventListener('scroll', update, true);
-    };
-  }, [open, align]);
+  // Placed at the trigger edge the group grows away from: a trailing group opens to the left of its
+  // right edge, a leading one to the right of its left edge.
+  const { setFloating, style } = usePopover({
+    open,
+    anchor: triggerRef.current,
+    placement: align === 'start' ? 'bottom-start' : 'bottom-end',
+  });
+  const setMenuRefs = useMergeRefs<HTMLDivElement>([menuRef, setFloating]);
 
   // Close on a press outside the dropdown. A press on the trigger is left to the trigger, which
   // toggles the dropdown on its click.
-  useCloseOnOutsidePress(open, [menuRef, triggerRef], () => setOpen(false));
-
-  // Close on Escape (via the shared keyboard dispatcher).
-  useStandaloneKeyboardScope(open, { ESCAPE: () => setOpen(false) });
+  useCloseOnOutsidePress(open, [menuRef, triggerRef], close);
 
   // While open, trap focus in the dropdown (initial focus on the first item) and restore it to
   // the trigger when it closes, so keystrokes can't leak to the background.
   useFocusTrap(open, menuRef, 'first');
+
+  // Arrows, Home, End move between the entries; Escape closes.
+  const { onKeyDown } = useRovingMenu(menuRef, open, close);
 
   const visibleItems = group.items.filter(item => item != null);
   const sections = (group.subGroups ?? [])
@@ -173,8 +164,8 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
   // of how many items are currently enabled.
   if (visibleItems.length === 1 && sections.length === 0 && !group.icon) {
     return (
-      <div className="tlToolbar__group tlToolbar__group--inline" data-tlunit={unitIndex}>
-        <span className="tlToolbar__item">
+      <div className="tl-toolbar__group" data-tlunit={unitIndex}>
+        <span>
           <TLChild control={visibleItems[0]} />
         </span>
       </div>
@@ -187,28 +178,26 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
   const iconOnly = !!group.icon;
 
   return (
-    <div className="tlToolbar__group tlToolbar__group--menu" data-tlunit={unitIndex}>
+    <div className="tl-toolbar__group" data-tlunit={unitIndex}>
       <button
         ref={triggerRef}
         type="button"
-        className={'tlToolbar__menuTrigger' + (iconOnly ? ' tlToolbar__menuTrigger--icon' : '')}
+        className={buttonClassName({ appearance: inheritedAppearance, icon: iconOnly })}
         // Don't steal focus from the content (e.g. a table) on mouse-open: the menu acts on the
         // current selection, so focus should return there after a command's dialog closes. The
         // menu's own focus trap still moves focus into the dropdown while it is open.
         onMouseDown={(e) => e.preventDefault()}
         onClick={handleToggle}
         aria-expanded={open}
-        aria-haspopup="true"
+        aria-haspopup="menu"
         aria-label={iconOnly ? label : undefined}
         {...tooltipProps(iconOnly ? label : undefined)}
       >
         {iconOnly
-          ? <ThemeIcon encoded={group.icon!} className="tlToolbar__menuIcon" />
+          ? <ThemeIcon encoded={group.icon!} className="tl-button__icon tl-icon-md" />
           : <>
-              <span>{label}</span>
-              <svg className="tlToolbar__chevron" viewBox="0 0 24 24" aria-hidden="true">
-                <polyline points="6,9 12,15 18,9" />
-              </svg>
+              <span className="tl-button__label">{label}</span>
+              <ThemeIcon encoded={CHEVRON_ICON} className="tl-button__icon tl-icon-sm" />
             </>
         }
       </button>
@@ -221,28 +210,24 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
           portal. */}
       {createPortal(
         <div
-          ref={menuRef}
-          className="tlToolbar__dropdown"
+          ref={setMenuRefs}
+          className="tl-popover tl-menu"
           role="menu"
           hidden={!open}
-          style={open ? menuStyle : undefined}
-          onClick={() => setOpen(false)}
+          style={open ? style : undefined}
+          onClick={close}
+          onKeyDown={onKeyDown}
+          {...anchoredOverlayProps}
         >
-          {visibleItems.map((item, i) => (
-            <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
-              <TLChild control={item} />
-            </div>
-          ))}
-          {sections.map((items, si) => (
-            <React.Fragment key={`sub-${si}`}>
-              {(visibleItems.length > 0 || si > 0) && <hr className="tlToolbar__dropdownSeparator" />}
-              {items.map((item, i) => (
-                <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
-                  <TLChild control={item} />
-                </div>
-              ))}
-            </React.Fragment>
-          ))}
+          <ButtonDefaults appearance="menu-item" iconOnly={false}>
+            {visibleItems.map((item, i) => <TLChild key={i} control={item} />)}
+            {sections.map((items, si) => (
+              <React.Fragment key={`sub-${si}`}>
+                {(visibleItems.length > 0 || si > 0) && <hr className="tl-divider" />}
+                {items.map((item, i) => <TLChild key={i} control={item} />)}
+              </React.Fragment>
+            ))}
+          </ButtonDefaults>
         </div>,
         document.body
       )}
@@ -262,10 +247,14 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
  * Granted less, it first drops the labels of the buttons that carry an icon, then moves the units
  * that still do not fit - single items of an inline group, whole menu groups - into an overflow
  * menu at the collapsing end.
+ *
+ * The buttons drop their labels themselves: the toolbar tells them through ButtonDefaults
+ * (`iconOnly`). The widths of both presentations are therefore read in two passes, one render
+ * each: first with labels, then compact.
  */
 const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
-  const groups = (state.groups as CliqueGroup[]) ?? [];
+  const groups = (state.groups as CliqueGroup[] | undefined) ?? NO_GROUPS;
   const overflowEnd = (state.overflow as OverflowEnd) ?? 'none';
   const collapsible = overflowEnd !== 'none';
   const i18n = useI18N(I18N_KEYS);
@@ -278,6 +267,8 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const metricsRef = useRef<Metrics | null>(null);
   const measuredRef = useRef<CliqueGroup[] | null>(null);
+  const fullRef = useRef<FullWidths | null>(null);
+  const [measurePhase, setMeasurePhase] = useState<MeasurePhase>(null);
   const [layout, setLayout] = useState<ToolbarLayout>(INITIAL_LAYOUT);
   const [, setResizeTick] = useState(0);
 
@@ -296,9 +287,13 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
     return { visibleGroups: shown, units: sequence };
   }, [groups]);
 
-  // The widths of the current groups are not known yet: this render lays everything out inline
-  // and uncompacted, which is what the measuring pass below reads.
-  const measuring = collapsible && measuredRef.current !== groups;
+  // The widths of the current groups are not known yet: this render lays everything out inline,
+  // with labels (`full`) or compact, which is what the measuring effect below reads. The first
+  // render after a change of the groups is already the `full` pass.
+  const phase: MeasurePhase = collapsible && measuredRef.current !== groups
+    ? (measurePhase ?? 'full')
+    : null;
+  const measuring = phase !== null;
   const settled = collapsible && !measuring && metricsRef.current != null;
   const compact = settled && layout.compact;
   const overflowCount = settled ? layout.overflowCount : 0;
@@ -338,18 +333,35 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
 
   useLayoutEffect(() => {
     const root = rootRef.current;
-    if (!root || !collapsible) return;
+    if (!root || !collapsible) {
+      // Nothing to measure: a pass begun before must not leave the buttons compact.
+      if (measurePhase !== null) setMeasurePhase(null);
+      return;
+    }
 
-    if (measuring) {
-      metricsRef.current = measureUnits(root, units.length);
+    if (phase === 'full') {
+      fullRef.current = { groups, widths: readUnits(root, units.length) };
+      setMeasurePhase('compact');
+      return;
+    }
+    if (phase === 'compact') {
+      const full = fullRef.current;
+      if (!full || full.groups !== groups) {
+        // The groups changed between the passes: the widths read do not belong together.
+        setMeasurePhase('full');
+        return;
+      }
+      metricsRef.current = metricsOf(root, full.widths, readUnits(root, units.length));
       measuredRef.current = groups;
+      fullRef.current = null;
+      setMeasurePhase(null);
     }
     const metrics = metricsRef.current;
     if (!metrics) return;
 
     const natural = widthOf(metrics, metrics.full, 0, units.length, false);
     const stated = Math.ceil(natural);
-    if (measuring) {
+    if (phase === 'compact') {
       // The measuring render leaves the toolbar unconstrained, so that the widths just read are
       // the natural ones. State the width the settled render gives it before asking how much is
       // granted - a stated width is what the host sizes itself from, a flex base size is not.
@@ -437,10 +449,6 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
     ? <MenuGroup group={overflowGroup} align={overflowEnd === 'leading' ? 'start' : 'end'} />
     : null;
 
-  const className = rootClassName(state, 'tlToolbar',
-    collapsible && 'tlToolbar--collapsible',
-    compact && COMPACT_CLASS);
-
   // While measuring, the toolbar takes the width it needs, so that the widths read from it are
   // the natural ones of its units. Afterwards it states that natural width as its own width and
   // gives it up again down to its overflow trigger.
@@ -452,18 +460,20 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   return (
-    <ButtonDefaults appearance={appearance}>
+    <ButtonDefaults appearance={appearance} iconOnly={collapsible && (phase === 'compact' || compact)}>
       <div
         id={controlId}
         ref={rootRef}
-        className={className}
+        className={rootClassName(state, 'tl-toolbar')}
         role="toolbar"
+        data-tl-overflow={collapsible ? overflowEnd : undefined}
+        data-tl-compact={compact ? '' : undefined}
         style={toolbarStyle}
       >
         {overflowEnd === 'leading' && trigger}
         {shownGroups.map((shown, i) => (
           <React.Fragment key={shown.group.name}>
-            {i > 0 && <span className="tlToolbar__separator" aria-hidden="true" />}
+            {i > 0 && <hr className="tl-divider tl-divider--vertical" aria-orientation="vertical" />}
             {shown.group.display === 'menu'
               ? <MenuGroup group={shown.group} unitIndex={shown.units[0].index} />
               : <InlineGroup units={shown.units} />
@@ -477,52 +487,42 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
 };
 
 /**
- * Reads the width of every unit, in the full and in the compact presentation.
- *
- * <p>Called while all units are laid out inline; the compact presentation is measured by putting
- * the toolbar into it for the duration of the measurement.</p>
+ * Reads the width of every unit in the presentation the toolbar currently renders, while all
+ * units are laid out inline. A unit whose button is hidden reads zero.
  */
-function measureUnits(root: HTMLElement, unitCount: number): Metrics {
-  const readUnits = () => {
-    const widths = new Array<number>(unitCount).fill(0);
-    root.querySelectorAll<HTMLElement>('[data-tlunit]').forEach(element => {
-      const index = Number(element.dataset.tlunit);
-      if (index >= 0 && index < unitCount) {
-        widths[index] = element.getBoundingClientRect().width;
-      }
-    });
-    return widths;
-  };
-
-  const full = readUnits();
-  root.classList.add(COMPACT_CLASS);
-  const compact = readUnits();
-  root.classList.remove(COMPACT_CLASS);
-
-  const rootStyle = getComputedStyle(root);
-  const gap = parseFloat(rootStyle.columnGap) || 0;
-  const groupElement = root.querySelector('.tlToolbar__group--inline');
-  const itemGap = groupElement
-    ? (parseFloat(getComputedStyle(groupElement).columnGap) || gap)
-    : gap;
-  const separatorElement = root.querySelector('.tlToolbar__separator');
-  const separator = separatorElement ? separatorElement.getBoundingClientRect().width : 1;
-
-  return { full, compact, gap, itemGap, separator, trigger: triggerSize(rootStyle) };
+function readUnits(root: HTMLElement, unitCount: number): number[] {
+  const widths = new Array<number>(unitCount).fill(0);
+  root.querySelectorAll<HTMLElement>('[data-tlunit]').forEach(element => {
+    const index = Number(element.dataset.tlunit);
+    if (index >= 0 && index < unitCount) {
+      widths[index] = element.getBoundingClientRect().width;
+    }
+  });
+  return widths;
 }
 
 /**
- * The width of the overflow trigger, which is absent as long as nothing overflows: the square
- * icon-button size the stylesheet states, in pixels.
+ * The metrics of the toolbar: the unit widths of both passes, with the gaps and the separator
+ * width read from the stylesheet and the width of the overflow trigger.
  */
-function triggerSize(rootStyle: CSSStyleDeclaration): number {
+function metricsOf(root: HTMLElement, full: number[], compact: number[]): Metrics {
+  const rootStyle = getComputedStyle(root);
+  const gap = parseFloat(rootStyle.columnGap) || 0;
+  const groupElement = root.querySelector('.tl-toolbar__group');
+  const itemGap = groupElement ? (parseFloat(getComputedStyle(groupElement).columnGap) || gap) : gap;
+  const separatorElement = root.querySelector('.tl-divider--vertical');
+  const separator = separatorElement ? separatorElement.getBoundingClientRect().width : 1;
+  // The trigger is rendered only once something overflows; it is an icon button, whose width is the
+  // size-control token - read, not guessed.
+  return { full, compact, gap, itemGap, separator, trigger: tokenPx(rootStyle, '--tl-size-control') };
+}
+
+/** A length token in pixels; a token stated in rem is converted by the root font size. */
+function tokenPx(style: CSSStyleDeclaration, name: string): number {
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-  const declared = rootStyle.getPropertyValue(TRIGGER_SIZE_PROPERTY).trim();
-  const size = parseFloat(declared);
-  if (isNaN(size)) {
-    return 2 * rem;
-  }
-  return declared.endsWith('rem') ? size * rem : size;
+  const v = style.getPropertyValue(name).trim();
+  const n = parseFloat(v);
+  return isNaN(n) ? 2 * rem : v.endsWith('rem') ? n * rem : n;
 }
 
 export default TLToolbar;

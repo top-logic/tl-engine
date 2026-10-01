@@ -140,6 +140,44 @@ public class ModuleUtil {
 	};
 
 	/**
+	 * A phase in which services are started or restarted.
+	 * 
+	 * <p>
+	 * While a {@link StartupPhase} is open, the module system is not {@link ModuleUtil#isRunning()
+	 * running}. Phases nest: The module system can become running again, when the outermost phase
+	 * is {@link #close() closed}.
+	 * </p>
+	 * 
+	 * @see ModuleUtil#beginStartup()
+	 */
+	public final class StartupPhase implements AutoCloseable {
+
+		private boolean _closed;
+
+		StartupPhase() {
+			// Created by ModuleUtil.
+		}
+
+		/**
+		 * Ends this phase.
+		 * 
+		 * <p>
+		 * If this is the outermost phase and the module system is {@link ModuleUtil#isRunning()
+		 * running} afterwards, all actions waiting for it run in the calling thread.
+		 * </p>
+		 */
+		@Override
+		public void close() {
+			if (_closed) {
+				return;
+			}
+			_closed = true;
+			endStartup();
+		}
+
+	}
+
+	/**
 	 * {@link ModuleContext} that does no bookkeeping.
 	 */
 	private ModuleContext _currentContext = new GlobalContext();
@@ -177,6 +215,29 @@ public class ModuleUtil {
 	private static Map<Class<? extends BasicRuntimeModule<?>>, BasicRuntimeModule<?>> _moduleByClass =
 		new ConcurrentHashMap<>();
 
+	/**
+	 * Guards {@link #_startupDepth}, {@link #_whenRunning} and {@link #_applicationServices}.
+	 */
+	private final Object _runningLock = new Object();
+
+	/**
+	 * Number of open {@link StartupPhase}s.
+	 */
+	private int _startupDepth;
+
+	/**
+	 * Actions waiting for the module system to become {@link #isRunning() running}.
+	 */
+	private final List<Runnable> _whenRunning = new ArrayList<>();
+
+	/**
+	 * The services the application has started as a whole, <code>null</code> if no application has
+	 * started its services.
+	 * 
+	 * @see #getApplicationServices()
+	 */
+	private Set<BasicRuntimeModule<?>> _applicationServices;
+
 	private ModuleUtil() {
 		// singleton constructor (is also called via reflection in test)
 	}
@@ -205,7 +266,7 @@ public class ModuleUtil {
 	}
 
 	/**
-	 * Starts all configured modules and their dependencies.
+	 * Starts all configured modules and their dependencies as the services of the application.
 	 * 
 	 * @throws IllegalStateException
 	 *         When {@link ModuleSystem} not started.
@@ -213,12 +274,179 @@ public class ModuleUtil {
 	 *         If there is a cyclic dependency.
 	 * @throws ModuleException
 	 *         if startup of some dependent of the given {@link BasicRuntimeModule} failed
+	 * 
+	 * @see #startApplicationServices(Collection)
 	 */
 	public void startConfiguredModules() throws IllegalArgumentException, ModuleException {
 		ModuleSystem moduleSystem = ModuleSystem.Module.INSTANCE.getImplementationInstance();
-		Set<BasicRuntimeModule<?>> modules = moduleSystem.configuredServices();
-		for (BasicRuntimeModule<?> module : modules) {
-			startUp(module);
+		startApplicationServices(moduleSystem.configuredServices());
+	}
+
+	/**
+	 * Starts the given services with all their dependencies as the services of the application.
+	 * 
+	 * <p>
+	 * The module system is {@link #isRunning() running}, as soon as all these services are active
+	 * and no {@link StartupPhase} is open.
+	 * </p>
+	 * 
+	 * @param services
+	 *        The services of the application.
+	 * 
+	 * @throws IllegalArgumentException
+	 *         If there is a cyclic dependency.
+	 * @throws ModuleException
+	 *         If the startup of some service failed.
+	 * 
+	 * @see #getApplicationServices()
+	 */
+	public void startApplicationServices(Collection<? extends BasicRuntimeModule<?>> services)
+			throws IllegalArgumentException, ModuleException {
+		try (StartupPhase phase = beginStartup()) {
+			setApplicationServices(services);
+			for (BasicRuntimeModule<?> module : services) {
+				startUp(module);
+			}
+		}
+	}
+
+	/**
+	 * The services the application has started with {@link #startApplicationServices(Collection)},
+	 * or <code>null</code>, if no application has started its services.
+	 */
+	public Set<BasicRuntimeModule<?>> getApplicationServices() {
+		synchronized (_runningLock) {
+			return _applicationServices == null ? null : Collections.unmodifiableSet(_applicationServices);
+		}
+	}
+
+	/**
+	 * Declares the given services as the services of the application without starting them.
+	 * 
+	 * <p>
+	 * If the module system is {@link #isRunning() running} afterwards, all actions waiting for it
+	 * run in the calling thread.
+	 * </p>
+	 * 
+	 * @param services
+	 *        The services of the application, or <code>null</code> to declare that no application
+	 *        has started its services.
+	 * 
+	 * @see #startApplicationServices(Collection)
+	 */
+	@FrameworkInternal
+	public void setApplicationServices(Collection<? extends BasicRuntimeModule<?>> services) {
+		try (StartupPhase phase = beginStartup()) {
+			synchronized (_runningLock) {
+				_applicationServices = services == null ? null : new LinkedHashSet<>(services);
+			}
+		}
+	}
+
+	/**
+	 * Opens a {@link StartupPhase}.
+	 * 
+	 * <p>
+	 * Each operation of {@link ModuleUtil} that starts or restarts services runs in its own
+	 * {@link StartupPhase}. A caller that starts services in several steps brackets them with an
+	 * explicit phase, so that the module system does not count as {@link #isRunning() running}
+	 * between the steps.
+	 * </p>
+	 * 
+	 * @return The opened phase, which must be {@link StartupPhase#close() closed} by the caller.
+	 */
+	public StartupPhase beginStartup() {
+		synchronized (_runningLock) {
+			_startupDepth++;
+		}
+		return new StartupPhase();
+	}
+
+	void endStartup() {
+		List<Runnable> actions;
+		synchronized (_runningLock) {
+			_startupDepth--;
+			if (!isRunningLocked()) {
+				return;
+			}
+			actions = new ArrayList<>(_whenRunning);
+			_whenRunning.clear();
+		}
+		runAll(actions);
+	}
+
+	/**
+	 * Whether the module system is up and running.
+	 * 
+	 * <p>
+	 * The module system is running, if an application has
+	 * {@link #startApplicationServices(Collection) started its services}, all of them are active,
+	 * and no {@link StartupPhase} is open, i.e. no services are being started or restarted.
+	 * </p>
+	 */
+	public boolean isRunning() {
+		synchronized (_runningLock) {
+			return isRunningLocked();
+		}
+	}
+
+	private boolean isRunningLocked() {
+		if (_startupDepth > 0 || _applicationServices == null) {
+			return false;
+		}
+		for (BasicRuntimeModule<?> service : _applicationServices) {
+			if (!service.isActive()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Runs the given action as soon as the module system is {@link #isRunning() running}.
+	 * 
+	 * <p>
+	 * If the module system is running, the action runs immediately in the calling thread.
+	 * Otherwise, it runs once in the thread that closes the {@link StartupPhase} after which the
+	 * module system is running, unless it is {@link #cancelWhenRunning(Runnable) cancelled}
+	 * before. A service that must not become active before all services of the application are
+	 * started registers such an action in its startup: Since the startup of a service runs in a
+	 * {@link StartupPhase}, the action runs when the start or restart that includes the service has
+	 * started all its services.
+	 * </p>
+	 * 
+	 * @param action
+	 *        The action to run.
+	 */
+	public void whenRunning(Runnable action) {
+		synchronized (_runningLock) {
+			if (!isRunningLocked()) {
+				_whenRunning.add(action);
+				return;
+			}
+		}
+		runAll(Collections.singletonList(action));
+	}
+
+	/**
+	 * Removes an action registered with {@link #whenRunning(Runnable)} that has not run yet.
+	 * 
+	 * @param action
+	 *        The action to remove. Nothing happens, if the action is not waiting.
+	 */
+	public void cancelWhenRunning(Runnable action) {
+		synchronized (_runningLock) {
+			_whenRunning.remove(action);
+		}
+	}
+
+	private static void runAll(List<Runnable> actions) {
+		for (Runnable action : actions) {
+			try {
+				action.run();
+			} catch (RuntimeException ex) {
+				Logger.error("Action waiting for the running module system failed: " + action, ex, ModuleUtil.class);
+			}
 		}
 	}
 
@@ -347,7 +575,7 @@ public class ModuleUtil {
 
 		ModuleContext before = _currentContext;
 		_currentContext = NONE;
-		try {
+		try (StartupPhase phase = beginStartup()) {
 			internalRestart(module, callback);
 		} finally {
 			_currentContext = before;
@@ -708,6 +936,13 @@ public class ModuleUtil {
 	 */
 	public void startModulesAndAdd(BasicRuntimeModule<?> module, List<BasicRuntimeModule<?>> startedModules)
 			throws ModuleException {
+		try (StartupPhase phase = beginStartup()) {
+			internalStartModulesAndAdd(module, startedModules);
+		}
+	}
+
+	private void internalStartModulesAndAdd(BasicRuntimeModule<?> module, List<BasicRuntimeModule<?>> startedModules)
+			throws ModuleException {
 		Iterable<? extends BasicRuntimeModule<?>> dependencies2 = getDependencies(module);
 		final Iterator<? extends BasicRuntimeModule<?>> dependencies = dependencies2.iterator();
 		if (threadContextManagerActive()) {
@@ -1054,11 +1289,13 @@ public class ModuleUtil {
 	public void startXMLProperties() throws ModuleException {
 		// start AliasManager as AliasManager is essentially an inner
 		// service which is needed
-		startUp(XMLProperties.Module.INSTANCE);
-		startUp(AliasManager.Module.INSTANCE);
-		startUp(ApplicationConfig.Module.INSTANCE);
-		startUp(ResourcesModule.Module.INSTANCE);
-		startUp(ModuleSystem.Module.INSTANCE);
+		try (StartupPhase phase = beginStartup()) {
+			startUp(XMLProperties.Module.INSTANCE);
+			startUp(AliasManager.Module.INSTANCE);
+			startUp(ApplicationConfig.Module.INSTANCE);
+			startUp(ResourcesModule.Module.INSTANCE);
+			startUp(ModuleSystem.Module.INSTANCE);
+		}
 	}
 
 	/**

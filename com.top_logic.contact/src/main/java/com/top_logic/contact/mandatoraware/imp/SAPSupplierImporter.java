@@ -106,7 +106,6 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
         this.delete = StringServices.parseBoolean(prop.getProperty("delete", "false"));
         create = StringServices.parseBoolean(prop.getProperty("create"));
         finished = true;
-        this.setRunOnStartup(false);
         
         this.dapByMandator = new HashMap<>();
 

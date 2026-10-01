@@ -11,9 +11,19 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.form.model.FormGroup;
+import com.top_logic.util.sched.Scheduler;
 
 /**
- * {@link SchedulingAlgorithm} that schedules a task immediately after first system startup.
+ * {@link SchedulingAlgorithm} that runs a task once after each start of the task scheduler.
+ * 
+ * <p>
+ * The task runs once on each cluster node after the application has fully started, and again when
+ * the task scheduler service is restarted. For a task that runs only on one node in the cluster, a
+ * run on any other node after the start of this node's task scheduler counts as the run for this
+ * start.
+ * </p>
+ * 
+ * @implNote The start of the task scheduler is {@link Scheduler#getDispatchStart()}.
  */
 @InApp
 public class OnStartup implements SchedulingAlgorithm {
@@ -41,7 +51,18 @@ public class OnStartup implements SchedulingAlgorithm {
 
 	@Override
 	public long nextSchedule(long notBefore, long lastSchedule) {
-		return lastSchedule == NO_SCHEDULE ? notBefore : NO_SCHEDULE;
+		if (lastSchedule == NO_SCHEDULE || lastSchedule < dispatchStart()) {
+			return notBefore;
+		}
+		return NO_SCHEDULE;
+	}
+
+	private static long dispatchStart() {
+		Scheduler scheduler = Scheduler.getSchedulerInstance();
+		if (scheduler == null) {
+			return NO_SCHEDULE;
+		}
+		return scheduler.getDispatchStart();
 	}
 
 	@Override

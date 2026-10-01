@@ -340,9 +340,7 @@ public class CompositeTaskImpl<C extends Config<?>> extends StateHandlingTask<C>
 
 	@Override
 	public boolean isNodeLocal() {
-		if (!super.isNodeLocal()) {
-			return false;
-		}
+		// Runs on every node only if all its children do.
 		for (Task child : _children) {
 			if (!child.isNodeLocal()) {
 				return false;

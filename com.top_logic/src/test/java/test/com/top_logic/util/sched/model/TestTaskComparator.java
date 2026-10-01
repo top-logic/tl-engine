@@ -14,7 +14,6 @@ import junit.framework.TestSuite;
 
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.TaskComparator;
-import com.top_logic.util.sched.task.impl.TaskImpl;
 import com.top_logic.util.sched.task.schedule.legacy.LegacySchedulesCommon;
 
 /**
@@ -38,13 +37,13 @@ public class TestTaskComparator extends TestCase {
         
         Calendar now = new GregorianCalendar(2004,Calendar.JULY, 14 ,12,0);
 
-        Task daily1 = new TaskImpl("Daily", LegacySchedulesCommon.DAILY,0, 0 , 0);
-        Task daily2 = new TaskImpl("Daily", LegacySchedulesCommon.DAILY,0, 1 , 0);
-        Task daily3 = new TaskImpl("Daily", LegacySchedulesCommon.DAILY,0, 12, 30);
+        Task daily1 = new TestingTask("Daily", LegacySchedulesCommon.DAILY,0, 0 , 0);
+        Task daily2 = new TestingTask("Daily", LegacySchedulesCommon.DAILY,0, 1 , 0);
+        Task daily3 = new TestingTask("Daily", LegacySchedulesCommon.DAILY,0, 12, 30);
         
-        Task daily4 = new TaskImpl("Daily4", LegacySchedulesCommon.DAILY,0, 0 , 0);
-        Task daily5 = new TaskImpl("Daily5", LegacySchedulesCommon.DAILY,0, 1 , 0);
-        Task daily6 = new TaskImpl("Daily6", LegacySchedulesCommon.DAILY,0, 12, 30);        
+        Task daily4 = new TestingTask("Daily4", LegacySchedulesCommon.DAILY,0, 0 , 0);
+        Task daily5 = new TestingTask("Daily5", LegacySchedulesCommon.DAILY,0, 1 , 0);
+        Task daily6 = new TestingTask("Daily6", LegacySchedulesCommon.DAILY,0, 12, 30);        
 
         daily1.calcNextShed(now.getTimeInMillis()); // Wed Jul 14 12:00:00 CEST 2004
         daily2.calcNextShed(now.getTimeInMillis()); // Wed Jul 14 12:00:00 CEST 2004
@@ -111,12 +110,14 @@ public class TestTaskComparator extends TestCase {
         
         assertEquals( 0, theComp.compare(null        ,null));
         
-        Task nulltask  = new TaskImpl(null      , LegacySchedulesCommon.DAILY,0, 0 , 0);
-        Task someTask  = new TaskImpl("someTask", LegacySchedulesCommon.DAILY,0, 0 , 0);
+        Task nulltask  = new TestingTask(null      , LegacySchedulesCommon.DAILY,0, 0 , 0);
+        Task someTask  = new TestingTask("someTask", LegacySchedulesCommon.DAILY,0, 0 , 0);
 
         assertEquals( 0, theComp.compare(nulltask ,nulltask));
-		assertTrue(theComp.compare(nulltask, someTask) < 0);
-		assertTrue(theComp.compare(someTask, nulltask) > 0);
+		// A task created without a name is named after its class.
+		assertEquals(TestingTask.class.getName(), nulltask.getName());
+		assertTrue(theComp.compare(nulltask, someTask) > 0);
+		assertTrue(theComp.compare(someTask, nulltask) < 0);
 
     }
 

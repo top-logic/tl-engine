@@ -90,7 +90,6 @@ public class SAPPersonImporter extends DataObjectImportTask  {
         }
         create = StringServices.parseBoolean(prop.getProperty("create"));
         finished = true;
-        this.setRunOnStartup(false);
     }
 
     @Override

@@ -20,7 +20,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 /**
  * Maven goal to create an empty file.
  */
-@Mojo(name = "touch", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
+@Mojo(name = "touch", defaultPhase = LifecyclePhase.GENERATE_RESOURCES, threadSafe = true)
 public class TouchFile extends AbstractMojo {
 
 	/**

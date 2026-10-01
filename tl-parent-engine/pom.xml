@@ -180,12 +180,32 @@
 						<phase>prepare-package</phase>
 						
 						<configuration>
-							<skip>${maven.javadoc.skip}</skip>
-							<javadocDir>../tl-doc/javadoc</javadocDir>
+							<skip>${tl.javadoc.skipIndex}</skip>
+							<javadocDir>${tl.javadoc.aggregateDir}</javadocDir>
 						</configuration>
 					</execution>
 		        </executions>
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<!-- 
+				With -Dtl.javadoc.aggregate=false, the modules do not combine their JavaDoc in a shared tree 
+				(see tl-parent-build), so there is no tree to index. 
+			-->
+			<id>javadoc-module-local</id>
+			<activation>
+				<property>
+					<name>tl.javadoc.aggregate</name>
+					<value>false</value>
+				</property>
+			</activation>
+
+			<properties>
+				<tl.javadoc.skipIndex>true</tl.javadoc.skipIndex>
+			</properties>
+		</profile>
+	</profiles>
 </project>

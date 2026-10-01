@@ -16,6 +16,7 @@ import junit.framework.TestResult;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.GenericTest;
+import test.com.top_logic.basic.util.SingleTestWrapper;
 
 /**
  * This class takes a {@link Test}, executes it and checks that the correct set of failure and error
@@ -24,7 +25,7 @@ import test.com.top_logic.basic.GenericTest;
  * 
  * @author <a href="mailto:Jan Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */
-public final class FailureMatchingTestWrapper extends GenericTest {
+public final class FailureMatchingTestWrapper extends GenericTest implements SingleTestWrapper {
 
 	private final Test _test;
 
@@ -62,6 +63,11 @@ public final class FailureMatchingTestWrapper extends GenericTest {
 	private IllegalArgumentException buildExceptionNotSingleTest() {
 		return new IllegalArgumentException("This class can only handle single test cases, but this test has "
 			+ _test.countTestCases() + " test cases!");
+	}
+
+	@Override
+	public Test getWrappedTest() {
+		return _test;
 	}
 
 	@Override

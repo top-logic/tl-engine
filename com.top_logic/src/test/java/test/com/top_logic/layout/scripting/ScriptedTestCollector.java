@@ -18,15 +18,23 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.SimpleTestFactory;
 import test.com.top_logic.basic.TestUtils;
+import test.com.top_logic.basic.util.AbstractBasicTestAll;
+import test.com.top_logic.basic.util.ScriptedTestUnit;
 
 import com.top_logic.basic.col.Provider;
 import com.top_logic.basic.io.DirectoriesOnlyFilter;
+import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.file.FileNameComparator;
 import com.top_logic.layout.scripting.util.ScriptFileFilter;
 
 /**
  * A {@link Provider} that creates {@link ScriptedTest}s for the given {@link File} or directory,
  * wrapped into an {@link ApplicationTestSetup}.
+ * 
+ * <p>
+ * The scripts directly contained in one directory form a {@link ScriptedTestUnit} keyed by the
+ * directory path relative to the module directory.
+ * </p>
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
@@ -106,13 +114,24 @@ public class ScriptedTestCollector implements Provider<Test> {
 
 	private void addScriptedTestsInDir(File targetFile, TestSuite suite) {
 		File[] scripts = targetFile.listFiles(ScriptFileFilter.INSTANCE);
-		if (scripts == null) {
+		if (scripts == null || scripts.length == 0) {
 			return;
 		}
 		sort(scripts, SCRIPT_COMPARATOR);
+		ScriptedTestUnit unit = new ScriptedTestUnit(unitKey(targetFile));
 		for (File normalFile : scripts) {
-			suite.addTest(XmlScriptedTestUtil.createTest(normalFile));
+			unit.addTest(XmlScriptedTestUtil.createTest(normalFile));
 		}
+		suite.addTest(unit);
+	}
+
+	private static String unitKey(File directory) {
+		String path = FileUtilities.canonicalize(directory).getPath();
+		String modulePath = AbstractBasicTestAll.MODULE_LAYOUT.getModuleDir().getPath();
+		if (path.startsWith(modulePath + File.separator)) {
+			path = path.substring(modulePath.length() + 1);
+		}
+		return path.replace(File.separatorChar, '/');
 	}
 
 	private static Collator createScriptCollator() {

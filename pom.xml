@@ -53,6 +53,21 @@
 		
 		<tl.layoutDir>${basedir}/src/main/webapp/WEB-INF/layouts</tl.layoutDir>
 		<tl.confDir>${basedir}/src/main/webapp/WEB-INF</tl.confDir>
+
+		<maven.javadoc.skip>false</maven.javadoc.skip>
+
+		<!-- 
+			Directory into which the framework modules write their JavaDoc to combine it into one tree. 
+			
+			With -Dtl.javadoc.aggregate=false, the "javadoc-module-local" profiles of tl-parent-build and 
+			tl-parent-engine keep the JavaDoc of each module in its own build directory and skip the index. 
+			The profiles are not declared here, because activating any profile of this POM deactivates its 
+			"full-build" profile, which is active by default.
+		-->
+		<tl.javadoc.aggregateDir>${basedir}/../tl-doc/javadoc</tl.javadoc.aggregateDir>
+		
+		<!-- Whether to skip indexing the combined JavaDoc tree in tl-parent-engine. -->
+		<tl.javadoc.skipIndex>${maven.javadoc.skip}</tl.javadoc.skipIndex>
 	</properties>
 
 	<developers>

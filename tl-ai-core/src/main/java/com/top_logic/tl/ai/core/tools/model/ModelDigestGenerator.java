@@ -41,14 +41,22 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * Next to the structure it carries what the elements <em>mean</em>: the description (tooltip
- * resource) of a module, type or part, as a {@code //} comment - on the line after a module header,
- * on the line before a type, at the end of a part's line. An element without a description gets no
- * comment. The keys are the ones {@code listModules}, {@code listTypes} and {@code listTypeParts}
- * read, so both answers agree, and the text is in the language of the account the run acts for.
- * Whitespace inside a description is collapsed, so every element stays on one line. A description
- * is never shortened: what an application states about an element - a unit, a constraint - is often
- * in its second sentence. A description of a readable type is as readable as its name, so the
- * scoping below covers the descriptions without a rule of its own.
+ * resource) of a module, type, part or enum value, as a {@code //} comment - on the line after a
+ * module header, on the line before a type, at the end of a part's or a value's line. An element
+ * without a description gets no comment, and an enumeration none of whose values has one stays on
+ * one line. The keys are the ones {@code listModules}, {@code listTypes}, {@code listTypeParts} and
+ * {@code listClassifiers} read, so both answers agree, and the text is in the language of the
+ * account the run acts for. Whitespace inside a description is collapsed, so every element stays on
+ * one line. A description is never shortened: what an application states about an element - a unit,
+ * a constraint - is often in its second sentence.
+ * </p>
+ *
+ * <p>
+ * Only <b>application</b> modules carry descriptions. A framework module keeps its structure-only
+ * form even when it is asked for: on the demo application its descriptions made that call 3.6 times
+ * as expensive in German (12.7k to 46k tokens), and {@code listTypes} still hands over the
+ * description of the one framework type a run needs. A description of a readable type is as
+ * readable as its name, so the scoping below covers the descriptions without a rule of its own.
  * </p>
  *
  * <h2>What the principal gets to see</h2>
@@ -129,7 +137,8 @@ public class ModelDigestGenerator {
 		Resources resources = Resources.getInstance(locale);
 		StringBuilder body = new StringBuilder();
 		for (TLModule module : modules) {
-			appendModule(body, module, accessible, resources);
+			// A framework module carries no descriptions, see the class comment.
+			appendModule(body, module, accessible, isFrameworkModule(module) ? null : resources);
 		}
 		if (body.length() == 0) {
 			// Nothing survived the scoping. An empty preamble would tell the model there is a model
@@ -157,6 +166,9 @@ public class ModelDigestGenerator {
 	 * by the engine's rights, so the module it belongs to is the only statement about it that can be
 	 * made, and a module the principal reads nothing of is not one it should be told about.
 	 * </p>
+	 *
+	 * @param resources
+	 *        Where the descriptions come from, or {@code null} for a module that carries none.
 	 */
 	private static void appendModule(StringBuilder sb, TLModule module, Set<TLClass> accessible,
 			Resources resources) {
@@ -209,13 +221,29 @@ public class ModelDigestGenerator {
 	private static void appendEnum(StringBuilder sb, TLEnumeration enumeration, Resources resources) {
 		sb.append("\n");
 		appendDescription(sb, resources, TLModelNamingConvention.getTypeLabelKey(enumeration));
-		sb.append("enum ").append(enumeration.getName()).append(" { ");
+		sb.append("enum ").append(enumeration.getName());
 		List<? extends TLClassifier> classifiers = enumeration.getClassifiers();
-		for (int i = 0; i < classifiers.size(); i++) {
-			if (i > 0) sb.append(", ");
-			sb.append(classifiers.get(i).getName());
+		List<String> descriptions = classifiers.stream()
+			.map(c -> description(resources, TLModelNamingConvention.resourceKey(c)))
+			.collect(Collectors.toList());
+		if (descriptions.stream().allMatch(d -> d == null)) {
+			sb.append(" { ");
+			for (int i = 0; i < classifiers.size(); i++) {
+				if (i > 0) sb.append(", ");
+				sb.append(classifiers.get(i).getName());
+			}
+			sb.append(" }\n");
+			return;
 		}
-		sb.append(" }\n");
+		sb.append(" {\n");
+		for (int i = 0; i < classifiers.size(); i++) {
+			sb.append("  ").append(classifiers.get(i).getName());
+			if (descriptions.get(i) != null) {
+				sb.append(" // ").append(descriptions.get(i));
+			}
+			sb.append("\n");
+		}
+		sb.append("}\n");
 	}
 
 	private static void appendStructuredType(StringBuilder sb, TLClass tlClass, String keyword,
@@ -303,9 +331,13 @@ public class ModelDigestGenerator {
 	}
 
 	/**
-	 * The tooltip of the given label key on one line, or {@code null} when the element has none.
+	 * The tooltip of the given label key on one line, or {@code null} when the element has none or
+	 * the module it belongs to is given no {@link Resources} because it carries no descriptions.
 	 */
 	private static String description(Resources resources, ResKey labelKey) {
+		if (resources == null) {
+			return null;
+		}
 		String tooltip = resources.getString(labelKey.tooltip(), null);
 		if (tooltip == null) {
 			return null;

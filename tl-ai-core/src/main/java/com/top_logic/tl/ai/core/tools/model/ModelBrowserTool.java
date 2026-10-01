@@ -507,7 +507,8 @@ public class ModelBrowserTool {
 	 * <p>
 	 * Lists the modules with their types (classes, interfaces, enums) and, for each type, its parts
 	 * with target types, multiplicity, inheritance, and derived/composite/mandatory markers, and the
-	 * description of every module, type and part that has one, in the run's language. Generated
+	 * description of every application module, type, part and enum value that has one, in the run's
+	 * language. Generated
 	 * fresh from the live model on every call. The result is the compact digest text itself, not JSON
 	 * — its terseness is the point.
 	 * </p>
@@ -528,8 +529,9 @@ public class ModelBrowserTool {
 	@ToolMethod(description = "Returns a compact structural overview of the entire application model in a "
 		+ "single call: all application modules, their types (classes, interfaces, enums), and for each "
 		+ "type its parts with target types, multiplicity, inheritance, and derived/composite/mandatory "
-		+ "markers. Each module, type and part that has a description (what it means in the business "
-		+ "domain) carries it as a `// ...` comment, in the user's language. "
+		+ "markers. Each application module, type, part and enum value that has a description (what it "
+		+ "means in the business domain) carries it as a `// ...` comment, in the user's language; "
+		+ "framework modules show structure only (use listTypes for a framework type's description). "
 		+ "Only the types you may read are listed. Use this FIRST for any question about model "
 		+ "structure — it replaces enumerating with "
 		+ "listModules + listTypes + listTypeParts. Framework modules and runtime instance data are "

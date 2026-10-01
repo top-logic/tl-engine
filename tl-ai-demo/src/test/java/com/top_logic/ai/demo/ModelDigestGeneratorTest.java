@@ -161,6 +161,24 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 	}
 
 	/**
+	 * An enumeration with described values gets one value per line, an undescribed value no comment;
+	 * a framework module stays structure only although its elements are documented.
+	 */
+	public void testDigestDescribesEnumValuesOfApplicationModulesOnly() {
+		TLModel model = ModelService.getApplicationModel();
+		String digest = ModelDigestGenerator.generate(model, true, ModelSecurity.UNCHECKED, Locale.ENGLISH);
+
+		assertTrue(digest, digest.contains("enum UnitOfMeasure {\n"
+			+ "  G // Gram, for small amounts of an ingredient such as spices.\n"
+			+ "  KG // Kilogram, the usual unit for flour, cheese and vegetables.\n"
+			+ "  T\n"));
+
+		// tl.ai.execution documents the type and every value, and still gets the one-line form.
+		assertTrue(digest, digest.contains("\n\nenum ExecutionStatus { RUNNING, COMPLETE, ERROR, CANCELLED, REJECTED }\n"));
+		assertFalse(digest, digest.contains("Lifecycle state of an agent execution."));
+	}
+
+	/**
 	 * Tests that the outlineModel tool returns the application model digest as plain text.
 	 */
 	public void testOutlineModelToolReturnsDigest() {

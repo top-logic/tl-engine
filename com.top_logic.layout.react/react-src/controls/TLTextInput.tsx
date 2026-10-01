@@ -253,6 +253,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
           className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
           onClick={handleClear}
           aria-label={t['js.textInput.clear']}
+          {...tooltipProps(t['js.textInput.clear'])}
         >
           <ThemeIcon encoded={CLEAR_ICON} className="tl-button__icon tl-icon-sm" />
         </button>

@@ -27,8 +27,11 @@ public interface WindowState extends com.top_logic.layout.react.state.ControlSta
 	/** @see #getHeight() */
 	String HEIGHT__PROP = "height";
 
-	/** @see #getMinHeight() */
-	String MIN_HEIGHT__PROP = "minHeight";
+	/** @see #getCustomWidth() */
+	String CUSTOM_WIDTH__PROP = "customWidth";
+
+	/** @see #getCustomHeight() */
+	String CUSTOM_HEIGHT__PROP = "customHeight";
 
 	/** @see #isResizable() */
 	String RESIZABLE__PROP = "resizable";
@@ -79,14 +82,29 @@ public interface WindowState extends com.top_logic.layout.react.state.ControlSta
 	com.top_logic.layout.react.state.WindowState setHeight(String value);
 
 	/**
-	 * The least height of the window, a CSS length. Absent: none.
+	 * The width in pixels the user gave the window when last resizing it. Absent: none remembered.
+	 *
+	 * Together with {@link #getCustomHeight()}, the remembered size replaces the configured
+	 * {@link #getWidth()} and the automatic height, but only while it fits into the browser window: the
+	 * client decides this, as only it knows the size of the browser window.
 	 */
-	String getMinHeight();
+	int getCustomWidth();
 
 	/**
-	 * @see #getMinHeight()
+	 * @see #getCustomWidth()
 	 */
-	com.top_logic.layout.react.state.WindowState setMinHeight(String value);
+	com.top_logic.layout.react.state.WindowState setCustomWidth(int value);
+
+	/**
+	 * The height in pixels the user gave the window when last resizing it. Absent: none
+	 * remembered.
+	 */
+	int getCustomHeight();
+
+	/**
+	 * @see #getCustomHeight()
+	 */
+	com.top_logic.layout.react.state.WindowState setCustomHeight(int value);
 
 	/**
 	 * Whether the user can resize the window by dragging its edges.

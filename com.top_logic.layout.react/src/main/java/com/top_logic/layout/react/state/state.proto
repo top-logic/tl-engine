@@ -720,9 +720,19 @@ message WindowState extends ControlState {
 	string height;
 
 	/**
-	 * The least height of the window, a CSS length. Absent: none.
+	 * The width in pixels the user gave the window when last resizing it. Absent: none remembered.
+	 *
+	 * Together with {@link #customHeight}, the remembered size replaces the configured
+	 * {@link #width} and the automatic height, but only while it fits into the browser window: the
+	 * client decides this, as only it knows the size of the browser window.
 	 */
-	string minHeight;
+	int32 customWidth;
+
+	/**
+	 * The height in pixels the user gave the window when last resizing it. Absent: none
+	 * remembered.
+	 */
+	int32 customHeight;
 
 	/**
 	 * Whether the user can resize the window by dragging its edges.

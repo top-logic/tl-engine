@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpSession;
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.monitor.UserSessionCleanup;
 
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
@@ -46,6 +47,22 @@ import com.top_logic.util.TLContextManager;
  * @author     <a href="mailto:mvo@top-logic.com">Michael Vogt</a>
  */
 public class TestSessionService extends BasicTestCase {
+
+	private UserSessionCleanup _userSessions;
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		_userSessions = UserSessionCleanup.snapshot(PersistencyLayer.getKnowledgeBase());
+	}
+
+	@Override
+	protected void tearDown() throws Exception {
+		// The logins of this test are recorded as user sessions, which must not be seen by later
+		// tests that share the knowledge base.
+		_userSessions.deleteCreated();
+		super.tearDown();
+	}
 
     public TestSessionService (String aName) {
         super (aName);

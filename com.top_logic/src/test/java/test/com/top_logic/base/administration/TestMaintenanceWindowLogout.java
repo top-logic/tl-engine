@@ -15,6 +15,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.CustomPropertiesDecorator;
 import test.com.top_logic.basic.CustomPropertiesSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.monitor.UserSessionCleanup;
 
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.servletunit.InvocationContext;
@@ -37,6 +38,22 @@ import com.top_logic.util.TLContextManager;
  */
 @SuppressWarnings("javadoc")
 public class TestMaintenanceWindowLogout extends BasicTestCase {
+
+	private UserSessionCleanup _userSessions;
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		_userSessions = UserSessionCleanup.snapshot(PersistencyLayer.getKnowledgeBase());
+	}
+
+	@Override
+	protected void tearDown() throws Exception {
+		// The logins of this test are recorded as user sessions, which must not be seen by later
+		// tests that share the knowledge base.
+		_userSessions.deleteCreated();
+		super.tearDown();
+	}
 
 	/**
 	 * Entering the maintenance window immediately ends the sessions of users that may not log in

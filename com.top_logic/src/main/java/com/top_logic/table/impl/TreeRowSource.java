@@ -6,9 +6,11 @@
 package com.top_logic.table.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -95,6 +97,57 @@ public class TreeRowSource<N, R> implements RowSource<R> {
 			return List.of();
 		}
 		return List.copyOf(_displayed.subList(lo, hi));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The data rows are the nodes of the {@link TreeStructure}, whatever the filter and the collapsed
+	 * nodes display of them. A {@link TreeStructure#isFinite() finite} tree is searched completely;
+	 * of a tree that is not, only the nodes reachable through expanded nodes are searched, since
+	 * its complete node set cannot be enumerated.
+	 * </p>
+	 */
+	@Override
+	public Set<Object> containedKeys(Collection<?> keys) {
+		Set<Object> result = new LinkedHashSet<>();
+		if (keys.isEmpty()) {
+			return result;
+		}
+		Set<Object> missing = new HashSet<>(keys);
+		boolean complete = _structure.isFinite();
+		for (N root : _structure.roots()) {
+			collectContained(root, missing, complete);
+			if (missing.isEmpty()) {
+				break;
+			}
+		}
+		for (Object key : keys) {
+			if (!missing.contains(key)) {
+				result.add(key);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Removes the given node and its searched descendants from the given missing keys.
+	 *
+	 * @param complete
+	 *        Whether the descendants of collapsed nodes are searched, too.
+	 */
+	private void collectContained(N node, Set<Object> missing, boolean complete) {
+		missing.remove(node);
+		if (missing.isEmpty() || _structure.isLeaf(node) || !(complete || _expanded.contains(node))) {
+			return;
+		}
+		for (N child : _structure.children(node)) {
+			collectContained(child, missing, complete);
+			if (missing.isEmpty()) {
+				return;
+			}
+		}
 	}
 
 	@Override

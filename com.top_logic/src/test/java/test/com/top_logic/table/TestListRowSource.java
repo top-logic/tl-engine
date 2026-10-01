@@ -193,4 +193,19 @@ public class TestListRowSource extends TestCase {
 		assertEquals(4, source.size());
 	}
 
+	/**
+	 * Tests that {@link RowSource#containedKeys(Collection)} answers for the data, not for the rows
+	 * the filter displays: a filtered element is contained, an object that is not an element is
+	 * not.
+	 */
+	public void testContainedKeysIgnoresTheFilter() {
+		List<Person> people = people();
+		RowSource<Person> source = new ListRowSource<>(people, columns(), Person::name);
+		source.withFilter(new FilterSpec(java.util.Map.of("name", new Contains("Bob"))));
+		assertEquals(List.of("Bob"), names(source));
+
+		assertEquals(java.util.Set.of("Charlie", "Bob"),
+			source.containedKeys(List.of("Charlie", "Bob", "nobody")));
+	}
+
 }

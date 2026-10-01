@@ -27,6 +27,7 @@ import com.top_logic.base.context.DefaultSessionContext;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.InstantiationContext;
@@ -398,6 +399,27 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
         return(true);
     }
 
+	/**
+	 * The ID of the registered session to which the given {@link SessionContext} belongs.
+	 * 
+	 * @param context
+	 *        The context to look up, e.g. {@link ThreadContextManager#getSession()} for the session
+	 *        of the current request. May be {@code null}.
+	 * @return The ID of the session, or {@code null} if the given context belongs to no registered
+	 *         session (e.g. the context of a system thread).
+	 */
+	public String getSessionId(SessionContext context) {
+		if (context == null) {
+			return null;
+		}
+		for (Map.Entry<String, Registration> entry : _sessionMap.entrySet()) {
+			if (entry.getValue().context() == context) {
+				return entry.getKey();
+			}
+		}
+		return null;
+	}
+
     /**
      * Returns the User object associated to the given session
      *
@@ -589,7 +611,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		sessionContext.addHttpSessionBindingListener(this);
 
         //storing session id and session info in session map
-		_sessionMap.put(session.getId(), new Registration(sessioninfo, session));
+		_sessionMap.put(session.getId(), new Registration(sessioninfo, session, sessionContext));
     }
 
 	@Override
@@ -781,8 +803,10 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 *        Information about the session.
 	 * @param session
 	 *        The session itself.
+	 * @param context
+	 *        The {@link TLSessionContext} installed in the session.
 	 */
-	private record Registration(SessionInfo info, HttpSession session) {
+	private record Registration(SessionInfo info, HttpSession session, TLSessionContext context) {
 		// Pure data.
 	}
 

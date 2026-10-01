@@ -116,6 +116,7 @@ public class RefreshUsersTask<C extends RefreshUsersTask.Config<?>> extends Stat
 
 	@Override
 	public boolean isNodeLocal() {
+		// Modifies persistent accounts; must run only once in the cluster.
 		return false;
 	}
 

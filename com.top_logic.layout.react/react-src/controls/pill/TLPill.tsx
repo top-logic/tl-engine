@@ -1,6 +1,20 @@
 import { React } from 'tl-react-bridge';
 
 /**
+ * The classes of a pill of the given role: `tl-pill`, its role modifier (none for neutral or no
+ * role), then the given further classes.
+ *
+ * <p>
+ * For an element that is a pill but holds more than the label - the chip of a multi-valued
+ * selection carries its drag handle and remove button beside the label, within the pill.
+ * </p>
+ */
+export function pillClassName(role?: string, className?: string): string {
+  return ['tl-pill', role && role !== 'neutral' ? 'tl-pill--' + role : '', className ?? '']
+    .filter(Boolean).join(' ');
+}
+
+/**
  * Displays a value the model gives a color role as a pill of that role.
  *
  * <p>
@@ -19,10 +33,8 @@ export function TLPill({
   className?: string;
   children?: React.ReactNode;
 }) {
-  const classes = ['tl-pill', role && role !== 'neutral' ? 'tl-pill--' + role : '', className ?? '']
-    .filter(Boolean).join(' ');
   return (
-    <span className={classes}>
+    <span className={pillClassName(role, className)}>
       <span className="tl-pill__label">{children}</span>
     </span>
   );

@@ -148,7 +148,12 @@ public abstract class TestUtils {
 
 	}
 
-	private static ArrayList<Test> removeTestsFromSuite(TestSuite suite) {
+	/**
+	 * Removes all direct children from the given {@link TestSuite}.
+	 * 
+	 * @return The removed children in their original order.
+	 */
+	public static ArrayList<Test> removeTestsFromSuite(TestSuite suite) {
 		try {
 			final Field declaredField = TestSuite.class.getDeclaredField("fTests");
 			declaredField.setAccessible(true);

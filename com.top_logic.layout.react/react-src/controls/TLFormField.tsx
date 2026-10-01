@@ -3,6 +3,7 @@ import {
   focusFieldInput, ThemeIcon,
 } from 'tl-react-bridge';
 import type { TLCellProps, ChildDescriptor } from 'tl-react-bridge';
+import { buttonClassName } from './button/ButtonDefaults';
 import { FormLayoutContext } from './FormLayoutContext';
 
 const { useContext, useState, useCallback, useMemo } = React;
@@ -10,6 +11,8 @@ const { useContext, useState, useCallback, useMemo } = React;
 const I18N_KEYS = {
   'js.formField.help': 'Help',
 };
+
+const HELP_ICON = 'css:fa-solid fa-circle-question';
 
 /**
  * Form field chrome wrapper that renders label, required indicator,
@@ -23,8 +26,10 @@ const I18N_KEYS = {
  * activate from a label - a group of options, an editable area - is focused by the label's click
  * handler instead. A hidden label ("hidden" label
  * position, either declared by the field or inherited from the form layout) is kept off the screen
- * in a visually hidden element that still names the input. The input area itself is a plain
- * element, so a click into the input reaches exactly the element under the pointer.
+ * in a visually hidden `label` that still names the input. The input area itself is a plain
+ * element, so a click into the input reaches exactly the element under the pointer. The error
+ * message, each warning message and the shown help text describe the input (`aria-describedby`,
+ * through the same association), in this order.
  *
  * State:
  * - label: string
@@ -68,14 +73,33 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
 
   const labelHidden = labelPos === 'hidden';
 
+  const hasError = error != null;
+  const hasWarnings = warnings != null && warnings.length > 0;
+
+  // Messages, help and the required star belong to editing: a read-only form shows values only.
+  // An error displaces the warnings.
+  const showError = !readOnly && hasError;
+  const showWarnings = !readOnly && !hasError && hasWarnings;
+  const showHelp = !readOnly && !!helpText;
+  const errorId = `${controlId}-error`;
+  const warningId = (i: number) => `${controlId}-warning-${i}`;
+  const helpTextId = `${controlId}-help`;
+  const warningCount = showWarnings ? warnings.length : 0;
+  const describedBy = [
+    showError ? errorId : '',
+    ...Array.from({ length: warningCount }, (_, i) => warningId(i)),
+    showHelp && helpVisible ? helpTextId : '',
+  ].filter(Boolean).join(' ') || undefined;
+
   // The id of the input control's focusable element, as the control reports it.
   const [inputId, setInputId] = useState<string | null>(null);
 
   // A field without label text has nothing to name its input with.
   const hasLabel = label !== '';
   const association = useMemo(
-    () => (fieldControlId === undefined || !hasLabel ? null : fieldLabel(controlId, fieldControlId, setInputId)),
-    [controlId, fieldControlId, hasLabel]
+    () => (fieldControlId === undefined || !hasLabel
+      ? null : fieldLabel(controlId, fieldControlId, setInputId, describedBy)),
+    [controlId, fieldControlId, hasLabel, describedBy]
   );
   const handleLabelClick = useCallback(
     (event: React.MouseEvent) => {
@@ -85,9 +109,6 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
     },
     [inputId]
   );
-
-  const hasError = error != null;
-  const hasWarnings = warnings != null && warnings.length > 0;
 
   // What the label says about itself: the rich content the server holds under the tooltip key,
   // or - the common case of a one-sentence description - the text the state already carries, so
@@ -100,64 +121,55 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   const className = [
-    'tlFormField',
-    `tlFormField--${labelPos}`,
-    readOnly ? 'tlFormField--readonly' : '',
-    fullLine ? 'tlFormField--fullLine' : '',
-    hasError ? 'tlFormField--error' : '',
-    !hasError && hasWarnings ? 'tlFormField--warning' : '',
-    dirty ? 'tlFormField--dirty' : '',
+    'tl-form-field',
+    `tl-form-field--${labelPos}`,
+    fullLine ? 'tl-form-field--full' : '',
   ].filter(Boolean).join(' ');
 
-  // An invisible field is hidden via CSS instead of not being rendered: unmounting the child
-  // control would drop its SSE subscription, so state patches arriving while hidden (e.g.
-  // editable toggling with the form mode) would be lost until a full re-serialization.
+  // An invisible field is hidden via the `hidden` attribute instead of not being rendered:
+  // unmounting the child control would drop its SSE subscription, so state patches arriving while
+  // hidden (e.g. editable toggling with the form mode) would be lost until a full re-serialization.
+  // The design system's `.tl-form-field[hidden]` keeps it hidden against the block's own display.
   return (
-    <div id={controlId} className={rootClassName(state, className)} style={visible ? undefined : { display: 'none' }}>
+    <div id={controlId} className={rootClassName(state, className)} data-tl-state={dirty ? 'dirty' : undefined}
+      hidden={!visible || undefined}>
       {!labelHidden && (
-        <div className="tlFormField__label">
-          <label id={association?.labelId} htmlFor={inputId ?? undefined} className="tlFormField__labelText"
+        <div className="tl-form-field__label tl-type-label">
+          <label id={association?.labelId} htmlFor={inputId ?? undefined} className="tl-form-field__label-text"
             onClick={handleLabelClick} {...labelTooltip}>{label}</label>
-          {required && !readOnly && <span className="tlFormField__required">*</span>}
-          {dirty && <span className="tlFormField__dirtyDot" />}
-          {helpText && !readOnly && (
-            <button type="button" className="tlFormField__helpIcon" onClick={toggleHelp}
-              aria-label={i18n['js.formField.help']} {...tooltipProps(i18n['js.formField.help'])}>
-              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-                <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                <text x="8" y="12" textAnchor="middle" fontSize="10"
-                  fill="currentColor">?</text>
-              </svg>
+          {required && !readOnly && <span className="tl-form-field__required" aria-hidden="true">*</span>}
+          {dirty && <span className="tl-form-field__dirty" aria-hidden="true" />}
+          {showHelp && (
+            <button type="button" className={buttonClassName({ appearance: 'ghost', small: true })} onClick={toggleHelp}
+              aria-label={i18n['js.formField.help']} aria-expanded={helpVisible} aria-controls={helpTextId}
+              {...tooltipProps(i18n['js.formField.help'])}>
+              <ThemeIcon encoded={HELP_ICON} className="tl-button__icon tl-icon-sm" />
             </button>
           )}
         </div>
       )}
       {labelHidden && association !== null && (
-        <span id={association?.labelId} className="tlVisuallyHidden">{label}</span>
+        <label id={association.labelId} htmlFor={inputId ?? undefined} className="tl-visually-hidden">{label}</label>
       )}
-      <div className="tlFormField__input">
+      <div className="tl-form-field__input">
         <FieldLabelContext.Provider value={association}>
           <TLChild control={field} />
         </FieldLabelContext.Provider>
       </div>
-      {!readOnly && hasError && (
-        <div className="tlFormField__error" role="alert">
-          <ThemeIcon encoded={errorIcon} className="tlFormField__errorIcon" />
+      {showError && (
+        <div id={errorId} className="tl-form-field__message tl-type-label" role="alert">
+          {typeof errorIcon === 'string' && <ThemeIcon encoded={errorIcon} className="tl-icon-sm" />}
           <span>{error}</span>
         </div>
       )}
-      {!readOnly && !hasError && hasWarnings && (
-        <div className="tlFormField__warnings" aria-live="polite">
-          {warnings.map((msg, i) => (
-            <div key={i} className="tlFormField__warning">
-              <ThemeIcon encoded={warningIcon} className="tlFormField__warningIcon" />
-              <span>{msg}</span>
-            </div>
-          ))}
+      {showWarnings && warnings.map((msg, i) => (
+        <div key={i} id={warningId(i)} className="tl-form-field__message tl-type-label" aria-live="polite">
+          {typeof warningIcon === 'string' && <ThemeIcon encoded={warningIcon} className="tl-icon-sm" />}
+          <span>{msg}</span>
         </div>
-      )}
-      {!readOnly && helpText && helpVisible && (
-        <div className="tlFormField__helpText">{helpText}</div>
+      ))}
+      {showHelp && (
+        <div id={helpTextId} className="tl-form-field__help-text tl-type-label" hidden={!helpVisible}>{helpText}</div>
       )}
     </div>
   );

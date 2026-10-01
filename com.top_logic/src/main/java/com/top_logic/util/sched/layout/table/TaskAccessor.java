@@ -77,13 +77,6 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
 	public static final String CLUSTER_LOCK = "clusterLock";
 
 	/**
-	 * Whether the given {@link Task} is being executed on startup.
-	 * 
-	 * @see Task#isRunOnStartup()
-	 */
-	public static final String RUN_ON_STARTUP = "runOnStartup";
-
-	/**
 	 * @see Task#needsMaintenanceMode()
 	 */
 	public static final String NEEDS_MAINTENANCE_MODE = "needsMaintenanceMode";
@@ -136,9 +129,6 @@ public class TaskAccessor extends ReadOnlyAccessor<Task> {
 		}
 		else if (CLUSTER_LOCK.equals(aProperty)) {
 			return getClusterLockValue(aTask);
-		}
-		else if (RUN_ON_STARTUP.equals(aProperty)) {
-			return Boolean.valueOf(aTask.isRunOnStartup());
 		}
 		else if (NEEDS_MAINTENANCE_MODE.equals(aProperty)) {
 			return Boolean.valueOf(aTask.needsMaintenanceMode());

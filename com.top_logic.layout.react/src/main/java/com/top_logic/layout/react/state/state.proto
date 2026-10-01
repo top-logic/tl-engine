@@ -72,6 +72,13 @@ message FieldState extends ControlState {
 	bool editable;
 
 	/**
+	 * Whether the field is shown as an inactive input. A disabled field accepts no input, but
+	 * presents its value in a visibly inactive input instead of displaying the value only. Only
+	 * set while {@link #editable} is not.
+	 */
+	bool disabled;
+
+	/**
 	 * Whether a value is required.
 	 */
 	bool mandatory;

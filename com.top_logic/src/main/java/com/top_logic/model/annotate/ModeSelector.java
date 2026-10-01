@@ -41,12 +41,16 @@ public interface ModeSelector {
 	 *        The object instance that is displayed.
 	 * @param attribute
 	 *        The model attribute that is represented by a form field.
+	 * @param editMode
+	 *        Whether the form displaying the attribute is in edit mode, as passed to
+	 *        {@link #getMode(TLObject, TLStructuredTypePart, boolean)} for the mode whose
+	 *        dependencies are traced.
 	 * @param trace
 	 *        Callback for reporting all values, the field mode depends on.
 	 * @param overlays
 	 *        The overlay lookup, or <code>null</code> if not available.
 	 */
-	void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
+	void traceDependencies(TLObject object, TLStructuredTypePart attribute, boolean editMode, Sink<Pointer> trace,
 			OverlayLookup overlays);
 
 }

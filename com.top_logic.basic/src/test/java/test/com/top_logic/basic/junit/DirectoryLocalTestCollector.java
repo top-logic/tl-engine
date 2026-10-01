@@ -22,6 +22,8 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.DeactivatedTest;
 import test.com.top_logic.basic.GenericTest;
 import test.com.top_logic.basic.SimpleTestFactory;
+import test.com.top_logic.basic.util.ScriptedTestMarker;
+import test.com.top_logic.basic.util.ScriptedTestUnit;
 
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Protocol;
@@ -86,6 +88,8 @@ public class DirectoryLocalTestCollector {
 
 	private final boolean _includeSubPackages;
 
+	private final boolean _markScriptedUnits;
+
 	/**
 	 * @param log
 	 *        The {@link Protocol} which is used to log non-error-information. Errors are passed via
@@ -95,8 +99,24 @@ public class DirectoryLocalTestCollector {
 	 *        start with the given package name.
 	 */
 	public DirectoryLocalTestCollector(Protocol log, boolean includeSubPackages) {
+		this(log, includeSubPackages, false);
+	}
+
+	/**
+	 * @param log
+	 *        The {@link Protocol} which is used to log non-error-information. Errors are passed via
+	 *        special error tests that fail.
+	 * @param includeSubPackages
+	 *        whether "subpackages" should be included, i.e. the tests of the packages whose names
+	 *        start with the given package name.
+	 * @param markScriptedUnits
+	 *        Whether the test of a class that contains {@link ScriptedTestMarker scripted tests} is
+	 *        wrapped into a {@link ScriptedTestUnit} keyed by the class name.
+	 */
+	public DirectoryLocalTestCollector(Protocol log, boolean includeSubPackages, boolean markScriptedUnits) {
 		_log = log;
 		_includeSubPackages = includeSubPackages;
+		_markScriptedUnits = markScriptedUnits;
 	}
 
 	/**
@@ -144,7 +164,7 @@ public class DirectoryLocalTestCollector {
 			int suffixIndex = content.getName().indexOf(JAVA_EXT);
 			String className = content.getName().substring(0, suffixIndex);
 			String qualifiedClassName = pckgName + '.' + className;
-			addTest(qualifiedClassName, result, _log);
+			addTest(qualifiedClassName, result, _log, _markScriptedUnits);
 		}
 		return result;
 	}
@@ -161,6 +181,25 @@ public class DirectoryLocalTestCollector {
 	 *        errors.)
 	 */
 	public static void addTest(String qualifiedClassName, TestSuite result, Protocol log) {
+		addTest(qualifiedClassName, result, log, false);
+	}
+
+	/**
+	 * Add the {@link Test} with the given class name to the given {@link TestSuite}.
+	 * 
+	 * @param qualifiedClassName
+	 *        The fully qualified class name of the {@link Test}.
+	 * @param result
+	 *        Is not allowed to be null.
+	 * @param log
+	 *        Is not allowed to be null. Is used for non-critical information. (Infos, but not
+	 *        errors.)
+	 * @param markScriptedUnit
+	 *        Whether to wrap the test into a {@link ScriptedTestUnit} keyed by the class name, if it
+	 *        contains {@link ScriptedTestMarker scripted tests}.
+	 */
+	public static void addTest(String qualifiedClassName, TestSuite result, Protocol log,
+			boolean markScriptedUnit) {
 		try {
 			Class<?> testClass = Class.forName(qualifiedClassName);
 
@@ -245,6 +284,9 @@ public class DirectoryLocalTestCollector {
 			// number of tests which will be executed by the suite
 			int numberOfTestsToRun = suite.countTestCases();
 			if (numberOfTestsToRun > 0) {
+				if (markScriptedUnit) {
+					suite = ScriptedTestUnit.markIfScripted(qualifiedClassName, suite);
+				}
 				result.addTest(suite);
 				log.info("Added tests from class '" + testClass + "'.");
 			}

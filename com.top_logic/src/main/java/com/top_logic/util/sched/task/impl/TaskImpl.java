@@ -24,9 +24,8 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.sched.BatchImpl;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.retry.Retry;
@@ -42,6 +41,8 @@ import com.top_logic.util.sched.task.log.DefaultTaskLogFileFactory;
 import com.top_logic.util.sched.task.log.TaskLog;
 import com.top_logic.util.sched.task.log.TaskLogWrapper;
 import com.top_logic.util.sched.task.log.TransientTaskLog;
+import com.top_logic.util.sched.task.result.TaskResult;
+import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
 import com.top_logic.util.sched.task.schedule.SchedulingAlgorithmCombinator;
 import com.top_logic.util.sched.task.schedule.legacy.LegacyDailySchedule;
@@ -67,27 +68,23 @@ import com.top_logic.util.sched.task.schedule.legacy.LegacyWeeklySchedule;
  * to be retried.
  * </p>
  * 
+ * <p>
+ * Each concrete task decides whether it runs on every cluster node or only once in the cluster at
+ * a time, based on what it does.
+ * </p>
+ * 
+ * @implNote The decision is the implementation of {@link Task#isNodeLocal()}, whose documentation
+ *           describes the obligations of both variants.
+ * 
  * @author <a href="mailto:kha@top-logic.com">kha</a>
  */
-public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements Task {
+public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements Task {
 
 	/**
 	 * Configuration options for {@link TaskImpl}.
 	 */
 	public interface Config<I extends TaskImpl<?>> extends Task.Config<I> {
-
-		/**
-		 * @see #isRunOnStartup()
-		 */
-		static final String RUN_ON_START_UP_PROPERTY = "run-on-startup";
-
-		/**
-		 * Whether this task can run during system startup.
-		 */
-		@BooleanDefault(true)
-		@Name(RUN_ON_START_UP_PROPERTY)
-		boolean isRunOnStartup();
-
+		// No additional properties.
 	}
 
 	private final class RunRequest {
@@ -159,8 +156,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 
 	private final boolean _maintenanceModeSafe;
 
-	private final boolean _runOnStartup;
-
 	private final boolean _blockingAllowed;
 
 	private final boolean _blockedByDefault;
@@ -195,7 +190,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
-		_runOnStartup = true;
 		_blockingAllowed = Config.DEFAULT_BLOCKING_ALLOWED;
 		_blockedByDefault = Config.DEFAULT_BLOCKED_BY_DEFAULT_VALUE;
     }
@@ -241,7 +235,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
-		_runOnStartup = true;
 		_blockingAllowed = Config.DEFAULT_BLOCKING_ALLOWED;
 		_blockedByDefault = Config.DEFAULT_BLOCKED_BY_DEFAULT_VALUE;
    }
@@ -277,7 +270,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
-		_runOnStartup = true;
 		_blockingAllowed = Config.DEFAULT_BLOCKING_ALLOWED;
 		_blockedByDefault = Config.DEFAULT_BLOCKED_BY_DEFAULT_VALUE;
 	}
@@ -324,7 +316,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
-		_runOnStartup = true;
 		_blockingAllowed = Config.DEFAULT_BLOCKING_ALLOWED;
 		_blockedByDefault = Config.DEFAULT_BLOCKED_BY_DEFAULT_VALUE;
     }
@@ -452,8 +443,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 
 		_schedulingAlgorithm =
 			createLegacySchedule(daytype, date, daymask, hour, minute, interval, stopHour, stopMinute);
-		_runOnStartup = Boolean.parseBoolean(prop.getProperty("runOnStartup", "true").trim());
-		setRunOnStartup(_runOnStartup);
 		_needsMaintenanceMode = Config.DEFAULT_NEEDS_MAINTENANCE_MODE;
 		_maintenanceModeDelay = Config.DEFAULT_MAINTENANCE_MODE_DELAY;
 		_maintenanceModeSafe = Config.DEFAULT_MAINTENANCE_MODE_SAFE;
@@ -519,7 +508,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		}
 		_schedulingAlgorithm = SchedulingAlgorithmCombinator.combine(context, config.getSchedules());
 
-		_runOnStartup = config.isRunOnStartup();
 		_needsMaintenanceMode = config.isNeedingMaintenanceMode();
 		if (config.getMaintenanceModeDelay() < 0) {
 			throw new IllegalArgumentException("Maintenance mode delay must not be negative.");
@@ -626,6 +614,59 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		calcNextShed(now);
 	}
 
+	/**
+	 * Executes the given work in a system {@link ThreadContext} and writes the result protocol of
+	 * this run to the {@link #getLog() task log}.
+	 * 
+	 * <p>
+	 * Before the work starts, {@link TaskLog#taskStarted()} is called. The work may end the run
+	 * with a result of its own through {@link TaskLog#taskEnded(ResultType, ResKey, Throwable)}.
+	 * Otherwise, when the work returns or throws, the end result is written:
+	 * </p>
+	 * <ul>
+	 * <li>{@link ResultType#CANCELED}, if the work returns and the task was asked to stop,</li>
+	 * <li>{@link ResultType#WARNING}, if the work returns and has reported warnings,</li>
+	 * <li>{@link ResultType#SUCCESS}, if the work returns otherwise,</li>
+	 * <li>{@link ResultType#ERROR}, if the work throws any {@link Throwable}.</li>
+	 * </ul>
+	 * 
+	 * <p>
+	 * This fulfills the obligations of a {@link #isPersistent() persistent} task.
+	 * </p>
+	 * 
+	 * @see StateHandlingTask
+	 */
+	protected final void runWithResultProtocol(Runnable work) {
+		ThreadContext.inSystemContext(getClass(), () -> {
+			getLog().taskStarted();
+			try {
+				work.run();
+				endOnReturn();
+			} catch (Throwable exception) {
+				endOnThrowable(exception);
+			}
+		});
+	}
+
+	private void endOnReturn() {
+		TaskResult currentResult = getLog().getCurrentResult();
+		if (currentResult.getResultType() == ResultType.NOT_FINISHED) {
+			if (getLog().getState() == TaskState.CANCELING || getShouldStop()) {
+				getLog().taskEnded(ResultType.CANCELED, ResultType.CANCELED.getMessageI18N());
+			} else if (currentResult.hasWarnings()) {
+				getLog().taskEnded(ResultType.WARNING, ResultType.WARNING.getMessageI18N());
+			} else {
+				getLog().taskEnded(ResultType.SUCCESS, ResultType.SUCCESS.getMessageI18N());
+			}
+		}
+	}
+
+	private void endOnThrowable(Throwable exception) {
+		if (getLog().getCurrentResult().getResultType() == ResultType.NOT_FINISHED) {
+			getLog().taskEnded(ResultType.ERROR, com.top_logic.util.sched.I18NConstants.UNEXPECTED_ERROR, exception);
+		}
+	}
+
 	@Override
 	public boolean markAsRun(long runStart) {
 		boolean result = false;
@@ -663,30 +704,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		return getClass().getName() + "(" + getName() + ")";
     }
 
-    /** 
-     * Avoid this task to be run on system startup.
-     * 
-     * @param    aFlag    <code>false</code> to avoid running on system startup.
-     */
-    public void setRunOnStartup(boolean aFlag) {
-		if (!aFlag) {
-			long now = now();
-			long nextRun = calcNextShed(now);
-			long currentTimeMillis = System.currentTimeMillis();
-			if (nextRun == SchedulingAlgorithm.NO_SCHEDULE) {
-				return;
-			}
-			if (nextRun <= currentTimeMillis) {
-				// Make the scheduler assuming this task has been run now.
-				lastSched = currentTimeMillis;
-				long postponedRun = calcNextShed(now);
-				Logger.info("Task '" + getName() + "' was configured to not run on startup."
-					+ " Its next run is therefore postponed from " + new Date(nextRun) + " to "
-					+ new Date(postponedRun) + ".", TaskImpl.class);
-			}
-        }
-    }
-
 	/**
 	 * The current time.
 	 */
@@ -715,29 +732,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		return CalendarUtil.newSimpleDateFormat("yyyy-MM-dd");
 	}
 
-	/**
-	 * Defines, if this task need to run in every cluster node by itself.
-	 * 
-	 * In some cases it may be needful, if a task runs only on one cluster node (e.g. refresh of
-	 * external user data), these tasks need to return <code>false</code> here.
-	 * 
-	 * <p>
-	 * If this method returns <code>false</code>, the {@link Task} has to call
-	 * {@link TaskLog#taskStarted()} and
-	 * {@link TaskLog#taskEnded(com.top_logic.util.sched.task.result.TaskResult.ResultType, ResKey, Throwable)}
-	 * only on one of the nodes. The node is allowed to change from one run to another run, but has
-	 * to be the same during one run. <br/>
-	 * Additionally, if this method returns <code>false</code>, {@link #isPersistent()} will return
-	 * <code>true</code> and the implementation constraints mentioned there apply.
-	 * </p>
-	 * 
-	 * @return <code>true</code> when task must run in every cluster node.
-	 */
-	@Override
-	public boolean isNodeLocal() {
-		return true;
-	}
-
 	@Override
 	public boolean needsMaintenanceMode() {
 		return _needsMaintenanceMode;
@@ -751,11 +745,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 	@Override
 	public boolean isMaintenanceModeSafe() {
 		return _maintenanceModeSafe;
-	}
-
-	@Override
-	public boolean isRunOnStartup() {
-		return _runOnStartup;
 	}
 
 	@Override
@@ -812,8 +801,6 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 		_log = createLog(scheduler);
 		getLog().setEventQueue(scheduler.getTaskUpdateQueue());
 		onAttachToScheduler();
-
-		setRunOnStartup(_runOnStartup);
 	}
 
 	@Override

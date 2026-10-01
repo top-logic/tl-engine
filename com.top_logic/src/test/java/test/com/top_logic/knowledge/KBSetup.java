@@ -14,6 +14,7 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.AssertProtocol;
+import test.com.top_logic.basic.DBBoundTest;
 import test.com.top_logic.basic.DatabaseTestSetup;
 import test.com.top_logic.basic.DatabaseTestSetup.DBType;
 import test.com.top_logic.basic.DefaultTestFactory;
@@ -42,7 +43,7 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
  * 
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
-public class KBSetup extends RearrangableThreadContextSetup {
+public class KBSetup extends RearrangableThreadContextSetup implements DBBoundTest {
 
 	/**
 	 * Type of the {@link KnowledgeBase} under test.
@@ -236,6 +237,11 @@ public class KBSetup extends RearrangableThreadContextSetup {
     public Object configKey() {
 		return _type;
     }
+
+	@Override
+	public DBType getBoundDB() {
+		return _type.db();
+	}
 
     @Override
     protected void doSetUp() throws Exception {

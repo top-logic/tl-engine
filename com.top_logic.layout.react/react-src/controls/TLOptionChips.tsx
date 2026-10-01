@@ -1,7 +1,8 @@
 import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
-import { ARG_OPTION, CMD_GOTO, OptionImage, ReadonlyValue, withPill } from './selectOptions';
+import { ARG_OPTION, CMD_GOTO, OptionContent, ReadonlyValues } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 
 const { useCallback, useMemo, useRef } = React;
 
@@ -13,6 +14,12 @@ const { useCallback, useMemo, useRef } = React;
  * read without opening anything, and each is changed with one click. A field taking several values
  * toggles each independently; a field taking one switches the selection to the clicked option, and
  * a click on the selected option clears it unless the field is mandatory.
+ *
+ * Design system: `tl-chip` buttons with `aria-pressed` in a `tl-chip-group`; selected is the
+ * attribute, and so is the field's state (see fieldStateAttrs). The label stands in a
+ * `tl-chip__label`, which ends in an ellipsis where the chip is too narrow. A read-only field shows
+ * its values in `tl-select__values`, as the dropdown does; a disabled field renders every chip as an
+ * inactive button (native `disabled`, see showsValueOnly).
  *
  * The server hands this control the complete option list as soon as it is displayed - there is no
  * moment at which it could ask for it.
@@ -26,9 +33,7 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
   const options = (state.options ?? []) as OptionDescriptor[];
   const multiSelect = state.multiSelect === true;
   const mandatory = state.mandatory === true;
-  const editable = state.editable !== false;
-  const hasError = state.hasError === true;
-  const hasWarnings = state.hasWarnings === true;
+  const disabled = state.disabled === true;
 
   // Tracks the latest selection so that a second click lands on what the first one produced, even
   // while the echo of the first has not arrived yet.
@@ -47,6 +52,7 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
 
   const toggle = useCallback(
     (option: OptionDescriptor) => {
+      if (disabled) return;
       const selection = valueRef.current;
       const selected = selection.some((v) => v.value === option.value);
       if (multiSelect) {
@@ -60,7 +66,7 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
         send([]);
       }
     },
-    [multiSelect, mandatory, send]
+    [disabled, multiSelect, mandatory, send]
   );
 
   /** Leads to the place the given option is displayed at. */
@@ -71,13 +77,9 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
     [sendCommand]
   );
 
-  if (!editable) {
+  if (showsValueOnly(state)) {
     return (
-      <div id={controlId} className={rootClassName(state, 'tlOptionChips', 'tlOptionChips--immutable')}>
-        {value.map((v) => (
-          <ReadonlyValue key={v.value} option={v} onGoto={goto} />
-        ))}
-      </div>
+      <ReadonlyValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />
     );
   }
 
@@ -86,12 +88,8 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
       id={controlId}
       {...labelProps}
       role="group"
-      className={rootClassName(
-        state,
-        'tlOptionChips',
-        hasError && 'tlOptionChips--error',
-        !hasError && hasWarnings && 'tlOptionChips--warning'
-      )}
+      className={rootClassName(state, 'tl-chip-group')}
+      {...fieldStateAttrs(state, false)}
     >
       {options.map((option) => {
         const selected = selectedIds.has(option.value);
@@ -99,18 +97,12 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
           <button
             key={option.value}
             type="button"
-            className={
-              'tlOptionChips__chip' + (selected ? ' tlOptionChips__chip--selected' : '')
-            }
+            className="tl-chip tl-type-label"
             aria-pressed={selected}
+            disabled={disabled}
             onClick={() => toggle(option)}
           >
-            {withPill(option.colorRole, (
-              <>
-                <OptionImage image={option.image} />
-                <span className="tlOptionChips__chipLabel">{option.label}</span>
-              </>
-            ))}
+            <OptionContent option={option} labelClassName="tl-chip__label" />
           </button>
         );
       })}

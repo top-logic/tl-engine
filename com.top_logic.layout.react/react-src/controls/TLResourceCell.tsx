@@ -1,6 +1,6 @@
 import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { TLPill } from './pill/TLPill';
+import { withPill } from './selectOptions';
 
 /** Command sent when the user follows the link of the displayed value. */
 const CMD_GOTO = 'goto';
@@ -15,6 +15,9 @@ const CMD_GOTO = 'goto';
  * - hasTooltip: boolean - whether the server provides a rich tooltip (fetched lazily)
  * - hasLink: boolean    - whether clicking navigates to the object
  * - colorRole?: string  - color role the object carries in the model; shown as a pill of that role
+ *
+ * Design system: a read-only value, `tl-field-value` (an `a` where it is a link), with the icon
+ * in `tl-icon-sm` and the label in `tl-field-value__text`.
  */
 const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -28,34 +31,32 @@ const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   const colorRole = (state.colorRole as string) || undefined;
 
   const icon = iconCss
-    ? <i className={iconCss} />
+    ? <i className={iconCss + ' tl-icon-sm'} aria-hidden="true" />
     : iconSrc
-    ? <img src={iconSrc} className="tlTypeIcon" alt="" />
+    ? <img src={iconSrc} className="tl-icon-sm" alt="" />
     : null;
 
-  const presentation = (
+  // A colored object is drawn as a pill; one the model gives no role stays plain.
+  const content = withPill(colorRole, (
     <>
       {icon}
-      {label && <span className="tlResourceLabel">{label}</span>}
+      {label && <span className="tl-field-value__text">{label}</span>}
     </>
-  );
-
-  // A colored object is drawn as a pill; one the model gives no role stays plain.
-  const content = colorRole ? <TLPill role={colorRole}>{presentation}</TLPill> : presentation;
+  ));
 
   const handleClick = React.useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     sendCommand(CMD_GOTO, {});
   }, [sendCommand]);
 
-  const className = rootClassName(state, 'tlResourceCell');
+  const className = rootClassName(state, 'tl-field-value tl-type-body');
   const tooltipAttr = hasTooltip ? 'key:tooltip' : undefined;
 
   if (hasLink) {
     return (
       <a
         id={controlId}
-        className={rootClassName(state, className)}
+        className={className}
         href="#"
         onClick={handleClick}
         data-tooltip={tooltipAttr}
@@ -66,7 +67,7 @@ const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   return (
-    <span id={controlId} className={rootClassName(state, className)} data-tooltip={tooltipAttr}>
+    <span id={controlId} className={className} data-tooltip={tooltipAttr}>
       {content}
     </span>
   );

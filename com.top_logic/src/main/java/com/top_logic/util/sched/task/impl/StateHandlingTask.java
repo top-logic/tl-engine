@@ -9,13 +9,11 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.util.sched.I18NConstants;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.TaskState;
 import com.top_logic.util.sched.task.composite.CompositeTaskImpl;
 import com.top_logic.util.sched.task.impl.StateHandlingTask.Config;
 import com.top_logic.util.sched.task.log.TaskLog;
-import com.top_logic.util.sched.task.result.TaskResult;
 import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 
 /**
@@ -62,17 +60,7 @@ public abstract class StateHandlingTask<T extends Config<?>> extends TaskImpl<T>
 	@Override
 	public final void run() {
 		super.run();
-		ThreadContext.inSystemContext(getClass(), this::runWithSystemContext);
-	}
-
-	private void runWithSystemContext() {
-		getLog().taskStarted();
-		try {
-			runHook();
-			cleanupOnTaskReturn();
-		} catch (Throwable exception) {
-			cleanupOnThrowable(exception);
-		}
+		runWithResultProtocol(this::runHook);
 	}
 
 	/**
@@ -109,25 +97,5 @@ public abstract class StateHandlingTask<T extends Config<?>> extends TaskImpl<T>
 	 * </p>
 	 */
 	protected abstract void runHook();
-
-	private void cleanupOnTaskReturn() {
-		TaskResult currentResult = getLog().getCurrentResult();
-		if (currentResult.getResultType() == ResultType.NOT_FINISHED) {
-			if (getLog().getState() == TaskState.CANCELING || getShouldStop()) {
-				getLog().taskEnded(ResultType.CANCELED, ResultType.CANCELED.getMessageI18N());
-			} else if (currentResult.hasWarnings()) {
-				getLog().taskEnded(ResultType.WARNING, ResultType.WARNING.getMessageI18N());
-			} else {
-				getLog().taskEnded(ResultType.SUCCESS, ResultType.SUCCESS.getMessageI18N());
-			}
-			return;
-		}
-	}
-
-	private void cleanupOnThrowable(Throwable exception) {
-		if (getLog().getCurrentResult().getResultType() == ResultType.NOT_FINISHED) {
-			getLog().taskEnded(ResultType.ERROR, I18NConstants.UNEXPECTED_ERROR, exception);
-		}
-	}
 
 }

@@ -193,8 +193,8 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       )}
       {!isMinimized && errorMessage && (
-        <div className="tlFormField__error tlPanel__error" role="alert">
-          <ThemeIcon encoded={state.errorIcon as string | undefined} className="tlFormField__errorIcon" />
+        <div className="tl-form-field__message tl-type-label tlPanel__error" role="alert">
+          {typeof state.errorIcon === 'string' && <ThemeIcon encoded={state.errorIcon} className="tl-icon-sm" />}
           <span>{errorMessage}</span>
         </div>
       )}

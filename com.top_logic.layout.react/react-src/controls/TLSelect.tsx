@@ -1,5 +1,7 @@
 import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps, SelectStateJson } from 'tl-react-bridge';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
 
@@ -10,6 +12,9 @@ interface SelectOption {
 
 /**
  * A select dropdown rendered via React.
+ *
+ * A read-only field shows the label of the selected option as a tl-field-value; a disabled field
+ * renders the select as an inactive one (native `disabled`, see showsValueOnly).
  */
 const TLSelect: React.FC<TLCellProps> = ({ controlId, config }) => {
   const state = useTLState<Partial<SelectStateJson>>();
@@ -27,30 +32,19 @@ const TLSelect: React.FC<TLCellProps> = ({ controlId, config }) => {
   // The options of this component carry string values.
   const options = (state.options ?? config?.options ?? []) as SelectOption[];
 
-  if (state.editable === false) {
+  if (showsValueOnly(state)) {
     const selectedLabel = options.find((opt) => opt.value === value)?.label ?? '';
-    return (
-      <span id={controlId} className={rootClassName(state, 'tlReactSelect tlReactSelect--immutable')}>
-        {selectedLabel}
-      </span>
-    );
+    return <FieldValue id={controlId} className={rootClassName(state)} text={selectedLabel} />;
   }
-
-  const hasError = state.hasError === true;
-  const hasWarnings = state.hasWarnings === true;
-  const cls = [
-    'tlReactSelect',
-    hasError ? 'tlReactSelect--error' : '',
-    !hasError && hasWarnings ? 'tlReactSelect--warning' : '',
-  ].filter(Boolean).join(' ');
 
   return (
     <span id={controlId}>
       <select
         value={(value as string) ?? ''}
         onChange={handleChange}
-        className={rootClassName(state, cls)}
-        aria-invalid={hasError || undefined}
+        disabled={state.disabled === true}
+        className={rootClassName(state, 'tl-field tl-type-body')}
+        {...fieldStateAttrs(state)}
         id={inputId}
         {...labelProps}
       >

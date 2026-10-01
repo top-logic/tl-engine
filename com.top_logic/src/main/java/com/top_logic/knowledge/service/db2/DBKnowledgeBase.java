@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -143,6 +144,7 @@ import com.top_logic.knowledge.search.InternalExpressionFactory;
 import com.top_logic.knowledge.search.Order;
 import com.top_logic.knowledge.search.QueryArguments;
 import com.top_logic.knowledge.search.RangeParam;
+import com.top_logic.knowledge.search.RevisionParam;
 import com.top_logic.knowledge.search.RevisionQuery;
 import com.top_logic.knowledge.search.RevisionQuery.LoadStrategy;
 import com.top_logic.knowledge.search.RevisionQueryArguments;
@@ -1861,13 +1863,18 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 			for (Iterator<Entry<MetaObject, HistoryQuery>> it = monomorphicSearches.entrySet().iterator(); it.hasNext(); ) {
 				Entry<MetaObject, HistoryQuery> entry = it.next();
 				HistoryQuery monomorphicQuery = entry.getValue();
-				Object[] enhancedArguments =
-					addInternalArguments(monomorphicQuery, requestedBranch, Revision.CURRENT_REV, Revision.CURRENT_REV,
-						0, -1, arguments);
 
 				// TODO: Transform order.
 				List<SQLOrder> orderBy = new ArrayList<>();
 				List<HistorySearch> searches = SQLBuilder.createHistorySearches(this.moRepository, monomorphicQuery);
+
+				Object[] enhancedArguments =
+					addInternalArguments(monomorphicQuery, requestedBranch, Revision.CURRENT_REV, Revision.CURRENT_REV,
+						0, -1, arguments);
+				if (monomorphicQuery.getRevisionParam() == RevisionParam.range) {
+					enhancedArguments = addRevisionRangeArguments(monomorphicQuery, queryArguments, currentRevision,
+						enhancedArguments);
+				}
 				for (HistorySearch search : searches) {
 					try {
 						Map<ObjectBranchId, List<LongRange>> partialResult = 
@@ -1895,7 +1902,69 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		
 		assert result != null : "At least one search was executed.";
 		adaptToCurrentRevision(result, currentRevision);
+		if (query.getRevisionParam() == RevisionParam.range) {
+			restrictToRevisionRange(result, queryArguments);
+		}
 		return result;
+	}
+
+	/**
+	 * Adds the values for {@link SQLBuilder#START_REVISION_PARAM} and
+	 * {@link SQLBuilder#STOP_REVISION_PARAM} to the given arguments.
+	 *
+	 * <p>
+	 * The database search must not exclude rows ending before the requested start revision, when
+	 * they are still alive in the current revision of this {@link KnowledgeBase}, because
+	 * {@link #adaptToCurrentRevision(Map, long)} extends them to the future.
+	 * </p>
+	 */
+	private static Object[] addRevisionRangeArguments(HistoryQuery monomorphicQuery,
+			HistoryQueryArguments queryArguments, long currentRevision, Object[] arguments) {
+		Map<String, Integer> argumentIndexByName = monomorphicQuery.getArgumentIndexByName();
+		int startIndex = argumentIndexByName.get(SQLBuilder.START_REVISION_PARAM);
+		int stopIndex = argumentIndexByName.get(SQLBuilder.STOP_REVISION_PARAM);
+		Object[] result = Arrays.copyOf(arguments, Math.max(arguments.length, Math.max(startIndex, stopIndex) + 1));
+		result[startIndex] = Long.valueOf(Math.min(queryArguments.getStartRevision(), currentRevision));
+		result[stopIndex] = Long.valueOf(queryArguments.getStopRevision());
+		return result;
+	}
+
+	/**
+	 * Restricts the life periods in the given result to the revision range requested in the given
+	 * {@link HistoryQueryArguments}.
+	 *
+	 * <p>
+	 * The database search already skips rows outside the requested range, see
+	 * {@link SQLBuilder#START_REVISION_PARAM}. This cuts off the parts of the life periods that
+	 * exceed the range and removes objects that do not match in any revision of the requested
+	 * range.
+	 * </p>
+	 *
+	 * @see HistoryQueryArguments#getStartRevision()
+	 * @see HistoryQueryArguments#getStopRevision()
+	 */
+	private static void restrictToRevisionRange(Map<ObjectBranchId, List<LongRange>> result,
+			HistoryQueryArguments queryArguments) {
+		long startRevision = queryArguments.getStartRevision();
+		long stopRevision = queryArguments.getStopRevision();
+		List<LongRange> requestedRange;
+		if (stopRevision == Revision.CURRENT_REV) {
+			requestedRange = LongRangeSet.endSection(startRevision);
+		} else {
+			// Stop revision is exclusive.
+			requestedRange = LongRangeSet.range(startRevision, stopRevision - 1);
+		}
+
+		Iterator<Entry<ObjectBranchId, List<LongRange>>> resultIt = result.entrySet().iterator();
+		while (resultIt.hasNext()) {
+			Entry<ObjectBranchId, List<LongRange>> resultEntry = resultIt.next();
+			List<LongRange> restricted = LongRangeSet.intersect(resultEntry.getValue(), requestedRange);
+			if (restricted.isEmpty()) {
+				resultIt.remove();
+			} else {
+				resultEntry.setValue(restricted);
+			}
+		}
 	}
 
 	/**

@@ -109,7 +109,7 @@ public class BasicTestCase extends TestCase implements InContext {
     public static final double EPSILON = 1E-20;
     
     /** 
-     * Project local temporary directory for tests. 
+     * Project local temporary directory for tests, see {@link ScratchDirectory}.
      * 
      * Must only be used through:
      * <ul>
@@ -119,7 +119,7 @@ public class BasicTestCase extends TestCase implements InContext {
      * <li>{@link #deleteTestDir()}</li>
      * </ul>
      */
-    private static final File TMP = new File("tmp");
+    private static final File TMP = ScratchDirectory.get();
 
     /** Use this to pretty print the Bytes used in log Space */
     protected static final NumberFormat   NUMF    = NumberFormat.getInstance();

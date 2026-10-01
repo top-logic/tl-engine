@@ -16,6 +16,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.ConfigLoaderTestUtil;
 import test.com.top_logic.basic.LoggingTestSetup;
+import test.com.top_logic.basic.ScratchDirectory;
 import test.com.top_logic.basic.SimpleTestFactory;
 import test.com.top_logic.basic.TestComment;
 import test.com.top_logic.basic.TestLayoutsNormalized;
@@ -37,6 +38,35 @@ import com.top_logic.basic.tooling.ModuleLayoutConstants;
  * Use this class only for modules not depending on the "com.top_logic" module. For those, use
  * <code>AbstractTestAll</code>.
  * </p>
+ * 
+ * <p>
+ * The collected tests are controlled by the following system properties:
+ * </p>
+ * <dl>
+ * <dt>{@link #TARGET_PROPERTY}</dt>
+ * <dd>A test directory or a single test file (Java test class or script) to run instead of all
+ * tests of the module.</dd>
+ * <dt>{@link #RECURSIVE_PROPERTY}</dt>
+ * <dd>Whether a directory given in {@link #TARGET_PROPERTY} is searched recursively.</dd>
+ * <dt>{@link ShardSelection#PROPERTY}</dt>
+ * <dd>Whether all tests run, all tests except the scripted ones, or only the scripted tests of one
+ * shard, see {@link ShardSelection}. With a directory in
+ * {@link #TARGET_PROPERTY}, the selection applies to the tests of that directory. With a single
+ * file in {@link #TARGET_PROPERTY}, the selection is ignored.</dd>
+ * <dt>{@link ShardSelection#MODULES_PROPERTY}</dt>
+ * <dd>The modules whose scripted tests are distributed over the same shards, see
+ * {@link ShardSelection#moduleOffset(String, String)}.</dd>
+ * <dt>{@link DBSelection#PROPERTY}</dt>
+ * <dd>Whether all tests run, only the tests bound to one worker database, or all tests except the
+ * ones bound to a worker database, see {@link DBSelection}. Applies like
+ * {@link ShardSelection#PROPERTY} to a directory in {@link #TARGET_PROPERTY} and is ignored for a
+ * single file.</dd>
+ * <dt>{@link DBSelection#WORKERS_PROPERTY}</dt>
+ * <dd>The databases that run their tests in separate runs, see
+ * {@link DBSelection#defaultWorkers()}.</dd>
+ * <dt>{@link ScratchDirectory#PROPERTY}</dt>
+ * <dd>The directory for temporary test files, see {@link ScratchDirectory}.</dd>
+ * </dl>
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
@@ -78,9 +108,31 @@ public abstract class AbstractBasicTestAll {
 	}
 
 	/**
+	 * System property selecting a test directory or file to run instead of all tests of the
+	 * module.
+	 */
+	public static final String TARGET_PROPERTY = "TestAll.target";
+
+	/**
+	 * System property selecting whether a directory given in {@link #TARGET_PROPERTY} is searched
+	 * recursively.
+	 */
+	public static final String RECURSIVE_PROPERTY = "TestAll.recursive";
+
+	/**
 	 * Constant for invoking a main method without arguments.
 	 */
 	protected static final String[] NO_ARGS = new String[0];
+
+	/**
+	 * The scripted tests to run, parsed from {@link ShardSelection#PROPERTY}.
+	 */
+	private ShardSelection _scripted = ShardSelection.ALL;
+
+	/**
+	 * The database tests to run, parsed from {@link DBSelection#PROPERTY}.
+	 */
+	private DBSelection _db = DBSelection.ALL;
 
 	/**
 	 * Creates an {@link AbstractBasicTestAll} and prepares the system for tests.
@@ -94,6 +146,7 @@ public abstract class AbstractBasicTestAll {
 		ClassLoader.getSystemClassLoader().setDefaultAssertionStatus(true);
 		// Configure the Logger according to system property Logger4.STDOUT_LEVEL_PROPERTY. (Default: Only errors and worse)
 		Logger.configureStdout();
+		ScratchDirectory.applyStorageDefault();
 	}
 	
 	/**
@@ -116,12 +169,18 @@ public abstract class AbstractBasicTestAll {
 		} catch (RuntimeException | Error ex) {
 			String testName = getClass().getSimpleName();
 			String message = "Failed to build the test suite. Cause: " + ex.getMessage();
-			return SimpleTestFactory.newBrokenTest(testName, new RuntimeException(message, ex));
+			// A suite as root: A single test case as root is not reported by the JUnit platform,
+			// since its class is not the TestAll class selected by the test run.
+			TestSuite suite = new TestSuite(testName);
+			suite.addTest(SimpleTestFactory.newBrokenTest(testName, new RuntimeException(message, ex)));
+			return suite;
 		}
 	}
 
 	private Test getTests() {
 		ServiceLoader<TestCollector> testCollectors = ServiceLoader.load(TestCollector.class);
+		_scripted = ShardSelection.fromSystemProperty();
+		_db = DBSelection.fromSystemProperties();
 		String targetPath = getTargetPath();
 		if (isEmpty(targetPath)) {
 			return getAllTests(testCollectors);
@@ -131,13 +190,14 @@ public abstract class AbstractBasicTestAll {
 	}
 
 	private String getTargetPath() {
-		String propertySelectedTest = "TestAll.target";
-		return System.getProperty(propertySelectedTest);
+		return System.getProperty(TARGET_PROPERTY);
 	}
 
 	private Test getAllTests(Iterable<TestCollector> collectors) {
 		TestSuite suite = new TestSuite("TestAll for " + MODULE_LAYOUT.getModuleDir().getName());
-		suite.addTest(getInternalModuleIndependentTests(collectors));
+		if (_scripted.includesNonScripted() && _db.includesUnbound()) {
+			suite.addTest(getInternalModuleIndependentTests(collectors));
+		}
 		suite.addTest(getInternalModuleSpecificTests(collectors));
 		return suite;
 	}
@@ -210,6 +270,8 @@ public abstract class AbstractBasicTestAll {
 				collector.addTestForDirectory(suite, testDirectory, recursive);
 			}
 		}
+		_scripted.apply(ShardSelection.moduleOffset(MODULE_LAYOUT.getModuleDir().getName()), suite);
+		_db.apply(suite);
 		if (suite.countTestCases() == 0) {
 			String testName = "No tests in directory '" + createTestName(testDirectory) + "'.";
 			suite.addTest(SimpleTestFactory.newSuccessfulTest(testName));
@@ -224,7 +286,7 @@ public abstract class AbstractBasicTestAll {
 	}
 
 	private boolean shouldCollectRecursively() {
-		return Boolean.parseBoolean(System.getProperty("TestAll.recursive"));
+		return Boolean.parseBoolean(System.getProperty(RECURSIVE_PROPERTY));
 	}
 
 	private File toTestDirectory(File directory) {

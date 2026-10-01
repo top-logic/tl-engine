@@ -67,15 +67,17 @@ public class TaskTestUtil {
 		return createInstance(config);
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static TaskImpl.Config<?> createTaskImplConfig(String taskName,
 			Class<? extends TaskImpl> implementationClass) {
-		TaskImpl.Config<?> config = TypedConfiguration.newConfigItem(TaskImpl.Config.class);
+		TaskImpl.Config config = TypedConfiguration.newConfigItem(TestingTask.Config.class);
 		config.setName(taskName);
+		config.setImplementationClass(implementationClass);
 		return config;
 	}
 
 	public static Task.Config<?> createTaskImplConfig(String taskName) {
-		TaskImpl.Config<?> config = TypedConfiguration.newConfigItem(TaskImpl.Config.class);
+		TestingTask.Config<?> config = TypedConfiguration.newConfigItem(TestingTask.Config.class);
 		config.setName(taskName);
 		return config;
 	}

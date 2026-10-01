@@ -134,7 +134,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
             <label className="tlColumnSelect__label">
               <input
                 type="checkbox"
-                className="tlReactCheckbox"
+                className="tl-checkbox"
                 checked={entry.visible}
                 disabled={lastVisible}
                 onChange={(e) => handleToggle(entry.name, e.target.checked)}

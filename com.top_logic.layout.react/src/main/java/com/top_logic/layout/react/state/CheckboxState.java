@@ -125,6 +125,9 @@ public interface CheckboxState extends com.top_logic.layout.react.state.FieldSta
 	com.top_logic.layout.react.state.CheckboxState setEditable(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.CheckboxState setDisabled(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.CheckboxState setMandatory(boolean value);
 
 	@Override

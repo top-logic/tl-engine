@@ -1,5 +1,6 @@
 import { React, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { showsValueOnly } from './form/fieldState';
 
 const { useCallback } = React;
 
@@ -20,6 +21,9 @@ const { useCallback } = React;
  *
  * A field holding no value puts the handle at the lower bound and shows no text, so an empty value
  * is not read as the smallest one.
+ *
+ * A read-only field shows the text only; a disabled field renders the track with its handle as an
+ * inactive input (native `disabled`, see showsValueOnly).
  */
 const TLSlider: React.FC<TLCellProps> = ({ controlId, state }) => {
   const inputId = fieldInputId(controlId);
@@ -43,7 +47,7 @@ const TLSlider: React.FC<TLCellProps> = ({ controlId, state }) => {
   const label = (state.valueLabel as string) ?? '';
   const number = typeof value === 'number' ? value : null;
 
-  if (state.editable === false) {
+  if (showsValueOnly(state)) {
     return (
       <span id={controlId} className={rootClassName(state, 'tlSlider tlSlider--immutable')}>
         {label}

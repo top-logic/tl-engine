@@ -64,6 +64,12 @@ public class CheckboxState_Impl extends com.top_logic.layout.react.state.impl.Fi
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.CheckboxState setDisabled(boolean value) {
+		internalSetDisabled(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.CheckboxState setMandatory(boolean value) {
 		internalSetMandatory(value);
 		return this;

@@ -245,6 +245,127 @@ public class TestReactValueListControl extends TestCase {
 	}
 
 	/**
+	 * The values of a disabled field are shown as inactive inputs, not as displayed values.
+	 */
+	public void testDisabled() {
+		AbstractFieldModel model = new AbstractFieldModel(Arrays.asList("T1", "T2"));
+		model.setDisabled(true);
+		ValueList list = list(model, FieldSpec.of(String.class, "Texts"));
+
+		assertEquals(Boolean.TRUE, list.disabledOf(0));
+		assertEquals(Boolean.TRUE, list.disabledOf(1));
+		assertEquals(Boolean.FALSE, list.editableOf(0));
+	}
+
+	/**
+	 * Disabling and enabling the field disables and enables its values with it, also where the
+	 * field is not editable either way.
+	 */
+	public void testDisabledFollows() {
+		AbstractFieldModel model = new AbstractFieldModel(Arrays.asList("T1", "T2"));
+		model.setEditable(false);
+		ValueList list = list(model, FieldSpec.of(String.class, "Texts"));
+		assertEquals(Boolean.FALSE, list.disabledOf(0));
+
+		model.setDisabled(true);
+
+		assertEquals(Boolean.TRUE, list.disabledOf(0));
+		assertEquals(Boolean.TRUE, list.disabledOf(1));
+
+		model.setEditable(true);
+		model.setDisabled(false);
+
+		assertEquals(Boolean.FALSE, list.disabledOf(0));
+		assertEquals(Boolean.TRUE, list.editableOf(0));
+	}
+
+	/**
+	 * A list saved while disabled shows its values as read-only values afterwards: none of them can
+	 * be entered, and a value sent for one of them is not taken.
+	 */
+	public void testViewAfterDisabled() {
+		AbstractFieldModel model = new AbstractFieldModel(Arrays.asList("T1", "T2"));
+		ValueList list = list(model, FieldSpec.of(String.class, "Texts"));
+		mode(model, true, false);
+		mode(model, false, true);
+
+		mode(model, false, false);
+
+		assertReadOnly(list);
+		list.type(0, "X");
+		assertEquals("A value of a field that is only displayed is not taken",
+			Arrays.asList("T1", "T2"), model.getValue());
+	}
+
+	/**
+	 * A displayed list that is edited while disabled shows its values as inactive inputs.
+	 */
+	public void testDisabledAfterView() {
+		AbstractFieldModel model = new AbstractFieldModel(Arrays.asList("T1", "T2"));
+		model.setEditable(false);
+		ValueList list = list(model, FieldSpec.of(String.class, "Texts"));
+
+		mode(model, false, true);
+
+		for (int n = 0; n < 2; n++) {
+			assertEquals(Boolean.FALSE, list.editableOf(n));
+			assertEquals(Boolean.TRUE, list.disabledOf(n));
+		}
+		list.type(0, "X");
+		assertEquals(Arrays.asList("T1", "T2"), model.getValue());
+	}
+
+	/**
+	 * A list that stops being disabled while it is edited makes its values editable again.
+	 */
+	public void testEditableAfterDisabled() {
+		AbstractFieldModel model = new AbstractFieldModel(Arrays.asList("T1", "T2"));
+		model.setEditable(false);
+		ValueList list = list(model, FieldSpec.of(String.class, "Texts"));
+		mode(model, false, true);
+
+		mode(model, true, false);
+
+		for (int n = 0; n < 2; n++) {
+			assertEquals(Boolean.TRUE, list.editableOf(n));
+			assertEquals(Boolean.FALSE, list.disabledOf(n));
+		}
+		list.type(0, "X");
+		assertEquals(Arrays.asList("X", "T2"), model.getValue());
+	}
+
+	/**
+	 * A value added to a list that goes back to being displayed after being disabled is read-only,
+	 * like the values that were there before.
+	 */
+	public void testExternalChangeAfterDisabled() {
+		AbstractFieldModel model = new AbstractFieldModel(Arrays.asList("T1"));
+		ValueList list = list(model, FieldSpec.of(String.class, "Texts"));
+		mode(model, false, true);
+		mode(model, false, false);
+
+		model.setValue(Arrays.asList("T1", "T2"));
+
+		assertReadOnly(list);
+	}
+
+	/**
+	 * Sets the state of the list the way a form field does when its mode is applied: the disabled
+	 * state first, then the editability.
+	 */
+	private static void mode(AbstractFieldModel model, boolean editable, boolean disabled) {
+		model.setDisabled(disabled);
+		model.setEditable(editable);
+	}
+
+	private static void assertReadOnly(ValueList list) {
+		for (int n = 0; n < list.elements().size(); n++) {
+			assertEquals("Value " + n + " is not editable", Boolean.FALSE, list.editableOf(n));
+			assertEquals("Value " + n + " is not disabled", Boolean.FALSE, list.disabledOf(n));
+		}
+	}
+
+	/**
 	 * An unordered collection is written back as a list in the order its values are displayed in,
 	 * so that a value keeps the position it was entered at.
 	 */
@@ -329,6 +450,11 @@ public class TestReactValueListControl extends TestCase {
 		/** Whether the control at the given position can be changed. */
 		Object editableOf(int index) {
 			return elements().get(index).scriptingScalarState().get(FieldState.EDITABLE__PROP);
+		}
+
+		/** Whether the control at the given position is shown as an inactive input. */
+		Object disabledOf(int index) {
+			return elements().get(index).scriptingScalarState().get(FieldState.DISABLED__PROP);
 		}
 
 		/** Enters the given text into the control at the given position, as its client does. */

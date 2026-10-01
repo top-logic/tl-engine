@@ -34,7 +34,7 @@ import com.top_logic.tools.resources.translate.deepl.DeepLTranslator;
 /**
  * Maven goal to translate resource files.
  */
-@Mojo(name = "translate")
+@Mojo(name = "translate", threadSafe = true)
 public class ResourceTranslator extends AbstractTranslateMojo {
 
 	private static final String CODE_OPEN = "<code>";

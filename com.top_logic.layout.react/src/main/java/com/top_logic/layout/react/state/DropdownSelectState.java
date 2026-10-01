@@ -274,6 +274,9 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 	com.top_logic.layout.react.state.DropdownSelectState setEditable(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.DropdownSelectState setDisabled(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.DropdownSelectState setMandatory(boolean value);
 
 	@Override

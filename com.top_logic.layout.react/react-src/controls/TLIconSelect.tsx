@@ -1,5 +1,6 @@
 import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { showsValueOnly } from './form/fieldState';
 import IconSelectPopup, { IconPreview } from './icon/IconSelectPopup';
 import type { IconEntry } from './icon/IconSelectPopup';
 
@@ -13,6 +14,8 @@ const { useState, useCallback, useRef } = React;
  * State from server:
  *  - value: string | null     - Encoded ThemeImage (e.g. "css:fa-solid fa-home")
  *  - editable: boolean        - Whether the field is editable
+ *  - disabled: boolean        - Whether the field that is not editable shows an inactive swatch
+ *                               button that opens no popup (see showsValueOnly) instead of the icon
  *  - icons: IconEntry[]       - Icon metadata (populated on loadIcons)
  *  - iconsLoaded: boolean     - Whether icons have been loaded
  */
@@ -55,8 +58,8 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
     await sendCommand('loadIcons');
   }, [sendCommand]);
 
-  // Immutable rendering
-  if (!editable) {
+  // Read-only rendering
+  if (showsValueOnly(state)) {
     return (
       <span id={controlId} className={rootClassName(state, 'tlIconSelect tlIconSelect--immutable')}>
         <span className="tlIconSelect__swatch">

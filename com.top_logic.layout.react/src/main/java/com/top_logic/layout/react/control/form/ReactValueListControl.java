@@ -128,12 +128,11 @@ public class ReactValueListControl extends ReactFormFieldControl {
 	private void reconcile() {
 		List<Object> values = ListElementFieldModel.elementsOf(getFieldModel());
 		int count = values.size();
-		boolean editable = getFieldModel().isEditable();
 
 		int kept = Math.min(count, _elementModels.size());
 		for (int n = 0; n < kept; n++) {
 			ListElementFieldModel element = _elementModels.get(n);
-			element.setEditable(editable);
+			syncState(element);
 			element.syncValue(values.get(n));
 		}
 		if (count == _elementModels.size()) {
@@ -151,7 +150,7 @@ public class ReactValueListControl extends ReactFormFieldControl {
 			dropped.add(_elementControls.remove(last));
 		}
 		for (int n = _elementModels.size(); n < count; n++) {
-			createElement(n, values.get(n), editable);
+			createElement(n, values.get(n));
 		}
 		putState(ELEMENTS, new ArrayList<>(_elementControls));
 		for (ReactControl control : dropped) {
@@ -159,14 +158,63 @@ public class ReactValueListControl extends ReactFormFieldControl {
 		}
 	}
 
-	private void createElement(int index, Object value, boolean editable) {
+	private void createElement(int index, Object value) {
 		ListElementFieldModel elementModel = new ListElementFieldModel(getFieldModel(), index, value);
-		elementModel.setEditable(editable);
+		syncState(elementModel);
 		ReactControl control = _elementProvider.createField(getReactContext(), _elementSpec, elementModel);
 		_elementModels.add(elementModel);
 		_elementControls.add(control);
 		if (isAttached()) {
 			control.attach();
+		}
+	}
+
+	/**
+	 * Gives a single value the editability and the disabled state of the list.
+	 *
+	 * <p>
+	 * Both are set on every change of either: the effective editability of a
+	 * {@link ListElementFieldModel} combines the two, so a value whose editability were set only
+	 * while the list changes it would become editable again when the list stops being disabled
+	 * while it stays read-only.
+	 * </p>
+	 *
+	 * @implNote The editability is set first, so that a value never turns editable in passing on
+	 *           the way to a state in which it is not.
+	 */
+	private void syncState(ListElementFieldModel element) {
+		FieldModel list = getFieldModel();
+		element.setEditable(list.isEditable());
+		element.setDisabled(list.isDisabled());
+	}
+
+	/**
+	 * Passes the editability on to the single values.
+	 */
+	@Override
+	protected void setEditable(boolean editable) {
+		super.setEditable(editable);
+		syncElementStates();
+	}
+
+	/**
+	 * Passes the disabled state on to the single values, so a disabled list shows each of them as
+	 * an inactive input.
+	 */
+	@Override
+	protected void setDisabled(boolean disabled) {
+		super.setDisabled(disabled);
+		syncElementStates();
+	}
+
+	private void syncElementStates() {
+		// Called from the super constructor, before the elements exist; the reconciliation at the
+		// end of the constructor sets their initial state.
+		if (_elementModels == null) {
+			return;
+		}
+		for (ListElementFieldModel element : _elementModels) {
+			syncState(element);
 		}
 	}
 

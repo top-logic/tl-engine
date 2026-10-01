@@ -10,6 +10,8 @@ import {
   fieldInputId,
 } from 'tl-react-bridge';
 import type { TLCellProps, NumberInputStateJson } from 'tl-react-bridge';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import { FieldValue } from './form/FieldValue';
 
 const { useCallback } = React;
 
@@ -38,6 +40,9 @@ const { useCallback } = React;
  * where no label does. state.debounceMs names the span a typed value is held back before it is
  * sent, defaulting to VALUE_DEBOUNCE_MS; state.sendValueOnBlur overrides it, and this field sets
  * it, so the span matters here only where the server turns the blur behaviour off.
+ *
+ * A read-only field shows the text as a tl-field-value; a disabled field renders the input as an
+ * inactive one (native `disabled`, see showsValueOnly).
  */
 const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<NumberInputStateJson>>();
@@ -62,22 +67,12 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
 
   const text = value == null ? '' : String(value);
 
-  if (state.editable === false) {
-    return (
-      <span id={controlId} className={rootClassName(state, 'tlReactNumberInput tlReactNumberInput--immutable')}>
-        {text}
-      </span>
-    );
+  if (showsValueOnly(state)) {
+    return <FieldValue id={controlId} className={rootClassName(state)} text={text} />;
   }
 
   const hasError = state.hasError === true;
-  const hasWarnings = state.hasWarnings === true;
   const errorMessage = state.errorMessage;
-  const cls = [
-    'tlReactNumberInput',
-    hasError ? 'tlReactNumberInput--error' : '',
-    !hasError && hasWarnings ? 'tlReactNumberInput--warning' : '',
-  ].filter(Boolean).join(' ');
 
   return (
     <span id={controlId}>
@@ -89,8 +84,9 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
         onBlur={handleBlur}
         onKeyDown={handleSubmitKey}
         placeholder={state.placeholder}
-        className={rootClassName(state, cls)}
-        aria-invalid={hasError || undefined}
+        disabled={state.disabled === true}
+        className={rootClassName(state, 'tl-field tl-type-body')}
+        {...fieldStateAttrs(state)}
         {...tooltipProps(hasError ? errorMessage : undefined)}
         id={inputId}
         {...labelProps}

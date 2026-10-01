@@ -35,31 +35,30 @@
  * Bar buttons are icons, not outlined pills: the ring only existed to hold them apart from the
  * accent background they no longer sit on.
  */
-.tlAppBar--primary .tlReactButton {
+.tlAppBar--primary .tl-button {
 	color: var(--icon-primary);
 	box-shadow: none;
 	border-radius: var(--corner-radius, 0.25rem);
 }
 
-.tlAppBar--primary button.tlReactButton:not(:disabled):hover {
+.tlAppBar--primary button.tl-button:not(:disabled):hover {
 	background: var(--layer-hover);
 	color: var(--icon-primary);
 }
 
-.tlAppBar--primary button.tlReactButton:not(:disabled):active {
+.tlAppBar--primary button.tl-button:not(:disabled):active {
 	background: var(--layer-active);
 	color: var(--icon-primary);
 	box-shadow: none;
 }
 
-.tlAppBar--primary button.tlReactButton:disabled {
+.tlAppBar--primary button.tl-button:disabled {
 	background: none;
 	color: var(--icon-disabled);
 	box-shadow: none;
 }
 
-.tlAppBar--primary .tlReactButton--icon,
-.tlAppBar--primary .tlReactButton--link {
+.tlAppBar--primary .tl-button--link {
 	color: var(--icon-primary);
 }
 
@@ -84,13 +83,13 @@ html:not([data-theme="dark"]) .tlAppBar__actions button:has(.bi-sun) {
  * does. The label stays in the accessible tree - hidden, not removed - so the button keeps its name
  * for screen readers and for tests.
  */
-.tlAppBar__actions button:has(.bi-sun) > .tlReactButton__image,
-.tlAppBar__actions button:has(.bi-moon-stars) > .tlReactButton__image {
+.tlAppBar__actions button:has(.bi-sun) > .tl-button__icon,
+.tlAppBar__actions button:has(.bi-moon-stars) > .tl-button__icon {
 	display: inline-block;
 }
 
-.tlAppBar__actions button:has(.bi-sun) > .tlReactButton__label,
-.tlAppBar__actions button:has(.bi-moon-stars) > .tlReactButton__label {
+.tlAppBar__actions button:has(.bi-sun) > .tl-button__label,
+.tlAppBar__actions button:has(.bi-moon-stars) > .tl-button__label {
 	position: absolute;
 	width: 1px;
 	height: 1px;

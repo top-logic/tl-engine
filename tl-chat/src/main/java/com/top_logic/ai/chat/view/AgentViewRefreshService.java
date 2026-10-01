@@ -47,10 +47,10 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
  * one refresh, see {@link Config#getRefreshDelayMillis()}) and then, for each registered window of
  * the affected account, synthesizes the events in that window's sub-session and <em>within the
  * window's {@link com.top_logic.layout.react.window.Interaction interaction}</em>, as the engine's
- * own request handling and SSE heartbeat do. The interaction is what makes this safe beside a
- * browser command: a React control's state map is a plain {@code HashMap}, so pushing state from
- * two threads at once would corrupt it. It is entered with a time limit, see
- * {@link WindowInteraction}.
+ * own request handling does. The interaction is what makes this safe beside a browser command: a
+ * React control's state map is a plain {@code HashMap}, so pushing state from two threads at once
+ * would corrupt it. (The engine's SSE heartbeat synthesizes without it; this deliberately does not
+ * copy that.) It is entered with a time limit, see {@link WindowInteraction}.
  * </p>
  *
  * <p>

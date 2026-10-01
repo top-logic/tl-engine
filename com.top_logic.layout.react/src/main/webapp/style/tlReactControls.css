@@ -181,56 +181,7 @@ button.tlCounter__button:focus {
 	font-size: var(--body-compact-01-font-size);
 }
 
-/* --- TLTabBar ---------------------------------------------------------- */
-
-/* A tab bar always fills its container, so the tab strip stays pinned and only the tab content
-   scrolls (see its fill declaration). */
-.tlReactTabBar {
-	display: flex;
-	flex-direction: column;
-	font-family: var(--font-family);
-}
-
-.tlReactTabBar__tabs {
-	display: flex;
-	gap: var(--spacing-02);
-	border-bottom: 1px solid var(--border-subtle-01);
-	padding: 0 var(--spacing-03);
-	/* Keep the tab strip pinned while the content scrolls. */
-	flex-shrink: 0;
-}
-
-.tlReactTabBar__tab {
-	padding: var(--spacing-03) var(--spacing-04);
-	border: none;
-	border-bottom: 2px solid transparent;
-	background: transparent;
-	font-family: var(--font-family);
-	font-size: var(--body-compact-01-font-size);
-	color: var(--text-secondary);
-	cursor: pointer;
-	white-space: nowrap;
-}
-
-.tlReactTabBar__tabIcon {
-	margin-right: var(--spacing-03);
-}
-
-.tlReactTabBar__tab:hover {
-	color: var(--text-primary);
-	border-bottom-color: var(--border-subtle-01);
-}
-
-.tlReactTabBar__tab:focus {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
-}
-
-.tlReactTabBar__tab--active {
-	color: var(--text-primary);
-	border-bottom-color: var(--button-primary);
-	font-weight: bold;
-}
+/* --- TLInset ---------------------------------------------------------- */
 
 /* ===========================================================================
    Spacing model.
@@ -286,24 +237,6 @@ button.tlCounter__button:focus {
 	flex-direction: column;
 	width: 100%;
 	padding: var(--page-inset);
-}
-
-.tlReactTabBar__content {
-	/* Flush: content owns its inset (see spacing model above). */
-	/* Own scroll region: fill the space left by the tab strip and scroll the
-	   tab content here, rather than letting it push the whole tab bar (and an
-	   ancestor scroller, e.g. the sidebar) past the viewport. */
-	flex: 1;
-	min-height: 0;
-	overflow: auto;
-	/* Lay the active content out as a bounded flex column. Children that opt to
-	   fill (a nested tab-bar, a fill panel) then resolve their height against this
-	   box; content-sized children keep their natural height and overflow-scroll
-	   here exactly as before. Without this, block flow lets a fill-ready child
-	   grow to its content height and a virtualized table never bounds its
-	   viewport (see TableViewControl). */
-	display: flex;
-	flex-direction: column;
 }
 
 /* --- TLAudioRecorder --------------------------------------------------- */
@@ -2155,56 +2088,6 @@ button.tlDrawerToggle:focus-visible {
 	background: var(--tl-surface-interactive-active);
 }
 
-/* --- TLBreadcrumb ---------------------------------------------------------- */
-
-.tlBreadcrumb {
-	font-family: var(--font-family);
-	font-size: var(--body-compact-01-font-size);
-}
-
-.tlBreadcrumb__list {
-	display: flex;
-	align-items: center;
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	gap: var(--spacing-01);
-}
-
-.tlBreadcrumb__entry {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-01);
-}
-
-.tlBreadcrumb__separator {
-	color: var(--text-secondary);
-	flex-shrink: 0;
-}
-
-.tlBreadcrumb__item {
-	border: none;
-	background: transparent;
-	padding: 0;
-	color: var(--link-primary);
-	font-family: var(--font-family);
-	font-size: var(--body-compact-01-font-size);
-	cursor: pointer;
-}
-
-.tlBreadcrumb__item:hover {
-	text-decoration: underline;
-}
-
-.tlBreadcrumb__item:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 2px;
-}
-
-.tlBreadcrumb__current {
-	color: var(--text-primary);
-}
-
 /* --- TLBottomBar ----------------------------------------------------------- */
 
 .tlBottomBar {
@@ -2734,7 +2617,7 @@ button.tlDrawer__closeBtn:focus-visible {
 	white-space: nowrap;
 }
 
-.tlAppShell .tlBreadcrumb {
+.tlAppShell .tl-breadcrumb { /* Übergang bis Welle 4 (Shell): liest die Paketklasse. */
 	padding: var(--spacing-02) var(--spacing-05);
 }
 

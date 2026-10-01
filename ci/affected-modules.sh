@@ -83,17 +83,19 @@
 #                still compiled and the test-jars that downstream tests depend
 #                on (<type>test-jar</type>) are installed. Never use
 #                -Dmaven.test.skip=true here, which would not install them.
-#            (2) Clean-build and test the changed modules and their dependents:
-#                  mvn -T 1C clean install spotbugs:spotbugs -pl $CHANGED -amd \
-#                      -DskipTests=false -Dtl.javadoc.aggregate=false \
-#                      -DTestAll.scripted=none ...
+#            (2) Clean-build the changed modules and their dependents without
+#                running tests:
+#                  mvn -T 1C clean install -pl $CHANGED -amd \
+#                      -DskipTests=true -Dtl.javadoc.aggregate=false
 #                -amd only adds dependents, never dependencies, so `clean`
 #                touches only modules of AFFECTED; the modules built only in
 #                step (1) are taken from the local repository. Every module of
 #                step (2) is recompiled from scratch, tests included.
-#            The scripted tests of SCRIPTED_MODULES run in shards with
-#            -DTestAll.scripted=<i>/<n>.
-#   full     Step (2) without -pl, i.e. the whole reactor.
+#            (3) Concurrently over the modules of step (2): the module tests
+#                (mvn -T 1C surefire:test ... -DTestAll.scripted=none), SpotBugs
+#                (mvn -T 1C spotbugs:spotbugs ...), and the scripted tests of
+#                SCRIPTED_MODULES in shards with -DTestAll.scripted=<i>/<n>.
+#   full     Steps (2) and (3) without -pl, i.e. the whole reactor.
 #
 set -euo pipefail
 

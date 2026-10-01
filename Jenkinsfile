@@ -3,8 +3,10 @@
  *
  * The pipeline builds and tests only the reactor modules a pull request affects
  * (see ci/affected-modules.sh for the selection and the Maven invocations per
- * mode), builds them with a parallel reactor, and runs the scripted tests in
- * parallel shards.
+ * mode), builds them with a parallel reactor without running tests, and then
+ * runs the module tests, the scripted tests in parallel shards, and SpotBugs
+ * concurrently. Since the build does not run tests, the tests of a module do not
+ * delay the build of its dependents.
  *
  * Stages:
  *   Checkout        Fresh workspace, checkout of the branch together with the
@@ -13,14 +15,16 @@
  *                   the changed modules, the affected modules, and the modules
  *                   with scripted tests.
  *   Build           partial: (1) compile-only install of the changed modules and
- *                   their dependencies, (2) clean build and test (scripted tests
- *                   excluded) of the changed modules and their dependents.
+ *                   their dependencies, (2) clean install without running tests
+ *                   of the changed modules and their dependents.
  *                   full: step (2) for the whole reactor. none: nothing.
- *   Check sources   Fails the build if the build modified versioned sources.
- *   Scripted tests  The scripted tests of the affected modules in SHARDS
- *                   concurrent Maven runs, each with its own scratch directory
- *                   and test ports. The build step (2) runs all other tests.
- *   (post)          Test results, SpotBugs issues, and the log rules
+ *   Test            Concurrent branches over the modules of build step (2):
+ *                   the module tests (scripted tests excluded), SpotBugs, and the
+ *                   scripted tests of the affected modules in SHARDS Maven runs,
+ *                   each with its own scratch directory and test ports.
+ *   Check sources   Fails the build if the build or the tests modified versioned
+ *                   sources.
+ *   (post)          Test results, SpotBugs issues (without Git blame), and the log rules
  *                   ci/build-log.rules (build warnings make the build
  *                   UNSTABLE, test JVM crashes make it FAILED).
  *
@@ -169,10 +173,44 @@ pipeline {
 							' -DskipTests=true -Dmaven.javadoc.skip=true -Dspotbugs.skip=true' +
 							' -Dtl.javadoc.aggregate=false', 0)
 					}
-					String modules = selection[KEY_MODE] == MODE_PARTIAL ? "-pl ${selection[KEY_CHANGED]} -amd" : ''
-					maven("-T ${identifier(params.MAVEN_THREADS)} clean install spotbugs:spotbugs ${modules}" +
-						" -DskipTests=${params.SKIP_TESTS} -Dspotbugs.skip=${params.SKIP_SPOTBUGS} -Dmaven.test.failure.ignore=true" +
-						" -Dtl.javadoc.aggregate=false -D${PROP_SCRIPTED}=${SCRIPTED_NONE}", 0)
+					maven("-T ${identifier(params.MAVEN_THREADS)} clean install ${builtModules()}" +
+						' -DskipTests=true -Dtl.javadoc.aggregate=false', 0)
+				}
+			}
+		}
+
+		stage('Test') {
+			when { expression { selection[KEY_MODE] != MODE_NONE } }
+			steps {
+				script {
+					Map branches = [failFast: false]
+					if (!params.SKIP_TESTS) {
+						branches['module-tests'] = {
+							maven("-T ${identifier(params.MAVEN_THREADS)} surefire:test ${builtModules()}" +
+								' -DskipTests=false -Dmaven.test.failure.ignore=true' +
+								" -D${PROP_SCRIPTED}=${SCRIPTED_NONE}", 0)
+						}
+					}
+					if (!params.SKIP_SPOTBUGS) {
+						branches['spotbugs'] = {
+							maven("-T ${identifier(params.MAVEN_THREADS)} spotbugs:spotbugs ${builtModules()}", 0)
+						}
+					}
+					int shards = params.SKIP_TESTS || count(selection[KEY_SCRIPTED]) == 0 ? 0 : Integer.parseInt(params.SHARDS)
+					for (int n = 1; n <= shards; n++) {
+						int shard = n
+						branches["shard-${shard}".toString()] = {
+							maven("surefire:test -pl ${selection[KEY_SCRIPTED]}" +
+								' -DskipTests=false -Dmaven.test.failure.ignore=true' +
+								" -D${PROP_SCRIPTED}=${shard}/${shards}" +
+								" -D${PROP_SHARD_MODULES}=${selection[KEY_SCRIPTED]}" +
+								" -D${PROP_SCRATCH_DIR}=tmp/shard-${shard}" +
+								" -Dsurefire.reportNameSuffix=shard-${shard}", shard)
+						}
+					}
+					if (branches.size() > 1) {
+						parallel branches
+					}
 				}
 			}
 		}
@@ -192,34 +230,12 @@ pipeline {
 				}
 			}
 		}
-
-		stage('Scripted tests') {
-			when { expression { count(selection[KEY_SCRIPTED]) > 0 && !params.SKIP_TESTS } }
-			steps {
-				script {
-					int shards = Integer.parseInt(params.SHARDS)
-					Map branches = [failFast: false]
-					for (int n = 1; n <= shards; n++) {
-						int shard = n
-						branches["shard-${shard}".toString()] = {
-							maven("surefire:test -pl ${selection[KEY_SCRIPTED]}" +
-								' -DskipTests=false -Dmaven.test.failure.ignore=true' +
-								" -D${PROP_SCRIPTED}=${shard}/${shards}" +
-								" -D${PROP_SHARD_MODULES}=${selection[KEY_SCRIPTED]}" +
-								" -D${PROP_SCRATCH_DIR}=tmp/shard-${shard}" +
-								" -Dsurefire.reportNameSuffix=shard-${shard}", shard)
-						}
-					}
-					parallel branches
-				}
-			}
-		}
 	}
 
 	post {
 		always {
 			junit testResults: '**/target/surefire-reports/TEST-*.xml', allowEmptyResults: true
-			recordIssues tools: [spotBugs()], enabledForFailure: true
+			recordIssues tools: [spotBugs()], enabledForFailure: true, skipBlames: true
 			logParser parsingRulesPath: '', projectRulePath: LOG_RULES, useProjectRule: true,
 				unstableOnWarning: true, failBuildOnError: true
 		}
@@ -257,6 +273,14 @@ void selectModules() {
 		error("Invalid module selection in ${AFFECTED_FILE}: ${result}")
 	}
 	selection = result
+}
+
+/**
+ * The module options of build step (2), which the Test stage reuses: the changed modules and their
+ * dependents for a partial build, the whole reactor otherwise.
+ */
+String builtModules() {
+	return selection[KEY_MODE] == MODE_PARTIAL ? "-pl ${selection[KEY_CHANGED]} -amd" : ''
 }
 
 /**

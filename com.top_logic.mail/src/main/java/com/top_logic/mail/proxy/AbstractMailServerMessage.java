@@ -12,6 +12,7 @@ import jakarta.mail.Flags;
 import jakarta.mail.Flags.Flag;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
+import jakarta.mail.MessageRemovedException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Multipart;
 import jakarta.mail.Part;
@@ -64,6 +65,9 @@ public abstract class AbstractMailServerMessage implements MailMessage {
         try {
 			return this.message.getSubject();
         }
+        catch (MessageRemovedException ex) {
+            return (this.message.toString());
+        }
         catch (Exception ex) {
             Logger.error("Unable to get name from message", ex, this);
 
@@ -73,15 +77,31 @@ public abstract class AbstractMailServerMessage implements MailMessage {
 
     @Override
 	public String getID() {
+        if (this.isRemoved()) {
+            return getMessageNumber();
+        }
+
         try {
             return (AbstractMailServerMessage.getMailID(this.message));
+        }
+        catch (MessageRemovedException ex) {
+            return getMessageNumber();
         }
         catch (Exception ex) {
             Logger.error("Unable to extract correct mail ID", ex, this);
 
-            return (Integer.toString(this.message.getMessageNumber()));
+            return getMessageNumber();
         }
     }
+
+	/**
+	 * The {@link Message#getMessageNumber() message number} of the {@link #getMessage() message}
+	 * as identifier that is available without accessing the mail server, even for a
+	 * {@link #isRemoved() removed} message.
+	 */
+	private String getMessageNumber() {
+		return Integer.toString(this.message.getMessageNumber());
+	}
 
     @Override
 	public Message getMessage() {
@@ -457,6 +477,9 @@ public abstract class AbstractMailServerMessage implements MailMessage {
             this.getMessage().setFlag(aFlag, aValue);
             Logger.info("Set mail flag ("+getSystemFlagName(aFlag)+") for '"+this.getID()+"'", this);
             return true;
+        } catch (MessageRemovedException mex) {
+			Logger.info("Unable to set flag (" + getSystemFlagName(aFlag) + ") for mail number " + getMessageNumber()
+				+ ", the mail was already removed from the folder by another client.", this);
         } catch (MessagingException mex) {
             Logger.error("Unable to set flag ("+getSystemFlagName(aFlag)+") for '"+this.getID()+"'", mex, this);
         }

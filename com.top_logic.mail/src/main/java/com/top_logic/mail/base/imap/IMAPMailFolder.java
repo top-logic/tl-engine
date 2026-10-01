@@ -18,6 +18,7 @@ import jakarta.mail.Folder;
 import jakarta.mail.FolderClosedException;
 import jakarta.mail.FolderNotFoundException;
 import jakarta.mail.Message;
+import jakarta.mail.MessageRemovedException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.event.ConnectionEvent;
 import jakarta.mail.event.MessageCountEvent;
@@ -353,6 +354,11 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
      */
     @Override
 	public boolean move(MailMessage aMessage) {
+		if (aMessage.isRemoved()) {
+			logRemoved(aMessage);
+			return false;
+		}
+
         Folder theFolder = this.getOriginalFolder();
 
         try {
@@ -398,11 +404,17 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
                 theOrig = MailReceiverService.getMailReceiverInstance().getFolder(theOrigName);
             }
             
-            aMessage.setFlag(Flag.DELETED, true);
+            if (!aMessage.setFlag(Flag.DELETED, true) && aMessage.isRemoved()) {
+				logRemoved(aMessage);
+				return false;
+            }
 
             Logger.info("Move mail " + aMessage.getID() + " to folder '" + theFolder + "'!", IMAPMailFolder.class);
 
             return (true);
+        }
+        catch (MessageRemovedException ex) {
+			logRemoved(aMessage);
         }
         catch (MessagingException ex) {
             Logger.error("Unable to move mail "+aMessage.getID()+" to this folder (is '" + theFolder + "')! " + Thread.currentThread().toString(), ex, IMAPMailFolder.class);
@@ -412,6 +424,11 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
         return (false);
     }
     
+	private void logRemoved(MailMessage aMessage) {
+		Logger.info("Mail number " + aMessage.getMessage().getMessageNumber() + " not moved to folder '" + this.getName()
+			+ "', it was already removed from its folder by another client.", IMAPMailFolder.class);
+	}
+
     private boolean undeleteMessage(MailMessage aMessage) {
         return aMessage.setFlag(Flag.DELETED, false) && aMessage.setFlag(Flag.SEEN, false);
     }

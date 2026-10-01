@@ -204,6 +204,10 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 		Iterator<?> srcIt = newValues.iterator();
 		int destPos = 0;
 
+		// New entries in front of the link at destPos, inserted together to space them evenly in
+		// the sort-order gap before that link.
+		List<KnowledgeAssociation> newLinks = list();
+
 		TLObject src = null;
 		while (srcIt.hasNext()) {
 			src = (TLObject) toStorageObject(srcIt.next());
@@ -211,19 +215,21 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 			if (destPos < links.size()) {
 				KnowledgeAssociation link = links.get(destPos);
 				if (link.getDestinationIdentity().equals(src.tHandle().tId())) {
-					// Entry exists, advance pointers.
+					// Entry exists, insert the new entries before it and advance pointers.
+					destPos = insertAll(links, destPos, newLinks);
+					newLinks = list();
+					destPos++;
 				} else {
-					// Add new entry.
-					KnowledgeAssociation newLink = LinkStorageUtil.createWrapperAssociation(attribute, null, src, this);
-					links.add(destPos, newLink);
+					// New entry.
+					newLinks.add(LinkStorageUtil.createWrapperAssociation(attribute, null, src, this));
 				}
 				src = null;
-				destPos++;
 			} else {
 				// Reached the end of the current link list, add all at the end.
 				break;
 			}
 		}
+		destPos = insertAll(links, destPos, newLinks);
 
 		if (destPos < links.size()) {
 			assert src == null && !srcIt.hasNext();
@@ -233,23 +239,37 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 				DBKnowledgeAssociation.clearReferencesAndRemoveLink(links.get(n));
 			}
 		} else {
-			if (src != null) {
-				append(attribute, links, src);
-			}
-			appendAll(attribute, links, srcIt);
+			appendAll(attribute, links, src, srcIt);
 		}
 	}
 
-	private void append(TLStructuredTypePart attribute, List<KnowledgeAssociation> links, TLObject src) {
-		KnowledgeAssociation newLink = LinkStorageUtil.createWrapperAssociation(attribute, null, src, this);
-		links.add(newLink);
+	/**
+	 * Inserts the given new links at the given position.
+	 * 
+	 * @return The position behind the inserted links.
+	 */
+	private static int insertAll(List<KnowledgeAssociation> links, int destPos,
+			List<KnowledgeAssociation> newLinks) {
+		if (newLinks.isEmpty()) {
+			return destPos;
+		}
+		links.addAll(destPos, newLinks);
+		return destPos + newLinks.size();
 	}
 
+	/**
+	 * Appends links to the given first element (if not <code>null</code>) and to all remaining
+	 * elements of the given iterator.
+	 */
 	private void appendAll(TLStructuredTypePart attribute, List<KnowledgeAssociation> links,
-			Iterator<?> srcIt) {
+			TLObject first, Iterator<?> srcIt) {
 		List<KnowledgeAssociation> newLinks = list();
+		if (first != null) {
+			newLinks.add(LinkStorageUtil.createWrapperAssociation(attribute, null, first, this));
+		}
 		while (srcIt.hasNext()) {
-			append(attribute, links, (TLObject) toStorageObject(srcIt.next()));
+			TLObject src = (TLObject) toStorageObject(srcIt.next());
+			newLinks.add(LinkStorageUtil.createWrapperAssociation(attribute, null, src, this));
 		}
 		links.addAll(newLinks);
 	}

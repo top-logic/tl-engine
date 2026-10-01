@@ -334,6 +334,8 @@ Ticket #29108: Add ReactToolbarControl for structured toolbar rendering.
 
 **Step 1: Create TLToolbar.tsx**
 
+> alt (bis Welle 3a): `.tlToolbar*` is now `tl-toolbar` (design system).
+
 ```tsx
 import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
@@ -1040,15 +1042,15 @@ Ticket #29108: Add demo view exercising command display features.
 **Step 1: Add CSS for toolbar and button components**
 
 Add styles for:
-- `.tlToolbar` — flexbox row, align-items center
-- `.tlToolbar__separator` — vertical line between groups
-- `.tlToolbar__group--inline` — flexbox row, gap between items
-- `.tlToolbar__group--menu` — position relative (for dropdown)
-- `.tlToolbar__menuTrigger` — styled button with chevron
-- `.tlToolbar__dropdown` — absolutely positioned popup
-- `.tlToolbar__dropdownItem` — menu item styling
-- `.tlToolbar__dropdownSeparator` — horizontal rule
-- `.tlToolbar__chevron` — small SVG chevron
+- `.tlToolbar` — flexbox row, align-items center — alt (bis Welle 3a)
+- `.tlToolbar__separator` — vertical line between groups — alt (bis Welle 3a)
+- `.tlToolbar__group--inline` — flexbox row, gap between items — alt (bis Welle 3a)
+- `.tlToolbar__group--menu` — position relative (for dropdown) — alt (bis Welle 3a)
+- `.tlToolbar__menuTrigger` — styled button with chevron — alt (bis Welle 3a)
+- `.tlToolbar__dropdown` — absolutely positioned popup — alt (bis Welle 3a)
+- `.tlToolbar__dropdownItem` — menu item styling — alt (bis Welle 3a)
+- `.tlToolbar__dropdownSeparator` — horizontal rule — alt (bis Welle 3a)
+- `.tlToolbar__chevron` — small SVG chevron — alt (bis Welle 3a)
 - `.tlReactButton--iconOnly` — square button, no text
 - `.tlReactButton__icon` — icon element
 - `.tlReactButton__label` — label text

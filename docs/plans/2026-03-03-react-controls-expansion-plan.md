@@ -702,6 +702,8 @@ git commit -m "Ticket #29109: Add TLAppBar top application bar."
 
 **Step 1: Write the React component**
 
+> alt (bis Welle 3a): `.tlBreadcrumb*` is now `tl-breadcrumb` (design system).
+
 ```tsx
 import { React, useTLState, useTLCommand } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
@@ -766,6 +768,8 @@ export default TLBreadcrumb;
 ```
 
 **Step 2: Add CSS**
+
+> alt (bis Welle 3a): `.tlBreadcrumb*` is now `tl-breadcrumb` (design system).
 
 ```css
 /* --- TLBreadcrumb ---------------------------------------------------------- */
@@ -1638,6 +1642,8 @@ git commit -m "Ticket #29109: Add TLSnackbar transient notifications."
 
 Key behavior: positioned relative to anchor element, roving tabindex keyboard navigation (reusing sidebar flyout pattern), close on outside click.
 
+> alt (bis Welle 3a): `.tlMenu*` is now `tl-menu` (design system).
+
 ```tsx
 import { React, useTLState, useTLCommand } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
@@ -1783,6 +1789,8 @@ export default TLMenu;
 ```
 
 **Step 2: Add CSS**
+
+> alt (bis Welle 3a): `.tlMenu*` is now `tl-menu` (design system).
 
 ```css
 /* --- TLMenu ---------------------------------------------------------------- */

@@ -5103,7 +5103,7 @@ button.tlDrawer__closeBtn:focus-visible {
   font-weight: 400;
   font-size: 12px;
   line-height: 1.5;
-  z-index: 9999999999999999;
+  z-index: var(--tl-layer-popover);
   cursor: text;
   user-select: text;
   display: flex;

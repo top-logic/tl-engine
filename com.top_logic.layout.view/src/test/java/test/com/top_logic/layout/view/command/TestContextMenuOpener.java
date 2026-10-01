@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.command;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -193,6 +194,78 @@ public class TestContextMenuOpener extends TestCase {
 		assertTrue(result.isSuccess());
 	}
 
+	/**
+	 * A menu opened at an element is shown there, and closing it without a selection tells the one
+	 * who opened it - once.
+	 */
+	public void testOpenAtAnchorReportsTheClose() {
+		AtomicInteger closed = new AtomicInteger();
+		RecordingRenderer renderer = new RecordingRenderer();
+		ContextMenuOpener opener = new ContextMenuOpener(renderer);
+
+		boolean shown = opener.open("anchor-1", contributionsFor(new CountingCommandModel("edit")),
+			closed::incrementAndGet);
+
+		assertTrue("A menu with entries is shown.", shown);
+		assertEquals("anchor-1", renderer.anchorId);
+		assertEquals("Nothing is closed yet.", 0, closed.get());
+
+		renderer.closeHandler.run();
+		assertEquals(1, closed.get());
+
+		renderer.closeHandler.run();
+		assertEquals("The close is reported once.", 1, closed.get());
+	}
+
+	/** A selection closes the menu, and the one who opened it learns that, too. */
+	public void testSelectionReportsTheClose() {
+		AtomicInteger closed = new AtomicInteger();
+		CountingCommandModel command = new CountingCommandModel("edit");
+		RecordingRenderer renderer = new RecordingRenderer();
+		ContextMenuOpener opener = new ContextMenuOpener(renderer);
+
+		opener.open("anchor-1", contributionsFor(command), closed::incrementAndGet);
+		renderer.selectHandler.apply("0:0");
+
+		assertEquals(1, command.invocations);
+		assertEquals(1, closed.get());
+	}
+
+	/**
+	 * A menu opened elsewhere replaces the open one, whose opener learns that its menu is closed -
+	 * but only once the new menu is actually shown: an opening that offers nothing leaves the open
+	 * menu standing.
+	 */
+	public void testReplacingTheMenuReportsTheCloseOfTheOldOne() {
+		AtomicInteger closedFirst = new AtomicInteger();
+		AtomicInteger closedSecond = new AtomicInteger();
+		RecordingRenderer renderer = new RecordingRenderer();
+		ContextMenuOpener opener = new ContextMenuOpener(renderer);
+
+		opener.open("anchor-1", contributionsFor(new CountingCommandModel("edit")), closedFirst::incrementAndGet);
+
+		CommandModel invisible = FakeCommandModels.contextMenu("x", "X", false, true);
+		boolean shown = opener.open("anchor-2", contributionsFor(invisible), closedSecond::incrementAndGet);
+		assertFalse("A menu without entries is not shown.", shown);
+		assertEquals("The open menu stays.", "anchor-1", renderer.anchorId);
+		assertEquals(0, closedFirst.get());
+
+		opener.open(5, 7, contributionsFor(new CountingCommandModel("copy")), closedSecond::incrementAndGet);
+		assertEquals("The replaced menu is reported closed.", 1, closedFirst.get());
+		assertEquals(0, closedSecond.get());
+
+		renderer.closeHandler.run();
+		assertEquals("The replaced menu's close is not reported again.", 1, closedFirst.get());
+		assertEquals(1, closedSecond.get());
+	}
+
+	/** The contributions of a menu offering the given command alone. */
+	private static List<Targeted> contributionsFor(CommandModel command) {
+		AtomicReference<Object> target = new AtomicReference<>();
+		ContextMenuContribution contribution = new ContextMenuContribution(target::set, List.of(command));
+		return List.of(new Targeted(contribution, "anything"));
+	}
+
 	/** Opens a menu offering the given command alone. */
 	private static RecordingRenderer openMenuFor(CommandModel command) {
 		AtomicReference<Object> target = new AtomicReference<>();
@@ -209,6 +282,8 @@ public class TestContextMenuOpener extends TestCase {
 
 		int lastY;
 
+		String anchorId;
+
 		boolean opened;
 
 		Function<String, HandlerResult> selectHandler;
@@ -221,6 +296,17 @@ public class TestContextMenuOpener extends TestCase {
 			this.opened = true;
 			this.lastX = x;
 			this.lastY = y;
+			this.anchorId = null;
+			this.lastItems = items;
+			this.selectHandler = selectHandler;
+			this.closeHandler = closeHandler;
+		}
+
+		@Override
+		public void show(String anchor, List<MenuEntry> items, Function<String, HandlerResult> selectHandler,
+				Runnable closeHandler) {
+			this.opened = true;
+			this.anchorId = anchor;
 			this.lastItems = items;
 			this.selectHandler = selectHandler;
 			this.closeHandler = closeHandler;

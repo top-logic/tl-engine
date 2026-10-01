@@ -2077,17 +2077,6 @@ button.tlDrawerToggle:focus-visible {
 	--tlText-tone: var(--tl-text-primary);
 }
 
-/* A click region hovers with the generic layer-hover, which is a light surface - under the
-   on-accent text above it that leaves nothing to read. On the accent bar it hovers and opens in the
-   accent's own darker shades instead. */
-.tlAppBar--primary .tlMenuRegion--click:hover {
-	background: var(--tl-surface-interactive-hover);
-}
-
-.tlAppBar--primary .tlMenuRegion--click[aria-expanded="true"] {
-	background: var(--tl-surface-interactive-active);
-}
-
 /* --- TLBottomBar ----------------------------------------------------------- */
 
 .tlBottomBar {
@@ -2699,35 +2688,6 @@ button.tlDrawer__closeBtn:focus-visible {
 	font-size: 0.875em;
 	white-space: pre-wrap;
 	color: var(--text-secondary);
-}
-
-/* --- TLMenuRegion ---------------------------------------------------------- */
-
-/* A right-click region is pure pass-through: it adds no box of its own, so the content it wraps
-   lays out exactly as it would without the region. */
-.tlMenuRegion {
-	display: contents;
-}
-
-/* A click region is the visible trigger of a drop-down, so it does become a box: an inline row
-   carrying the affordances of a control. */
-.tlMenuRegion--click {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	padding: var(--spacing-02) var(--spacing-03);
-	border-radius: var(--border-radius-02);
-	cursor: pointer;
-	user-select: none;
-}
-
-.tlMenuRegion--click:hover {
-	background: var(--layer-hover);
-}
-
-.tlMenuRegion--click:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
 }
 
 /* --- User menu ------------------------------------------------------------- */

@@ -62,6 +62,30 @@ public class ContextMenuOpener {
 				Runnable closeHandler);
 
 		/**
+		 * Show a menu at the element with the given ID.
+		 *
+		 * <p>
+		 * The menu hangs off the element and follows it, instead of standing at the point the
+		 * element happened to occupy when the menu was requested. A renderer that cannot place a
+		 * menu at an element refuses.
+		 * </p>
+		 *
+		 * @param anchorId
+		 *        The ID of the client-side element the menu is placed at.
+		 * @param items
+		 *        The entries of the menu.
+		 * @param selectHandler
+		 *        Called with the ID of the selected item, returning the result of the selection,
+		 *        see {@link ReactMenuControl#setSelectHandler(Function)}.
+		 * @param closeHandler
+		 *        Called when the menu is closed without a selection.
+		 */
+		default void show(String anchorId, List<MenuEntry> items, Function<String, HandlerResult> selectHandler,
+				Runnable closeHandler) {
+			throw new UnsupportedOperationException("anchored menus");
+		}
+
+		/**
 		 * Hide the currently displayed menu.
 		 */
 		void hide();
@@ -88,6 +112,9 @@ public class ContextMenuOpener {
 
 	private Supplier<ReactContext> _contextSupplier;
 
+	/** Told when the menu currently shown closes, see {@link #open(String, List, Runnable)}. */
+	private Runnable _closed;
+
 	/**
 	 * Creates a {@link ContextMenuOpener} backed by the given {@link MenuRenderer}.
 	 */
@@ -105,13 +132,81 @@ public class ContextMenuOpener {
 	/**
 	 * Opens a composed context menu at the given coordinates.
 	 *
+	 * @see #open(int, int, List, Runnable)
+	 */
+	public void open(int x, int y, List<Targeted> contributions) {
+		open(x, y, contributions, null);
+	}
+
+	/**
+	 * Opens a composed context menu at the given coordinates.
+	 *
 	 * <p>
 	 * Publishes each target through the corresponding contribution's setter, then assembles a flat
 	 * menu from the visible commands. Does nothing if all contributions produce no visible
 	 * commands.
 	 * </p>
+	 *
+	 * @param closed
+	 *        Told once when the menu closes - by a selection, without one, or because another menu
+	 *        replaces it. May be {@code null}.
+	 * @return Whether a menu is shown; {@code false} if no contribution offers a visible command.
 	 */
-	public void open(int x, int y, List<Targeted> contributions) {
+	public boolean open(int x, int y, List<Targeted> contributions, Runnable closed) {
+		Assembly menu = assemble(contributions);
+		if (menu == null) {
+			return false;
+		}
+		activate(contributions, menu, closed);
+		_renderer.show(x, y, menu.items(), this::handleSelect, this::handleClose);
+		return true;
+	}
+
+	/**
+	 * Opens a composed context menu at the client-side element with the given ID.
+	 *
+	 * <p>
+	 * Assembles the menu as {@link #open(int, int, List, Runnable)} does. The menu hangs off the
+	 * element, so a trigger that opens it - a drop-down button - can report its expanded state
+	 * through the given callback.
+	 * </p>
+	 *
+	 * @param anchorId
+	 *        The ID of the client-side element the menu is placed at.
+	 * @param contributions
+	 *        The groups of commands to offer, each with the target to publish.
+	 * @param closed
+	 *        Told once when the menu closes - by a selection, without one, or because another menu
+	 *        replaces it. May be {@code null}.
+	 * @return Whether a menu is shown; {@code false} if no contribution offers a visible command.
+	 */
+	public boolean open(String anchorId, List<Targeted> contributions, Runnable closed) {
+		Assembly menu = assemble(contributions);
+		if (menu == null) {
+			return false;
+		}
+		activate(contributions, menu, closed);
+		_renderer.show(anchorId, menu.items(), this::handleSelect, this::handleClose);
+		return true;
+	}
+
+	/**
+	 * The entries of a composed menu, together with the commands they stand for.
+	 *
+	 * @param items
+	 *        The entries to display.
+	 * @param commands
+	 *        Per contribution, the commands in the order their entries' IDs address them.
+	 */
+	private record Assembly(List<MenuEntry> items, List<List<CommandModel>> commands) {
+		// record
+	}
+
+	/**
+	 * Publishes the targets and composes the menu, or returns {@code null} if no contribution
+	 * offers a visible command.
+	 */
+	private static Assembly assemble(List<Targeted> contributions) {
 		for (Targeted t : contributions) {
 			t.contribution().setTarget().accept(t.target());
 		}
@@ -141,12 +236,35 @@ public class ContextMenuOpener {
 			perContributionCommands.add(sorted);
 		}
 		if (!anything) {
-			return;
+			return null;
 		}
+		return new Assembly(items, perContributionCommands);
+	}
 
+	/**
+	 * Makes the given menu the one selections are dispatched to.
+	 *
+	 * <p>
+	 * Called right before the menu is shown: the menu it replaces is closed only now, so that an
+	 * opening that shows nothing leaves the open menu - and its trigger's expanded state - alone.
+	 * </p>
+	 */
+	private void activate(List<Targeted> contributions, Assembly menu, Runnable closed) {
+		notifyClosed();
 		_active = List.copyOf(contributions);
-		_activeCommands = perContributionCommands;
-		_renderer.show(x, y, items, this::handleSelect, this::handleClose);
+		_activeCommands = menu.commands();
+		_closed = closed;
+	}
+
+	/**
+	 * Tells the opener of the current menu that it is closed, once.
+	 */
+	private void notifyClosed() {
+		Runnable closed = _closed;
+		_closed = null;
+		if (closed != null) {
+			closed.run();
+		}
 	}
 
 	private static void appendCliqued(List<MenuEntry> out, int contributionIndex, List<CommandModel> sorted) {
@@ -194,6 +312,7 @@ public class ContextMenuOpener {
 		_renderer.hide();
 		_active = List.of();
 		_activeCommands = List.of();
+		notifyClosed();
 
 		if (cmd == null) {
 			// A selection from a menu that has been replaced in the meantime.
@@ -205,6 +324,7 @@ public class ContextMenuOpener {
 	private void handleClose() {
 		_active = List.of();
 		_activeCommands = List.of();
+		notifyClosed();
 	}
 
 	/**

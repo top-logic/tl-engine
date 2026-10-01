@@ -1551,6 +1551,8 @@
 						com.top_logic.util.sched.CleanUpTask
 					 -->
 					<dependency key="com.top_logic.util.monitor.ApplicationMonitor$Module" value="true" />
+					<!-- Needed by com.top_logic.knowledge.service.blob.BlobGarbageCollectionTask -->
+					<dependency key="com.top_logic.basic.io.blob.BlobStoreService$Module" value="true" />
 				</dependencies>
 				<tasks>
 					<task class="com.top_logic.util.sched.CleanSysTmpTask" 
@@ -1608,6 +1610,13 @@
 							<daily
 								time-of-day="00:01"
 							/>
+						</schedules>
+					</task>
+					<task class="com.top_logic.knowledge.service.blob.BlobGarbageCollectionTask"
+						name="BlobGarbageCollectionTask"
+					>
+						<schedules>
+							<daily time-of-day="02:30" />
 						</schedules>
 					</task>
 				</tasks>

@@ -68,6 +68,8 @@
 #   AFFECTED=<comma-separated module dirs>           (partial: CHANGED plus all
 #            downstream modules in reactor order; full: all reactor modules
 #            except the root aggregator; none: empty)
+#   TEST_MODULES=<comma-separated dirs among AFFECTED whose packaging runs
+#            tests in the Maven lifecycle (all but pom and maven-archetype)>
 #   SCRIPTED_MODULES=<comma-separated dirs among AFFECTED with scripted tests>
 # A human-readable summary goes to stderr.
 #
@@ -91,10 +93,14 @@
 #                touches only modules of AFFECTED; the modules built only in
 #                step (1) are taken from the local repository. Every module of
 #                step (2) is recompiled from scratch, tests included.
-#            (3) Concurrently over the modules of step (2): the module tests
-#                (mvn -T 1C surefire:test ... -DTestAll.scripted=none), SpotBugs
+#            (3) Concurrently: the module tests of TEST_MODULES
+#                (mvn -T 1C surefire:test -pl $TEST_MODULES
+#                -DTestAll.scripted=none), SpotBugs over the modules of step (2)
 #                (mvn -T 1C spotbugs:spotbugs ...), and the scripted tests of
 #                SCRIPTED_MODULES in shards with -DTestAll.scripted=<i>/<n>.
+#                Called as a goal, surefire:test also runs in modules whose
+#                packaging does not bind it (there, it finds the TestAll of the
+#                tl-basic test-jar and fails), hence the explicit TEST_MODULES.
 #   full     Steps (2) and (3) without -pl, i.e. the whole reactor.
 #
 set -euo pipefail
@@ -103,7 +109,11 @@ set -euo pipefail
 readonly KEY_MODE=MODE
 readonly KEY_CHANGED=CHANGED
 readonly KEY_AFFECTED=AFFECTED
+readonly KEY_TEST=TEST_MODULES
 readonly KEY_SCRIPTED=SCRIPTED_MODULES
+
+# Packagings whose Maven lifecycle runs no tests.
+readonly NO_TEST_PACKAGING_PATTERN='^(pom|maven-archetype)$'
 
 # Modes.
 readonly MODE_FULL=full
@@ -166,10 +176,10 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 # Validates the reactor Maven selects for the given arguments and writes one
-# line "<groupId>:<artifactId> <pom path>" per reactor project, in reactor
-# order, to the file $REACTOR_OUT. The POM path is the one Maven prints below
-# the project header; it is relative to the first project of the reactor, so
-# it identifies the module directory only in a run of the whole reactor.
+# line "<groupId>:<artifactId> <pom path> <packaging>" per reactor project, in
+# reactor order, to the file $REACTOR_OUT. The POM path is the one Maven prints
+# below the project header; it is relative to the first project of the reactor,
+# so it identifies the module directory only in a run of the whole reactor.
 reactor_projects() {
     local log="$TMP/mvn.log"
     if ! "$MVN" -B -Denforcer.skip=true "$@" validate > "$log" 2>&1; then
@@ -178,7 +188,8 @@ reactor_projects() {
     fi
     awk '
         /^\[INFO\] -*< [^ ]+ >-*$/ { ga = $0; sub(/^\[INFO\] -*< /, "", ga); sub(/ >-*$/, "", ga); next }
-        /^\[INFO\]   from / && ga != "" { pom = $0; sub(/^\[INFO\]   from /, "", pom); print ga " " pom; ga = "" }
+        /^\[INFO\]   from / && ga != "" { pom = $0; sub(/^\[INFO\]   from /, "", pom); next }
+        /^\[INFO\] -*\[ [^ ]+ \]-*$/ && pom != "" { pkg = $0; sub(/^\[INFO\] -*\[ /, "", pkg); sub(/ \]-*$/, "", pkg); print ga " " pom " " pkg; ga = ""; pom = "" }
     ' "$log" > "$REACTOR_OUT"
     [[ -s "$REACTOR_OUT" ]] || die "No project headers with '[INFO]   from <pom>' lines in the Maven output; Maven >= 3.9 is required."
 }
@@ -202,9 +213,10 @@ fi
 REACTOR_OUT="$TMP/reactor.txt"
 declare -A DIR_OF=()
 declare -A IS_MODULE=()
+declare -A PACKAGING_OF=()
 ALL_MODULES=()
 reactor_projects
-while read -r ga pom; do
+while read -r ga pom packaging; do
     case "$pom" in
         pom.xml) continue ;;    # the root aggregator
         */pom.xml) d="${pom%/pom.xml}" ;;
@@ -212,6 +224,7 @@ while read -r ga pom; do
     esac
     DIR_OF["$ga"]="$d"
     IS_MODULE["$d"]=1
+    PACKAGING_OF["$d"]="$packaging"
     ALL_MODULES+=("$d")
 done < "$REACTOR_OUT"
 
@@ -262,6 +275,10 @@ done < <(
     git ls-tree -r --name-only "$HEAD_SHA" | grep -E "$SCRIPT_FILE_PATTERN" || true
     git grep -l -E "$SCRIPTED_SUITE_PATTERN" "$HEAD_SHA" -- '*/src/test/*' | sed "s#^$HEAD_SHA:##" || true
 )
+TEST_MODULES=()
+for d in ${AFFECTED_MODULES[@]+"${AFFECTED_MODULES[@]}"}; do
+    [[ "${PACKAGING_OF[$d]}" =~ $NO_TEST_PACKAGING_PATTERN ]] || TEST_MODULES+=("$d")
+done
 SCRIPTED_MODULES=()
 for d in ${AFFECTED_MODULES[@]+"${AFFECTED_MODULES[@]}"}; do
     [[ -n "${HAS_SCRIPTED[$d]:-}" ]] && SCRIPTED_MODULES+=("$d")
@@ -272,6 +289,7 @@ done
     echo "$KEY_MODE=$MODE"
     echo "$KEY_CHANGED=$(join_commas ${CHANGED_MODULES[@]+"${CHANGED_MODULES[@]}"})"
     echo "$KEY_AFFECTED=$(join_commas ${AFFECTED_MODULES[@]+"${AFFECTED_MODULES[@]}"})"
+    echo "$KEY_TEST=$(join_commas ${TEST_MODULES[@]+"${TEST_MODULES[@]}"})"
     echo "$KEY_SCRIPTED=$(join_commas ${SCRIPTED_MODULES[@]+"${SCRIPTED_MODULES[@]}"})"
 } > "${OUTPUT:-/dev/stdout}"
 
@@ -287,6 +305,6 @@ done
         "$MODE_NONE")    echo ">>> Mode $MODE: no reactor module changed." ;;
         "$MODE_PARTIAL") echo ">>> Mode $MODE: ${#CHANGED_MODULES[@]} changed modules: ${CHANGED_MODULES[*]}" ;;
     esac
-    echo ">>> ${#AFFECTED_MODULES[@]} affected modules."
+    echo ">>> ${#AFFECTED_MODULES[@]} affected modules, ${#TEST_MODULES[@]} with tests in the Maven lifecycle."
     echo ">>> Modules with scripted tests: ${SCRIPTED_MODULES[*]:-(none)}"
 } >&2

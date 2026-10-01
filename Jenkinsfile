@@ -18,10 +18,11 @@
  *                   their dependencies, (2) clean install without running tests
  *                   of the changed modules and their dependents.
  *                   full: step (2) for the whole reactor. none: nothing.
- *   Test            Concurrent branches over the modules of build step (2):
- *                   the module tests (scripted tests excluded), SpotBugs, and the
- *                   scripted tests of the affected modules in SHARDS Maven runs,
- *                   each with its own scratch directory and test ports.
+ *   Test            Concurrent branches: the module tests of the affected
+ *                   modules whose packaging runs tests (scripted tests excluded),
+ *                   SpotBugs over the modules of build step (2), and the scripted
+ *                   tests of the affected modules in SHARDS Maven runs, each with
+ *                   its own scratch directory and test ports.
  *   Check sources   Fails the build if the build or the tests modified versioned
  *                   sources.
  *   (post)          Test results, SpotBugs issues (without Git blame), and the log rules
@@ -75,6 +76,7 @@ import groovy.transform.Field
 @Field final String KEY_MODE = 'MODE'
 @Field final String KEY_CHANGED = 'CHANGED'
 @Field final String KEY_AFFECTED = 'AFFECTED'
+@Field final String KEY_TEST = 'TEST_MODULES'
 @Field final String KEY_SCRIPTED = 'SCRIPTED_MODULES'
 
 /** Build modes of ci/affected-modules.sh. */
@@ -184,9 +186,9 @@ pipeline {
 			steps {
 				script {
 					Map branches = [failFast: false]
-					if (!params.SKIP_TESTS) {
+					if (!params.SKIP_TESTS && count(selection[KEY_TEST]) > 0) {
 						branches['module-tests'] = {
-							maven("-T ${identifier(params.MAVEN_THREADS)} surefire:test ${builtModules()}" +
+							maven("-T ${identifier(params.MAVEN_THREADS)} surefire:test -pl ${selection[KEY_TEST]}" +
 								' -DskipTests=false -Dmaven.test.failure.ignore=true' +
 								" -D${PROP_SCRIPTED}=${SCRIPTED_NONE}", 0)
 						}
@@ -276,8 +278,8 @@ void selectModules() {
 }
 
 /**
- * The module options of build step (2), which the Test stage reuses: the changed modules and their
- * dependents for a partial build, the whole reactor otherwise.
+ * The module options of build step (2), which the SpotBugs branch of the Test stage reuses: the
+ * changed modules and their dependents for a partial build, the whole reactor otherwise.
  */
 String builtModules() {
 	return selection[KEY_MODE] == MODE_PARTIAL ? "-pl ${selection[KEY_CHANGED]} -amd" : ''

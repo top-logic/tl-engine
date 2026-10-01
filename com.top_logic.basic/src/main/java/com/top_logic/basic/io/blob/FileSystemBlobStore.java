@@ -74,12 +74,6 @@ public class FileSystemBlobStore extends AbstractBlobStore<FileSystemBlobStore.C
 	private static final int SHARD_LENGTH = 2;
 
 	/**
-	 * Accepted keys: canonical lower case UUID strings.
-	 */
-	private static final Pattern KEY_PATTERN =
-		Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
-
-	/**
 	 * Names of shard directories.
 	 */
 	private static final Pattern SHARD_PATTERN = Pattern.compile("[0-9a-f]{" + SHARD_LENGTH + "}");
@@ -160,12 +154,6 @@ public class FileSystemBlobStore extends AbstractBlobStore<FileSystemBlobStore.C
 			.resolve(key.substring(0, SHARD_LENGTH))
 			.resolve(key.substring(SHARD_LENGTH, 2 * SHARD_LENGTH))
 			.resolve(key);
-	}
-
-	private static void checkKey(String key) {
-		if (key == null || !KEY_PATTERN.matcher(key).matches()) {
-			throw new IllegalArgumentException("Invalid blob key: '" + key + "'.");
-		}
 	}
 
 	@Override

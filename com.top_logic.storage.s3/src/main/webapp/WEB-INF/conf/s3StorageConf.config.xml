@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!--
+			The module registers no blob store. An application adds an S3 store to the blob store service in its
+			own configuration, e.g.:
+
+			<config service-class="com.top_logic.basic.io.blob.BlobStoreService">
+				<instance>
+					<stores>
+						<store name="s3"
+							class="com.top_logic.storage.s3.S3BlobStore"
+							endpoint="%S3_ENDPOINT%"
+							region="%S3_REGION%"
+							bucket="%S3_BUCKET%"
+							prefix="%S3_PREFIX%"
+							path-style-access="%S3_PATH_STYLE_ACCESS%"
+							access-key="%S3_ACCESS_KEY%"
+							secret-key="%S3_SECRET%"
+							server-side-encryption="%S3_SERVER_SIDE_ENCRYPTION%"
+							kms-key-id="%S3_KMS_KEY_ID%"
+						/>
+					</stores>
+				</instance>
+			</config>
+
+			To make it the store for binary attributes that name no store, the application additionally sets
+			default-store="s3" on the instance.
+		-->
+	</services>
+
+	<configs />
+</application>

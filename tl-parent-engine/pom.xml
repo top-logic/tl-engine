@@ -115,6 +115,7 @@
 		<module>../com.top_logic.search.lucene</module>
 		<module>../com.top_logic.security.auth.pac4j</module>
 		<module>../com.top_logic.storage.azure</module>
+		<module>../com.top_logic.storage.s3</module>
 		<module>../com.top_logic.template</module>
 		<module>../com.top_logic.themes.core</module>
 		<module>../com.top_logic.umljs</module>

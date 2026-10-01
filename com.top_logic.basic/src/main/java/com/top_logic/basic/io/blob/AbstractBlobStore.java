@@ -8,6 +8,7 @@ package com.top_logic.basic.io.blob;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -19,6 +20,12 @@ import com.top_logic.basic.config.InstantiationContext;
  */
 public abstract class AbstractBlobStore<C extends BlobStore.Config<?>> extends AbstractConfiguredInstance<C>
 		implements BlobStore {
+
+	/**
+	 * Pattern of the keys created by {@link #newKey()}: canonical lower case UUID strings.
+	 */
+	public static final Pattern KEY_PATTERN =
+		Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
 
 	/**
 	 * Creates a {@link AbstractBlobStore} from configuration.
@@ -43,6 +50,30 @@ public abstract class AbstractBlobStore<C extends BlobStore.Config<?>> extends A
 	 */
 	protected String newKey() {
 		return UUID.randomUUID().toString();
+	}
+
+	/**
+	 * Whether the given string is a key as created by {@link #newKey()}.
+	 *
+	 * @param key
+	 *        The string to check, may be <code>null</code>.
+	 */
+	public static boolean isValidKey(String key) {
+		return key != null && KEY_PATTERN.matcher(key).matches();
+	}
+
+	/**
+	 * Checks that the given string is a key as created by {@link #newKey()}.
+	 *
+	 * @param key
+	 *        The key to check.
+	 * @throws IllegalArgumentException
+	 *         If the key is not valid.
+	 */
+	protected static void checkKey(String key) {
+		if (!isValidKey(key)) {
+			throw new IllegalArgumentException("Invalid blob key: '" + key + "'.");
+		}
 	}
 
 	/**

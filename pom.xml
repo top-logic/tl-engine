@@ -40,6 +40,8 @@
 		<msgbuf.version>1.3.0</msgbuf.version>
 		<bouncycastle.version>1.86</bouncycastle.version>
 		<batik.version>1.19</batik.version>
+		<awssdk.version>2.55.9</awssdk.version>
+		<testcontainers.version>2.0.5</testcontainers.version>
 		<tl.license.version>7.8.2</tl.license.version>
 		<!-- renovate: datasource=node-version depName=node -->
 		<node.version>20.10.0</node.version>
@@ -783,6 +785,11 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-storage-s3</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-template</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -1221,6 +1228,20 @@
 				<groupId>com.fasterxml.jackson</groupId>
 				<artifactId>jackson-bom</artifactId>
 				<version>${fasterxml.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>bom</artifactId>
+				<version>${awssdk.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.testcontainers</groupId>
+				<artifactId>testcontainers-bom</artifactId>
+				<version>${testcontainers.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>

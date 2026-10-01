@@ -22,6 +22,7 @@
 		<form initial-edit-mode="true"
 			input="model"
 			mode-switch="false"
+			with-inset="true"
 		>
 			<field attribute="data"/>
 			<commands>

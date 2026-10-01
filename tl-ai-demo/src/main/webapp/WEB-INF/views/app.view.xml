@@ -457,7 +457,7 @@
 							</data-list>
 						</section>
 						<pane>
-							<form input="dockPaneObject">
+							<form input="dockPaneObject" with-inset="true">
 								<field attribute="date"/>
 								<field attribute="description"/>
 								<field attribute="amount"/>

@@ -29,7 +29,7 @@
 			<en>My settings</en>
 			<de>Meine Einstellungen</de>
 		</title>
-		<form input="account">
+		<form input="account" with-inset="true">
 			<field attribute="aiPreferences"/>
 		</form>
 	</panel>

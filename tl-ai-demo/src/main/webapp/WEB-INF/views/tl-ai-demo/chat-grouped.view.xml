@@ -685,7 +685,7 @@
 				object - picked in the "Belege" list, or presented by the agent.
 			-->
 			<pane>
-				<form input="paneInvoice">
+				<form input="paneInvoice" with-inset="true">
 					<field attribute="date"/>
 					<field attribute="description"/>
 					<field attribute="amount"/>

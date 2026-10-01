@@ -58,6 +58,10 @@ import com.top_logic.model.migration.data.Type;
 public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeFlexAttributeProcessor.Config<?>>
 		implements MigrationProcessor {
 
+	private static final byte BLOB_TYPE = 50;
+
+	private static final String BLOB_DATA_DBNAME = "BLOB_DATA";
+
 	/**
 	 * Configuration of the types of the objects whose attributes should be moved.
 	 * 
@@ -179,8 +183,7 @@ public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeF
 				AbstractFlexDataManager.LONG_DATA_DBNAME,
 				AbstractFlexDataManager.DOUBLE_DATA_DBNAME,
 				AbstractFlexDataManager.VARCHAR_DATA_DBNAME,
-				AbstractFlexDataManager.CLOB_DATA_DBNAME,
-				AbstractFlexDataManager.BLOB_DATA_DBNAME);
+				AbstractFlexDataManager.CLOB_DATA_DBNAME);
 
 			SQLExpression typeValue;
 
@@ -188,13 +191,14 @@ public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeF
 			SQLExpression doubleValue = literal(DBType.DOUBLE, null);
 			SQLExpression stringValue = literal(DBType.STRING, null);
 			SQLExpression clobValue = literal(DBType.CLOB, null);
-			SQLExpression blobValue = literal(DBType.BLOB, null);
+			SQLExpression blobValue = null;
 
 			SQLColumnReference sourceValue = column(dbColumn.getDBName());
 			switch (dbColumn.getSQLType()) {
 				case BLOB:
-					typeValue = literal(DBType.INT, AbstractFlexDataManager.BLOB_TYPE);
+					typeValue = literal(DBType.INT, BLOB_TYPE);
 					blobValue = sourceValue;
+					columnNames.add(BLOB_DATA_DBNAME);
 					break;
 				case BOOLEAN:
 					typeValue = sqlCase(sourceValue,
@@ -264,8 +268,10 @@ public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeF
 				columnDef(longValue),
 				columnDef(doubleValue),
 				columnDef(stringValue),
-				columnDef(clobValue),
-				columnDef(blobValue)));
+				columnDef(clobValue)));
+			if (blobValue != null) {
+				columnDefs.add(columnDef(blobValue));
+			}
 			CompiledStatement copy = query(
 				insert(
 					table(flexTable.getDBMapping().getDBName()),

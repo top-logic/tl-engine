@@ -749,7 +749,8 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		FlexDataManagerFactory factory = FlexDataManagerFactory.getInstance();
 		
 		MOKnowledgeItemImpl dataType = lookupType(AbstractFlexDataManager.FLEX_DATA);
-		this.versionedDataManager = factory.newFlexDataManager(connectionPool, dataType);
+		MOKnowledgeItemImpl binaryDataType = lookupType(AbstractFlexDataManager.FLEX_BINARY_DATA);
+		this.versionedDataManager = factory.newFlexDataManager(connectionPool, dataType, binaryDataType);
 	}
 
 	private void initImplementationFactory() {

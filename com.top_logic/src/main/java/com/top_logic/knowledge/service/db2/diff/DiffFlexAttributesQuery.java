@@ -18,11 +18,19 @@ import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.AttributeItemQuery.AttributeItemResult;
+import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.AttributeValueResult;
+import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.BinaryAttributeItemQuery.BinaryAttributeItemResult;
+import com.top_logic.knowledge.service.db2.ItemResult;
 import com.top_logic.knowledge.service.db2.ItemQuery.DirectItemResult;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItemImpl;
 
 /**
  * {@link AbstractDiffUpdateQuery} that reports changes in flex attributes.
+ * 
+ * <p>
+ * The query reads either the {@link AbstractFlexDataManager#FLEX_DATA flex data table} or the
+ * {@link AbstractFlexDataManager#FLEX_BINARY_DATA table of binary values}.
+ * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -87,7 +95,7 @@ public class DiffFlexAttributesQuery extends AbstractDiffUpdateQuery {
 		return new DiffFlexUpdateResult(this.sqlDialect, flexDataType, type, executeStatement(connection));
 	}
 	
-	public static class DiffFlexUpdateResult extends DiffUpdateResult<AttributeItemResult> {
+	public static class DiffFlexUpdateResult extends DiffUpdateResult<AttributeValueResult> {
 		
 		private MOAttributeImpl _revMaxAttribute;
 
@@ -96,6 +104,10 @@ public class DiffFlexAttributesQuery extends AbstractDiffUpdateQuery {
 			super(sqlDialect, type, resultSet);
 			_revMaxAttribute = AbstractFlexDataManager.getAttribute(flexData, AbstractFlexDataManager.REV_MAX);
 		}
+
+		private static boolean isBinaryTable(MOClass type) {
+			return type.getAttributeOrNull(AbstractFlexDataManager.CONTENT) != null;
+		}
 		
 		@Override
 		public boolean isCreation() throws SQLException {
@@ -103,16 +115,36 @@ public class DiffFlexAttributesQuery extends AbstractDiffUpdateQuery {
 		}
 
 		@Override
-		protected AttributeItemResult createNewValues(DBHelper sqlDialect, MOClass type, ResultSet wrappedResult, int offset) {
-			return new AttributeItemResult(type, DirectItemResult.createDirectItemResult(sqlDialect, wrappedResult,
-				offset));
+		protected AttributeValueResult createNewValues(DBHelper sqlDialect, MOClass type, ResultSet wrappedResult,
+				int offset) {
+			ItemResult values = DirectItemResult.createDirectItemResult(sqlDialect, wrappedResult, offset);
+			if (isBinaryTable(type)) {
+				return new BinaryAttributeItemResult(type, values);
+			}
+			return new AttributeItemResult(type, values);
 		}
 
 
 		@Override
-		protected AttributeItemResult createOldValues(DBHelper sqlDialect, MOClass type, ResultSet wrappedResult, int offset) {
-			return new AttributeItemResult(type, DirectItemResult.createDirectItemResult(sqlDialect, wrappedResult,
-				offset)) {
+		protected AttributeValueResult createOldValues(DBHelper sqlDialect, MOClass type, ResultSet wrappedResult,
+				int offset) {
+			ItemResult values = DirectItemResult.createDirectItemResult(sqlDialect, wrappedResult, offset);
+			if (isBinaryTable(type)) {
+				return new BinaryAttributeItemResult(type, values) {
+					/**
+					 * All values are <code>null</code> for a creation.
+					 */
+					@Override
+					public Object getAttributeValue() throws SQLException {
+						if (getRevMax() == 0) {
+							return null;
+						} else {
+							return super.getAttributeValue();
+						}
+					}
+				};
+			}
+			return new AttributeItemResult(type, values) {
 				
 				/**
 				 * It may be that the result set is a result for an old value so all values in the

@@ -188,7 +188,7 @@ public class DeletedObjectPurge {
 
 	private final List<TableAccess> _tableAccess;
 
-	private final FlexDataAccess _flexDataAccess;
+	private final List<FlexDataAccess> _flexDataAccess;
 
 	private final CompiledStatement _selectBranches;
 
@@ -222,8 +222,11 @@ public class DeletedObjectPurge {
 		_tableAccess = Collections.unmodifiableList(tableAccess);
 		_tableAccessByType = tableAccessByType;
 
-		ItemTables.Table flexData = _tables.getFlexData();
-		_flexDataAccess = flexData == null ? null : new FlexDataAccess(flexData);
+		List<FlexDataAccess> flexDataAccess = new ArrayList<>();
+		for (ItemTables.Table flexTable : _tables.getFlexTables()) {
+			flexDataAccess.add(new FlexDataAccess(flexTable));
+		}
+		_flexDataAccess = Collections.unmodifiableList(flexDataAccess);
 
 		_selectBranches = createSelectBranches();
 		_selectBranchSwitch = createSelectBranchSwitch();
@@ -504,17 +507,19 @@ public class DeletedObjectPurge {
 			String typeName = table.getType().getName();
 			TableAccess access = _tableAccessByType.get(typeName);
 			long rows = 0;
-			long flexRows = 0;
+			long[] flexRowsByTable = new long[_flexDataAccess.size()];
 			for (List<TLID> chunk : deleteChunks(group.getIds())) {
 				if (dryRun) {
 					rows += access.countRows(connection, group.getBranch(), chunk);
-					if (_flexDataAccess != null) {
-						flexRows += _flexDataAccess.countRows(connection, group.getBranch(), typeName, chunk);
+					for (int n = 0; n < flexRowsByTable.length; n++) {
+						flexRowsByTable[n] +=
+							_flexDataAccess.get(n).countRows(connection, group.getBranch(), typeName, chunk);
 					}
 				} else {
 					rows += access.deleteRows(connection, group.getBranch(), chunk);
-					if (_flexDataAccess != null) {
-						flexRows += _flexDataAccess.deleteRows(connection, group.getBranch(), typeName, chunk);
+					for (int n = 0; n < flexRowsByTable.length; n++) {
+						flexRowsByTable[n] +=
+							_flexDataAccess.get(n).deleteRows(connection, group.getBranch(), typeName, chunk);
 					}
 					connection.commit();
 				}
@@ -522,8 +527,12 @@ public class DeletedObjectPurge {
 			if (rows > 0) {
 				report.table(table.getDBName()).addErasedRows(rows);
 			}
-			if (flexRows > 0) {
-				report.table(_flexDataAccess.getTable().getDBName()).addErasedRows(flexRows);
+			long flexRows = 0;
+			for (int n = 0; n < flexRowsByTable.length; n++) {
+				if (flexRowsByTable[n] > 0) {
+					report.table(_flexDataAccess.get(n).getTable().getDBName()).addErasedRows(flexRowsByTable[n]);
+					flexRows += flexRowsByTable[n];
+				}
 			}
 			if (!dryRun && rows > 0) {
 				log.info("Erased " + rows + " rows of '" + table.getDBName() + "' and " + flexRows

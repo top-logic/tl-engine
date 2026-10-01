@@ -5,16 +5,19 @@
  */
 package com.top_logic.knowledge.service;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.Mapping;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.NamedValues;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.service.db2.DBKnowledgeItem;
 import com.top_logic.knowledge.service.db2.FlexData;
@@ -91,6 +94,28 @@ public interface FlexDataManager {
 	 */
 	<T> void loadAll(long dataRevision, AttributeLoader<T> callback, Mapping<? super T, ? extends ObjectKey> keyMapping,
 			List<T> baseObjects, KnowledgeBase kb);
+
+	/**
+	 * Prepares a binary value for storing it in a dynamic attribute of the given item.
+	 *
+	 * <p>
+	 * Called when the value is assigned to the attribute, not during the commit. Content that is
+	 * stored in a blob store is uploaded by this method.
+	 * </p>
+	 *
+	 * @param item
+	 *        The item the value is assigned to.
+	 * @param attribute
+	 *        The name of the dynamic attribute.
+	 * @param value
+	 *        The value to assign, not <code>null</code>.
+	 * @return The value to keep in the dynamic values of the item until the commit.
+	 * @throws IOException
+	 *         If reading or uploading the content fails.
+	 */
+	default BinaryData toStoredValue(KnowledgeItem item, String attribute, BinaryData value) throws IOException {
+		return value;
+	}
 
 	/**
 	 * Stores the given modified values.

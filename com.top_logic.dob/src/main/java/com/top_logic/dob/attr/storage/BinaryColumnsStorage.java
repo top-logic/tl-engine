@@ -10,6 +10,7 @@ import java.io.UncheckedIOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
+import java.util.function.ToIntFunction;
 
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataSource;
@@ -122,16 +123,9 @@ public class BinaryColumnsStorage extends AbstractMOAttributeStorageImpl {
 			ObjectContext context) throws SQLException {
 		AbstractBinaryAttribute binaryAttribute = binaryAttribute(attribute);
 
-		DBAttribute keyColumn = binaryAttribute.getKeyColumn();
-		if (keyColumn != null) {
-			String key = dbResult.getString(index(resultOffset, keyColumn));
-			if (key != null) {
-				String hash = dbResult.getString(index(resultOffset, binaryAttribute.getHashColumn()));
-				long size = dbResult.getLong(index(resultOffset, binaryAttribute.getSizeColumn()));
-				String contentType = dbResult.getString(index(resultOffset, binaryAttribute.getContentTypeColumn()));
-				String name = dbResult.getString(index(resultOffset, binaryAttribute.getNameColumn()));
-				return new BlobBinaryData(binaryAttribute.getStoreName(), key, hash, size, contentType, name);
-			}
+		BlobBinaryData blob = fetchReference(dbResult, binaryAttribute, column -> index(resultOffset, column));
+		if (blob != null) {
+			return blob;
 		}
 
 		DBAttribute dataColumn = binaryAttribute.getDataColumn();
@@ -144,6 +138,38 @@ public class BinaryColumnsStorage extends AbstractMOAttributeStorageImpl {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Reads the reference to a blob from the columns of the given attribute.
+	 *
+	 * @param dbResult
+	 *        The result positioned at the row to read.
+	 * @param attribute
+	 *        The attribute whose columns are read.
+	 * @param columnIndex
+	 *        The index of each column of the attribute in the given result.
+	 * @return The reference to the blob of the row, <code>null</code> if the row has no blob
+	 *         reference, e.g. because it stores its content inline or has no value.
+	 */
+	public static BlobBinaryData fetchReference(ResultSet dbResult, AbstractBinaryAttribute attribute,
+			ToIntFunction<DBAttribute> columnIndex) throws SQLException {
+		DBAttribute keyColumn = attribute.getKeyColumn();
+		if (keyColumn == null) {
+			return null;
+		}
+		String key = dbResult.getString(columnIndex.applyAsInt(keyColumn));
+		if (key == null) {
+			return null;
+		}
+		String hash = dbResult.getString(columnIndex.applyAsInt(attribute.getHashColumn()));
+		DBAttribute storeColumn = attribute.getStoreColumn();
+		String storeName = storeColumn != null ? dbResult.getString(columnIndex.applyAsInt(storeColumn))
+			: attribute.getStoreName();
+		long size = dbResult.getLong(columnIndex.applyAsInt(attribute.getSizeColumn()));
+		String contentType = dbResult.getString(columnIndex.applyAsInt(attribute.getContentTypeColumn()));
+		String name = dbResult.getString(columnIndex.applyAsInt(attribute.getNameColumn()));
+		return new BlobBinaryData(storeName, key, hash, size, contentType, name);
 	}
 
 	private static int index(int resultOffset, DBAttribute column) {
@@ -164,42 +190,59 @@ public class BinaryColumnsStorage extends AbstractMOAttributeStorageImpl {
 		AbstractBinaryAttribute binaryAttribute = binaryAttribute(attribute);
 		BinaryData value = (BinaryData) getCacheValue(attribute, item, storage);
 
-		DBAttribute keyColumn = binaryAttribute.getKeyColumn();
-		DBAttribute hashColumn = binaryAttribute.getHashColumn();
-		DBAttribute dataColumn = binaryAttribute.getDataColumn();
-
-		if (value == null) {
-			if (keyColumn != null) {
-				storeObject(keyColumn, stmtArgs, stmtOffset, item, null);
-				storeObject(hashColumn, stmtArgs, stmtOffset, item, null);
-			}
-			storeObject(binaryAttribute.getSizeColumn(), stmtArgs, stmtOffset, item, null);
-			storeObject(binaryAttribute.getContentTypeColumn(), stmtArgs, stmtOffset, item, null);
-			storeObject(binaryAttribute.getNameColumn(), stmtArgs, stmtOffset, item, null);
-			if (dataColumn != null) {
-				storeObject(dataColumn, stmtArgs, stmtOffset, item, null);
-			}
-			return;
+		Object[] columnValues = columnValues(binaryAttribute, value);
+		DBAttribute[] columns = binaryAttribute.getDbMapping();
+		for (int n = 0; n < columns.length; n++) {
+			storeObject(columns[n], stmtArgs, stmtOffset, item, columnValues[n]);
 		}
+
+		if (value != null) {
+			wrapInlineContent(pool, binaryAttribute, item, storage);
+		}
+	}
+
+	/**
+	 * The values of the columns of the given attribute storing the given value.
+	 *
+	 * <p>
+	 * A {@link BlobBinaryData} is stored as reference to its blob, if the attribute stores blob
+	 * references, all other values are stored inline. The size of an inline value must be known.
+	 * </p>
+	 *
+	 * @param attribute
+	 *        The attribute to store the value in.
+	 * @param value
+	 *        The value to store, <code>null</code> for no value.
+	 * @return The column values in the order of {@link AbstractBinaryAttribute#getDbMapping()}. The
+	 *         value of the BLOB column is the given {@link BinaryData} itself.
+	 * @throws SQLException
+	 *         If the value cannot be stored in the columns of the attribute.
+	 */
+	public static Object[] columnValues(AbstractBinaryAttribute attribute, BinaryData value) throws SQLException {
+		DBAttribute[] columns = attribute.getDbMapping();
+		Object[] result = new Object[columns.length];
+		if (value == null) {
+			return result;
+		}
+
+		DBAttribute keyColumn = attribute.getKeyColumn();
+		DBAttribute storeColumn = attribute.getStoreColumn();
+		DBAttribute dataColumn = attribute.getDataColumn();
 
 		boolean external = keyColumn != null && value instanceof BlobBinaryData;
 		if (external) {
 			BlobBinaryData blob = (BlobBinaryData) value;
-			if (!Objects.equals(blob.getStoreName(), binaryAttribute.getStoreName())) {
+			if (storeColumn != null) {
+				set(result, columns, storeColumn, blob.getStoreName());
+			} else if (!Objects.equals(blob.getStoreName(), attribute.getStoreName())) {
 				throw new SQLException("Blob '" + blob.getKey() + "' of attribute '" + attribute.getName()
 					+ "' is not stored in the store of the attribute.");
 			}
-			storeObject(keyColumn, stmtArgs, stmtOffset, item, blob.getKey());
-			storeObject(hashColumn, stmtArgs, stmtOffset, item, blob.getHash());
-		} else {
-			if (dataColumn == null) {
-				throw new SQLException("Content '" + value.getName() + "' of attribute '" + attribute.getName()
-					+ "' has not been stored in a blob store.");
-			}
-			if (keyColumn != null) {
-				storeObject(keyColumn, stmtArgs, stmtOffset, item, null);
-				storeObject(hashColumn, stmtArgs, stmtOffset, item, null);
-			}
+			set(result, columns, keyColumn, blob.getKey());
+			set(result, columns, attribute.getHashColumn(), blob.getHash());
+		} else if (dataColumn == null) {
+			throw new SQLException("Content '" + value.getName() + "' of attribute '" + attribute.getName()
+				+ "' has not been stored in a blob store.");
 		}
 
 		long size = value.getSize();
@@ -207,17 +250,25 @@ public class BinaryColumnsStorage extends AbstractMOAttributeStorageImpl {
 			throw new SQLException("Size of content '" + value.getName() + "' of attribute '" + attribute.getName()
 				+ "' is unknown.");
 		}
-		storeObject(binaryAttribute.getSizeColumn(), stmtArgs, stmtOffset, item, Long.valueOf(size));
-		storeObject(binaryAttribute.getContentTypeColumn(), stmtArgs, stmtOffset, item,
-			truncate(binaryAttribute.getContentTypeColumn(), value.getContentType()));
-		storeObject(binaryAttribute.getNameColumn(), stmtArgs, stmtOffset, item,
-			truncate(binaryAttribute.getNameColumn(), storedName(value)));
+		set(result, columns, attribute.getSizeColumn(), Long.valueOf(size));
+		set(result, columns, attribute.getContentTypeColumn(),
+			truncate(attribute.getContentTypeColumn(), value.getContentType()));
+		set(result, columns, attribute.getNameColumn(), truncate(attribute.getNameColumn(), storedName(value)));
 
-		if (dataColumn != null) {
-			storeObject(dataColumn, stmtArgs, stmtOffset, item, external ? null : value);
+		if (dataColumn != null && !external) {
+			set(result, columns, dataColumn, value);
 		}
+		return result;
+	}
 
-		wrapInlineContent(pool, binaryAttribute, item, storage);
+	private static void set(Object[] values, DBAttribute[] columns, DBAttribute column, Object value) {
+		for (int n = 0; n < columns.length; n++) {
+			if (columns[n] == column) {
+				values[n] = value;
+				return;
+			}
+		}
+		throw new IllegalArgumentException("Column '" + column.getDBName() + "' is not a column of the attribute.");
 	}
 
 	private static String storedName(BinaryData value) {

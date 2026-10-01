@@ -5,11 +5,15 @@
  */
 package com.top_logic.knowledge.service.db2;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MOAttribute;
@@ -158,6 +162,9 @@ abstract class DynamicKnowledgeItem extends DBKnowledgeItem implements DynamicAt
 		if (CollectionUtil.equals(oldValue, newValue)) {
 			return oldValue;
 		}
+		if (newValue instanceof BinaryDataSource binary) {
+			newValue = toStoredValue(dynamicAttributeName, BinaryData.cast(binary));
+		}
 		
 		FlexData updatedData = this.getDataObjectForWrite(currentModificationContext);
 		Object oldAttributeValue = updatedData.setAttributeValue(dynamicAttributeName, newValue);
@@ -167,6 +174,19 @@ abstract class DynamicKnowledgeItem extends DBKnowledgeItem implements DynamicAt
 			handleAfterDynamicUpdate(currentModificationContext, dynamicAttributeName, oldValue, newValue);
 		}
 		return oldAttributeValue;
+	}
+
+	/**
+	 * Prepares a binary value for storage, see
+	 * {@link FlexDataManager#toStoredValue(com.top_logic.knowledge.objects.KnowledgeItem, String, BinaryData)}.
+	 */
+	private BinaryData toStoredValue(String dynamicAttributeName, BinaryData value) {
+		try {
+			return getFlexDataManager().toStoredValue(this, dynamicAttributeName, value);
+		} catch (IOException ex) {
+			throw new UncheckedIOException(
+				"Storing content '" + value.getName() + "' for attribute '" + dynamicAttributeName + "' failed.", ex);
+		}
 	}
 
 	private void handleAfterDynamicUpdate(DBContext context, String attributeName, Object oldValue, Object newValue) {

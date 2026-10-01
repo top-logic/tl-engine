@@ -40,7 +40,8 @@ import com.top_logic.dob.sql.SimpleDBAttribute;
  * </p>
  *
  * @implNote Column suffixes: {@link #SUFFIX_KEY} (key of the blob in the blob store),
- *           {@link #SUFFIX_HASH} (SHA-256 hash of the content of the blob), {@link #SUFFIX_SIZE}
+ *           {@link #SUFFIX_HASH} (SHA-256 hash of the content of the blob), {@link #SUFFIX_STORE}
+ *           (name of the blob store, only with a store column), {@link #SUFFIX_SIZE}
  *           (size of the content in bytes), {@link #SUFFIX_CONTENT_TYPE} (content type),
  *           {@link #SUFFIX_NAME} (name), {@link #SUFFIX_DATA} (content stored inline).
  *
@@ -61,6 +62,9 @@ public abstract class AbstractBinaryAttribute extends AbstractMOAttribute {
 	/** Column suffix of the column holding the SHA-256 hash of the blob content. */
 	public static final String SUFFIX_HASH = "_HASH";
 
+	/** Column suffix of the column holding the name of the blob store of the blob. */
+	public static final String SUFFIX_STORE = "_STORE";
+
 	/** Column suffix of the column holding the size of the content. */
 	public static final String SUFFIX_SIZE = "_SIZE";
 
@@ -75,6 +79,9 @@ public abstract class AbstractBinaryAttribute extends AbstractMOAttribute {
 
 	/** Size of the {@link #SUFFIX_HASH} column: a SHA-256 hash as hex string. */
 	public static final int HASH_COLUMN_SIZE = 64;
+
+	/** Size of the {@link #SUFFIX_STORE} column. */
+	public static final int STORE_COLUMN_SIZE = 128;
 
 	/** Size of the {@link #SUFFIX_CONTENT_TYPE} column. */
 	public static final int CONTENT_TYPE_COLUMN_SIZE = 255;
@@ -131,6 +138,27 @@ public abstract class AbstractBinaryAttribute extends AbstractMOAttribute {
 		 */
 		void setStore(String value);
 
+		/** Configuration name of {@link #isStoreColumn()}. */
+		String STORE_COLUMN = "store-column";
+
+		/**
+		 * Whether each row stores the name of the blob store holding its content.
+		 *
+		 * <p>
+		 * Without a store column, all content of the attribute is resolved in the configured
+		 * {@link #getStore()}. With a store column, each row names the store of its content,
+		 * so that rows of the same attribute can reference content in different stores. An empty
+		 * store column refers to the default store of the blob store service.
+		 * </p>
+		 */
+		@Name(STORE_COLUMN)
+		boolean isStoreColumn();
+
+		/**
+		 * @see #isStoreColumn()
+		 */
+		void setStoreColumn(boolean value);
+
 	}
 
 	private AttributeStorage _storage;
@@ -140,6 +168,8 @@ public abstract class AbstractBinaryAttribute extends AbstractMOAttribute {
 	private final DBAttribute _keyColumn;
 
 	private final DBAttribute _hashColumn;
+
+	private final DBAttribute _storeColumn;
 
 	private final DBAttribute _sizeColumn;
 
@@ -172,6 +202,7 @@ public abstract class AbstractBinaryAttribute extends AbstractMOAttribute {
 		_dbBaseName = config.getDBNameEffective();
 		_keyColumn = external ? keyColumn(inline) : null;
 		_hashColumn = external ? hashColumn(inline) : null;
+		_storeColumn = external && ((ExternalConfig) config).isStoreColumn() ? storeColumn() : null;
 		_sizeColumn = sizeColumn();
 		_contentTypeColumn = contentTypeColumn();
 		_nameColumn = nameColumn();
@@ -199,6 +230,7 @@ public abstract class AbstractBinaryAttribute extends AbstractMOAttribute {
 		boolean inline = orig._dataColumn != null;
 		_keyColumn = external ? keyColumn(inline) : null;
 		_hashColumn = external ? hashColumn(inline) : null;
+		_storeColumn = orig._storeColumn != null ? storeColumn() : null;
 		_sizeColumn = sizeColumn();
 		_contentTypeColumn = contentTypeColumn();
 		_nameColumn = nameColumn();
@@ -214,6 +246,12 @@ public abstract class AbstractBinaryAttribute extends AbstractMOAttribute {
 	private DBAttribute hashColumn(boolean inline) {
 		return new SimpleDBAttribute(this, MOPrimitive.STRING, _dbBaseName + SUFFIX_HASH, HASH_COLUMN_SIZE, true,
 			isMandatory() && !inline);
+	}
+
+	private DBAttribute storeColumn() {
+		// An empty store name refers to the default store.
+		return new SimpleDBAttribute(this, MOPrimitive.STRING, _dbBaseName + SUFFIX_STORE, STORE_COLUMN_SIZE, true,
+			false);
 	}
 
 	private DBAttribute sizeColumn() {
@@ -245,6 +283,9 @@ public abstract class AbstractBinaryAttribute extends AbstractMOAttribute {
 		if (_keyColumn != null) {
 			result.add(_keyColumn);
 			result.add(_hashColumn);
+			if (_storeColumn != null) {
+				result.add(_storeColumn);
+			}
 		}
 		result.add(_sizeColumn);
 		result.add(_contentTypeColumn);
@@ -269,6 +310,14 @@ public abstract class AbstractBinaryAttribute extends AbstractMOAttribute {
 	 */
 	public DBAttribute getHashColumn() {
 		return _hashColumn;
+	}
+
+	/**
+	 * The column holding the name of the blob store of the blob, <code>null</code> if all blobs of
+	 * this attribute are stored in the {@link #getStoreName() store of the attribute}.
+	 */
+	public DBAttribute getStoreColumn() {
+		return _storeColumn;
 	}
 
 	/**

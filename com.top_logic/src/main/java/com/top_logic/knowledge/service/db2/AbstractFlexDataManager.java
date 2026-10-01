@@ -14,7 +14,6 @@ import static com.top_logic.dob.sql.SQLFactory.column;
 import static com.top_logic.dob.sql.SQLFactory.table;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,8 +23,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ExtID;
@@ -40,6 +40,8 @@ import com.top_logic.basic.col.MappedComparator;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLColumnDefinition;
 import com.top_logic.basic.db.sql.SQLExpression;
@@ -52,10 +54,8 @@ import com.top_logic.basic.db.sql.SQLSelect;
 import com.top_logic.basic.db.sql.SQLTable;
 import com.top_logic.basic.db.sql.SQLTableReference;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
-import com.top_logic.basic.io.binary.DBBinaryData;
-import com.top_logic.basic.io.binary.FileBasedBinaryData;
+import com.top_logic.basic.io.blob.BlobUpload;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.DBHelper;
@@ -66,6 +66,7 @@ import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.NamedValues;
 import com.top_logic.dob.attr.ComputedMOAttribute;
+import com.top_logic.dob.attr.HybridBinaryAttribute;
 import com.top_logic.dob.attr.MOAttributeImpl;
 import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.dob.attr.NextCommitNumberFuture;
@@ -78,7 +79,9 @@ import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AttributeLoader;
+import com.top_logic.knowledge.service.BinaryStorageSettings;
 import com.top_logic.knowledge.service.Branch;
+import com.top_logic.knowledge.service.DynamicBinaryStoragePolicy;
 import com.top_logic.knowledge.service.FlexDataManager;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -247,13 +250,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 		return new MOAttributeImpl(CLOB_DATA, CLOB_DATA_DBNAME, MOPrimitive.STRING, false, false, DBType.CLOB, 0, 0);
 	}
     /**
-     * Attribute that can store long {@link String} data. 
-     */
-	private static MOAttributeImpl createBlobDataAttr() {
-		return new MOAttributeImpl(BLOB_DATA, BLOB_DATA_DBNAME, MOPrimitive.BLOB, false, false, DBType.BLOB, 0, 0);
-	}
-
-    /**
 	 * Name of the {@link KnowledgeItem} type that stores {@link NamedValues} data associated with a
 	 * {@link KnowledgeObject}.
 	 */
@@ -276,6 +272,58 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	 *        Whether multiple branches are supported
 	 */
 	public static MOKnowledgeItemImpl createFlexDataType(String typeName, String dbName, boolean multipleBranches) {
+		return createFlexType(typeName, dbName, multipleBranches, false);
+	}
+
+	/**
+	 * Name of the {@link KnowledgeItem} type that stores the binary values of dynamic attributes.
+	 */
+	public static final String FLEX_BINARY_DATA = "FlexBinaryData";
+
+	/**
+	 * Database table name of {@link #FLEX_BINARY_DATA}.
+	 */
+	public static final String FLEX_BINARY_DATA_DB_NAME = "FLEX_BINARY";
+
+	/**
+	 * Name of the {@link HybridBinaryAttribute} of {@link #FLEX_BINARY_DATA} storing the value.
+	 * 
+	 * <p>
+	 * The attribute has a store column, so that each row names the blob store holding its content.
+	 * </p>
+	 */
+	public static final String CONTENT = "content";
+
+	/**
+	 * Create {@link KnowledgeItem} type that stores the binary values of dynamic attributes of
+	 * {@link KnowledgeObject}s.
+	 * 
+	 * <p>
+	 * The type has the same key columns as a {@link #createFlexDataType(String, String, boolean)
+	 * flex data type} and stores the value in a {@link HybridBinaryAttribute} {@link #CONTENT}.
+	 * </p>
+	 * 
+	 * @param typeName
+	 *        The internal name of the type.
+	 * @param dbName
+	 *        The name of the corresponding database table.
+	 * @param multipleBranches
+	 *        Whether multiple branches are supported
+	 */
+	public static MOKnowledgeItemImpl createFlexBinaryDataType(String typeName, String dbName,
+			boolean multipleBranches) {
+		return createFlexType(typeName, dbName, multipleBranches, true);
+	}
+
+	private static HybridBinaryAttribute createContentAttr() {
+		HybridBinaryAttribute.Config config = TypedConfiguration.newConfigItem(HybridBinaryAttribute.Config.class);
+		config.setAttributeName(CONTENT);
+		config.setStoreColumn(true);
+		return new HybridBinaryAttribute(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
+	}
+
+	private static MOKnowledgeItemImpl createFlexType(String typeName, String dbName, boolean multipleBranches,
+			boolean binary) {
 		MOKnowledgeItemImpl type = new MOKnowledgeItemImpl(typeName);
 		type.setDBName(dbName);
     	type.setFinal(true);
@@ -302,13 +350,16 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			
 			revMinAttribute = createRevMinAttr();
 			type.addAttribute(revMinAttribute);
-			type.addAttribute(createDataTypeAttr());
-			
-			type.addAttribute(createLongTypeAttr());
-			type.addAttribute(createDoubleDataAttr());
-			type.addAttribute(createVarcharDataAttr());
-			type.addAttribute(createClobDataAttr());
-			type.addAttribute(createBlobDataAttr());
+			if (binary) {
+				type.addAttribute(createContentAttr());
+			} else {
+				type.addAttribute(createDataTypeAttr());
+
+				type.addAttribute(createLongTypeAttr());
+				type.addAttribute(createDoubleDataAttr());
+				type.addAttribute(createVarcharDataAttr());
+				type.addAttribute(createClobDataAttr());
+			}
 		} catch (DuplicateAttributeException e) {
 			throw new UnreachableAssertion(e);
 		}
@@ -390,11 +441,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	public static final String CLOB_DATA_DBNAME = "CLOB_DATA";
 
 	/**
-	 * Name of the {@link MOAttribute} that stores {@link #createBlobDataAttr()} data.
-	 */
-	public static final String BLOB_DATA_DBNAME = "BLOB_DATA";
-
-	/**
 	 * Name of the DB column that stores {@link #createBranchAttr(boolean)} data.
 	 */
 	public static final String BRANCH = "_branch";
@@ -449,10 +495,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	 */
 	public static final String CLOB_DATA = "clobData";
 
-	/**
-	 * Name of the DB column that stores {@link #createBlobDataAttr()} data.
-	 */
-	public static final String BLOB_DATA = "blobData";
     
 	// Special row types that use no data columns.
     
@@ -520,11 +562,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
      * {@link #createDataTypeAttr()} value that marks a {@link String} value in the {@link #createClobDataAttr()}.  
      */
 	public static final byte CLOB_TYPE = 40;
-
-    /**
-     * {@link #createDataTypeAttr()} value that marks a {@link String} value in the {@link #createBlobDataAttr()}.  
-     */
-	public static final byte BLOB_TYPE = 50;
 
 	/**
 	 * {@link #createDataTypeAttr()} value that marks a {@link TLID}. If value is {@link LongID} it
@@ -643,11 +680,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 		 */
 		String getClobData() throws SQLException;
 
-		/**
-		 * The data from the {@link AbstractFlexDataManager#createBlobDataAttr()}.
-		 */
-		BinaryData getBlobData() throws SQLException;
-
 	}
 
 	/**
@@ -674,26 +706,9 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 
 		private final ConnectionPool _basePool;
 
-		/**
-		 * May be {@link VersionedBLOBData#NO_BRANCH} in case there is no database column for
-		 * branch.
-		 */
-		private final long _branch;
-
-		private final String _type;
-
-		private final long _commitNumber;
-
-		private MOKnowledgeItemImpl _dataType;
-
-		public AttributeResultSetWrapper(ConnectionPool aPool, ResultSet result,
-				long aBranch, String aType, MOKnowledgeItemImpl dataType, long aCommitNr) {
+		public AttributeResultSetWrapper(ConnectionPool aPool, ResultSet result) {
 			super(result);
 			_basePool = aPool;
-			_branch = aBranch;
-			_type = aType;
-			_dataType = dataType;
-			_commitNumber = aCommitNr;
 		}
 
 		@Override
@@ -746,31 +761,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 
 		protected abstract int clobIndex();
 
-		@Override
-		public BinaryData getBlobData() throws SQLException {
-			try {
-				String attr = getAttributeName();
-				long size = getLongData();
-
-				String contentType = getVarcharData();
-				String name = DBBinaryData.noEmptyName(getClobData());
-
-				if (size < BinaryDataFactory.MAX_MEMORY_SIZE) {
-					final DBHelper sqlDialect = _basePool.getSQLDialect();
-					InputStream stream = sqlDialect.getBinaryStream(resultSet, blobIndex());
-
-					return BinaryDataFactory.createMemoryBinaryData(stream, size, contentType, name);
-				}
-				// Will fetch Stream on demand, later
-				return new VersionedBLOBData(size, _basePool, _dataType, _branch, _type, getObjectName(), attr,
-					_commitNumber, name);
-			} catch (IOException ex) {
-				throw (SQLException) new SQLException("Reading stream attribute failed.").initCause(ex);
-			}
-		}
-
-		protected abstract int blobIndex();
-
 		protected abstract TLID getObjectName() throws SQLException;
 
 	}
@@ -792,8 +782,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 		final int RESULT_VARCHAR_DATA_IDX;
 
 		final int RESULT_CLOB_DATA_IDX;
-
-		final int RESULT_BLOB_DATA_IDX;
     	
 		private final CompiledStatement statement;
 
@@ -816,8 +804,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			RESULT_VARCHAR_DATA_IDX = columns.size();
 			columns.add(columnDef(column(tableAlias, CLOB_DATA_DBNAME), CLOB_DATA_DBNAME));
 			RESULT_CLOB_DATA_IDX = columns.size();
-			columns.add(columnDef(column(tableAlias, BLOB_DATA_DBNAME), BLOB_DATA_DBNAME));
-			RESULT_BLOB_DATA_IDX = columns.size();
 			SQLTableReference from = table(dataType, tableAlias);
 			boolean multipleBranches = dataType.multipleBranches();
 			SQLExpression where;
@@ -854,11 +840,10 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				throws SQLException {
 			if (dataType.multipleBranches()) {
 				ResultSet result = statement.executeQuery(connection, branch, type, id, commitNumber);
-				return new HistoricAttributeResult(basePool, result, branch, type, id, commitNumber);
+				return new HistoricAttributeResult(basePool, result, id);
 			} else {
 				ResultSet result = statement.executeQuery(connection, type, id, commitNumber);
-				return new HistoricAttributeResult(basePool, result, VersionedBLOBData.NO_BRANCH, type, id,
-					commitNumber);
+				return new HistoricAttributeResult(basePool, result, id);
 			}
     	}
     	
@@ -866,9 +851,8 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 
 			private TLID _id;
 
-			public HistoricAttributeResult(ConnectionPool aPool, ResultSet result,
-					long aBranch, String aType, TLID anId, long aCommitNr) {
-				super(aPool, result, aBranch, aType, dataType, aCommitNr);
+			public HistoricAttributeResult(ConnectionPool aPool, ResultSet result, TLID anId) {
+				super(aPool, result);
 				_id = anId;
  			}
 
@@ -908,11 +892,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			}
 
 			@Override
-			protected int blobIndex() {
-				return RESULT_BLOB_DATA_IDX;
-			}
-			
-			@Override
 			protected TLID getObjectName() throws SQLException {
 				return _id;
 			}
@@ -921,103 +900,7 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
     	
 	}
 	
-    /**
-     * This allows re-fetching of DBBinaryData in case the {@link FileBasedBinaryData} becomes invalid.
-     */
-    private static class VersionedBLOBData extends DBBinaryData {
 
-		static final long NO_BRANCH = -1;
-        
-		private static final String HISTORY_CONTEXT = "historyContext";
-		private final long   branch;
-        private final String type;
-
-		private final TLID id;
-        private final String attr;
-        private final long   commitNumber;
-
-		private final CompiledStatement statement;
-
-		private final String _name;
-
-		public VersionedBLOBData(long aSize, ConnectionPool aPool, MOKnowledgeItemImpl dataType, long aBranch,
-				String aType, TLID anId, String anAttr, long aCommitNr, String name) throws SQLException {
-			super(aSize, aPool);
-			this._name = name;
-            this.branch = aBranch;
-            this.type   = aType;
-            this.id     = anId;
-            this.attr   = anAttr;
-            this.commitNumber = aCommitNr;
-			DBHelper sqlDialect = aPool.getSQLDialect();
-			String tableAlias = NO_TABLE_ALIAS;
-			List<SQLColumnDefinition> columns = columns(
-				columnDef(column(tableAlias, VARCHAR_DATA_DBNAME), null),
-				columnDef(column(tableAlias, LONG_DATA_DBNAME), null),
-				columnDef(column(tableAlias, BLOB_DATA_DBNAME), null)
-				);
-			SQLTableReference from = table(dataType, tableAlias);
-			SQLExpression where;
-			if (multipleBranches()) {
-				where = eq(column(tableAlias, BRANCH_DBNAME, NOT_NULL), parameter(DBType.LONG, BRANCH_DBNAME));
-			} else {
-				where = SQLFactory.literalTrueLogical();
-			}
-			where = and(
-				where,
-				eq(column(tableAlias, TYPE_DBNAME, NOT_NULL), parameter(DBType.STRING, TYPE_DBNAME)),
-				eq(column(tableAlias, IDENTIFIER_DBNAME, NOT_NULL), parameter(DBType.ID, IDENTIFIER_DBNAME)),
-				eq(column(tableAlias, ATTRIBUTE_DBNAME, NOT_NULL), parameter(DBType.STRING, ATTRIBUTE_DBNAME)),
-				ge(column(tableAlias, BasicTypes.REV_MAX_DB_NAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT)),
-				le(column(tableAlias, BasicTypes.REV_MIN_DB_NAME, NOT_NULL), parameter(DBType.LONG, HISTORY_CONTEXT))
-				);
-			SQLSelect select = select(columns, from, where);
-			select.setNoBlockHint(true);
-			List<Parameter> parameters = new ArrayList<>();
-			if (multipleBranches()) {
-				parameters.add(parameterDef(DBType.LONG, BRANCH_DBNAME));
-			}
-			Collections.addAll(parameters,
-				parameterDef(DBType.STRING, TYPE_DBNAME),
-				parameterDef(DBType.ID, IDENTIFIER_DBNAME),
-				parameterDef(DBType.STRING, ATTRIBUTE_DBNAME),
-				parameterDef(DBType.LONG, HISTORY_CONTEXT)
-				);
-			this.statement = query(parameters, select).toSql(sqlDialect);
-        }
-
-		private boolean multipleBranches() {
-			return this.branch != NO_BRANCH;
-		}
-
-		@Override
-		protected BinaryData refetch(PooledConnection connection) throws SQLException {
-			try (ResultSet res = fetchResult(connection)) {
-				if (res.next()) {
-					return fromBlobColumn(connection.getSQLDialect(), res, getName(), 1, 2, 3);
-				}
-				throw new SQLException("No binary data found.");
-			}
-		}
-
-        /**
-		 * Create the {@link ResultSet} need to re-fetch the historic BLOB-Data.
-		 */
-		protected ResultSet fetchResult(PooledConnection connection) throws SQLException {
-			if (multipleBranches()) {
-				return statement.executeQuery(connection, branch, type, id, attr, commitNumber);
-			} else {
-				return statement.executeQuery(connection, type, id, attr, commitNumber);
-			}
-        }
-
-		@Override
-		public String getName() {
-			return _name;
-		}
-    }
-
-	
 	private static class GetBulkAttributesStatement {
 		private static final String HISTORY_CONTEXT = "historyContext";
 
@@ -1036,8 +919,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 		final int RESULT_VARCHAR_DATA_IDX;
 
 		final int RESULT_CLOB_DATA_IDX;
-
-		final int RESULT_BLOB_DATA_IDX;
 
 		private final CompiledStatement statement;
 
@@ -1068,8 +949,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			RESULT_VARCHAR_DATA_IDX = columns.size();
 			columns.add(columnDef(column(tableAlias, CLOB_DATA_DBNAME), CLOB_DATA_DBNAME));
 			RESULT_CLOB_DATA_IDX = columns.size();
-			columns.add(columnDef(column(tableAlias, BLOB_DATA_DBNAME), BLOB_DATA_DBNAME));
-			RESULT_BLOB_DATA_IDX = columns.size();
 			SQLTableReference from = table(dataType, tableAlias);
 			SQLExpression where;
 			if (multipleBranches) {
@@ -1110,18 +989,17 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				long branch, String type, Collection<TLID> ids, long commitNumber) throws SQLException {
 			if (_dataType.multipleBranches()) {
 				ResultSet resultSet = statement.executeQuery(connection, branch, type, ids, commitNumber);
-				return new BulkAttributeResult(basePool, resultSet, branch, type, commitNumber);
+				return new BulkAttributeResult(basePool, resultSet);
 			} else {
 				ResultSet resultSet = statement.executeQuery(connection, type, ids, commitNumber);
-				return new BulkAttributeResult(basePool, resultSet, VersionedBLOBData.NO_BRANCH, type, commitNumber);
+				return new BulkAttributeResult(basePool, resultSet);
 			}
 		}
 
 		public final class BulkAttributeResult extends AttributeResultSetWrapper {
 
-			public BulkAttributeResult(ConnectionPool aPool, ResultSet resultSet, long aBranch,
-					String aType, long aCommitNr) {
-				super(aPool, resultSet, aBranch, aType, _dataType, aCommitNr);
+			public BulkAttributeResult(ConnectionPool aPool, ResultSet resultSet) {
+				super(aPool, resultSet);
 			}
 
 			@Override
@@ -1162,11 +1040,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			@Override
 			protected int clobIndex() {
 				return RESULT_CLOB_DATA_IDX;
-			}
-
-			@Override
-			protected int blobIndex() {
-				return RESULT_BLOB_DATA_IDX;
 			}
 
 		}
@@ -1220,8 +1093,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 
 		private final int PARAM_CLOB_DATA_IDX;
 
-		private final int PARAM_BLOB_DATA_IDX;
-
 		private final CompiledStatement statement;
 
 		public AddAttributeStatement(DBHelper sqlDialect, MOKnowledgeItemImpl dataType) {
@@ -1242,8 +1113,7 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				LONG_DATA_DBNAME,
 				DOUBLE_DATA_DBNAME,
 				VARCHAR_DATA_DBNAME,
-				CLOB_DATA_DBNAME,
-				BLOB_DATA_DBNAME
+				CLOB_DATA_DBNAME
 				);
 			List<SQLExpression> values = new ArrayList<>();
 			if (multipleBranches) {
@@ -1259,8 +1129,7 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				parameter(DBType.LONG, LONG_DATA_DBNAME),
 				parameter(DBType.DOUBLE, DOUBLE_DATA_DBNAME),
 				parameter(DBType.STRING, VARCHAR_DATA_DBNAME),
-				parameter(DBType.CLOB, CLOB_DATA_DBNAME),
-				parameter(DBType.BLOB, BLOB_DATA_DBNAME)
+				parameter(DBType.CLOB, CLOB_DATA_DBNAME)
 				);
 			SQLInsert insert = insert(table, columnNames, values);
 			List<Parameter> parameters = new ArrayList<>();
@@ -1288,8 +1157,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			parameters.add(parameterDef(DBType.STRING, VARCHAR_DATA_DBNAME));
 			PARAM_CLOB_DATA_IDX = parameters.size();
 			parameters.add(parameterDef(DBType.CLOB, CLOB_DATA_DBNAME));
-			PARAM_BLOB_DATA_IDX = parameters.size();
-			parameters.add(parameterDef(DBType.BLOB, BLOB_DATA_DBNAME));
 			NUMBER_PARAMETERS = parameters.size();
 			MAX_BATCH_SIZE = sqlDialect.getMaxBatchSize(NUMBER_PARAMETERS);
 
@@ -1321,7 +1188,7 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				PARAM_LONG_DATA_IDX,
 				PARAM_DOUBLE_DATA_IDX,
 				PARAM_VARCHAR_DATA_IDX,
-				PARAM_CLOB_DATA_IDX, PARAM_BLOB_DATA_IDX);
+				PARAM_CLOB_DATA_IDX);
 
 			collector.addAddAttributeBatch(args);
 		}
@@ -1347,12 +1214,36 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 
 	private final GetBulkAttributesStatement getBulkAttributesStatement;
 
+	private final DBAccess _binaryBranchAccess;
+
+	/**
+	 * Access to the table of binary values.
+	 */
+	protected final FlexBinaryAccess _binaryAccess;
+
+	private final BinaryStorageSettings _binaryDefaults;
+
+	private final DynamicBinaryStoragePolicy _binaryStoragePolicy;
+
 	/**
 	 * Creates a {@link AbstractFlexDataManager}.
 	 * 
-	 * @param aPool used to fetch the actual Data.
+	 * @param aPool
+	 *        Used to fetch the actual Data.
+	 * @param dataType
+	 *        The type of the table storing all values except binary ones, see
+	 *        {@link #createFlexDataType(String, String, boolean)}.
+	 * @param binaryDataType
+	 *        The type of the table storing binary values, see
+	 *        {@link #createFlexBinaryDataType(String, String, boolean)}.
+	 * @param binaryDefaults
+	 *        The storage settings for binary values, if the policy chooses no other.
+	 * @param binaryStoragePolicy
+	 *        The policy choosing the storage settings for a binary value.
 	 */
-	public AbstractFlexDataManager(ConnectionPool aPool, MOKnowledgeItemImpl dataType) {
+	public AbstractFlexDataManager(ConnectionPool aPool, MOKnowledgeItemImpl dataType,
+			MOKnowledgeItemImpl binaryDataType, BinaryStorageSettings binaryDefaults,
+			DynamicBinaryStoragePolicy binaryStoragePolicy) {
         this.connectionPool = aPool;
         try {
 			this.sqlDialect = connectionPool.getSQLDialect();
@@ -1363,6 +1254,28 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 		this.dataType = dataType;
 		this.getHistoricAttributesStatement = new GetHistoricAttributesStatement(sqlDialect, dataType);
 		this.getBulkAttributesStatement = new GetBulkAttributesStatement(sqlDialect, dataType, fetchSize);
+		_binaryBranchAccess =
+			new VersionedDBAccess(sqlDialect, binaryDataType, BRANCH, IDENTIFIER, REV_MAX, REV_MIN);
+		_binaryAccess = new FlexBinaryAccess(aPool, sqlDialect, binaryDataType, fetchSize);
+		_binaryDefaults = binaryDefaults;
+		_binaryStoragePolicy = binaryStoragePolicy;
+	}
+
+	/**
+	 * Whether the given value is stored in the table of binary values.
+	 */
+	protected static boolean isBinary(Object value) {
+		return value instanceof BinaryDataSource;
+	}
+
+	/**
+	 * Uploads the content to the blob store chosen by the {@link DynamicBinaryStoragePolicy}, if
+	 * it has at least the threshold size chosen by the policy.
+	 */
+	@Override
+	public BinaryData toStoredValue(KnowledgeItem item, String attribute, BinaryData value) throws IOException {
+		BinaryStorageSettings settings = _binaryStoragePolicy.forValue(item, attribute, _binaryDefaults);
+		return BlobUpload.uploadAboveThreshold(settings.storeName(), settings.threshold(), value);
 	}
     
 	@Override
@@ -1437,41 +1350,31 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			int retry = sqlDialect.retryCount();
 			while (true) {
 				PooledConnection readConnection = this.connectionPool.borrowReadConnection();
-				try (GetBulkAttributesStatement.BulkAttributeResult res =
-					this.getBulkAttributesStatement.query(connectionPool, readConnection, branch, typeName,
-						bulkIds, dataRevision)) {
-					Iterator<T> baseIt = bulkObjects.iterator();
-
-					ImmutableFlexData flexData = null;
-					TLID currentId = null;
-					while (res.next()) {
-						TLID nextId = res.getObjectName();
-						if (!nextId.equals(currentId)) {
-							if (currentId != null) {
-								// Flush current data.
-								flushData(dataRevision, callback, keyMapping, baseIt, flexData, currentId);
-							}
-
-							// Construct new data.
-							currentId = nextId;
-							flexData = new ImmutableFlexData();
+				try {
+					Map<TLID, ImmutableFlexData> dataById = new HashMap<>();
+					try (GetBulkAttributesStatement.BulkAttributeResult res =
+						this.getBulkAttributesStatement.query(connectionPool, readConnection, branch, typeName,
+							bulkIds, dataRevision)) {
+						while (res.next()) {
+							TLID id = res.getObjectName();
+							String name = res.getAttributeName();
+							long revMin = res.getRevMin();
+							Object value = fetchValue(res);
+							dataById.computeIfAbsent(id, x -> new ImmutableFlexData())
+								.initAttributeValue(name, value, revMin);
 						}
-
-						assert flexData != null;
-						String name = res.getAttributeName();
-						long revMin = res.getRevMin();
-						Object value = fetchValue(res);
-
-						flexData.initAttributeValue(name, value, revMin);
 					}
+					_binaryAccess.loadAllValues(readConnection, branch, typeName, bulkIds, dataRevision,
+						(id, name, value, revMin) -> dataById.computeIfAbsent(id, x -> new ImmutableFlexData())
+							.initAttributeValue(name, value, revMin));
 
-					// flush last data
-					flushData(dataRevision, callback, keyMapping, baseIt, flexData, currentId);
-
-					// skip objects without attributes
-					while (baseIt.hasNext()) {
-						T baseObject = baseIt.next();
-						callback.loadEmpty(dataRevision, baseObject);
+					for (T baseObject : bulkObjects) {
+						FlexData flexData = dataById.get(keyMapping.map(baseObject).getObjectName());
+						if (flexData != null) {
+							callback.loadData(dataRevision, baseObject, flexData);
+						} else {
+							callback.loadEmpty(dataRevision, baseObject);
+						}
 					}
 					break;
 				} catch (SQLException sqx) {
@@ -1530,26 +1433,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 		return ((DBKnowledgeBase) kb).getDataRevision(item.getHistoryContext());
 	}
 
-	private <T> void flushData(long dataRevision, AttributeLoader<T> callback,
-			Mapping<? super T, ? extends ObjectKey> keyMapping, Iterator<T> baseIt, FlexData flexData,
-			TLID currentId) {
-		while (baseIt.hasNext()) {
-			T baseObject = baseIt.next();
-			ObjectKey baseKey = keyMapping.map(baseObject);
-			
-			if (baseKey.getObjectName().equals(currentId)) {
-				callback.loadData(dataRevision, baseObject, flexData);
-				return;
-			} else {
-				callback.loadEmpty(dataRevision, baseObject);
-			}
-		}
-
-		// Either the loaded data has been assigned, or no data was available at all.
-		assert flexData == null : "Target '" + currentId
-			+ "' for flush of data " + flexData + " not found (potential identifier order mismatch).";
-	}
-
 	@Override
 	public FlexData load(KnowledgeBase kb, ObjectKey key, boolean mutable) {
 		long dataRevision = dataRevisionForItem(kb, key);
@@ -1577,29 +1460,24 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			try (AttributeResult res =
 				getHistoricAttributesStatement.query(connectionPool, readConnection, branch, type, id,
 					dataRevision)) {
-				FlexData data;
-				if (res.next()) {
-					AbstractFlexData flexData;
-					if (mutable) {
-						flexData = new MutableFlexData();
-					} else {
-						flexData = new ImmutableFlexData();
-					}
-					do {
-						String name = res.getAttributeName();
-						long revMin = res.getRevMin();
-						Object value = fetchValue(res);
-						flexData.initAttributeValue(name, value, revMin);
-					} while (res.next());
-					data = flexData;
+				AbstractFlexData flexData;
+				if (mutable) {
+					flexData = new MutableFlexData();
 				} else {
-					if (mutable) {
-						data = new MutableFlexData();
-					} else {
-						data = NoFlexData.INSTANCE;
-					}
+					flexData = new ImmutableFlexData();
 				}
-				return data;
+				while (res.next()) {
+					String name = res.getAttributeName();
+					long revMin = res.getRevMin();
+					Object value = fetchValue(res);
+					flexData.initAttributeValue(name, value, revMin);
+				}
+				_binaryAccess.loadValues(readConnection, branch, type, id, dataRevision,
+					(valueId, name, value, revMin) -> flexData.initAttributeValue(name, value, revMin));
+				if (!mutable && flexData.getAttributes().isEmpty()) {
+					return NoFlexData.INSTANCE;
+				}
+				return flexData;
 			} catch (SQLException sqx) {
 				retry--;
 				readConnection.closeConnection(sqx);
@@ -1629,9 +1507,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 		case CLOB_TYPE: {
 			return resultSet.getClobData();  
 		}
-        case BLOB_TYPE: {
-            return resultSet.getBlobData();  
-        }
 		case INTEGER_TYPE: {
 			return Integer.valueOf(((int) resultSet.getLongData()));
 		}
@@ -1741,7 +1616,7 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	 *        The statement index, where clob data is stored.
 	 */
 	public static final void setData(long commitNumber, Object[] args, Object value, int dataTypeIdx,
-			int longDataIdx, int doubleDataIdx, int varcharDataIdx, int clobDataIdx, int blobDataIndex) throws SQLException {
+			int longDataIdx, int doubleDataIdx, int varcharDataIdx, int clobDataIdx) throws SQLException {
 		if (value instanceof String) {
 			String s = (String) value;
 			args[longDataIdx] = null;
@@ -1763,7 +1638,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				args[varcharDataIdx] = null;
 				args[clobDataIdx] = s;
 			}
-			args[blobDataIndex] = null;
 		} else if (value instanceof Number) {
 			if (value instanceof Integer) {
 				args[dataTypeIdx] = INTEGER_TYPE;
@@ -1788,7 +1662,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			}
 			args[varcharDataIdx] = null;
 			args[clobDataIdx] = null;
-			args[blobDataIndex] = null;
 		} else if (value instanceof Date) {
 			args[dataTypeIdx] = DATE_TYPE;
 
@@ -1796,7 +1669,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			args[doubleDataIdx] = null;
 			args[varcharDataIdx] = null;
 			args[clobDataIdx] = null;
-			args[blobDataIndex] = null;
 		} else if (value instanceof Boolean) {
 			args[dataTypeIdx] = DATE_TYPE;
 			if (((Boolean) value).booleanValue()) {
@@ -1809,28 +1681,11 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			args[doubleDataIdx] = null;
 			args[varcharDataIdx] = null;
 			args[clobDataIdx] = null;
-			args[blobDataIndex] = null;
-		} else if (value instanceof BinaryDataSource) {
-			args[dataTypeIdx] = BLOB_TYPE;
-
-			BinaryDataSource bd = (BinaryDataSource) value;
-			long size = bd.getSize();
-			args[longDataIdx] = size;
-			args[doubleDataIdx] = null;
-			args[varcharDataIdx] = bd.getContentType();
-			String name = bd.getName();
-			if (!BinaryData.NO_NAME.equals(name)) {
-				args[clobDataIdx] = name;
-			} else {
-				args[clobDataIdx] = null;
-			}
-			args[blobDataIndex] = bd;
 		} else if (value instanceof TLID) {
 			args[dataTypeIdx] = TL_ID_TYPE;
 
 			args[doubleDataIdx] = null;
 			args[clobDataIdx] = null;
-			args[blobDataIndex] = null;
 			TLID tlId = (TLID) value;
 			if (tlId instanceof LongID) {
 				args[longDataIdx] = ((LongID) tlId).longValue();
@@ -1848,7 +1703,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 
 			args[doubleDataIdx] = null;
 			args[clobDataIdx] = null;
-			args[blobDataIndex] = null;
 			ExtID extId = (ExtID) value;
 			args[longDataIdx] = extId.systemId();
 			args[varcharDataIdx] = Long.toString(extId.objectId(), Character.MAX_RADIX);
@@ -1858,13 +1712,11 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			args[doubleDataIdx] = null;
 			args[varcharDataIdx] = null;
 			args[clobDataIdx] = null;
-			args[blobDataIndex] = null;
 		} else {
 			args[longDataIdx] = null;
 			args[doubleDataIdx] = null;
 			args[varcharDataIdx] = null;
 			args[clobDataIdx] = null;
-			args[blobDataIndex] = null;
 			if (value != null) {
 				throw new SQLException("Cannot store values of type '" + value.getClass() + "' to flex data.");
 			} else {
@@ -1892,19 +1744,130 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	@Override
 	public final void branch(PooledConnection context, long branchId, long createRev, long baseBranchId,
 			long baseRevision, Collection<String> branchedTypNames) throws SQLException {
-		SQLExpression filterExpr;
-		if (!CollectionUtil.isEmptyOrNull(branchedTypNames)) {
-			try {
-				DBAttribute typeAttribute = (DBAttribute) dataType.getAttribute(TYPE);
-				SQLExpression column = column(NO_TABLE_ALIAS, typeAttribute, true);
-				filterExpr = inSet(column, branchedTypNames, typeAttribute.getSQLType());
-			} catch (NoSuchAttributeException ex) {
-				throw new RuntimeException(ex);
-			}
-		} else {
-			filterExpr = literalTrueLogical();
+		branchAccess.branch(context, branchId, createRev, baseBranchId, baseRevision,
+			typeFilter(dataType, branchedTypNames));
+		_binaryBranchAccess.branch(context, branchId, createRev, baseBranchId, baseRevision,
+			typeFilter(_binaryAccess.getType(), branchedTypNames));
+	}
+
+	private static SQLExpression typeFilter(MOKnowledgeItemImpl table, Collection<String> typeNames) {
+		if (CollectionUtil.isEmptyOrNull(typeNames)) {
+			return literalTrueLogical();
 		}
-		branchAccess.branch(context, branchId, createRev, baseBranchId, baseRevision, filterExpr);
+		try {
+			DBAttribute typeAttribute = (DBAttribute) table.getAttribute(TYPE);
+			SQLExpression column = column(NO_TABLE_ALIAS, typeAttribute, true);
+			return inSet(column, typeNames, typeAttribute.getSQLType());
+		} catch (NoSuchAttributeException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
+
+	/**
+	 * Result reporting rows of attribute value assignments managed by the {@link FlexDataManager}.
+	 * 
+	 * @see AttributeItemQuery
+	 * @see BinaryAttributeItemQuery
+	 */
+	public interface AttributeValueResult extends KnowledgeItemResult {
+
+		/**
+		 * The name of the attribute whose value is reported by the current row.
+		 */
+		String getAttributeName() throws SQLException;
+
+		/**
+		 * The value of the attribute that is represented by the current row.
+		 */
+		Object getAttributeValue() throws SQLException;
+
+	}
+
+	/**
+	 * {@link ItemQuery} that reports binary attribute value assignments managed by the
+	 * {@link FlexDataManager}.
+	 * 
+	 * @see #createFlexBinaryDataType(String, String, boolean)
+	 */
+	public static class BinaryAttributeItemQuery extends MultipleItemQuery {
+
+		/**
+		 * Creates a {@link BinaryAttributeItemQuery}.
+		 */
+		public BinaryAttributeItemQuery(DBHelper sqlDialect, MOClass type, String tableAlias,
+				SQLExpression[] filter, DBAttribute[] order, boolean[] descending) {
+			super(sqlDialect, type, tableAlias, filter, order, descending);
+		}
+
+		@Override
+		public BinaryAttributeItemResult query(Connection context) throws SQLException {
+			return new BinaryAttributeItemResult(getType(), super.query(context));
+		}
+
+		/**
+		 * {@link AttributeValueResult} of a {@link BinaryAttributeItemQuery}.
+		 */
+		public static class BinaryAttributeItemResult extends ItemResultAdapter implements AttributeValueResult {
+
+			private final ItemResult _result;
+
+			private final MOClass _dataType;
+
+			private final MOAttribute _content;
+
+			/**
+			 * Creates a {@link BinaryAttributeItemResult}.
+			 */
+			public BinaryAttributeItemResult(MOClass dataType, ItemResult result) {
+				_result = result;
+				_dataType = dataType;
+				_content = dataType.getAttributeOrNull(CONTENT);
+			}
+
+			@Override
+			protected ItemResult getImplementation() {
+				return _result;
+			}
+
+			@Override
+			public final long getBranch() throws SQLException {
+				if (_dataType.getDBMapping().multipleBranches()) {
+					return getImplementation().getLongValue(getAttribute(_dataType, BRANCH));
+				} else {
+					return TLContext.TRUNK_ID;
+				}
+			}
+
+			@Override
+			public final String getTypeName() throws SQLException {
+				return getImplementation().getStringValue(getAttribute(_dataType, TYPE));
+			}
+
+			@Override
+			public final TLID getIdentifier() throws SQLException {
+				return getImplementation().getIDValue(getAttribute(_dataType, IDENTIFIER));
+			}
+
+			@Override
+			public final long getRevMax() throws SQLException {
+				return getImplementation().getLongValue(getAttribute(_dataType, REV_MAX));
+			}
+
+			@Override
+			public final long getRevMin() throws SQLException {
+				return getImplementation().getLongValue(getAttribute(_dataType, REV_MIN));
+			}
+
+			@Override
+			public final String getAttributeName() throws SQLException {
+				return getImplementation().getStringValue(getAttribute(_dataType, ATTRIBUTE));
+			}
+
+			@Override
+			public Object getAttributeValue() throws SQLException {
+				return getImplementation().getValue(_content, null);
+			}
+		}
 	}
 
 	/**
@@ -1938,7 +1901,8 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 		 * 
 		 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 		 */
-		public static class AttributeItemResult extends ItemResultAdapter implements KnowledgeItemResult, AttributeResult {
+		public static class AttributeItemResult extends ItemResultAdapter
+				implements KnowledgeItemResult, AttributeResult, AttributeValueResult {
 			
 			private ItemResult result;
 
@@ -2015,19 +1979,11 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 				return getImplementation().getClobStringValue(getAttribute(dataType, CLOB_DATA));
 			}
 			
-			@Override
-			public BinaryData getBlobData() throws SQLException {
-				return getImplementation().getBlobValue(
-					getAttribute(dataType, CLOB_DATA),
-					getAttribute(dataType, VARCHAR_DATA),
-					getAttribute(dataType, LONG_DATA),
-					getAttribute(dataType, BLOB_DATA));
-			}
-
 			/**
 			 * The decoded value of the attribute that is represented by the
 			 * current row.
 			 */
+			@Override
 			public Object getAttributeValue() throws SQLException {
 				return AbstractFlexDataManager.fetchValue(this);
 			}

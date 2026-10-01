@@ -83,6 +83,22 @@ public class FlexJournalManager extends JournalManager {
 			} catch (DuplicateTypeException ex) {
 				log.error("Journal post-value type already exists.", ex);
 			}
+			try {
+				typeRepository.addMetaObject(
+					AbstractFlexDataManager.createFlexBinaryDataType(
+						FlexDataChangeEntryJournal.JOURNAL_PRE_BINARY_VALUE_TYPE_NAME, null,
+						typeRepository.multipleBranches()));
+			} catch (DuplicateTypeException ex) {
+				log.error("Journal binary pre-value type already exists.", ex);
+			}
+			try {
+				typeRepository.addMetaObject(
+					AbstractFlexDataManager.createFlexBinaryDataType(
+						FlexDataChangeEntryJournal.JOURNAL_POST_BINARY_VALUE_TYPE_NAME, null,
+						typeRepository.multipleBranches()));
+			} catch (DuplicateTypeException ex) {
+				log.error("Journal binary post-value type already exists.", ex);
+			}
 		}
 
 	}

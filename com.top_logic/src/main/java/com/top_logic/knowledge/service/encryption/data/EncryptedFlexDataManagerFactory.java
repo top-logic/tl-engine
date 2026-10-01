@@ -45,8 +45,9 @@ public class EncryptedFlexDataManagerFactory extends FlexDataManagerFactory {
 	}
 
 	@Override
-	public FlexDataManager newFlexDataManager(ConnectionPool connectionPool, MOKnowledgeItemImpl dataType) {
-		FlexDataManager impl = super.newFlexDataManager(connectionPool, dataType);
+	public FlexDataManager newFlexDataManager(ConnectionPool connectionPool, MOKnowledgeItemImpl dataType,
+			MOKnowledgeItemImpl binaryDataType) {
+		FlexDataManager impl = super.newFlexDataManager(connectionPool, dataType, binaryDataType);
 		return new EncryptedFlexDataManager(_config.getTransformer(), impl);
 	}
 

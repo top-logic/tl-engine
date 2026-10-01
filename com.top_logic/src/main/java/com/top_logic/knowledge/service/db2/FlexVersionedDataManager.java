@@ -32,6 +32,7 @@ import com.top_logic.basic.db.sql.SQLQuery;
 import com.top_logic.basic.db.sql.SQLQuery.Parameter;
 import com.top_logic.basic.db.sql.SQLTable;
 import com.top_logic.basic.db.sql.SQLUpdate;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.DBHelper;
@@ -41,7 +42,11 @@ import com.top_logic.dob.NamedValues;
 import com.top_logic.dob.attr.NextCommitNumberFuture;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.BasicTypes;
+import com.top_logic.knowledge.service.BinaryStorageSettings;
+import com.top_logic.knowledge.service.DefaultBinaryStoragePolicy;
+import com.top_logic.knowledge.service.DynamicBinaryStoragePolicy;
 import com.top_logic.knowledge.service.FlexDataManager;
+import com.top_logic.knowledge.service.FlexDataManagerFactory;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.AddAttributeStatement.AddAttributeBatchCollector;
 import com.top_logic.knowledge.service.db2.MutableFlexData.ChangeType;
 
@@ -126,8 +131,7 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 				LONG_DATA_DBNAME,
 				DOUBLE_DATA_DBNAME,
 				VARCHAR_DATA_DBNAME,
-				CLOB_DATA_DBNAME,
-				BLOB_DATA_DBNAME);
+				CLOB_DATA_DBNAME);
 			List<SQLExpression> values = new ArrayList<>();
 			if (multipleBranches) {
 				values.add(parameter(DBType.LONG, BRANCH_DBNAME));
@@ -142,8 +146,7 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 				parameter(DBType.LONG, LONG_DATA_DBNAME),
 				parameter(DBType.DOUBLE, DOUBLE_DATA_DBNAME),
 				parameter(DBType.STRING, VARCHAR_DATA_DBNAME),
-				parameter(DBType.CLOB, CLOB_DATA_DBNAME),
-				parameter(DBType.BLOB, BLOB_DATA_DBNAME));
+				parameter(DBType.CLOB, CLOB_DATA_DBNAME));
 			SQLInsert insert = insert(table, columnNames, values);
 			List<Parameter> parameters = new ArrayList<>();
 			if (multipleBranches) {
@@ -159,7 +162,6 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 			parameters.add(parameterDef(DBType.DOUBLE, DOUBLE_DATA_DBNAME));
 			parameters.add(parameterDef(DBType.STRING, VARCHAR_DATA_DBNAME));
 			parameters.add(parameterDef(DBType.CLOB, CLOB_DATA_DBNAME));
-			parameters.add(parameterDef(DBType.BLOB, BLOB_DATA_DBNAME));
 			ADD_OLD_BATCH_SIZE = sqlDialect.getMaxBatchSize(parameters.size());
 			CompiledStatement sql = query(parameters, insert).toSql(sqlDialect);
 			return sql;
@@ -188,8 +190,7 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 				LONG_DATA_DBNAME,
 				DOUBLE_DATA_DBNAME,
 				VARCHAR_DATA_DBNAME,
-				CLOB_DATA_DBNAME,
-				BLOB_DATA_DBNAME);
+				CLOB_DATA_DBNAME);
 			List<SQLExpression> values = new ArrayList<>();
 			Collections.addAll(values,
 				parameter(DBType.LONG, BasicTypes.REV_MIN_DB_NAME),
@@ -197,8 +198,7 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 				parameter(DBType.LONG, LONG_DATA_DBNAME),
 				parameter(DBType.DOUBLE, DOUBLE_DATA_DBNAME),
 				parameter(DBType.STRING, VARCHAR_DATA_DBNAME),
-				parameter(DBType.CLOB, CLOB_DATA_DBNAME),
-				parameter(DBType.BLOB, BLOB_DATA_DBNAME));
+				parameter(DBType.CLOB, CLOB_DATA_DBNAME));
 
 			SQLUpdate updates = update(table, where, columns, values);
 			List<Parameter> parameters = new ArrayList<>();
@@ -214,8 +214,7 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 				parameterDef(DBType.LONG, LONG_DATA_DBNAME),
 				parameterDef(DBType.DOUBLE, DOUBLE_DATA_DBNAME),
 				parameterDef(DBType.STRING, VARCHAR_DATA_DBNAME),
-				parameterDef(DBType.CLOB, CLOB_DATA_DBNAME),
-				parameterDef(DBType.BLOB, BLOB_DATA_DBNAME));
+				parameterDef(DBType.CLOB, CLOB_DATA_DBNAME));
 
 			UPDATE_CURRENT_BATCH_SIZE = sqlDialect.getMaxBatchSize(parameters.size());
 			CompiledStatement sql = query(parameters, updates).toSql(sqlDialect);
@@ -251,10 +250,10 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 			Object[] args;
 			int argsIndex = 0;
 			if (_dataType.multipleBranches()) {
-				args = new Object[12];
+				args = new Object[11];
 				args[argsIndex++] = branch;
 			} else {
-				args = new Object[11];
+				args = new Object[10];
 			}
 			args[argsIndex++] = type;
 			args[argsIndex++] = id;
@@ -267,8 +266,7 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 				argsIndex + 1,
 				argsIndex + 2,
 				argsIndex + 3,
-				argsIndex + 4,
-				argsIndex + 5);
+				argsIndex + 4);
 			collector.addInsertOldAttributeValueBatch(args);
 		}
 
@@ -277,10 +275,10 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 			Object[] args;
 			int argsIndex = 0;
 			if (_dataType.multipleBranches()) {
-				args = new Object[11];
+				args = new Object[10];
 				args[argsIndex++] = branch;
 			} else {
-				args = new Object[10];
+				args = new Object[9];
 			}
 			args[argsIndex++] = type;
 			args[argsIndex++] = id;
@@ -292,8 +290,7 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 				argsIndex + 1,
 				argsIndex + 2,
 				argsIndex + 3,
-				argsIndex + 4,
-				argsIndex + 5);
+				argsIndex + 4);
 			collector.addUpdateCurrentAttributeValueBatch(args);
 		}
 
@@ -632,16 +629,106 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 
 	private final DeleteMultipleObjectsStatement _deleteMultipleObjectsStatement;
 
-	public FlexVersionedDataManager(ConnectionPool connectionPool, MOKnowledgeItemImpl dataType) {
-		super(connectionPool, dataType);
+	private final DeleteAttributeStatement _deleteBinaryAttributeStatement;
+
+	private final DeleteSingleObjectStatement _deleteSingleObjectBinariesStatement;
+
+	private final DeleteMultipleObjectsStatement _deleteMultipleObjectsBinariesStatement;
+
+	/**
+	 * Creates a {@link FlexVersionedDataManager} storing binary values with the
+	 * {@link DefaultBinaryStoragePolicy}, the default store and a threshold of
+	 * {@link FlexDataManagerFactory.Config#DEFAULT_BINARY_THRESHOLD}.
+	 *
+	 * @see #FlexVersionedDataManager(ConnectionPool, MOKnowledgeItemImpl, MOKnowledgeItemImpl,
+	 *      BinaryStorageSettings, DynamicBinaryStoragePolicy)
+	 */
+	public FlexVersionedDataManager(ConnectionPool connectionPool, MOKnowledgeItemImpl dataType,
+			MOKnowledgeItemImpl binaryDataType) {
+		this(connectionPool, dataType, binaryDataType,
+			new BinaryStorageSettings(null, FlexDataManagerFactory.Config.DEFAULT_BINARY_THRESHOLD),
+			DefaultBinaryStoragePolicy.INSTANCE);
+	}
+
+	/**
+	 * Creates a {@link FlexVersionedDataManager}.
+	 *
+	 * @see AbstractFlexDataManager#AbstractFlexDataManager(ConnectionPool, MOKnowledgeItemImpl,
+	 *      MOKnowledgeItemImpl, BinaryStorageSettings, DynamicBinaryStoragePolicy)
+	 */
+	public FlexVersionedDataManager(ConnectionPool connectionPool, MOKnowledgeItemImpl dataType,
+			MOKnowledgeItemImpl binaryDataType, BinaryStorageSettings binaryDefaults,
+			DynamicBinaryStoragePolicy binaryStoragePolicy) {
+		super(connectionPool, dataType, binaryDataType, binaryDefaults, binaryStoragePolicy);
 
 		this.deleteAttributeStatement = new DeleteAttributeStatement(sqlDialect, dataType);
 		this.addAttributeStatement = new AddAttributeStatement(sqlDialect, dataType);
 		_updateAttributeStatement = new UpdateAttributeStatement(sqlDialect, dataType);
 		_deleteSingleObjectStatement = new DeleteSingleObjectStatement(sqlDialect, dataType);
 		_deleteMultipleObjectsStatement = new DeleteMultipleObjectsStatement(sqlDialect, dataType);
+
+		_deleteBinaryAttributeStatement = new DeleteAttributeStatement(sqlDialect, binaryDataType);
+		_deleteSingleObjectBinariesStatement = new DeleteSingleObjectStatement(sqlDialect, binaryDataType);
+		_deleteMultipleObjectsBinariesStatement = new DeleteMultipleObjectsStatement(sqlDialect, binaryDataType);
 	}
-	
+
+	/**
+	 * Batches of all statements writing changed values.
+	 */
+	private final class Writer implements AutoCloseable {
+
+		private final Batch _addBatch;
+
+		private final Batch _deleteBatch;
+
+		private final Batch _addOldValueBatch;
+
+		private final Batch _updateCurrentValueBatch;
+
+		private final Batch _addBinaryBatch;
+
+		private final Batch _deleteBinaryBatch;
+
+		final BatchCollector _values;
+
+		/**
+		 * Collects outdates and inserts of binary values. Outdating the current row of a binary
+		 * value sets its end revision, so that it is kept as historic row. The new value is
+		 * inserted as new current row afterwards.
+		 */
+		final BatchCollector _binaries;
+
+		Writer(Connection connection) throws SQLException {
+			_addBatch = addAttributeStatement.statement().createBatch(connection);
+			_deleteBatch = deleteAttributeStatement.statement().createBatch(connection);
+			_addOldValueBatch = _updateAttributeStatement.addOldValueStatement().createBatch(connection);
+			_updateCurrentValueBatch =
+				_updateAttributeStatement.updateCurrentValueStatement().createBatch(connection);
+			_addBinaryBatch = _binaryAccess.insertStatement().createBatch(connection);
+			_deleteBinaryBatch = _deleteBinaryAttributeStatement.statement().createBatch(connection);
+			_values = new BatchCollector(_addBatch, addAttributeStatement.maxBatchSize(),
+				_deleteBatch, deleteAttributeStatement.maxBatchSize(), _addOldValueBatch,
+				_updateAttributeStatement.addOldValueMaxBatchSize(), _updateCurrentValueBatch,
+				_updateAttributeStatement.updateCurrentValueMaxBatchSize());
+			_binaries = new BatchCollector(_addBinaryBatch, _binaryAccess.insertBatchSize(),
+				_deleteBinaryBatch, _deleteBinaryAttributeStatement.maxBatchSize(), null, 0, null, 0);
+		}
+
+		@Override
+		public void close() throws SQLException {
+			try (Batch addBatch = _addBatch;
+					Batch deleteBatch = _deleteBatch;
+					Batch addOldValueBatch = _addOldValueBatch;
+					Batch updateCurrentValueBatch = _updateCurrentValueBatch;
+					Batch addBinaryBatch = _addBinaryBatch;
+					Batch deleteBinaryBatch = _deleteBinaryBatch) {
+				_values.close();
+				_binaries.close();
+			}
+		}
+
+	}
+
 	@Override
 	public void updateAll(List<DBKnowledgeItem> items, CommitContext context) throws SQLException {
 		int firstDynamicValueIndex = -1;
@@ -657,22 +744,12 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 			return;
 		}
 
-		try (
-				Batch addBatch = addAttributeStatement.statement().createBatch(context.getConnection());
-				Batch deleteBatch = deleteAttributeStatement.statement().createBatch(context.getConnection());
-				Batch addOldValueBatch =
-					_updateAttributeStatement.addOldValueStatement().createBatch(context.getConnection());
-				Batch updateCurrentValueBatch =
-					_updateAttributeStatement.updateCurrentValueStatement().createBatch(context.getConnection());
-				BatchCollector collector = new BatchCollector(addBatch, addAttributeStatement.maxBatchSize(),
-					deleteBatch, deleteAttributeStatement.maxBatchSize(), addOldValueBatch,
-					_updateAttributeStatement.addOldValueMaxBatchSize(), updateCurrentValueBatch,
-						_updateAttributeStatement.updateCurrentValueMaxBatchSize());) {
+		try (Writer writer = new Writer(context.getConnection())) {
 			for (int i = firstDynamicValueIndex; i < items.size(); i++) {
 				DBKnowledgeItem item = items.get(i);
 				FlexData dynamicValues = item.getLocalDynamicValues(context);
 				if (dynamicValues != null) {
-					internalStore(item.tId(), dynamicValues, context, collector);
+					internalStore(item.tId(), dynamicValues, context, writer);
 				}
 			}
 
@@ -681,27 +758,19 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 	
 	@Override
 	protected void internalStore(ObjectKey key, FlexData data, CommitContext context) throws SQLException {
-		try (
-				Batch addBatch = addAttributeStatement.statement().createBatch(context.getConnection());
-				Batch deleteBatch = deleteAttributeStatement.statement().createBatch(context.getConnection());
-				Batch addOldValueBatch =
-					_updateAttributeStatement.addOldValueStatement().createBatch(context.getConnection());
-				Batch updateCurrentValueBatch =
-					_updateAttributeStatement.updateCurrentValueStatement().createBatch(context.getConnection());
-				BatchCollector collector = new BatchCollector(addBatch, addAttributeStatement.maxBatchSize(),
-					deleteBatch, deleteAttributeStatement.maxBatchSize(), addOldValueBatch,
-					_updateAttributeStatement.addOldValueMaxBatchSize(), updateCurrentValueBatch,
-					_updateAttributeStatement.updateCurrentValueMaxBatchSize());) {
-			internalStore(key, data, context, collector);
+		try (Writer writer = new Writer(context.getConnection())) {
+			internalStore(key, data, context, writer);
 		}
 	}
 
-	private void internalStore(ObjectKey key, FlexData data, CommitContext context, BatchCollector collector)
+	private void internalStore(ObjectKey key, FlexData data, CommitContext context, Writer writer)
 			throws SQLException {
 		long branch = key.getBranchContext();
 		long commitNumber = context.getCommitNumber();
 		String theType = key.getObjectType().getName();
 		TLID id = key.getObjectName();
+		BatchCollector collector = writer._values;
+		BatchCollector binaries = writer._binaries;
 
 		MutableFlexData anObject = (MutableFlexData) data;
 		for (Entry<String, ChangeType> change : anObject.getChanges()) {
@@ -717,27 +786,58 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 							anObject.setAttributeValue(changedAttribute, commitNumber);
 							attributeValue = commitNumber;
 						}
-						addAttributeStatement.addAttribute(collector, branch, commitNumber, theType, id,
-							changedAttribute, attributeValue);
+						if (isBinary(attributeValue)) {
+							addBinary(binaries, branch, commitNumber, theType, id, changedAttribute, attributeValue);
+						} else {
+							addAttributeStatement.addAttribute(collector, branch, commitNumber, theType, id,
+								changedAttribute, attributeValue);
+						}
 						break;
 					}
 					case UPDATE: {
 						Object newAttributeValue = anObject.getAttributeValue(changedAttribute);
 						Object oldAttributeValue = anObject.oldValue(changedAttribute);
-						Long lastModified = anObject.lastModified(changedAttribute);
-						_updateAttributeStatement.updateAttribute(collector, branch, commitNumber, theType, id,
-							changedAttribute, newAttributeValue, lastModified, oldAttributeValue);
+						boolean newBinary = isBinary(newAttributeValue);
+						boolean oldBinary = isBinary(oldAttributeValue);
+						if (oldBinary) {
+							_deleteBinaryAttributeStatement.deleteAttribute(binaries, branch, commitNumber, theType,
+								id, changedAttribute);
+						}
+						if (newBinary) {
+							if (!oldBinary) {
+								deleteAttributeStatement.deleteAttribute(collector, branch, commitNumber, theType, id,
+									changedAttribute);
+							}
+							addBinary(binaries, branch, commitNumber, theType, id, changedAttribute,
+								newAttributeValue);
+						} else if (oldBinary) {
+							if (newAttributeValue == NextCommitNumberFuture.INSTANCE) {
+								anObject.setAttributeValue(changedAttribute, commitNumber);
+								newAttributeValue = commitNumber;
+							}
+							addAttributeStatement.addAttribute(collector, branch, commitNumber, theType, id,
+								changedAttribute, newAttributeValue);
+						} else {
+							Long lastModified = anObject.lastModified(changedAttribute);
+							_updateAttributeStatement.updateAttribute(collector, branch, commitNumber, theType, id,
+								changedAttribute, newAttributeValue, lastModified, oldAttributeValue);
 
-						if (newAttributeValue == NextCommitNumberFuture.INSTANCE) {
-							anObject.setAttributeValue(changedAttribute, commitNumber);
-							newAttributeValue = commitNumber;
+							if (newAttributeValue == NextCommitNumberFuture.INSTANCE) {
+								anObject.setAttributeValue(changedAttribute, commitNumber);
+								newAttributeValue = commitNumber;
+							}
 						}
 						break;
 
 					}
 					case DELETE: {
-						deleteAttributeStatement.deleteAttribute(collector, branch, commitNumber, theType, id,
-							changedAttribute);
+						if (isBinary(anObject.oldValue(changedAttribute))) {
+							_deleteBinaryAttributeStatement.deleteAttribute(binaries, branch, commitNumber, theType,
+								id, changedAttribute);
+						} else {
+							deleteAttributeStatement.deleteAttribute(collector, branch, commitNumber, theType, id,
+								changedAttribute);
+						}
 						break;
 					}
 					case UNCHANGED:
@@ -753,6 +853,12 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 		anObject.commitLocally(commitNumber);
 	}
 
+	private void addBinary(BatchCollector binaries, long branch, long commitNumber, String type, TLID id,
+			String attribute, Object value) throws SQLException {
+		binaries.addAddAttributeBatch(
+			_binaryAccess.insertArguments(branch, commitNumber, type, id, attribute, BinaryData.cast(value)));
+	}
+
 	@Override
 	public void deleteAll(List<DBKnowledgeItem> items, CommitContext context) throws SQLException {
 		int size = items.size();
@@ -764,7 +870,6 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 				break;
 			}
 			default: {
-				long commitNumber = context.getCommitNumber();
 				int maxSetSize = context.getConnection().getSQLDialect().getMaxSetSize();
 				List<TLID> ids = new ArrayList<>(size);
 
@@ -777,12 +882,7 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 					long nextBranch = nextKey.getBranchContext();
 					String nextType = nextKey.getObjectType().getName();
 					if (nextBranch != branch || !nextType.equals(type) || ids.size() >= maxSetSize) {
-						if (ids.size() == 1) {
-							deleteSingleObject(branch, ids.get(0), type, context);
-						} else {
-							_deleteMultipleObjectsStatement.deleteObjects(context.getConnection(), branch, commitNumber,
-								ids, type);
-						}
+						deleteObjects(branch, ids, type, context);
 						ids.clear();
 
 						branch = nextBranch;
@@ -791,12 +891,7 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 					ids.add(nextKey.getObjectName());
 				}
 
-				if (ids.size() == 1) {
-					deleteSingleObject(branch, ids.get(0), type, context);
-				} else {
-					_deleteMultipleObjectsStatement.deleteObjects(context.getConnection(), branch, commitNumber, ids,
-						type);
-				}
+				deleteObjects(branch, ids, type, context);
 			}
 		}
 	}
@@ -810,9 +905,25 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 		return deleteSingleObject(branch, id, type, context);
 	}
 
+	private void deleteObjects(long branch, List<TLID> ids, String type, CommitContext context)
+			throws SQLException {
+		if (ids.size() == 1) {
+			deleteSingleObject(branch, ids.get(0), type, context);
+		} else {
+			long commitNumber = context.getCommitNumber();
+			_deleteMultipleObjectsStatement.deleteObjects(context.getConnection(), branch, commitNumber, ids, type);
+			_deleteMultipleObjectsBinariesStatement.deleteObjects(context.getConnection(), branch, commitNumber, ids,
+				type);
+		}
+	}
+
 	private boolean deleteSingleObject(long branch, TLID id, String type, CommitContext context) throws SQLException {
 		long commitNumber = context.getCommitNumber();
-		return _deleteSingleObjectStatement.deleteObject(context.getConnection(), branch, commitNumber, id, type) > 0;
+		int values =
+			_deleteSingleObjectStatement.deleteObject(context.getConnection(), branch, commitNumber, id, type);
+		int binaries =
+			_deleteSingleObjectBinariesStatement.deleteObject(context.getConnection(), branch, commitNumber, id, type);
+		return values + binaries > 0;
 	}
 
 }

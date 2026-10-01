@@ -33,7 +33,8 @@ public class TestFlexUnversionedDataManager extends AbstractFlexDataManagerTest 
 	protected FlexDataManager createFlexDataManager() {
 		return new FlexVersionedDataManager(
 			kb().getConnectionPool(),
-			kb().lookupType(AbstractFlexDataManager.FLEX_DATA));
+			kb().lookupType(AbstractFlexDataManager.FLEX_DATA),
+			kb().lookupType(AbstractFlexDataManager.FLEX_BINARY_DATA));
 	}
 	
     @Override

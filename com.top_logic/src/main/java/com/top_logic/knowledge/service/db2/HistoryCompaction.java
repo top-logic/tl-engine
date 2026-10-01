@@ -213,7 +213,7 @@ public class HistoryCompaction {
 
 	private final Map<String, TableAccess> _itemTableByName;
 
-	private final TableAccess _flexDataAccess;
+	private final List<TableAccess> _flexDataAccess;
 
 	private final CompiledStatement _resolveRevision;
 
@@ -283,8 +283,11 @@ public class HistoryCompaction {
 		}
 		_itemTableAccess = Collections.unmodifiableList(itemTables);
 		_itemTableByName = itemTableByName;
-		ItemTables.Table flexData = _tables.getFlexData();
-		_flexDataAccess = flexData == null ? null : new TableAccess(flexData);
+		List<TableAccess> flexDataAccess = new ArrayList<>();
+		for (ItemTables.Table flexTable : _tables.getFlexTables()) {
+			flexDataAccess.add(new TableAccess(flexTable));
+		}
+		_flexDataAccess = Collections.unmodifiableList(flexDataAccess);
 
 		_resolveRevision = createResolveRevision();
 		_revisionExists = createRevisionExists();
@@ -455,8 +458,8 @@ public class HistoryCompaction {
 			for (TableAccess table : _itemTableAccess) {
 				table.compact(connection, report, lower, upper, dryRun, log);
 			}
-			if (_flexDataAccess != null) {
-				_flexDataAccess.compact(connection, report, lower, upper, dryRun, log);
+			for (TableAccess flexTable : _flexDataAccess) {
+				flexTable.compact(connection, report, lower, upper, dryRun, log);
 			}
 			compactBranches(connection, report, lower, upper, dryRun);
 			compactRevisionTable(connection, report, lower, upper, dryRun);

@@ -5,15 +5,18 @@
  */
 package com.top_logic.knowledge.service;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.Mapping;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.db2.DBKnowledgeItem;
 import com.top_logic.knowledge.service.db2.FlexData;
 
@@ -51,6 +54,11 @@ public class FlexDataManagerProxy implements FlexDataManager {
 	public <T> void loadAll(long dataRevision, AttributeLoader<T> callback,
 			Mapping<? super T, ? extends ObjectKey> keyMapping, List<T> baseObjects, KnowledgeBase kb) {
 		_impl.loadAll(dataRevision, callback, keyMapping, baseObjects, kb);
+	}
+
+	@Override
+	public BinaryData toStoredValue(KnowledgeItem item, String attribute, BinaryData value) throws IOException {
+		return _impl.toStoredValue(item, attribute, value);
 	}
 
 	@Override

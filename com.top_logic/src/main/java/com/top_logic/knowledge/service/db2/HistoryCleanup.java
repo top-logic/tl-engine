@@ -69,6 +69,8 @@ public class HistoryCleanup implements Runnable {
 	/** CompiledStatement that removes old flex data entries. */
 	private final CompiledStatement _flexAttributeCleanup;
 
+	private final CompiledStatement _flexBinaryAttributeCleanup;
+
 	/**
 	 * {@link CompiledStatement} that fetches the minimum of all revisions that are stored in the
 	 * cleanup table.
@@ -110,7 +112,10 @@ public class HistoryCleanup implements Runnable {
 			}
 			delStmts.add(deleteStmt);
 		}
-		_flexAttributeCleanup = createFlexAttributeCleanup(sqlDialect, cleanupTypes);
+		_flexAttributeCleanup =
+			createFlexAttributeCleanup(sqlDialect, cleanupTypes, AbstractFlexDataManager.FLEX_DATA_DB_NAME);
+		_flexBinaryAttributeCleanup =
+			createFlexAttributeCleanup(sqlDialect, cleanupTypes, AbstractFlexDataManager.FLEX_BINARY_DATA_DB_NAME);
 		_deleteStatements = delStmts.toArray(new CompiledStatement[delStmts.size()]);
 		ClusterManager cm = ClusterManager.getInstance();
 		if (!inClusterMode(cm)) {
@@ -157,9 +162,12 @@ public class HistoryCleanup implements Runnable {
 		return query.toSql(sqlDialect);
 	}
 
-	/** @see #_flexAttributeCleanup */
+	/**
+	 * @see #_flexAttributeCleanup
+	 * @see #_flexBinaryAttributeCleanup
+	 */
 	private CompiledStatement createFlexAttributeCleanup(DBHelper sqlDialect,
-			Iterable<? extends MetaObject> cleanupTypes) {
+			Iterable<? extends MetaObject> cleanupTypes, String tableName) {
 		List<String> typeNames = new ArrayList<>();
 		for (MetaObject cleanupType : cleanupTypes) {
 			typeNames.add(cleanupType.getName());
@@ -169,7 +177,7 @@ public class HistoryCleanup implements Runnable {
 		SQLQuery<?> query = query(
 			Arrays.asList(parameterDef(IdentifierTypes.REVISION_REFERENCE_MO_TYPE.getDefaultSQLType(), "rev")),
 			delete(
-				table(AbstractFlexDataManager.FLEX_DATA_DB_NAME, alias),
+				table(tableName, alias),
 				and(
 					inSet(column(alias, AbstractFlexDataManager.TYPE_DBNAME), typeNames, referenceDBType),
 					le(
@@ -232,6 +240,7 @@ public class HistoryCleanup implements Runnable {
 			deleteStatement.executeUpdate(connection, rev);
 		}
 		_flexAttributeCleanup.executeUpdate(connection, rev);
+		_flexBinaryAttributeCleanup.executeUpdate(connection, rev);
 	}
 
 	/**

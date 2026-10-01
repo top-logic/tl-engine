@@ -36,8 +36,6 @@ import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLColumnDefinition;
 import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.db.sql.SQLQuery.Parameter;
-import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.io.binary.DBBinaryData;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
@@ -364,8 +362,7 @@ public class MoveHistoricReferenceToColumn
 			columnDef(AbstractFlexDataManager.LONG_DATA_DBNAME),
 			columnDef(AbstractFlexDataManager.DOUBLE_DATA_DBNAME),
 			columnDef(AbstractFlexDataManager.VARCHAR_DATA_DBNAME),
-			columnDef(AbstractFlexDataManager.CLOB_DATA_DBNAME),
-			columnDef(AbstractFlexDataManager.BLOB_DATA_DBNAME));
+			columnDef(AbstractFlexDataManager.CLOB_DATA_DBNAME));
 
 		CompiledStatement select = query(
 			select(
@@ -405,12 +402,6 @@ public class MoveHistoricReferenceToColumn
 				@Override
 				public String getClobData() throws SQLException {
 					return DirectItemResult.getClobStringValue(sqlDialect, rows, dataTypeIdx + 4);
-				}
-
-				@Override
-				public BinaryData getBlobData() throws SQLException {
-					return DBBinaryData.fromBlobColumn(sqlDialect, rows, getClobData(), dataTypeIdx + 3,
-						dataTypeIdx + 1, dataTypeIdx + 5);
 				}
 			};
 

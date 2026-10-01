@@ -12,11 +12,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.top_logic.basic.db.sql.SQLExpression;
-import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.io.binary.DBBinaryData;
 import com.top_logic.basic.sql.DBHelper;
+import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
+import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.AttributeResult;
 import com.top_logic.knowledge.service.db2.ItemQuery.DirectItemResult;
@@ -24,6 +24,11 @@ import com.top_logic.knowledge.service.db2.MOKnowledgeItemImpl;
 
 /**
  * {@link AbstractDiffDeletionQuery} that reports deletions of flex attributes.
+ * 
+ * <p>
+ * The query reads either the {@link AbstractFlexDataManager#FLEX_DATA flex data table} or the
+ * {@link AbstractFlexDataManager#FLEX_BINARY_DATA table of binary values}.
+ * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -91,7 +96,15 @@ public class DiffFlexDeletionQuery extends AbstractDiffDeletionQuery {
 			_flexDataType = flexDataType;
 		}
 
+		/**
+		 * The value of the deleted attribute.
+		 */
 		public Object getValue() throws SQLException {
+			MOAttribute content = _flexDataType.getAttributeOrNull(AbstractFlexDataManager.CONTENT);
+			if (content != null) {
+				return content.getStorage().fetchValue(_sqlDialect, resultSet, DBAttribute.DEFAULT_DB_OFFSET, content,
+					null);
+			}
 			return AbstractFlexDataManager.fetchValue(this);
 		}
 
@@ -138,15 +151,6 @@ public class DiffFlexDeletionQuery extends AbstractDiffDeletionQuery {
 		public String getClobData() throws SQLException {
 			int clobIndex = columnIndex(AbstractFlexDataManager.CLOB_DATA);
 			return DirectItemResult.getClobStringValue(_sqlDialect, resultSet, clobIndex);
-		}
-		
-		@Override
-		public BinaryData getBlobData() throws SQLException {
-			int contentTypeIndex = columnIndex(AbstractFlexDataManager.VARCHAR_DATA);
-			int sizeIndex = columnIndex(AbstractFlexDataManager.LONG_DATA);
-			int blobIndex = columnIndex(AbstractFlexDataManager.BLOB_DATA);
-			return DBBinaryData.fromBlobColumn(_sqlDialect, resultSet, getClobData(), contentTypeIndex, sizeIndex,
-				blobIndex);
 		}
 
 	}

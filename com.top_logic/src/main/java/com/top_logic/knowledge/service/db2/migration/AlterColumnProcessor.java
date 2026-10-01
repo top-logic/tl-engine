@@ -21,6 +21,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.db.model.DBSchemaFactory;
+import com.top_logic.basic.db.model.util.DBSchemaUtils;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLModifyColumn;
@@ -185,9 +187,29 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 		log.info("Renaming flex attribute '" + columnName + "' of table '" + tableName + "' to '"
 			+ newName + "'.");
 
+		int cnt = renameFlexAttribute(connection, AbstractFlexDataManager.FLEX_DATA_DB_NAME, tableName, columnName,
+			newName);
+		if (DBSchemaUtils.extractTable(connection.getPool(), DBSchemaFactory.createDBSchema(),
+			AbstractFlexDataManager.FLEX_BINARY_DATA_DB_NAME) != null) {
+			cnt += renameFlexAttribute(connection, AbstractFlexDataManager.FLEX_BINARY_DATA_DB_NAME, tableName,
+				columnName, newName);
+		}
+
+		log.info(
+			"Renamed " + cnt + " flex attributes '" + columnName + "' of table '" + tableName + "' to '"
+				+ newName + "'.");
+	}
+
+	/**
+	 * Renames the attribute in the rows of the given table of dynamic attribute values.
+	 *
+	 * @return The number of renamed rows.
+	 */
+	private int renameFlexAttribute(PooledConnection connection, String flexTable, String tableName,
+			String columnName, String newName) throws SQLException {
 		CompiledStatement sql = query(
 			update(
-				table(AbstractFlexDataManager.FLEX_DATA_DB_NAME),
+				table(flexTable),
 				and(
 					eqSQL(column(AbstractFlexDataManager.TYPE_DBNAME),
 						literal(DBType.STRING, tableName)),
@@ -196,11 +218,7 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 				columnNames(AbstractFlexDataManager.ATTRIBUTE_DBNAME),
 				expressions(literal(DBType.STRING, newName)))).toSql(connection.getSQLDialect());
 
-		int cnt = sql.executeUpdate(connection);
-
-		log.info(
-			"Renamed " + cnt + " flex attributes '" + columnName + "' of table '" + tableName + "' to '"
-				+ newName + "'.");
+		return sql.executeUpdate(connection);
 	}
 
 	private void adjustTable(Log log, PooledConnection connection, MOStructure table, MOAttribute column,

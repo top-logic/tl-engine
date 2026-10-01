@@ -7,6 +7,9 @@ package com.top_logic.knowledge.service.db2;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -15,6 +18,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.InlineSet;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.PooledConnection;
@@ -1154,10 +1158,28 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 		assert !isPersistent() : "Intialisation only in new objects.";
 		Object[] localValues = getValuesForInitialisation(context);
 		Object initialSetAttributes = InlineSet.newInlineSet();
+		List<Entry<String, Object>> dynamicBinaryValues = null;
 		for (Entry<String, Object> entry : initialValues) {
 			String attributeName = entry.getKey();
+			if (entry.getValue() instanceof BinaryDataSource && !isStaticAttribute(attributeName)) {
+				/* The storage of a binary value of a dynamic attribute may depend on other values,
+				 * e.g. the type of the object. */
+				if (dynamicBinaryValues == null) {
+					dynamicBinaryValues = new ArrayList<>();
+				}
+				// The entries of the initial values may be reused while iterating.
+				dynamicBinaryValues.add(new SimpleImmutableEntry<>(attributeName, entry.getValue()));
+				continue;
+			}
 			initAttribute(attributeName, localValues, entry.getValue());
 			initialSetAttributes = InlineSet.add(String.class, initialSetAttributes, attributeName);
+		}
+		if (dynamicBinaryValues != null) {
+			for (Entry<String, Object> entry : dynamicBinaryValues) {
+				String attributeName = entry.getKey();
+				initAttribute(attributeName, localValues, entry.getValue());
+				initialSetAttributes = InlineSet.add(String.class, initialSetAttributes, attributeName);
+			}
 		}
 		MOKnowledgeItem table = tTable();
 		for (MOAttribute attr : table.getAttributes()) {

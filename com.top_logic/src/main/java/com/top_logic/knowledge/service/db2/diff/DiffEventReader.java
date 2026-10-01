@@ -6,6 +6,7 @@
 package com.top_logic.knowledge.service.db2.diff;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -28,7 +29,6 @@ import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
-import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.AttributeItemQuery.AttributeItemResult;
 import com.top_logic.knowledge.service.db2.AbstractKnowledgeEventReader;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItem;
@@ -69,9 +69,17 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 	 * The result sets to get events for the current type
 	 */
 	private DiffUpdateResult<?> rowAttributesResult;
-	private DiffFlexDeletionResult flexDeletionResult;
 	private DiffRowDeletionResult rowDeletionResult;
-	private DiffFlexUpdateResult flexUpdateResult;
+
+	/**
+	 * Changed values of dynamic attributes, one for each table of dynamic attribute values.
+	 */
+	private final List<FlexUpdates> _flexUpdates = new ArrayList<>();
+
+	/**
+	 * Deleted values of dynamic attributes, one for each table of dynamic attribute values.
+	 */
+	private final List<FlexDeletions> _flexDeletions = new ArrayList<>();
 
 	private MOAttribute _rowBranchAttribute;
 
@@ -94,18 +102,6 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 	 * ID of the current object in {@link #rowDeletionResult}
 	 */
 	private ObjectBranchId currentRowDelID;
-	/**
-	 * ID of the current object in {@link #flexUpdateResult}
-	 */
-	private ObjectBranchId currentFlexUpdateID;
-	/**
-	 * ID of the current object in {@link #flexDeletionResult}
-	 */
-	private ObjectBranchId currentFlexDelID;
-
-	private boolean _hasFlexUpdate;
-
-	private boolean _hasFlexDeletion;
 
 	/**
 	 * Comparator of {@link ObjectBranchId}s.
@@ -146,7 +142,6 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 	}
 
 	private void init() throws SQLException {
-		MOKnowledgeItemImpl flexDataType = kb.lookupType(AbstractFlexDataManager.FLEX_DATA);
 		sqlDialect = kb.getConnectionPool().getSQLDialect();
 		PooledConnection connection = getReadConnection();
 		Set<String> typeNameFilter = null;
@@ -170,12 +165,16 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 			_touchedTypes = RevisionXref.createAllTypesResult(getKnowledgeBase(), typeNameFilter);
 		}
 
-		flexUpdateResult =
-			DiffFlexAttributesQuery.createDiffFlexAttributesQuery(sqlDialect, flexDataType, null, sourceBranch,
-				sourceRev, destBranch, destRev).query(connection);
-		flexDeletionResult =
-			DiffFlexDeletionQuery.createDiffFlexDeletionQuery(sqlDialect, flexDataType, null, sourceBranch,
-				sourceRev, destBranch, destRev).query(connection);
+		for (String flexTypeName : List.of(AbstractFlexDataManager.FLEX_DATA,
+			AbstractFlexDataManager.FLEX_BINARY_DATA)) {
+			MOKnowledgeItemImpl flexDataType = kb.lookupType(flexTypeName);
+			_flexUpdates.add(new FlexUpdates(
+				DiffFlexAttributesQuery.createDiffFlexAttributesQuery(sqlDialect, flexDataType, null, sourceBranch,
+					sourceRev, destBranch, destRev).query(connection)));
+			_flexDeletions.add(new FlexDeletions(
+				DiffFlexDeletionQuery.createDiffFlexDeletionQuery(sqlDialect, flexDataType, null, sourceBranch,
+					sourceRev, destBranch, destRev).query(connection)));
+		}
 
 		findNextType();
 	}
@@ -218,8 +217,9 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 				destBranch, destRev).query(connection);
 		setNewRowDelID();
 
-		setNewFlexUpdateID();
-		setNewFlexDelID();
+		for (FlexChanges changes : allFlexChanges()) {
+			changes.findNext();
+		}
 
 		findNextObjectName();
 	}
@@ -250,78 +250,227 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 		}
 	}
 
-	private void setNewFlexUpdateID() throws SQLException {
-		while (true) {
-			if (!_hasFlexUpdate) {
-				_hasFlexUpdate = flexUpdateResult.next();
-				if (!_hasFlexUpdate) {
-					// There is no more update at all.
-					currentFlexUpdateID = null;
-					break;
-				}
-			}
-			AttributeItemResult newValues = flexUpdateResult.getNewValues();
-			int compareValue = beforeRowType(newValues.getTypeName());
-			if (compareValue == 0) {
-				currentFlexUpdateID = new ObjectBranchId(newValues.getBranch(), currentType, newValues.getIdentifier());
-				_hasFlexUpdate = false;
-			} else if (compareValue > 0) {
-				/* All changes for the current type processed. */
-				currentFlexUpdateID = null;
-			} else {
-				/* Can currently not assert the following when types are fetched from the XRef
-				 * table, because the flex table contains a BLOB column. The diff SQL reports all
-				 * rows in which the BLOB column is not null, because the database can not compare
-				 * them. Therefore the result also contains rows for types which are not contained
-				 * in the XRefTable. */
-				/* There is no row change for the current flex change. This is actually not
-				 * possible, because if the the touched types are retrieved from that XRef table
-				 * than the a change of an flex attribute is alos reported to the XRef table,
-				 * otherwise all types are considered, therefore flex type must also be considered.
-				 * The only reason is a wrong order of the database result. not restricted. */
-//				assert false : "Illegal update: rowtype: '" + currentType + "', flextype: '" + newValues.getTypeName()
-//					+ "', flexid: '" + newValues.getIdentifier() + "'";
-				_hasFlexUpdate = false;
-				// check next flex update
-				continue;
-			}
-			break;
-		}
+	private List<FlexChanges> allFlexChanges() {
+		List<FlexChanges> result = new ArrayList<>(_flexUpdates.size() + _flexDeletions.size());
+		result.addAll(_flexUpdates);
+		result.addAll(_flexDeletions);
+		return result;
 	}
 
-	private void setNewFlexDelID() throws SQLException {
-		while (true) {
-			if (!_hasFlexDeletion) {
-				_hasFlexDeletion = flexDeletionResult.next();
-				if (!_hasFlexDeletion) {
-					// There is no more deletion at all.
-					currentFlexDelID = null;
-					break;
+	/**
+	 * Changes of dynamic attribute values read from a single table of dynamic attribute values.
+	 *
+	 * <p>
+	 * The changes are ordered by type, branch and identifier. The changes of the
+	 * {@link #currentType} are reported object by object.
+	 * </p>
+	 */
+	private abstract class FlexChanges {
+
+		/**
+		 * ID of the object of the current row, <code>null</code> if there are no more changes of
+		 * the {@link #currentType}.
+		 */
+		ObjectBranchId _currentID;
+
+		/**
+		 * Whether the current row has been read, but not yet been assigned to a type.
+		 */
+		private boolean _pending;
+
+		/**
+		 * Moves to the next row.
+		 */
+		abstract boolean nextRow() throws SQLException;
+
+		/**
+		 * The name of the type of the object of the current row.
+		 */
+		abstract String typeName() throws SQLException;
+
+		/**
+		 * The branch of the object of the current row.
+		 */
+		abstract long branch() throws SQLException;
+
+		/**
+		 * The identifier of the object of the current row.
+		 */
+		abstract TLID identifier() throws SQLException;
+
+		/**
+		 * Adds the change of the current row to the given change.
+		 */
+		abstract void addTo(ItemChange change) throws SQLException;
+
+		/**
+		 * Whether a change for an object of a type without any row change is skipped. Otherwise,
+		 * such a change is an error.
+		 */
+		abstract boolean skipUnknownTypes();
+
+		abstract void close() throws SQLException;
+
+		/**
+		 * Moves to the next change of the {@link #currentType}.
+		 */
+		final void findNext() throws SQLException {
+			while (true) {
+				if (!_pending) {
+					_pending = nextRow();
+					if (!_pending) {
+						// There is no more change at all.
+						_currentID = null;
+						break;
+					}
 				}
+				int compareValue = beforeRowType(typeName());
+				if (compareValue == 0) {
+					_currentID = new ObjectBranchId(branch(), currentType, identifier());
+					_pending = false;
+				} else if (compareValue > 0) {
+					/* All changes for the current type processed. */
+					_currentID = null;
+				} else {
+					/* There is no row change for the current flex change. This is actually not
+					 * possible, because if the the touched types are retrieved from that XRef table
+					 * than the a change of an flex attribute is also reported to the XRef table,
+					 * otherwise all types are considered, therefore flex type must also be
+					 * considered. The only reason is a wrong order of the database result. */
+					assert skipUnknownTypes() : "Illegal change: rowtype: '" + currentType + "', flextype: '"
+						+ typeName() + "', flexid: '" + identifier() + "'";
+					_pending = false;
+					// check next change
+					continue;
+				}
+				break;
 			}
-			int compareValue = beforeRowType(flexDeletionResult.getTypeName());
-			if (compareValue == 0) {
-				currentFlexDelID =
-					new ObjectBranchId(flexDeletionResult.getBranchId(), currentType,
-						flexDeletionResult.getObjectName());
-				_hasFlexDeletion = false;
-			} else if (compareValue > 0) {
-				/* All changes for the current type processed. */
-				currentFlexDelID = null;
-			} else {
-				/* There is no row change for the current flex change. This is actually not
-				 * possible, because if the the touched types are retrieved from that XRef table
-				 * than the a change of an flex attribute is alos reported to the XRef table,
-				 * otherwise all types are considered, therefore flex type must also be considered.
-				 * The only reason is a wrong order of the database result. not restricted. */
-				assert false : "Illegal update: rowtype: '" + currentType + "', flextype: '" + flexDeletionResult.getTypeName()
-					+ "', flexid: '" + flexDeletionResult.getObjectName() + "'";
-				_hasFlexDeletion = false;
-				// check next flex deletion
-				continue;
-			}
-			break;
 		}
+
+		/**
+		 * Adds all changes of the {@link #currentObjectID} to the given change.
+		 */
+		final void addAll(ItemChange change) throws SQLException {
+			while (currentObjectID.equals(_currentID)) {
+				addTo(change);
+				findNext();
+			}
+		}
+
+		/**
+		 * Skips all changes of the given object.
+		 */
+		final void skip(ObjectBranchId id) throws SQLException {
+			while (id.equals(_currentID)) {
+				findNext();
+			}
+		}
+
+	}
+
+	private final class FlexUpdates extends FlexChanges {
+
+		private final DiffFlexUpdateResult _result;
+
+		FlexUpdates(DiffFlexUpdateResult result) {
+			_result = result;
+		}
+
+		@Override
+		boolean nextRow() throws SQLException {
+			return _result.next();
+		}
+
+		@Override
+		String typeName() throws SQLException {
+			return _result.getNewValues().getTypeName();
+		}
+
+		@Override
+		long branch() throws SQLException {
+			return _result.getNewValues().getBranch();
+		}
+
+		@Override
+		TLID identifier() throws SQLException {
+			return _result.getNewValues().getIdentifier();
+		}
+
+		/**
+		 * Can not assert that the type has row changes when types are fetched from the XRef
+		 * table, because the tables of dynamic values contain LOB columns. The diff SQL reports
+		 * all rows in which a LOB column is not null, because the database can not compare them.
+		 * Therefore the result also contains rows for types which are not contained in the XRef
+		 * table.
+		 */
+		@Override
+		boolean skipUnknownTypes() {
+			return true;
+		}
+
+		/**
+		 * Adds the change, if the values differ: The result reports all rows with LOB values,
+		 * since the database can not compare them.
+		 */
+		@Override
+		void addTo(ItemChange change) throws SQLException {
+			Object oldValue = _result.getOldValues().getAttributeValue();
+			Object newValue = _result.getNewValues().getAttributeValue();
+			if (!CollectionUtil.equals(oldValue, newValue)) {
+				change.setValue(_result.getNewValues().getAttributeName(), oldValue, newValue);
+			}
+		}
+
+		@Override
+		void close() throws SQLException {
+			_result.close();
+		}
+
+	}
+
+	private final class FlexDeletions extends FlexChanges {
+
+		private final DiffFlexDeletionResult _result;
+
+		FlexDeletions(DiffFlexDeletionResult result) {
+			_result = result;
+		}
+
+		@Override
+		boolean nextRow() throws SQLException {
+			return _result.next();
+		}
+
+		@Override
+		String typeName() throws SQLException {
+			return _result.getTypeName();
+		}
+
+		@Override
+		long branch() throws SQLException {
+			return _result.getBranchId();
+		}
+
+		@Override
+		TLID identifier() throws SQLException {
+			return _result.getObjectName();
+		}
+
+		@Override
+		boolean skipUnknownTypes() {
+			return false;
+		}
+
+		@Override
+		void addTo(ItemChange change) throws SQLException {
+			change.setValue(_result.getAttributeName(), _result.getValue(), null);
+		}
+
+		@Override
+		void close() throws SQLException {
+			_result.close();
+		}
+
 	}
 
 	private int beforeRowType(String flexTypeName) {
@@ -337,11 +486,11 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 		if (currentObjectID == null || (currentRowDelID != null && ID_FINDER.compare(currentObjectID, currentRowDelID) > 0)) {
 			currentObjectID = currentRowDelID;
 		}
-		if (currentObjectID == null || (currentFlexUpdateID != null && ID_FINDER.compare(currentObjectID, currentFlexUpdateID) > 0)) {
-			currentObjectID = currentFlexUpdateID;
-		}
-		if (currentObjectID == null || (currentFlexDelID != null && ID_FINDER.compare(currentObjectID, currentFlexDelID) > 0)) {
-			currentObjectID = currentFlexDelID;
+		for (FlexChanges changes : allFlexChanges()) {
+			ObjectBranchId flexID = changes._currentID;
+			if (currentObjectID == null || (flexID != null && ID_FINDER.compare(currentObjectID, flexID) > 0)) {
+				currentObjectID = flexID;
+			}
 		}
 	}
 
@@ -373,8 +522,10 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 							change.setValue(attr.getName(), oldValue, newValue);
 						}
 
-						addUpdatedFlexAttr(change);
+						// Deletions first: A value moving from one table of dynamic values to another
+						// is reported as deletion followed by an update.
 						addDeletedFlexAttr(change);
+						addUpdatedFlexAttr(change);
 
 						setNewRowUpdateID();
 
@@ -399,25 +550,21 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 
 						addDeletedFlexAttr(itemDeletion);
 
-						assert !currentRowDelID.equals(currentFlexUpdateID) : "As the object is deleted, there must not be an update for the same object.";
-						while (currentRowDelID.equals(currentFlexUpdateID)) {
-							setNewFlexUpdateID();
+						for (FlexUpdates updates : _flexUpdates) {
+							assert !currentRowDelID.equals(updates._currentID) : "As the object is deleted, there must not be an update for the same object.";
+							updates.skip(currentRowDelID);
 						}
 
 						setNewRowDelID();
 
-					} else if (currentObjectID.equals(currentFlexUpdateID)) {
+					} else if (hasFlexChanges(currentObjectID)) {
 						ItemChange change;
-						itemEvent = change = new ItemUpdate(revision, currentFlexUpdateID, true);
+						itemEvent = change = new ItemUpdate(revision, currentObjectID, true);
 
+						// Deletions first: A value moving from one table of dynamic values to another
+						// is reported as deletion followed by an update.
+						addDeletedFlexAttr(change);
 						addUpdatedFlexAttr(change);
-						addDeletedFlexAttr(change);
-
-					} else if (currentObjectID.equals(currentFlexDelID)) {
-						ItemChange change;
-						itemEvent = change = new ItemUpdate(revision, currentFlexDelID, true);
-
-						addDeletedFlexAttr(change);
 
 					} else {
 						assert false : "Unexpected objectID " + currentObjectID;
@@ -446,21 +593,24 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 		return null;
 	}
 
-	private void addUpdatedFlexAttr(ItemChange change) throws SQLException {
-		while (currentObjectID.equals(currentFlexUpdateID)) {
-			final Object oldValue = flexUpdateResult.getOldValues().getAttributeValue();
-			final Object newValue = flexUpdateResult.getNewValues().getAttributeValue();
-			change.setValue(flexUpdateResult.getNewValues().getAttributeName(), oldValue, newValue);
+	private boolean hasFlexChanges(ObjectBranchId id) {
+		for (FlexChanges changes : allFlexChanges()) {
+			if (id.equals(changes._currentID)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
-			setNewFlexUpdateID();
+	private void addUpdatedFlexAttr(ItemChange change) throws SQLException {
+		for (FlexUpdates updates : _flexUpdates) {
+			updates.addAll(change);
 		}
 	}
 
 	private void addDeletedFlexAttr(ItemChange change) throws SQLException {
-		while (currentObjectID.equals(currentFlexDelID)) {
-			change.setValue(flexDeletionResult.getAttributeName(), flexDeletionResult.getValue(), null);
-
-			setNewFlexDelID();
+		for (FlexDeletions deletions : _flexDeletions) {
+			deletions.addAll(change);
 		}
 	}
 
@@ -473,24 +623,6 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 		} finally {
 			super.close();
 		}
-	}
-
-	private void cleanFlexUpdateResult() throws SQLException {
-		if (flexUpdateResult == null) {
-			return;
-		}
-		DiffFlexUpdateResult result = flexUpdateResult;
-		flexUpdateResult = null;
-		result.close();
-	}
-
-	private void cleanFlexDeletionResult() throws SQLException {
-		if (flexDeletionResult == null) {
-			return;
-		}
-		DiffFlexDeletionResult result = flexDeletionResult;
-		flexDeletionResult = null;
-		result.close();
 	}
 
 	private void cleanRowDeletionResult() throws SQLException {
@@ -528,10 +660,20 @@ public class DiffEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 	}
 
 	private void cleanFlexResult() throws SQLException {
+		List<FlexChanges> changes = allFlexChanges();
+		_flexUpdates.clear();
+		_flexDeletions.clear();
+		closeAll(changes, 0);
+	}
+
+	private static void closeAll(List<FlexChanges> changes, int index) throws SQLException {
+		if (index >= changes.size()) {
+			return;
+		}
 		try {
-			cleanFlexUpdateResult();
+			changes.get(index).close();
 		} finally {
-			cleanFlexDeletionResult();
+			closeAll(changes, index + 1);
 		}
 	}
 

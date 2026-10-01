@@ -60,6 +60,12 @@ public class FlexDataChangeEntryJournal implements JournalPersistancyHandler {
 
 	public static final String JOURNAL_POST_VALUE_TYPE_NAME = "JournalPostValue";
 
+	/** Name of the type storing binary values before a change. */
+	public static final String JOURNAL_PRE_BINARY_VALUE_TYPE_NAME = "JournalPreBinaryValue";
+
+	/** Name of the type storing binary values after a change. */
+	public static final String JOURNAL_POST_BINARY_VALUE_TYPE_NAME = "JournalPostBinaryValue";
+
 	/** Data table of values after a change */
 	private final FlexDataManager postValueData;
 
@@ -74,11 +80,15 @@ public class FlexDataChangeEntryJournal implements JournalPersistancyHandler {
 		try {
 			MOKnowledgeItemImpl preValueType =
 				(MOKnowledgeItemImpl) moRepository.getMetaObject(JOURNAL_PRE_VALUE_TYPE_NAME);
-			preValueData = factory.newFlexDataManager(pool, preValueType);
+			MOKnowledgeItemImpl preBinaryValueType =
+				(MOKnowledgeItemImpl) moRepository.getMetaObject(JOURNAL_PRE_BINARY_VALUE_TYPE_NAME);
+			preValueData = factory.newFlexDataManager(pool, preValueType, preBinaryValueType);
 
 			MOKnowledgeItemImpl postValueType =
 				(MOKnowledgeItemImpl) moRepository.getMetaObject(JOURNAL_POST_VALUE_TYPE_NAME);
-			postValueData = factory.newFlexDataManager(pool, postValueType);
+			MOKnowledgeItemImpl postBinaryValueType =
+				(MOKnowledgeItemImpl) moRepository.getMetaObject(JOURNAL_POST_BINARY_VALUE_TYPE_NAME);
+			postValueData = factory.newFlexDataManager(pool, postValueType, postBinaryValueType);
 		} catch (UnknownTypeException ex) {
 			throw (AssertionError) new AssertionError(
 				"Journal manager types not installed in the persistency layer.").initCause(ex);

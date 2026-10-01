@@ -38,6 +38,9 @@ import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.AttributeItemQuery;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.AttributeItemQuery.AttributeItemResult;
+import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.AttributeValueResult;
+import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.BinaryAttributeItemQuery;
+import com.top_logic.knowledge.service.db2.AbstractFlexDataManager.BinaryAttributeItemQuery.BinaryAttributeItemResult;
 import com.top_logic.util.TLContext;
 
 /**
@@ -72,6 +75,11 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 	private final PriorityQueue<EventKey> eventQueue;
 	
 	private AttributeItemResult flexAttributes;
+
+	/**
+	 * Rows of binary values of dynamic attributes.
+	 */
+	private BinaryAttributeItemResult _binaryAttributes;
 
 	private TypeResult touchedTypes;
 
@@ -398,44 +406,68 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 
 	private void initFlexAttributeQueues() throws SQLException {
 		MOKnowledgeItemImpl flexdataType = kb.lookupType(AbstractFlexDataManager.FLEX_DATA);
+		this.flexAttributes = new AttributeItemQuery(kb.dbHelper, flexdataType, TABLE_ALIAS,
+			flexFilter(flexdataType), flexOrder(flexdataType), flexOrderDescending(flexdataType))
+				.query(getReadConnection());
+
+		MOKnowledgeItemImpl binaryDataType = kb.lookupType(AbstractFlexDataManager.FLEX_BINARY_DATA);
+		_binaryAttributes = new BinaryAttributeItemQuery(kb.dbHelper, binaryDataType, TABLE_ALIAS,
+			flexFilter(binaryDataType), flexOrder(binaryDataType), flexOrderDescending(binaryDataType))
+				.query(getReadConnection());
+
+		findNextFlexAttribute(flexAttributes);
+		findNextFlexAttribute(_binaryAttributes);
+	}
+
+	private SQLExpression[] flexFilter(MOKnowledgeItemImpl flexdataType) {
 		DBAttribute revMinAttr = AbstractFlexDataManager.getAttribute(flexdataType, AbstractFlexDataManager.REV_MIN);
 		DBAttribute revMaxAttr = AbstractFlexDataManager.getAttribute(flexdataType, AbstractFlexDataManager.REV_MAX);
+		DBAttribute typeAttr = AbstractFlexDataManager.getAttribute(flexdataType, AbstractFlexDataManager.TYPE);
+
+		SQLExpression[] filter = correctRevisionFilter(revMaxAttr, revMinAttr);
+		filter = addTypeFilter(filter, typeAttr);
+		if (flexdataType.multipleBranches()) {
+			DBAttribute branchAttr = AbstractFlexDataManager.getAttribute(flexdataType, AbstractFlexDataManager.BRANCH);
+			filter = addBranchFilter(filter, branchAttr);
+		}
+		return filter;
+	}
+
+	private static DBAttribute[] flexOrder(MOKnowledgeItemImpl flexdataType) {
+		DBAttribute revMinAttr = AbstractFlexDataManager.getAttribute(flexdataType, AbstractFlexDataManager.REV_MIN);
 		DBAttribute typeAttr = AbstractFlexDataManager.getAttribute(flexdataType, AbstractFlexDataManager.TYPE);
 		DBAttribute identifierAttr =
 			AbstractFlexDataManager.getAttribute(flexdataType, AbstractFlexDataManager.IDENTIFIER);
 		DBAttribute attributeAttr =
 			AbstractFlexDataManager.getAttribute(flexdataType, AbstractFlexDataManager.ATTRIBUTE);
-		
-		SQLExpression[] filter = correctRevisionFilter(revMaxAttr, revMinAttr);
-		filter = addTypeFilter(filter, typeAttr);
-
-		DBAttribute[] orders;
-		boolean[] descending;
 		if (flexdataType.multipleBranches()) {
 			DBAttribute branchAttr = AbstractFlexDataManager.getAttribute(flexdataType, AbstractFlexDataManager.BRANCH);
-			filter = addBranchFilter(filter, branchAttr);
-			orders = new DBAttribute[] { typeAttr, branchAttr, identifierAttr, revMinAttr, attributeAttr };
-			descending = new boolean[] { false, false, false, reverted, false };
+			return new DBAttribute[] { typeAttr, branchAttr, identifierAttr, revMinAttr, attributeAttr };
 		} else {
-			orders = new DBAttribute[] { typeAttr, identifierAttr, revMinAttr, attributeAttr };
-			descending = new boolean[] { false, false, reverted, false };
+			return new DBAttribute[] { typeAttr, identifierAttr, revMinAttr, attributeAttr };
 		}
-		AttributeItemQuery flexQuery =
-			new AttributeItemQuery(kb.dbHelper, flexdataType, TABLE_ALIAS, filter, orders, descending);
-		this.flexAttributes = flexQuery.query(getReadConnection());
-
-		findNextFlexAttribute();
 	}
 
-	private void findNextFlexAttribute() throws SQLException {
-		boolean hasNext = flexAttributes.next();
+	private boolean[] flexOrderDescending(MOKnowledgeItemImpl flexdataType) {
+		if (flexdataType.multipleBranches()) {
+			return new boolean[] { false, false, false, reverted, false };
+		} else {
+			return new boolean[] { false, false, reverted, false };
+		}
+	}
+
+	/**
+	 * Adds the event keys of the next row of the given result to the event queue.
+	 */
+	private void findNextFlexAttribute(AttributeValueResult values) throws SQLException {
+		boolean hasNext = values.next();
 		if (hasNext) {
-			String nextFlexTypeName = flexAttributes.getTypeName();
-			long nextFlexBranch = flexAttributes.getBranch();
-			TLID nextFlexIdentifier = flexAttributes.getIdentifier();
-			long nextRevMin = flexAttributes.getRevMin();
-			long nextRevMax = flexAttributes.getRevMax();
-			String nextFlexAttributeName = flexAttributes.getAttributeName();
+			String nextFlexTypeName = values.getTypeName();
+			long nextFlexBranch = values.getBranch();
+			TLID nextFlexIdentifier = values.getIdentifier();
+			long nextRevMin = values.getRevMin();
+			long nextRevMax = values.getRevMax();
+			String nextFlexAttributeName = values.getAttributeName();
 			
 			if (! nextFlexTypeName.equals(this.currentFlexTypeName)) {
 				this.currentFlexType = kb.lookupType(nextFlexTypeName);
@@ -455,7 +487,8 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 					EventKeyKind.flexAttribute,
 					currentFlexId,
 					setRev,
-					nextFlexAttributeName));
+					nextFlexAttributeName,
+					values));
 
 			if (reverted || nextRevMax < Revision.CURRENT_REV) {
 				// A potential attribute reset.
@@ -468,7 +501,8 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 							EventKeyKind.attributeDeletion,
 							currentFlexId,
 							potentialResetRev,
-							nextFlexAttributeName));
+							nextFlexAttributeName,
+							null));
 				}
 			}
 		}
@@ -618,12 +652,13 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 					throw new AssertionError("Item change expected.");
 				}
 
-				String attributeName = ((AttributeEventKey) currentEventKey).attributeName;
-				Object newValue = this.flexAttributes.getAttributeValue();
+				AttributeEventKey attributeKey = (AttributeEventKey) currentEventKey;
+				String attributeName = attributeKey.attributeName;
+				Object newValue = attributeKey._values.getAttributeValue();
 				Object oldValue = diff.put(attributeName, newValue);
 				changeEvent.setValue(attributeName, oldValue, newValue);
 				
-				findNextFlexAttribute();
+				findNextFlexAttribute(attributeKey._values);
 				break;
 			}
 			}
@@ -711,11 +746,28 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 	}
 
 	private void closeResourcesStep2() throws SQLException {
+		try {
+			closeFlexAttributes();
+		} finally {
+			closeBinaryAttributes();
+		}
+	}
+
+	private void closeFlexAttributes() throws SQLException {
 		if (flexAttributes == null) {
 			return;
 		}
 		AttributeItemResult result = flexAttributes;
 		flexAttributes = null;
+		result.close();
+	}
+
+	private void closeBinaryAttributes() throws SQLException {
+		if (_binaryAttributes == null) {
+			return;
+		}
+		BinaryAttributeItemResult result = _binaryAttributes;
+		_binaryAttributes = null;
 		result.close();
 	}
 
@@ -931,10 +983,18 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 	 */
 	public static class AttributeEventKey extends EventKey {
 		/*package protected*/ final String attributeName;
-		
-		public AttributeEventKey(EventKeyKind eventType, ObjectBranchId objectId, long deleteRev, String attributeName) {
+
+		/**
+		 * The rows the value of a {@link EventKeyKind#flexAttribute} key is read from,
+		 * <code>null</code> for other kinds.
+		 */
+		final AttributeValueResult _values;
+
+		public AttributeEventKey(EventKeyKind eventType, ObjectBranchId objectId, long deleteRev, String attributeName,
+				AttributeValueResult values) {
 			super(eventType, objectId, deleteRev);
 			this.attributeName = attributeName;
+			_values = values;
 		}
 		
 		@Override

@@ -9,8 +9,10 @@ import java.util.List;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.Mapping;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.AttributeLoader;
 import com.top_logic.knowledge.service.FlexDataManager;
 import com.top_logic.knowledge.service.FlexDataManagerProxy;
@@ -62,6 +64,19 @@ public class TransformingFlexDataManager extends FlexDataManagerProxy {
 		super(impl);
 
 		_transformation = transformation;
+	}
+
+	/**
+	 * Keeps the value unchanged.
+	 *
+	 * <p>
+	 * The {@link DataTransformation} receives the content when the values are stored. Uploading the
+	 * content before would bypass the transformation.
+	 * </p>
+	 */
+	@Override
+	public BinaryData toStoredValue(KnowledgeItem item, String attribute, BinaryData value) {
+		return value;
 	}
 
 	@Override

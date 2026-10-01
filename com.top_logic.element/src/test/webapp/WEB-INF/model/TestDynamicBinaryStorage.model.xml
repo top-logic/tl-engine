@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestDynamicBinaryStorage">
+			<types>
+				<class name="Node">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<attributes>
+						<property name="plain"
+							type="tl.core:Binary"
+						/>
+						<property name="annotated"
+							type="tl.core:Binary"
+						>
+							<annotations>
+								<binary-storage
+									store="other"
+									threshold="100"
+								/>
+							</annotations>
+						</property>
+						<property name="storeOnly"
+							type="tl.core:Binary"
+						>
+							<annotations>
+								<binary-storage store="other"/>
+							</annotations>
+						</property>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

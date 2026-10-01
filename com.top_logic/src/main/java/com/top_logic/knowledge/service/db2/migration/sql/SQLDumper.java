@@ -34,7 +34,9 @@ import com.top_logic.basic.col.filter.FilterFactory;
 import com.top_logic.basic.db.model.DBColumn;
 import com.top_logic.basic.db.model.DBTable;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.io.blob.BlobUpload;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.H2Helper;
@@ -45,7 +47,9 @@ import com.top_logic.dob.AttributeStorage;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.attr.AbstractBinaryAttribute;
 import com.top_logic.dob.attr.NextCommitNumberFuture;
+import com.top_logic.dob.attr.storage.BinaryColumnsStorage;
 import com.top_logic.dob.attr.storage.ComputedAttributeStorage;
 import com.top_logic.dob.attr.storage.InitialAttributeStorage;
 import com.top_logic.dob.ex.NoSuchAttributeException;
@@ -557,6 +561,8 @@ public class SQLDumper implements EventWriter {
 
 		MOStructure _flexValueType;
 
+		MOStructure _flexBinaryValueType;
+
 		private final Map<String, TypedList> _bufferByType;
 
 		final List<Val> _flexValues;
@@ -610,6 +616,11 @@ public class SQLDumper implements EventWriter {
 				_flexValueType = (MOStructure) types.getMetaObject(AbstractFlexDataManager.FLEX_DATA);
 			} catch (UnknownTypeException ex) {
 				_log.error("No flex data type.", ex);
+			}
+			try {
+				_flexBinaryValueType = (MOStructure) types.getMetaObject(AbstractFlexDataManager.FLEX_BINARY_DATA);
+			} catch (UnknownTypeException ex) {
+				_log.error("No flex binary data type.", ex);
 			}
 			try {
 				_sequenceType = (MOStructure) types.getMetaObject(SequenceTypeProvider.SEQUENCE_TYPE_NAME);
@@ -808,8 +819,33 @@ public class SQLDumper implements EventWriter {
 				return;
 			}
 
-			DBTable table = table(_flexValueType);
-			List<MOAttribute> attributes = _flexValueType.getAttributes();
+			List<Val> values = new ArrayList<>();
+			List<Val> binaryValues = new ArrayList<>();
+			for (Val val : _flexValues) {
+				Object value = val.getValue();
+				if (value == null) {
+					continue;
+				}
+				if (value instanceof BinaryDataSource) {
+					binaryValues.add(val);
+				} else {
+					values.add(val);
+				}
+			}
+			flushValues(_flexValueType, values, false);
+			flushValues(_flexBinaryValueType, binaryValues, true);
+
+			_flexValues.clear();
+		}
+
+		private void flushValues(MOStructure valueType, List<Val> values, boolean binary)
+				throws IOException, NoSuchAttributeException {
+			if (values.isEmpty()) {
+				return;
+			}
+
+			DBTable table = table(valueType);
+			List<MOAttribute> attributes = valueType.getAttributes();
 			List<DBColumn> columns = table.getColumns();
 			int columnCount = columns.size();
 
@@ -826,20 +862,22 @@ public class SQLDumper implements EventWriter {
 				storages[n] = storage;
 			}
 
-			int branchIndex = _flexValueType.getAttribute(AbstractFlexDataManager.BRANCH).getCacheIndex();
-			int idIndex = _flexValueType.getAttribute(AbstractFlexDataManager.IDENTIFIER).getCacheIndex();
-			int revMinIndex = _flexValueType.getAttribute(AbstractFlexDataManager.REV_MIN).getCacheIndex();
-			int revMaxIndex = _flexValueType.getAttribute(AbstractFlexDataManager.REV_MAX).getCacheIndex();
-			int typeIndex = _flexValueType.getAttribute(AbstractFlexDataManager.TYPE).getCacheIndex();
-			int attrIndex = _flexValueType.getAttribute(AbstractFlexDataManager.ATTRIBUTE).getCacheIndex();
-			int dataTypeIndex = _flexValueType.getAttribute(AbstractFlexDataManager.DATA_TYPE).getCacheIndex();
-			int longIndex = _flexValueType.getAttribute(AbstractFlexDataManager.LONG_DATA).getCacheIndex();
-			int doubleIndex = _flexValueType.getAttribute(AbstractFlexDataManager.DOUBLE_DATA).getCacheIndex();
+			int branchIndex = valueType.getAttribute(AbstractFlexDataManager.BRANCH).getCacheIndex();
+			int idIndex = valueType.getAttribute(AbstractFlexDataManager.IDENTIFIER).getCacheIndex();
+			int revMinIndex = valueType.getAttribute(AbstractFlexDataManager.REV_MIN).getCacheIndex();
+			int revMaxIndex = valueType.getAttribute(AbstractFlexDataManager.REV_MAX).getCacheIndex();
+			int typeIndex = valueType.getAttribute(AbstractFlexDataManager.TYPE).getCacheIndex();
+			int attrIndex = valueType.getAttribute(AbstractFlexDataManager.ATTRIBUTE).getCacheIndex();
+			AbstractBinaryAttribute content =
+				binary ? (AbstractBinaryAttribute) valueType.getAttribute(AbstractFlexDataManager.CONTENT) : null;
+			int dataTypeIndex = binary ? -1 : valueType.getAttribute(AbstractFlexDataManager.DATA_TYPE).getCacheIndex();
+			int longIndex = binary ? -1 : valueType.getAttribute(AbstractFlexDataManager.LONG_DATA).getCacheIndex();
+			int doubleIndex =
+				binary ? -1 : valueType.getAttribute(AbstractFlexDataManager.DOUBLE_DATA).getCacheIndex();
 			int varcharIndex =
-				_flexValueType.getAttribute(AbstractFlexDataManager.VARCHAR_DATA).getCacheIndex();
-			int clobIndex = _flexValueType.getAttribute(AbstractFlexDataManager.CLOB_DATA).getCacheIndex();
-			int blobIndex = _flexValueType.getAttribute(AbstractFlexDataManager.BLOB_DATA).getCacheIndex();
-			_insertWriter.appendInsert(table, _flexValues.stream().filter(val -> val.getValue() != null).map(val -> {
+				binary ? -1 : valueType.getAttribute(AbstractFlexDataManager.VARCHAR_DATA).getCacheIndex();
+			int clobIndex = binary ? -1 : valueType.getAttribute(AbstractFlexDataManager.CLOB_DATA).getCacheIndex();
+			_insertWriter.appendInsert(table, values.stream().map(val -> {
 			
 					Object[] columnValues = new Object[columnCount];
 					cacheValues[branchIndex] = val.getOwner().getId().getBranchId();
@@ -850,9 +888,18 @@ public class SQLDumper implements EventWriter {
 					cacheValues[attrIndex] = val.getName();
 			
 					try {
-						AbstractFlexDataManager.setData(val.getCommitRev(), cacheValues, val.getValue(), dataTypeIndex,
-							longIndex, doubleIndex, varcharIndex, clobIndex, blobIndex);
-					} catch (SQLException ex) {
+						if (binary) {
+							Object[] contentValues = BinaryColumnsStorage.columnValues(content,
+								BlobUpload.withKnownSize(BinaryData.cast(val.getValue())));
+							DBAttribute[] contentColumns = content.getDbMapping();
+							for (int n = 0; n < contentColumns.length; n++) {
+								columnValues[contentColumns[n].getDBColumnIndex()] = contentValues[n];
+							}
+						} else {
+							AbstractFlexDataManager.setData(val.getCommitRev(), cacheValues, val.getValue(),
+								dataTypeIndex, longIndex, doubleIndex, varcharIndex, clobIndex);
+						}
+					} catch (SQLException | IOException ex) {
 						StringBuilder errorSerializing = new StringBuilder();
 						errorSerializing.append("Error setting flex data values in '");
 						errorSerializing.append(val);
@@ -864,6 +911,9 @@ public class SQLDumper implements EventWriter {
 			
 					for (int n = 0; n < attributeCount; n++) {
 						MOAttribute attr = attributes.get(n);
+						if (attr == content) {
+							continue;
+						}
 			
 						DBAttribute[] dbMapping = attr.getDbMapping();
 						if (dbMapping.length > 0) {
@@ -886,8 +936,6 @@ public class SQLDumper implements EventWriter {
 					}
 					return columnValues;
 			}).filter(Objects::nonNull).collect(Collectors.toList()));
-
-			_flexValues.clear();
 		}
 
 		private DBTable table(MOStructure type) {

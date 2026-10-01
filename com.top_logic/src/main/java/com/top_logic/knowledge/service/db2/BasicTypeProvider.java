@@ -51,6 +51,9 @@ public class BasicTypeProvider implements TypeProvider {
 			moRepository.addMetaObject(
 				AbstractFlexDataManager.createFlexDataType(AbstractFlexDataManager.FLEX_DATA,
 					AbstractFlexDataManager.FLEX_DATA_DB_NAME, moRepository.multipleBranches()));
+			moRepository.addMetaObject(
+				AbstractFlexDataManager.createFlexBinaryDataType(AbstractFlexDataManager.FLEX_BINARY_DATA,
+					AbstractFlexDataManager.FLEX_BINARY_DATA_DB_NAME, moRepository.multipleBranches()));
 		} catch (DataObjectException ex) {
 			log.error("Creating basic types failed.", ex);
 		}

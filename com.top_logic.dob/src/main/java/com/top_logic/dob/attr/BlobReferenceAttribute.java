@@ -14,8 +14,9 @@ import com.top_logic.dob.sql.DBAttribute;
  * {@link MOAttribute} whose values reference blobs in a {@link BlobStore}.
  *
  * <p>
- * Each row stores the key of its blob in the {@link #getKeyColumn() key column}; the store is a
- * property of the attribute, not of the row.
+ * Each row stores the key of its blob in the {@link #getKeyColumn() key column}. The store is a
+ * property of the attribute, unless the attribute has a {@link #getStoreColumn() store column}
+ * naming the store of each row.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -25,8 +26,20 @@ public interface BlobReferenceAttribute extends MOAttribute {
 	/**
 	 * The name of the {@link BlobStore} in the {@link BlobStoreService} holding the content,
 	 * <code>null</code> for the default store.
+	 *
+	 * <p>
+	 * If the attribute has a {@link #getStoreColumn() store column}, this is the store new content
+	 * is uploaded to, and existing content is resolved in the store named by its row.
+	 * </p>
 	 */
 	String getStoreName();
+
+	/**
+	 * The column holding the name of the store of the blob of each row, <code>null</code> if all
+	 * blobs are stored in the {@link #getStoreName() store of the attribute}. An empty value refers
+	 * to the default store.
+	 */
+	DBAttribute getStoreColumn();
 
 	/**
 	 * The column holding the blob key, <code>null</code> in rows without a blob.

@@ -433,6 +433,10 @@ public class ItemTables {
 
 	private final Table _flexData;
 
+	private final Table _flexBinaryData;
+
+	private final List<Table> _flexTables;
+
 	/**
 	 * Creates a {@link ItemTables} view of the given type repository.
 	 *
@@ -447,7 +451,16 @@ public class ItemTables {
 			tableByTypeName.put(table.getType().getName(), table);
 		}
 		_itemTableByTypeName = tableByTypeName;
-		_flexData = lookupFlexData(repository);
+		_flexData = lookupFlexData(repository, AbstractFlexDataManager.FLEX_DATA);
+		_flexBinaryData = lookupFlexData(repository, AbstractFlexDataManager.FLEX_BINARY_DATA);
+		List<Table> flexTables = new ArrayList<>();
+		if (_flexData != null) {
+			flexTables.add(_flexData);
+		}
+		if (_flexBinaryData != null) {
+			flexTables.add(_flexBinaryData);
+		}
+		_flexTables = Collections.unmodifiableList(flexTables);
 	}
 
 	private static List<Table> lookupItemTables(MORepository repository) {
@@ -484,8 +497,8 @@ public class ItemTables {
 		return result;
 	}
 
-	private static Table lookupFlexData(MORepository repository) {
-		MetaObject type = repository.getTypeOrNull(AbstractFlexDataManager.FLEX_DATA);
+	private static Table lookupFlexData(MORepository repository, String typeName) {
+		MetaObject type = repository.getTypeOrNull(typeName);
 		if (!(type instanceof MOKnowledgeItem)) {
 			return null;
 		}
@@ -562,6 +575,28 @@ public class ItemTables {
 	 */
 	public Table getFlexData() {
 		return _flexData;
+	}
+
+	/**
+	 * The table storing binary values of dynamic attributes, or <code>null</code> if the
+	 * {@link #getRepository() repository} has none.
+	 *
+	 * @see AbstractFlexDataManager#FLEX_BINARY_DATA
+	 */
+	public Table getFlexBinaryData() {
+		return _flexBinaryData;
+	}
+
+	/**
+	 * All tables storing dynamic attribute values: the {@link #getFlexData() flexible data table}
+	 * and the {@link #getFlexBinaryData() table of binary values}, as far as present.
+	 *
+	 * <p>
+	 * Their rows carry the type of the object they belong to in a column of their own.
+	 * </p>
+	 */
+	public List<Table> getFlexTables() {
+		return _flexTables;
 	}
 
 }

@@ -148,6 +148,74 @@ public class TestDiffEventReader extends AbstractDBKnowledgeBaseClusterTest {
 
 	}
 
+	/**
+	 * Changes of binary values of dynamic attributes, stored in the table of binary values.
+	 */
+	public void testBinaryFlexAttributes() throws DataObjectException, SQLException {
+		BinaryData unchanged = BinaryDataFactory.createBinaryData(new byte[] { 1, 2, 3 }, "a/b", "unchanged");
+		BinaryData oldValue = BinaryDataFactory.createBinaryData(new byte[] { 4, 5 }, "a/b", "old");
+		BinaryData newValue = BinaryDataFactory.createBinaryData(new byte[20000], "a/b", "new");
+		BinaryData added = BinaryDataFactory.createBinaryData(new byte[] { 6 }, "a/b", "added");
+		BinaryData deleted = BinaryDataFactory.createBinaryData(new byte[] { 7 }, "a/b", "deleted");
+
+		KnowledgeObject e1;
+		Revision r0;
+		{
+			Transaction tx = begin();
+			e1 = newE("e1");
+			e1.setAttributeValue("binUnchanged", unchanged);
+			e1.setAttributeValue("binChanged", oldValue);
+			e1.setAttributeValue("binDeleted", deleted);
+			e1.setAttributeValue("kindChanged", "text");
+			tx.commit();
+			r0 = tx.getCommitRevision();
+		}
+		Revision r1;
+		{
+			Transaction tx = begin();
+			e1.setAttributeValue("binChanged", newValue);
+			e1.setAttributeValue("binAdded", added);
+			e1.setAttributeValue("binDeleted", null);
+			e1.setAttributeValue("kindChanged", added);
+			tx.commit();
+			r1 = tx.getCommitRevision();
+		}
+
+		DiffEventReader reader = newDiffReader(r0, r1);
+		try {
+			ItemEvent event = reader.readEvent();
+			assertInstanceof(event, ItemUpdate.class);
+			Map<String, Object> values = ((ItemUpdate) event).getValues();
+			Map<String, Object> oldValues = ((ItemUpdate) event).getOldValues();
+			assertEquals(
+				new MapBuilder<String, Object>().put("binChanged", newValue).put("binAdded", added)
+					.put("binDeleted", null).put("kindChanged", added).toMap(),
+				values);
+			assertEquals(
+				new MapBuilder<String, Object>().put("binChanged", oldValue).put("binAdded", null)
+					.put("binDeleted", deleted).put("kindChanged", "text").toMap(),
+				oldValues);
+			assertEquals("new", ((BinaryData) values.get("binChanged")).getName());
+			assertNull(reader.readEvent());
+		} finally {
+			reader.close();
+		}
+
+		DiffEventReader reverseReader = newDiffReader(r1, r0);
+		try {
+			ItemEvent event = reverseReader.readEvent();
+			assertInstanceof(event, ItemUpdate.class);
+			Map<String, Object> values = ((ItemUpdate) event).getValues();
+			assertEquals(
+				new MapBuilder<String, Object>().put("binChanged", oldValue).put("binAdded", null)
+					.put("binDeleted", deleted).put("kindChanged", "text").toMap(),
+				values);
+			assertNull(reverseReader.readEvent());
+		} finally {
+			reverseReader.close();
+		}
+	}
+
 	public void testMultipleFlexAttributeDifferentType() throws DataObjectException, SQLException {
 		KnowledgeObject e1;
 		KnowledgeObject d1;

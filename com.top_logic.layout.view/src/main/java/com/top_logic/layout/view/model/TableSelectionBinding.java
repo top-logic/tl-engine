@@ -56,8 +56,9 @@ public class TableSelectionBinding extends SelectionChannelBinding {
 	 * <p>
 	 * To be called by the owner of the table directly after {@link TableViewControl#refreshData()}:
 	 * a row that appears only now (the just-created object the channel already names) is selected
-	 * and scrolled into view, and a row this table displayed as selected and that is gone gives the
-	 * channel up to whatever is left of the selection.
+	 * and scrolled into view, and a selected row whose object is gone from the table's data gives the
+	 * channel up to whatever is left of the selection. A selected row that a filter or a collapsed
+	 * group merely hides is still part of the data and keeps the channel value.
 	 * </p>
 	 */
 	public void rowsRefreshed() {

@@ -48,6 +48,9 @@ public class TestTableSelectionRetention extends TestCase {
 	/** The name of the column the tests group by: the first letter of the row. */
 	private static final String COLUMN_GROUP = "group";
 
+	/** State key of the keyboard cursor row index. */
+	private static final String CURSOR_INDEX = "cursorIndex";
+
 	/** State key of the client's row list. */
 	private static final String ROWS = "rows";
 
@@ -178,6 +181,33 @@ public class TestTableSelectionRetention extends TestCase {
 		_table.setGroupedColumn(null);
 
 		assertEquals(Set.of(A1), _table.getSelectedKeys());
+	}
+
+	/**
+	 * Tests that a row of the data the filter hides can be selected programmatically: it becomes
+	 * the selection without a cursor, and shows as selected once the filter is removed.
+	 */
+	public void testSelectingAFilteredRow() {
+		search(B1);
+
+		_table.selectRows(List.of(A1));
+
+		assertEquals(Set.of(A1), _table.getSelectedKeys());
+		assertEquals(List.of(Set.of(A1)), _notified);
+		assertEquals("No displayed row carries the cursor.", Integer.valueOf(-1), _table.clientState(CURSOR_INDEX));
+
+		search("");
+
+		assertEquals(Boolean.TRUE, clientRows().get(0).get(SELECTED));
+	}
+
+	/**
+	 * Tests that a key the table's data has no row for is not selected.
+	 */
+	public void testSelectingAForeignKeySelectsNothing() {
+		_table.selectRows(List.of("elsewhere"));
+
+		assertEquals(Set.of(), _table.getSelectedKeys());
 	}
 
 	/** Searches the rows for the given term, an empty one clearing the search. */

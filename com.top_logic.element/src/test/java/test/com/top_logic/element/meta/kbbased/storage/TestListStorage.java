@@ -10,6 +10,7 @@ import static java.util.Collections.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -26,6 +27,7 @@ import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.element.meta.kbbased.storage.ListStorage;
 import com.top_logic.element.model.DynamicModelService;
+import com.top_logic.knowledge.util.OrderedLinkUtil;
 import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
@@ -41,9 +43,20 @@ import com.top_logic.util.model.ModelService;
 @SuppressWarnings("javadoc")
 public class TestListStorage extends BasicTestCase {
 
-	private static final long MILLIS_TO_SECONDS = 1000;
-
-	private static final long MAX_ALLOWED_SECONDS = 30;
+	/**
+	 * Upper limit for the CPU time of the test thread for setting the list in each performance
+	 * test.
+	 * 
+	 * <p>
+	 * The limit applies to CPU time, not wall-clock time: on a loaded build node, the time the test
+	 * thread waits for a free CPU does not count. All work of the operation (including the embedded
+	 * database and the commit) runs in the test thread. When the JVM cannot measure thread CPU
+	 * time, the limit applies to wall-clock time.
+	 * </p>
+	 * 
+	 * @see StopWatch#createThreadCpuWatch()
+	 */
+	private static final long MAX_ALLOWED_SECONDS = 3;
 
 	private static final Class<TestListStorage> THIS_CLASS = TestListStorage.class;
 
@@ -56,10 +69,54 @@ public class TestListStorage extends BasicTestCase {
 	private static final String PARENT_TO_CHILDREN_ATTRIBUTE_NAME = "children";
 
 	/**
-	 * Before #23922 the execution time would increase from 6 seconds for 32'000 elements to 15
-	 * seconds for 33'000 elements, 5 minutes for 5'000 elements and 15 minutes for 50'000 elements.
+	 * Number of elements in the lists set by the performance tests.
+	 * 
+	 * <p>
+	 * Setting an ordered list through {@link ListStorage} must take time linear in the number of
+	 * elements. For this number of elements, a linear implementation needs a small fraction of
+	 * {@link #MAX_ALLOWED_SECONDS}, whereas a quadratic one needs far more.
+	 * </p>
+	 *
+	 * <p>
+	 * {@link #testLargeListPerformance()} appends all elements to an empty list. Each element gets a
+	 * sort order of {@link OrderedLinkUtil#APPEND_INC} above its predecessor. This number of
+	 * elements stays far below the point where the range of sort-order values is exhausted
+	 * ({@link OrderedLinkUtil#MAX_ORDER} / {@link OrderedLinkUtil#APPEND_INC}).
+	 * </p>
+	 * 
+	 * <p>
+	 * {@link #testInsertBeforeExistingPerformance()} inserts half of the elements in front of the
+	 * other half. The inserted elements share the sort-order gap before the first existing element.
+	 * Inserting them one after another halves the remaining gap with each element and renumbers the
+	 * whole list again and again. Splitting the elements in halves maximizes the cost of this, since
+	 * each renumbering covers the whole list.
+	 * </p>
+	 * 
+	 * <p>
+	 * {@link #testInsertRunExceedingGapPerformance()} inserts a run of {@link #LARGE_RUN_COUNT}
+	 * elements in front of {@link #LARGE_RUN_EXISTING_COUNT} existing elements.
+	 * </p>
 	 */
-	private static final int CHILDREN_COUNT = 50_000;
+	private static final int CHILDREN_COUNT = 10_000;
+
+	/**
+	 * Number of elements in the list before {@link #testInsertRunExceedingGapPerformance()} inserts
+	 * {@link #LARGE_RUN_COUNT} elements in front of them.
+	 */
+	private static final int LARGE_RUN_EXISTING_COUNT = 1_000;
+
+	/**
+	 * Number of elements that {@link #testInsertRunExceedingGapPerformance()} inserts in front of
+	 * {@link #LARGE_RUN_EXISTING_COUNT} existing elements.
+	 * 
+	 * <p>
+	 * The existing elements are appended to an empty list, so the free sort-order range before the
+	 * first existing element is {@link OrderedLinkUtil#APPEND_INC}. The inserted run is at least as
+	 * large as this range, so the elements of the run cannot be spaced within it, and the list is
+	 * renumbered once for the whole run.
+	 * </p>
+	 */
+	private static final int LARGE_RUN_COUNT = CHILDREN_COUNT - LARGE_RUN_EXISTING_COUNT;
 
 	private TLObject _parent;
 
@@ -78,27 +135,96 @@ public class TestListStorage extends BasicTestCase {
 		}
 	}
 
+	/**
+	 * Checks that setting a list of {@link #CHILDREN_COUNT} elements stays within
+	 * {@link #MAX_ALLOWED_SECONDS} of CPU time.
+	 */
 	public void testLargeListPerformance() {
 		assertEquals(ListStorage.class, getTestedStorage().getClass());
-		measurePerformance();
-	}
-
-	private void measurePerformance() {
-		StopWatch stopWatch = StopWatch.createStartedWatch();
-		inTransaction(() -> setChildren(_children));
-		stopWatch.stop();
+		assertFastEnough("append " + CHILDREN_COUNT + " elements", () -> setChildren(_children));
+		assertEquals(_children, getChildren());
 		inTransaction(() -> setChildren(emptyList()));
-		// System.err.println(stopWatch); // For debugging.
-		assertTrue(createErrorMessage(stopWatch), isFastEnough(stopWatch));
 	}
 
-	private String createErrorMessage(StopWatch stopWatch) {
-		return "TLObject.setList(" + CHILDREN_COUNT + " elements) should take less than " + MAX_ALLOWED_SECONDS
-			+ " seconds, but took: " + stopWatch;
+	/**
+	 * Checks that inserting {@link #CHILDREN_COUNT} / 2 elements in front of the other
+	 * {@link #CHILDREN_COUNT} / 2 elements stays within {@link #MAX_ALLOWED_SECONDS} of CPU time.
+	 */
+	public void testInsertBeforeExistingPerformance() {
+		assertInsertFastEnough(CHILDREN_COUNT / 2);
 	}
 
-	private boolean isFastEnough(StopWatch stopWatch) {
-		return stopWatch.getElapsedMillis() < MILLIS_TO_SECONDS * MAX_ALLOWED_SECONDS;
+	/**
+	 * Checks that inserting {@link #LARGE_RUN_COUNT} elements in front of
+	 * {@link #LARGE_RUN_EXISTING_COUNT} existing elements stays within {@link #MAX_ALLOWED_SECONDS}
+	 * of CPU time.
+	 */
+	public void testInsertRunExceedingGapPerformance() {
+		assertTrue("Inserted run must not fit into the sort-order range before the first existing element.",
+			LARGE_RUN_COUNT >= OrderedLinkUtil.APPEND_INC);
+		assertInsertFastEnough(LARGE_RUN_COUNT);
+	}
+
+	/**
+	 * Sets the list to all but the given number of leading elements of {@link #CHILDREN_COUNT}
+	 * elements, and checks the time for inserting the leading elements in front of them.
+	 */
+	private void assertInsertFastEnough(int insertedCount) {
+		inTransaction(() -> setChildren(_children.subList(insertedCount, CHILDREN_COUNT)));
+
+		assertFastEnough(
+			"insert " + insertedCount + " elements in front of " + (CHILDREN_COUNT - insertedCount) + " elements",
+			() -> setChildren(_children));
+		assertEquals(_children, getChildren());
+		inTransaction(() -> setChildren(emptyList()));
+	}
+
+	/**
+	 * Checks the order of the list after inserting elements before, between, and after existing
+	 * elements.
+	 */
+	public void testInsertAtSeveralPositions() {
+		TLObject a = _children.get(0);
+		TLObject b = _children.get(1);
+		TLObject c = _children.get(2);
+		TLObject d = _children.get(3);
+		TLObject e = _children.get(4);
+		TLObject f = _children.get(5);
+		TLObject g = _children.get(6);
+
+		inTransaction(() -> setChildren(List.of(b, e)));
+		assertEquals(List.of(b, e), getChildren());
+
+		inTransaction(() -> setChildren(List.of(a, b, c, d, e, f, g)));
+		assertEquals(List.of(a, b, c, d, e, f, g), getChildren());
+
+		inTransaction(() -> setChildren(List.of(a, c, e)));
+		assertEquals(List.of(a, c, e), getChildren());
+
+		inTransaction(() -> setChildren(emptyList()));
+		assertEquals(emptyList(), getChildren());
+	}
+
+	private void assertFastEnough(String operation, Runnable setList) {
+		StopWatch cpuWatch = StopWatch.createStartedThreadCpuWatch();
+		StopWatch wallWatch = StopWatch.createStartedWatch();
+		inTransaction(setList);
+		wallWatch.stop();
+		cpuWatch.stop();
+
+		assertTrue(createErrorMessage(operation, cpuWatch, wallWatch),
+			cpuWatch.getElapsedNanos() < TimeUnit.SECONDS.toNanos(MAX_ALLOWED_SECONDS));
+	}
+
+	private String createErrorMessage(String operation, StopWatch cpuWatch, StopWatch wallWatch) {
+		String limit = cpuWatch.isThreadCpuTime() ? "CPU time" : "wall-clock time (CPU time not available)";
+		String cpuTime = cpuWatch.isThreadCpuTime() ? cpuWatch.toString() : "not available";
+		return "TLObject.setList(" + operation + ") should take less than " + MAX_ALLOWED_SECONDS
+			+ " seconds of " + limit + ", but took: CPU time " + cpuTime + ", wall-clock time " + wallWatch;
+	}
+
+	private List<?> getChildren() {
+		return (List<?>) _parent.tValueByName(PARENT_TO_CHILDREN_ATTRIBUTE_NAME);
 	}
 
 	private void setChildren(List<TLObject> children) {

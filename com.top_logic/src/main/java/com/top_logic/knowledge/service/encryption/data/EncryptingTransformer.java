@@ -142,9 +142,15 @@ public class EncryptingTransformer implements DataTransformation {
 			}
 		}
 
+		/**
+		 * The size of the cipher text, <code>-1</code> if the size of the plain text is not known.
+		 */
 		@Override
 		public long getSize() {
 			long plainTextSize = _dataImpl.getSize();
+			if (plainTextSize < 0) {
+				return -1;
+			}
 			return _encryption.getCipherTextSize(plainTextSize);
 		}
 
@@ -188,9 +194,15 @@ public class EncryptingTransformer implements DataTransformation {
 			}
 		}
 
+		/**
+		 * The size of the plain text, <code>-1</code> if the size of the cipher text is not known.
+		 */
 		@Override
 		public long getSize() {
 			long chipherTextSize = _dataImpl.getSize();
+			if (chipherTextSize < 0) {
+				return -1;
+			}
 			return _encryption.getPlainTextSize(chipherTextSize);
 		}
 

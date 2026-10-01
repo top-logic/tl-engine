@@ -1,6 +1,7 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useCloseOnOutsidePress, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition, TLRunningDrag } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
+import { Menu, MenuItem } from './menu/Menu';
 
 /**
  * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
@@ -397,7 +398,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const [contextMenu, setContextMenu] = React.useState<{
     x: number; y: number; colIdx: number;
   } | null>(null);
-  const contextMenuRef = React.useRef<HTMLDivElement>(null);
 
   // -- Frozen column splitter state: the boundary the running drag would drop the frozen area at. --
   const [frozenPreview, setFrozenPreview] = React.useState<{ x: number; count: number } | null>(null);
@@ -1114,12 +1114,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     });
   }, [columns, frozenWidth, frozenColumnCount, sendCommand]);
 
-  // Close the context menu on a press outside of it; Escape is handled by the shared keyboard
-  // dispatcher. A press inside keeps it, so that the click following the press still reaches the
-  // menu item it started on.
-  useCloseOnOutsidePress(!!contextMenu, [contextMenuRef], () => setContextMenu(null));
-  useStandaloneKeyboardScope(!!contextMenu, { ESCAPE: () => setContextMenu(null) });
-
   // -- Filter handler: open the server-side filter dialog for a column. --
   const handleOpenFilter = React.useCallback((columnName: string, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -1698,47 +1692,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       )}
 
       {/* Column context menu */}
-      {contextMenu && (
-        <div
-          className="tlMenu"
-          role="menu"
-          ref={contextMenuRef}
-          style={{ position: 'fixed', top: contextMenu.y, left: contextMenu.x, zIndex: 10000 }}
-        >
-          {contextMenu.colIdx + 1 !== frozenColumnCount
-              && !columns[contextMenu.colIdx]?.pinnedEnd && (
-            <button type="button" className="tlMenu__item" role="menuitem" onClick={handleFreezeUpTo}>
-              <span className="tlMenu__label">{i18n['js.table.freezeUpTo']}</span>
-            </button>
-          )}
-          {frozenColumnCount > 0 && (
-            <button type="button" className="tlMenu__item" role="menuitem" onClick={handleUnfreezeAll}>
-              <span className="tlMenu__label">{i18n['js.table.unfreezeAll']}</span>
-            </button>
-          )}
-          {!columns[contextMenu.colIdx]?.pinnedEnd && (
-            <button type="button" className="tlMenu__item" role="menuitem"
-              onClick={() => {
-                fitColumnToContent(columns[contextMenu.colIdx].name);
-                setContextMenu(null);
-              }}>
-              <span className="tlMenu__label">{i18n['js.table.fitColumn']}</span>
-            </button>
-          )}
-          {columns[contextMenu.colIdx]?.groupable
-              && columns[contextMenu.colIdx].name !== grouping && (
-            <button type="button" className="tlMenu__item" role="menuitem"
-              onClick={() => handleGroupBy(columns[contextMenu.colIdx].name)}>
-              <span className="tlMenu__label">{i18n['js.table.groupBy']}</span>
-            </button>
-          )}
-          {grouping !== '' && (
-            <button type="button" className="tlMenu__item" role="menuitem" onClick={handleUngroup}>
-              <span className="tlMenu__label">{i18n['js.table.ungroup']}</span>
-            </button>
-          )}
-        </div>
-      )}
+      <Menu open={!!contextMenu} anchor={contextMenu ? { x: contextMenu.x, y: contextMenu.y } : null} onClose={() => setContextMenu(null)}>
+        {contextMenu && contextMenu.colIdx + 1 !== frozenColumnCount && !columns[contextMenu.colIdx]?.pinnedEnd && (
+          <MenuItem label={i18n['js.table.freezeUpTo']} onSelect={handleFreezeUpTo} />)}
+        {contextMenu && frozenColumnCount > 0 && <MenuItem label={i18n['js.table.unfreezeAll']} onSelect={handleUnfreezeAll} />}
+        {contextMenu && !columns[contextMenu.colIdx]?.pinnedEnd && (
+          <MenuItem label={i18n['js.table.fitColumn']} onSelect={() => { fitColumnToContent(columns[contextMenu.colIdx].name); setContextMenu(null); }} />)}
+        {contextMenu && columns[contextMenu.colIdx]?.groupable && columns[contextMenu.colIdx].name !== grouping && (
+          <MenuItem label={i18n['js.table.groupBy']} onSelect={() => handleGroupBy(columns[contextMenu.colIdx].name)} />)}
+        {contextMenu && grouping !== '' && <MenuItem label={i18n['js.table.ungroup']} onSelect={handleUngroup} />}
+      </Menu>
     </div>
     </KeyboardScopeProvider>
   );

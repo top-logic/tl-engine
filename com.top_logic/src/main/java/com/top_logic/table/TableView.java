@@ -5,7 +5,9 @@
  */
 package com.top_logic.table;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.table.filter.TextFilterState;
 
@@ -79,6 +81,19 @@ public interface TableView<R> {
 	 * The displayed rows in the half-open index range {@code [from, to)}.
 	 */
 	List<Row<R>> rows(int from, int to);
+
+	/**
+	 * The given row keys that belong to a data row of this table, whether that row is displayed or
+	 * hidden by a filter, a collapsed group or a collapsed tree node.
+	 *
+	 * @param keys
+	 *        The {@link Row#key() row keys} to check.
+	 * @return The keys among the given ones this table has a data row for, in the order they are
+	 *         given.
+	 *
+	 * @see RowSource#containedKeys(Collection)
+	 */
+	Set<Object> containedKeys(Collection<?> keys);
 
 	/**
 	 * The content of the given row's cell in the named column.

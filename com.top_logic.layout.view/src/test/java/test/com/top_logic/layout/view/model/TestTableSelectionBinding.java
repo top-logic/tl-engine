@@ -183,6 +183,25 @@ public class TestTableSelectionBinding extends TestCase {
 	}
 
 	/**
+	 * Tests that a row the filter hides keeps the channel value through a refresh that keeps its
+	 * object: the filter changes what the table displays, not its data.
+	 */
+	public void testFilteredRowKeepsTheValue() {
+		_channel.set(A1);
+		_tableA.search(A2);
+
+		refreshA(A1, A2);
+
+		assertEquals(Set.of(A1), _tableA.getSelectedKeys());
+		assertEquals(A1, _channel.get());
+
+		refreshA(A2);
+
+		assertNull("The filtered row's object is gone from the data.", _channel.get());
+		assertEquals(Set.of(), _tableA.getSelectedKeys());
+	}
+
+	/**
 	 * Tests that giving up the selection in the table clears the channel.
 	 */
 	public void testDeselectionClearsTheValue() {

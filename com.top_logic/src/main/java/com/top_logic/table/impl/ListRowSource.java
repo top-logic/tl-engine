@@ -6,11 +6,13 @@
 package com.top_logic.table.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -141,6 +143,32 @@ public class ListRowSource<R> implements RowSource<R> {
 			return List.of();
 		}
 		return List.copyOf(_displayed.subList(lo, hi));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The data rows are the ones for the {@link #elements() backing business objects}, whatever the
+	 * filter and the collapsed groups display of them.
+	 * </p>
+	 */
+	@Override
+	public Set<Object> containedKeys(Collection<?> keys) {
+		Set<Object> result = new LinkedHashSet<>();
+		if (keys.isEmpty()) {
+			return result;
+		}
+		Set<Object> existing = new HashSet<>();
+		for (R element : _elements) {
+			existing.add(_keyOf.apply(element));
+		}
+		for (Object key : keys) {
+			if (existing.contains(key)) {
+				result.add(key);
+			}
+		}
+		return result;
 	}
 
 	@Override

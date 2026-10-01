@@ -24,12 +24,16 @@ export function useButtonDefaults(): ButtonDefaultsValue {
   return React.useContext(Context);
 }
 
-/** The class list of a button: block, appearance, tone, size, typography, passed-through classes. */
+/**
+ * The class list of a button: block, appearance, tone, size, shape, typography, passed-through
+ * classes. `icon` is a button showing only an icon: a square of the control height.
+ */
 export function buttonClassName(opts: {
-  appearance: ButtonAppearance; danger?: boolean; small?: boolean; extra?: string;
+  appearance: ButtonAppearance; danger?: boolean; small?: boolean; icon?: boolean; extra?: string;
 }): string {
   return ['tl-button', `tl-button--${opts.appearance}`, 'tl-type-body',
     opts.danger && opts.appearance !== 'link' ? 'tl-button--danger' : '',
     opts.small ? 'tl-button--sm' : '',
+    opts.icon ? 'tl-button--icon' : '',
     opts.extra ?? ''].filter(Boolean).join(' ');
 }

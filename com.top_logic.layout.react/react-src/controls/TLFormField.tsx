@@ -140,7 +140,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
           {required && !readOnly && <span className="tl-form-field__required" aria-hidden="true">*</span>}
           {dirty && <span className="tl-form-field__dirty" aria-hidden="true" />}
           {showHelp && (
-            <button type="button" className={buttonClassName({ appearance: 'ghost', small: true })} onClick={toggleHelp}
+            <button type="button" className={buttonClassName({ appearance: 'ghost', small: true, icon: true })} onClick={toggleHelp}
               aria-label={i18n['js.formField.help']} aria-expanded={helpVisible} aria-controls={helpTextId}
               {...tooltipProps(i18n['js.formField.help'])}>
               <ThemeIcon encoded={HELP_ICON} className="tl-button__icon tl-icon-sm" />

@@ -436,7 +436,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			Sink<Pointer> sink = pointer -> dependencies.add(pointer.attribute());
 			OverlayLookup overlays = _formControl.getValidationModel();
 			mode = _modeSelector.getMode(self, part, editMode);
-			_modeSelector.traceDependencies(self, part, sink,
+			_modeSelector.traceDependencies(self, part, editMode, sink,
 				overlays != null ? overlays : AttributeOptions.NO_OVERLAYS);
 			_modeDependencies = dependencies;
 		}

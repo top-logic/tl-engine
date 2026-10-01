@@ -246,8 +246,8 @@ public class TestAttributeFieldDisabledMode extends BasicTestCase {
 		}
 
 		@Override
-		public void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
-				OverlayLookup overlays) {
+		public void traceDependencies(TLObject object, TLStructuredTypePart attribute, boolean editMode,
+				Sink<Pointer> trace, OverlayLookup overlays) {
 			// Depends on nothing.
 		}
 	}

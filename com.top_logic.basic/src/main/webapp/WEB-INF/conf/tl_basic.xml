@@ -14,6 +14,9 @@
         <entry name="%UPLOAD_VIRUS_SCAN_HOST%" value="${env:upload_virus_scan_host:localhost}" />
         <entry name="%UPLOAD_VIRUS_SCAN_PORT%" value="${env:upload_virus_scan_port:3310}" />
         <entry name="%UPLOAD_VIRUS_SCAN_UNAVAILABLE_POLICY%" value="${env:upload_virus_scan_unavailable_policy:REJECT}" />
+
+        <!-- Root directory of the default file system blob store. -->
+        <entry name="%BLOB_STORE_ROOT%" value="${env:tl_blob_store_root:%VAR_PATH%/blobs}" />
     </alias>
 
 	<properties> 

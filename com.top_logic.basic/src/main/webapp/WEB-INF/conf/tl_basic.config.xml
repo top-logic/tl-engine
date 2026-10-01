@@ -20,6 +20,7 @@
 					<module key="com.top_logic.basic.html.SafeHTML$Module" value="true" />
 					<module key="com.top_logic.basic.translation.TranslationService$Module" value="%TRANSLATION_ENABLED%" />
 					<module key="com.top_logic.basic.io.binary.scan.UploadSecurityService$Module" value="%UPLOAD_VIRUS_SCAN_ENABLED%" />
+					<module key="com.top_logic.basic.io.blob.BlobStoreService$Module" value="true" />
 				</modules>
 			</instance>
 		</config>
@@ -28,6 +29,19 @@
 			<instance class="com.top_logic.basic.io.NoFileSystemCache"/>
 		</config>
 		
+		<config service-class="com.top_logic.basic.io.blob.BlobStoreService">
+			<instance class="com.top_logic.basic.io.blob.BlobStoreService"
+				default-store="default"
+			>
+				<stores>
+					<store name="default"
+						class="com.top_logic.basic.io.blob.FileSystemBlobStore"
+						root="%BLOB_STORE_ROOT%"
+					/>
+				</stores>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.basic.translation.TranslationService">
 			<instance class="com.top_logic.basic.translation.DeepLTranslationService"
 				api-host="https://api.deepl.com/v2"

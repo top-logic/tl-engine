@@ -35,6 +35,8 @@ import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MOAttribute;
+import com.top_logic.dob.attr.AbstractBinaryAttribute;
+import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
@@ -45,6 +47,8 @@ import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.knowledge.service.migration.processors.BinaryContentMigration;
+import com.top_logic.knowledge.service.migration.processors.MoveFlexBinaryDataProcessor;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.QualifiedTypeName;
@@ -57,10 +61,6 @@ import com.top_logic.model.migration.data.Type;
  */
 public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeFlexAttributeProcessor.Config<?>>
 		implements MigrationProcessor {
-
-	private static final byte BLOB_TYPE = 50;
-
-	private static final String BLOB_DATA_DBNAME = "BLOB_DATA";
 
 	/**
 	 * Configuration of the types of the objects whose attributes should be moved.
@@ -157,6 +157,10 @@ public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeF
 			log.info("Column '" + columnName + "' of table '" + tableName + "' does not exist, ignoring.", Log.WARN);
 			return;
 		}
+		if (isBinary(column)) {
+			moveBinaryValues(context, log, connection, table, typeRef, column, attributeName);
+			return;
+		}
 		if (column.getDbMapping().length != 1) {
 			log.error("Trying to move column '" + columnName + "' of table '" + tableName
 				+ "' with non-trivial DB mapping of size " + column.getDbMapping().length + " to flex data.");
@@ -191,15 +195,9 @@ public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeF
 			SQLExpression doubleValue = literal(DBType.DOUBLE, null);
 			SQLExpression stringValue = literal(DBType.STRING, null);
 			SQLExpression clobValue = literal(DBType.CLOB, null);
-			SQLExpression blobValue = null;
 
 			SQLColumnReference sourceValue = column(dbColumn.getDBName());
 			switch (dbColumn.getSQLType()) {
-				case BLOB:
-					typeValue = literal(DBType.INT, BLOB_TYPE);
-					blobValue = sourceValue;
-					columnNames.add(BLOB_DATA_DBNAME);
-					break;
 				case BOOLEAN:
 					typeValue = sqlCase(sourceValue,
 						literal(DBType.INT, AbstractFlexDataManager.BOOLEAN_TRUE),
@@ -269,9 +267,6 @@ public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeF
 				columnDef(doubleValue),
 				columnDef(stringValue),
 				columnDef(clobValue)));
-			if (blobValue != null) {
-				columnDefs.add(columnDef(blobValue));
-			}
 			CompiledStatement copy = query(
 				insert(
 					table(flexTable.getDBMapping().getDBName()),
@@ -293,6 +288,114 @@ public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeF
 					+ attributeName + "': " + ex.getMessage(),
 				ex);
 		}
+	}
+
+	private static boolean isBinary(MOAttribute column) {
+		return column instanceof AbstractBinaryAttribute
+			|| (column.getMetaObject() == MOPrimitive.BLOB && column.getDbMapping().length == 1);
+	}
+
+	/**
+	 * Copies the values of a binary column to the table of dynamic binary values.
+	 *
+	 * <p>
+	 * The content is copied as stored: inline content stays inline, references to blobs are taken
+	 * over. Values of a plain BLOB column get their size computed and the content type
+	 * {@link BinaryContentMigration#DEFAULT_CONTENT_TYPE}.
+	 * </p>
+	 */
+	private void moveBinaryValues(MigrationContext context, Log log, PooledConnection connection,
+			MOStructure table, MOReference typeRef, MOAttribute column, String attributeName) {
+		Config<?> config = getConfig();
+		String tableName = config.getTable();
+		try {
+			Set<TLID> changedTypes = resolveObjectTypeIds(context, connection, config);
+			log.info("Moving binary column values of objects with concrete type IDs: " + changedTypes);
+
+			MOStructure binaryTable = MoveFlexBinaryDataProcessor.ensureTable(context, log, connection);
+			AbstractBinaryAttribute content =
+				(AbstractBinaryAttribute) binaryTable.getAttribute(AbstractFlexDataManager.CONTENT);
+
+			List<String> columnNames = new ArrayList<>();
+			List<SQLColumnDefinition> columnDefs = new ArrayList<>();
+			if (context.hasBranchSupport()) {
+				columnNames.add(AbstractFlexDataManager.BRANCH_DBNAME);
+				columnDefs.add(columnDef(BasicTypes.BRANCH_DB_NAME));
+			}
+			Collections.addAll(columnNames,
+				AbstractFlexDataManager.TYPE_DBNAME,
+				AbstractFlexDataManager.IDENTIFIER_DBNAME,
+				BasicTypes.REV_MAX_DB_NAME,
+				AbstractFlexDataManager.ATTRIBUTE_DBNAME,
+				BasicTypes.REV_MIN_DB_NAME);
+			Collections.addAll(columnDefs,
+				columnDef(literal(DBType.STRING, tableName)),
+				columnDef(BasicTypes.IDENTIFIER_DB_NAME),
+				columnDef(BasicTypes.REV_MAX_DB_NAME),
+				columnDef(literal(DBType.STRING, attributeName)),
+				columnDef(BasicTypes.REV_MIN_DB_NAME));
+
+			SQLExpression hasValue;
+			boolean plain = !(column instanceof AbstractBinaryAttribute);
+			if (plain) {
+				String dataColumn = column.getDbMapping()[0].getDBName();
+				columnNames.add(content.getDataColumn().getDBName());
+				columnDefs.add(columnDef(dataColumn));
+				hasValue = not(isNull(column(dataColumn)));
+			} else {
+				AbstractBinaryAttribute source = (AbstractBinaryAttribute) column;
+				copy(columnNames, columnDefs, content.getSizeColumn(), source.getSizeColumn());
+				copy(columnNames, columnDefs, content.getContentTypeColumn(), source.getContentTypeColumn());
+				copy(columnNames, columnDefs, content.getNameColumn(), source.getNameColumn());
+				if (source.getKeyColumn() != null) {
+					copy(columnNames, columnDefs, content.getKeyColumn(), source.getKeyColumn());
+					copy(columnNames, columnDefs, content.getHashColumn(), source.getHashColumn());
+					columnNames.add(content.getStoreColumn().getDBName());
+					columnDefs.add(source.getStoreColumn() != null ? columnDef(source.getStoreColumn().getDBName())
+						: columnDef(literal(DBType.STRING, source.getStoreName())));
+				}
+				if (source.getDataColumn() != null) {
+					copy(columnNames, columnDefs, content.getDataColumn(), source.getDataColumn());
+				}
+				hasValue = not(isNull(column(source.getSizeColumn().getDBName())));
+			}
+
+			CompiledStatement insertSelect = query(
+				insert(
+					table(binaryTable.getDBMapping().getDBName()),
+					columnNames,
+					select(
+						columnDefs,
+						table(table.getDBMapping().getDBName()),
+						and(
+							inSet(
+								column(typeRef.getColumn(ReferencePart.name).getDBName()),
+								setLiteral(changedTypes, DBType.ID)),
+							hasValue))))
+								.toSql(connection.getSQLDialect());
+			int cntCopy = insertSelect.executeUpdate(connection);
+			log.info("Copied " + cntCopy + " binary values from table '" + tableName + "' to flex attribute '"
+				+ attributeName + "'.");
+
+			if (plain) {
+				BinaryContentMigration.fillMissingMetadata(log, connection, binaryTable, content,
+					and(
+						eqSQL(column(AbstractFlexDataManager.TYPE_DBNAME), literal(DBType.STRING, tableName)),
+						eqSQL(column(AbstractFlexDataManager.ATTRIBUTE_DBNAME),
+							literal(DBType.STRING, attributeName))));
+			}
+		} catch (SQLException | MigrationException ex) {
+			log.error(
+				"Failed to move values of binary column '" + column.getName() + "' from '" + tableName
+					+ "' to flex attribute '" + attributeName + "': " + ex.getMessage(),
+				ex);
+		}
+	}
+
+	private static void copy(List<String> columnNames, List<SQLColumnDefinition> columnDefs, DBAttribute target,
+			DBAttribute source) {
+		columnNames.add(target.getDBName());
+		columnDefs.add(columnDef(source.getDBName()));
 	}
 
 	/**

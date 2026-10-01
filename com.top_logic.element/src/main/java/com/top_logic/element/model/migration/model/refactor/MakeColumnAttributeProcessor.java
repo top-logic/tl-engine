@@ -7,13 +7,17 @@ package com.top_logic.element.model.migration.model.refactor;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,13 +35,23 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.Batch;
 import com.top_logic.basic.db.sql.CompiledStatement;
+import com.top_logic.basic.db.model.util.DBSchemaUtils;
 import com.top_logic.basic.db.sql.SQLColumnDefinition;
+import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.db.sql.SQLOrder;
+import com.top_logic.basic.db.sql.SQLQuery.Parameter;
+import com.top_logic.basic.io.binary.AbstractBinaryData;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.blob.BlobBinaryData;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.attr.AbstractBinaryAttribute;
+import com.top_logic.dob.attr.MOPrimitive;
+import com.top_logic.dob.attr.storage.BinaryColumnsStorage;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.BasicTypes;
@@ -53,6 +67,8 @@ import com.top_logic.knowledge.service.db2.ItemQuery.DirectItemResult;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.knowledge.service.migration.processors.BinaryContentMigration;
+import com.top_logic.knowledge.service.migration.processors.BinaryPlacement;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.util.TLContext;
@@ -173,6 +189,15 @@ public class MakeColumnAttributeProcessor extends AbstractConfiguredInstance<Mak
 			log.info("Column '" + columnName + "' of table '" + tableName + "' does not exist, ignoring.", Log.WARN);
 			return;
 		}
+		if (column instanceof AbstractBinaryAttribute binaryColumn) {
+			moveBinaryValues(context, log, connection, repository, table, typeRef, binaryColumn, attributeName);
+			return;
+		}
+		if (column.getMetaObject() == MOPrimitive.BLOB) {
+			log.error("Trying to move flex values to the plain BLOB column '" + columnName + "' of table '"
+				+ tableName + "', migrate the column to a binary attribute kind first.");
+			return;
+		}
 		if (column.getDbMapping().length != 1) {
 			log.error("Trying to move flex values to column '" + columnName + "' of table '" + tableName
 					+ "' with non-trivial DB mapping of size " + column.getDbMapping().length + ".");
@@ -205,6 +230,291 @@ public class MakeColumnAttributeProcessor extends AbstractConfiguredInstance<Mak
 						+ "' in '" + tableName + "': " + ex.getMessage(),
 				ex);
 		}
+	}
+
+	/**
+	 * Moves the values of a dynamic binary attribute from the table of dynamic binary values to the
+	 * columns of a binary attribute of the object table.
+	 *
+	 * <p>
+	 * Content is stored as the target attribute requires: content in a blob store is referenced,
+	 * if the target stores content in the same store, and uploaded otherwise; inline content is
+	 * read from the table of dynamic binary values when it is written.
+	 * </p>
+	 */
+	private void moveBinaryValues(MigrationContext context, Log log, PooledConnection connection,
+			MORepository repository, MOStructure table, MOReference typeRef, AbstractBinaryAttribute target,
+			String attributeName) {
+		Config<?> config = getConfig();
+		try {
+			MOStructure binaryTable =
+				(MOStructure) repository.getTypeOrNull(AbstractFlexDataManager.FLEX_BINARY_DATA);
+			if (binaryTable == null
+				|| !DBSchemaUtils.exists(connection, binaryTable.getDBMapping().getDBName())) {
+				log.info("No table of dynamic binary values, nothing to move for attribute '" + attributeName + "'.");
+				return;
+			}
+			AbstractBinaryAttribute content =
+				(AbstractBinaryAttribute) binaryTable.getAttribute(AbstractFlexDataManager.CONTENT);
+
+			Set<TLID> changedTypes = MakeFlexAttributeProcessor.resolveObjectTypeIds(context, connection, config);
+			log.info("Moving binary values of objects with concrete type IDs: " + changedTypes);
+
+			boolean hasBranch = context.hasBranchSupport();
+			List<AttributeValue> flexValues = getBinaryFlexValues(connection, table, attributeName, binaryTable,
+				content, typeRef, changedTypes, hasBranch);
+
+			List<AttributeValue> rowValues =
+				getRowValuesToUpdate(log, connection, table, binaryTable, target.getSizeColumn(), hasBranch,
+					flexValues);
+
+			updateBinaryTableRows(context, log, connection, table, target, rowValues);
+
+			if (!config.isDoNotDeleteDataFromFlexTable()) {
+				deleteFlexValues(context, log, connection, attributeName, binaryTable, flexValues);
+			}
+		} catch (SQLException | IOException | MigrationException ex) {
+			log.error(
+				"Failed to move binary values for attribute '" + attributeName + "' to column '" + target.getName()
+					+ "' in '" + table.getName() + "': " + ex.getMessage(),
+				ex);
+		}
+	}
+
+	private List<AttributeValue> getBinaryFlexValues(PooledConnection connection, MOStructure table,
+			String attributeName, MOStructure binaryTable, AbstractBinaryAttribute content, MOReference typeRef,
+			Set<TLID> changedTypes, boolean hasBranch) throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+		List<SQLColumnDefinition> columns = new ArrayList<>();
+		if (hasBranch) {
+			columns.add(columnDef(AbstractFlexDataManager.BRANCH_DBNAME));
+		}
+		Collections.addAll(columns,
+			columnDef(AbstractFlexDataManager.IDENTIFIER_DBNAME),
+			columnDef(BasicTypes.REV_MAX_DB_NAME),
+			columnDef(BasicTypes.REV_MIN_DB_NAME),
+			columnDef(AbstractFlexDataManager.TYPE_DBNAME));
+		Map<DBAttribute, Integer> contentIndex = new IdentityHashMap<>();
+		for (DBAttribute contentColumn : content.getDbMapping()) {
+			if (contentColumn == content.getDataColumn()) {
+				continue;
+			}
+			columns.add(columnDef(contentColumn.getDBName()));
+			contentIndex.put(contentColumn, Integer.valueOf(columns.size()));
+		}
+
+		List<SQLOrder> orders = new ArrayList<>();
+		if (hasBranch) {
+			orders.add(order(column(AbstractFlexDataManager.BRANCH_DBNAME)));
+		}
+		orders.add(order(column(AbstractFlexDataManager.IDENTIFIER_DBNAME)));
+		orders.add(order(column(BasicTypes.REV_MIN_DB_NAME)));
+
+		CompiledStatement selectValues = query(
+			select(
+				columns,
+				table(binaryTable.getDBMapping().getDBName()),
+				and(
+					eq(column(AbstractFlexDataManager.ATTRIBUTE_DBNAME), literalString(attributeName)),
+					not(isNull(column(content.getSizeColumn().getDBName()))),
+					inSetSelect(
+						column(AbstractFlexDataManager.IDENTIFIER_DBNAME),
+						selectDistinct(
+							columns(columnDef(BasicTypes.IDENTIFIER_DB_NAME)),
+							table(table.getDBMapping().getDBName()),
+							inSet(
+								column(typeRef.getColumn(ReferencePart.name).getDBName()),
+								setLiteral(changedTypes, DBType.ID))))),
+				orders)).toSql(sqlDialect);
+
+		List<AttributeValue> flexValues = new ArrayList<>();
+		try (ResultSet rows = selectValues.executeQuery(connection)) {
+			while (rows.next()) {
+				int colIdx = 1;
+				long branch;
+				if (hasBranch) {
+					branch = rows.getLong(colIdx++);
+				} else {
+					branch = TLContext.TRUNK_ID;
+				}
+				TLID objectID = IdentifierUtil.getId(rows, colIdx++);
+				long revMax = rows.getLong(colIdx++);
+				long revMin = rows.getLong(colIdx++);
+				String objectType = rows.getString(colIdx++);
+
+				BinaryData value =
+					BinaryColumnsStorage.fetchReference(rows, content, c -> contentIndex.get(c).intValue());
+				if (value == null) {
+					long size = rows.getLong(contentIndex.get(content.getSizeColumn()).intValue());
+					String contentType = rows.getString(contentIndex.get(content.getContentTypeColumn()).intValue());
+					String name = rows.getString(contentIndex.get(content.getNameColumn()).intValue());
+					value = new FlexContent(connection, binaryTable, content.getDataColumn(), hasBranch, branch,
+						objectType, objectID, revMax, attributeName, size, contentType, name);
+				}
+				flexValues.add(new AttributeValue(objectID, branch, revMin, revMax, value));
+			}
+		}
+		return flexValues;
+	}
+
+	private void updateBinaryTableRows(MigrationContext context, Log log, PooledConnection connection,
+			MOStructure table, AbstractBinaryAttribute target, List<AttributeValue> rowValues)
+			throws SQLException, IOException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+		Util sqlUtil = context.getSQLUtils();
+		DBAttribute[] targetColumns = target.getDbMapping();
+
+		List<Parameter> parameters = new ArrayList<>();
+		parameters.add(sqlUtil.branchParamDef());
+		parameters.add(parameterDef(DBType.ID, "id"));
+		parameters.add(parameterDef(DBType.LONG, "revMin"));
+		List<String> columnNames = new ArrayList<>();
+		List<SQLExpression> values = new ArrayList<>();
+		for (int n = 0; n < targetColumns.length; n++) {
+			String parameterName = "value" + n;
+			parameters.add(parameterDef(targetColumns[n].getSQLType(), parameterName));
+			columnNames.add(targetColumns[n].getDBName());
+			values.add(parameter(targetColumns[n].getSQLType(), parameterName));
+		}
+		CompiledStatement updateStmt = query(parameters,
+			update(table(table.getDBMapping().getDBName()),
+				and(
+					sqlUtil.eqBranch(),
+					eq(column(BasicTypes.IDENTIFIER_DB_NAME), parameter(DBType.ID, "id")),
+					eq(column(BasicTypes.REV_MIN_DB_NAME), parameter(DBType.LONG, "revMin"))),
+				columnNames,
+				values)).toSql(sqlDialect);
+
+		BinaryPlacement placement = BinaryPlacement.of(target);
+		// Content uploaded for a flex value, which may be stored in several rows.
+		Map<Object, BinaryData> uploaded = new IdentityHashMap<>();
+
+		int batchSize = 0;
+		int maxBatchSize = Math.min(100, sqlDialect.getMaxBatchSize(parameters.size()));
+		int totalUpdates = 0;
+		try (Batch batch = updateStmt.createBatch(connection)) {
+			for (AttributeValue rowValue : rowValues) {
+				BinaryData value = uploaded.get(rowValue._value);
+				if (value == null) {
+					value = BinaryContentMigration.place((BinaryData) rowValue._value, placement);
+					if (value instanceof BlobBinaryData) {
+						uploaded.put(rowValue._value, value);
+					}
+				}
+				Object[] columnValues = BinaryColumnsStorage.columnValues(target, value);
+				Object[] args = new Object[3 + columnValues.length];
+				args[0] = Long.valueOf(rowValue._branch);
+				args[1] = rowValue._id;
+				args[2] = Long.valueOf(rowValue._revMin);
+				System.arraycopy(columnValues, 0, args, 3, columnValues.length);
+				batch.addBatch(args);
+				if (++batchSize >= maxBatchSize) {
+					batch.executeBatch();
+					totalUpdates += batchSize;
+					batchSize = 0;
+				}
+			}
+			if (batchSize > 0) {
+				batch.executeBatch();
+				totalUpdates += batchSize;
+			}
+		}
+		log.info("Updated " + totalUpdates + " rows in table " + table.getName() + ".");
+	}
+
+	/**
+	 * Inline content of a row of the table of dynamic binary values, read when it is accessed.
+	 */
+	private static final class FlexContent extends AbstractBinaryData {
+
+		private final PooledConnection _connection;
+
+		private final MOStructure _binaryTable;
+
+		private final DBAttribute _dataColumn;
+
+		private final boolean _hasBranch;
+
+		private final long _branch;
+
+		private final String _objectType;
+
+		private final TLID _objectId;
+
+		private final long _revMax;
+
+		private final String _attribute;
+
+		private final long _size;
+
+		private final String _contentType;
+
+		private final String _name;
+
+		FlexContent(PooledConnection connection, MOStructure binaryTable, DBAttribute dataColumn, boolean hasBranch,
+				long branch, String objectType, TLID objectId, long revMax, String attribute, long size,
+				String contentType, String name) {
+			_connection = connection;
+			_binaryTable = binaryTable;
+			_dataColumn = dataColumn;
+			_hasBranch = hasBranch;
+			_branch = branch;
+			_objectType = objectType;
+			_objectId = objectId;
+			_revMax = revMax;
+			_attribute = attribute;
+			_size = size;
+			_contentType = contentType;
+			_name = name;
+		}
+
+		@Override
+		public long getSize() {
+			return _size;
+		}
+
+		@Override
+		public String getContentType() {
+			return _contentType;
+		}
+
+		@Override
+		public String getName() {
+			return _name;
+		}
+
+		@Override
+		public InputStream getStream() throws IOException {
+			try {
+				DBHelper sqlDialect = _connection.getSQLDialect();
+				SQLExpression condition = and(
+					eqSQL(column(AbstractFlexDataManager.TYPE_DBNAME), literalString(_objectType)),
+					eqSQL(column(AbstractFlexDataManager.IDENTIFIER_DBNAME), literal(DBType.ID, _objectId)),
+					eqSQL(column(BasicTypes.REV_MAX_DB_NAME), literal(DBType.LONG, Long.valueOf(_revMax))),
+					eqSQL(column(AbstractFlexDataManager.ATTRIBUTE_DBNAME), literalString(_attribute)));
+				if (_hasBranch) {
+					condition = and(
+						eqSQL(column(AbstractFlexDataManager.BRANCH_DBNAME), literal(DBType.LONG, Long.valueOf(_branch))),
+						condition);
+				}
+				CompiledStatement select = query(
+					select(columns(columnDef(_dataColumn.getDBName())),
+						table(_binaryTable.getDBMapping().getDBName()), condition)).toSql(sqlDialect);
+				try (ResultSet result = select.executeQuery(_connection)) {
+					if (!result.next()) {
+						throw new IOException("Binary value of attribute '" + _attribute + "' of object '"
+							+ _objectId + "' not found.");
+					}
+					try (InputStream content = sqlDialect.getBinaryStream(result, 1)) {
+						return BinaryDataFactory.createBinaryData(content, _size, _contentType, _name).getStream();
+					}
+				}
+			} catch (SQLException ex) {
+				throw new IOException("Reading binary value of attribute '" + _attribute + "' of object '"
+					+ _objectId + "' failed.", ex);
+			}
+		}
+
 	}
 
 	private void deleteFlexValues(MigrationContext context, Log log, PooledConnection connection, String attributeName,

@@ -90,11 +90,15 @@ public interface AttributeConfig extends PolymorphicConfiguration<MOAttribute> {
 	@BooleanDefault(false)
 	boolean isOverride();
 
+	/** The name of the property represented by {@link #getStorage()}. */
+	String STORAGE_PROPERTY = "storage";
+
 	/**
 	 * The {@link AttributeStorage storage strategy} of the configured {@link MOAttribute}.
 	 * 
 	 * @see MOAttribute#getStorage()
 	 */
+	@Name(STORAGE_PROPERTY)
 	@DefaultContainer
 	@InstanceFormat
 	AttributeStorage getStorage();

@@ -2791,7 +2791,7 @@ button.tlDrawer__closeBtn:focus-visible {
 	color: var(--text-muted);
 }
 
-/* --- TLMenu ---------------------------------------------------------------- */
+/* --- TLViewError ----------------------------------------------------------- */
 
 /* Placeholder rendered in place of a view that could not be loaded. */
 .tlViewError {
@@ -2818,94 +2818,6 @@ button.tlDrawer__closeBtn:focus-visible {
 	font-size: 0.875em;
 	white-space: pre-wrap;
 	color: var(--text-secondary);
-}
-
-.tlMenu {
-	z-index: var(--tl-layer-popover);
-	min-width: 10rem;
-	/* A menu offering many entries (e.g. the element types of a container) stays within the
-	   viewport and scrolls instead of being cut off. */
-	max-height: 70vh;
-	overflow-y: auto;
-	background: var(--layer-02);
-	border: 1px solid var(--border-strong);
-	border-radius: var(--border-radius-02);
-	box-shadow: var(--shadow-menu);
-	padding: var(--spacing-02) 0;
-	font-family: var(--font-family);
-	outline: none;
-}
-
-.tlMenu__item {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-03);
-	width: 100%;
-	padding: var(--spacing-03) var(--spacing-04);
-	border: none;
-	background: transparent;
-	color: var(--text-secondary);
-	font-size: var(--body-compact-01-font-size);
-	font-family: var(--font-family);
-	cursor: pointer;
-	text-align: left;
-}
-
-button.tlMenu__item:hover,
-.tlMenu__item--focused {
-	background: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-button.tlMenu__item:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
-}
-
-.tlMenu__item--disabled {
-	color: var(--text-disabled);
-	cursor: default;
-}
-
-button.tlMenu__item--disabled:hover {
-	background: transparent;
-	color: var(--text-disabled);
-}
-
-/* The entry whose command is in force, e.g. the current theme among the offered ones. */
-.tlMenu__item--active {
-	font-weight: 600;
-}
-
-.tlMenu__separator {
-	border: none;
-	border-top: 1px solid var(--border-subtle);
-	margin: var(--spacing-02) var(--spacing-04);
-}
-
-/* A caption above a group of entries: set in the secondary text colour and a smaller size so it
-   reads as a heading of the entries rather than as one of them. */
-.tlMenu__header {
-	padding: var(--spacing-02) var(--spacing-04) var(--spacing-01);
-	font-size: var(--label-01-font-size);
-	font-weight: 600;
-	color: var(--text-secondary);
-	white-space: nowrap;
-	cursor: default;
-	user-select: none;
-}
-
-.tlMenu__icon {
-	flex-shrink: 0;
-	width: 1rem;
-	text-align: center;
-	font-size: 1rem;
-}
-
-.tlMenu__label {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 /* --- TLMenuRegion ---------------------------------------------------------- */

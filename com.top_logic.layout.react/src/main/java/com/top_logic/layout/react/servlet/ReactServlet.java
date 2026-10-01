@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -36,6 +37,7 @@ import com.top_logic.base.services.simpleajax.PropertyUpdate;
 import com.top_logic.base.services.simpleajax.RangeReplacement;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.DirectDownload;
 import com.top_logic.basic.io.binary.scan.UploadGuardRequest;
 import com.top_logic.basic.io.binary.scan.UploadRejectedException;
 import com.top_logic.basic.json.JSON;
@@ -165,6 +167,15 @@ public class ReactServlet extends TopLogicServlet {
 	/** Name of the {@link #CMD_UPLOAD_REJECTED} argument holding the size of the refused file. */
 	private static final String ARG_SIZE = "size";
 
+	/** Name of the HTTP header controlling the caching of a response. */
+	private static final String HEADER_CACHE_CONTROL = "Cache-Control";
+
+	/**
+	 * Value of the {@link #HEADER_CACHE_CONTROL} header of a redirect to a direct download, whose
+	 * target URL is valid for a short time only.
+	 */
+	private static final String CACHE_CONTROL_NO_STORE = "private, no-store";
+
 	/**
 	 * Request attribute through which Jetty takes the {@link MultipartConfigElement} to apply to
 	 * the body of the current request, mirroring {@code ServletContextRequest.MULTIPART_CONFIG_ELEMENT}
@@ -274,6 +285,15 @@ public class ReactServlet extends TopLogicServlet {
 		BinaryData data = ((DataProvider) control).getDownloadData(key);
 		if (data == null) {
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+
+		URI directDownloadUrl = DirectDownload.getDirectDownloadUrl(data);
+		if (directDownloadUrl != null) {
+			// The browser fetches the content from the storage. The target URL expires soon, so the
+			// redirect must not be cached.
+			response.setHeader(HEADER_CACHE_CONTROL, CACHE_CONTROL_NO_STORE);
+			response.sendRedirect(directDownloadUrl.toASCIIString());
 			return;
 		}
 

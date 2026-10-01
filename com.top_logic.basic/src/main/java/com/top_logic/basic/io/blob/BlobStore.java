@@ -7,6 +7,7 @@ package com.top_logic.basic.io.blob;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.time.Instant;
 import java.util.stream.Stream;
 
@@ -121,6 +122,33 @@ public interface BlobStore extends AutoCloseable {
 	 * @return The {@link BlobInfo} of all stored blobs. The caller must close the stream.
 	 */
 	Stream<BlobInfo> list() throws IOException;
+
+	/**
+	 * Creates a time-limited URL from which a browser fetches the content of the blob with the
+	 * given key directly from the storage.
+	 *
+	 * <p>
+	 * The response to the URL announces the given content type and file name, since the store
+	 * keeps no such metadata itself. A store that cannot issue such URLs, or has direct downloads
+	 * disabled, returns <code>null</code>; the content is then streamed by the application server.
+	 * </p>
+	 *
+	 * @param key
+	 *        A key returned by {@link #put(InputStream, long, String)}.
+	 * @param size
+	 *        The size of the content in bytes, or <code>-1</code> if unknown. A store may decline
+	 *        direct downloads for small content.
+	 * @param contentType
+	 *        The MIME type the download is delivered with.
+	 * @param fileName
+	 *        The file name proposed to the browser, or <code>null</code> for none.
+	 * @return The download URL, or <code>null</code> if the content must be streamed.
+	 *
+	 * @see com.top_logic.basic.io.binary.DirectDownload
+	 */
+	default URI createDownloadUrl(String key, long size, String contentType, String fileName) {
+		return null;
+	}
 
 	/**
 	 * Removes temporary artifacts of this store (e.g. leftovers of failed or interrupted uploads)

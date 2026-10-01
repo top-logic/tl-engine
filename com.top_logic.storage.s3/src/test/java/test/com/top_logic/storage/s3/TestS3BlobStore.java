@@ -9,6 +9,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -44,6 +47,7 @@ import software.amazon.awssdk.services.s3.model.ServerSideEncryption;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.binary.ContentDisposition;
 import com.top_logic.basic.io.blob.BlobInfo;
 import com.top_logic.basic.io.blob.BlobStore;
 import com.top_logic.storage.s3.S3BlobStore;
@@ -345,6 +349,40 @@ public class TestS3BlobStore extends AbstractBlobStoreContractTest {
 			String largeKey = store.put(new PatternInputStream(size), size, CONTENT_TYPE);
 			assertContent(store, largeKey, size);
 			assertEquals(expected, head(largeKey).serverSideEncryption());
+		}
+	}
+
+	/**
+	 * A presigned URL delivers the content with the response headers taken from the metadata given
+	 * to the store, and supports range requests.
+	 */
+	public void testDirectDownload() throws Exception {
+		S3BlobStore.Config<?> config = newConfig(PREFIX);
+		config.setDirectDownload(true);
+		config.setDirectDownloadMinSize(0);
+		try (S3BlobStore store = newStore(config)) {
+			byte[] content = bytes(1000);
+			String key = store.put(new ByteArrayInputStream(content), content.length, CONTENT_TYPE);
+			String fileName = "\u00DCbersicht M\u00E4rz.pdf";
+			URI url = store.createDownloadUrl(key, content.length, "application/pdf", fileName);
+			assertNotNull(url);
+
+			HttpClient http = HttpClient.newHttpClient();
+			HttpResponse<byte[]> response =
+				http.send(HttpRequest.newBuilder(url).GET().build(), HttpResponse.BodyHandlers.ofByteArray());
+			assertEquals(200, response.statusCode());
+			assertTrue(Arrays.equals(content, response.body()));
+			assertEquals("application/pdf", response.headers().firstValue("Content-Type").orElse(null));
+			assertEquals(ContentDisposition.headerValue(ContentDisposition.INLINE, fileName),
+				response.headers().firstValue(ContentDisposition.HEADER).orElse(null));
+			assertEquals(S3BlobStore.DIRECT_DOWNLOAD_CACHE_CONTROL,
+				response.headers().firstValue("Cache-Control").orElse(null));
+
+			HttpResponse<byte[]> range = http.send(
+				HttpRequest.newBuilder(url).header("Range", S3BlobStore.rangeHeader(10, 20)).GET().build(),
+				HttpResponse.BodyHandlers.ofByteArray());
+			assertEquals(206, range.statusCode());
+			assertTrue(Arrays.equals(Arrays.copyOfRange(content, 10, 30), range.body()));
 		}
 	}
 

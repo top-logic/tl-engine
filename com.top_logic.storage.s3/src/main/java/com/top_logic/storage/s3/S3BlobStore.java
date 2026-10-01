@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,8 +29,10 @@ import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.CompletedPart;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListMultipartUploadsRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.MultipartUpload;
@@ -40,6 +43,7 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.model.ServerSideEncryption;
 import software.amazon.awssdk.services.s3.model.UploadPartResponse;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.utils.SdkAutoCloseable;
 
 import com.top_logic.basic.CalledByReflection;
@@ -56,6 +60,8 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.format.MemorySizeFormat;
+import com.top_logic.basic.config.format.MillisFormat;
+import com.top_logic.basic.io.binary.ContentDisposition;
 import com.top_logic.basic.io.LimitedInputStream;
 import com.top_logic.basic.io.blob.AbstractBlobStore;
 import com.top_logic.basic.io.blob.BlobInfo;
@@ -78,6 +84,12 @@ import com.top_logic.basic.io.blob.NoSuchBlobException;
  * Without configured access keys, the credentials are taken from the default credentials provider
  * chain of the AWS SDK: environment variables, the <code>~/.aws/credentials</code> file, or the
  * IAM role of the instance or container.
+ * </p>
+ *
+ * <p>
+ * Optionally, browsers download content directly from the storage through short-lived presigned
+ * URLs instead of receiving it through the application server, see
+ * {@link Config#getDirectDownload()}.
  * </p>
  *
  * @implNote The store communicates through the lightweight HTTP client based on
@@ -119,6 +131,36 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 	 * Default value of {@link Config#getMultipartThreshold()}.
 	 */
 	public static final long DEFAULT_MULTIPART_THRESHOLD = 16L * 1024 * 1024;
+
+	/**
+	 * Default value of {@link Config#getDirectDownloadMinSize()}.
+	 */
+	public static final long DEFAULT_DIRECT_DOWNLOAD_MIN_SIZE = 1024L * 1024;
+
+	/**
+	 * Default value of {@link Config#getDirectDownloadLifetime()} in milliseconds.
+	 */
+	public static final long DEFAULT_DIRECT_DOWNLOAD_LIFETIME = 60L * 1000;
+
+	/**
+	 * Maximum lifetime of a presigned URL accepted by S3 (7 days) in milliseconds.
+	 */
+	public static final long MAX_DIRECT_DOWNLOAD_LIFETIME = 7L * 24 * 60 * 60 * 1000;
+
+	/**
+	 * Minimum lifetime of a presigned URL in milliseconds.
+	 */
+	public static final long MIN_DIRECT_DOWNLOAD_LIFETIME = 1000;
+
+	/**
+	 * Value of the <code>Cache-Control</code> header that a direct download is delivered with.
+	 *
+	 * <p>
+	 * The content is user specific and its URL is only valid for a short time, so neither the
+	 * browser nor a proxy keeps it.
+	 * </p>
+	 */
+	public static final String DIRECT_DOWNLOAD_CACHE_CONTROL = "private, no-store";
 
 	/**
 	 * Default value of {@link Config#getRegion()}.
@@ -204,6 +246,26 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		 * Configuration name of {@link #getPartSize()}.
 		 */
 		String PART_SIZE = "part-size";
+
+		/**
+		 * Configuration name of {@link #getDirectDownload()}.
+		 */
+		String DIRECT_DOWNLOAD = "direct-download";
+
+		/**
+		 * Configuration name of {@link #getDirectDownloadMinSize()}.
+		 */
+		String DIRECT_DOWNLOAD_MIN_SIZE = "direct-download-min-size";
+
+		/**
+		 * Configuration name of {@link #getDirectDownloadLifetime()}.
+		 */
+		String DIRECT_DOWNLOAD_LIFETIME = "direct-download-lifetime";
+
+		/**
+		 * Configuration name of {@link #getPublicEndpoint()}.
+		 */
+		String PUBLIC_ENDPOINT = "public-endpoint";
 
 		/**
 		 * The URL of the S3 service, e.g. <code>https://minio.example.com:9000</code>.
@@ -393,6 +455,83 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		void setPartSize(long value);
 
 		/**
+		 * Whether browsers download content directly from the storage.
+		 *
+		 * <p>
+		 * When enabled, a download in the React UI is answered with a redirect to a presigned URL
+		 * of the object instead of streaming the content through the application server. The
+		 * browser must be able to reach the storage, see {@link #getPublicEndpoint()}. The storage
+		 * then also serves range requests, e.g. for seeking in audio or PDF content. The
+		 * integrity check of the content against its stored hash is not applied to direct
+		 * downloads.
+		 * </p>
+		 */
+		@Name(DIRECT_DOWNLOAD)
+		boolean getDirectDownload();
+
+		/**
+		 * @see #getDirectDownload()
+		 */
+		void setDirectDownload(boolean value);
+
+		/**
+		 * The minimum size of content downloaded directly from the storage.
+		 *
+		 * <p>
+		 * Smaller content is streamed through the application server, since the redirect would
+		 * cost more than it saves. The size is given in bytes, optionally with a unit, e.g.
+		 * <code>1MB</code>. Only relevant if {@link #getDirectDownload()} is enabled.
+		 * </p>
+		 */
+		@Name(DIRECT_DOWNLOAD_MIN_SIZE)
+		@Format(MemorySizeFormat.class)
+		@LongDefault(DEFAULT_DIRECT_DOWNLOAD_MIN_SIZE)
+		long getDirectDownloadMinSize();
+
+		/**
+		 * @see #getDirectDownloadMinSize()
+		 */
+		void setDirectDownloadMinSize(long value);
+
+		/**
+		 * The time a URL for a direct download stays valid, e.g. <code>60s</code>.
+		 *
+		 * <p>
+		 * The storage checks the validity when the transfer starts, so a slow download of large
+		 * content completes after the URL has expired. Anyone holding the URL can fetch the
+		 * content within this time. At most 7 days. Only relevant if {@link #getDirectDownload()}
+		 * is enabled.
+		 * </p>
+		 */
+		@Name(DIRECT_DOWNLOAD_LIFETIME)
+		@Format(MillisFormat.class)
+		@LongDefault(DEFAULT_DIRECT_DOWNLOAD_LIFETIME)
+		long getDirectDownloadLifetime();
+
+		/**
+		 * @see #getDirectDownloadLifetime()
+		 */
+		void setDirectDownloadLifetime(long value);
+
+		/**
+		 * The URL under which browsers reach the S3 service, e.g.
+		 * <code>https://storage.example.com</code>.
+		 *
+		 * <p>
+		 * URLs for direct downloads are issued for this address. Empty if browsers reach the
+		 * storage under the address given in {@link #getEndpoint()}. Only relevant if
+		 * {@link #getDirectDownload()} is enabled.
+		 * </p>
+		 */
+		@Name(PUBLIC_ENDPOINT)
+		String getPublicEndpoint();
+
+		/**
+		 * @see #getPublicEndpoint()
+		 */
+		void setPublicEndpoint(String value);
+
+		/**
 		 * Implementation class of the store.
 		 */
 		@Override
@@ -417,6 +556,15 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 
 	private final S3Client _client;
 
+	private final URI _publicEndpoint;
+
+	private final Duration _directDownloadLifetime;
+
+	/**
+	 * The presigner for direct download URLs, created on first use.
+	 */
+	private S3Presigner _presigner;
+
 	/**
 	 * Creates a {@link S3BlobStore} from configuration.
 	 *
@@ -436,6 +584,9 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		_partSize = (int) checkBounds(context, Config.PART_SIZE, config.getPartSize(), MIN_PART_SIZE, MAX_REQUEST_SIZE);
 		_multipartThreshold =
 			(int) checkBounds(context, Config.MULTIPART_THRESHOLD, config.getMultipartThreshold(), 0, MAX_REQUEST_SIZE);
+		_publicEndpoint = parseEndpoint(context, config.getPublicEndpoint());
+		_directDownloadLifetime = Duration.ofMillis(checkBounds(context, Config.DIRECT_DOWNLOAD_LIFETIME,
+			config.getDirectDownloadLifetime(), MIN_DIRECT_DOWNLOAD_LIFETIME, MAX_DIRECT_DOWNLOAD_LIFETIME));
 		_client = createClient();
 	}
 
@@ -505,6 +656,61 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 			builder.endpointOverride(_endpoint);
 		}
 		return builder;
+	}
+
+	/**
+	 * Creates the presigner for the URLs of direct downloads.
+	 *
+	 * <p>
+	 * Called on the first direct download. The presigner signs for the
+	 * {@link #getPublicEndpoint() public endpoint} of the storage.
+	 * </p>
+	 */
+	protected S3Presigner createPresigner() {
+		return configurePresigner(S3Presigner.builder()).build();
+	}
+
+	/**
+	 * Applies the connection settings of this store to the given presigner builder.
+	 */
+	protected S3Presigner.Builder configurePresigner(S3Presigner.Builder builder) {
+		builder
+			.region(_region)
+			.credentialsProvider(_credentialsProvider)
+			.serviceConfiguration(S3Configuration.builder()
+				.pathStyleAccessEnabled(Boolean.valueOf(getConfig().getPathStyleAccess()))
+				.build());
+		URI endpoint = getPublicEndpoint();
+		if (endpoint != null) {
+			builder.endpointOverride(endpoint);
+		}
+		return builder;
+	}
+
+	private synchronized S3Presigner getPresigner() {
+		if (_presigner == null) {
+			_presigner = createPresigner();
+		}
+		return _presigner;
+	}
+
+	/**
+	 * The URL of the S3 service as reached by browsers, or <code>null</code> for AWS S3, where the
+	 * endpoint is derived from the region.
+	 *
+	 * <p>
+	 * The configured public endpoint, or {@link #getEndpoint()} if none is configured.
+	 * </p>
+	 */
+	public URI getPublicEndpoint() {
+		return _publicEndpoint != null ? _publicEndpoint : _endpoint;
+	}
+
+	/**
+	 * The time a URL for a direct download stays valid.
+	 */
+	public Duration getDirectDownloadLifetime() {
+		return _directDownloadLifetime;
 	}
 
 	/**
@@ -775,6 +981,41 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		return ioException("Reading blob '" + key + "' failed", ex);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Creates a presigned URL for reading the object, if direct downloads are enabled and the
+	 * content has at least the configured minimum size. The URL forces the response headers
+	 * <code>Content-Type</code>, <code>Content-Disposition</code> (<code>inline</code> with the
+	 * given file name) and <code>Cache-Control</code> ({@link #DIRECT_DOWNLOAD_CACHE_CONTROL}),
+	 * independent of the metadata of the stored object.
+	 * </p>
+	 */
+	@Override
+	public URI createDownloadUrl(String key, long size, String contentType, String fileName) {
+		Config<?> config = getConfig();
+		if (!config.getDirectDownload() || size < config.getDirectDownloadMinSize()) {
+			return null;
+		}
+		GetObjectRequest request = GetObjectRequest.builder()
+			.bucket(_bucket)
+			.key(getObjectName(key))
+			.responseContentType(contentType == null ? DEFAULT_CONTENT_TYPE : contentType)
+			.responseContentDisposition(ContentDisposition.headerValue(ContentDisposition.INLINE, fileName))
+			.responseCacheControl(DIRECT_DOWNLOAD_CACHE_CONTROL)
+			.build();
+		try {
+			return getPresigner()
+				.presignGetObject(presign -> presign.signatureDuration(_directDownloadLifetime).getObjectRequest(request))
+				.url().toURI();
+		} catch (SdkException | URISyntaxException ex) {
+			Logger.warn("Cannot create a direct download URL for blob '" + key + "' (S3 blob store '" + getName()
+				+ "'), the content is streamed.", ex, S3BlobStore.class);
+			return null;
+		}
+	}
+
 	@Override
 	public void delete(String key) throws IOException {
 		String objectName = getObjectName(key);
@@ -851,6 +1092,12 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 	@Override
 	public void close() throws IOException {
 		try {
+			synchronized (this) {
+				if (_presigner != null) {
+					_presigner.close();
+					_presigner = null;
+				}
+			}
 			_client.close();
 		} finally {
 			if (_credentialsProvider instanceof SdkAutoCloseable) {

@@ -7,6 +7,7 @@ package com.top_logic.basic.io.blob;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Objects;
 
 import com.top_logic.basic.StringServices;
@@ -14,6 +15,7 @@ import com.top_logic.basic.io.HashingInputStream;
 import com.top_logic.basic.io.VerifyingInputStream;
 import com.top_logic.basic.io.binary.AbstractBinaryData;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.DirectDownload;
 
 /**
  * {@link BinaryData} whose content is stored as blob in a {@link BlobStore}.
@@ -31,11 +33,16 @@ import com.top_logic.basic.io.binary.BinaryData;
  * {@link #getStream(long, long)} is not checked.
  * </p>
  *
+ * <p>
+ * A {@link DirectDownload} is offered if the store issues download URLs, see
+ * {@link BlobStore#createDownloadUrl(String, long, String, String)}.
+ * </p>
+ *
  * @see BlobUpload
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public final class BlobBinaryData extends AbstractBinaryData {
+public final class BlobBinaryData extends AbstractBinaryData implements DirectDownload {
 
 	private final String _storeName;
 
@@ -135,6 +142,22 @@ public final class BlobBinaryData extends AbstractBinaryData {
 	 */
 	public InputStream getStream(long offset, long length) throws IOException {
 		return getStore().get(_key, offset, length);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The URL is created by the store of the content. It is <code>null</code> if the store does
+	 * not issue download URLs for this content.
+	 * </p>
+	 *
+	 * @see BlobStore#createDownloadUrl(String, long, String, String)
+	 */
+	@Override
+	public URI getDirectDownloadUrl() {
+		String fileName = BinaryData.NO_NAME.equals(_name) ? null : _name;
+		return getStore().createDownloadUrl(_key, _size, _contentType, fileName);
 	}
 
 	private String describe() {

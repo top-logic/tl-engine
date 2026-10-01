@@ -25,8 +25,6 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.InMemoryBinaryData;
 import com.top_logic.dob.MOFactory;
-import com.top_logic.dob.attr.MOAttributeImpl;
-import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.dob.meta.DeferredMetaObject;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MORepository;
@@ -64,7 +62,7 @@ public class TestBinaryDataAttribute extends AbstractDBKnowledgeBaseTest {
 			public void createTypes(Log log, MOFactory typeFactory, MORepository typeRepository) {
 				MOClass type = new MOKnowledgeItemImpl(TYPE);
 				type.setSuperclass(new DeferredMetaObject(B_NAME));
-				type.addAttribute(new MOAttributeImpl(BINARY_ROW_ATTR, MOPrimitive.BLOB, false));
+				type.addAttribute(newInlineBinaryAttribute(BINARY_ROW_ATTR, false));
 				typeRepository.addMetaObject(type);
 
 				MOClass extendedType = new MOKnowledgeItemImpl(TYPE_EXTENSION);

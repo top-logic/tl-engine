@@ -24,10 +24,17 @@ import junit.framework.Test;
 import test.com.top_logic.LocalTestSetup;
 import test.com.top_logic.basic.module.TestModuleUtil;
 
+import com.top_logic.basic.AbortExecutionException;
+import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.TLID;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.db.schema.io.MORepositoryBuilder;
+import com.top_logic.basic.db.schema.setup.SchemaSetup;
+import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.HashingInputStream;
 import com.top_logic.basic.io.StreamUtilities;
@@ -53,13 +60,16 @@ import com.top_logic.dob.meta.DeferredMetaObject;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.schema.config.AttributeConfig;
 import com.top_logic.dob.schema.config.MetaObjectConfig;
+import com.top_logic.dob.schema.config.MetaObjectsConfig;
 import com.top_logic.dob.sql.DBTableMetaObject;
 import com.top_logic.dob.xml.DOXMLConstants;
 import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.objects.meta.DefaultMOFactory;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItemImpl;
+import com.top_logic.knowledge.service.db2.DBTypeRepository;
 
 /**
  * Test of the binary attribute kinds {@link InlineBinaryAttribute}, {@link RefBinaryAttribute}
@@ -593,6 +603,42 @@ public class TestBinaryAttributeKinds extends AbstractDBKnowledgeBaseClusterTest
 		try (InputStream in = actual.getStream()) {
 			assertEquals(expected, StreamUtilities.readStreamContents(in));
 		}
+	}
+
+	/**
+	 * A plain <code>Blob</code> attribute in the schema of a knowledge base is rejected with an
+	 * error naming the binary attribute kind to use instead.
+	 */
+	public void testPlainBlobAttributeRejected() throws Exception {
+		String schemaXml = "<" + MORepositoryBuilder.ROOT_TAG + ">"
+			+ "<" + MetaObjectsConfig.METAOBJECTS + ">"
+			+ "<" + DOXMLConstants.META_OBJECT_ELEMENT + " object_name='PlainBlob'>"
+			+ "<attributes>"
+			+ "<" + DOXMLConstants.MO_ATTRIBUTE_ELEMENT + " att_name='data' att_type='Blob'/>"
+			+ "</attributes>"
+			+ "</" + DOXMLConstants.META_OBJECT_ELEMENT + ">"
+			+ "</" + MetaObjectsConfig.METAOBJECTS + ">"
+			+ "</" + MORepositoryBuilder.ROOT_TAG + ">";
+		MetaObjectsConfig types = TypedConfiguration.parse(MORepositoryBuilder.ROOT_TAG, MetaObjectsConfig.class,
+			CharacterContents.newContent(schemaXml));
+
+		// Parsing the declaration succeeds, so that a schema stored in the database can be read.
+		SchemaConfiguration schema = TypedConfiguration.newConfigItem(SchemaConfiguration.class);
+		schema.setMetaObjects(types);
+		SchemaSetup setup = new SchemaSetup(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, schema);
+		assertNotNull(setup.createMORepository(DefaultMOFactory.INSTANCE).getTypeOrNull("PlainBlob"));
+
+		BufferingProtocol log = new BufferingProtocol();
+		try {
+			DBTypeRepository.newRepository(new DefaultInstantiationContext(log),
+				kb().getConnectionPool().getSQLDialect(), setup, true);
+			fail("Plain Blob attribute must be rejected.");
+		} catch (ConfigurationException | AbortExecutionException ex) {
+			// Expected.
+		}
+		String errors = String.join("\n", log.getErrors());
+		assertTrue(errors, errors.contains("'data'"));
+		assertTrue(errors, errors.contains(InlineBinaryAttribute.Config.TAG_NAME));
 	}
 
 	private static byte[] randomContent(int size) {

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29715_move_flex_binary_data"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<!--
+			Move the values of dynamic binary attributes from the flex attribute
+			table into the table of dynamic binary values. The content stays in
+			the database.
+		-->
+		<move-flex-binary-data/>
+	</processors>
+	<post-processors/>
+</migration>

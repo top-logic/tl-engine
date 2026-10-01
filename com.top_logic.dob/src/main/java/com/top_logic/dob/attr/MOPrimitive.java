@@ -26,7 +26,6 @@ import com.top_logic.basic.sql.DBType;
 import com.top_logic.dob.AttributeStorage;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MetaObject;
-import com.top_logic.dob.attr.storage.BinaryAttributeStorage;
 import com.top_logic.dob.attr.storage.MOAttributeStorageImpl;
 import com.top_logic.dob.meta.AbstractMetaObject;
 import com.top_logic.dob.meta.TypeContext;
@@ -97,9 +96,6 @@ public final class MOPrimitive extends AbstractMetaObject implements DBMetaObjec
      */
     public static final MOPrimitive BLOB      =
 		new MOPrimitive("Blob", DBType.BLOB, Integer.MAX_VALUE, 0);
-	static {
-		BLOB._defaultStorage = BinaryAttributeStorage.INSTANCE;
-	}
     /**
      * Constant primitive for common, lightweight use.
      */
@@ -182,7 +178,7 @@ public final class MOPrimitive extends AbstractMetaObject implements DBMetaObjec
 	private final int _defaultSQLPrec;
 
 	/** @see #getDefaultStorage() */
-	private AttributeStorage _defaultStorage = MOAttributeStorageImpl.INSTANCE;
+	private final AttributeStorage _defaultStorage = MOAttributeStorageImpl.INSTANCE;
     
 	/**
 	 * The set of {@link MetaObject} this {@link MOPrimitive} is a subtype of.

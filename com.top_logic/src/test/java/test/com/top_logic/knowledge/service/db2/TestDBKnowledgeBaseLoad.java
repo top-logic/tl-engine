@@ -74,7 +74,7 @@ public class TestDBKnowledgeBaseLoad extends AbstractDBKnowledgeBaseClusterTest 
 				CC.setSuperclass((MOClass) typeRepository.getMetaObject(B_NAME));
 				MOAttribute cc1 = new MOAttributeImpl(C1_NAME, MOPrimitive.CLOB);
 				CC.addAttribute(cc1);
-				MOAttribute cc2 = new MOAttributeImpl(C2_NAME, MOPrimitive.BLOB);
+				MOAttribute cc2 = newInlineBinaryAttribute(C2_NAME, false);
 				CC.addAttribute(cc2);
 				KnowledgeBaseTestScenarioImpl.setApplicationType(CC, SimpleWrapperFactoryTestScenario.CObj.class);
 				typeRepository.addMetaObject(CC);

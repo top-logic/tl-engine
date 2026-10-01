@@ -140,7 +140,7 @@ public abstract class AbstractBinaryMigrationTest extends AbstractDBKnowledgeBas
 				MigrationContext context = new MigrationContext(log, connection) {
 					@Override
 					public MORepository getPersistentRepository() {
-						return kb().getMORepository();
+						return persistentRepository();
 					}
 
 					@Override
@@ -166,6 +166,13 @@ public abstract class AbstractBinaryMigrationTest extends AbstractDBKnowledgeBas
 		}
 		assertFalse("Migration failed: " + log.getErrors(), log.hasErrors());
 		return log;
+	}
+
+	/**
+	 * The types of the database during the migration.
+	 */
+	protected MORepository persistentRepository() {
+		return kb().getMORepository();
 	}
 
 	/**

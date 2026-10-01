@@ -32,7 +32,7 @@
 				/>
 				<mo_attribute att_name="filename" att_type="String" mandatory="true" binary="true" />
 				<mo_attribute att_name="content-type" att_type="String" mandatory="true" />
-				<mo_attribute att_name="data" att_type="java.sql.Blob" mandatory="true" />
+				<binary-inline att_name="data" mandatory="true" />
 				<mo_attribute att_name="hash" att_type="String" mandatory="true" />
 			</attributes>
 			<index>

@@ -5,6 +5,8 @@
  */
 package test.com.top_logic.knowledge.service.db2;
 
+import static com.top_logic.basic.db.sql.SQLFactory.*;
+
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,16 +27,27 @@ import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.blob.BlobBinaryData;
 import com.top_logic.basic.io.blob.BlobStoreService;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.sql.ConnectionPool;
+import com.top_logic.basic.sql.DBHelper;
+import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.dob.MOAttribute;
+import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.attr.AbstractBinaryAttribute;
 import com.top_logic.dob.attr.HybridBinaryAttribute;
 import com.top_logic.dob.attr.InlineBinaryAttribute;
+import com.top_logic.dob.attr.MOAttributeImpl;
+import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.dob.attr.RefBinaryAttribute;
+import com.top_logic.dob.meta.DefaultMORepository;
 import com.top_logic.dob.meta.DeferredMetaObject;
 import com.top_logic.dob.meta.MOClass;
+import com.top_logic.dob.meta.MOClassImpl;
+import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.schema.config.AttributeConfig;
 import com.top_logic.dob.schema.config.MetaObjectConfig;
 import com.top_logic.dob.schema.config.MetaObjectsConfig;
+import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.dob.xml.DOXMLConstants;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -129,7 +142,15 @@ public class TestMigrateBinaryAttribute extends AbstractBinaryMigrationTest {
 		return (log, typeFactory, typeRepository) -> {
 			try {
 				for (String[] table : TABLES) {
-					typeRepository.addMetaObject(createType(parseTable(table[0], table[column])));
+					String declaration = table[column];
+					if (declaration == PLAIN_BLOB) {
+						// A knowledge base cannot declare a plain Blob attribute. The values are
+						// written to an inline attribute, whose columns are reduced to the single
+						// content column of a plain Blob attribute before the migration, see
+						// toPlainBlobLayout(String).
+						declaration = INLINE;
+					}
+					typeRepository.addMetaObject(createType(parseTable(table[0], declaration)));
 				}
 			} catch (Exception ex) {
 				throw new AssertionError("Creating test types failed.", ex);
@@ -380,6 +401,10 @@ public class TestMigrateBinaryAttribute extends AbstractBinaryMigrationTest {
 
 	private BufferingProtocol migrateAndCheckSchema(String table, String processor, BinaryAttributeKind kind)
 			throws Exception {
+		if (isPlainBlob(table)) {
+			toPlainBlobLayout(table);
+			_plainBlobTable = table;
+		}
 		_expectedStoredKind = kind;
 		_expectedStoredTable = table;
 		try {
@@ -387,7 +412,75 @@ public class TestMigrateBinaryAttribute extends AbstractBinaryMigrationTest {
 		} finally {
 			_expectedStoredKind = null;
 			_expectedStoredTable = null;
+			_plainBlobTable = null;
 		}
+	}
+
+	private static boolean isPlainBlob(String table) {
+		for (String[] entry : TABLES) {
+			if (entry[0].equals(table)) {
+				return entry[1] == PLAIN_BLOB;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Reduces the columns of the inline attribute {@link #DATA} of the given table to the single
+	 * content column of a plain Blob attribute, as stored by an earlier version.
+	 */
+	private void toPlainBlobLayout(String table) throws SQLException {
+		MOClass type = (MOClass) kb().getMORepository().getMetaObject(table);
+		AbstractBinaryAttribute inline = (AbstractBinaryAttribute) type.getAttribute(DATA);
+		String tableName = type.getDBMapping().getDBName();
+
+		ConnectionPool pool = kb().getConnectionPool();
+		PooledConnection connection = pool.borrowWriteConnection();
+		try {
+			DBHelper sqlDialect = connection.getSQLDialect();
+			for (DBAttribute column : new DBAttribute[] { inline.getSizeColumn(), inline.getContentTypeColumn(),
+				inline.getNameColumn() }) {
+				query(dropColumn(table(tableName), column.getDBName())).toSql(sqlDialect).executeUpdate(connection);
+			}
+			query(modifyColumnName(table(tableName), inline.getDataColumn().getDBName(), DBType.BLOB,
+				plainBlobAttribute().getDbMapping()[0].getDBName())).toSql(sqlDialect).executeUpdate(connection);
+			connection.commit();
+		} finally {
+			pool.releaseWriteConnection(connection);
+		}
+	}
+
+	private static MOAttribute plainBlobAttribute() {
+		return new MOAttributeImpl(DATA, MOPrimitive.BLOB, !MOAttribute.MANDATORY);
+	}
+
+	/**
+	 * The table whose attribute {@link #DATA} is stored as plain Blob attribute during the
+	 * migration, <code>null</code> if none.
+	 */
+	private String _plainBlobTable;
+
+	@Override
+	protected MORepository persistentRepository() {
+		MORepository repository = super.persistentRepository();
+		if (_plainBlobTable == null) {
+			return repository;
+		}
+		MOClass type = (MOClass) repository.getMetaObject(_plainBlobTable);
+		MOClassImpl plainType = new MOClassImpl(_plainBlobTable);
+		plainType.setSuperclass(type.getSuperclass());
+		plainType.setDBName(type.getDBMapping().getDBName());
+		plainType.addAttribute(plainBlobAttribute());
+
+		MORepository result = new DefaultMORepository(repository.multipleBranches());
+		for (MetaObject other : repository.getMetaObjects()) {
+			if (!other.getName().equals(_plainBlobTable)) {
+				result.addMetaObject(other);
+			}
+		}
+		result.addMetaObject(plainType.resolve(result));
+		plainType.freeze();
+		return result;
 	}
 
 	private BinaryAttributeKind _expectedStoredKind;

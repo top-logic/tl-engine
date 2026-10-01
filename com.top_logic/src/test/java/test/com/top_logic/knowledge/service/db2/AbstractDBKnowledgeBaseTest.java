@@ -55,6 +55,8 @@ import com.top_logic.basic.col.Mappings;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.Decision;
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.db.sql.SQLSelect;
@@ -66,6 +68,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MOAttribute;
+import com.top_logic.dob.attr.InlineBinaryAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.ex.UnknownTypeException;
@@ -135,6 +138,16 @@ public abstract class AbstractDBKnowledgeBaseTest extends AbstractKnowledgeBaseT
 	};
 	
 	private LocalTestSetup localSetup;
+
+	/**
+	 * Creates an {@link InlineBinaryAttribute} with the given name for a test schema.
+	 */
+	public static MOAttribute newInlineBinaryAttribute(String name, boolean mandatory) {
+		InlineBinaryAttribute.Config config = TypedConfiguration.newConfigItem(InlineBinaryAttribute.Config.class);
+		config.setAttributeName(name);
+		config.setMandatory(mandatory);
+		return (MOAttribute) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+	}
 
 	public static final KnowledgeObject[] NO_OBJECTS = new KnowledgeObject[0];
 

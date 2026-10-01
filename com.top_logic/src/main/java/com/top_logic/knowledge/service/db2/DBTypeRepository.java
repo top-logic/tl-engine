@@ -30,16 +30,22 @@ import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MOFactory;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.MetaObject.Kind;
+import com.top_logic.dob.attr.AbstractBinaryAttribute;
+import com.top_logic.dob.attr.HybridBinaryAttribute;
+import com.top_logic.dob.attr.InlineBinaryAttribute;
 import com.top_logic.dob.attr.MOPrimitive;
+import com.top_logic.dob.attr.RefBinaryAttribute;
 import com.top_logic.dob.ex.DuplicateTypeException;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.meta.AbstractTypeSystem;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOCollectionImpl;
 import com.top_logic.dob.meta.MORepository;
+import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.dob.util.MetaObjectUtils;
 import com.top_logic.knowledge.MOReferenceInternal;
 import com.top_logic.knowledge.service.BasicTypes;
+import com.top_logic.knowledge.service.migration.processors.MigrateBinaryAttributeProcessor;
 
 
 /**
@@ -430,9 +436,45 @@ public class DBTypeRepository extends AbstractTypeSystem implements MORepository
 		DBTypeRepository result = new DBTypeRepository(sqlDialect, schemaSetup.getConfig().hasMultipleBranches());
 		MOFactory typeFactory = new DBKnowledgeTypeFactory(versioning);
 		schemaSetup.createTypes(context, result, typeFactory);
+		checkBinaryAttributes(context, result);
 		context.checkErrors();
 		result.resolveReferences();
 		return result;
+	}
+
+
+	/**
+	 * Reports an error for every attribute that stores binary content in a plain
+	 * {@link MOPrimitive#BLOB} column.
+	 *
+	 * <p>
+	 * A plain BLOB column stores only the content, neither size, content type nor name. Binary
+	 * attributes of the knowledge base must be declared with one of the binary attribute kinds (see
+	 * {@link AbstractBinaryAttribute}). A schema stored in the database by an earlier version may
+	 * still contain plain BLOB attributes; these are read by migration processors (e.g.
+	 * {@link MigrateBinaryAttributeProcessor}) that migrate them to a binary attribute kind, which
+	 * is why the plain attribute is not rejected when its declaration is parsed but only when the
+	 * types of a knowledge base are set up.
+	 * </p>
+	 */
+	private static void checkBinaryAttributes(InstantiationContext context, DBTypeRepository repository) {
+		for (MetaObject type : repository.metaMap.values()) {
+			if (!(type instanceof MOStructure)) {
+				continue;
+			}
+			for (MOAttribute attribute : ((MOStructure) type).getDeclaredAttributes()) {
+				if (attribute.getMetaObject() == MOPrimitive.BLOB && !(attribute instanceof AbstractBinaryAttribute)) {
+					context.error("Attribute '" + attribute.getName() + "' of table '" + type.getName()
+						+ "' is declared as plain '" + MOPrimitive.BLOB.getName()
+						+ "' attribute, which is not supported. Declare it as '<" + InlineBinaryAttribute.Config.TAG_NAME
+						+ ">' (or '<" + RefBinaryAttribute.Config.TAG_NAME + ">', '<"
+						+ HybridBinaryAttribute.Config.TAG_NAME + ">') and migrate the stored attribute with '<"
+						+ MigrateBinaryAttributeProcessor.Config.TAG_NAME + " table=\"" + type.getName()
+						+ "\" attribute=\"" + attribute.getName() + "\" kind=\""
+						+ InlineBinaryAttribute.Config.TAG_NAME + "\"/>'.");
+				}
+			}
+		}
 	}
 
 }

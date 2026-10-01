@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29715_binary_inline"
+		module="tl-model-wysiwyg"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29715_move_flex_binary_data"
+			module="tl"
+		/>
+		<dependency name="Ticket_29617_color_role"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+	</dependencies>
+	<processors>
+		<!--
+			Store the image content of structured texts together with its size,
+			content type and name. The attribute is inherited by all subtypes
+			(e.g. I18NHTMLAttributeStorage).
+		-->
+		<migrate-binary-attribute
+			attribute="data"
+			kind="binary-inline"
+			table="HTMLAttributeStorage"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

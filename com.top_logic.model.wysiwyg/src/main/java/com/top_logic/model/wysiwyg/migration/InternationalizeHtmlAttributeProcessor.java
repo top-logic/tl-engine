@@ -7,10 +7,12 @@ package com.top_logic.model.wysiwyg.migration;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
-import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -23,6 +25,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.Batch;
 import com.top_logic.basic.db.sql.CompiledStatement;
+import com.top_logic.basic.db.sql.SQLColumnDefinition;
+import com.top_logic.basic.db.sql.SQLExpression;
+import com.top_logic.basic.db.sql.SQLQuery.Parameter;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
@@ -32,6 +37,8 @@ import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
+import com.top_logic.dob.meta.MORepository;
+import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.element.model.migration.model.refactor.InternationalizeAttributeProcessor;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -95,6 +102,10 @@ public class InternationalizeHtmlAttributeProcessor extends InternationalizeAttr
 		super(context, config);
 	}
 
+	/**
+	 * Index of the first column of the image content in the result of the image query.
+	 */
+	private static final int DATA_COLUMN_OFFSET = 12;
 
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
@@ -108,8 +119,10 @@ public class InternationalizeHtmlAttributeProcessor extends InternationalizeAttr
 
 			// Move images.
 
-			MOClass imagesTable =
-				(MOClass) context.getSchemaRepository().getType(StructuredTextAttributeStorage.HTML_ATTRIBUTE_STORAGE);
+			// The tables as currently stored in the database: The image content may still be stored
+			// in a form the application schema no longer declares.
+			MORepository repository = context.getPersistentRepository();
+			MOClass imagesTable = (MOClass) repository.getType(StructuredTextAttributeStorage.HTML_ATTRIBUTE_STORAGE);
 
 			MOReference objRef =
 				(MOReference) imagesTable.getAttribute(I18NStructuredTextAttributeStorage.OBJECT_ATTRIBUTE_NAME);
@@ -120,10 +133,10 @@ public class InternationalizeHtmlAttributeProcessor extends InternationalizeAttr
 				columnName(imagesTable.getAttribute(I18NStructuredTextAttributeStorage.FILENAME_ATTRIBUTE_NAME));
 			String contentTypeColumn =
 				columnName(imagesTable.getAttribute(I18NStructuredTextAttributeStorage.CONTENT_TYPE_ATTRIBUTE_NAME));
-			String dataColumn =
-				columnName(imagesTable.getAttribute(I18NStructuredTextAttributeStorage.DATA_ATTRIBUTE_NAME));
 			String hashColumn =
 				columnName(imagesTable.getAttribute(I18NStructuredTextAttributeStorage.HASH_ATTRIBUTE_NAME));
+			DBAttribute[] dataColumns =
+				imagesTable.getAttribute(I18NStructuredTextAttributeStorage.DATA_ATTRIBUTE_NAME).getDbMapping();
 
 			TypePart attr = util.getTLTypePartOrFail(connection, config.getAttribute());
 			TLID attrId = attr.getDefinition();
@@ -136,23 +149,28 @@ public class InternationalizeHtmlAttributeProcessor extends InternationalizeAttr
 					lang = ResourcesModule.getInstance().getDefaultLocale().getLanguage();
 				}
 
+				List<SQLColumnDefinition> selectColumns = new ArrayList<>(columns(
+					util.branchColumnDef(),
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME),
+					columnDef(BasicTypes.REV_MIN_DB_NAME),
+					columnDef(BasicTypes.REV_MAX_DB_NAME),
+					columnDef(BasicTypes.REV_CREATE_DB_NAME),
+
+					columnDef(objRef.getColumn(ReferencePart.type).getDBName()),
+					columnDef(objRef.getColumn(ReferencePart.name).getDBName()),
+					columnDef(attrRef.getColumn(ReferencePart.name).getDBName()),
+
+					columnDef(fileNameColumn),
+					columnDef(contentTypeColumn),
+					columnDef(hashColumn)));
+				// Some drivers require the stream of a BLOB to be read after all other columns.
+				for (DBAttribute dataColumn : dataColumns) {
+					selectColumns.add(columnDef(dataColumn.getDBName()));
+				}
+
 				CompiledStatement select = query(
 					select(
-						columns(
-							util.branchColumnDef(),
-							columnDef(BasicTypes.IDENTIFIER_DB_NAME),
-							columnDef(BasicTypes.REV_MIN_DB_NAME),
-							columnDef(BasicTypes.REV_MAX_DB_NAME),
-							columnDef(BasicTypes.REV_CREATE_DB_NAME),
-
-							columnDef(objRef.getColumn(ReferencePart.type).getDBName()),
-							columnDef(objRef.getColumn(ReferencePart.name).getDBName()),
-							columnDef(attrRef.getColumn(ReferencePart.name).getDBName()),
-
-							columnDef(fileNameColumn),
-							columnDef(contentTypeColumn),
-							columnDef(dataColumn),
-							columnDef(hashColumn)),
+						selectColumns,
 						table(imagesTable.getDBMapping().getDBName()),
 						and(
 							eqSQL(column(attrRef.getColumn(ReferencePart.name).getDBName()),
@@ -167,8 +185,7 @@ public class InternationalizeHtmlAttributeProcessor extends InternationalizeAttr
 				select.setResultSetConfiguration(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 
 				MOClass i18nImagesTable =
-					(MOClass) context.getSchemaRepository()
-						.getType(I18NStructuredTextAttributeStorage.IMAGES_TABLE_NAME);
+					(MOClass) repository.getType(I18NStructuredTextAttributeStorage.IMAGES_TABLE_NAME);
 
 				long start = System.nanoTime();
 				int perSecond = 0;
@@ -192,12 +209,18 @@ public class InternationalizeHtmlAttributeProcessor extends InternationalizeAttr
 
 							String fileName = result.getString(9);
 							String contentType = result.getString(10);
-							Blob data = result.getBlob(11);
-							String hash = result.getString(12);
+							String hash = result.getString(11);
 
-							batch.addBatch(
+							List<Object> values = new ArrayList<>(Arrays.asList(
 								imgBranch, util.newID(connection), revMin, revMax, revCreate, objType, objId, attrId,
-								fileName, contentType, data, hash, lang);
+								fileName, contentType, hash, lang));
+							for (int n = 0; n < dataColumns.length; n++) {
+								int index = DATA_COLUMN_OFFSET + n;
+								values.add(dataColumns[n].getSQLType() == DBType.BLOB ? result.getBlob(index)
+									: result.getObject(index));
+							}
+
+							batch.addBatch(values.toArray());
 
 							if (++batchSize >= maxBatchSize) {
 								batch.executeBatch();
@@ -288,58 +311,64 @@ public class InternationalizeHtmlAttributeProcessor extends InternationalizeAttr
 			columnName(i18nTable.getAttribute(I18NStructuredTextAttributeStorage.FILENAME_ATTRIBUTE_NAME));
 		String contentTypeColumn =
 			columnName(i18nTable.getAttribute(I18NStructuredTextAttributeStorage.CONTENT_TYPE_ATTRIBUTE_NAME));
-		String dataColumn = columnName(i18nTable.getAttribute(I18NStructuredTextAttributeStorage.DATA_ATTRIBUTE_NAME));
 		String hashColumn = columnName(i18nTable.getAttribute(I18NStructuredTextAttributeStorage.HASH_ATTRIBUTE_NAME));
 		String langColumn =
 			columnName(i18nTable.getAttribute(I18NStructuredTextAttributeStorage.LANGUAGE_ATTRIBUTE_NAME));
+		DBAttribute[] dataColumns =
+			i18nTable.getAttribute(I18NStructuredTextAttributeStorage.DATA_ATTRIBUTE_NAME).getDbMapping();
 
-		CompiledStatement insert = query(
-			parameters(
-				parameterDef(DBType.LONG, "branch"),
-				parameterDef(DBType.ID, "id"),
-				parameterDef(DBType.LONG, "revMin"),
-				parameterDef(DBType.LONG, "revMax"),
-				parameterDef(DBType.LONG, "revCreate"),
+		List<Parameter> parameters = new ArrayList<>(parameters(
+			parameterDef(DBType.LONG, "branch"),
+			parameterDef(DBType.ID, "id"),
+			parameterDef(DBType.LONG, "revMin"),
+			parameterDef(DBType.LONG, "revMax"),
+			parameterDef(DBType.LONG, "revCreate"),
 
-				parameterDef(DBType.LONG, "objType"),
-				parameterDef(DBType.LONG, "objId"),
-				parameterDef(DBType.ID, "attrId"),
+			parameterDef(DBType.LONG, "objType"),
+			parameterDef(DBType.LONG, "objId"),
+			parameterDef(DBType.ID, "attrId"),
 
-				parameterDef(DBType.STRING, "fileName"),
-				parameterDef(DBType.STRING, "contentType"),
-				parameterDef(DBType.BLOB, "data"),
-				parameterDef(DBType.STRING, "hash"),
-				parameterDef(DBType.LONG, "lang")),
-			insert(
-				table(i18nTable.getDBMapping().getDBName()),
-				Util.listWithoutNull(columnNames(
-					util.branchColumnOrNull(),
-					BasicTypes.IDENTIFIER_DB_NAME,
-					BasicTypes.REV_MIN_DB_NAME,
-					BasicTypes.REV_MAX_DB_NAME,
-					BasicTypes.REV_CREATE_DB_NAME,
-					objRef.getColumn(ReferencePart.type).getDBName(),
-					objRef.getColumn(ReferencePart.name).getDBName(),
-					attrRef.getColumn(ReferencePart.name).getDBName(),
-					fileNameColumn,
-					contentTypeColumn,
-					dataColumn,
-					hashColumn,
-					langColumn)),
-				Util.listWithoutNull(expressions(
-					util.branchParamOrNull(),
-					parameter(DBType.ID, "id"),
-					parameter(DBType.LONG, "revMin"),
-					parameter(DBType.LONG, "revMax"),
-					parameter(DBType.LONG, "revCreate"),
-					parameter(DBType.LONG, "objType"),
-					parameter(DBType.LONG, "objId"),
-					parameter(DBType.ID, "attrId"),
-					parameter(DBType.ID, "fileName"),
-					parameter(DBType.ID, "contentType"),
-					parameter(DBType.ID, "data"),
-					parameter(DBType.ID, "hash"),
-					parameter(DBType.LONG, "lang"))))).toSql(connection.getSQLDialect());
+			parameterDef(DBType.STRING, "fileName"),
+			parameterDef(DBType.STRING, "contentType"),
+			parameterDef(DBType.STRING, "hash"),
+			parameterDef(DBType.LONG, "lang")));
+		List<String> columns = new ArrayList<>(Util.listWithoutNull(columnNames(
+			util.branchColumnOrNull(),
+			BasicTypes.IDENTIFIER_DB_NAME,
+			BasicTypes.REV_MIN_DB_NAME,
+			BasicTypes.REV_MAX_DB_NAME,
+			BasicTypes.REV_CREATE_DB_NAME,
+			objRef.getColumn(ReferencePart.type).getDBName(),
+			objRef.getColumn(ReferencePart.name).getDBName(),
+			attrRef.getColumn(ReferencePart.name).getDBName(),
+			fileNameColumn,
+			contentTypeColumn,
+			hashColumn,
+			langColumn)));
+		List<SQLExpression> values = new ArrayList<>(Util.listWithoutNull(expressions(
+			util.branchParamOrNull(),
+			parameter(DBType.ID, "id"),
+			parameter(DBType.LONG, "revMin"),
+			parameter(DBType.LONG, "revMax"),
+			parameter(DBType.LONG, "revCreate"),
+			parameter(DBType.LONG, "objType"),
+			parameter(DBType.LONG, "objId"),
+			parameter(DBType.ID, "attrId"),
+			parameter(DBType.ID, "fileName"),
+			parameter(DBType.ID, "contentType"),
+			parameter(DBType.ID, "hash"),
+			parameter(DBType.LONG, "lang"))));
+		// All columns of the image content in the order of the selected values.
+		for (int n = 0; n < dataColumns.length; n++) {
+			DBAttribute dataColumn = dataColumns[n];
+			String parameterName = "data" + n;
+			parameters.add(parameterDef(dataColumn.getSQLType(), parameterName));
+			columns.add(dataColumn.getDBName());
+			values.add(parameter(dataColumn.getSQLType(), parameterName));
+		}
+
+		CompiledStatement insert = query(parameters,
+			insert(table(i18nTable.getDBMapping().getDBName()), columns, values)).toSql(connection.getSQLDialect());
 		return insert;
 	}
 

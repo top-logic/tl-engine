@@ -135,6 +135,32 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 	}
 
 	/**
+	 * A documented module, type and part carry their description, on one line and in the requested
+	 * language; an undocumented type and part carry none.
+	 */
+	public void testDigestCarriesDescriptionsInTheGivenLanguage() {
+		TLModel model = ModelService.getApplicationModel();
+		String english = ModelDigestGenerator.generate(model, false, ModelSecurity.UNCHECKED, Locale.ENGLISH);
+		String german = ModelDigestGenerator.generate(model, false, ModelSecurity.UNCHECKED, Locale.GERMAN);
+
+		assertTrue(english, english.contains("## luigis.pizzashop (6 types, 1 enum)\n"
+			+ "// Product costing of a pizza shop: what a product is made of and what it costs to make.\n"));
+		assertTrue(english, english.contains("\n// A dish the shop sells, with the components one unit of it needs.\n"
+			+ "class Product extends NamedEntities {\n"));
+		assertTrue("The line break of the tooltip is collapsed.", english.contains(
+			"  budget: tl.core:Double // The most one unit of the product may cost to make, in euros."
+				+ " Compared with the cost per unit.\n"));
+
+		assertTrue(english, english.contains("\n\nclass Ingredient extends Component { }\n"));
+		assertTrue(english, english.contains("  components: -> ProductComponent[] (mandatory, composite)\n"));
+
+		assertTrue(german, german.contains("\n// Ein Gericht, das die Pizzeria verkauft, mit den Komponenten,"
+			+ " die eine Einheit davon braucht.\nclass Product extends NamedEntities {\n"));
+		assertTrue(german, german.contains("  budget: tl.core:Double // Was die Herstellung einer Einheit des"
+			+ " Produkts höchstens kosten darf, in Euro. Wird mit den Kosten pro Einheit verglichen.\n"));
+	}
+
+	/**
 	 * Tests that the outlineModel tool returns the application model digest as plain text.
 	 */
 	public void testOutlineModelToolReturnsDigest() {

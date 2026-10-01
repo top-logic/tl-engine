@@ -121,9 +121,9 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		 * How long a refresh waits for a window's interaction, in milliseconds.
 		 *
 		 * <p>
-		 * The interaction is held while that window runs a browser command, and such a command synthesizes
-		 * the model events itself when it finishes - so giving up costs nothing but a little
-		 * latency, whereas waiting would tie up a scheduler thread behind a slow command.
+		 * The interaction is held while that window runs a browser command, and such a command
+		 * synthesizes the model events itself when it finishes - so giving up costs nothing but a
+		 * little latency, whereas waiting would tie up a scheduler thread behind a slow command.
 		 * </p>
 		 *
 		 * @see #LOCK_TIMEOUT_MILLIS
@@ -137,10 +137,10 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		 *
 		 * <p>
 		 * Longer than {@link #getLockTimeoutMillis()}, and for the opposite reason: a refresh that
-		 * gives up loses nothing, because the command holding the interaction synthesizes the same events
-		 * when it finishes. A write has no such second chance - nobody else is going to put the
-		 * agent's value on the channel - so giving up means telling the model that the page could
-		 * not be reached.
+		 * gives up loses nothing, because the command holding the interaction synthesizes the same
+		 * events when it finishes. A write has no such second chance - nobody else is going to put
+		 * the agent's value on the channel - so giving up means telling the model that the page
+		 * could not be reached.
 		 * </p>
 		 *
 		 * @see #WRITE_TIMEOUT_MILLIS
@@ -480,8 +480,8 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 
 	/**
 	 * Pushes the pending model changes into one window, in its own sub-session and within its
-	 * interaction. Best-effort: a window that cannot be reached is skipped, never logged as a failure of
-	 * the run that caused the refresh.
+	 * interaction. Best-effort: a window that cannot be reached is skipped, never logged as a failure
+	 * of the run that caused the refresh.
 	 */
 	private void refresh(TLSubSessionContext subSession, WindowRef window) {
 		ReactWindowRegistry registry = window.registry().get();

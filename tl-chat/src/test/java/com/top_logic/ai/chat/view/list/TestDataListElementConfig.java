@@ -101,7 +101,8 @@ public class TestDataListElementConfig extends TestCase {
 		new DefaultInstantiationContext(log).getInstance(config);
 
 		assertFalse("The old spelling is reported.", log.getErrors().isEmpty());
-		assertTrue(log.getErrors().toString(), log.getErrors().toString().contains(DataListElement.Config.ROW_CSS_CLASS));
+		String errors = log.getErrors().toString();
+		assertTrue(errors, errors.contains(DataListElement.Config.ROW_CSS_CLASS));
 	}
 
 	/** A plain class on the list itself is what css-class is for, and is accepted. */

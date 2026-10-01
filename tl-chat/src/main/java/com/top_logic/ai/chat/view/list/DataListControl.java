@@ -193,7 +193,8 @@ public class DataListControl extends ReactControl {
 				ViewChannel commandInput =
 					cmdConfig.getInput() == null ? _rowChannel : context.resolveChannel(cmdConfig.getInput());
 				ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
-				_rowCommandModels.add(ViewCommandModel.create(context, rowCommands.get(i), cmdConfig, commandInput, rule));
+				_rowCommandModels.add(
+					ViewCommandModel.create(context, rowCommands.get(i), cmdConfig, commandInput, rule));
 			}
 			// Wrapped, so each command runs in *this* list's context. The opener dispatches with the
 			// frame's own ReactContext, which is not a ViewContext and does not hold this list's row

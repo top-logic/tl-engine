@@ -197,6 +197,11 @@ public class IMAPMail extends AbstractContainerWrapper implements Mail {
         }
     }
 
+	@Override
+	public String getMailURL() {
+		return tGetDataString(MAIL_URL);
+	}
+
     @Override
 	public boolean hasAttachments() {
 		return Utils.isTrue((Boolean) this.getValue(Mail.HAS_ATTACHMENT));

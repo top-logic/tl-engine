@@ -24,13 +24,8 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.MappedList;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.util.MetaObjectUtils;
-import com.top_logic.dsa.DataAccessProxy;
-import com.top_logic.dsa.DatabaseAccessException;
-import com.top_logic.dsa.repos.RepositoryDataSourceAdaptor;
-import com.top_logic.dsa.repos.file.FileRepository;
 import com.top_logic.knowledge.objects.DestinationIterator;
 import com.top_logic.knowledge.objects.KAIterator;
-import com.top_logic.knowledge.objects.KOAttributes;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -38,7 +33,6 @@ import com.top_logic.knowledge.objects.SourceIterator;
 import com.top_logic.knowledge.service.AssociationQueryUtil;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.KnowledgeBaseRefetch;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.AbstractAssociationQuery;
 import com.top_logic.knowledge.service.db2.LiveAssociationsEndList;
@@ -62,9 +56,6 @@ import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
  * @author    <a href="mailto:mer@top-logic.com">Michael Eriksson</a>
  */
 public abstract class AbstractWrapper extends PersistentObject implements Wrapper {
-
-    /** Cached access to the DataAccessProxy */
-    protected transient DataAccessProxy   dap;
 
     /**
 	 * Construct an instance wrapped around the specified
@@ -103,57 +94,6 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 			throws DataObjectException {
 		return source.tKnowledgeBase().createAssociation(source.tHandle(), target.tHandle(), aType);
 	}
-
-	/** get a cached acces to the associated Datasource. 
-     * 
-     * @return null when getDSN() is null. 
-     */
-    @Override
-	public DataAccessProxy getDAP() throws DatabaseAccessException {
-        if (dap == null) {
-            String theDSN = this.getDSN ();
-    
-            if (theDSN != null) {
-				dap = new DataAccessProxy(theDSN);
-            } // Else: keep null default.
-        }
-        else
-            this.checkInvalid();
-
-        return dap;
-    }
-
-    /**
-      * Get a Data Source Name identifying the physical representation of this
-      * Wrapper.
-      * <p>
-      * Note that the result may be e.g <code>null</code> or an empty String
-      * depending on the underlying KnowledgeObject.
-      * </p>
-      *
-      * @return the DSN; may be null
-      */
-    @Override
-	public String getDSN() {
-        String theDSN = null;
-		if (MetaObjectUtils.hasAttribute(this.tTable(), KOAttributes.PHYSICAL_RESOURCE)) {
-			theDSN = tGetDataString(KOAttributes.PHYSICAL_RESOURCE);
-        }
-
-        return theDSN;
-    }
-    
-    /** 
-     * Call this when the Physical resource was changed externally 
-     * 
-     * TODO FMA/KHA properties may still not work in cluster, 
-     *              e.g. when used with 
-     *              {@link FileRepository} /
-     *              {@link RepositoryDataSourceAdaptor}
-     */
-    public void resetDAP() {
-        dap              = null;
-    }
 
     /**
 	 * Provoke modification of the underlying {@link KnowledgeItem}.
@@ -259,17 +199,6 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 		tSetData(attributeName, newValue);
 		return true;
 	}
-
-	@Override
-	public Object tSetData(String property, Object newValue) {
-		Object oldValue = super.tSetData(property, newValue);
-		if (KOAttributes.PHYSICAL_RESOURCE.equals(property)) {
-			if (!CollectionUtil.equals(newValue, oldValue)) {
-				this.resetDAP();
-			}
-		}
-		return oldValue;
-    }
 
     /**
      * Get the single other end of an outgoing association.
@@ -472,19 +401,6 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 			return null;
 		}
 	}
-
-    /**
-	 * Force the wrapper to refetch the cached values.
-	 * 
-	 * This method will be called (indirectly) by the {@link KnowledgeBaseRefetch}, which
-	 * synchronizes the content between different VMs (in a cluster).
-	 * 
-	 * By default we will forget about eventually cached Attributes.
-	 */
-    @Override
-	public void refetchWrapper() {
-        resetDAP(); // Forget about the DataAccessProxy / Physical resource
-    }
 
     /**
      * Stable compareTo along the name of the Wrappers.

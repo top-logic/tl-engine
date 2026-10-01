@@ -21,14 +21,11 @@
 		</add-mo-attribute>
 		<!--
 			Copy the content of every revision of every document from the
-			document repository into the content attribute.
+			document repository into the content attribute. The repository is
+			read through the reader of the application configuration
+			DocumentRepositoryConfig.
 		-->
-		<migrate-document-content>
-			<reader class="com.top_logic.knowledge.service.migration.processors.FileRepositoryContentReader"
-				attic="%ATTIC_PATH%"
-				path="%REPOSITORY_PATH%"
-			/>
-		</migrate-document-content>
+		<migrate-document-content/>
 	</processors>
 	<post-processors/>
 </migration>

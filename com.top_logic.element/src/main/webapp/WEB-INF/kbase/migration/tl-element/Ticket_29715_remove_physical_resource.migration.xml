@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29715_remove_physical_resource"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29715_drop_physical_resource"
+			module="tl"
+		/>
+		<dependency name="Ticket_29617_color_role"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<!-- Documents and web folders have no physical resource. -->
+		<add-class-generalizations name="tl.folder:Document">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.folder:WebFolder">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</add-class-generalizations>
+		<remove-class-generalizations name="tl.folder:Document">
+			<generalization type="tl.folder:WithResource"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="tl.folder:WebFolder">
+			<generalization type="tl.folder:WithResource"/>
+		</remove-class-generalizations>
+		<delete-property name="tl.folder:WithResource#physicalResource"/>
+		<delete-class name="tl.folder:WithResource"/>
+	</processors>
+	<post-processors/>
+</migration>

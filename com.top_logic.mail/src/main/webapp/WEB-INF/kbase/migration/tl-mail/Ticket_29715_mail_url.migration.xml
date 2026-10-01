@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29715_mail_url"
+		module="tl-mail"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29715_document_content"
+			module="tl"
+		/>
+		<dependency name="Ticket_29617_color_role"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="X05_Ticket_26702_fix_spelling_of_attachment"
+			module="tl-mail"
+		/>
+	</dependencies>
+	<processors>
+		<!-- The data source name of a mail is stored in an attribute of the mail. -->
+		<add-mo-attribute table="Mail">
+			<mo_attribute
+				att_name="mailURL"
+				att_type="String"
+				db_size="1333"
+				mandatory="false"
+			/>
+		</add-mo-attribute>
+		<copy-column
+			source="physicalResource"
+			table="Mail"
+			target="mailURL"
+		/>
+		<!--
+			The content of a mail attachment is stored in the content attribute of
+			its document. The content of attachments stored before is read from the
+			mail server, if receiving mails is activated.
+		-->
+		<migrate-document-content protocol="mail">
+			<reader class="com.top_logic.mail.migration.MailContentReader"/>
+		</migrate-document-content>
+	</processors>
+	<post-processors/>
+</migration>

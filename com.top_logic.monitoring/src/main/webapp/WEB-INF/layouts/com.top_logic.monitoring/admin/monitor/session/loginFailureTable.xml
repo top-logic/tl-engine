@@ -11,7 +11,6 @@
 	</params>
 
 	<tableView name="failedLoginsComponent"
-		excludeColumns="physicalResource"
 		isSecurityMaster="true"
 		model="selection(sessionSearch)"
 		modelBuilder="com.top_logic.monitoring.session.FailedLoginTableComponent$FailedLoginsModelBuilder"

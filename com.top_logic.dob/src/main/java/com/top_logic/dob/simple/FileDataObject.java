@@ -210,11 +210,6 @@ public class FileDataObject implements DataObject {
                     return file.getName();
                 }
                 break;    
-            case 'p' :
-                if (attrName.equals("physicalResource")) {
-                    return file.getAbsolutePath();
-                }
-                break;    
             case 's' :
                 if (attrName.equals("size")) {
                     return length();

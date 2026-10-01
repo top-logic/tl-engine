@@ -19,9 +19,9 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -42,7 +42,6 @@ import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.knowledge.objects.DCMetaData;
-import com.top_logic.knowledge.objects.KOAttributes;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.wrap.Document;
@@ -62,9 +61,14 @@ import com.top_logic.knowledge.wrap.Document;
  * </p>
  *
  * <p>
- * Rows that already have content, rows without content version and rows whose physical resource
- * is no document of the repository are left unchanged. Content missing in the repository is
- * reported as warning and leaves the row without content.
+ * Rows that already have content, rows without content version (if the repository is versioned)
+ * and rows whose physical resource is no document of the repository are left unchanged. Content
+ * missing in the repository is reported as warning and leaves the row without content.
+ * </p>
+ *
+ * <p>
+ * The repository is accessed through the configured reader, or through the reader of the
+ * application configuration {@link DocumentRepositoryConfig}.
  * </p>
  *
  * <p>
@@ -82,6 +86,11 @@ public class MigrateDocumentContentProcessor
 	 * Separator between the protocol and the path in a data source name.
 	 */
 	public static final String PROTOCOL_SEPARATOR = "://";
+
+	/**
+	 * Name of the attribute of the stored schema holding the data source name of a document.
+	 */
+	public static final String PHYSICAL_RESOURCE = "physicalResource";
 
 	/**
 	 * Number of processed rows after which progress is logged.
@@ -114,9 +123,13 @@ public class MigrateDocumentContentProcessor
 
 		/**
 		 * Access to the repository holding the document content.
+		 *
+		 * <p>
+		 * If not given, the reader of the application configuration {@link DocumentRepositoryConfig}
+		 * is used.
+		 * </p>
 		 */
 		@Name(READER)
-		@Mandatory
 		PolymorphicConfiguration<? extends RepositoryContentReader> getReader();
 
 		/**
@@ -159,13 +172,23 @@ public class MigrateDocumentContentProcessor
 	@CalledByReflection
 	public MigrateDocumentContentProcessor(InstantiationContext context, Config<?> config) {
 		super(context, config);
-		_reader = context.getInstance(config.getReader());
+		PolymorphicConfiguration<? extends RepositoryContentReader> readerConfig = config.getReader();
+		if (readerConfig == null) {
+			readerConfig = ApplicationConfig.getInstance().getConfig(DocumentRepositoryConfig.class).getReader();
+		}
+		_reader = context.getInstance(readerConfig);
 	}
 
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		Config<?> config = getConfig();
 		String tableName = config.getTable();
+
+		if (_reader == null) {
+			log.error("No reader for the document repository configured, see '"
+				+ DocumentRepositoryConfig.class.getName() + "'.");
+			return;
+		}
 
 		MORepository repository = context.getPersistentRepository();
 		MetaObject type = repository.getTypeOrNull(tableName);
@@ -199,7 +222,7 @@ public class MigrateDocumentContentProcessor
 		for (DBAttribute keyColumn : keyColumns) {
 			columns.add(columnDef(keyColumn.getDBName()));
 		}
-		int resourceIndex = addColumn(columns, table, KOAttributes.PHYSICAL_RESOURCE);
+		int resourceIndex = addColumn(columns, table, PHYSICAL_RESOURCE);
 		int versionIndex = addColumn(columns, table, Document.VERSION_NUMBER);
 		int nameIndex = addColumn(columns, table, Document.NAME_ATTRIBUTE);
 		int formatIndex = addColumn(columns, table, DCMetaData.FORMAT);
@@ -241,7 +264,7 @@ public class MigrateDocumentContentProcessor
 					Object[] key = BinaryContentMigration.readKey(sqlDialect, rows, keyColumns);
 					String resource = rows.getString(resourceIndex);
 					int version = rows.getInt(versionIndex);
-					if (rows.wasNull() || version <= 0) {
+					if (_reader.isVersioned() && (rows.wasNull() || version <= 0)) {
 						noVersion++;
 						continue;
 					}
@@ -254,9 +277,9 @@ public class MigrateDocumentContentProcessor
 					BinaryData stored = _reader.read(path, version);
 					if (stored == null) {
 						missing++;
-						log.info("No content of version " + version + " of document '" + path + "' in the repository ("
-							+ table.getName() + " row " + keyString(key) + "), the row is left without content.",
-							Log.WARN);
+						log.info("No content of version " + version + " of document '" + resource
+							+ "' in its data source (" + table.getName() + " row " + keyString(key)
+							+ "), the row is left without content.", Log.WARN);
 						continue;
 					}
 
@@ -287,7 +310,7 @@ public class MigrateDocumentContentProcessor
 
 		log.info("Migrated the content of " + migrated + " of " + processed + " rows of table '" + table.getName()
 			+ "' (" + external + " stored in a blob store, " + (migrated - external) + " inline). Rows without content: "
-			+ noVersion + ", rows of other data sources: " + otherSource + ", rows with content missing in the repository: "
+			+ noVersion + ", rows of other data sources: " + otherSource + ", rows with content missing in the data source: "
 			+ missing + ".", missing > 0 ? Log.WARN : Log.INFO);
 	}
 

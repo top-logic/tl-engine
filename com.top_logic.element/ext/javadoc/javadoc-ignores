@@ -285,7 +285,6 @@ com.top_logic.element.genericimport.TypeResolverBase.java: Missing documentation
 com.top_logic.element.genericimport.WrapperCreateHandler.java: Missing documentation: com.top_logic.element.genericimport.WrapperCreateHandler
 com.top_logic.element.genericimport.WrapperUpdateHandler.java: Missing documentation: com.top_logic.element.genericimport.WrapperUpdateHandler
 com.top_logic.element.genericimport.converterfunction.CurrencyMapping.java: Missing documentation: com.top_logic.element.genericimport.converterfunction.CurrencyMapping
-com.top_logic.element.genericimport.converterfunction.DocumentMapping.java: Invalid camel case word 'DocumentMapping', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.genericimport.converterfunction.PersonByIDMapping.java: Missing documentation: com.top_logic.element.genericimport.converterfunction.PersonByIDMapping
 com.top_logic.element.genericimport.converterfunction.ResolveReferenceListMapping.java: Invalid camel case word 'ResolveReferenceListMapping', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.genericimport.converterfunction.ResolveReferenceMapping.java: Invalid camel case word 'ResolveReferenceMapping', this may only be used within JavaDoc links or HTML code tags.

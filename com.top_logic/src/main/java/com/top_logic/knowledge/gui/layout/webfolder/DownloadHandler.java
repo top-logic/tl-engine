@@ -7,13 +7,10 @@ package com.top_logic.knowledge.gui.layout.webfolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.Map;
 
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.IdentifierUtil;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.InstantiationContext;
@@ -21,7 +18,6 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.io.binary.EmptyBinaryData;
-import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.DocumentVersion;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -34,7 +30,7 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.InViewModeExecutable;
 
 /**
- * Allows Downloading of (versioned) physical Resources from Wrappers.
+ * Allows Downloading of (versioned) {@link Document} contents.
  * 
  * Used mostly to download Documents from Webfolders, but
  * should be useable for other Tasks as well.
@@ -104,37 +100,21 @@ public class DownloadHandler extends AbstractDownloadHandler {
 				return BinaryDataFactory.createBinaryData(theFile);
 	        }
 	        
-	        InputStream theData;
-	        if (theWrap.tHandle().isInstanceOf("Link")) {
-	            theData = this.getLinkData(thePack.wrapper);
-				return BinaryDataFactory.createFileBasedBinaryData(theData);
-	        }
-	        else {
-	            if (theWrap instanceof DocumentVersion) {
-	                theWrap = ((DocumentVersion) theWrap).getDocument();
-	            } 
-				if (theWrap instanceof Document) {
-					Document document = (Document) theWrap;
-					String theVersion = thePack.version;
-					BinaryData content;
-					if (StringServices.isEmpty(theVersion)) {
-						content = document;
-					} else {
-						content = document.getVersionContent(Integer.parseInt(theVersion));
-					}
-					return content != null ? content : EmptyBinaryData.INSTANCE;
-				}
-
-				DataAccessProxy theDAP = theWrap.getDAP();
-				if (theDAP != null) {
-					if (Logger.isDebugEnabled(this)) {
-						Logger.debug("Downloading from " + theDAP, this);
-					}
-					return BinaryDataFactory.createFileBasedBinaryData(theDAP.getEntry());
+			if (theWrap instanceof DocumentVersion) {
+				theWrap = ((DocumentVersion) theWrap).getDocument();
+			}
+			if (theWrap instanceof Document) {
+				Document document = (Document) theWrap;
+				String theVersion = thePack.version;
+				BinaryData content;
+				if (StringServices.isEmpty(theVersion)) {
+					content = document;
 				} else {
-					return EmptyBinaryData.INSTANCE;
+					content = document.getVersionContent(Integer.parseInt(theVersion));
 				}
-	        }
+				return content != null ? content : EmptyBinaryData.INSTANCE;
+			}
+			return EmptyBinaryData.INSTANCE;
     	}
     }
 
@@ -154,27 +134,6 @@ public class DownloadHandler extends AbstractDownloadHandler {
     	}
     }
     
-    /**
-     * Special For dataObejcts of type "LINK".
-     */
-	protected final InputStream getLinkData(Wrapper theWrap) throws IOException {
-        String theDSN = theWrap.getDSN();
-
-        if (theDSN != null) {
-            if (theDSN.startsWith("http://")) {
-                URL theURL = new URL(theDSN);
-
-                Logger.info("Trying download from " + theDSN, this);
-
-                return theURL.openStream();
-            }
-            else {
-                return theWrap.getDAP().getEntry();
-            } 
-        }
-        return null;
-    }
-
     /**
      * Nothing to cleanup here, thanks for asking.
      */

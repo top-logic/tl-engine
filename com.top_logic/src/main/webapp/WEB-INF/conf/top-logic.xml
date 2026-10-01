@@ -36,10 +36,10 @@
         <!-- Folder for the built-in document management (web folders). -->
         <entry name="%DOCUMENTS_PATH%" value="%VAR_PATH%/documents" />
         
-        <!-- Folder to store dynamic documents in (web folders). -->
+        <!-- Folder of the document repository of former versions, input of the migration of document content. -->
         <entry name="%REPOSITORY_PATH%" value="%DOCUMENTS_PATH%/repository" />
         
-        <!-- Folder to move deleted dynamic documents to (web folders). -->
+        <!-- Folder of documents deleted from the document repository of former versions, input of the migration of document content. -->
         <entry name="%ATTIC_PATH%" value="%DOCUMENTS_PATH%/attic" />
         
         <!-- Storage of dynamic internationalizations. -->

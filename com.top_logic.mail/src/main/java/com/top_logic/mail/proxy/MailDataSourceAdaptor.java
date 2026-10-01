@@ -81,7 +81,18 @@ public class MailDataSourceAdaptor extends AbstractDataSourceAdaptor {
 	 *        Configuration for this {@link MailDataSourceAdaptor}.
 	 */
 	public MailDataSourceAdaptor(InstantiationContext context, Config config) {
-		this.proxy = MailReceiverService.getMailReceiverInstance();
+		this(MailReceiverService.getMailReceiverInstance());
+	}
+
+	/**
+	 * Creates a {@link MailDataSourceAdaptor} accessing the mail server through the given
+	 * {@link MailReceiver}.
+	 *
+	 * @param receiver
+	 *        The connection to the mail server.
+	 */
+	public MailDataSourceAdaptor(MailReceiver receiver) {
+		this.proxy = receiver;
 	}
 
 	/**

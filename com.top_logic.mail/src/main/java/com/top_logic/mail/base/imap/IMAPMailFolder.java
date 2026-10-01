@@ -29,7 +29,6 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.element.meta.kbbased.PersistentObjectImpl;
-import com.top_logic.knowledge.objects.KOAttributes;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.searching.FullTextBuBuffer;
@@ -64,8 +63,6 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
 	private static final AssociationSetQuery<KnowledgeAssociation> CONTENT =
 		AssociationQuery.createOutgoingQuery("contents", CONTENTS_ASSOCIATION);
 
-	private static final boolean NOFORCE = false;
-	
     private String message;
     
 	private Set<MessageCountListener> listeners;
@@ -145,14 +142,6 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
 	public Collection<? extends TLObject> getContent() {
 		return resolveWrappers(CONTENT);
 	}
-
-    @Override
-	protected String toStringValues() {
-		String result = super.toStringValues();
-		result += ", DSN: " + this.getDSN();
-
-        return result;
-    }
 
     @Override
 	protected boolean _add(TLObject newChild) {
@@ -311,15 +300,10 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
     public boolean removeFolder(KnowledgeObject anObject) {
         try {
             if (MailFactory.isMailFolder(anObject)) {
-                String theMessage = this.removeMailFolder (anObject);
-            
-                if (StringServices.isEmpty(theMessage)) {
-                    this.removeKO(anObject);
-                }
-            
-                this.setMessage(theMessage);
-            
-                return (StringServices.isEmpty(theMessage));
+                this.removeKO(anObject);
+                this.setMessage(null);
+
+                return true;
             }
             else if (MailFactory.isMail(anObject)) {
                 return (this.removeMail(anObject));
@@ -624,41 +608,6 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
         anObject.delete();
 
         return (null);
-    }
-
-    /** 
-     * Remove the mail folder from the mail server.
-     * 
-     * After calling this method the given mail folder will be marked as deleted on the mail server.
-     * 
-     * @param    anObject    The knowledge object representing the mail folder.
-     * @return   <code>null</code>, if removing succeeds, otherwise the error message.
-     */
-    protected String removeMailFolder(KnowledgeObject anObject) {
-        DataAccessProxy theProxy;
-        String          theResult = null;
-        String          theName = "Unknown";
-
-        try {
-            theName = (String) anObject.getAttributeValue(KOAttributes.PHYSICAL_RESOURCE);
-
-            if (!StringServices.isEmpty(theName)) {
-                theProxy = new DataAccessProxy(theName);
-
-                theProxy.delete(NOFORCE);
-
-                if (Logger.isDebugEnabled(this)) {
-                    Logger.debug("removeMailFolder(): deleted: " + theProxy, this);
-                }
-            }
-        }
-        catch (Exception ex) {
-            theResult = "Unable to remove \"" + theName + '"';
-
-            Logger.error(theResult, ex, this);
-        }
-
-        return (theResult);
     }
 
     /** 

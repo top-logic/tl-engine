@@ -37,8 +37,6 @@ public class FileMetaObject {
 
 			// name is just the file.name
 			result.addAttribute(new MOAttributeImpl("name", MOPrimitive.STRING, MOAttribute.MANDATORY));
-			// physicalResource is the absolute pathname
-			result.addAttribute(new MOAttributeImpl("physicalResource", MOPrimitive.STRING, MOAttribute.MANDATORY));
 		} catch (DuplicateAttributeException dax) {
 			throw new UnreachableAssertion(dax);
 		}

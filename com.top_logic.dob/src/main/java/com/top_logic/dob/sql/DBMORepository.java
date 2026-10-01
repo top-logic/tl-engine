@@ -202,7 +202,7 @@ public class DBMORepository implements MORepository {
      * Examples:
      * <pre> IDENTIFIER INTEGER
      *  D_VALUE NUMBER(10,2)
-     *  PHYSICAL_RESOURCE VARCHAR</pre>
+     *  NAME VARCHAR</pre>
      */
     public static void appendColumnSpec(
         DBHelper aDBHelper, PrintWriter out, DBAttribute dbAttr) {

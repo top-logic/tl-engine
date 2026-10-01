@@ -39,22 +39,12 @@
 			</instance>
 		</config>
 	
-		<config service-class="com.top_logic.dsa.DataAccessService">
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
 			<instance>
 				<dependencies>
+					<!-- Decryption of the document repository during migration. -->
 					<dependency key="com.top_logic.basic.encryption.EncryptionService$Module" value="true" />
 				</dependencies>
-				<adaptors>
-					<adaptor name="repository" config:override="true">
-						<config class="com.top_logic.dsa.impl.EncryptedDataSourceAdaptor">
-							<impl class="com.top_logic.dsa.repos.RepositoryDataSourceAdaptor">
-                                <repository class="com.top_logic.dsa.repos.file.FileRepository"
-									attic="%ATTIC_PATH%" 
-									path="%REPOSITORY_PATH%" />
-							</impl>
-						</config>
-					</adaptor>
-            	</adaptors>
 			</instance>
 		</config>
 
@@ -70,6 +60,15 @@
 	</services>
 
 	<configs>
+		<!-- Input of the migration of document content: the encrypted document repository of former versions. -->
+		<config config:interface="com.top_logic.knowledge.service.migration.processors.DocumentRepositoryConfig">
+			<reader class="com.top_logic.knowledge.service.migration.processors.EncryptedRepositoryContentReader">
+				<impl class="com.top_logic.knowledge.service.migration.processors.FileRepositoryContentReader"
+					attic="%ATTIC_PATH%"
+					path="%REPOSITORY_PATH%"
+				/>
+			</reader>
+		</config>
 
 		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
 			<type-systems>

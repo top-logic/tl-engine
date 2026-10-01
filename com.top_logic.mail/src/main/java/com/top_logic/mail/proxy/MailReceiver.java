@@ -155,7 +155,17 @@ public class MailReceiver implements ConnectionListener {
 
 	private ServerConfig _config;
 
-	MailReceiver(ServerConfig config) {
+	/**
+	 * Creates a {@link MailReceiver} accessing the server of the given configuration.
+	 *
+	 * <p>
+	 * The connection is opened on {@link #login()} or on first access.
+	 * </p>
+	 *
+	 * @param config
+	 *        The server configuration.
+	 */
+	public MailReceiver(ServerConfig config) {
 		_config = config;
 	}
 

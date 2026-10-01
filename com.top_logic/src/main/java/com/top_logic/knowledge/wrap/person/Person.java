@@ -26,7 +26,6 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.time.TimeZones;
 import com.top_logic.dob.NamedValues;
-import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.HistoryManager;
@@ -170,20 +169,6 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
         super(ko);
     }
     
-    /* (non-Javadoc)
-     * @see com.top_logic.knowledge.wrap.Wrapper#getDAP()
-     */
-    @Override
-	public DataAccessProxy getDAP() {
-        return null; //Persons have no DAP
-    }
-    /* (non-Javadoc)
-     * @see com.top_logic.knowledge.wrap.Wrapper#getDSN()
-     */
-    @Override
-	public String getDSN() {
-        return null; //Persons have no DSN
-    }
 
     /**
 	 * Get the {@link TimeZone} of the person.

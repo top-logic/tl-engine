@@ -7,16 +7,22 @@ package test.com.top_logic.knowledge.service.db2;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.nio.file.Files;
+import java.sql.ResultSet;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Test;
 
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationReader;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -39,10 +45,7 @@ import com.top_logic.dob.schema.config.AttributeConfig;
 import com.top_logic.dob.schema.config.MetaObjectConfig;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.dob.xml.DOXMLConstants;
-import com.top_logic.dsa.repos.Repository;
-import com.top_logic.dsa.repos.file.FileRepository;
 import com.top_logic.knowledge.objects.DCMetaData;
-import com.top_logic.knowledge.objects.KOAttributes;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.HistoryUtils;
@@ -51,8 +54,10 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItemImpl;
 import com.top_logic.knowledge.service.migration.MigrationConfig;
 import com.top_logic.knowledge.service.migration.processors.AddPrimitiveMOAttributeProcessor;
+import com.top_logic.knowledge.service.migration.processors.DocumentRepositoryConfig;
 import com.top_logic.knowledge.service.migration.processors.FileRepositoryContentReader;
 import com.top_logic.knowledge.service.migration.processors.MigrateDocumentContentProcessor;
+import com.top_logic.knowledge.service.migration.processors.RepositoryContentReader;
 import com.top_logic.knowledge.service.migration.processors.SQLProcessor;
 import com.top_logic.knowledge.wrap.Document;
 
@@ -60,9 +65,9 @@ import com.top_logic.knowledge.wrap.Document;
  * Test of {@link MigrateDocumentContentProcessor} with {@link FileRepositoryContentReader}.
  *
  * <p>
- * The repository is created on disk with {@link FileRepository}. The rows of the document table
- * {@link #TABLE} reference versions of the repository, as documents did before their content was
- * stored in the binary attribute {@link Document#CONTENT}.
+ * The repository is created on disk in the layout {@link FileRepositoryContentReader} reads. The
+ * rows of the document table {@link #TABLE} reference versions of the repository, as documents did
+ * before their content was stored in the binary attribute {@link Document#CONTENT}.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -106,9 +111,9 @@ public class TestMigrateDocumentContent extends AbstractBinaryMigrationTest {
 	private static TypeProvider types(boolean withContent) {
 		return (log, typeFactory, typeRepository) -> {
 			try {
-				// The physical resource is inherited from the knowledge object table.
 				String attributes =
-					attribute(Document.NAME_ATTRIBUTE, "String")
+					attribute(MigrateDocumentContentProcessor.PHYSICAL_RESOURCE, "String")
+						+ attribute(Document.NAME_ATTRIBUTE, "String")
 						+ attribute(DCMetaData.FORMAT, "String")
 						+ attribute(Document.VERSION_NUMBER, "Integer")
 						+ (withContent
@@ -154,11 +159,8 @@ public class TestMigrateDocumentContent extends AbstractBinaryMigrationTest {
 		byte[] v2 = randomContent(5000);
 		byte[] deleted = randomContent(300);
 
-		Repository repository = createRepository();
-		createVersions(repository, DOCUMENT_PATH, v1, v2);
-		createVersions(repository, DELETED_PATH, deleted);
-		repository.delete(USER, DELETED_PATH, true);
-		assertFalse(repository.existsEntry(DELETED_PATH));
+		createVersions(entryDirectory(DOCUMENT_PATH), v1, v2);
+		createVersions(new File(_atticDir, DELETED_PATH), deleted);
 
 		Transaction tx1 = begin();
 		KnowledgeObject document = newA(TABLE, "doc");
@@ -182,7 +184,7 @@ public class TestMigrateDocumentContent extends AbstractBinaryMigrationTest {
 		addContentColumns();
 		BufferingProtocol log = migrate(processor(), TypedConfiguration.newConfigItem(SchemaConfiguration.class));
 		assertTrue(log.getInfos().toString(), log.getInfos().stream()
-			.anyMatch(message -> message.contains("rows with content missing in the repository: 1")));
+			.anyMatch(message -> message.contains("rows with content missing in the data source: 1")));
 
 		refetchNode2();
 		KnowledgeItem current = node2Item(document);
@@ -211,6 +213,90 @@ public class TestMigrateDocumentContent extends AbstractBinaryMigrationTest {
 	}
 
 	/**
+	 * A repository that is not versioned delivers content for documents with version
+	 * <code>0</code>.
+	 */
+	public void testUnversionedRepository() throws Exception {
+		byte[] attachment = randomContent(100);
+		UnversionedReader.CONTENT.put("INBOX?42&1", attachment);
+		try {
+			Transaction tx = begin();
+			KnowledgeObject document = newA(TABLE, "attachment");
+			setRow(document, UnversionedReader.PROTOCOL + MigrateDocumentContentProcessor.PROTOCOL_SEPARATOR
+				+ "INBOX?42&1", "attachment.bin", "application/octet-stream", 0);
+			KnowledgeObject missing = newA(TABLE, "missing");
+			setRow(missing, UnversionedReader.PROTOCOL + MigrateDocumentContentProcessor.PROTOCOL_SEPARATOR
+				+ "INBOX?42&2", "missing.bin", "application/octet-stream", 0);
+			KnowledgeObject repositoryDocument = newA(TABLE, "doc");
+			setRow(repositoryDocument, DOCUMENT_PATH, "report.txt", "text/plain", 1);
+			commit(tx);
+
+			addContentColumns();
+			String processor = "<processor class='" + MigrateDocumentContentProcessor.class.getName() + "'"
+				+ " " + MigrateDocumentContentProcessor.Config.TABLE + "='" + TABLE + "'"
+				+ " " + MigrateDocumentContentProcessor.Config.PROTOCOL + "='" + UnversionedReader.PROTOCOL + "'>"
+				+ "<" + MigrateDocumentContentProcessor.Config.READER + " class='"
+				+ UnversionedReader.class.getName() + "'/></processor>";
+			BufferingProtocol log =
+				migrate(processor, TypedConfiguration.newConfigItem(SchemaConfiguration.class));
+			assertTrue(log.getInfos().toString(), log.getInfos().stream()
+				.anyMatch(message -> message.contains("Migrated the content of 1 of 3 rows")));
+
+			refetchNode2();
+			assertContent(attachment, "application/octet-stream", "attachment.bin",
+				(BinaryData) node2Item(document).getAttributeValue(Document.CONTENT));
+			assertNull(node2Item(missing).getAttributeValue(Document.CONTENT));
+			assertNull(node2Item(repositoryDocument).getAttributeValue(Document.CONTENT));
+		} finally {
+			UnversionedReader.CONTENT.clear();
+		}
+	}
+
+	/**
+	 * {@link RepositoryContentReader} that is not versioned, delivering the content of
+	 * {@link #CONTENT}.
+	 */
+	public static class UnversionedReader extends AbstractConfiguredInstance<UnversionedReader.Config<?>>
+			implements RepositoryContentReader {
+
+		/**
+		 * Protocol of the data source names of the documents read by {@link UnversionedReader}.
+		 */
+		static final String PROTOCOL = "unversioned";
+
+		/**
+		 * Content by path.
+		 */
+		static final Map<String, byte[]> CONTENT = new HashMap<>();
+
+		/**
+		 * Configuration options of {@link UnversionedReader}.
+		 */
+		public interface Config<I extends UnversionedReader> extends PolymorphicConfiguration<I> {
+			// No options.
+		}
+
+		/**
+		 * Creates a {@link UnversionedReader}.
+		 */
+		public UnversionedReader(InstantiationContext context, Config<?> config) {
+			super(context, config);
+		}
+
+		@Override
+		public boolean isVersioned() {
+			return false;
+		}
+
+		@Override
+		public BinaryData read(String path, int version) {
+			byte[] content = CONTENT.get(path);
+			return content == null ? null : BinaryDataFactory.createBinaryData(content);
+		}
+
+	}
+
+	/**
 	 * The migration script of the document content parses into the expected processors.
 	 */
 	public void testMigrationScript() throws Exception {
@@ -235,7 +321,16 @@ public class TestMigrateDocumentContent extends AbstractBinaryMigrationTest {
 			(MigrateDocumentContentProcessor.Config<?>) processors.get(1);
 		assertEquals(Document.OBJECT_NAME, content.getTable());
 		assertEquals(Document.CONTENT, content.getAttribute());
-		assertTrue(content.getReader() instanceof FileRepositoryContentReader.Config);
+		assertNull("The reader is taken from the application configuration.", content.getReader());
+	}
+
+	/**
+	 * The application configuration reads the document repository with the
+	 * {@link FileRepositoryContentReader}.
+	 */
+	public void testApplicationConfiguration() {
+		DocumentRepositoryConfig config = ApplicationConfig.getInstance().getConfig(DocumentRepositoryConfig.class);
+		assertTrue(config.getReader() instanceof FileRepositoryContentReader.Config);
 	}
 
 	private String processor() {
@@ -248,33 +343,36 @@ public class TestMigrateDocumentContent extends AbstractBinaryMigrationTest {
 			+ "/></processor>";
 	}
 
-	private Repository createRepository() {
-		FileRepository.Config<?> config = TypedConfiguration.newConfigItem(FileRepository.Config.class);
-		config.setPath(_repositoryDir.getAbsolutePath());
-		config.setWorkarea("");
-		config.setAttic(_atticDir.getAbsolutePath());
-		return (Repository) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+	/**
+	 * The directory of the versions of the document with the given path, as stored by the file
+	 * repository.
+	 */
+	private File entryDirectory(String path) {
+		String[] elements = path.split(FileRepositoryContentReader.PATH_SEPARATOR);
+		File parent = _repositoryDir;
+		for (int n = 0; n < elements.length - 1; n++) {
+			String element = elements[n];
+			parent = new File(parent, element.startsWith(FileRepositoryContentReader.ESCAPE)
+				? FileRepositoryContentReader.ESCAPE + element : element);
+		}
+		return new File(parent, FileRepositoryContentReader.ENTRY_PREFIX + elements[elements.length - 1]);
 	}
 
-	private static void createVersions(Repository repository, String path, byte[]... versions) throws Exception {
-		int slash = path.lastIndexOf('/');
-		String folder = path.substring(0, slash);
-		String name = path.substring(slash + 1);
-		if (!repository.exists(folder)) {
-			assertTrue(repository.mkdir("", folder));
-		}
+	/**
+	 * Writes the given versions of a document into its directory of versions.
+	 */
+	static void createVersions(File versionsDir, byte[]... versions) throws Exception {
+		assertTrue(versionsDir.mkdirs());
 		for (int n = 0; n < versions.length; n++) {
-			if (n > 0) {
-				assertTrue(repository.lock(USER, path));
-			}
-			assertEquals(n + 1, repository.create(USER, folder, name, new ByteArrayInputStream(versions[n])));
-			assertTrue(repository.unlock(USER, path));
+			String name = FileRepositoryContentReader.ESCAPE + (n + 1)
+				+ FileRepositoryContentReader.NORMAL_VERSION_INFIX + USER;
+			Files.write(new File(versionsDir, name).toPath(), versions[n]);
 		}
 	}
 
 	private static void setRow(KnowledgeObject row, String path, String name, String format, int version)
 			throws Exception {
-		row.setAttributeValue(KOAttributes.PHYSICAL_RESOURCE,
+		row.setAttributeValue(MigrateDocumentContentProcessor.PHYSICAL_RESOURCE,
 			path.contains(MigrateDocumentContentProcessor.PROTOCOL_SEPARATOR) ? path
 				: MigrateDocumentContentProcessor.Config.DEFAULT_PROTOCOL
 					+ MigrateDocumentContentProcessor.PROTOCOL_SEPARATOR + path);
@@ -296,6 +394,10 @@ public class TestMigrateDocumentContent extends AbstractBinaryMigrationTest {
 		try {
 			SQLProcessor sql = new SQLProcessor(connection);
 			for (DBAttribute column : content.getDbMapping()) {
+				if (hasColumn(connection, tableName, column.getDBName())) {
+					// Added by a former test of the suite.
+					continue;
+				}
 				DBColumn definition = SchemaSetup.createColumn(column);
 				sql.execute(addColumn(table(tableName), definition, null));
 			}
@@ -303,6 +405,19 @@ public class TestMigrateDocumentContent extends AbstractBinaryMigrationTest {
 		} finally {
 			kb().getConnectionPool().releaseWriteConnection(connection);
 		}
+	}
+
+	private static boolean hasColumn(PooledConnection connection, String tableName, String columnName)
+			throws Exception {
+		try (ResultSet columns = connection.getMetaData().getColumns(null, null, null, null)) {
+			while (columns.next()) {
+				if (tableName.equalsIgnoreCase(columns.getString("TABLE_NAME"))
+					&& columnName.equalsIgnoreCase(columns.getString("COLUMN_NAME"))) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public static Test suite() {

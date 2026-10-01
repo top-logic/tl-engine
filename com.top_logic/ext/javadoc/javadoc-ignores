@@ -235,7 +235,6 @@ com.top_logic.base.dsa.DataUploadServlet.java: Invalid camel case word 'putEntry
 com.top_logic.base.dsa.DataUploadServlet.java: Invalid camel case word 'putEntryInContainer', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.dsa.DataUploadServlet.java: Invalid camel case word 'theFormFieldMap', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.dsa.DataUploadServlet.java: Invalid camel case word 'uploadHandler', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.dsa.RepositoryMonitor.java: Invalid camel case word 'DataAccessProxy', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.dsa.UploadHandler.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.base.dsa.UploadHandler
 com.top_logic.base.dsa.UploadHandler.java: Invalid camel case word 'DataAccessProxy', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.dsa.UploadHandler.java: Invalid camel case word 'FileItem', this may only be used within JavaDoc links or HTML code tags.
@@ -1263,7 +1262,6 @@ com.top_logic.knowledge.gui.layout.webfolder.DeleteHandler.java: Invalid camel c
 com.top_logic.knowledge.gui.layout.webfolder.DeleteHandler.java: Missing documentation: com.top_logic.knowledge.gui.layout.webfolder.DeleteHandler.getFolder
 com.top_logic.knowledge.gui.layout.webfolder.DeleteHandler.java: Missing documentation: com.top_logic.knowledge.gui.layout.webfolder.DeleteHandler.getObjectToRemove
 com.top_logic.knowledge.gui.layout.webfolder.DocumentAware.java: Invalid camel case word 'WebFolder', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.gui.layout.webfolder.DownloadHandler.java: Invalid camel case word 'dataObejcts', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.gui.layout.webfolder.DownloadHandler.java: Missing documentation: com.top_logic.knowledge.gui.layout.webfolder.DownloadHandler.DownloadPackage
 com.top_logic.knowledge.gui.layout.webfolder.DownloadHandler.java: Missing documentation: com.top_logic.knowledge.gui.layout.webfolder.DownloadHandler.DownloadPackage.file
 com.top_logic.knowledge.gui.layout.webfolder.DownloadHandler.java: Missing documentation: com.top_logic.knowledge.gui.layout.webfolder.DownloadHandler.DownloadPackage.version
@@ -1760,7 +1758,6 @@ com.top_logic.knowledge.wrap.AbstractContainerWrapper.java: Invalid camel case w
 com.top_logic.knowledge.wrap.AbstractContainerWrapper.java: Invalid camel case word 'getInstance', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.AbstractFlexWrapperJournalDelegate.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.knowledge.wrap.AbstractFlexWrapperJournalDelegate
 com.top_logic.knowledge.wrap.AbstractFlexWrapperJournalDelegate.java: Missing documentation: com.top_logic.knowledge.wrap.AbstractFlexWrapperJournalDelegate.getJournalType
-com.top_logic.knowledge.wrap.AbstractWrapper.java: Invalid camel case word 'DataAccessProxy', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.AbstractWrapper.java: Invalid camel case word 'FlexWrapper', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.AbstractWrapper.java: Invalid camel case word 'KnowledgeAssociations', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.AbstractWrapper.java: Invalid camel case word 'KnowledgeBase', this may only be used within JavaDoc links or HTML code tags.
@@ -1773,7 +1770,6 @@ com.top_logic.knowledge.wrap.AbstractWrapper.java: Invalid camel case word 'aNam
 com.top_logic.knowledge.wrap.AbstractWrapper.java: Invalid camel case word 'aType', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.AbstractWrapper.java: Invalid camel case word 'anAssociation', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.AbstractWrapper.java: Invalid camel case word 'compareTo', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.wrap.AbstractWrapper.java: Invalid camel case word 'getDSN', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.AbstractWrapper.java: Invalid camel case word 'getInstance', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.Address.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.Address.java: Invalid camel case word 'KnowledgeObjects', this may only be used within JavaDoc links or HTML code tags.
@@ -1791,7 +1787,6 @@ com.top_logic.knowledge.wrap.Clipboard.java: Missing documentation: com.top_logi
 com.top_logic.knowledge.wrap.DefaultWrapper.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.DefaultWrapper.java: Invalid camel case word 'WrapperFactory', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.DefaultWrapper.java: Invalid camel case word 'getInstance', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.wrap.Document.java: Invalid camel case word 'DataAccessProxy', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.Document.java: Invalid camel case word 'DocumentVersion', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.Document.java: Invalid camel case word 'KnowledgeBase', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.Document.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
@@ -1832,7 +1827,6 @@ com.top_logic.knowledge.wrap.ValueProviderUtils.java: Invalid camel case word 'a
 com.top_logic.knowledge.wrap.ValueProviderUtils.java: Invalid camel case word 'fieldName', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.ValueProviderUtils.java: Invalid camel case word 'theObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.ValueProviderUtils.java: Missing documentation: com.top_logic.knowledge.wrap.ValueProviderUtils.setAttributeIgnore
-com.top_logic.knowledge.wrap.WebFolder.java: Invalid camel case word 'DataAccessProxy', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.WebFolder.java: Invalid camel case word 'DataSourceName', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.WebFolder.java: Invalid camel case word 'KnowledgeBase', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.WebFolder.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
@@ -1852,7 +1846,6 @@ com.top_logic.knowledge.wrap.WebFolderFactory.java: Invalid camel case word 'Web
 com.top_logic.knowledge.wrap.WebFolderFactory.java: Invalid camel case word 'getDocFolderRoot', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.WebFolderFactory.java: Invalid camel case word 'getInstance', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.WebFolderFactory.java: Invalid camel case word 'getPossibleTypes', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.wrap.Wrapper.java: Invalid camel case word 'DataAccessProxy', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.Wrapper.java: Invalid camel case word 'KnowledgeBase', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.Wrapper.java: Invalid camel case word 'KnowledgeObject', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.wrap.WrapperAccessor.java: Missing documentation: com.top_logic.knowledge.wrap.WrapperAccessor.SELF

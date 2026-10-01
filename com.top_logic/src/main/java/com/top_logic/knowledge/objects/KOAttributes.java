@@ -16,10 +16,4 @@ public interface KOAttributes {
 
 	/** Name of the identifier  attribute. */
     public static final String IDENTIFIER = "identifier";
-    
-    /** Name of the physical resource attribute. */
-    public static final String PHYSICAL_RESOURCE = "physicalResource";
-
-    /** Index of the physical resource attribute in Database */
-    public static final int    PHYSICAL_RESOURCE_IDX = 2;
 }

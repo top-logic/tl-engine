@@ -20,6 +20,7 @@ import com.top_logic.basic.io.binary.BinaryData;
  *
  * @see MigrateDocumentContentProcessor
  * @see FileRepositoryContentReader
+ * @see EncryptedRepositoryContentReader
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -39,5 +40,18 @@ public interface RepositoryContentReader {
 	 *         If accessing the repository fails.
 	 */
 	BinaryData read(String path, int version) throws IOException;
+
+	/**
+	 * Whether the repository stores versions of a document.
+	 *
+	 * <p>
+	 * A document of a versioned repository has no content, as long as its version is
+	 * <code>0</code>. A repository that is not versioned delivers the single content of a
+	 * document for every version.
+	 * </p>
+	 */
+	default boolean isVersioned() {
+		return true;
+	}
 
 }

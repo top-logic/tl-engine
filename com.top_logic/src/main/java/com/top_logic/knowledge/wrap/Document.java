@@ -29,7 +29,6 @@ import com.top_logic.convert.FormatConverterFactory;
 import com.top_logic.convert.converters.FormatConverter;
 import com.top_logic.dob.attr.NextCommitNumberFuture;
 import com.top_logic.dob.ex.NoSuchAttributeException;
-import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.knowledge.analyze.AnalyzeException;
 import com.top_logic.knowledge.analyze.AnalyzeService;
@@ -38,7 +37,6 @@ import com.top_logic.knowledge.indexing.DefaultIndexingService;
 import com.top_logic.knowledge.indexing.IndexException;
 import com.top_logic.knowledge.indexing.IndexingService;
 import com.top_logic.knowledge.objects.DCMetaData;
-import com.top_logic.knowledge.objects.KOAttributes;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.LifecycleAttributes;
 import com.top_logic.knowledge.searching.FullTextBuBuffer;
@@ -64,11 +62,6 @@ import com.top_logic.util.error.TopLogicException;
  * are versioned, a historic revision of a document reads the content it had in that revision.
  * </p>
  * 
- * <p>
- * A document without stored content, whose physical resource names an external data source (e.g.
- * a mail attachment), reads its content from that data source.
- * </p>
- *
  * @author    <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
 public class Document extends AbstractBoundWrapper implements BinaryData {
@@ -135,19 +128,6 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 		return super.getName();
 	}
 
-    /**
-     * Returns a string representation of this document.
-     *
-     * @return    A representation for debugging.
-     */
-    @Override
-	protected String toStringValues() {
-		String result = super.toStringValues();
-		result = result + ", DSN: " + getDSN();
-
-		return result;
-    }
-
 	/**
 	 * Method returns the content of the represented document.
 	 * 
@@ -159,7 +139,7 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 		if (content != null) {
 			return content.getStream();
 		}
-		return getExternalContent();
+		return null;
 	}
 
 	/**
@@ -168,18 +148,6 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	 */
 	public BinaryData getStoredContent() {
 		return (BinaryData) tGetData(CONTENT);
-	}
-
-	/**
-	 * The content of a document whose physical resource names an external data source.
-	 */
-	private InputStream getExternalContent() {
-		DataAccessProxy theDap = getDAP();
-		if (theDap != null && theDap.exists() && theDap.isEntry()) {
-			return theDap.getEntry(String.valueOf(getVersionNumber()));
-		} else {
-			return null;
-		}
 	}
 
 	@Override
@@ -393,11 +361,7 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	 * Whether this document has content.
 	 */
 	public boolean exists() {
-		if (getStoredContent() != null) {
-			return true;
-		}
-		DataAccessProxy theDAP = getDAP();
-		return theDAP != null && theDAP.exists();
+		return getStoredContent() != null;
 	}
 
     /**
@@ -544,83 +508,47 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	 * Create a new Document with the specified name and no content.
 	 * 
 	 * <p>
-	 * The content type of the document is computed from the name of the document. The content is
-	 * set by {@link #update(BinaryData)}.
-	 * </p>
-	 * 
-	 * @see #createDocument(String, String, KnowledgeBase, long)
-	 */
-	public static Document createDocument(String name, KnowledgeBase kb) {
-		return createDocument(name, null, kb, 0);
-	}
-
-    /**
-	 * Create a new Document with the specified name, physical resource, and size 0.
-	 * 
-	 * @see #createDocument(String, String, KnowledgeBase, long)
-	 */
-	public static Document createDocument(String name, String physicalResource, KnowledgeBase kb) {
-		return createDocument(name, physicalResource, kb, 0);
-	}
-
-	/**
-	 * Create a new Document with the specified name, physical resource, and size.
-	 * 
-	 * <p>
 	 * The content type of the document is computed from the name of the document. If no useful
 	 * content type can be determined (i.e. only {@link BinaryData#CONTENT_TYPE_OCTET_STREAM
-	 * application/octet-stream}), nothing is stored.
+	 * application/octet-stream}), nothing is stored. The content is set by
+	 * {@link #update(BinaryData)}.
 	 * </p>
 	 * 
-	 * @see #createDocument(String, String, KnowledgeBase, long, String)
+	 * @see #createDocument(String, KnowledgeBase, String)
 	 */
-	public static Document createDocument(String name, String physicalResource, KnowledgeBase kb, long contentSize) {
+	public static Document createDocument(String name, KnowledgeBase kb) {
 		String contentType = MimeTypes.getInstance().getMimeType(name);
 		if (BinaryData.CONTENT_TYPE_OCTET_STREAM.equals(contentType)) {
 			contentType = null;
 		}
-		return createDocument(name, physicalResource, kb, contentSize, contentType);
+		return createDocument(name, kb, contentType);
 	}
 
 	/**
-	 * Create a new Document with the specified name and physical resource.
+	 * Create a new Document with the specified name and content type, and no content.
 	 * 
 	 * <p>
-	 * This method only creates a KnowledgeObject. It is assumed that any entity represented by the
-	 * physical resource is already available.
+	 * The content is set by {@link #update(BinaryData)}.
 	 * </p>
 	 * 
 	 * @param name
-	 *        the name to use for the email; must not be null
-	 * @param physicalResource
-	 *        the physical resource naming an external data source that holds the content,
-	 *        <code>null</code> for a document whose content is set by {@link #update(BinaryData)}
+	 *        The name of the document; must not be null.
 	 * @param kb
-	 *        the KnowledgeBase in which to create the Email; must not be null
-	 * @param contentSize
-	 *        size of the content beyond a physical resource
+	 *        The {@link KnowledgeBase} in which to create the document; must not be null.
 	 * @param contentType
 	 *        Content type of the document. May be <code>null</code>.
-	 * @return the new Document wrapper; never null
-	 * 
+	 * @return The new Document wrapper; never null.
 	 */
-	public static Document createDocument(String name, String physicalResource, KnowledgeBase kb, long contentSize,
-			String contentType) {
-		Document theDocument = null;
+	public static Document createDocument(String name, KnowledgeBase kb, String contentType) {
+		KnowledgeObject theKO = kb.createKnowledgeObject(OBJECT_NAME);
 
-		{
-			KnowledgeObject theKO = kb.createKnowledgeObject(OBJECT_NAME);
-
-			theKO.setAttributeValue(NAME_ATTRIBUTE, name);
-			theKO.setAttributeValue(KOAttributes.PHYSICAL_RESOURCE, physicalResource);
-			if (contentType != null) {
-				theKO.setAttributeValue(DCMetaData.FORMAT, contentType);
-			}
-
-			theDocument = getInstance(theKO);
-			theDocument.updateKOValues(contentSize);
+		theKO.setAttributeValue(NAME_ATTRIBUTE, name);
+		if (contentType != null) {
+			theKO.setAttributeValue(DCMetaData.FORMAT, contentType);
 		}
 
+		Document theDocument = getInstance(theKO);
+		theDocument.updateKOValues(0);
 		return theDocument;
 	}
 

@@ -57,6 +57,7 @@
 				<mo_attribute att_name="attachments" att_type="Boolean" mandatory="true" />
 
 				<mo_attribute att_name="from"       att_type="String"  mandatory="false" />
+				<mo_attribute att_name="mailURL"    att_type="String"  mandatory="false" db_size="1333" />
 			</attributes>
 		</metaobject>
 

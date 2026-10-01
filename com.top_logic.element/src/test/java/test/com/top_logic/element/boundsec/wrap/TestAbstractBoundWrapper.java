@@ -17,9 +17,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.knowledge.wrap.person.CreateDefaultTestPersons;
 
-import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.dsa.util.MimeTypes;
-import com.top_logic.knowledge.objects.KOAttributes;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
@@ -36,10 +34,6 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  * @author    <a href="mailto:dro@top-logic.com">Dieter Rothb&auml;cher</a>
  */
 public class TestAbstractBoundWrapper extends BasicTestCase {
-
-    /** Some DSN for the document to be wrapped by ConcreteBoundWrapper */
-	private static final String DSN = "file://" + ModuleLayoutConstants.SRC_TEST_DIR
-			+ "/test/com/top_logic/element/boundsec/wrap/TestAbstractBoundWrapper.java";
 
     /**
      * Constructor for TestAbstractBoundWrapper.
@@ -62,7 +56,7 @@ public class TestAbstractBoundWrapper extends BasicTestCase {
         BoundedRole role3   = null;
         BoundedRole role4   = null;
         try {
-            doc = Document.createDocument("aName", DSN, theKB);
+            doc = Document.createDocument("aName", theKB);
 			ConcreteBoundWrapper boundObject = new ConcreteBoundWrapper(doc.tHandle());
                                                                     
             // Now we have the wrapper, let's test it
@@ -118,7 +112,6 @@ public class TestAbstractBoundWrapper extends BasicTestCase {
 		KnowledgeObject doc = theKB.createKnowledgeObject("Document");
         try {
 			doc.setAttributeValue(AbstractBoundWrapper.NAME_ATTRIBUTE, "testSerializable");
-			doc.setAttributeValue(KOAttributes.PHYSICAL_RESOURCE, DSN);
 			Document boundObject = (Document) WrapperFactory.getWrapper(doc);
 			Document serObject = (Document) assertSerializable(boundObject);
             

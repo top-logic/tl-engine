@@ -2,7 +2,6 @@
 <h3>Verschlüsselbare Daten</h3>
 <p>Die folgenden Daten sind verschlüsselbar</p>
 <ul>
- <li>Dokumente</li>
  <li>Die Journal-Historie</li>
  <li>Speziell ausgezeichnete Attributwerte von Objekten. 
   <ul>
@@ -78,19 +77,18 @@
    &lt;entry name="provider:com.top_logic.knowledge.journal.FlexJournalManager$JournalTypes" value="enabled"/&gt;
 &lt;/section&gt;
 </code></pre>
-<h5>Verschlüsselung des File-Repositories</h5>
-<p>Damit die Dateien im File-Repository verschlüsselt werden, muss der <code class="hljs inlineCode">EncryptedDataSourceAdaptor</code> für den <code class="hljs inlineCode">DataAccessService</code> verwendet werden. Der <code class="hljs inlineCode">EncryptedDataSourceAdaptor</code> verwendet den <code class="hljs inlineCode">EncryptionService</code>. Daher muss eine zusätzliche Abhängigkeit in den <code class="hljs inlineCode">DataAccessService</code> eingetragen werden.</p>
-<pre><code>&lt;section name="DataAccessService"&gt;
-   &lt;entry name="dependency:com.top_logic.basic.encryption.EncryptionService$Module" value="enabled" /&gt;
-
-   &lt;entry name="repository" value="com.top_logic.dsa.impl.EncryptedDataSourceAdaptor" /&gt;
-   &lt;entry name="repository.xproperties" value="repository" /&gt;
-&lt;/section&gt;
-
-&lt;section name="repository"&gt;
-   &lt;entry name="wrapped" value="com.top_logic.dsa.repos.RepositoryDataSourceAdaptor" /&gt;
-&lt;/section&gt;
+<h5>Migration des verschlüsselten File-Repositories</h5>
+<p>Frühere Versionen haben die Inhalte von Dokumenten verschlüsselt in einem File-Repository abgelegt. Bei der Datenmigration werden diese Inhalte in das Inhaltsattribut der Dokumente übernommen. Das Konfigurationsbundle <code class="hljs inlineCode">top-logic.encrypted.config.xml</code> konfiguriert dafür einen Leser, der die Dateien des Repositories mit dem Schlüssel des <code class="hljs inlineCode">EncryptionService</code> entschlüsselt, und macht den <code class="hljs inlineCode">EncryptionService</code> zu einer Abhängigkeit der Datenmigration:</p>
+<pre><code>&lt;config config:interface="com.top_logic.knowledge.service.migration.processors.DocumentRepositoryConfig"&gt;
+   &lt;reader class="com.top_logic.knowledge.service.migration.processors.EncryptedRepositoryContentReader"&gt;
+      &lt;impl class="com.top_logic.knowledge.service.migration.processors.FileRepositoryContentReader"
+         attic="%ATTIC_PATH%"
+         path="%REPOSITORY_PATH%"
+      /&gt;
+   &lt;/reader&gt;
+&lt;/config&gt;
 </code></pre>
+<p>Die Inhalte von Dokumenten werden wie alle Binärwerte in der Datenbank oder in einem Blob-Store abgelegt. Eine Verschlüsselung dieser Inhalte ist Aufgabe der jeweiligen Ablage (z.B. Server-seitige Verschlüsselung eines S3-Speichers oder verschlüsseltes Dateisystem).</p>
 <h5>Signaturdienst zum Schutz vor gefälschten Login-Daten</h5>
 <p>Nutzerpasswörter werden als Signatur (Einwegverschlüsselung) gespeichert. Normalerweise wird hierfür ein Schlüsselpaar verwendet, das im Anwendungsverzeichnis abgelegt wird. Um bei eingeschalteter Verschlüsselung zu verhindern, dass ein Datenbankadministrator einen Passwort-Hash selbst berechnen und in die Datenbank speichern kann, um sich danach mit dem gefälschten Login an der Anwendung anzumelden, werden die Nutzerpasswörter mit dem Verschlüsselungsschlüssel signiert (verschlüsselter Hash des Passworts gespeichert).</p>
 <pre><code>&lt;section name="SignatureService"&gt;

@@ -128,16 +128,6 @@
  		<config service-class="com.top_logic.dsa.DataAccessService">
 			<instance>
 				<adaptors>
-	        	<!-- For TestWebfolder -->
-					<adaptor name="repository">
-                        <config class="com.top_logic.dsa.repos.RepositoryDataSourceAdaptor">
-                            <repository class="com.top_logic.dsa.repos.file.FileRepository"
-								attic="./tmp/attic"
-								path="./tmp/repository"
-								workarea="./tmp/workarea" />
-						</config>
-					</adaptor>
-	        	<!-- For TestWebfolder -->
 					<adaptor name="file">
 						<config	class="com.top_logic.dsa.file.FilesystemDataSourceAdaptor"
 							home="." />

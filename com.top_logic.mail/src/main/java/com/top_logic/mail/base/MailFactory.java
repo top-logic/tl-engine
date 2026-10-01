@@ -5,6 +5,8 @@
  */
 package com.top_logic.mail.base;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -19,9 +21,9 @@ import jakarta.mail.internet.InternetAddress;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.ex.UnknownTypeException;
-import com.top_logic.knowledge.objects.KOAttributes;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -200,7 +202,7 @@ public class MailFactory {
 		theMail.setValue(Mail.MAIL_ID, theMailID);
 		theMail.setValue(Mail.NAME, StringServices.minimizeString(theMailName, 150, 147));
 		theMail.setValue(Mail.ATTR_SENT_DATE,  theMessage.getSentDate());
-		theMail.setValue(KOAttributes.PHYSICAL_RESOURCE, getMailURL(theMessage, null));
+		theMail.tSetData(Mail.MAIL_URL, getMailURL(theMessage, null));
 
 		theMail.setAddress(Mail.ATTR_FROM, theMessage.getFrom());
 		theMail.setAddress(Mail.ATTR_TO, theMessage.getRecipients(RecipientType.TO));
@@ -327,7 +329,7 @@ public class MailFactory {
         KnowledgeBase   theKB = theKO.getKnowledgeBase();
 
         for (Attachment theAtt : someAttachments.attachments) {
-			Document theDoc = createAttachment(aMailMessage, theAtt, theKB);
+			Document theDoc = createAttachment(theAtt, theKB);
 			KnowledgeAssociation theKA  = theKB.createAssociation(theKO, theDoc.tHandle(), Mail.ATTACHED_DOCUMENTS_ASSOCIATION);
 
             if (theKA == null) {
@@ -337,12 +339,32 @@ public class MailFactory {
         }
 	}
 
-	private static Document createAttachment(Message aMailMessage, Attachment anAttachment, KnowledgeBase aKB)
-			throws MessagingException {
-		String theURL = getMailURL(aMailMessage, anAttachment);
-
-		return Document.createDocument(anAttachment.getName(), theURL, aKB, anAttachment.getSize(),
-			anAttachment.getMimeType());
+	/**
+	 * Creates a {@link Document} holding the content of the given attachment.
+	 * 
+	 * <p>
+	 * The content is stored in the {@link Document#CONTENT content} of the document. Must be called
+	 * within a transaction.
+	 * </p>
+	 * 
+	 * @param anAttachment
+	 *        The attachment of a mail.
+	 * @param aKB
+	 *        The {@link KnowledgeBase} to create the document in.
+	 * @return The new document.
+	 * @throws MessagingException
+	 *         If reading the attachment fails.
+	 */
+	public static Document createAttachment(Attachment anAttachment, KnowledgeBase aKB) throws MessagingException {
+		String contentType = anAttachment.getMimeType();
+		Document theDoc = Document.createDocument(anAttachment.getName(), aKB, contentType);
+		try (InputStream content = anAttachment.getContent()) {
+			theDoc.update(
+				BinaryDataFactory.createFileBasedBinaryData(content, contentType, anAttachment.getName()));
+		} catch (IOException ex) {
+			throw new MessagingException("Cannot read attachment '" + anAttachment.getName() + "'.", ex);
+		}
+		return theDoc;
 	}
 
 	private static String getMailURL(Message aMessage, Attachment anAttachment) throws MessagingException {

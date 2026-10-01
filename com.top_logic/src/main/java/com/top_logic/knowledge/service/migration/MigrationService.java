@@ -74,6 +74,7 @@ import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.ApplicationTypes;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.encryption.SymmetricEncryption;
+import com.top_logic.basic.io.blob.BlobStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
@@ -130,6 +131,8 @@ import com.top_logic.util.model.CompatibilityService;
 	Settings.Module.class,
 	AttributeSettings.Module.class,
 	CompatibilityService.Module.class,
+	/* Upload of binary content to blob stores */
+	BlobStoreService.Module.class,
 })
 @ServiceExtensionPoint(InitialTableSetup.Module.class)
 @Label("Data migration")

@@ -47,8 +47,6 @@ public class TestFileDataObject extends TestCase {
         assertEquals(Boolean.TRUE , folder.getAttributeValue("isContainer"));
         assertEquals(Boolean.FALSE, folder.getAttributeValue("isEntry"));
         assertEquals("simple"     , folder.getAttributeValue("name"));
-        
-        folder.getAttributeValue("physicalResource");
 
         assertEquals(Boolean.FALSE, file.getAttributeValue("isContainer"));
         assertEquals(Boolean.TRUE , file.getAttributeValue("isEntry"));
@@ -56,8 +54,6 @@ public class TestFileDataObject extends TestCase {
         
         assertEquals("TestFileDataObject.java" 
                                   , file.getAttributeValue("name"));
-                                  
-        file.getAttributeValue("physicalResource");
         
         try {
             file.setAttributeValue("any", null);
@@ -148,7 +144,7 @@ public class TestFileDataObject extends TestCase {
         String [] testArray = folder.getAttributeNames();
         
         assertNotNull ( "array is null!", testArray);
-        assertEquals  ( 9,                testArray.length);
+        assertEquals  ( 8,                testArray.length);
     }
     
     /**

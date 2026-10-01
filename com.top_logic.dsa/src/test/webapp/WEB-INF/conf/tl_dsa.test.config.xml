@@ -17,14 +17,6 @@
 						<config class="com.top_logic.dsa.file.FilesystemDataSourceAdaptor"
 							home="./tmp" />
 					</adaptor>
-					<adaptor name="testRepository">
-						<config class="com.top_logic.dsa.repos.RepositoryDataSourceAdaptor">
-                            <repository class="com.top_logic.dsa.repos.file.FileRepository"
-								attic="./tmp/attic"
-								path="./tmp/repository"
-								workarea="./tmp/workarea" />
-						</config>
-					</adaptor>
             	</adaptors>
 			</instance>
 		</config>

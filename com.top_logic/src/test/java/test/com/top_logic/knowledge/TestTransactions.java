@@ -172,21 +172,21 @@ public class TestTransactions extends BasicTestCase {
         try {
         pers.setAttributeValue("name","Heinerle");
         assertEquals("Heinerle", pers.getAttributeValue("name"));
-        assertNull  ( pers.getAttributeValue("physicalResource"));
+        assertNull  ( pers.getAttributeValue("timezone"));
         kb.commit();
         assertEquals("Heinerle", pers.getAttributeValue("name"));
-        assertNull  (pers.getAttributeValue("physicalResource"));
-        pers.setAttributeValue("physicalResource","Gaddezwersch");
+        assertNull  (pers.getAttributeValue("timezone"));
+        pers.setAttributeValue("timezone","Gaddezwersch");
         assertEquals("Heinerle"     , pers.getAttributeValue("name"));
-        assertEquals("Gaddezwersch" , pers.getAttributeValue("physicalResource"));
+        assertEquals("Gaddezwersch" , pers.getAttributeValue("timezone"));
         kb.commit();
         assertEquals("Heinerle", pers.getAttributeValue("name"));
-        assertEquals("Gaddezwersch" , pers.getAttributeValue("physicalResource"));
-        pers.setAttributeValue("physicalResource", null);
-        assertNull  ( pers.getAttributeValue("physicalResource"));
+        assertEquals("Gaddezwersch" , pers.getAttributeValue("timezone"));
+        pers.setAttributeValue("timezone", null);
+        assertNull  ( pers.getAttributeValue("timezone"));
         assertEquals("Heinerle", pers.getAttributeValue("name"));
         kb.commit();
-        assertNull  ( pers.getAttributeValue("physicalResource"));
+        assertNull  ( pers.getAttributeValue("timezone"));
         assertEquals("Heinerle", pers.getAttributeValue("name"));
     }
         finally {

@@ -39,25 +39,9 @@
 				/>
 			</attributes>
 		</class>
-		<interface name="WithResource">
-			<generalizations>
-				<generalization type="tl.model:TLObject"/>
-			</generalizations>
-			<attributes>
-				<property name="physicalResource"
-					type="tl.core:String"
-				>
-					<annotations>
-						<delete-protected/>
-						<visibility value="hidden"/>
-						<fulltext-relevant value="false"/>
-					</annotations>
-				</property>
-			</attributes>
-		</interface>
 		<class name="Document">
 			<generalizations>
-				<generalization type="WithResource"/>
+				<generalization type="tl.model:TLObject"/>
 			</generalizations>
 			<annotations>
 				<table name="Document"/>
@@ -105,7 +89,7 @@
 		</class>
 		<class name="WebFolder">
 			<generalizations>
-				<generalization type="WithResource"/>
+				<generalization type="tl.model:TLObject"/>
 			</generalizations>
 			<annotations>
 				<table name="WebFolder"/>

@@ -10,8 +10,6 @@ import java.util.Date;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.dob.identifier.ObjectKey;
-import com.top_logic.dsa.DataAccessProxy;
-import com.top_logic.dsa.DatabaseAccessException;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.searching.FullTextBuBuffer;
 import com.top_logic.knowledge.searching.FullTextSearchable;
@@ -109,35 +107,6 @@ public interface Wrapper extends TLNamed, Comparable<Wrapper>, ValueProvider, Fu
 		return tCreator();
 	}
 	
-    /**
-	 * Get the physical representation of this Wrapper.
-	 * <p>
-	 * Note that the result is <code>null</code> when no physical representation is present. This is
-	 * the same as new DataAccessProxy({@link #getDSN()}) except for a null DSN. The DataAccessProxy
-	 * may be cached, so access should be faster.
-	 * </p>
-	 *
-	 * @return the physical representation; may be null
-	 * @implNote The default implementation returns <code>null</code>.
-	 */
-	default DataAccessProxy getDAP() throws DatabaseAccessException {
-		return null;
-	}
-    
-    /**
-	 * Get a Data Source Name identifying the physical representation of this Wrapper.
-	 * <p>
-	 * Note that the result may be e.g <code>null</code> or an empty String depending on the
-	 * underlying KnowledgeObject.
-	 * </p>
-	 *
-	 * @return the DSN; may be null
-	 * @implNote The default implementation returns <code>null</code>.
-	 */
-	default String getDSN() {
-		return null;
-	}
-    
     /**
      * Get the {@link KnowledgeBase} of the wrapped object.
      * 

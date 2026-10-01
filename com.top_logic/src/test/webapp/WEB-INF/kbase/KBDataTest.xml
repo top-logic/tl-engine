@@ -7,7 +7,6 @@
 <objectlist>
 
 <knowledgeobject object_type="WebFolder" object_name="1049d3:efc1d3c034:-7fbe">
-	<ko_attribute att_name="physicalResource" att_value="repository://de"/>
 	
 	
 	
@@ -17,7 +16,6 @@
 </knowledgeobject>
 
 <knowledgeobject object_type="WebFolder" object_name="358f03:ee69d20e58:-7fd6">
-	<ko_attribute att_name="physicalResource" att_value="repository://PUP Website"/>
 	
 	
 	
@@ -27,7 +25,6 @@
 </knowledgeobject>
 
 <knowledgeobject object_type="WebFolder" object_name="1049d3:efc1d3c034:-7fc3">
-	<ko_attribute att_name="physicalResource" att_value="repository://en"/>
 	
 	
 	
@@ -37,7 +34,6 @@
 </knowledgeobject>
 
 <knowledgeobject object_type="WebFolder" object_name="1049d3:efc1d3c034:-7fba">
-	<ko_attribute att_name="physicalResource" att_value="repository://Home45457"/>
 	
 	
 	
@@ -47,7 +43,6 @@
 </knowledgeobject>
 
 <knowledgeobject object_type="WebFolder" object_name="1049d3:efc1d3c034:-7fb6">
-	<ko_attribute att_name="physicalResource" att_value="repository://Home45458"/>
 	
 	
 	
@@ -57,7 +52,6 @@
 </knowledgeobject>
 
 <knowledgeobject object_type="WebFolder" object_name="6b9c84:efeb2b2d23:-7fc1">
-	<ko_attribute att_name="physicalResource" att_value="repository://Kontakt"/>
 	
 	
 	
@@ -67,7 +61,6 @@
 </knowledgeobject>
 
 <knowledgeobject object_type="WebFolder" object_name="6b9c84:efeb2b2d23:-7fbd">
-	<ko_attribute att_name="physicalResource" att_value="repository://Contact"/>
 	
 	
 	
@@ -95,12 +88,10 @@
 </knowledgeobject>
 
 <knowledgeobject object_type="WebFolder" object_name="webappFolder">
-	<ko_attribute att_name="physicalResource" att_value="webapp://"/>
 	<ko_attribute att_name="name" att_value="webappFolder"/>
 </knowledgeobject>
 
 <knowledgeobject object_type="WebFolder" object_name="webinfFolder">
-	<ko_attribute att_name="physicalResource" att_value="webapp://WEB-INF"/>
 	<ko_attribute att_name="name" att_value="webinfFolder"/>
 </knowledgeobject>
 

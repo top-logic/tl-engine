@@ -431,32 +431,6 @@ public class TestDataAccessProxy extends BasicTestCase {
         */
     }
 
-    /** Test repository based acces to DSA (if possible) */
-    public void testRepository() throws DatabaseAccessException, IOException {
-
-        DAPInfo info = DAPInfo.currInfo;
-
-        if (!info.root.isRepository())
-            return;
-        
-        info.entry.lock();
-        info.entry.lock();
-        
-        info.entry.unlock();
-        info.entry.unlock();
-		InputStream in1 = info.entry.getEntry("1");
-		try {
-			InputStream in2 = getInputStream();
-			try {
-				assertTrue(FileUtilities.equalsStreamContents(in1, in2));
-			} finally {
-				in2.close();
-			}
-		} finally {
-			in1.close();
-		}
-    }
-
     /** Testthings that may kill the DSA ;->>  */
     public void testEvil() {
         /*
@@ -551,7 +525,6 @@ public class TestDataAccessProxy extends BasicTestCase {
         TestSuite suite = new TestSuite ();
 
 		suite.addTest(TestUtils.tryEnrichTestnames(createInner("testFile"), "testFile"));
-		suite.addTest(TestUtils.tryEnrichTestnames(createInner("testRepository"), "testRepository"));
             
         Test innerTest = ServiceTestSetup.createSetup(suite, DataAccessService.Module.INSTANCE);
 		return DSATestSetup.createDSATestSetup(innerTest);

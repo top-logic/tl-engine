@@ -60,9 +60,6 @@ public class SearchResultAccessor extends ReadOnlyAccessor<Object> {
                 
             }else if(property.equals("location")){
                 return theResult.getObject().getKnowledgeBase().getName();
-                
-//                use this code to get information like "repository://file.txt"
-//                return getValueFromWrapper("physicalResource", theResult);
             }else {
                 return getValueFromWrapper(property, theResult);
                 

@@ -55,6 +55,14 @@ public interface Mail extends Wrapper {
     /** Flag, if mail has attachments. */
 	public static final String HAS_ATTACHMENT = "attachments";
 
+	/**
+	 * The data source name of the mail in the mail data source, e.g.
+	 * <code>mail://INBOX?&lt;mail ID&gt;</code>.
+	 * 
+	 * @see MailFolder#MAIL_DSA_PREFIX
+	 */
+	public static final String MAIL_URL = "mailURL";
+
     /** 
      * Return the unique ID of this mail.
      * 
@@ -98,6 +106,13 @@ public interface Mail extends Wrapper {
 
     /** The message of the mail. */
     public abstract String getMessage();
+
+	/**
+	 * The data source name of this mail in the mail data source, see {@link #MAIL_URL}.
+	 * 
+	 * @return The data source name, <code>null</code> if not known.
+	 */
+	public abstract String getMailURL();
 
     /** <code>true</code> when mail has attachments. */
     public abstract boolean hasAttachments();

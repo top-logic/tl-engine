@@ -10,7 +10,6 @@
 %><%@page import="com.top_logic.mig.html.layout.MainLayout"
 %><%@page import="com.top_logic.layout.form.model.FormContext"
 %><%@page import="com.top_logic.util.ResourceViewerServlet"
-%><%@page import="com.top_logic.knowledge.objects.KOAttributes"
 %><%@page import="com.top_logic.basic.StringServices"
 %><%@taglib uri="layout"   prefix="layout"
 %><%@taglib uri="ajaxform" prefix="form"
@@ -110,7 +109,7 @@ FormContext   theContext    = theComponent.getFormContext();
 					</tr>
 				</table>
 				<%
-				String theDSN = ResourceViewerServlet.getDocumentReference((String) theModel.getValue(KOAttributes.PHYSICAL_RESOURCE), null);
+				String theDSN = ResourceViewerServlet.getDocumentReference(theModel.getMailURL(), null);
 				String theURL = request.getContextPath() + "/servlet/ResourceViewerServlet?command=" + ResourceViewerServlet.COMMAND_INLINE +
 				'&' + ResourceViewerServlet.PARAM_REF + '=' + theDSN;
 				%>

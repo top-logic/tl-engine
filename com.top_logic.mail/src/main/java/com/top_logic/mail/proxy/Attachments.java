@@ -32,7 +32,7 @@ public class Attachments {
     /**
 	 * Create a representation of attachments.
 	 */
-    Attachments() {
+	public Attachments() {
     }
 
     @Override

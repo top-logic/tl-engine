@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29715_drop_physical_resource"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29715_document_content"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<!--
+			The physical resource of knowledge objects is no longer used: document
+			content is stored in the content attribute of the document, the data
+			source name of a mail in an attribute of the mail. The column is dropped
+			from every table of a knowledge object type.
+		-->
+		<drop-column
+			column="physicalResource"
+			table="KnowledgeObject"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

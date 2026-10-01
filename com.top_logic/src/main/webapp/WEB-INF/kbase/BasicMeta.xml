@@ -129,12 +129,7 @@
 			<implementation-factory class="com.top_logic.knowledge.service.db2.KnowledgeObjectFactory" />
 		</annotation>
 	</annotations>
-	
-	<attributes>
-	<!-- Warning the DB_KB relies on the precise order of these Attributes ! -->
-    <mo_attribute att_name="physicalResource"   att_type="String" 
-		db_size="1333" db_name="PHYSICAL_RESOURCE" mandatory="false" hidden="true"/>
-	</attributes>
+
 </metaobject>
 
 <metaobject object_name="ObjectLabel" super_class="Object" abstract="false">

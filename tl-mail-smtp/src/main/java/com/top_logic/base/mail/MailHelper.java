@@ -22,7 +22,6 @@ import com.top_logic.base.mail.script.SendMail;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.Named;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
@@ -33,9 +32,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.contact.external.ExternalContact;
 import com.top_logic.dsa.DataAccessProxy;
-import com.top_logic.dsa.util.DataAccessProxyDataSource;
 import com.top_logic.knowledge.wrap.Document;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.format.MailAddressFormat;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -241,12 +238,6 @@ public class MailHelper extends ConfiguredManagedClass<ConfiguredManagedClass.Co
                 }
                 else if (theObject instanceof DataSource) {
                     aMail.addAttachment((DataSource) theObject);
-                }
-                else if (theObject instanceof Wrapper) {
-					{
-						aMail.addAttachment(new DataAccessProxyDataSource(((Wrapper) theObject).getDAP(),
-							((Named) theObject).getName()));
-                    }
                 }
             }
         }

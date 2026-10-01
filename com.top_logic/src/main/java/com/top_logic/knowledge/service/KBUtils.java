@@ -96,7 +96,6 @@ public class KBUtils {
         Set<String> set = new HashSet<>();
         set.addAll(LifecycleAttributes.LSANAMES);
         set.add(KOAttributes.IDENTIFIER);
-        set.add(KOAttributes.PHYSICAL_RESOURCE);
 		set.add(BasicTypes.BRANCH_ATTRIBUTE_NAME);
 		set.add(BasicTypes.IDENTIFIER_ATTRIBUTE_NAME);
 		set.add(BasicTypes.REV_CREATE_ATTRIBUTE_NAME);

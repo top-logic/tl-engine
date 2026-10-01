@@ -588,7 +588,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       )}
       {loadError && (
         <div className="tl-select__status tl-type-body" role="alert">
-          <button type="button" className="tl-button tl-button--link tl-type-label" onClick={handleRetry}>
+          <button type="button" className="tl-button tl-button--link tl-type-body" onClick={handleRetry}>
             {i18n['js.dropdownSelect.error']}
           </button>
         </div>

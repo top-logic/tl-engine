@@ -28,7 +28,7 @@ export function useButtonDefaults(): ButtonDefaultsValue {
 export function buttonClassName(opts: {
   appearance: ButtonAppearance; danger?: boolean; small?: boolean; extra?: string;
 }): string {
-  return ['tl-button', `tl-button--${opts.appearance}`, 'tl-type-label',
+  return ['tl-button', `tl-button--${opts.appearance}`, 'tl-type-body',
     opts.danger && opts.appearance !== 'link' ? 'tl-button--danger' : '',
     opts.small ? 'tl-button--sm' : '',
     opts.extra ?? ''].filter(Boolean).join(' ');

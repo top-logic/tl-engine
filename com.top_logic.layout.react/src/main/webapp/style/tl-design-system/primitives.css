@@ -53,12 +53,13 @@
   --tl-gray-48: #676A6F;
   --tl-gray-49: #64676B;
   --tl-gray-55: #54565B;
+  --tl-gray-60: #44484C;
+  --tl-gray-64: #393E42;
   --tl-gray-66: #34383C;
   --tl-gray-67: #343A3F;
   --tl-gray-69: #2B3034;
   --tl-gray-70: #2B2F33;
   --tl-gray-72: #27292D;
-  --tl-gray-73: #22262A;
   --tl-gray-74: #242729;
   --tl-gray-76: #1D2023;
   --tl-gray-77: #1B1D21;
@@ -118,6 +119,7 @@
   --tl-size-9: 4rem;
   --tl-size-10: 6rem;
   --tl-size-11: 10rem;
+  --tl-view-1: 70vh;
   --tl-text-1: 0.75rem;
   --tl-text-2: 0.875rem;
   --tl-text-3: 1rem;

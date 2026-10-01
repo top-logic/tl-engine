@@ -6,13 +6,11 @@
 package com.top_logic.layout.react.wysiwyg;
 
 import com.top_logic.layout.form.model.FieldModel;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.I18NEditorDialog;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
-import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * {@link ReactFieldControlProvider} for {@code tl.model.i18n:I18NHtml} attributes.

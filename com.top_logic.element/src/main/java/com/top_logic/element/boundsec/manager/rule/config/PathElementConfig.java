@@ -41,6 +41,9 @@ public interface PathElementConfig extends PolymorphicConfiguration<PathNavigati
 	@Options(fun = NavigableReferences.class, mapping = TLModelPartRef.PartMapping.class)
 	TLModelPartRef getAttribute();
 
+	/** @see #getAttribute() */
+	void setAttribute(TLModelPartRef attribute);
+
 	/**
 	 * {@link AllReferences} offering only the {@link TLReference}s that a {@link PathNavigation} can
 	 * navigate.
@@ -72,6 +75,9 @@ public interface PathElementConfig extends PolymorphicConfiguration<PathNavigati
 	 */
 	@Name(PathElementConfig.XML_ATTRIBUTE_INVERSE)
 	boolean isInverse();
+
+	/** @see #isInverse() */
+	void setInverse(boolean inverse);
 
 }
 

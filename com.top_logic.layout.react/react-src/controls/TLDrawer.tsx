@@ -115,7 +115,7 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
       )}
       <div className="tlDrawer__body">
         <FillBarrier>
-          {child && <TLChild control={child} />}
+          {!!child && <TLChild control={child} />}
         </FillBarrier>
       </div>
     </aside>

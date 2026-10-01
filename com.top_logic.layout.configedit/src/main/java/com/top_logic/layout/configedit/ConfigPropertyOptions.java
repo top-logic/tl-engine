@@ -17,10 +17,12 @@ import com.top_logic.basic.config.customization.AnnotationCustomizations;
 import com.top_logic.basic.config.customization.ConfiguredAnnotationCustomizations;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
+import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.edit.EditorFactory;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 
 /**
@@ -73,9 +75,9 @@ public class ConfigPropertyOptions extends LazyTypedAnnotatable implements Decla
 	 *
 	 *        <p>
 	 *        Passed in rather than derived from the property's own item: the way up is
-	 *        {@link com.top_logic.basic.config.ConfigPart#container()}, and not every configuration
-	 *        on the way is a {@code ConfigPart} - {@code SingletonConfig} is not - so walking up
-	 *        stops early and silently at the wrong item.
+	 *        {@link com.top_logic.basic.config.container.ConfigPart#container()}, and not every
+	 *        configuration on the way is a {@code ConfigPart} - {@code SingletonConfig} is not - so
+	 *        walking up stops early and silently at the wrong item.
 	 *        </p>
 	 */
 	public ConfigPropertyOptions(ConfigurationItem formModel, PropertyDescriptor property) {
@@ -170,6 +172,54 @@ public class ConfigPropertyOptions extends LazyTypedAnnotatable implements Decla
 	public static DerivedProperty<? extends Iterable<?>> optionProvider(ConfigurationItem formModel,
 			PropertyDescriptor property) {
 		return Fields.optionProvider(new ConfigPropertyOptions(formModel, property));
+	}
+
+	/**
+	 * The mode provider of the given property: the {@link DynamicMode} annotation's function over
+	 * the properties it references, or {@code null} if the property has no dynamic mode.
+	 *
+	 * <p>
+	 * Built the way the classic declarative form builds it (see
+	 * {@link com.top_logic.layout.form.values.edit.EditorFactory#fieldMode(PropertyDescriptor, ConfigurationItem)}),
+	 * so that a mode function written for that form works here unchanged.
+	 * </p>
+	 *
+	 * @param formModel
+	 *        What is being edited as a whole, see
+	 *        {@link #ConfigPropertyOptions(ConfigurationItem, PropertyDescriptor)}.
+	 * @param property
+	 *        The property whose mode is resolved.
+	 */
+	public static DerivedProperty<FieldMode> modeProvider(ConfigurationItem formModel, PropertyDescriptor property) {
+		DynamicMode annotation = NO_CUSTOMIZATIONS.getAnnotation(property, DynamicMode.class);
+		if (annotation == null) {
+			return null;
+		}
+		return Fields.getDerivedValue(new ConfigPropertyOptions(formModel, property), property.getDescriptor(),
+			FieldMode.class, annotation.fun(), annotation.args(),
+			"dynamic mode of '" + property.getPropertyName() + "'");
+	}
+
+	/**
+	 * The {@link Options} annotation declaring that the given property's own value is picked from
+	 * a fixed set, or {@code null} if it has none.
+	 *
+	 * <p>
+	 * Looked up the way {@link Fields#optionProvider(DeclarativeFormOptions)} looks it up when it
+	 * builds the provider, which is what makes the two answers agree: the annotation counts when it
+	 * sits on the property, and equally when it sits on the type of the property's value - a value
+	 * class such as {@link com.top_logic.tool.boundsec.CommandGroupReference} declares once, for
+	 * every property ever typed with it, that its instances come from a fixed set.
+	 * </p>
+	 *
+	 * <p>
+	 * A property without such an annotation may still have an option provider, namely the
+	 * implementation types of a polymorphic property - see
+	 * {@link #optionProvider(PropertyDescriptor)}. The annotation is what tells the two apart.
+	 * </p>
+	 */
+	public static Options optionsAnnotation(PropertyDescriptor property) {
+		return NO_CUSTOMIZATIONS.getAnnotation(property, Options.class);
 	}
 
 	/**

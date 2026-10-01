@@ -32,8 +32,9 @@ import com.top_logic.table.impl.ListRowSource;
 
 /**
  * Tests that a selection change a
- * {@link TableViewControl.SelectionListener selection listener} refuses leaves the
- * {@link TableViewControl} showing and holding the selection it had before.
+ * {@link com.top_logic.layout.react.control.table.TableViewControl.SelectionListener selection
+ * listener} refuses leaves the {@link TableViewControl} showing and holding the selection it had
+ * before.
  *
  * <p>
  * The refusal is the unsaved changes of a form the selection would replace, reaching the table as a

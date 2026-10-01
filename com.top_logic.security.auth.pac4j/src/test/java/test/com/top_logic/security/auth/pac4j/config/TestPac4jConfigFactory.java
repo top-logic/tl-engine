@@ -22,9 +22,9 @@ import org.pac4j.core.client.direct.AnonymousClient;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
 
-import com.nimbusds.openid.connect.sdk.Prompt;
-
 import test.com.top_logic.basic.module.ServiceTestSetup;
+
+import com.nimbusds.openid.connect.sdk.Prompt;
 
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
@@ -45,10 +45,16 @@ import com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory;
  */
 public class TestPac4jConfigFactory extends TestCase {
 
-	/** The {@link ClientConfigurator.Config#getName() name} of the configured OIDC client. */
+	/**
+	 * The {@link com.top_logic.security.auth.pac4j.config.ClientConfigurator.Config#getName() name}
+	 * of the configured OIDC client.
+	 */
 	private static final String OIDC_CLIENT = "test-oidc";
 
-	/** The {@link ClientConfigurator.Config#getName() name} of the configured non-OIDC client. */
+	/**
+	 * The {@link com.top_logic.security.auth.pac4j.config.ClientConfigurator.Config#getName() name}
+	 * of the configured non-OIDC client.
+	 */
 	private static final String ANONYMOUS_CLIENT = "test-anonymous";
 
 	/** The context path the {@link ServletContext} of this test reports. */

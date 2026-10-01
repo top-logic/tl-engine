@@ -41,6 +41,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
@@ -132,10 +133,12 @@ public class ElementAccessManager extends AccessManager {
 		void setRoleRules(RoleRulesConfig roleRules);
 
 		/**
-		 * The security parent rule definitions for the access manager.
+		 * The role parent rules of the access manager: for a type, the navigation to the objects
+		 * whose roles an object of the type inherits.
 		 */
 		@ItemDefault
 		@Name(SECURITY_PARENTS)
+		@Label("Role parents")
 		SecurityParentsConfig getSecurityParents();
 
 		/**
@@ -164,7 +167,7 @@ public class ElementAccessManager extends AccessManager {
 	/** Key to store the current version of the role rule definition in the database. */
 	private static final String ROLE_RULES_CONFIG_VERSION_PROPERTY = "roleRules.version";
 
-	/** Key to store the current version of the security parents definition in the database. */
+	/** Key to store the current version of the role parents definition in the database. */
 	private static final String SECURITY_PARENTS_CONFIG_VERSION_PROPERTY = "security-parents.version";
 
 	/**
@@ -392,7 +395,7 @@ public class ElementAccessManager extends AccessManager {
 	}
 
 	/**
-	 * Loads the security parent rules file if necessary.
+	 * Loads the role parent rules file if necessary.
 	 */
 	private boolean loadSecurityParentRules() {
 		try {
@@ -402,7 +405,7 @@ public class ElementAccessManager extends AccessManager {
 				/* Use english resources, because messages are written to log. */
 				Resources resource = Resources.getLogInstance();
 				for (ResKey theProblem : rulesImporter.getProblems()) {
-					Logger.error("Problem while reloading security parents: " + resource.getString(theProblem), this);
+					Logger.error("Problem while reloading role parents: " + resource.getString(theProblem), this);
 				}
 				return false;
 			}
@@ -640,12 +643,38 @@ public class ElementAccessManager extends AccessManager {
         }
     }
 
+	/**
+	 * The resolved security-parent rules that apply to objects of the given type.
+	 *
+	 * <p>
+	 * The result already respects the {@link NavigationRule#isInherit() inheritance} of the
+	 * configured rules: a rule declared on a generalization with inheritance enabled is contained
+	 * in the result of each of its specializations. An abstract type never carries a rule, since no
+	 * object has an abstract type.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type to look up the rules for.
+	 * @return The rules applying to objects of the given type, an empty collection if the type has
+	 *         no role parent. The result must not be modified.
+	 *
+	 * @see Config#getSecurityParents()
+	 */
+	public Collection<NavigationRule> getRoleParentRules(TLClass type) {
+		return _resolvedSecurityParents.getOrDefault(type, Collections.emptyList());
+	}
+
+	@Override
+	public boolean hasRoleSource(TLClass type) {
+		return !getRules(type).isEmpty() || !getRoleParentRules(type).isEmpty();
+	}
+
 	@Override
 	public Collection<? extends BoundObject> getSecurityParents(BoundObject object) {
 		Set<TLObject> out = new HashSet<>();
-		_resolvedSecurityParents
-			.getOrDefault(object.tType(), Collections.emptyList())
-			.forEach(rule -> rule.getContent(object, out));
+		if (object.tType() instanceof TLClass type) {
+			getRoleParentRules(type).forEach(rule -> rule.getContent(object, out));
+		}
 		return out.stream()
 			.filter(BoundObject.class::isInstance)
 			.map(BoundObject.class::cast)

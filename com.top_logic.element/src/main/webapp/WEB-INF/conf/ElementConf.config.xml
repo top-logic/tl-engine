@@ -11,6 +11,7 @@
 		           <module key="com.top_logic.element.structured.util.NumberHandlerFactory$Module" value="true"/>
 			       <module key="com.top_logic.util.model.CompatibilityService$Module" value="true" />
 			       <module key="com.top_logic.element.boundsec.attribute.AttributeClassifierManager$Module" value="true" />
+			       <module key="com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck$Module" value="true" />
 				</modules>
 			</instance>
 		</config>
@@ -49,6 +50,7 @@
 		            <provider kind="CODE" type="com.top_logic.element.structured.StructuredElement" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider" />
 		            <provider kind="CODE" type="com.top_logic.knowledge.wrap.Wrapper" implementation="com.top_logic.knowledge.gui.WrapperResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.element.boundsec.manager.rule.RoleRule" implementation="com.top_logic.element.boundsec.manager.rule.RoleRuleResourceProvider" />
+					<provider kind="CODE" type="com.top_logic.element.boundsec.manager.coverage.CoverageStatus" implementation="com.top_logic.element.boundsec.manager.coverage.CoverageStatusResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.element.layout.grid.GridTreeTableNode" implementation="com.top_logic.element.layout.grid.GridTreeTableNodeResourceProvider">
 						<!-- Is used by the scripting for creating and resolving CompactLabelPaths in the TreeGrid. -->
 					</provider>
@@ -174,6 +176,10 @@
 			<instance class="com.top_logic.element.structured.util.NumberHandlerFactory" />
 		</config>
 		
+		<config service-class="com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck">
+			<instance class="com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck" />
+		</config>
+		
 		<config service-class="com.top_logic.util.model.CompatibilityService">
 			<instance class="com.top_logic.element.util.model.ElementCompatibilityService" />
 		</config>
@@ -236,6 +242,25 @@
 			</instance>
 		</config>
 		
+		<!--
+			The change log and the image gallery models are maintained by the engine's own code
+			(the change log is written on commit, the gallery images are handled by the gallery
+			control) and never on behalf of a user through the access check, so they carry no
+			access definition on purpose.
+		-->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance class="com.top_logic.model.security.SecurityConfigurationService">
+				<security-config>
+					<module name="tl.changelog"
+						internal="true"
+					/>
+					<module name="tl.imagegallery"
+						internal="true"
+					/>
+				</security-config>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory">
 			<instance class="com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory">
 				<generator-spis>

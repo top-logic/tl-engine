@@ -314,6 +314,15 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	}
 
 	/**
+	 * Whether the field is visible.
+	 *
+	 * @see #setVisible(boolean)
+	 */
+	public boolean isVisible() {
+		return !Boolean.FALSE.equals(getState(VISIBLE));
+	}
+
+	/**
 	 * Updates the required state.
 	 *
 	 * @param required

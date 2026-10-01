@@ -33,7 +33,7 @@ export interface IconEntry {
 type Tab = 'simple' | 'advanced';
 
 interface IconSelectPopupProps {
-  anchorRef: React.RefObject<HTMLButtonElement>;
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
   currentValue: string | null;
   icons: IconEntry[];
   iconsLoaded: boolean;

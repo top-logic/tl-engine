@@ -1,4 +1,4 @@
-import { LRLanguage, LanguageSupport } from '@codemirror/language';
+import { LRLanguage, LanguageSupport } from 'tl-code-editor';
 import { parser } from './tlscript.grammar';
 import { highlighting } from './tlscript-highlight';
 

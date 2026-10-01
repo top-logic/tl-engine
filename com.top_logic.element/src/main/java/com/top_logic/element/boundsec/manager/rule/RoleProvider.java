@@ -6,6 +6,7 @@
 package com.top_logic.element.boundsec.manager.rule;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import com.top_logic.tool.boundsec.BoundObject;
@@ -45,6 +46,25 @@ public interface RoleProvider {
 	 * @return the id, never <code>null</code>
 	 */
 	public String getId();
+
+	/**
+	 * The id of the configuration this provider was created from.
+	 *
+	 * <p>
+	 * One configured rule grants each of the roles it names, so several {@link RoleProvider}s share
+	 * the id of their configuration while each of them carries an {@link #getId() id} of its own.
+	 * The configuration id is what an editor of the access definition addresses the rule by.
+	 * </p>
+	 *
+	 * @see com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig#getId()
+	 */
+	String getConfigId();
+
+	/**
+	 * The steps leading from an object this provider {@link #matches(BoundObject) applies to} to
+	 * the objects the {@link #getGroups(BoundObject) groups} are taken from.
+	 */
+	List<PathElement> getPath();
 
 	/**
 	 * the {@link BoundedRole} this role provider grants to {@link Group}s on {@link BoundObject}s.  

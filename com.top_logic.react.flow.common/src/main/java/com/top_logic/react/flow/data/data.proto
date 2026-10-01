@@ -103,7 +103,7 @@ message TreeLayout extends FloatingLayout {
 	double parentAlign;
 	
 	/**
-	 * Offset to add to the parent Y coordinate after the alignment operation based on {@link #parentRatio}.
+	 * Offset to add to the parent Y coordinate after the alignment operation based on {@link #parentAlign}.
 	 */	
 	double parentOffset;
 	
@@ -1320,8 +1320,8 @@ message GanttRangeDecoration extends GanttDecoration {
  *
  * <p>
  * Row heights are computed per-row from the maximum item intrinsic height plus padding, with
- * {@link #rowMinContentHeight} as a floor. The effective total height of a row is:
- * {@code max(rowMinContentHeight, max(item.intrinsicHeight in row)) + 2 * rowPadding}.
+ * {@link GanttRow#minContentHeight} as a floor. The effective total height of a row is:
+ * {@code max(row.minContentHeight, max(item.intrinsicHeight in row)) + 2 * row.rowPadding}.
  * All items in the same row receive the same final content height so that neighbouring boxes
  * can grow together.
  * </p>

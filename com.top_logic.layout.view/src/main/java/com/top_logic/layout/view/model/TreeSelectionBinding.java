@@ -273,7 +273,7 @@ public class TreeSelectionBinding {
 			return selected.isEmpty();
 		}
 		if (value instanceof Collection<?> objects) {
-			return selected.equals(new LinkedHashSet<Object>(objects));
+			return selected.equals(new LinkedHashSet<>(objects));
 		}
 		return selected.size() == 1 && selected.contains(value);
 	}

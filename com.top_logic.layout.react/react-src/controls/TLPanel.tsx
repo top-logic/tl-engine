@@ -142,13 +142,13 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
       {hasHeader && (
       <div className="tlPanel__header">
         {!!title && title.trim() !== '' && <span className="tlPanel__title">{title}</span>}
-        {state.titleContent && (
+        {!!state.titleContent && (
           <div className="tlPanel__titleContent">
             <TLChild control={state.titleContent} />
           </div>
         )}
         <div className="tlPanel__toolbar">
-          {state.toolbar && <TLChild control={state.toolbar} />}
+          {!!state.toolbar && <TLChild control={state.toolbar} />}
           {showMinimize && !isMaximized && (
             <button
               type="button"
@@ -198,7 +198,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
           <span>{errorMessage}</span>
         </div>
       )}
-      {!isMinimized && state.buttonBar && (
+      {!isMinimized && !!state.buttonBar && (
         <ButtonDefaults appearance="secondary">
           <div className="tlPanel__buttonBar">
             <TLChild control={state.buttonBar} />

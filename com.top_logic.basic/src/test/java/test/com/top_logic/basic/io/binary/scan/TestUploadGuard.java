@@ -20,13 +20,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.Part;
-
 import junit.extensions.TestSetup;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
@@ -60,7 +60,10 @@ public class TestUploadGuard extends BasicTestCase {
 	/** Name of a plain form field transmitted along with the upload. */
 	private static final String PLAIN_FIELD = "controlId";
 
-	/** Name of the property {@link UploadSecurityService.Config#getCheckers()}. */
+	/**
+	 * Name of the property
+	 * {@link com.top_logic.basic.io.binary.scan.UploadSecurityService.Config#getCheckers()}.
+	 */
 	private static final String CHECKERS_PROPERTY = "checkers";
 
 	/** Content type of an uploaded text file. */

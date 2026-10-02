@@ -13,11 +13,14 @@ import java.sql.SQLException;
 
 import junit.framework.Test;
 
+import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.db.model.DBColumn;
+import com.top_logic.basic.db.model.DBSchema;
 import com.top_logic.basic.db.model.DBSchemaFactory;
 import com.top_logic.basic.db.model.DBTable;
 import com.top_logic.basic.db.model.util.DBSchemaUtils;
+import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.db.schema.setup.config.TypeProvider;
 import com.top_logic.basic.db.sql.SQLAddColumn;
@@ -27,8 +30,12 @@ import com.top_logic.basic.io.blob.BlobBinaryData;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.dob.attr.AbstractBinaryAttribute;
+import com.top_logic.dob.ex.DuplicateTypeException;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.BasicTypes;
+import com.top_logic.dob.meta.MOClass;
+import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.HistoryUtils;
@@ -46,6 +53,11 @@ import com.top_logic.util.TLContext;
  * extended by the BLOB column it had before binary values were stored in a table of their own.
  * </p>
  *
+ * <p>
+ * A second pair of tables of the same layout, as the journal of changes uses them, tests the
+ * configuration of the source and target type.
+ * </p>
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @SuppressWarnings("javadoc")
@@ -53,18 +65,35 @@ public class TestMoveFlexBinaryData extends AbstractBinaryMigrationTest {
 
 	private static final String ATTR = "dynBinary";
 
-	private static final TypeProvider NO_TYPES = (log, typeFactory, typeRepository) -> {
-		// No additional types.
+	/** Name of the type of a second table of dynamic attribute values. */
+	private static final String VALUE_TYPE = "TestMoveValue";
+
+	/** Name of the type of a second table of dynamic binary values. */
+	private static final String BINARY_VALUE_TYPE = "TestMoveBinaryValue";
+
+	/**
+	 * A second pair of a table of dynamic attribute values and a table of dynamic binary values, as
+	 * the journal of changes creates them.
+	 */
+	private static final TypeProvider VALUE_TYPES = (log, typeFactory, typeRepository) -> {
+		try {
+			typeRepository.addMetaObject(
+				AbstractFlexDataManager.createFlexDataType(VALUE_TYPE, null, typeRepository.multipleBranches()));
+			typeRepository.addMetaObject(AbstractFlexDataManager.createFlexBinaryDataType(BINARY_VALUE_TYPE, null,
+				typeRepository.multipleBranches()));
+		} catch (DuplicateTypeException ex) {
+			throw new AssertionError(ex);
+		}
 	};
 
 	@Override
 	protected TypeProvider sourceTypes() {
-		return NO_TYPES;
+		return VALUE_TYPES;
 	}
 
 	@Override
 	protected TypeProvider targetTypes() {
-		return NO_TYPES;
+		return VALUE_TYPES;
 	}
 
 	/** Binary rows are moved with their revision ranges and the generic table loses its BLOB column. */
@@ -138,6 +167,120 @@ public class TestMoveFlexBinaryData extends AbstractBinaryMigrationTest {
 		assertContent(large, "a/b", "large", largeValue);
 	}
 
+	/** Binary values of a configured pair of tables are moved into the configured binary table. */
+	public void testMoveConfiguredTables() throws Exception {
+		byte[] v1 = randomContent(2000);
+
+		Transaction tx1 = begin();
+		KnowledgeObject item = newE("e1");
+		commit(tx1);
+		long rev = tx1.getCommitRevision().getCommitNumber();
+
+		String valueTable = dbName(VALUE_TYPE);
+		String binaryTable = dbName(BINARY_VALUE_TYPE);
+		addBlobColumn(valueTable);
+		insertBinaryRow(valueTable, item.tId(), rev, Revision.CURRENT_REV, v1, Long.valueOf(v1.length),
+			"text/plain", "v1.txt");
+		dropTable(binaryTable);
+
+		migrate(configuredProcessor(VALUE_TYPE, BINARY_VALUE_TYPE), emptySchema());
+
+		assertFalse(hasBlobColumn(valueTable));
+		assertEquals(0, countBinaryFlexRows(valueTable));
+		assertEquals(v1, readContent(binaryTable, item.tId()));
+
+		// The generic table of dynamic attribute values is not touched.
+		assertEquals(0, countBinaryFlexRows(AbstractFlexDataManager.FLEX_DATA_DB_NAME));
+	}
+
+	/** Without a source table, the target table is created and nothing is moved. */
+	public void testMissingSourceTable() throws Exception {
+		String valueTable = dbName(VALUE_TYPE);
+		String binaryTable = dbName(BINARY_VALUE_TYPE);
+		dropTable(valueTable);
+		try {
+			dropTable(binaryTable);
+
+			BufferingProtocol log = migrate(configuredProcessor(VALUE_TYPE, BINARY_VALUE_TYPE), emptySchema());
+
+			assertTrue(exists(binaryTable));
+			assertFalse(exists(valueTable));
+			assertTrue(log.getInfos().toString(), log.getInfos().stream().anyMatch(m -> m.contains(valueTable)));
+		} finally {
+			createTable(VALUE_TYPE);
+		}
+	}
+
+	/** Without a target type in the schema, nothing is done. */
+	public void testMissingTargetType() throws Exception {
+		String valueTable = dbName(VALUE_TYPE);
+		addBlobColumn(valueTable);
+
+		migrate(configuredProcessor(VALUE_TYPE, "NoSuchType"), emptySchema());
+
+		assertTrue(hasBlobColumn(valueTable));
+	}
+
+	private static String configuredProcessor(String sourceType, String targetType) {
+		return processor(MoveFlexBinaryDataProcessor.Config.SOURCE_TYPE + "='" + sourceType + "' "
+			+ MoveFlexBinaryDataProcessor.Config.TARGET_TYPE + "='" + targetType + "'");
+	}
+
+	private String dbName(String typeName) {
+		return ((MOStructure) kb().getMORepository().getTypeOrNull(typeName)).getDBMapping().getDBName();
+	}
+
+	private boolean exists(String tableName) throws SQLException {
+		PooledConnection connection = kb().getConnectionPool().borrowReadConnection();
+		try {
+			return DBSchemaUtils.exists(connection, tableName);
+		} finally {
+			kb().getConnectionPool().releaseReadConnection(connection);
+		}
+	}
+
+	private void createTable(String typeName) throws SQLException {
+		if (exists(dbName(typeName))) {
+			return;
+		}
+		PooledConnection connection = kb().getConnectionPool().borrowWriteConnection();
+		try {
+			DBSchema schema = DBSchemaFactory.createDBSchema();
+			schema.setName(null);
+			DBTable table = SchemaSetup.createTable((MOClass) kb().getMORepository().getTypeOrNull(typeName));
+			schema.getTables().add(table);
+			DBSchemaUtils.create(connection, table);
+			connection.commit();
+		} finally {
+			kb().getConnectionPool().releaseWriteConnection(connection);
+		}
+	}
+
+	private byte[] readContent(String binaryTable, ObjectKey key) throws SQLException {
+		MOStructure binaryType = (MOStructure) kb().getMORepository().getTypeOrNull(BINARY_VALUE_TYPE);
+		AbstractBinaryAttribute content =
+			(AbstractBinaryAttribute) binaryType.getAttribute(AbstractFlexDataManager.CONTENT);
+		PooledConnection connection = kb().getConnectionPool().borrowReadConnection();
+		try {
+			DBHelper sql = connection.getSQLDialect();
+			try (PreparedStatement statement = connection.prepareStatement(
+				"SELECT " + sql.columnRef(content.getDataColumn().getDBName()) + " FROM "
+					+ sql.tableRef(binaryTable) + " WHERE " + sql.columnRef(AbstractFlexDataManager.ATTRIBUTE_DBNAME)
+					+ " = ? AND " + sql.columnRef(AbstractFlexDataManager.IDENTIFIER_DBNAME) + " = ?")) {
+				statement.setString(1, ATTR);
+				IdentifierUtil.setId(statement, 2, key.getObjectName());
+				try (ResultSet result = statement.executeQuery()) {
+					assertTrue(result.next());
+					byte[] data = result.getBytes(1);
+					assertFalse(result.next());
+					return data;
+				}
+			}
+		} finally {
+			kb().getConnectionPool().releaseReadConnection(connection);
+		}
+	}
+
 	private static String processor(String settings) {
 		return "<processor class='" + MoveFlexBinaryDataProcessor.class.getName() + "' " + settings + "/>";
 	}
@@ -151,13 +294,17 @@ public class TestMoveFlexBinaryData extends AbstractBinaryMigrationTest {
 	}
 
 	private void addBlobColumn() throws SQLException {
-		if (hasBlobColumn()) {
+		addBlobColumn(AbstractFlexDataManager.FLEX_DATA_DB_NAME);
+	}
+
+	private void addBlobColumn(String tableName) throws SQLException {
+		if (hasBlobColumn(tableName)) {
 			return;
 		}
 		PooledConnection connection = kb().getConnectionPool().borrowWriteConnection();
 		try {
 			SQLAddColumn addColumn =
-				SQLFactory.addColumn(table(AbstractFlexDataManager.FLEX_DATA_DB_NAME),
+				SQLFactory.addColumn(table(tableName),
 					MoveFlexBinaryDataProcessor.BLOB_DATA_DB_NAME, DBType.BLOB);
 			addColumn.setMandatory(false);
 			query(addColumn).toSql(connection.getSQLDialect()).executeUpdate(connection);
@@ -168,11 +315,15 @@ public class TestMoveFlexBinaryData extends AbstractBinaryMigrationTest {
 	}
 
 	private void dropBinaryTable() throws SQLException {
+		dropTable(AbstractFlexDataManager.FLEX_BINARY_DATA_DB_NAME);
+	}
+
+	private void dropTable(String tableName) throws SQLException {
 		PooledConnection connection = kb().getConnectionPool().borrowWriteConnection();
 		try {
 			DBHelper sql = connection.getSQLDialect();
 			try (PreparedStatement statement = connection.prepareStatement(
-				"DROP TABLE " + sql.tableRef(AbstractFlexDataManager.FLEX_BINARY_DATA_DB_NAME))) {
+				"DROP TABLE " + sql.tableRef(tableName))) {
 				statement.executeUpdate();
 			}
 			connection.commit();
@@ -182,8 +333,12 @@ public class TestMoveFlexBinaryData extends AbstractBinaryMigrationTest {
 	}
 
 	private boolean hasBlobColumn() throws SQLException {
+		return hasBlobColumn(AbstractFlexDataManager.FLEX_DATA_DB_NAME);
+	}
+
+	private boolean hasBlobColumn(String tableName) throws SQLException {
 		DBTable table = DBSchemaUtils.extractTable(kb().getConnectionPool(), DBSchemaFactory.createDBSchema(),
-			AbstractFlexDataManager.FLEX_DATA_DB_NAME);
+			tableName);
 		for (DBColumn column : table.getColumns()) {
 			if (MoveFlexBinaryDataProcessor.BLOB_DATA_DB_NAME.equalsIgnoreCase(column.getDBName())) {
 				return true;
@@ -193,11 +348,15 @@ public class TestMoveFlexBinaryData extends AbstractBinaryMigrationTest {
 	}
 
 	private int countBinaryFlexRows() throws SQLException {
+		return countBinaryFlexRows(AbstractFlexDataManager.FLEX_DATA_DB_NAME);
+	}
+
+	private int countBinaryFlexRows(String tableName) throws SQLException {
 		PooledConnection connection = kb().getConnectionPool().borrowReadConnection();
 		try {
 			DBHelper sql = connection.getSQLDialect();
 			try (PreparedStatement statement = connection.prepareStatement(
-				"SELECT COUNT(*) FROM " + sql.tableRef(AbstractFlexDataManager.FLEX_DATA_DB_NAME)
+				"SELECT COUNT(*) FROM " + sql.tableRef(tableName)
 					+ " WHERE " + sql.columnRef(AbstractFlexDataManager.DATA_TYPE_DBNAME) + " = ?")) {
 				statement.setInt(1, MoveFlexBinaryDataProcessor.BLOB_TYPE);
 				try (ResultSet result = statement.executeQuery()) {
@@ -212,12 +371,18 @@ public class TestMoveFlexBinaryData extends AbstractBinaryMigrationTest {
 
 	private void insertBinaryRow(ObjectKey key, long revMin, long revMax, byte[] content, Long size,
 			String contentType, String name) throws SQLException {
+		insertBinaryRow(AbstractFlexDataManager.FLEX_DATA_DB_NAME, key, revMin, revMax, content, size, contentType,
+			name);
+	}
+
+	private void insertBinaryRow(String tableName, ObjectKey key, long revMin, long revMax, byte[] content,
+			Long size, String contentType, String name) throws SQLException {
 		PooledConnection connection = kb().getConnectionPool().borrowWriteConnection();
 		try {
 			DBHelper sql = connection.getSQLDialect();
 			boolean branches = multipleBranches();
 			StringBuilder insert = new StringBuilder();
-			insert.append("INSERT INTO ").append(sql.tableRef(AbstractFlexDataManager.FLEX_DATA_DB_NAME)).append(" (");
+			insert.append("INSERT INTO ").append(sql.tableRef(tableName)).append(" (");
 			if (branches) {
 				insert.append(sql.columnRef(AbstractFlexDataManager.BRANCH_DBNAME)).append(", ");
 			}

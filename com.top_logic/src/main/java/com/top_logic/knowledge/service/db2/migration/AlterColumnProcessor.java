@@ -21,7 +21,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.db.model.DBSchemaFactory;
 import com.top_logic.basic.db.model.util.DBSchemaUtils;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.db.sql.CompiledStatement;
@@ -189,8 +188,7 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 
 		int cnt = renameFlexAttribute(connection, AbstractFlexDataManager.FLEX_DATA_DB_NAME, tableName, columnName,
 			newName);
-		if (DBSchemaUtils.extractTable(connection.getPool(), DBSchemaFactory.createDBSchema(),
-			AbstractFlexDataManager.FLEX_BINARY_DATA_DB_NAME) != null) {
+		if (DBSchemaUtils.exists(connection, AbstractFlexDataManager.FLEX_BINARY_DATA_DB_NAME)) {
 			cnt += renameFlexAttribute(connection, AbstractFlexDataManager.FLEX_BINARY_DATA_DB_NAME, tableName,
 				columnName, newName);
 		}

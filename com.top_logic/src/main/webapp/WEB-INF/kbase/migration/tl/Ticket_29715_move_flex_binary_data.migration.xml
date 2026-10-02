@@ -18,6 +18,20 @@
 			the database.
 		-->
 		<move-flex-binary-data/>
+
+		<!--
+			Move the binary values of the journal of changes from its value
+			tables into its tables of binary values. Without a journal in the
+			application, there is nothing to move.
+		-->
+		<move-flex-binary-data
+			source-type="JournalPreValue"
+			target-type="JournalPreBinaryValue"
+		/>
+		<move-flex-binary-data
+			source-type="JournalPostValue"
+			target-type="JournalPostBinaryValue"
+		/>
 	</processors>
 	<post-processors/>
 </migration>

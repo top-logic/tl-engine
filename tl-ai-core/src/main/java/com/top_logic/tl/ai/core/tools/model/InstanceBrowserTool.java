@@ -9,8 +9,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
@@ -18,19 +20,23 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.util.TLModelNamingConvention;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.visit.LabelVisitor;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.ToolResults;
+import com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceListResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceMetadata;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceTypeInfo;
+import com.top_logic.tl.ai.core.tools.model.messages.InstancesResponse;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -66,8 +72,8 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * response only - a refusal is this application's own sentence, not something it disclosed.
  * </p>
  *
- * @see #listInstances(String, String, Integer, String, ToolExecutionContext)
- * @see #getInstance(String, ToolExecutionContext)
+ * @see #listInstances(String, String, List, Integer, String, ToolExecutionContext)
+ * @see #getInstance(List, ToolExecutionContext)
  * @see ReadFilter
  */
 public class InstanceBrowserTool {
@@ -101,20 +107,31 @@ public class InstanceBrowserTool {
 	/** Maximum number of instances per page. */
 	private static final int MAX_LIMIT = 1000;
 
+	/** How many identifiers one {@code getInstance} call reads at most. */
+	static final int MAX_IDS = 50;
+
 	/**
 	 * Lists instances of a specific type with pagination support.
 	 *
 	 * <p>
-	 * Returns a JSON object containing the instances of the page - each written as
-	 * {@code label [id:TID]}, see {@link ReadFilter#labelled(TLObject)} - the total count, and a
-	 * cursor for retrieving the next page. The cursor is an opaque string that should be passed to
-	 * subsequent calls to retrieve more results.
+	 * Returns a JSON object containing the instances of the page - each with its identifier, its
+	 * label, its own type and the requested attribute values - the total count, and a cursor for
+	 * retrieving the next page. The cursor is an opaque string that should be passed to subsequent
+	 * calls to retrieve more results.
+	 * </p>
+	 *
+	 * <p>
+	 * The attributes are what spares a model a {@code getInstance} per row (#616): asked for
+	 * {@code name, startDate}, a listing of twenty events is one call rather than twenty-one.
 	 * </p>
 	 *
 	 * @param moduleName
 	 *        The module containing the type.
 	 * @param typeName
 	 *        The type name.
+	 * @param attributes
+	 *        Names of the attributes to include per instance; empty or {@code null} for none. A name
+	 *        the instance's type does not have, or that the acting account may not read, is left out.
 	 * @param limit
 	 *        Maximum number of instances to return (default: 100, max: 1000).
 	 * @param cursor
@@ -124,27 +141,29 @@ public class InstanceBrowserTool {
 	 * @return JSON object with the page's instances as {@code label [id:TID]} plus pagination
 	 *         metadata, marked as business data; or error JSON, unmarked, if the type was not found.
 	 */
-	@ToolMethod(description = "Get a paginated list of instances for a specific type. Each entry reads 'label [id:TID]'; pass that TID to any tool that takes one. Only instances you may read are listed, and the total count is the number of those. Use limit parameter to control page size (default: 100, max: 1000). Use cursor from previous response to get next page.", mode = ToolMode.READ, group = ToolGroups.DATA_READ, marking = AnswerMarking.TOOL)
+	@ToolMethod(description = "Get a paginated list of instances for a specific type. Each entry has the instance's id, label and type, plus the values of the 'attributes' you name - name the ones you need instead of calling getInstance per instance. Pass the id to any tool that takes one. Only instances you may read are listed, and the total count is the number of those. To SHOW instances to the user, call present with a query instead. Use limit parameter to control page size (default: 100, max: 1000). Use cursor from previous response to get next page.", mode = ToolMode.READ, group = ToolGroups.DATA_READ, marking = AnswerMarking.TOOL)
 	public String listInstances(
 			@P("The module containing the type") String moduleName,
 			@P("The name of the type") String typeName,
-			@P("Maximum number of instances to return (default: 100, max: 1000)") Integer limit,
-			@P("Cursor for pagination (null/empty for first page, use nextCursor from previous response)") String cursor,
+			@P(value = "Names of attributes to include for every instance, e.g. [\"name\", \"startDate\"]", required = false) List<String> attributes,
+			@P(value = "Maximum number of instances to return (default: 100, max: 1000)", required = false) Integer limit,
+			@P(value = "Cursor for pagination (null/empty for first page, use nextCursor from previous response)", required = false) String cursor,
 			ToolExecutionContext context) {
 
 		Map<String, Object> args = new HashMap<>();
 		args.put("moduleName", moduleName);
 		args.put("typeName", typeName);
+		args.put("attributes", attributes);
 		args.put("limit", limit);
 		args.put("cursor", cursor);
 		return ToolResults.invoke(InstanceBrowserTool.class, "listInstances()", args,
 			"Error accessing instances: ",
 			json -> ReadFilter.marked(moduleName + ":" + typeName, json),
-			() -> doListInstances(moduleName, typeName, limit, cursor, ReadFilter.of(context)));
+			() -> doListInstances(moduleName, typeName, attributes, limit, cursor, ReadFilter.of(context)));
 	}
 
-	private InstanceListResponse doListInstances(String moduleName, String typeName, Integer limit, String cursor,
-			ReadFilter readFilter) {
+	private InstanceListResponse doListInstances(String moduleName, String typeName, List<String> attributes,
+			Integer limit, String cursor, ReadFilter readFilter) throws IOException {
 		// Validate parameters
 		if (moduleName == null || moduleName.isEmpty()) {
 			throw new IllegalArgumentException("Module name is required");
@@ -199,12 +218,28 @@ public class InstanceBrowserTool {
 		result.setLimit(effectiveLimit);
 		result.setOffset(offset);
 
-		// Label and identifier per instance, in the one form every text result uses: the identifier
-		// is what the model names the object by in its next call, the label is what tells two of them
-		// apart. Both are business data, and both are disclosed here only because the filter above
-		// already said this instance may be seen.
+		// Identifier, label and type per instance: the identifier is what the model names the object
+		// by in its next call, the label is what tells two of them apart, the type says what it is -
+		// a subtype of the listed type included. All of them are business data, disclosed here only
+		// because the filter above already said this instance may be seen.
+		Set<String> wanted = attributeNames(attributes);
 		for (TLObject instance : pageInstances) {
-			result.addInstance(ReadFilter.labelled(instance));
+			InstanceEntry entry = InstanceEntry.create()
+				.setId(ReadFilter.idOf(instance))
+				.setLabel(MetaLabelProvider.INSTANCE.getLabel(instance));
+			TLStructuredType instanceType = instance.tType();
+			if (instanceType != null) {
+				entry.setType(TLModelUtil.qualifiedName(instanceType));
+			}
+			if (!wanted.isEmpty()) {
+				// The same per-attribute read decisions getInstance makes, then cut to what was asked.
+				for (Map.Entry<String, Object> attribute : readFilter.attributesOf(instance).entrySet()) {
+					if (wanted.contains(attribute.getKey())) {
+						entry.putAttribute(attribute.getKey(), serialize(attribute.getValue()));
+					}
+				}
+			}
+			result.addInstance(entry);
 		}
 
 		// Pagination metadata
@@ -264,34 +299,82 @@ public class InstanceBrowserTool {
 	}
 
 	/**
-	 * Gets detailed information about a single instance by its TID.
+	 * Gets detailed information about instances by their TIDs.
 	 *
 	 * <p>
-	 * Returns a JSON object containing the instance's TID, type information, the attribute values the
-	 * principal may read, and metadata (container, transient status). References to other objects are
+	 * Returns a JSON object with one entry per instance found - its TID, type information, the
+	 * attribute values the principal may read, and metadata (container, transient status) - and one
+	 * error sentence per identifier that names nothing readable. References to other objects are
 	 * represented as structured objects with TIDs, and a referenced object the principal may not read
 	 * is left out of them.
 	 * </p>
 	 *
-	 * @param tid
-	 *        The TopLogic identifier in format "TypeName:id".
+	 * <p>
+	 * A list rather than one identifier (#616): reading five rows used to be five calls, each of
+	 * them a turn of the agent loop.
+	 * </p>
+	 *
+	 * @param tids
+	 *        The TopLogic identifiers in format "TypeName:id", at most {@link #MAX_IDS}.
 	 * @param context
 	 *        Injected execution context, supplying the read filter of the run.
-	 * @return JSON object with instance details, marked as business data; or error JSON, unmarked, if
-	 *         the instance does not exist or the principal may not read it - deliberately the same
-	 *         answer, see
-	 *         {@link TidResolver#resolve(String, com.top_logic.tl.ai.core.security.ModelSecurity)}.
+	 * @return JSON object with the instances, marked as business data; an identifier that does not
+	 *         exist and one the principal may not read get the same error sentence - deliberately,
+	 *         see {@link TidResolver#resolve(String, com.top_logic.tl.ai.core.security.ModelSecurity)}.
 	 */
-	@ToolMethod(description = "Get detailed information about a single instance by its TID including the attribute values you may read", mode = ToolMode.READ, group = ToolGroups.DATA_READ, marking = AnswerMarking.TOOL)
-	public String getInstance(@P("The TopLogic identifier (TID) in format 'TypeName:id'") String tid,
+	@ToolMethod(description = "Get detailed information about instances by their TIDs, including the attribute values you may read. Pass every id you need in one call (at most 50).", mode = ToolMode.READ, group = ToolGroups.DATA_READ, marking = AnswerMarking.TOOL)
+	public String getInstance(@P("The TopLogic identifiers (TIDs) in format 'TypeName:id'") List<String> tids,
 			ToolExecutionContext context) {
 
 		Map<String, Object> args = new HashMap<>();
-		args.put("tid", tid);
+		args.put("tids", tids);
 		return ToolResults.invoke(InstanceBrowserTool.class, "getInstance()", args,
 			"Error retrieving instance: ",
-			json -> ReadFilter.marked(tid, json),
-			() -> doGetInstance(tid, ReadFilter.of(context)));
+			json -> ReadFilter.marked("getInstance", json),
+			() -> doGetInstances(tids, ReadFilter.of(context)));
+	}
+
+	private InstancesResponse doGetInstances(List<String> tids, ReadFilter readFilter) throws IOException {
+		Set<String> wanted = new LinkedHashSet<>();
+		if (tids != null) {
+			for (String tid : tids) {
+				if (tid != null && !tid.isBlank()) {
+					wanted.add(tid.trim());
+				}
+			}
+		}
+		if (wanted.isEmpty()) {
+			throw new IllegalArgumentException("Pass at least one TID.");
+		}
+		if (wanted.size() > MAX_IDS) {
+			throw new IllegalArgumentException("At most " + MAX_IDS + " TIDs per call, got " + wanted.size()
+				+ ". To show many objects to the user, call present with a query.");
+		}
+		InstancesResponse result = InstancesResponse.create();
+		for (String tid : wanted) {
+			try {
+				result.addInstance(doGetInstance(tid, readFilter));
+			} catch (IllegalArgumentException ex) {
+				// One identifier that names nothing does not hide the ones that do: this is reading,
+				// and the model is told exactly which of its ids failed and why.
+				result.addError(tid + ": " + ex.getMessage());
+			}
+		}
+		return result;
+	}
+
+	/** The requested attribute names, trimmed, without the blank ones. */
+	private static Set<String> attributeNames(List<String> attributes) {
+		if (attributes == null) {
+			return Set.of();
+		}
+		Set<String> result = new LinkedHashSet<>();
+		for (String name : attributes) {
+			if (name != null && !name.isBlank()) {
+				result.add(name.trim());
+			}
+		}
+		return result;
 	}
 
 	private InstanceResponse doGetInstance(String tid, ReadFilter readFilter) throws IOException {

@@ -297,7 +297,34 @@ message EnumerationResponse {
 // ===== InstanceBrowserTool Messages =====
 
 /**
- * Paginated list of instance TIDs.
+ * One object of a listing: what it is called, what it is, how to name it again, and the
+ * attribute values the caller asked for.
+ */
+message InstanceEntry {
+	/**
+	 * The identifier a later call names the object by (`getInstance`, `present`, cite).
+	 */
+	string id;
+
+	/**
+	 * What the object is called.
+	 */
+	string label;
+
+	/**
+	 * The qualified name of the object's own type, which may be a subtype of the listed one.
+	 */
+	string type;
+
+	/**
+	 * The requested attributes the acting account may read, by name, each serialized as JSON the way
+	 * {@code InstanceResponse.attributes} is.
+	 */
+	map<string, string> attributes;
+}
+
+/**
+ * Paginated list of instances.
  */
 message InstanceListResponse {
 	/**
@@ -326,12 +353,9 @@ message InstanceListResponse {
 	int offset;
 
 	/**
-	 * The instances of this page, one entry each, written as `label [id:TID]`.
-	 *
-	 * The identifier is what a later call names the object by ({@code getInstance}, cite, a host's
-	 * present tool); the label is what tells two of them apart. See {@code ReadFilter.labelled}.
+	 * The instances of this page.
 	 */
-	repeated string instances;
+	repeated InstanceEntry instances;
 
 	/**
 	 * Cursor for the next page (null if no more pages).
@@ -422,6 +446,21 @@ message InstanceResponse {
 	 * Instance metadata.
 	 */
 	InstanceMetadata metadata;
+}
+
+/**
+ * The instances {@code getInstance} was asked for, in the order they were named.
+ */
+message InstancesResponse {
+	/**
+	 * The instances that were found and may be read.
+	 */
+	repeated InstanceResponse instances;
+
+	/**
+	 * One sentence per identifier that named nothing the acting account may read.
+	 */
+	repeated string errors;
 }
 
 // ===== ModelAnnotationBrowserTool Messages =====

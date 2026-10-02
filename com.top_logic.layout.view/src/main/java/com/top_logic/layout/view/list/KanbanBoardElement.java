@@ -9,12 +9,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Log;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -35,8 +38,14 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.dnd.DeclaredDrop;
+import com.top_logic.layout.view.dnd.DragSourceBinding;
+import com.top_logic.layout.view.dnd.DropConfig;
+import com.top_logic.layout.view.dnd.DropScope;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
@@ -86,14 +95,37 @@ import com.top_logic.model.util.TLModelPartRef;
  * re-distribute the objects; a card of an object that stays on the board keeps its controls, also
  * when it moves to another column.
  * </p>
+ *
+ * <p>
+ * With a {@link Config#getDrag() drag}, cards are dragged like the rows of a table - onto another
+ * column, or onto any display accepting their type. Each column is a drop target for the
+ * {@link Config#getDrops() drops}: a drop is made on the column, whose value is the target of the
+ * drop and published on its {@code target-channel}. An {@link Config#getOnReorder() reorder
+ * function} keeps the order within the columns: a drop within a column runs it alone, and after a
+ * drop on another column has run its action chain, it runs with the new order of that column.
+ * </p>
+ *
+ * <pre>
+ * &lt;kanban-board ...
+ *   on-reorder="column -&gt; tickets -&gt; count($tickets.size()).foreach(i -&gt; $tickets[$i].set(`demo.tickets:Ticket#order`, $i))"
+ * &gt;
+ *   &lt;drag/&gt;
+ *   &lt;drop accept="demo.tickets:Ticket" target-channel="dropColumn"&gt;
+ *     ...
+ *   &lt;/drop&gt;
+ * &lt;/kanban-board&gt;
+ * </pre>
  */
 @InApp
 public class KanbanBoardElement implements UIElement {
 
+	/** The tag a {@link KanbanBoardElement} is written with. */
+	public static final String TAG_NAME = "kanban-board";
+
 	/**
 	 * Configuration for {@link KanbanBoardElement}.
 	 */
-	@TagName("kanban-board")
+	@TagName(TAG_NAME)
 	public interface Config extends UIElement.Config, Inputs {
 
 		/** Configuration name for {@link #getColumns()}. */
@@ -119,6 +151,15 @@ public class KanbanBoardElement implements UIElement {
 
 		/** Configuration name for {@link #getCard()}. */
 		String CARD = "card";
+
+		/** Configuration name for {@link #getDrag()}. */
+		String DRAG = "drag";
+
+		/** Configuration name for {@link #getDrops()}. */
+		String DROPS = "drops";
+
+		/** Configuration name for {@link #getOnReorder()}. */
+		String ON_REORDER = "on-reorder";
 
 		@Override
 		@ClassDefault(KanbanBoardElement.class)
@@ -220,6 +261,54 @@ public class KanbanBoardElement implements UIElement {
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getCard();
+
+		/**
+		 * Makes the cards of this board draggable, so they can be dropped on another column or on a
+		 * display that accepts their type.
+		 *
+		 * <p>
+		 * Unset (default) leaves the cards undraggable.
+		 * </p>
+		 */
+		@Name(DRAG)
+		KanbanDragConfig getDrag();
+
+		/**
+		 * What the columns of this board accept a drop of, and what is done with the dropped
+		 * objects.
+		 *
+		 * <p>
+		 * A drop is made on a column: the column value is the target of the drop - written to the
+		 * drop's {@code target-channel} before its actions run, and the input of its
+		 * {@code target-executability} rules. A drop of objects that the column already displays is
+		 * no drop of this kind; it is applied by the {@link #getOnReorder() reorder function} alone.
+		 * Empty (default) leaves the columns accepting no drop from elsewhere.
+		 * </p>
+		 */
+		@Name(DROPS)
+		@DefaultContainer
+		List<KanbanDropConfig> getDrops();
+
+		/**
+		 * TL-Script function giving a column a new order on a drop: {@code column -> objects -> ...},
+		 * run in a transaction.
+		 *
+		 * <p>
+		 * The function receives the column value and the objects of that column in their new order -
+		 * those the column displayed when the drop was made, with the dropped objects placed where
+		 * they were dropped. It typically numbers the objects in an attribute that the
+		 * {@link #getItems() items} are sorted by.
+		 * </p>
+		 *
+		 * <p>
+		 * A drop within a column runs this function alone. A drop on another column runs the action
+		 * chain of the matching {@link #getDrops() drop} first, and this function once the chain has
+		 * run to its end - not after a chain that was aborted. Without the function, a drop within a
+		 * column is not accepted.
+		 * </p>
+		 */
+		@Name(ON_REORDER)
+		Expr getOnReorder();
 	}
 
 	private final Config _config;
@@ -234,6 +323,14 @@ public class KanbanBoardElement implements UIElement {
 
 	private final List<UIElement> _cardContent;
 
+	/** The type tag the cards are dragged under, {@code null} while they are not draggable. */
+	private final String _dragType;
+
+	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
+	private final List<DeclaredDrop> _drops;
+
+	private final QueryExecutor _onReorder;
+
 	/**
 	 * Creates a {@link KanbanBoardElement} from configuration.
 	 */
@@ -247,6 +344,37 @@ public class KanbanBoardElement implements UIElement {
 		_cardContent = config.getCard().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
+		_dragType = dragType(context, config);
+		_drops = config.getDrops().stream()
+			.map(drop -> DeclaredDrop.compile(context, drop, DropScope.ITEM))
+			.toList();
+		_onReorder = QueryExecutor.compileOptional(config.getOnReorder());
+	}
+
+	/**
+	 * The type tag the cards of a board declaring a {@link Config#getDrag() drag} are dragged under:
+	 * the declared {@link KanbanDragConfig#getType() type}, or the first of the board's
+	 * {@link Config#getObservedTypes() observed types}. {@code null} for a board whose cards are not
+	 * draggable, and for one that says nothing about what its cards are - which is reported as a
+	 * configuration error.
+	 */
+	private static String dragType(Log log, Config config) {
+		KanbanDragConfig drag = config.getDrag();
+		if (drag == null) {
+			return null;
+		}
+		TLModelPartRef declared = drag.getType();
+		if (declared != null) {
+			return declared.qualifiedName();
+		}
+		List<TLModelPartRef> types = config.getObservedTypes();
+		if (types == null || types.isEmpty()) {
+			log.error("A <" + TAG_NAME + "> whose cards are dragged must say what they are: either '"
+				+ KanbanDragConfig.TYPE + "' on its <" + Config.DRAG + ">, or '" + Config.OBSERVED_TYPES
+				+ "' on the board itself.");
+			return null;
+		}
+		return types.get(0).qualifiedName();
 	}
 
 	@Override
@@ -281,10 +409,52 @@ public class KanbanBoardElement implements UIElement {
 
 		ReactKanbanBoardControl board = cards.board();
 		board.setCssClass(_config.getCssClass());
+		if (_dragType != null) {
+			installDragSource(context, board);
+		}
+		if (!_drops.isEmpty()) {
+			board.setDropTarget(DeclaredDrop.bind(context, board, board::refreshDropTarget, _drops));
+		}
+		QueryExecutor onReorder = _onReorder;
+		if (onReorder != null) {
+			board.setReorder((column, objects) -> inTransaction(() -> onReorder.execute(column, objects)));
+		}
 		// Observe the model only while the board is displayed.
 		board.addAttachListener(() -> observer.attach(context.getModelScope()));
 		board.addDetachListener(observer::detach);
 		return board;
+	}
+
+	/**
+	 * Makes the cards of the given board draggable as the {@link Config#getDrag() drag} declares,
+	 * the {@link KanbanDragConfig#getCardExecutability() card rules} deciding per card.
+	 */
+	private void installDragSource(ViewContext context, ReactKanbanBoardControl board) {
+		KanbanDragConfig drag = _config.getDrag();
+		DragSourceBinding.Source source = new DragSourceBinding.Source() {
+			@Override
+			public String dragType() {
+				return board.dragType();
+			}
+
+			@Override
+			public void setDragSource(String dragType, Predicate<Object> draggable) {
+				board.setDragSource(dragType, draggable);
+			}
+
+			@Override
+			public void refreshDragSource() {
+				board.refreshDragSource();
+			}
+		};
+		DragSourceBinding.install(context, board, source, drag, _dragType, drag.getCardExecutability());
+	}
+
+	private static void inTransaction(Runnable action) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			action.run();
+			tx.commit();
+		}
 	}
 
 	/**

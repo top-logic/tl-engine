@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.dnd;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -223,13 +224,28 @@ public class DropBinding implements DropTarget {
 	 */
 	@Override
 	public void onDrop(DropEvent event) {
+		onDrop(event, null);
+	}
+
+	/**
+	 * Applies the drop as {@link #onDrop(DropEvent)} does, and runs the given follow-up once the
+	 * action chain of the matching drop has run to its end.
+	 *
+	 * <p>
+	 * The follow-up runs as a last step of the chain: after an action that waits for the user, it
+	 * runs once the chain resumes, and an aborted chain does not run it - neither does a drop
+	 * nothing matches.
+	 * </p>
+	 */
+	@Override
+	public void onDrop(DropEvent event, Runnable onApplied) {
 		String tag = draggedType(event);
 		if (tag == null) {
 			return;
 		}
 		Drop drop = select(event, tag, true);
 		if (drop != null) {
-			apply(drop, event.objects(), targetOf(drop, event));
+			apply(drop, event.objects(), targetOf(drop, event), onApplied);
 		}
 	}
 
@@ -316,12 +332,20 @@ public class DropBinding implements DropTarget {
 		return tag;
 	}
 
-	private void apply(Drop drop, List<?> objects, Object target) {
+	private void apply(Drop drop, List<?> objects, Object target, Runnable onApplied) {
 		ViewChannel targetChannel = drop.targetChannel();
 		if (targetChannel != null) {
 			targetChannel.set(target);
 		}
-		ViewActionChain.run(_context, drop.actions(), objects, null);
+		List<ViewAction> actions = drop.actions();
+		if (onApplied != null) {
+			actions = new ArrayList<>(actions);
+			actions.add((context, input) -> {
+				onApplied.run();
+				return input;
+			});
+		}
+		ViewActionChain.run(_context, actions, objects, null);
 	}
 
 	/**

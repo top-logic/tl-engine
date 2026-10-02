@@ -3661,8 +3661,9 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 
 /* Why the target under the running drag refuses it, next to the pointer (left/top set by the
-   table), above every other layer like a tooltip. */
-.tlTableView__dropHint {
+   table or the board), above every other layer like a tooltip. */
+.tlTableView__dropHint,
+.tlKanbanBoard__dropHint {
 	position: fixed;
 	z-index: 13000;
 	max-width: min(400px, calc(100vw - 2 * var(--spacing-05)));
@@ -5621,4 +5622,50 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlKanbanBoard__card--selected:hover {
 	background: var(--tl-surface-brand-subtle);
 	border-color: var(--tl-border-interactive);
+}
+
+.tlKanbanBoard__card[draggable="true"] {
+	cursor: grab;
+}
+
+.tlKanbanBoard__column--dragover {
+	border-color: var(--tl-border-interactive);
+	background: var(--tl-surface-brand-subtle);
+}
+
+.tlKanbanBoard__column--dropRefused {
+	border-color: var(--tl-status-error-border);
+	background: var(--tl-status-error-subtle);
+	cursor: not-allowed;
+}
+
+/* The insertion line between two cards where a drop reorders the column: drawn into the gap
+   above or below the card, so the cards do not move while the pointer does. */
+.tlKanbanBoard__card {
+	position: relative;
+}
+
+.tlKanbanBoard__card--dropBefore::before,
+.tlKanbanBoard__card--dropAfter::after,
+.tlKanbanBoard__cards--dropEnd::after {
+	content: "";
+	display: block;
+	height: var(--tl-border-width-accent);
+	background: var(--tl-border-interactive);
+	pointer-events: none;
+}
+
+.tlKanbanBoard__card--dropBefore::before,
+.tlKanbanBoard__card--dropAfter::after {
+	position: absolute;
+	left: 0;
+	right: 0;
+}
+
+.tlKanbanBoard__card--dropBefore::before {
+	top: calc(-0.5 * var(--tl-space-sm) - 0.5 * var(--tl-border-width-accent) - var(--tl-border-width-sm));
+}
+
+.tlKanbanBoard__card--dropAfter::after {
+	bottom: calc(-0.5 * var(--tl-space-sm) - 0.5 * var(--tl-border-width-accent) - var(--tl-border-width-sm));
 }

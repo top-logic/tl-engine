@@ -495,7 +495,18 @@ The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/repeater-demo.view.
 
 The `<card>` content is instantiated per object with the object on `item-channel` (`item` by default), by the same keyed `TemplateInstances` the items of `<object-list>` use: a card of an object that stays keeps its controls, also when the object moves to another column. `selection` names the channel a clicked card writes its object to; the card of the object the channel holds is highlighted (`KanbanSelectionBinding`, a `SelectionChannelBinding`). The board follows its displayed objects and the `observed-types`, so changing the attribute the column is computed from moves the card. A card selection is recorded as `selectCardByKey` naming the object, since the client card keys are allocated per session.
 
-The demo is `com.top_logic.demo.react`'s `WEB-INF/views/board.view.xml` (nav item "Board").
+**Drag and drop.** `<drag/>` (`KanbanDragConfig`: `type`, defaulting to the first `observed-types` entry; board-wide `executability`; per-card `card-executability`) makes the cards drag sources exactly like table rows - same payload, so a card can be dropped on a `<table>` accepting its type and table rows on the board. Each `<drop accept=… target-channel=… refuse-if=…>` (the shared `DropConfig`, compiled with `DropScope.ITEM`) makes the columns drop targets: the **column value** is the target - written to `target-channel` before the action chain runs, passed to `target-executability` and to `refuse-if` (`column -> objects -> reason`). While a drag hovers a column, the client probes the server (`dropProbe`), and a refusal is shown at the column with its reason next to the pointer. A recorded drop becomes `dropObjects`, naming the objects and the column value (or the card object it was dropped beside) by business identity.
+
+**Order within a column: `on-reorder`.** `column -> objects -> …`, run in a transaction, receives the column value and the objects of that column in their new order: those displayed when the drop was made, with the dropped objects placed where they were dropped. It typically numbers the objects in an attribute `items` sorts by. Order of execution:
+
+- a drop of cards within the column they are in runs `on-reorder` alone (no `<drop>` chain); without `on-reorder` such a drop is not accepted, and the client shows no insertion line there;
+- a drop on another column (or from another control) runs the matching `<drop>` chain first and, once that chain has run to its end (not after an abort), `on-reorder` with the new order of the target column - so the card lands where it was dropped.
+
+With `on-reorder`, the client draws an insertion line before or after the card under the pointer, or at the end of the column; without it, a drop is made on the column as a whole.
+
+The shared server half of the drop protocol (wire names, resolving the dragged objects, probe verdicts, recording) is `com.top_logic.layout.react.control.dnd.DropSupport`, used by `TableViewControl` and `ReactKanbanBoardControl` alike; the refusal hint of both clients is `react-src/controls/drop-hint.ts`.
+
+The demo is `com.top_logic.demo.react`'s `WEB-INF/views/board.view.xml` (nav item "Board"): dragging a ticket to another column sets its status, a closed ticket cannot be dropped on "Open", and `on-reorder` numbers the tickets in the `order` attribute.
 
 ## A page of weighted columns: `<columns>`
 

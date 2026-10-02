@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -22,10 +23,13 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.constraint.check.ConstraintChecker;
+import com.top_logic.basic.config.constraint.check.ConstraintFailure;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.blob.AbstractBlobStore;
 import com.top_logic.basic.io.blob.BlobInfo;
@@ -109,6 +113,28 @@ public class TestBlobStoreService extends BasicTestCase {
 		assertTrue("Missing default store must be reported.", log.hasErrors());
 	}
 
+	/** The configuration constraints report a default store name that names no configured store. */
+	public void testDefaultStoreConstraint() throws ConfigurationException {
+		BlobStoreService.Config<?> config =
+			newConfig(BlobStoreService.DEFAULT_STORE_NAME, BlobStoreService.DEFAULT_STORE_NAME, OTHER_STORE);
+		assertEquals(List.of(), constraintFailures(config));
+
+		config.setDefaultStore(OTHER_STORE);
+		assertEquals(List.of(), constraintFailures(config));
+
+		config.setDefaultStore("missing");
+		List<ConstraintFailure> failures = constraintFailures(config);
+		assertEquals(failures.toString(), 1, failures.size());
+		assertEquals(BlobStoreService.Config.DEFAULT_STORE, failures.get(0).getContextProperty().getPropertyName());
+	}
+
+	private static List<ConstraintFailure> constraintFailures(BlobStoreService.Config<?> config)
+			throws ConfigurationException {
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(config);
+		return checker.getFailures();
+	}
+
 	/** The application configuration provides the default store. */
 	public void testApplicationConfiguration() {
 		BlobStoreService service = BlobStoreService.getInstance();
@@ -179,6 +205,10 @@ public class TestBlobStoreService extends BasicTestCase {
 	}
 
 	private BlobStoreService newService(InstantiationContext context, String defaultStore, String... storeNames) {
+		return (BlobStoreService) context.getInstance(newConfig(defaultStore, storeNames));
+	}
+
+	private BlobStoreService.Config<?> newConfig(String defaultStore, String... storeNames) {
 		BlobStoreService.Config<?> config = TypedConfiguration.newConfigItem(BlobStoreService.Config.class);
 		config.setDefaultStore(defaultStore);
 		for (String name : storeNames) {
@@ -188,7 +218,7 @@ public class TestBlobStoreService extends BasicTestCase {
 			storeConfig.setRoot(new File(_root, name).getPath());
 			config.getStores().put(name, storeConfig);
 		}
-		return (BlobStoreService) context.getInstance(config);
+		return config;
 	}
 
 	/**

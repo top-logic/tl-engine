@@ -8,6 +8,7 @@ package test.com.top_logic.storage.azure;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -21,8 +22,14 @@ import com.top_logic.basic.ConfigurationEncryption;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.constraint.check.ConstraintChecker;
+import com.top_logic.basic.config.constraint.check.ConstraintFailure;
+import com.top_logic.basic.config.customization.NoCustomizations;
+import com.top_logic.basic.config.order.DefaultOrderStrategy;
 import com.top_logic.basic.io.blob.BlobStore;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.storage.azure.AzureBlobStore;
@@ -239,6 +246,95 @@ public class TestAzureBlobStoreConfig extends BasicTestCase {
 	private static String connectionString() {
 		return "DefaultEndpointsProtocol=http;AccountName=" + ACCOUNT + ";AccountKey=" + KEY + ";BlobEndpoint="
 			+ ENDPOINT + ";";
+	}
+
+	/** Both forms of account settings fulfill the constraints, also with empty unused settings. */
+	public void testConstraintsOfValidConfigs() throws Exception {
+		assertEquals(List.of(), failures(newConfig()));
+
+		AzureBlobStore.Config<?> config = parse("<store name='azure' class='" + AzureBlobStore.class.getName() + "'"
+			+ " container='data' connection-string='unencrypted:" + connectionString() + "'"
+			+ " endpoint='' account-name='' account-key='unencrypted:' public-endpoint=''/>");
+		assertEquals(List.of(), failures(config));
+	}
+
+	/** Missing account settings are reported at account name and account key. */
+	public void testMissingCredentialsConstraint() throws Exception {
+		AzureBlobStore.Config<?> config = parse("<store name='azure' class='" + AzureBlobStore.class.getName() + "'"
+			+ " container='data' connection-string='unencrypted:' account-name='' account-key='unencrypted:'/>");
+		Set<String> faulty = new HashSet<>();
+		for (ConstraintFailure failure : failures(config)) {
+			assertFalse(failure.isWarning());
+			faulty.add(failure.getContextProperty().getPropertyName());
+		}
+		assertEquals(Set.of(AzureBlobStore.Config.ACCOUNT_NAME, AzureBlobStore.Config.ACCOUNT_KEY), faulty);
+
+		config = newConfig();
+		config.setAccountKey("");
+		assertErrorAt(config, AzureBlobStore.Config.ACCOUNT_KEY);
+	}
+
+	/** A connection string together with an account key is reported at the connection string. */
+	public void testConnectionStringAndAccountConstraint() throws Exception {
+		AzureBlobStore.Config<?> config = newConfig();
+		config.setEndpoint("");
+		config.setAccountName("");
+		config.setConnectionString(connectionString());
+		assertErrorAt(config, AzureBlobStore.Config.CONNECTION_STRING);
+	}
+
+	/** Sizes and lifetimes outside the limits are reported. */
+	public void testBoundsConstraints() throws Exception {
+		AzureBlobStore.Config<?> config = parse("<store name='azure' class='" + AzureBlobStore.class.getName() + "'"
+			+ " container='data' account-name='" + ACCOUNT + "' account-key='unencrypted:" + KEY + "'"
+			+ " block-size='32kB'/>");
+		assertErrorAt(config, AzureBlobStore.Config.BLOCK_SIZE);
+
+		config = newConfig();
+		config.setSingleUploadThreshold(-1);
+		assertErrorAt(config, AzureBlobStore.Config.SINGLE_UPLOAD_THRESHOLD);
+
+		config = newConfig();
+		config.setDirectDownloadLifetime(AzureBlobStore.MIN_DIRECT_DOWNLOAD_LIFETIME - 1);
+		assertErrorAt(config, AzureBlobStore.Config.DIRECT_DOWNLOAD_LIFETIME);
+	}
+
+	/** A single upload threshold below the block size is valid, but reported as warning. */
+	public void testThresholdBelowBlockSize() throws Exception {
+		AzureBlobStore.Config<?> config = newConfig();
+		config.setSingleUploadThreshold(AzureBlobStore.MIN_BLOCK_SIZE);
+		List<ConstraintFailure> failures = failures(config);
+		assertEquals(failures.toString(), 1, failures.size());
+		assertTrue(failures.get(0).isWarning());
+		assertEquals(AzureBlobStore.Config.SINGLE_UPLOAD_THRESHOLD,
+			failures.get(0).getContextProperty().getPropertyName());
+	}
+
+	/** All settings are displayed in a configuration editor. */
+	public void testDisplayOrder() {
+		ConfigurationDescriptor descriptor =
+			TypedConfiguration.getConfigurationDescriptor(AzureBlobStore.Config.class);
+		Set<PropertyDescriptor> displayed = new HashSet<>(
+			new DefaultOrderStrategy(NoCustomizations.INSTANCE).getDisplayProperties(descriptor));
+		for (PropertyDescriptor property : descriptor.getProperties()) {
+			Hidden hidden = property.getAnnotation(Hidden.class);
+			if (hidden != null && hidden.value()) {
+				continue;
+			}
+			assertTrue("Not displayed: " + property.getPropertyName(), displayed.contains(property));
+		}
+	}
+
+	private static void assertErrorAt(AzureBlobStore.Config<?> config, String property) throws Exception {
+		List<ConstraintFailure> errors = failures(config).stream().filter(failure -> !failure.isWarning()).toList();
+		assertEquals(errors.toString(), 1, errors.size());
+		assertEquals(property, errors.get(0).getContextProperty().getPropertyName());
+	}
+
+	private static List<ConstraintFailure> failures(AzureBlobStore.Config<?> config) throws Exception {
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(config);
+		return checker.getFailures();
 	}
 
 	private static void assertConfigError(AzureBlobStore.Config<?> config) throws Exception {

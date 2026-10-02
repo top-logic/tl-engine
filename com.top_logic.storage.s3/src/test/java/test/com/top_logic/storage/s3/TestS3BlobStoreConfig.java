@@ -7,6 +7,9 @@ package test.com.top_logic.storage.s3;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import junit.framework.Test;
@@ -24,8 +27,14 @@ import com.top_logic.basic.ConfigurationEncryption;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.constraint.check.ConstraintChecker;
+import com.top_logic.basic.config.constraint.check.ConstraintFailure;
+import com.top_logic.basic.config.customization.NoCustomizations;
+import com.top_logic.basic.config.order.DefaultOrderStrategy;
 import com.top_logic.basic.io.blob.BlobStore;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.storage.s3.S3BlobStore;
@@ -229,6 +238,98 @@ public class TestS3BlobStoreConfig extends BasicTestCase {
 		S3BlobStore.Config<?> config = newConfig();
 		config.setEndpoint("localhost:9000/x y");
 		assertConfigError(config);
+	}
+
+	/** The defaults and empty values taken from unset environment variables fulfill the constraints. */
+	public void testConstraintsOfDefaults() throws Exception {
+		assertEquals(List.of(), failures(newConfig()));
+
+		S3BlobStore.Config<?> config = parse(
+			"<store name='s3' class='" + S3BlobStore.class.getName() + "' bucket='data'"
+				+ " endpoint='' access-key='' secret-key='unencrypted:' kms-key-id='' public-endpoint=''/>");
+		assertEquals(List.of(), failures(config));
+	}
+
+	/** A secret key without access key and an access key without secret key are reported. */
+	public void testCredentialsConstraint() throws Exception {
+		S3BlobStore.Config<?> config = parse(
+			"<store name='s3' class='" + S3BlobStore.class.getName() + "' bucket='data'"
+				+ " secret-key='unencrypted:secret'/>");
+		assertErrorAt(config, S3BlobStore.Config.ACCESS_KEY);
+
+		config = newConfig();
+		config.setAccessKey("admin");
+		assertErrorAt(config, S3BlobStore.Config.SECRET_KEY);
+
+		config.setSecretKey("secret");
+		assertEquals(List.of(), failures(config));
+	}
+
+	/** Sizes and lifetimes outside the limits of S3 are reported. */
+	public void testBoundsConstraints() throws Exception {
+		S3BlobStore.Config<?> config = parse(
+			"<store name='s3' class='" + S3BlobStore.class.getName() + "' bucket='data' part-size='4MB'/>");
+		assertErrorAt(config, S3BlobStore.Config.PART_SIZE);
+
+		config = newConfig();
+		config.setMultipartThreshold(-1);
+		assertErrorAt(config, S3BlobStore.Config.MULTIPART_THRESHOLD);
+
+		config = newConfig();
+		config.setDirectDownloadLifetime(S3BlobStore.MAX_DIRECT_DOWNLOAD_LIFETIME + 1);
+		assertErrorAt(config, S3BlobStore.Config.DIRECT_DOWNLOAD_LIFETIME);
+
+		config = newConfig();
+		config.setDirectDownloadMinSize(-1);
+		assertErrorAt(config, S3BlobStore.Config.DIRECT_DOWNLOAD_MIN_SIZE);
+	}
+
+	/** A multipart threshold below the part size is valid, but reported as warning. */
+	public void testThresholdBelowPartSize() throws Exception {
+		S3BlobStore.Config<?> config = newConfig();
+		config.setMultipartThreshold(S3BlobStore.MIN_PART_SIZE);
+		config.setPartSize(S3BlobStore.DEFAULT_PART_SIZE);
+		List<ConstraintFailure> failures = failures(config);
+		assertEquals(failures.toString(), 1, failures.size());
+		assertTrue(failures.get(0).isWarning());
+		assertEquals(S3BlobStore.Config.MULTIPART_THRESHOLD, failures.get(0).getContextProperty().getPropertyName());
+	}
+
+	/** An endpoint that is no URL is reported. */
+	public void testEndpointConstraint() throws Exception {
+		S3BlobStore.Config<?> config = newConfig();
+		config.setEndpoint("localhost:9000/x y");
+		assertErrorAt(config, S3BlobStore.Config.ENDPOINT);
+
+		config = newConfig();
+		config.setPublicEndpoint("storage.example.com");
+		assertErrorAt(config, S3BlobStore.Config.PUBLIC_ENDPOINT);
+	}
+
+	/** All settings are displayed in a configuration editor. */
+	public void testDisplayOrder() {
+		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(S3BlobStore.Config.class);
+		Set<PropertyDescriptor> displayed = new HashSet<>(
+			new DefaultOrderStrategy(NoCustomizations.INSTANCE).getDisplayProperties(descriptor));
+		for (PropertyDescriptor property : descriptor.getProperties()) {
+			Hidden hidden = property.getAnnotation(Hidden.class);
+			if (hidden != null && hidden.value()) {
+				continue;
+			}
+			assertTrue("Not displayed: " + property.getPropertyName(), displayed.contains(property));
+		}
+	}
+
+	private static void assertErrorAt(S3BlobStore.Config<?> config, String property) throws Exception {
+		List<ConstraintFailure> errors = failures(config).stream().filter(failure -> !failure.isWarning()).toList();
+		assertEquals(errors.toString(), 1, errors.size());
+		assertEquals(property, errors.get(0).getContextProperty().getPropertyName());
+	}
+
+	private static List<ConstraintFailure> failures(S3BlobStore.Config<?> config) throws Exception {
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(config);
+		return checker.getFailures();
 	}
 
 	private static void assertConfigError(S3BlobStore.Config<?> config) throws Exception {

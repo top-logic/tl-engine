@@ -8,6 +8,12 @@ package com.top_logic.storage.azure;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.HasURLFormat;
+import com.top_logic.basic.config.constraint.impl.MandatoryIfNoneGiven;
+import com.top_logic.basic.config.constraint.impl.NotGivenTogether;
+import com.top_logic.basic.config.order.DisplayOrder;
 
 /**
  * Settings for accessing an Azure storage account.
@@ -21,6 +27,12 @@ import com.top_logic.basic.config.annotation.Name;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@DisplayOrder({
+	AzureStorageAccountConfig.CONNECTION_STRING,
+	AzureStorageAccountConfig.ACCOUNT_NAME,
+	AzureStorageAccountConfig.ACCOUNT_KEY,
+	AzureStorageAccountConfig.ENDPOINT,
+})
 public interface AzureStorageAccountConfig extends ConfigurationItem {
 
 	/**
@@ -53,11 +65,13 @@ public interface AzureStorageAccountConfig extends ConfigurationItem {
 	 * configuration, or as plain text with the prefix <code>unencrypted:</code>. Empty if the
 	 * account is given by its account name and account key. A connection string with a shared
 	 * access signature instead of an account key grants access as well, but allows no direct
-	 * downloads.
+	 * downloads. Must not be given together with {@link #getAccountName()},
+	 * {@link #getAccountKey()} or {@link #getEndpoint()}.
 	 * </p>
 	 */
 	@Name(CONNECTION_STRING)
 	@Encrypted
+	@Constraint(value = NotGivenTogether.class, args = { @Ref(ACCOUNT_NAME), @Ref(ACCOUNT_KEY), @Ref(ENDPOINT) })
 	String getConnectionString();
 
 	/**
@@ -73,10 +87,12 @@ public interface AzureStorageAccountConfig extends ConfigurationItem {
 	 * Empty for the default endpoint of an account in the Azure cloud, which is derived from the
 	 * account name. Required for other clouds and for the storage emulator Azurite, where the
 	 * account name is part of the path (<code>http://127.0.0.1:10000/devstoreaccount1</code>). Only
-	 * used together with account name and account key.
+	 * used together with account name and account key. The value is an absolute URL with protocol
+	 * and host.
 	 * </p>
 	 */
 	@Name(ENDPOINT)
+	@Constraint(HasURLFormat.class)
 	String getEndpoint();
 
 	/**
@@ -88,10 +104,11 @@ public interface AzureStorageAccountConfig extends ConfigurationItem {
 	 * The name of the storage account.
 	 *
 	 * <p>
-	 * Required, if no connection string is given.
+	 * Required, if no {@link #getConnectionString()} is given.
 	 * </p>
 	 */
 	@Name(ACCOUNT_NAME)
+	@Constraint(value = MandatoryIfNoneGiven.class, args = @Ref(CONNECTION_STRING))
 	String getAccountName();
 
 	/**
@@ -103,12 +120,13 @@ public interface AzureStorageAccountConfig extends ConfigurationItem {
 	 * An access key of the storage account.
 	 *
 	 * <p>
-	 * Required, if no connection string is given. The value is given encrypted in the
-	 * configuration, or as plain text with the prefix <code>unencrypted:</code>.
+	 * Required, if no {@link #getConnectionString()} is given. The value is given encrypted in
+	 * the configuration, or as plain text with the prefix <code>unencrypted:</code>.
 	 * </p>
 	 */
 	@Name(ACCOUNT_KEY)
 	@Encrypted
+	@Constraint(value = MandatoryIfNoneGiven.class, args = @Ref(CONNECTION_STRING))
 	String getAccountKey();
 
 	/**

@@ -17,6 +17,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 
@@ -57,6 +58,7 @@ public class FileRepositoryContentReader extends AbstractConfiguredInstance<File
 	/**
 	 * Configuration options of {@link FileRepositoryContentReader}.
 	 */
+	@DisplayOrder({ Config.PATH, Config.ATTIC })
 	public interface Config<I extends FileRepositoryContentReader> extends PolymorphicConfiguration<I> {
 
 		/** Configuration name of {@link #getPath()}. */

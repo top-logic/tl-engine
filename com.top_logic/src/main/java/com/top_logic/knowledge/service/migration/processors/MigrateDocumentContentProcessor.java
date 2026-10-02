@@ -25,6 +25,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLColumnDefinition;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -101,6 +102,7 @@ public class MigrateDocumentContentProcessor
 	 * Configuration options for {@link MigrateDocumentContentProcessor}.
 	 */
 	@TagName(Config.TAG_NAME)
+	@DisplayOrder({ Config.TABLE, Config.ATTRIBUTE, Config.PROTOCOL, Config.READER })
 	public interface Config<I extends MigrateDocumentContentProcessor> extends PolymorphicConfiguration<I> {
 
 		/** Tag name of a {@link MigrateDocumentContentProcessor} in a migration script. */

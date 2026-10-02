@@ -45,16 +45,26 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.config.constraint.annotation.Bound;
+import com.top_logic.basic.config.constraint.annotation.Comparision;
+import com.top_logic.basic.config.constraint.annotation.ComparisonDependency;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.HasURLFormat;
+import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.config.format.MemorySizeFormat;
 import com.top_logic.basic.config.format.MillisFormat;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.io.LimitedInputStream;
 import com.top_logic.basic.io.binary.ContentDisposition;
 import com.top_logic.basic.io.blob.AbstractBlobStore;
 import com.top_logic.basic.io.blob.BlobInfo;
 import com.top_logic.basic.io.blob.BlobStore;
 import com.top_logic.basic.io.blob.NoSuchBlobException;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.tool.boundsec.CommandHandler.ConfirmConfig.VisibleIf;
 
 /**
  * {@link BlobStore} keeping each blob as block blob in a container of Azure Blob Storage.
@@ -175,6 +185,16 @@ public class AzureBlobStore extends AbstractBlobStore<AzureBlobStore.Config<?>> 
 	/**
 	 * Configuration of a {@link AzureBlobStore}.
 	 */
+	@DisplayOrder({
+		Config.CONTAINER,
+		Config.PREFIX,
+		Config.SINGLE_UPLOAD_THRESHOLD,
+		Config.BLOCK_SIZE,
+		Config.DIRECT_DOWNLOAD,
+		Config.DIRECT_DOWNLOAD_MIN_SIZE,
+		Config.DIRECT_DOWNLOAD_LIFETIME,
+		Config.PUBLIC_ENDPOINT,
+	})
 	public interface Config<I extends AzureBlobStore> extends BlobStore.Config<I>, AzureStorageAccountConfig {
 
 		/**
@@ -259,12 +279,25 @@ public class AzureBlobStore extends AbstractBlobStore<AzureBlobStore.Config<?>> 
 		 * <p>
 		 * Content up to this size is buffered in memory and uploaded in one request. Larger
 		 * content is uploaded in blocks. The size is given in bytes, optionally with a unit, e.g.
-		 * <code>16MB</code>.
+		 * <code>16MB</code>, and must not exceed 2147483639 bytes (2 GB minus 8 bytes). The
+		 * default is 16 MB.
 		 * </p>
+		 *
+		 * <p>
+		 * The threshold should be at least the {@link #getBlockSize()}: a smaller threshold
+		 * uploads content between both sizes as a single block, which takes two requests instead
+		 * of one.
+		 * </p>
+		 *
+		 * @implNote The upper bound is {@link AzureBlobStore#MAX_REQUEST_SIZE}.
 		 */
 		@Name(SINGLE_UPLOAD_THRESHOLD)
 		@Format(MemorySizeFormat.class)
 		@LongDefault(DEFAULT_SINGLE_UPLOAD_THRESHOLD)
+		@Constraint(NonNegative.class)
+		@Bound(comparison = Comparision.SMALLER_OR_EQUAL, value = MAX_REQUEST_SIZE)
+		@ComparisonDependency(comparison = Comparision.GREATER_OR_EQUAL, other = @Ref(BLOCK_SIZE), symmetric = false,
+			asWarning = true)
 		long getSingleUploadThreshold();
 
 		/**
@@ -276,14 +309,21 @@ public class AzureBlobStore extends AbstractBlobStore<AzureBlobStore.Config<?>> 
 		 * The size of the blocks of an upload in blocks.
 		 *
 		 * <p>
-		 * One block is buffered in memory per running upload. The size must be at least 64 kB.
-		 * Since a blob consists of at most 50,000 blocks, the block size limits the size of a
-		 * blob: the default of 8 MB allows blobs of up to 400 GB.
+		 * One block is buffered in memory per running upload. The size is given in bytes,
+		 * optionally with a unit, e.g. <code>8MB</code>. It must be at least 64 kB and must not
+		 * exceed 2147483639 bytes (2 GB minus 8 bytes). Since a blob consists of at most 50,000
+		 * blocks, the block size limits the size of a blob: the default of 8 MB allows blobs of up
+		 * to 400 GB.
 		 * </p>
+		 *
+		 * @implNote The bounds are {@link AzureBlobStore#MIN_BLOCK_SIZE} and
+		 *           {@link AzureBlobStore#MAX_REQUEST_SIZE}.
 		 */
 		@Name(BLOCK_SIZE)
 		@Format(MemorySizeFormat.class)
 		@LongDefault(DEFAULT_BLOCK_SIZE)
+		@Bound(comparison = Comparision.GREATER_OR_EQUAL, value = MIN_BLOCK_SIZE)
+		@Bound(comparison = Comparision.SMALLER_OR_EQUAL, value = MAX_REQUEST_SIZE)
 		long getBlockSize();
 
 		/**
@@ -318,12 +358,15 @@ public class AzureBlobStore extends AbstractBlobStore<AzureBlobStore.Config<?>> 
 		 * <p>
 		 * Smaller content is streamed through the application server, since the redirect would
 		 * cost more than it saves. The size is given in bytes, optionally with a unit, e.g.
-		 * <code>1MB</code>. Only relevant if {@link #getDirectDownload()} is enabled.
+		 * <code>1MB</code>; the default is 1 MB. Only relevant if {@link #getDirectDownload()} is
+		 * enabled.
 		 * </p>
 		 */
 		@Name(DIRECT_DOWNLOAD_MIN_SIZE)
+		@DynamicMode(fun = VisibleIf.class, args = @Ref(DIRECT_DOWNLOAD))
 		@Format(MemorySizeFormat.class)
 		@LongDefault(DEFAULT_DIRECT_DOWNLOAD_MIN_SIZE)
+		@Constraint(NonNegative.class)
 		long getDirectDownloadMinSize();
 
 		/**
@@ -337,13 +380,19 @@ public class AzureBlobStore extends AbstractBlobStore<AzureBlobStore.Config<?>> 
 		 * <p>
 		 * The storage checks the validity when the transfer starts, so a slow download of large
 		 * content completes after the URL has expired. Anyone holding the URL can fetch the
-		 * content within this time. At most 7 days. Only relevant if {@link #getDirectDownload()}
-		 * is enabled.
+		 * content within this time. At least one second, at most 7 days; the default is one
+		 * minute. Only relevant if {@link #getDirectDownload()} is enabled.
 		 * </p>
+		 *
+		 * @implNote The bounds are {@link AzureBlobStore#MIN_DIRECT_DOWNLOAD_LIFETIME} and
+		 *           {@link AzureBlobStore#MAX_DIRECT_DOWNLOAD_LIFETIME}.
 		 */
 		@Name(DIRECT_DOWNLOAD_LIFETIME)
+		@DynamicMode(fun = VisibleIf.class, args = @Ref(DIRECT_DOWNLOAD))
 		@Format(MillisFormat.class)
 		@LongDefault(DEFAULT_DIRECT_DOWNLOAD_LIFETIME)
+		@Bound(comparison = Comparision.GREATER_OR_EQUAL, value = MIN_DIRECT_DOWNLOAD_LIFETIME)
+		@Bound(comparison = Comparision.SMALLER_OR_EQUAL, value = MAX_DIRECT_DOWNLOAD_LIFETIME)
 		long getDirectDownloadLifetime();
 
 		/**
@@ -359,10 +408,13 @@ public class AzureBlobStore extends AbstractBlobStore<AzureBlobStore.Config<?>> 
 		 * URLs for direct downloads are issued for this address instead of the endpoint of the
 		 * account. For the storage emulator Azurite, the address includes the account name as
 		 * path, like the endpoint does. Empty if browsers reach the storage under the endpoint of
-		 * the account. Only relevant if {@link #getDirectDownload()} is enabled.
+		 * the account. The value is an absolute URL with protocol and host. Only relevant if
+		 * {@link #getDirectDownload()} is enabled.
 		 * </p>
 		 */
 		@Name(PUBLIC_ENDPOINT)
+		@DynamicMode(fun = VisibleIf.class, args = @Ref(DIRECT_DOWNLOAD))
+		@Constraint(HasURLFormat.class)
 		String getPublicEndpoint();
 
 		/**

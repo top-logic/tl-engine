@@ -55,12 +55,21 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.constraint.annotation.Bound;
+import com.top_logic.basic.config.constraint.annotation.Comparision;
+import com.top_logic.basic.config.constraint.annotation.ComparisonDependency;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.HasURLFormat;
+import com.top_logic.basic.config.constraint.impl.MandatoryIfGiven;
+import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.config.format.MemorySizeFormat;
 import com.top_logic.basic.config.format.MillisFormat;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.io.binary.ContentDisposition;
 import com.top_logic.basic.io.LimitedInputStream;
 import com.top_logic.basic.io.blob.AbstractBlobStore;
@@ -190,6 +199,23 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 	/**
 	 * Configuration of a {@link S3BlobStore}.
 	 */
+	@DisplayOrder({
+		Config.ENDPOINT,
+		Config.REGION,
+		Config.PATH_STYLE_ACCESS,
+		Config.BUCKET,
+		Config.PREFIX,
+		Config.ACCESS_KEY,
+		Config.SECRET_KEY,
+		Config.SERVER_SIDE_ENCRYPTION,
+		Config.KMS_KEY_ID,
+		Config.MULTIPART_THRESHOLD,
+		Config.PART_SIZE,
+		Config.DIRECT_DOWNLOAD,
+		Config.DIRECT_DOWNLOAD_MIN_SIZE,
+		Config.DIRECT_DOWNLOAD_LIFETIME,
+		Config.PUBLIC_ENDPOINT,
+	})
 	public interface Config<I extends S3BlobStore> extends BlobStore.Config<I> {
 
 		/**
@@ -272,10 +298,11 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		 *
 		 * <p>
 		 * Empty for AWS S3, where the endpoint is derived from the region. Required for
-		 * S3-compatible servers.
+		 * S3-compatible servers. The value is an absolute URL with protocol and host.
 		 * </p>
 		 */
 		@Name(ENDPOINT)
+		@Constraint(HasURLFormat.class)
 		String getEndpoint();
 
 		/**
@@ -363,6 +390,7 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		 * </p>
 		 */
 		@Name(ACCESS_KEY)
+		@Constraint(value = MandatoryIfGiven.class, args = @Ref(SECRET_KEY))
 		String getAccessKey();
 
 		/**
@@ -371,15 +399,16 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		void setAccessKey(String value);
 
 		/**
-		 * The secret key belonging to the access key.
+		 * The secret key belonging to the {@link #getAccessKey()}.
 		 *
 		 * <p>
-		 * The value is given encrypted in the configuration, or as plain text with the prefix
-		 * <code>unencrypted:</code>.
+		 * Required, if an access key is given. The value is given encrypted in the configuration,
+		 * or as plain text with the prefix <code>unencrypted:</code>.
 		 * </p>
 		 */
 		@Name(SECRET_KEY)
 		@Encrypted
+		@Constraint(value = MandatoryIfGiven.class, args = @Ref(ACCESS_KEY))
 		String getSecretKey();
 
 		/**
@@ -403,8 +432,8 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		 * The ID or ARN of the key used for the encryption mode SSE-KMS.
 		 *
 		 * <p>
-		 * Empty to use the default key of the key management service. Ignored for other
-		 * encryption modes.
+		 * Empty to use the default key of the key management service. Only relevant if the
+		 * {@link #getServerSideEncryption()} is SSE-KMS, ignored for other encryption modes.
 		 * </p>
 		 */
 		@Name(KMS_KEY_ID)
@@ -422,12 +451,25 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		 * <p>
 		 * Content up to this size is buffered in memory and uploaded in one request. Larger
 		 * content is uploaded in parts. The size is given in bytes, optionally with a unit, e.g.
-		 * <code>16MB</code>.
+		 * <code>16MB</code>, and must not exceed 2147483639 bytes (2 GB minus 8 bytes). The
+		 * default is 16 MB.
 		 * </p>
+		 *
+		 * <p>
+		 * The threshold should be at least the {@link #getPartSize()}: a smaller threshold uploads
+		 * content between both sizes as multipart upload of a single part, which takes three
+		 * requests instead of one.
+		 * </p>
+		 *
+		 * @implNote The upper bound is {@link S3BlobStore#MAX_REQUEST_SIZE}.
 		 */
 		@Name(MULTIPART_THRESHOLD)
 		@Format(MemorySizeFormat.class)
 		@LongDefault(DEFAULT_MULTIPART_THRESHOLD)
+		@Constraint(NonNegative.class)
+		@Bound(comparison = Comparision.SMALLER_OR_EQUAL, value = MAX_REQUEST_SIZE)
+		@ComparisonDependency(comparison = Comparision.GREATER_OR_EQUAL, other = @Ref(PART_SIZE), symmetric = false,
+			asWarning = true)
 		long getMultipartThreshold();
 
 		/**
@@ -439,14 +481,21 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		 * The size of the parts of a multipart upload.
 		 *
 		 * <p>
-		 * One part is buffered in memory per running upload. The size must be at least 5 MB. Since
-		 * S3 accepts at most 10,000 parts per upload, the part size limits the size of a blob: the
-		 * default of 8 MB allows blobs of up to 80 GB.
+		 * One part is buffered in memory per running upload. The size is given in bytes,
+		 * optionally with a unit, e.g. <code>8MB</code>. It must be at least 5 MB and must not
+		 * exceed 2147483639 bytes (2 GB minus 8 bytes). Since S3 accepts at most 10,000 parts per
+		 * upload, the part size limits the size of a blob: the default of 8 MB allows blobs of up
+		 * to 80 GB.
 		 * </p>
+		 *
+		 * @implNote The bounds are {@link S3BlobStore#MIN_PART_SIZE} and
+		 *           {@link S3BlobStore#MAX_REQUEST_SIZE}.
 		 */
 		@Name(PART_SIZE)
 		@Format(MemorySizeFormat.class)
 		@LongDefault(DEFAULT_PART_SIZE)
+		@Bound(comparison = Comparision.GREATER_OR_EQUAL, value = MIN_PART_SIZE)
+		@Bound(comparison = Comparision.SMALLER_OR_EQUAL, value = MAX_REQUEST_SIZE)
 		long getPartSize();
 
 		/**
@@ -480,12 +529,14 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		 * <p>
 		 * Smaller content is streamed through the application server, since the redirect would
 		 * cost more than it saves. The size is given in bytes, optionally with a unit, e.g.
-		 * <code>1MB</code>. Only relevant if {@link #getDirectDownload()} is enabled.
+		 * <code>1MB</code>; the default is 1 MB. Only relevant if {@link #getDirectDownload()} is
+		 * enabled.
 		 * </p>
 		 */
 		@Name(DIRECT_DOWNLOAD_MIN_SIZE)
 		@Format(MemorySizeFormat.class)
 		@LongDefault(DEFAULT_DIRECT_DOWNLOAD_MIN_SIZE)
+		@Constraint(NonNegative.class)
 		long getDirectDownloadMinSize();
 
 		/**
@@ -499,13 +550,18 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		 * <p>
 		 * The storage checks the validity when the transfer starts, so a slow download of large
 		 * content completes after the URL has expired. Anyone holding the URL can fetch the
-		 * content within this time. At most 7 days. Only relevant if {@link #getDirectDownload()}
-		 * is enabled.
+		 * content within this time. At least one second, at most 7 days; the default is one
+		 * minute. Only relevant if {@link #getDirectDownload()} is enabled.
 		 * </p>
+		 *
+		 * @implNote The bounds are {@link S3BlobStore#MIN_DIRECT_DOWNLOAD_LIFETIME} and
+		 *           {@link S3BlobStore#MAX_DIRECT_DOWNLOAD_LIFETIME}.
 		 */
 		@Name(DIRECT_DOWNLOAD_LIFETIME)
 		@Format(MillisFormat.class)
 		@LongDefault(DEFAULT_DIRECT_DOWNLOAD_LIFETIME)
+		@Bound(comparison = Comparision.GREATER_OR_EQUAL, value = MIN_DIRECT_DOWNLOAD_LIFETIME)
+		@Bound(comparison = Comparision.SMALLER_OR_EQUAL, value = MAX_DIRECT_DOWNLOAD_LIFETIME)
 		long getDirectDownloadLifetime();
 
 		/**
@@ -519,11 +575,12 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		 *
 		 * <p>
 		 * URLs for direct downloads are issued for this address. Empty if browsers reach the
-		 * storage under the address given in {@link #getEndpoint()}. Only relevant if
-		 * {@link #getDirectDownload()} is enabled.
+		 * storage under the address given in {@link #getEndpoint()}. The value is an absolute URL
+		 * with protocol and host. Only relevant if {@link #getDirectDownload()} is enabled.
 		 * </p>
 		 */
 		@Name(PUBLIC_ENDPOINT)
+		@Constraint(HasURLFormat.class)
 		String getPublicEndpoint();
 
 		/**

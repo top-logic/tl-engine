@@ -9,6 +9,7 @@ import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 
 /**
  * Internationalization constants for this package.
@@ -28,6 +29,12 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/** @en Must be set, if none of {0} is set. */
 	public static ResKey1 MUST_BE_SET_IF_OTHERS_ARE_UNSET__OTHERS;
+
+	/** @en Must be set, if {0} is set. */
+	public static ResKey1 MUST_BE_SET_IF_OTHER_IS_SET__OTHER;
+
+	/** @en The value {0} is none of the entries of {1}: {2} */
+	public static ResKey3 NOT_CONTAINED_IN__VALUE__OTHER__ENTRIES;
 
 	/** @en Must not be set together with {0}. */
 	public static ResKey1 MUST_NOT_BE_SET_TOGETHER_WITH__OTHER;

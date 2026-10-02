@@ -21,6 +21,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.io.blob.BlobStore;
 import com.top_logic.basic.io.blob.BlobStoreNames;
@@ -80,10 +82,16 @@ public class BlobGarbageCollectionTask<C extends BlobGarbageCollectionTask.Confi
 		 * removed. A restored backup that still references such content finds it only if the
 		 * content was not collected after the backup was taken.
 		 * </p>
+		 *
+		 * <p>
+		 * The time span is given with a unit, e.g. <code>24h</code> or <code>30d</code>, and must
+		 * not be negative. The default is 24 hours.
+		 * </p>
 		 */
 		@Name(GRACE_PERIOD)
 		@Format(MillisFormat.class)
 		@LongDefault(DEFAULT_GRACE_PERIOD)
+		@Constraint(NonNegative.class)
 		long getGracePeriod();
 
 		/**

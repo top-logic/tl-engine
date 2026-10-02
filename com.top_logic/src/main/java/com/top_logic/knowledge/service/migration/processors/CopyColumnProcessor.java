@@ -18,6 +18,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MOAttribute;
@@ -48,6 +49,7 @@ public class CopyColumnProcessor extends AbstractConfiguredInstance<CopyColumnPr
 	 * Configuration options of {@link CopyColumnProcessor}.
 	 */
 	@TagName(Config.TAG_NAME)
+	@DisplayOrder({ Config.TABLE, Config.SOURCE, Config.TARGET })
 	public interface Config<I extends CopyColumnProcessor> extends PolymorphicConfiguration<I> {
 
 		/** Tag name of a {@link CopyColumnProcessor} in a migration script. */

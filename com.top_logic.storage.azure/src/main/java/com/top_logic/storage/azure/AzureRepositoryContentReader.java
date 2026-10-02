@@ -23,6 +23,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.io.binary.AbstractBinaryData;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.knowledge.service.migration.processors.DocumentRepositoryConfig;
@@ -78,6 +79,12 @@ public class AzureRepositoryContentReader extends AbstractConfiguredInstance<Azu
 	/**
 	 * Configuration options of {@link AzureRepositoryContentReader}.
 	 */
+	@DisplayOrder({
+		Config.CONTAINER_NAME,
+		Config.DIRECTORY_NAME,
+		Config.PATH,
+		Config.ATTIC,
+	})
 	public interface Config<I extends AzureRepositoryContentReader>
 			extends PolymorphicConfiguration<I>, AzureStorageAccountConfig {
 

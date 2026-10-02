@@ -19,7 +19,11 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.ContainedIn;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
@@ -44,6 +48,7 @@ public class BlobStoreService extends ConfiguredManagedClass<BlobStoreService.Co
 	/**
 	 * Configuration of the {@link BlobStoreService}.
 	 */
+	@DisplayOrder({ Config.STORES, Config.DEFAULT_STORE })
 	public interface Config<I extends BlobStoreService> extends ConfiguredManagedClass.Config<I> {
 
 		/**
@@ -73,11 +78,13 @@ public class BlobStoreService extends ConfiguredManagedClass<BlobStoreService.Co
 		 * The name of the store that is used when no store is named explicitly.
 		 *
 		 * <p>
-		 * The value must be the name of one of the configured stores.
+		 * The value must be the name of a store configured in {@link #getStores()}. Binary
+		 * attributes and services that name no store keep their content in this store.
 		 * </p>
 		 */
 		@Name(DEFAULT_STORE)
 		@StringDefault(DEFAULT_STORE_NAME)
+		@Constraint(value = ContainedIn.class, args = @Ref(STORES))
 		String getDefaultStore();
 
 		/**

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="tl-graphic-blocks-server/flowChart.template.xml"
+>
+	<arguments
+		model="selection(com.top_logic.demo/technical/components/flowchart1/productsContextList.layout.xml#List)"
+		multiSelection="true"
+		partnerGroup="assemblies"
+	>
+		<name key="dynamic.49ae9c8d-db89-436a-ab31-009cf7e5cce8">
+			<en>Assemblies</en>
+			<de>Baugruppen</de>
+		</name>
+		<modelBuilder class="com.top_logic.graphic.flow.server.ui.ScriptFlowChartBuilder">
+			<create-chart><![CDATA[model -> {
+
+// Only assemblies (parts built from other parts) are displayed. Single parts are not part of the
+// diagram, but can be selected in the table sharing the selection with this diagram. Such a
+// selection is kept when the diagram is rebuilt or extended by a CTRL-click in the diagram.
+assemblies = $model.get(`test.flowchart:Product#buildInstructions`)
+    .filter(p -> !$p.get(`test.flowchart:FlowNode#inputs`).isEmpty());
+
+nodes = $assemblies.map(p -> flowSelection(
+    userObject: $p,
+    content: flowBorder(stroke: "#eccf33", thickness: 2, cssClass: "tlSelectionMarker",
+    content: flowFill(fill: "#ffee95", cssClass: "tlSelectionMarker",
+    content: flowPadding(all: 8,
+    content: flowText(
+        fontWeight: "bold",
+        text: $p.get(`test.flowchart:FlowNode#name`)))))));
+
+nodeByPart = $nodes.indexBy(n -> $n["userObject"]);
+
+flowChart(
+    root: flowPadding(all: 16,
+        content: flowTree(
+            nodes: $nodes,
+            connections: $assemblies
+                .map(p -> $p
+                    .get(`test.flowchart:FlowNode#inputs`)
+                    .filter(c -> $assemblies.containsElement($c))
+                    .map(c -> flowConnection(
+                        parent: $nodeByPart[$p],
+                        child: $nodeByPart[$c])))
+                .flatten()
+        )
+    )
+);
+
+}]]></create-chart>
+		</modelBuilder>
+		<buttons>
+			<button id="ID_046f0ca8_f7e9_43b6_a679_d0f2fe9eccdc"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

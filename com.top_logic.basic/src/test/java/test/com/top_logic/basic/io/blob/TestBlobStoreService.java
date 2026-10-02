@@ -30,6 +30,7 @@ import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.blob.AbstractBlobStore;
 import com.top_logic.basic.io.blob.BlobInfo;
 import com.top_logic.basic.io.blob.BlobStore;
+import com.top_logic.basic.io.blob.BlobStoreNames;
 import com.top_logic.basic.io.blob.BlobStoreService;
 import com.top_logic.basic.io.blob.FileSystemBlobStore;
 import com.top_logic.basic.module.ModuleException;
@@ -142,6 +143,21 @@ public class TestBlobStoreService extends BasicTestCase {
 			stores.remove(FAILING_STORE);
 			stores.remove(RECORDING_STORE);
 			restartService();
+		}
+	}
+
+	/** The store name options list the configured stores, no options without active service. */
+	public void testStoreNameOptions() throws ModuleException {
+		BlobStoreNames options = new BlobStoreNames();
+		assertEquals(new ArrayList<>(BlobStoreService.getInstance().getStores().keySet()), options.apply());
+		assertTrue(options.apply().contains(BlobStoreService.getInstance().getDefaultStore().getName()));
+
+		ModuleUtil.INSTANCE.shutDown(BlobStoreService.Module.INSTANCE);
+		try {
+			assertFalse(BlobStoreService.Module.INSTANCE.isActive());
+			assertEquals(new ArrayList<>(), options.apply());
+		} finally {
+			ModuleUtil.INSTANCE.startUp(BlobStoreService.Module.INSTANCE);
 		}
 	}
 

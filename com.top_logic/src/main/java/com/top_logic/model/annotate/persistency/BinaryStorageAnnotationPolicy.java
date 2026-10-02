@@ -7,6 +7,7 @@ package com.top_logic.model.annotate.persistency;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.dob.MOAttribute;
+import com.top_logic.dob.attr.BinaryAttributeKind;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.BinaryStorageSettings;
@@ -18,8 +19,8 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.TLBinaryStorage;
 
 /**
- * {@link DynamicBinaryStoragePolicy} taking store and threshold from the {@link TLBinaryStorage}
- * annotation of the model attribute.
+ * {@link DynamicBinaryStoragePolicy} taking kind, store and threshold from the
+ * {@link TLBinaryStorage} annotation of the model attribute.
  *
  * <p>
  * The model attribute is the attribute with the name of the dynamic attribute in the model type of
@@ -54,6 +55,10 @@ public class BinaryStorageAnnotationPolicy implements DynamicBinaryStoragePolicy
 			return defaults;
 		}
 		BinaryStorageSettings result = defaults;
+		BinaryAttributeKind kind = annotation.getKind();
+		if (kind != null) {
+			result = result.withKind(kind);
+		}
 		String store = StringServices.nonEmpty(annotation.getStore());
 		if (store != null) {
 			result = result.withStoreName(store);

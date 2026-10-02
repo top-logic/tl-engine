@@ -3,20 +3,25 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.knowledge.service.migration.processors;
+package com.top_logic.dob.attr;
+
+import java.io.IOException;
 
 import com.top_logic.basic.config.ExternallyNamed;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.blob.BlobStore;
+import com.top_logic.basic.io.blob.BlobStoreService;
+import com.top_logic.basic.io.blob.BlobUpload;
 import com.top_logic.dob.MOAttribute;
-import com.top_logic.dob.attr.AbstractBinaryAttribute;
-import com.top_logic.dob.attr.HybridBinaryAttribute;
-import com.top_logic.dob.attr.InlineBinaryAttribute;
-import com.top_logic.dob.attr.RefBinaryAttribute;
 
 /**
- * The kinds of binary attributes in the kbase schema.
+ * The kinds of storing the content of binary values: inline in the database, in a blob store, or
+ * depending on the size of the content.
  *
  * <p>
- * The external name of each kind is the tag name of the attribute in the schema.
+ * Each kind is the kind of a binary attribute in the kbase schema; its external name is the tag
+ * name of the attribute in the schema. For binary values of dynamic attributes, the kind is chosen
+ * per value.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -24,12 +29,12 @@ import com.top_logic.dob.attr.RefBinaryAttribute;
 public enum BinaryAttributeKind implements ExternallyNamed {
 
 	/**
-	 * Content stored inline in a BLOB column, see {@link InlineBinaryAttribute}.
+	 * All content stored inline in the database, see {@link InlineBinaryAttribute}.
 	 */
 	INLINE(InlineBinaryAttribute.Config.TAG_NAME, InlineBinaryAttribute.Config.class),
 
 	/**
-	 * Content stored in a blob store, see {@link RefBinaryAttribute}.
+	 * All content stored in a blob store, see {@link RefBinaryAttribute}.
 	 */
 	REF(RefBinaryAttribute.Config.TAG_NAME, RefBinaryAttribute.Config.class),
 
@@ -71,6 +76,39 @@ public enum BinaryAttributeKind implements ExternallyNamed {
 	 */
 	public boolean isInline() {
 		return this != REF;
+	}
+
+	/**
+	 * Prepares the given content for being stored according to this kind.
+	 *
+	 * <p>
+	 * Content stored in a blob store is uploaded by this method.
+	 * </p>
+	 *
+	 * @param storeName
+	 *        The name of the {@link BlobStore} in the {@link BlobStoreService} receiving external
+	 *        content, <code>null</code> for the default store. Ignored for {@link #INLINE}.
+	 * @param threshold
+	 *        The size from which on content is stored in the blob store, only relevant for
+	 *        {@link #HYBRID}.
+	 * @param data
+	 *        The data to store, or <code>null</code>.
+	 * @return A {@link BinaryData} with known size to store inline, or the reference to the
+	 *         uploaded content.
+	 */
+	public BinaryData toStoredValue(String storeName, long threshold, BinaryData data) throws IOException {
+		if (data == null) {
+			return null;
+		}
+		switch (this) {
+			case INLINE:
+				return BlobUpload.inline(data);
+			case REF:
+				return BlobUpload.upload(storeName, data);
+			case HYBRID:
+				return BlobUpload.uploadAboveThreshold(storeName, threshold, data);
+		}
+		throw new IllegalStateException("Unknown kind: " + this);
 	}
 
 	/**

@@ -7,11 +7,13 @@ package test.com.top_logic.element.meta.kbbased.storage;
 
 import static com.top_logic.knowledge.service.KBUtils.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Stream;
 
 import junit.framework.Test;
 
@@ -28,12 +30,15 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.AbstractBinaryData;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.blob.BlobBinaryData;
+import com.top_logic.basic.io.blob.BlobInfo;
 import com.top_logic.basic.io.blob.BlobStore;
 import com.top_logic.basic.io.blob.BlobStoreService;
 import com.top_logic.basic.io.blob.FileSystemBlobStore;
+import com.top_logic.dob.attr.BinaryAttributeKind;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -65,6 +70,10 @@ public class TestDynamicBinaryStorage extends BasicTestCase {
 	private static final String ANNOTATED_ATTRIBUTE = "annotated";
 
 	private static final String STORE_ONLY_ATTRIBUTE = "storeOnly";
+
+	private static final String INLINE_ATTRIBUTE = "inline";
+
+	private static final String REF_ATTRIBUTE = "ref";
 
 	private static final String OTHER_STORE = "other";
 
@@ -122,6 +131,70 @@ public class TestDynamicBinaryStorage extends BasicTestCase {
 			getNodeType().getPart(STORE_ONLY_ATTRIBUTE).getAnnotation(TLBinaryStorage.class);
 		assertEquals(OTHER_STORE, storeOnly.getStore());
 		assertNull(storeOnly.getThreshold());
+		assertNull(storeOnly.getKind());
+
+		assertEquals(BinaryAttributeKind.INLINE,
+			getNodeType().getPart(INLINE_ATTRIBUTE).getAnnotation(TLBinaryStorage.class).getKind());
+		assertEquals(BinaryAttributeKind.REF,
+			getNodeType().getPart(REF_ATTRIBUTE).getAnnotation(TLBinaryStorage.class).getKind());
+	}
+
+	/**
+	 * With the inline kind, content larger than the annotated threshold and the default threshold
+	 * is stored inline, no blob is written.
+	 */
+	public void testInlineKind() throws IOException {
+		byte[] large = randomContent(LARGE);
+
+		store(INLINE_ATTRIBUTE, large);
+
+		assertFalse(storedValue(INLINE_ATTRIBUTE) instanceof BlobBinaryData);
+		assertContent(large, load(INLINE_ATTRIBUTE));
+		assertNoBlobs();
+	}
+
+	/**
+	 * With the inline kind, content of unknown size is stored inline, no blob is written.
+	 */
+	public void testInlineKindUnknownSize() throws IOException {
+		byte[] large = randomContent(LARGE);
+
+		inTransaction(() -> _node.tUpdateByName(INLINE_ATTRIBUTE, unknownSize(large)));
+
+		BinaryData stored = (BinaryData) storedValue(INLINE_ATTRIBUTE);
+		assertFalse(stored instanceof BlobBinaryData);
+		assertEquals(LARGE, stored.getSize());
+		assertContent(large, load(INLINE_ATTRIBUTE));
+		assertNoBlobs();
+	}
+
+	/**
+	 * With the inline kind, the content of a blob assigned from another attribute is copied into
+	 * the database.
+	 */
+	public void testInlineKindFromBlob() throws IOException {
+		byte[] content = randomContent(500);
+		store(REF_ATTRIBUTE, content);
+		BinaryData blob = load(REF_ATTRIBUTE);
+
+		inTransaction(() -> _node.tUpdateByName(INLINE_ATTRIBUTE, blob));
+
+		assertFalse(storedValue(INLINE_ATTRIBUTE) instanceof BlobBinaryData);
+		assertContent(content, load(INLINE_ATTRIBUTE));
+	}
+
+	/** With the reference kind, even small content is stored in the annotated store. */
+	public void testRefKind() throws IOException {
+		byte[] small = randomContent(10);
+
+		store(REF_ATTRIBUTE, small);
+
+		BlobBinaryData stored = (BlobBinaryData) storedValue(REF_ATTRIBUTE);
+		assertEquals(OTHER_STORE, stored.getStoreName());
+		try (InputStream in = _service.getStore(OTHER_STORE).get(stored.getKey())) {
+			assertEquals(small, StreamUtilities.readStreamContents(in));
+		}
+		assertContent(small, load(REF_ATTRIBUTE));
 	}
 
 	/** Content above the annotated threshold is stored in the annotated store. */
@@ -222,6 +295,38 @@ public class TestDynamicBinaryStorage extends BasicTestCase {
 	private void store(String attributeName, byte[] content) {
 		inTransaction(() -> _node.tUpdateByName(attributeName,
 			BinaryDataFactory.createBinaryData(content, "text/plain", attributeName + ".txt")));
+	}
+
+	private void assertNoBlobs() throws IOException {
+		for (BlobStore store : _service.getStores().values()) {
+			try (Stream<BlobInfo> blobs = store.list()) {
+				assertEquals("Blobs in store '" + store.getName() + "'.", 0, blobs.count());
+			}
+		}
+	}
+
+	private static BinaryData unknownSize(byte[] content) {
+		return new AbstractBinaryData() {
+			@Override
+			public InputStream getStream() {
+				return new ByteArrayInputStream(content);
+			}
+
+			@Override
+			public long getSize() {
+				return -1;
+			}
+
+			@Override
+			public String getName() {
+				return "unknown.bin";
+			}
+
+			@Override
+			public String getContentType() {
+				return BinaryData.CONTENT_TYPE_OCTET_STREAM;
+			}
+		};
 	}
 
 	private BinaryData load(String attributeName) {

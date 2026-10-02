@@ -14,6 +14,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.config.constraint.annotation.Bound;
+import com.top_logic.basic.config.constraint.annotation.Comparision;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.config.format.MemorySizeFormat;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.blob.BlobUpload;
@@ -60,10 +64,20 @@ public class HybridBinaryAttribute extends AbstractBinaryAttribute implements Bl
 		 * larger in the blob store. The size is given in bytes, optionally with a unit, e.g.
 		 * <code>64KB</code> or <code>1MB</code>.
 		 * </p>
+		 *
+		 * <p>
+		 * The threshold must be positive: an attribute storing all content in the blob store is a
+		 * {@link RefBinaryAttribute}. It must not exceed 2147483639 bytes (2 GB minus 8 bytes),
+		 * since content of unknown size is buffered in memory up to the threshold to decide.
+		 * </p>
+		 *
+		 * @implNote The upper bound is {@link BlobUpload#MAX_BUFFERED_THRESHOLD}.
 		 */
 		@Name(THRESHOLD)
 		@Format(MemorySizeFormat.class)
 		@LongDefault(DEFAULT_THRESHOLD)
+		@Constraint(Positive.class)
+		@Bound(comparison = Comparision.SMALLER_OR_EQUAL, value = BlobUpload.MAX_BUFFERED_THRESHOLD)
 		long getThreshold();
 
 		/**
@@ -93,7 +107,9 @@ public class HybridBinaryAttribute extends AbstractBinaryAttribute implements Bl
 		super(context, config, true, true);
 		_storeName = StringServices.nonEmpty(config.getStore());
 		long threshold = config.getThreshold();
-		if (threshold <= 0 || threshold > Integer.MAX_VALUE - 8) {
+		if (threshold <= 0 || threshold > BlobUpload.MAX_BUFFERED_THRESHOLD) {
+			// The schema stored in the database is not checked against the constraints of the
+			// configuration.
 			context.error("Invalid threshold " + threshold + " of binary attribute '" + config.getAttributeName()
 				+ "', using default " + DEFAULT_THRESHOLD + ".");
 			threshold = DEFAULT_THRESHOLD;
@@ -121,7 +137,7 @@ public class HybridBinaryAttribute extends AbstractBinaryAttribute implements Bl
 
 	@Override
 	public BinaryData toStoredValue(BinaryData value) throws IOException {
-		return BlobUpload.uploadAboveThreshold(_storeName, _threshold, value);
+		return BinaryAttributeKind.HYBRID.toStoredValue(_storeName, _threshold, value);
 	}
 
 	@Override

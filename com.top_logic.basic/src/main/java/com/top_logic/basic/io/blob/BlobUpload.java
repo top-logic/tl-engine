@@ -28,6 +28,17 @@ import com.top_logic.basic.io.binary.BinaryDataFactory;
  */
 public final class BlobUpload {
 
+	/**
+	 * The largest threshold for which {@link #uploadAboveThreshold(String, long, BinaryData)}
+	 * accepts content of unknown size.
+	 *
+	 * <p>
+	 * To decide about content of unknown size, up to the threshold number of bytes are buffered in
+	 * an array, whose size is limited by the virtual machine.
+	 * </p>
+	 */
+	public static final int MAX_BUFFERED_THRESHOLD = Integer.MAX_VALUE - 8;
+
 	private BlobUpload() {
 		// Utility class.
 	}
@@ -92,6 +103,29 @@ public final class BlobUpload {
 	}
 
 	/**
+	 * Prepares the given data for being stored inline in the database.
+	 *
+	 * <p>
+	 * Content of a {@link BlobBinaryData} is copied, so that it no longer references the blob.
+	 * Content of unknown size is copied to determine its size.
+	 * </p>
+	 *
+	 * @param data
+	 *        The data, or <code>null</code>.
+	 * @return A {@link BinaryData} with known size that is not a {@link BlobBinaryData}, or
+	 *         <code>null</code> for <code>null</code>.
+	 */
+	public static BinaryData inline(BinaryData data) throws IOException {
+		if (data instanceof BlobBinaryData) {
+			try (InputStream content = data.getStream()) {
+				return BinaryDataFactory.createBinaryData(content, data.getSize(), data.getContentType(),
+					data.getName());
+			}
+		}
+		return withKnownSize(data);
+	}
+
+	/**
 	 * Stores the content of the given data in a blob store, if it has at least the given size.
 	 *
 	 * <p>
@@ -104,7 +138,9 @@ public final class BlobUpload {
 	 *        The name of the store in the {@link BlobStoreService}, <code>null</code> for the
 	 *        default store.
 	 * @param threshold
-	 *        The minimum size in bytes of content to store in the blob store.
+	 *        The minimum size in bytes of content to store in the blob store. With a threshold of
+	 *        <code>0</code>, all content is stored in the blob store. For content of unknown size,
+	 *        the threshold must not be larger than {@link #MAX_BUFFERED_THRESHOLD}.
 	 * @param data
 	 *        The data to store, or <code>null</code>.
 	 * @return A {@link BlobBinaryData} referencing the uploaded content, or a {@link BinaryData}
@@ -118,21 +154,14 @@ public final class BlobUpload {
 		long size = data.getSize();
 		if (size >= 0) {
 			if (size < threshold) {
-				if (data instanceof BlobBinaryData) {
-					// Content of another blob that must be kept inline.
-					try (InputStream content = data.getStream()) {
-						return BinaryDataFactory.createBinaryData(content, size, data.getContentType(),
-							data.getName());
-					}
-				}
-				return data;
+				return inline(data);
 			}
 			return upload(storeName, data);
 		}
 
-		if (threshold > Integer.MAX_VALUE - 8) {
+		if (threshold > MAX_BUFFERED_THRESHOLD) {
 			throw new IllegalArgumentException("Threshold too large for buffering content of unknown size: "
-				+ threshold);
+				+ threshold + " > " + MAX_BUFFERED_THRESHOLD);
 		}
 		try (InputStream content = data.getStream()) {
 			byte[] prefix = content.readNBytes((int) threshold);

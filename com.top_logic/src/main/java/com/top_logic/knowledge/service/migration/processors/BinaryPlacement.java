@@ -8,6 +8,7 @@ package com.top_logic.knowledge.service.migration.processors;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.blob.BlobStoreService;
 import com.top_logic.dob.attr.AbstractBinaryAttribute;
+import com.top_logic.dob.attr.BinaryAttributeKind;
 import com.top_logic.dob.attr.HybridBinaryAttribute;
 
 /**

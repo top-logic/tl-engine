@@ -34,6 +34,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.attr.AbstractBinaryAttribute;
+import com.top_logic.dob.attr.BinaryAttributeKind;
 import com.top_logic.dob.attr.HybridBinaryAttribute;
 import com.top_logic.dob.attr.InlineBinaryAttribute;
 import com.top_logic.dob.attr.MOAttributeImpl;
@@ -57,7 +58,6 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.KBSchemaUtil;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItemImpl;
-import com.top_logic.knowledge.service.migration.processors.BinaryAttributeKind;
 import com.top_logic.knowledge.service.migration.processors.MigrateBinaryAttributeProcessor;
 
 /**

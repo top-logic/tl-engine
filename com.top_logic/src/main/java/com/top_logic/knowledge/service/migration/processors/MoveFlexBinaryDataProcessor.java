@@ -21,9 +21,12 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.constraint.annotation.Bound;
+import com.top_logic.basic.config.constraint.annotation.Comparision;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.config.format.MemorySizeFormat;
@@ -35,9 +38,12 @@ import com.top_logic.basic.db.model.util.DBSchemaUtils;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLColumnDefinition;
+import com.top_logic.basic.io.blob.BlobStoreNames;
+import com.top_logic.basic.io.blob.BlobUpload;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.attr.AbstractBinaryAttribute;
+import com.top_logic.dob.attr.BinaryAttributeKind;
 import com.top_logic.dob.attr.HybridBinaryAttribute;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
@@ -46,6 +52,9 @@ import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.tool.boundsec.CommandHandler.ConfirmConfig.VisibleIf;
 
 /**
  * {@link MigrationProcessor} moving binary values of dynamic attributes from a table of dynamic
@@ -168,6 +177,8 @@ public class MoveFlexBinaryDataProcessor extends AbstractConfiguredInstance<Move
 		 */
 		@Name(STORE)
 		@Nullable
+		@Options(fun = BlobStoreNames.class)
+		@DynamicMode(fun = VisibleIf.class, args = @Ref(UPLOAD))
 		String getStore();
 
 		/**
@@ -175,13 +186,19 @@ public class MoveFlexBinaryDataProcessor extends AbstractConfiguredInstance<Move
 		 *
 		 * <p>
 		 * The size is given in bytes, optionally with a unit, e.g. <code>64KB</code> or
-		 * <code>1MB</code>. With a size of zero, all moved content is uploaded.
+		 * <code>1MB</code>. With a size of zero, all moved content is uploaded. The size must not
+		 * exceed 2147483639 bytes (2 GB minus 8 bytes), the largest threshold for content of
+		 * unknown size.
 		 * </p>
+		 *
+		 * @implNote The upper bound is {@link BlobUpload#MAX_BUFFERED_THRESHOLD}.
 		 */
 		@Name(THRESHOLD)
 		@Format(MemorySizeFormat.class)
 		@LongDefault(HybridBinaryAttribute.DEFAULT_THRESHOLD)
 		@Constraint(NonNegative.class)
+		@Bound(comparison = Comparision.SMALLER_OR_EQUAL, value = BlobUpload.MAX_BUFFERED_THRESHOLD)
+		@DynamicMode(fun = VisibleIf.class, args = @Ref(UPLOAD))
 		long getThreshold();
 
 	}

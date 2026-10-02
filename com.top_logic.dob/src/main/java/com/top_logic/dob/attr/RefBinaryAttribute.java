@@ -12,7 +12,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.io.blob.BlobUpload;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 
@@ -75,7 +74,7 @@ public class RefBinaryAttribute extends AbstractBinaryAttribute implements BlobR
 
 	@Override
 	public BinaryData toStoredValue(BinaryData value) throws IOException {
-		return BlobUpload.upload(_storeName, value);
+		return BinaryAttributeKind.REF.toStoredValue(_storeName, 0, value);
 	}
 
 	@Override

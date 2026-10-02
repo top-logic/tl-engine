@@ -29,6 +29,27 @@
 								<binary-storage store="other"/>
 							</annotations>
 						</property>
+						<property name="inline"
+							type="tl.core:Binary"
+						>
+							<annotations>
+								<binary-storage
+									kind="binary-inline"
+									store="other"
+									threshold="100"
+								/>
+							</annotations>
+						</property>
+						<property name="ref"
+							type="tl.core:Binary"
+						>
+							<annotations>
+								<binary-storage
+									kind="binary-ref"
+									store="other"
+								/>
+							</annotations>
+						</property>
 					</attributes>
 					<generalizations>
 						<generalization type="tl.model:TLObject"/>

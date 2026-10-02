@@ -55,7 +55,6 @@ import com.top_logic.basic.db.sql.SQLTable;
 import com.top_logic.basic.db.sql.SQLTableReference;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataSource;
-import com.top_logic.basic.io.blob.BlobUpload;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.DBHelper;
@@ -1269,13 +1268,13 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	}
 
 	/**
-	 * Uploads the content to the blob store chosen by the {@link DynamicBinaryStoragePolicy}, if
-	 * it has at least the threshold size chosen by the policy.
+	 * Keeps the content inline or uploads it to the blob store, as decided by the
+	 * {@link BinaryStorageSettings} chosen by the {@link DynamicBinaryStoragePolicy}.
 	 */
 	@Override
 	public BinaryData toStoredValue(KnowledgeItem item, String attribute, BinaryData value) throws IOException {
 		BinaryStorageSettings settings = _binaryStoragePolicy.forValue(item, attribute, _binaryDefaults);
-		return BlobUpload.uploadAboveThreshold(settings.storeName(), settings.threshold(), value);
+		return settings.toStoredValue(value);
 	}
     
 	@Override

@@ -116,6 +116,34 @@ public class TestBlobUpload extends BasicTestCase {
 		assertEquals(blob, inline);
 	}
 
+	/** Inline content is never uploaded, independent of its size. */
+	public void testInline() throws IOException {
+		BlobBinaryData blob = BlobUpload.upload(null, BinaryDataFactory.createBinaryData(content(THRESHOLD * 2)));
+		BinaryData copy = BlobUpload.inline(blob);
+		assertFalse(copy instanceof BlobBinaryData);
+		assertEquals(blob, copy);
+
+		byte[] large = content(THRESHOLD * 5);
+		BinaryData unknown = BlobUpload.inline(unknownSize(large));
+		assertFalse(unknown instanceof BlobBinaryData);
+		assertEquals(large.length, unknown.getSize());
+		assertTrue(Arrays.equals(large, StreamUtilities.readStreamContents(unknown)));
+
+		BinaryData known = BinaryDataFactory.createBinaryData(content(10));
+		assertSame(known, BlobUpload.inline(known));
+		assertNull(BlobUpload.inline(null));
+	}
+
+	/** Content of unknown size cannot be decided with a threshold too large for buffering. */
+	public void testThresholdTooLargeForUnknownSize() throws IOException {
+		try {
+			BlobUpload.uploadAboveThreshold(null, BlobUpload.MAX_BUFFERED_THRESHOLD + 1L, unknownSize(content(10)));
+			fail("Threshold too large for buffering expected.");
+		} catch (IllegalArgumentException ex) {
+			// Expected.
+		}
+	}
+
 	public void testWithKnownSize() throws IOException {
 		BinaryData known = BinaryDataFactory.createBinaryData(content(10));
 		assertSame(known, BlobUpload.withKnownSize(known));

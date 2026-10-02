@@ -23,10 +23,12 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.io.blob.BlobStore;
+import com.top_logic.basic.io.blob.BlobStoreNames;
 import com.top_logic.basic.io.blob.BlobStoreService;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.util.sched.task.impl.StateHandlingTask;
 import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 
@@ -93,6 +95,7 @@ public class BlobGarbageCollectionTask<C extends BlobGarbageCollectionTask.Confi
 		 */
 		@Name(STORES)
 		@Format(CommaSeparatedStrings.class)
+		@Options(fun = BlobStoreNames.class)
 		List<String> getStores();
 
 	}

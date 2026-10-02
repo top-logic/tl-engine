@@ -39,6 +39,7 @@ import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.NamedValues;
+import com.top_logic.dob.attr.BinaryAttributeKind;
 import com.top_logic.dob.attr.NextCommitNumberFuture;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.BasicTypes;
@@ -637,8 +638,8 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 
 	/**
 	 * Creates a {@link FlexVersionedDataManager} storing binary values with the
-	 * {@link DefaultBinaryStoragePolicy}, the default store and a threshold of
-	 * {@link FlexDataManagerFactory.Config#DEFAULT_BINARY_THRESHOLD}.
+	 * {@link DefaultBinaryStoragePolicy}, the {@link BinaryAttributeKind#HYBRID} kind, the default
+	 * store and a threshold of {@link FlexDataManagerFactory.Config#DEFAULT_BINARY_THRESHOLD}.
 	 *
 	 * @see #FlexVersionedDataManager(ConnectionPool, MOKnowledgeItemImpl, MOKnowledgeItemImpl,
 	 *      BinaryStorageSettings, DynamicBinaryStoragePolicy)
@@ -646,7 +647,8 @@ public class FlexVersionedDataManager extends AbstractFlexDataManager {
 	public FlexVersionedDataManager(ConnectionPool connectionPool, MOKnowledgeItemImpl dataType,
 			MOKnowledgeItemImpl binaryDataType) {
 		this(connectionPool, dataType, binaryDataType,
-			new BinaryStorageSettings(null, FlexDataManagerFactory.Config.DEFAULT_BINARY_THRESHOLD),
+			new BinaryStorageSettings(BinaryAttributeKind.HYBRID, null,
+				FlexDataManagerFactory.Config.DEFAULT_BINARY_THRESHOLD),
 			DefaultBinaryStoragePolicy.INSTANCE);
 	}
 

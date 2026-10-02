@@ -52,6 +52,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.attr.AbstractBinaryAttribute;
+import com.top_logic.dob.attr.BinaryAttributeKind;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -557,11 +558,11 @@ public class TestDynamicBinaryAttributes extends AbstractDBKnowledgeBaseClusterT
 	public void testStoragePolicy() throws Exception {
 		String special = "special";
 		DynamicBinaryStoragePolicy policy = (item, attribute, defaults) -> attribute.equals(special)
-			? new BinaryStorageSettings(OTHER_STORE, 100) : defaults;
+			? new BinaryStorageSettings(BinaryAttributeKind.HYBRID, OTHER_STORE, 100) : defaults;
 		FlexDataManager manager = new FlexVersionedDataManager(kb().getConnectionPool(),
 			kb().lookupType(AbstractFlexDataManager.FLEX_DATA),
 			kb().lookupType(AbstractFlexDataManager.FLEX_BINARY_DATA),
-			new BinaryStorageSettings(null, 1000), policy);
+			new BinaryStorageSettings(BinaryAttributeKind.HYBRID, null, 1000), policy);
 
 		byte[] content = randomContent(500);
 

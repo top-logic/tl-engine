@@ -81,7 +81,7 @@ public class TestAgentViewRefresh extends BasicTestCase {
 		// The run's account has to be the account the window is logged in as - that is what decides
 		// whether a change reaches it, and it is the whole point of the register.
 		subSession().setPerson(user);
-		_registry = new ReactWindowRegistry();
+		_registry = new ReactWindowRegistry("test-session");
 		_scope = _registry.getOrCreateModelScope(WINDOW);
 		_listener = event -> {
 			for (UserMemory memory : memories()) {
@@ -120,7 +120,7 @@ public class TestAgentViewRefresh extends BasicTestCase {
 	 *
 	 * <p>
 	 * This is the case the chat actually lives in: a run writes throughout, and a pass takes as
-	 * long as it takes to enter every registered window and wait for its request lock. Before
+	 * long as it takes to enter every registered window and wait for its interaction. Before
 	 * {@link PendingRefreshes} the pending set was cleared before the work and no second pass was
 	 * armed while the first one was running, so a write landing in that gap was dropped - the row
 	 * then stood still until an unrelated browser command or the 30 s heartbeat happened to

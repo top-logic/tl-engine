@@ -440,11 +440,11 @@
 						The row's state as a CSS class. <data-list> knows nothing about tasks; the
 						three class names are the generic row states its stylesheet defines.
 					-->
-					<css-class><![CDATA[t -> switch {
+					<row-css-class><![CDATA[t -> switch {
 						$t.get(`tl.ai.execution:AgentTask#status`) == "completed": "is-done";
 						$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": "is-running";
 						default: "is-pending";
-					}]]></css-class>
+					}]]></row-css-class>
 					<empty-text>
 						<en>Nothing planned yet</en>
 						<de>Noch nichts geplant</de>
@@ -685,7 +685,7 @@
 				object - picked in the "Belege" list, or presented by the agent.
 			-->
 			<pane>
-				<form input="paneInvoice">
+				<form input="paneInvoice" with-inset="true">
 					<field attribute="date"/>
 					<field attribute="description"/>
 					<field attribute="amount"/>

@@ -138,8 +138,8 @@ public class DataListElement implements UIElement {
 		/** Configuration property name for {@link #getCount()}. */
 		String COUNT = "count";
 
-		/** Configuration property name for {@link #getCssClass()}. */
-		String CSS_CLASS = "css-class";
+		/** Configuration property name for {@link #getRowCssClass()}. */
+		String ROW_CSS_CLASS = "row-css-class";
 
 		/** Configuration property name for {@link #getCommands()}. */
 		String COMMANDS = "commands";
@@ -262,11 +262,16 @@ public class DataListElement implements UIElement {
 		 * so several classes are a space-separated string; what they look like is the application
 		 * theme's business.
 		 * </p>
+		 *
+		 * <p>
+		 * Not {@link #getCssClass() css-class}, which every view element has and which is the one
+		 * class of the list's root element.
+		 * </p>
 		 */
-		@Name(CSS_CLASS)
-		@Label("CSS class")
+		@Name(ROW_CSS_CLASS)
+		@Label("Row CSS class")
 		@Nullable
-		Expr getCssClass();
+		Expr getRowCssClass();
 
 		/**
 		 * Header buttons, rendered above the list. Each is a standard view command - a
@@ -465,6 +470,15 @@ public class DataListElement implements UIElement {
 	@CalledByReflection
 	public DataListElement(InstantiationContext context, Config config) {
 		_config = config;
+		String cssClass = config.getCssClass();
+		if (cssClass != null && cssClass.contains("->")) {
+			// Up to tl-ai 2.0.5, css-class was the row function; since the engine gave every element
+			// a css-class of its own, a view still written that way would put the script text on the
+			// list's root element and lose the row classes without a word.
+			context.error("The css-class of a <data-list> is the class of the list itself, but '"
+				+ cssClass + "' is a function of a row. Rename the property to "
+				+ Config.ROW_CSS_CLASS + ".");
+		}
 		// Instantiate the commands here, where an InstantiationContext is available.
 		instantiate(context, config.getCommands(), _commands, _commandConfigs);
 		instantiate(context, config.getRowCommands(), _rowCommands, _rowCommandConfigs);

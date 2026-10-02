@@ -1494,7 +1494,9 @@ public class ToolAccessPolicyComponent extends FormComponent {
 	 * </p>
 	 */
 	private HTMLFragment warnings() {
-		List<ResKey> messages = PolicyChecks.warnings(draft().config(), rolesWithModelRights());
+		List<ResKey> messages =
+			PolicyChecks.warnings(draft().config(), rolesWithModelRights(),
+				AiToolAccessService.partsWithoutSecurity());
 		if (messages.isEmpty()) {
 			return Fragments.empty();
 		}

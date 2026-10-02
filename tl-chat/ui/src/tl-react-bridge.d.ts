@@ -26,6 +26,15 @@ declare module 'tl-react-bridge' {
 
   export function useTLState(): Record<string, unknown>
 
+  /**
+   * The class name of a control's root element: the given classes the component brings itself,
+   * followed by the `css-class` the view configured for this one element. Falsy entries are left out.
+   */
+  export function rootClassName(
+    state: Record<string, unknown>,
+    ...classes: (string | false | null | undefined)[]
+  ): string
+
   export function useTLCommand(): (
     command: string,
     args?: Record<string, unknown>,

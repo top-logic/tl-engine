@@ -1,4 +1,4 @@
-import { React, TLChild, useTLCommand, useTLState } from 'tl-react-bridge'
+import { React, rootClassName, TLChild, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { bundle } from './i18n'
@@ -255,7 +255,7 @@ export function TLChatRail({ controlId }: TLCellProps) {
 
   if (!chat.authenticated) {
     return (
-      <div id={controlId} className="tl-chat-rail is-signed-out">
+      <div id={controlId} className={rootClassName(state, 'tl-chat-rail', 'is-signed-out')}>
         <div className="signed-out">
           <h2>{labels.signInHeading}</h2>
           <p>{labels.signInBody}</p>
@@ -268,7 +268,12 @@ export function TLChatRail({ controlId }: TLCellProps) {
     <div
       id={controlId}
       ref={root}
-      className={`tl-chat-rail${drawer ? ' is-drawer' : ''}${drawerOpen ? ' is-drawer-open' : ''}`}
+      className={rootClassName(
+        state,
+        'tl-chat-rail',
+        drawer && 'is-drawer',
+        drawerOpen && 'is-drawer-open',
+      )}
       style={drawer ? ({ '--rail-drawer-end': `${drawerEnd}px` } as React.CSSProperties) : undefined}
       onKeyDown={onDrawerKey}
     >

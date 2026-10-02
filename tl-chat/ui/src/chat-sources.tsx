@@ -1,4 +1,4 @@
-import { React, useTLCommand, useTLState } from 'tl-react-bridge'
+import { React, rootClassName, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import { useBadgeChannel } from './chat-section'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
@@ -41,7 +41,7 @@ export function TLChatSources({ controlId }: TLCellProps) {
   }, [])
 
   return (
-    <div id={controlId} className="tl-chat-section">
+    <div id={controlId} className={rootClassName(state, 'tl-chat-section')}>
       <SourcesSection
         sources={chat.sources}
         labels={labels}

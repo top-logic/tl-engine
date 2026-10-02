@@ -129,6 +129,11 @@ describe('the rendered dock', () => {
     expect(html).toMatch(/class="tl-chat-dock__panel"[^>]*hidden/)
   })
 
+  it('writes the css-class of the element on its root, after its own classes', () => {
+    const html = render(dockState({ cssClass: 'appDock' }))
+    expect(html).toMatch(/^<div id="dock-test" class="tl-chat-dock appDock"/)
+  })
+
   /** On the first commit the dock cannot know yet whether the page shows its conversation. */
   it('mounts nothing of its content on the first commit', () => {
     expect(render(dockState({ chatId: 'dock-first-commit' }))).not.toContain('data-module')

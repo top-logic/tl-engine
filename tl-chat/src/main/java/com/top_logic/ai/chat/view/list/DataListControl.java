@@ -48,6 +48,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
@@ -121,7 +122,7 @@ public class DataListControl extends ReactControl {
 
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
 		_groupExecutor = config.getGroupBy() == null ? null : QueryExecutor.compile(config.getGroupBy());
-		_cssClassExecutor = config.getCssClass() == null ? null : QueryExecutor.compile(config.getCssClass());
+		_cssClassExecutor = config.getRowCssClass() == null ? null : QueryExecutor.compile(config.getRowCssClass());
 
 		LinesConfig linesConfig = config.getLines();
 		if (linesConfig != null) {
@@ -137,6 +138,7 @@ public class DataListControl extends ReactControl {
 			_inputChannels.add(context.resolveChannel(ref));
 		}
 
+		setCssClass(config.getCssClass());
 		putState("search", Boolean.valueOf(config.getSearch()));
 		putState("collapsible", Boolean.valueOf(config.getCollapsible()));
 		putState("collapsed", Boolean.valueOf(config.getCollapsed()));
@@ -151,10 +153,7 @@ public class DataListControl extends ReactControl {
 		List<Map<String, Object>> buttons = new ArrayList<>();
 		for (int i = 0; i < commands.size() && i < commandConfigs.size(); i++) {
 			ViewCommand.Config cmdConfig = commandConfigs.get(i);
-			ViewChannel commandInput =
-				cmdConfig.getInput() == null ? null : context.resolveChannel(cmdConfig.getInput());
-			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
-			ViewCommandModel model = ViewCommandModel.create(commands.get(i), cmdConfig, commandInput, rule);
+			ViewCommandModel model = ViewCommandModel.forCommand(context, commands.get(i), cmdConfig);
 			_commandModels.add(model);
 
 			Map<String, Object> entry = new LinkedHashMap<>();
@@ -165,7 +164,7 @@ public class DataListControl extends ReactControl {
 		}
 		putState("buttons", buttons);
 		if (!_commandModels.isEmpty()) {
-			addAttachListener(() -> _commandModels.forEach(ViewCommandModel::attach));
+			addAttachListener(() -> _commandModels.forEach(model -> model.attach(context.getModelScope())));
 			addDetachListener(() -> _commandModels.forEach(ViewCommandModel::detach));
 		}
 
@@ -194,7 +193,8 @@ public class DataListControl extends ReactControl {
 				ViewChannel commandInput =
 					cmdConfig.getInput() == null ? _rowChannel : context.resolveChannel(cmdConfig.getInput());
 				ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
-				_rowCommandModels.add(ViewCommandModel.create(rowCommands.get(i), cmdConfig, commandInput, rule));
+				_rowCommandModels.add(
+					ViewCommandModel.create(context, rowCommands.get(i), cmdConfig, commandInput, rule));
 			}
 			// Wrapped, so each command runs in *this* list's context. The opener dispatches with the
 			// frame's own ReactContext, which is not a ViewContext and does not hold this list's row
@@ -206,7 +206,7 @@ public class DataListControl extends ReactControl {
 				menuCommands.add(new InListContext(model, context));
 			}
 			_rowMenu = new ContextMenuContribution(row -> _rowChannel.set(row), menuCommands);
-			addAttachListener(() -> _rowCommandModels.forEach(ViewCommandModel::attach));
+			addAttachListener(() -> _rowCommandModels.forEach(model -> model.attach(context.getModelScope())));
 			addDetachListener(() -> _rowCommandModels.forEach(ViewCommandModel::detach));
 		}
 		putState("hasRowMenu", Boolean.valueOf(_rowMenu != null));
@@ -519,6 +519,26 @@ public class DataListControl extends ReactControl {
 		@Override
 		public HandlerResult executeCommand(ReactContext ignored) {
 			return model.executeCommand(context);
+		}
+
+		@Override
+		public HandlerResult perform(ReactContext ignored) {
+			return model.perform(context);
+		}
+
+		@Override
+		public ExecutableState getExecutableState() {
+			return model.getExecutableState();
+		}
+
+		@Override
+		public boolean isActive() {
+			return model.isActive();
+		}
+
+		@Override
+		public String getCssClasses() {
+			return model.getCssClasses();
 		}
 
 		@Override

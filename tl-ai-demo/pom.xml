@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-app</artifactId>
-		<version>8.0.0-alpha8</version>
+		<version>8.0.0-alpha9</version>
 		<relativePath />
 	</parent>
 	
@@ -18,7 +18,7 @@
 	  </license>
 	</licenses>
 	
-	<version>8.0.0-alpha8</version>
+	<version>8.0.0-alpha9</version>
   	
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>

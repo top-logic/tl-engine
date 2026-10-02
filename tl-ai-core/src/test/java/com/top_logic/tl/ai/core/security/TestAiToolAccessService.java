@@ -17,7 +17,10 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.annotate.security.AccessGrant;
+import com.top_logic.model.annotate.security.AccessRevoke;
+import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tool.boundsec.CommandGroupReference;
@@ -26,6 +29,8 @@ import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
+import com.top_logic.tl.ai.core.security.layout.I18NConstants;
+import com.top_logic.tl.ai.core.security.layout.PolicyChecks;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
@@ -360,6 +365,96 @@ public class TestAiToolAccessService extends TestCase {
 				classRights("pm:Note", "Delete", "janitor"))));
 	}
 
+	/**
+	 * A revoke in the same entry takes back what a grant before it gave - the application revoking
+	 * what the framework granted, both layers appended to one rule sequence.
+	 */
+	public void testRevokeTakesBackAnEarlierGrant() {
+		assertEquals(Set.of("ticketReader"),
+			AiToolAccessService.rolesWithModelRights(securityConfig(
+				classRights("pm:Ticket",
+					grant("Read", "projectPartner, ticketReader", false),
+					revoke("Read", "projectPartner", false)))));
+	}
+
+	/** A revoke without roles takes back every role of the operation, and only of that operation. */
+	public void testRevokeWithoutRolesClearsTheOperation() {
+		assertEquals(Set.of("ticketWriter"),
+			AiToolAccessService.rolesWithModelRights(securityConfig(
+				classRights("pm:Ticket",
+					grant("Read", "projectPartner", false),
+					grant("Write", "ticketWriter", false),
+					revoke("Read", "", false)))));
+	}
+
+	/** The sequence is applied in order: a grant after a revoke allows the operation again. */
+	public void testGrantAfterRevokeCounts() {
+		assertEquals(Set.of("projectPartner"),
+			AiToolAccessService.rolesWithModelRights(securityConfig(
+				classRights("pm:Ticket",
+					grant("Read", "projectPartner", false),
+					revoke("Read", "projectPartner", false),
+					grant("Read", "projectPartner", false)))));
+	}
+
+	/**
+	 * A grant passed on to the specializations still reaches them when a revoke takes it back from
+	 * the type alone, so the role keeps counting.
+	 */
+	public void testInheritedGrantSurvivesARevokeOfTheTypeAlone() {
+		assertEquals(Set.of("projectPartner"),
+			AiToolAccessService.rolesWithModelRights(securityConfig(
+				classRights("pm:Ticket",
+					grant("Read", "projectPartner", true),
+					revoke("Read", "projectPartner", false)))));
+	}
+
+	/** A revoke takes back nothing another entry granted: the role is readable there. */
+	public void testRevokeDoesNotReachOtherEntries() {
+		assertEquals(Set.of("projectPartner"),
+			AiToolAccessService.rolesWithModelRights(securityConfig(
+				classRights("pm:Project", grant("Read", "projectPartner", false)),
+				classRights("pm:Ticket", revoke("Read", "projectPartner", false)))));
+	}
+
+	/**
+	 * The types and modules marked {@code without-security} are what a role no grant names still
+	 * reaches - the engine lets every account at their objects, whatever its roles (#609).
+	 */
+	public void testPartsWithoutSecurityAreCollected() {
+		SecurityConfigurationService.TLModuleAccessRights lookups =
+			TypedConfiguration.newConfigItem(SecurityConfigurationService.TLModuleAccessRights.class);
+		lookups.setName("pm.lookup");
+		lookups.setWithoutSecurity(true);
+		SecurityConfigurationService.ModelAccessRights notes = classRights("pm:Note");
+		((SecurityConfigurationService.TLClassAccessRights) notes).setWithoutSecurity(true);
+
+		assertEquals("Only the entries marked, module and type alike, not the one that grants.",
+			Set.of("pm.lookup", "pm:Note"),
+			AiToolAccessService.partsWithoutSecurity(securityConfig(lookups, notes,
+				classRights("pm:Project", "Read", "projectPartner"))));
+		assertEquals(Set.of(), AiToolAccessService.partsWithoutSecurity(securityConfig(
+			classRights("pm:Project", "Read", "projectPartner"))));
+	}
+
+	/**
+	 * A role whose data tools reach the types without security is not told they see nothing; it is
+	 * told what they reach. Without such types the original sentence stands (#609).
+	 */
+	public void testDataRoleWarningNamesWhatWithoutSecurityReaches() {
+		ResKey precise = PolicyChecks.dataRoleWithoutModelRights("lookupEditor",
+			Set.of(ToolGroups.DATA_WRITE), Set.of("pm.lookup", "pm:Note"));
+		assertEquals(I18NConstants.WARN_DATA_ROLE_ONLY_WITHOUT_SECURITY__ROLE_GROUPS_PARTS.getKey(),
+			precise.getKey());
+		assertEquals(List.of("lookupEditor", ToolGroups.DATA_WRITE, "pm.lookup, pm:Note"),
+			List.of(precise.arguments()));
+
+		ResKey nothing = PolicyChecks.dataRoleWithoutModelRights("dora",
+			Set.of(ToolGroups.DATA_WRITE), Set.of());
+		assertEquals(I18NConstants.WARN_DATA_ROLE_WITHOUT_MODEL_RIGHTS__ROLE_GROUPS.getKey(),
+			nothing.getKey());
+	}
+
 	private static SecurityConfigurationService.Config securityConfig(
 			SecurityConfigurationService.ModelAccessRights... rights) {
 		SecurityConfigurationService.Config config =
@@ -372,20 +467,41 @@ public class TestAiToolAccessService extends TestCase {
 
 	private static SecurityConfigurationService.ModelAccessRights classRights(String typeName,
 			String operation, String roles) {
+		return classRights(typeName, grant(operation, roles, false));
+	}
+
+	private static SecurityConfigurationService.ModelAccessRights classRights(String typeName,
+			AccessRule... rules) {
 		SecurityConfigurationService.TLClassAccessRights rights =
 			TypedConfiguration.newConfigItem(SecurityConfigurationService.TLClassAccessRights.class);
 		rights.setName(typeName);
-		AccessGrant grant = TypedConfiguration.newConfigItem(AccessGrant.class);
-		// AccessGrant declares no setter for its operation, so it is updated generically.
-		grant.update(grant.descriptor().getProperty(AccessGrant.OPERATION),
-			new CommandGroupReference(operation));
+		rights.getGrants().addAll(List.of(rules));
+		return rights;
+	}
+
+	private static AccessRule grant(String operation, String roles, boolean inherit) {
+		return rule(AccessGrant.class, operation, roles, inherit);
+	}
+
+	private static AccessRule revoke(String operation, String roles, boolean inherit) {
+		return rule(AccessRevoke.class, operation, roles, inherit);
+	}
+
+	private static AccessRule rule(Class<? extends AccessRule> kind, String operation, String roles,
+			boolean inherit) {
+		AccessRule rule = TypedConfiguration.newConfigItem(kind);
+		// AccessRule declares no setters, so its properties are updated generically.
+		rule.update(rule.descriptor().getProperty(AccessRule.OPERATION), new CommandGroupReference(operation));
+		rule.update(rule.descriptor().getProperty(AccessRule.INHERIT), inherit);
 		for (String roleName : roles.split(",")) {
+			if (roleName.isBlank()) {
+				continue;
+			}
 			RoleConfig role = TypedConfiguration.newConfigItem(RoleConfig.class);
 			role.setName(roleName.trim());
-			grant.getRoles().add(role);
+			rule.getRoles().add(role);
 		}
-		rights.getGrants().put(grant.getOperation(), grant);
-		return rights;
+		return rule;
 	}
 
 	private static ToolAccessPolicy policy(RoleAccess... roles) {

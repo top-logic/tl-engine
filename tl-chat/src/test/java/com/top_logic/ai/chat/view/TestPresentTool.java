@@ -46,8 +46,8 @@ import com.top_logic.util.model.ModelService;
  * The test drives the real path: a real sub-session, a window registered with
  * {@link AgentViewRefreshService} the way a rendering chat registers one, and a channel opened
  * through {@link ChatViewBinding} the way {@code <chat-conversation present="…">} opens one. What
- * stands in for the browser is the {@link ReactWindowRegistry} - the tool only ever asks it for the
- * request lock - and what stands in for the page is a listener on the channel.
+ * stands in for the browser is the {@link ReactWindowRegistry} - the tool only ever asks it for an
+ * interaction - and what stands in for the page is a listener on the channel.
  * </p>
  *
  * <p>
@@ -232,7 +232,7 @@ public class TestPresentTool extends BasicTestCase {
 
 	/** Registers the window the run belongs to, as a rendering chat element does. */
 	private void withWindow() {
-		AgentViewRefreshService.registerWindow(subSession(), windowName(), new ReactWindowRegistry());
+		AgentViewRefreshService.registerWindow(subSession(), windowName(), new ReactWindowRegistry("test-session"));
 	}
 
 	/** Opens the fixture's channel to the agent, as {@code <chat-conversation present="…">} does. */

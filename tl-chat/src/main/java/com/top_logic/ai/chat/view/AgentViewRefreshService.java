@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
@@ -27,8 +26,6 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.sched.SchedulerService;
-import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
@@ -48,16 +45,17 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
  * <p>
  * The service listens for committed changes, coalesces them (many task updates within one turn cost
  * one refresh, see {@link Config#getRefreshDelayMillis()}) and then, for each registered window of
- * the affected account, synthesizes the events in that window's sub-session and <em>under the
- * window's request lock</em>. The lock is what makes this safe beside a browser command: a React
- * control's state map is a plain {@code HashMap}, so pushing state from two threads at once would
- * corrupt it. (The heartbeat path in the engine skips the lock; this deliberately does not copy
- * that.)
+ * the affected account, synthesizes the events in that window's sub-session and <em>within the
+ * window's {@link com.top_logic.layout.react.window.Interaction interaction}</em>, as the engine's
+ * own request handling does. The interaction is what makes this safe beside a browser command: a
+ * React control's state map is a plain {@code HashMap}, so pushing state from two threads at once
+ * would corrupt it. (The engine's SSE heartbeat synthesizes without it; this deliberately does not
+ * copy that.) It is entered with a time limit, see {@link WindowInteraction}.
  * </p>
  *
  * <p>
  * <b>Coalescing never forgets a change.</b> A pass takes time - it enters every registered window's
- * sub-session and waits for that window's request lock - and the agent writes throughout. A change
+ * sub-session and waits for that window's interaction - and the agent writes throughout. A change
  * that arrives while a pass is running is therefore carried into the next pass rather than folded
  * into the running one, which has already taken its batch; {@link PendingRefreshes} is the whole of
  * that rule. Without it such a change was dropped, and the row it was about stood still until an
@@ -120,12 +118,12 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		int getRefreshDelayMillis();
 
 		/**
-		 * How long a refresh waits for a window's request lock, in milliseconds.
+		 * How long a refresh waits for a window's interaction, in milliseconds.
 		 *
 		 * <p>
-		 * The lock is held while that window runs a browser command, and such a command synthesizes
-		 * the model events itself when it finishes - so giving up costs nothing but a little
-		 * latency, whereas waiting would tie up a scheduler thread behind a slow command.
+		 * The interaction is held while that window runs a browser command, and such a command
+		 * synthesizes the model events itself when it finishes - so giving up costs nothing but a
+		 * little latency, whereas waiting would tie up a scheduler thread behind a slow command.
 		 * </p>
 		 *
 		 * @see #LOCK_TIMEOUT_MILLIS
@@ -135,14 +133,14 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		int getLockTimeoutMillis();
 
 		/**
-		 * How long a write into a window waits for that window's request lock, in milliseconds.
+		 * How long a write into a window waits for that window's interaction, in milliseconds.
 		 *
 		 * <p>
 		 * Longer than {@link #getLockTimeoutMillis()}, and for the opposite reason: a refresh that
-		 * gives up loses nothing, because the command holding the lock synthesizes the same events
-		 * when it finishes. A write has no such second chance - nobody else is going to put the
-		 * agent's value on the channel - so giving up means telling the model that the page could
-		 * not be reached.
+		 * gives up loses nothing, because the command holding the interaction synthesizes the same
+		 * events when it finishes. A write has no such second chance - nobody else is going to put
+		 * the agent's value on the channel - so giving up means telling the model that the page
+		 * could not be reached.
 		 * </p>
 		 *
 		 * @see #WRITE_TIMEOUT_MILLIS
@@ -198,6 +196,9 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 	 */
 	private final PendingRefreshes _pending = new PendingRefreshes();
 
+	/** Enters a window's interaction for the refresh and for {@link #inWindow}, bounded in time. */
+	private WindowInteraction _interaction;
+
 	/** The scheduled refresh, or <code>null</code> when none is due. */
 	private volatile ScheduledFuture<?> _scheduled;
 
@@ -232,6 +233,7 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 	@Override
 	protected void startUp() {
 		super.startUp();
+		_interaction = new WindowInteraction();
 		_instance = this;
 		AgentExecutionStore.getInstance().addChangeListener(this);
 	}
@@ -249,6 +251,7 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		_windows.clear();
 		_pending.clear();
 		_instance = null;
+		_interaction.close();
 		super.shutDown();
 	}
 
@@ -306,11 +309,11 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 	}
 
 	/**
-	 * Runs {@code action} in the browser window of {@code subSession}, under that window's request
-	 * lock, with the window's pending model changes applied first.
+	 * Runs {@code action} in the browser window of {@code subSession}, within that window's
+	 * interaction, with the window's pending model changes applied first.
 	 *
 	 * <p>
-	 * This is the write counterpart of the refresh: same window register, same lock discipline, but
+	 * This is the write counterpart of the refresh: same window register, same interaction, but
 	 * the caller supplies what happens rather than only asking for a synthesize. It is what lets an
 	 * agent tool put a value onto a view channel of the window the run belongs to - a React
 	 * control's state map is a plain {@code HashMap}, so a write from the agent thread beside a
@@ -333,7 +336,9 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 	 *        The window's sub-session; on the agent thread that is the bound one. May be
 	 *        <code>null</code>, which is {@link WindowAccess#NO_WINDOW}.
 	 * @param action
-	 *        What to do in the window. Runs on the calling thread.
+	 *        What to do in the window. Runs on a thread that holds the window's interaction, in the
+	 *        window's sub-session, while the calling thread waits for it; an exception it throws is
+	 *        thrown here.
 	 * @return What became of it; never <code>null</code>.
 	 */
 	public static WindowAccess inWindow(TLSubSessionContext subSession, Runnable action) {
@@ -349,27 +354,12 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		if (registry == null) {
 			return WindowAccess.NO_WINDOW;
 		}
-		return ThreadContextManager.inContext(subSession,
-			(ComputationEx2<WindowAccess, RuntimeException, RuntimeException>) () -> {
-				ReentrantLock lock = registry.getRequestLock();
-				boolean locked;
-				try {
-					locked = lock.tryLock(service.getConfig().getWriteTimeoutMillis(), TimeUnit.MILLISECONDS);
-				} catch (InterruptedException ex) {
-					Thread.currentThread().interrupt();
-					return WindowAccess.BUSY;
-				}
-				if (!locked) {
-					return WindowAccess.BUSY;
-				}
-				try {
-					registry.synthesizeModelEvents(window.windowName());
-					action.run();
-					return WindowAccess.DONE;
-				} finally {
-					lock.unlock();
-				}
+		boolean ran = service._interaction.run(registry, subSession, service.getConfig().getWriteTimeoutMillis(),
+			() -> {
+				registry.synthesizeModelEvents(window.windowName());
+				action.run();
 			});
+		return ran ? WindowAccess.DONE : WindowAccess.BUSY;
 	}
 
 	@Override
@@ -489,9 +479,9 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 	}
 
 	/**
-	 * Pushes the pending model changes into one window, in its own sub-session and under its request
-	 * lock. Best-effort: a window that cannot be reached is skipped, never logged as a failure of
-	 * the run that caused the refresh.
+	 * Pushes the pending model changes into one window, in its own sub-session and within its
+	 * interaction. Best-effort: a window that cannot be reached is skipped, never logged as a failure
+	 * of the run that caused the refresh.
 	 */
 	private void refresh(TLSubSessionContext subSession, WindowRef window) {
 		ReactWindowRegistry registry = window.registry().get();
@@ -501,26 +491,10 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 			return;
 		}
 		try {
-			ThreadContextManager.inContext(subSession, () -> {
-				ReentrantLock lock = registry.getRequestLock();
-				boolean locked;
-				try {
-					locked = lock.tryLock(getConfig().getLockTimeoutMillis(), TimeUnit.MILLISECONDS);
-				} catch (InterruptedException ex) {
-					Thread.currentThread().interrupt();
-					return;
-				}
-				if (!locked) {
-					// A browser command holds the lock, and that command synthesizes the events
-					// itself when it finishes - so this refresh has nothing left to do.
-					return;
-				}
-				try {
-					registry.synthesizeModelEvents(window.windowName());
-				} finally {
-					lock.unlock();
-				}
-			});
+			// A window that stays busy is skipped: the browser command holding it synthesizes the
+			// same events itself when it finishes, so this refresh has nothing left to do.
+			_interaction.run(registry, subSession, getConfig().getLockTimeoutMillis(),
+				() -> registry.synthesizeModelEvents(window.windowName()));
 		} catch (RuntimeException ex) {
 			Logger.warn("Could not refresh chat window '" + window.windowName() + "': "
 				+ ex.getMessage(), ex, AgentViewRefreshService.class);

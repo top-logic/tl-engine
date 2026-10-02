@@ -5,12 +5,16 @@
  */
 package com.top_logic.ai.chat.view.list;
 
+import java.util.List;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 
+import com.top_logic.basic.BufferingProtocol;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.layout.view.command.GenericViewCommand;
@@ -32,7 +36,8 @@ public class TestDataListElementConfig extends TestCase {
 		assertNull("No lines configured by default.", config.getLines());
 		assertNull("No selection channel by default.", config.getSelection());
 		assertNull("No count channel by default.", config.getCount());
-		assertNull("No row state until a css-class expression is set.", config.getCssClass());
+		assertNull("No row state until a row-css-class expression is set.", config.getRowCssClass());
+		assertNull("No class on the list itself by default.", config.getCssClass());
 		assertNull("No title by default.", config.getTitle());
 		assertTrue("No header commands by default.", config.getCommands().isEmpty());
 		assertTrue("No row commands by default.", config.getRowCommands().isEmpty());
@@ -69,13 +74,52 @@ public class TestDataListElementConfig extends TestCase {
 			+ " config:interface='" + DataListElement.Config.class.getName() + "'"
 			+ " count='progressBadge'>"
 			+ "<rows>all(`tl.ai.execution:AgentTask`)</rows>"
-			+ "<css-class>t -> \"is-done\"</css-class>"
+			+ "<row-css-class>t -> \"is-done\"</row-css-class>"
 			+ "</data-list>";
 		DataListElement.Config config =
 			(DataListElement.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
 		assertNotNull("The count channel is configured.", config.getCount());
 		assertEquals("progressBadge", config.getCount().getChannelName());
-		assertNotNull("The row state expression is configured.", config.getCssClass());
+		assertNotNull("The row state expression is configured.", config.getRowCssClass());
+	}
+
+	/**
+	 * A view written for tl-ai 2.0.5, whose {@code <css-class>} was the row function, is refused
+	 * rather than read as the class of the list: the engine's {@code css-class} of every element
+	 * would otherwise take the script text and the rows would lose their state without a word.
+	 */
+	public void testRowFunctionAsCssClassIsRefused() throws Exception {
+		String xml = "<data-list xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + DataListElement.Config.class.getName() + "'>"
+			+ "<rows>all(`tl.ai.execution:AgentTask`)</rows>"
+			+ "<css-class>t -> \"is-done\"</css-class>"
+			+ "</data-list>";
+		DataListElement.Config config =
+			(DataListElement.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+
+		BufferingProtocol log = new BufferingProtocol();
+		new DefaultInstantiationContext(log).getInstance(config);
+
+		assertFalse("The old spelling is reported.", log.getErrors().isEmpty());
+		String errors = log.getErrors().toString();
+		assertTrue(errors, errors.contains(DataListElement.Config.ROW_CSS_CLASS));
+	}
+
+	/** A plain class on the list itself is what css-class is for, and is accepted. */
+	public void testCssClassOfTheList() throws Exception {
+		String xml = "<data-list xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + DataListElement.Config.class.getName() + "'"
+			+ " css-class='appRail'>"
+			+ "<rows>all(`tl.ai.execution:AgentTask`)</rows>"
+			+ "</data-list>";
+		DataListElement.Config config =
+			(DataListElement.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+
+		BufferingProtocol log = new BufferingProtocol();
+		new DefaultInstantiationContext(log).getInstance(config);
+
+		assertEquals(List.of(), log.getErrors());
+		assertEquals("appRail", config.getCssClass());
 	}
 
 	/**

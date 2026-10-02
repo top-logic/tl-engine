@@ -1,4 +1,4 @@
-import { React, TLChild, useTLState } from 'tl-react-bridge'
+import { React, rootClassName, TLChild, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { bundle } from './i18n'
@@ -148,13 +148,13 @@ export function TLChatDock({ controlId }: TLCellProps) {
   // The page showing this conversation itself is the other such case: there is nothing for a dock
   // to open, and a second view of one conversation is what the window cannot carry.
   if (!chat.authenticated || chat.conversationsOutsideDock > 0) {
-    return <div id={controlId} className="tl-chat-dock is-stood-down" />
+    return <div id={controlId} className={rootClassName(state, 'tl-chat-dock', 'is-stood-down')} />
   }
 
   return (
     <div
       id={controlId}
-      className={`tl-chat-dock${open ? ' is-open' : ''}`}
+      className={rootClassName(state, 'tl-chat-dock', open && 'is-open')}
       onKeyDown={onKeyDown}
     >
       <div

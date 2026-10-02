@@ -126,19 +126,24 @@ public class PolicyChecks {
 	 *        The roles some Read, Write or Create grant of the model access rights names. Never
 	 *        <code>null</code>; empty when there is nothing to compare against, which then produces no
 	 *        warning rather than one about every role.
+	 * @param partsWithoutSecurity
+	 *        The types and modules the model access rights mark {@code without-security}, see
+	 *        {@link AiToolAccessService#partsWithoutSecurity()}. Never <code>null</code>.
 	 * @return One message per finding, in a stable order; empty for a policy with no surprises.
 	 */
-	public static List<ResKey> warnings(ToolAccessPolicy policy, Set<String> rolesWithModelRights) {
+	public static List<ResKey> warnings(ToolAccessPolicy policy, Set<String> rolesWithModelRights,
+			Set<String> partsWithoutSecurity) {
 		List<ResKey> result = new ArrayList<>();
 		for (Map.Entry<String, RoleAccess> configured : new TreeMap<>(policy.getToolAccess()).entrySet()) {
-			warnAboutRole(configured.getKey(), configured.getValue(), rolesWithModelRights, result);
+			warnAboutRole(configured.getKey(), configured.getValue(), rolesWithModelRights,
+				partsWithoutSecurity, result);
 		}
 		warnAboutBackgroundLimit(policy, result);
 		return result;
 	}
 
 	private static void warnAboutRole(String roleName, RoleAccess role,
-			Set<String> rolesWithModelRights, List<ResKey> result) {
+			Set<String> rolesWithModelRights, Set<String> partsWithoutSecurity, List<ResKey> result) {
 		Set<String> granted = grantedGroups(role);
 
 		if (granted.contains(ToolGroups.SCRIPT) && granted.contains(ToolGroups.DATA_WRITE)) {
@@ -158,8 +163,7 @@ public class PolicyChecks {
 		dataGroups.retainAll(Set.of(ToolGroups.DATA_READ, ToolGroups.DATA_WRITE));
 		if (!dataGroups.isEmpty() && !rolesWithModelRights.isEmpty()
 			&& !rolesWithModelRights.contains(roleName)) {
-			result.add(I18NConstants.WARN_DATA_ROLE_WITHOUT_MODEL_RIGHTS__ROLE_GROUPS
-				.fill(roleName, String.join(", ", dataGroups)));
+			result.add(dataRoleWithoutModelRights(roleName, dataGroups, partsWithoutSecurity));
 		}
 
 		boolean saysAnything = !role.getGrants().isEmpty() || !role.getDenies().isEmpty();
@@ -169,6 +173,32 @@ public class PolicyChecks {
 		if (!role.getGrants().isEmpty() && SecurityRoleKind.EVERY_ACCOUNT.equals(roleName)) {
 			result.add(I18NConstants.WARN_EVERY_ACCOUNT_ROLE__ROLE.fill(roleName));
 		}
+	}
+
+	/**
+	 * The warning about a role holding data capabilities that no Read, Write or Create grant names.
+	 *
+	 * <p>
+	 * Where the model access rights mark types or modules {@code without-security}, the role's data
+	 * tools reach exactly those, so the warning names them instead of saying the tools see nothing
+	 * (#609).
+	 * </p>
+	 *
+	 * @param roleName
+	 *        The role.
+	 * @param dataGroups
+	 *        The data capabilities the role holds.
+	 * @param partsWithoutSecurity
+	 *        The types and modules marked {@code without-security}; may be empty.
+	 */
+	public static ResKey dataRoleWithoutModelRights(String roleName, Set<String> dataGroups,
+			Set<String> partsWithoutSecurity) {
+		String groups = String.join(", ", new TreeSet<>(dataGroups));
+		if (partsWithoutSecurity.isEmpty()) {
+			return I18NConstants.WARN_DATA_ROLE_WITHOUT_MODEL_RIGHTS__ROLE_GROUPS.fill(roleName, groups);
+		}
+		return I18NConstants.WARN_DATA_ROLE_ONLY_WITHOUT_SECURITY__ROLE_GROUPS_PARTS.fill(roleName, groups,
+			String.join(", ", new TreeSet<>(partsWithoutSecurity)));
 	}
 
 	private static void warnAboutBackgroundLimit(ToolAccessPolicy policy, List<ResKey> result) {

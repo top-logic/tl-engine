@@ -280,6 +280,20 @@ describe('where the prompt cards are rendered', () => {
     expect(markup).toContain('Summarise')
     expect(markup).toContain('title="Please summarise the newest invoices."')
   })
+
+  it('writes the css-class of the element on its root, after its own classes', () => {
+    setTLState({
+      chatId: 'css-class-test',
+      windowId: 'w1',
+      authenticated: true,
+      language: 'en',
+      cssClass: 'appChat',
+    })
+    const markup = renderToStaticMarkup(
+      React.createElement(TLChatConversation, { controlId: 'css-class-test', state: {} }),
+    )
+    expect(markup).toMatch(/^<div id="css-class-test" class="tl-chat-conversation appChat"/)
+  })
 })
 
 describe('TLChatConversation and App', () => {

@@ -229,6 +229,9 @@
 			    grant is only consulted after the class-level check has passed, and its absence means
 			    the attribute inherits that decision. So a ticketReader reads a ticket and its title,
 			    and pm:Ticket#body is absent from what any tool reports to it.
+			  * The <part> grant on pm:Project#partners names no role at all, so nobody but an
+			    administrator writes it: a partner keeps writing the project and is refused that one
+			    attribute.
 			  * Both roles appear here AND in <tool-access>. Neither table knows about the other; what
 			    connects them is the role name and nothing else.
 
@@ -263,6 +266,17 @@
 					<part name="pm:Ticket#body">
 						<grant operation="Read"
 							roles="projectPartner"
+						/>
+					</part>
+					<!--
+						Who partners on a project is what the scope rule derives projectPartner from, so a
+						partner who could write it could hand that role to anybody. A Write grant naming
+						no role withholds the attribute from every account that is not an administrator,
+						while the project itself stays writable for its partners (Issue #625).
+					-->
+					<part name="pm:Project#partners">
+						<grant operation="Write"
+							roles=""
 						/>
 					</part>
 				</security-config>

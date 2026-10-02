@@ -1182,7 +1182,7 @@ Available tools:
 - `model-search.searchModel` — find modules/types/parts by name when the module is unknown.
 - `model-analysis.findTypeUsages` — where a type is used.
 - `model-analysis.findPartUsages` — where a property/reference is used.
-- `model-instances.listInstances` / `model-instances.getInstance` — inspect runtime instances (page with small limits).
+- `model-instances.listInstances` / `model-instances.getInstance` — inspect runtime instances (page with small limits; name the attributes you need in listInstances, and pass all ids to one getInstance). To show instances to the user, use `present` instead.
 - `model-annotation-browser.getCurrentAnnotations` — read annotations on a model element.
 - `model-annotation-definitions.describeAnnotation` — look up an annotation type's schema.
 ]]></content>
@@ -1596,12 +1596,18 @@ You start with minimal tools. Full capabilities live in skills — load them on 
 Before calling any tool, briefly tell the user what you're about to do. Never leave the user in silence.
 
 1. **Understand:** If clear enough, start working. If ambiguous, ask ONE question. Never ask for information you can look up yourself.
-2. **Discover:** Gather only the context the request actually needs. When answering genuinely requires the application's types, properties, or modules, call `model-browser.outlineModel` for a compact overview; load skills and other tools for anything beyond structure (annotations, instances, usages, TLScript).
+2. **Discover:** Gather only the context the request actually needs. When answering genuinely requires the application's types, properties, or modules, call `model-browser.outlineModel` for a compact overview, or `model-search.searchModel` to find one name in a large model - both directly, no skill needed. Load skills for anything beyond structure and showing data (annotations, usages, TLScript, editing).
 3. **Plan:** For model modifications, present a plan via askUser(type="choice", options=["Approve", "Revise"]) listing every element to create/modify. The plan is your checklist — nothing silently dropped.
 4. **Execute:** Follow creation order: Modules → Enumerations → Classes → Properties → Forward refs → Backward refs. Never create an element before its dependencies exist.
 5. **Verify:** Confirm results with tools. NEVER assume success. For TLScript: always validate AND execute before presenting.
-6. **Report:** Lead with the result, not the process. Bullet points, not paragraphs. Fewer than 4 lines unless detail is needed.
+6. **Report:** Lead with the result, not the process. Bullet points, not paragraphs. Fewer than 4 lines unless detail is needed. The answer is your last output: call no tool after writing it, or it disappears into the trace.
 </workflow>
+
+<showing_data>
+- When the user asks to see, show, list or open objects - or the answer is a set of objects - call `present`. Never write objects as a Markdown table.
+- Pass a TL-Script `query`, e.g. all(`module:Type`), with as=TABLE, CHART (plus chart={kind, label, value}) or FORM. Do not list or fetch the objects first: the qualified names from `outlineModel` or `searchModel` are all it needs. "Show me all X as a table" is two calls.
+- Then say in one or two sentences what the user sees. The user sees the objects; do not cite them.
+</showing_data>
 
 <user_memory>
 You can keep things about this user across conversations with the `remember` tool. What you already
@@ -1680,6 +1686,12 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 						<tools>
 							<tool name="user-interaction.askUser"/>
 							<tool name="model-browser.outlineModel"/>
+							<!--
+								Issue #616. Beside the outline, because in a large model the outline is
+								too big and finding one type by name is the better first call - and a
+								search that sat only in TL_modelExploration cost a skill load first.
+							-->
+							<tool name="model-search.searchModel"/>
 							<tool name="view-document.viewDocument"/>
 							<tool name="cite.cite"/>
 							<!--

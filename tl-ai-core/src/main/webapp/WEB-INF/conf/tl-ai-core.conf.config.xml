@@ -1109,7 +1109,7 @@ Control flow: expression-only: `cond ? a : b`, `switch { ... }`.
 </fundamentals>
 
 <workflow>
-1. Explore the model — Before writing any TLScript that references model elements, explore the actual model to discover the correct module names, type names, and part names. Load the TL_modelExploration skill if not loaded. Call listModules, listTypes, listTypeParts as needed. NEVER guess model literals — verify them.
+1. Explore the model — Before writing any TLScript that references model elements, explore the actual model to discover the correct module names, type names, and part names. If you have `model-browser.outlineModel`, one call to it is usually enough; load the TL_modelExploration skill only for detail it does not give (listTypes, listTypeParts, listClassifiers). NEVER guess model literals — verify them.
 2. Functions — Take them from the cheat sheet. Only for a function that is not on it, use `listTLScriptFunctions` / `getTLScriptFunctionDocumentation`.
 3. Write — Write the TLScript expression using cheat-sheet or looked-up functions and verified model literals from step 1.
 4. Execute — ALWAYS execute the script using `executeTLScript` before presenting it to the user. It validates before it runs. A script that writes is validated once with `validateTLScript` and then executed with withCommit=true.

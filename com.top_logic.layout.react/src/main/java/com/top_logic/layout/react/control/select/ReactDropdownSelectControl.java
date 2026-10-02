@@ -41,6 +41,7 @@ import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.react.state.DropdownSelectState;
 import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -55,9 +56,9 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * One control serves every {@link SelectDisplay shape} the options are offered in - a list that
- * opens on demand and filters as the user types, a cloud of toggles, or a bar of segments. All
- * three hold the same option index, exchange the same value, and present an option by the same
- * descriptor; they differ in the React component drawing them and in when they are handed the
+ * opens on demand and filters as the user types, a cloud of toggles, a bar of segments, or a group
+ * of radio buttons or checkboxes. All of them hold the same option index, exchange the same value,
+ * and present an option by the same descriptor; they differ in the React component drawing them and in when they are handed the
  * option list: a list that opens on demand fetches it on first open through the
  * {@link #CMD_LOAD_OPTIONS} command, while a shape {@link SelectDisplay#showsAllOptions() showing
  * every option} is handed it right away.
@@ -90,6 +91,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	/** The React component drawing the options as the segments of one bar. */
 	private static final String MODULE_SEGMENTED = "TLSegmentedChoice";
 
+	/** The React component drawing every option as a radio button or a checkbox. */
+	private static final String MODULE_RADIO = "TLChoiceGroup";
+
 	// Command names.
 	private static final String CMD_LOAD_OPTIONS = "loadOptions";
 
@@ -113,6 +117,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private final boolean _customOrder;
 
 	private final SelectDisplay _display;
+
+	private final Orientation _orientation;
 
 	/**
 	 * Maps option ID strings to the original option objects. Used by
@@ -167,22 +173,50 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Creates a {@link ReactDropdownSelectControl} offering its options in the given shape.
+	 * Creates a {@link ReactDropdownSelectControl} offering its options in the given shape, laid
+	 * out one below the other where the shape is {@link SelectDisplay#RADIO}.
 	 *
 	 * @param display
 	 *        The shape the options are offered in, see {@link #getDisplay()}.
 	 * @see #ReactDropdownSelectControl(ReactContext, SelectFieldModel, LabelProvider, Comparator,
-	 *      boolean)
+	 *      boolean, SelectDisplay, Orientation)
 	 */
 	public ReactDropdownSelectControl(ReactContext context, SelectFieldModel model,
 			LabelProvider labelProvider, Comparator<?> optionComparator, boolean customOrder,
 			SelectDisplay display) {
+		this(context, model, labelProvider, optionComparator, customOrder, display, Orientation.VERTICAL);
+	}
+
+	/**
+	 * Creates a {@link ReactDropdownSelectControl} offering its options in the given shape and
+	 * direction.
+	 *
+	 * @param context
+	 *        The {@link ReactContext} for ID allocation and SSE registration.
+	 * @param model
+	 *        The {@link SelectFieldModel} providing value, options, editability, and validation.
+	 * @param labelProvider
+	 *        Provider for option labels. If the provider also implements
+	 *        {@link ResourceProvider}, option images are included.
+	 * @param optionComparator
+	 *        Comparator for sorting options. Pass {@code null} for natural order.
+	 * @param customOrder
+	 *        Whether the user can reorder selected values (drag chips to reorder).
+	 * @param display
+	 *        The shape the options are offered in, see {@link #getDisplay()}.
+	 * @param orientation
+	 *        The direction the options are laid out in, see {@link #getOrientation()}.
+	 */
+	public ReactDropdownSelectControl(ReactContext context, SelectFieldModel model,
+			LabelProvider labelProvider, Comparator<?> optionComparator, boolean customOrder,
+			SelectDisplay display, Orientation orientation) {
 		super(context, model, module(display));
 		_selectModel = model;
 		_labelProvider = labelProvider;
 		_optionComparator = optionComparator;
 		_customOrder = customOrder;
 		_display = display;
+		_orientation = orientation;
 		initSelectState();
 		_displayedObjects.observeValue(model.getValue());
 		addAttachListener(() -> _displayedObjects.attach(modelScope()));
@@ -203,6 +237,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 				return MODULE_CHIPS;
 			case SEGMENTED:
 				return MODULE_SEGMENTED;
+			case RADIO:
+				return MODULE_RADIO;
 			default:
 				return MODULE_DROPDOWN;
 		}
@@ -213,6 +249,19 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 */
 	public SelectDisplay getDisplay() {
 		return _display;
+	}
+
+	/**
+	 * The direction the options are laid out in: one below the other, or side by side and wrapping
+	 * onto further lines.
+	 *
+	 * <p>
+	 * Only the shape {@link SelectDisplay#RADIO} lays its options out in a direction to choose;
+	 * the other shapes ignore it.
+	 * </p>
+	 */
+	public Orientation getOrientation() {
+		return _orientation;
 	}
 
 	/**
@@ -256,6 +305,10 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			resources.getString(I18NConstants.JS_DROPDOWN_SELECT_EMPTY));
 		if (_display != SelectDisplay.DROPDOWN) {
 			putState(DropdownSelectState.DISPLAY__PROP, _display.getExternalName());
+		}
+		if (_display == SelectDisplay.RADIO && _orientation == Orientation.HORIZONTAL) {
+			putState(DropdownSelectState.ORIENTATION__PROP,
+				DropdownSelectState.Orientation.HORIZONTAL.protocolName());
 		}
 		invalidateOptions();
 	}
@@ -356,7 +409,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), DropdownSelectState.DISPLAY__PROP);
+		return presentationKeys(super.scriptingPresentationKeys(), DropdownSelectState.DISPLAY__PROP,
+			DropdownSelectState.ORIENTATION__PROP);
 	}
 
 	private void setOptionsLoaded(boolean loaded) {

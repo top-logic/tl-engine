@@ -3350,6 +3350,13 @@ button.tlMenu__item--disabled:hover {
 	text-overflow: ellipsis;
 }
 
+/* A group of radio buttons or checkboxes whose options stand one below the other, each as wide as its
+   label, rather than side by side in a row that wraps. */
+.tl-choice-group--vertical {
+	flex-direction: column;
+	align-items: flex-start;
+}
+
 /* A flex row of its own - a value with its icon, a row of values, a group of radios - stays one in
    a cell rather than the block the more specific rule for the root span asks for, and does not wrap. */
 .tlTableView__cell > .tl-field-value,

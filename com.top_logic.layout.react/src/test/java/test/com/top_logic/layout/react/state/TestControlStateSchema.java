@@ -77,6 +77,7 @@ import com.top_logic.layout.react.state.TextInputState;
 import com.top_logic.layout.react.state.ToggleButtonState;
 import com.top_logic.layout.react.state.WindowState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
@@ -249,6 +250,15 @@ public class TestControlStateSchema extends TestCase {
 	}
 
 	/**
+	 * The directions the options of a group of radio buttons are laid out in are sent as the schema
+	 * spells them.
+	 */
+	public void testDropdownSelectOrientation() {
+		assertSameNames(Orientation.values(), DropdownSelectState.Orientation.values(),
+			DropdownSelectState.Orientation::valueOf);
+	}
+
+	/**
 	 * The kinds of a snackbar message are sent as the schema spells them.
 	 */
 	public void testSnackbarVariant() {
@@ -335,6 +345,39 @@ public class TestControlStateSchema extends TestCase {
 		assertEachDeclared(state.get(DropdownSelectState.OPTIONS__PROP), DropdownSelectState.Option.class);
 		assertEachDeclared(state.get(DropdownSelectState.VALUE__PROP), DropdownSelectState.Option.class);
 		assertTrue(state.containsKey(DropdownSelectState.OPTIONS__PROP));
+	}
+
+	/**
+	 * A group of radio buttons is drawn by its own component, and every key it sends - including the
+	 * direction its options are laid out in - is declared in {@link DropdownSelectState}.
+	 */
+	public void testChoiceGroupKeys() {
+		ReactDropdownSelectControl control = new ReactDropdownSelectControl(createContext(),
+			new SimpleSelectFieldModel(List.of("b"), List.of("a", "b"), false), String::valueOf, null, false,
+			SelectDisplay.RADIO, Orientation.HORIZONTAL);
+		putFieldKeys(control);
+
+		Map<?, ?> state = state(control);
+		assertEquals("TLChoiceGroup", control.getReactModule());
+		assertDeclared(state, DropdownSelectState.class);
+		assertEachDeclared(state.get(DropdownSelectState.OPTIONS__PROP), DropdownSelectState.Option.class);
+		assertEquals(DropdownSelectState.Display.RADIO.protocolName(), state.get(DropdownSelectState.DISPLAY__PROP));
+		assertEquals(DropdownSelectState.Orientation.HORIZONTAL.protocolName(),
+			state.get(DropdownSelectState.ORIENTATION__PROP));
+		assertTrue(state.containsKey(DropdownSelectState.EMPTY_OPTION_LABEL__PROP));
+	}
+
+	/**
+	 * The options of a group of radio buttons stand one below the other unless asked otherwise, and
+	 * that default is not sent.
+	 */
+	public void testChoiceGroupVerticalByDefault() {
+		ReactDropdownSelectControl control = new ReactDropdownSelectControl(createContext(),
+			new SimpleSelectFieldModel(List.of("b"), List.of("a", "b"), false), String::valueOf, null, false,
+			SelectDisplay.RADIO);
+
+		assertEquals(Orientation.VERTICAL, control.getOrientation());
+		assertFalse(state(control).containsKey(DropdownSelectState.ORIENTATION__PROP));
 	}
 
 	/**

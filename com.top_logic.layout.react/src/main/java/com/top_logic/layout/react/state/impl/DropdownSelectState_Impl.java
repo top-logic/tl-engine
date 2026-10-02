@@ -144,6 +144,8 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 
 	private com.top_logic.layout.react.state.DropdownSelectState.Display _display = com.top_logic.layout.react.state.DropdownSelectState.Display.DROPDOWN;
 
+	private com.top_logic.layout.react.state.DropdownSelectState.Orientation _orientation = com.top_logic.layout.react.state.DropdownSelectState.Orientation.HORIZONTAL;
+
 	private final java.util.List<com.top_logic.layout.react.state.DropdownSelectState.Option> _options = new java.util.ArrayList<>();
 
 	private boolean _optionsLoaded = false;
@@ -178,6 +180,23 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 	protected final void internalSetDisplay(com.top_logic.layout.react.state.DropdownSelectState.Display value) {
 		if (value == null) throw new IllegalArgumentException("Property 'display' cannot be null.");
 		_display = value;
+	}
+
+	@Override
+	public final com.top_logic.layout.react.state.DropdownSelectState.Orientation getOrientation() {
+		return _orientation;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.DropdownSelectState setOrientation(com.top_logic.layout.react.state.DropdownSelectState.Orientation value) {
+		internalSetOrientation(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getOrientation()} without chain call utility. */
+	protected final void internalSetOrientation(com.top_logic.layout.react.state.DropdownSelectState.Orientation value) {
+		if (value == null) throw new IllegalArgumentException("Property 'orientation' cannot be null.");
+		_orientation = value;
 	}
 
 	@Override
@@ -372,6 +391,8 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 		super.writeFields(out);
 		out.name(DISPLAY__PROP);
 		getDisplay().writeTo(out);
+		out.name(ORIENTATION__PROP);
+		getOrientation().writeTo(out);
 		out.name(OPTIONS__PROP);
 		out.beginArray();
 		for (com.top_logic.layout.react.state.DropdownSelectState.Option x : getOptions()) {
@@ -392,6 +413,7 @@ public class DropdownSelectState_Impl extends com.top_logic.layout.react.state.i
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case DISPLAY__PROP: setDisplay(com.top_logic.layout.react.state.DropdownSelectState.Display.readDisplay(in)); break;
+			case ORIENTATION__PROP: setOrientation(com.top_logic.layout.react.state.DropdownSelectState.Orientation.readOrientation(in)); break;
 			case OPTIONS__PROP: {
 				java.util.List<com.top_logic.layout.react.state.DropdownSelectState.Option> newValue = new java.util.ArrayList<>();
 				in.beginArray();

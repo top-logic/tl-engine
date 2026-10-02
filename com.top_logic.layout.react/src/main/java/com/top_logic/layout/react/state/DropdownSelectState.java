@@ -2,8 +2,9 @@ package com.top_logic.layout.react.state;
 
 /**
  * State of a field choosing one or more objects, the components {@code TLDropdownSelect} (a list
- * that opens on demand), {@code TLOptionChips} (every option a toggle of its own) and
- * {@code TLSegmentedChoice} (the options as the segments of one bar).
+ * that opens on demand), {@code TLOptionChips} (every option a toggle of its own),
+ * {@code TLSegmentedChoice} (the options as the segments of one bar) and {@code TLChoiceGroup}
+ * (a radio button or a checkbox for every option).
  *
  * The {@link #getValue()} is the list of the chosen objects, each an {@link Option} (also for a field
  * choosing one object). A change is sent as the command {@code valueChanged} with the list of the
@@ -34,6 +35,12 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 		 */
 		SEGMENTED("segmented"),
 
+		/**
+		 * A radio button for every option, or a checkbox for every option of a field choosing
+		 * several objects.
+		 */
+		RADIO("radio"),
+
 		;
 
 		private final String _protocolName;
@@ -59,6 +66,7 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 				case "dropdown": return DROPDOWN;
 				case "chips": return CHIPS;
 				case "segmented": return SEGMENTED;
+				case "radio": return RADIO;
 			}
 			return DROPDOWN;
 		}
@@ -70,6 +78,63 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 
 		/** Reads a new instance from the given reader. */
 		public static Display readDisplay(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+			return valueOfProtocol(in.nextString());
+		}
+	}
+
+	/**
+	 * The direction the options of a group of radio buttons or checkboxes are laid out in.
+	 *
+	 * The control does not send {@link #VERTICAL}: an absent orientation means the options stand
+	 * one below the other.
+	 */
+	public enum Orientation implements de.haumacher.msgbuf.data.ProtocolEnum {
+
+		/**
+		 * The options side by side, wrapping onto further lines where the room ends.
+		 */
+		HORIZONTAL("horizontal"),
+
+		/**
+		 * The options one below the other.
+		 */
+		VERTICAL("vertical"),
+
+		;
+
+		private final String _protocolName;
+
+		private Orientation(String protocolName) {
+			_protocolName = protocolName;
+		}
+
+		/**
+		 * The protocol name of a {@link Orientation} constant.
+		 *
+		 * @see #valueOfProtocol(String)
+		 */
+		@Override
+		public String protocolName() {
+			return _protocolName;
+		}
+
+		/** Looks up a {@link Orientation} constant by it's protocol name. */
+		public static Orientation valueOfProtocol(String protocolName) {
+			if (protocolName == null) { return null; }
+			switch (protocolName) {
+				case "horizontal": return HORIZONTAL;
+				case "vertical": return VERTICAL;
+			}
+			return HORIZONTAL;
+		}
+
+		/** Writes this instance to the given output. */
+		public final void writeTo(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+			out.value(protocolName());
+		}
+
+		/** Reads a new instance from the given reader. */
+		public static Orientation readOrientation(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 			return valueOfProtocol(in.nextString());
 		}
 	}
@@ -179,6 +244,9 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 	/** @see #getDisplay() */
 	String DISPLAY__PROP = "display";
 
+	/** @see #getOrientation() */
+	String ORIENTATION__PROP = "orientation";
+
 	/** @see #getOptions() */
 	String OPTIONS__PROP = "options";
 
@@ -204,6 +272,17 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 	 * @see #getDisplay()
 	 */
 	com.top_logic.layout.react.state.DropdownSelectState setDisplay(com.top_logic.layout.react.state.DropdownSelectState.Display value);
+
+	/**
+	 * The direction the options are laid out in. Only the shape {@link Display#RADIO} reads it.
+	 * Absent means {@link Orientation#VERTICAL}, the options one below the other.
+	 */
+	com.top_logic.layout.react.state.DropdownSelectState.Orientation getOrientation();
+
+	/**
+	 * @see #getOrientation()
+	 */
+	com.top_logic.layout.react.state.DropdownSelectState setOrientation(com.top_logic.layout.react.state.DropdownSelectState.Orientation value);
 
 	/**
 	 * The objects that can be chosen, valid while {@link #isOptionsLoaded()} is set. A list that opens

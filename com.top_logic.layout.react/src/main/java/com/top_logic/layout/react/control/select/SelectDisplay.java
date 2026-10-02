@@ -14,8 +14,9 @@ import com.top_logic.basic.config.ExternallyNamed;
  * <p>
  * All shapes edit the same value and accept the same number of values; they differ in how much of
  * the option list is visible without acting, and therefore in how many options they suit. A list
- * that opens on demand takes one line whatever the number of options, while a cloud of toggles and
- * a bar of segments show every option at all times and are read without opening anything.
+ * that opens on demand takes one line whatever the number of options, while a cloud of toggles, a
+ * bar of segments and a group of radio buttons show every option at all times and are read without
+ * opening anything.
  * </p>
  *
  * @see ReactDropdownSelectControl
@@ -54,7 +55,20 @@ public enum SelectDisplay implements ExternallyNamed {
 	 * position is the value.
 	 * </p>
 	 */
-	SEGMENTED("segmented");
+	SEGMENTED("segmented"),
+
+	/**
+	 * Offer every option as a radio button, or as a checkbox where several values can be chosen,
+	 * the options laid out one below the other or side by side.
+	 *
+	 * <p>
+	 * The shape for a handful of mutually exclusive options in a form - a priority, a salutation,
+	 * a delivery method: every option is read at a glance together with its label, and the chosen
+	 * one is marked the way a form marks a choice. A field taking several values offers a checkbox
+	 * for each option instead.
+	 * </p>
+	 */
+	RADIO("radio");
 
 	private final String _externalName;
 

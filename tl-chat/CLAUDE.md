@@ -159,7 +159,7 @@ run. See `doc/scheduled-agent.md`.
 - **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
 - **`AgentTask`** (`…chat.sched`) – The scheduler task above. Not to be confused with
   `tl.ai.execution:AgentTask`, which is one entry of the plan an agent writes while it works
-- **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`), keyed by `(sub-session, conversation)`: a window showing a page's chat beside a `<chat-dock>`'s has a `TaskProgressTracker` for each (#502). A caller that names no conversation registers and resolves the window's unnamed one, which is what the classic client has. Published API: the classic control in `tl-chat-classic` and `Consulting`'s own control register here from outside this module.
+- **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`), keyed by `(sub-session, conversation)`: a window showing a page's chat beside a `<chat-dock>`'s has a `TaskProgressTracker` for each (#502). A caller that names no conversation registers and resolves the window's unnamed one. Published API: `tl-chat-classic` reads a classic window's id here, and `Consulting`'s own control registers here from outside this module.
 - **`ChatViewBinding`** – Once per (sub-session, conversation): tracker, user, and the channels the agent may write there. The split elements (`<chat-conversation>`, `<chat-rail>`, `<chat-dock>`, the rail sections) delegate to it so several controls do not bind the window several times. The conversation is the `chat-id`; it is read as a key of its own because a chat that shared its conversation with nobody would key its layout and its tracker differently - the one-element `<agent-chat>` did, until #487 removed it. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
 - **`AgentViewRefreshService`** – Makes a model-bound element beside the transcript follow a running agent. A run commits from a background thread, and a window only sees model changes when its `GlobalModelEventForwarder` is asked to synthesize them - on a browser command or on the 30 s SSE heartbeat. The service listens on `AgentExecutionStore.ChangeListener`, coalesces a burst of writes (200 ms) and synthesizes per window, in that window's sub-session and **within the window's `Interaction`** (a `ReactControl`'s state map is a plain `HashMap`; the engine's SSE heartbeat synthesizes without it, and this deliberately does not copy that). The engine offers only a blocking `ReactWindowRegistry.beginInteraction()`, so `WindowInteraction` enters it on a thread of its own while the caller waits with a time limit, and calls the work off when the limit passes first - an agent thread must not wait for a browser command that may itself be waiting for the agent. **Coalescing never forgets a change**: a pass takes as long as it takes to enter every registered window and wait for its interaction, and a change that arrives while one is running is carried into the next pass rather than dropped - `PendingRefreshes` is the whole of that rule, and `TestAgentViewRefresh` is what holds it (#497). A window is registered with the account it is logged in as, read where a context is bound, because the pass runs on a scheduler thread that has none. Windows are registered by `ChatViewBinding` while a chat renders, which is a fork: the engine offers no way to enumerate an account's live windows. The same register and the same interaction serve the write direction: `inWindow` runs a caller's action in the window's sub-session within its interaction (after synthesizing, so the window knows the run's objects), and `hasWindow` is what lets a tool tell "this run is headless" from "this page allows nothing". A write waits longer for the interaction than a refresh does (`write-timeout-millis`, 5 s): a refresh that gives up loses nothing, a write has no second chance.
 - **`PresentTool`** – The `present` tool (`com.top_logic.ai.chat.tools`): the agent puts model objects onto a channel of the page it is on, and the page renders them however it likes. Registered from this module's own configuration, so every application that depends on `tl-chat` has the tool; **which** channel it may write is the page's decision (`<chat-conversation present="…">`, deny by default). See "the agent writes a channel" below.
@@ -208,11 +208,11 @@ The chat UI is a React application in `ui/`. It talks to the servlet above and t
 TopLogic command handlers, no AJAX framework - so the same bundle would run against any host that
 serves `/chat/*`.
 
-The classic `chat-client.js` control for LayoutServlet applications is **not** in this module any
-more: it is the separate, frozen `tl-chat-classic` (#398), which depends on this one. A host gets
-the "Albert" tab by depending on `tl-chat-classic`; depending on `tl-chat` alone gives the API and
-the React chat. Session state the classic control reads - `Chat`, `ChatProcessor`,
-`TaskProgressTracker`, `ChatSessionRegistry`, `PromptImprovementProcessor` - stays here.
+This React chat is the only chat front end. A LayoutServlet application shows it in a classic tab
+through the separate module `tl-chat-classic` (#618), which writes these same view elements into a
+classic page; it replaced the hand-written `chat-client.js` control that lived there since #398. A
+host gets the "Albert" tab by depending on `tl-chat-classic`; depending on `tl-chat` alone gives the
+API and the React chat in React pages.
 
 ### Toolchain and build output
 
@@ -531,7 +531,7 @@ it lists what the account may choose with *some* agent it may run and marks each
 `grantedToRole`; `modelsFor()` in `models.ts` narrows that to `granted ∪ {selected agent's model}`
 before the picker sees it. A request that names something the account may not use is answered **403**
 with a sentence in the user's language, which the composer shows in the notice strip in the neutral
-tone; the classic control in `tl-chat-classic` renders it as a system bubble.
+tone.
 
 `entryPointAgent` is resolved for the caller, not read from the configuration: a client that names no
 agent runs the agent the payload reports. The prompt improver is exempt from the agent allowlist -
@@ -670,7 +670,7 @@ It is a `ThemeImage`, named like every other icon of the chat, in one of three f
 - **Only the answer's place.** The "Arbeitet …" / "… gearbeitet" line, the streaming caret and the
   dock launcher's busy mark are unchanged.
 - The option is on `<chat-conversation>`, so a `<chat-dock>` gets it on the conversation nested in it.
-  `App` (`TLAgentChat`) reads the same state. `tl-chat-classic` is frozen and keeps its own.
+  `App` (`TLAgentChat`) reads the same state.
 
 `tl-ai-demo`'s Chat page shows `images/tl-ai-demo-working.svg`, a neutral example; its dock keeps the
 dots. `working-indicator.test.tsx` and `TestChatWorkingIndicator` pin both.
@@ -1243,7 +1243,7 @@ browser, clicking one costs no round trip.
 | `<value>` | Mandatory. TL-Script producing the text the click puts into the composer. |
 
 **Where they stand, and when.** Between the greeting and the composer - under "Womit kann ich
-helfen?", over the field - which is the position `tl-chat-classic` gives its own example prompts and
+helfen?", over the field - which is the position the former classic chat gave its own example prompts and
 the order the eye reads them in: what this is, what you could ask, where you type. In the empty
 stage's grid they are a row of their own (`.stage.is-empty .prompt-suggestions`), zero-height for a
 conversation that offers none.

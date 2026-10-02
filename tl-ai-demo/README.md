@@ -87,9 +87,11 @@ and `ChatServlet` answers every request from such a session with 401, so the cha
 note instead of a composer - the agent works with the user's data and the user's permissions.
 
 **The classic UI** (`WEB-INF/layouts/mainTabbar.layout.xml`) serves the administration through the
-LayoutServlet, and the classic chat control still works; the event domain has React views only.
-Reach it at <http://localhost:8080/tl-ai-demo/servlet/LayoutServlet>. Its "Albert" tab comes from
-`tl-chat-classic`, which this application depends on for exactly that reason (#398).
+LayoutServlet; the event domain has React views only. Reach it at
+<http://localhost:8080/tl-ai-demo/servlet/LayoutServlet>. Its "Albert" tab comes from
+`tl-chat-classic`, which this application depends on for exactly that reason: the React chat, written
+into the classic tab (#618) - the module's generic view (`tl-chat-classic/chat.view.xml`: chats,
+conversation, progress and sources), a conversation of its own beside the React pages' `chat`.
 
 ## An agent on a schedule
 

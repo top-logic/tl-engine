@@ -12,7 +12,7 @@ Custom AI agent framework built on TopLogic, replacing LangChain4j with a purpos
 | **tl-ai-core** | Agent loop engine, multi-provider LLM streaming, tool dispatcher & implementations, MCP client, multi-agent delegation, memory/compaction, TL-Script bindings |
 | **tl-ai-mcp-server** | MCP protocol server (SDK 1.1.2) exposing TopLogic model/tools to external AI clients over HTTP at `/mcp/*`. **Off by default** - the endpoint authenticates nobody, see `doc/security/mcp-endpoint.md` |
 | **tl-chat** | Agentic chat UI - REST API + SSE streaming servlet, React frontend (`ui/`, Vite), session management, human-in-the-loop approval |
-| **tl-chat-classic** | The frozen classic `chat-client.js` control for LayoutServlet applications - the "Albert" tab. Opt-in: a host gets it by depending on this module. |
+| **tl-chat-classic** | The React chat in a classic LayoutServlet tab - the "Albert" tab. A `LayoutComponent` that writes a React view into a classic page; a temporary bridge with documented workarounds (`tl-chat-classic/CLAUDE.md`). Opt-in: a host gets it by depending on this module. |
 | **tl-ai-vector-index** | Semantic search via embedding models (Mistral) and vector stores (Qdrant/JVector), background indexing daemon |
 | **tl-ai-eval** | Model eval harness: the same business tasks put to several models through our own agent loop, graded against the database they leave behind. Its own runs are gated by `-Dtl.ai.eval=true`; its plumbing runs in every build against a scripted provider. See `tl-ai-eval/README.md` |
 | **tl-ai-demo** | Application module bundling all above for deployment |
@@ -317,10 +317,10 @@ the chat's notice line; `AgentExecution.model` is corrected to what answered. `a
 
 `ChatServlet` at `/chat/*` handles REST + SSE. `ChatProcessor` orchestrates background agent execution. `ChatSSEHandler` implements `AgentEventListener` for real-time push (50ms flush batching, 30+ event types).
 
-Two front ends consume that one API:
+One front end consumes that API, the React chat (`tl-chat/ui/`): TypeScript + Vite, mounted into the React view layer by the composed view elements `<chat-conversation>`, `<chat-rail>` and `<chat-dock>`. See `tl-chat/CLAUDE.md` for the toolchain and the dev loop. It is shown in two kinds of page:
 
-- **React** (`tl-chat/ui/`, the current one): TypeScript + Vite, mounted into the React view layer by the composed view elements `<chat-conversation>`, `<chat-rail>` and `<chat-dock>`. See `tl-chat/CLAUDE.md` for the toolchain and the dev loop.
-- **Legacy** (`tl-chat-classic`, own module since #398): `chat-client.js` and the classic `ChatControl` for LayoutServlet applications. Still shipped and still working; frozen, not developed further. A host gets the "Albert" tab by depending on `tl-chat-classic`; depending on `tl-chat` alone gives the API and the React chat only. See `tl-chat-classic/CLAUDE.md`.
+- **React pages** (`/view/`), where the view elements stand in a `.view.xml`.
+- **Classic LayoutServlet pages**, through `tl-chat-classic` (#618): `ReactViewComponent` writes a React view into a classic tab, with the classic window as the React window. A host gets the "Albert" tab by depending on `tl-chat-classic`. The bridge is temporary - `LayoutComponent` is to leave tl-core - and works around four engine gaps inside tl-ai, each marked in the code; see `tl-chat-classic/CLAUDE.md`. It replaced the hand-written `chat-client.js` control.
 
 `ChatSessionManager` maintains per-session state (Chat + ConversationMemory + ConversationLog) with LRU cache. `ChatHistoryService` persists to KnowledgeBase.
 

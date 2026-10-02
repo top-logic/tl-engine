@@ -19,7 +19,7 @@ Model Context Protocol (MCP) server implementation enabling AI agents to interac
 Chat UI components and model definitions for building conversational interfaces within TopLogic applications. Chat messages are handled by the entry-point agent (tl-ai-core), which routes to specialist agents (ModelExplorer, ModelEditor, TLScriptAgent) via delegation; the UI shows a unified execution timeline (AgentCall vs ToolCall). Includes persistent chat sessions with per-user history stored in the KnowledgeBase.
 
 ### [tl-chat-classic](tl-chat-classic/)
-The classic `chat-client.js` control for LayoutServlet applications - the "Albert" tab. Frozen: still shipped and still working, not developed further. It depends on `tl-chat` for the API and the session state; an application gets the tab by depending on this module.
+The React chat in a classic LayoutServlet application - the "Albert" tab. A `LayoutComponent` writes a React view into the classic page; an application gets the tab by depending on this module and chooses the view it shows. A temporary bridge with documented workarounds, see [tl-chat-classic/CLAUDE.md](tl-chat-classic/CLAUDE.md).
 
 ### [tl-ai-vector-index](tl-ai-vector-index/)
 Semantic search via embedding models and vector stores, with background indexing daemon.

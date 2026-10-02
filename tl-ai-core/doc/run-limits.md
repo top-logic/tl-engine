@@ -100,7 +100,7 @@ opened - and answers `SendResult.rejected(reason)`. `ChatServlet`
 turns that into **HTTP 429** with `{"status":"rejected","reason":"…"}`; the React client throws a
 `RefusedError` (a `ForbiddenError`, so every caller that already shows a refusal as information
 shows this one too) and the composer puts the sentence in the notice strip, not sticky - the answer
-is to send again in a moment. The classic control shows it as a system bubble.
+is to send again in a moment.
 
 The check is advisory, because between it and the submit another request can take the last place.
 That path is caught too: `ChatRunExecutor.submit` throws `NoRoom`, and there - the only place where

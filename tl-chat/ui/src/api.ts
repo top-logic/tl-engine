@@ -32,9 +32,8 @@ export function apiBase(): string {
  *
  * A window can show more than one - a page's chat beside a `<chat-dock>`'s, two `<agent-chat>`
  * elements - and each has its own active session, its own run and its own event stream on the
- * server. A bare window id is the window's unnamed conversation, which is what the classic
- * `chat-client.js` addresses and what a host calling these functions with a window id alone still
- * gets.
+ * server. A bare window id is the window's unnamed conversation, which is what a host calling
+ * these functions with a window id alone gets (the classic `chat-client.js` was one until #618).
  *
  * The parameter is `conversation` rather than `chatId` because `PUT /chat/preferences` already
  * spells a `chatId`, and that one is the key the *layout* is stored under - the same string for

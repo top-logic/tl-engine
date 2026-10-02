@@ -143,8 +143,8 @@ public class TestChatConversationRouting extends BasicTestCase {
 	 * A request that names no conversation addresses the window's unnamed one.
 	 *
 	 * <p>
-	 * That is what the classic {@code chat-client.js} sends, which has one chat per window and no
-	 * chat id to state.
+	 * That is what a host that shows one chat per window may send: it has no chat id to state. The
+	 * classic {@code chat-client.js} was such a host until #618 replaced it.
 	 * </p>
 	 */
 	public void testARequestNamingNoConversationGetsTheUnnamedOne() {

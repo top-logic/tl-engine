@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Create dialog for an invoice, opened from invoices.view.xml.
+
+	What the demo is about: the dialog asks for the event the invoice belongs to, its direction and
+	the scan - and nothing else. "Create" files the invoice under the event and has the model read
+	the number, the dates, the tax rate, the counterparty and the lines off the image.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+		<!-- The event the new invoice is filed under: an invoice is part of an event. -->
+		<channel name="event"/>
+	</channels>
+
+	<window width="720px">
+		<title>
+			<en>New invoice</en>
+			<de>Neue Rechnung</de>
+		</title>
+		<stack>
+			<!-- Which event the invoice is filed under; "Create" stays disabled until one is picked. -->
+			<panel>
+				<title>
+					<en>Event</en>
+					<de>Veranstaltung</de>
+				</title>
+				<table
+					selection="event"
+					types="demo.events:Event"
+				>
+					<columns>
+						<column attribute="name"/>
+						<column attribute="startDate"
+							sort="DESC"
+						/>
+						<column attribute="venue"/>
+					</columns>
+					<rows>all(`demo.events:Event`)</rows>
+				</table>
+			</panel>
+			<form initial-edit-mode="true"
+				input="model"
+				mode-switch="false"
+				with-inset="true"
+			>
+				<field attribute="direction"/>
+				<field attribute="scan"/>
+				<commands>
+					<!--
+						The command's input is the picked event, so it stays disabled until one is
+						picked; the invoice being created comes in over the "model" channel.
+					-->
+					<generic-command
+						image="css:bi bi-check-lg"
+						input="event"
+						placement="BUTTON_BAR"
+					>
+						<label>
+							<en>Create</en>
+							<de>Erstellen</de>
+						</label>
+						<executability>
+							<null-input-disabled/>
+						</executability>
+						<store-form-state/>
+						<with-transaction>
+							<execute-script>
+								<!--
+									Both channels by name: what the chain hands on after
+									<store-form-state> is the form's object, not the command's input.
+								-->
+								<inputs>
+									<input channel="model"/>
+									<input channel="event"/>
+								</inputs>
+								<!--
+									A nested <function> element rather than an attribute: the script carries
+									quotes and line breaks, which an attribute would force into entities.
+								-->
+								<function><![CDATA[draft -> event -> chained -> {
+    invoice = $draft.copy(transient: false);
+    $event.add(`demo.events:Event#invoices`, $invoice);
+    $invoice.set(`demo.events:Invoice#currency`, $event.get(`demo.events:Event#currency`));
+    scan = $invoice.get(`demo.events:Invoice#scan`);
+
+    values = ifElse(isEmpty($scan), null, {
+        result = aiChat(
+            [{
+                "role": "system",
+                "content": "Read the invoice in the image the user provides and return its data as a JSON object. Dates are written as dd.MM.yyyy. Amounts are plain numbers without currency or thousands separators. Write the line descriptions in language {0}.".fill(
+                    currentUser().get(`tl.accounts:Person#locale`))
+            },
+            {
+                "role": "user",
+                "content": $scan
+            }],
+            responseFormat: {
+                "name": "invoice",
+                "schema": {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "invoiceNumber": {"type": "string", "description": "The invoice number as printed."},
+                        "invoiceDate": {"type": "string", "description": "The invoice date, dd.MM.yyyy."},
+                        "dueDate": {"type": "string", "description": "The date payment is due, dd.MM.yyyy."},
+                        "taxRate": {"type": "number", "description": "The VAT rate in percent, e.g. 19."},
+                        "counterparty": {"type": "string", "description": "The name of the company that issued the invoice."},
+                        "lines": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "description": {"type": "string"},
+                                    "quantity": {"type": "number"},
+                                    "unitPrice": {"type": "number", "description": "Net price of one unit."}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        );
+
+        // A model wraps its JSON in a markdown fence often enough that parseJson() on the raw answer
+        // fails, so the fence is stripped before parsing - a prompt is a request, this is a parser.
+        parsed = regexReplace(regex("(?s)^\\s*```(?:json)?\\s*|\\s*```\\s*$"), $result, "").parseJson();
+
+        // The same schema comes back either as the values or wrapped in its own "properties" key.
+        ifElse(isEmpty($parsed["properties"]), $parsed, $parsed["properties"]);
+    });
+
+    v = key -> ifElse(isEmpty($values), null, $values[$key]);
+
+    // An amount the model wrote as text ("4.088,80 EUR") is read as the number it means.
+    number = x -> ifElse(isEmpty($x), null, {
+        text = regexReplace(regex(","), regexReplace(regex("[^0-9,.]"), $x.toString(), ""), ".");
+        ifElse(isEmpty($text), null, $text.parseJson());
+    });
+    day = x -> ifElse(isEmpty($x), null, dateFormat("dd.MM.yyyy").parse($x));
+
+    // The two mandatory values have a fallback, so a scan the model could not read is still filed
+    // and the user corrects it in the form, instead of the whole creation being rolled back.
+    $invoice.set(`demo.events:Invoice#invoiceNumber`,
+        ifElse(isEmpty($v("invoiceNumber")), "?", $v("invoiceNumber")));
+    $invoice.set(`demo.events:Invoice#invoiceDate`,
+        ifElse(isEmpty($v("invoiceDate")), today(), $day($v("invoiceDate"))));
+    $invoice.set(`demo.events:Invoice#dueDate`, $day($v("dueDate")));
+    $invoice.set(`demo.events:Invoice#taxRate`, $number($v("taxRate")));
+    $invoice.set(`demo.events:Invoice#status`, `demo.events:InvoiceStatus#RECEIVED`);
+
+    // Only a company this application already knows is set; inventing a contact would need an
+    // address the scan does not reliably give.
+    issuer = $v("counterparty");
+    $invoice.set(`demo.events:Invoice#counterparty`, ifElse(isEmpty($issuer), null,
+        all(`Contacts:CompanyContact`)
+            .filter(c -> $c.get(`Contacts:Contact.all#name`).toLowerCase().stringContains($issuer.toLowerCase())
+                || $issuer.toLowerCase().stringContains($c.get(`Contacts:Contact.all#name`).toLowerCase()))
+            .firstElement()));
+
+    ifElse(isEmpty($v("lines")), list(), $v("lines")).foreach(l -> {
+        line = new(`demo.events:InvoiceLine`);
+        $line.set(`demo.events:InvoiceLine#description`, $l["description"]);
+        $line.set(`demo.events:InvoiceLine#quantity`, $number($l["quantity"]));
+        $line.set(`demo.events:InvoiceLine#unitPrice`, $number($l["unitPrice"]));
+        $invoice.add(`demo.events:Invoice#lines`, $line);
+    });
+
+    $invoice;
+}]]></function>
+							</execute-script>
+						</with-transaction>
+						<write-channel name="selection"/>
+						<close-dialog/>
+					</generic-command>
+				</commands>
+			</form>
+		</stack>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

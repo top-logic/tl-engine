@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Venues: every venue on the left, the selected one on the right with its address and rooms
+	(venue-detail.view.xml).
+-->
+<view>
+	<channels>
+		<channel name="selectedVenue"/>
+	</channels>
+
+	<split-panel orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane min-size="320"
+				size="45"
+				unit="%"
+			>
+				<panel fill="true">
+					<title>
+						<en>Venues</en>
+						<de>Veranstaltungsorte</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<execute-script function="x -> new(`demo.events:Venue`, transient: true)"/>
+							<open-dialog close-on-backdrop="false"
+								bind-input-to="model"
+								dialog-view="tl-ai-demo/venues/create-venue.view.xml"
+							>
+								<bind channel="selection"
+									to="selectedVenue"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-trash"
+							input="selectedVenue"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete venue</en>
+								<de>Veranstaltungsort löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm>
+								<confirm-label>
+									<en>Delete</en>
+									<de>Löschen</de>
+								</confirm-label>
+								<cancel-label>
+									<en>Cancel</en>
+									<de>Abbrechen</de>
+								</cancel-label>
+								<expr><![CDATA[v -> {
+									"en": "Delete “" + $v.get(`demo.events:Named#name`) + "” with its rooms?",
+									"de": "„" + $v.get(`demo.events:Named#name`) + "“ mit allen Räumen löschen?"
+								}.internationalize()]]></expr>
+							</confirm>
+							<with-transaction>
+								<execute-script function="v -> { $v.delete(); null; }"/>
+							</with-transaction>
+							<write-channel name="selectedVenue"/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="demo.events:Venue"
+						selection="selectedVenue"
+						types="demo.events:Venue"
+					>
+						<columns>
+							<column attribute="name"
+								sort="ASC"
+							/>
+							<column attribute="capacity"/>
+							<column attribute="phone"/>
+							<column attribute="email"/>
+							<column attribute="website"/>
+						</columns>
+						<rows>all(`demo.events:Venue`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane size="55"
+				unit="%"
+			>
+				<view-ref view="tl-ai-demo/venues/venue-detail.view.xml">
+					<bind channel="venue"
+						to="selectedVenue"
+					/>
+				</view-ref>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

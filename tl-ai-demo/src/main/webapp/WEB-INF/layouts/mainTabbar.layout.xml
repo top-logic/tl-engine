@@ -6,7 +6,6 @@
 >
 	<arguments>
 		<components>
-			<layout-reference resource="tl-ai-demo/invoices/tabLayout.layout.xml"/>
 			<layout-reference resource="admin/index.layout.xml"/>
 		</components>
 		<dialogs>

@@ -10,8 +10,8 @@
 		<config service-class="com.top_logic.tl.ai.core.citation.CitationKinds">
 			<instance>
 				<kinds>
-					<kind name="invoice"
-						description="a Beleg of this application"
+					<kind name="event"
+						description="an event of this application (demo.events:Event)"
 						id-source="the id of that object as a tool reported it, e.g. its TID GenericObject:5371"
 						passage="false"
 					>
@@ -20,11 +20,36 @@
 							this is the word the Quellen rail and the marker popover show a reader.
 						-->
 						<label>
-							<de>Beleg</de>
+							<de>Veranstaltung</de>
+							<en>Event</en>
+						</label>
+					</kind>
+					<kind name="invoice"
+						description="an invoice of an event in this application (demo.events:Invoice)"
+						id-source="the id of that object as a tool reported it, e.g. its TID GenericObject:5371"
+						passage="false"
+					>
+						<label>
+							<de>Rechnung</de>
 							<en>Invoice</en>
 						</label>
 					</kind>
 				</kinds>
+			</instance>
+		</config>
+
+		<!--
+			A binary attribute (an invoice's scan) as a file field. The engine's default for
+			tl.core:Binary is a text input in this version, which shows "[no name]" and cannot take a
+			file, so the demo maps the type to the engine's own file control.
+		-->
+		<config service-class="com.top_logic.layout.view.form.FieldControlService">
+			<instance>
+				<providers>
+					<provider type="tl.core:Binary">
+						<impl class="com.top_logic.layout.view.form.BinaryControlProvider"/>
+					</provider>
+				</providers>
 			</instance>
 		</config>
 

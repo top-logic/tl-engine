@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	One event, on tabs: an overview with the figures the model computes and the master data, then
+	its four compositions - the programme, the registrations, the sponsors and the invoices.
+
+	Every tab holds a <form> of its own on the same event, so each is edited and saved on its own.
+	One form around the whole <tab-bar> would be simpler, but a <composition-table> inside a tab of
+	it adds no row in this engine version. A <composition-table> adds, edits and removes rows of a
+	composite reference, saved with its form. A session and an invoice have parts of their own
+	(speakers, invoice lines), so their rows open a detail dialog that edits those in turn.
+-->
+<view>
+	<channels>
+		<channel name="event"/>
+	</channels>
+
+	<panel fill="true">
+		<title>
+			<en>Event</en>
+			<de>Veranstaltung</de>
+		</title>
+		<tab-bar active-tab="overview">
+			<tab id="overview">
+				<label>
+					<en>Overview</en>
+					<de>Übersicht</de>
+				</label>
+				<form input="event"
+					with-inset="true"
+				>
+					<!--
+						The figures the model computes (storage-algorithm "query"), first and side by
+						side, because they are what a reader of an event wants to know. Never editable.
+					-->
+					<grid min-column-width="9rem">
+						<field attribute="registrationCount"/>
+						<field attribute="remainingCapacity"/>
+						<field attribute="revenue"/>
+						<field attribute="totalExpenses"/>
+						<field attribute="balance"/>
+					</grid>
+					<field attribute="name"/>
+					<field attribute="status"/>
+					<field attribute="startDate"/>
+					<field attribute="endDate"/>
+					<field attribute="venue"/>
+					<field attribute="maxParticipants"/>
+					<field attribute="ticketPrice"/>
+					<field attribute="currency"/>
+					<field attribute="organizer"/>
+					<field attribute="manager"/>
+					<field attribute="themeColor"/>
+					<field attribute="description"/>
+				</form>
+			</tab>
+			<tab id="sessions">
+				<label>
+					<en>Programme</en>
+					<de>Programm</de>
+				</label>
+				<form input="event"
+					with-inset="true"
+				>
+					<composition-table attribute="sessions">
+						<columns>
+							<column attribute="name"/>
+							<column attribute="format"/>
+							<column attribute="startTime"/>
+							<column attribute="durationMinutes"/>
+							<column attribute="room"/>
+						</columns>
+						<detail-dialog
+							edit-mode-channel="editMode"
+							input-channel="session"
+							layout="tl-ai-demo/events/session-dialog.view.xml"
+							width="720"
+						/>
+					</composition-table>
+				</form>
+			</tab>
+			<tab id="registrations">
+				<label>
+					<en>Registrations</en>
+					<de>Anmeldungen</de>
+				</label>
+				<form input="event"
+					with-inset="true"
+				>
+					<composition-table attribute="registrations">
+						<columns>
+							<column attribute="participant"/>
+							<column attribute="status"/>
+							<column attribute="pricePaid"/>
+							<column attribute="registeredAt"/>
+							<column attribute="notes"/>
+						</columns>
+					</composition-table>
+				</form>
+			</tab>
+			<tab id="sponsorships">
+				<label>
+					<en>Sponsors</en>
+					<de>Sponsoren</de>
+				</label>
+				<form input="event"
+					with-inset="true"
+				>
+					<composition-table attribute="sponsorships">
+						<columns>
+							<column attribute="sponsor"/>
+							<column attribute="level"/>
+							<column attribute="amount"/>
+							<column attribute="contractSigned"/>
+							<column attribute="invoice"/>
+						</columns>
+					</composition-table>
+				</form>
+			</tab>
+			<tab id="invoices">
+				<label>
+					<en>Invoices</en>
+					<de>Rechnungen</de>
+				</label>
+				<form input="event"
+					with-inset="true"
+				>
+					<composition-table attribute="invoices">
+						<columns>
+							<column attribute="invoiceNumber"/>
+							<column attribute="grossAmount"/>
+							<column attribute="status"/>
+							<column attribute="isOverdue"/>
+							<column attribute="direction"/>
+							<column attribute="counterparty"/>
+							<column attribute="invoiceDate"/>
+						</columns>
+						<detail-dialog
+							edit-mode-channel="editMode"
+							input-channel="invoice"
+							layout="tl-ai-demo/invoices/invoice-dialog.view.xml"
+							width="760"
+						/>
+					</composition-table>
+				</form>
+			</tab>
+		</tab-bar>
+	</panel>
+</view>

@@ -1,13 +1,9 @@
 eclipse.preferences.version=1
-encoding//src/main/java=utf-8
 encoding//src/main/java/META-INF/messages_de.properties=UTF-8
+encoding//src/main/java=utf-8
 encoding//src/main/webapp/WEB-INF/conf/resources/missing.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/model.luigis.pizzashop.messages_de.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/model.luigis.pizzashop.messages_en.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.ai.demo.imageclassification.messages_de.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.ai.demo.imageclassification.messages_en.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.ai.demo.messages_de.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.ai.demo.messages_en.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/model.demo.events.messages_de.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/model.demo.events.messages_en.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/tl-ai-demo.app-messages_de.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/tl-ai-demo.app-messages_en.properties=UTF-8
 encoding//src/test/java=utf-8

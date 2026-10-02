@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Invoices: the invoices of all events on the left, the selected one on the right with its lines
+	and its scan (invoice-detail.view.xml).
+
+	An invoice is part of an event (`Event#invoices` is a composition), so this page is a view
+	across events rather than a list of its own: the "Event" column is the invoice's container, and
+	"New invoice" asks which event the invoice belongs to.
+-->
+<view>
+	<channels>
+		<channel name="selectedInvoice"/>
+		<!-- See events.view.xml: the shell binds its own draft channel over this one (Issue #440). -->
+		<channel name="chatDraft"/>
+	</channels>
+
+	<split-panel orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane min-size="360"
+				size="50"
+				unit="%"
+			>
+				<panel fill="true">
+					<title>
+						<en>Invoices</en>
+						<de>Rechnungen</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<execute-script function="x -> new(`demo.events:Invoice`, transient: true)"/>
+							<open-dialog close-on-backdrop="false"
+								bind-input-to="model"
+								dialog-view="tl-ai-demo/invoices/create-invoice.view.xml"
+							>
+								<bind channel="selection"
+									to="selectedInvoice"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-chat-left-text"
+							input="selectedInvoice"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Ask about this</en>
+								<de>Dazu fragen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<execute-script>
+								<function><![CDATA[i -> {
+									"en": "Please check invoice " + $i.get(`demo.events:Invoice#invoiceNumber`)
+										+ ": do the lines add up, and what is still to do?",
+									"de": "Bitte prüfe die Rechnung " + $i.get(`demo.events:Invoice#invoiceNumber`)
+										+ ": Stimmen die Positionen, und was ist noch zu tun?"
+								}.internationalize()]]></function>
+							</execute-script>
+							<write-channel name="chatDraft"/>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-trash"
+							input="selectedInvoice"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete invoice</en>
+								<de>Rechnung löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm>
+								<confirm-label>
+									<en>Delete</en>
+									<de>Löschen</de>
+								</confirm-label>
+								<cancel-label>
+									<en>Cancel</en>
+									<de>Abbrechen</de>
+								</cancel-label>
+								<expr><![CDATA[i -> {
+									"en": "Delete invoice " + $i.get(`demo.events:Invoice#invoiceNumber`) + "?",
+									"de": "Rechnung " + $i.get(`demo.events:Invoice#invoiceNumber`) + " löschen?"
+								}.internationalize()]]></expr>
+							</confirm>
+							<with-transaction>
+								<execute-script function="i -> { $i.delete(); null; }"/>
+							</with-transaction>
+							<write-channel name="selectedInvoice"/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="demo.events:Invoice,demo.events:InvoiceLine"
+						selection="selectedInvoice"
+						types="demo.events:Invoice"
+					>
+						<columns>
+							<column attribute="invoiceNumber"/>
+							<column attribute="grossAmount"/>
+							<column attribute="status"/>
+							<column attribute="isOverdue"/>
+							<column attribute="dueDate"/>
+							<column attribute="event"/>
+							<column attribute="direction"/>
+							<column attribute="counterparty"/>
+							<column attribute="invoiceDate"
+								sort="DESC"
+							/>
+						</columns>
+						<rows>all(`demo.events:Invoice`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane size="50"
+				unit="%"
+			>
+				<view-ref view="tl-ai-demo/invoices/invoice-detail.view.xml">
+					<bind channel="invoice"
+						to="selectedInvoice"
+					/>
+				</view-ref>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

@@ -27,16 +27,16 @@ import com.top_logic.util.model.ModelService;
 public class ModelDigestGeneratorTest extends BasicTestCase {
 
 	/**
-	 * Tests that the digest contains the pizza shop module and its types.
+	 * Tests that the digest contains the event-management module and its types.
 	 */
-	public void testDigestContainsPizzashopModule() {
+	public void testDigestContainsEventsModule() {
 		TLModel model = ModelService.getApplicationModel();
 		String digest = digest(model, false);
 
 		assertNotNull("Digest should not be null", digest);
 		assertFalse("Digest should not be empty", digest.isEmpty());
 		assertTrue("Digest should contain module header",
-			digest.contains("## luigis.pizzashop"));
+			digest.contains("## demo.events"));
 	}
 
 	/**
@@ -46,14 +46,14 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 		TLModel model = ModelService.getApplicationModel();
 		String digest = digest(model, false);
 
-		assertTrue("Digest should contain Product class",
-			digest.contains("class Product"));
-		assertTrue("Digest should contain Ingredient class",
-			digest.contains("class Ingredient"));
-		assertTrue("Digest should contain Component interface",
-			digest.contains("interface Component") || digest.contains("class Component"));
-		assertTrue("Digest should contain NamedEntities",
-			digest.contains("NamedEntities"));
+		assertTrue("Digest should contain Event class",
+			digest.contains("class Event"));
+		assertTrue("Digest should contain Room class",
+			digest.contains("class Room"));
+		assertTrue("Digest should contain Documented interface",
+			digest.contains("interface Documented"));
+		assertTrue("Digest should contain Named",
+			digest.contains("interface Named"));
 	}
 
 	/**
@@ -63,10 +63,10 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 		TLModel model = ModelService.getApplicationModel();
 		String digest = digest(model, false);
 
-		assertTrue("Digest should contain UnitOfMeasure enum",
-			digest.contains("enum UnitOfMeasure"));
+		assertTrue("Digest should contain EventStatus enum",
+			digest.contains("enum EventStatus"));
 		assertTrue("Digest should contain enum classifiers",
-			digest.contains("G") && digest.contains("KG") && digest.contains("ML"));
+			digest.contains("DRAFT") && digest.contains("PLANNED") && digest.contains("SOLD_OUT"));
 	}
 
 	/**
@@ -76,10 +76,10 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 		TLModel model = ModelService.getApplicationModel();
 		String digest = digest(model, false);
 
-		assertTrue("Digest should contain budget property",
-			digest.contains("budget"));
-		assertTrue("Digest should contain components reference",
-			digest.contains("components"));
+		assertTrue("Digest should contain ticketPrice property",
+			digest.contains("ticketPrice"));
+		assertTrue("Digest should contain sessions reference",
+			digest.contains("sessions"));
 		assertTrue("Digest should contain mandatory marker",
 			digest.contains("mandatory"));
 		assertTrue("Digest should contain derived marker",
@@ -93,10 +93,10 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 		TLModel model = ModelService.getApplicationModel();
 		String digest = digest(model, false);
 
-		assertTrue("Digest should show Product extends NamedEntities",
-			digest.contains("Product extends NamedEntities"));
-		assertTrue("Digest should show Ingredient extends Component",
-			digest.contains("Ingredient extends Component"));
+		assertTrue("Digest should show Event extends Named, Documented",
+			digest.contains("Event extends Named, Documented"));
+		assertTrue("Digest should show Room extends Named",
+			digest.contains("Room extends Named"));
 	}
 
 	/**
@@ -143,35 +143,36 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 		String english = ModelDigestGenerator.generate(model, false, ModelSecurity.UNCHECKED, Locale.ENGLISH);
 		String german = ModelDigestGenerator.generate(model, false, ModelSecurity.UNCHECKED, Locale.GERMAN);
 
-		assertTrue(english, english.contains("## luigis.pizzashop (6 types, 1 enum)\n"
-			+ "// Product costing of a pizza shop: what a product is made of and what it costs to make.\n"));
-		assertTrue(english, english.contains("\n// A dish the shop sells, with the components one unit of it needs.\n"
-			+ "class Product extends NamedEntities {\n"));
+		assertTrue(english, english.contains("## demo.events (13 types, 8 enums)\n"
+			+ "// Demo model for events, venues, sessions, registrations, sponsorships and invoices.\n"));
+		assertTrue(english, english.contains("\n// An event such as a conference, with sessions, registrations,"
+			+ " sponsorships and invoices.\nclass Event extends Named, Documented {\n"));
 		assertTrue("The line break of the tooltip is collapsed.", english.contains(
-			"  budget: tl.core:Double // The most one unit of the product may cost to make, in euros."
-				+ " Compared with the cost per unit.\n"));
+			"  balance: tl.core:Double (derived) // Revenue minus total expenses."
+				+ " Negative when the event costs more than it earns.\n"));
 
-		assertTrue(english, english.contains("\n\nclass Ingredient extends Component { }\n"));
-		assertTrue(english, english.contains("  components: -> ProductComponent[] (mandatory, composite)\n"));
+		// The security test bed's "pm" model documents nothing: no comment above or beside it.
+		assertTrue(english, english.contains("\n\nclass Project extends tl.model:TLObject {\n"
+			+ "  name: tl.core:String (mandatory)\n"));
+		assertTrue(english, english.contains("  sessions: -> Session[] (composite) // Program of the event.\n"));
 
-		assertTrue(german, german.contains("\n// Ein Gericht, das die Pizzeria verkauft, mit den Komponenten,"
-			+ " die eine Einheit davon braucht.\nclass Product extends NamedEntities {\n"));
-		assertTrue(german, german.contains("  budget: tl.core:Double // Was die Herstellung einer Einheit des"
-			+ " Produkts höchstens kosten darf, in Euro. Wird mit den Kosten pro Einheit verglichen.\n"));
+		assertTrue(german, german.contains("\n// Eine Veranstaltung, z. B. eine Konferenz, mit Sessions, Anmeldungen,"
+			+ " Sponsoring und Rechnungen.\nclass Event extends Named, Documented {\n"));
+		assertTrue(german, german.contains("  balance: tl.core:Double (derived) // Einnahmen abzüglich Ausgaben."
+			+ " Negativ, wenn die Veranstaltung mehr kostet, als sie einbringt.\n"));
 	}
 
 	/**
-	 * An enumeration with described values gets one value per line, an undescribed value no comment;
-	 * a framework module stays structure only although its elements are documented.
+	 * An enumeration with described values gets one value per line; a framework module stays structure
+	 * only although its elements are documented.
 	 */
 	public void testDigestDescribesEnumValuesOfApplicationModulesOnly() {
 		TLModel model = ModelService.getApplicationModel();
 		String digest = ModelDigestGenerator.generate(model, true, ModelSecurity.UNCHECKED, Locale.ENGLISH);
 
-		assertTrue(digest, digest.contains("enum UnitOfMeasure {\n"
-			+ "  G // Gram, for small amounts of an ingredient such as spices.\n"
-			+ "  KG // Kilogram, the usual unit for flour, cheese and vegetables.\n"
-			+ "  T\n"));
+		assertTrue(digest, digest.contains("// Lifecycle status of an event.\nenum EventStatus {\n"
+			+ "  DRAFT // Being prepared, not announced yet.\n"
+			+ "  PLANNED // Announced, registration not open yet.\n"));
 
 		// tl.ai.execution documents the type and every value, and still gets the one-line form.
 		assertTrue(digest, digest.contains("\n\nenum ExecutionStatus { RUNNING, COMPLETE, ERROR, CANCELLED, REJECTED }\n"));
@@ -186,10 +187,10 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 		String overview = tool.outlineModel(Boolean.FALSE, ToolContext.unrestricted());
 
 		assertNotNull("Overview should not be null", overview);
-		assertTrue("Overview should contain pizzashop module",
-			overview.contains("## luigis.pizzashop"));
-		assertTrue("Overview should contain Product class",
-			overview.contains("class Product"));
+		assertTrue("Overview should contain the events module",
+			overview.contains("## demo.events"));
+		assertTrue("Overview should contain Event class",
+			overview.contains("class Event"));
 		assertFalse("Overview should exclude framework modules by default",
 			overview.contains("## tl.core"));
 	}

@@ -42,8 +42,8 @@ import com.top_logic.model.util.TLModelPartRef;
  * <p>
  * The agent names objects and the page decides how they look, so what the page decided is a
  * statement this application makes, not an implementation detail: several presented objects are a
- * <b>table</b> of their attributes - the same three columns the Belege page shows - and not a list
- * of labels, which is what the rail's pane used to hold and what made the pane say less about the
+ * <b>table</b> of their attributes - the name, start date, free seats and balance of each event - and
+ * not a list of labels, which is what the rail's pane used to hold and what made the pane say less about the
  * objects than the answer beside it did.
  * </p>
  *
@@ -58,7 +58,7 @@ public class TestPresentedObjectsPane extends TestCase {
 	private static final String VIEW = "/WEB-INF/views/tl-ai-demo/chat-grouped.view.xml";
 
 	/** The type the pane is about. */
-	private static final String INVOICE = "tl.ai.demo.imageclassification:Invoice";
+	private static final String EVENT = "demo.events:Event";
 
 	/**
 	 * Several presented objects are shown as a table of their attributes.
@@ -66,13 +66,13 @@ public class TestPresentedObjectsPane extends TestCase {
 	public void testCollectionIsATable() throws Exception {
 		TableElement.Config table = presentedTable();
 
-		assertEquals("The columns are the ones the Belege page shows.",
-			List.of("date", "description", "amountLabel"), attributes(table));
+		assertEquals("The columns say how each event is doing.",
+			List.of("name", "startDate", "remainingCapacity", "balance"), attributes(table));
 		assertEquals("Naming the row type gives the columns their model labels - and is what lets"
 			+ " this table be built at all, while the pane channel is still empty.",
-			List.of(INVOICE), qualifiedNames(table.getTypes()));
+			List.of(EVENT), qualifiedNames(table.getTypes()));
 		assertEquals("The rows are what stands on the channel the <present> tool writes.",
-			List.of("paneInvoices"), channelNames(table));
+			List.of("paneItems"), channelNames(table));
 		assertNotNull("The rows are computed from that channel.", table.getRows());
 	}
 

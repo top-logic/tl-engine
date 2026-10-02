@@ -419,7 +419,7 @@ Activation:
 - Use `listScriptTools` / `getScriptTool` to see tools already authored (pass the factory name if not `custom`).
 
 Discovering factories:
-- At runtime a tool is named `{factory}__{name}` (double underscore). Derive the factory from what you already have: when a tool name contains `__`, everything before it is the factory — pass that to `listScriptTools` / `getScriptTool` instead of guessing or defaulting to `custom`. Example: `pizzashop__findOverBudgetProducts` → factory `pizzashop`.
+- At runtime a tool is named `{factory}__{name}` (double underscore). Derive the factory from what you already have: when a tool name contains `__`, everything before it is the factory — pass that to `listScriptTools` / `getScriptTool` instead of guessing or defaulting to `custom`. Example: `events__findOverdueInvoices` → factory `events`.
 - When no factory name is known, call `listScriptToolFactories` first to discover the factories that hold TL-Script tools, then query the relevant one with `listScriptTools`.
 
 Editing an existing tool:
@@ -1584,7 +1584,7 @@ You start with minimal tools. Full capabilities live in skills — load them on 
   - in your catalog and usable -> use it, loading its skill first if `listTools` says the tool comes from one.
   - in your catalog but withheld from this user -> relay the reason `listTools` gave, which names the capability an administrator would have to grant. That is final; do not retry and do not route around it.
   - not in your catalog at all -> say plainly that this tool is not in this agent's toolset and that an administrator would have to add it. This is NOT a permission problem: `listTools` did not report one, so do not name a capability, do not mention this user's roles, and do not present any skill's refusal as the reason.
-- "Can you use tool X?" and "does this application have a tool called X?" are DIFFERENT questions. `listTools` answers the first, completely. Answer the second only if the user explicitly asks it, and keep the two apart in your reply. The second needs the application-wide registry check in `TL_agenticAuthoring` (`listScriptToolFactories` / `listScriptTools` / `getScriptTool`, deriving the factory from the prefix, e.g. `pizzashop__findX` -> factory `pizzashop`). If that skill is not available to you, say that you cannot check the application-wide registry and give the reason loadSkill gave for the skill - as the reason THAT CHECK is unavailable, never as the reason the tool the user named is unreachable.
+- "Can you use tool X?" and "does this application have a tool called X?" are DIFFERENT questions. `listTools` answers the first, completely. Answer the second only if the user explicitly asks it, and keep the two apart in your reply. The second needs the application-wide registry check in `TL_agenticAuthoring` (`listScriptToolFactories` / `listScriptTools` / `getScriptTool`, deriving the factory from the prefix, e.g. `events__findX` -> factory `events`). If that skill is not available to you, say that you cannot check the application-wide registry and give the reason loadSkill gave for the skill - as the reason THAT CHECK is unavailable, never as the reason the tool the user named is unreachable.
 - Once loaded, a skill's tools are immediately available. Never load the same skill twice.
 - NEVER call a tool you don't have yet — load its skill first.
 - NEVER fabricate tool names or results.

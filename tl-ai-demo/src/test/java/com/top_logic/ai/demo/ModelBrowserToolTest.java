@@ -25,11 +25,11 @@ import com.top_logic.util.model.ModelService;
  */
 public class ModelBrowserToolTest extends BasicTestCase {
 
-	private static final String PIZZASHOP_MODULE = "luigis.pizzashop";
-	private static final String UNIT_OF_MEASURE_ENUM = "UnitOfMeasure";
-	private static final String PRODUCT_CLASS = "Product";
-	private static final String NAMED_ENTITIES_INTERFACE = "NamedEntities";
-	private static final String COMPONENT_INTERFACE = "Component";
+	private static final String EVENTS_MODULE = "demo.events";
+	private static final String EVENT_STATUS_ENUM = "EventStatus";
+	private static final String EVENT_CLASS = "Event";
+	private static final String NAMED_INTERFACE = "Named";
+	private static final String DOCUMENTED_INTERFACE = "Documented";
 
 	/**
 	 * Tests that listModules() returns only application modules by default (framework modules
@@ -40,8 +40,8 @@ public class ModelBrowserToolTest extends BasicTestCase {
 		String result = tool.listModules(null);
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain luigis.pizzashop module",
-			result.contains(PIZZASHOP_MODULE));
+		assertTrue("Result should contain demo.events module",
+			result.contains(EVENTS_MODULE));
 		assertTrue("Result should be valid JSON with modules array",
 			result.contains("\"modules\""));
 		assertFalse("Result should NOT contain framework module tl.model",
@@ -56,8 +56,8 @@ public class ModelBrowserToolTest extends BasicTestCase {
 		String result = tool.listModules(true);
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain luigis.pizzashop module",
-			result.contains(PIZZASHOP_MODULE));
+		assertTrue("Result should contain demo.events module",
+			result.contains(EVENTS_MODULE));
 		assertTrue("Result should contain framework module tl.model",
 			result.contains("\"tl.model\""));
 		assertTrue("Result should be valid JSON with modules array",
@@ -65,21 +65,21 @@ public class ModelBrowserToolTest extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that listTypes() returns types from the luigis.pizzashop module.
+	 * Tests that listTypes() returns types from the demo.events module.
 	 */
 	public void testListTypes() {
 		ModelBrowserTool tool = new ModelBrowserTool();
-		String result = tool.listTypes(PIZZASHOP_MODULE);
+		String result = tool.listTypes(EVENTS_MODULE);
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain UnitOfMeasure enum",
-			result.contains(UNIT_OF_MEASURE_ENUM));
-		assertTrue("Result should contain Product class",
-			result.contains(PRODUCT_CLASS));
-		assertTrue("Result should contain NamedEntities interface",
-			result.contains(NAMED_ENTITIES_INTERFACE));
-		assertTrue("Result should contain Component interface",
-			result.contains(COMPONENT_INTERFACE));
+		assertTrue("Result should contain EventStatus enum",
+			result.contains(EVENT_STATUS_ENUM));
+		assertTrue("Result should contain Event class",
+			result.contains(EVENT_CLASS));
+		assertTrue("Result should contain Named interface",
+			result.contains(NAMED_INTERFACE));
+		assertTrue("Result should contain Documented interface",
+			result.contains(DOCUMENTED_INTERFACE));
 		assertTrue("Result should contain types array",
 			result.contains("\"types\""));
 		assertTrue("Result should contain meta-type information",
@@ -115,21 +115,21 @@ public class ModelBrowserToolTest extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that listTypeParts() returns parts from the Product class.
+	 * Tests that listTypeParts() returns parts from the Event class.
 	 */
 	public void testListTypeParts() {
 		ModelBrowserTool tool = new ModelBrowserTool();
-		String result = tool.listTypeParts(PIZZASHOP_MODULE, PRODUCT_CLASS, false);
+		String result = tool.listTypeParts(EVENTS_MODULE, EVENT_CLASS, false);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain parts array",
 			result.contains("\"parts\""));
-		assertTrue("Result should contain 'components' reference",
-			result.contains("components"));
-		assertTrue("Result should contain 'plannedQuantity' property",
-			result.contains("plannedQuantity"));
-		assertTrue("Result should contain 'budget' property",
-			result.contains("budget"));
+		assertTrue("Result should contain 'sessions' reference",
+			result.contains("sessions"));
+		assertTrue("Result should contain 'startDate' property",
+			result.contains("startDate"));
+		assertTrue("Result should contain 'ticketPrice' property",
+			result.contains("ticketPrice"));
 		assertTrue("Result should contain part kind information",
 			result.contains("\"kind\""));
 		assertTrue("Result should contain type information",
@@ -142,19 +142,19 @@ public class ModelBrowserToolTest extends BasicTestCase {
 	public void testListTypePartsWithInherited() {
 		ModelBrowserTool tool = new ModelBrowserTool();
 
-		// Product inherits from NamedEntities, which has a 'name' property
-		String resultWithInherited = tool.listTypeParts(PIZZASHOP_MODULE, PRODUCT_CLASS, true);
-		String resultWithoutInherited = tool.listTypeParts(PIZZASHOP_MODULE, PRODUCT_CLASS, false);
+		// Event inherits from Named, which has a 'name' property
+		String resultWithInherited = tool.listTypeParts(EVENTS_MODULE, EVENT_CLASS, true);
+		String resultWithoutInherited = tool.listTypeParts(EVENTS_MODULE, EVENT_CLASS, false);
 
 		assertNotNull("Result with inherited should not be null", resultWithInherited);
 		assertNotNull("Result without inherited should not be null", resultWithoutInherited);
 
-		assertTrue("Result with inherited should contain 'name' property from NamedEntities",
+		assertTrue("Result with inherited should contain 'name' property from Named",
 			resultWithInherited.contains("\"name\""));
 		assertTrue("Result with inherited should mark inherited parts",
 			resultWithInherited.contains("\"inherited\""));
 
-		// The result without inherited may or may not contain 'name' if Product overrides it,
+		// The result without inherited may or may not contain 'name' if Event overrides it,
 		// but it should have fewer total parts
 		int partsCountWithInherited = countOccurrences(resultWithInherited, "\"name\"");
 		int partsCountWithoutInherited = countOccurrences(resultWithoutInherited, "\"name\"");
@@ -168,7 +168,7 @@ public class ModelBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListTypePartsInvalidType() {
 		ModelBrowserTool tool = new ModelBrowserTool();
-		String result = tool.listTypeParts(PIZZASHOP_MODULE, "NonExistentType", false);
+		String result = tool.listTypeParts(EVENTS_MODULE, "NonExistentType", false);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error message",
@@ -182,7 +182,7 @@ public class ModelBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListTypePartsOnEnumeration() {
 		ModelBrowserTool tool = new ModelBrowserTool();
-		String result = tool.listTypeParts(PIZZASHOP_MODULE, UNIT_OF_MEASURE_ENUM, false);
+		String result = tool.listTypeParts(EVENTS_MODULE, EVENT_STATUS_ENUM, false);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error message",
@@ -192,29 +192,29 @@ public class ModelBrowserToolTest extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that listClassifiers() returns classifiers from the UnitOfMeasure enumeration.
+	 * Tests that listClassifiers() returns classifiers from the EventStatus enumeration.
 	 */
 	public void testListClassifiers() {
 		ModelBrowserTool tool = new ModelBrowserTool();
-		String result = tool.listClassifiers(PIZZASHOP_MODULE, UNIT_OF_MEASURE_ENUM);
+		String result = tool.listClassifiers(EVENTS_MODULE, EVENT_STATUS_ENUM);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain classifiers array",
 			result.contains("\"classifiers\""));
-		assertTrue("Result should contain G classifier",
-			result.contains("\"G\""));
-		assertTrue("Result should contain KG classifier",
-			result.contains("\"KG\""));
-		assertTrue("Result should contain T classifier",
-			result.contains("\"T\""));
-		assertTrue("Result should contain ML classifier",
-			result.contains("\"ML\""));
-		assertTrue("Result should contain L classifier",
-			result.contains("\"L\""));
-		assertTrue("Result should contain HOUR classifier",
-			result.contains("\"HOUR\""));
-		assertTrue("Result should contain MINUTE classifier",
-			result.contains("\"MINUTE\""));
+		assertTrue("Result should contain DRAFT classifier",
+			result.contains("\"DRAFT\""));
+		assertTrue("Result should contain PLANNED classifier",
+			result.contains("\"PLANNED\""));
+		assertTrue("Result should contain OPEN_FOR_REGISTRATION classifier",
+			result.contains("\"OPEN_FOR_REGISTRATION\""));
+		assertTrue("Result should contain SOLD_OUT classifier",
+			result.contains("\"SOLD_OUT\""));
+		assertTrue("Result should contain RUNNING classifier",
+			result.contains("\"RUNNING\""));
+		assertTrue("Result should contain COMPLETED classifier",
+			result.contains("\"COMPLETED\""));
+		assertTrue("Result should contain CANCELLED classifier",
+			result.contains("\"CANCELLED\""));
 		assertTrue("Result should contain classifier count",
 			result.contains("\"classifierCount\""));
 
@@ -228,7 +228,7 @@ public class ModelBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListClassifiersInvalidEnum() {
 		ModelBrowserTool tool = new ModelBrowserTool();
-		String result = tool.listClassifiers(PIZZASHOP_MODULE, "NonExistentEnum");
+		String result = tool.listClassifiers(EVENTS_MODULE, "NonExistentEnum");
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error message",
@@ -242,7 +242,7 @@ public class ModelBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListClassifiersOnClass() {
 		ModelBrowserTool tool = new ModelBrowserTool();
-		String result = tool.listClassifiers(PIZZASHOP_MODULE, PRODUCT_CLASS);
+		String result = tool.listClassifiers(EVENTS_MODULE, EVENT_CLASS);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error message",
@@ -256,7 +256,7 @@ public class ModelBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListClassifiersNullModule() {
 		ModelBrowserTool tool = new ModelBrowserTool();
-		String result = tool.listClassifiers(null, UNIT_OF_MEASURE_ENUM);
+		String result = tool.listClassifiers(null, EVENT_STATUS_ENUM);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error message",

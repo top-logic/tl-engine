@@ -98,18 +98,3 @@ html:not([data-theme="dark"]) .tlAppBar__actions button:has(.bi-sun) {
 	clip-path: inset(50%);
 	white-space: nowrap;
 }
-
-/* --- Invoice table: one line per cell --------------------------------------- */
-
-/*
- * Table rows have a fixed height, so a description long enough to wrap was drawn across three
- * lines inside a one-line row and visually cut in half. One line with an ellipsis says the same
- * thing honestly; the full text is one click away in the form beside the table.
- */
-.tlTableView__cell[data-col="description"],
-.tlTableView__cell[data-col="description"] span,
-.tlTableView__cell[data-col="description"] div {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}

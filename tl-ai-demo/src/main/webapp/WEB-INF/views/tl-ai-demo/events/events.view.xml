@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Events: every event on the left, the selected one on the right with its programme,
+	registrations, sponsors and invoices (event-detail.view.xml).
+
+	Built from the standard view elements only - a <table> bound to demo.events:Event and a <form>
+	on its selection - so the page shows what an application gets from its model without code.
+-->
+<view>
+	<channels>
+		<channel name="selectedEvent"/>
+		<!--
+			The chat composer's unsent text. Declared so this page loads on its own; inside the shell
+			app.view.xml binds its own channel of that name over this one, and "Ask about this" then
+			writes the draft of the chat on the other nav item (Issue #440).
+		-->
+		<channel name="chatDraft"/>
+	</channels>
+
+	<split-panel orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane min-size="360"
+				size="40"
+				unit="%"
+			>
+				<panel fill="true">
+					<title>
+						<en>Events</en>
+						<de>Veranstaltungen</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<!-- A transient object, copied in by the dialog: an abandoned dialog leaves nothing behind. -->
+							<execute-script function="x -> new(`demo.events:Event`, transient: true)"/>
+							<open-dialog close-on-backdrop="false"
+								bind-input-to="model"
+								dialog-view="tl-ai-demo/events/create-event.view.xml"
+							>
+								<bind channel="selection"
+									to="selectedEvent"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-chat-left-text"
+							input="selectedEvent"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Ask about this</en>
+								<de>Dazu fragen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<execute-script>
+								<function><![CDATA[e -> {
+									"en": "How is the event “" + $e.get(`demo.events:Named#name`)
+										+ "” doing - registrations, budget and open invoices?",
+									"de": "Wie steht die Veranstaltung „" + $e.get(`demo.events:Named#name`)
+										+ "“ - Anmeldungen, Budget und offene Rechnungen?"
+								}.internationalize()]]></function>
+							</execute-script>
+							<write-channel name="chatDraft"/>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-trash"
+							input="selectedEvent"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete event</en>
+								<de>Veranstaltung löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm>
+								<confirm-label>
+									<en>Delete</en>
+									<de>Löschen</de>
+								</confirm-label>
+								<cancel-label>
+									<en>Cancel</en>
+									<de>Abbrechen</de>
+								</cancel-label>
+								<expr><![CDATA[e -> {
+									"en": "Delete “" + $e.get(`demo.events:Named#name`)
+										+ "” with its sessions, registrations, sponsorships and invoices?",
+									"de": "„" + $e.get(`demo.events:Named#name`)
+										+ "“ mit allen Sessions, Anmeldungen, Sponsorings und Rechnungen löschen?"
+								}.internationalize()]]></expr>
+							</confirm>
+							<with-transaction>
+								<execute-script function="e -> { $e.delete(); null; }"/>
+							</with-transaction>
+							<write-channel name="selectedEvent"/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="demo.events:Event,demo.events:Registration,demo.events:Sponsorship,demo.events:Invoice,demo.events:InvoiceLine"
+						selection="selectedEvent"
+						types="demo.events:Event"
+					>
+						<columns>
+							<column attribute="name"/>
+							<column attribute="startDate"
+								sort="ASC"
+							/>
+							<column attribute="status"/>
+							<column attribute="remainingCapacity"/>
+							<column attribute="balance"/>
+							<column attribute="venue"/>
+							<column attribute="registrationCount"/>
+						</columns>
+						<rows>all(`demo.events:Event`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane size="60"
+				unit="%"
+			>
+				<view-ref view="tl-ai-demo/events/event-detail.view.xml">
+					<bind channel="event"
+						to="selectedEvent"
+					/>
+				</view-ref>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

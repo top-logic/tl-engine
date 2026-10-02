@@ -188,8 +188,8 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 	 * The body can then navigate the wrapper using {@code .get(`Type#attr`)} TL-Script syntax.
 	 *
 	 * <p>
-	 * Uses {@code luigis.pizzashop:Ingredient} (concrete class with a {@code name} attribute
-	 * inherited from {@code luigis.pizzashop:NamedEntities}) because it is already part of the
+	 * Uses {@code demo.events:Room} (concrete class with a {@code name} attribute
+	 * inherited from {@code demo.events:Named}) because it is already part of the
 	 * tl-ai-demo model and is exercised by {@link InstanceBrowserToolTest}.
 	 * </p>
 	 */
@@ -197,33 +197,32 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
 		String tid;
-		TLObject ingredient;
+		TLObject room;
 		try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
-			ingredient = createObject(
-				"new(`luigis.pizzashop:Ingredient`)" +
-				"..set(`luigis.pizzashop:Component#name`, 'fixture-ingredient')" +
-				"..set(`luigis.pizzashop:Component#baseUnit`, `luigis.pizzashop:UnitOfMeasure#G`)" +
-				"..set(`luigis.pizzashop:Component#costPerBaseUnit`, 1.0)");
+			room = createObject(
+				"new(`demo.events:Room`)" +
+				"..set(`demo.events:Named#name`, 'fixture-room')" +
+				"..set(`demo.events:Room#capacity`, 10)");
 			tx.commit();
-			tid = ingredient.tId().asString();
+			tid = room.tId().asString();
 		}
 
 		try {
 			ScriptParameter p = TypedConfiguration.newConfigItem(ScriptParameter.class);
 			p.setName("target");
-			p.setType(TLModelPartRef.ref("luigis.pizzashop:Ingredient"));
+			p.setType(TLModelPartRef.ref("demo.events:Room"));
 			p.setMandatory(true);
 
 			Tool tool = singleTool(scriptConfig("readName", ToolMode.READ,
-				"$target.get(`luigis.pizzashop:NamedEntities#name`)", p));
+				"$target.get(`demo.events:Named#name`)", p));
 
 			ToolResult result = tool.execute(Map.of("target", tid), ToolContext.EMPTY);
 
-			assertEquals("fixture-ingredient", MarkedResults.disclosed(result.text()));
+			assertEquals("fixture-room", MarkedResults.disclosed(result.text()));
 		} finally {
 			try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
-				if (ingredient.tValid()) {
-					ingredient.tDelete();
+				if (room.tValid()) {
+					room.tDelete();
 				}
 				tx.commit();
 			}
@@ -237,67 +236,64 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 	 * the results — proving individual resolution, not just count.
 	 *
 	 * <p>
-	 * Uses the same {@code luigis.pizzashop:Ingredient} type as
+	 * Uses the same {@code demo.events:Room} type as
 	 * {@link #testTLClassParameterResolvesTid()}.
 	 * </p>
 	 */
 	public void testMultipleTLClassParameterResolvesListOfTids() throws Exception {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
-		TLObject ingredientA;
-		TLObject ingredientB;
-		TLObject ingredientC;
+		TLObject roomA;
+		TLObject roomB;
+		TLObject roomC;
 		String tidA;
 		String tidB;
 		String tidC;
 
 		try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
-			ingredientA = createObject(
-				"new(`luigis.pizzashop:Ingredient`)" +
-				"..set(`luigis.pizzashop:Component#name`, 'a')" +
-				"..set(`luigis.pizzashop:Component#baseUnit`, `luigis.pizzashop:UnitOfMeasure#G`)" +
-				"..set(`luigis.pizzashop:Component#costPerBaseUnit`, 1.0)");
-			ingredientB = createObject(
-				"new(`luigis.pizzashop:Ingredient`)" +
-				"..set(`luigis.pizzashop:Component#name`, 'b')" +
-				"..set(`luigis.pizzashop:Component#baseUnit`, `luigis.pizzashop:UnitOfMeasure#G`)" +
-				"..set(`luigis.pizzashop:Component#costPerBaseUnit`, 1.0)");
-			ingredientC = createObject(
-				"new(`luigis.pizzashop:Ingredient`)" +
-				"..set(`luigis.pizzashop:Component#name`, 'c')" +
-				"..set(`luigis.pizzashop:Component#baseUnit`, `luigis.pizzashop:UnitOfMeasure#G`)" +
-				"..set(`luigis.pizzashop:Component#costPerBaseUnit`, 1.0)");
+			roomA = createObject(
+				"new(`demo.events:Room`)" +
+				"..set(`demo.events:Named#name`, 'a')" +
+				"..set(`demo.events:Room#capacity`, 10)");
+			roomB = createObject(
+				"new(`demo.events:Room`)" +
+				"..set(`demo.events:Named#name`, 'b')" +
+				"..set(`demo.events:Room#capacity`, 10)");
+			roomC = createObject(
+				"new(`demo.events:Room`)" +
+				"..set(`demo.events:Named#name`, 'c')" +
+				"..set(`demo.events:Room#capacity`, 10)");
 			tx.commit();
-			tidA = ingredientA.tId().asString();
-			tidB = ingredientB.tId().asString();
-			tidC = ingredientC.tId().asString();
+			tidA = roomA.tId().asString();
+			tidB = roomB.tId().asString();
+			tidC = roomC.tId().asString();
 		}
 
 		try {
 			ScriptParameter p = TypedConfiguration.newConfigItem(ScriptParameter.class);
 			p.setName("targets");
-			p.setType(TLModelPartRef.ref("luigis.pizzashop:Ingredient"));
+			p.setType(TLModelPartRef.ref("demo.events:Room"));
 			p.setMandatory(true);
 			p.setMultiple(true);
 
 			// $targets.map(x -> $x.get(`…#name`)) produces a list of name strings;
 			// .join(",") concatenates them into a single comma-separated string.
 			Tool tool = singleTool(scriptConfig("listNames", ToolMode.READ,
-				"$targets.map(x -> $x.get(`luigis.pizzashop:NamedEntities#name`)).join(\",\")", p));
+				"$targets.map(x -> $x.get(`demo.events:Named#name`)).join(\",\")", p));
 
 			ToolResult result = tool.execute(Map.of("targets", List.of(tidA, tidB, tidC)), ToolContext.EMPTY);
 
 			assertEquals("a,b,c", MarkedResults.disclosed(result.text()));
 		} finally {
 			try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
-				if (ingredientA.tValid()) {
-					ingredientA.tDelete();
+				if (roomA.tValid()) {
+					roomA.tDelete();
 				}
-				if (ingredientB.tValid()) {
-					ingredientB.tDelete();
+				if (roomB.tValid()) {
+					roomB.tDelete();
 				}
-				if (ingredientC.tValid()) {
-					ingredientC.tDelete();
+				if (roomC.tValid()) {
+					roomC.tDelete();
 				}
 				tx.commit();
 			}
@@ -334,7 +330,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 	 * "not found" message rather than throwing.
 	 *
 	 * <p>
-	 * Strategy: create a real {@code Ingredient}, capture its TID (which reveals the KB storage
+	 * Strategy: create a real {@code Room}, capture its TID (which reveals the KB storage
 	 * type name, e.g. {@code StructuredElement:&lt;id&gt;}), delete the object, then invoke with a
 	 * TID that uses the same storage-type prefix but a non-existent numeric id. This avoids
 	 * hard-coding the KB storage type name, which differs from the TL model class name.
@@ -343,39 +339,38 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 	public void testUnknownTidReturnsNotFoundError() throws Exception {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
-		// Build a ghost TID: same storage-type prefix as a real Ingredient, but id 0 which
+		// Build a ghost TID: same storage-type prefix as a real Room, but id 0 which
 		// is never allocated by the KB sequence.
 		String ghostTid;
-		TLObject ingredient;
+		TLObject room;
 		try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
-			ingredient = createObject(
-				"new(`luigis.pizzashop:Ingredient`)" +
-				"..set(`luigis.pizzashop:Component#name`, 'ghost-ingredient')" +
-				"..set(`luigis.pizzashop:Component#baseUnit`, `luigis.pizzashop:UnitOfMeasure#G`)" +
-				"..set(`luigis.pizzashop:Component#costPerBaseUnit`, 1.0)");
+			room = createObject(
+				"new(`demo.events:Room`)" +
+				"..set(`demo.events:Named#name`, 'ghost-room')" +
+				"..set(`demo.events:Room#capacity`, 10)");
 			tx.commit();
 		}
 		// Determine the KB storage type prefix (e.g. "StructuredElement"), then build a TID
 		// with a large id (Long.MAX_VALUE) that is never allocated.
-		String realTid = ingredient.tId().asString();
+		String realTid = room.tId().asString();
 		String typePrefix = realTid.split(":", 2)[0];
 		ghostTid = typePrefix + ":" + Long.MAX_VALUE;
 
 		// Clean up the real object before running the tool so the KB is in a defined state.
 		try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
-			if (ingredient.tValid()) {
-				ingredient.tDelete();
+			if (room.tValid()) {
+				room.tDelete();
 			}
 			tx.commit();
 		}
 
 		ScriptParameter p = TypedConfiguration.newConfigItem(ScriptParameter.class);
 		p.setName("target");
-		p.setType(TLModelPartRef.ref("luigis.pizzashop:Ingredient"));
+		p.setType(TLModelPartRef.ref("demo.events:Room"));
 		p.setMandatory(true);
 
 		Tool tool = singleTool(scriptConfig("readName", ToolMode.READ,
-			"$target.get(`luigis.pizzashop:NamedEntities#name`)", p));
+			"$target.get(`demo.events:Named#name`)", p));
 
 		ToolResult result = tool.execute(Map.of("target", ghostTid), ToolContext.EMPTY);
 

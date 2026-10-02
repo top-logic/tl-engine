@@ -7,7 +7,7 @@
 				<tasks>
 					<!--
 						One AgentTask, so that the path exists in a running application and can be
-						tried by hand: Administration > Scheduler > Tasks > DailyInvoiceSummary >
+						tried by hand: Administration > Scheduler > Tasks > DailyEventBriefing >
 						"Start task".
 
 						Disabled, because every run of it costs a real model call and this is a demo
@@ -19,13 +19,13 @@
 						one a chat message without an explicit choice runs.
 					-->
 					<task class="com.top_logic.ai.chat.sched.AgentTask"
-						name="DailyInvoiceSummary"
+						name="DailyEventBriefing"
 						enabled="false"
 						run-as="root"
 						run-on-startup="false"
-						session-title="Tageszusammenfassung der Belege"
+						session-title="Tagesbericht Veranstaltungen"
 					>
-						<prompt>Fasse die Belege zusammen, die heute erfasst wurden: wie viele es sind, auf welche Summe sie sich belaufen und was auffällt. Wenn heute keiner erfasst wurde, schreibe genau das. Frage nicht nach - zu diesem Lauf gibt es niemanden, der antworten könnte.</prompt>
+						<prompt>Fasse den Stand der Veranstaltungen zusammen: welche in den nächsten 30 Tagen stattfinden, wie viele freie Plätze sie noch haben, wie ihr Saldo steht und welche eingehenden Rechnungen überfällig sind. Wenn nichts davon zutrifft, schreibe genau das. Frage nicht nach - zu diesem Lauf gibt es niemanden, der antworten könnte.</prompt>
 						<schedules>
 							<daily time-of-day="18:00"/>
 						</schedules>

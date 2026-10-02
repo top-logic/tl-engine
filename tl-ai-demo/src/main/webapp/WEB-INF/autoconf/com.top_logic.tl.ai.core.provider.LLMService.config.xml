@@ -30,7 +30,7 @@
 				<agent-execution default-model="claude-sonnet-4-6"/>
 				<!--
 					What the model is told it is working in (Issue #437). Without it a run reads the
-					application's own name, which is the platform's here; this demo is about invoices,
+					application's own name, which is the platform's here; this demo is about event management,
 					and saying so is worth one line in every prompt.
 
 					The block's wording itself is NOT configured here: it is the shipped, translated
@@ -40,8 +40,8 @@
 				-->
 				<environment>
 					<application>
-						<en>Invoice management demo (tl-ai-demo)</en>
-						<de>Belegverwaltung (Demo, tl-ai-demo)</de>
+						<en>Event management demo (tl-ai-demo)</en>
+						<de>Veranstaltungsmanagement (Demo, tl-ai-demo)</de>
 					</application>
 				</environment>
 				<model-catalog>

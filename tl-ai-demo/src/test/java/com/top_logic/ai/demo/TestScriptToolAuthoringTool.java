@@ -153,13 +153,13 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 
 	public void testUpdateMissingListsExistingNames() {
 		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
-		store.create("summarize_ingredient_costs", "X", "d", java.util.List.of(), "1", "READ", true);
+		store.create("summarize_event_budgets", "X", "d", java.util.List.of(), "1", "READ", true);
 		try {
 			store.update("wrong-name", null, "x", null, null, null, null);
 			fail("expected missing-tool rejection");
 		} catch (IllegalArgumentException ex) {
 			assertTrue("message should list existing names: " + ex.getMessage(),
-				ex.getMessage().contains("summarize_ingredient_costs"));
+				ex.getMessage().contains("summarize_event_budgets"));
 		}
 	}
 
@@ -200,16 +200,16 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 			cfg -> holder[0] = cfg);
 
 		assertFalse("no factories expected before any tool is created: " + tool.listScriptToolFactories(),
-			tool.listScriptToolFactories().contains("pizzashop"));
+			tool.listScriptToolFactories().contains("events"));
 
 		tool.createScriptTool("greet", "Greet", "Greets by name.",
 			List.of(), "\"hi\"", "READ", Boolean.TRUE, "custom");
-		tool.createScriptTool("findOverBudgetProducts", "Find", "Finds products over budget.",
-			List.of(), "1", "READ", Boolean.TRUE, "pizzashop");
+		tool.createScriptTool("findOverdueInvoices", "Find", "Finds overdue invoices.",
+			List.of(), "1", "READ", Boolean.TRUE, "events");
 
 		String list = tool.listScriptToolFactories();
 		assertTrue("custom factory must be listed: " + list, list.contains("custom"));
-		assertTrue("pizzashop factory must be listed: " + list, list.contains("pizzashop"));
+		assertTrue("events factory must be listed: " + list, list.contains("events"));
 	}
 
 	public void testListScriptToolFactoriesExcludesEmptyFactory() {

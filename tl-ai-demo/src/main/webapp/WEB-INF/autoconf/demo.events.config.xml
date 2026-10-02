@@ -5,7 +5,7 @@
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance>
 				<bundles>
-					<bundle name="model.tl.ai.demo.imageclassification.messages"/>
+					<bundle name="model.demo.events.messages"/>
 				</bundles>
 			</instance>
 		</config>
@@ -13,7 +13,7 @@
 		<config service-class="com.top_logic.util.model.ModelService">
 			<instance>
 				<declarations>
-					<declaration file="/WEB-INF/model/tl.ai.demo.imageclassification.model.xml"/>
+					<declaration file="/WEB-INF/model/demo.events.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

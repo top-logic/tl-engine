@@ -47,9 +47,9 @@ import com.top_logic.util.model.ModelService;
  */
 public class InstanceBrowserToolTest extends BasicTestCase {
 
-	private static final String PIZZASHOP_MODULE = "luigis.pizzashop";
-	private static final String PRODUCT_CLASS = "Product";
-	private static final String INGREDIENT_CLASS = "Ingredient";
+	private static final String EVENTS_MODULE = "demo.events";
+	private static final String EVENT_CLASS = "Event";
+	private static final String ROOM_CLASS = "Room";
 
 	private Person _previousUser;
 
@@ -87,21 +87,21 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesBasic() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, null, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain module", result.contains("\"module\""));
-			assertTrue("Result should contain module name", result.contains(PIZZASHOP_MODULE));
+			assertTrue("Result should contain module name", result.contains(EVENTS_MODULE));
 			assertTrue("Result should contain type", result.contains("\"type\""));
-			assertTrue("Result should contain type name", result.contains(PRODUCT_CLASS));
+			assertTrue("Result should contain type name", result.contains(EVENT_CLASS));
 			assertTrue("Result should contain totalCount", result.contains("\"totalCount\""));
 			assertTrue("Result should contain instances array", result.contains("\"instances\""));
 			assertTrue("Result should contain limit", result.contains("\"limit\""));
 			assertTrue("Result should contain offset", result.contains("\"offset\""));
 			assertTrue("Result should contain hasMore", result.contains("\"hasMore\""));
 
-			// Should have created 3 products
-			assertTrue("Should contain 3 products", result.contains("\"totalCount\":3"));
+			// Should have created 3 events
+			assertTrue("Should contain 3 events", result.contains("\"totalCount\":3"));
 		});
 	}
 
@@ -111,11 +111,11 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesWithLimit() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 2, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, 2, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain limit", result.contains("\"limit\":2"));
-			// With 3 total products and limit 2, there should be more
+			// With 3 total events and limit 2, there should be more
 			assertTrue("Should indicate more results available", result.contains("\"hasMore\":true"));
 			assertTrue("Should contain nextCursor", result.contains("\"nextCursor\""));
 		});
@@ -129,7 +129,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
 
 			// Get first page with limit 2
-			String firstPage = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 2, null, ToolContext.EMPTY);
+			String firstPage = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, 2, null, ToolContext.EMPTY);
 			assertNotNull("First page should not be null", firstPage);
 
 			// Extract next cursor (simple string matching since we don't want to parse JSON)
@@ -138,7 +138,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			String cursor = firstPage.substring(cursorStart, cursorEnd);
 
 			// Get second page using cursor
-			String secondPage = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 2, cursor, ToolContext.EMPTY);
+			String secondPage = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, 2, cursor, ToolContext.EMPTY);
 			assertNotNull("Second page should not be null", secondPage);
 			assertTrue("Second page should have offset 2", secondPage.contains("\"offset\":2"));
 			// With 3 total, offset 2 should have no more results
@@ -152,7 +152,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesLimitClamping() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 10000, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, 10000, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			// Limit should be clamped to 1000 (MAX_LIMIT)
@@ -165,11 +165,11 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	 */
 	public void testGetInstanceBasic() throws Exception {
 		withTestObjects(objects -> {
-			// Get the TID of the first product
-			TLObject product = objects.getProduct(0);
-			assertNotNull("Product1 should exist", product);
+			// Get the TID of the first event
+			TLObject event = objects.getEvent(0);
+			assertNotNull("Event1 should exist", event);
 
-			String tid = product.tId().asString();
+			String tid = event.tId().asString();
 
 			InstanceBrowserTool tool = new InstanceBrowserTool();
 			String result = tool.getInstance(tid, ToolContext.EMPTY);
@@ -180,13 +180,13 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			assertTrue("Result should contain attributes", result.contains("\"attributes\""));
 			assertTrue("Result should contain metadata", result.contains("\"metadata\""));
 
-			// Should contain Product type information
-			assertTrue("Should contain Product type", result.contains(PRODUCT_CLASS));
-			assertTrue("Should contain module", result.contains(PIZZASHOP_MODULE));
+			// Should contain Event type information
+			assertTrue("Should contain Event type", result.contains(EVENT_CLASS));
+			assertTrue("Should contain module", result.contains(EVENTS_MODULE));
 
 			// Should contain attribute values
 			assertTrue("Should contain name attribute", result.contains("name"));
-			assertTrue("Should contain plannedQuantity attribute", result.contains("plannedQuantity"));
+			assertTrue("Should contain maxParticipants attribute", result.contains("maxParticipants"));
 		});
 	}
 
@@ -195,17 +195,17 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	 */
 	public void testGetInstanceAttributeValues() throws Exception {
 		withTestObjects(objects -> {
-			TLObject product = objects.getProduct(0);
-			String tid = product.tId().asString();
+			TLObject event = objects.getEvent(0);
+			String tid = event.tId().asString();
 
 			InstanceBrowserTool tool = new InstanceBrowserTool();
 			String result = tool.getInstance(tid, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
-			// Product1 has name="Margherita Pizza"
-			assertTrue("Should contain product name", result.contains("Margherita"));
-			// Product1 has planned quantity=100.0
-			assertTrue("Should contain planned quantity", result.contains("100"));
+			// Event1 has name="Herbstkonferenz"
+			assertTrue("Should contain event name", result.contains("Herbstkonferenz"));
+			// Event1 has max participants=100
+			assertTrue("Should contain max participants", result.contains("100"));
 		});
 	}
 
@@ -214,8 +214,8 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	 */
 	public void testGetInstanceMetadata() throws Exception {
 		withTestObjects(objects -> {
-			TLObject product = objects.getProduct(0);
-			String tid = product.tId().asString();
+			TLObject event = objects.getEvent(0);
+			String tid = event.tId().asString();
 
 			InstanceBrowserTool tool = new InstanceBrowserTool();
 			String result = tool.getInstance(tid, ToolContext.EMPTY);
@@ -232,7 +232,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesNullModule() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(null, PRODUCT_CLASS, null, null, ToolContext.EMPTY);
+			String result = tool.listInstances(null, EVENT_CLASS, null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -247,7 +247,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesEmptyModule() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances("", PRODUCT_CLASS, null, null, ToolContext.EMPTY);
+			String result = tool.listInstances("", EVENT_CLASS, null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -262,7 +262,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesNullType() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, null, null, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, null, null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -277,7 +277,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesEmptyType() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, "", null, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, "", null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -292,7 +292,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesTypeNotFound() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, "NonExistentType", null, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, "NonExistentType", null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -307,7 +307,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesInvalidLimitNegative() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, -1, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, -1, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -322,7 +322,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesInvalidLimitZero() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, 0, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, 0, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -382,7 +382,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testGetInstanceTidNotFound() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.getInstance("Product:99999", ToolContext.EMPTY);
+			String result = tool.getInstance("Event:99999", ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -396,15 +396,15 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
 
-			// List products
-			String productsResult = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, null, null, ToolContext.EMPTY);
-			assertNotNull("Products result should not be null", productsResult);
-			assertTrue("Should have products", productsResult.contains("\"totalCount\":3"));
+			// List events
+			String eventsResult = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, null, ToolContext.EMPTY);
+			assertNotNull("Events result should not be null", eventsResult);
+			assertTrue("Should have events", eventsResult.contains("\"totalCount\":3"));
 
-			// List ingredients
-			String ingredientsResult = tool.listInstances(PIZZASHOP_MODULE, INGREDIENT_CLASS, null, null, ToolContext.EMPTY);
-			assertNotNull("Ingredients result should not be null", ingredientsResult);
-			assertTrue("Should have ingredients", ingredientsResult.contains("\"totalCount\":2"));
+			// List rooms
+			String roomsResult = tool.listInstances(EVENTS_MODULE, ROOM_CLASS, null, null, ToolContext.EMPTY);
+			assertNotNull("Rooms result should not be null", roomsResult);
+			assertTrue("Should have rooms", roomsResult.contains("\"totalCount\":2"));
 		});
 	}
 
@@ -414,7 +414,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesEmptyCursor() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(PIZZASHOP_MODULE, PRODUCT_CLASS, null, "", ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, "", ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Empty cursor should start at offset 0", result.contains("\"offset\":0"));
@@ -427,79 +427,85 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	private void withTestObjects(TestConsumer test) throws Exception {
 		List<TLObject> createdObjects = new ArrayList<>();
 
-		// First transaction: Create ingredients and commit
+		// First transaction: Create rooms and commit
 		try (Transaction tx = kb().beginTransaction(ResKey.NONE)) {
-			TLObject ingredient1 = createObject(
-				"new(`luigis.pizzashop:Ingredient`)" +
-				"..set(`luigis.pizzashop:Component#name`, 'Tomato Sauce')" +
-				"..set(`luigis.pizzashop:Component#baseUnit`, `luigis.pizzashop:UnitOfMeasure#ML`)" +
-				"..set(`luigis.pizzashop:Component#costPerBaseUnit`, 0.005)");
-			createdObjects.add(ingredient1);
+			TLObject room1 = createObject(
+				"new(`demo.events:Room`)" +
+				"..set(`demo.events:Named#name`, 'Saal Rhein')" +
+				"..set(`demo.events:Room#capacity`, 800)" +
+				"..set(`demo.events:Room#hasProjector`, true)");
+			createdObjects.add(room1);
 
-			TLObject ingredient2 = createObject(
-				"new(`luigis.pizzashop:Ingredient`)" +
-				"..set(`luigis.pizzashop:Component#name`, 'Mozzarella Cheese')" +
-				"..set(`luigis.pizzashop:Component#baseUnit`, `luigis.pizzashop:UnitOfMeasure#G`)" +
-				"..set(`luigis.pizzashop:Component#costPerBaseUnit`, 0.012)");
-			createdObjects.add(ingredient2);
+			TLObject room2 = createObject(
+				"new(`demo.events:Room`)" +
+				"..set(`demo.events:Named#name`, 'Raum Dom')" +
+				"..set(`demo.events:Room#capacity`, 120)" +
+				"..set(`demo.events:Room#hasProjector`, false)");
+			createdObjects.add(room2);
 
 			tx.commit();
 		}
 
-		// Second transaction: Create products that reference the ingredients
+		// Second transaction: Create events whose sessions reference the rooms
 		try (Transaction tx = kb().beginTransaction(ResKey.NONE)) {
-			// Product 1 with 2 components
-			TLObject product1 = createObject(
+			// Event 1 with 2 sessions
+			TLObject event1 = createObject(
 				"{ " +
-				"  ingredient1 = all(`luigis.pizzashop:Ingredient`).filter(i -> $i.get(`luigis.pizzashop:Component#name`) == 'Tomato Sauce').firstElement(); " +
-				"  ingredient2 = all(`luigis.pizzashop:Ingredient`).filter(i -> $i.get(`luigis.pizzashop:Component#name`) == 'Mozzarella Cheese').firstElement(); " +
-				"  new(`luigis.pizzashop:Product`)" +
-				"    ..set(`luigis.pizzashop:NamedEntities#name`, 'Margherita Pizza')" +
-				"    ..set(`luigis.pizzashop:Product#plannedQuantity`, 100.0)" +
-				"    ..set(`luigis.pizzashop:Product#budget`, 500.0)" +
-				"    ..set(`luigis.pizzashop:Product#components`, list(" +
-				"      new(`luigis.pizzashop:ProductComponent`)" +
-				"        ..set(`luigis.pizzashop:ProductComponent#component`, $ingredient1)" +
-				"        ..set(`luigis.pizzashop:ProductComponent#amount`, 50.0)" +
-				"        ..set(`luigis.pizzashop:ProductComponent#unit`, `luigis.pizzashop:UnitOfMeasure#ML`), " +
-				"      new(`luigis.pizzashop:ProductComponent`)" +
-				"        ..set(`luigis.pizzashop:ProductComponent#component`, $ingredient2)" +
-				"        ..set(`luigis.pizzashop:ProductComponent#amount`, 100.0)" +
-				"        ..set(`luigis.pizzashop:ProductComponent#unit`, `luigis.pizzashop:UnitOfMeasure#G`)));" +
+				"  room1 = all(`demo.events:Room`).filter(r -> $r.get(`demo.events:Named#name`) == 'Saal Rhein').firstElement(); " +
+				"  room2 = all(`demo.events:Room`).filter(r -> $r.get(`demo.events:Named#name`) == 'Raum Dom').firstElement(); " +
+				"  new(`demo.events:Event`)" +
+				"    ..set(`demo.events:Named#name`, 'Herbstkonferenz')" +
+				"    ..set(`demo.events:Event#status`, `demo.events:EventStatus#PLANNED`)" +
+				"    ..set(`demo.events:Event#startDate`, today())" +
+				"    ..set(`demo.events:Event#maxParticipants`, 100)" +
+				"    ..set(`demo.events:Event#ticketPrice`, 500.0)" +
+				"    ..set(`demo.events:Event#sessions`, list(" +
+				"      new(`demo.events:Session`)" +
+				"        ..set(`demo.events:Named#name`, 'Keynote')" +
+				"        ..set(`demo.events:Session#room`, $room1)" +
+				"        ..set(`demo.events:Session#durationMinutes`, 45), " +
+				"      new(`demo.events:Session`)" +
+				"        ..set(`demo.events:Named#name`, 'Workshop')" +
+				"        ..set(`demo.events:Session#room`, $room2)" +
+				"        ..set(`demo.events:Session#durationMinutes`, 90)));" +
 				"}");
-			createdObjects.add(product1);
+			createdObjects.add(event1);
 
-			// Product 2 with 1 component
-			TLObject product2 = createObject(
+			// Event 2 with 1 session
+			TLObject event2 = createObject(
 				"{ " +
-				"  ingredient2 = all(`luigis.pizzashop:Ingredient`).filter(i -> $i.get(`luigis.pizzashop:Component#name`) == 'Mozzarella Cheese').firstElement(); " +
-				"  new(`luigis.pizzashop:Product`)" +
-				"    ..set(`luigis.pizzashop:NamedEntities#name`, 'Pepperoni Pizza')" +
-				"    ..set(`luigis.pizzashop:Product#plannedQuantity`, 80.0)" +
-				"    ..set(`luigis.pizzashop:Product#budget`, 600.0)" +
-				"    ..set(`luigis.pizzashop:Product#components`, list(" +
-				"      new(`luigis.pizzashop:ProductComponent`)" +
-				"        ..set(`luigis.pizzashop:ProductComponent#component`, $ingredient2)" +
-				"        ..set(`luigis.pizzashop:ProductComponent#amount`, 150.0)" +
-				"        ..set(`luigis.pizzashop:ProductComponent#unit`, `luigis.pizzashop:UnitOfMeasure#G`)));" +
+				"  room2 = all(`demo.events:Room`).filter(r -> $r.get(`demo.events:Named#name`) == 'Raum Dom').firstElement(); " +
+				"  new(`demo.events:Event`)" +
+				"    ..set(`demo.events:Named#name`, 'Datentag')" +
+				"    ..set(`demo.events:Event#status`, `demo.events:EventStatus#DRAFT`)" +
+				"    ..set(`demo.events:Event#startDate`, today())" +
+				"    ..set(`demo.events:Event#maxParticipants`, 80)" +
+				"    ..set(`demo.events:Event#ticketPrice`, 600.0)" +
+				"    ..set(`demo.events:Event#sessions`, list(" +
+				"      new(`demo.events:Session`)" +
+				"        ..set(`demo.events:Named#name`, 'Vortrag')" +
+				"        ..set(`demo.events:Session#room`, $room2)" +
+				"        ..set(`demo.events:Session#durationMinutes`, 30)));" +
 				"}");
-			createdObjects.add(product2);
+			createdObjects.add(event2);
 
-			// Product 3 with 1 component
-			TLObject product3 = createObject(
+			// Event 3 with 1 session
+			TLObject event3 = createObject(
 				"{ " +
-				"  ingredient1 = all(`luigis.pizzashop:Ingredient`).filter(i -> $i.get(`luigis.pizzashop:Component#name`) == 'Tomato Sauce').firstElement(); " +
-				"  new(`luigis.pizzashop:Product`)" +
-				"    ..set(`luigis.pizzashop:NamedEntities#name`, 'Veggie Pizza')" +
-				"    ..set(`luigis.pizzashop:Product#plannedQuantity`, 60.0)" +
-				"    ..set(`luigis.pizzashop:Product#budget`, 450.0)" +
-				"    ..set(`luigis.pizzashop:Product#components`, list(" +
-				"      new(`luigis.pizzashop:ProductComponent`)" +
-				"        ..set(`luigis.pizzashop:ProductComponent#component`, $ingredient1)" +
-				"        ..set(`luigis.pizzashop:ProductComponent#amount`, 30.0)" +
-				"        ..set(`luigis.pizzashop:ProductComponent#unit`, `luigis.pizzashop:UnitOfMeasure#ML`)));" +
+				"  room1 = all(`demo.events:Room`).filter(r -> $r.get(`demo.events:Named#name`) == 'Saal Rhein').firstElement(); " +
+				"  new(`demo.events:Event`)" +
+				"    ..set(`demo.events:Named#name`, 'Sommerfest')" +
+				"    ..set(`demo.events:Event#status`, `demo.events:EventStatus#COMPLETED`)" +
+				"    ..set(`demo.events:Event#startDate`, today())" +
+				"    ..set(`demo.events:Event#maxParticipants`, 60)" +
+				"    ..set(`demo.events:Event#ticketPrice`, 450.0)" +
+				"    ..set(`demo.events:Event#sessions`, list(" +
+				"      new(`demo.events:Session`)" +
+				"        ..set(`demo.events:Named#name`, 'Lightning Talks')" +
+				"        ..set(`demo.events:Session#room`, $room1)" +
+				"        ..set(`demo.events:Session#durationMinutes`, 60)));" +
 				"}");
-			createdObjects.add(product3);
+			createdObjects.add(event3);
 
 			tx.commit();
 		}
@@ -582,8 +588,8 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			this.objects = objects;
 		}
 
-		TLObject getProduct(int index) {
-			// Products are at indices 2, 3, 4 (after 2 ingredients)
+		TLObject getEvent(int index) {
+			// Events are at indices 2, 3, 4 (after 2 rooms)
 			return objects.get(index + 2);
 		}
 	}

@@ -70,7 +70,7 @@ public class SecDemoModelDigestTest extends SecDemoPersonaTest {
 	 * A module the persona may read no type of is absent with everything in it.
 	 *
 	 * <p>
-	 * The demo's own {@code luigis.pizzashop} model carries no grant at all, which is the
+	 * The demo's own {@code demo.events} model carries no grant at all, which is the
 	 * deny-by-default case: no persona of this fixture may read any of its types, so no persona is told
 	 * that the module exists. An administrator, who bypasses the rights, is told - which is what makes
 	 * this a statement about the scoping rather than about the module being missing.
@@ -78,7 +78,7 @@ public class SecDemoModelDigestTest extends SecDemoPersonaTest {
 	 */
 	public void testAModuleWithNoReadableTypeIsAbsent() {
 		String forAnna = outline(ANNA);
-		assertHasNot("No persona holds a grant in the pizza shop model.", "## luigis.pizzashop",
+		assertHasNot("No persona holds a grant in the event-management model.", "## demo.events",
 			forAnna);
 		assertHas("...while the module the fixture does grant on is there.", "## pm", forAnna);
 	}

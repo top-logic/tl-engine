@@ -10,16 +10,18 @@
 	conversation over the "chatSession" channel, not by chat-id, and would work the same outside the
 	<chat>), the <chat-conversation/> (transcript plus prompt field) in the middle, and a
 	<chat-rail/> on the right. The rail is a shell - what it shows is configured here, and the
-	"Belege" section is an ordinary <data-list>, which is the point: any view element is a section,
-	so an application puts its own views beside the transcript without the chat knowing about them.
+	"Veranstaltungen" section is an ordinary <data-list>, which is the point: any view element is a
+	section, so an application puts its own views beside the transcript without the chat knowing
+	about them.
 -->
 <view>
 	<channels>
 		<channel name="chatSession"/>
 		<!--
-			What the rail's pane is showing, written by the "Belege" list, by the agent's `present`
-			tool, or by both. Empty means the sections; the pane's close button empties it again.
-			It holds one invoice or several - "show me the three most expensive" puts three there.
+			What the rail's pane is showing, written by the "Veranstaltungen" list, by the agent's
+			`present` tool, or by both. Empty means the sections; the pane's close button empties it
+			again. It holds one event or several - "show me the events that are filling up" puts them
+			all there.
 		-->
 		<channel name="paneObject"/>
 		<!--
@@ -27,16 +29,24 @@
 			set of records is a table, and neither element can render the other's value: <form>
 			resolves its input to one object. The rail shows the <pane> for the first and the
 			<list-pane> for the second, so exactly one of the two ever has something to show.
+			Both keep the events only, because both render demo.events:Event until #616 makes the
+			pane generic: an invoice the agent presents opens no pane rather than a broken form.
 		-->
-		<derived-channel name="paneInvoice"
+		<derived-channel name="paneItem"
 			inputs="paneObject"
 		>
-			<expr><![CDATA[v -> ifElse($v.size() == 1, $v.singleElement(), null)]]></expr>
+			<expr><![CDATA[v -> {
+				events = $v.filter(o -> $o.instanceOf(`demo.events:Event`));
+				ifElse($events.size() == 1, $events.singleElement(), null);
+			}]]></expr>
 		</derived-channel>
-		<derived-channel name="paneInvoices"
+		<derived-channel name="paneItems"
 			inputs="paneObject"
 		>
-			<expr><![CDATA[v -> ifElse($v.size() > 1, $v, list())]]></expr>
+			<expr><![CDATA[v -> {
+				events = $v.filter(o -> $o.instanceOf(`demo.events:Event`));
+				ifElse($events.size() > 1, $events, list());
+			}]]></expr>
 		</derived-channel>
 		<!-- The counts the rail shows on the section headers and the strip icons. -->
 		<channel name="progressBadge"/>
@@ -46,7 +56,7 @@
 			The composer's unsent text, the object a command puts into it as a reference token, and
 			the passage of one a command quotes into it.
 			Declared here so this page works on its own; app.view.xml binds its own "chatDraft" over
-			this one (<view-ref><bind/></view-ref>), which is what lets the Belege page write it too -
+			this one (<view-ref><bind/></view-ref>), which is what lets the Events page write it too -
 			see "Writing a channel across a view boundary" in tl-chat/CLAUDE.md.
 		-->
 		<channel name="chatDraft"/>
@@ -192,14 +202,14 @@
 			</row-commands>
 			<!--
 				Which chats this list offers, and the one place the page's rule about that is written
-				(Issue #508). With an invoice open it is that invoice's conversations, found by
-				asking the invoice which sessions refer to it; with none open it is every chat of
+				(Issue #508). With an object open in the pane it is that object's conversations, found
+				by asking the object which sessions refer to it; with none open it is every chat of
 				this account, which is what this page showed before there was a subject at all.
 
 				Three things are worth reading off it. The backwards navigation is the whole feature -
 				a host needs no remembered id, because the conversation says in the database what it
 				is about. The owner filter stays, because `referers` is not a security boundary.
-				And a chat that was started with no invoice open simply is not in the scoped list:
+				And a chat that was started with nothing open simply is not in the scoped list:
 				there is no backfill, and the unscoped list below is where it is still found.
 
 				The input is the pane's single object, so the agent's own `present` re-scopes this
@@ -213,14 +223,14 @@
 				asks the sessions rather than the object:
 
 					all(`tl.ai.execution:AgentSession`)
-						.filter(s -> $s.get(`tl.ai.execution:AgentSession#subject`) == $invoice)
+						.filter(s -> $s.get(`tl.ai.execution:AgentSession#subject`) == $object)
 			-->
 			<inputs>
-				<input channel="paneInvoice"/>
+				<input channel="paneItem"/>
 			</inputs>
-			<rows><![CDATA[invoice -> ifElse(isEmpty($invoice),
+			<rows><![CDATA[object -> ifElse(isEmpty($object),
 					all(`tl.ai.execution:AgentSession`),
-					$invoice.referers(`tl.ai.execution:AgentSession#subject`))
+					$object.referers(`tl.ai.execution:AgentSession#subject`))
 				.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
 				.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`)
 				.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc())]]></rows>
@@ -237,13 +247,13 @@
 		<panel fill="true">
 			<!--
 				`present` is the allow list of the tool of the same name: it names the one channel
-				this page lets the agent write. "Show me invoice X" then ends as that invoice in the
+				this page lets the agent write. "Show me event X" then ends as that event in the
 				rail's pane. Deny by default - without this attribute no run reaches any channel of
 				this view, and a `present` call naming another channel is refused.
 
 				`subject` is the other half of the scoped list above: a chat this element creates -
-				the first send of a fresh conversation - is stamped with the invoice the pane is
-				showing, and is found again from that invoice for as long as it exists. Nothing on
+				the first send of a fresh conversation - is stamped with the object the pane is
+				showing, and is found again from that object for as long as it exists. Nothing on
 				the way in: which conversation is shown stays the "chatSession" channel's business,
 				and picking one stays the <data-list>'s.
 
@@ -260,7 +270,7 @@
 				prompt-improver-agent="TL_PromptImprover"
 				quote="chatQuote"
 				reference="chatReference"
-				subject="paneInvoice"
+				subject="paneItem"
 				trace="summary"
 				working-indicator="/images/tl-ai-demo-working.svg"
 			>
@@ -272,8 +282,8 @@
 					about the run rather than about this application.
 				-->
 				<placeholder>
-					<en>Ask about these invoices, their amounts or who they are from.</en>
-					<de>Fragen Sie nach diesen Belegen, ihren Beträgen oder ihren Absendern.</de>
+					<en>Ask about the events, their programme, registrations, sponsors or invoices.</en>
+					<de>Fragen Sie nach den Veranstaltungen, ihrem Programm, Anmeldungen, Sponsoren oder Rechnungen.</de>
 				</placeholder>
 				<actions rate="true"/>
 				<controls
@@ -293,10 +303,9 @@
 
 					"Application" is stable, so it is rendered into the environment block of the system
 					prompt - which has to stay byte-identical across the turns of one conversation, or
-					the provider's prompt cache misses on every one of them. "Open invoice" and
-					"Open invoice amount" follow the user's clicks in the rail, so they are not: they go
-					into the per-turn <turn-context> block, which travels in the turn itself, beside the
-					user's text (#438).
+					the provider's prompt cache misses on every one of them. "Open event" follows the
+					user's clicks in the rail, so it is not: it goes into the per-turn <turn-context>
+					block, which travels in the turn itself, beside the user's text (#438).
 
 					The dock in app.view.xml states the same facts, because it is the same conversation:
 					a page that states them and a dock that does not would flip the environment block
@@ -313,20 +322,22 @@
 					<fact name="Application"
 						stable="true"
 					>
-						<value><![CDATA[open -> "Invoice management demo (tl-ai-demo)"]]></value>
+						<value><![CDATA[open -> "Event management demo (tl-ai-demo)"]]></value>
 					</fact>
-					<fact name="Open invoice amount"
+					<fact name="Open event"
 						stable="false"
 					>
-						<value><![CDATA[open -> ifElse(isEmpty($open), "none",
-							$open.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`))]]></value>
+						<value><![CDATA[open -> ifElse(isEmpty($open) || !$open.instanceOf(`demo.events:Event`), "none",
+							$open.get(`demo.events:Named#name`)
+								+ ": " + $open.get(`demo.events:Event#registrationCount`) + " active registrations, balance "
+								+ $open.get(`demo.events:Event#balance`))]]></value>
 					</fact>
 				</context>
 				<!--
 					The first questions this page offers (Issue #529). The same binding as the
 					<context> above - the <inputs> are the leading arguments of every card's
 					expression, evaluated on the server and re-evaluated when the pane changes - so a
-					card can name the invoice the user has open rather than only a fixed sentence.
+					card can name the object the user has open rather than only a fixed sentence.
 
 					A click FILLS the composer and stops there. The user reads the sentence and
 					presses send, which is the rule the draft, reference and quote channels already
@@ -336,51 +347,49 @@
 					They stand under the greeting of a NEW chat and nowhere else - the one screen
 					with nothing to react to - and a chat opened from the list on the left never
 					shows them, whatever it holds. The third card is the one that is worth having:
-					with an invoice open it asks about that invoice by name, and with none open it
+					with an object open it asks about that object by name, and with none open it
 					asks the question that still makes sense.
 				-->
 				<prompts>
 					<inputs>
-						<input channel="paneInvoice"/>
+						<input channel="paneItem"/>
 					</inputs>
-					<prompt icon="css:bi bi-receipt">
+					<prompt icon="css:bi bi-people">
 						<label>
-							<en>Summarise the newest invoices</en>
-							<de>Die neuesten Belege zusammenfassen</de>
+							<en>Which events are filling up?</en>
+							<de>Welche Veranstaltungen sind fast voll?</de>
 						</label>
 						<value><![CDATA[open -> {
-							"en": "Please summarise the three newest invoices with their amounts.",
-							"de": "Bitte fasse die drei neuesten Belege mit ihren Beträgen zusammen."
+							"en": "Which events have the fewest seats left, and how much has each of them earned so far?",
+							"de": "Welche Veranstaltungen haben die wenigsten freien Plätze, und was hat jede bisher eingenommen?"
 						}.internationalize()]]></value>
 					</prompt>
-					<prompt icon="css:bi bi-currency-euro">
+					<prompt icon="css:bi bi-exclamation-triangle">
 						<label>
-							<en>What did I spend this year?</en>
-							<de>Was habe ich dieses Jahr ausgegeben?</de>
+							<en>Overdue invoices</en>
+							<de>Überfällige Rechnungen</de>
 						</label>
 						<value><![CDATA[open -> {
-							"en": "What is the total of all invoices of this year, and which month was the most expensive?",
-							"de": "Wie hoch ist die Summe aller Belege dieses Jahres, und welcher Monat war der teuerste?"
+							"en": "Which incoming invoices are overdue and not paid yet? Show them to me.",
+							"de": "Welche eingehenden Rechnungen sind überfällig und noch nicht bezahlt? Zeig sie mir."
 						}.internationalize()]]></value>
 					</prompt>
 					<prompt icon="css:bi bi-question-circle">
 						<label>
-							<en>Explain the open invoice</en>
-							<de>Den geöffneten Beleg erklären</de>
+							<en>Explain what is open</en>
+							<de>Das Geöffnete erklären</de>
 						</label>
 						<value><![CDATA[open -> ifElse(isEmpty($open),
 							{
-								"en": "Open the most expensive invoice and explain what it is for.",
-								"de": "Öffne den teuersten Beleg und erkläre, wofür er ist."
+								"en": "Open the next upcoming event and summarise its programme and budget.",
+								"de": "Öffne die nächste anstehende Veranstaltung und fasse Programm und Budget zusammen."
 							}.internationalize(),
 							{
-								"en": "Please explain the invoice “",
-								"de": "Bitte erkläre den Beleg „"
+								"en": "Please explain “",
+								"de": "Bitte erkläre „"
 							}.internationalize()
-								+ $open.get(`tl.ai.demo.imageclassification:Invoice#description`)
-								+ {"en": "” over ", "de": "“ über "}.internationalize()
-								+ $open.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`)
-								+ ".")]]></value>
+								+ $open.label()
+								+ {"en": "” and what still needs to be done.", "de": "“ und was noch zu tun ist."}.internationalize())]]></value>
 					</prompt>
 				</prompts>
 				<!--
@@ -390,20 +399,21 @@
 					possible. The <fact> above could have said the label; it could not have said the
 					identifier without this page knowing how this product spells one.
 				-->
-				<selection name="Open invoice"
+				<selection name="Open object"
 					channel="paneObject"
 				/>
 				<!--
-					Declarative @-mention: typing "@" offers this application's invoices, no TypeScript.
-					Each mention carries the invoice's id and puts its description into the message as the
-					quoted text the agent reads.
+					Declarative @-mention: typing "@" offers this application's events, venues and
+					invoices, no TypeScript. Each mention carries the object's id and puts its label
+					into the message as the quoted text the agent reads.
 				-->
-				<mention observed-types="tl.ai.demo.imageclassification:Invoice">
-					<rows><![CDATA[all(`tl.ai.demo.imageclassification:Invoice`)
-						.sort((i -> $i.get(`tl.ai.demo.imageclassification:Invoice#date`)).comparator().desc())]]></rows>
-					<label><![CDATA[i -> $i.get(`tl.ai.demo.imageclassification:Invoice#description`)]]></label>
-					<text><![CDATA[i -> $i.get(`tl.ai.demo.imageclassification:Invoice#description`)
-						+ " (" + $i.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`) + ")"]]></text>
+				<mention observed-types="demo.events:Event,demo.events:Venue,demo.events:Invoice">
+					<rows><![CDATA[all(`demo.events:Event`)
+						.sort((e -> $e.get(`demo.events:Event#startDate`)).comparator().desc())
+						.union(all(`demo.events:Venue`).sort((v -> $v.get(`demo.events:Named#name`)).comparator()))
+						.union(all(`demo.events:Invoice`).sort((i -> $i.get(`demo.events:Invoice#invoiceDate`)).comparator().desc()))]]></rows>
+					<label><![CDATA[o -> $o.label()]]></label>
+					<text><![CDATA[o -> $o.label() + " (" + $o.type().label() + ")"]]></text>
 				</mention>
 			</chat-conversation>
 		</panel>
@@ -481,67 +491,65 @@
 				Nothing chat-specific: an ordinary <data-list> of this application's own objects, in a
 				rail section. Picking one writes it to "paneObject", which is what opens the pane.
 			-->
-			<section name="invoices"
-				icon="css:bi bi-receipt"
+			<section name="events"
+				icon="css:bi bi-calendar-event"
 			>
 				<label>
-					<en>Invoices</en>
-					<de>Belege</de>
+					<en>Events</en>
+					<de>Veranstaltungen</de>
 				</label>
 				<data-list
 					collapsible="false"
-					observed-types="tl.ai.demo.imageclassification:Invoice"
+					observed-types="demo.events:Event"
 					row-actions="hover"
-					row-channel="invoice"
+					row-channel="event"
 					search="false"
 					selection="paneObject"
 				>
 					<empty-text>
-						<en>No invoices yet</en>
-						<de>Noch keine Belege</de>
+						<en>No events yet</en>
+						<de>Noch keine Veranstaltungen</de>
 					</empty-text>
 					<!--
 						What issue #440 is about: ordinary view commands put a question about this
 						row into the composer, with no chat-specific code and no new command class.
-						The first writes a whole German sentence to the "chatDraft" channel; the
-						second writes the invoice itself to "chatReference", which the composer turns
-						into one atomic reference token at the caret - what picking it with "@" does.
-						Neither sends: the user reads the sentence and presses send.
+						The first writes a whole sentence to the "chatDraft" channel; the second
+						writes the event itself to "chatReference", which the composer turns into one
+						atomic reference token at the caret - what picking it with "@" does. Neither
+						sends: the user reads the sentence and presses send.
 
-						The last two are issue #509: a passage *of* the invoice rather than the
-						invoice. "chatQuote" takes the token itself, so the command says which piece
-						the user marked - here the description, there the amount - and the composer
-						inserts the same atomic token with that text and that location. Two commands
-						rather than one, because that is the case the channel exists for: two
-						passages of the SAME object, each inserting at the caret, which a channel
-						carrying only the object could not tell apart. The location is written as a
-						text per language, the way the sentence above is, and the control resolves it
-						in the user's own.
+						The last two are issue #509: a passage *of* the event rather than the event.
+						"chatQuote" takes the token itself, so the command says which piece the user
+						marked - here the description, there the balance - and the composer inserts
+						the same atomic token with that text and that location. Two commands rather
+						than one, because that is the case the channel exists for: two passages of
+						the SAME object, each inserting at the caret, which a channel carrying only
+						the object could not tell apart. The location is written as a text per
+						language, the way the sentence above is, and the control resolves it in the
+						user's own.
 					-->
 					<row-commands>
 						<generic-command
 							image="css:bi bi-chat-left-text"
-							input="invoice"
+							input="event"
 						>
 							<label>
 								<en>Ask about this</en>
 								<de>Dazu fragen</de>
 							</label>
 							<execute-script>
-								<function><![CDATA[i -> {
-									"en": "Please explain the invoice “"
-										+ $i.get(`tl.ai.demo.imageclassification:Invoice#description`)
-										+ "” over " + $i.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`) + ".",
-									"de": "Bitte erkläre die Rechnung „"
-										+ $i.get(`tl.ai.demo.imageclassification:Invoice#description`)
-										+ "“ über " + $i.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`) + "."
+								<function><![CDATA[e -> {
+									"en": "How is the event “" + $e.get(`demo.events:Named#name`)
+										+ "” doing - registrations, budget and open invoices?",
+									"de": "Wie steht die Veranstaltung „" + $e.get(`demo.events:Named#name`)
+										+ "“ - Anmeldungen, Budget und offene Rechnungen?"
 								}.internationalize()]]></function>
 							</execute-script>
 							<write-channel name="chatDraft"/>
 						</generic-command>
 						<generic-command
 							image="css:bi bi-quote"
-							input="invoice"
+							input="event"
 						>
 							<label>
 								<en>Quote in the message</en>
@@ -551,47 +559,47 @@
 						</generic-command>
 						<generic-command
 							image="css:bi bi-card-text"
-							input="invoice"
+							input="event"
 						>
 							<label>
 								<en>Quote the description</en>
 								<de>Beschreibung zitieren</de>
 							</label>
 							<execute-script>
-								<function><![CDATA[i -> {
-									"id": $i,
+								<function><![CDATA[e -> {
+									"id": $e,
 									"location": {"en": "Description", "de": "Beschreibung"}.internationalize(),
-									"text": $i.get(`tl.ai.demo.imageclassification:Invoice#description`)
+									"text": $e.get(`demo.events:Named#description`)
 								}]]></function>
 							</execute-script>
 							<write-channel name="chatQuote"/>
 						</generic-command>
 						<generic-command
-							image="css:bi bi-currency-euro"
-							input="invoice"
+							image="css:bi bi-cash-coin"
+							input="event"
 						>
 							<label>
-								<en>Quote the amount</en>
-								<de>Betrag zitieren</de>
+								<en>Quote the balance</en>
+								<de>Saldo zitieren</de>
 							</label>
 							<execute-script>
-								<function><![CDATA[i -> {
-									"id": $i,
-									"location": {"en": "Amount", "de": "Betrag"}.internationalize(),
-									"text": $i.get(`tl.ai.demo.imageclassification:Invoice#amountLabel`)
+								<function><![CDATA[e -> {
+									"id": $e,
+									"location": {"en": "Balance", "de": "Saldo"}.internationalize(),
+									"text": numberFormat("#,##0.00").format($e.get(`demo.events:Event#balance`))
 								}]]></function>
 							</execute-script>
 							<write-channel name="chatQuote"/>
 						</generic-command>
 					</row-commands>
 					<lines>
-						<line attribute="description"/>
-						<line attribute="amountLabel"
+						<line attribute="name"/>
+						<line attribute="startDate"
 							emphasis="secondary"
 						/>
 					</lines>
-					<rows><![CDATA[all(`tl.ai.demo.imageclassification:Invoice`)
-						.sort((i -> $i.get(`tl.ai.demo.imageclassification:Invoice#date`)).comparator().desc())]]></rows>
+					<rows><![CDATA[all(`demo.events:Event`)
+						.sort((e -> $e.get(`demo.events:Event#startDate`)).comparator().desc())]]></rows>
 				</data-list>
 			</section>
 			<!--
@@ -682,52 +690,47 @@
 			</section>
 			<!--
 				The pane's content, shown in place of the sections while "paneObject" holds one
-				object - picked in the "Belege" list, or presented by the agent.
+				event - picked in the "Veranstaltungen" list, or presented by the agent. A <form>
+				resolves its fields against one type, so this pane shows the domain's main type,
+				demo.events:Event; #616 replaces <pane>/<list-pane> with a generic pane that renders
+				any type.
 			-->
 			<pane>
-				<form input="paneInvoice" with-inset="true">
-					<field attribute="date"/>
-					<field attribute="description"/>
-					<field attribute="amount"/>
-					<field attribute="data"/>
+				<form input="paneItem"
+					mode-switch="false"
+					with-inset="true"
+				>
+					<field attribute="name"/>
+					<field attribute="status"/>
+					<field attribute="startDate"/>
+					<field attribute="venue"/>
+					<field attribute="registrationCount"/>
+					<field attribute="remainingCapacity"/>
+					<field attribute="balance"/>
 				</form>
 			</pane>
 			<!--
-				And what it shows instead when several objects stand there, which is what the agent
-				does for "show me the three newest invoices": an ordinary <table> over the
-				collection, with the same three columns the Belege page shows. The agent named the
-				objects, this page decided they are a table - and the answer in the transcript, which
-				the model writes as a Markdown table, and the pane beside it now show the same thing
-				(Issue #493).
-
-				Two attributes are load-bearing rather than decorative:
-
-				- `types` fixes the row type. <table> resolves its columns once, when the control is
-				  built, from `types` or else from the rows present at that moment - and the rail
-				  builds both pane children up front, while the channel is still empty, so a <table>
-				  naming neither would fail at page build. Naming the type is also what gives the
-				  columns their model labels and offers the invoice's remaining attributes in the
-				  column selection.
-				- `selection` makes a row click open that invoice: it writes the clicked row to
-				  "paneObject", which is one object, so the pane switches to the <form> above. The
-				  drill-down is one-way - closing the pane returns to the sections, not to the table.
-
-				No <column sort="..."> on purpose: the rows arrive in the order the agent named them,
-				and "the three newest" is an order the user asked for. The user can still sort.
+				And what it shows instead when several events stand there, which is what the agent
+				does for "show me the events that are filling up": an ordinary <table> over the
+				collection (Issue #493). `types` fixes the row type, because the rail builds the
+				pane up front while the channel is still empty; `selection` makes a row click open
+				that event in the form above. No <column sort="..."> on purpose: the rows arrive in
+				the order the agent named them.
 			-->
 			<list-pane>
 				<table
-					observed-types="tl.ai.demo.imageclassification:Invoice"
+					observed-types="demo.events:Event"
 					selection="paneObject"
-					types="tl.ai.demo.imageclassification:Invoice"
+					types="demo.events:Event"
 				>
 					<columns>
-						<column attribute="date"/>
-						<column attribute="description"/>
-						<column attribute="amountLabel"/>
+						<column attribute="name"/>
+						<column attribute="startDate"/>
+						<column attribute="remainingCapacity"/>
+						<column attribute="balance"/>
 					</columns>
 					<inputs>
-						<input channel="paneInvoices"/>
+						<input channel="paneItems"/>
 					</inputs>
 					<rows><![CDATA[shown -> $shown]]></rows>
 				</table>

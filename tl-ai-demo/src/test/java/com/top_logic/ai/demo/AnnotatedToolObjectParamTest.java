@@ -66,14 +66,14 @@ import com.top_logic.util.model.ModelService;
 public class AnnotatedToolObjectParamTest extends BasicTestCase {
 
 	/** A tool written the way an application writes one. */
-	public static class IngredientTools {
+	public static class RoomTools {
 
 		// Marking is off here so that these tests assert the resolved object and nothing else;
 		// what the framework puts around an answer is TestAnnotatedToolMarking's subject.
-		@ToolMethod(description = "Reports an ingredient's name", mode = ToolMode.READ,
+		@ToolMethod(description = "Reports a room's name", mode = ToolMode.READ,
 			marking = AnswerMarking.NONE)
-		public String ingredientName(@P("the ingredient") TLObject ingredient) {
-			return String.valueOf(ingredient.tValueByName("name"));
+		public String roomName(@P("the room") TLObject room) {
+			return String.valueOf(room.tValueByName("name"));
 		}
 	}
 
@@ -103,11 +103,11 @@ public class AnnotatedToolObjectParamTest extends BasicTestCase {
 	 * The identifier a tool result reports is fed back and arrives as the object.
 	 */
 	public void testIdentifierArrivesAsTheObject() throws Exception {
-		TLObject ingredient = createIngredient("mozzarella");
+		TLObject room = createRoom("Kaisaal");
 
-		ToolResult result = tool().execute(Map.of("ingredient", tid(ingredient)), unchecked());
+		ToolResult result = tool().execute(Map.of("room", tid(room)), unchecked());
 
-		assertEquals("mozzarella", result.text());
+		assertEquals("Kaisaal", result.text());
 	}
 
 	/**
@@ -115,12 +115,12 @@ public class AnnotatedToolObjectParamTest extends BasicTestCase {
 	 * what the model has in front of it.
 	 */
 	public void testLabelWithIdentifierIsAccepted() throws Exception {
-		TLObject ingredient = createIngredient("basil");
+		TLObject room = createRoom("Elbblick");
 
 		ToolResult result = tool().execute(
-			Map.of("ingredient", "basil [id:" + tid(ingredient) + "]"), unchecked());
+			Map.of("room", "Elbblick [id:" + tid(room) + "]"), unchecked());
 
-		assertEquals("basil", result.text());
+		assertEquals("Elbblick", result.text());
 	}
 
 	/**
@@ -128,16 +128,16 @@ public class AnnotatedToolObjectParamTest extends BasicTestCase {
 	 * and refused before the method runs, so the turn's writes are not rolled back.
 	 */
 	public void testUnreadableObjectIsRefusedLikeAMissingOne() throws Exception {
-		TLObject ingredient = createIngredient("truffle");
+		TLObject room = createRoom("Werkstatt");
 
 		try {
-			tool().execute(Map.of("ingredient", tid(ingredient)), refusingEveryRead());
+			tool().execute(Map.of("room", tid(room)), refusingEveryRead());
 			fail("An object the principal may not read must not reach the tool.");
 		} catch (ToolArgumentCoercionException expected) {
 			assertTrue("Says no more than 'not found': " + expected.getMessage(),
 				expected.getMessage().contains("not found"));
 			assertFalse("...and nothing about the object itself: " + expected.getMessage(),
-				expected.getMessage().contains("truffle"));
+				expected.getMessage().contains("Werkstatt"));
 		}
 	}
 
@@ -147,7 +147,7 @@ public class AnnotatedToolObjectParamTest extends BasicTestCase {
 	 */
 	public void testMalformedIdentifierIsSynthetic() {
 		try {
-			tool().execute(Map.of("ingredient", "not an id"), unchecked());
+			tool().execute(Map.of("room", "not an id"), unchecked());
 			fail("A string that is no identifier must be refused.");
 		} catch (ToolArgumentCoercionException expected) {
 			assertTrue(expected.getMessage().contains("not an id"));
@@ -155,7 +155,7 @@ public class AnnotatedToolObjectParamTest extends BasicTestCase {
 	}
 
 	private static Tool tool() {
-		List<Tool> tools = AnnotatedTools.from(new IngredientTools());
+		List<Tool> tools = AnnotatedTools.from(new RoomTools());
 		assertEquals("Expected exactly one tool", 1, tools.size());
 		return tools.get(0);
 	}
@@ -248,14 +248,13 @@ public class AnnotatedToolObjectParamTest extends BasicTestCase {
 		}
 	};
 
-	private static TLObject createIngredient(String name) throws Exception {
+	private static TLObject createRoom(String name) throws Exception {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
 			TLObject result = createObject(
-				"new(`luigis.pizzashop:Ingredient`)"
-					+ "..set(`luigis.pizzashop:Component#name`, '" + name + "')"
-					+ "..set(`luigis.pizzashop:Component#baseUnit`, `luigis.pizzashop:UnitOfMeasure#G`)"
-					+ "..set(`luigis.pizzashop:Component#costPerBaseUnit`, 1.0)");
+				"new(`demo.events:Room`)"
+					+ "..set(`demo.events:Named#name`, '" + name + "')"
+					+ "..set(`demo.events:Room#capacity`, 40)");
 			tx.commit();
 			return result;
 		}

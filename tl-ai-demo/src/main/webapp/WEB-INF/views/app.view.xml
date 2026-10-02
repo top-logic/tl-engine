@@ -3,10 +3,9 @@
 <!--
 	Root view of the tl-ai demo, served under /view/ and resolved through ViewConfig#getDefaultView.
 
-	The shell holds everything the legacy tab bar (WEB-INF/layouts/mainTabbar.layout.xml) offers -
-	the invoices and the framework's administration - plus the agent chat, which is what the demo is
-	about and therefore the start item. The classic LayoutServlet UI keeps working unchanged; this is
-	a second front end onto the same model, not a replacement.
+	The shell holds the agent chat, which is what the demo is about and therefore the start item,
+	the event-management domain the agent works on (events, venues, invoices of the demo.events
+	model), the user's settings and the framework's administration.
 
 	Everything here is built from the standard view elements, the chat included, so the demo shows
 	what an application gets for free rather than what this module wrote itself.
@@ -38,7 +37,7 @@
 			What the page BEHIND the dock has selected (Issue #494). Declared in the shell, because
 			the dock floats over every page and the pages are <view-ref>s with channel namespaces of
 			their own: each page hands its own selection channel over with one <bind> below, and the
-			dock states whatever stands here as the turn's "Selected invoice".
+			dock states whatever stands here as the turn's "Selected object".
 
 			Nothing writes it but the page that is on screen, and a page that binds nothing simply
 			leaves it holding what it held - which is why a page that has a selection to state binds
@@ -146,7 +145,7 @@
 			<sidebar active-item="chat">
 				<!--
 					The chat first and active on entry: this application exists to demonstrate the
-					agent, and the invoices are the data it works on rather than the point.
+					agent, and the events are the data it works on rather than the point.
 
 					It is built from view elements; the one-element form that used to exist is gone -
 					a <data-list> of this user's chats, a <chat-conversation>, and a <chat-rail>
@@ -163,11 +162,49 @@
 					<!--
 						The chat page declares a "chatDraft" of its own, so it also works standalone;
 						this binding hands it *this* view's channel instead, which is the one the
-						Belege page below writes.
+						Events and Invoices pages below write.
 					-->
 					<view-ref view="tl-ai-demo/chat-grouped.view.xml">
 						<bind channel="chatDraft"
 							to="chatDraft"
+						/>
+					</view-ref>
+				</nav-item>
+
+				<!--
+					The event-management domain, one page per kind of thing the user looks for.
+					Each page's own selection channel IS the shell's "pageSelection", so the dock's
+					conversation states what the page behind it has selected without knowing the
+					page exists (Issue #494); the Events and Invoices pages also write the chat's
+					draft with their "Ask about this" command (Issue #440).
+				-->
+				<nav-item id="events"
+					icon="css:bi bi-calendar-event"
+				>
+					<label>
+						<en>Events</en>
+						<de>Veranstaltungen</de>
+					</label>
+					<view-ref view="tl-ai-demo/events/events.view.xml">
+						<bind channel="chatDraft"
+							to="chatDraft"
+						/>
+						<bind channel="selectedEvent"
+							to="pageSelection"
+						/>
+					</view-ref>
+				</nav-item>
+
+				<nav-item id="venues"
+					icon="css:bi bi-geo-alt"
+				>
+					<label>
+						<en>Venues</en>
+						<de>Veranstaltungsorte</de>
+					</label>
+					<view-ref view="tl-ai-demo/venues/venues.view.xml">
+						<bind channel="selectedVenue"
+							to="pageSelection"
 						/>
 					</view-ref>
 				</nav-item>
@@ -177,22 +214,12 @@
 				>
 					<label>
 						<en>Invoices</en>
-						<de>Belege</de>
+						<de>Rechnungen</de>
 					</label>
-					<!--
-						The other end of the same channel: the "Dazu fragen" toolbar command on this
-						page writes the chat's draft, although the chat is a different view.
-					-->
-					<view-ref view="tl-ai-demo/invoices.view.xml">
+					<view-ref view="tl-ai-demo/invoices/invoices.view.xml">
 						<bind channel="chatDraft"
 							to="chatDraft"
 						/>
-						<!--
-							And the other direction of the same mechanism: the page's own selection
-							channel IS the shell's "pageSelection", so the dock's conversation can
-							state the invoice this page has open without knowing the page exists
-							(Issue #494).
-						-->
 						<bind channel="selectedInvoice"
 							to="pageSelection"
 						/>
@@ -246,7 +273,7 @@
 			joined nobody, which is the shape a typo here produces.
 
 			And the id is "chat", the Chat page's own: this is the SAME conversation, reachable from
-			Belege and from Administration without leaving the page. On the Chat page itself there
+			every other page without leaving it. On the Chat page itself there
 			is nothing for the dock to open, so it hides - and showing it there would put two
 			composers on one draft channel and two rails on one remembered layout.
 		-->
@@ -308,7 +335,7 @@
 						<!--
 							"draft" is the shell's own channel, named with no <bind> at all - this
 							element sits in app.view.xml, and <app-shell> does not isolate channels.
-							That is the dock half of issue #440: "Dazu fragen" on the Belege page
+							That is the dock half of issue #440: "Dazu fragen" on the page
 							behind it writes the draft, and the question is standing here when the
 							user opens the dock. The Chat page's conversation follows the same
 							channel, and the two are never mounted at once (a dock steps aside for a
@@ -330,7 +357,7 @@
 								two turns of one chat would miss the provider's prompt cache on every
 								turn after it.
 
-								"Open invoice" is this dock's own rail pane, the way it is the page's
+								"Open event" is this dock's own rail pane, the way it is the page's
 								rail pane over there.
 							-->
 							<context>
@@ -340,13 +367,15 @@
 								<fact name="Application"
 									stable="true"
 								>
-									<value><![CDATA[open -> "Invoice management demo (tl-ai-demo)"]]></value>
+									<value><![CDATA[open -> "Event management demo (tl-ai-demo)"]]></value>
 								</fact>
-								<fact name="Open invoice"
+								<fact name="Open event"
 									stable="false"
 								>
-									<value><![CDATA[open -> ifElse(isEmpty($open), "none",
-										$open.get(`tl.ai.demo.imageclassification:Invoice#description`))]]></value>
+									<value><![CDATA[open -> ifElse(isEmpty($open) || !$open.instanceOf(`demo.events:Event`), "none",
+										$open.get(`demo.events:Named#name`)
+											+ ": " + $open.get(`demo.events:Event#registrationCount`) + " active registrations, balance "
+											+ $open.get(`demo.events:Event#balance`))]]></value>
 								</fact>
 							</context>
 							<!--
@@ -355,23 +384,21 @@
 								One line, and the agent is told the label, the type and the identifier
 								it needs to act on the object.
 
-								Named "Selected invoice" rather than "Selected object", because that is
-								what it truthfully is on every page of this demo: the shell has no
-								channel saying which nav item is active, so this states what the Belege
-								page has selected, and keeps saying so while the user reads their
-								settings. Naming the page's list is honest where naming "the selection"
-								would not be.
+								Named "Selected object", because the shell has no channel saying which
+								nav item is active: this states what the Events, Venues or Invoices
+								page last selected, and keeps saying so while the user reads their
+								settings.
 							-->
-							<selection name="Selected invoice"
+							<selection name="Selected object"
 								channel="pageSelection"
 							/>
 						</chat-conversation>
 					</panel>
 					<!--
 						The rail, with its pane - which is what "the pane is visible as well if
-						wanted" means here: picking an invoice in the "Belege" section replaces the
-						section column with the form, inside the dock's panel, exactly as it does on
-						the page.
+						wanted" means here: picking an event in the "Veranstaltungen" section replaces
+						the section column with its form, inside the dock's panel, exactly as it does
+						on the page.
 					-->
 					<chat-rail input="dockPaneObject"
 						open="false"
@@ -429,39 +456,45 @@
 							</label>
 							<chat-sources badge="dockSourcesBadge"/>
 						</section>
-						<section name="invoices"
-							icon="css:bi bi-receipt"
+						<section name="events"
+							icon="css:bi bi-calendar-event"
 						>
 							<label>
-								<en>Invoices</en>
-								<de>Belege</de>
+								<en>Events</en>
+								<de>Veranstaltungen</de>
 							</label>
 							<data-list
 								collapsible="false"
-								observed-types="tl.ai.demo.imageclassification:Invoice"
+								observed-types="demo.events:Event"
 								search="false"
 								selection="dockPaneObject"
 							>
 								<empty-text>
-									<en>No invoices yet</en>
-									<de>Noch keine Belege</de>
+									<en>No events yet</en>
+									<de>Noch keine Veranstaltungen</de>
 								</empty-text>
 								<lines>
-									<line attribute="description"/>
-									<line attribute="amountLabel"
+									<line attribute="name"/>
+									<line attribute="startDate"
 										emphasis="secondary"
 									/>
 								</lines>
-								<rows><![CDATA[all(`tl.ai.demo.imageclassification:Invoice`)
-									.sort((i -> $i.get(`tl.ai.demo.imageclassification:Invoice#date`)).comparator().desc())]]></rows>
+								<rows><![CDATA[all(`demo.events:Event`)
+									.sort((e -> $e.get(`demo.events:Event#startDate`)).comparator().desc())]]></rows>
 							</data-list>
 						</section>
 						<pane>
-							<form input="dockPaneObject" with-inset="true">
-								<field attribute="date"/>
-								<field attribute="description"/>
-								<field attribute="amount"/>
-								<field attribute="data"/>
+							<form input="dockPaneObject"
+								mode-switch="false"
+								with-inset="true"
+							>
+								<field attribute="name"/>
+								<field attribute="status"/>
+								<field attribute="startDate"/>
+								<field attribute="venue"/>
+								<field attribute="registrationCount"/>
+								<field attribute="remainingCapacity"/>
+								<field attribute="balance"/>
 							</form>
 						</pane>
 					</chat-rail>

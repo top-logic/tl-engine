@@ -41,12 +41,12 @@ public class TestChatSelectionConfig extends TestCase {
 
 	/** A page that knows a better word for what it holds says it. */
 	public void testAPageMayNameTheFactAndTheLabel() throws Exception {
-		Selection selection = parse("<selection channel='paneObject' name='Open invoice'>"
-			+ "<label>i -> $i.get(`tl.ai.demo.imageclassification:Invoice#description`)</label>"
+		Selection selection = parse("<selection channel='paneObject' name='Open event'>"
+			+ "<label>e -> $e.get(`demo.events:Named#name`)</label>"
 			+ "</selection>");
 
 		assertEquals("paneObject", selection.getChannel().getChannelName());
-		assertEquals("Open invoice", selection.getName());
+		assertEquals("Open event", selection.getName());
 		assertNotNull(selection.getLabel());
 	}
 

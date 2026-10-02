@@ -70,6 +70,16 @@
 		
 		<!-- Whether to skip indexing the combined JavaDoc tree in tl-parent-engine. -->
 		<tl.javadoc.skipIndex>${maven.javadoc.skip}</tl.javadoc.skipIndex>
+
+		<!--
+			Comma-separated build and test features of this engine version that the CI pipelines of the
+			repository tl-ci use if present (an application inherits them from its engine version):
+
+			scripted-shards: Test selection TestAll.scripted, TestAll.shardModules and TestAll.scratchDir.
+			db-workers: Database test selection TestAll.db and TestAll.dbWorkers.
+			javadoc-local: Module-local JavaDoc build with -Dtl.javadoc.aggregate=false.
+		-->
+		<tl.ci.features>scripted-shards,db-workers,javadoc-local</tl.ci.features>
 	</properties>
 
 	<developers>

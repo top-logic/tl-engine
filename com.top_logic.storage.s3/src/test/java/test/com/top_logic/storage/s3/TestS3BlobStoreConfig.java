@@ -37,6 +37,7 @@ import com.top_logic.basic.config.customization.NoCustomizations;
 import com.top_logic.basic.config.order.DefaultOrderStrategy;
 import com.top_logic.basic.io.blob.BlobStore;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.storage.s3.S3BlobStore;
 import com.top_logic.storage.s3.ServerSideEncryptionMode;
 
@@ -203,6 +204,19 @@ public class TestS3BlobStoreConfig extends BasicTestCase {
 				}
 			}
 		}
+	}
+
+	/**
+	 * The KMS key setting is shown only for the encryption mode SSE-KMS.
+	 */
+	public void testKmsKeyIdMode() {
+		S3BlobStore.KmsKeyIdMode mode = new S3BlobStore.KmsKeyIdMode();
+		for (ServerSideEncryptionMode encryption : ServerSideEncryptionMode.values()) {
+			FieldMode expected =
+				encryption == ServerSideEncryptionMode.SSE_KMS ? FieldMode.ACTIVE : FieldMode.INVISIBLE;
+			assertEquals(encryption.getExternalName(), expected, mode.apply(encryption));
+		}
+		assertEquals(FieldMode.INVISIBLE, mode.apply(null));
 	}
 
 	/** The format of the <code>Range</code> header. */

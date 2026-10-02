@@ -19,6 +19,11 @@
 			<artifactId>tl-basic</artifactId>
 		</dependency>
 		<dependency>
+			<!-- For the annotations guiding configuration editors (dependent field modes). -->
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>s3</artifactId>
 			<exclusions>

@@ -71,11 +71,15 @@ import com.top_logic.basic.config.format.MemorySizeFormat;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.io.binary.ContentDisposition;
+import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.io.LimitedInputStream;
 import com.top_logic.basic.io.blob.AbstractBlobStore;
 import com.top_logic.basic.io.blob.BlobInfo;
 import com.top_logic.basic.io.blob.BlobStore;
 import com.top_logic.basic.io.blob.NoSuchBlobException;
+import com.top_logic.layout.form.model.FieldMode;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.tool.boundsec.CommandHandler.ConfirmConfig.VisibleIf;
 
 /**
  * {@link BlobStore} keeping each blob as an object in a bucket of AWS S3 or an S3-compatible
@@ -438,6 +442,7 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		 */
 		@Name(KMS_KEY_ID)
 		@Label("KMS key ID")
+		@DynamicMode(fun = KmsKeyIdMode.class, args = @Ref(SERVER_SIDE_ENCRYPTION))
 		String getKmsKeyId();
 
 		/**
@@ -537,6 +542,7 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		@Format(MemorySizeFormat.class)
 		@LongDefault(DEFAULT_DIRECT_DOWNLOAD_MIN_SIZE)
 		@Constraint(NonNegative.class)
+		@DynamicMode(fun = VisibleIf.class, args = @Ref(DIRECT_DOWNLOAD))
 		long getDirectDownloadMinSize();
 
 		/**
@@ -562,6 +568,7 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		@LongDefault(DEFAULT_DIRECT_DOWNLOAD_LIFETIME)
 		@Bound(comparison = Comparision.GREATER_OR_EQUAL, value = MIN_DIRECT_DOWNLOAD_LIFETIME)
 		@Bound(comparison = Comparision.SMALLER_OR_EQUAL, value = MAX_DIRECT_DOWNLOAD_LIFETIME)
+		@DynamicMode(fun = VisibleIf.class, args = @Ref(DIRECT_DOWNLOAD))
 		long getDirectDownloadLifetime();
 
 		/**
@@ -581,6 +588,7 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		 */
 		@Name(PUBLIC_ENDPOINT)
 		@Constraint(HasURLFormat.class)
+		@DynamicMode(fun = VisibleIf.class, args = @Ref(DIRECT_DOWNLOAD))
 		String getPublicEndpoint();
 
 		/**
@@ -594,6 +602,18 @@ public class S3BlobStore extends AbstractBlobStore<S3BlobStore.Config<?>> {
 		@Override
 		@ClassDefault(S3BlobStore.class)
 		Class<? extends I> getImplementationClass();
+
+	}
+
+	/**
+	 * Shows the KMS key setting only for the encryption mode {@link ServerSideEncryptionMode#SSE_KMS}.
+	 */
+	public static class KmsKeyIdMode extends Function1<FieldMode, ServerSideEncryptionMode> {
+
+		@Override
+		public FieldMode apply(ServerSideEncryptionMode encryption) {
+			return encryption == ServerSideEncryptionMode.SSE_KMS ? FieldMode.ACTIVE : FieldMode.INVISIBLE;
+		}
 
 	}
 

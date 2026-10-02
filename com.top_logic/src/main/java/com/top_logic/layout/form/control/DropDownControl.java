@@ -491,6 +491,11 @@ public class DropDownControl extends AbstractSelectControl {
 	}
 
 	@Override
+	protected String buildInputId() {
+		return getButtonID();
+	}
+
+	@Override
 	protected void internalHandleDisabledEvent(FormMember sender, Boolean oldValue, Boolean newValue) {
 		addDisabledUpdate(newValue.booleanValue());
 	}

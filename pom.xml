@@ -1081,6 +1081,12 @@
 			    <version>${kafka.version}</version>
 			</dependency>
 			<dependency>
+			    <!-- Note: Overrides the vulnerable version requested by kafka-clients. -->
+			    <groupId>com.github.luben</groupId>
+			    <artifactId>zstd-jni</artifactId>
+			    <version>1.5.7-20</version>
+			</dependency>
+			<dependency>
 				<groupId>org.apache.zookeeper</groupId>
 				<artifactId>zookeeper</artifactId>
 				<version>${zookeeper.version}</version>
@@ -1250,6 +1256,12 @@
 			<dependency>
 			    <groupId>org.apache.pdfbox</groupId>
 	    		<artifactId>fontbox</artifactId>
+			    <version>3.0.8</version>
+			</dependency>
+			<dependency>
+			    <!-- Note: Overrides the version requested by docx4j. -->
+			    <groupId>org.apache.pdfbox</groupId>
+	    		<artifactId>pdfbox-io</artifactId>
 			    <version>3.0.8</version>
 			</dependency>
 			<dependency>

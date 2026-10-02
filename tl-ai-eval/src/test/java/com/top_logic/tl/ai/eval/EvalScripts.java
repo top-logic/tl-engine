@@ -41,6 +41,12 @@ public class EvalScripts {
 	/** Names the tool the agents read with. */
 	public static final String READ_TOOL = "listInstances";
 
+	/** Names the tool the agents show objects with. */
+	public static final String PRESENT_TOOL = "present";
+
+	/** The chart the chart scenario asks for: one bar per project, its ticket count. */
+	private static final String TICKETS_PER_PROJECT = "p -> $p.get(`pm:Project#tickets`).size()";
+
 	private static final AtomicInteger CALL_IDS = new AtomicInteger();
 
 	private EvalScripts() {
@@ -83,6 +89,12 @@ public class EvalScripts {
 						+ ".filter(p -> $p.get(`pm:Project#name`) == 'Alpha')"
 						+ ".get(`pm:Project#tickets`)"
 						+ ".foreach(t -> $t.set(`pm:Ticket#status`, 'triaged'))"));
+			}
+			if (prompt.contains("as a table")) {
+				return List.of(present("all(`pm:Ticket`)", "TABLE", null));
+			}
+			if (prompt.contains("bar chart")) {
+				return List.of(present("all(`pm:Project`)", "CHART", TICKETS_PER_PROJECT));
 			}
 			if (prompt.contains("Invoice export crashes")) {
 				// Correct: look, find nothing, and change nothing.
@@ -131,6 +143,34 @@ public class EvalScripts {
 	}
 
 	/**
+	 * A model that reads everything before it shows anything: the route "show me all tickets as a
+	 * table" took before #616. It shows the right table - and needs three calls for it.
+	 */
+	public static ScriptedProvider.Script fetchesBeforeShowing() {
+		ScriptedProvider.Script oracle = oracle();
+		return (request, turn) -> {
+			if (!firstUserText(request).contains("as a table")) {
+				return oracle.reply(request, turn);
+			}
+			switch (turn) {
+				case 0:
+					return List.of(read("pm", "Ticket"));
+				case 1:
+					return List.of(read("pm", "Project"));
+				case 2:
+					return List.of(present("all(`pm:Ticket`)", "TABLE", null));
+				default:
+					return List.of(new TextContent("The table shows the three tickets."));
+			}
+		};
+	}
+
+	/** A model that charts the right projects with the wrong number: one bar of height 1 each. */
+	public static ScriptedProvider.Script chartsTheWrongValue() {
+		return fallback(oracle(), "bar chart", present("all(`pm:Project`)", "CHART", "p -> 1"));
+	}
+
+	/**
 	 * The oracle, except for the one prompt that contains {@code marker}, which is answered with
 	 * {@code instead}.
 	 */
@@ -158,6 +198,39 @@ public class EvalScripts {
 			throw new UncheckedIOException(ex);
 		}
 		return new ToolCall("call-" + CALL_IDS.incrementAndGet(), WRITE_TOOL, buffer.toString());
+	}
+
+	/**
+	 * A call of the present tool showing what the query finds.
+	 *
+	 * @param value
+	 *        The chart's value function, for {@code as="CHART"}; {@code null} otherwise. The label is
+	 *        the project's name.
+	 */
+	public static ToolCall present(String query, String as, String value) {
+		StringW buffer = new StringW();
+		try (JsonWriter json = new JsonWriter(buffer)) {
+			json.beginObject();
+			json.name("query");
+			json.value(query);
+			json.name("as");
+			json.value(as);
+			if (value != null) {
+				json.name("chart");
+				json.beginObject();
+				json.name("kind");
+				json.value("BAR");
+				json.name("label");
+				json.value("p -> $p.get(`pm:Project#name`)");
+				json.name("value");
+				json.value(value);
+				json.endObject();
+			}
+			json.endObject();
+		} catch (IOException ex) {
+			throw new UncheckedIOException(ex);
+		}
+		return new ToolCall("call-" + CALL_IDS.incrementAndGet(), PRESENT_TOOL, buffer.toString());
 	}
 
 	/** A call of the read tool listing the instances of one type. */

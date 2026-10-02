@@ -51,6 +51,20 @@ public class TestEvalGraders extends TestCase {
 			verdict.detail().contains("write"));
 	}
 
+	/**
+	 * A bound on the number of calls counts every call, the required ones included, and says how
+	 * many there were (#616).
+	 */
+	public void testMoreCallsThanTheBoundFail() throws Exception {
+		assertTrue(grade("required='a.present' max-calls='2'", List.of("outlineModel", "present")).passed());
+
+		Verdict verdict = grade("required='a.present' max-calls='2'", List.of("listInstances", "getInstance", "present"));
+
+		assertFalse(verdict.passed());
+		assertTrue("The detail has to say how many: " + verdict.detail(),
+			verdict.detail().contains("made 3 tool calls, at most 2"));
+	}
+
 	/** Order is not checked: the same calls in the other order still pass. */
 	public void testOrderDoesNotMatter() throws Exception {
 		assertTrue(grade("required='a.one, a.two'", List.of("two", "one")).passed());

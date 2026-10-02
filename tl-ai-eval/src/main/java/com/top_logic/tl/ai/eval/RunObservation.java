@@ -49,7 +49,21 @@ public class RunObservation implements AgentEventListener {
 	private static final Set<String> INFRASTRUCTURE_KINDS =
 		Set.of("AUTHENTICATION", "BILLING", "OVERLOADED");
 
+	/**
+	 * One tool call the loop dispatched: the name the model used, and its arguments as it wrote them.
+	 *
+	 * @param name
+	 *        The tool name on the wire.
+	 * @param argsJson
+	 *        The arguments, a JSON object.
+	 */
+	public record Call(String name, String argsJson) {
+		// Sole record.
+	}
+
 	private final List<String> _toolCalls = Collections.synchronizedList(new ArrayList<>());
+
+	private final List<Call> _calls = Collections.synchronizedList(new ArrayList<>());
 
 	private volatile int _turns;
 
@@ -67,6 +81,7 @@ public class RunObservation implements AgentEventListener {
 			_turns = Math.max(_turns, started.turnNumber());
 		} else if (event instanceof AgentEvent.ToolCallStarted call) {
 			_toolCalls.add(call.toolName());
+			_calls.add(new Call(call.toolName(), call.argsJson()));
 		} else if (event instanceof AgentEvent.ToolCallDenied denied) {
 			_toolCalls.add(denied.toolName());
 		} else if (event instanceof AgentEvent.ProviderError error) {
@@ -88,6 +103,16 @@ public class RunObservation implements AgentEventListener {
 	public List<String> toolCalls() {
 		synchronized (_toolCalls) {
 			return List.copyOf(_toolCalls);
+		}
+	}
+
+	/**
+	 * The calls that ran, with their arguments, in call order: what a grader of what a call did
+	 * reads, e.g. {@link Presented}. A denied call is in {@link #toolCalls()} only - it did nothing.
+	 */
+	public List<Call> calls() {
+		synchronized (_calls) {
+			return List.copyOf(_calls);
 		}
 	}
 

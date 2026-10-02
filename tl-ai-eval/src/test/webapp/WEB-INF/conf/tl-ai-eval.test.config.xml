@@ -14,7 +14,8 @@
 	TestEvalAgentsAreComparable asserts that every agent named by an arm carries the same prompt and
 	the same tools, so the copies cannot drift apart unnoticed.
 
-	The tool set is deliberately small - read the instances, read one, validate a script, run one.
+	The tool set is deliberately small - read the instances, read one, validate a script, run one,
+	and show objects to the user.
 	The point of the minimal version is that a red cell has few possible causes.
 -->
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
@@ -24,6 +25,23 @@
 				<declarations>
 					<declaration file="/WEB-INF/model/pm.model.xml"/>
 				</declarations>
+			</instance>
+		</config>
+
+		<!--
+			The "present" tool, as an eval run has it: no page, so EvalPresentTool accepts what the
+			model shows after the same checks a chat page's tool makes, and the <presented> grader
+			reads the call (#616).
+		-->
+		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+			<instance>
+				<tool-factories>
+					<factory name="present">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.eval.EvalPresentTool"
+						/>
+					</factory>
+				</tool-factories>
 			</instance>
 		</config>
 
@@ -41,6 +59,8 @@
 How to work here:
 
   * To READ data, use listInstances and getInstance. Never answer about the data from memory.
+  * To SHOW objects to the user - "show me", "as a table", "as a chart" - call present with a
+    TL-Script query; do not read them first.
   * To WRITE data, use executeTLScript with withCommit=true. Use it for nothing else - it is the
     write tool of this application, and reaching for it says you are about to change something.
   * Make exactly the change you were asked for and no other. If the thing you were asked to change
@@ -54,6 +74,7 @@ Answer in one short sentence when you are done.]]></system-prompt>
 							<tool name="model-instances.getInstance"/>
 							<tool name="script-exec.validateTLScript"/>
 							<tool name="script-exec.executeTLScript"/>
+							<tool name="present.present"/>
 						</tools>
 					</agent>
 					<agent name="Eval_NoTools"
@@ -67,6 +88,8 @@ Answer in one short sentence when you are done.]]></system-prompt>
 How to work here:
 
   * To READ data, use listInstances and getInstance. Never answer about the data from memory.
+  * To SHOW objects to the user - "show me", "as a table", "as a chart" - call present with a
+    TL-Script query; do not read them first.
   * To WRITE data, use executeTLScript with withCommit=true. Use it for nothing else - it is the
     write tool of this application, and reaching for it says you are about to change something.
   * Make exactly the change you were asked for and no other. If the thing you were asked to change
@@ -80,6 +103,7 @@ Answer in one short sentence when you are done.]]></system-prompt>
 							<tool name="model-instances.getInstance"/>
 							<tool name="script-exec.validateTLScript"/>
 							<tool name="script-exec.executeTLScript"/>
+							<tool name="present.present"/>
 						</tools>
 					</agent>
 					<agent name="Eval_Sonnet"
@@ -93,6 +117,8 @@ Answer in one short sentence when you are done.]]></system-prompt>
 How to work here:
 
   * To READ data, use listInstances and getInstance. Never answer about the data from memory.
+  * To SHOW objects to the user - "show me", "as a table", "as a chart" - call present with a
+    TL-Script query; do not read them first.
   * To WRITE data, use executeTLScript with withCommit=true. Use it for nothing else - it is the
     write tool of this application, and reaching for it says you are about to change something.
   * Make exactly the change you were asked for and no other. If the thing you were asked to change
@@ -106,6 +132,7 @@ Answer in one short sentence when you are done.]]></system-prompt>
 							<tool name="model-instances.getInstance"/>
 							<tool name="script-exec.validateTLScript"/>
 							<tool name="script-exec.executeTLScript"/>
+							<tool name="present.present"/>
 						</tools>
 					</agent>
 					<agent name="Eval_Haiku"
@@ -119,6 +146,8 @@ Answer in one short sentence when you are done.]]></system-prompt>
 How to work here:
 
   * To READ data, use listInstances and getInstance. Never answer about the data from memory.
+  * To SHOW objects to the user - "show me", "as a table", "as a chart" - call present with a
+    TL-Script query; do not read them first.
   * To WRITE data, use executeTLScript with withCommit=true. Use it for nothing else - it is the
     write tool of this application, and reaching for it says you are about to change something.
   * Make exactly the change you were asked for and no other. If the thing you were asked to change
@@ -132,6 +161,7 @@ Answer in one short sentence when you are done.]]></system-prompt>
 							<tool name="model-instances.getInstance"/>
 							<tool name="script-exec.validateTLScript"/>
 							<tool name="script-exec.executeTLScript"/>
+							<tool name="present.present"/>
 						</tools>
 					</agent>
 				</agents>

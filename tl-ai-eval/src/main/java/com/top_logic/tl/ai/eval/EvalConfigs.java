@@ -114,7 +114,8 @@ public class EvalConfigs {
 	 * </p>
 	 */
 	static boolean isPositive(Expectation expectation) {
-		if (expectation instanceof KbQuery) {
+		if (expectation instanceof KbQuery || expectation instanceof Presented) {
+			// A presentation fails for a run that presented nothing.
 			return true;
 		}
 		return expectation instanceof ToolSequence tools && !tools.getRequired().isEmpty();

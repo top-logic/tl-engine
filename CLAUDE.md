@@ -117,8 +117,8 @@ mvn -pl tl-ai-demo test -DskipTests=false -Dtl.ai.vector.e2e=true -Dtest='Vector
 
 ### The model eval
 
-`tl-ai-eval` puts the same five business tasks to every configured model and grades the database
-each run left behind. Its **plumbing runs in every build**, against a provider whose answers a test
+`tl-ai-eval` puts the same seven business tasks to every configured model and grades the database
+each run left behind - or, for a "show me" task, what it presented. Its **plumbing runs in every build**, against a provider whose answers a test
 writes, so the scenario file's TL-Script expressions and the graders are exercised at no cost:
 
 ```bash

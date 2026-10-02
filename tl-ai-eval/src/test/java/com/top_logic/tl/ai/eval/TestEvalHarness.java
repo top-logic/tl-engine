@@ -71,7 +71,7 @@ public class TestEvalHarness extends BasicTestCase {
 	 * A model that does what every oracle describes passes every scenario.
 	 *
 	 * <p>
-	 * The load-bearing test of the module. It proves the five scenarios are solvable at all - a
+	 * The load-bearing test of the module. It proves the seven scenarios are solvable at all - a
 	 * benchmark whose tasks nobody can do measures nothing - and with them that every TL-Script
 	 * expression in the file compiles, evaluates and produces the value written beside it.
 	 * </p>
@@ -84,7 +84,7 @@ public class TestEvalHarness extends BasicTestCase {
 				+ " exactly what its oracle says, but failed " + row.failedGraders()
 				+ " -- " + details(row), RunOutcome.PASS, row.outcome());
 		}
-		assertEquals("Five scenarios, three repeats each.", 15, rows.size());
+		assertEquals("Seven scenarios, three repeats each.", 21, rows.size());
 
 		String report = EvalReport.render(rows);
 		assertTrue("Every cell is three of three: " + report, report.contains("3/3"));
@@ -122,6 +122,26 @@ public class TestEvalHarness extends BasicTestCase {
 		assertTrue("And counting the triaged tickets catches it a second way, which is why the"
 			+ " expectation counts rather than merely checking Alpha's two: " + details(row),
 			row.failedGraders().contains("exactly-alphas-two-tickets-are-triaged"));
+	}
+
+	/**
+	 * Reading everything before showing it fails the "show me" bar, though the table it ends with is
+	 * the right one (#616): that route is what the scenario exists to price.
+	 */
+	public void testAModelThatFetchesBeforeShowingFails() throws Exception {
+		RunRecord row = onlyScenario(EvalScripts.fetchesBeforeShowing(), "show-tickets-as-table");
+
+		assertEquals(details(row), RunOutcome.FAIL, row.outcome());
+		assertEquals("Only the cost is wrong, so only the call bar may fail: " + details(row),
+			List.of("in-at-most-two-calls"), row.failedGraders());
+	}
+
+	/** A chart of the right objects drawing the wrong number fails on its values. */
+	public void testAModelThatChartsTheWrongValueFails() throws Exception {
+		RunRecord row = onlyScenario(EvalScripts.chartsTheWrongValue(), "tickets-per-project-as-chart");
+
+		assertEquals(details(row), RunOutcome.FAIL, row.outcome());
+		assertEquals(details(row), List.of("the-bars-are-the-ticket-counts"), row.failedGraders());
 	}
 
 	/** Inventing an object that was only referred to fails, however plausible the answer reads. */
@@ -170,7 +190,7 @@ public class TestEvalHarness extends BasicTestCase {
 
 		List<RunRecord> skipped = rows.stream()
 			.filter(r -> "no-tools".equals(r.arm())).toList();
-		assertEquals("One row per scenario, not one per repeat.", 5, skipped.size());
+		assertEquals("One row per scenario, not one per repeat.", 7, skipped.size());
 		for (RunRecord row : skipped) {
 			assertEquals(RunOutcome.COULD_NOT_RUN, row.outcome());
 			assertTrue("The row has to say why: " + row.error(),
@@ -179,7 +199,7 @@ public class TestEvalHarness extends BasicTestCase {
 		EvalReport.ArmSummary summary = EvalReport.arms(rows).stream()
 			.filter(a -> "no-tools".equals(a.arm())).findFirst().orElseThrow();
 		assertEquals("An arm that never ran has no cells to average.", 0, summary.cells());
-		assertEquals(5, summary.cellsNotRun());
+		assertEquals(7, summary.cellsNotRun());
 	}
 
 	/**

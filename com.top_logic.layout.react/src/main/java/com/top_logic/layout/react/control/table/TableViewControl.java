@@ -19,15 +19,11 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.LabelProvider;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
-import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
@@ -46,7 +42,6 @@ import com.top_logic.layout.react.control.dnd.DropPosition;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
 import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.dnd.DropVerdict;
-import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -1629,7 +1624,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * {@code -1} when the key resolves to no object or no row displays it.
 	 */
 	private int rowIndexOf(ModelName name) {
-		Object target = name == null ? null : locate(newActionContext(), name);
+		Object target = ScriptingModelKey.locate(null, name);
 		if (target == null) {
 			return -1;
 		}
@@ -2192,12 +2187,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		if (position == null) {
 			return dropRefused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
-		ActionContext actionContext = newActionContext();
+		ActionContext actionContext = ScriptingModelKey.newActionContextOrNull();
 
 		List<ModelName> unresolved = new ArrayList<>();
 		List<Object> objects = new ArrayList<>();
 		for (ModelName name : args.getObjects()) {
-			Object object = locate(actionContext, name);
+			Object object = ScriptingModelKey.locate(actionContext, null, name);
 			if (object == null) {
 				unresolved.add(name);
 			} else {
@@ -2207,7 +2202,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		Object target = null;
 		ModelName targetName = args.getTargetObject();
 		if (targetName != null) {
-			Object object = locate(actionContext, targetName);
+			Object object = ScriptingModelKey.locate(actionContext, null, targetName);
 			// The target must be a row of this table: a recorded drop that lands somewhere else is a
 			// drift, not a drop.
 			Row<R> targetRow = object == null ? null : rowFor(object);
@@ -2277,36 +2272,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			return null;
 		}
 		return queue.getControl(controlId);
-	}
-
-	/**
-	 * An {@link ActionContext} for resolving a {@link ModelName}, or {@code null} if the running
-	 * interaction offers no display context to build one from.
-	 */
-	private ActionContext newActionContext() {
-		try {
-			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
-			return new ReactActionContext(displayContext, displayContext.asRequest().getSession());
-		} catch (RuntimeException ex) {
-			Logger.warn("Cannot resolve a business identity outside an interaction.", ex, this);
-			return null;
-		}
-	}
-
-	/**
-	 * The object the given {@link ModelName} designates, or {@code null} if it designates none (or
-	 * there is no {@code context} to resolve it in).
-	 */
-	private Object locate(ActionContext context, ModelName name) {
-		if (context == null || name == null) {
-			return null;
-		}
-		try {
-			return ModelResolver.locateModel(context, null, name);
-		} catch (RuntimeException ex) {
-			Logger.warn("Cannot resolve object for key: " + name, ex, this);
-			return null;
-		}
 	}
 
 	private Object keyAt(int rowIndex) {

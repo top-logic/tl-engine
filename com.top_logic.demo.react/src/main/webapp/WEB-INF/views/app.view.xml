@@ -94,6 +94,15 @@
 							<de>Objektliste</de>
 						</label>
 					</nav-item>
+					<nav-item id="board"
+						icon="css:bi bi-columns-gap"
+					>
+						<view-ref view="board.view.xml"/>
+						<label>
+							<en>Board</en>
+							<de>Board</de>
+						</label>
+					</nav-item>
 					<nav-item id="projects"
 						icon="css:bi bi-kanban"
 					>

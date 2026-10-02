@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Kanban board demo: the tickets in the columns of their status.
+	
+	The columns are the classifiers of the status enumeration, in their declaration order; the
+	tickets are sorted by name, which is their order within a column. Each card shows the name of
+	its ticket and its status. Clicking a card selects its ticket, and the form beside the board
+	edits the selected one: saving another status moves the card into the column of that status,
+	since the board follows the tickets it displays. The selection travels both ways - the card of
+	the ticket the form shows is the highlighted one.
+	
+	"Generate samples" on the object list page creates tickets in every status.
+-->
+<view>
+	<channels>
+		<channel name="ticket"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="320"
+				size="65"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Board</en>
+						<de>Board</de>
+					</title>
+					<kanban-board
+						column="t -> $t.get(`demo.tickets:Ticket#status`)"
+						columns="all(`demo.tickets:TicketStatus`)"
+						items="all(`demo.tickets:Ticket`).sort(comparator(t -> $t.get(`demo.tickets:Ticket#name`)))"
+						observed-types="demo.tickets:Ticket"
+						selection="ticket"
+					>
+						<card>
+							<view-ref view="board/ticket-card.view.xml">
+								<bind
+									channel="ticket"
+									to="item"
+								/>
+							</view-ref>
+						</card>
+					</kanban-board>
+				</panel>
+			</pane>
+			<pane
+				size="35"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Ticket</en>
+						<de>Ticket</de>
+					</title>
+					<form
+						input="ticket"
+						with-inset="true"
+					>
+						<field attribute="name"/>
+						<field attribute="status"/>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

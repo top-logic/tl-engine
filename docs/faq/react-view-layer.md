@@ -489,6 +489,14 @@ A form with unsaved input blocks the write of the channel it is bound to: it reg
 
 The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/repeater-demo.view.xml` with `style/tl-demo-react.css`.
 
+## Cards in columns: `<kanban-board>`
+
+`<kanban-board>` (`KanbanBoardElement`, control `ReactKanbanBoardControl`, client `TLKanbanBoard`) distributes computed objects into columns of cards. Over its `inputs`, `columns` computes the column values (the classifiers of an enumeration - `all(\`my:Status\`)` - or arbitrary objects), `items` the objects, whose order is their order within a column, and `column` maps an object to its column value; an object whose column value is none of the columns is not shown. The header shows `column-label` (`column -> label`, the label of the column value by default) and the number of cards.
+
+The `<card>` content is instantiated per object with the object on `item-channel` (`item` by default), by the same keyed `TemplateInstances` the items of `<object-list>` use: a card of an object that stays keeps its controls, also when the object moves to another column. `selection` names the channel a clicked card writes its object to; the card of the object the channel holds is highlighted (`KanbanSelectionBinding`, a `SelectionChannelBinding`). The board follows its displayed objects and the `observed-types`, so changing the attribute the column is computed from moves the card. A card selection is recorded as `selectCardByKey` naming the object, since the client card keys are allocated per session.
+
+The demo is `com.top_logic.demo.react`'s `WEB-INF/views/board.view.xml` (nav item "Board").
+
 ## A page of weighted columns: `<columns>`
 
 `<columns breakpoint="48rem" gap="default">` (`ColumnsElement`) lays a page out in columns of unequal width and reflows it to a single column when the space gets narrow. Each child is a `<column weight="2">` (`ColumnElement`); a column takes a share of the width in proportion to its weight (weight 1 by default), and its own children stand below each other over the full width of the column. Below the breakpoint the columns stack in the order they are written — the main column first, the side column below it.

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	A ticket as a card of the board: its name, and its status as a pill in the colour of the
+	status. The derived channels observe the ticket they are computed from, so an edit of the
+	ticket reaches the card.
+-->
+<view>
+	<channels>
+		<channel name="ticket"/>
+		<derived-channel name="name"
+			expr="t -> $t.get(`demo.tickets:Ticket#name`)"
+			inputs="ticket"
+		/>
+		<derived-channel name="status"
+			expr="t -> $t.get(`demo.tickets:Ticket#status`)"
+			inputs="ticket"
+		/>
+	</channels>
+	<stack
+		align="start"
+		gap="compact"
+	>
+		<text
+			input="name"
+			variant="label"
+		/>
+		<text input="status"/>
+	</stack>
+</view>

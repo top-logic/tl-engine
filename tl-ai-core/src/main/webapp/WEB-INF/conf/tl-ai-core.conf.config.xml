@@ -1668,6 +1668,7 @@ writing from nothing, not for editing one that exists.
 - The tool's answer is the confirmation. Report the new values from it; do not read the object again.
 - A SET described by a CONDITION ("all overdue items of X"), a CALCULATION (a percentage raise, values copied or derived from other data), or SEVERAL DEPENDENT STEPS that must happen together (a parent with its children): ONE TL-Script. Load TL_tlScriptWriting, write the script, validate it once, then execute it with withCommit=true. Let the script return what it changed - the count, or the new values: that is the confirmation. No separate query before it, no read after it.
 - Reading and aggregating (max, count, sum, filter, sort, following references) is not a change: it goes to `query` or `present`, see <data_questions>.
+- Changing data is not a model modification: present no plan and ask no confirmation with askUser. Each write shows the user an approval card, and that is the confirmation.
 - Both paths act with the user's rights. A refusal is final: tell the user what their account may not change. Never use the other path to get around it.
 </changing_data>
 

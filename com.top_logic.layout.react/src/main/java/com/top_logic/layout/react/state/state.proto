@@ -19,6 +19,7 @@
  *   TLOptionChips     - DropdownSelectState
  *   TLSegmentedChoice - DropdownSelectState
  *   TLTabBar          - TabBarState
+ *   TLAccordion       - AccordionState
  *   TLWindow          - WindowState
  *   TLDialog          - DialogState
  *   TLMenu            - MenuState
@@ -695,6 +696,68 @@ message TabBarState extends ControlState {
 	 * The content of the selected tab.
 	 */
 	ChildControl activeContent;
+}
+
+/**
+ * State of an accordion: a stack of sections, each with a header and a body that is expanded or
+ * collapsed independently, the component {@code TLAccordion}.
+ *
+ * A click on the header of a section sends the command {@code toggleSection} to the server with the
+ * arguments {@code sectionId} (the {@link Section#id} of the section) and {@code expanded} (whether
+ * the section is to be expanded). The server answers with the resulting {@link #sections}: in an
+ * {@link #exclusive} accordion, expanding a section collapses all others.
+ */
+message AccordionState extends ControlState {
+
+	/**
+	 * A section of the accordion.
+	 */
+	message Section {
+		/**
+		 * The ID of the section, unique within the accordion.
+		 */
+		string id;
+
+		/**
+		 * The label displayed in the header of the section.
+		 */
+		string label;
+
+		/**
+		 * The icon displayed in the header of the section before the {@link #label}, the encoded form
+		 * of a theme image. Absent for a section without an icon.
+		 */
+		string icon;
+
+		/**
+		 * Whether the body of the section is displayed.
+		 */
+		bool expanded;
+
+		/**
+		 * The actions displayed at the end of the header of the section, a toolbar for instance.
+		 * Absent for a section without actions.
+		 */
+		ChildControl actions;
+
+		/**
+		 * The body of the section. Absent until the section is expanded for the first time; from
+		 * then on it stays present when the section is collapsed, so that the component can keep it
+		 * mounted (with its local state) and only hide it.
+		 */
+		ChildControl content;
+	}
+
+	/**
+	 * The sections, in the order from top to bottom.
+	 */
+	repeated Section sections;
+
+	/**
+	 * Whether at most one section is expanded at a time. Expanding a section of an exclusive
+	 * accordion collapses the section expanded before. All sections may be collapsed.
+	 */
+	bool exclusive;
 }
 
 /**

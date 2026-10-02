@@ -23,6 +23,7 @@
  *   TLOptionChips     - DropdownSelectState
  *   TLSegmentedChoice - DropdownSelectState
  *   TLTabBar          - TabBarState
+ *   TLAccordion       - AccordionState
  *   TLWindow          - WindowState
  *   TLDialog          - DialogState
  *   TLMenu            - MenuState
@@ -699,6 +700,69 @@ export namespace TabBarStateJson {
 		 * The icon of the tab, the encoded form of a theme image.
 		 */
 		icon: string;
+	}
+}
+
+/**
+ * State of an accordion: a stack of sections, each with a header and a body that is expanded or
+ * collapsed independently, the component `TLAccordion`.
+ *
+ * A click on the header of a section sends the command `toggleSection` to the server with the
+ * arguments `sectionId` (the {@link AccordionStateJson.Section.id} of the section) and `expanded` (whether
+ * the section is to be expanded). The server answers with the resulting {@link AccordionStateJson.sections}: in an
+ * {@link AccordionStateJson.exclusive} accordion, expanding a section collapses all others.
+ */
+export interface AccordionStateJson extends ControlStateJson {
+	/**
+	 * The sections, in the order from top to bottom.
+	 */
+	sections: AccordionStateJson.Section[];
+
+	/**
+	 * Whether at most one section is expanded at a time. Expanding a section of an exclusive
+	 * accordion collapses the section expanded before. All sections may be collapsed.
+	 */
+	exclusive: boolean;
+}
+
+export namespace AccordionStateJson {
+	/**
+	 * A section of the accordion.
+	 */
+	export interface Section {
+		/**
+		 * The ID of the section, unique within the accordion.
+		 */
+		id: string;
+
+		/**
+		 * The label displayed in the header of the section.
+		 */
+		label: string;
+
+		/**
+		 * The icon displayed in the header of the section before the {@link AccordionStateJson.Section.label}, the encoded form
+		 * of a theme image. Absent for a section without an icon.
+		 */
+		icon: string;
+
+		/**
+		 * Whether the body of the section is displayed.
+		 */
+		expanded: boolean;
+
+		/**
+		 * The actions displayed at the end of the header of the section, a toolbar for instance.
+		 * Absent for a section without actions.
+		 */
+		actions?: ChildControlJson;
+
+		/**
+		 * The body of the section. Absent until the section is expanded for the first time; from
+		 * then on it stays present when the section is collapsed, so that the component can keep it
+		 * mounted (with its local state) and only hide it.
+		 */
+		content?: ChildControlJson;
 	}
 }
 

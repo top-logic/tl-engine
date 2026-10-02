@@ -33,6 +33,8 @@ import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.accordion.AccordionSection;
+import com.top_logic.layout.react.control.accordion.ReactAccordionControl;
 import com.top_logic.layout.react.control.button.ButtonAppearance;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ButtonSize;
@@ -61,6 +63,7 @@ import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.react.control.toggle.ReactToggleButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.AccordionState;
 import com.top_logic.layout.react.state.ButtonState;
 import com.top_logic.layout.react.state.CheckboxState;
 import com.top_logic.layout.react.state.ChildControl;
@@ -358,6 +361,28 @@ public class TestControlStateSchema extends TestCase {
 		assertDeclared(state, TabBarState.class);
 		assertEachDeclared(state.get(TabBarState.TABS__PROP), TabBarState.Tab.class);
 		assertChild(state.get(TabBarState.ACTIVE_CONTENT__PROP));
+	}
+
+	/**
+	 * Every key of an accordion and of its sections is declared in {@link AccordionState}.
+	 */
+	public void testAccordionKeys() {
+		ReactAccordionControl control = new ReactAccordionControl(createContext(), null, List.of(
+			new AccordionSection("a", "A", this::toggle).withExpanded(true).withIcon("css:fas fa-home")
+				.withActions(toggle()),
+			new AccordionSection("b", "B", this::toggle)), true);
+		// Creates the content of the expanded section.
+		control.attach();
+		control.setHidden(true);
+		control.setCssClass("css");
+
+		Map<?, ?> state = state(control);
+		assertEquals(properties(AccordionState.class), state.keySet());
+		assertEachDeclared(state.get(AccordionState.SECTIONS__PROP), AccordionState.Section.class);
+		Map<?, ?> first = (Map<?, ?>) ((List<?>) state.get(AccordionState.SECTIONS__PROP)).get(0);
+		assertEquals(properties(AccordionState.Section.class), first.keySet());
+		assertChild(first.get(AccordionState.Section.ACTIONS__PROP));
+		assertChild(first.get(AccordionState.Section.CONTENT__PROP));
 	}
 
 	/**

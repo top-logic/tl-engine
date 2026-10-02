@@ -69,7 +69,8 @@ import com.top_logic.util.Resources;
  * A {@link Config#isClosable() closable} message can be dismissed by the user. A dismissed message
  * stays closed as long as nothing changes; it is shown again as soon as an input channel gets a new
  * value, or as soon as an evaluation yields another visibility, title or message than the one the
- * user dismissed. Building the view anew shows it again as well: the dismissal is not stored.
+ * user dismissed. The dismissal is not stored: a new session, which builds the view anew, shows it
+ * again. Leaving the page and coming back within the same session keeps it closed.
  * </p>
  *
  * <p>

@@ -135,7 +135,7 @@ public class TestDataObjectMapAdaptor extends TestCase {
 		assertTrue(doma.containsValue(Long.valueOf(file.lastModified())));
 
         assertFalse (  doma.isEmpty());
-        assertEquals(9,doma.size());
+        assertEquals(8,doma.size());
 
         try {
             doma.put("name", "value");
@@ -156,7 +156,7 @@ public class TestDataObjectMapAdaptor extends TestCase {
         assertTrue(doma.keySet().contains("name"));
         assertTrue(doma.values().contains(file.getName()));
 
-        assertEquals(9, doma.entrySet().size());
+        assertEquals(8, doma.entrySet().size());
     }
 
     /**

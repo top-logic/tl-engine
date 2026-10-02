@@ -1174,22 +1174,9 @@
 											</name>
 										</business-object>
 									</object>
-									<labeled-member label="Sperren"/>
-									<labeled-member label="Sperren"/>
+									<labeled-member label="Aktualisieren"/>
+									<labeled-member label="Ersetzen"/>
 								</path>
-							</model-name>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-							failure-expected="false"
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="Ersetzen"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesDocumentsSecondViewFolder"
-									tab-path="Strukturen > Typendemo > 2 Dokumente (zweite Ansicht)"
-								/>
 							</model-name>
 						</action>
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"

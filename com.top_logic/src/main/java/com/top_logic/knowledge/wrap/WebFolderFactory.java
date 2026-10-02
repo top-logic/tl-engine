@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.knowledge.service.PersistencyLayer;
 
 /**
@@ -27,6 +28,8 @@ import com.top_logic.knowledge.service.PersistencyLayer;
  */
 @ServiceDependencies({
 	PersistencyLayer.Module.class,
+	// Documents derive their content type from the MIME types.
+	MimeTypes.Module.class,
 })
 @Label("Web folder factory")
 public class WebFolderFactory extends ManagedClass {

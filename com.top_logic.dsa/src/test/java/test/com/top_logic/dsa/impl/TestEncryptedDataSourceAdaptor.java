@@ -85,7 +85,7 @@ public class TestEncryptedDataSourceAdaptor extends TestCase implements DataChan
 	protected void setUp() throws Exception {
 		super.setUp();
 		File dir = new File(TEST_HOME);
-		assertTrue("Unable to create directory " + dir, dir.mkdir());
+		assertTrue("Unable to create directory " + dir, dir.mkdirs());
 	}
 
 	@Override

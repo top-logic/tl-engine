@@ -90,7 +90,7 @@ public class TestFilesystemDataSourceAdaptor extends TestDataSourceAdapter imple
 	protected void setUp() throws Exception {
 		super.setUp();
 		File dir = new File("tmp/FDSA");
-		assertTrue("Unable to create directory " + dir, dir.mkdir());
+		assertTrue("Unable to create directory " + dir, dir.mkdirs());
 	}
 
 	@Override

@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<form name="AgentContent"
+<component class="com.top_logic.ai.chat.classic.ReactViewComponent"
+	name="AgentContent"
 	resPrefix="chat.layout.agent"
-	showMaximize="false"
-	showPopOut="true"
->
-	<modelBuilder class="com.top_logic.ai.chat.layout.ChatComponentBuilder"/>
-</form>
+	view="tl-chat-classic/chat.view.xml"
+/>

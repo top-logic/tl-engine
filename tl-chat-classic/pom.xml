@@ -27,15 +27,22 @@
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-core</artifactId>
 		</dependency>
+		<!--
+			The React view layer: ReactViewComponent builds a view's control tree and registers it as
+			the React window of the classic window. tl-chat brings both in already; they are named
+			here because this module's code uses them directly.
+		-->
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-ai-core</artifactId>
-			<version>${project.version}</version>
+			<artifactId>tl-layout-react</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view</artifactId>
 		</dependency>
 		<!--
-			The control renders a view onto the session state that tl-chat owns: Chat,
-			ChatProcessor, TaskProgressTracker and ChatSessionRegistry stay there, and the
-			chat-client.js in this module talks to tl-chat's /chat/* endpoint.
+			The chat this module's tab displays: the view elements of chat.view.xml, the /chat/* API
+			they talk to, and ChatSessionRegistry, which names the classic window.
 		-->
 		<dependency>
 			<groupId>com.top-logic</groupId>

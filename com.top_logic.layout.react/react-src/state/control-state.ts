@@ -300,7 +300,8 @@ export namespace CheckboxStateJson {
 	 * The component draws `'checkbox'` and `'switch'`; the control does not send
 	 * `'checkbox'`, an absent display means a box that is ticked. `'select'` and
 	 * `'radio'` are presentations of a boolean offered as a choice between labelled values,
-	 * which is a component of its own; they are never sent to this component.
+	 * which is a field choosing one object ({@link DropdownSelectStateJson}); they are never sent to
+	 * this component.
 	 */
 	export type Display =
 		/**
@@ -560,8 +561,9 @@ export namespace SelectStateJson {
 
 /**
  * State of a field choosing one or more objects, the components `TLDropdownSelect` (a list
- * that opens on demand), `TLOptionChips` (every option a toggle of its own) and
- * `TLSegmentedChoice` (the options as the segments of one bar).
+ * that opens on demand), `TLOptionChips` (every option a toggle of its own),
+ * `TLSegmentedChoice` (the options as the segments of one bar) and `TLChoiceGroup`
+ * (a radio button or a checkbox for every option).
  *
  * The {@link FieldStateJson.value} is the list of the chosen objects, each an {@link DropdownSelectStateJson.Option} (also for a field
  * choosing one object). A change is sent as the command `valueChanged` with the list of the
@@ -573,6 +575,12 @@ export interface DropdownSelectStateJson extends FieldStateJson {
 	 * opens on demand.
 	 */
 	display: DropdownSelectStateJson.Display;
+
+	/**
+	 * The direction the options are laid out in. Only the shape `'radio'` reads it.
+	 * Absent means `'vertical'`, the options one below the other.
+	 */
+	orientation: DropdownSelectStateJson.Orientation;
 
 	/**
 	 * The objects that can be chosen, valid while {@link DropdownSelectStateJson.optionsLoaded} is set. A list that opens
@@ -597,7 +605,15 @@ export interface DropdownSelectStateJson extends FieldStateJson {
 	multiSelect: boolean;
 
 	/**
-	 * The label of the choice of no object.
+	 * Whether the list that opens on demand offers no input to filter its options by; absent means
+	 * it does. Without the input, typing the beginning of a label moves to the option it starts.
+	 * Only the shape `'dropdown'` reads it.
+	 */
+	noFilter: boolean;
+
+	/**
+	 * The label of the choice of no object: the option of its own a group of radio buttons offers
+	 * for it, the text the other shapes show while nothing is chosen.
 	 */
 	emptyOptionLabel: string;
 }
@@ -621,7 +637,28 @@ export namespace DropdownSelectStateJson {
 		/**
 		 * The options as the segments of one bar.
 		 */
-		| 'segmented';
+		| 'segmented'
+		/**
+		 * A radio button for every option, or a checkbox for every option of a field choosing
+		 * several objects.
+		 */
+		| 'radio';
+
+	/**
+	 * The direction the options of a group of radio buttons or checkboxes are laid out in.
+	 *
+	 * The control does not send `'vertical'`: an absent orientation means the options stand
+	 * one below the other.
+	 */
+	export type Orientation =
+		/**
+		 * The options side by side, wrapping onto further lines where the room ends.
+		 */
+		| 'horizontal'
+		/**
+		 * The options one below the other.
+		 */
+		| 'vertical';
 
 	/**
 	 * An object that can be chosen.

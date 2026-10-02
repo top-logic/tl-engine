@@ -427,6 +427,19 @@
 							<classification-display value="checklist"/>
 						</annotations>
 					</reference>
+					<reference name="priorityRadio"
+						kind="forwards"
+						type="Priority"
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
+							<classification-display value="radio-inline"/>
+						</annotations>
+					</reference>
 
 					<!-- References -->
 					<reference name="owner"

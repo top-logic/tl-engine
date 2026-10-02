@@ -54,7 +54,7 @@ public class AttributeCellEditing implements CellEditing {
 
 	@Override
 	public ReactControl createControl(ReactContext context, Object row, BoundFieldModel model) {
-		return FieldControlService.getInstance().createFieldControl(context, part(row), model);
+		return FieldControlService.getInstance().createCellControl(context, part(row), model);
 	}
 
 	/**

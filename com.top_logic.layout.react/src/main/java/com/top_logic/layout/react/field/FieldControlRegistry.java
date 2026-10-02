@@ -8,22 +8,26 @@ package com.top_logic.layout.react.field;
 import java.text.Format;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.format.configured.Formatter;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
-import com.top_logic.layout.react.control.form.ReactBooleanChoiceControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.form.ReactValueListControl;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
+import com.top_logic.layout.react.control.select.SelectDisplay;
+import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 
@@ -179,22 +183,64 @@ public class FieldControlRegistry {
 	}
 
 	/**
-	 * Edits a boolean value as a checkbox, or as a switch, radio buttons or a select when it
-	 * {@link FieldSpec#getBooleanPresentation() asks} for it.
+	 * Edits a boolean value the way the field {@link FieldSpec#getBooleanPresentation() asks} for.
+	 *
+	 * @see #createBooleanControl(ReactContext, FieldModel, BooleanPresentation, boolean)
+	 */
+	private static ReactControl createBooleanControl(ReactContext context, FieldSpec field, FieldModel model) {
+		return createBooleanControl(context, model, field.getBooleanPresentation(), field.isTriState());
+	}
+
+	/**
+	 * Creates the control editing a boolean value in the given presentation.
 	 *
 	 * <p>
 	 * A checkbox and a switch show the value in place, while radio buttons and a select offer it as
-	 * a choice between labelled values. A {@link FieldSpec#isTriState() tri-state} value keeps a
-	 * state for "no value": the checkbox gets a third state, the choice a third option, and a
-	 * switch - having no third position - stays a checkbox.
+	 * a choice between yes and no: a {@link ReactDropdownSelectControl} choosing one of the two
+	 * values, labelled the way a boolean value is labelled everywhere else, so a field reads like
+	 * the table cell over the same attribute. Radio buttons stand side by side; the select opens a
+	 * list without an input to filter it by, there being nothing to search among two values.
 	 * </p>
+	 *
+	 * <p>
+	 * A tri-state value keeps a state for "no value": the checkbox gets a third state, the choice
+	 * an option for no value, and a switch - having no third position - stays a checkbox. A
+	 * two-valued choice always holds one of its values and offers no choice of no value, whether
+	 * the field is mandatory or not.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context to create the control in.
+	 * @param model
+	 *        Holds the edited value.
+	 * @param presentation
+	 *        How the value is displayed.
+	 * @param triState
+	 *        Whether the value may also be unknown, {@code null}.
+	 * @return The control to display.
 	 */
-	private static ReactControl createBooleanControl(ReactContext context, FieldSpec field, FieldModel model) {
-		BooleanPresentation presentation = field.getBooleanPresentation();
-		if (presentation == BooleanPresentation.RADIO || presentation == BooleanPresentation.SELECT) {
-			return new ReactBooleanChoiceControl(context, model, presentation, field.isTriState());
+	public static ReactControl createBooleanControl(ReactContext context, FieldModel model,
+			BooleanPresentation presentation, boolean triState) {
+		if (presentation == BooleanPresentation.RADIO) {
+			return new ReactDropdownSelectControl(context, booleanChoice(model, triState),
+				MetaLabelProvider.INSTANCE, null, false, SelectDisplay.RADIO, Orientation.HORIZONTAL);
 		}
-		return new ReactCheckboxControl(context, model, presentation, field.isTriState());
+		if (presentation == BooleanPresentation.SELECT) {
+			ReactDropdownSelectControl control = new ReactDropdownSelectControl(context,
+				booleanChoice(model, triState), MetaLabelProvider.INSTANCE, null, false, SelectDisplay.DROPDOWN);
+			control.setFilter(false);
+			return control;
+		}
+		return new ReactCheckboxControl(context, model, presentation, triState);
+	}
+
+	/**
+	 * The given boolean field offered as a choice between yes and no, mandatory unless the value
+	 * may also be unknown.
+	 */
+	private static FixedOptionsFieldModel booleanChoice(FieldModel model, boolean triState) {
+		return new FixedOptionsFieldModel(model, List.of(Boolean.TRUE, Boolean.FALSE), false,
+			Boolean.valueOf(!triState));
 	}
 
 	/**

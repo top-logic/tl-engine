@@ -2047,6 +2047,20 @@
 		<pluginManagement>
 			<plugins>
 				<plugin>
+					<groupId>com.github.eirslett</groupId>
+					<artifactId>frontend-maven-plugin</artifactId>
+					<version>1.15.4</version>
+					<configuration>
+						<nodeVersion>v${node.version}</nodeVersion>
+
+						<!--
+							One Node installation per version, shared by all frontend modules of the build. A
+							version change installs into a new directory, never over an existing installation.
+						-->
+						<installDirectory>${maven.multiModuleProjectDirectory}/node/${node.version}</installDirectory>
+					</configuration>
+				</plugin>
+				<plugin>
 					<groupId>com.top-logic</groupId>
 					<artifactId>tl-maven-plugin</artifactId>
 					<version>${tl.version}</version>

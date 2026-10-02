@@ -2674,6 +2674,38 @@ button.tlDrawer__closeBtn:focus-visible {
 	to   { opacity: 0; }
 }
 
+/* --- TLAlert --------------------------------------------------------------- */
+
+/* The alert component of the design system (style/tl-design-system/components.css) brings the
+   surface, the line and the icon color per variant; these rules lay out what TLAlert puts into its
+   body and the dismiss button standing in a column of its own. */
+
+.tl-alert--closable {
+	grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.tl-alert__body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--tl-space-2xs);
+}
+
+.tl-alert__message {
+	overflow-wrap: anywhere;
+	white-space: pre-line;
+}
+
+.tl-alert__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--tl-space-xs);
+	padding-block-start: var(--tl-space-xs);
+}
+
+.tl-alert__close {
+	align-self: start;
+}
+
 /* --- TLAppShell ------------------------------------------------------------ */
 
 .tlAppShell {

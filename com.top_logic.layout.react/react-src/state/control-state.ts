@@ -27,6 +27,7 @@
  *   TLDialog          - DialogState
  *   TLMenu            - MenuState
  *   TLSnackbar        - SnackbarState
+ *   TLAlert           - AlertState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -951,4 +952,49 @@ export namespace SnackbarStateJson {
 		 * The report of an error.
 		 */
 		| 'error';
+}
+
+/**
+ * State of a highlighted message standing in the content of a page, the component `TLAlert`.
+ *
+ * A hidden alert (see {@link ControlStateJson.hidden}) renders nothing. Dismissing the alert sends the
+ * command `dismiss` with the {@link AlertStateJson.generation} of the content dismissed as argument
+ * `generation`.
+ */
+export interface AlertStateJson extends ControlStateJson {
+	/**
+	 * The kind of the message, selecting its color and its icon. Absent: an information.
+	 */
+	variant: SnackbarStateJson.Variant;
+
+	/**
+	 * The heading of the message, plain text. Absent: no heading.
+	 */
+	title: string;
+
+	/**
+	 * The message, plain text.
+	 */
+	message: string;
+
+	/**
+	 * The icon of the message, the encoded form of a theme image matching the {@link AlertStateJson.variant}.
+	 */
+	icon: string;
+
+	/**
+	 * Whether the user can dismiss the message.
+	 */
+	closable: boolean;
+
+	/**
+	 * The buttons offering what to do about the message, in display order.
+	 */
+	actions: ChildControlJson[];
+
+	/**
+	 * The number of the content shown, counting the contents this control has shown. A dismiss
+	 * reporting another number refers to a content that is no longer shown.
+	 */
+	generation: number;
 }

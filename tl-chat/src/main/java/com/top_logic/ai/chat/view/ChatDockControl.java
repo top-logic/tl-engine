@@ -49,6 +49,7 @@ public class ChatDockControl extends ReactControl {
 	 */
 	public ChatDockControl(ViewContext context, Config config, List<UIElement> content) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLChatDock"));
+		setCssClass(config.getCssClass());
 
 		// The dock's own chat-id, or "default": a <chat> nested inside cannot hand one up, so unlike
 		// every other chat element this one is normally configured rather than inheriting.

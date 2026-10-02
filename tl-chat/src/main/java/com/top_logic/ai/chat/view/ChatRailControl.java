@@ -72,6 +72,7 @@ public class ChatRailControl extends ReactControl {
 	public ChatRailControl(ViewContext context, Config config, List<Section> sections, List<UIElement> pane,
 			List<UIElement> listPane) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLChatRail"));
+		setCssClass(config.getCssClass());
 
 		// The rail's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
 		// "default". The browser keys its store by what we push here, so it must be the resolved id.

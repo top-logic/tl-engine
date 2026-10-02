@@ -1,4 +1,4 @@
-import { React, useTLCommand, useTLState } from 'tl-react-bridge'
+import { React, rootClassName, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import type { ApprovalRequest, Attachment, ContextFact, InteractionRequest } from './types'
 import { chatIdOf, readBootstrap, useChat, useSessionsRevision } from './chat-store'
@@ -588,7 +588,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
 
   if (!chat.authenticated) {
     return (
-      <div id={controlId} className="tl-chat-conversation is-signed-out">
+      <div id={controlId} className={rootClassName(state, 'tl-chat-conversation', 'is-signed-out')}>
         <div className="signed-out">
           <h2>{labels.signInHeading}</h2>
           <p>{labels.signInBody}</p>
@@ -598,7 +598,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   }
 
   return (
-    <div id={controlId} className="tl-chat-conversation">
+    <div id={controlId} className={rootClassName(state, 'tl-chat-conversation')}>
       <div className={`stage${chat.messages.length === 0 ? ' is-empty' : ''}`}>
         <Thread
           messages={chat.messages}

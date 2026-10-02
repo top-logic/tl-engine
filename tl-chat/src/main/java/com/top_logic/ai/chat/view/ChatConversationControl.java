@@ -177,6 +177,7 @@ public class ChatConversationControl extends ReactControl {
 	/** Creates a {@link ChatConversationControl}. */
 	public ChatConversationControl(ViewContext context, Config config) {
 		super(context, null, blankToDefault(config.getReactElement(), "TLChatConversation"));
+		setCssClass(config.getCssClass());
 
 		// The element's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
 		// "default". The browser keys its store by what we push here, so it must be the resolved id.

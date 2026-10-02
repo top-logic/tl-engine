@@ -189,6 +189,13 @@ describe('the rendered rail', () => {
   })
 })
 
+describe('the css-class of the element', () => {
+  it('is written on the root after the classes of the rail itself', () => {
+    const html = render(railState({ cssClass: 'appRail' }))
+    expect(html).toMatch(/^<div id="render-test" class="tl-chat-rail appRail"/)
+  })
+})
+
 describe('the chat bundle', () => {
   /**
    * React is the host's, handed to this bundle by `tl-react-bridge`.

@@ -51,6 +51,7 @@ public class ChatSectionControl extends ReactControl {
 	 */
 	public ChatSectionControl(ViewContext context, Config config, String tag, String defaultReactElement) {
 		super(context, null, blankToDefault(config.getReactElement(), defaultReactElement));
+		setCssClass(config.getCssClass());
 
 		// The section's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
 		// "default". The browser keys its store by what we push here, so it must be the resolved id.

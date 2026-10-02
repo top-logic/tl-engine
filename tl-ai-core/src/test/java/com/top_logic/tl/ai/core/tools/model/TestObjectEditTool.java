@@ -103,6 +103,21 @@ public class TestObjectEditTool extends BasicTestCase {
 		assertContains("saved when this turn ends", result.text());
 	}
 
+	/**
+	 * An attribute named the way a user says it - other case, a space in it - is the attribute, so
+	 * the model needs no lookup to learn the spelling. The answer names the attribute written.
+	 */
+	public void testAnAttributeIsFoundByTheWayTheUserNamesIt() {
+		Agent agent = agent("before");
+
+		ToolResult result = update(agent, values("Description", "after", "system prompt", "Be brief."));
+
+		assertSucceeded(result);
+		assertEquals("after", agent.getDescription());
+		assertEquals("Be brief.", agent.getSystemPrompt());
+		assertContains("\"systemPrompt\"", result.text());
+	}
+
 	/** Values the object already has are no change, and nothing is written. */
 	public void testUnchangedValuesWriteNothing() {
 		Agent agent = agent("same");

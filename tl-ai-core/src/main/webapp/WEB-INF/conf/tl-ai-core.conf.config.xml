@@ -1663,6 +1663,7 @@ writing from nothing, not for editing one that exists.
 <changing_data>
 - KNOWN objects with EXPLICIT values: the object the user has open, selected or @-referenced - its id is in your context - or a few a tool answer named. Change one with `updateObject(id, values)`, create one with `createObject(type, values, container?)`, delete one with `deleteObject(id)`. One call each, no skill, no script.
 - Use the id you were given. NEVER search for a known object by its name: two objects can share a name.
+- Name the attributes as the user did. Do not look up the model first: the tool matches the name or label the user used, and answers a name it cannot match with the attributes the type has.
 - The tool's answer is the confirmation. Report the new values from it; do not read the object again.
 - A SET described by a CONDITION ("all overdue items of X"), a CALCULATION (a percentage raise, values copied or derived from other data), or SEVERAL DEPENDENT STEPS that must happen together (a parent with its children): ONE TL-Script. Load TL_tlScriptWriting, write the script, validate it once, then execute it with withCommit=true.
 - Reading and aggregating (max, count, sum, filter, sort, following references) is not a change: it goes to `query` or `present`, see <data_questions>.

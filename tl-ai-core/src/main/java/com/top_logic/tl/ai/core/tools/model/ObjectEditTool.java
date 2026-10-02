@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -29,6 +30,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
@@ -40,6 +42,7 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
@@ -136,7 +139,10 @@ public class ObjectEditTool {
 	 */
 	@ToolMethod(description = "Change attributes of ONE object you know by its identifier: the object"
 		+ " the user has open, selected or referenced, or one a tool answer named. Never search for that"
-		+ " object by name. One call sets every attribute in 'values'. The server converts each value"
+		+ " object by name. One call sets every attribute in 'values'. Name the attributes as the user"
+		+ " did - the server matches a name that differs only in case or spacing, and the label the"
+		+ " user sees - so look nothing up first; a name it cannot match is answered with the type's"
+		+ " attributes. The server converts each value"
 		+ " to the attribute's type: a number, true/false, a date as \"2027-05-14\", an enumeration by"
 		+ " its value name, a reference by the identifier of the object it points to, a list for an"
 		+ " attribute that holds several values (the list replaces them), null to clear. The answer"
@@ -229,7 +235,8 @@ public class ObjectEditTool {
 	 * @return The new object and its values, or a failed result saying why nothing was created.
 	 */
 	@ToolMethod(description = "Create ONE object of a type and set its attributes in the same call."
-		+ " Give every mandatory attribute in 'values'; the same value forms as updateObject. An object"
+		+ " Give every mandatory attribute in 'values'; the same names and value forms as updateObject."
+		+ " A refusal names the mandatory attributes the type has. An object"
 		+ " that is part of another one (contained in it) is created by naming that object as"
 		+ " 'container'. The answer gives the new object's identifier and its values - that IS the"
 		+ " confirmation. For several objects that depend on each other, write one TL-Script instead.",
@@ -536,13 +543,15 @@ public class ObjectEditTool {
 		Map<TLStructuredTypePart, Object> result = new LinkedHashMap<>();
 		List<String> unknown = new ArrayList<>();
 		for (String given : names) {
-			TLStructuredTypePart part = type.getPart(partName(given));
+			TLStructuredTypePart part = attribute(type, given);
 			if (part == null) {
 				unknown.add(given);
 				continue;
 			}
 			checkWritable(type, part, creating);
-			result.put(part, given);
+			if (result.put(part, given) != null) {
+				throw new IllegalArgumentException("'" + part.getName() + "' is named twice in 'values'.");
+			}
 		}
 		if (!unknown.isEmpty()) {
 			throw new IllegalArgumentException("'" + qualified(type) + "' has no attribute "
@@ -552,6 +561,63 @@ public class ObjectEditTool {
 				+ ".");
 		}
 		return result;
+	}
+
+	/**
+	 * The attribute the model named, also when it named it the way the user did.
+	 *
+	 * <p>
+	 * The exact name first; then a name that differs only in case, spaces, hyphens or underscores
+	 * ({@code "ticket price"} for {@code ticketPrice}); then the attribute's label in the user's
+	 * language or in English. A looser match is taken only when exactly one attribute fits it, so a
+	 * guess never picks between two. The answer names the attribute that was written, which makes
+	 * the match visible. What this saves is the model-lookup call a model otherwise spends on
+	 * learning the spelling of a name the user already said.
+	 * </p>
+	 *
+	 * @throws IllegalArgumentException
+	 *         If a loose name fits several attributes.
+	 */
+	private static TLStructuredTypePart attribute(TLStructuredType type, String given) {
+		String name = partName(given);
+		TLStructuredTypePart exact = type.getPart(name);
+		if (exact != null) {
+			return exact;
+		}
+		String wanted = normalized(name);
+		List<TLStructuredTypePart> candidates = type.getAllParts().stream()
+			.filter(part -> !part.isDerived())
+			.map(TLStructuredTypePart.class::cast)
+			.toList();
+		TLStructuredTypePart byName = unique(given, candidates.stream()
+			.filter(part -> normalized(part.getName()).equals(wanted)).toList());
+		if (byName != null) {
+			return byName;
+		}
+		Resources user = Resources.getInstance();
+		Resources english = Resources.getInstance(Locale.ENGLISH);
+		return unique(given, candidates.stream()
+			.filter(part -> wanted.equals(normalized(label(user, part)))
+				|| wanted.equals(normalized(label(english, part))))
+			.toList());
+	}
+
+	private static TLStructuredTypePart unique(String given, List<TLStructuredTypePart> matches) {
+		if (matches.size() > 1) {
+			throw new IllegalArgumentException("'" + given + "' fits several attributes: "
+				+ quoted(matches.stream().map(TLStructuredTypePart::getName).toList())
+				+ ". Name the one you mean exactly.");
+		}
+		return matches.isEmpty() ? null : matches.get(0);
+	}
+
+	private static String label(Resources resources, TLStructuredTypePart part) {
+		return resources.getString(TLModelI18N.getI18NKey(part), null);
+	}
+
+	/** A name or label with case, spaces, hyphens and underscores taken out. */
+	private static String normalized(String text) {
+		return text == null ? "" : text.replaceAll("[\\s_-]", "").toLowerCase(Locale.ROOT);
 	}
 
 	private static void checkWritable(TLStructuredType type, TLStructuredTypePart part, boolean creating) {
@@ -652,7 +718,7 @@ public class ObjectEditTool {
 	}
 
 	private static String english(TopLogicException ex) {
-		return com.top_logic.util.Resources.getInstance(java.util.Locale.ENGLISH).getString(ex.getErrorKey());
+		return Resources.getInstance(Locale.ENGLISH).getString(ex.getErrorKey());
 	}
 
 	private static String json(Object value) throws IOException {

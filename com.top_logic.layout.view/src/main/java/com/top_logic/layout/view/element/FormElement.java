@@ -35,6 +35,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
@@ -622,6 +623,11 @@ public class FormElement extends ContainerElement {
 		@Override
 		public KeyStroke getKeyGesture() {
 			return _inner.getKeyGesture();
+		}
+
+		@Override
+		public ButtonTone getTone() {
+			return _inner.getTone();
 		}
 
 		@Override

@@ -56,11 +56,7 @@ public class LexicographicEdgeComparator implements Comparator<Object> {
 		int firstTargetOrder = _targetOrder.indexOf(getEdgeTarget(firstEdge));
 		int secondTargetOrder = _targetOrder.indexOf(getEdgeTarget(secondEdge));
 		
-		if (firstTargetOrder < secondTargetOrder) {
-			return -1;
-		} else {
-			return 1;
-		}
+		return Integer.compare(firstTargetOrder, secondTargetOrder);
 	}
 
 	private Object getEdgeSource(Object edge) {

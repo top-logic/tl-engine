@@ -1,22 +1,27 @@
 import { React } from 'tl-react-bridge';
+import { menuItemClassName } from '../menu/Menu';
 
-export type ButtonAppearance = 'primary' | 'secondary' | 'ghost' | 'link';
+export type ButtonAppearance = 'primary' | 'secondary' | 'ghost' | 'link' | 'menu-item';
 
 /**
  * What a container tells the buttons inside it. The server state of a button wins over these
  * defaults; the defaults win over the built-in default (`secondary`).
  *
- * - `appearance`: a toolbar says `ghost`, a dialog's button bar says `secondary`.
+ * - `appearance`: a toolbar says `ghost`, a dialog's button bar says `secondary`. A menu says
+ *   `menu-item`, and that one wins over the server: inside a menu every button is an entry.
+ * - `iconOnly`: a compact toolbar says `true`; every button that shows its icon drops its label
+ *   then and becomes a square icon button, its label moving to the tooltip.
  */
 export interface ButtonDefaultsValue {
   appearance?: ButtonAppearance;
+  iconOnly?: boolean;
 }
 
 const Context = React.createContext<ButtonDefaultsValue>({});
 
 export function ButtonDefaults({ children, ...value }: React.PropsWithChildren<ButtonDefaultsValue>) {
   const parent = React.useContext(Context);
-  const merged = React.useMemo(() => ({ ...parent, ...value }), [parent, value.appearance]);
+  const merged = React.useMemo(() => ({ ...parent, ...value }), [parent, value.appearance, value.iconOnly]);
   return <Context.Provider value={merged}>{children}</Context.Provider>;
 }
 
@@ -24,12 +29,32 @@ export function useButtonDefaults(): ButtonDefaultsValue {
   return React.useContext(Context);
 }
 
-/** The class list of a button: block, appearance, tone, size, typography, passed-through classes. */
+/**
+ * The class list of a button: block, appearance, tone, size, shape, typography, passed-through
+ * classes. `icon` is a button showing only an icon: a square of the control height. A `menu-item`
+ * is an entry of a menu (tl-menu__item, as MenuItem draws it): it keeps its tone - a destructive
+ * entry is tl-menu__item--danger - but has no size or shape of its own; `current` marks the entry
+ * in force, which reads strong.
+ */
 export function buttonClassName(opts: {
-  appearance: ButtonAppearance; danger?: boolean; small?: boolean; extra?: string;
+  appearance: ButtonAppearance; danger?: boolean; small?: boolean; icon?: boolean; current?: boolean; extra?: string;
 }): string {
-  return ['tl-button', `tl-button--${opts.appearance}`, 'tl-type-label',
+  if (opts.appearance === 'menu-item') {
+    return menuItemClassName(opts.current, opts.extra, opts.danger);
+  }
+  return ['tl-button', `tl-button--${opts.appearance}`, 'tl-type-body',
     opts.danger && opts.appearance !== 'link' ? 'tl-button--danger' : '',
     opts.small ? 'tl-button--sm' : '',
+    opts.icon ? 'tl-button--icon' : '',
     opts.extra ?? ''].filter(Boolean).join(' ');
+}
+
+/**
+ * What an entry of a menu carries besides its classes: the role and the roving tabindex. An entry
+ * is a `menuitem`; a toggle, which always has a pressed state (`checked` true or false), is a
+ * `menuitemcheckbox`. Outside a menu, nothing.
+ */
+export function menuItemProps(defaults: ButtonDefaultsValue, checked?: boolean): { role?: string; tabIndex?: number } {
+  if (defaults.appearance !== 'menu-item') return {};
+  return { role: checked === undefined ? 'menuitem' : 'menuitemcheckbox', tabIndex: -1 };
 }

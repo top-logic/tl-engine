@@ -110,7 +110,7 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
         {print && (
           <button
             type="button"
-            className="tl-button tl-button--ghost tl-type-label tlHtml__print"
+            className="tl-button tl-button--ghost tl-type-body tlHtml__print"
             aria-label={t['js.html.print']}
             {...tooltipProps(t['js.html.print'])}
             onClick={handlePrint}

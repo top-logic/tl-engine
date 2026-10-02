@@ -8,8 +8,8 @@ const I18N_KEYS = {
   'js.formGroup.expand': 'Expand',
 };
 
-const CHEVRON_OPEN = 'css:fa-solid fa-chevron-down';
-const CHEVRON_COLLAPSED = 'css:fa-solid fa-chevron-right';
+/** Points right; the package's toggle rotates it when `aria-expanded` is true. */
+const CHEVRON = 'css:fa-solid fa-chevron-right';
 
 /** The class of the group's border: a subtle one is a separator line, an outlined one a frame. */
 const BORDER_CLASS: Record<string, string> = {
@@ -67,13 +67,13 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
       {hasHeader && (
         <div className="tl-form-group__header">
           {collapsible && (
-            <button type="button" className="tl-form-group__toggle"
+            <button type="button" className="tl-toggle"
               onClick={handleToggle}
               aria-expanded={!collapsed}
               aria-controls={bodyId}
               aria-label={toggleLabel}
               {...tooltipProps(toggleLabel)}>
-              <ThemeIcon encoded={collapsed ? CHEVRON_COLLAPSED : CHEVRON_OPEN} className="tl-icon-sm" />
+              <ThemeIcon encoded={CHEVRON} className="tl-icon-sm" />
             </button>
           )}
           {headerControl && (

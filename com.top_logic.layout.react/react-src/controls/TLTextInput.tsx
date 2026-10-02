@@ -15,6 +15,7 @@ import {
 import type { TLCellProps, TextInputStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import { FieldValue } from './form/FieldValue';
+import { buttonClassName } from './button/ButtonDefaults';
 
 const { useCallback, useRef } = React;
 
@@ -249,24 +250,24 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
       {clearable && (
         <button
           type="button"
-          className="tl-field-group__action"
+          className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
           onClick={handleClear}
           aria-label={t['js.textInput.clear']}
-          title={t['js.textInput.clear']}
+          {...tooltipProps(t['js.textInput.clear'])}
         >
-          <ThemeIcon encoded={CLEAR_ICON} className="tl-icon-sm" />
+          <ThemeIcon encoded={CLEAR_ICON} className="tl-button__icon tl-icon-sm" />
         </button>
       )}
       {openHref !== null && (
         <a
-          className="tl-field-group__action"
+          className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
           href={openHref}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={t['js.textInput.open']}
           {...tooltipProps(text)}
         >
-          <ThemeIcon encoded={OPEN_ICON} className="tl-icon-sm" />
+          <ThemeIcon encoded={OPEN_ICON} className="tl-button__icon tl-icon-sm" />
         </a>
       )}
     </span>

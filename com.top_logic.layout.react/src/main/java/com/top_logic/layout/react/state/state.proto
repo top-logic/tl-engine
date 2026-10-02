@@ -23,6 +23,7 @@
  *   TLDialog          - DialogState
  *   TLMenu            - MenuState
  *   TLSnackbar        - SnackbarState
+ *   TLAlert           - AlertState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -856,6 +857,12 @@ message MenuState extends ControlState {
 		 * Additional CSS classes of the item, separated by spaces.
 		 */
 		string cssClasses;
+
+		/**
+		 * The kind of action the item stands for. Absent means `default`, an ordinary action;
+		 * `danger` marks an item whose command destroys or discards what the user has.
+		 */
+		ButtonState.Tone tone;
 	}
 
 	/**
@@ -943,6 +950,52 @@ message SnackbarState extends ControlState {
 
 	/**
 	 * The number of the message shown, counting the messages this control has shown.
+	 */
+	int32 generation;
+}
+
+/**
+ * State of a highlighted message standing in the content of a page, the component {@code TLAlert}.
+ *
+ * A hidden alert (see {@link ControlState#hidden}) renders nothing. Dismissing the alert sends the
+ * command {@code dismiss} with the {@link #generation} of the content dismissed as argument
+ * {@code generation}.
+ */
+message AlertState extends ControlState {
+	/**
+	 * The kind of the message, selecting its color and its icon. Absent: an information.
+	 */
+	SnackbarState.Variant variant;
+
+	/**
+	 * The heading of the message, plain text. Absent: no heading.
+	 */
+	string title;
+
+	/**
+	 * The message, plain text.
+	 */
+	@Name("message")
+	string messageText;
+
+	/**
+	 * The icon of the message, the encoded form of a theme image matching the {@link #variant}.
+	 */
+	string icon;
+
+	/**
+	 * Whether the user can dismiss the message.
+	 */
+	bool closable;
+
+	/**
+	 * The buttons offering what to do about the message, in display order.
+	 */
+	repeated ChildControl actions;
+
+	/**
+	 * The number of the content shown, counting the contents this control has shown. A dismiss
+	 * reporting another number refers to a content that is no longer shown.
 	 */
 	int32 generation;
 }

@@ -27,6 +27,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
@@ -38,6 +39,7 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.KeyStroke;
+import com.top_logic.layout.react.control.common.ReactAlertControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.form.InputType;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
@@ -61,6 +63,7 @@ import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.react.control.toggle.ReactToggleButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.AlertState;
 import com.top_logic.layout.react.state.ButtonState;
 import com.top_logic.layout.react.state.CheckboxState;
 import com.top_logic.layout.react.state.ChildControl;
@@ -404,7 +407,7 @@ public class TestControlStateSchema extends TestCase {
 	public void testMenuKeys() {
 		ReactMenuControl control = new ReactMenuControl(createContext(), null, List.of(
 			MenuEntry.header("Header"),
-			MenuEntry.item("a", "A", "css:fas fa-home", ExecutableState.NOT_EXEC_DISABLED, "css", true),
+			MenuEntry.item("a", "A", "css:fas fa-home", ExecutableState.NOT_EXEC_DISABLED, "css", true, ButtonTone.DANGER),
 			MenuEntry.separator()),
 			id -> HandlerResult.DEFAULT_RESULT, () -> {
 				// Never closed.
@@ -420,6 +423,36 @@ public class TestControlStateSchema extends TestCase {
 	}
 
 	/**
+	 * A destructive entry says so; an ordinary one sends no tone, since an absent tone means the
+	 * default.
+	 */
+	public void testMenuEntryTone() {
+		ReactMenuControl control = new ReactMenuControl(createContext(), null, List.of(
+			MenuEntry.item("a", "Delete", null, ExecutableState.EXECUTABLE, null, false, ButtonTone.DANGER),
+			MenuEntry.item("b", "Edit", null, ExecutableState.EXECUTABLE, null, false)),
+			id -> HandlerResult.DEFAULT_RESULT, () -> {
+				// Never closed.
+			});
+
+		List<?> items = (List<?>) state(control).get(MenuState.ITEMS__PROP);
+		assertEquals(ButtonTone.DANGER.getExternalName(), ((Map<?, ?>) items.get(0)).get(MenuState.Entry.TONE__PROP));
+		assertFalse(((Map<?, ?>) items.get(1)).containsKey(MenuState.Entry.TONE__PROP));
+	}
+
+	/**
+	 * A menu entry without a tone is rejected at construction.
+	 */
+	public void testMenuEntryRequiresTone() {
+		try {
+			new MenuEntry(MenuState.EntryType.ITEM, "a", "Delete", null, ExecutableState.EXECUTABLE, null, false,
+				null);
+			fail("A null tone must be rejected.");
+		} catch (NullPointerException ex) {
+			// Expected.
+		}
+	}
+
+	/**
 	 * Every key of a snackbar is declared in {@link SnackbarState}.
 	 */
 	public void testSnackbarKeys() {
@@ -429,6 +462,24 @@ public class TestControlStateSchema extends TestCase {
 		control.show();
 
 		assertDeclared(state(control), SnackbarState.class);
+	}
+
+	/**
+	 * Every key of an alert and of its actions is declared in {@link AlertState}.
+	 */
+	public void testAlertKeys() {
+		ReactAlertControl control = new ReactAlertControl(createContext());
+		control.show(Variant.WARNING, "Title", "Message");
+		control.setClosable(true);
+		control.setActions(List.of(toggle()));
+		control.setCssClass("css");
+
+		Map<?, ?> state = state(control);
+		assertDeclared(state, AlertState.class);
+		assertEquals(properties(AlertState.class), state.keySet());
+		for (Object action : (List<?>) state.get(AlertState.ACTIONS__PROP)) {
+			assertChild(action);
+		}
 	}
 
 	private ReactToggleButtonControl toggle() {
@@ -517,12 +568,14 @@ public class TestControlStateSchema extends TestCase {
 	 * The suite of tests.
 	 *
 	 * <p>
-	 * Several controls ask {@link Resources} for labels, which the services of the setup provide.
+	 * Several controls ask {@link Resources} for labels and {@link ThemeFactory} for icons, which the
+	 * services of the setup provide.
 	 * </p>
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(new TestSuite(TestControlStateSchema.class), ResourcesModule.Module.INSTANCE));
+			ServiceTestSetup.createSetup(new TestSuite(TestControlStateSchema.class), ResourcesModule.Module.INSTANCE,
+				ThemeFactory.Module.INSTANCE));
 	}
 
 }

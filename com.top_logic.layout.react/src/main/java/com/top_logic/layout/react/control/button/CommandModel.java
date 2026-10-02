@@ -206,8 +206,8 @@ public interface CommandModel {
 	 *
 	 * <p>
 	 * Appended to the class list of the command's button, and of a menu entry rendering the
-	 * command, so that a single command can be styled (e.g. marked as destructive) wherever it is
-	 * offered. Returns {@code null} by default (no additional classes).
+	 * command. Returns {@code null} by default (no additional classes). Whether the command is
+	 * destructive is not a class but its {@link #getTone() tone}.
 	 * </p>
 	 */
 	default String getCssClasses() {
@@ -225,6 +225,20 @@ public interface CommandModel {
 	 */
 	default KeyStroke getKeyGesture() {
 		return null;
+	}
+
+	/**
+	 * The kind of action this command stands for.
+	 *
+	 * <p>
+	 * {@link ButtonTone#DANGER} for a command that destroys or discards what the user has: every UI
+	 * element offering it - its button, a menu entry, the confirmation asking for it - shows it as
+	 * destructive. The tone follows from what the command does, not from a presentation option, and
+	 * does not change while the model lives. Returns {@link ButtonTone#DEFAULT} by default.
+	 * </p>
+	 */
+	default ButtonTone getTone() {
+		return ButtonTone.DEFAULT;
 	}
 
 	/**

@@ -25,6 +25,8 @@ import com.top_logic.tl.ai.core.agent.environment.TurnContext;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.model.TidResolver;
+import com.top_logic.tl.ai.core.tools.present.PresentAs;
+import com.top_logic.tl.ai.core.tools.present.Presentation;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -128,6 +130,19 @@ public class TestChatSelection extends BasicTestCase {
 		// MAX_NAMED objects joined by MAX_NAMED - 1 separators, plus the one in front of the count.
 		assertEquals("Exactly MAX_NAMED objects are named, and the rest is one phrase.",
 			ChatSelection.MAX_NAMED, countOccurrences(value, "; "));
+	}
+
+	/**
+	 * What the agent presented is still what the user looks at: a table is stated as a table, with
+	 * the objects in it (#616).
+	 */
+	public void testAPresentedTableSaysItIsOne() {
+		Presentation table = Presentation.of(PresentAs.TABLE, List.of(first, second), "Rechnungen", null);
+
+		String value = ChatSelection.describe(table, TestChatSelection::title);
+
+		assertTrue(value, value.startsWith("a table of 2 objects: Hosting August"));
+		assertContains("[id:" + ReadFilter.idOf(second) + "]", value);
 	}
 
 	/** A page that knows a better word for its objects says it, and nothing else changes. */

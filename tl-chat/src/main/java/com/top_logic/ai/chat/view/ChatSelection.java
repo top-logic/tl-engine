@@ -16,6 +16,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.tl.ai.core.tools.present.PresentAs;
+import com.top_logic.tl.ai.core.tools.present.Presentation;
 
 /**
  * How a page's current selection is stated to the agent.
@@ -73,7 +75,8 @@ public final class ChatSelection {
 	 * States what stands on a selection channel.
 	 *
 	 * @param selection
-	 *        The channel's value: one object, a collection of them, or nothing.
+	 *        The channel's value: one object, a collection of them, a {@link Presentation} the
+	 *        agent put there, or nothing.
 	 * @param label
 	 *        What to call one object; {@code null} for the application's own label.
 	 * @return The value of the fact; never {@code null}, and never empty - a selection of nothing is
@@ -86,6 +89,12 @@ public final class ChatSelection {
 		}
 		int named = Math.min(objects.size(), MAX_NAMED);
 		StringBuilder out = new StringBuilder();
+		if (selection instanceof Presentation shown && shown.as() != PresentAs.FORM) {
+			// What the agent presented, still on screen: which objects, and that they are a table or
+			// a chart rather than one object the user opened.
+			out.append("a ").append(shown.as().name().toLowerCase()).append(" of ")
+				.append(objects.size()).append(objects.size() == 1 ? " object: " : " objects: ");
+		}
 		for (int n = 0; n < named; n++) {
 			if (n > 0) {
 				out.append("; ");
@@ -102,6 +111,9 @@ public final class ChatSelection {
 	private static List<Object> selected(Object selection) {
 		if (selection == null) {
 			return List.of();
+		}
+		if (selection instanceof Presentation shown) {
+			return new ArrayList<>(shown.objects());
 		}
 		Collection<?> many = selection instanceof Collection<?> collection ? collection : List.of(selection);
 		List<Object> objects = new ArrayList<>(many.size());

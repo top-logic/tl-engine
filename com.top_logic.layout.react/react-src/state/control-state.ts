@@ -725,9 +725,19 @@ export interface WindowStateJson extends ControlStateJson {
 	height: string;
 
 	/**
-	 * The least height of the window, a CSS length. Absent: none.
+	 * The width in pixels the user gave the window when last resizing it. Absent: none remembered.
+	 *
+	 * Together with {@link WindowStateJson.customHeight}, the remembered size replaces the configured
+	 * {@link WindowStateJson.width} and the automatic height, but only while it fits into the browser window: the
+	 * client decides this, as only it knows the size of the browser window.
 	 */
-	minHeight: string;
+	customWidth: number;
+
+	/**
+	 * The height in pixels the user gave the window when last resizing it. Absent: none
+	 * remembered.
+	 */
+	customHeight: number;
 
 	/**
 	 * Whether the user can resize the window by dragging its edges.

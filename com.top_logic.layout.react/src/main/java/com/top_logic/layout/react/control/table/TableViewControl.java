@@ -750,12 +750,14 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/**
 	 * Selects exactly the row with the given {@link Row#key() row key} (clearing any other selection),
-	 * or clears the selection when {@code key} is {@code null} or matches no current row. Pushes the
-	 * change to the client, scrolls the row into view and notifies the
+	 * or clears the selection when {@code key} is {@code null} or names no row of the table's data.
+	 * Pushes the change to the client, scrolls the row into view and notifies the
 	 * {@link #addSelectionListener(SelectionListener) selection listeners}.
 	 *
 	 * @param key
 	 *        The row key to select, or {@code null} to clear.
+	 *
+	 * @see #selectRows(Collection)
 	 */
 	public void selectRow(Object key) {
 		selectRows(key == null ? Set.of() : Collections.singleton(key));
@@ -763,9 +765,16 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/**
 	 * Selects exactly the rows whose {@link Row#key() row key} is among the given ones (clearing any
-	 * other selection), leaving out the keys no current row has. Pushes the change to the client,
-	 * scrolls the first selected row into view and notifies the
+	 * other selection), leaving out the keys the table's data has no row for. Pushes the change to
+	 * the client, scrolls the first displayed selected row into view and notifies the
 	 * {@link #addSelectionListener(SelectionListener) selection listeners}.
+	 *
+	 * <p>
+	 * A row of the data that is not displayed - hidden by a filter, or inside a collapsed group or
+	 * tree node - is selected as well (see {@link TableView#containedKeys(Collection)}); it shows as
+	 * selected once it is displayed again. The keyboard cursor and the range anchor go to the first
+	 * displayed selected row, and to no row when none of the selected rows is displayed.
+	 * </p>
 	 *
 	 * <p>
 	 * A selection of more than one row is what {@link SelectionMode#MULTI} allows; in
@@ -777,24 +786,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	public void selectRows(Collection<?> keys) {
 		_selectedKeys.clear();
-		_cursorIndex = -1;
-		_selectionAnchor = -1;
 		if (!keys.isEmpty()) {
-			Set<?> requested = keys instanceof Set<?> set ? set : new HashSet<Object>(keys);
-			List<Row<R>> rows = _view.rows(0, _view.rowCount());
-			for (int i = 0; i < rows.size(); i++) {
-				Row<R> row = rows.get(i);
-				if (row.kind() == RowKind.DATA && requested.contains(row.key())) {
-					_selectedKeys.add(row.key());
-					if (_cursorIndex < 0) {
-						// The first selected row carries the cursor and is the range anchor, so a
-						// keyboard range extension continues from where the selection starts.
-						_cursorIndex = i;
-						_selectionAnchor = i;
-					}
-				}
-			}
+			_selectedKeys.addAll(_view.containedKeys(keys));
 		}
+		// The first displayed selected row carries the cursor and is the range anchor, so a
+		// keyboard range extension continues from where the selection starts.
+		_cursorIndex = firstSelectedRowIndex();
+		_selectionAnchor = _cursorIndex;
 		pushSelection();
 		// Scroll the selected row into view when it lies outside the current viewport (e.g. a row
 		// selected programmatically after a create), centering it; keep the viewport otherwise.
@@ -1305,21 +1303,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/**
 	 * Rebuilds the row count and viewport after the backing data changed externally (e.g. an
-	 * object was created or deleted and the row source was refreshed). Stale selected keys that no
-	 * longer match a row are dropped.
+	 * object was created or deleted and the row source was refreshed).
+	 *
+	 * <p>
+	 * A selected key whose object is gone from the data is dropped from the selection. A selected
+	 * row the table merely does not display - hidden by a filter, or inside a collapsed group or
+	 * tree node - is still part of the data and stays selected (see
+	 * {@link TableView#containedKeys(Collection)}).
+	 * </p>
 	 */
 	public void refreshData() {
-		_selectedKeys.retainAll(currentRowKeys());
+		_selectedKeys.retainAll(_view.containedKeys(_selectedKeys));
 		commitSelection();
 		rebuildAfterRowChange();
-	}
-
-	private Set<Object> currentRowKeys() {
-		Set<Object> keys = new LinkedHashSet<>();
-		for (Row<R> row : _view.rows(0, _view.rowCount())) {
-			keys.add(row.key());
-		}
-		return keys;
 	}
 
 	private void rebuildAfterRowChange() {
@@ -1414,38 +1410,37 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/**
 	 * Re-derives the cursor and the range anchor from the selected rows after the rows were
-	 * rearranged, and gives up the selection of a row that is no longer among them.
+	 * rearranged.
 	 *
 	 * <p>
-	 * A value the table can still display stays selected - it is the selection whoever wrote it
-	 * made, and a rearrangement is no reason to drop it. To be called after a rearrangement that
-	 * leaves every row displayed (a change of the grouping), where a key that is not among the rows
-	 * is one the table cannot display any more.
+	 * A rearrangement (a change of the grouping) does not change the data, so the selection itself
+	 * stays as it is - also a selected row that is not displayed, because a filter hides it or its
+	 * group is collapsed. The cursor goes to the first displayed selected row, and to no row when
+	 * none of the selected rows is displayed.
 	 * </p>
 	 */
 	private void relocateSelection() {
+		_cursorIndex = firstSelectedRowIndex();
+		_selectionAnchor = _cursorIndex;
+		commitSelection();
+	}
+
+	/**
+	 * The index of the first displayed row that is selected, {@code -1} when none of the selected
+	 * rows is displayed.
+	 */
+	private int firstSelectedRowIndex() {
 		if (_selectedKeys.isEmpty()) {
-			_cursorIndex = -1;
-			_selectionAnchor = -1;
-			commitSelection();
-			return;
+			return -1;
 		}
-		Set<Object> displayed = new LinkedHashSet<>();
-		int cursor = -1;
 		List<Row<R>> rows = _view.rows(0, _view.rowCount());
 		for (int n = 0; n < rows.size(); n++) {
 			Row<R> row = rows.get(n);
 			if (row.kind() == RowKind.DATA && _selectedKeys.contains(row.key())) {
-				displayed.add(row.key());
-				if (cursor < 0) {
-					cursor = n;
-				}
+				return n;
 			}
 		}
-		_selectedKeys.retainAll(displayed);
-		_cursorIndex = cursor;
-		_selectionAnchor = cursor;
-		commitSelection();
+		return -1;
 	}
 
 	/** The name of the column the rows are grouped by, {@code null} when they are not grouped. */

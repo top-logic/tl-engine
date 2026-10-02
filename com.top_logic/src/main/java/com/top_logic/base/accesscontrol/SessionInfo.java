@@ -139,6 +139,18 @@ class SessionInfo extends HashMap<String, Object> {
         return (String)(this.get(SESSION_ID));
     }    
 
+	/**
+	 * The name of the user of the session.
+	 * 
+	 * <p>
+	 * In contrast to the name of {@link #getUser()}, this name is available even after the user
+	 * account has been deleted.
+	 * </p>
+	 */
+	protected String getUserName() {
+		return (String) this.get(SESSION_DATA_USER_NAME);
+	}
+
     /**
      * Get the user for the session. Use lazy init to prevent problems while restart
      * of the server.

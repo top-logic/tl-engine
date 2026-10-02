@@ -476,6 +476,11 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	@Override
+	public Set<Object> containedKeys(Collection<?> keys) {
+		return _source.containedKeys(keys);
+	}
+
+	@Override
 	public CellContent cell(Row<R> row, String column) {
 		Column<R, ?> definition = _columns.get(column);
 		if (definition == null) {

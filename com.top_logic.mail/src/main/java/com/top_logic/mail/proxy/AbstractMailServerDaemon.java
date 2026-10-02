@@ -231,6 +231,12 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 	 *         otherwise.
 	 */
     protected boolean processMail(MailMessage aMail) {
+        if (aMail.isRemoved()) {
+			Logger.info("Skipped mail number " + aMail.getMessage().getMessageNumber()
+				+ ", it was already removed from the folder by another client.", AbstractMailServerDaemon.class);
+            return false;
+        }
+
         try {
         	if (this.isReportMail(aMail) && this.processReportMail(aMail)) {
         		return true;
@@ -242,7 +248,11 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
                 return processMailInternal(aMail);
             }
         } catch (Exception ex) {
-            if (ex instanceof MessagingException) {
+            if (ex instanceof MessageRemovedException || aMail.isRemoved()) {
+				Logger.info("Stopped processing mail number " + aMail.getMessage().getMessageNumber()
+					+ ", it was removed from the folder by another client.", AbstractMailServerDaemon.class);
+            }
+            else if (ex instanceof MessagingException) {
                 Logger.error("Unable to process mail due to messaging problems!" + aMail.getName(), ex, AbstractMailServerDaemon.class);
             }
             else {

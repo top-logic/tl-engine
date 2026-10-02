@@ -259,7 +259,7 @@ public class UserSession extends AbstractWrapper {
 	 * Find a user session with the given parameters.
 	 * 
 	 * @param aUser
-	 *        The user name of the session.
+	 *        The user name of the session, <code>null</code> to accept a session of any user.
 	 * @param anID
 	 *        The ID of the session.
 	 * @return The found session or <code>null</code>, if there is no such session.
@@ -272,7 +272,7 @@ public class UserSession extends AbstractWrapper {
 	 * Find a user session with the given parameters.
 	 * 
 	 * @param aUser
-	 *        The user name of the session.
+	 *        The user name of the session, <code>null</code> to accept a session of any user.
 	 * @param anID
 	 *        The ID of the session.
 	 * @param aServer
@@ -286,7 +286,7 @@ public class UserSession extends AbstractWrapper {
 
 			while (iter.hasNext()) {
 				KnowledgeItem theKO = iter.next();
-				if (aUser.equals(theKO.getAttributeValue(UserSession.USER_NAME))
+				if ((aUser == null || aUser.equals(theKO.getAttributeValue(UserSession.USER_NAME)))
 						&& aServer.equals(theKO.getAttributeValue(UserSession.SERVER))
 						&& null == theKO.getAttributeValue(UserSession.LOGOUT)) {
 					result = UserSession.getInstance((KnowledgeObject) theKO);

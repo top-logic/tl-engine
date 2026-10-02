@@ -38,6 +38,13 @@
 
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
+
+		<!--
+			Number of workers each GWT compilation uses to compile its permutations (parameter "localWorkers"
+			of the gwt-maven-plugin). A number, or a factor of the CPU cores when terminated with "C" (e.g. 0.5C).
+			In a parallel build (-T), the compilations of independent GWT modules run concurrently.
+		-->
+		<gwt.localWorkers>1</gwt.localWorkers>
 	</properties>
 
 	<dependencyManagement>

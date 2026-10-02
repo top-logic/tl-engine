@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+	<alias>
+		<!--
+			The demo tests never receive mail: all test runs share one IMAP mailbox, and a mail daemon
+			in a test run would interfere with the other runs. IMAP is tested in com.top_logic.mail.
+		-->
+		<entry name="%IMAP_ACTIVE%" value="false" />
+	</alias>
+</root>

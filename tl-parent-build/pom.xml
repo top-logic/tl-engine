@@ -200,4 +200,28 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<!-- 
+				Keeps the JavaDoc of each module in the module's own build directory instead of combining it in 
+				the shared tree tl.javadoc.aggregateDir. Activated by -Dtl.javadoc.aggregate=false.
+				
+				The shared tree is written by many modules, which a parallel build (-T) runs concurrently. The 
+				doclet still runs in every module and generates its message resources and warnings, only its 
+				output goes to a module-local directory.
+			-->
+			<id>javadoc-module-local</id>
+			<activation>
+				<property>
+					<name>tl.javadoc.aggregate</name>
+					<value>false</value>
+				</property>
+			</activation>
+
+			<properties>
+				<tl.javadoc.aggregateDir>${project.build.directory}/tl-doc</tl.javadoc.aggregateDir>
+			</properties>
+		</profile>
+	</profiles>
 </project>

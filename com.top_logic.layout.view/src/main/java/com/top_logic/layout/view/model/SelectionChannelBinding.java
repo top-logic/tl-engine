@@ -31,6 +31,14 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * </ul>
  *
  * <p>
+ * The elements of a selector are its data, not the part of it the selector currently shows: an
+ * element a filter hides, or one inside a collapsed group, is still an element of the selector. It
+ * takes a channel value naming it as its selection, and keeps that selection as long as it is part
+ * of the data - which it shows once it is visible again. Only an element gone from the data gives
+ * the selection up.
+ * </p>
+ *
+ * <p>
  * A value the selector merely does not have an element for means no more than "nothing selected
  * here": the selector shows no selection and leaves the channel alone. Clearing it would destroy
  * what another writer put there - the element a second selector over a different set of elements

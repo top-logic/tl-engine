@@ -5,17 +5,68 @@
  */
 package com.top_logic.basic.util;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.concurrent.TimeUnit;
+import java.util.function.LongSupplier;
 
 /**
- * Utility to measure timings with {@link System#nanoTime()}.
+ * Utility to measure elapsed time.
+ * 
+ * <p>
+ * A {@link StopWatch} reads its time from a clock delivering nanoseconds. By default, this is the
+ * wall clock {@link System#nanoTime()}. A watch created with {@link #createThreadCpuWatch()}
+ * measures the CPU time of the current thread instead, see
+ * {@link ThreadMXBean#getCurrentThreadCpuTime()}. Other clocks can be passed to
+ * {@link #StopWatch(LongSupplier)}.
+ * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class StopWatch {
 
+	private final LongSupplier _clock;
+
+	private final boolean _threadCpuTime;
+
 	private boolean _running = false;
 	private long _nanos = 0L;
+
+	/**
+	 * Creates a stopped {@link StopWatch} measuring wall-clock time with {@link System#nanoTime()}.
+	 */
+	public StopWatch() {
+		this(System::nanoTime);
+	}
+
+	/**
+	 * Creates a stopped {@link StopWatch} reading its time from the given clock.
+	 * 
+	 * @param clock
+	 *        The time source delivering nanoseconds. Only differences between two values of the
+	 *        clock are evaluated, the origin is arbitrary.
+	 */
+	public StopWatch(LongSupplier clock) {
+		this(clock, false);
+	}
+
+	private StopWatch(LongSupplier clock, boolean threadCpuTime) {
+		_clock = clock;
+		_threadCpuTime = threadCpuTime;
+	}
+
+	/**
+	 * Whether this watch measures the CPU time of the current thread.
+	 * 
+	 * <p>
+	 * This is the case for a watch created with {@link #createThreadCpuWatch()}, if the JVM supports
+	 * measuring thread CPU time. Otherwise, the watch measures wall-clock time or the time of the
+	 * clock passed to {@link #StopWatch(LongSupplier)}.
+	 * </p>
+	 */
+	public boolean isThreadCpuTime() {
+		return _threadCpuTime;
+	}
 
 	/**
 	 * Starts the watch.
@@ -24,7 +75,7 @@ public class StopWatch {
 		if (_running) {
 			throw new IllegalStateException("Already started.");
 		}
-		_nanos -= System.nanoTime();
+		_nanos -= _clock.getAsLong();
 		_running = true;
 		return this;
 	}
@@ -36,7 +87,7 @@ public class StopWatch {
 		if (! _running) {
 			throw new IllegalStateException("Not started.");
 		}
-		_nanos += System.nanoTime();
+		_nanos += _clock.getAsLong();
 		_running = false;
 		return this;
 	}
@@ -71,7 +122,7 @@ public class StopWatch {
 	 */
 	public long getElapsedNanos() {
 		if (_running) {
-			return _nanos + System.nanoTime();
+			return _nanos + _clock.getAsLong();
 		} else {
 			return _nanos;
 		}
@@ -82,7 +133,7 @@ public class StopWatch {
 	 */
 	public long getElapsedMillis() {
 		if (_running) {
-			return (_nanos + System.nanoTime()) / (1000 * 1000);
+			return (_nanos + _clock.getAsLong()) / (1000 * 1000);
 		} else {
 			return _nanos / (1000 * 1000);
 		}
@@ -98,6 +149,55 @@ public class StopWatch {
 	 */
 	public static StopWatch createStartedWatch() {
 		return new StopWatch().start();
+	}
+
+	/**
+	 * Creates a stopped {@link StopWatch} measuring the CPU time of the current thread.
+	 * 
+	 * <p>
+	 * The CPU time of a thread excludes the time the thread waits for a free CPU on a loaded
+	 * machine, and the work done by other threads. Therefore, the watch must be started, stopped,
+	 * and read on the same thread.
+	 * </p>
+	 * 
+	 * <p>
+	 * If the JVM does not support measuring the CPU time of the current thread, or thread CPU time
+	 * measurement is disabled and cannot be enabled, the watch measures wall-clock time with
+	 * {@link System#nanoTime()}. {@link #isThreadCpuTime()} tells which clock is used.
+	 * </p>
+	 * 
+	 * @see ThreadMXBean#getCurrentThreadCpuTime()
+	 */
+	public static StopWatch createThreadCpuWatch() {
+		ThreadMXBean threads = ManagementFactory.getThreadMXBean();
+		if (enableThreadCpuTime(threads)) {
+			return new StopWatch(threads::getCurrentThreadCpuTime, true);
+		}
+		return new StopWatch();
+	}
+
+	/**
+	 * Creates a {@link #start() started} {@link StopWatch} measuring the CPU time of the current
+	 * thread.
+	 * 
+	 * @see #createThreadCpuWatch()
+	 */
+	public static StopWatch createStartedThreadCpuWatch() {
+		return createThreadCpuWatch().start();
+	}
+
+	private static boolean enableThreadCpuTime(ThreadMXBean threads) {
+		if (!threads.isCurrentThreadCpuTimeSupported()) {
+			return false;
+		}
+		if (!threads.isThreadCpuTimeEnabled()) {
+			try {
+				threads.setThreadCpuTimeEnabled(true);
+			} catch (UnsupportedOperationException | SecurityException ex) {
+				return false;
+			}
+		}
+		return threads.isThreadCpuTimeEnabled();
 	}
 
 	/**
@@ -131,8 +231,7 @@ public class StopWatch {
 	 * Convert time in nanoseconds to a human readable representation.
 	 * 
 	 * @param nanos
-	 *        elapsed time in nanoseconds as given by a difference between two calls to
-	 *        {@link System#nanoTime()}
+	 *        elapsed time in nanoseconds, e.g. {@link #getElapsedNanos()}
 	 * @return a human readable representation of that time.
 	 * 
 	 * @see #toStringNanos(long, TimeUnit)
@@ -145,8 +244,7 @@ public class StopWatch {
 	 * Convert time in nanoseconds to a human readable representation.
 	 * 
 	 * @param nanos
-	 *        elapsed time in nanoseconds as given by a difference between two calls to
-	 *        {@link System#nanoTime()}
+	 *        elapsed time in nanoseconds, e.g. {@link #getElapsedNanos()}
 	 * @param precision
 	 *        Definition of the displayed precision, e.g if <code>precision</code> is "minute", then
 	 *        seconds, milliseconds or nanos are not display.

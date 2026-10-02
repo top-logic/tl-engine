@@ -13,6 +13,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import junit.framework.TestCase;
@@ -269,6 +270,101 @@ public class TestDiagramSelectionBinding extends TestCase {
 		assertNull("Nothing of the diagram writes the channel any more.", _channel.get());
 	}
 
+	/**
+	 * Tests that a diagram built anew without a displayed node keeps the selected object it never
+	 * displayed - the object a second selector over a larger set of elements selected.
+	 */
+	public void testReplacedDiagramKeepsTheUndisplayedObject() {
+		bind(diagram(true, NODE_A, NODE_B));
+		_channel.set(Set.of(NODE_A, ELSEWHERE));
+
+		_control.setModel(diagram(true, NODE_B));
+
+		assertEquals(Set.of(), selectedUserObjects());
+		assertEquals("Only the vanished node is given up.", ELSEWHERE, _channel.get());
+	}
+
+	/**
+	 * Tests that an update of the client not touching the selection (a zoom, a pan) leaves a
+	 * selected object alone the diagram does not display.
+	 */
+	public void testUpdateWithoutSelectionChangeKeepsTheUndisplayedObject() throws IOException {
+		bind(diagram(true, NODE_A, NODE_B));
+		Set<String> value = Set.of(NODE_A, ELSEWHERE);
+		_channel.set(value);
+
+		clientPatch(diagram -> diagram.setViewBoxWidth(500));
+
+		assertEquals(Set.of(NODE_A), selectedUserObjects());
+		assertEquals(value, _channel.get());
+	}
+
+	/**
+	 * Tests that a click with a modifier key adds the clicked node to the selection and keeps the
+	 * selected object the diagram does not display.
+	 */
+	public void testModifierClickKeepsTheUndisplayedObject() throws IOException {
+		bind(diagram(true, NODE_A, NODE_B));
+		_channel.set(ELSEWHERE);
+
+		clientPatch(diagram -> {
+			diagram.setIncrementalSelection(true);
+			select(diagram, NODE_A);
+		});
+
+		assertEquals(Set.of(NODE_A), selectedUserObjects());
+		assertEquals(Set.of(ELSEWHERE, NODE_A), _channel.get());
+	}
+
+	/**
+	 * Tests that a plain click replaces the whole selection, also the object the diagram does not
+	 * display.
+	 */
+	public void testPlainClickDropsTheUndisplayedObject() throws IOException {
+		bind(diagram(true, NODE_A, NODE_B));
+		_channel.set(Set.of(NODE_B, ELSEWHERE));
+
+		clientPatch(diagram -> {
+			diagram.setIncrementalSelection(false);
+			deselectAll(diagram);
+			select(diagram, NODE_A);
+		});
+
+		assertEquals(Set.of(NODE_A), selectedUserObjects());
+		assertEquals(NODE_A, _channel.get());
+	}
+
+	/**
+	 * Tests that a plain click on the diagram background drops the selected object the diagram
+	 * does not display, even if no node of the diagram was selected.
+	 */
+	public void testBackgroundClickDropsTheUndisplayedObject() throws IOException {
+		bind(diagram(true, NODE_A, NODE_B));
+		_channel.set(ELSEWHERE);
+
+		clientPatch(diagram -> {
+			diagram.setIncrementalSelection(false);
+			deselectAll(diagram);
+		});
+
+		assertNull(_channel.get());
+	}
+
+	/**
+	 * Tests that in a diagram showing one selected node at a time, the node clicked replaces the
+	 * selected object the diagram does not display, also with a modifier key.
+	 */
+	public void testSingleSelectClickReplacesTheUndisplayedObject() throws IOException {
+		_channel.set(ELSEWHERE);
+
+		clientPatch(diagram -> {
+			diagram.setIncrementalSelection(true);
+			select(diagram, NODE_A);
+		});
+
+		assertEquals(NODE_A, _channel.get());
+	}
+
 	@Override
 	protected void tearDown() throws Exception {
 		_binding.dispose();
@@ -340,6 +436,38 @@ public class TestDiagramSelectionBinding extends TestCase {
 		StringW patch = new StringW();
 		clientScope.createPatch(new JsonWriter(patch));
 		return patch.toString();
+	}
+
+	/**
+	 * Applies the given change to the client's copy of the shared diagram and sends it back as a
+	 * msgbuf patch, the way the client does.
+	 */
+	private void clientPatch(Consumer<Diagram> change) throws IOException {
+		DefaultScope clientScope = new DefaultScope(2, 1);
+		Diagram clientDiagram = Diagram.readDiagram(clientScope, new JsonReader(new StringR(_control.render())));
+
+		change.accept(clientDiagram);
+
+		StringW patch = new StringW();
+		clientScope.createPatch(new JsonWriter(patch));
+		_control.executeClientCommand(FlowDiagramControl.CMD_UPDATE,
+			Map.of(FlowDiagramControl.ARG_PATCH, patch.toString()));
+	}
+
+	/** Adds the node drawn with the given CSS class to the selection of the client's diagram. */
+	private static void select(Diagram clientDiagram, String cssClass) {
+		Widget node = node(clientDiagram, widget -> cssClass.equals(widget.getCssClass()));
+		assertNotNull("No node for '" + cssClass + "' in the served diagram.", node);
+		clientDiagram.getSelection().add(node);
+		SelectionUtil.setSelected(node, true);
+	}
+
+	/** Deselects every node of the client's diagram. */
+	private static void deselectAll(Diagram clientDiagram) {
+		for (Widget selected : clientDiagram.getSelection()) {
+			SelectionUtil.setSelected(selected, false);
+		}
+		clientDiagram.setSelection(Collections.emptyList());
 	}
 
 	/** Reads a serialized diagram the way the client mounts on it. */

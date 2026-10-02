@@ -674,6 +674,14 @@ It is a `ThemeImage`, named like every other icon of the chat, in one of three f
 `tl-ai-demo`'s Chat page shows `images/tl-ai-demo-working.svg`, a neutral example; its dock keeps the
 dots. `working-indicator.test.tsx` and `TestChatWorkingIndicator` pin both.
 
+While the latest step of a running run is thinking, the collapsed run line says what the model is
+thinking about - "Nachdenken: " and the start of the newest paragraph of the thinking summary - in
+place of "Arbeitet …" (#602). A model can think for minutes before its next step: Claude Opus 5.5
+thought for almost four on an intake of five documents, and a line that only said "Arbeitet …" for
+that long read as a hang. The summary exists only because `AnthropicRequestBuilder` asks for
+`display: "summarized"`; the API default on the models since Opus 4.7 streams thinking blocks with no
+text. `thread.test.ts` pins the line.
+
 ### The composer's reference tokens
 
 A host's quoted passage is an **inline token inside the text**, not a chip above it: "shorten

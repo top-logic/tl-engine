@@ -90,10 +90,48 @@ describe('a running turn', () => {
 
   it('holds it through a turn that only thinks', () => {
     const html = render(build(THINKING), true)
-    // Thinking is a step, so in summary mode the run summary takes over the working line.
+    // Thinking is a step, so in summary mode the run summary takes over the working line - and
+    // says what the model is thinking about rather than only that it works (tl-ai#602).
     expect(html).toContain('run-summary')
-    expect(html).toContain(labels.working)
+    expect(html).toContain(`${labels.thinking}: Erst überlegen`)
     expect(html).toContain('answer is-pending')
+  })
+
+  /**
+   * A model that thinks for minutes streams its summary paragraph by paragraph. The line follows
+   * the newest paragraph, so it moves while the model works, and it stays one short line.
+   */
+  it('follows the newest paragraph of a long thought, cut to one line', () => {
+    const long = 'Now I am weighing the rent against the service charges, '.repeat(3)
+    const html = render(
+      build([
+        ...TURN_STARTED,
+        { type: 'APPEND_THINKING', delta: '**Reading the materials**\n\nFirst paragraph.' },
+        { type: 'APPEND_THINKING', delta: `\n\n${long}` },
+      ]),
+      true,
+    )
+    expect(html).not.toContain('First paragraph.')
+    expect(html).toContain(`${labels.thinking}: Now I am weighing the rent`)
+    expect(html).toContain('…')
+    expect(html).not.toContain(long.trim())
+  })
+
+  it('says it is working again once the thought turns into a step', () => {
+    const html = render(
+      build([
+        ...THINKING,
+        { type: 'ADD_TOOL', toolUseId: 'toolu_1', name: 'recordStatement', input: {} },
+      ]),
+      true,
+    )
+    expect(html).toContain(labels.working)
+    expect(html).not.toContain(`${labels.thinking}: Erst überlegen`)
+  })
+
+  it('shows no thought once the run is over', () => {
+    const html = render(build([...THINKING, { type: 'END_RUN', runId: 'r1' }]), false)
+    expect(html).not.toContain(`${labels.thinking}: Erst überlegen`)
   })
 
   it('gives the place back to the answer on the first delta', () => {

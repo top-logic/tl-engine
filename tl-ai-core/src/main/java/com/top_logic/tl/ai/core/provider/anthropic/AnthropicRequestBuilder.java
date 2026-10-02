@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.CompactionMarker;
@@ -371,20 +373,67 @@ public final class AnthropicRequestBuilder {
 		req.setOutputConfig(outputConfig);
 	}
 
+	/**
+	 * Writes the thinking configuration for the requested effort.
+	 *
+	 * <p>
+	 * Adaptive thinking asks for the {@code summarized} display. On the models since Opus 4.7 the
+	 * API default is {@code omitted}: the thinking blocks stream with empty text, so a model that
+	 * thinks for minutes shows nothing at all until its first tool call (Gitea #602 measured 234 s
+	 * of silence on Opus 5.5). The summary costs nothing extra - thinking is billed the same under
+	 * either display - and it is what the chat shows while the model works.
+	 * </p>
+	 *
+	 * <p>
+	 * Without an effort, a model that {@link #thinksUnasked(String) thinks unasked} still gets the
+	 * adaptive configuration: for it, adaptive is what omitting the parameter means anyway, so the
+	 * request only changes what is shown. Every other model is left without thinking, as before.
+	 * </p>
+	 */
 	private static void writeThinkingParams(AnthropicRequest req, String model, int maxOutputTokens,
 			Map<String, Object> modelOptions) {
 		Object thinkingEffort = modelOptions.get("thinking_effort");
 		if (thinkingEffort == null) {
+			if (thinksUnasked(model)) {
+				req.setThinking(adaptiveThinking());
+			}
 			return;
 		}
 		if (requiresBudgetTokens(model)) {
 			int budgetTokens = effortToBudgetTokens(thinkingEffort.toString(), maxOutputTokens);
 			req.setThinking(Map.of("type", "enabled", "budget_tokens", budgetTokens));
 		} else {
-			req.setThinking(Map.of("type", "adaptive"));
+			req.setThinking(adaptiveThinking());
 			putOutputConfig(req, "effort", thinkingEffort.toString());
 		}
 	}
+
+	private static Map<String, Object> adaptiveThinking() {
+		Map<String, Object> thinking = new LinkedHashMap<>();
+		thinking.put("type", "adaptive");
+		thinking.put("display", "summarized");
+		return thinking;
+	}
+
+	/**
+	 * Whether the model thinks adaptively when the request says nothing about thinking.
+	 *
+	 * <p>
+	 * True for the generation-5 models and later (Opus 5.x, Sonnet 5.x) and for Fable and Mythos;
+	 * on Opus 5.5 and Fable thinking cannot even be switched off. The 4.x models do not think
+	 * unless asked.
+	 * </p>
+	 */
+	static boolean thinksUnasked(String model) {
+		if (model.contains("fable") || model.contains("mythos")) {
+			return true;
+		}
+		Matcher generation = MODEL_GENERATION.matcher(model);
+		return generation.find() && Integer.parseInt(generation.group(1)) >= 5;
+	}
+
+	/** The major version of an Opus or Sonnet model name, e.g. {@code 5} in {@code claude-opus-5-5}. */
+	private static final Pattern MODEL_GENERATION = Pattern.compile("(?:opus|sonnet)-(\\d+)(?:\\D|$)");
 
 	private static boolean requiresBudgetTokens(String model) {
 		return model.contains("haiku");

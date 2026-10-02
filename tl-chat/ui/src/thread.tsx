@@ -835,11 +835,18 @@ function RunSummary({
   const [open, setOpen] = useState(startOpen)
   if (events.length === 0) return null
   const steps = events.filter((item) => item.type === 'tool_call').length || events.length
+  const thought = busy ? currentThought(events) : ''
   return (
     <div className={`run-summary${open ? ' is-open' : ''}`}>
       <button type="button" className="run-summary-head" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-        <span className={busy ? 'is-live' : undefined}>
-          {busy ? labels.working : stopped ? labels.runStepsStopped(steps) : labels.runSteps(steps)}
+        <span className={busy ? 'run-summary-label is-live' : 'run-summary-label'}>
+          {busy
+            ? thought
+              ? `${labels.thinking}: ${thought}`
+              : labels.working
+            : stopped
+              ? labels.runStepsStopped(steps)
+              : labels.runSteps(steps)}
         </span>
         <span className={`run-summary-caret${open ? ' is-open' : ''}`} aria-hidden="true" />
       </button>
@@ -853,6 +860,26 @@ function RunSummary({
     </div>
   )
 }
+
+/**
+ * What the model is thinking about right now, for the collapsed line of a running run.
+ *
+ * A model can think for minutes before its next step (TopLogic/tl-ai#602 measured almost four on
+ * Claude Opus 5.5), and a line that only says "working" for that long reads as a hang. While the
+ * latest step is thinking, the line shows the start of its newest paragraph instead; the summary
+ * arrives paragraph by paragraph, so the line moves on as the model does. Empty when the latest
+ * step is not thinking or has no text yet.
+ */
+function currentThought(events: ChatMessage[]): string {
+  const last = events[events.length - 1]
+  if (last?.type !== 'thinking') return ''
+  const paragraphs = last.content.split(/\n\s*\n/).map((p) => p.replace(/\*\*/g, '').replace(/\s+/g, ' ').trim())
+  const newest = paragraphs.filter((p) => p.length > 0).pop() ?? ''
+  return newest.length > THOUGHT_CHARS ? `${newest.slice(0, THOUGHT_CHARS).trimEnd()}…` : newest
+}
+
+/** How much of the newest thought the collapsed line shows. */
+const THOUGHT_CHARS = 80
 
 /**
  * What a failed run leaves in the thread, in the place the answer would have taken.

@@ -28,7 +28,8 @@ import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import de.haumacher.msgbuf.json.JsonUtil;
 
 /**
- * Tests how {@link AnthropicRequestBuilder} puts multimodal content on the wire.
+ * Tests how {@link AnthropicRequestBuilder} puts multimodal content and the thinking configuration
+ * on the wire.
  *
  * <p>The Messages API permits {@code text}, {@code image} and {@code document} blocks inside a
  * {@code tool_result}, so an image a tool produced needs no follow-up user message. The same blocks
@@ -146,6 +147,73 @@ public class TestAnthropicRequestBuilder extends TestCase {
 			assertNull("A nested block must not carry its own breakpoint.",
 				asMap(block).get("cache_control"));
 		}
+	}
+
+	/**
+	 * Adaptive thinking asks for the summarized display, so a model whose API default is
+	 * {@code omitted} (Opus 4.7 and later) streams readable thinking instead of empty blocks.
+	 */
+	public void testAdaptiveThinkingAsksForTheSummary() throws Exception {
+		Map<String, Object> request = thinkingRequest("claude-opus-5-5", Map.of("thinking_effort", "high"));
+
+		Map<String, Object> thinking = asMap(request.get("thinking"));
+		assertEquals("adaptive", thinking.get("type"));
+		assertEquals("summarized", thinking.get("display"));
+		assertEquals("high", asMap(request.get("output_config")).get("effort"));
+	}
+
+	/** Budget thinking (Haiku) is left as it was: its display defaults to the summary already. */
+	public void testBudgetThinkingIsUnchanged() throws Exception {
+		Map<String, Object> request =
+			thinkingRequest("claude-haiku-4-5-20251001", Map.of("thinking_effort", "medium"));
+
+		Map<String, Object> thinking = asMap(request.get("thinking"));
+		assertEquals("enabled", thinking.get("type"));
+		assertNull(thinking.get("display"));
+		assertEquals(Long.valueOf(2048), Long.valueOf(((Number) thinking.get("budget_tokens")).longValue()));
+	}
+
+	/**
+	 * Without an effort, a model that thinks anyway still asks for the summary - the case of an agent
+	 * with no configured effort, in which Opus 5.5 thought for minutes with nothing on screen. The
+	 * effort is left to the API default.
+	 */
+	public void testNoEffortStillShowsThinkingOfAModelThatThinksUnasked() throws Exception {
+		Map<String, Object> request = thinkingRequest("claude-opus-5-5", Map.of());
+
+		Map<String, Object> thinking = asMap(request.get("thinking"));
+		assertEquals("adaptive", thinking.get("type"));
+		assertEquals("summarized", thinking.get("display"));
+		assertNull(request.get("output_config"));
+	}
+
+	/** Without an effort, a model that only thinks when asked is not switched to thinking. */
+	public void testNoEffortLeavesOtherModelsWithoutThinking() throws Exception {
+		Map<String, Object> request = thinkingRequest("claude-sonnet-4-6", Map.of());
+
+		assertNull(request.get("thinking"));
+		assertNull(request.get("output_config"));
+	}
+
+	/** Which model names count as thinking without being asked. */
+	public void testThinksUnasked() {
+		for (String model : List.of("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-sonnet-5",
+			"claude-fable-5", "claude-fable-5-1", "claude-mythos-5-1", "anthropic.claude-opus-5-5")) {
+			assertTrue(model, AnthropicRequestBuilder.thinksUnasked(model));
+		}
+		for (String model : List.of("claude-opus-4-8", "claude-opus-4-7", "claude-opus-4-6", "claude-sonnet-4-6",
+			"claude-opus-4-5-20251101", "claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001")) {
+			assertFalse(model, AnthropicRequestBuilder.thinksUnasked(model));
+		}
+	}
+
+	private static Map<String, Object> thinkingRequest(String model, Map<String, Object> options)
+			throws Exception {
+		UserMessage user = new UserMessage(UUID.randomUUID().toString(), Instant.now(),
+			List.of(new TextContent("Think about it.")));
+		String json = AnthropicRequestBuilder.buildRequestJson(new ProviderRequest(
+			model, "You are helpful.", List.<Message> of(user), List.of(), 4096, options));
+		return asMap(JsonUtil.parseJsonValue(json));
 	}
 
 	private static String buildJson(List<ContentPart> toolResultContent) throws Exception {

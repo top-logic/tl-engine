@@ -4611,6 +4611,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+  max-width: 100%;
   padding: 0;
   border: 0;
   background: transparent;
@@ -4622,6 +4623,14 @@
 
 .run-summary-head:hover {
   color: var(--text-primary);
+}
+
+/* A running run's line can carry the model's current thought: one line, cut where the column ends. */
+.run-summary-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .run-summary-body {

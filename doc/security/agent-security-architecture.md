@@ -1071,6 +1071,45 @@ The clerk sees their customers and a clear denial for the write. Neither layer a
 RBAC alone would return every customer; ABAC alone would let the clerk run arbitrary TL-Script and
 merely fail per object, leaking type structure and cardinality in the process.
 
+#### 3.3.5 Writing one object: the object tools · **implemented** (#625)
+
+`updateObject`, `createObject` and `deleteObject` (`ObjectEditTool`, group `data.write`, mode
+`DATA_WRITE`) are the write path for one object the agent knows by its id. They are core tools of
+`TL_SingleAgent`, so they reach exactly the accounts whose roles hold `data.write` on the security root
+(L1), and the approval prompt of a `DATA_WRITE` tool comes on top. What they add below L1:
+
+| Question | Where it is asked |
+|---|---|
+| May the account read the object it names? | `TidResolver` - an object it may not read is "not found", like one that does not exist; also every object a reference value names |
+| May it change this object, and **each** attribute in the call? | `canWrite(obj)` and `canWrite(obj, attr)` for every attribute, all before the first write; the refusal names the withheld attributes |
+| May it create this type here? | `canCreate(type, container)`, and `canCreate(container, composition)` when the object is created inside another one |
+| May it delete this object **and everything it contains**? | `canDelete` for the object and, by type, for every object of its composition subtree; then the engine's own `DeleteChecker` veto |
+| Do the values satisfy the model? | the checks `ModelService` vetoes a commit with (mandatory, `TLSize`, `TLRange`, error-level `TLConstraints`), asked on the changed object; a violation undoes the call's own write |
+| What does the answer show? | only attributes the account may read; a written attribute it may not read is reported as written, without its value |
+
+**Every refusal happens before anything is written** (or after the call undid its own write), so it is
+reported as a failed tool call that the turn does not roll back - other permitted changes of the same
+turn survive. The pre-commit guard (L4) still asks the same questions for whatever the turn changed.
+
+**Never in a system context.** `ModelAccessRights` grants every right when the thread runs in a system
+context (`ThreadContext.isSystemContext()`), whatever account the run names, and the knowledge base
+records the context's id as the author of the commit. So the tools refuse to run there instead of
+writing something nobody checked and nobody authored. In a chat the tools run in the user's sub-session,
+and the revision names the user (`SecDemoObjectEditTest` asserts the author). A scheduled `AgentTask`
+binds its configured account to its sub-session, which replaces the system context id with the
+account's, so it acts - and is recorded - as that account, bounded by the `<background-allowlist>`.
+
+**Two engine facts the tools inherit rather than decide:**
+
+- **A new object's attributes are not checked one by one.** The engine allows every operation on an
+  object that is not committed yet, attribute grants included, because the roles that decide them are
+  derived at commit time. `createObject` checks the creation; the initial values are checked as the
+  application's own create forms check them. A `<part>` Write grant restricts *changing* an attribute.
+- **Contained objects take their rights from their container** unless the application configures an
+  access parent or a role source for them: deleting a session of an event is writing the event. A
+  `deleteObject` that also removes contained objects is therefore within the rights of an account that
+  may write the container, exactly as the delete command of the UI is.
+
 ### 3.4 L3 - Context and result pre-filtering
 
 **Pre-filter, never post-hoc redact.** Once a value is in the conversation it has been streamed to the

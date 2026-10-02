@@ -524,6 +524,22 @@ loses **both**. As `dora`, the same unchecked write is refused too.
 > the KnowledgeBase, which a KB rollback cannot undo. There is no run in which the guard is a no-op: it
 > runs for every turn that opened a transaction.
 
+### 5.6a The object tools (#625)
+
+`updateObject`, `createObject` and `deleteObject` ask the model rights themselves, per object and per
+attribute, before they write; L4 then asks again. `SecDemoObjectEditTest` runs each through a real agent
+turn as a persona:
+
+| Persona | Call | Expected |
+|---|---|---|
+| `anna` | change the title of an **Alpha** ticket | changed; the revision's author is Anna |
+| `anna` | change the title of a **Beta** ticket | refused, nothing written, no rollback needed |
+| `anna` | set `partners` of **Alpha** | refused, naming `'partners'`: the `<part name="pm:Project#partners">` grant names no role, so nobody but an administrator writes who partners on a project - a partner who could would hand the scope role to anybody |
+| `anna` | create a ticket in **Alpha** / in **Beta** | created / refused |
+| `anna` | delete an Alpha ticket | refused: `pm:Ticket` has no Delete grant |
+| `ben` | any of the three | not offered (no `data.write`), and refused by the model rights when handed the tool anyway |
+| `anna`, unattended | any of the three | not offered: the background allowlist holds no `data.write` |
+
 ### 5.7 Two closed doors
 
 | # | Behaviour | Where | You should see |

@@ -85,12 +85,14 @@ public interface SelectableBoxOperations extends DecorationOperations, SVGClickH
 		if (self().isSelected()) {
 			if (event.isCtrlKey()) {
 				// Toggle
+				diagram.setIncrementalSelection(true);
 				diagram.getSelection().remove(self());
 				self().setSelected(false);
 			} else if (event.isShiftKey()) {
 				// Ignore.
 			} else {
 				// Make unique.
+				diagram.setIncrementalSelection(false);
 				for (SelectableBox selected : diagram.getSelection()) {
 					if (selected == self()) {
 						continue;
@@ -101,9 +103,11 @@ public interface SelectableBoxOperations extends DecorationOperations, SVGClickH
 			}
 		} else {
 			if (diagram.isMultiSelect() && (event.isShiftKey() || event.isCtrlKey())) {
+				diagram.setIncrementalSelection(true);
 				diagram.getSelection().add(self());
 			} else {
 				// Make unique.
+				diagram.setIncrementalSelection(false);
 				for (SelectableBox selected : diagram.getSelection()) {
 					if (selected == self()) {
 						continue;

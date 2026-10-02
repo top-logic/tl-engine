@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <!--
-	The scenario set of the pm fixture: five business tasks, each with a reference solution and
-	expectations on the data they must leave behind.
+	The scenario set of the pm fixture: seven business tasks, each with a reference solution and
+	expectations on what they must leave behind - five on the data, two on what the user is shown.
 
-	Every scenario is graded on the FINAL STATE of the knowledge base, never on what the transcript
-	says. A transcript records what a model claimed; only the data records what happened, and a model
-	that reports success it did not achieve is exactly the failure an eval exists to find.
+	Every scenario is graded on the FINAL STATE, never on what the transcript says: the knowledge
+	base for a task that writes, and for a "show me" task the presentation its present call produced,
+	re-evaluated by the grader. A transcript records what a model claimed; only the data records what
+	happened, and a model that reports success it did not achieve is exactly the failure an eval
+	exists to find.
 
 	The seeded state every scenario starts from is PmFixture, restored before every single run:
 
@@ -16,7 +18,7 @@
 	so there are 2 projects and 3 tickets, and every count below is a count over that.
 
 	There is deliberately no scenario whose whole answer is a sentence ("how many tickets does Alpha
-	have?"). The minimal version has two graders, both about the database, and a question answered in
+	have?"). The graders are about the database and about what was presented, and a question answered in
 	prose can only be graded by an answer matcher or a judge model - both follow-ups. A scenario that
 	asserted merely "it read something and wrote nothing" would be green for a model that read the
 	wrong thing, which is worse than not having it.
@@ -157,6 +159,56 @@ finished, it did not write, and the tickets are still there.]]></oracle>
 				</kb-query>
 				<tool-sequence label="did-not-reach-for-the-write-tool"
 					forbidden="script-exec.executeTLScript"
+				/>
+			</expectations>
+		</scenario>
+		<!--
+			"Show me X" (#616): a task that changes no data, so what is graded is what the run SHOWED -
+			the objects of its last present call and how it showed them - and what it cost. The bar of
+			two calls is the point: the run this replaces listed the instances, fetched every one and
+			wrote a Markdown table, ten calls for one screen.
+		-->
+		<scenario id="show-tickets-as-table">
+			<prompt>Show me all tickets as a table.</prompt>
+			<oracle><![CDATA[One present call with query all(`pm:Ticket`) and as=TABLE - the
+system prompt names the type, so nothing has to be read first - then one sentence saying what the
+user sees. The table holds exactly the three tickets.
+
+The near-miss this catches is the old route: listInstances, getInstance for the tickets, then
+present with the ids. It shows the same table and fails the two-call bar.]]></oracle>
+			<expectations>
+				<presented label="exactly-the-tickets-as-a-table"
+					as="TABLE"
+				>
+					<expression><![CDATA[rows -> values -> $rows.size() == all(`pm:Ticket`).size() && $rows.containsAll(all(`pm:Ticket`))]]></expression>
+					<expected>true</expected>
+				</presented>
+				<tool-sequence label="in-at-most-two-calls"
+					max-calls="2"
+					required="present.present"
+				/>
+			</expectations>
+		</scenario>
+
+		<scenario id="tickets-per-project-as-chart">
+			<prompt>Show the number of tickets per project as a bar chart.</prompt>
+			<oracle><![CDATA[One present call with query all(`pm:Project`), as=CHART and chart
+{kind: BAR, label: p -> $p.get(`pm:Project#name`), value: p -> $p.get(`pm:Project#tickets`).size()}.
+The chart has one bar per project: Alpha 2, Beta 1.
+
+The values are graded, not only the bars: a chart of the right projects drawing something other
+than their ticket count fails "the-bars-are-the-ticket-counts".]]></oracle>
+			<expectations>
+				<presented label="the-bars-are-the-ticket-counts"
+					as="CHART"
+					chart-kind="BAR"
+				>
+					<expression><![CDATA[rows -> values -> $rows.size() == 2 && $values.sum() == 3 && $values.max() == 2]]></expression>
+					<expected>true</expected>
+				</presented>
+				<tool-sequence label="in-at-most-two-calls"
+					max-calls="2"
+					required="present.present"
 				/>
 			</expectations>
 		</scenario>

@@ -1,7 +1,7 @@
 package com.top_logic.tl.ai.core.tools.model.messages;
 
 /**
- * Paginated list of instance TIDs.
+ * Paginated list of instances.
  */
 public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
@@ -39,6 +39,9 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 	/** @see #isHasMore() */
 	public static final String HAS_MORE__PROP = "hasMore";
 
+	/** @see #getHint() */
+	public static final String HINT__PROP = "hint";
+
 	private String _module = "";
 
 	private String _type = "";
@@ -49,11 +52,13 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 
 	private int _offset = 0;
 
-	private final java.util.List<String> _instances = new java.util.ArrayList<>();
+	private final java.util.List<com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry> _instances = new java.util.ArrayList<>();
 
 	private String _nextCursor = "";
 
 	private boolean _hasMore = false;
+
+	private String _hint = "";
 
 	/**
 	 * Creates a {@link InstanceListResponse} instance.
@@ -165,25 +170,23 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 	}
 
 	/**
-	 * The instances of this page, one entry each, written as `label [id:TID]`.
-	 *
-	 * The identifier is what a later call names the object by ({@code getInstance}, cite, a host's
-	 * present tool); the label is what tells two of them apart. See {@code ReadFilter.labelled}.
+	 * The instances of this page.
 	 */
-	public final java.util.List<String> getInstances() {
+	public final java.util.List<com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry> getInstances() {
 		return _instances;
 	}
 
 	/**
 	 * @see #getInstances()
 	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.InstanceListResponse setInstances(java.util.List<? extends String> value) {
+	public com.top_logic.tl.ai.core.tools.model.messages.InstanceListResponse setInstances(java.util.List<? extends com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry> value) {
 		internalSetInstances(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getInstances()} without chain call utility. */
-	protected final void internalSetInstances(java.util.List<? extends String> value) {
+	protected final void internalSetInstances(java.util.List<? extends com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'instances' cannot be null.");
 		_instances.clear();
 		_instances.addAll(value);
 	}
@@ -191,20 +194,20 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 	/**
 	 * Adds a value to the {@link #getInstances()} list.
 	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.InstanceListResponse addInstance(String value) {
+	public com.top_logic.tl.ai.core.tools.model.messages.InstanceListResponse addInstance(com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry value) {
 		internalAddInstance(value);
 		return this;
 	}
 
-	/** Implementation of {@link #addInstance(String)} without chain call utility. */
-	protected final void internalAddInstance(String value) {
+	/** Implementation of {@link #addInstance(com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry)} without chain call utility. */
+	protected final void internalAddInstance(com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry value) {
 		_instances.add(value);
 	}
 
 	/**
 	 * Removes a value from the {@link #getInstances()} list.
 	 */
-	public final void removeInstance(String value) {
+	public final void removeInstance(com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry value) {
 		_instances.remove(value);
 	}
 
@@ -248,6 +251,27 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 		_hasMore = value;
 	}
 
+	/**
+	 * Set when there are more instances than one page: says to select, sort or aggregate with a
+	 * query rather than paging through all of them.
+	 */
+	public final String getHint() {
+		return _hint;
+	}
+
+	/**
+	 * @see #getHint()
+	 */
+	public com.top_logic.tl.ai.core.tools.model.messages.InstanceListResponse setHint(String value) {
+		internalSetHint(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getHint()} without chain call utility. */
+	protected final void internalSetHint(String value) {
+		_hint = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return INSTANCE_LIST_RESPONSE__TYPE;
@@ -263,7 +287,8 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 			OFFSET__PROP, 
 			INSTANCES__PROP, 
 			NEXT_CURSOR__PROP, 
-			HAS_MORE__PROP);
+			HAS_MORE__PROP, 
+			HINT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -296,6 +321,7 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 			case INSTANCES__PROP: return getInstances();
 			case NEXT_CURSOR__PROP: return getNextCursor();
 			case HAS_MORE__PROP: return isHasMore();
+			case HINT__PROP: return getHint();
 			default: return null;
 		}
 	}
@@ -308,9 +334,10 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 			case TOTAL_COUNT__PROP: internalSetTotalCount((int) value); break;
 			case LIMIT__PROP: internalSetLimit((int) value); break;
 			case OFFSET__PROP: internalSetOffset((int) value); break;
-			case INSTANCES__PROP: internalSetInstances(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
+			case INSTANCES__PROP: internalSetInstances(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry.class, value)); break;
 			case NEXT_CURSOR__PROP: internalSetNextCursor((String) value); break;
 			case HAS_MORE__PROP: internalSetHasMore((boolean) value); break;
+			case HINT__PROP: internalSetHint((String) value); break;
 		}
 	}
 
@@ -341,14 +368,16 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 		out.value(getOffset());
 		out.name(INSTANCES__PROP);
 		out.beginArray();
-		for (String x : getInstances()) {
-			out.value(x);
+		for (com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry x : getInstances()) {
+			x.writeTo(out);
 		}
 		out.endArray();
 		out.name(NEXT_CURSOR__PROP);
 		out.value(getNextCursor());
 		out.name(HAS_MORE__PROP);
 		out.value(isHasMore());
+		out.name(HINT__PROP);
+		out.value(getHint());
 	}
 
 	@Override
@@ -360,10 +389,10 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 			case LIMIT__PROP: setLimit(in.nextInt()); break;
 			case OFFSET__PROP: setOffset(in.nextInt()); break;
 			case INSTANCES__PROP: {
-				java.util.List<String> newValue = new java.util.ArrayList<>();
+				java.util.List<com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					newValue.add(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in));
+					newValue.add(com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry.readInstanceEntry(in));
 				}
 				in.endArray();
 				setInstances(newValue);
@@ -371,6 +400,7 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 			break;
 			case NEXT_CURSOR__PROP: setNextCursor(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case HAS_MORE__PROP: setHasMore(in.nextBoolean()); break;
+			case HINT__PROP: setHint(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

@@ -56,6 +56,9 @@ public interface ToolSequence extends Expectation {
 	/** @see #getForbidden() */
 	String FORBIDDEN = "forbidden";
 
+	/** @see #getMaxCalls() */
+	String MAX_CALLS = "max-calls";
+
 	/**
 	 * Tool names that must all appear among the run's tool calls, in any order.
 	 *
@@ -84,4 +87,18 @@ public interface ToolSequence extends Expectation {
 	@Name(FORBIDDEN)
 	@Format(CommaSeparatedStrings.class)
 	List<String> getForbidden();
+
+	/**
+	 * How many tool calls the whole run may make; 0 for no bound.
+	 *
+	 * <p>
+	 * For a task whose cost is the finding: "show me all tickets as a table" done right is one or two
+	 * calls (#616), and a run that lists, fetches every row and only then shows them reached the same
+	 * screen at five times the price. Every call counts, the required ones included.
+	 * </p>
+	 *
+	 * @see #MAX_CALLS
+	 */
+	@Name(MAX_CALLS)
+	int getMaxCalls();
 }

@@ -80,3 +80,52 @@ export function railBadgeTotal(
 export function paneIsOpen(sideOpen: boolean, paneContent: unknown): boolean {
   return Boolean(sideOpen && paneContent != null)
 }
+
+/** How a step of the pane's history shows its objects. */
+export type PaneStepKind = 'table' | 'chart' | 'form'
+
+/** One step of the pane's history, as `PresentationPane` serialized it. */
+export interface PaneStep {
+  /** Unique within the rail's life; what keeps a step's mounted control where it is. */
+  id: number
+  kind: PaneStepKind
+  /** Already localised: the object's label, the agent's title, or the type and the count. */
+  title: string
+  /** The child control descriptor of the step. */
+  control: unknown
+}
+
+/**
+ * Reads the pane's history, bottom first. The last step is the one shown; an empty history is a
+ * closed pane.
+ */
+export function readPaneSteps(state: Record<string, unknown>): PaneStep[] {
+  const raw = state.paneSteps
+  if (!Array.isArray(raw)) return []
+  const steps: PaneStep[] = []
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') continue
+    const row = entry as Record<string, unknown>
+    if (typeof row.id !== 'number' || row.control == null) continue
+    const kind = row.kind === 'chart' || row.kind === 'form' ? row.kind : 'table'
+    steps.push({
+      id: row.id,
+      kind,
+      title: typeof row.title === 'string' ? row.title : '',
+      control: row.control,
+    })
+  }
+  return steps
+}
+
+/** The strip icon of a pane step, as an encoded ThemeImage. */
+export function paneStepIcon(kind: PaneStepKind): string {
+  switch (kind) {
+    case 'chart':
+      return 'css:bi bi-bar-chart-line'
+    case 'form':
+      return 'css:bi bi-card-text'
+    default:
+      return 'css:bi bi-table'
+  }
+}

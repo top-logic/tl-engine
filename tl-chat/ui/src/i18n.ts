@@ -270,6 +270,8 @@ const EN = {
   /** A run that ended before it finished - cancelled, or cut off by a restart (#598). */
   runStepsStopped: (count: number) => (count === 1 ? 'Stopped after 1 step' : `Stopped after ${count} steps`),
   paneClose: 'Close',
+  paneCollapse: 'Fold the pane away',
+  paneExpand: 'Show the pane again',
 }
 
 type Bundle = typeof EN
@@ -508,6 +510,8 @@ const DE: Bundle = {
   runSteps: (count: number) => (count === 1 ? 'In 1 Schritt erledigt' : `In ${count} Schritten erledigt`),
   runStepsStopped: (count: number) => (count === 1 ? 'Nach 1 Schritt beendet' : `Nach ${count} Schritten beendet`),
   paneClose: 'Schließen',
+  paneCollapse: 'Bereich einklappen',
+  paneExpand: 'Bereich wieder anzeigen',
 }
 
 const BUNDLES: Record<Language, Bundle> = { en: EN, de: DE }

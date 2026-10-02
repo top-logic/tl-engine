@@ -119,7 +119,7 @@ public class EvalRunner {
 		List<String> toolCalls = observation.toolCalls();
 		List<Verdict> verdicts = new ArrayList<>();
 		verdicts.add(completionVerdict(stopReason, error));
-		verdicts.addAll(Graders.grade(scenario, toolCalls));
+		verdicts.addAll(Graders.grade(scenario, toolCalls, observation.calls()));
 		TokenUsage usage = observation.usage();
 		boolean passed = verdicts.stream().allMatch(Verdict::passed);
 		RunOutcome outcome = passed ? RunOutcome.PASS : (error != null ? RunOutcome.ERROR : RunOutcome.FAIL);

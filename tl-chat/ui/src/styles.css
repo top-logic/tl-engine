@@ -762,6 +762,66 @@
 }
 
 /*
+ * The pane's history (#616): every step stays mounted, one above the other, and only the top one
+ * is shown. Each step is its own scroller and the ones below are hidden with `visibility`, not
+ * `display: none`, so a step keeps its layout - and with it its scroll position - while another is
+ * on top, and "back" shows it exactly as it was left. `inert` keeps them out of the tab order.
+ */
+.tl-chat-rail .side-pane-body.has-steps {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+}
+
+.tl-chat-rail .pane-step {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  padding: 0.75rem;
+}
+
+.tl-chat-rail .pane-step.is-stashed {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* A table scrolls itself, with its header in place; the step only gives it the height. */
+.tl-chat-rail .pane-step.is-table {
+  overflow: hidden;
+  padding: 0;
+}
+
+.tl-chat-rail .pane-step.is-table > *,
+.tl-chat-rail .pane-step.is-chart > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.tl-chat-rail .pane-step.is-chart {
+  padding: 1rem;
+}
+
+/*
+ * A chart is read at a glance: as high as it needs to be for its bars to compare, not as high as the
+ * pane happens to be - a 900 px bar says no more than a 400 px one, and the eye has to travel it.
+ */
+.tl-chat-rail .pane-step.is-chart > * {
+  flex: 0 0 auto;
+  height: clamp(16rem, 60%, 26rem);
+}
+
+/* The folded pane's way back: the strip's first icon, set apart from the sections below it. */
+.tl-chat-rail .side-strip-item.is-pane {
+  color: var(--button-primary);
+}
+
+.tl-chat-rail .side-strip-item.is-pane + .side-strip-item {
+  margin-top: 0.5rem;
+}
+
+/*
  * A section is a card of its own.
  *
  * App's `.side-section` is borderless, and tells its own sections from a host's with a dashed
@@ -4680,7 +4740,8 @@
   stroke-width: 1.4;
 }
 
-.side-pane-close {
+.side-pane-close,
+.side-pane-collapse {
   display: inline-grid;
   place-items: center;
   width: 1.75rem;
@@ -4693,7 +4754,8 @@
   cursor: pointer;
 }
 
-.side-pane-close svg {
+.side-pane-close svg,
+.side-pane-collapse svg {
   width: 0.85rem;
   height: 0.85rem;
   fill: none;
@@ -4701,7 +4763,8 @@
   stroke-width: 1.5;
 }
 
-.side-pane-close:hover {
+.side-pane-close:hover,
+.side-pane-collapse:hover {
   color: var(--text-primary);
 }
 

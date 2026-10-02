@@ -162,7 +162,8 @@ run. See `doc/scheduled-agent.md`.
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (a chat control) and `HttpSession` (`ChatServlet`), keyed by `(sub-session, conversation)`: a window showing a page's chat beside a `<chat-dock>`'s has a `TaskProgressTracker` for each (#502). A caller that names no conversation registers and resolves the window's unnamed one. Published API: `tl-chat-classic` reads a classic window's id here, and `Consulting`'s own control registers here from outside this module.
 - **`ChatViewBinding`** – Once per (sub-session, conversation): tracker, user, and the channels the agent may write there. The split elements (`<chat-conversation>`, `<chat-rail>`, `<chat-dock>`, the rail sections) delegate to it so several controls do not bind the window several times. The conversation is the `chat-id`; it is read as a key of its own because a chat that shared its conversation with nobody would key its layout and its tracker differently - the one-element `<agent-chat>` did, until #487 removed it. The layout preference is the exception: it is read whenever `writeLayoutState` is asked for it, which every chat control does from `onBeforeWrite` - see "where the chat's state lives". It is also where every join is tallied for `ChatJoinLog`.
 - **`AgentViewRefreshService`** – Makes a model-bound element beside the transcript follow a running agent. A run commits from a background thread, and a window only sees model changes when its `GlobalModelEventForwarder` is asked to synthesize them - on a browser command or on the 30 s SSE heartbeat. The service listens on `AgentExecutionStore.ChangeListener`, coalesces a burst of writes (200 ms) and synthesizes per window, in that window's sub-session and **within the window's `Interaction`** (a `ReactControl`'s state map is a plain `HashMap`; the engine's SSE heartbeat synthesizes without it, and this deliberately does not copy that). The engine offers only a blocking `ReactWindowRegistry.beginInteraction()`, so `WindowInteraction` enters it on a thread of its own while the caller waits with a time limit, and calls the work off when the limit passes first - an agent thread must not wait for a browser command that may itself be waiting for the agent. **Coalescing never forgets a change**: a pass takes as long as it takes to enter every registered window and wait for its interaction, and a change that arrives while one is running is carried into the next pass rather than dropped - `PendingRefreshes` is the whole of that rule, and `TestAgentViewRefresh` is what holds it (#497). A window is registered with the account it is logged in as, read where a context is bound, because the pass runs on a scheduler thread that has none. Windows are registered by `ChatViewBinding` while a chat renders, which is a fork: the engine offers no way to enumerate an account's live windows. The same register and the same interaction serve the write direction: `inWindow` runs a caller's action in the window's sub-session within its interaction (after synthesizing, so the window knows the run's objects), and `hasWindow` is what lets a tool tell "this run is headless" from "this page allows nothing". A write waits longer for the interaction than a refresh does (`write-timeout-millis`, 5 s): a refresh that gives up loses nothing, a write has no second chance.
-- **`PresentTool`** – The `present` tool (`com.top_logic.ai.chat.tools`): the agent puts model objects onto a channel of the page it is on, and the page renders them however it likes. Registered from this module's own configuration, so every application that depends on `tl-chat` has the tool; **which** channel it may write is the page's decision (`<chat-conversation present="…">`, deny by default). See "the agent writes a channel" below.
+- **`ChatPresentTool`** – The `present` tool of a chat page (`com.top_logic.ai.chat.tools`), over the base `PresentTool` in tl-ai-core: the agent shows objects - found by a TL-Script query or named by id - as a table, a chart or a form on a channel of the page it is on. Registered from this module's own configuration, so every application that depends on `tl-chat` has the tool; **which** channel it may write is the page's decision (`<chat-conversation present="…">`, deny by default). See "the agent writes a channel" below.
+- **`PresentationPane`** – The pane of a `<chat-rail input="…">`: renders what stands on that channel for any type, and keeps the history "Zurück" walks. See "the rail's pane" below.
 - **`ChatScope` / `ChatScopeElement`** – The `<chat>` container and the ambient value it puts into the child `ViewContext`. An element's conversation is its own `chat-id`, else the enclosing `<chat>`, else `default`.
 - **`ChatJoinLog`** – Per render, which element joined which chat id; logged when the interaction ends, with a WARN for an element that joined nobody while another id has several.
 
@@ -705,12 +706,13 @@ prefix form and no chip list.
 product; the agent picker lives in the **+** menu, which is where it was reachable all along
 (#416). The skill picker itself comes with the skills work.
 
-**Is `ref` resolvable? No - not by the framework.** It is the host application's own id, carried so
-that a host tool can recognise it; tl-ai ships no tool that takes one, and the agent is told so by
-the `<reference>` prompt fragment (`tl-ai-core.conf.config.xml`). **A host must therefore put
-everything the model needs into the element's text**, which is the quoted passage. A host that wants
-the id to mean more gives its agent a tool that accepts it; then the same fragment's "unless a tool
-you have takes such an id" applies.
+**Is `ref` resolvable?** For a model object - what `@` and the `reference`/`quote` channels insert
+from an object - yes (#616): `ref` is the `TypeName:id` every tool reads (`ReadFilter.idOf`) and
+`kind` the qualified type, so the agent answers from label and kind where they suffice and reads the
+object with `getInstance(ref)`, a core tool of Albert, where they do not. The `<reference>` prompt
+fragment (`tl-ai-core.conf.config.xml`) says so. A host that writes an id of its own as text is the
+other case: tl-ai ships no tool that takes it, so **such a host must put everything the model needs
+into the element's text**, or give its agent a tool that accepts that id.
 
 ### What an answer's citations look like
 
@@ -940,15 +942,16 @@ itself to offer:
 
 | | |
 |--|--|
-| The tool | `present(ids, channel)` - `com.top_logic.ai.chat.tools.PresentTool`, registered as `present.present` from `tl-chat.conf.config.xml`, so every host of this module has it. Classified READ / `interaction`: it reads business data and changes page state, not the knowledge base, so there is nothing to approve - and the approval card would sit in the very page it is filling. |
-| The ids | The identifiers tool results carry as `label [id:TID]` (`ReadFilter.withId`, read back by `TidResolver.objectId`). One id puts the object on the channel as itself; several put a `List`. All or nothing - one unreadable id refuses the whole call, because a page showing three of four objects is a page that lies about what the user is looking at. |
-| The rights | Every id resolves through `TidResolver` with the **acting user's** `ModelSecurity`. An object they may not read is refused exactly like one that does not exist. A tool never exceeds its user. |
-| The allow list | **Deny by default.** `ChatConversationControl` resolves each `present="…"` entry and registers it on the `ChatViewBinding` of its (window, chat-id); the tool looks the name up across the bindings of that *window* - which is what a run knows about itself, the chat id being something the tool layer is never told. **So a window's allow list is the union of its chats' lists**: a page and a `<chat-dock>` that each name a channel means a run in either may write both, and a host that needs them kept apart gives them separate windows. A name nobody registered is refused with the list of names that exist. The registration ends with the control, so a view that is gone is not writable. |
+| The tool | `present(query, ids, as, chart, title, channel)` - `PresentTool` in tl-ai-core holds the logic, `com.top_logic.ai.chat.tools.ChatPresentTool` delivers to the page; registered as `present.present` from `tl-chat.conf.config.xml`, so every host of this module has it. Classified READ / `interaction`: it reads business data and changes page state, not the knowledge base, so there is nothing to approve - and the approval card would sit in the very page it is filling. |
+| What | A TL-Script `query` evaluating to the objects - "show me all events as a table" is `present(query: all(`demo.events:Event`), as: TABLE)`, one call, with no listing and fetching first (#616) - or the `ids` of objects the model already holds. `as` is `TABLE`, `CHART` (with `chart: {kind, label, value}`, two TL-Script functions of one object) or `FORM`; omitted, one object is a form and several are a table. The answer lists the objects as `label [id:TID]` (a chart's as `label: value [id:TID]`), so the model can talk about them without reading them again. |
+| The value | A form's object stands on the channel as itself - what a `<form>`, a subject or a context fact reading "the open object" understands. A table or a chart stands there as the `Presentation`, which a `<chat-rail>` renders and `ChatSelection` states to the agent. |
+| The rights | A query is evaluated without being able to modify anything, and its objects are reduced to the ones the **acting user** may read (`ReadFilter`), the way `filterSecurity` would. Every id resolves through `TidResolver` with the same rights, all or nothing: an object they may not read is refused exactly like one that does not exist. A chart's functions are tried on every object before anything is shown, so a failing function is the model's error to correct, not an empty chart. |
+| The allow list | **Deny by default.** `ChatConversationControl` resolves each `present="…"` entry and registers it on the `ChatViewBinding` of its (window, chat-id); the tool looks the name up across the bindings of that *window* - which is what a run knows about itself, the chat id being something the tool layer is never told. **So a window's allow list is the union of its chats' lists.** A window that offers exactly one channel is written without the model naming it; one that offers several makes the model choose and names them. The registration ends with the control, so a view that is gone is not writable. |
 | The window | The value is written in the window's sub-session, **within its interaction**, through `AgentViewRefreshService.inWindow` - a `ReactControl`'s state map is a plain `HashMap`. A run with no window (headless, TL-Script, the scheduler) says "no page is attached" and does nothing; that is a fact about the run, and is deliberately a different sentence from "this page allows nothing". |
 
-Which channel a host names is the whole configuration surface: the agent points at data, and what
-that data *looks like* is whatever element reads that channel. `TestPresentTool` drives the real
-path - a registered window, a registered channel, a listener standing in for the page.
+`TestPresentTool` drives the real path - a registered window, a registered channel, a listener
+standing in for the page. The eval has the same tool without a page (`EvalPresentTool`), and grades
+what a run showed (`<presented>`, tl-ai-eval).
 
 #### The draft as a channel (#440)
 
@@ -1091,8 +1094,8 @@ An application configures this element in the design view. Its options fall into
   mention), optional `label`/`text` expressions, `observed-types`, `limit`. Same skill as
   `<data-list>`'s `rows`; the control compiles them with `QueryExecutor`, pushes a bounded candidate
   set shaped as the browser's `ReferenceCandidate`, and the existing `@` picker filters it client-side.
-  A `<mention>` wins over `reference-source`. Each mention carries the object's stable id; the framework
-  ships no tool that resolves it, so a host that wants the id to mean more gives its agent such a tool
+  A `<mention>` wins over `reference-source`. Each mention carries the object's `TypeName:id`, which
+  `getInstance` resolves; a host that wants an id of its own to mean more gives its agent such a tool
   (see the `<reference>` prompt fragment). The nested `<context>` and `<prompts>` bindings are the
   same skill again - see below.
 
@@ -1310,14 +1313,6 @@ the pane's chrome, and every section's body is a view element the application co
         <label><en>Invoices</en><de>Rechnungen</de></label>
         <data-list selection="paneObject" …/>
     </section>
-    <pane><form input="paneInvoice"/></pane>
-    <list-pane>
-        <table types="my.module:Invoice" selection="paneObject">
-            <columns><column attribute="date"/><column attribute="description"/>…</columns>
-            <inputs><input channel="paneInvoices"/></inputs>
-            <rows>shown -> $shown</rows>
-        </table>
-    </list-pane>
 </chat-rail>
 ```
 
@@ -1328,35 +1323,44 @@ produced or a live view of its browser without this element learning about any o
 `registerRailSection` is gone, replaced by nesting). `@` sources, `+` menu items, citation renderers
 and message actions are still registered from TypeScript and referenced by name from XML.
 
-The `input` channel is the rail's second face: while it holds something the pane replaces the
-section column, with the value available to the element inside over the same channel; closing the
-pane writes `null` back. **One** object shows the `<pane>`, **several** show the `<list-pane>` - a
-record is a form and a set of records is a list, and no one element renders both (`<form>` resolves
-its input to one object). A rail that configured only one of the two uses it for whatever stands
-there. The pane's title is the object's label, or the count for a set.
+#### The rail's pane (#616)
 
-**Make the `<list-pane>` a `<table>`, not a list of labels** (Issue #493). The set that lands there
-is what the agent `present`ed, and the answer beside it says what those objects *are* - so a pane
-that only repeats their labels says less about them than the transcript does. Two things the
-element needs, and both are about *when* the pane is built:
+The `input` channel is the rail's second face: while it holds something, the pane replaces the
+section column. **Nothing about it is configured but the channel** - `PresentationPane` renders any
+type:
 
-- **Name the row type** (`types=`) or write explicit `<column>`s. `<table>` resolves its columns
-  once, when the control is built, from `types` or else from the rows present at that moment - and
-  the rail builds both pane children **up front**, while the channel is still empty, so a `<table>`
-  naming neither fails at page build with *"A `<table>` requires either explicit `<column>`s or a
-  resolvable row type to derive them from"*. Naming the type is also what gives the columns their
-  model labels and offers the type's remaining attributes in the column selection.
-- **Name a `selection` channel** - the pane's own `input` channel - if a row click should open that
-  object: one object on that channel is what switches the pane to the `<pane>` beside it. The
-  drill-down is one-way; closing the pane returns to the sections, not to the table.
+| On the channel | The pane shows |
+|--|--|
+| one object | its form: every attribute not hidden from display, inherited ones first (so `name` leads), each composition as a `<composition-table>` below the fields - the engine's `<field>` prints a composition as text |
+| several objects | a `<table>` typed to their most specific common type: the type's `<main-properties>`, or else up to six single-valued attributes that are not long text; the rest of the type is offered in the column selection. One personalization per type (`chat-pane:<type>`), so the columns a user picked for events are those of the next table of events |
+| a `Presentation` (what `present` writes) | the table, chart (the engine's React `<chart>`, `tl-layout-react-chartjs`) or form it names, titled with the agent's `title` |
 
-A pane whose objects are **not** of one type has no table to build: keep the `<data-list>` there,
-which renders any object by its label. Every child stays mounted - a collapsed section and an unopened pane are
-hidden, not dropped - so a section keeps reporting its badge while the rail is closed, which is
-exactly when the badge matters. The composed rail has no workspace grid to spread a sheet over, so
-`App`'s 1280 px sheet does not apply to it; below its own `drawer-below` host width it opens as a
-drawer over the conversation instead - see "a rail in a narrow host". Two rails on one `chat-id` are
-not supported: the open state and the collapsed set are one per conversation.
+Before #616 the application wired the pane per type - a `<pane><form>` and a `<list-pane><table>`
+over its own main type - and every other type the agent presented showed empty cells. Those two
+children are gone; a host that had them deletes them.
+
+**History.** Every value that reaches the channel is a step on top of the ones before, and so is a
+row clicked in a table or a bar in a chart, which opens that object's form. "Zurück" drops the top
+step and writes the value of the one below back onto the channel, so whatever else reads it - a
+scoped chat list, a context fact - sees what the user sees. A value equal to the top step's is not
+a new step. At most 20 steps; the oldest goes first. Closing the pane (the cross) empties the
+channel, and with it the history.
+
+**Every step stays mounted.** The browser keeps all steps in the DOM, the top one shown and the ones
+below `visibility: hidden` and `inert`, each its own scroller - so the table "Zurück" returns to
+has its data, its sort, its filter and its scroll position, and no agent call is involved. A chart
+is recomputed from its objects when the user returns to it.
+
+**Folding.** The pane's `»` folds it away with its content kept; the strip's first icon (the step's
+kind: table, chart or form) brings it back. A rail without a strip still shows that icon while the
+pane holds something. Something new arriving - the agent presenting, a row picked in a section -
+shows itself even while folded. In a drawer (narrow host), Escape and the scrim fold the pane rather
+than empty it.
+
+The composed rail has no workspace grid to spread a sheet over, so `App`'s 1280 px sheet does not
+apply to it; below its own `drawer-below` host width it opens as a drawer over the conversation
+instead - see "a rail in a narrow host". Two rails on one `chat-id` are not supported: the open
+state and the collapsed set are one per conversation.
 
 #### A rail in a narrow host (#565)
 

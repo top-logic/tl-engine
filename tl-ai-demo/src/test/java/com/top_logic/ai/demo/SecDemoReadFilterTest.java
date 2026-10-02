@@ -6,6 +6,7 @@
 package com.top_logic.ai.demo;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -308,7 +309,7 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 	}
 
 	private String getInstance(String login, String tid) {
-		return callTool(login, GET_TOOL, Map.of("tid", tid));
+		return callTool(login, GET_TOOL, Map.of("tids", List.of(tid)));
 	}
 
 	private String callTool(String login, String qualifiedToolName, Map<String, Object> args) {

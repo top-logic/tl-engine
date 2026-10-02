@@ -7,6 +7,7 @@ package com.top_logic.ai.chat.view;
 
 import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 
 /**
  * I18N constants of the chat view elements.
@@ -25,6 +26,15 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @de {0} Objekte
 	 */
 	public static ResKey1 PANE_TITLE_OBJECTS__COUNT;
+
+	/**
+	 * Title of the rail's pane while it shows a table or a chart of objects of one type, and the
+	 * agent named no title of its own.
+	 *
+	 * @en {0} ({1})
+	 * @de {0} ({1})
+	 */
+	public static ResKey2 PANE_TITLE_TYPE__TYPE_COUNT;
 
 	static {
 		initConstants(I18NConstants.class);

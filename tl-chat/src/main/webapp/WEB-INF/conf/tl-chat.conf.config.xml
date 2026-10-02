@@ -29,7 +29,7 @@
 				<tool-factories>
 					<factory name="present">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
-							tool-class="com.top_logic.ai.chat.tools.PresentTool"
+							tool-class="com.top_logic.ai.chat.tools.ChatPresentTool"
 						/>
 					</factory>
 				</tool-factories>

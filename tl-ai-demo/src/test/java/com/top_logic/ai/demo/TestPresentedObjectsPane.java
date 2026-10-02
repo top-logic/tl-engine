@@ -5,10 +5,8 @@
  */
 package com.top_logic.ai.demo;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -16,35 +14,27 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 
+import com.top_logic.ai.chat.view.ChatConversationElement;
 import com.top_logic.ai.chat.view.ChatRailElement;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
-import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.element.FormElement;
-import com.top_logic.layout.view.element.TableElement;
-import com.top_logic.layout.view.table.AttributeColumn;
-import com.top_logic.layout.view.table.ColumnDeclaration;
-import com.top_logic.model.util.TLModelPartRef;
 
 /**
- * What the chat page shows for the objects an agent <code>present</code>s (Issue #493).
+ * What the chat page shows for the objects an agent <code>present</code>s (Issues #493, #616).
  *
  * <p>
- * The agent names objects and the page decides how they look, so what the page decided is a
- * statement this application makes, not an implementation detail: several presented objects are a
- * <b>table</b> of their attributes - the name, start date, free seats and balance of each event - and
- * not a list of labels, which is what the rail's pane used to hold and what made the pane say less about the
- * objects than the answer beside it did.
+ * Since #616 the rail's pane renders whatever stands on its channel - one object as its form, several
+ * as a table with the columns of their type, a chart - for any type. What this application decides
+ * is only <em>which</em> channel: the one its conversation lets the agent write. So the test pins
+ * that the two name the same channel.
  * </p>
  *
  * <p>
@@ -57,58 +47,17 @@ public class TestPresentedObjectsPane extends TestCase {
 	/** The chat page of this demo. */
 	private static final String VIEW = "/WEB-INF/views/tl-ai-demo/chat-grouped.view.xml";
 
-	/** The type the pane is about. */
-	private static final String EVENT = "demo.events:Event";
-
-	/**
-	 * Several presented objects are shown as a table of their attributes.
-	 */
-	public void testCollectionIsATable() throws Exception {
-		TableElement.Config table = presentedTable();
-
-		assertEquals("The columns say how each event is doing.",
-			List.of("name", "startDate", "remainingCapacity", "balance"), attributes(table));
-		assertEquals("Naming the row type gives the columns their model labels - and is what lets"
-			+ " this table be built at all, while the pane channel is still empty.",
-			List.of(EVENT), qualifiedNames(table.getTypes()));
-		assertEquals("The rows are what stands on the channel the <present> tool writes.",
-			List.of("paneItems"), channelNames(table));
-		assertNotNull("The rows are computed from that channel.", table.getRows());
-	}
-
-	/**
-	 * A row click opens that object: the table writes it to the channel the pane's
-	 * {@code <form>} reads, which is what turns the table into the record beside it.
-	 */
-	public void testRowClickOpensTheObject() throws Exception {
-		TableElement.Config table = presentedTable();
-
-		assertNotNull("A row click has to lead somewhere.", table.getSelection());
-		assertEquals("paneObject", table.getSelection().getChannelName());
-
-		ChatRailElement.Config rail = rail();
-		assertEquals("One object is a form.", 1, rail.getPane().size());
-		assertTrue("... and it is the <form> the clicked row lands in.",
-			rail.getPane().get(0) instanceof FormElement.Config);
-	}
-
-	/** The one table the rail's {@code <list-pane>} holds. */
-	private TableElement.Config presentedTable() throws Exception {
-		List<PolymorphicConfiguration<? extends UIElement>> listPane = rail().getListPane();
-
-		assertEquals("The pane for a collection holds exactly one element.", 1, listPane.size());
-		PolymorphicConfiguration<? extends UIElement> content = listPane.get(0);
-		assertTrue("Several presented objects are a <table>, not a list of labels, but were: "
-			+ content.descriptor().getConfigurationInterface().getName(),
-			content instanceof TableElement.Config);
-		return (TableElement.Config) content;
-	}
-
-	/** The {@code <chat-rail>} of the demo's chat page. */
-	private ChatRailElement.Config rail() throws Exception {
-		ChatRailElement.Config rail = search(view(), ChatRailElement.Config.class);
+	/** What the agent presents is what the rail's pane shows. */
+	public void testThePaneShowsWhatTheAgentPresents() throws Exception {
+		ViewElement.Config view = view();
+		ChatRailElement.Config rail = search(view, ChatRailElement.Config.class);
+		ChatConversationElement.Config conversation = search(view, ChatConversationElement.Config.class);
 		assertNotNull("The chat page has a rail.", rail);
-		return rail;
+		assertNotNull("The chat page has a conversation.", conversation);
+
+		assertEquals("paneObject", rail.getInput().getChannelName());
+		assertTrue("The agent may write the channel the pane shows: " + conversation.getPresent(),
+			conversation.getPresent().stream().anyMatch(ref -> "paneObject".equals(ref.getChannelName())));
 	}
 
 	/** The shipped view file, parsed. */
@@ -124,32 +73,6 @@ public class TestPresentedObjectsPane extends TestCase {
 
 		context.checkErrors();
 		return config;
-	}
-
-	private static List<String> attributes(TableElement.Config table) {
-		assertNotNull("The table names its columns.", table.getColumns());
-		List<String> result = new ArrayList<>();
-		for (PolymorphicConfiguration<? extends ColumnDeclaration> column : table.getColumns().getColumns()) {
-			assertTrue("An attribute column: " + column, column instanceof AttributeColumn.Config);
-			result.add(((AttributeColumn.Config) column).getAttribute());
-		}
-		return result;
-	}
-
-	private static List<String> qualifiedNames(List<TLModelPartRef> refs) {
-		List<String> result = new ArrayList<>();
-		for (TLModelPartRef ref : refs) {
-			result.add(ref.qualifiedName());
-		}
-		return result;
-	}
-
-	private static List<String> channelNames(TableElement.Config table) {
-		List<String> result = new ArrayList<>();
-		for (ChannelRef ref : table.getInputs()) {
-			result.add(ref.getChannelName());
-		}
-		return result;
 	}
 
 	/**

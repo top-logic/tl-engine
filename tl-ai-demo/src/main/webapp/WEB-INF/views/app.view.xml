@@ -398,7 +398,7 @@
 						The rail, with its pane - which is what "the pane is visible as well if
 						wanted" means here: picking an event in the "Veranstaltungen" section replaces
 						the section column with its form, inside the dock's panel, exactly as it does
-						on the page.
+						on the page. The pane is the rail's own and renders any type (#616).
 					-->
 					<chat-rail input="dockPaneObject"
 						open="false"
@@ -483,20 +483,6 @@
 									.sort((e -> $e.get(`demo.events:Event#startDate`)).comparator().desc())]]></rows>
 							</data-list>
 						</section>
-						<pane>
-							<form input="dockPaneObject"
-								mode-switch="false"
-								with-inset="true"
-							>
-								<field attribute="name"/>
-								<field attribute="status"/>
-								<field attribute="startDate"/>
-								<field attribute="venue"/>
-								<field attribute="registrationCount"/>
-								<field attribute="remainingCapacity"/>
-								<field attribute="balance"/>
-							</form>
-						</pane>
 					</chat-rail>
 				</chat>
 			</chat-dock>

@@ -22,6 +22,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.SearchBuilder;
+import com.top_logic.model.search.expr.compile.transform.HasSideEffects;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
@@ -347,27 +348,16 @@ public class TLScriptExecutor {
 	 * @return The execution result.
 	 */
 	public static ExecutionResult execute(String script, boolean withCommit, List<?> args) {
-		// First validate the script
-		ValidationResult validation = validate(script);
-		if (!validation.isValid()) {
-			ValidationError error = validation.getError();
-			return ExecutionResult.error(error.getMessage());
+		QueryExecutor executor;
+		try {
+			executor = compile(script);
+		} catch (RuntimeException ex) {
+			return ExecutionResult.error(messageOf(ex));
 		}
 
-		// Build and compile expression
 		try {
-			TLModel model = ModelService.getApplicationModel();
-			SearchExpression searchExpr = SearchBuilder.toSearchExpression(model, validation.getExpr());
-
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			QueryExecutor executor = QueryExecutor.compile(kb, model, searchExpr);
-
-			// Prepare script arguments
-			Args scriptArgs = prepareArgs(args);
-
-			// Execute with transaction control
-			Object result = executeWithTransactionControl(executor, scriptArgs, withCommit, kb);
-
+			Object result = executeWithTransactionControl(executor, prepareArgs(args), withCommit, kb);
 			return ExecutionResult.success(result);
 
 		} catch (I18NRuntimeException ex) {
@@ -379,6 +369,114 @@ public class TLScriptExecutor {
 			// Unexpected execution error
 			return ExecutionResult.error(ex.getMessage());
 		}
+	}
+
+	/**
+	 * Compiles TLScript code, after the checks {@link #validate(String)} makes.
+	 *
+	 * <p>
+	 * For a caller that runs the same expression more than once - a function applied to every row of
+	 * a result - and therefore must not parse it per row. {@link #evaluate(QueryExecutor, Object...)}
+	 * runs what this returns the way {@link #execute(String, boolean, List)} runs a script without a
+	 * commit.
+	 * </p>
+	 *
+	 * @param script
+	 *        The TLScript code.
+	 * @return The compiled expression.
+	 * @throws IllegalArgumentException
+	 *         If the code does not parse, names something the model does not have, or does not
+	 *         compile; the message says which, in the words {@link #validate(String)} uses.
+	 */
+	public static QueryExecutor compile(String script) {
+		return compile(script, false);
+	}
+
+	/**
+	 * Compiles TLScript code that must not change anything: an expression that creates, sets,
+	 * deletes or otherwise has a side effect is refused before it runs.
+	 *
+	 * <p>
+	 * For the tools that read with TL-Script - {@code query}, {@code present} - and are classified
+	 * {@code READ} for it, so they run without asking anybody. Discarding the modifications after
+	 * the fact ({@link #evaluate(QueryExecutor, Object...)}) is not enough for those: a side effect
+	 * outside the knowledge base - a mail, a message - is not discarded. The decision is the
+	 * engine's own ({@link HasSideEffects}), the one its compiler optimizes by.
+	 * </p>
+	 *
+	 * @throws IllegalArgumentException
+	 *         As {@link #compile(String)}, and for an expression with a side effect.
+	 */
+	public static QueryExecutor compileReadOnly(String script) {
+		return compile(script, true);
+	}
+
+	private static QueryExecutor compile(String script, boolean readOnly) {
+		ValidationResult validation = validate(script);
+		if (!validation.isValid()) {
+			throw new IllegalArgumentException(validation.getError().getMessage());
+		}
+		try {
+			TLModel model = ModelService.getApplicationModel();
+			SearchExpression searchExpr = SearchBuilder.toSearchExpression(model, validation.getExpr());
+			if (readOnly && Boolean.TRUE.equals(searchExpr.visit(HasSideEffects.INSTANCE, null))) {
+				throw new IllegalArgumentException("The expression changes data (it creates, sets, deletes"
+					+ " or has another side effect); this tool only reads. Remove the writing part.");
+			}
+			return QueryExecutor.compile(PersistencyLayer.getKnowledgeBase(), model, searchExpr);
+		} catch (I18NRuntimeException ex) {
+			throw new IllegalArgumentException(Resources.getInstance().getString(ex.getErrorKey()), ex);
+		}
+	}
+
+	/**
+	 * Evaluates TLScript code that must not change anything, see {@link #compileReadOnly(String)}.
+	 *
+	 * @return The result; an error result for code that does not compile, has a side effect, or
+	 *         fails while it runs.
+	 */
+	public static ExecutionResult executeReadOnly(String script) {
+		QueryExecutor executor;
+		try {
+			executor = compileReadOnly(script);
+		} catch (RuntimeException ex) {
+			return ExecutionResult.error(messageOf(ex));
+		}
+		try {
+			return ExecutionResult.success(evaluate(executor));
+		} catch (RuntimeException ex) {
+			return ExecutionResult.error(messageOf(ex));
+		}
+	}
+
+	/**
+	 * Runs a {@link #compile(String) compiled} expression on the given arguments, discarding every
+	 * modification it makes.
+	 *
+	 * @param executor
+	 *        The compiled expression; a function receives the arguments, anything else ignores them.
+	 * @param args
+	 *        The arguments.
+	 * @return The result.
+	 * @throws RuntimeException
+	 *         Whatever the expression throws; an {@link I18NRuntimeException} carries the engine's
+	 *         own sentence, see {@link #messageOf(RuntimeException)}.
+	 */
+	public static Object evaluate(QueryExecutor executor, Object... args) {
+		return executeWithTransactionControl(executor, prepareArgs(List.of(args)), false,
+			PersistencyLayer.getKnowledgeBase());
+	}
+
+	/**
+	 * The sentence a failed evaluation is reported with: the engine's own, translated, where it has
+	 * one, otherwise the Java message.
+	 */
+	public static String messageOf(RuntimeException failure) {
+		if (failure instanceof I18NRuntimeException i18n) {
+			return Resources.getInstance().getString(i18n.getErrorKey());
+		}
+		String message = failure.getMessage();
+		return message != null ? message : failure.getClass().getSimpleName();
 	}
 
 	/**

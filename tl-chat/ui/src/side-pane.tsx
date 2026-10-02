@@ -39,6 +39,9 @@ export function SidePane({
   width,
   onWidth,
   onBack,
+  onClose,
+  showBack = true,
+  onCollapse,
   labels,
   mode,
   version,
@@ -47,6 +50,7 @@ export function SidePane({
   placement = 'workspace',
   narrow = false,
   overlay = false,
+  bodyClassName,
   children,
 }: {
   title: string
@@ -55,6 +59,15 @@ export function SidePane({
   width: number
   onWidth: (width: number) => void
   onBack: () => void
+  /** What the close cross does; `onBack` when there is no difference between the two. */
+  onClose?: () => void
+  /**
+   * Whether there is a step to go back to. Without one the back link is left out and the cross is
+   * the way out - a "back" that closes says one thing and does another.
+   */
+  showBack?: boolean
+  /** Folds the pane away with its content kept; no fold button when absent. */
+  onCollapse?: () => void
   labels: Labels
   mode?: PaneMode
   version?: string
@@ -85,6 +98,8 @@ export function SidePane({
    * never grows past the room the host has left of the strip.
    */
   overlay?: boolean
+  /** A class for the body, for a host that lays out what it puts there itself. */
+  bodyClassName?: string
   children: React.ReactNode
 }) {
   const pane = useRef<HTMLDivElement>(null)
@@ -314,9 +329,11 @@ export function SidePane({
         be done with it, and the way out. Everything below it belongs to the host.
       */}
       <header className={`side-pane-bar${mode === 'document' ? ' is-document' : ''}`}>
-        <button type="button" className="side-back" onClick={onBack}>
-          ‹ {backLabel || labels.sideBack}
-        </button>
+        {showBack ? (
+          <button type="button" className="side-back" onClick={onBack}>
+            ‹ {backLabel || labels.sideBack}
+          </button>
+        ) : null}
         <h2 className="side-pane-title" title={title}>
           {title}
         </h2>
@@ -351,13 +368,32 @@ export function SidePane({
             ))}
           </div>
         ) : null}
-        <button type="button" className="side-pane-close" aria-label={labels.paneClose} onClick={onBack}>
+        {onCollapse ? (
+          <button
+            type="button"
+            className="side-pane-collapse"
+            aria-label={labels.paneCollapse}
+            title={labels.paneCollapse}
+            onClick={onCollapse}
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="m3.5 4 4 4-4 4M8.5 4l4 4-4 4" />
+            </svg>
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className="side-pane-close"
+          aria-label={labels.paneClose}
+          title={labels.paneClose}
+          onClick={onClose ?? onBack}
+        >
           <svg viewBox="0 0 16 16" aria-hidden="true">
             <path d="m4 4 8 8M12 4l-8 8" />
           </svg>
         </button>
       </header>
-      <div className="side-pane-body">{children}</div>
+      <div className={bodyClassName ? `side-pane-body ${bodyClassName}` : 'side-pane-body'}>{children}</div>
     </div>
   )
 }

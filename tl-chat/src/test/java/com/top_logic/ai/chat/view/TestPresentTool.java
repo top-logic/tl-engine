@@ -19,8 +19,9 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.history.ChatHistoryService;
-import com.top_logic.ai.chat.tools.PresentTool;
+import com.top_logic.ai.chat.tools.ChatPresentTool;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
@@ -34,6 +35,10 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.tools.present.ChartKind;
+import com.top_logic.tl.ai.core.tools.present.ChartSpec;
+import com.top_logic.tl.ai.core.tools.present.PresentAs;
+import com.top_logic.tl.ai.core.tools.present.Presentation;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.util.TLContextManager;
@@ -51,7 +56,7 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
- * The cases live next to {@link ChatViewBinding} rather than next to {@link PresentTool}, for the
+ * The cases live next to {@link ChatViewBinding} rather than next to {@link ChatPresentTool}, for the
  * reason {@code TestChatViewBinding} does: registering a channel without a live window needs the
  * binding's package-visible {@code bind}.
  * </p>
@@ -61,13 +66,20 @@ public class TestPresentTool extends BasicTestCase {
 	/** The channel the fixture's page offers. */
 	private static final String PANE = "paneObject";
 
+	/**
+	 * A query a model would write. That a query finds the objects it names is the eval's to show -
+	 * it runs against data committed the way an application's is (tl-ai-eval, show-scenarios); here
+	 * it is only the shape of what comes back that counts.
+	 */
+	private static final String PERSONS = "all(`tl.accounts:Person`)";
+
 	private static Person user;
 
 	private static TLObject first;
 
 	private static TLObject second;
 
-	private PresentTool _tool;
+	private ChatPresentTool _tool;
 
 	private ViewChannel _channel;
 
@@ -82,8 +94,10 @@ public class TestPresentTool extends BasicTestCase {
 			// and the write, none of which know what an invoice is.
 			first = ChatHistoryService.createSession("First", user);
 			second = ChatHistoryService.createSession("Second", user);
+			// The store commits on its writer thread; the ids resolve at this thread's revision.
+			HistoryUtils.updateSessionRevision();
 		}
-		_tool = new PresentTool();
+		_tool = new ChatPresentTool();
 		_written = new ArrayList<>();
 		_channel = new DefaultViewChannel(PANE);
 		_channel.addListener((sender, oldValue, newValue) -> _written.add(newValue));
@@ -105,22 +119,43 @@ public class TestPresentTool extends BasicTestCase {
 		assertEquals("Nothing reached the channel.", List.of(), _written);
 	}
 
-	/** A call that names no channel is answered before anything is resolved. */
-	public void testWithoutAChannelNameNothingHappens() {
+	/**
+	 * The model need not know the channel's name: a page that offers one place is written without
+	 * one (#616), which is what makes "show me" a single call.
+	 */
+	public void testAPageWithOnePlaceNeedsNoChannelName() {
 		withWindow();
 		allow();
 
-		assertSays("no channel named", present(List.of(tid(first)), "  "));
-		assertEquals(List.of(), _written);
+		assertSays("The user now sees the form", present(List.of(tid(first)), "  "));
+		assertEquals(List.of(first), _written);
 	}
 
-	/** Nor does a call that names no object. */
-	public void testWithoutIdsNothingHappens() {
+	/** A page that offers several places makes the model choose, and names them. */
+	public void testAPageWithSeveralPlacesNeedsAChannelName() {
+		withWindow();
+		allow();
+		ViewChannel other = new DefaultViewChannel("dockPane");
+		ChatViewBinding.bind(subSession(), windowName(), "/app", "main").allowPresenting("dockPane", other);
+		try {
+			String result = present(List.of(tid(first)), "");
+
+			assertSays("several places", result);
+			assertSays(PANE, result);
+			assertSays("dockPane", result);
+			assertEquals(List.of(), _written);
+		} finally {
+			ChatViewBinding.bind(subSession(), windowName(), "/app", "main").denyPresenting("dockPane", other);
+		}
+	}
+
+	/** A call that names neither a query nor an object is answered before anything is resolved. */
+	public void testWithoutIdsOrQueryNothingHappens() {
 		withWindow();
 		allow();
 
-		assertSays("no ids given", present(List.of(), PANE));
-		assertSays("no ids given", present(null, PANE));
+		assertSays("nothing to show", present(List.of(), PANE));
+		assertSays("nothing to show", present(null, PANE));
 		assertEquals(List.of(), _written);
 	}
 
@@ -130,7 +165,7 @@ public class TestPresentTool extends BasicTestCase {
 
 		String result = present(List.of(tid(first)), PANE);
 
-		assertSays("offers no channel", result);
+		assertSays("offers no place", result);
 		assertEquals(List.of(), _written);
 	}
 
@@ -154,7 +189,7 @@ public class TestPresentTool extends BasicTestCase {
 		withWindow();
 		allow();
 
-		String result = _tool.present(List.of(tid(first)), PANE, context(new NoReadSecurity()));
+		String result = _tool.present(null, List.of(tid(first)), null, null, null, PANE, context(new NoReadSecurity()));
 
 		assertSays("Nothing was presented", result);
 		assertSays("not found", result);
@@ -182,27 +217,77 @@ public class TestPresentTool extends BasicTestCase {
 			List.of(), _written);
 	}
 
-	/** One object stands on the channel as itself, which is what a {@code <form>} can render. */
+	/**
+	 * One object stands on the channel as itself - what every element reading "the open object"
+	 * understands - and the answer names it the way every tool does.
+	 */
 	public void testOneObjectReachesTheChannel() {
 		withWindow();
 		allow();
 
 		String result = present(List.of(tid(first)), PANE);
 
-		assertSays("The page now shows", result);
+		assertSays("The user now sees the form", result);
+		assertSays("[id:" + tid(first) + "]", result);
 		assertEquals(List.of(first), _written);
 		assertEquals(first, _channel.get());
 	}
 
-	/** Several stand on it as a collection, in the order the model named them. */
-	public void testSeveralObjectsReachTheChannelAsACollection() {
+	/** Several stand on it as a table, in the order the model named them. */
+	public void testSeveralObjectsReachTheChannelAsATable() {
 		withWindow();
 		allow();
 
 		String result = present(List.of(tid(second), tid(first)), PANE);
 
-		assertSays("2 objects", result);
-		assertEquals(List.of(List.of(second, first)), _written);
+		assertSays("a table of 2 objects", result);
+		Presentation shown = (Presentation) _channel.get();
+		assertEquals(PresentAs.TABLE, shown.as());
+		assertEquals(List.of(second, first), shown.objects());
+	}
+
+	/** A query that fails, or finds something other than objects, says so and shows nothing. */
+	public void testABrokenQueryIsAnsweredWithItsError() {
+		withWindow();
+		allow();
+
+		assertSays("the query failed", present("all(`no.such:Type`)"));
+		assertSays("must evaluate to model objects", present(PERSONS + ".size()"));
+		assertSays("either 'query' or 'ids'", _tool.present(PERSONS, List.of(tid(first)), null, null, null, "",
+			context(ModelSecurity.UNCHECKED)));
+		assertEquals(List.of(), _written);
+	}
+
+	/** A form shows one object, and a request for a form of several is refused, not guessed at. */
+	public void testAFormOfSeveralIsRefused() {
+		withWindow();
+		allow();
+
+		assertSays("a FORM shows exactly one object", _tool.present(null, List.of(tid(first), tid(second)),
+			PresentAs.FORM, null, null, "", context(ModelSecurity.UNCHECKED)));
+		assertEquals(List.of(), _written);
+	}
+
+	/**
+	 * A chart's functions are tried on every object before anything is shown, so a mistake is the
+	 * model's to correct rather than an empty chart in front of the user.
+	 */
+	public void testAChartIsCheckedBeforeItIsShown() {
+		withWindow();
+		allow();
+
+		String label = "s -> \"row\"";
+		assertSays("a CHART needs 'chart'", chart(null));
+		assertSays("value function does not compile", chart(new ChartSpec(ChartKind.BAR, label, "s -> $s.(")));
+		assertSays("which is not a number", chart(new ChartSpec(ChartKind.BAR, label, "s -> \"x\"")));
+		assertEquals(List.of(), _written);
+
+		String result = chart(new ChartSpec(ChartKind.BAR, label, "s -> 7"));
+
+		assertSays("a bar chart of", result);
+		assertSays("row: 7 [id:" + tid(first) + "]", result);
+		Presentation shown = (Presentation) _channel.get();
+		assertEquals(PresentAs.CHART, shown.as());
 	}
 
 	/** The same object named twice is one object: the page shows what the model meant. */
@@ -241,7 +326,16 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	private String present(List<String> ids, String channel) {
-		return _tool.present(ids, channel, context(ModelSecurity.UNCHECKED));
+		return _tool.present(null, ids, null, null, null, channel, context(ModelSecurity.UNCHECKED));
+	}
+
+	private String present(String query) {
+		return _tool.present(query, null, null, null, null, "", context(ModelSecurity.UNCHECKED));
+	}
+
+	private String chart(ChartSpec spec) {
+		return _tool.present(null, List.of(tid(first), tid(second)), PresentAs.CHART, spec, null, "",
+			context(ModelSecurity.UNCHECKED));
 	}
 
 	private static ToolContext context(ModelSecurity security) {

@@ -16,13 +16,13 @@ Issue: [#433](https://git.top-logic.com/TopLogic/tl-ai/issues/433).
 
 | Piece | Where |
 |---|---|
-| Scenario model (`<eval>`, `<arm>`, `<scenario>`, `<kb-query>`, `<tool-sequence>`) | `EvalConfig`, `EvalScenario`, `Expectation` and its two kinds |
+| Scenario model (`<eval>`, `<arm>`, `<scenario>`, `<kb-query>`, `<tool-sequence>`, `<presented>`) | `EvalConfig`, `EvalScenario`, `Expectation` and its three kinds |
 | Loading and checking a scenario file | `EvalConfigs` |
 | One run of one scenario on one arm | `EvalRunner`, `RunObservation` |
 | The whole matrix | `EvalMatrix`, `EvalFixture` |
 | Deciding whether it worked | `Graders`, `Verdict`, `RunRecord` |
 | Output | `EvalCsv` (raw), `EvalReport` (aggregate) |
-| The `pm` fixture and its five scenarios | `src/test/java/.../PmFixture.java`, `src/test/resources/.../pm-scenarios.config.xml` |
+| The `pm` fixture and its seven scenarios | `src/test/java/.../PmFixture.java`, `src/test/resources/.../pm-scenarios.config.xml` |
 | A model whose answers a test writes | `src/test/java/.../ScriptedProvider.java`, `EvalScripts` |
 
 The runner is production code; the `pm` fixture and its scenarios are test resources. That split is
@@ -42,7 +42,7 @@ mvn -pl tl-ai-eval test -DskipTests=false
 
 This runs the shipped scenario file end to end against `ScriptedProvider`, a model whose answers
 `EvalScripts` writes - through the real `AgentRunner`, the real agent definitions, the real tool
-registry, the real approval gate and a real H2 knowledge base. It proves the five scenarios are
+registry, the real approval gate and a real H2 knowledge base. It proves the seven scenarios are
 solvable, that every TL-Script expression in the file still compiles and evaluates, and that the
 near-misses each scenario exists to catch are in fact caught.
 
@@ -53,7 +53,7 @@ source env.sh                      # for ANTHROPIC_API_KEY / tl_anthropic_api_ke
 mvn -pl tl-ai-eval test -DskipTests=false -Dtl.ai.eval=true -Dtest=TestEvalPmMatrix
 ```
 
-Five scenarios × three arms × three repeats. The CSV lands in `target/eval/pm-<timestamp>.csv`
+Seven scenarios × three arms × three repeats. The CSV lands in `target/eval/pm-<timestamp>.csv`
 (`-Dtl.ai.eval.out=<file>` puts it elsewhere) and the report is printed. Without
 `-Dtl.ai.eval=true` the class reports as **skipped**, never as passed. With it but without a key,
 the real arms report as "could not run" - the provider refused *us*, so the model was never asked -
@@ -102,6 +102,16 @@ to get a green matrix that means nothing:
 
 Then teach the scripted model to solve it, in `EvalScripts.oracle()`, and add the near-miss you
 expect a real model to make. That is what keeps the zero-cost build honest.
+
+**A task that shows rather than writes** (#616) - "show me all tickets as a table", "tickets per
+project as a bar chart" - leaves the database as it was, so rule 2 has nothing to grade. What it
+produced is the presentation, and `<presented>` grades that: it takes the run's last `present` call,
+evaluates the query the model passed (or resolves its ids) itself, and hands the objects - and for
+a chart the values the model's function computes for them - to a TL-Script function
+`rows -> values -> ...` whose result is compared like a `<kb-query>`'s. `as` and `chart-kind` say
+how they must have been shown. The other half is the price: `max-calls` on `<tool-sequence>` bounds
+the whole run, every call counted. An eval run has no page, so the arms carry `EvalPresentTool` -
+the same checks as a chat page's `present`, without the page.
 
 **A new arm** is one block in the scenario file plus one agent definition and one model assignment
 in `src/test/webapp/WEB-INF/conf/tl-ai-eval.test.config.xml` and

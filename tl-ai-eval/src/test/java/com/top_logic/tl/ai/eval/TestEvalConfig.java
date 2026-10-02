@@ -29,11 +29,12 @@ public class TestEvalConfig extends TestCase {
 
 		assertEquals("The README and the scenario file must agree on the arms.",
 			List.of("scripted", "sonnet", "haiku"), List.copyOf(config.getArms().keySet()));
-		assertEquals("Five scenarios, as the ticket asks.", 5, config.getScenarios().size());
+		assertEquals("Five writing scenarios (#433) and two showing ones (#616).", 7, config.getScenarios().size());
 		assertEquals(3, config.getRepeats());
 
 		assertEquals(List.of("create-ticket", "update-ticket-status", "scoped-update",
-			"absent-ticket-changes-nothing", "refuse-delete"),
+			"absent-ticket-changes-nothing", "refuse-delete", "show-tickets-as-table",
+			"tickets-per-project-as-chart"),
 			config.getScenarios().stream().map(EvalScenario::getId).toList());
 	}
 

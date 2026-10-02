@@ -39,6 +39,7 @@ import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool;
+import com.top_logic.tl.ai.core.tools.script.QueryTool;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
 
@@ -87,7 +88,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesBasic() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain module", result.contains("\"module\""));
@@ -111,7 +112,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesWithLimit() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, 2, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, 2, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain limit", result.contains("\"limit\":2"));
@@ -129,7 +130,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
 
 			// Get first page with limit 2
-			String firstPage = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, 2, null, ToolContext.EMPTY);
+			String firstPage = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, 2, null, ToolContext.EMPTY);
 			assertNotNull("First page should not be null", firstPage);
 
 			// Extract next cursor (simple string matching since we don't want to parse JSON)
@@ -138,7 +139,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			String cursor = firstPage.substring(cursorStart, cursorEnd);
 
 			// Get second page using cursor
-			String secondPage = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, 2, cursor, ToolContext.EMPTY);
+			String secondPage = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, 2, cursor, ToolContext.EMPTY);
 			assertNotNull("Second page should not be null", secondPage);
 			assertTrue("Second page should have offset 2", secondPage.contains("\"offset\":2"));
 			// With 3 total, offset 2 should have no more results
@@ -152,11 +153,11 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesLimitClamping() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, 10000, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, 10000, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
-			// Limit should be clamped to 1000 (MAX_LIMIT)
-			assertTrue("Limit should be clamped to 1000", result.contains("\"limit\":1000"));
+			// Limit should be clamped to 200 (MAX_LIMIT)
+			assertTrue("Limit should be clamped to 200", result.contains("\"limit\":200"));
 		});
 	}
 
@@ -172,7 +173,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			String tid = event.tId().asString();
 
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.getInstance(tid, ToolContext.EMPTY);
+			String result = tool.getInstance(List.of(tid), ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain tid", result.contains("\"tid\""));
@@ -199,7 +200,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			String tid = event.tId().asString();
 
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.getInstance(tid, ToolContext.EMPTY);
+			String result = tool.getInstance(List.of(tid), ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			// Event1 has name="Herbstkonferenz"
@@ -218,11 +219,113 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			String tid = event.tId().asString();
 
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.getInstance(tid, ToolContext.EMPTY);
+			String result = tool.getInstance(List.of(tid), ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Should contain metadata", result.contains("\"metadata\""));
 			assertTrue("Should contain transient flag", result.contains("\"transient\""));
+		});
+	}
+
+	/**
+	 * Every entry of a listing says what the object is and how to name it again, and carries the
+	 * attributes asked for - so a table of twenty rows is one call, not twenty-one (#616).
+	 */
+	public void testListInstancesCarriesTypeAndRequestedAttributes() throws Exception {
+		withTestObjects(objects -> {
+			InstanceBrowserTool tool = new InstanceBrowserTool();
+			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, List.of("name", " maxParticipants ", "noSuchAttribute"),
+				null, null, ToolContext.EMPTY);
+
+			String tid = objects.getEvent(0).tId().asString();
+			assertTrue(result, result.contains("\"id\":\"" + tid + "\""));
+			assertTrue(result, result.contains("\"type\":\"" + EVENTS_MODULE + ":" + EVENT_CLASS + "\""));
+			assertTrue(result, result.contains("Herbstkonferenz"));
+			assertTrue(result, result.contains("\"maxParticipants\":\"100\""));
+			assertFalse("An attribute the type does not have is left out: " + result,
+				result.contains("noSuchAttribute"));
+			assertFalse("An attribute nobody asked for is left out: " + result, result.contains("ticketPrice"));
+		});
+	}
+
+	/** Several identifiers are one call, and each of them is answered. */
+	public void testGetInstanceReadsSeveral() throws Exception {
+		withTestObjects(objects -> {
+			InstanceBrowserTool tool = new InstanceBrowserTool();
+			String first = objects.getEvent(0).tId().asString();
+			String second = objects.getEvent(1).tId().asString();
+
+			String result = tool.getInstance(List.of(first, second, "Event:99999"), ToolContext.EMPTY);
+
+			assertTrue(result, result.contains("\"tid\":\"" + first + "\""));
+			assertTrue(result, result.contains("\"tid\":\"" + second + "\""));
+			// One id that names nothing does not hide the ones that do.
+			assertTrue(result, result.contains("\"errors\":[\"Event:99999: "));
+		});
+	}
+
+	/**
+	 * A page that does not hold every instance says how to get the answer without paging: a query
+	 * the server computes (#616).
+	 */
+	public void testListInstancesPointsToAQueryWhenThereAreMore() throws Exception {
+		withTestObjects(objects -> {
+			InstanceBrowserTool tool = new InstanceBrowserTool();
+			String partial = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, 2, null, ToolContext.EMPTY);
+			String complete = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, null, null, ToolContext.EMPTY);
+
+			assertTrue(partial, partial.contains("\"hint\":\"There are 3 instances."));
+			assertTrue(partial, partial.contains("query"));
+			assertFalse("A complete page needs no hint: " + complete, complete.contains("There are"));
+		});
+	}
+
+	// --- The query tool reads the same data, and is tested on the same fixture. ---
+
+	/** A count is computed on the server: the model reads one number, not the rows. */
+	public void testQueryCounts() throws Exception {
+		withTestObjects(objects -> {
+			String result = new QueryTool().query("all(`demo.events:Event`).size()", ToolContext.EMPTY);
+
+			assertTrue(result, result.matches("(?s).*>\\s*3\\s*</.*"));
+		});
+	}
+
+	/** The largest one is one object, named the way every tool names one. */
+	public void testQuerySelectsTheLargest() throws Exception {
+		withTestObjects(objects -> {
+			String result = new QueryTool().query(
+				"all(`demo.events:Event`).sort((e -> $e.get(`demo.events:Event#maxParticipants`)).comparator().desc()).firstElement()",
+				ToolContext.EMPTY);
+
+			assertTrue(result, result.contains("Herbstkonferenz [type:demo.events:Event] [id:"
+				+ objects.getEvent(0).tId().asString() + "]"));
+		});
+	}
+
+	/** An expression that writes is refused before it runs, and nothing changes. */
+	public void testQueryRefusesToWrite() throws Exception {
+		withTestObjects(objects -> {
+			String result = new QueryTool().query(
+				"all(`demo.events:Event`).foreach(e -> $e.set(`demo.events:Named#name`, 'renamed'))",
+				ToolContext.EMPTY);
+
+			assertTrue(result, result.startsWith("Error:"));
+			assertTrue(result, result.contains("changes data"));
+			assertEquals("Herbstkonferenz", objects.getEvent(0).tValueByName("name"));
+		});
+	}
+
+	/** A long list is cut, and the answer says how long it was. */
+	public void testQueryCutsALongList() throws Exception {
+		withTestObjects(objects -> {
+			StringBuilder sixty = new StringBuilder("list(");
+			for (int n = 1; n <= 60; n++) {
+				sixty.append(n == 1 ? "" : ", ").append(n);
+			}
+			String result = new QueryTool().query(sixty.append(")").toString(), ToolContext.EMPTY);
+
+			assertTrue(result, result.contains("... and 10 more (60 in all)"));
 		});
 	}
 
@@ -232,7 +335,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesNullModule() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(null, EVENT_CLASS, null, null, ToolContext.EMPTY);
+			String result = tool.listInstances(null, EVENT_CLASS, null, null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -247,7 +350,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesEmptyModule() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances("", EVENT_CLASS, null, null, ToolContext.EMPTY);
+			String result = tool.listInstances("", EVENT_CLASS, null, null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -262,7 +365,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesNullType() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(EVENTS_MODULE, null, null, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, null, null, null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -277,7 +380,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesEmptyType() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(EVENTS_MODULE, "", null, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, "", null, null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -292,7 +395,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesTypeNotFound() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(EVENTS_MODULE, "NonExistentType", null, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, "NonExistentType", null, null, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -307,7 +410,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesInvalidLimitNegative() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, -1, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, -1, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -322,7 +425,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesInvalidLimitZero() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, 0, null, ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, 0, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -352,7 +455,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testGetInstanceEmptyTid() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.getInstance("", ToolContext.EMPTY);
+			String result = tool.getInstance(List.of(""), ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Result should contain error", result.contains("\"error\""));
@@ -367,10 +470,10 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testGetInstanceInvalidTidFormat() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.getInstance("InvalidTid", ToolContext.EMPTY);
+			String result = tool.getInstance(List.of("InvalidTid"), ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
-			assertTrue("Result should contain error", result.contains("\"error\""));
+			assertTrue("Result should contain errors", result.contains("\"errors\""));
 			assertTrue("Error should mention invalid format",
 				result.contains("Invalid") || result.contains("format"));
 		});
@@ -382,10 +485,10 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testGetInstanceTidNotFound() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.getInstance("Event:99999", ToolContext.EMPTY);
+			String result = tool.getInstance(List.of("Event:99999"), ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
-			assertTrue("Result should contain error", result.contains("\"error\""));
+			assertTrue("Result should contain errors", result.contains("\"errors\":[\"Event:99999: "));
 		});
 	}
 
@@ -397,12 +500,12 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
 
 			// List events
-			String eventsResult = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, null, ToolContext.EMPTY);
+			String eventsResult = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, null, null, ToolContext.EMPTY);
 			assertNotNull("Events result should not be null", eventsResult);
 			assertTrue("Should have events", eventsResult.contains("\"totalCount\":3"));
 
 			// List rooms
-			String roomsResult = tool.listInstances(EVENTS_MODULE, ROOM_CLASS, null, null, ToolContext.EMPTY);
+			String roomsResult = tool.listInstances(EVENTS_MODULE, ROOM_CLASS, null, null, null, ToolContext.EMPTY);
 			assertNotNull("Rooms result should not be null", roomsResult);
 			assertTrue("Should have rooms", roomsResult.contains("\"totalCount\":2"));
 		});
@@ -414,7 +517,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	public void testListInstancesEmptyCursor() throws Exception {
 		withTestObjects(objects -> {
 			InstanceBrowserTool tool = new InstanceBrowserTool();
-			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, "", ToolContext.EMPTY);
+			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, null, "", ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
 			assertTrue("Empty cursor should start at offset 0", result.contains("\"offset\":0"));

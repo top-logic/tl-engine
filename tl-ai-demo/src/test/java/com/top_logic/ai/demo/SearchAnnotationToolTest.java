@@ -24,14 +24,14 @@ import com.top_logic.util.model.ModelService;
  */
 public class SearchAnnotationToolTest extends BasicTestCase {
 
-	private static final String TARGET_REF_PRODUCT_NAME = "luigis.pizzashop:Product#name";
+	private static final String TARGET_REF_EVENT_NAME = "demo.events:Event#name";
 
 	/**
 	 * Tests listing annotations for a target returns results.
 	 */
 	public void testListAvailableAnnotations() {
 		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String result = tool.listAvailableAnnotations(TARGET_REF_PRODUCT_NAME);
+		String result = tool.listAvailableAnnotations(TARGET_REF_EVENT_NAME);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain tagName", result.contains("\"tagName\""));
@@ -79,7 +79,7 @@ public class SearchAnnotationToolTest extends BasicTestCase {
 	 */
 	public void testListForType() {
 		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String result = tool.listAvailableAnnotations("luigis.pizzashop:Product");
+		String result = tool.listAvailableAnnotations("demo.events:Event");
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain results", result.contains("\"results\""));
@@ -91,7 +91,7 @@ public class SearchAnnotationToolTest extends BasicTestCase {
 	 */
 	public void testListForModule() {
 		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String result = tool.listAvailableAnnotations("luigis.pizzashop");
+		String result = tool.listAvailableAnnotations("demo.events");
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain results", result.contains("\"results\""));
@@ -103,7 +103,7 @@ public class SearchAnnotationToolTest extends BasicTestCase {
 	 */
 	public void testStorageAlgorithmIncludesImplementations() {
 		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String result = tool.listAvailableAnnotations(TARGET_REF_PRODUCT_NAME);
+		String result = tool.listAvailableAnnotations(TARGET_REF_EVENT_NAME);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain storage-algorithm", result.contains("\"storage-algorithm\""));
@@ -121,7 +121,7 @@ public class SearchAnnotationToolTest extends BasicTestCase {
 	 */
 	public void testNonPolymorphicAnnotationHasNoImplementations() {
 		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String result = tool.listAvailableAnnotations(TARGET_REF_PRODUCT_NAME);
+		String result = tool.listAvailableAnnotations(TARGET_REF_EVENT_NAME);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain visibility annotation", result.contains("\"visibility\""));
@@ -133,7 +133,7 @@ public class SearchAnnotationToolTest extends BasicTestCase {
 	 */
 	public void testImplementationOptionsHaveTagNames() {
 		SearchAnnotationTool tool = new SearchAnnotationTool();
-		String result = tool.listAvailableAnnotations(TARGET_REF_PRODUCT_NAME);
+		String result = tool.listAvailableAnnotations(TARGET_REF_EVENT_NAME);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Implementation options should have tagName", result.contains("\"tagName\""));

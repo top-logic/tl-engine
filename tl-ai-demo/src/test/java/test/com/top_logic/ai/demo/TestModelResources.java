@@ -60,9 +60,9 @@ import com.top_logic.util.model.ModelService;
  * The keys come from the model as the application loads it - {@link ModelConfigLoader} over the
  * declarations of the {@link ModelService} - so a type nobody declares is out of scope, and a newly
  * declared one is in scope the moment it is added. Of what is declared, the check holds the modules
- * this project ships, named {@value #OWN_MODULE_PREFIX}*. The two fixtures - "luigis.pizzashop" and
- * the "pm" model of the security test bed - are not held to it: they furnish a demonstration, not a
- * product.
+ * this project ships, named {@value #OWN_MODULE_PREFIX}*. The two fixtures - "demo.events", the
+ * event-management domain of the demo, and the "pm" model of the security test bed - are not held to
+ * it: they furnish a demonstration, not a product.
  * </p>
  *
  * @see #KNOWN_GAPS

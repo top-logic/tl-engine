@@ -25,24 +25,24 @@ import com.top_logic.util.model.ModelService;
  */
 public class TypeAnalysisToolTest extends BasicTestCase {
 
-	private static final String PIZZASHOP_MODULE = "luigis.pizzashop";
-	private static final String UNIT_OF_MEASURE_ENUM = "UnitOfMeasure";
-	private static final String PRODUCT_CLASS = "Product";
-	private static final String NAMED_ENTITIES_INTERFACE = "NamedEntities";
-	private static final String COMPONENT_INTERFACE = "Component";
+	private static final String EVENTS_MODULE = "demo.events";
+	private static final String EVENT_STATUS_ENUM = "EventStatus";
+	private static final String EVENT_CLASS = "Event";
+	private static final String NAMED_INTERFACE = "Named";
+	private static final String ROOM_CLASS = "Room";
 
 	// Qualified names
-	private static final String PRODUCT_QUALIFIED = PIZZASHOP_MODULE + ":" + PRODUCT_CLASS;
-	private static final String NAMED_ENTITIES_QUALIFIED = PIZZASHOP_MODULE + ":" + NAMED_ENTITIES_INTERFACE;
-	private static final String COMPONENT_QUALIFIED = PIZZASHOP_MODULE + ":" + COMPONENT_INTERFACE;
-	private static final String UNIT_OF_MEASURE_QUALIFIED = PIZZASHOP_MODULE + ":" + UNIT_OF_MEASURE_ENUM;
+	private static final String EVENT_QUALIFIED = EVENTS_MODULE + ":" + EVENT_CLASS;
+	private static final String NAMED_QUALIFIED = EVENTS_MODULE + ":" + NAMED_INTERFACE;
+	private static final String ROOM_QUALIFIED = EVENTS_MODULE + ":" + ROOM_CLASS;
+	private static final String EVENT_STATUS_QUALIFIED = EVENTS_MODULE + ":" + EVENT_STATUS_ENUM;
 
 	/**
 	 * Tests finding usages of a class type.
 	 */
 	public void testFindTypeUsagesForClass() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findTypeUsages(PRODUCT_QUALIFIED);
+		String result = tool.findTypeUsages(EVENT_QUALIFIED);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain properties array", result.contains("\"properties\""));
@@ -55,14 +55,14 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testFindTypeUsagesForEnumeration() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findTypeUsages(UNIT_OF_MEASURE_QUALIFIED);
+		String result = tool.findTypeUsages(EVENT_STATUS_QUALIFIED);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain properties array", result.contains("\"properties\""));
 		assertTrue("Result should contain references array", result.contains("\"references\""));
 		assertTrue("Result should contain subclasses array", result.contains("\"subclasses\""));
 		// Enumerations typically don't have subclasses
-		// The result might show properties that use UnitOfMeasure as their value type
+		// The result might show properties that use EventStatus as their value type
 	}
 
 	/**
@@ -70,16 +70,16 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testFindTypeUsagesForInterface() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findTypeUsages(NAMED_ENTITIES_QUALIFIED);
+		String result = tool.findTypeUsages(NAMED_QUALIFIED);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain properties array", result.contains("\"properties\""));
 		assertTrue("Result should contain references array", result.contains("\"references\""));
 		assertTrue("Result should contain subclasses array", result.contains("\"subclasses\""));
-		// Product inherits from NamedEntities, so it should appear in subclasses
+		// Event inherits from Named, so it should appear in subclasses
 		if (!result.contains("\"subclasses\":[]")) {
-			assertTrue("Subclasses should contain Product or other subclasses",
-				result.contains(PRODUCT_CLASS) || result.contains("subclass"));
+			assertTrue("Subclasses should contain Event or other subclasses",
+				result.contains(EVENT_CLASS) || result.contains("subclass"));
 		}
 	}
 
@@ -88,7 +88,7 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testPropertyUsagesStructure() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findTypeUsages(UNIT_OF_MEASURE_QUALIFIED);
+		String result = tool.findTypeUsages(EVENT_STATUS_QUALIFIED);
 
 		assertNotNull("Result should not be null", result);
 		// If there are property usages, they should have the correct structure
@@ -104,7 +104,7 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testReferenceUsagesStructure() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findTypeUsages(COMPONENT_QUALIFIED);
+		String result = tool.findTypeUsages(ROOM_QUALIFIED);
 
 		assertNotNull("Result should not be null", result);
 		// If there are reference usages, they should have the correct structure
@@ -120,7 +120,7 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testSubclassesStructure() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findTypeUsages(NAMED_ENTITIES_QUALIFIED);
+		String result = tool.findTypeUsages(NAMED_QUALIFIED);
 
 		assertNotNull("Result should not be null", result);
 		// If there are subclasses, they should have the correct structure
@@ -185,12 +185,12 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testFindPartUsagesForProperty() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findPartUsages(PRODUCT_QUALIFIED, "plannedQuantity");
+		String result = tool.findPartUsages(EVENT_QUALIFIED, "startDate");
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain ownerType", result.contains("\"ownerType\""));
 		assertTrue("Result should contain partName", result.contains("\"partName\""));
-		assertTrue("Result should contain plannedQuantity", result.contains("plannedQuantity"));
+		assertTrue("Result should contain startDate", result.contains("startDate"));
 		assertTrue("Result should contain partKind", result.contains("\"partKind\""));
 		assertTrue("Result should indicate property kind", result.contains("\"partKind\":\"property\""));
 		assertTrue("Result should contain definedIn", result.contains("\"definedIn\""));
@@ -202,12 +202,12 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testFindPartUsagesForReference() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findPartUsages(PRODUCT_QUALIFIED, "components");
+		String result = tool.findPartUsages(EVENT_QUALIFIED, "sessions");
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain ownerType", result.contains("\"ownerType\""));
 		assertTrue("Result should contain partName", result.contains("\"partName\""));
-		assertTrue("Result should contain components", result.contains("components"));
+		assertTrue("Result should contain sessions", result.contains("sessions"));
 		assertTrue("Result should contain partKind", result.contains("\"partKind\""));
 		assertTrue("Result should indicate reference kind", result.contains("\"partKind\":\"reference\""));
 		assertTrue("Result should contain definedIn", result.contains("\"definedIn\""));
@@ -219,14 +219,14 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testPartUsagesDefinedIn() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		// Test with a part that might be inherited (name from NamedEntities)
-		String result = tool.findPartUsages(PRODUCT_QUALIFIED, "name");
+		// Test with a part that might be inherited (name from Named)
+		String result = tool.findPartUsages(EVENT_QUALIFIED, "name");
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain definedIn", result.contains("\"definedIn\""));
-		// The name property should be defined in NamedEntities or Product itself
+		// The name property should be defined in Named or Event itself
 		assertTrue("definedIn should contain a qualified name",
-			result.contains(PIZZASHOP_MODULE + ":"));
+			result.contains(EVENTS_MODULE + ":"));
 	}
 
 	/**
@@ -234,12 +234,12 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testPartUsagesInheritedBy() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		// Use a part from NamedEntities which is inherited by Product
-		String result = tool.findPartUsages(NAMED_ENTITIES_QUALIFIED, "name");
+		// Use a part from Named which is inherited by Event
+		String result = tool.findPartUsages(NAMED_QUALIFIED, "name");
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain inheritedBy array", result.contains("\"inheritedBy\""));
-		// If Product inherits from NamedEntities, it should be in the inherited by list
+		// If Event inherits from Named, it should be in the inherited by list
 		// (or the inherited by array might be empty if no subclasses inherit it)
 	}
 
@@ -248,7 +248,7 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testFindPartUsagesNullOwnerType() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findPartUsages(null, "plannedQuantity");
+		String result = tool.findPartUsages(null, "startDate");
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -261,7 +261,7 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testFindPartUsagesEmptyOwnerType() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findPartUsages("", "plannedQuantity");
+		String result = tool.findPartUsages("", "startDate");
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -274,7 +274,7 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testFindPartUsagesNullPartName() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findPartUsages(PRODUCT_QUALIFIED, null);
+		String result = tool.findPartUsages(EVENT_QUALIFIED, null);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -287,7 +287,7 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testFindPartUsagesEmptyPartName() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findPartUsages(PRODUCT_QUALIFIED, "");
+		String result = tool.findPartUsages(EVENT_QUALIFIED, "");
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -327,7 +327,7 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testFindPartUsagesPartNotFound() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findPartUsages(PRODUCT_QUALIFIED, "nonExistentPart");
+		String result = tool.findPartUsages(EVENT_QUALIFIED, "nonExistentPart");
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -342,10 +342,10 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
 
 		String[] types = {
-			PRODUCT_QUALIFIED,
-			NAMED_ENTITIES_QUALIFIED,
-			COMPONENT_QUALIFIED,
-			UNIT_OF_MEASURE_QUALIFIED
+			EVENT_QUALIFIED,
+			NAMED_QUALIFIED,
+			ROOM_QUALIFIED,
+			EVENT_STATUS_QUALIFIED
 		};
 
 		for (String type : types) {
@@ -367,10 +367,10 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	public void testFindPartUsagesMultipleParts() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
 
-		String[] parts = {"plannedQuantity", "budget", "name"};
+		String[] parts = {"startDate", "ticketPrice", "name"};
 
 		for (String part : parts) {
-			String result = tool.findPartUsages(PRODUCT_QUALIFIED, part);
+			String result = tool.findPartUsages(EVENT_QUALIFIED, part);
 
 			// Some parts might not exist, which is ok - they should return an error
 			assertNotNull("Result for " + part + " should not be null", result);
@@ -391,15 +391,15 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testPropertyUsagesExcludeReferences() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findTypeUsages(COMPONENT_QUALIFIED);
+		String result = tool.findTypeUsages(ROOM_QUALIFIED);
 
 		assertNotNull("Result should not be null", result);
-		// Component is referenced by Product.components
+		// Room is referenced by Session.room and Venue.rooms
 		// This should appear in references, not properties
 		assertTrue("Result should contain references array", result.contains("\"references\""));
 
 		if (result.contains("\"references\":[{")) {
-			assertTrue("Reference to Component should have 'reference type' usage",
+			assertTrue("Reference to Room should have 'reference type' usage",
 				result.contains("reference type"));
 		}
 	}
@@ -409,7 +409,7 @@ public class TypeAnalysisToolTest extends BasicTestCase {
 	 */
 	public void testTypeUsagesSorting() {
 		TypeAnalysisTool tool = new TypeAnalysisTool();
-		String result = tool.findTypeUsages(NAMED_ENTITIES_QUALIFIED);
+		String result = tool.findTypeUsages(NAMED_QUALIFIED);
 
 		assertNotNull("Result should not be null", result);
 		// Results should be sorted (though we can't easily verify order in plain text)

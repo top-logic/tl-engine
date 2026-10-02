@@ -33,7 +33,7 @@ import com.top_logic.util.sched.task.Task;
  */
 public class TestScheduledAgentDemoConfig extends TestCase {
 
-	private static final String TASK_NAME = "DailyInvoiceSummary";
+	private static final String TASK_NAME = "DailyEventBriefing";
 
 	/** The demo ships exactly one scheduled agent, and it is disabled. */
 	public void testTheDemoTaskIsShippedDisabled() throws Exception {
@@ -54,7 +54,7 @@ public class TestScheduledAgentDemoConfig extends TestCase {
 		assertEquals(ApprovalMode.AUTO_APPROVE, config.getApprovalMode());
 		assertTrue("The transcript is what the README tells the reader to go and look at.",
 			config.isRecordSession());
-		assertEquals("Tageszusammenfassung der Belege", config.getSessionTitle());
+		assertEquals("Tagesbericht Veranstaltungen", config.getSessionTitle());
 		assertNotNull("There has to be something to ask.", config.getPrompt());
 		assertEquals("The example is scheduled, not run-once.", 1, config.getSchedules().size());
 	}

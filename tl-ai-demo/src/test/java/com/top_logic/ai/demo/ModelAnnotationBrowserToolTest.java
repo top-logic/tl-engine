@@ -25,21 +25,21 @@ import com.top_logic.util.model.ModelService;
  */
 public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 
-	private static final String PIZZASHOP_MODULE = "luigis.pizzashop";
-	private static final String UNIT_OF_MEASURE_ENUM = "UnitOfMeasure";
-	private static final String PRODUCT_CLASS = "Product";
-	private static final String NAMED_ENTITIES_INTERFACE = "NamedEntities";
+	private static final String EVENTS_MODULE = "demo.events";
+	private static final String EVENT_STATUS_ENUM = "EventStatus";
+	private static final String EVENT_CLASS = "Event";
+	private static final String NAMED_INTERFACE = "Named";
 
 	/**
 	 * Tests listing annotations on a module (module-only reference format).
 	 */
 	public void testListAnnotationsOnModule() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String result = tool.getCurrentAnnotations(PIZZASHOP_MODULE, false);
+		String result = tool.getCurrentAnnotations(EVENTS_MODULE, false);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain target reference", result.contains("\"target\""));
-		assertTrue("Result should contain module name", result.contains(PIZZASHOP_MODULE));
+		assertTrue("Result should contain module name", result.contains(EVENTS_MODULE));
 		assertTrue("Result should contain kind field", result.contains("\"kind\""));
 		assertTrue("Result should indicate module kind", result.contains("\"kind\":\"module\""));
 		assertTrue("Result should contain annotations array", result.contains("\"annotations\""));
@@ -50,16 +50,16 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListAnnotationsOnType() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":" + PRODUCT_CLASS;
+		String targetRef = EVENTS_MODULE + ":" + EVENT_CLASS;
 		String result = tool.getCurrentAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain target reference", result.contains("\"target\""));
 		assertTrue("Result should contain module field", result.contains("\"module\""));
 		assertTrue("Result should contain type field", result.contains("\"type\""));
-		assertTrue("Result should contain Product", result.contains(PRODUCT_CLASS));
+		assertTrue("Result should contain Event", result.contains(EVENT_CLASS));
 		assertTrue("Result should contain kind field", result.contains("\"kind\""));
-		// The kind should be "class" (not "type") since Product is a class
+		// The kind should be "class" (not "type") since Event is a class
 		assertTrue("Result should indicate class or type kind",
 			result.contains("\"kind\":\"class\"") || result.contains("\"kind\":\"type\""));
 		assertTrue("Result should contain annotations array", result.contains("\"annotations\""));
@@ -70,13 +70,13 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListAnnotationsOnEnumeration() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":" + UNIT_OF_MEASURE_ENUM;
+		String targetRef = EVENTS_MODULE + ":" + EVENT_STATUS_ENUM;
 		String result = tool.getCurrentAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain target reference", result.contains(targetRef));
 		assertTrue("Result should contain enumeration kind", result.contains("\"kind\":\"enumeration\""));
-		assertTrue("Result should contain UnitOfMeasure", result.contains(UNIT_OF_MEASURE_ENUM));
+		assertTrue("Result should contain EventStatus", result.contains(EVENT_STATUS_ENUM));
 		assertTrue("Result should contain annotations array", result.contains("\"annotations\""));
 	}
 
@@ -85,14 +85,14 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListAnnotationsOnPart() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":" + PRODUCT_CLASS + "#plannedQuantity";
+		String targetRef = EVENTS_MODULE + ":" + EVENT_CLASS + "#startDate";
 		String result = tool.getCurrentAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain target reference", result.contains(targetRef));
 		assertTrue("Result should contain part kind", result.contains("\"kind\":\"part\""));
 		assertTrue("Result should contain part field", result.contains("\"part\""));
-		assertTrue("Result should contain plannedQuantity", result.contains("plannedQuantity"));
+		assertTrue("Result should contain startDate", result.contains("startDate"));
 		assertTrue("Result should contain annotations array", result.contains("\"annotations\""));
 	}
 
@@ -101,14 +101,14 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListAnnotationsOnClassifier() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":" + UNIT_OF_MEASURE_ENUM + "#KG";
+		String targetRef = EVENTS_MODULE + ":" + EVENT_STATUS_ENUM + "#PLANNED";
 		String result = tool.getCurrentAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain target reference", result.contains(targetRef));
 		assertTrue("Result should contain classifier kind", result.contains("\"kind\":\"classifier\""));
 		assertTrue("Result should contain classifier field", result.contains("\"classifier\""));
-		assertTrue("Result should contain KG", result.contains("KG"));
+		assertTrue("Result should contain PLANNED", result.contains("PLANNED"));
 		assertTrue("Result should contain annotations array", result.contains("\"annotations\""));
 	}
 
@@ -117,7 +117,7 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListAnnotationsLocalOnly() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":" + PRODUCT_CLASS;
+		String targetRef = EVENTS_MODULE + ":" + EVENT_CLASS;
 		String result = tool.getCurrentAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
@@ -137,8 +137,8 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListAnnotationsWithInherited() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		// Product inherits from NamedEntities
-		String targetRef = PIZZASHOP_MODULE + ":" + PRODUCT_CLASS;
+		// Event inherits from Named
+		String targetRef = EVENTS_MODULE + ":" + EVENT_CLASS;
 		String result = tool.getCurrentAnnotations(targetRef, true);
 
 		assertNotNull("Result should not be null", result);
@@ -154,7 +154,7 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testInheritedAnnotationsHaveDefinedIn() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":" + PRODUCT_CLASS;
+		String targetRef = EVENTS_MODULE + ":" + EVENT_CLASS;
 		String result = tool.getCurrentAnnotations(targetRef, true);
 
 		assertNotNull("Result should not be null", result);
@@ -208,7 +208,7 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListAnnotationsInvalidType() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":NonExistentType";
+		String targetRef = EVENTS_MODULE + ":NonExistentType";
 		String result = tool.getCurrentAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
@@ -222,7 +222,7 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListAnnotationsInvalidPart() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":" + PRODUCT_CLASS + "#nonExistentPart";
+		String targetRef = EVENTS_MODULE + ":" + EVENT_CLASS + "#nonExistentPart";
 		String result = tool.getCurrentAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
@@ -236,7 +236,7 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListAnnotationsInvalidClassifier() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":" + UNIT_OF_MEASURE_ENUM + "#INVALID";
+		String targetRef = EVENTS_MODULE + ":" + EVENT_STATUS_ENUM + "#INVALID";
 		String result = tool.getCurrentAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
@@ -276,7 +276,7 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListAnnotationsEmptyTypeName() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String result = tool.getCurrentAnnotations(PIZZASHOP_MODULE + ":", false);
+		String result = tool.getCurrentAnnotations(EVENTS_MODULE + ":", false);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -289,7 +289,7 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListAnnotationsEmptyPartName() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":" + PRODUCT_CLASS + "#";
+		String targetRef = EVENTS_MODULE + ":" + EVENT_CLASS + "#";
 		String result = tool.getCurrentAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
@@ -303,7 +303,7 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testAnnotationInfoIncludesTag() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":" + PRODUCT_CLASS;
+		String targetRef = EVENTS_MODULE + ":" + EVENT_CLASS;
 		String result = tool.getCurrentAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
@@ -318,7 +318,7 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testAnnotationInfoIncludesConfigInterface() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":" + PRODUCT_CLASS;
+		String targetRef = EVENTS_MODULE + ":" + EVENT_CLASS;
 		String result = tool.getCurrentAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
@@ -333,7 +333,7 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testAnnotationInfoIncludesConfigJson() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":" + PRODUCT_CLASS;
+		String targetRef = EVENTS_MODULE + ":" + EVENT_CLASS;
 		String result = tool.getCurrentAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
@@ -350,11 +350,11 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	public void testListAnnotationsOnDifferentClassifiers() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
 
-		// Test each classifier in UnitOfMeasure
-		String[] classifiers = {"G", "KG", "T", "ML", "L", "HOUR", "MINUTE"};
+		// Test each classifier in EventStatus
+		String[] classifiers = {"DRAFT", "PLANNED", "OPEN_FOR_REGISTRATION", "SOLD_OUT", "RUNNING", "COMPLETED", "CANCELLED"};
 
 		for (String classifier : classifiers) {
-			String targetRef = PIZZASHOP_MODULE + ":" + UNIT_OF_MEASURE_ENUM + "#" + classifier;
+			String targetRef = EVENTS_MODULE + ":" + EVENT_STATUS_ENUM + "#" + classifier;
 			String result = tool.getCurrentAnnotations(targetRef, false);
 
 			assertNotNull("Result for " + classifier + " should not be null", result);
@@ -369,12 +369,12 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListAnnotationsOnInterface() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":" + NAMED_ENTITIES_INTERFACE;
+		String targetRef = EVENTS_MODULE + ":" + NAMED_INTERFACE;
 		String result = tool.getCurrentAnnotations(targetRef, false);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain target reference", result.contains(targetRef));
-		assertTrue("Result should contain NamedEntities", result.contains(NAMED_ENTITIES_INTERFACE));
+		assertTrue("Result should contain Named", result.contains(NAMED_INTERFACE));
 		assertTrue("Result should contain annotations array", result.contains("\"annotations\""));
 	}
 
@@ -383,7 +383,7 @@ public class ModelAnnotationBrowserToolTest extends BasicTestCase {
 	 */
 	public void testListAnnotationsNullIncludeInherited() {
 		ModelAnnotationBrowserTool tool = new ModelAnnotationBrowserTool();
-		String targetRef = PIZZASHOP_MODULE + ":" + PRODUCT_CLASS;
+		String targetRef = EVENTS_MODULE + ":" + EVENT_CLASS;
 		String result = tool.getCurrentAnnotations(targetRef, null);
 
 		assertNotNull("Result should not be null", result);

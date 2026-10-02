@@ -92,12 +92,12 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
     }
 
 	/** */
-    public void testSemanticSearchPizza() throws Exception {
+    public void testSemanticSearchEvent() throws Exception {
         withTestObjects(objects -> {
              VectorIndex index = VectorIndex.getInstance();
 
             for (TLObject obj : objects.getObjects()) {
-                if (obj.tType().getName().equals("Product")) {
+                if (obj.tType().getName().equals("Event")) {
 					KnowledgeObject ko = (KnowledgeObject) obj.tHandle();
 
                     if (ko != null) {
@@ -110,12 +110,12 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
                             @Override
                             public String getContent() throws IndexException {
                                 String label = LabelProviderService.getLabel(obj);
-                                if ("Margherita Pizza".equals(label)) {
-                                    return "Margherita Pizza with classic tomato sauce, fresh mozzarella cheese, and basil leaves";
-                                } else if ("Pepperoni Pizza".equals(label)) {
-                                    return "Pepperoni Pizza with spicy salami slices, tomato sauce, and melted cheese";
-                                } else if ("Hawaiian Pizza".equals(label)) {
-                                    return "Hawaiian Pizza with ham, juicy pineapple chunks, and sweet tomato sauce";
+                                if ("KI im Mittelstand".equals(label)) {
+                                    return "KI im Mittelstand, a conference on AI agents and data models for medium-sized companies";
+                                } else if ("Hamburg Data Summit".equals(label)) {
+                                    return "Hamburg Data Summit, a conference on data platforms and data quality";
+                                } else if ("Open Source Sommerfest".equals(label)) {
+                                    return "Open Source Sommerfest, a summer party with lightning talks and a barbecue";
                                 }
                                 return label;
                             }
@@ -137,23 +137,23 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
                 Thread.sleep(1000);
             }
 
-            String query = "classic tomato and cheese italian pizza";
+            String query = "artificial intelligence agents for small businesses";
             List<EmbeddingMatch<TextSegment>> results = search(index, query);
 
             assertNotNull("Results list should not be null", results);
             assertFalse("Results should not be empty. Results: " + results, results.isEmpty());
 
-            boolean foundMargherita = false;
+            boolean foundEvent = false;
             for (EmbeddingMatch<TextSegment> r : results) {
                 String pl = r.embedded().text();
                 // Match the label or part of the JSON text
-                if (pl != null && (pl.contains("Margherita") || pl.contains("tomato and cheese"))) {
-                    foundMargherita = true;
+                if (pl != null && (pl.contains("Mittelstand") || pl.contains("AI agents"))) {
+                    foundEvent = true;
                 }
             }
 
-            assertTrue("Should find Margherita Pizza in the semantic search results. Results: " + results,
-                foundMargherita);
+            assertTrue("Should find KI im Mittelstand in the semantic search results. Results: " + results,
+                foundEvent);
         });
     }
 
@@ -163,13 +163,13 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
             VectorIndex index = VectorIndex.getInstance();
 
             // 1. Manually add to vector index
-            TLObject margheritaObj = null;
+            TLObject eventObj = null;
             for (TLObject obj : objects.getObjects()) {
-                if (obj.tType().getName().equals("Product")) {
+                if (obj.tType().getName().equals("Event")) {
 						KnowledgeObject ko = (KnowledgeObject) obj.tHandle();
                     if (ko != null) {
-                        if ("Margherita Pizza".equals(LabelProviderService.getLabel(obj))) {
-                            margheritaObj = obj;
+                        if ("KI im Mittelstand".equals(LabelProviderService.getLabel(obj))) {
+                            eventObj = obj;
                         }
 
                         index.addContent(new ContentObject() {
@@ -192,8 +192,8 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
                 }
             }
 
-            if (margheritaObj == null) {
-				fail("Margherita Pizza object should have been created");
+            if (eventObj == null) {
+				fail("KI im Mittelstand should have been created");
 				return;
 			}
 
@@ -206,29 +206,29 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
             }
 
             // 2. Pre-condition Assert
-            String query = "classic tomato and cheese italian pizza";
+            String query = "artificial intelligence agents for small businesses";
             List<EmbeddingMatch<TextSegment>> resultsBefore = search(index, query);
 
             assertNotNull("Results list should not be null", resultsBefore);
             assertFalse("Results should not be empty", resultsBefore.isEmpty());
 
-            boolean foundMargheritaBefore = false;
+            boolean foundEventBefore = false;
             for (EmbeddingMatch<TextSegment> r : resultsBefore) {
                 String pl = r.embedded().text();
-                if (pl != null && pl.contains("Margherita")) {
-                    foundMargheritaBefore = true;
+                if (pl != null && pl.contains("Mittelstand")) {
+                    foundEventBefore = true;
                     break;
                 }
             }
-            assertTrue("Should find Margherita Pizza in the semantic search results before deletion",
-                foundMargheritaBefore);
+            assertTrue("Should find KI im Mittelstand in the semantic search results before deletion",
+                foundEventBefore);
 
             // 3. Delete Action
-			KnowledgeObject koToDelete = (KnowledgeObject) margheritaObj.tHandle();
+			KnowledgeObject koToDelete = (KnowledgeObject) eventObj.tHandle();
             index.deleteContent(koToDelete.tId());
 
             try (Transaction tx = kb().beginTransaction(ResKey.text("Delete test object"))) {
-                margheritaObj.tDelete();
+                eventObj.tDelete();
                 tx.commit();
             }
 
@@ -243,16 +243,16 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
             // 4. Post-condition Assert
             List<EmbeddingMatch<TextSegment>> resultsAfter = search(index, query);
 
-            boolean foundMargheritaAfter = false;
+            boolean foundEventAfter = false;
             for (EmbeddingMatch<TextSegment> r : resultsAfter) {
                 String pl = r.embedded().text();
-                if (pl != null && pl.contains("Margherita")) {
-                    foundMargheritaAfter = true;
+                if (pl != null && pl.contains("Mittelstand")) {
+                    foundEventAfter = true;
                     break;
                 }
             }
-            assertFalse("Should NOT find Margherita Pizza in the semantic search results after deletion",
-                foundMargheritaAfter);
+            assertFalse("Should NOT find KI im Mittelstand in the semantic search results after deletion",
+                foundEventAfter);
         });
     }
 
@@ -261,20 +261,20 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
         withTestObjects(objects -> {
             VectorIndex index = VectorIndex.getInstance();
 
-            // 1. Setup: Index a specific pizza
-            TLObject margheritaObj = null;
+            // 1. Setup: Index a specific event
+            TLObject eventObj = null;
             for (TLObject obj : objects.getObjects()) {
-                if ("Margherita Pizza".equals(LabelProviderService.getLabel(obj))) {
-                    margheritaObj = obj;
+                if ("KI im Mittelstand".equals(LabelProviderService.getLabel(obj))) {
+                    eventObj = obj;
                     break;
                 }
             }
-            if (margheritaObj == null) {
-				fail("Margherita Pizza should exist");
+            if (eventObj == null) {
+				fail("KI im Mittelstand should exist");
 				return;
 			}
 
-			KnowledgeObject ko = (KnowledgeObject) margheritaObj.tHandle();
+			KnowledgeObject ko = (KnowledgeObject) eventObj.tHandle();
             index.addContent(new ContentObject() {
                 @Override
                 public KnowledgeObject getKnowledgeObject() {
@@ -283,7 +283,7 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
 
                 @Override
                 public String getContent() throws IndexException {
-                    return "Margherita Pizza with tomato and cheese";
+                    return "KI im Mittelstand, a conference on AI agents";
                 }
 
                 @Override
@@ -300,9 +300,9 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
             }
 
             // 2. Verify it's found by original name
-            List<EmbeddingMatch<TextSegment>> initialResults = search(index, "margherita pizza");
-            assertTrue("Should find original pizza",
-                initialResults.stream().anyMatch(m -> m.embedded().text().contains("Margherita")));
+            List<EmbeddingMatch<TextSegment>> initialResults = search(index, "KI im Mittelstand conference");
+            assertTrue("Should find the original event",
+                initialResults.stream().anyMatch(m -> m.embedded().text().contains("Mittelstand")));
 
             index.addContent(new ContentObject() {
                 @Override
@@ -312,7 +312,7 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
 
                 @Override
                 public String getContent() throws IndexException {
-                    return "Truffle Mushroom Deluxe Pizza with premium mushrooms and white truffle oil";
+                    return "Gardening Workshop about roses, compost and raised vegetable beds";
                 }
 
                 @Override
@@ -329,126 +329,114 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
             }
 
             // 4. Verify Post-Update:
-            // Searching for "Truffle" should find it
-            List<EmbeddingMatch<TextSegment>> resultsTruffle = search(index, "truffle mushroom pizza");
-            assertTrue("Should find the updated content 'Truffle'. Results: " + resultsTruffle,
-                resultsTruffle.stream().anyMatch(m -> m.embedded().text().contains("Truffle")));
+            // Searching for "Gardening" should find it
+            List<EmbeddingMatch<TextSegment>> resultsNew = search(index, "gardening workshop roses");
+            assertTrue("Should find the updated content 'Gardening'. Results: " + resultsNew,
+                resultsNew.stream().anyMatch(m -> m.embedded().text().contains("Gardening")));
 
-            // Searching for "Margherita" should NOT find it in the core text content
-            List<EmbeddingMatch<TextSegment>> resultsMargherita = search(index, "margherita pizza");
-            boolean textStillFoundMargherita = false;
-            for (EmbeddingMatch<TextSegment> r : resultsMargherita) {
+            // Searching for "Mittelstand" should NOT find it in the core text content
+            List<EmbeddingMatch<TextSegment>> resultsOld = search(index, "KI im Mittelstand conference");
+            boolean textStillFoundOld = false;
+            for (EmbeddingMatch<TextSegment> r : resultsOld) {
                 String fullJson = r.embedded().text();
 
-                // Only consider it a failure if "Margherita" is in the actual indexed text, not the metadata name
+                // Only consider it a failure if "Mittelstand" is in the actual indexed text, not the metadata name
                 try {
                     org.json.simple.parser.JSONParser parser = new org.json.simple.parser.JSONParser();
                     org.json.simple.JSONObject jo = (org.json.simple.JSONObject) parser.parse(fullJson);
                     org.json.simple.JSONObject contentJo = (org.json.simple.JSONObject) jo.get("content");
                     if (contentJo != null) {
                         String text = (String) contentJo.get("_text");
-                        if (text != null && text.contains("Margherita")) {
-                            textStillFoundMargherita = true;
+                        if (text != null && text.contains("Mittelstand")) {
+                            textStillFoundOld = true;
                         }
                     }
                 } catch (Exception e) {
                     // Fallback to simple check if JSON parsing fails, but be aware of metadata
-                    if (fullJson.contains("Margherita")) {
-                        textStillFoundMargherita = true;
+                    if (fullJson.contains("Mittelstand")) {
+                        textStillFoundOld = true;
                     }
                 }
             }
 
             assertFalse(
-                "Should NOT find 'Margherita' in the text content anymore after update. Results: " + resultsMargherita,
-                textStillFoundMargherita);
+                "Should NOT find 'Mittelstand' in the text content anymore after update. Results: " + resultsOld,
+                textStillFoundOld);
         });
     }
 
     private void withTestObjects(TestConsumer test) throws Exception {
         List<TLObject> createdObjects = new ArrayList<>();
 
-        // 1. Transaction: Create ingredients and commit
-        try (Transaction tx = kb().beginTransaction(ResKey.text("Create test ingredients"))) {
-            TLObject ingredient1 = createObject(
-                "new(`luigis.pizzashop:Ingredient`)" +
-                    "..set(`luigis.pizzashop:Component#name`, 'Tomato Sauce')" +
-                    "..set(`luigis.pizzashop:Component#baseUnit`, `luigis.pizzashop:UnitOfMeasure#ML`)" +
-                    "..set(`luigis.pizzashop:Component#costPerBaseUnit`, 0.005)");
-            createdObjects.add(ingredient1);
+        // 1. Transaction: Create rooms and commit
+        try (Transaction tx = kb().beginTransaction(ResKey.text("Create test rooms"))) {
+            TLObject room1 = createObject(
+                "new(`demo.events:Room`)" +
+                    "..set(`demo.events:Named#name`, 'Saal Rhein')" +
+                    "..set(`demo.events:Room#capacity`, 800)");
+            createdObjects.add(room1);
 
-            TLObject ingredient2 = createObject(
-                "new(`luigis.pizzashop:Ingredient`)" +
-                    "..set(`luigis.pizzashop:Component#name`, 'Mozzarella Cheese')" +
-                    "..set(`luigis.pizzashop:Component#baseUnit`, `luigis.pizzashop:UnitOfMeasure#G`)" +
-                    "..set(`luigis.pizzashop:Component#costPerBaseUnit`, 0.012)");
-            createdObjects.add(ingredient2);
+            TLObject room2 = createObject(
+                "new(`demo.events:Room`)" +
+                    "..set(`demo.events:Named#name`, 'Raum Dom')" +
+                    "..set(`demo.events:Room#capacity`, 120)");
+            createdObjects.add(room2);
 
             tx.commit();
         }
 
-        // Second transaction: Create products that reference the ingredients
-        try (Transaction tx = kb().beginTransaction(ResKey.text("Create test products"))) {
-            // Product 1
-            TLObject product1 = createObject(
+        // Second transaction: Create events whose sessions reference the rooms
+        try (Transaction tx = kb().beginTransaction(ResKey.text("Create test events"))) {
+            // Event 1
+            TLObject event1 = createObject(
                 "{ " +
-                    "  ingredient1 = all(`luigis.pizzashop:Ingredient`).filter(i -> $i.get(`luigis.pizzashop:Component#name`) == 'Tomato Sauce').firstElement(); "
-                    +
-                    "  ingredient2 = all(`luigis.pizzashop:Ingredient`).filter(i -> $i.get(`luigis.pizzashop:Component#name`) == 'Mozzarella Cheese').firstElement(); "
-                    +
-                    "  new(`luigis.pizzashop:Product`)" +
-                    "    ..set(`luigis.pizzashop:NamedEntities#name`, 'Margherita Pizza')" +
-                    "    ..set(`luigis.pizzashop:Product#plannedQuantity`, 100.0)" +
-                    "    ..set(`luigis.pizzashop:Product#budget`, 500.0)" +
-                    "    ..set(`luigis.pizzashop:Product#components`, list(" +
-                    "      new(`luigis.pizzashop:ProductComponent`)" +
-                    "        ..set(`luigis.pizzashop:ProductComponent#component`, $ingredient1)" +
-                    "        ..set(`luigis.pizzashop:ProductComponent#amount`, 50.0)" +
-                    "        ..set(`luigis.pizzashop:ProductComponent#unit`, `luigis.pizzashop:UnitOfMeasure#ML`), "
-                    +
-                    "      new(`luigis.pizzashop:ProductComponent`)" +
-                    "        ..set(`luigis.pizzashop:ProductComponent#component`, $ingredient2)" +
-                    "        ..set(`luigis.pizzashop:ProductComponent#amount`, 100.0)" +
-                    "        ..set(`luigis.pizzashop:ProductComponent#unit`, `luigis.pizzashop:UnitOfMeasure#G`)));"
-                    +
+                    "  room = all(`demo.events:Room`).filter(r -> $r.get(`demo.events:Named#name`) == 'Saal Rhein').firstElement(); " +
+                    "  new(`demo.events:Event`)" +
+                    "    ..set(`demo.events:Named#name`, 'KI im Mittelstand')" +
+                    "    ..set(`demo.events:Event#status`, `demo.events:EventStatus#OPEN_FOR_REGISTRATION`)" +
+                    "    ..set(`demo.events:Event#startDate`, today())" +
+                    "    ..set(`demo.events:Event#maxParticipants`, 100)" +
+                    "    ..set(`demo.events:Event#ticketPrice`, 500.0)" +
+                    "    ..set(`demo.events:Event#sessions`, list(" +
+                    "      new(`demo.events:Session`)" +
+                    "        ..set(`demo.events:Named#name`, 'Agenten statt Assistenten')" +
+                    "        ..set(`demo.events:Session#room`, $room)));" +
                     "}");
-            createdObjects.add(product1);
+            createdObjects.add(event1);
 
-            // Product 2
-            TLObject product2 = createObject(
+            // Event 2
+            TLObject event2 = createObject(
                 "{ " +
-                    "  ingredient2 = all(`luigis.pizzashop:Ingredient`).filter(i -> $i.get(`luigis.pizzashop:Component#name`) == 'Mozzarella Cheese').firstElement(); "
-                    +
-                    "  new(`luigis.pizzashop:Product`)" +
-                    "    ..set(`luigis.pizzashop:NamedEntities#name`, 'Pepperoni Pizza')" +
-                    "    ..set(`luigis.pizzashop:Product#plannedQuantity`, 80.0)" +
-                    "    ..set(`luigis.pizzashop:Product#budget`, 600.0)" +
-                    "    ..set(`luigis.pizzashop:Product#components`, list(" +
-                    "      new(`luigis.pizzashop:ProductComponent`)" +
-                    "        ..set(`luigis.pizzashop:ProductComponent#component`, $ingredient2)" +
-                    "        ..set(`luigis.pizzashop:ProductComponent#amount`, 150.0)" +
-                    "        ..set(`luigis.pizzashop:ProductComponent#unit`, `luigis.pizzashop:UnitOfMeasure#G`)));"
-                    +
+                    "  room = all(`demo.events:Room`).filter(r -> $r.get(`demo.events:Named#name`) == 'Raum Dom').firstElement(); " +
+                    "  new(`demo.events:Event`)" +
+                    "    ..set(`demo.events:Named#name`, 'Hamburg Data Summit')" +
+                    "    ..set(`demo.events:Event#status`, `demo.events:EventStatus#PLANNED`)" +
+                    "    ..set(`demo.events:Event#startDate`, today())" +
+                    "    ..set(`demo.events:Event#maxParticipants`, 80)" +
+                    "    ..set(`demo.events:Event#ticketPrice`, 600.0)" +
+                    "    ..set(`demo.events:Event#sessions`, list(" +
+                    "      new(`demo.events:Session`)" +
+                    "        ..set(`demo.events:Named#name`, 'Datenqualität in der Praxis')" +
+                    "        ..set(`demo.events:Session#room`, $room)));" +
                     "}");
-            createdObjects.add(product2);
+            createdObjects.add(event2);
 
-            // Product 3
-            TLObject product3 = createObject(
+            // Event 3
+            TLObject event3 = createObject(
                 "{ " +
-                    "  ingredient1 = all(`luigis.pizzashop:Ingredient`).filter(i -> $i.get(`luigis.pizzashop:Component#name`) == 'Tomato Sauce').firstElement(); "
-                    +
-                    "  new(`luigis.pizzashop:Product`)" +
-                    "    ..set(`luigis.pizzashop:NamedEntities#name`, 'Veggie Pizza')" +
-                    "    ..set(`luigis.pizzashop:Product#plannedQuantity`, 60.0)" +
-                    "    ..set(`luigis.pizzashop:Product#budget`, 450.0)" +
-                    "    ..set(`luigis.pizzashop:Product#components`, list(" +
-                    "      new(`luigis.pizzashop:ProductComponent`)" +
-                    "        ..set(`luigis.pizzashop:ProductComponent#component`, $ingredient1)" +
-                    "        ..set(`luigis.pizzashop:ProductComponent#amount`, 30.0)" +
-                    "        ..set(`luigis.pizzashop:ProductComponent#unit`, `luigis.pizzashop:UnitOfMeasure#ML`)));"
-                    +
+                    "  room = all(`demo.events:Room`).filter(r -> $r.get(`demo.events:Named#name`) == 'Saal Rhein').firstElement(); " +
+                    "  new(`demo.events:Event`)" +
+                    "    ..set(`demo.events:Named#name`, 'Open Source Sommerfest')" +
+                    "    ..set(`demo.events:Event#status`, `demo.events:EventStatus#COMPLETED`)" +
+                    "    ..set(`demo.events:Event#startDate`, today())" +
+                    "    ..set(`demo.events:Event#maxParticipants`, 60)" +
+                    "    ..set(`demo.events:Event#ticketPrice`, 450.0)" +
+                    "    ..set(`demo.events:Event#sessions`, list(" +
+                    "      new(`demo.events:Session`)" +
+                    "        ..set(`demo.events:Named#name`, 'Lightning Talks')" +
+                    "        ..set(`demo.events:Session#room`, $room)));" +
                     "}");
-            createdObjects.add(product3);
+            createdObjects.add(event3);
 
             tx.commit();
         }

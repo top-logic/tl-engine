@@ -26,19 +26,19 @@ import com.top_logic.util.model.ModelService;
  */
 public class ModelSearchToolTest extends BasicTestCase {
 
-	private static final String PIZZASHOP_MODULE = "luigis.pizzashop";
-	private static final String UNIT_OF_MEASURE_ENUM = "UnitOfMeasure";
-	private static final String PRODUCT_CLASS = "Product";
+	private static final String EVENTS_MODULE = "demo.events";
+	private static final String EVENT_STATUS_ENUM = "EventStatus";
+	private static final String EVENT_CLASS = "Event";
 	/**
 	 * Tests searching for a class by exact name.
 	 */
 	public void testSearchByExactClassName() {
 		ModelSearchTool tool = new ModelSearchTool();
-		String result = tool.searchModel(PRODUCT_CLASS, null, null);
+		String result = tool.searchModel(EVENT_CLASS, null, null);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should be valid JSON with a result count", result.contains("\"resultCount\""));
-		assertTrue("Result should contain Product class", result.contains(PRODUCT_CLASS));
+		assertTrue("Result should contain Event class", result.contains(EVENT_CLASS));
 		assertTrue("Result should contain class kind", result.contains("\"kind\":\"class\""));
 		assertTrue("Result should contain qualified name", result.contains("\"qualifiedName\""));
 		assertTrue("Result should contain score", result.contains("\"score\""));
@@ -51,10 +51,10 @@ public class ModelSearchToolTest extends BasicTestCase {
 	 */
 	public void testSearchByExactEnumName() {
 		ModelSearchTool tool = new ModelSearchTool();
-		String result = tool.searchModel(UNIT_OF_MEASURE_ENUM, null, null);
+		String result = tool.searchModel(EVENT_STATUS_ENUM, null, null);
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain UnitOfMeasure enum", result.contains(UNIT_OF_MEASURE_ENUM));
+		assertTrue("Result should contain EventStatus enum", result.contains(EVENT_STATUS_ENUM));
 		assertTrue("Result should contain enumeration kind", result.contains("\"kind\":\"enumeration\""));
 		assertTrue("Result should contain classifier count", result.contains("\"classifierCount\""));
 		assertTrue("Exact match should have high score (1000)", result.contains("\"score\":1000"));
@@ -65,10 +65,10 @@ public class ModelSearchToolTest extends BasicTestCase {
 	 */
 	public void testSearchByPropertyName() {
 		ModelSearchTool tool = new ModelSearchTool();
-		String result = tool.searchModel("plannedQuantity", null, null);
+		String result = tool.searchModel("ticketPrice", null, null);
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain plannedQuantity", result.contains("plannedQuantity"));
+		assertTrue("Result should contain ticketPrice", result.contains("ticketPrice"));
 		assertTrue("Result should contain property kind", result.contains("\"kind\":\"property\""));
 		assertTrue("Result should contain owner type in context", result.contains("\"type\""));
 		assertTrue("Result should contain module in context", result.contains("\"module\""));
@@ -79,10 +79,10 @@ public class ModelSearchToolTest extends BasicTestCase {
 	 */
 	public void testSearchByReferenceName() {
 		ModelSearchTool tool = new ModelSearchTool();
-		String result = tool.searchModel("components", null, null);
+		String result = tool.searchModel("sessions", null, null);
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain components", result.contains("components"));
+		assertTrue("Result should contain sessions", result.contains("sessions"));
 		assertTrue("Result should contain reference kind", result.contains("\"kind\":\"reference\""));
 		assertTrue("Result should contain owner type", result.contains("\"type\""));
 	}
@@ -92,25 +92,25 @@ public class ModelSearchToolTest extends BasicTestCase {
 	 */
 	public void testSearchByPartialName() {
 		ModelSearchTool tool = new ModelSearchTool();
-		String result = tool.searchModel("Unit", null, null);
+		String result = tool.searchModel("EventSt", null, null);
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain UnitOfMeasure", result.contains("UnitOfMeasure"));
+		assertTrue("Result should contain EventStatus", result.contains("EventStatus"));
 		assertTrue("Result should contain results", result.contains("\"results\""));
 		// Prefix match should have score 500
 		assertTrue("Prefix match should have medium-high score", result.contains("\"score\":500"));
 	}
 
 	/**
-	 * Tests searching with module filter to limit results to pizzashop module.
+	 * Tests searching with module filter to limit results to the events module.
 	 */
 	public void testSearchWithModuleFilter() {
 		ModelSearchTool tool = new ModelSearchTool();
-		String result = tool.searchModel("Product", Collections.singletonList(PIZZASHOP_MODULE), null);
+		String result = tool.searchModel("Event", Collections.singletonList(EVENTS_MODULE), null);
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain Product", result.contains(PRODUCT_CLASS));
-		assertTrue("Result should contain luigis.pizzashop module", result.contains(PIZZASHOP_MODULE));
+		assertTrue("Result should contain Event", result.contains(EVENT_CLASS));
+		assertTrue("Result should contain demo.events module", result.contains(EVENTS_MODULE));
 		assertTrue("Result should be successful", result.contains("\"error\":\"\""));
 	}
 
@@ -119,10 +119,10 @@ public class ModelSearchToolTest extends BasicTestCase {
 	 */
 	public void testSearchWithKindFilterClass() {
 		ModelSearchTool tool = new ModelSearchTool();
-		String result = tool.searchModel("Product", null, Collections.singletonList("class"));
+		String result = tool.searchModel("Event", null, Collections.singletonList("class"));
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain Product", result.contains(PRODUCT_CLASS));
+		assertTrue("Result should contain Event", result.contains(EVENT_CLASS));
 		assertTrue("Result should only contain class kind", result.contains("\"kind\":\"class\""));
 		// Should not contain enumerations, properties, or references
 		assertFalse("Result should not contain enumeration kind", result.contains("\"kind\":\"enumeration\""));
@@ -134,10 +134,10 @@ public class ModelSearchToolTest extends BasicTestCase {
 	 */
 	public void testSearchWithKindFilterEnum() {
 		ModelSearchTool tool = new ModelSearchTool();
-		String result = tool.searchModel("Unit", null, Collections.singletonList("enumeration"));
+		String result = tool.searchModel("EventSt", null, Collections.singletonList("enumeration"));
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain UnitOfMeasure", result.contains(UNIT_OF_MEASURE_ENUM));
+		assertTrue("Result should contain EventStatus", result.contains(EVENT_STATUS_ENUM));
 		assertTrue("Result should only contain enumeration kind", result.contains("\"kind\":\"enumeration\""));
 		assertFalse("Result should not contain class kind", result.contains("\"kind\":\"class\""));
 	}
@@ -161,10 +161,10 @@ public class ModelSearchToolTest extends BasicTestCase {
 	 */
 	public void testSearchByModuleName() {
 		ModelSearchTool tool = new ModelSearchTool();
-		String result = tool.searchModel("pizzashop", null, null);
+		String result = tool.searchModel("events", null, null);
 
 		assertNotNull("Result should not be null", result);
-		assertTrue("Result should contain pizzashop", result.contains("pizzashop"));
+		assertTrue("Result should contain events", result.contains("demo.events"));
 		assertTrue("Result should contain module kind", result.contains("\"kind\":\"module\""));
 		assertTrue("Result should contain type count", result.contains("\"typeCount\""));
 	}
@@ -215,7 +215,7 @@ public class ModelSearchToolTest extends BasicTestCase {
 	 */
 	public void testSearchMatchedField() {
 		ModelSearchTool tool = new ModelSearchTool();
-		String result = tool.searchModel(PRODUCT_CLASS, null, null);
+		String result = tool.searchModel(EVENT_CLASS, null, null);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain matchedField", result.contains("\"matchedField\""));
@@ -258,17 +258,17 @@ public class ModelSearchToolTest extends BasicTestCase {
 	 */
 	public void testSearchCaseInsensitive() {
 		ModelSearchTool tool = new ModelSearchTool();
-		String resultLower = tool.searchModel("product", null, null);
-		String resultUpper = tool.searchModel("PRODUCT", null, null);
-		String resultMixed = tool.searchModel("PrOdUcT", null, null);
+		String resultLower = tool.searchModel("event", null, null);
+		String resultUpper = tool.searchModel("EVENT", null, null);
+		String resultMixed = tool.searchModel("EvEnT", null, null);
 
 		assertNotNull("Lower case result should not be null", resultLower);
 		assertNotNull("Upper case result should not be null", resultUpper);
 		assertNotNull("Mixed case result should not be null", resultMixed);
 
-		assertTrue("Lower case search should find Product", resultLower.contains(PRODUCT_CLASS));
-		assertTrue("Upper case search should find Product", resultUpper.contains(PRODUCT_CLASS));
-		assertTrue("Mixed case search should find Product", resultMixed.contains(PRODUCT_CLASS));
+		assertTrue("Lower case search should find Event", resultLower.contains(EVENT_CLASS));
+		assertTrue("Upper case search should find Event", resultUpper.contains(EVENT_CLASS));
+		assertTrue("Mixed case search should find Event", resultMixed.contains(EVENT_CLASS));
 
 		// All should have same high score for exact match (ignoring case)
 		assertTrue("Lower case should have score 1000", resultLower.contains("\"score\":1000"));
@@ -281,7 +281,7 @@ public class ModelSearchToolTest extends BasicTestCase {
 	 */
 	public void testSearchIncludesContext() {
 		ModelSearchTool tool = new ModelSearchTool();
-		String result = tool.searchModel(PRODUCT_CLASS, null, null);
+		String result = tool.searchModel(EVENT_CLASS, null, null);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain context", result.contains("\"context\""));
@@ -296,18 +296,18 @@ public class ModelSearchToolTest extends BasicTestCase {
 	public void testSearchWithCombinedFilters() {
 		ModelSearchTool tool = new ModelSearchTool();
 		String result = tool.searchModel("name",
-			Collections.singletonList(PIZZASHOP_MODULE),
+			Collections.singletonList(EVENTS_MODULE),
 			Collections.singletonList("property"));
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should be successful", result.contains("\"error\":\"\""));
-		// If there are results, they should be properties from pizzashop module
+		// If there are results, they should be properties from the events module
 		if (result.contains("\"resultCount\":0") || result.contains("\"resultCount\": 0")) {
 			// No results is valid
 			assertTrue("No results is valid", true);
 		} else {
 			assertTrue("Results should contain property kind", result.contains("\"kind\":\"property\""));
-			assertTrue("Results should be from pizzashop module", result.contains(PIZZASHOP_MODULE));
+			assertTrue("Results should be from the events module", result.contains(EVENTS_MODULE));
 		}
 	}
 

@@ -7,11 +7,16 @@ const ITEM = '[role="menuitem"]:not([disabled]), [role="menuitemcheckbox"]:not([
 
 /**
  * Roving tabindex over the entries of a menu: exactly one entry is in the tab order, the one that
- * has focus; arrows cycle, Home/End jump, Escape closes; disabled entries are skipped. Shared by
+ * has focus; arrows cycle, Home/End jump, Escape closes; disabled and hidden entries are skipped. Shared by
  * Menu and the toolbar overflow.
  */
 export function useRovingMenu(ref: React.RefObject<HTMLElement | null>, open: boolean, onClose: () => void): { onKeyDown: (e: React.KeyboardEvent) => void } {
-  const items = useCallback(() => Array.from(ref.current?.querySelectorAll<HTMLElement>(ITEM) ?? []), [ref]);
+  // Only rendered entries rove: an entry inside a hidden wrapper (the upload button renders
+  // `<span hidden>` around its menuitem) cannot take focus, and as a target it would stall the arrows.
+  const items = useCallback(
+    () => Array.from(ref.current?.querySelectorAll<HTMLElement>(ITEM) ?? []).filter(el => el.getClientRects().length > 0),
+    [ref],
+  );
 
   useEffect(() => {
     if (!open) return;

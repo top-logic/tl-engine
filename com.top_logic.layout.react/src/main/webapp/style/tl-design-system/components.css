@@ -1065,8 +1065,8 @@ a.tl-field-value:hover {
 /* Menu — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W3).
    Ein Menü ist ein tl-popover mit Einträgen. Der Fokus ist echt (Roving-Tabindex): der Ring aus
    base.css ist der Cursor, innen, weil der Behälter scrollt. Zustände sind Attribute: aria-current
-   (in Kraft; das Gewicht trägt tl-type-label-strong), disabled. Zeigen ist surface-interactive-hover —
-   seit „Zeigen auf allen Gründen“ auch dunkel auf dem Overlay sichtbar. */
+   (in Kraft; das Gewicht trägt tl-type-body-strong, sonst tl-type-body), disabled. Zeigen ist
+   surface-interactive-hover — seit „Zeigen auf allen Gründen“ auch dunkel auf dem Overlay sichtbar. */
 
 .tl-menu {
   display: flex;

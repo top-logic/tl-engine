@@ -15,7 +15,10 @@ export interface PopoverOptions {
   placement?: 'bottom-start' | 'bottom-end' | 'top-start';
 }
 
-/** The gap between anchor and surface: space-xs, read from the tokens so it follows the density. */
+/**
+ * The gap between anchor and surface: --tl-space-xs as computed on the root element, converted to
+ * pixels. Read once per opening (see usePopover), not on every render.
+ */
 function gapPx(): number {
   const root = getComputedStyle(document.documentElement);
   const v = root.getPropertyValue('--tl-space-xs').trim();
@@ -26,11 +29,13 @@ function gapPx(): number {
 
 export function usePopover(opts: PopoverOptions): { setFloating: (el: HTMLElement | null) => void; style: React.CSSProperties } {
   const { open, anchor, placement = 'bottom-start' } = opts;
+  // Two getComputedStyle calls per render would run per keystroke in a select: read on opening only.
+  const gap = React.useMemo(gapPx, [open]);
   const { refs, floatingStyles } = useFloating({
     open,
     placement,
     strategy: 'fixed',
-    middleware: [offset(gapPx()), flip(), shift({ padding: gapPx() })],
+    middleware: [offset(gap), flip(), shift({ padding: gap })],
     whileElementsMounted: open ? autoUpdate : undefined,
   });
   // floating-ui keeps the position reference as state: set it on every change, element or point,

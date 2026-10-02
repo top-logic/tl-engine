@@ -251,18 +251,27 @@ describe('what a boundary may cut', () => {
    * asserted: refusing a pair that would have been safe costs a boundary, never a wrong answer.
    */
   it('never releases a boundary the renderer reads across', () => {
+    // Rendering is what costs here (marked plus DOMPurify over jsdom), so it is done only where the
+    // answer matters: for a pair whose boundary `stablePrefixEnd` actually releases, and with each
+    // shape rendered alone once rather than once per pair. Asking the renderer about every pair took
+    // 1728 renders and 6.6 s on a busy CI node (#620); the assertion is the same.
+    const head = new Map(Object.values(SHAPES).map((shape) => [shape, render(`${shape}\n\n`)]))
+    const tail = new Map(Object.values(SHAPES).map((shape) => [shape, render(shape)]))
     const unsafe: string[] = []
     for (const [beforeName, before] of Object.entries(SHAPES)) {
       for (const [afterName, after] of Object.entries(SHAPES)) {
         const source = `${before}\n\n${after}`
         const at = before.length + 2
-        const oneBlock = render(source) !== render(source.slice(0, at)) + render(source.slice(at))
         // The trailing newline finishes the last line, which is the other thing a boundary needs.
-        if (oneBlock && stablePrefixEnd(`${source}\n`) === at) unsafe.push(`${beforeName} | ${afterName}`)
+        if (stablePrefixEnd(`${source}\n`) !== at) continue
+        const oneBlock = render(source) !== head.get(before)! + tail.get(after)!
+        if (oneBlock) unsafe.push(`${beforeName} | ${afterName}`)
       }
     }
     expect(unsafe).toEqual([])
-  })
+    // The sweep over every pair is the point, and it still renders some 550 pairs: well under a
+    // second on a quiet machine, but vitest's default 5 s is not the bound a loaded CI node keeps.
+  }, 20_000)
 })
 
 describe('the streamed split', () => {
@@ -321,7 +330,7 @@ describe('a streaming answer', () => {
   const settle = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
 
   /**
-   * The issue's own measurement (#510): a `MutationObserver` over the answer while 200 deltas of it
+   * The issue's own measurement (#510): a `MutationObserver` over the answer while 100 deltas of it
    * arrive, one short sentence each.
    *
    * Counted in nodes rather than in records, because a `innerHTML` that replaces a whole answer is
@@ -329,8 +338,13 @@ describe('a streaming answer', () => {
    * nodes in it.
    *
    * What this says is not a budget but a shape - a delta must not cost more because more has
-   * already been written. Before the split it did: the same 200 deltas churned 79998 nodes, 5200
-   * of them over the first fifty deltas and 35000 over the last fifty.
+   * already been written. Before the split it did: 200 deltas churned 79998 nodes, 5200 of them
+   * over the first fifty deltas and 35000 over the last fifty.
+   *
+   * 100 deltas rather than the issue's 200: jsdom makes each delta dearer the longer the answer is,
+   * so the run grew with the square of the count and passed 5 s on a busy CI node (#620). Half the
+   * deltas is a quarter of the time, and the shape still shows - the old rebuild churns thousands
+   * of nodes over the last 25 deltas, against the few dozen allowed here.
    */
   it('extends the answer instead of rebuilding it', async () => {
     const container = document.createElement('div')
@@ -338,7 +352,7 @@ describe('a streaming answer', () => {
     const root = createRoot(container)
     mounted = root
 
-    const deltas = 200
+    const deltas = 100
     const answer = (n: number) =>
       Array.from({ length: n }, (_, i) => `Sentence number ${i + 1} of the answer.`).join('\n\n')
 
@@ -365,12 +379,12 @@ describe('a streaming answer', () => {
     observer.disconnect()
 
     const sum = (from: number, to: number) => counts.slice(from, to).reduce((a, b) => a + b, 0)
-    const first = sum(0, 50)
-    const last = sum(counts.length - 50, counts.length)
+    const first = sum(0, 25)
+    const last = sum(counts.length - 25, counts.length)
     // A flat count: the late deltas of a long answer cost what the early ones of a short one cost,
     // and no delta costs more than the handful of nodes an append and a tail swap are.
     expect(Math.max(...counts)).toBeLessThanOrEqual(12)
-    expect(last).toBeLessThanOrEqual(first + 50)
+    expect(last).toBeLessThanOrEqual(first + 25)
 
     // And what is standing there is still the whole answer, rendered as it always was.
     root.render(React.createElement(Markdown, { text: answer(deltas), labels }))

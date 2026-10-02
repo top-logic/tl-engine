@@ -265,9 +265,20 @@ default) offers the options in a list that opens on demand and is searched by ty
 every option as a toggle, `segmented` draws them as a bar of segments with a marker sliding to the
 chosen one. One server control (`ReactDropdownSelectControl`) serves all three - it keeps the option
 index and the value protocol and names the client component to draw the shape with
-(`TLDropdownSelect`, `TLOptionChips`, `TLSegmentedChoice`) - so a shape showing every option is
-handed the complete option list right away, having nothing to open at which it could ask for it. The
-shapes showing every option suit a handful of options; a long list belongs in a dropdown.
+(`TLDropdownSelect`, `TLOptionChips`, `TLSegmentedChoice`, `TLChoiceGroup`) - so a shape showing
+every option is handed the complete option list right away, having nothing to open at which it could
+ask for it. The shapes showing every option suit a handful of options; a long list belongs in a
+dropdown. `radio` offers every option as a radio button (a checkbox where several values can be
+chosen), laid out by `orientation` (`vertical`, the default, or `horizontal`). `filter="false"`
+drops the filter input of the dropdown, which then jumps to an option by typing the beginning of its
+label.
+
+Where `display` and `orientation` say nothing, the field decides: `FieldSpec.getSelectDisplay()` and
+`FieldSpec.getSelectOrientation()`, which `FieldControlService` takes from the model annotations
+`<classification-display value="radio|radio-inline|checklist"/>` (an enumeration) and
+`<reference-display value="radio|radio-inline"/>` (a reference) - at the attribute, else at its
+type. `radio` and `checklist` give vertical radio buttons, `radio-inline` horizontal ones, every other
+presentation the dropdown.
 
 ```xml
 <field attribute="priority">
@@ -326,7 +337,8 @@ a switch is asked for: a switch has no third position for "no value".
    attribute is shown. `<boolean-display presentation="switch"/>` is the same decision said in the
    model's own vocabulary: it reaches the field description as
    `FieldSpec.getBooleanPresentation()`, which `BooleanControlProvider` follows where its own
-   `display` says nothing.
+   `display` says nothing; `<classification-display>` and `<reference-display>` reach
+   `SelectControlProvider` the same way.
 3. The type map of `FieldControlService` and, failing that, the `FieldControlRegistry` entry for the
    kind of value the type holds.
 

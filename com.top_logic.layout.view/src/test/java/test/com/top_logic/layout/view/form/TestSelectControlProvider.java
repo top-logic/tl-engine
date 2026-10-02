@@ -32,6 +32,7 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
+import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.view.form.SelectControlProvider;
 
 /**
@@ -73,9 +74,45 @@ public class TestSelectControlProvider extends TestCase {
 
 	/** Without a display stated, the options are offered in a list that opens on demand. */
 	public void testTheOptionsAreOfferedInADropdownByDefault() {
-		assertEquals(SelectDisplay.DROPDOWN, new SelectControlProvider().getDisplay());
-		assertEquals(SelectDisplay.DROPDOWN, provider(null).getDisplay());
+		assertNull(new SelectControlProvider().getDisplay());
+		assertNull(provider(null).getDisplay());
 		assertEquals(SelectDisplay.DROPDOWN, control(provider(null)).getDisplay());
+		assertEquals(SelectDisplay.DROPDOWN, control(new SelectControlProvider()).getDisplay());
+	}
+
+	/** A provider stating no display offers the options in the shape the field asks for. */
+	public void testTheFieldDecidesWhereTheConfigurationSaysNothing() {
+		ReactDropdownSelectControl control =
+			control(provider(null), SelectDisplay.RADIO, Orientation.HORIZONTAL);
+
+		assertEquals(SelectDisplay.RADIO, control.getDisplay());
+		assertEquals(Orientation.HORIZONTAL, control.getOrientation());
+	}
+
+	/** A configured display and orientation override what the field says, so one field deviates. */
+	public void testTheConfigurationOverridesTheField() {
+		ReactDropdownSelectControl dropdown =
+			control(provider(SelectDisplay.DROPDOWN), SelectDisplay.RADIO, Orientation.HORIZONTAL);
+		assertEquals(SelectDisplay.DROPDOWN, dropdown.getDisplay());
+
+		ReactDropdownSelectControl vertical = control(provider(SelectDisplay.RADIO, Orientation.VERTICAL, true),
+			SelectDisplay.RADIO, Orientation.HORIZONTAL);
+		assertEquals(SelectDisplay.RADIO, vertical.getDisplay());
+		assertEquals(Orientation.VERTICAL, vertical.getOrientation());
+	}
+
+	/** A configured orientation reaches the group of radio buttons. */
+	public void testTheConfiguredOrientationReachesTheControl() {
+		assertEquals(Orientation.VERTICAL, control(provider(SelectDisplay.RADIO)).getOrientation());
+		assertEquals(Orientation.HORIZONTAL,
+			control(provider(SelectDisplay.RADIO, Orientation.HORIZONTAL, true)).getOrientation());
+	}
+
+	/** A list stated without filter offers no input to filter its options by. */
+	public void testTheConfiguredFilterReachesTheControl() {
+		assertTrue(control(provider(null)).hasFilter());
+		assertTrue(new SelectControlProvider().hasFilter());
+		assertFalse(control(provider(null, null, false)).hasFilter());
 	}
 
 	/** A list that opens on demand is drawn by the component that can open one. */
@@ -137,11 +174,25 @@ public class TestSelectControlProvider extends TestCase {
 		assertEquals(SelectDisplay.DROPDOWN, readDisplay(SelectDisplay.DROPDOWN));
 	}
 
-	/** A configuration stating no display offers the options in a list that opens on demand. */
-	public void testTheUnconfiguredDisplayIsADropdown() throws Exception {
+	/** A configuration stating no display leaves the shape to the field. */
+	public void testTheUnconfiguredDisplayFollowsTheField() throws Exception {
 		SelectControlProvider.Config config = readConfig("<input-control/>");
 
-		assertEquals(SelectDisplay.DROPDOWN, config.getDisplay());
+		assertNull(config.getDisplay());
+		assertNull(config.getOrientation());
+		assertTrue(config.hasFilter());
+	}
+
+	/** Orientation and filter are configured by the names they are known by in a view. */
+	public void testOrientationAndFilterAreReadFromTheirNames() throws Exception {
+		SelectControlProvider.Config config = readConfig("<input-control "
+			+ SelectControlProvider.Config.DISPLAY + "='" + SelectDisplay.RADIO.getExternalName() + "' "
+			+ SelectControlProvider.Config.ORIENTATION + "='" + Orientation.HORIZONTAL.getExternalName() + "' "
+			+ SelectControlProvider.Config.FILTER + "='false'/>");
+
+		assertEquals(SelectDisplay.RADIO, config.getDisplay());
+		assertEquals(Orientation.HORIZONTAL, config.getOrientation());
+		assertFalse(config.hasFilter());
 	}
 
 	/** Asserts that the given control holds the complete option list for its client. */
@@ -156,7 +207,18 @@ public class TestSelectControlProvider extends TestCase {
 
 	/** The control the given provider builds for a field picked from {@link #OPTIONS}. */
 	private ReactDropdownSelectControl control(SelectControlProvider provider) {
-		FieldSpec field = FieldSpec.of(String.class, LABEL);
+		return control(provider, SelectDisplay.DROPDOWN, Orientation.VERTICAL);
+	}
+
+	/**
+	 * The control the given provider builds for a field picked from {@link #OPTIONS} that asks for
+	 * the given shape and direction.
+	 */
+	private ReactDropdownSelectControl control(SelectControlProvider provider, SelectDisplay fieldDisplay,
+			Orientation fieldOrientation) {
+		FieldSpec field = FieldSpec.of(String.class, LABEL)
+			.setSelectDisplay(fieldDisplay)
+			.setSelectOrientation(fieldOrientation);
 		SimpleSelectFieldModel model = new SimpleSelectFieldModel(null, OPTIONS, false);
 
 		ReactControl control = provider.createControl(_context, field, model);
@@ -177,11 +239,23 @@ public class TestSelectControlProvider extends TestCase {
 
 	/** A provider configured for the given display, or for none if {@code null} is given. */
 	private static SelectControlProvider provider(SelectDisplay display) {
+		return provider(display, null, true);
+	}
+
+	/**
+	 * A provider configured for the given display and orientation, each left unstated if
+	 * {@code null} is given, and with or without a filter.
+	 */
+	private static SelectControlProvider provider(SelectDisplay display, Orientation orientation, boolean filter) {
 		SelectControlProvider.Config config =
 			TypedConfiguration.newConfigItem(SelectControlProvider.Config.class);
 		if (display != null) {
 			config.update(config.descriptor().getProperty(SelectControlProvider.Config.DISPLAY), display);
 		}
+		if (orientation != null) {
+			config.update(config.descriptor().getProperty(SelectControlProvider.Config.ORIENTATION), orientation);
+		}
+		config.update(config.descriptor().getProperty(SelectControlProvider.Config.FILTER), Boolean.valueOf(filter));
 		return (SelectControlProvider) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
 			.getInstance(config);
 	}

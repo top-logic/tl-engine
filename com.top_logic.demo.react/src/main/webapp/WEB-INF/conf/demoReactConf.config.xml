@@ -46,6 +46,19 @@
 				</roles>
 			</instance>
 		</config>
+		<!--
+			The migration scripts of this application. A database that stores no version of a module
+			listed in the minimum modules counts as being in the initial version of that module, so
+			that all migration scripts of the application module are applied to a database that
+			stores no version of it yet.
+		-->
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance minimum-modules="tl, tl-element, tl-model-search, tl-monitoring, tl-contact, tl-model-wysiwyg, tl-demo-react">
+				<modules>
+					<module name="tl-demo-react"/>
+				</modules>
+			</instance>
+		</config>
 		<config service-class="com.top_logic.util.model.ModelService">
 			<instance>
 				<declarations>
@@ -515,6 +528,15 @@
 	</services>
 
 	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/DemoReactMeta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
 		<!--
 			This is a React-only application: its entry point is the React view shell at /view/.
 			The framework's start page is a singleton setting that the legacy core defaults to the

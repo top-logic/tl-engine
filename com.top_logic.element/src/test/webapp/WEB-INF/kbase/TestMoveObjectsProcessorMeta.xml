@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Destination table of TestMoveObjectsProcessor. -->
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+	<metaobjects>
+		<metaobject
+			object_name="TestMoveTarget"
+			super_class="TLObject"
+		/>
+	</metaobjects>
+</objectlist>

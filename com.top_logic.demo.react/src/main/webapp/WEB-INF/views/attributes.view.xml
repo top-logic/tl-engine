@@ -423,6 +423,9 @@
 									<field attribute="phone"/>
 									<field attribute="json"/>
 									<field attribute="image"/>
+									<field attribute="binaryInline"/>
+									<field attribute="binaryRef"/>
+									<field attribute="binaryHybrid"/>
 									<field attribute="priority"/>
 									<field attribute="tags"/>
 									<field attribute="owner"/>

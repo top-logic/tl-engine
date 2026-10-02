@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestMoveObjectsProcessor">
+			<types>
+				<class name="Node">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<attributes>
+						<property name="label"
+							type="tl.core:String"
+						/>
+						<property name="content"
+							type="tl.core:Binary"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

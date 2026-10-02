@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+	<metaobjects>
+		<!--
+			The table of the demo objects (demo.react:Demo). Its columns hold one binary attribute of
+			each storage kind: the content of "binaryInline" is always stored in the row, the content of
+			"binaryRef" always in the default blob store, and the content of "binaryHybrid" in the row
+			up to 16 KB and in the default blob store above.
+		-->
+		<metaobject
+			object_name="DemoReact"
+			super_class="TLObject"
+		>
+			<attributes>
+				<binary-inline
+					att_name="binaryInline"
+					mandatory="false"
+				/>
+				<binary-ref
+					att_name="binaryRef"
+					mandatory="false"
+				/>
+				<binary-hybrid
+					att_name="binaryHybrid"
+					mandatory="false"
+					threshold="16KB"
+				/>
+			</attributes>
+		</metaobject>
+	</metaobjects>
+</objectlist>

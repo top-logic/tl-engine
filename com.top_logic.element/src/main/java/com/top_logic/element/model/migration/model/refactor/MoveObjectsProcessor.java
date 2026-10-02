@@ -24,6 +24,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.db.model.util.DBSchemaUtils;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLColumnDefinition;
 import com.top_logic.basic.sql.DBType;
@@ -48,34 +49,66 @@ import com.top_logic.model.migration.data.Type;
 
 /**
  * {@link MigrationProcessor} moving objects from one table to another.
+ *
+ * <p>
+ * References to the moved objects are re-targeted, and the values of their dynamic attributes,
+ * both in the table of dynamic attribute values and in the table of dynamic binary values, are
+ * assigned to the destination table.
+ * </p>
  */
 public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjectsProcessor.Config<?>>
 		implements MigrationProcessor {
+
+	/**
+	 * The database tables of dynamic attribute values, whose rows name the table of the object they
+	 * belong to.
+	 */
+	private static final List<String> FLEX_TABLES =
+		List.of(AbstractFlexDataManager.FLEX_DATA_DB_NAME, AbstractFlexDataManager.FLEX_BINARY_DATA_DB_NAME);
 
 	/**
 	 * Configuration options for {@link MoveObjectsProcessor}.
 	 */
 	@TagName("move-objects")
 	public interface Config<I extends MoveObjectsProcessor> extends PolymorphicConfiguration<I> {
+
+		/** Configuration name of {@link #getSourceTable()}. */
+		String SOURCE_TABLE = "source-table";
+
+		/** Configuration name of {@link #getDestTable()}. */
+		String DEST_TABLE = "dest-table";
+
+		/** Configuration name of {@link #getTypes()}. */
+		String TYPES = "types";
+
 		/**
 		 * Name of the table to take the objects from.
 		 */
-		@Name("source-table")
+		@Name(SOURCE_TABLE)
 		String getSourceTable();
+
+		/** @see #getSourceTable() */
+		void setSourceTable(String value);
 
 		/**
 		 * Name of the table to move the objects to.
 		 */
-		@Name("dest-table")
+		@Name(DEST_TABLE)
 		String getDestTable();
+
+		/** @see #getDestTable() */
+		void setDestTable(String value);
 
 		/**
 		 * The type of objects to move.
 		 */
 		@Mandatory
-		@Name("types")
+		@Name(TYPES)
 		@Format(QualifiedTypeName.ListFormat.class)
 		List<QualifiedTypeName> getTypes();
+
+		/** @see #getTypes() */
+		void setTypes(List<QualifiedTypeName> value);
 
 		/**
 		 * Whether to only move objects of the given type excluding sub-classes.
@@ -233,28 +266,10 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 			int cntCopy = copy.executeUpdate(connection);
 			log.info("Copied " + cntCopy + " rows from table '" + sourceTableName + "' to '" + destTableName + "'.");
 
-			CompiledStatement update = query(
-				update(
-					table(AbstractFlexDataManager.FLEX_DATA_DB_NAME),
-					and(
-						eqSQL(
-							column(AbstractFlexDataManager.TYPE_DBNAME),
-							literal(DBType.STRING, sourceTableName)),
-						inSetSelect(
-							column(AbstractFlexDataManager.IDENTIFIER_DBNAME),
-							select(
-								columns(columnDef(BasicTypes.IDENTIFIER_DB_NAME)),
-								table(sourceTable.getDBMapping().getDBName()),
-								inSet(
-									column(typeRef.getColumn(ReferencePart.name).getDBName()),
-									setLiteral(movedTypes, DBType.ID))))),
+			for (String flexTable : FLEX_TABLES) {
+				moveDynamicValues(log, connection, sourceTable, destTableName, typeRef, movedTypes, flexTable);
+			}
 
-					columnNames(AbstractFlexDataManager.TYPE_DBNAME),
-					expressions(literal(DBType.STRING, destTableName)))).toSql(connection.getSQLDialect());
-
-			int cntUpdate = update.executeUpdate(connection);
-			log.info("Migrated " + cntUpdate + " flex attributes from table '" + sourceTableName + "' to '" + destTableName + "'.");
-			
 			CompiledStatement delete = query(
 				delete(
 					table(sourceTable.getDBMapping().getDBName()),
@@ -274,6 +289,48 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 					+ "': " + ex.getMessage(),
 				ex);
 		}
+	}
+
+	/**
+	 * Re-assigns the rows of a table of dynamic attribute values that belong to moved objects to the
+	 * destination table.
+	 *
+	 * <p>
+	 * A table that does not exist in the database is skipped.
+	 * </p>
+	 */
+	private void moveDynamicValues(Log log, PooledConnection connection, MOStructure sourceTable,
+			String destTableName, MOReference typeRef, Set<TLID> movedTypes, String flexTable)
+			throws SQLException {
+		String sourceTableName = sourceTable.getName();
+		if (!DBSchemaUtils.exists(connection, flexTable)) {
+			log.info("No table '" + flexTable + "', no dynamic attribute values to move from table '"
+				+ sourceTableName + "' to '" + destTableName + "'.");
+			return;
+		}
+
+		CompiledStatement update = query(
+			update(
+				table(flexTable),
+				and(
+					eqSQL(
+						column(AbstractFlexDataManager.TYPE_DBNAME),
+						literal(DBType.STRING, sourceTableName)),
+					inSetSelect(
+						column(AbstractFlexDataManager.IDENTIFIER_DBNAME),
+						select(
+							columns(columnDef(BasicTypes.IDENTIFIER_DB_NAME)),
+							table(sourceTable.getDBMapping().getDBName()),
+							inSet(
+								column(typeRef.getColumn(ReferencePart.name).getDBName()),
+								setLiteral(movedTypes, DBType.ID))))),
+
+				columnNames(AbstractFlexDataManager.TYPE_DBNAME),
+				expressions(literal(DBType.STRING, destTableName)))).toSql(connection.getSQLDialect());
+
+		int cntUpdate = update.executeUpdate(connection);
+		log.info("Migrated " + cntUpdate + " dynamic attribute values in '" + flexTable + "' from table '"
+			+ sourceTableName + "' to '" + destTableName + "'.");
 	}
 
 }

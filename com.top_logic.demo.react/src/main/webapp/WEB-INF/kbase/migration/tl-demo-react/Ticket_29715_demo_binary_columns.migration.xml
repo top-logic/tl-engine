@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29715_demo_binary_columns"
+		module="tl-demo-react"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29715_drop_physical_resource"
+			module="tl"
+		/>
+		<dependency name="Ticket_29715_remove_physical_resource"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_29715_binary_inline"
+			module="tl-model-wysiwyg"
+		/>
+	</dependencies>
+	<processors>
+		<!-- The table of the demo objects with a binary column of each storage kind. -->
+		<processor class="com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor">
+			<schema>
+				<metaobject
+					object_name="DemoReact"
+					super_class="TLObject"
+				>
+					<attributes>
+						<binary-inline
+							att_name="binaryInline"
+							mandatory="false"
+						/>
+						<binary-ref
+							att_name="binaryRef"
+							mandatory="false"
+						/>
+						<binary-hybrid
+							att_name="binaryHybrid"
+							mandatory="false"
+							threshold="16KB"
+						/>
+					</attributes>
+				</metaobject>
+			</schema>
+		</processor>
+
+		<!-- The demo objects move from the generic table into their own table. -->
+		<move-objects
+			dest-table="DemoReact"
+			source-table="GenericObject"
+			types="demo.react:Demo"
+		/>
+		<add-annotations name="demo.react:Demo">
+			<annotations>
+				<table name="DemoReact"/>
+			</annotations>
+		</add-annotations>
+
+		<!-- One binary attribute per column. -->
+		<create-property name="demo.react:Demo#binaryInline"
+			type="tl.core:Binary"
+		>
+			<annotations>
+				<dynamic-visibility>
+					<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+						function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+					/>
+				</dynamic-visibility>
+				<input-control>
+					<impl class="com.top_logic.layout.view.form.BinaryControlProvider"/>
+				</input-control>
+			</annotations>
+		</create-property>
+		<reorder-part name="demo.react:Demo#binaryInline"
+			before="priority"
+		/>
+		<create-property name="demo.react:Demo#binaryRef"
+			type="tl.core:Binary"
+		>
+			<annotations>
+				<dynamic-visibility>
+					<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+						function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+					/>
+				</dynamic-visibility>
+				<input-control>
+					<impl class="com.top_logic.layout.view.form.BinaryControlProvider"/>
+				</input-control>
+			</annotations>
+		</create-property>
+		<reorder-part name="demo.react:Demo#binaryRef"
+			before="priority"
+		/>
+		<create-property name="demo.react:Demo#binaryHybrid"
+			type="tl.core:Binary"
+		>
+			<annotations>
+				<dynamic-visibility>
+					<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+						function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+					/>
+				</dynamic-visibility>
+				<input-control>
+					<impl class="com.top_logic.layout.view.form.BinaryControlProvider"/>
+				</input-control>
+			</annotations>
+		</create-property>
+		<reorder-part name="demo.react:Demo#binaryHybrid"
+			before="priority"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

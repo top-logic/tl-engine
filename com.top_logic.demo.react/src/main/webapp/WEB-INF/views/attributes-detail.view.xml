@@ -127,6 +127,9 @@
 				<field attribute="phone"/>
 				<field attribute="json"/>
 				<field attribute="image"/>
+				<field attribute="binaryInline"/>
+				<field attribute="binaryRef"/>
+				<field attribute="binaryHybrid"/>
 			</group>
 			<group
 				border="subtle"

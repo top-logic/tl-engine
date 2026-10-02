@@ -21,22 +21,11 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import junit.extensions.TestSetup;
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
-import org.testcontainers.DockerClientFactory;
-import org.testcontainers.containers.MinIOContainer;
-
-import test.com.top_logic.basic.ModuleTestSetup;
-import test.com.top_logic.basic.SimpleTestFactory;
 import test.com.top_logic.basic.io.blob.AbstractBlobStoreContractTest;
 
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.MultipartUpload;
@@ -54,16 +43,16 @@ import com.top_logic.storage.s3.S3BlobStore;
 import com.top_logic.storage.s3.ServerSideEncryptionMode;
 
 /**
- * Test of {@link S3BlobStore} against a MinIO server started in a Docker container.
+ * Test of {@link S3BlobStore} against a SeaweedFS server started in a Docker container.
  *
  * <p>
  * The test is skipped if no Docker environment is available. Each test uses a bucket of its own.
  * </p>
  *
  * <p>
- * The MinIO server is started with a static KMS key, so that it accepts the server-side encryption
- * modes SSE-S3 and SSE-KMS. The contract tests run without server-side encryption; the encryption
- * modes are tested separately.
+ * The server accepts the server-side encryption modes SSE-S3 and SSE-KMS, see
+ * {@link SeaweedFSSetup}. The contract tests run with the default encryption mode SSE-S3; the
+ * other modes are tested separately.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -71,21 +60,9 @@ import com.top_logic.storage.s3.ServerSideEncryptionMode;
 public class TestS3BlobStore extends AbstractBlobStoreContractTest {
 
 	/**
-	 * The MinIO image the tests run against.
-	 */
-	private static final String MINIO_IMAGE = "minio/minio:RELEASE.2025-04-22T22-12-26Z";
-
-	/**
-	 * Environment variable of MinIO defining a static KMS key: name and base64 encoded 256 bit key.
-	 */
-	private static final String MINIO_KMS_SECRET_KEY = "MINIO_KMS_SECRET_KEY";
-
-	/**
-	 * Name of the static KMS key of the MinIO server.
+	 * Name of the KMS key for SSE-KMS, created by the server on first use.
 	 */
 	private static final String KMS_KEY_ID = "test-key";
-
-	private static final String KMS_KEY = "bXktbWluaW8ta2V5LWZvci10ZXN0aW5nLW9ubHktMzI=";
 
 	private static final String STORE_NAME = "s3";
 
@@ -95,16 +72,16 @@ public class TestS3BlobStore extends AbstractBlobStoreContractTest {
 
 	private static final AtomicInteger BUCKET_COUNTER = new AtomicInteger();
 
-	private static MinIOContainer _minio;
-
-	private static S3Client _admin;
-
 	private String _bucket;
+
+	private static S3Client admin() {
+		return SeaweedFSSetup.admin();
+	}
 
 	@Override
 	protected BlobStore createStore() throws Exception {
 		_bucket = "test-" + BUCKET_COUNTER.incrementAndGet() + "-" + System.currentTimeMillis();
-		_admin.createBucket(request -> request.bucket(_bucket));
+		admin().createBucket(request -> request.bucket(_bucket));
 		return newStore(newConfig(PREFIX));
 	}
 
@@ -118,16 +95,16 @@ public class TestS3BlobStore extends AbstractBlobStoreContractTest {
 	}
 
 	private static void deleteBucket(String bucket) {
-		for (MultipartUpload upload : _admin.listMultipartUploadsPaginator(request -> request.bucket(bucket))
+		for (MultipartUpload upload : admin().listMultipartUploadsPaginator(request -> request.bucket(bucket))
 			.uploads()) {
-			_admin.abortMultipartUpload(
+			admin().abortMultipartUpload(
 				request -> request.bucket(bucket).key(upload.key()).uploadId(upload.uploadId()));
 		}
-		for (S3Object object : _admin.listObjectsV2Paginator(request -> request.bucket(bucket)).contents()) {
-			_admin.deleteObject(request -> request.bucket(bucket).key(object.key()));
+		for (S3Object object : admin().listObjectsV2Paginator(request -> request.bucket(bucket)).contents()) {
+			admin().deleteObject(request -> request.bucket(bucket).key(object.key()));
 		}
 		try {
-			_admin.deleteBucket(request -> request.bucket(bucket));
+			admin().deleteBucket(request -> request.bucket(bucket));
 		} catch (S3Exception ex) {
 			// E.g. uploads not reported by the listing of the server, the container is discarded anyway.
 			Logger.warn("Cannot delete test bucket '" + bucket + "'.", ex, TestS3BlobStore.class);
@@ -137,13 +114,12 @@ public class TestS3BlobStore extends AbstractBlobStoreContractTest {
 	private S3BlobStore.Config<?> newConfig(String prefix) {
 		S3BlobStore.Config<?> config = TypedConfiguration.newConfigItem(S3BlobStore.Config.class);
 		config.setName(STORE_NAME);
-		config.setEndpoint(_minio.getS3URL());
+		config.setEndpoint(SeaweedFSSetup.endpoint());
 		config.setBucket(_bucket);
 		config.setPrefix(prefix);
 		config.setPathStyleAccess(true);
-		config.setAccessKey(_minio.getUserName());
-		config.setSecretKey(_minio.getPassword());
-		config.setServerSideEncryption(ServerSideEncryptionMode.NONE);
+		config.setAccessKey(SeaweedFSSetup.ACCESS_KEY);
+		config.setSecretKey(SeaweedFSSetup.SECRET_KEY);
 		return config;
 	}
 
@@ -160,9 +136,11 @@ public class TestS3BlobStore extends AbstractBlobStoreContractTest {
 		byte[] content = bytes(100);
 		String key = put(content);
 
-		HeadObjectResponse head = _admin.headObject(request -> request.bucket(_bucket).key(PREFIX + key));
+		HeadObjectResponse head = admin().headObject(request -> request.bucket(_bucket).key(PREFIX + key));
 		assertEquals(Long.valueOf(content.length), head.contentLength());
 		assertEquals(CONTENT_TYPE, head.contentType());
+		assertEquals("Encrypted with the default mode SSE-S3.", ServerSideEncryption.AES256,
+			head.serverSideEncryption());
 		assertEquals(Collections.singletonList(PREFIX + key), objectNames());
 	}
 
@@ -318,6 +296,13 @@ public class TestS3BlobStore extends AbstractBlobStoreContractTest {
 		}
 	}
 
+	/** Content is stored without server-side encryption. */
+	public void testServerSideEncryptionNone() throws IOException {
+		S3BlobStore.Config<?> config = multipartConfig();
+		config.setServerSideEncryption(ServerSideEncryptionMode.NONE);
+		assertEncryption(config, null);
+	}
+
 	/** Content is encrypted with SSE-S3. */
 	public void testServerSideEncryptionS3() throws IOException {
 		S3BlobStore.Config<?> config = multipartConfig();
@@ -394,7 +379,7 @@ public class TestS3BlobStore extends AbstractBlobStoreContractTest {
 	}
 
 	private HeadObjectResponse head(String key) {
-		return _admin.headObject(request -> request.bucket(_bucket).key(PREFIX + key));
+		return admin().headObject(request -> request.bucket(_bucket).key(PREFIX + key));
 	}
 
 	/**
@@ -424,18 +409,18 @@ public class TestS3BlobStore extends AbstractBlobStoreContractTest {
 	}
 
 	private void putObject(String objectName) {
-		_admin.putObject(request -> request.bucket(_bucket).key(objectName), RequestBody.fromBytes(bytes(5)));
+		admin().putObject(request -> request.bucket(_bucket).key(objectName), RequestBody.fromBytes(bytes(5)));
 	}
 
 	private void startUpload(String objectName) {
 		String uploadId =
-			_admin.createMultipartUpload(request -> request.bucket(_bucket).key(objectName)).uploadId();
-		_admin.uploadPart(request -> request.bucket(_bucket).key(objectName).uploadId(uploadId).partNumber(1),
+			admin().createMultipartUpload(request -> request.bucket(_bucket).key(objectName)).uploadId();
+		admin().uploadPart(request -> request.bucket(_bucket).key(objectName).uploadId(uploadId).partNumber(1),
 			RequestBody.fromBytes(bytes(100)));
 	}
 
 	private List<String> objectNames() {
-		return _admin.listObjectsV2Paginator(request -> request.bucket(_bucket)).contents().stream()
+		return admin().listObjectsV2Paginator(request -> request.bucket(_bucket)).contents().stream()
 			.map(S3Object::key)
 			.sorted()
 			.collect(Collectors.toList());
@@ -446,7 +431,7 @@ public class TestS3BlobStore extends AbstractBlobStoreContractTest {
 	}
 
 	private List<String> uploads(String prefix) {
-		return _admin.listMultipartUploadsPaginator(request -> request.bucket(_bucket).prefix(prefix)).uploads()
+		return admin().listMultipartUploadsPaginator(request -> request.bucket(_bucket).prefix(prefix)).uploads()
 			.stream()
 			.map(MultipartUpload::key)
 			.sorted()
@@ -462,57 +447,10 @@ public class TestS3BlobStore extends AbstractBlobStoreContractTest {
 	}
 
 	/**
-	 * Starts the MinIO container for the whole suite.
-	 */
-	private static class MinIOSetup extends TestSetup {
-
-		MinIOSetup(Test test) {
-			super(test);
-		}
-
-		@Override
-		protected void setUp() throws Exception {
-			super.setUp();
-			_minio = new MinIOContainer(MINIO_IMAGE).withEnv(MINIO_KMS_SECRET_KEY, KMS_KEY_ID + ":" + KMS_KEY);
-			_minio.start();
-			_admin = S3Client.builder()
-				.httpClientBuilder(UrlConnectionHttpClient.builder())
-				.endpointOverride(URI.create(_minio.getS3URL()))
-				.region(Region.US_EAST_1)
-				.forcePathStyle(Boolean.TRUE)
-				.credentialsProvider(StaticCredentialsProvider.create(
-					AwsBasicCredentials.create(_minio.getUserName(), _minio.getPassword())))
-				.build();
-		}
-
-		@Override
-		protected void tearDown() throws Exception {
-			try {
-				if (_admin != null) {
-					_admin.close();
-				}
-			} finally {
-				_admin = null;
-				if (_minio != null) {
-					_minio.stop();
-				}
-				_minio = null;
-				super.tearDown();
-			}
-		}
-
-	}
-
-	/**
-	 * The test suite, empty if no Docker environment is available.
+	 * The test suite, a skip placeholder if no Docker environment is available.
 	 */
 	public static Test suite() {
-		if (!DockerClientFactory.instance().isDockerAvailable()) {
-			TestSuite skipped = new TestSuite(TestS3BlobStore.class.getName());
-			skipped.addTest(SimpleTestFactory.newSuccessfulTest("Skipped: Docker is not available."));
-			return skipped;
-		}
-		return ModuleTestSetup.setupModule(new MinIOSetup(new TestSuite(TestS3BlobStore.class)));
+		return SeaweedFSSetup.suite(TestS3BlobStore.class);
 	}
 
 }

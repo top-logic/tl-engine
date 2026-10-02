@@ -43,6 +43,14 @@
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-layout-react</artifactId>
 		</dependency>
+		<!--
+			The engine's React <chart>: the chat's pane draws what the agent presents as a chart
+			with it (Issue #616), rather than with a chart of its own.
+		-->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-react-chartjs</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-element</artifactId>

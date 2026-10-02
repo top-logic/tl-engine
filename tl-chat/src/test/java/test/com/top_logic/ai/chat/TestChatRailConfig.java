@@ -31,8 +31,7 @@ public class TestChatRailConfig extends TestCase {
 		Config config = TypedConfiguration.newConfigItem(Config.class);
 		assertNull("No id of its own: the enclosing <chat> names it, else it is the default chat.",
 			config.getChatId());
-		assertTrue(config.getSections().isEmpty());
-		assertTrue("The shell ships no sections of its own.", config.getPane().isEmpty());
+		assertTrue("The shell ships no sections of its own.", config.getSections().isEmpty());
 		assertNull(config.getInput());
 		assertTrue(config.getStrip());
 		assertTrue(config.getOpen());
@@ -51,7 +50,6 @@ public class TestChatRailConfig extends TestCase {
 	public void testEmptyRailParses() throws Exception {
 		Config config = parse("<chat-rail %s/>");
 		assertTrue(config.getSections().isEmpty());
-		assertTrue(config.getPane().isEmpty());
 	}
 
 	/** The sections parse in the order written, each with its own content element. */
@@ -102,14 +100,15 @@ public class TestChatRailConfig extends TestCase {
 			config.getSections().get(0).getContent().get(0).getImplementationClass());
 	}
 
-	/** The pane is a child of its own, shown while the input channel holds an object. */
-	public void testPaneAndInputChannelParse() throws Exception {
+	/**
+	 * The pane is configured by its channel alone: it renders any type (#616), so there is nothing to
+	 * nest for it.
+	 */
+	public void testThePaneIsItsInputChannel() throws Exception {
 		Config config = parse("<chat-rail %s input='selected'>"
 			+ "<section name='sources'><chat-sources/></section>"
-			+ "<pane><form input='selected'/></pane>"
 			+ "</chat-rail>");
-		assertNotNull(config.getInput());
-		assertEquals(1, config.getPane().size());
+		assertEquals("selected", config.getInput().getChannelName());
 		assertEquals(1, config.getSections().size());
 	}
 

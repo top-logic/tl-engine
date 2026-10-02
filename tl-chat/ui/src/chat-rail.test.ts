@@ -7,6 +7,7 @@ import {
   collapsedFromSections,
   paneIsOpen,
   railBadgeTotal,
+  readPaneSteps,
   readRailSections,
   readSectionBadges,
 } from './rail-model'
@@ -142,50 +143,64 @@ describe('the rendered rail', () => {
   })
 
   /**
-   * The pane is the rail's other face: `paneOpen` swaps which of the two the user sees, and the
-   * pane's element stays mounted in both, so reopening it shows the object as it is now.
+   * The pane is the server's history of steps (#616): nothing on the channel is no pane at all, and
+   * one step replaces the section column with that step, titled by it.
    */
-  it('swaps the sections for the pane while the input channel holds an object', () => {
-    const pane = { controlId: 'c9', module: 'TLForm', state: {} }
-    const closed = render(railState({ pane, paneOpen: false, chatId: 'pane-closed' }))
+  it('swaps the sections for the pane while its history holds a step', () => {
+    const closed = render(railState({ paneSteps: [], chatId: 'pane-closed' }))
     expect(closed).toContain('class="rail-column"')
-    expect(closed).toContain('data-module="TLForm"')
-    expect(closed).toMatch(/class="side-pane"[^>]*hidden/)
+    expect(closed).not.toContain('class="side-pane')
 
-    const open = render(railState({ pane, paneOpen: true, paneTitle: 'Invoice 4711', chatId: 'pane-open' }))
+    const form = { controlId: 'c9', module: 'TLForm', state: {} }
+    const open = render(railState({
+      paneSteps: [{ id: 1, kind: 'form', title: 'Invoice 4711', control: form }],
+      chatId: 'pane-open',
+    }))
     expect(open).toContain('class="rail-column is-hidden"')
     expect(open).toContain('Invoice 4711')
     expect(open).not.toMatch(/class="side-pane"[^>]*hidden/)
+    expect(open).toContain('data-module="TLForm"')
+    // One step has nothing to go back to: the cross is the way out, not a "back" that closes.
+    expect(open).not.toContain('class="side-back"')
+    expect(open).toContain('class="side-pane-close"')
+    expect(open).toContain('class="side-pane-collapse"')
   })
 
   /**
-   * One object is a form, several are a list, and no element renders both - so the rail picks the
-   * pane child by how many objects the channel holds (`paneMany`, written by the control).
+   * Every step stays mounted, so "back" finds the table as it was left - its sort, its filter, its
+   * scroll position. Only the top one is shown; the ones below are stashed and inert.
    */
-  it('shows the list pane instead of the pane while several objects stand on the channel', () => {
-    const pane = { controlId: 'c9', module: 'TLForm', state: {} }
-    const listPane = { controlId: 'c10', module: 'TLDataList', state: {} }
-
-    // Both stay mounted, as every other child of the rail does; one of the two is hidden.
-    const one = render(railState({ pane, listPane, paneOpen: true, paneMany: false, chatId: 'pane-one' }))
-    expect(one).toMatch(/class="is-hidden"><tl-child data-control-id="c10"/)
-    expect(one).toMatch(/<div><tl-child data-control-id="c9"/)
-
-    const many = render(railState({
-      pane, listPane, paneOpen: true, paneMany: true, paneTitle: '3 objects', chatId: 'pane-many',
+  it('keeps every step mounted, shows the top one and offers the way back to the one below', () => {
+    const table = { controlId: 'c10', module: 'TLTableView', state: {} }
+    const form = { controlId: 'c11', module: 'TLForm', state: {} }
+    const html = render(railState({
+      paneSteps: [
+        { id: 1, kind: 'table', title: 'Veranstaltung (4)', control: table },
+        { id: 2, kind: 'form', title: 'KI im Mittelstand 2026', control: form },
+      ],
+      chatId: 'pane-history',
     }))
-    expect(many).toMatch(/class="is-hidden"><tl-child data-control-id="c9"/)
-    expect(many).toMatch(/<div><tl-child data-control-id="c10"/)
-    expect(many).toContain('3 objects')
+    expect(html).toMatch(/class="pane-step is-table is-stashed" inert="" aria-hidden="true"><tl-child data-control-id="c10"/)
+    expect(html).toMatch(/class="pane-step is-form" aria-hidden="false"><tl-child data-control-id="c11"/)
+    expect(html).toContain('KI im Mittelstand 2026')
+    expect(html).toContain('class="side-back"')
+    // The strip's first icon is the pane's: what brings a folded pane back.
+    expect(html).toMatch(/class="side-strip-item is-pane is-active"/)
   })
 
-  /** A rail that configured only a `<pane>` shows it for whatever stands on the channel. */
-  it('falls back to the one pane child that is configured', () => {
-    const pane = { controlId: 'c9', module: 'TLForm', state: {} }
-
-    const html = render(railState({ pane, paneOpen: true, paneMany: true, chatId: 'pane-only-one' }))
-    expect(html).toMatch(/<div><tl-child data-control-id="c9"/)
-    expect(html).not.toContain('is-hidden"><tl-child data-control-id="c9"')
+  it('reads only well-formed steps', () => {
+    expect(readPaneSteps({ paneSteps: 'nonsense' })).toEqual([])
+    expect(readPaneSteps({
+      paneSteps: [
+        { id: 1, kind: 'chart', title: 'Umsatz', control: { controlId: 'c1' } },
+        { id: 'x', kind: 'table', control: { controlId: 'c2' } },
+        { id: 3, kind: 'mystery', control: { controlId: 'c3' } },
+        { id: 4, kind: 'form' },
+      ],
+    })).toEqual([
+      { id: 1, kind: 'chart', title: 'Umsatz', control: { controlId: 'c1' } },
+      { id: 3, kind: 'table', title: '', control: { controlId: 'c3' } },
+    ])
   })
 })
 

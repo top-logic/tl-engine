@@ -5,7 +5,9 @@ import { bundle } from './i18n'
 import {
   collapsedFromSections,
   paneIsOpen,
+  paneStepIcon,
   railBadgeTotal,
+  readPaneSteps,
   readRailSections,
   readSectionBadges,
   type RailSectionState,
@@ -42,9 +44,14 @@ function isShown(element: HTMLElement): boolean {
  * It renders the frame - the strip, the section headers, the pane's chrome - and nothing else: each
  * section's body is the view element the application put there, rendered as a child control.
  *
- * Every child stays mounted. A collapsed section and an unopened pane are hidden, not dropped, so a
- * section keeps reporting its badge while it is out of sight (the badge is the whole point of a
- * closed rail) and a reopened pane shows its object as it is now rather than as it was.
+ * Every child stays mounted. A collapsed section is hidden, not dropped, so it keeps reporting its
+ * badge while it is out of sight (the badge is the whole point of a closed rail).
+ *
+ * The pane shows what stands on the rail's `input` channel, for any type (#616): the server keeps a
+ * history of steps - a table, the form of a row clicked in it, a chart - and every step stays
+ * mounted, the top one shown. "Back" asks the server to drop the top step, which shows the one below
+ * as it was left; folding the pane away hides it with its content kept, and the strip's first icon
+ * brings it back. Neither asks the agent anything.
  */
 export function TLChatRail({ controlId }: TLCellProps) {
   const state = useTLState()
@@ -58,17 +65,16 @@ export function TLChatRail({ controlId }: TLCellProps) {
   const strip = state.strip !== false
   const openDefault = state.open !== false
   const paneMode = state.paneMode === 'document' ? 'document' : 'card'
-  const paneTitle = typeof state.paneTitle === 'string' ? state.paneTitle : ''
-  // Two pane children: the <pane> shows one object, the <list-pane> shows several. A rail that
-  // configured only one of them uses it for whatever stands on the channel.
-  //
-  // Both stay mounted and only one is shown, which is the same rule the sections follow: a control
-  // the browser drops loses the row source it was observing, and the one that comes back is the one
-  // that was computed when the pane was still empty.
-  const singleControl = state.pane ?? null
-  const listControl = state.listPane ?? null
-  const showList = state.paneMany === true ? listControl != null : singleControl == null && listControl != null
-  const paneControl = showList ? listControl : singleControl
+  const steps = useMemo(() => readPaneSteps(state), [state])
+  const top = steps.length > 0 ? steps[steps.length - 1] : null
+  /**
+   * The step the user folded the pane away on, if they did.
+   *
+   * Kept as the step rather than as a flag, so that something new arriving - the agent presenting
+   * a table, a row picked in a section - shows itself instead of landing in a folded pane.
+   */
+  const [foldedStep, setFoldedStep] = useState<number | null>(null)
+  const folded = top != null && foldedStep === top.id
 
   // Tell the chat a rail is on the page, so `<chat-conversation/>` knows its badge button has
   // something to open. Unregisters on unmount.
@@ -154,8 +160,8 @@ export function TLChatRail({ controlId }: TLCellProps) {
   const collapsedIds = useMemo(() => new Set(chat.collapsedSections), [chat.collapsedSections])
   /** Whether the rail is open: its drawer while it is one, else the user's column choice. */
   const railOpen = drawer ? chat.railDrawer && chat.railDrawerOpen : chat.sideOpen
-  /** The pane the `input` channel opens. */
-  const objectPane = state.paneOpen === true && paneControl != null
+  /** The pane the `input` channel opens, unless the user folded it away. */
+  const objectPane = top != null && !folded
   /** The chat's own transient pane, which a citation renderer still opens with `openInPane`. */
   const hostPane = paneIsOpen(railOpen, chat.paneContent)
   const paneOpen = objectPane || hostPane
@@ -167,11 +173,28 @@ export function TLChatRail({ controlId }: TLCellProps) {
     void command('closePane')
   }, [command])
 
-  /** Closes an open drawer: the section column, and the pane it shows. */
+  const paneBack = useCallback(() => {
+    void command('paneBack')
+  }, [command])
+
+  const foldPane = useCallback(() => {
+    if (top) setFoldedStep(top.id)
+  }, [top])
+
+  /** The strip's pane icon: folds a shown pane away, and shows a folded one again. */
+  const togglePane = useCallback(() => {
+    if (!top) return
+    setFoldedStep(folded ? null : top.id)
+  }, [folded, top])
+
+  /**
+   * Closes an open drawer: the section column, and the pane it shows - folded rather than emptied,
+   * because a tap beside a drawer means "let me see the conversation", not "throw this away".
+   */
   const closeDrawer = useCallback(() => {
-    if (objectPane) closeObjectPane()
+    if (objectPane) foldPane()
     actions.closeSide()
-  }, [actions, closeObjectPane, objectPane])
+  }, [actions, foldPane, objectPane])
 
   const onStrip = useCallback(
     (section: RailSectionState) => {
@@ -281,9 +304,21 @@ export function TLChatRail({ controlId }: TLCellProps) {
         // A pointer's way out. Keyboard and screen reader users have the strip and Escape.
         <div className="rail-drawer-scrim" aria-hidden="true" onClick={closeDrawer} />
       ) : null}
-      {strip ? (
+      {strip || top ? (
         <nav className="side-strip" aria-label={labels.sideRail}>
-          {sections.map((section) => (
+          {top ? (
+            <button
+              type="button"
+              className={`side-strip-item is-pane${objectPane ? ' is-active' : ''}`}
+              title={folded ? `${labels.paneExpand}: ${top.title}` : labels.paneCollapse}
+              aria-label={folded ? `${labels.paneExpand}: ${top.title}` : labels.paneCollapse}
+              aria-expanded={objectPane}
+              onClick={togglePane}
+            >
+              <ThemeIcon encoded={paneStepIcon(top.kind)} />
+            </button>
+          ) : null}
+          {(strip ? sections : []).map((section) => (
             <button
               type="button"
               key={section.name}
@@ -337,28 +372,35 @@ export function TLChatRail({ controlId }: TLCellProps) {
         </div>
       </aside>
 
-      {paneControl != null ? (
+      {top != null ? (
         <SidePane
-          title={paneTitle}
+          title={top.title}
           width={chat.paneWidth}
           onWidth={actions.setPaneWidth}
-          onBack={closeObjectPane}
+          onBack={paneBack}
+          showBack={steps.length > 1}
+          onClose={closeObjectPane}
+          onCollapse={foldPane}
           labels={labels}
           mode={paneMode}
           hidden={!objectPane}
           placement="rail"
           overlay={drawer}
+          bodyClassName="has-steps"
         >
-          {singleControl != null ? (
-            <div className={showList ? 'is-hidden' : undefined}>
-              <TLChild control={singleControl} />
-            </div>
-          ) : null}
-          {listControl != null ? (
-            <div className={showList ? undefined : 'is-hidden'}>
-              <TLChild control={listControl} />
-            </div>
-          ) : null}
+          {steps.map((step) => {
+            const shown = step === top
+            return (
+              <div
+                key={step.id}
+                className={`pane-step is-${step.kind}${shown ? '' : ' is-stashed'}`}
+                inert={!shown}
+                aria-hidden={!shown}
+              >
+                <TLChild control={step.control} />
+              </div>
+            )
+          })}
         </SidePane>
       ) : null}
 

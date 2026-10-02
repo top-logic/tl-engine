@@ -47,6 +47,10 @@ class FakeEventSource {
 const PROGRESS = { controlId: 'c2', module: 'TLDataList', state: {} }
 const INVOICES = { controlId: 'c3', module: 'TLDataList', state: {} }
 const PANE = { controlId: 'c4', module: 'TLForm', state: {} }
+const TABLE = { controlId: 'c5', module: 'TLTableView', state: {} }
+
+/** One step of the pane's history, as the server writes it. */
+const FORM_STEP = { id: 1, kind: 'form', title: 'INV-1', control: PANE }
 
 /** A chat id per test: a chat's store outlives the element, and no test may see the last one's. */
 let chatId = ''
@@ -66,9 +70,7 @@ function railState(overrides: Record<string, unknown> = {}): Record<string, unkn
     open: true,
     drawerBelow: 70,
     paneMode: 'card',
-    pane: PANE,
-    paneOpen: false,
-    paneTitle: 'INV-1',
+    paneSteps: [],
     sections: [
       { name: 'progress', label: 'Progress', icon: '', open: true, content: PROGRESS },
       { name: 'invoices', label: 'Invoices', icon: '', open: true, content: INVOICES },
@@ -257,9 +259,9 @@ describe('the rail in a narrow host', () => {
     expect(store().getState().sideOpen).toBe(true)
   })
 
-  it('shows the object pane in the drawer, and Escape closes the pane with it', () => {
+  it('shows the object pane in the drawer, and Escape folds the pane away with it', () => {
     mount(400)
-    render({ paneOpen: true })
+    render({ paneSteps: [FORM_STEP] })
     expect(rail().classList.contains('is-drawer-open')).toBe(true)
     const pane = host.querySelector<HTMLElement>('.side-pane')!
     expect(pane.hidden).toBe(false)
@@ -267,7 +269,10 @@ describe('the rail in a narrow host', () => {
     expect(host.querySelector('.side-splitter')).toBeNull()
     expect(pane.style.minWidth).toBe('0px')
     key(pane, 'Escape')
-    expect(tlCommands().map((command) => command.name)).toContain('closePane')
+    // Folded, not emptied: a tap beside a drawer means "let me see the conversation".
+    expect(tlCommands().map((command) => command.name)).not.toContain('closePane')
+    expect(pane.hidden).toBe(true)
+    expect(rail().classList.contains('is-drawer-open')).toBe(false)
   })
 
   it('takes the focus into the pane that a row pick opens, so Escape still reaches the drawer', () => {
@@ -275,11 +280,11 @@ describe('the rail in a narrow host', () => {
     click(stripItem(1))
     // The picked row is hidden with the column, and the browser drops the focus onto the page.
     ;(document.activeElement as HTMLElement).blur()
-    render({ paneOpen: true })
+    render({ paneSteps: [FORM_STEP] })
     const pane = host.querySelector<HTMLElement>('.side-pane')!
     expect(pane.contains(document.activeElement)).toBe(true)
     key(document.activeElement!, 'Escape')
-    expect(tlCommands().map((command) => command.name)).toContain('closePane')
+    expect(pane.hidden).toBe(true)
   })
 
   it('gives the column back, as the user left it, when the host grows wide again', () => {
@@ -294,3 +299,55 @@ describe('the rail in a narrow host', () => {
     expect(rail().classList.contains('is-drawer-open')).toBe(false)
   })
 })
+
+describe('the pane history (#616)', () => {
+  const TABLE_STEP = { id: 1, kind: 'table', title: 'Invoice (4)', control: TABLE }
+  const ROW_STEP = { id: 2, kind: 'form', title: 'INV-1', control: PANE }
+
+  function pane(): HTMLElement {
+    return host.querySelector<HTMLElement>('.side-pane')!
+  }
+
+  it('asks the server for the step below on "back", and to empty the pane on the cross', () => {
+    mount(1400, { paneSteps: [TABLE_STEP, ROW_STEP] })
+    click(host.querySelector('.side-back')!)
+    click(host.querySelector('.side-pane-close')!)
+    expect(tlCommands().map((command) => command.name)).toEqual(['paneBack', 'closePane'])
+  })
+
+  it('shows the step below as it was left, from the same mounted element', () => {
+    mount(1400, { paneSteps: [TABLE_STEP] })
+    const table = host.querySelector('[data-control-id="c5"]')
+    render({ paneSteps: [TABLE_STEP, ROW_STEP] })
+    expect(host.querySelector('[data-control-id="c5"]')).toBe(table)
+    expect(table!.parentElement!.classList.contains('is-stashed')).toBe(true)
+    render({ paneSteps: [TABLE_STEP] })
+    expect(host.querySelector('[data-control-id="c5"]')).toBe(table)
+    expect(table!.parentElement!.classList.contains('is-stashed')).toBe(false)
+  })
+
+  it('folds away with its content kept, and the strip brings it back without a server call', () => {
+    mount(1400, { paneSteps: [TABLE_STEP] })
+    const table = host.querySelector('[data-control-id="c5"]')
+    click(host.querySelector('.side-pane-collapse')!)
+    expect(pane().hidden).toBe(true)
+    // The sections the pane stood over are what the rail shows meanwhile.
+    expect(column().classList.contains('is-hidden')).toBe(false)
+    const expand = host.querySelector<HTMLButtonElement>('.side-strip-item.is-pane')!
+    expect(expand.getAttribute('aria-expanded')).toBe('false')
+    expect(expand.getAttribute('aria-label')).toContain('Invoice (4)')
+    click(expand)
+    expect(pane().hidden).toBe(false)
+    expect(host.querySelector('[data-control-id="c5"]')).toBe(table)
+    expect(tlCommands()).toEqual([])
+  })
+
+  it('shows something new even while folded away', () => {
+    mount(1400, { paneSteps: [TABLE_STEP] })
+    click(host.querySelector('.side-pane-collapse')!)
+    render({ paneSteps: [TABLE_STEP, ROW_STEP] })
+    expect(pane().hidden).toBe(false)
+    expect(pane().textContent).toContain('INV-1')
+  })
+})
+

@@ -437,6 +437,19 @@ public class TestControlStateSchema extends TestCase {
 	}
 
 	/**
+	 * A menu entry without a tone is rejected at construction.
+	 */
+	public void testMenuEntryRequiresTone() {
+		try {
+			new MenuEntry(MenuState.EntryType.ITEM, "a", "Delete", null, ExecutableState.EXECUTABLE, null, false,
+				null);
+			fail("A null tone must be rejected.");
+		} catch (NullPointerException ex) {
+			// Expected.
+		}
+	}
+
+	/**
 	 * Every key of a snackbar is declared in {@link SnackbarState}.
 	 */
 	public void testSnackbarKeys() {

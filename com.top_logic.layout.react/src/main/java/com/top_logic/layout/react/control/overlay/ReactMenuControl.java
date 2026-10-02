@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import com.top_logic.layout.react.ReactContext;
@@ -183,6 +184,13 @@ public class ReactMenuControl extends ReactControl {
 	 */
 	public record MenuEntry(EntryType type, String id, String label, String icon, ExecutableState state,
 			String cssClasses, boolean active, ButtonTone tone) {
+
+		/**
+		 * Creates a {@link MenuEntry}.
+		 */
+		public MenuEntry {
+			Objects.requireNonNull(tone, "tone");
+		}
 
 		/**
 		 * Whether the item is displayed as disabled, see {@link #state()}.

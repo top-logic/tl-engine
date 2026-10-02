@@ -8,6 +8,7 @@ package com.top_logic.layout.view.command;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -25,6 +26,7 @@ import com.top_logic.basic.config.constraint.impl.OnlySetIfUnset;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.model.search.expr.IsEqual;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -279,6 +281,15 @@ public class SwitchAction extends InterruptibleViewAction {
 	public boolean appliesFormState() {
 		return ViewActions.appliesFormState(_default)
 			|| _cases.stream().anyMatch(candidate -> ViewActions.appliesFormState(candidate.actions()));
+	}
+
+	/**
+	 * Destructive as soon as one of the cases or the default is, see {@link #appliesFormState()}.
+	 */
+	@Override
+	public ButtonTone getTone() {
+		return ViewActions.tone(Stream.concat(_default.stream(),
+			_cases.stream().flatMap(candidate -> candidate.actions().stream())).toList());
 	}
 
 	/**

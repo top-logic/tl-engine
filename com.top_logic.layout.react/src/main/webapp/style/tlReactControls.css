@@ -181,56 +181,7 @@ button.tlCounter__button:focus {
 	font-size: var(--body-compact-01-font-size);
 }
 
-/* --- TLTabBar ---------------------------------------------------------- */
-
-/* A tab bar always fills its container, so the tab strip stays pinned and only the tab content
-   scrolls (see its fill declaration). */
-.tlReactTabBar {
-	display: flex;
-	flex-direction: column;
-	font-family: var(--font-family);
-}
-
-.tlReactTabBar__tabs {
-	display: flex;
-	gap: var(--spacing-02);
-	border-bottom: 1px solid var(--border-subtle-01);
-	padding: 0 var(--spacing-03);
-	/* Keep the tab strip pinned while the content scrolls. */
-	flex-shrink: 0;
-}
-
-.tlReactTabBar__tab {
-	padding: var(--spacing-03) var(--spacing-04);
-	border: none;
-	border-bottom: 2px solid transparent;
-	background: transparent;
-	font-family: var(--font-family);
-	font-size: var(--body-compact-01-font-size);
-	color: var(--text-secondary);
-	cursor: pointer;
-	white-space: nowrap;
-}
-
-.tlReactTabBar__tabIcon {
-	margin-right: var(--spacing-03);
-}
-
-.tlReactTabBar__tab:hover {
-	color: var(--text-primary);
-	border-bottom-color: var(--border-subtle-01);
-}
-
-.tlReactTabBar__tab:focus {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
-}
-
-.tlReactTabBar__tab--active {
-	color: var(--text-primary);
-	border-bottom-color: var(--button-primary);
-	font-weight: bold;
-}
+/* --- TLInset ---------------------------------------------------------- */
 
 /* ===========================================================================
    Spacing model.
@@ -286,24 +237,6 @@ button.tlCounter__button:focus {
 	flex-direction: column;
 	width: 100%;
 	padding: var(--page-inset);
-}
-
-.tlReactTabBar__content {
-	/* Flush: content owns its inset (see spacing model above). */
-	/* Own scroll region: fill the space left by the tab strip and scroll the
-	   tab content here, rather than letting it push the whole tab bar (and an
-	   ancestor scroller, e.g. the sidebar) past the viewport. */
-	flex: 1;
-	min-height: 0;
-	overflow: auto;
-	/* Lay the active content out as a bounded flex column. Children that opt to
-	   fill (a nested tab-bar, a fill panel) then resolve their height against this
-	   box; content-sized children keep their natural height and overflow-scroll
-	   here exactly as before. Without this, block flow lets a fill-ready child
-	   grow to its content height and a virtualized table never bounds its
-	   viewport (see TableViewControl). */
-	display: flex;
-	flex-direction: column;
 }
 
 /* --- TLAudioRecorder --------------------------------------------------- */
@@ -1113,11 +1046,10 @@ div.tlValueList {
    (it drops button labels and folds commands into its overflow menu), and the title truncates
    only once the toolbar is down to its overflow trigger. A toolbar that cannot collapse keeps
    its width, so there the title yields first. */
-.tlPanel__header:has(> .tlPanel__toolbar > .tlToolbar--collapsible) > .tlPanel__toolbar {
-	flex-shrink: var(--tl-toolbar-shrink-priority);
-	/* Stated explicitly: the automatic minimum size would be the toolbar's natural width, which
-	   is exactly the width the toolbar is meant to give up again. */
-	min-width: var(--tl-toolbar-trigger-size);
+.tlPanel__header:has(> .tlPanel__toolbar > .tl-toolbar[data-tl-overflow]) > .tlPanel__toolbar {
+	/* Übergang bis Welle 4 (Panel): Gewicht, mit dem die Toolbar vor dem Titel nachgibt. */
+	flex-shrink: 100000;
+	min-width: var(--tl-size-control);
 }
 
 .tlPanel__actionButton {
@@ -2110,11 +2042,10 @@ button.tlDrawerToggle:focus-visible {
 /* Who gives way when the bar is too narrow: a toolbar that can collapse absorbs the shrink (it
    drops button labels and folds commands into its overflow menu), and the title truncates only
    once the toolbar is down to its overflow trigger. */
-.tlAppBar__actions:has(> .tlToolbar--collapsible) {
-	flex-shrink: var(--tl-toolbar-shrink-priority);
-	/* Stated explicitly: the automatic minimum size would be the toolbar's natural width, which
-	   is exactly the width the toolbar is meant to give up again. */
-	min-width: var(--tl-toolbar-trigger-size);
+.tlAppBar__actions:has(> .tl-toolbar[data-tl-overflow]) {
+	/* Übergang bis Welle 4 (AppBar). */
+	flex-shrink: 100000;
+	min-width: var(--tl-size-control);
 }
 
 .tlAppBar__trailing {
@@ -2144,67 +2075,6 @@ button.tlDrawerToggle:focus-visible {
    keeps it, because the rule does not match its tone class. */
 .tlAppBar--primary .tlText--tone-primary {
 	--tlText-tone: var(--tl-text-primary);
-}
-
-/* A click region hovers with the generic layer-hover, which is a light surface - under the
-   on-accent text above it that leaves nothing to read. On the accent bar it hovers and opens in the
-   accent's own darker shades instead. */
-.tlAppBar--primary .tlMenuRegion--click:hover {
-	background: var(--tl-surface-interactive-hover);
-}
-
-.tlAppBar--primary .tlMenuRegion--click[aria-expanded="true"] {
-	background: var(--tl-surface-interactive-active);
-}
-
-/* --- TLBreadcrumb ---------------------------------------------------------- */
-
-.tlBreadcrumb {
-	font-family: var(--font-family);
-	font-size: var(--body-compact-01-font-size);
-}
-
-.tlBreadcrumb__list {
-	display: flex;
-	align-items: center;
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	gap: var(--spacing-01);
-}
-
-.tlBreadcrumb__entry {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-01);
-}
-
-.tlBreadcrumb__separator {
-	color: var(--text-secondary);
-	flex-shrink: 0;
-}
-
-.tlBreadcrumb__item {
-	border: none;
-	background: transparent;
-	padding: 0;
-	color: var(--link-primary);
-	font-family: var(--font-family);
-	font-size: var(--body-compact-01-font-size);
-	cursor: pointer;
-}
-
-.tlBreadcrumb__item:hover {
-	text-decoration: underline;
-}
-
-.tlBreadcrumb__item:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 2px;
-}
-
-.tlBreadcrumb__current {
-	color: var(--text-primary);
 }
 
 /* --- TLBottomBar ----------------------------------------------------------- */
@@ -2736,7 +2606,7 @@ button.tlDrawer__closeBtn:focus-visible {
 	white-space: nowrap;
 }
 
-.tlAppShell .tlBreadcrumb {
+.tlAppShell .tl-breadcrumb { /* Übergang bis Welle 4 (Shell): liest die Paketklasse. */
 	padding: var(--spacing-02) var(--spacing-05);
 }
 
@@ -2791,7 +2661,7 @@ button.tlDrawer__closeBtn:focus-visible {
 	color: var(--text-muted);
 }
 
-/* --- TLMenu ---------------------------------------------------------------- */
+/* --- TLViewError ----------------------------------------------------------- */
 
 /* Placeholder rendered in place of a view that could not be loaded. */
 .tlViewError {
@@ -2818,140 +2688,6 @@ button.tlDrawer__closeBtn:focus-visible {
 	font-size: 0.875em;
 	white-space: pre-wrap;
 	color: var(--text-secondary);
-}
-
-.tlMenu {
-	z-index: var(--tl-layer-popover);
-	min-width: 10rem;
-	/* A menu offering many entries (e.g. the element types of a container) stays within the
-	   viewport and scrolls instead of being cut off. */
-	max-height: 70vh;
-	overflow-y: auto;
-	background: var(--layer-02);
-	border: 1px solid var(--border-strong);
-	border-radius: var(--border-radius-02);
-	box-shadow: var(--shadow-menu);
-	padding: var(--spacing-02) 0;
-	font-family: var(--font-family);
-	outline: none;
-}
-
-.tlMenu__item {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-03);
-	width: 100%;
-	padding: var(--spacing-03) var(--spacing-04);
-	border: none;
-	background: transparent;
-	color: var(--text-secondary);
-	font-size: var(--body-compact-01-font-size);
-	font-family: var(--font-family);
-	cursor: pointer;
-	text-align: left;
-}
-
-button.tlMenu__item:hover,
-.tlMenu__item--focused {
-	background: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-button.tlMenu__item:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
-}
-
-.tlMenu__item--disabled {
-	color: var(--text-disabled);
-	cursor: default;
-}
-
-button.tlMenu__item--disabled:hover {
-	background: transparent;
-	color: var(--text-disabled);
-}
-
-/* The entry whose command is in force, e.g. the current theme among the offered ones. */
-.tlMenu__item--active {
-	font-weight: 600;
-}
-
-.tlMenu__separator {
-	border: none;
-	border-top: 1px solid var(--border-subtle);
-	margin: var(--spacing-02) var(--spacing-04);
-}
-
-/* A caption above a group of entries: set in the secondary text colour and a smaller size so it
-   reads as a heading of the entries rather than as one of them. */
-.tlMenu__header {
-	padding: var(--spacing-02) var(--spacing-04) var(--spacing-01);
-	font-size: var(--label-01-font-size);
-	font-weight: 600;
-	color: var(--text-secondary);
-	white-space: nowrap;
-	cursor: default;
-	user-select: none;
-}
-
-.tlMenu__icon {
-	flex-shrink: 0;
-	width: 1rem;
-	text-align: center;
-	font-size: 1rem;
-}
-
-.tlMenu__label {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-/* --- TLMenuRegion ---------------------------------------------------------- */
-
-/* A right-click region is pure pass-through: it adds no box of its own, so the content it wraps
-   lays out exactly as it would without the region. */
-.tlMenuRegion {
-	display: contents;
-}
-
-/* A click region is the visible trigger of a drop-down, so it does become a box: an inline row
-   carrying the affordances of a control. */
-.tlMenuRegion--click {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	padding: var(--spacing-02) var(--spacing-03);
-	border-radius: var(--border-radius-02);
-	cursor: pointer;
-	user-select: none;
-}
-
-.tlMenuRegion--click:hover {
-	background: var(--layer-hover);
-}
-
-.tlMenuRegion--click:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
-}
-
-/* --- User menu ------------------------------------------------------------- */
-
-/* The account name beside the avatar. It yields before the work area does: at narrow widths the
-   avatar alone identifies the session. */
-.tlUserMenu__name {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	max-width: 12rem;
-}
-
-@media (max-width: 640px) {
-	.tlUserMenu__name {
-		display: none;
-	}
 }
 
 /* --- TLTableView ----------------------------------------------------------- */
@@ -4622,143 +4358,6 @@ button.tlMenu__item--disabled:hover {
 	}
 }
 
-/* --- TLToolbar ------------------------------------------------------------- */
-
-.tlToolbar {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	flex-shrink: 0;
-}
-
-:root {
-	/* Width of an icon-only toolbar trigger, such as the overflow menu's "...". A collapsing
-	   toolbar never shrinks below it, so its overflow menu stays reachable. */
-	--tl-toolbar-trigger-size: 2rem;
-
-	/* Weight with which the wrapper of a collapsing toolbar takes a shrink, so that the toolbar
-	   gives way before the title beside it. The share of a shrink an item takes is proportional
-	   to its flex shrink factor times its flex base size, so the title beside the toolbar keeps a
-	   share of its own; at this weight that share stays below Chrome's layout unit of 1/64 px for
-	   any bar or header up to a few thousand pixels wide, and a title is cut only once the
-	   toolbar is down to its trigger. (A single layout unit of overflow already costs a whole
-	   character, because an ellipsis replaces the last character that no longer fits.) */
-	--tl-toolbar-shrink-priority: 100000;
-}
-
-/* A toolbar that collapses states its full natural width (as an inline style set by TLToolbar),
-   which is what its host sizes itself from, and gives that width up again down to its overflow
-   trigger. The content sits at the end the toolbar collapses towards, so the space it has given
-   up is at the far end from what is still visible. */
-.tlToolbar--collapsible {
-	flex-shrink: 1;
-	min-width: var(--tl-toolbar-trigger-size);
-	justify-content: flex-end;
-}
-
-/* Compact presentation: a labeled command button collapses to its icon, which is also its
-   accessible name and tooltip. Buttons without an icon keep their label. The dropdown of a menu
-   group is portaled out of the toolbar, so its entries keep their labels.
-   Übergang bis Welle 3 (Toolbar): die Regel liest die Klassen der Paket-Komponente tl-button. */
-.tlToolbar--compact .tl-button:has(> .tl-button__icon) {
-	width: var(--tl-size-control);
-	flex-shrink: 0;
-	padding: 0;
-}
-
-.tlToolbar--compact .tl-button:has(> .tl-button__icon) > .tl-button__label {
-	display: none;
-}
-
-.tlToolbar__separator {
-	display: block;
-	width: 1px;
-	height: 1rem;
-	background: var(--border-subtle);
-	flex-shrink: 0;
-}
-
-.tlToolbar__group--inline {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-02);
-}
-
-/* An item whose button is currently hidden renders empty - drop it from the flex layout so
-   it does not contribute gap and the visible buttons stay flush with the toolbar edge. */
-.tlToolbar__item:empty {
-	display: none;
-}
-
-.tlToolbar__group--menu {
-	position: relative;
-}
-
-.tlToolbar__menuTrigger {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	height: 2rem;
-	padding: 0 var(--spacing-03);
-	border: none;
-	border-radius: var(--corner-radius);
-	background: transparent;
-	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
-	color: var(--button-secondary);
-	font-family: var(--font-family);
-	font-weight: bold;
-	font-size: var(--heading-compact-02-font-size);
-	cursor: pointer;
-	white-space: nowrap;
-}
-
-button.tlToolbar__menuTrigger:hover {
-	background: var(--layer-hover);
-}
-
-button.tlToolbar__menuTrigger:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 1px;
-}
-
-/* Compact, square icon-only trigger (e.g. the burger overflow menu). */
-.tlToolbar__menuTrigger--icon {
-	gap: 0;
-	width: var(--tl-toolbar-trigger-size);
-	padding: 0;
-	justify-content: center;
-}
-
-.tlToolbar__menuIcon {
-	display: inline-flex;
-	align-items: center;
-	font-size: var(--heading-compact-03-font-size);
-	line-height: 1;
-}
-
-/* The menu trigger visually mirrors a secondary button, so on the accent-colored
-   primary app bar it needs the same on-accent foreground the sibling buttons get -
-   otherwise its accent-blue text/outline is unreadable on the accent background.
-   (Panel toolbars are now light surfaces and use the default secondary styling.) */
-.tlAppBar--primary .tlToolbar__menuTrigger {
-	color: var(--tl-text-primary);
-	box-shadow: inset 0px 0px 0px 2px var(--tl-text-primary);
-}
-
-.tlAppBar--primary button.tlToolbar__menuTrigger:not(:disabled):hover {
-	background: var(--tl-surface-interactive-hover);
-}
-
-.tlAppBar--primary button.tlToolbar__menuTrigger[aria-expanded="true"] {
-	background: var(--tl-surface-interactive-active);
-}
-
-/* The icon-only burger is a plain icon button: no outline box, on any surface. */
-.tlToolbar__menuTrigger--icon,
-.tlAppBar--primary .tlToolbar__menuTrigger--icon {
-	box-shadow: none;
-}
-
 /* --- TLColorInput ------------------------------------------------------ */
 
 .tlColorInput {
@@ -5504,7 +5103,7 @@ button.tlToolbar__menuTrigger:focus-visible {
   font-weight: 400;
   font-size: 12px;
   line-height: 1.5;
-  z-index: 9999999999999999;
+  z-index: var(--tl-layer-popover);
   cursor: text;
   user-select: text;
   display: flex;
@@ -5622,62 +5221,6 @@ button.tlToolbar__menuTrigger:focus-visible {
 }
 .tlDashboard__tile--dropBefore::before { left: -10px; }
 .tlDashboard__tile--dropAfter::after { right: -10px; }
-
-button.tlToolbar__menuTrigger[aria-expanded="true"] {
-	background: var(--layer-active);
-}
-
-.tlToolbar__chevron {
-	width: 0.75rem;
-	height: 0.75rem;
-	fill: none;
-	stroke: currentColor;
-	stroke-width: 2;
-	stroke-linecap: round;
-	stroke-linejoin: round;
-	flex-shrink: 0;
-}
-
-.tlToolbar__dropdown[hidden] {
-	display: none;
-}
-
-.tlToolbar__dropdown {
-	position: absolute;
-	top: calc(100% + var(--spacing-02));
-	right: 0;
-	z-index: var(--tl-layer-popover);
-	min-width: 10rem;
-	background: var(--layer-02);
-	border: 1px solid var(--border-strong);
-	border-radius: var(--border-radius-02);
-	box-shadow: var(--shadow-menu);
-	padding: var(--spacing-02) 0;
-}
-
-/* Ein Menüeintrag füllt seine Zeile; der Button darin ist ghost und streckt sich. */
-.tlToolbar__dropdownItem {
-	display: grid;
-}
-
-/* An entry whose button is currently hidden renders empty - drop it, so the menu does not offer
-   (and a screen reader does not announce) blank entries. */
-.tlToolbar__dropdownItem:empty {
-	display: none;
-}
-
-/* Übergang bis Welle 3 (Menu): ein Menüeintrag füllt seine Zeile und ist linksbündig; die
-   Menu-Komponente ersetzt den Button hier. Farben und Zustände trägt der Button selbst (ghost). */
-.tlToolbar__dropdownItem > .tl-button {
-	width: 100%;
-	justify-content: flex-start;
-}
-
-.tlToolbar__dropdownSeparator {
-	border: none;
-	border-top: 1px solid var(--border-subtle);
-	margin: var(--spacing-02) var(--spacing-04);
-}
 
 /* --- TLPanel button bar ---------------------------------------------------- */
 

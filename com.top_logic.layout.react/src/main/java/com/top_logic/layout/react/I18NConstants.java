@@ -390,7 +390,21 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.panel.popOut")
 	public static ResKey JS_PANEL_POP_OUT;
 
+	// -- Breadcrumb client-side i18n keys --
+
+	/**
+	 * @en Breadcrumb
+	 */
+	@CustomKey("js.breadcrumb.label")
+	public static ResKey JS_BREADCRUMB_LABEL;
+
 	// -- Toolbar client-side i18n keys --
+
+	/**
+	 * @en Toolbar
+	 */
+	@CustomKey("js.toolbar.label")
+	public static ResKey JS_TOOLBAR_LABEL;
 
 	/**
 	 * @en More actions

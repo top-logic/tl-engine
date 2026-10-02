@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal, useFieldLabelProps, ThemeIcon } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal, useFieldLabelProps, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import {
   ARG_OPTION,
@@ -9,6 +9,7 @@ import {
 } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
 import { pillClassName } from './pill/TLPill';
+import { buttonClassName } from './button/ButtonDefaults';
 import { ProgressBar } from './TLProgress';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 
@@ -74,12 +75,12 @@ function Chip({
       {removable && (
         <button
           type="button"
-          className="tl-select__chip-remove"
+          className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
           onClick={handleRemove}
           aria-label={removeLabel}
           {...tooltipProps(removeLabel)}
         >
-          <ThemeIcon encoded="css:fa-solid fa-xmark" className="tl-icon-sm" />
+          <ThemeIcon encoded="css:fa-solid fa-xmark" className="tl-button__icon tl-icon-sm" />
         </button>
       )}
     </span>
@@ -197,7 +198,6 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [loadError, setLoadError] = useState(false);
-  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
   // Drag-and-drop state for chip reordering
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -257,7 +257,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     removalIndexRef.current = -1;
 
     const buttons = containerRef.current?.querySelectorAll<HTMLElement>(
-      '.tl-select__chip-remove'
+      '.tl-select__chip > .tl-button'
     );
     if (buttons && buttons.length > 0) {
       buttons[Math.min(idx, buttons.length - 1)].focus();
@@ -272,28 +272,10 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     setSearchTerm('');
   });
 
-  // Position the dropdown when it opens
-  useEffect(() => {
-    if (!isOpen || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    // The height the popup may grow to is the design system's (tl-select__popup max-height: eight
-    // rows, the search field and the padding); it follows the density, so it is read from the
-    // rendered popup rather than repeated here. Should it not resolve, the popup's current height
-    // decides.
-    const popup = dropdownRef.current;
-    const cssMaxHeight = popup ? parseFloat(getComputedStyle(popup).maxHeight) : NaN;
-    const maxHeight = Number.isFinite(cssMaxHeight) ? cssMaxHeight : (popup?.offsetHeight ?? 0);
-    const flipAbove = spaceBelow < maxHeight && rect.top > spaceBelow;
-
-    setDropdownStyle({
-      left: rect.left,
-      width: rect.width,
-      ...(flipAbove
-        ? { bottom: window.innerHeight - rect.top }
-        : { top: rect.bottom }),
-    });
-  }, [isOpen]);
+  // The popup is placed at the field by the one popover placement (flipped, shifted, following
+  // scroll and resize); its width is the field's.
+  const { setFloating, style: popoverStyle } = usePopover({ open: isOpen, anchor: containerRef.current });
+  const popupRef = useMergeRefs<HTMLDivElement>([dropdownRef, setFloating]);
 
   // -- Handlers --
 
@@ -546,13 +528,13 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const showClearButton = !mandatory && value.length > 0 && !disabled;
   const listboxId = `${controlId}-listbox`;
 
-  // The position is data measured from the field (see above); layer, surface and shadow are the
-  // design system's (tl-select__popup).
+  // The position is usePopover's (see above); layer, surface and shadow are the design system's
+  // (tl-popover), the inner layout is tl-select__popup's.
   const dropdownContent = isOpen ? (
     <div
-      ref={dropdownRef}
-      className="tl-select__popup"
-      style={dropdownStyle}
+      ref={popupRef}
+      className="tl-popover tl-select__popup"
+      style={{ ...popoverStyle, width: containerRef.current?.getBoundingClientRect().width }}
       {...anchoredOverlayProps}
     >
       {/* Search field - shown when options are loaded */}
@@ -588,7 +570,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       )}
       {loadError && (
         <div className="tl-select__status tl-type-body" role="alert">
-          <button type="button" className="tl-button tl-button--link tl-type-label" onClick={handleRetry}>
+          <button type="button" className="tl-button tl-button--link tl-type-body" onClick={handleRetry}>
             {i18n['js.dropdownSelect.error']}
           </button>
         </div>
@@ -683,12 +665,12 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
           {showClearButton && (
             <button
               type="button"
-              className="tl-select__clear"
+              className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
               onClick={clearAll}
               aria-label={i18n['js.dropdownSelect.clear']}
               {...tooltipProps(i18n['js.dropdownSelect.clear'])}
             >
-              <ThemeIcon encoded="css:fa-solid fa-xmark" className="tl-icon-sm" />
+              <ThemeIcon encoded="css:fa-solid fa-xmark" className="tl-button__icon tl-icon-sm" />
             </button>
           )}
           <span className="tl-select__arrow" aria-hidden="true">

@@ -1,163 +1,26 @@
-import { React, useTLState, useTLCommand, useCloseOnOutsidePress, useFocusTrap, rootClassName, ThemeIcon } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps, MenuStateJson } from 'tl-react-bridge';
+import { Menu, MenuItem, MenuHeader, MenuSeparator } from './menu/Menu';
 
-const { useCallback, useEffect, useRef, useState } = React;
+type MenuItemState = Partial<MenuStateJson.Entry> & Required<Pick<MenuStateJson.Entry, 'type' | 'id' | 'label'>>;
 
-/**
- * An entry as the server describes it. Only an item is focused and chosen, and an item always
- * carries its ID and label.
- */
-type MenuItem = Partial<MenuStateJson.Entry> & Required<Pick<MenuStateJson.Entry, 'type' | 'id' | 'label'>>;
-
-/**
- * A popup menu triggered by an anchor element.
- *
- * State:
- * - open: boolean
- * - anchorId: string
- * - items: MenuItem[]
- */
+/** A popup menu the server opens at an anchor element (anchorId) or a viewport point (anchorX/Y). */
 const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<MenuStateJson>>();
   const sendCommand = useTLCommand();
-
   const open = state.open === true;
-  const anchorId = state.anchorId;
-  const anchorX = state.anchorX;
-  const anchorY = state.anchorY;
-  const items = (state.items ?? []) as MenuItem[];
-
-  const menuRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
-  const [focusedIndex, setFocusedIndex] = useState(0);
-
-  const focusableItems = items.filter(it => it.type === 'item' && !it.disabled);
-
-  // Position relative to anchor or at absolute coordinates.
-  useEffect(() => {
-    if (!open) return;
-    const menuHeight = menuRef.current?.offsetHeight ?? 200;
-    const menuWidth = menuRef.current?.offsetWidth ?? 200;
-
-    if (anchorX != null && anchorY != null) {
-      // Absolute positioning at viewport coordinates (right-click menus).
-      let top = anchorY;
-      let left = anchorX;
-      if (top + menuHeight > window.innerHeight) {
-        top = Math.max(0, window.innerHeight - menuHeight);
-      }
-      if (left + menuWidth > window.innerWidth) {
-        left = Math.max(0, window.innerWidth - menuWidth);
-      }
-      setPosition({ top, left });
-      setFocusedIndex(0);
-      return;
-    }
-
-    if (!anchorId) return;
-    const anchor = document.getElementById(anchorId);
-    if (!anchor) return;
-    const rect = anchor.getBoundingClientRect();
-
-    let top = rect.bottom + 4;
-    let left = rect.left;
-
-    // Flip vertically if near bottom.
-    if (top + menuHeight > window.innerHeight) {
-      top = rect.top - menuHeight - 4;
-    }
-    // Flip horizontally if near right edge.
-    if (left + menuWidth > window.innerWidth) {
-      left = rect.right - menuWidth;
-    }
-
-    setPosition({ top, left });
-    setFocusedIndex(0);
-  }, [open, anchorId, anchorX, anchorY]);
-
-  const handleClose = useCallback(() => {
-    sendCommand('close');
-  }, [sendCommand]);
-
-  const handleSelect = useCallback((itemId: string) => {
-    sendCommand('selectItem', { itemId });
-  }, [sendCommand]);
-
-  // Close on a press outside the menu.
-  useCloseOnOutsidePress(open, [menuRef], handleClose);
-
-  // Keyboard navigation.
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') { e.preventDefault(); handleClose(); return; }
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setFocusedIndex(i => (i + 1) % focusableItems.length);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setFocusedIndex(i => (i - 1 + focusableItems.length) % focusableItems.length);
-    } else if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      const item = focusableItems[focusedIndex];
-      if (item) handleSelect(item.id);
-    }
-  }, [handleClose, handleSelect, focusableItems, focusedIndex]);
-
-  // Trap focus within the menu while open and restore it to the trigger when it closes.
-  useFocusTrap(open, menuRef);
-
-  // Keep the focused entry in view: a menu taller than the viewport scrolls, and the roving focus
-  // must not leave its entry below or above the visible part.
-  useEffect(() => {
-    if (!open) return;
-    const focused = menuRef.current?.querySelector('.tlMenu__item--focused');
-    focused?.scrollIntoView({ block: 'nearest' });
-  }, [open, focusedIndex]);
-
-  if (!open) return null;
-
+  const items = (state.items ?? []) as MenuItemState[];
+  const anchor = state.anchorId
+    ? document.getElementById(state.anchorId)
+    : state.anchorX != null && state.anchorY != null ? { x: state.anchorX, y: state.anchorY } : null;
+  const close = React.useCallback(() => sendCommand('close'), [sendCommand]);
   return (
-    <div
-      id={controlId}
-      className={rootClassName(state, 'tlMenu')}
-      role="menu"
-      ref={menuRef}
-      tabIndex={-1}
-      style={{ position: 'fixed', top: position.top, left: position.left }}
-      onKeyDown={handleKeyDown}
-    >
-      {items.map((item, index) => {
-        if (item.type === 'separator') {
-          return <hr key={index} className="tlMenu__separator" />;
-        }
-        if (item.type === 'header') {
-          return (
-            <div key={index} className="tlMenu__header" role="presentation">
-              {item.label}
-            </div>
-          );
-        }
-        const focusIdx = focusableItems.indexOf(item);
-        const isFocused = focusIdx === focusedIndex;
-        return (
-          <button
-            key={item.id}
-            type="button"
-            className={'tlMenu__item' + (isFocused ? ' tlMenu__item--focused' : '') +
-              (item.disabled ? ' tlMenu__item--disabled' : '') +
-              (item.active ? ' tlMenu__item--active' : '') +
-              (item.cssClasses ? ' ' + item.cssClasses : '')}
-            role="menuitem"
-            aria-current={item.active ? 'true' : undefined}
-            disabled={item.disabled}
-            tabIndex={isFocused ? 0 : -1}
-            onClick={() => handleSelect(item.id)}
-          >
-            {item.icon && <ThemeIcon encoded={item.icon} className="tlMenu__icon" />}
-            <span className="tlMenu__label">{item.label}</span>
-          </button>
-        );
-      })}
-    </div>
+    <Menu id={controlId} className={rootClassName(state)} open={open} anchor={anchor} onClose={close}>
+      {items.map((item, i) => item.type === 'separator' ? <MenuSeparator key={i} />
+        : item.type === 'header' ? <MenuHeader key={i} label={item.label} />
+        : <MenuItem key={item.id} icon={item.icon} label={item.label} disabled={item.disabled} current={item.active}
+            danger={item.tone === 'danger'} className={item.cssClasses} onSelect={() => sendCommand('selectItem', { itemId: item.id })} />)}
+    </Menu>
   );
 };
 

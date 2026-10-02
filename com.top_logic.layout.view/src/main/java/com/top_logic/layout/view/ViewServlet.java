@@ -408,6 +408,16 @@ public class ViewServlet extends TopLogicServlet {
 			}
 
 			@Override
+			public void show(String anchorId, List<ReactMenuControl.MenuEntry> items,
+					Function<String, HandlerResult> selectHandler, Runnable closeHandler) {
+				menu.updateItems(items);
+				menu.setSelectHandler(selectHandler);
+				menu.setCloseHandler(closeHandler);
+				menu.setAnchorId(anchorId);
+				menu.open();
+			}
+
+			@Override
 			public void hide() {
 				menu.close();
 			}

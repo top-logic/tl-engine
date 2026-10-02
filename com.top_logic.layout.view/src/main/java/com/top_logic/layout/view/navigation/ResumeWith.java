@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.navigation;
 
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.view.command.Continuation;
 
 /**
@@ -48,5 +49,10 @@ final class ResumeWith implements Continuation {
 	@Override
 	public void onAbort(Runnable compensation) {
 		_chain.onAbort(compensation);
+	}
+
+	@Override
+	public ButtonTone tone() {
+		return _chain.tone();
 	}
 }

@@ -38,6 +38,8 @@
   --tl-size-indicator: var(--tl-size-2);
   --tl-size-field-label-min: var(--tl-size-10);
   --tl-size-field-label-max: var(--tl-size-11);
+  --tl-size-popover-min: var(--tl-size-11);
+  --tl-size-popover-max: var(--tl-view-1);
   --tl-size-choice: var(--tl-size-4);
   --tl-size-switch: var(--tl-size-7);
   --tl-size-switch-knob: var(--tl-size-3);
@@ -145,6 +147,7 @@
   --tl-size-control: var(--tl-height-3);
   --tl-size-control-sm: var(--tl-height-1);
   --tl-size-row: var(--tl-height-4);
+  --tl-size-bar: var(--tl-height-5);
   --tl-space-control-x: var(--tl-size-3);
   --tl-space-control-y: var(--tl-size-2);
   --tl-space-control-gap: var(--tl-size-4);
@@ -157,9 +160,9 @@
   --tl-surface-layer-nested: var(--tl-gray-74);
   --tl-surface-overlay: var(--tl-gray-70);
   --tl-surface-field: var(--tl-gray-72);
-  --tl-surface-interactive-hover: var(--tl-gray-73);
-  --tl-surface-interactive-selected: var(--tl-gray-69);
-  --tl-surface-interactive-active: var(--tl-gray-67);
+  --tl-surface-interactive-hover: var(--tl-gray-67);
+  --tl-surface-interactive-selected: var(--tl-gray-64);
+  --tl-surface-interactive-active: var(--tl-gray-60);
   --tl-surface-disabled: var(--tl-gray-69);
   --tl-surface-brand: var(--tl-blue-32);
   --tl-surface-brand-hover: var(--tl-blue-27);
@@ -237,6 +240,7 @@
   --tl-size-control: var(--tl-height-2);
   --tl-size-control-sm: var(--tl-height-1);
   --tl-size-row: var(--tl-height-3);
+  --tl-size-bar: var(--tl-height-4);
   --tl-space-control-x: var(--tl-size-2);
   --tl-space-control-y: var(--tl-size-1);
   --tl-space-control-gap: var(--tl-size-3);

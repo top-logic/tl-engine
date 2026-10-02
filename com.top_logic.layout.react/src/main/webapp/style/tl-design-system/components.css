@@ -22,6 +22,7 @@
 }
 .tl-alert[hidden] { display: none; }
 
+/* Je Bedeutung Fläche und Linie, erzeugt aus src/tokens.json (tools/generate.mjs). */
 .tl-alert--error { background: var(--tl-status-error-subtle); border-color: var(--tl-status-error-border); }
 .tl-alert--warning { background: var(--tl-status-warning-subtle); border-color: var(--tl-status-warning-border); }
 .tl-alert--success { background: var(--tl-status-success-subtle); border-color: var(--tl-status-success-border); }
@@ -74,6 +75,7 @@
 
 /* --- Kategorien -------------------------------------------------------------- */
 
+/* Je Kategorie Fläche und Linie, erzeugt aus src/tokens.json (tools/generate.mjs). */
 .tl-avatar--category-1 { background: var(--tl-category-1-subtle); border-color: var(--tl-category-1-border); }
 .tl-avatar--category-2 { background: var(--tl-category-2-subtle); border-color: var(--tl-category-2-border); }
 .tl-avatar--category-3 { background: var(--tl-category-3-subtle); border-color: var(--tl-category-3-border); }
@@ -104,6 +106,37 @@
 }
 .tl-badge[hidden] { display: none; }
 
+/* --- breadcrumb/breadcrumb.css --- */
+/* Breadcrumb — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W4).
+   nav > ol > li; die Einträge sind tl-button--link, die aktuelle Seite ein Text mit aria-current,
+   der Trenner ein tl-icon-sm (aria-hidden). Keine eigene Schrift, keine eigene Fokusregel. */
+
+.tl-breadcrumb__list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--tl-space-2xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tl-breadcrumb__list[hidden] { display: none; }
+
+.tl-breadcrumb__entry {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+}
+.tl-breadcrumb__entry[hidden] { display: none; }
+
+.tl-breadcrumb__separator {
+  color: var(--tl-icon-secondary);
+}
+
+.tl-breadcrumb__current {
+  color: var(--tl-text-primary);
+}
+
 /* --- button/button.css --- */
 /* Button — docs/skalen.md „Button: vier Erscheinungen, eine Tönung, keine Größe“.
    Vier Erscheinungen (--primary, --secondary, --ghost, --link), eine Tönung (--danger),
@@ -111,6 +144,9 @@
    liefert base.css. Kein Selektor von außen: der Container wählt die Erscheinung.
    Umriss und Ghost füllen sich beim Zeigen: roter Text trägt auf keiner Hover-Fläche 4,5, die
    getönte Fläche status-error-subtle bleibt dem Hinweisstreifen vorbehalten. */
+
+/* Reset ohne Spezifität: die Typo-Klasse am Element gewinnt. */
+:where(.tl-button) { font: inherit; }
 
 .tl-button {
   display: inline-flex;
@@ -123,7 +159,6 @@
   border-radius: var(--tl-radius-sm);
   background: transparent;
   color: var(--tl-text-primary);
-  font: inherit;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
@@ -142,6 +177,7 @@
 .tl-button__label {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* --- Erscheinungen ------------------------------------------------------- */
@@ -229,6 +265,23 @@
 .tl-button--sm {
   min-height: var(--tl-size-control-sm);
   padding: 0 var(--tl-space-2xs);
+}
+
+/* --- Form: der Icon-Knopf ------------------------------------------------ */
+
+/* Quadratisch, ohne Label: der Knopf ist sein Icon. Pflicht am Element: aria-label und Tooltip
+   (Vertrag). Mit --sm 24 px — die Mindest-Trefferfläche (WCAG 2.5.8). */
+.tl-button--icon {
+  width: var(--tl-size-control);
+  height: var(--tl-size-control);
+  padding: 0;
+}
+
+.tl-button--icon.tl-button--sm {
+  width: var(--tl-size-control-sm);
+  height: var(--tl-size-control-sm);
+  min-height: var(--tl-size-control-sm);
+  padding: 0;
 }
 
 /* --- Zustände als Attribute --------------------------------------------- */
@@ -400,7 +453,7 @@
 .tl-radio:disabled {
   border-color: var(--tl-border-disabled);
   background: var(--tl-surface-disabled);
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .tl-checkbox:disabled:checked,
@@ -430,7 +483,7 @@
 
 .tl-choice:has(:disabled) {
   color: var(--tl-text-disabled);
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .tl-choice:has([aria-readonly="true"]) {
@@ -510,7 +563,7 @@
 
 .tl-segmented__segment:disabled {
   color: var(--tl-text-disabled);
-  cursor: not-allowed;
+  cursor: default;
 }
 
 /* --- Chips -------------------------------------------------------------------- */
@@ -570,7 +623,7 @@
   border-color: var(--tl-border-disabled);
   background: var(--tl-surface-disabled);
   color: var(--tl-text-disabled);
-  cursor: not-allowed;
+  cursor: default;
 }
 
 /* Deaktiviert und gewählt: wie .tl-checkbox:disabled:checked. */
@@ -647,7 +700,7 @@
   border-color: var(--tl-border-disabled);
   background: var(--tl-surface-disabled);
   color: var(--tl-text-disabled);
-  cursor: not-allowed;
+  cursor: default;
 }
 
 /* Mehrzeilig wächst das Feld mit den Zeilen; hier trägt es den Innenabstand oben und unten. */
@@ -667,41 +720,32 @@
 }
 .tl-field-group[hidden] { display: none; }
 
-.tl-field-group__icon,
-.tl-field-group__action {
+.tl-field-group__icon {
   position: absolute;
   inset-block: 0;
   display: flex;
   align-items: center;
-  color: var(--tl-icon-secondary);
-}
-
-.tl-field-group__icon {
   inset-inline-start: var(--tl-space-control-x);
+  color: var(--tl-icon-secondary);
   pointer-events: none;
 }
 
-.tl-field-group__action {
+/* Die Aktion in der Gruppe (Löschen, Link öffnen) ist ein tl-button--icon --sm --ghost und sitzt im
+   Feld, am Ende; das Feld macht ihr Platz (:has unten). */
+.tl-field-group > .tl-button {
+  position: absolute;
   inset-inline-end: var(--tl-space-2xs);
-  margin-block: var(--tl-space-2xs);
-  padding: 0 var(--tl-space-xs);
-  border: 0;
-  border-radius: var(--tl-radius-sm);
-  background: transparent;
-  cursor: pointer;
-}
-
-.tl-field-group__action:hover {
-  background: var(--tl-surface-interactive-hover);
+  top: 50%;
+  translate: 0 -50%;
 }
 
 .tl-field-group:has(> .tl-field-group__icon) > .tl-field {
   padding-inline-start: calc(var(--tl-space-control-x) + var(--tl-size-icon-sm) + var(--tl-space-xs));
 }
 
-/* Endknopf: Abstand zum Rand, Innenabstand beidseitig, Icon — und eine Lücke zum Text. */
-.tl-field-group:has(> .tl-field-group__action) > .tl-field {
-  padding-inline-end: calc(var(--tl-space-2xs) + 2 * var(--tl-space-xs) + var(--tl-size-icon-sm) + var(--tl-space-xs));
+/* Endknopf: Abstand zum Rand, der Knopf (size-control-sm im Quadrat) — und eine Lücke zum Text. */
+.tl-field-group:has(> .tl-button) > .tl-field {
+  padding-inline-end: calc(var(--tl-space-2xs) + var(--tl-size-control-sm) + var(--tl-space-xs));
 }
 
 /* --- Lesewert ---------------------------------------------------------------------- */
@@ -820,10 +864,19 @@ a.tl-field-value:hover {
   min-height: 0;
 }
 
+/* Das Label bricht um: ein abgeschnittenes Formularlabel versteckt, wonach das Feld fragt. */
 .tl-form-field__label-text {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+/* Der Hilfeknopf steht neben dem leisesten Text des Felds: Umriss-Glyphe in icon-secondary, erst unter dem
+   Zeiger icon-primary. Die Trefferfläche bleibt size-control-sm (docs/skalen.md „Leisten und Hilfe“). */
+.tl-form-field__help {
+  color: var(--tl-icon-secondary);
+}
+
+.tl-form-field__help:hover {
+  color: var(--tl-icon-primary);
 }
 
 .tl-form-field__required {
@@ -913,25 +966,6 @@ a.tl-field-value:hover {
   gap: var(--tl-space-xs);
   min-height: var(--tl-size-control);
   color: var(--tl-text-primary);
-}
-
-.tl-form-group__toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--tl-size-control);
-  height: var(--tl-size-control);
-  padding: 0;
-  border: 0;
-  border-radius: var(--tl-radius-sm);
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-/* Kein Zeigen auf Deaktiviertem; :where hält die Spezifität niedrig. */
-.tl-form-group__toggle:where(:not(:disabled)):hover {
-  background: var(--tl-surface-interactive-hover);
 }
 
 .tl-form-group__title {
@@ -1037,6 +1071,105 @@ a.tl-field-value:hover {
   color: var(--tl-status-error-text);
 }
 
+/* --- menu/menu.css --- */
+/* Menu — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W3).
+   Ein Menü ist ein tl-popover mit Einträgen. Der Fokus ist echt (Roving-Tabindex): der Ring aus
+   base.css ist der Cursor, innen, weil der Behälter scrollt. Zustände sind Attribute: aria-current
+   (in Kraft; das Gewicht trägt tl-type-body-strong, sonst tl-type-body), disabled. Der Ton (destruktiv)
+   ist kein Zustand und darum der Modifier tl-menu__item--danger. Zeigen ist
+   surface-interactive-hover — seit „Zeigen auf allen Gründen“ auch dunkel auf dem Overlay sichtbar. */
+
+.tl-menu {
+  display: flex;
+  flex-direction: column;
+}
+.tl-menu[hidden] { display: none; }
+
+/* Reset ohne Spezifität: die Typo-Klasse am Element gewinnt. */
+:where(.tl-menu__item) { font: inherit; }
+
+.tl-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  width: 100%;
+  min-height: var(--tl-size-row);
+  padding: 0 var(--tl-space-control-x);
+  border: 0;
+  border-radius: var(--tl-radius-sm);
+  background: transparent;
+  color: var(--tl-text-primary);
+  text-align: start;
+  cursor: pointer;
+}
+.tl-menu__item[hidden] { display: none; }
+
+.tl-menu__item:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-menu__item:active {
+  background: var(--tl-surface-interactive-active);
+}
+
+/* Ton folgt der Aktion (docs/skalen.md): der Eintrag einer destruktiven Aktion trägt die drei Paare
+   von tl-button--ghost.tl-button--danger. Eine Klasse wie am Knopf, kein Attribut — Ton ist kein
+   Zustand. Steht nach dem Grundeintrag und vor :disabled: bei gleicher Spezifität gewinnt
+   deaktiviert, auch unter dem Zeiger. */
+.tl-menu__item--danger {
+  color: var(--tl-status-error-text);
+}
+
+.tl-menu__item--danger:hover {
+  background: var(--tl-status-error-surface);
+  color: var(--tl-text-on-status-error);
+}
+
+.tl-menu__item--danger:active {
+  background: var(--tl-status-error-surface-active);
+  color: var(--tl-text-on-status-error-active);
+}
+
+.tl-menu__item:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-menu__item:disabled {
+  color: var(--tl-text-disabled);
+  background: transparent;
+  cursor: default;
+}
+
+.tl-menu__icon {
+  flex-shrink: 0;
+}
+
+.tl-menu__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-menu__header {
+  padding: var(--tl-space-2xs) var(--tl-space-control-x);
+  color: var(--tl-text-secondary);
+}
+
+.tl-menu > .tl-divider {
+  margin-block: var(--tl-space-2xs);
+}
+
+/* --- Auslöser --------------------------------------------------------------- */
+
+/* Eine Kontextmenü-Region ist reine Durchreiche: keine eigene Box. Ein Klick-Auslöser ist ein
+   nativer Knopf mit tl-button tl-button--ghost (Vertrag) — die Klasse markiert ihn nur. */
+.tl-menu-region[data-tl-trigger="contextmenu"] {
+  display: contents;
+}
+.tl-menu-region[hidden] { display: none; }
+
 /* --- pill/pill.css --- */
 /* Pill — docs/skalen.md „Pill: Rolle statt Farbe“.
    Ein Wert, der sich von anderen abheben soll, als getönte Kapsel. Die Farbe ist eine Rolle aus
@@ -1066,6 +1199,7 @@ a.tl-field-value:hover {
 .tl-pill__label {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* --- Rollen ---------------------------------------------------------------- */
@@ -1075,23 +1209,11 @@ a.tl-field-value:hover {
   border-color: var(--tl-border-interactive);
 }
 
-.tl-pill--error {
-  background: var(--tl-status-error-subtle);
-  border-color: var(--tl-status-error-border);
-}
-.tl-pill--warning {
-  background: var(--tl-status-warning-subtle);
-  border-color: var(--tl-status-warning-border);
-}
-.tl-pill--success {
-  background: var(--tl-status-success-subtle);
-  border-color: var(--tl-status-success-border);
-}
-.tl-pill--info {
-  background: var(--tl-status-info-subtle);
-  border-color: var(--tl-status-info-border);
-}
-
+/* Bedeutungen und Kategorien: je Rolle Fläche und Linie, erzeugt aus src/tokens.json (tools/generate.mjs). */
+.tl-pill--error { background: var(--tl-status-error-subtle); border-color: var(--tl-status-error-border); }
+.tl-pill--warning { background: var(--tl-status-warning-subtle); border-color: var(--tl-status-warning-border); }
+.tl-pill--success { background: var(--tl-status-success-subtle); border-color: var(--tl-status-success-border); }
+.tl-pill--info { background: var(--tl-status-info-subtle); border-color: var(--tl-status-info-border); }
 .tl-pill--category-1 { background: var(--tl-category-1-subtle); border-color: var(--tl-category-1-border); }
 .tl-pill--category-2 { background: var(--tl-category-2-subtle); border-color: var(--tl-category-2-border); }
 .tl-pill--category-3 { background: var(--tl-category-3-subtle); border-color: var(--tl-category-3-border); }
@@ -1100,6 +1222,28 @@ a.tl-field-value:hover {
 .tl-pill--category-6 { background: var(--tl-category-6-subtle); border-color: var(--tl-category-6-border); }
 .tl-pill--category-7 { background: var(--tl-category-7-subtle); border-color: var(--tl-category-7-border); }
 .tl-pill--category-8 { background: var(--tl-category-8-subtle); border-color: var(--tl-category-8-border); }
+
+/* --- popover/popover.css --- */
+/* Popover — docs/skalen.md „Scrim und Ebenen“, „Gleiches wird zusammengelegt“ (W1).
+   Die eine Fläche für alles, was über der Oberfläche schwebt und einen Anker hat: Menü, Select-Popup,
+   Toolbar-Überlauf. Die Lage setzt bridge/popover.ts (floating-ui, fixed) inline; hier stehen Fläche,
+   Ebene und Grenzen. Mindestbreite und Höhe sind Maße, keine Literale. */
+
+.tl-popover {
+  position: fixed;
+  z-index: var(--tl-layer-popover);
+  box-sizing: border-box;
+  min-width: var(--tl-size-popover-min);
+  max-height: var(--tl-size-popover-max);
+  overflow: auto;
+  padding: var(--tl-space-xs);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+  background: var(--tl-surface-overlay);
+  box-shadow: var(--tl-shadow-popover);
+  color: var(--tl-text-primary);
+}
+.tl-popover[hidden] { display: none; }
 
 /* --- progress/progress.css --- */
 /* Progress — docs/skalen.md „Progress: ein Anteil, kein Urteil“.
@@ -1165,8 +1309,8 @@ a.tl-field-value:hover {
    Ein gewählter Wert mit Rolle ist eine tl-pill — im Einzelwert, im Chip und im Lesewert.
    Zustände sind Attribute: aria-expanded offen, aria-selected gewählt, data-tl-state~="highlighted"
    die Tastatur-Hervorhebung, data-tl-state~="dragging" / "drop-before" / "drop-after" das Umordnen.
-   Das Popup schwebt über dem Formular, darum Schatten (shadow-popover) und Ebene (layer-popover);
-   sein Radius radius-md umschließt die Optionen mit radius-sm. */
+   Das Popup ist ein tl-popover (Fläche, Schatten, Ebene, Radius radius-md um die Optionen mit
+   radius-sm); hier steht nur sein Innenaufbau. Entfernen und Löschen sind tl-button--icon. */
 
 .tl-select {
   display: flex;
@@ -1216,33 +1360,10 @@ a.tl-field-value:hover {
   min-width: 0;
 }
 
-/* Die Trefferfläche ist mindestens size-control-sm im Quadrat (WCAG 2.5.8, 24 × 24 px), auch wenn das
-   Icon kleiner ist. */
-.tl-select__chip-remove,
-.tl-select__clear {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-inline-size: var(--tl-size-control-sm);
-  min-block-size: var(--tl-size-control-sm);
-  padding: 0;
-  border: 0;
-  border-radius: var(--tl-radius-sm);
-  background: transparent;
-  color: var(--tl-icon-secondary);
-  cursor: pointer;
-}
-
-/* Der Entfernen-Knopf sitzt in der Pille (size-control-sm, mit Rand). Er ragt um die Randbreite über
-   ihren Inhalt: die Trefferfläche bleibt size-control-sm, die Pille wächst nicht — und mit ihr nicht
-   das Feld über size-control. */
-.tl-select__chip-remove {
+/* Der Entfernen-Knopf ist ein tl-button--icon --sm --ghost; er liegt in der Pille, ohne sie zu heben. */
+.tl-select__chip > .tl-button {
   margin-block: calc(-1 * var(--tl-border-width-sm));
-}
-
-.tl-select__chip-remove:hover,
-.tl-select__clear:hover {
-  background: var(--tl-surface-interactive-hover);
+  margin-inline-end: calc(-1 * var(--tl-space-2xs));
 }
 
 .tl-select__drag-handle {
@@ -1277,22 +1398,14 @@ a.tl-field-value:hover {
 /* --- Popup ------------------------------------------------------------------------- */
 
 /* Höchstens acht Optionszeilen plus Suchfeld und Innenabstand; die 8 ist eine Anzahl Zeilen,
-   einheitenlos, kein Maß. Die Lage (top, left, Breite) setzt das Skript an der Wurzel. */
+   einheitenlos, kein Maß. Fläche, Ebene und Lage: tl-popover (bridge/popover.ts). */
 .tl-select__popup {
-  position: fixed;
-  z-index: var(--tl-layer-popover);
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
   max-height: calc(8 * var(--tl-size-row) + var(--tl-size-control) + 2 * var(--tl-space-xs));
   overflow: hidden;
-  padding: var(--tl-space-xs);
-  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
-  border-radius: var(--tl-radius-md);
-  background: var(--tl-surface-overlay);
-  box-shadow: var(--tl-shadow-popover);
-  color: var(--tl-text-primary);
 }
+.tl-select__popup[hidden] { display: none; }
 
 /* Die Gruppe um das Suchfeld (tl-field-group mit Lupe) trägt den Abstand zur Liste: säße er am Feld,
    würde die Gruppe um ihn höher und das absolut gesetzte Icon rutschte aus der Mitte des Feldes.
@@ -1369,4 +1482,147 @@ a.tl-field-value:hover {
 @keyframes tl-skeleton-pulse {
   from { opacity: 1; }
   to { opacity: 0.5; }
+}
+
+/* --- tabs/tabs.css --- */
+/* Tabs — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W3).
+   role=tablist/tab/tabpanel; Roving-Tabindex, Pfeile wählen. Aktiv ist aria-selected: Akzentlinie
+   unten und text-primary, kein Fettdruck — nichts springt beim Wechsel. Den Fokusring liefert base.css.
+   Ein Reiter ist size-bar hoch, so hoch wie die Toolbar (docs/skalen.md „Leisten und Hilfe“).
+   Das Panel ist eine Flex-Spalte, damit füllende Kinder (die virtualisierte Tabelle) ihre Höhe bekommen. */
+
+.tl-tabs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.tl-tabs[hidden] { display: none; }
+
+.tl-tabs__list {
+  display: flex;
+  gap: var(--tl-space-xs);
+  padding: 0 var(--tl-space-sm);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  flex-shrink: 0;
+}
+.tl-tabs__list[hidden] { display: none; }
+
+/* Reset ohne Spezifität: die Typo-Klasse am Element gewinnt. */
+:where(.tl-tabs__tab) { font: inherit; }
+
+.tl-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-height: var(--tl-size-bar);
+  padding: 0 var(--tl-space-md);
+  border: 0;
+  border-bottom: var(--tl-border-width-accent) solid transparent;
+  background: transparent;
+  color: var(--tl-text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tl-tabs__tab[hidden] { display: none; }
+
+.tl-tabs__tab:hover {
+  color: var(--tl-text-primary);
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-tabs__tab[aria-selected="true"] {
+  color: var(--tl-text-primary);
+  border-color: var(--tl-border-interactive);
+}
+
+.tl-tabs__panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+.tl-tabs__panel[hidden] { display: none; }
+
+/* --- toggle/toggle.css --- */
+/* Toggle — docs/skalen.md „Gleiches wird zusammengelegt“ (W4).
+   Ein Knopf, ein Glyph: der Chevron zeigt rechts (zu) und dreht bei aria-expanded auf unten (offen).
+   24 px quadratisch — die Mindest-Trefferfläche. Ghost-Optik; den Fokusring liefert base.css.
+   Ein Dropdown-Indikator (Select-Pfeil) ist kein Toggle: er zeigt unten = zu, oben = offen. */
+
+.tl-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tl-size-control-sm);
+  height: var(--tl-size-control-sm);
+  padding: 0;
+  border: var(--tl-border-width-sm) solid transparent;
+  border-radius: var(--tl-radius-sm);
+  background: transparent;
+  color: var(--tl-icon-primary);
+  cursor: pointer;
+}
+.tl-toggle[hidden] { display: none; }
+
+.tl-toggle:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-toggle:active {
+  background: var(--tl-surface-interactive-active);
+}
+
+.tl-toggle:disabled {
+  color: var(--tl-icon-disabled);
+  background: transparent;
+  cursor: default;
+}
+
+.tl-toggle > .tl-icon-sm {
+  transition: rotate var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-toggle[aria-expanded="true"] > .tl-icon-sm {
+  rotate: 90deg;
+}
+
+/* --- toolbar/toolbar.css --- */
+/* Toolbar — docs/skalen.md „Gleiches wird zusammengelegt“ (W12).
+   Die Einträge sind Button-Controls; die Toolbar gibt ihnen die Erscheinung (ButtonDefaults) und sagt
+   ihnen, wann sie kompakt sind (iconOnly) — keine Regel hier liest tl-button__label. Trenner sind
+   tl-divider--vertical. Zustände sind Attribute: data-tl-overflow (kollabiert an diesem Ende),
+   data-tl-compact (Icons statt Label). */
+
+.tl-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-height: var(--tl-size-bar);
+  padding-block: var(--tl-space-2xs);
+  flex-shrink: 0;
+}
+.tl-toolbar[hidden] { display: none; }
+
+/* Eine kollabierende Toolbar nennt ihre natürliche Breite (Inline-Stil aus TLToolbar) und gibt sie bis
+   zum Überlauf-Trigger wieder her; ihr Inhalt sitzt am Ende, zu dem sie kollabiert. */
+.tl-toolbar[data-tl-overflow] {
+  flex-shrink: 1;
+  min-width: var(--tl-size-control);
+  justify-content: flex-end;
+}
+
+.tl-toolbar[data-tl-overflow="leading"] {
+  justify-content: flex-start;
+}
+
+.tl-toolbar__group {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+}
+.tl-toolbar__group[hidden] { display: none; }
+
+.tl-toolbar__group > :empty {
+  display: none;
 }

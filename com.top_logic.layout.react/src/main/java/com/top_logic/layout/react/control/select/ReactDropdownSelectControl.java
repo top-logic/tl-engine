@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.LabelProvider;
@@ -119,6 +120,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private final SelectDisplay _display;
 
 	private final Orientation _orientation;
+
+	private boolean _filter = true;
 
 	/**
 	 * Maps option ID strings to the original option objects. Used by
@@ -265,6 +268,44 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
+	 * Whether the list that opens on demand offers an input to filter its options by.
+	 *
+	 * <p>
+	 * Without the input, the open list is operated by the keyboard alone: the arrow keys move
+	 * through the options, and typing the beginning of a label jumps to the option it starts. That
+	 * suits a short list whose labels the user knows, such as yes and no. Only the shape
+	 * {@link SelectDisplay#DROPDOWN} opens a list; the other shapes ignore it.
+	 * </p>
+	 *
+	 * @see #setFilter(boolean)
+	 */
+	public boolean hasFilter() {
+		return _filter;
+	}
+
+	/**
+	 * Sets whether the list that opens on demand offers an input to filter its options by.
+	 *
+	 * @see #hasFilter()
+	 */
+	public void setFilter(boolean filter) {
+		_filter = filter;
+		putState(DropdownSelectState.NO_FILTER__PROP, Boolean.valueOf(!filter));
+	}
+
+	/**
+	 * The label of the choice of no value in the given shape.
+	 *
+	 * <p>
+	 * A group of radio buttons offers it as an option of its own, labelled by what it means. The
+	 * other shapes show it where the field holds no value, inviting the user to choose one.
+	 * </p>
+	 */
+	private static ResKey emptyOptionLabel(SelectDisplay display) {
+		return display == SelectDisplay.RADIO ? I18NConstants.VALUE_NONE : I18NConstants.JS_DROPDOWN_SELECT_EMPTY;
+	}
+
+	/**
 	 * Re-describes the displayed value after one of the objects it consists of has changed.
 	 *
 	 * <p>
@@ -301,8 +342,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		updateValueState();
 		putState(DropdownSelectState.MULTI_SELECT__PROP, _selectModel.isMultiple());
 		putState(DropdownSelectState.CUSTOM_ORDER__PROP, _customOrder);
-		putState(DropdownSelectState.EMPTY_OPTION_LABEL__PROP,
-			resources.getString(I18NConstants.JS_DROPDOWN_SELECT_EMPTY));
+		putState(DropdownSelectState.EMPTY_OPTION_LABEL__PROP, resources.getString(emptyOptionLabel(_display)));
 		if (_display != SelectDisplay.DROPDOWN) {
 			putState(DropdownSelectState.DISPLAY__PROP, _display.getExternalName());
 		}
@@ -410,7 +450,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
 		return presentationKeys(super.scriptingPresentationKeys(), DropdownSelectState.DISPLAY__PROP,
-			DropdownSelectState.ORIENTATION__PROP);
+			DropdownSelectState.ORIENTATION__PROP, DropdownSelectState.NO_FILTER__PROP);
 	}
 
 	private void setOptionsLoaded(boolean loaded) {

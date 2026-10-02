@@ -259,6 +259,9 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 	/** @see #isMultiSelect() */
 	String MULTI_SELECT__PROP = "multiSelect";
 
+	/** @see #isNoFilter() */
+	String NO_FILTER__PROP = "noFilter";
+
 	/** @see #getEmptyOptionLabel() */
 	String EMPTY_OPTION_LABEL__PROP = "emptyOptionLabel";
 
@@ -337,7 +340,20 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 	com.top_logic.layout.react.state.DropdownSelectState setMultiSelect(boolean value);
 
 	/**
-	 * The label of the choice of no object.
+	 * Whether the list that opens on demand offers no input to filter its options by; absent means
+	 * it does. Without the input, typing the beginning of a label moves to the option it starts.
+	 * Only the shape {@link Display#DROPDOWN} reads it.
+	 */
+	boolean isNoFilter();
+
+	/**
+	 * @see #isNoFilter()
+	 */
+	com.top_logic.layout.react.state.DropdownSelectState setNoFilter(boolean value);
+
+	/**
+	 * The label of the choice of no object: the option of its own a group of radio buttons offers
+	 * for it, the text the other shapes show while nothing is chosen.
 	 */
 	String getEmptyOptionLabel();
 

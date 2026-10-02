@@ -299,7 +299,8 @@ export namespace CheckboxStateJson {
 	 * The component draws `'checkbox'` and `'switch'`; the control does not send
 	 * `'checkbox'`, an absent display means a box that is ticked. `'select'` and
 	 * `'radio'` are presentations of a boolean offered as a choice between labelled values,
-	 * which is a component of its own; they are never sent to this component.
+	 * which is a field choosing one object ({@link DropdownSelectStateJson}); they are never sent to
+	 * this component.
 	 */
 	export type Display =
 		/**
@@ -603,7 +604,15 @@ export interface DropdownSelectStateJson extends FieldStateJson {
 	multiSelect: boolean;
 
 	/**
-	 * The label of the choice of no object.
+	 * Whether the list that opens on demand offers no input to filter its options by; absent means
+	 * it does. Without the input, typing the beginning of a label moves to the option it starts.
+	 * Only the shape `'dropdown'` reads it.
+	 */
+	noFilter: boolean;
+
+	/**
+	 * The label of the choice of no object: the option of its own a group of radio buttons offers
+	 * for it, the text the other shapes show while nothing is chosen.
 	 */
 	emptyOptionLabel: string;
 }

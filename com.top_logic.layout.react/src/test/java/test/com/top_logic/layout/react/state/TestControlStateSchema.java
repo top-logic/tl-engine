@@ -381,6 +381,23 @@ public class TestControlStateSchema extends TestCase {
 	}
 
 	/**
+	 * A list that opens on demand offers an input to filter it by unless asked otherwise; that
+	 * default is not sent, and the request for no filter is declared in {@link DropdownSelectState}.
+	 */
+	public void testDropdownWithoutFilter() {
+		ReactDropdownSelectControl control = new ReactDropdownSelectControl(createContext(),
+			new SimpleSelectFieldModel(List.of("b"), List.of("a", "b"), false), String::valueOf, null, false);
+		assertTrue(control.hasFilter());
+		assertFalse(state(control).containsKey(DropdownSelectState.NO_FILTER__PROP));
+
+		control.setFilter(false);
+		Map<?, ?> state = state(control);
+		assertFalse(control.hasFilter());
+		assertDeclared(state, DropdownSelectState.class);
+		assertEquals(Boolean.TRUE, state.get(DropdownSelectState.NO_FILTER__PROP));
+	}
+
+	/**
 	 * Every key of a toggle button is declared in {@link ToggleButtonState}.
 	 */
 	public void testToggleButtonKeys() {

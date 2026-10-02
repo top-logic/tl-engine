@@ -11,6 +11,7 @@ import type { OptionDescriptor } from './selectOptions';
 import { pillClassName } from './pill/TLPill';
 import { ProgressBar } from './TLProgress';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import { findTypeAheadMatch, isTypeAheadKey, useTypeAhead } from './typeAhead';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
 
@@ -154,6 +155,12 @@ function OptionRow({
  * read-only field shows its values in `tl-select__values`. A disabled field renders the field as
  * an inactive one (`aria-disabled`, out of the tab order) that opens no list and offers neither the
  * clear button nor the removal and reordering of chips (see showsValueOnly).
+ *
+ * Where the server asks for no filter (`noFilter`), the open list has no search field: the focus
+ * stays on the field, which then carries the `aria-activedescendant`, and the list is operated by
+ * the keyboard alone. Besides the arrow keys, Enter and Escape, typing the beginning of a label moves
+ * to the option it starts (type-ahead, see useTypeAhead); on the closed field, typing opens the list
+ * and moves there.
  */
 const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<DropdownSelectStateJson>>();
@@ -170,6 +177,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const optionsLoaded = state.optionsLoaded === true;
   const allOptions = (state.options ?? []) as OptionDescriptor[];
   const emptyOptionLabel = state.emptyOptionLabel ?? '';
+  const noFilter = state.noFilter === true;
 
   // Drag-and-drop is enabled only for custom-order multi-select editable fields
   const dragEnabled = customOrder && multiSelect && !disabled && editable;
@@ -217,6 +225,11 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   // Index of the last removed chip, used to restore focus after SSE update.
   const removalIndexRef = useRef(-1);
 
+  // Type-ahead in a list without a search field. A prefix typed before the options have arrived
+  // waits for them in pendingPrefixRef.
+  const typeAhead = useTypeAhead();
+  const pendingPrefixRef = useRef<string | null>(null);
+
   // Derived: selected value IDs for fast lookup
   const selectedIds = useMemo(
     () => new Set(value.map((v) => v.value)),
@@ -241,6 +254,15 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       setHighlightedIndex(-1);
     }
   }, [filteredOptions.length, searchTerm]);
+
+  // A prefix typed while the options were loading moves to its option once they are there.
+  useEffect(() => {
+    const prefix = pendingPrefixRef.current;
+    if (prefix === null || !isOpen || !optionsLoaded) return;
+    pendingPrefixRef.current = null;
+    const match = findTypeAheadMatch(filteredOptions.map((o) => o.label), prefix, -1);
+    if (match >= 0) setHighlightedIndex(match);
+  }, [isOpen, optionsLoaded, filteredOptions]);
 
   // Focus search input when dropdown is open and options are loaded.
   // Re-runs on value changes to restore focus after SSE state updates.
@@ -383,8 +405,33 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     [sendCommand]
   );
 
+  /**
+   * Takes a typed character into the type-ahead prefix and moves to the option it starts, opening
+   * the list first if it is closed.
+   */
+  const typeAheadKey = useCallback(
+    (ch: string) => {
+      const prefix = typeAhead.type(ch);
+      if (!isOpen || !optionsLoaded) {
+        pendingPrefixRef.current = prefix;
+        if (!isOpen) openDropdown();
+        return;
+      }
+      const match = findTypeAheadMatch(filteredOptions.map((o) => o.label), prefix, highlightedIndex);
+      if (match >= 0) setHighlightedIndex(match);
+    },
+    [typeAhead, isOpen, optionsLoaded, openDropdown, filteredOptions, highlightedIndex]
+  );
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (noFilter && isTypeAheadKey(e, typeAhead.typing()) && (e.target as HTMLElement).tagName !== 'BUTTON') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!disabled && editable) typeAheadKey(e.key);
+        return;
+      }
+
       if (!isOpen) {
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
           // Let Enter/Space activate a focused child button (chip remove, clear).
@@ -435,6 +482,11 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       }
     },
     [
+      noFilter,
+      typeAhead,
+      disabled,
+      editable,
+      typeAheadKey,
       isOpen,
       openDropdown,
       closeDropdown,
@@ -555,8 +607,8 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       style={dropdownStyle}
       {...anchoredOverlayProps}
     >
-      {/* Search field - shown when options are loaded */}
-      {(optionsLoaded || loadError) && (
+      {/* Search field - shown when options are loaded, unless the field asks for none */}
+      {!noFilter && (optionsLoaded || loadError) && (
         <span className="tl-field-group tl-select__search-group">
           <span className="tl-field-group__icon" aria-hidden="true">
             <ThemeIcon encoded="css:fa-solid fa-magnifying-glass" className="tl-icon-sm" />
@@ -634,6 +686,9 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-controls={isOpen ? listboxId : undefined}
+        aria-activedescendant={
+          noFilter && isOpen && highlightedIndex >= 0 ? `${controlId}-opt-${highlightedIndex}` : undefined
+        }
         aria-disabled={disabled || undefined}
         tabIndex={disabled ? -1 : 0}
         onClick={!isOpen ? openDropdown : undefined}

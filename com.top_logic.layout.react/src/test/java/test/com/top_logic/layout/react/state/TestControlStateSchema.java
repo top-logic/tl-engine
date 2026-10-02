@@ -404,7 +404,7 @@ public class TestControlStateSchema extends TestCase {
 	public void testMenuKeys() {
 		ReactMenuControl control = new ReactMenuControl(createContext(), null, List.of(
 			MenuEntry.header("Header"),
-			MenuEntry.item("a", "A", "css:fas fa-home", ExecutableState.NOT_EXEC_DISABLED, "css", true),
+			MenuEntry.item("a", "A", "css:fas fa-home", ExecutableState.NOT_EXEC_DISABLED, "css", true, ButtonTone.DANGER),
 			MenuEntry.separator()),
 			id -> HandlerResult.DEFAULT_RESULT, () -> {
 				// Never closed.
@@ -417,6 +417,23 @@ public class TestControlStateSchema extends TestCase {
 		assertEquals(List.of("header", "item", "separator"),
 			((List<?>) state.get(MenuState.ITEMS__PROP)).stream()
 				.map(entry -> ((Map<?, ?>) entry).get(MenuState.Entry.TYPE__PROP)).toList());
+	}
+
+	/**
+	 * A destructive entry says so; an ordinary one sends no tone, since an absent tone means the
+	 * default.
+	 */
+	public void testMenuEntryTone() {
+		ReactMenuControl control = new ReactMenuControl(createContext(), null, List.of(
+			MenuEntry.item("a", "Delete", null, ExecutableState.EXECUTABLE, null, false, ButtonTone.DANGER),
+			MenuEntry.item("b", "Edit", null, ExecutableState.EXECUTABLE, null, false)),
+			id -> HandlerResult.DEFAULT_RESULT, () -> {
+				// Never closed.
+			});
+
+		List<?> items = (List<?>) state(control).get(MenuState.ITEMS__PROP);
+		assertEquals(ButtonTone.DANGER.getExternalName(), ((Map<?, ?>) items.get(0)).get(MenuState.Entry.TONE__PROP));
+		assertFalse(((Map<?, ?>) items.get(1)).containsKey(MenuState.Entry.TONE__PROP));
 	}
 
 	/**

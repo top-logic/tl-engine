@@ -888,6 +888,12 @@ export namespace MenuStateJson {
 		 * Additional CSS classes of the item, separated by spaces.
 		 */
 		cssClasses: string;
+
+		/**
+		 * The kind of action the item stands for. Absent means `default`, an ordinary action;
+		 * `danger` marks an item whose command destroys or discards what the user has.
+		 */
+		tone: ButtonStateJson.Tone;
 	}
 }
 

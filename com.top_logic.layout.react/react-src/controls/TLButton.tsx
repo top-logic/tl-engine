@@ -84,8 +84,8 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const mode: ButtonStateJson.DisplayMode = defaults.iconOnly && shows
     ? 'icon-only'
     : resolvedAppearance === 'menu-item' && resolvedImage ? 'icon-label' : resolvedMode;
-  // Additional CSS classes declared on the command this button renders, e.g. to mark a
-  // destructive action.
+  // Additional CSS classes declared on the command this button renders. A destructive command is
+  // not a class but its tone (`state.tone`).
   const cssClasses = state.cssClasses;
   // When set, clicking navigates the browser directly (e.g. an external SSO redirect) instead of
   // dispatching a server command - this avoids depending on the asynchronous SSE round-trip.

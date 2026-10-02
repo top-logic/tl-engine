@@ -19,7 +19,7 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
       {items.map((item, i) => item.type === 'separator' ? <MenuSeparator key={i} />
         : item.type === 'header' ? <MenuHeader key={i} label={item.label} />
         : <MenuItem key={item.id} icon={item.icon} label={item.label} disabled={item.disabled} current={item.active}
-            className={item.cssClasses} onSelect={() => sendCommand('selectItem', { itemId: item.id })} />)}
+            danger={item.tone === 'danger'} className={item.cssClasses} onSelect={() => sendCommand('selectItem', { itemId: item.id })} />)}
     </Menu>
   );
 };

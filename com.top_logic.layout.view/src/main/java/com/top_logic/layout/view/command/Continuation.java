@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.command;
 
+import com.top_logic.layout.react.control.button.ButtonTone;
+
 /**
  * Control handed to a {@link ViewAction} to continue (or cancel) the surrounding action chain.
  *
@@ -51,4 +53,21 @@ public interface Continuation {
 	 *        The cleanup/rollback to run on abort or failure.
 	 */
 	void onAbort(Runnable compensation);
+
+	/**
+	 * The tone of what follows the step that is executing now.
+	 *
+	 * <p>
+	 * {@link ButtonTone#DANGER} when an action that runs after this step - in this chain, or after
+	 * the action this chain is nested in - {@link ViewAction#getTone() is destructive}. A step that
+	 * asks the user before the chain goes on (a {@link ConfirmAction}) draws its affirmative answer
+	 * in this tone: that answer lets the destruction happen. The tone of the step itself and of the
+	 * steps before it does not count.
+	 * </p>
+	 *
+	 * @return {@link ButtonTone#DEFAULT} unless the continuation knows the rest of its chain.
+	 */
+	default ButtonTone tone() {
+		return ButtonTone.DEFAULT;
+	}
 }

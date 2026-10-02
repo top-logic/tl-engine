@@ -26,14 +26,18 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonTone;
+import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.command.ActionScript;
 import com.top_logic.layout.view.command.CommandCliques;
+import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.IfAction;
+import com.top_logic.layout.view.command.InterruptibleViewAction;
 import com.top_logic.layout.view.command.SwitchAction;
 import com.top_logic.layout.view.command.SwitchAction.SwitchCase;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.command.ViewActions;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
@@ -159,6 +163,67 @@ public class TestActionTone extends TestCase {
 		@Override
 		public ButtonTone getTone() {
 			return ButtonTone.DANGER;
+		}
+	}
+
+	/**
+	 * A step asking the user before the chain goes on sees the tone of what follows it: the answer
+	 * that lets a deletion happen is destructive. What ran before, and the step itself, do not count.
+	 */
+	public void testTheConfirmationTakesTheToneOfWhatFollows() {
+		Asking ask = new Asking();
+		run(List.of(ask, new Destroying()));
+		assertEquals(ButtonTone.DANGER, ask._seen);
+
+		ask = new Asking();
+		run(List.of(ask, ORDINARY));
+		assertEquals(ButtonTone.DEFAULT, ask._seen);
+
+		ask = new Asking();
+		run(List.of(new Destroying(), ask));
+		assertEquals("What ran before the question is done already.", ButtonTone.DEFAULT, ask._seen);
+
+		Asking destructiveAsk = new Asking() {
+			@Override
+			public ButtonTone getTone() {
+				return ButtonTone.DANGER;
+			}
+		};
+		run(List.of(destructiveAsk, ORDINARY));
+		assertEquals("The tone of the step itself does not count.", ButtonTone.DEFAULT, destructiveAsk._seen);
+	}
+
+	/**
+	 * A question in a branch sees what follows the branch in the chain it is nested in, as well as
+	 * what follows it in the branch.
+	 */
+	public void testANestedConfirmationSeesTheRestOfTheEnclosingChain() {
+		Asking ask = new Asking();
+		run(List.of(new IfAction(TRUE, List.of(ask), List.of()), new Destroying()));
+		assertEquals(ButtonTone.DANGER, ask._seen);
+
+		ask = new Asking();
+		run(List.of(new IfAction(TRUE, List.of(ask, new Destroying()), List.of()), ORDINARY));
+		assertEquals(ButtonTone.DANGER, ask._seen);
+
+		ask = new Asking();
+		run(List.of(new IfAction(TRUE, List.of(ask), List.of()), ORDINARY));
+		assertEquals(ButtonTone.DEFAULT, ask._seen);
+	}
+
+	private static void run(List<ViewAction> chain) {
+		ViewActionChain.run(new DefaultViewContext(null), chain, "in", null);
+	}
+
+	/** A step that records the tone its continuation reports, then declines, as a user may. */
+	static class Asking extends InterruptibleViewAction {
+
+		ButtonTone _seen;
+
+		@Override
+		public void execute(ReactContext context, Object input, Continuation continuation) {
+			_seen = continuation.tone();
+			continuation.abort();
 		}
 	}
 

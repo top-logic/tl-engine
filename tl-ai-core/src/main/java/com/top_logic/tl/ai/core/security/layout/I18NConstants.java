@@ -349,6 +349,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 WARN_DATA_ROLE_WITHOUT_MODEL_RIGHTS__ROLE_GROUPS;
 
 	/**
+	 * The cross-layer warning about a role with data capabilities and no model access rights, in an
+	 * application whose model access rights mark types or modules as without security.
+	 *
+	 * @en Role {0} holds {1}, but appears in no Read, Write or Create grant of the model access
+	 *     rights: its data tools reach only what is marked without security ({2}) and see nothing
+	 *     and change nothing elsewhere, and a refused read comes back empty rather than as an
+	 *     error.
+	 * @de Die Rolle {0} hält {1}, kommt aber in keinem Read-, Write- oder Create-Grant der
+	 *     Modellrechte vor: Ihre Daten-Tools erreichen nur, was ohne Sicherheit markiert ist ({2}),
+	 *     und sehen und ändern sonst nichts, und eine verweigerte Leseoperation liefert ein leeres
+	 *     Ergebnis statt eines Fehlers.
+	 */
+	public static ResKey3 WARN_DATA_ROLE_ONLY_WITHOUT_SECURITY__ROLE_GROUPS_PARTS;
+
+	/**
 	 * The cross-layer warning about a role nobody can hold where tool access reads roles.
 	 *
 	 * @en Role {0} is granted tools, but no role rule of this application can produce it on the security

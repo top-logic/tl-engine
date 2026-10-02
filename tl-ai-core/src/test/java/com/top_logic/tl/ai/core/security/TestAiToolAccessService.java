@@ -17,6 +17,7 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.annotate.security.AccessGrant;
 import com.top_logic.model.annotate.security.AccessRevoke;
 import com.top_logic.model.annotate.security.AccessRule;
@@ -28,6 +29,8 @@ import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
+import com.top_logic.tl.ai.core.security.layout.I18NConstants;
+import com.top_logic.tl.ai.core.security.layout.PolicyChecks;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
@@ -412,6 +415,44 @@ public class TestAiToolAccessService extends TestCase {
 			AiToolAccessService.rolesWithModelRights(securityConfig(
 				classRights("pm:Project", grant("Read", "projectPartner", false)),
 				classRights("pm:Ticket", revoke("Read", "projectPartner", false)))));
+	}
+
+	/**
+	 * The types and modules marked {@code without-security} are what a role no grant names still
+	 * reaches - the engine lets every account at their objects, whatever its roles (#609).
+	 */
+	public void testPartsWithoutSecurityAreCollected() {
+		SecurityConfigurationService.TLModuleAccessRights lookups =
+			TypedConfiguration.newConfigItem(SecurityConfigurationService.TLModuleAccessRights.class);
+		lookups.setName("pm.lookup");
+		lookups.setWithoutSecurity(true);
+		SecurityConfigurationService.ModelAccessRights notes = classRights("pm:Note");
+		((SecurityConfigurationService.TLClassAccessRights) notes).setWithoutSecurity(true);
+
+		assertEquals("Only the entries marked, module and type alike, not the one that grants.",
+			Set.of("pm.lookup", "pm:Note"),
+			AiToolAccessService.partsWithoutSecurity(securityConfig(lookups, notes,
+				classRights("pm:Project", "Read", "projectPartner"))));
+		assertEquals(Set.of(), AiToolAccessService.partsWithoutSecurity(securityConfig(
+			classRights("pm:Project", "Read", "projectPartner"))));
+	}
+
+	/**
+	 * A role whose data tools reach the types without security is not told they see nothing; it is
+	 * told what they reach. Without such types the original sentence stands (#609).
+	 */
+	public void testDataRoleWarningNamesWhatWithoutSecurityReaches() {
+		ResKey precise = PolicyChecks.dataRoleWithoutModelRights("lookupEditor",
+			Set.of(ToolGroups.DATA_WRITE), Set.of("pm.lookup", "pm:Note"));
+		assertEquals(I18NConstants.WARN_DATA_ROLE_ONLY_WITHOUT_SECURITY__ROLE_GROUPS_PARTS.getKey(),
+			precise.getKey());
+		assertEquals(List.of("lookupEditor", ToolGroups.DATA_WRITE, "pm.lookup, pm:Note"),
+			List.of(precise.arguments()));
+
+		ResKey nothing = PolicyChecks.dataRoleWithoutModelRights("dora",
+			Set.of(ToolGroups.DATA_WRITE), Set.of());
+		assertEquals(I18NConstants.WARN_DATA_ROLE_WITHOUT_MODEL_RIGHTS__ROLE_GROUPS.getKey(),
+			nothing.getKey());
 	}
 
 	private static SecurityConfigurationService.Config securityConfig(

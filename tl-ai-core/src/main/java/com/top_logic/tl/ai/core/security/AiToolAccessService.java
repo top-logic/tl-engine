@@ -675,18 +675,47 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 			// state - saying it again here would add noise, not information.
 			return;
 		}
-		Set<String> withModelRights =
-			rolesWithModelRights(SecurityConfigurationService.Module.INSTANCE
-				.getImplementationInstance().getConfig());
+		SecurityConfigurationService.Config securityConfig =
+			SecurityConfigurationService.Module.INSTANCE.getImplementationInstance().getConfig();
+		Set<String> withModelRights = rolesWithModelRights(securityConfig);
+		Set<String> withoutSecurity = partsWithoutSecurity(securityConfig);
+		String reach = withoutSecurity.isEmpty()
+			? "its data tools will see nothing and change nothing."
+			: "its data tools reach only what is marked without-security ("
+				+ String.join(", ", withoutSecurity) + ") and see nothing and change nothing elsewhere.";
 		for (Map.Entry<String, Set<String>> entry :
 				dataRolesWithoutModelRights(policy, _access::groupOf, withModelRights).entrySet()) {
 			Logger.warn("The role '" + entry.getKey() + "' in the agent tool access configuration holds "
 				+ entry.getValue() + ", but appears in no Read, Write or Create grant of the model"
-				+ " security configuration, so its data tools will see nothing and change nothing."
+				+ " security configuration, so " + reach
 				+ " Either add a <grant> for it to <security-config>, or drop the data capabilities from"
 				+ " its <tool-access> entry so the policy stops promising something the model rights"
 				+ " deny.", AiToolAccessService.class);
 		}
+	}
+
+	/**
+	 * The names of the types and modules the given model security configuration marks
+	 * {@code without-security}, sorted.
+	 *
+	 * <p>
+	 * The engine lets every account read, write and create the objects of such a type, of its
+	 * specializations and of every type of such a module, whatever roles the account holds. A role no
+	 * grant names therefore still reaches those objects, and the warning about it has to say so
+	 * instead of claiming it reaches nothing (#609). It cannot say more: which types a role's data
+	 * tools are meant for is written in neither configuration, and the bypass does not tell one role
+	 * from another.
+	 * </p>
+	 */
+	public static Set<String> partsWithoutSecurity(SecurityConfigurationService.Config config) {
+		Set<String> result = new TreeSet<>();
+		for (SecurityConfigurationService.ModelAccessRights rights : config.getSecurityConfig().values()) {
+			if (rights instanceof SecurityConfigurationService.TypeBasedAccessRights typeBased
+				&& typeBased.isWithoutSecurity()) {
+				result.add(rights.getName());
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -1163,6 +1192,21 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 		Set<String> withModelRights = rolesWithModelRights(
 			SecurityConfigurationService.Module.INSTANCE.getImplementationInstance().getConfig());
 		return dataRolesWithoutModelRights(getConfig(), _access::groupOf, withModelRights);
+	}
+
+	/**
+	 * {@link #partsWithoutSecurity(SecurityConfigurationService.Config)} for the running model
+	 * security configuration, for a view that words the warning of
+	 * {@link #dataRolesWithoutModelRights()}.
+	 *
+	 * @return The names in a stable order; empty if there is nothing to compare against.
+	 */
+	public static Set<String> partsWithoutSecurity() {
+		if (!SecurityConfigurationService.Module.INSTANCE.isActive()) {
+			return Set.of();
+		}
+		return partsWithoutSecurity(
+			SecurityConfigurationService.Module.INSTANCE.getImplementationInstance().getConfig());
 	}
 
 	/**

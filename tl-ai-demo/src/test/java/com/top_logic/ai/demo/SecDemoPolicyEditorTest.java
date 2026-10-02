@@ -526,7 +526,7 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 	 */
 	public void testTheWarningsOfTheFixture() {
 		PolicyDraft draft = draft();
-		List<String> warnings = keys(PolicyChecks.warnings(draft.config(), Set.of(PARTNER)));
+		List<String> warnings = keys(PolicyChecks.warnings(draft.config(), Set.of(PARTNER), Set.of()));
 
 		assertTrue("The partner holds both TL-Script and the permission to change data: " + warnings,
 			warnings.contains(key("WARN_SCRIPT_WITH_DATA_WRITE__ROLE")));
@@ -543,7 +543,7 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 		draft.setCapabilityState(PARTNER, ToolGroups.EGRESS, CellState.GRANTED);
 
 		assertTrue("Reading data and sending it outward is the combination worth one sentence.",
-			keys(PolicyChecks.warnings(draft.config(), Set.of(PARTNER)))
+			keys(PolicyChecks.warnings(draft.config(), Set.of(PARTNER), Set.of()))
 				.contains(key("WARN_DATA_AND_EGRESS__ROLE")));
 	}
 
@@ -551,14 +551,14 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 	public void testTheBackgroundWarnings() {
 		PolicyDraft draft = draft();
 		draft.setBackgroundChoice(BackgroundChoice.ALL);
-		assertTrue(keys(PolicyChecks.warnings(draft.config(), Set.of()))
+		assertTrue(keys(PolicyChecks.warnings(draft.config(), Set.of(), Set.of()))
 			.contains(key("WARN_BACKGROUND_ALL")));
 
 		// The fixture's own limit carries TL-Script and deliberately not the permission to change
 		// data, which is exactly the combination the two sentences have to tell apart.
 		assertTrue("TL-Script without the permission to change data cannot persist anything, and an"
 			+ " administrator has to know which of the two they wrote.",
-			keys(PolicyChecks.warnings(draft().config(), Set.of()))
+			keys(PolicyChecks.warnings(draft().config(), Set.of(), Set.of()))
 				.contains(key("WARN_BACKGROUND_SCRIPT")));
 
 		PolicyDraft alsoWriting = draft();
@@ -566,7 +566,7 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 		withWrite.add(ToolGroups.DATA_WRITE);
 		alsoWriting.setBackgroundGroups(withWrite);
 		assertTrue("With both on the list, an unattended run can persist anything a script expresses.",
-			keys(PolicyChecks.warnings(alsoWriting.config(), Set.of()))
+			keys(PolicyChecks.warnings(alsoWriting.config(), Set.of(), Set.of()))
 				.contains(key("WARN_BACKGROUND_SCRIPT_AND_DATA_WRITE")));
 	}
 

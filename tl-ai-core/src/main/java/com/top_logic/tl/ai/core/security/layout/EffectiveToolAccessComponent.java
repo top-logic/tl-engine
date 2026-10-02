@@ -280,10 +280,11 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 		AiToolAccessService service = AiToolAccessService.getInstance();
 		Set<String> shownRoles = access().roleNames();
 		List<ResKey> result = new ArrayList<>();
+		Set<String> withoutSecurity = AiToolAccessService.partsWithoutSecurity();
 		for (Map.Entry<String, Set<String>> entry : service.dataRolesWithoutModelRights().entrySet()) {
 			if (shownRoles.contains(entry.getKey())) {
-				result.add(I18NConstants.WARN_DATA_ROLE_WITHOUT_MODEL_RIGHTS__ROLE_GROUPS
-					.fill(entry.getKey(), String.join(", ", entry.getValue())));
+				result.add(PolicyChecks.dataRoleWithoutModelRights(entry.getKey(), entry.getValue(),
+					withoutSecurity));
 			}
 		}
 		for (String roleName : service.rolesUnreachableOnSecurityRoot()) {

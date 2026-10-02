@@ -188,6 +188,9 @@ public class DropDownControl extends AbstractSelectControl {
 
 		out.beginBeginTag(BUTTON);
 		out.writeAttribute(CLASS_ATTR, "ddwttDropBtn");
+		if (dropdown.isDisabled()) {
+			out.writeAttribute(DISABLED_ATTR, DISABLED_DISABLED_VALUE);
+		}
 		out.writeAttribute(TYPE_ATTR, "button");
 		addButtonEvents(out);
 		out.writeAttribute(ID, getButtonID());
@@ -197,9 +200,6 @@ public class DropDownControl extends AbstractSelectControl {
 				Object item = _selection.get(0);
 				renderTooltip(context, out, dropdown, item);
 			}
-		}
-		if (dropdown.isDisabled()) {
-			out.writeAttribute(DISABLED_ATTR, "");
 		}
 		out.endBeginTag();
 		{

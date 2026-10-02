@@ -803,8 +803,13 @@
   padding: 1rem;
 }
 
+/*
+ * A chart is read at a glance: as high as it needs to be for its bars to compare, not as high as the
+ * pane happens to be - a 900 px bar says no more than a 400 px one, and the eye has to travel it.
+ */
 .tl-chat-rail .pane-step.is-chart > * {
-  min-height: 16rem;
+  flex: 0 0 auto;
+  height: clamp(16rem, 60%, 26rem);
 }
 
 /* The folded pane's way back: the strip's first icon, set apart from the sections below it. */

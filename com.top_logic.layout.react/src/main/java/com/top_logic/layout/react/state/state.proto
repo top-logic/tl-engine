@@ -23,6 +23,7 @@
  *   TLDialog          - DialogState
  *   TLMenu            - MenuState
  *   TLSnackbar        - SnackbarState
+ *   TLAlert           - AlertState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -288,7 +289,8 @@ message CheckboxState extends FieldState {
 	 * The component draws {@link #CHECKBOX} and {@link #SWITCH}; the control does not send
 	 * {@link #CHECKBOX}, an absent display means a box that is ticked. {@link #SELECT} and
 	 * {@link #RADIO} are presentations of a boolean offered as a choice between labelled values,
-	 * which is a component of its own; they are never sent to this component.
+	 * which is a field choosing one object ({@link DropdownSelectState}); they are never sent to
+	 * this component.
 	 */
 	enum Display {
 		/** A box that is ticked. */
@@ -556,8 +558,9 @@ message SelectState extends FieldState {
 
 /**
  * State of a field choosing one or more objects, the components {@code TLDropdownSelect} (a list
- * that opens on demand), {@code TLOptionChips} (every option a toggle of its own) and
- * {@code TLSegmentedChoice} (the options as the segments of one bar).
+ * that opens on demand), {@code TLOptionChips} (every option a toggle of its own),
+ * {@code TLSegmentedChoice} (the options as the segments of one bar) and {@code TLChoiceGroup}
+ * (a radio button or a checkbox for every option).
  *
  * The {@link #value} is the list of the chosen objects, each an {@link Option} (also for a field
  * choosing one object). A change is sent as the command {@code valueChanged} with the list of the
@@ -583,6 +586,29 @@ message DropdownSelectState extends FieldState {
 		/** The options as the segments of one bar. */
 		@Name("segmented")
 		SEGMENTED;
+
+		/**
+		 * A radio button for every option, or a checkbox for every option of a field choosing
+		 * several objects.
+		 */
+		@Name("radio")
+		RADIO;
+	}
+
+	/**
+	 * The direction the options of a group of radio buttons or checkboxes are laid out in.
+	 *
+	 * The control does not send {@link #VERTICAL}: an absent orientation means the options stand
+	 * one below the other.
+	 */
+	enum Orientation {
+		/** The options side by side, wrapping onto further lines where the room ends. */
+		@Name("horizontal")
+		HORIZONTAL;
+
+		/** The options one below the other. */
+		@Name("vertical")
+		VERTICAL;
 	}
 
 	/**
@@ -626,6 +652,12 @@ message DropdownSelectState extends FieldState {
 	Display display;
 
 	/**
+	 * The direction the options are laid out in. Only the shape {@link Display#RADIO} reads it.
+	 * Absent means {@link Orientation#VERTICAL}, the options one below the other.
+	 */
+	Orientation orientation;
+
+	/**
 	 * The objects that can be chosen, valid while {@link #optionsLoaded} is set. A list that opens
 	 * on demand asks for them with the command {@code loadOptions}.
 	 */
@@ -648,7 +680,15 @@ message DropdownSelectState extends FieldState {
 	bool multiSelect;
 
 	/**
-	 * The label of the choice of no object.
+	 * Whether the list that opens on demand offers no input to filter its options by; absent means
+	 * it does. Without the input, typing the beginning of a label moves to the option it starts.
+	 * Only the shape {@link Display#DROPDOWN} reads it.
+	 */
+	bool noFilter;
+
+	/**
+	 * The label of the choice of no object: the option of its own a group of radio buttons offers
+	 * for it, the text the other shapes show while nothing is chosen.
 	 */
 	string emptyOptionLabel;
 }
@@ -949,6 +989,52 @@ message SnackbarState extends ControlState {
 
 	/**
 	 * The number of the message shown, counting the messages this control has shown.
+	 */
+	int32 generation;
+}
+
+/**
+ * State of a highlighted message standing in the content of a page, the component {@code TLAlert}.
+ *
+ * A hidden alert (see {@link ControlState#hidden}) renders nothing. Dismissing the alert sends the
+ * command {@code dismiss} with the {@link #generation} of the content dismissed as argument
+ * {@code generation}.
+ */
+message AlertState extends ControlState {
+	/**
+	 * The kind of the message, selecting its color and its icon. Absent: an information.
+	 */
+	SnackbarState.Variant variant;
+
+	/**
+	 * The heading of the message, plain text. Absent: no heading.
+	 */
+	string title;
+
+	/**
+	 * The message, plain text.
+	 */
+	@Name("message")
+	string messageText;
+
+	/**
+	 * The icon of the message, the encoded form of a theme image matching the {@link #variant}.
+	 */
+	string icon;
+
+	/**
+	 * Whether the user can dismiss the message.
+	 */
+	bool closable;
+
+	/**
+	 * The buttons offering what to do about the message, in display order.
+	 */
+	repeated ChildControl actions;
+
+	/**
+	 * The number of the content shown, counting the contents this control has shown. A dismiss
+	 * reporting another number refers to a content that is no longer shown.
 	 */
 	int32 generation;
 }

@@ -104,8 +104,8 @@ public class ValueCellEditing implements CellEditing {
 	@Override
 	public ReactControl createControl(ReactContext context, Object row, BoundFieldModel model) {
 		// The column header says what the cell holds, so the field itself carries no label.
-		FieldSpec field =
-			FieldControlService.fieldSpec(_type.type(), _type.annotations(), null, _type.multiple(), model);
+		FieldSpec field = FieldControlService.cellSpec(
+			FieldControlService.fieldSpec(_type.type(), _type.annotations(), null, _type.multiple(), model));
 		return FieldControlService.getInstance().createFieldControl(context, _type.type(), field, model);
 	}
 

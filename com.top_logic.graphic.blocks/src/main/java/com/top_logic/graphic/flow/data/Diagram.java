@@ -24,6 +24,9 @@ public interface Diagram extends com.top_logic.graphic.flow.data.Widget, com.top
 	/** @see #isMultiSelect() */
 	String MULTI_SELECT__PROP = "multiSelect";
 
+	/** @see #isIncrementalSelection() */
+	String INCREMENTAL_SELECTION__PROP = "incrementalSelection";
+
 	/** @see #getClickHandler() */
 	String CLICK_HANDLER__PROP = "clickHandler";
 
@@ -92,6 +95,26 @@ public interface Diagram extends com.top_logic.graphic.flow.data.Widget, com.top
 	 * @see #isMultiSelect()
 	 */
 	com.top_logic.graphic.flow.data.Diagram setMultiSelect(boolean value);
+
+	/**
+	 * Whether the last selection change by a click in the diagram was incremental.
+	 *
+	 * <p>
+	 * Set by the client on every click that changes the {@link #getSelection()}, before the selection
+	 * is changed: {@code true} for a click with a modifier key pressed (the clicked element is
+	 * added to or removed from the selection), {@code false} for a plain click on an element or on
+	 * the diagram background (the selection is replaced). The value must be set on every such
+	 * click, even if it does not change, since the server reacts on the set, not on a change of
+	 * the value: A non-incremental click drops selected objects that are not displayed in the
+	 * diagram.
+	 * </p>
+	 */
+	boolean isIncrementalSelection();
+
+	/**
+	 * @see #isIncrementalSelection()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setIncrementalSelection(boolean value);
 
 	/**
 	 * Internal field for storing the current click handler registration (client-side only).

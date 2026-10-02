@@ -45,6 +45,7 @@ import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonWriter;
+import de.haumacher.msgbuf.observer.Listener;
 
 /**
  * {@link ReactControl} for displaying flow diagrams.
@@ -86,8 +87,16 @@ public class FlowDiagramControl extends ReactControl {
 		 * form the selection would replace block it. The refusal unwinds through whoever changed
 		 * the selection; the diagram keeps what the client displays.
 		 * </p>
+		 *
+		 * @param userObjects
+		 *        The user objects of the elements now selected.
+		 * @param replacing
+		 *        Whether the user replaced the whole selection by a plain click in the diagram (see
+		 *        {@link Diagram#isIncrementalSelection()}), so that also selected objects the diagram
+		 *        does not display are given up. <code>false</code> for a click with a modifier key
+		 *        and for an update not touching the selection.
 		 */
-		void selectionChanged(Set<Object> userObjects);
+		void selectionChanged(Set<Object> userObjects, boolean replacing);
 	}
 
 	/**
@@ -225,7 +234,23 @@ public class FlowDiagramControl extends ReactControl {
 		markSelection(userObjects);
 		pushDiagramChanges();
 
-		notifySelectionChanged();
+		notifySelectionChanged(true);
+	}
+
+	/**
+	 * Whether a selectable element of the diagram carries the given user object.
+	 */
+	public boolean hasElementFor(Object userObject) {
+		if (_diagram == null || userObject == null) {
+			return false;
+		}
+		boolean[] found = { false };
+		WidgetTraversal.visitAll(_diagram, widget -> {
+			if (!found[0] && SelectionUtil.isSelectable(widget) && userObject.equals(widget.getUserObject())) {
+				found[0] = true;
+			}
+		});
+		return found[0];
 	}
 
 	/**
@@ -309,10 +334,10 @@ public class FlowDiagramControl extends ReactControl {
 	/**
 	 * Tells the {@link SelectionListener}s what the diagram displays as selected.
 	 */
-	private void notifySelectionChanged() {
+	private void notifySelectionChanged(boolean replacing) {
 		Set<Object> userObjects = getSelectedUserObjects();
 		for (SelectionListener listener : _selectionListeners) {
-			listener.selectionChanged(userObjects);
+			listener.selectionChanged(userObjects, replacing);
 		}
 	}
 
@@ -499,9 +524,23 @@ public class FlowDiagramControl extends ReactControl {
 			return;
 		}
 		JsonReader json = new JsonReader(new StringR(patch));
-		_graphScope.applyChanges(json);
 
-		notifySelectionChanged();
+		// Whether the patch reports a plain click replacing the selection.
+		Diagram diagram = _diagram;
+		boolean[] replacing = { false };
+		Listener clickKind = (obj, property, value) -> {
+			if (obj == diagram && Diagram.INCREMENTAL_SELECTION__PROP.equals(property)) {
+				replacing[0] = !((Boolean) value).booleanValue();
+			}
+		};
+		diagram.registerListener(clickKind);
+		try {
+			_graphScope.applyChanges(json);
+		} finally {
+			diagram.unregisterListener(clickKind);
+		}
+
+		notifySelectionChanged(replacing[0]);
 	}
 
 	/**

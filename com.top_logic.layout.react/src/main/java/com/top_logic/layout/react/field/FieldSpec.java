@@ -13,6 +13,8 @@ import java.util.List;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
+import com.top_logic.layout.react.control.select.SelectDisplay;
+import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 
 /**
@@ -59,6 +61,10 @@ public final class FieldSpec {
 	private BooleanPresentation _booleanPresentation = BooleanPresentation.CHECKBOX;
 
 	private boolean _triState;
+
+	private SelectDisplay _selectDisplay = SelectDisplay.DROPDOWN;
+
+	private Orientation _selectOrientation = Orientation.VERTICAL;
 
 	private ReactDatePickerControl.Kind _dateKind = ReactDatePickerControl.Kind.DATE;
 
@@ -356,6 +362,41 @@ public final class FieldSpec {
 	}
 
 	/**
+	 * The shape the options of a value chosen from options are offered in.
+	 */
+	public SelectDisplay getSelectDisplay() {
+		return _selectDisplay;
+	}
+
+	/**
+	 * Sets the {@link #getSelectDisplay() shape} the options are offered in.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setSelectDisplay(SelectDisplay selectDisplay) {
+		_selectDisplay = selectDisplay;
+		return this;
+	}
+
+	/**
+	 * The direction the options of a value chosen from options are laid out in, where its
+	 * {@link #getSelectDisplay() shape} lays them out in a direction to choose.
+	 */
+	public Orientation getSelectOrientation() {
+		return _selectOrientation;
+	}
+
+	/**
+	 * Sets the {@link #getSelectOrientation() direction} the options are laid out in.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setSelectOrientation(Orientation selectOrientation) {
+		_selectOrientation = selectOrientation;
+		return this;
+	}
+
+	/**
 	 * Whether a boolean value keeps a state of its own for "no value".
 	 */
 	public boolean isTriState() {
@@ -495,6 +536,8 @@ public final class FieldSpec {
 		result._multilineRows = _multilineRows;
 		result._booleanPresentation = _booleanPresentation;
 		result._triState = _triState;
+		result._selectDisplay = _selectDisplay;
+		result._selectOrientation = _selectOrientation;
 		result._dateKind = _dateKind;
 		result._numberFormat = _numberFormat;
 		result._dateFormat = _dateFormat;

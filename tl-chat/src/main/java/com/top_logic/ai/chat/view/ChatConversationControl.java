@@ -39,9 +39,11 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
+import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.util.TLContext;
 
 /**
@@ -1056,7 +1058,9 @@ public class ChatConversationControl extends ReactControl {
 		}
 		String label = _mentionLabel != null ? label(_mentionLabel.execute(object)) : label(object);
 		Map<String, Object> token = new LinkedHashMap<>();
-		token.put("kind", object.tType() == null ? "" : object.tType().getName());
+		// The qualified type and the identifier the tools read (#616): with them the agent can answer
+		// about a referenced object without a call, or read it with getInstance in one.
+		token.put("kind", object.tType() == null ? "" : TLModelUtil.qualifiedName(object.tType()));
 		token.put("id", id);
 		token.put("label", label);
 		token.put("text", _mentionText != null ? label(_mentionText.execute(object)) : label);
@@ -1071,12 +1075,16 @@ public class ChatConversationControl extends ReactControl {
 		return value instanceof TLObject object ? tokenOf(object) : Map.of();
 	}
 
-	/** The browser id of an object: its stable knowledge-object name (the id a mention carries). */
+	/**
+	 * The id a mention carries: the {@code TypeName:id} every tool reads back
+	 * ({@link ReadFilter#idOf(TLObject)}), so a referenced object is one {@code getInstance} away.
+	 */
 	private static String idOf(TLObject object) {
 		if (object == null || object.tHandle() == null) {
 			return "";
 		}
-		return object.tHandle().getObjectName().toExternalForm();
+		String id = ReadFilter.idOf(object);
+		return id == null ? "" : id;
 	}
 
 	/** A {@link ThemeImage} in the encoded form the browser's {@code ThemeIcon} renders. */

@@ -39,6 +39,9 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 	/** @see #isHasMore() */
 	public static final String HAS_MORE__PROP = "hasMore";
 
+	/** @see #getHint() */
+	public static final String HINT__PROP = "hint";
+
 	private String _module = "";
 
 	private String _type = "";
@@ -54,6 +57,8 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 	private String _nextCursor = "";
 
 	private boolean _hasMore = false;
+
+	private String _hint = "";
 
 	/**
 	 * Creates a {@link InstanceListResponse} instance.
@@ -246,6 +251,27 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 		_hasMore = value;
 	}
 
+	/**
+	 * Set when there are more instances than one page: says to select, sort or aggregate with a
+	 * query rather than paging through all of them.
+	 */
+	public final String getHint() {
+		return _hint;
+	}
+
+	/**
+	 * @see #getHint()
+	 */
+	public com.top_logic.tl.ai.core.tools.model.messages.InstanceListResponse setHint(String value) {
+		internalSetHint(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getHint()} without chain call utility. */
+	protected final void internalSetHint(String value) {
+		_hint = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return INSTANCE_LIST_RESPONSE__TYPE;
@@ -261,7 +287,8 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 			OFFSET__PROP, 
 			INSTANCES__PROP, 
 			NEXT_CURSOR__PROP, 
-			HAS_MORE__PROP);
+			HAS_MORE__PROP, 
+			HINT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -294,6 +321,7 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 			case INSTANCES__PROP: return getInstances();
 			case NEXT_CURSOR__PROP: return getNextCursor();
 			case HAS_MORE__PROP: return isHasMore();
+			case HINT__PROP: return getHint();
 			default: return null;
 		}
 	}
@@ -309,6 +337,7 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 			case INSTANCES__PROP: internalSetInstances(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry.class, value)); break;
 			case NEXT_CURSOR__PROP: internalSetNextCursor((String) value); break;
 			case HAS_MORE__PROP: internalSetHasMore((boolean) value); break;
+			case HINT__PROP: internalSetHint((String) value); break;
 		}
 	}
 
@@ -347,6 +376,8 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 		out.value(getNextCursor());
 		out.name(HAS_MORE__PROP);
 		out.value(isHasMore());
+		out.name(HINT__PROP);
+		out.value(getHint());
 	}
 
 	@Override
@@ -369,6 +400,7 @@ public class InstanceListResponse extends de.haumacher.msgbuf.data.AbstractDataO
 			break;
 			case NEXT_CURSOR__PROP: setNextCursor(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case HAS_MORE__PROP: setHasMore(in.nextBoolean()); break;
+			case HINT__PROP: setHint(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

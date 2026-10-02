@@ -1603,11 +1603,13 @@ Before calling any tool, briefly tell the user what you're about to do. Never le
 6. **Report:** Lead with the result, not the process. Bullet points, not paragraphs. Fewer than 4 lines unless detail is needed. The answer is your last output: call no tool after writing it, or it disappears into the trace.
 </workflow>
 
-<showing_data>
-- When the user asks to see, show, list or open objects - or the answer is a set of objects - call `present`. Never write objects as a Markdown table.
-- Pass a TL-Script `query`, e.g. all(`module:Type`), with as=TABLE, CHART (plus chart={kind, label, value}) or FORM. Do not list or fetch the objects first: the qualified names from `outlineModel` or `searchModel` are all it needs. "Show me all X as a table" is two calls.
-- Then say in one or two sentences what the user sees. The user sees the objects; do not cite them.
-</showing_data>
+<data_questions>
+- The server computes, you read the result. Selecting, sorting, max/min, top-n, counting, summing and filtering always go INTO a TL-Script expression - never list instances and evaluate rows yourself. The qualified names from `outlineModel` or `searchModel` are all it needs.
+- To state an answer ("which X has the most Y?", "how many X?"), call `query`, e.g. all(`module:Type`).sort((x -> $x.get(`module:Type#size`)).comparator().desc()).firstElement() - sort takes a comparator, not a key.
+- To see, show, list or open objects, or when the answer is a set of objects, call `present` with such a query and as=TABLE, CHART (plus chart={kind, label, value}) or FORM. Never write objects as a Markdown table. "Show me all X as a table" is two calls.
+- An object the user referenced or that a tool named is read with `getInstance` (several ids in one call).
+- Then say in one or two sentences what the user sees or what the result is. Do not cite objects the user sees.
+</data_questions>
 
 <user_memory>
 You can keep things about this user across conversations with the `remember` tool. What you already
@@ -1653,7 +1655,9 @@ writing from nothing, not for editing one that exists.
   marked in the application and put at that point in their sentence
 - The element's text IS the quoted passage - read it there and answer about it
 - label names the source, location says where in it, kind says what it is
-- ref is the host application's own id for that object. You cannot resolve it unless a tool you have
+- A ref shaped TypeName:id is the object's id as your tools read it, and kind is its qualified type:
+  answer from label and kind when they suffice, else read the object with getInstance(ref)
+- Any other ref is the host application's own id. You cannot resolve it unless a tool you have
   takes such an id; if you need more than the quoted text, say so or use a tool, never invent content
 - Do NOT search the application for a ref: it is not a model name, a type or a search term, and
   finding nothing under it says nothing about whether the object exists
@@ -1692,6 +1696,13 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 								search that sat only in TL_modelExploration cost a skill load first.
 							-->
 							<tool name="model-search.searchModel"/>
+							<!--
+								Issue #616: an @-reference gives the agent an object's id, and reading
+								it, or computing an answer over the data, must not cost a skill load
+								first. query only reads; writing stays with the TL-Script skill.
+							-->
+							<tool name="model-instances.getInstance"/>
+							<tool name="model-query.query"/>
 							<tool name="view-document.viewDocument"/>
 							<tool name="cite.cite"/>
 							<!--
@@ -2504,6 +2515,16 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 					<factory name="script-doc">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.script.TLScriptReferenceTool"
+						/>
+					</factory>
+					<!--
+						Issue #616: answering a question about the data with one read-only expression,
+						computed on the server - a core tool of Albert, where executeTLScript is a skill's
+						and asks for approval.
+					-->
+					<factory name="model-query">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.script.QueryTool"
 						/>
 					</factory>
 					<factory name="script-exec">

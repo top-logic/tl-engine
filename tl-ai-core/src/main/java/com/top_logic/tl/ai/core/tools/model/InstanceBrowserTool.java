@@ -101,11 +101,19 @@ public class InstanceBrowserTool {
 		// no-op for stateless tools
 	}
 
-	/** Default number of instances per page. */
-	private static final int DEFAULT_LIMIT = 100;
+	/**
+	 * Default number of instances per page.
+	 *
+	 * <p>
+	 * Small on purpose (#616): a listing is for looking at a few instances, and a model that pages
+	 * through all of them to find the largest one floods its context with rows a query would have
+	 * reduced to one on the server.
+	 * </p>
+	 */
+	static final int DEFAULT_LIMIT = 20;
 
 	/** Maximum number of instances per page. */
-	private static final int MAX_LIMIT = 1000;
+	static final int MAX_LIMIT = 200;
 
 	/** How many identifiers one {@code getInstance} call reads at most. */
 	static final int MAX_IDS = 50;
@@ -122,7 +130,7 @@ public class InstanceBrowserTool {
 	 *
 	 * <p>
 	 * The attributes are what spares a model a {@code getInstance} per row (#616): asked for
-	 * {@code name, startDate}, a listing of twenty events is one call rather than twenty-one.
+	 * {@code name, status}, a listing of twenty rows is one call rather than twenty-one.
 	 * </p>
 	 *
 	 * @param moduleName
@@ -133,7 +141,7 @@ public class InstanceBrowserTool {
 	 *        Names of the attributes to include per instance; empty or {@code null} for none. A name
 	 *        the instance's type does not have, or that the acting account may not read, is left out.
 	 * @param limit
-	 *        Maximum number of instances to return (default: 100, max: 1000).
+	 *        Maximum number of instances to return (default: 20, max: 200).
 	 * @param cursor
 	 *        Pagination cursor from previous response (null/empty for first page).
 	 * @param context
@@ -141,12 +149,12 @@ public class InstanceBrowserTool {
 	 * @return JSON object with the page's instances as {@code label [id:TID]} plus pagination
 	 *         metadata, marked as business data; or error JSON, unmarked, if the type was not found.
 	 */
-	@ToolMethod(description = "Get a paginated list of instances for a specific type. Each entry has the instance's id, label and type, plus the values of the 'attributes' you name - name the ones you need instead of calling getInstance per instance. Pass the id to any tool that takes one. Only instances you may read are listed, and the total count is the number of those. To SHOW instances to the user, call present with a query instead. Use limit parameter to control page size (default: 100, max: 1000). Use cursor from previous response to get next page.", mode = ToolMode.READ, group = ToolGroups.DATA_READ, marking = AnswerMarking.TOOL)
+	@ToolMethod(description = "Get a paginated list of instances for a specific type, to look at a few of them. Each entry has the instance's id, label and type, plus the values of the 'attributes' you name - name the ones you need instead of calling getInstance per instance. Only instances you may read are listed, and the total count is the number of those. Never page through instances to select, sort, count or aggregate them: use query (to state a result) or present (to show objects) with a TL-Script expression. Page size: limit (default 20, max 200); cursor from the previous response for the next page.", mode = ToolMode.READ, group = ToolGroups.DATA_READ, marking = AnswerMarking.TOOL)
 	public String listInstances(
 			@P("The module containing the type") String moduleName,
 			@P("The name of the type") String typeName,
-			@P(value = "Names of attributes to include for every instance, e.g. [\"name\", \"startDate\"]", required = false) List<String> attributes,
-			@P(value = "Maximum number of instances to return (default: 100, max: 1000)", required = false) Integer limit,
+			@P(value = "Names of attributes to include for every instance, e.g. [\"name\", \"status\"]", required = false) List<String> attributes,
+			@P(value = "Maximum number of instances to return (default: 20, max: 200)", required = false) Integer limit,
 			@P(value = "Cursor for pagination (null/empty for first page, use nextCursor from previous response)", required = false) String cursor,
 			ToolExecutionContext context) {
 
@@ -245,6 +253,11 @@ public class InstanceBrowserTool {
 		// Pagination metadata
 		result.setNextCursor(nextCursor);
 		result.setHasMore(hasMore);
+		if (hasMore) {
+			result.setHint("There are " + totalCount + " instances. Do not page through them to select, sort,"
+				+ " count or aggregate: put that into a TL-Script expression for query (to state the result)"
+				+ " or present (to show the objects), and the server computes it.");
+		}
 
 		return result;
 	}

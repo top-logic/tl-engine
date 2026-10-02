@@ -39,6 +39,7 @@ import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool;
+import com.top_logic.tl.ai.core.tools.script.QueryTool;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
 
@@ -155,8 +156,8 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			String result = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, 10000, null, ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
-			// Limit should be clamped to 1000 (MAX_LIMIT)
-			assertTrue("Limit should be clamped to 1000", result.contains("\"limit\":1000"));
+			// Limit should be clamped to 200 (MAX_LIMIT)
+			assertTrue("Limit should be clamped to 200", result.contains("\"limit\":200"));
 		});
 	}
 
@@ -260,6 +261,71 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			assertTrue(result, result.contains("\"tid\":\"" + second + "\""));
 			// One id that names nothing does not hide the ones that do.
 			assertTrue(result, result.contains("\"errors\":[\"Event:99999: "));
+		});
+	}
+
+	/**
+	 * A page that does not hold every instance says how to get the answer without paging: a query
+	 * the server computes (#616).
+	 */
+	public void testListInstancesPointsToAQueryWhenThereAreMore() throws Exception {
+		withTestObjects(objects -> {
+			InstanceBrowserTool tool = new InstanceBrowserTool();
+			String partial = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, 2, null, ToolContext.EMPTY);
+			String complete = tool.listInstances(EVENTS_MODULE, EVENT_CLASS, null, null, null, ToolContext.EMPTY);
+
+			assertTrue(partial, partial.contains("\"hint\":\"There are 3 instances."));
+			assertTrue(partial, partial.contains("query"));
+			assertFalse("A complete page needs no hint: " + complete, complete.contains("There are"));
+		});
+	}
+
+	// --- The query tool reads the same data, and is tested on the same fixture. ---
+
+	/** A count is computed on the server: the model reads one number, not the rows. */
+	public void testQueryCounts() throws Exception {
+		withTestObjects(objects -> {
+			String result = new QueryTool().query("all(`demo.events:Event`).size()", ToolContext.EMPTY);
+
+			assertTrue(result, result.matches("(?s).*>\\s*3\\s*</.*"));
+		});
+	}
+
+	/** The largest one is one object, named the way every tool names one. */
+	public void testQuerySelectsTheLargest() throws Exception {
+		withTestObjects(objects -> {
+			String result = new QueryTool().query(
+				"all(`demo.events:Event`).sort((e -> $e.get(`demo.events:Event#maxParticipants`)).comparator().desc()).firstElement()",
+				ToolContext.EMPTY);
+
+			assertTrue(result, result.contains("Herbstkonferenz [type:demo.events:Event] [id:"
+				+ objects.getEvent(0).tId().asString() + "]"));
+		});
+	}
+
+	/** An expression that writes is refused before it runs, and nothing changes. */
+	public void testQueryRefusesToWrite() throws Exception {
+		withTestObjects(objects -> {
+			String result = new QueryTool().query(
+				"all(`demo.events:Event`).foreach(e -> $e.set(`demo.events:Named#name`, 'renamed'))",
+				ToolContext.EMPTY);
+
+			assertTrue(result, result.startsWith("Error:"));
+			assertTrue(result, result.contains("changes data"));
+			assertEquals("Herbstkonferenz", objects.getEvent(0).tValueByName("name"));
+		});
+	}
+
+	/** A long list is cut, and the answer says how long it was. */
+	public void testQueryCutsALongList() throws Exception {
+		withTestObjects(objects -> {
+			StringBuilder sixty = new StringBuilder("list(");
+			for (int n = 1; n <= 60; n++) {
+				sixty.append(n == 1 ? "" : ", ").append(n);
+			}
+			String result = new QueryTool().query(sixty.append(")").toString(), ToolContext.EMPTY);
+
+			assertTrue(result, result.contains("... and 10 more (60 in all)"));
 		});
 	}
 

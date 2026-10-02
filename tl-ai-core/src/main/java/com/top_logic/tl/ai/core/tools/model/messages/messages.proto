@@ -366,6 +366,12 @@ message InstanceListResponse {
 	 * Whether there are more instances beyond this page.
 	 */
 	bool hasMore;
+
+	/**
+	 * Set when there are more instances than one page: says to select, sort or aggregate with a
+	 * query rather than paging through all of them.
+	 */
+	string hint;
 }
 
 /**

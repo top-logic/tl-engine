@@ -706,12 +706,13 @@ prefix form and no chip list.
 product; the agent picker lives in the **+** menu, which is where it was reachable all along
 (#416). The skill picker itself comes with the skills work.
 
-**Is `ref` resolvable? No - not by the framework.** It is the host application's own id, carried so
-that a host tool can recognise it; tl-ai ships no tool that takes one, and the agent is told so by
-the `<reference>` prompt fragment (`tl-ai-core.conf.config.xml`). **A host must therefore put
-everything the model needs into the element's text**, which is the quoted passage. A host that wants
-the id to mean more gives its agent a tool that accepts it; then the same fragment's "unless a tool
-you have takes such an id" applies.
+**Is `ref` resolvable?** For a model object - what `@` and the `reference`/`quote` channels insert
+from an object - yes (#616): `ref` is the `TypeName:id` every tool reads (`ReadFilter.idOf`) and
+`kind` the qualified type, so the agent answers from label and kind where they suffice and reads the
+object with `getInstance(ref)`, a core tool of Albert, where they do not. The `<reference>` prompt
+fragment (`tl-ai-core.conf.config.xml`) says so. A host that writes an id of its own as text is the
+other case: tl-ai ships no tool that takes it, so **such a host must put everything the model needs
+into the element's text**, or give its agent a tool that accepts that id.
 
 ### What an answer's citations look like
 
@@ -1093,8 +1094,8 @@ An application configures this element in the design view. Its options fall into
   mention), optional `label`/`text` expressions, `observed-types`, `limit`. Same skill as
   `<data-list>`'s `rows`; the control compiles them with `QueryExecutor`, pushes a bounded candidate
   set shaped as the browser's `ReferenceCandidate`, and the existing `@` picker filters it client-side.
-  A `<mention>` wins over `reference-source`. Each mention carries the object's stable id; the framework
-  ships no tool that resolves it, so a host that wants the id to mean more gives its agent such a tool
+  A `<mention>` wins over `reference-source`. Each mention carries the object's `TypeName:id`, which
+  `getInstance` resolves; a host that wants an id of its own to mean more gives its agent such a tool
   (see the `<reference>` prompt fragment). The nested `<context>` and `<prompts>` bindings are the
   same skill again - see below.
 

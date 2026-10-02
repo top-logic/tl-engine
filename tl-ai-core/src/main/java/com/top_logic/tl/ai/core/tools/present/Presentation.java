@@ -117,7 +117,7 @@ public final class Presentation {
 				+ " of one object, e.g. e -> $e.get(`module:Type#attribute`).");
 		}
 		try {
-			return TLScriptExecutor.compile(source);
+			return TLScriptExecutor.compileReadOnly(source);
 		} catch (IllegalArgumentException ex) {
 			throw new IllegalArgumentException("The chart's " + name + " function does not compile: "
 				+ ex.getMessage(), ex);

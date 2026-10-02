@@ -10,7 +10,7 @@ package com.top_logic.tl.ai.core.tools.present;
  *
  * <p>
  * The argument of the {@code present} tool's {@code chart} parameter, as the model writes it. Both
- * functions are TL-Script functions of one object, e.g. {@code e -> $e.get(`m:Event#name`)}. They
+ * functions are TL-Script functions of one object, e.g. {@code c -> $c.get(`crm:Customer#name`)}. They
  * are compiled and tried on every row before anything reaches the page, so a function that does not
  * compile, or a value that is not a number, is answered as an error the model can correct.
  * </p>

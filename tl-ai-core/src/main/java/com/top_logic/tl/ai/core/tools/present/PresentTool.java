@@ -52,8 +52,8 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * ({@link ReadFilter}), the way {@code filterSecurity} would. Ids are resolved with the same rights
  * ({@link TidResolver}) and all or nothing: one unreadable or unknown id refuses the call, since a
  * page showing three of four objects the model named would quietly lie about what the user sees.</li>
- * <li><b>No writes.</b> The query and the chart functions run without being able to modify anything
- * ({@link TLScriptExecutor#evaluate}). That is why the tool is {@link ToolMode#READ} and needs no
+ * <li><b>No writes.</b> The query and the chart functions are refused when they would change anything
+ * ({@link TLScriptExecutor#compileReadOnly}). That is why the tool is {@link ToolMode#READ} and needs no
  * approval - the approval dialog would sit in the very page this is trying to fill.</li>
  * <li><b>Checked before shown.</b> A chart's functions are tried on every object first, so a function
  * that fails or a value that is not a number is answered as an error the model can correct, rather
@@ -100,7 +100,7 @@ public abstract class PresentTool {
 		marking = AnswerMarking.TOOL)
 	public String present(
 			@P(value = "TL-Script expression evaluating to the objects to show, e.g. "
-				+ "all(`demo:Event`).filter(e -> $e.get(`demo:Event#status`) == `demo:Status#OPEN`). "
+				+ "all(`crm:Customer`).filter(c -> $c.get(`crm:Customer#active`)). "
 				+ "Use the qualified names outlineModel or searchModel reported.",
 				required = false) String query,
 			@P(value = "Ids of objects you already hold, as tool results wrote them ([id:...]). "
@@ -108,9 +108,9 @@ public abstract class PresentTool {
 			@P(value = "TABLE, CHART or FORM. Omit to get a form for one object and a table for several.",
 				required = false) PresentAs as,
 			@P(value = "For as=CHART: kind (BAR, LINE or PIE), label and value - each a TL-Script "
-				+ "function of one object, e.g. label: e -> $e.get(`demo:Event#name`), value: "
-				+ "e -> $e.get(`demo:Event#revenue`).", required = false) ChartSpec chart,
-			@P(value = "Short title of the view in the user's language, e.g. \"Umsatz pro Event\".",
+				+ "function of one object, e.g. label: c -> $c.get(`crm:Customer#name`), value: "
+				+ "c -> $c.get(`crm:Customer#revenue`).", required = false) ChartSpec chart,
+			@P(value = "Short title of the view in the user's language, e.g. \"Umsatz pro Kunde\".",
 				required = false) String title,
 			@P(value = "Page channel to write. Omit it: only needed when the page offers several.",
 				required = false) String channel,
@@ -140,7 +140,7 @@ public abstract class PresentTool {
 				}
 			}
 		} else {
-			TLScriptExecutor.ExecutionResult result = TLScriptExecutor.execute(expression, false, List.of());
+			TLScriptExecutor.ExecutionResult result = TLScriptExecutor.executeReadOnly(expression);
 			if (!result.isSuccess()) {
 				return "Nothing was presented: the query failed: " + result.getErrorMessage();
 			}

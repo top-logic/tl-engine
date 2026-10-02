@@ -22,6 +22,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.SearchBuilder;
+import com.top_logic.model.search.expr.compile.transform.HasSideEffects;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
@@ -388,6 +389,29 @@ public class TLScriptExecutor {
 	 *         compile; the message says which, in the words {@link #validate(String)} uses.
 	 */
 	public static QueryExecutor compile(String script) {
+		return compile(script, false);
+	}
+
+	/**
+	 * Compiles TLScript code that must not change anything: an expression that creates, sets,
+	 * deletes or otherwise has a side effect is refused before it runs.
+	 *
+	 * <p>
+	 * For the tools that read with TL-Script - {@code query}, {@code present} - and are classified
+	 * {@code READ} for it, so they run without asking anybody. Discarding the modifications after
+	 * the fact ({@link #evaluate(QueryExecutor, Object...)}) is not enough for those: a side effect
+	 * outside the knowledge base - a mail, a message - is not discarded. The decision is the
+	 * engine's own ({@link HasSideEffects}), the one its compiler optimizes by.
+	 * </p>
+	 *
+	 * @throws IllegalArgumentException
+	 *         As {@link #compile(String)}, and for an expression with a side effect.
+	 */
+	public static QueryExecutor compileReadOnly(String script) {
+		return compile(script, true);
+	}
+
+	private static QueryExecutor compile(String script, boolean readOnly) {
 		ValidationResult validation = validate(script);
 		if (!validation.isValid()) {
 			throw new IllegalArgumentException(validation.getError().getMessage());
@@ -395,9 +419,33 @@ public class TLScriptExecutor {
 		try {
 			TLModel model = ModelService.getApplicationModel();
 			SearchExpression searchExpr = SearchBuilder.toSearchExpression(model, validation.getExpr());
+			if (readOnly && Boolean.TRUE.equals(searchExpr.visit(HasSideEffects.INSTANCE, null))) {
+				throw new IllegalArgumentException("The expression changes data (it creates, sets, deletes"
+					+ " or has another side effect); this tool only reads. Remove the writing part.");
+			}
 			return QueryExecutor.compile(PersistencyLayer.getKnowledgeBase(), model, searchExpr);
 		} catch (I18NRuntimeException ex) {
 			throw new IllegalArgumentException(Resources.getInstance().getString(ex.getErrorKey()), ex);
+		}
+	}
+
+	/**
+	 * Evaluates TLScript code that must not change anything, see {@link #compileReadOnly(String)}.
+	 *
+	 * @return The result; an error result for code that does not compile, has a side effect, or
+	 *         fails while it runs.
+	 */
+	public static ExecutionResult executeReadOnly(String script) {
+		QueryExecutor executor;
+		try {
+			executor = compileReadOnly(script);
+		} catch (RuntimeException ex) {
+			return ExecutionResult.error(messageOf(ex));
+		}
+		try {
+			return ExecutionResult.success(evaluate(executor));
+		} catch (RuntimeException ex) {
+			return ExecutionResult.error(messageOf(ex));
 		}
 	}
 

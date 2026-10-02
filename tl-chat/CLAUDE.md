@@ -1051,8 +1051,8 @@ comes down to two questions about the engine. Both are answered, with the code:
 
 The demo shows all three positions on one channel. `app.view.xml` declares `chatDraft`; the dock's
 `<chat-conversation draft="chatDraft"/>` names it with **no** `<bind>`, because the dock is in that
-same file, while the chat page and the Belege page each get it through one `<bind>` on their
-`<view-ref>`. The Belege page's "Dazu fragen" then reaches both: open the dock on that page and the
+same file, while the chat page and the Events page each get it through one `<bind>` on their
+`<view-ref>`. The Events page's "Dazu fragen" then reaches both: open the dock on that page and the
 question is in its composer; switch to the Chat page instead and it is in that one's.
 
 Two conversations on one draft channel work here only because the two are **never mounted at once** -
@@ -1156,14 +1156,14 @@ line instead (#494):
 
 ```xml
 <chat-conversation input="chatSession">
-    <selection channel="selectedInvoice"/>
+    <selection channel="selectedEvent"/>
 </chat-conversation>
 ```
 
 which states, as a per-turn fact of the `<turn-context>` block:
 
 ```
-Selected object: Hosting August [type:tl.ai.demo.imageclassification:Invoice] [id:GenericObject:12345]
+Selected object: KI im Mittelstand 2026 [type:demo.events:Event] [id:GenericObject:12345]
 ```
 
 | | |
@@ -1187,10 +1187,11 @@ the `<context>` facts, because the block is read top down.
 **A dock states it too, and should.** `<chat-dock>` has no `<selection>` of its own - it frames a
 `<chat-conversation>`, and that is where the line goes. The dock is where a user asks about the page
 *behind* it, so the page has to hand its selection over: in `tl-ai-demo` the shell declares a
-`pageSelection` channel, the Belege page's `<view-ref>` binds its own `selectedInvoice` onto it, and
-the dock's conversation states that channel. Where a shell has no channel naming the active page -
-which is where the engine stands today - name the fact after the list it reads (`Selected invoice`)
-rather than after "the selection", because the value survives the user navigating away.
+`pageSelection` channel, the Events, Venues and Invoices pages' `<view-ref>`s each bind their own
+selection channel onto it, and the dock's conversation states that channel. Where a shell has no
+channel naming the active page - which is where the engine stands today - the value survives the user
+navigating away, so name the fact after what the pages hold together (`Selected object`) or, when
+only one list writes it, after that list.
 
 **State them from every place one conversation is reachable from.** A page that declares a
 `<context>` and a dock over the same conversation that declares none flips the environment block

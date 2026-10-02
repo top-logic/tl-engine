@@ -14,7 +14,7 @@ request.
 
 ```
 <environment>
-You run inside the TopLogic application "Invoice management demo" as the assistant of one user.
+You run inside the TopLogic application "Event management demo" as the assistant of one user.
 User: Ada Lovelace. Address the user the way they ask to be addressed in their preferences.
 Language: Deutsch (de). Answer only in this language.
 Date: 2026-09-19 (Europe/Berlin).

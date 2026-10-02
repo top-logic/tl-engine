@@ -26,7 +26,7 @@ import com.top_logic.tl.ai.core.security.ReadFilter;
  * </p>
  *
  * <pre>
- * Selected object: Hosting August [type:tl.ai.demo.imageclassification:Invoice] [id:GenericObject:12345]
+ * Selected object: KI im Mittelstand 2026 [type:demo.events:Event] [id:GenericObject:12345]
  * </pre>
  *
  * <p>

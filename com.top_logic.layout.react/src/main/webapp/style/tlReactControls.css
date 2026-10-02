@@ -1113,6 +1113,106 @@ button.tlPanel__actionButton:focus-visible {
 	background: var(--background);
 }
 
+/* --- TLAccordion ------------------------------------------------------- */
+
+/* A surface holding a stack of sections, separated by lines. Each header is a row of the trigger
+   button (chevron, icon, label) and the section's actions beside it. The focus ring is the one of
+   the design system, drawn inside the trigger since the header spans the whole frame. */
+.tl-accordion {
+	border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+	border-radius: var(--tl-radius-md);
+	background: var(--tl-surface-layer);
+	color: var(--tl-text-primary);
+}
+
+.tl-accordion__section + .tl-accordion__section {
+	border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-accordion__header {
+	display: flex;
+	align-items: center;
+	gap: var(--tl-space-xs);
+	min-height: var(--tl-size-bar);
+}
+
+.tl-accordion__header:hover {
+	background: var(--tl-surface-interactive-hover);
+}
+
+/* The hover surface follows the rounded corners of the frame. */
+.tl-accordion__section:first-child > .tl-accordion__header {
+	border-top-left-radius: calc(var(--tl-radius-md) - var(--tl-border-width-sm));
+	border-top-right-radius: calc(var(--tl-radius-md) - var(--tl-border-width-sm));
+}
+
+.tl-accordion__section:last-child:not(.tl-accordion__section--expanded) > .tl-accordion__header {
+	border-bottom-left-radius: calc(var(--tl-radius-md) - var(--tl-border-width-sm));
+	border-bottom-right-radius: calc(var(--tl-radius-md) - var(--tl-border-width-sm));
+}
+
+.tl-accordion__heading {
+	flex: 1 1 auto;
+	min-width: 0;
+	align-self: stretch;
+	display: flex;
+}
+
+/* Reset without specificity: the typography class on the element wins. */
+:where(.tl-accordion__trigger) { font: inherit; }
+
+.tl-accordion__trigger {
+	flex: 1 1 auto;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--tl-space-xs);
+	padding: 0 var(--tl-space-md);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+
+.tl-accordion__trigger:focus-visible {
+	outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-accordion__chevron {
+	flex: none;
+	color: var(--tl-icon-primary);
+	transition: rotate var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-accordion__trigger[aria-expanded="true"] > .tl-accordion__chevron {
+	rotate: 90deg;
+}
+
+.tl-accordion__icon {
+	flex: none;
+	color: var(--tl-icon-primary);
+}
+
+.tl-accordion__label {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tl-accordion__actions {
+	flex: none;
+	display: flex;
+	align-items: center;
+	padding-right: var(--tl-space-sm);
+}
+
+.tl-accordion__panel {
+	padding: var(--tl-space-md);
+	border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
 /* --- TLSplitPanel ------------------------------------------------------ */
 
 .tlSplitPanel__splitter {

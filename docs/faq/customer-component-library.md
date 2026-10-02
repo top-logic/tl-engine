@@ -211,6 +211,7 @@ commands the component sends. The list in the header:
 | `TLSelect` | `SelectState` |
 | `TLDropdownSelect`, `TLOptionChips`, `TLSegmentedChoice` | `DropdownSelectState` |
 | `TLTabBar` | `TabBarState` |
+| `TLAccordion` | `AccordionState` |
 | `TLWindow` | `WindowState` |
 | `TLDialog` | `DialogState` |
 | `TLMenu` | `MenuState` |

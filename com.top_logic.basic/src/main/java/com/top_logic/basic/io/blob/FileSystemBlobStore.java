@@ -42,7 +42,7 @@ import com.top_logic.basic.io.LimitedInputStream;
  * the number of entries per directory to the number of blobs divided by 65,536. Shard directories
  * are created on demand and never removed. The even distribution and the listing of keys in their
  * order by walking the shard directories in order rely on the random leading digits of the keys
- * created by {@link #newKey()}.
+ * the store creates.
  * </p>
  *
  * <p>
@@ -56,6 +56,8 @@ import com.top_logic.basic.io.LimitedInputStream;
  * The content type of a blob is not stored. The store does not encrypt the content; encryption at
  * rest is a matter of the volume the root directory resides on.
  * </p>
+ *
+ * @implNote The keys are created by {@link #newKey()}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

@@ -298,6 +298,14 @@ public class TestObjectEditTool extends BasicTestCase {
 		assertEquals(before, memories().size());
 	}
 
+	/** A name where an id belongs is refused with the type the reference takes, to look it up in. */
+	public void testANameForAReferenceNamesTheTypeToLookIn() {
+		ToolResult result = create(MEMORY_TYPE, values("owner", "Smith", "kind", "FACT", "text", "x",
+			"createdAt", "2027-05-14T09:30"));
+
+		assertRefused(result, "'owner' refers to an object of type 'tl.accounts:Person'");
+	}
+
 	/** Creating is its own right, asked before anything exists. */
 	public void testCreateWithoutTheRightCreatesNothing() {
 		int before = memories().size();

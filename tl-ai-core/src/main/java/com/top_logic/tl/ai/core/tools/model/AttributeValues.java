@@ -438,7 +438,15 @@ final class AttributeValues {
 					+ type + "'; pass the identifier of one, 'TypeName:id' as a tool answer printed it, not "
 					+ describe(value) + ".");
 			}
-			target = TidResolver.resolve(id, security);
+			try {
+				target = TidResolver.resolve(id, security);
+			} catch (IllegalArgumentException ex) {
+				// Most often a name the user said ("set the owner to Smith"). Saying which type the
+				// reference takes spares the model a model lookup before it searches for the object.
+				throw new IllegalArgumentException("'" + part.getName() + "' refers to an object of type '"
+					+ TLModelUtil.qualifiedName(type) + "', and " + describe(value) + " does not name one: "
+					+ ex.getMessage() + " Find that object's id first, then pass the id.", ex);
+			}
 		}
 		if (!TLModelUtil.isCompatibleInstance(type, target)) {
 			throw new IllegalArgumentException("'" + part.getName() + "' refers to objects of type '" + type

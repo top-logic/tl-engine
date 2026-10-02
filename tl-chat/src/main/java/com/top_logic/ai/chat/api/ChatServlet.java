@@ -1946,8 +1946,8 @@ public class ChatServlet extends TopLogicServlet {
 	 * <p>
 	 * A window can show more than one: a page's chat beside a {@code <chat-dock>}'s, two
 	 * {@code <agent-chat>} elements, a chat in a dialog over the one on the page. A request that
-	 * names none addresses the window's unnamed conversation, which is what the classic
-	 * {@code chat-client.js} has.
+	 * names none addresses the window's unnamed conversation, which is what a host showing one chat
+	 * per window may use (the classic {@code chat-client.js} did until #618).
 	 * </p>
 	 *
 	 * <p>

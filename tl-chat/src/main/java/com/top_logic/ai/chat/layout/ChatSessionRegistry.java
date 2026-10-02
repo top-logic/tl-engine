@@ -41,7 +41,7 @@ import com.top_logic.basic.col.TypedAnnotatable.Property;
  * approvals. So the tracker is keyed by {@code (sub-session, conversation)}, and the client echoes
  * the conversation key - the browser's own {@code chat-id} - as {@code chatId} beside the window
  * id. A request that names none addresses the window's unnamed conversation, which is what the
- * classic {@code chat-client.js} has (Gitea #502). Before that, one tracker per window meant that
+ * classic {@code chat-client.js} used until #618 (Gitea #502). Before that, one tracker per window meant that
  * two conversations in one window took each other's turns: the second one to send got the first
  * one's stream and the first one waited for an answer that never arrived.
  * </p>

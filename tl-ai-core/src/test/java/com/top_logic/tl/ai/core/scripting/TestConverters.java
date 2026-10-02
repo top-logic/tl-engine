@@ -202,8 +202,8 @@ public class TestConverters extends TestCase {
 	}
 
 	/**
-	 * What {@code ChatControl} writes into the page: the fragment the control renders has to carry
-	 * the sanitized HTML, not the renderer's raw output.
+	 * What a control writes into the page: the fragment it renders has to carry the sanitized HTML,
+	 * not the renderer's raw output.
 	 */
 	public void testControlFragmentWritesSanitizedHtml() throws Exception {
 		StringWriter buffer = new StringWriter();

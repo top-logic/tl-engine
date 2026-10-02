@@ -1324,8 +1324,8 @@ reopen, so anything active in it is stored, not reflected.
 Both front ends filter with an allow-list, and neither trusts the other end:
 
 - **Server side** - `Converters.markdownToHtmlString` is the single boundary where HTML is made from
-  model text, and every consumer goes through it: the classic `ChatControl`, the `contentHtml` the
-  chat API hands to `chat-client.js`, and the TL-Script function `convert.markdownToHtml`. Two layers
+  model text, and every consumer goes through it: the `contentHtml` the chat API hands out and the
+  TL-Script function `convert.markdownToHtml`. Two layers
   act there. The renderer escapes raw HTML in the Markdown (`HtmlRenderer.ESCAPE_HTML`), so a quoted
   `<script>` becomes text. `HtmlSanitizer` then filters what the renderer itself produced, which is
   the layer escaping cannot replace: `[text](javascript:...)` is Markdown, not HTML, and the renderer

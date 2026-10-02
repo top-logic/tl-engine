@@ -147,6 +147,7 @@
   --tl-size-control: var(--tl-height-3);
   --tl-size-control-sm: var(--tl-height-1);
   --tl-size-row: var(--tl-height-4);
+  --tl-size-bar: var(--tl-height-5);
   --tl-space-control-x: var(--tl-size-3);
   --tl-space-control-y: var(--tl-size-2);
   --tl-space-control-gap: var(--tl-size-4);
@@ -239,6 +240,7 @@
   --tl-size-control: var(--tl-height-2);
   --tl-size-control-sm: var(--tl-height-1);
   --tl-size-row: var(--tl-height-3);
+  --tl-size-bar: var(--tl-height-4);
   --tl-space-control-x: var(--tl-size-2);
   --tl-space-control-y: var(--tl-size-1);
   --tl-space-control-gap: var(--tl-size-3);

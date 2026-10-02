@@ -869,6 +869,16 @@ a.tl-field-value:hover {
   min-width: 0;
 }
 
+/* Der Hilfeknopf steht neben dem leisesten Text des Felds: Umriss-Glyphe in icon-secondary, erst unter dem
+   Zeiger icon-primary. Die Trefferfläche bleibt size-control-sm (docs/skalen.md „Leisten und Hilfe“). */
+.tl-form-field__help {
+  color: var(--tl-icon-secondary);
+}
+
+.tl-form-field__help:hover {
+  color: var(--tl-icon-primary);
+}
+
 .tl-form-field__required {
   color: var(--tl-status-error-text);
 }
@@ -1459,6 +1469,7 @@ a.tl-field-value:hover {
 /* Tabs — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W3).
    role=tablist/tab/tabpanel; Roving-Tabindex, Pfeile wählen. Aktiv ist aria-selected: Akzentlinie
    unten und text-primary, kein Fettdruck — nichts springt beim Wechsel. Den Fokusring liefert base.css.
+   Ein Reiter ist size-bar hoch, so hoch wie die Toolbar (docs/skalen.md „Leisten und Hilfe“).
    Das Panel ist eine Flex-Spalte, damit füllende Kinder (die virtualisierte Tabelle) ihre Höhe bekommen. */
 
 .tl-tabs {
@@ -1484,7 +1495,7 @@ a.tl-field-value:hover {
   display: inline-flex;
   align-items: center;
   gap: var(--tl-space-xs);
-  min-height: var(--tl-size-control);
+  min-height: var(--tl-size-bar);
   padding: 0 var(--tl-space-md);
   border: 0;
   border-bottom: var(--tl-border-width-accent) solid transparent;
@@ -1568,6 +1579,7 @@ a.tl-field-value:hover {
   display: flex;
   align-items: center;
   gap: var(--tl-space-xs);
+  min-height: var(--tl-size-bar);
   padding-block: var(--tl-space-2xs);
   flex-shrink: 0;
 }

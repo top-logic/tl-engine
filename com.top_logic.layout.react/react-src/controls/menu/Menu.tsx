@@ -83,20 +83,22 @@ export const Menu: React.FC<MenuProps> = ({ open, anchor, onClose, placement, id
 };
 
 /**
- * The class list of a menu entry: block, typography - an entry in force (`current`, reported as
- * `aria-current`) reads strong -, passed-through classes. Shared by MenuItem and every button that
- * renders as an entry (ButtonDefaults `menu-item`), so the two cannot drift apart.
+ * The class list of a menu entry: block, tone - an entry of a destructive command (`danger`) is
+ * tl-menu__item--danger -, typography - an entry in force (`current`, reported as `aria-current`)
+ * reads strong -, passed-through classes. Shared by MenuItem and every button that renders as an
+ * entry (ButtonDefaults `menu-item`), so the two cannot drift apart.
  */
-export function menuItemClassName(current?: boolean, extra?: string): string {
-  return ['tl-menu__item', current ? 'tl-type-body-strong' : 'tl-type-body', extra ?? ''].filter(Boolean).join(' ');
+export function menuItemClassName(current?: boolean, extra?: string, danger?: boolean): string {
+  return ['tl-menu__item', danger ? 'tl-menu__item--danger' : '', current ? 'tl-type-body-strong' : 'tl-type-body', extra ?? '']
+    .filter(Boolean).join(' ');
 }
 
-export const MenuItem: React.FC<{ id?: string; icon?: string; label: string; disabled?: boolean; current?: boolean; className?: string; onSelect: () => void }> =
-  ({ id, icon, label, disabled, current, className, onSelect }) => (
+export const MenuItem: React.FC<{ id?: string; icon?: string; label: string; disabled?: boolean; current?: boolean; danger?: boolean; className?: string; onSelect: () => void }> =
+  ({ id, icon, label, disabled, current, danger, className, onSelect }) => (
     <button
       type="button"
       id={id}
-      className={menuItemClassName(current, className)}
+      className={menuItemClassName(current, className, danger)}
       role="menuitem"
       aria-current={current ? 'true' : undefined}
       disabled={disabled}

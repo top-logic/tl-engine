@@ -282,7 +282,8 @@ public class ContextMenuOpener {
 				encodeIcon(cmd.getImage()),
 				cmd.getExecutableState(),
 				cmd.getCssClasses(),
-				cmd.isActive()));
+				cmd.isActive(),
+				cmd.getTone()));
 			currentClique = clique;
 			first = false;
 		}

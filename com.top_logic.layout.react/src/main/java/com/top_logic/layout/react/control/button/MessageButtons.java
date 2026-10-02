@@ -155,7 +155,8 @@ public class MessageButtons {
 	}
 
 	/**
-	 * Creates a Discard button (trash icon).
+	 * Creates a Discard button (trash icon), drawn in the {@link ButtonTone#DANGER destructive}
+	 * tone: discarding throws away what the user entered.
 	 *
 	 * @param context
 	 *        The React context.
@@ -167,6 +168,7 @@ public class MessageButtons {
 		String label = Resources.getInstance().getString(I18NConstants.BUTTON_DISCARD);
 		ReactButtonControl button = new ReactButtonControl(context, label, action);
 		button.setImage(Icons.BUTTON_DISCARD);
+		button.setTone(ButtonTone.DANGER);
 		return button;
 	}
 }

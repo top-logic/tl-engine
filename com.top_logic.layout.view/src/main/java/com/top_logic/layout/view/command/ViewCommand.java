@@ -15,6 +15,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.button.KeyStrokeFormat;
@@ -212,5 +213,21 @@ public interface ViewCommand {
 	 */
 	default ViewExecutabilityRule getIntrinsicRule() {
 		return ViewExecutabilityRule.ALWAYS_EXECUTABLE;
+	}
+
+	/**
+	 * The kind of action this command stands for, decided by what the command does.
+	 *
+	 * <p>
+	 * {@link ButtonTone#DANGER} for a command that destroys or discards what the user has. There is
+	 * no configuration for it: an author states what a command does, the command's UI shows it.
+	 * </p>
+	 *
+	 * @return {@link ButtonTone#DEFAULT} for an ordinary command.
+	 *
+	 * @see ViewAction#getTone()
+	 */
+	default ButtonTone getTone() {
+		return ButtonTone.DEFAULT;
 	}
 }

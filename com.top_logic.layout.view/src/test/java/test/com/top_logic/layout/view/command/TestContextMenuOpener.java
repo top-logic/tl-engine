@@ -15,6 +15,7 @@ import junit.framework.TestCase;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
@@ -363,5 +364,24 @@ public class TestContextMenuOpener extends TestCase {
 			invocations++;
 			return _result;
 		}
+	}
+
+	/**
+	 * The entry of a destructive command is destructive, the entry of an ordinary one is not -
+	 * within one group, so that nothing but the tone tells them apart.
+	 */
+	public void testADestructiveCommandMakesADestructiveEntry() {
+		AtomicReference<Object> target = new AtomicReference<>();
+		CommandModel edit = FakeCommandModels.contextMenu("edit", "Edit", true, true);
+		CommandModel delete = FakeCommandModels.contextMenu("delete", "Delete", true, true, false, ButtonTone.DANGER);
+		ContextMenuContribution contribution = new ContextMenuContribution(target::set, List.of(edit, delete));
+
+		RecordingRenderer renderer = new RecordingRenderer();
+		new ContextMenuOpener(renderer).open(0, 0, List.of(new Targeted(contribution, "row")));
+
+		List<MenuEntry> items = renderer.lastItems;
+		assertEquals(2, items.size());
+		assertEquals(ButtonTone.DEFAULT, items.get(0).tone());
+		assertEquals(ButtonTone.DANGER, items.get(1).tone());
 	}
 }

@@ -487,6 +487,37 @@ public class TestTreeLayout extends TestCase {
 		assertNoLineCrossesBox(svg, "Wide childless sibling B2");
 	}
 
+	public void testCompactSiblingBusNotOnSiblingBus() throws IOException {
+		// #29722: 1 → {1.1, 1.2}; 1.1 → {1.1.1, 1.1.2}; 1.1.1 → {1.1.1.1, 1.1.1.2, 1.1.1.3};
+		// 1.1.2 → {1.1.2.1}; 1.2 → {1.2.1}. The children of 1.1.1 extend downwards, leaving
+		// vertical free space between 1.1.1 and 1.1.2. The subtree of 1.2 fits into that space
+		// box-wise, but its bus (1.2 → 1.2.1) runs at the same X as the bus of 1.1
+		// (1.1 → 1.1.2). Collinear buses conflict, so 1.2 stays below 1.1.2.
+		TreeLayout tree = TreeLayout.create().setCompact(true);
+
+		Box n1 = node("1");
+		tree.addNode(n1);
+		Box n11 = addChild(tree, n1, "1.1");
+		Box n111 = addChild(tree, n11, "1.1.1");
+		addChild(tree, n111, "1.1.1.1");
+		addChild(tree, n111, "1.1.1.2");
+		addChild(tree, n111, "1.1.1.3");
+		Box n112 = addChild(tree, n11, "1.1.2");
+		addChild(tree, n112, "1.1.2.1");
+		Box n12 = addChild(tree, n1, "1.2");
+		addChild(tree, n12, "1.2.1");
+
+		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
+		String svg = writeToFile(diagram, "./target/TestTreeLayout-compact-collinear-bus.svg");
+
+		double[] b112 = boxBounds(svg, "1.1.2");
+		assertTrue("1.2 must be placed below 1.1.2.", boxBounds(svg, "1.2")[1] > b112[3]);
+		assertTrue("1.2.1 must be placed below 1.1.2.", boxBounds(svg, "1.2.1")[1] > b112[3]);
+
+		assertNoLineCrossesBox(svg, "1.2");
+		assertNoLineCrossesBox(svg, "1.2.1");
+	}
+
 	/**
 	 * Asserts that no bus, stub, or connection line segment crosses the box of the node with the
 	 * given label.

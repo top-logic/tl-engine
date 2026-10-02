@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -93,6 +94,14 @@ public class GenericViewCommand implements ViewCommand {
 	@Override
 	public ViewExecutabilityRule getIntrinsicRule() {
 		return ViewActions.intrinsicRule(_actions);
+	}
+
+	/**
+	 * Destructive as soon as one of the actions of the chain is.
+	 */
+	@Override
+	public ButtonTone getTone() {
+		return ViewActions.tone(_actions);
 	}
 
 	/**

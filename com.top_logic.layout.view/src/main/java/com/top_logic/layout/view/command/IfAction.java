@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.command;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -18,6 +19,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -148,5 +150,14 @@ public class IfAction extends InterruptibleViewAction {
 	@Override
 	public boolean appliesFormState() {
 		return ViewActions.appliesFormState(_then) || ViewActions.appliesFormState(_else);
+	}
+
+	/**
+	 * Destructive as soon as one of the branches is: the branch that is not taken decides the
+	 * command's tone as well, as it decides {@link #appliesFormState()}.
+	 */
+	@Override
+	public ButtonTone getTone() {
+		return ViewActions.tone(Stream.concat(_then.stream(), _else.stream()).toList());
 	}
 }

@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.view.security.ModelAccessRule;
 import com.top_logic.model.search.expr.DeleteObject;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -82,6 +83,14 @@ public class DeleteObjectAction implements ViewAction {
 	@Override
 	public ViewExecutabilityRule getIntrinsicRule() {
 		return ModelAccessRule.onInput(SimpleBoundCommandGroup.DELETE);
+	}
+
+	/**
+	 * Deleting is destructive.
+	 */
+	@Override
+	public ButtonTone getTone() {
+		return ButtonTone.DANGER;
 	}
 
 	@Override

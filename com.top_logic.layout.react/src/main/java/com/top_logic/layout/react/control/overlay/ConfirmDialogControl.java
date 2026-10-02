@@ -12,6 +12,7 @@ import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
@@ -23,10 +24,10 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * Shows a message with an affirmative and a declining button (defaulting to "Yes"/"No", but the
- * labels are configurable); the affirmative button is styled as the dialog's primary action. The
- * given {@code onConfirm} action runs only when the user confirms; all other ways of closing the
- * dialog (declining button, the window's close button, Escape, backdrop) cancel without side
- * effects.
+ * labels are configurable); the affirmative button is the dialog's primary action, drawn in the
+ * tone of what it lets happen. The given {@code onConfirm} action runs only when the user confirms;
+ * all other ways of closing the dialog (declining button, the window's close button, Escape,
+ * backdrop) cancel without side effects.
  * </p>
  */
 public class ConfirmDialogControl {
@@ -51,9 +52,13 @@ public class ConfirmDialogControl {
 	 * @param onCancel
 	 *        Runs when the user declines through any path (cancel button, the window's close button,
 	 *        Escape, or backdrop). May be {@code null}.
+	 * @param confirmTone
+	 *        The tone of the affirmative button: {@link ButtonTone#DANGER} when confirming lets
+	 *        something be destroyed, so that the answer reads as destructive. The button stays the
+	 *        dialog's default (primary, Enter) either way.
 	 */
 	public static void openDialog(ReactContext context, DialogManager dialogManager, String title, String message,
-			String confirmLabel, String cancelLabel, Runnable onConfirm, Runnable onCancel) {
+			String confirmLabel, String cancelLabel, Runnable onConfirm, Runnable onCancel, ButtonTone confirmTone) {
 		// One-shot guard so a given cancel-or-confirm outcome fires exactly once, regardless of how
 		// the dialog is dismissed (button, X, Escape, backdrop all funnel through the result handler).
 		boolean[] confirmed = { false };
@@ -80,6 +85,7 @@ public class ConfirmDialogControl {
 		});
 		// The affirmative action is the dialog's default: primary-styled and Enter-bound.
 		confirmButton.markAsDefault();
+		confirmButton.setTone(confirmTone);
 		actions.add(confirmButton);
 		window.setActions(actions);
 

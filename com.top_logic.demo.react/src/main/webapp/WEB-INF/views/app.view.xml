@@ -180,6 +180,15 @@
 								<de>HTML-Inhalte</de>
 							</label>
 						</nav-item>
+						<nav-item id="alert-demo"
+							icon="css:bi bi-exclamation-triangle"
+						>
+							<view-ref view="demo/alert-demo.view.xml"/>
+							<label>
+								<en>Alerts</en>
+								<de>Hinweisboxen</de>
+							</label>
+						</nav-item>
 						<nav-item id="config-editor"
 							icon="css:bi bi-sliders"
 						>

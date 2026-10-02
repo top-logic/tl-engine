@@ -390,7 +390,21 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.panel.popOut")
 	public static ResKey JS_PANEL_POP_OUT;
 
+	// -- Breadcrumb client-side i18n keys --
+
+	/**
+	 * @en Breadcrumb
+	 */
+	@CustomKey("js.breadcrumb.label")
+	public static ResKey JS_BREADCRUMB_LABEL;
+
 	// -- Toolbar client-side i18n keys --
+
+	/**
+	 * @en Toolbar
+	 */
+	@CustomKey("js.toolbar.label")
+	public static ResKey JS_TOOLBAR_LABEL;
 
 	/**
 	 * @en More actions
@@ -862,6 +876,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.iconSelect.chooseIcon")
 	public static ResKey JS_ICON_SELECT_CHOOSE_ICON;
+
+	// -- Alert client-side i18n keys --
+
+	/**
+	 * @en Dismiss
+	 */
+	@CustomKey("js.alert.dismiss")
+	public static ResKey JS_ALERT_DISMISS;
 
 	// -- Window client-side i18n keys --
 

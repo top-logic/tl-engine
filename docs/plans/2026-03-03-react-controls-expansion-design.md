@@ -115,7 +115,7 @@ Navigation trail showing current location.
 
 **Commands:** `navigate({ itemId })`
 
-**CSS classes:** `.tlBreadcrumb`, `.tlBreadcrumb__item`, `.tlBreadcrumb__separator`, `.tlBreadcrumb__current`
+**CSS classes:** `.tlBreadcrumb`, `.tlBreadcrumb__item`, `.tlBreadcrumb__separator`, `.tlBreadcrumb__current` — alt (bis Welle 3a), now `tl-breadcrumb` (design system)
 
 ---
 
@@ -190,7 +190,7 @@ Popup menu triggered by an anchor element.
 
 **A11y:** `role="menu"`, `role="menuitem"`, roving tabindex.
 
-**CSS classes:** `.tlMenu`, `.tlMenu__item`, `.tlMenu__item--active`, `.tlMenu__item--disabled`, `.tlMenu__separator`, `.tlMenu__icon`, `.tlMenu__label`
+**CSS classes:** `.tlMenu`, `.tlMenu__item`, `.tlMenu__item--active`, `.tlMenu__item--disabled`, `.tlMenu__separator`, `.tlMenu__icon`, `.tlMenu__label` — alt (bis Welle 3a), now `tl-menu` (design system)
 
 ---
 

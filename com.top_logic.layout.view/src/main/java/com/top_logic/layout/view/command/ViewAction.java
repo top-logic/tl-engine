@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.command;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonTone;
 
 /**
  * Lightweight functional building block for composable view commands.
@@ -101,5 +102,22 @@ public interface ViewAction {
 	 */
 	default ViewExecutabilityRule getIntrinsicRule() {
 		return ViewExecutabilityRule.ALWAYS_EXECUTABLE;
+	}
+
+	/**
+	 * The kind of action this is.
+	 *
+	 * <p>
+	 * {@link ButtonTone#DANGER} for an action that destroys or discards what the user has - deleting
+	 * its input, say. A command running the action takes this tone (see
+	 * {@link ViewActions#tone(java.util.List)}), so that every surface offering the command - its
+	 * button, a menu entry, the confirmation asking for it - shows it as destructive, without the
+	 * author choosing a color.
+	 * </p>
+	 *
+	 * @return {@link ButtonTone#DEFAULT} for an ordinary action.
+	 */
+	default ButtonTone getTone() {
+		return ButtonTone.DEFAULT;
 	}
 }

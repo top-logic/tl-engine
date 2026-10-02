@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objects>
+	<!-- The object the interactive section of the alert demo edits and its alert observes. -->
+	<object id="alert-demo"
+		type="demo.react:Demo"
+	>
+		<attribute name="name"
+			value="Alert demo"
+		/>
+		<attribute name="string"
+			value="Hello"
+		/>
+		<attribute name="active"
+			value="true"
+		/>
+	</object>
+</objects>

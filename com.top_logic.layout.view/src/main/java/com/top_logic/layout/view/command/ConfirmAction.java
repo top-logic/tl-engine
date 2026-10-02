@@ -40,6 +40,11 @@ import com.top_logic.util.Resources;
  * unchanged); on decline it {@link Continuation#abort() aborts}, running the compensations of any
  * already-executed actions.
  * </p>
+ *
+ * <p>
+ * The affirmative answer is drawn in the {@link Continuation#tone() tone of what follows}: before a
+ * deletion it reads as destructive, and it stays the dialog's default on Enter.
+ * </p>
  */
 @InApp
 public class ConfirmAction extends InterruptibleViewAction {
@@ -142,6 +147,7 @@ public class ConfirmAction extends InterruptibleViewAction {
 			confirmLabel,
 			cancelLabel,
 			() -> continuation.resume(input),
-			() -> continuation.abort());
+			() -> continuation.abort(),
+			continuation.tone());
 	}
 }

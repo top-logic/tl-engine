@@ -576,6 +576,25 @@ public class AzureBlobStore extends AbstractBlobStore<AzureBlobStore.Config<?>> 
 	@Override
 	public String put(InputStream content, long size, String contentType) throws IOException {
 		String key = newKey();
+		upload(key, content, size, contentType);
+		return key;
+	}
+
+	/**
+	 * Uploads content under the given key.
+	 *
+	 * @param key
+	 *        The key of the blob to create. A blob with this key must not exist.
+	 * @param content
+	 *        The content to upload.
+	 * @param size
+	 *        The size of the content in bytes, or <code>-1</code> if unknown.
+	 * @param contentType
+	 *        The content type, or <code>null</code> for the default content type.
+	 * @throws IOException
+	 *         If the upload fails, especially if a blob with the given key already exists.
+	 */
+	protected void upload(String key, InputStream content, long size, String contentType) throws IOException {
 		BlockBlobClient blob = blob(key);
 		BlobHttpHeaders headers =
 			new BlobHttpHeaders().setContentType(contentType == null ? DEFAULT_CONTENT_TYPE : contentType);
@@ -589,11 +608,10 @@ public class AzureBlobStore extends AbstractBlobStore<AzureBlobStore.Config<?>> 
 			if (head.length <= _singleUploadThreshold) {
 				checkSize(size, head.length);
 				uploadSingle(blob, head, headers);
-				return key;
+				return;
 			}
 		}
 		uploadBlocks(blob, head, in, size, headers);
-		return key;
 	}
 
 	private void uploadSingle(BlockBlobClient blob, byte[] content, BlobHttpHeaders headers) throws IOException {

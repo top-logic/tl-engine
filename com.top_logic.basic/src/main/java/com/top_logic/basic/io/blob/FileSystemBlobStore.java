@@ -40,7 +40,9 @@ import com.top_logic.basic.io.LimitedInputStream;
  * The file of a blob is located in two levels of shard directories named after the first and
  * second pair of hex digits of its key: <code>&lt;root&gt;/ab/cd/abcd1234-...</code>. This limits
  * the number of entries per directory to the number of blobs divided by 65,536. Shard directories
- * are created on demand and never removed.
+ * are created on demand and never removed. The even distribution and the listing of keys in their
+ * order by walking the shard directories in order rely on the random leading digits of the keys
+ * created by {@link #newKey()}.
  * </p>
  *
  * <p>

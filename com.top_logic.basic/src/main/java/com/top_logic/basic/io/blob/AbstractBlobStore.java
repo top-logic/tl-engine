@@ -47,8 +47,17 @@ public abstract class AbstractBlobStore<C extends BlobStore.Config<?>> extends A
 	/**
 	 * Creates a new random key: the canonical lower case string form of a random (version 4)
 	 * {@link UUID}.
+	 *
+	 * <p>
+	 * The key of a blob is always chosen by the store, never by the caller, and never reused. Its
+	 * leading hex digits are uniformly distributed, since they stem from a cryptographically strong
+	 * random number generator (the version digit of the UUID follows only at position 13).
+	 * Implementations rely on this: {@link FileSystemBlobStore} names its shard directories after
+	 * the leading hex digits and lists its keys in order by walking these directories in order, and
+	 * object storages spread their request load by key prefix.
+	 * </p>
 	 */
-	protected String newKey() {
+	protected final String newKey() {
 		return UUID.randomUUID().toString();
 	}
 

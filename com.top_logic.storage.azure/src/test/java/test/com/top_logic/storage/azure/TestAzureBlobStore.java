@@ -260,26 +260,20 @@ public class TestAzureBlobStore extends AbstractBlobStoreContractTest {
 	/** An existing blob is never overwritten, neither by a single upload nor by blocks. */
 	public void testNoOverwrite() throws IOException {
 		String fixedKey = UUID.randomUUID().toString();
-		try (AzureBlobStore store = new AzureBlobStore(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
-			blockConfig()) {
-			@Override
-			protected String newKey() {
-				return fixedKey;
-			}
-		}) {
+		try (KeyedUploadStore store = new KeyedUploadStore(blockConfig())) {
 			byte[] content = bytes(100);
-			assertEquals(fixedKey, store.put(new ByteArrayInputStream(content), content.length, CONTENT_TYPE));
+			store.uploadAs(fixedKey, new ByteArrayInputStream(content), content.length);
 
 			byte[] other = new byte[200];
 			try {
-				store.put(new ByteArrayInputStream(other), other.length, CONTENT_TYPE);
+				store.uploadAs(fixedKey, new ByteArrayInputStream(other), other.length);
 				fail("An existing blob must not be overwritten.");
 			} catch (IOException ex) {
 				// Expected.
 			}
 			long large = 5 * BLOCK_SIZE;
 			try {
-				store.put(new PatternInputStream(large), large, CONTENT_TYPE);
+				store.uploadAs(fixedKey, new PatternInputStream(large), large);
 				fail("An existing blob must not be overwritten by blocks.");
 			} catch (IOException ex) {
 				// Expected.
@@ -288,6 +282,21 @@ public class TestAzureBlobStore extends AbstractBlobStoreContractTest {
 				assertTrue("Content must be unchanged.", Arrays.equals(content, in.readAllBytes()));
 			}
 		}
+	}
+
+	/**
+	 * {@link AzureBlobStore} uploading under a key given by the test, to provoke key collisions.
+	 */
+	private static final class KeyedUploadStore extends AzureBlobStore {
+
+		KeyedUploadStore(AzureBlobStore.Config<?> config) {
+			super(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
+		}
+
+		void uploadAs(String key, InputStream content, long size) throws IOException {
+			upload(key, content, size, CONTENT_TYPE);
+		}
+
 	}
 
 	/** A missing container is reported as error, not as missing blob. */

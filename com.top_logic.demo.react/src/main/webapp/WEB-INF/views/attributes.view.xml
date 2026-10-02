@@ -406,6 +406,7 @@
 									<field attribute="tri"/>
 									<field attribute="activeRadio"/>
 									<field attribute="activeSelect"/>
+									<field attribute="priorityRadio"/>
 									<field attribute="flags"/>
 									<field attribute="date"/>
 									<field attribute="dateTime"/>

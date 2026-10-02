@@ -31,6 +31,7 @@ import com.top_logic.model.resources.TLTypePartResourceProvider;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.visit.LabelVisitor;
+import com.top_logic.tl.ai.core.agent.environment.RunEnvironment;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.ToolResults;
 import com.top_logic.tl.ai.core.tools.model.messages.ClassifierInfo;
@@ -505,7 +506,9 @@ public class ModelBrowserTool {
 	 *
 	 * <p>
 	 * Lists the modules with their types (classes, interfaces, enums) and, for each type, its parts
-	 * with target types, multiplicity, inheritance, and derived/composite/mandatory markers. Generated
+	 * with target types, multiplicity, inheritance, and derived/composite/mandatory markers, and the
+	 * description of every application module, type, part and enum value that has one, in the run's
+	 * language. Generated
 	 * fresh from the live model on every call. The result is the compact digest text itself, not JSON
 	 * — its terseness is the point.
 	 * </p>
@@ -526,7 +529,10 @@ public class ModelBrowserTool {
 	@ToolMethod(description = "Returns a compact structural overview of the entire application model in a "
 		+ "single call: all application modules, their types (classes, interfaces, enums), and for each "
 		+ "type its parts with target types, multiplicity, inheritance, and derived/composite/mandatory "
-		+ "markers. Only the types you may read are listed. Use this FIRST for any question about model "
+		+ "markers. Each application module, type, part and enum value that has a description (what it "
+		+ "means in the business domain) carries it as a `// ...` comment, in the user's language; "
+		+ "framework modules show structure only (use listTypes for a framework type's description). "
+		+ "Only the types you may read are listed. Use this FIRST for any question about model "
 		+ "structure — it replaces enumerating with "
 		+ "listModules + listTypes + listTypeParts. Framework modules and runtime instance data are "
 		+ "excluded; for annotations, instances, or usages use the dedicated tools.", mode = ToolMode.READ, group = ToolGroups.MODEL_READ)
@@ -537,7 +543,7 @@ public class ModelBrowserTool {
 		try {
 			TLModel model = ModelService.getApplicationModel();
 			String overview = ModelDigestGenerator.generate(model, Boolean.TRUE.equals(includeFramework),
-				ReadFilter.of(context).security());
+				ReadFilter.of(context).security(), RunEnvironment.runLocale());
 			if (overview.isEmpty()) {
 				return "No application modules found in the model.";
 			}

@@ -15,6 +15,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
@@ -32,6 +33,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tl.ai.core.agent.LockConflictException;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
@@ -188,11 +190,16 @@ public class ObjectEditTool {
 				+ " already has these values. Nothing was written.");
 		}
 
-		context.transaction().acquireLock(LOCK, target);
-		converted.forEach(target::tUpdate);
-		List<String> violations = ObjectConstraints.violations(target);
+		lock(context, target);
+		List<String> violations = writing("updateObject", () -> {
+			converted.forEach(target::tUpdate);
+			List<String> problems = ObjectConstraints.violations(target);
+			if (!problems.isEmpty()) {
+				before.forEach(target::tUpdate);
+			}
+			return problems;
+		});
 		if (!violations.isEmpty()) {
-			before.forEach(target::tUpdate);
 			return refusal("The values break the model's rules, so nothing was changed:\n- "
 				+ String.join("\n- ", violations));
 		}
@@ -280,20 +287,31 @@ public class ObjectEditTool {
 		Map<TLStructuredTypePart, Object> converted = convert(given, parts, security);
 
 		if (container != null) {
-			context.transaction().acquireLock(LOCK, container);
+			lock(context, container);
 		}
-		TLObject created = ModelService.getInstance().getFactory().createObject(type, container);
-		converted.forEach(created::tUpdate);
-		if (place != null) {
-			if (place.isMultiple()) {
-				container.tAdd(place, created);
-			} else {
-				container.tUpdate(place, created);
+		TLObject parent = container;
+		TLReference composition = place;
+		TLObject[] result = new TLObject[1];
+		List<String> violations = writing("createObject", () -> {
+			TLObject created = ModelService.getInstance().getFactory().createObject(type, parent);
+			converted.forEach(created::tUpdate);
+			if (composition != null) {
+				if (composition.isMultiple()) {
+					parent.tAdd(composition, created);
+				} else {
+					parent.tUpdate(composition, created);
+				}
 			}
-		}
-		List<String> violations = ObjectConstraints.violations(created);
+			List<String> problems = ObjectConstraints.violations(created);
+			if (problems.isEmpty()) {
+				result[0] = created;
+			} else {
+				created.tDelete();
+			}
+			return problems;
+		});
+		TLObject created = result[0];
 		if (!violations.isEmpty()) {
-			created.tDelete();
 			return refusal("The object would break the model's rules, so it was not created:\n- "
 				+ String.join("\n- ", violations) + "\n" + mandatoryHint(type));
 		}
@@ -441,8 +459,11 @@ public class ObjectEditTool {
 
 		String deleted = ReadFilter.labelled(target);
 		String typeName = qualified(target.tType());
-		context.transaction().acquireLock(LOCK, target);
-		target.tDelete();
+		lock(context, target);
+		writing("deleteObject", () -> {
+			target.tDelete();
+			return List.of();
+		});
 
 		Map<String, Object> answer = new LinkedHashMap<>();
 		answer.put("deleted", deleted);
@@ -521,6 +542,37 @@ public class ObjectEditTool {
 
 		Denied(String message) {
 			super(message);
+		}
+	}
+
+	/**
+	 * Takes the lock the interactive editors take, or refuses: nothing is written yet, so a lock held
+	 * by somebody else is a refusal like any other.
+	 */
+	private static void lock(ToolContext context, TLObject target) {
+		try {
+			context.transaction().acquireLock(LOCK, target);
+		} catch (LockConflictException ex) {
+			throw new IllegalArgumentException("Somebody is editing " + nameOf(target)
+				+ " right now, so it cannot be changed: " + ex.getMessage() + " Nothing was changed.", ex);
+		}
+	}
+
+	/**
+	 * Runs the part of an operation that writes.
+	 *
+	 * <p>
+	 * A failure in here may leave part of the call written, and a failed tool call that reports a
+	 * refusal is one the turn commits around. So whatever escapes is re-thrown as a failure the
+	 * agent loop rolls the whole turn back for, never as a refusal.
+	 * </p>
+	 */
+	private static List<String> writing(String call, Supplier<List<String>> write) {
+		try {
+			return write.get();
+		} catch (RuntimeException ex) {
+			throw new IllegalStateException(call + " failed while writing, so the changes of this turn are"
+				+ " rolled back: " + ex.getMessage(), ex);
 		}
 	}
 

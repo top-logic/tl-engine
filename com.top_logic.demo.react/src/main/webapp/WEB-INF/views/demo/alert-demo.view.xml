@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The alert: a highlighted message in the content of a view.
+	
+	The first section shows one fixed message per severity, with and without a title. The second
+	shows a message the user can close, offering a command as a button.
+	
+	The third section computes its message over an object: the form edits the object "Alert demo"
+	(seeded by data/Z04-alert-demo.objects.xml), the alert below it is shown while the object is
+	active and repeats its text. Saving the form changes the object while the channel keeps pointing
+	to it - the alert observes the object itself and follows. A closed alert opens again as soon as
+	the saved text yields another message.
+-->
+<view>
+	<channels>
+		<derived-channel name="obj"
+			expr="all(`demo.react:Demo`).filter(d -> $d.get(`demo.react:Demo#name`) == 'Alert demo').firstElement()"
+		/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Alerts</en>
+			<de>Hinweisboxen</de>
+		</title>
+
+		<text variant="title">
+			<label>
+				<en>Severities</en>
+				<de>Schweregrade</de>
+			</label>
+		</text>
+		<alert severity="info">
+			<title>
+				<en>Information</en>
+				<de>Information</de>
+			</title>
+			<message>
+				<en>An info alert with a title.</en>
+				<de>Eine Info-Box mit Titel.</de>
+			</message>
+		</alert>
+		<alert severity="success">
+			<message>
+				<en>A success alert without a title.</en>
+				<de>Eine Erfolgsmeldung ohne Titel.</de>
+			</message>
+		</alert>
+		<alert severity="warning">
+			<title>
+				<en>Warning</en>
+				<de>Warnung</de>
+			</title>
+			<message>
+				<en>A warning alert with a title.</en>
+				<de>Eine Warnung mit Titel.</de>
+			</message>
+		</alert>
+		<alert severity="error">
+			<message>
+				<en>An error alert without a title.</en>
+				<de>Eine Fehlermeldung ohne Titel.</de>
+			</message>
+		</alert>
+
+		<text variant="title">
+			<label>
+				<en>Closable, with a command</en>
+				<de>Schließbar, mit Kommando</de>
+			</label>
+		</text>
+		<alert
+			closable="true"
+			severity="info"
+		>
+			<title>
+				<en>New version available</en>
+				<de>Neue Version verfügbar</de>
+			</title>
+			<message>
+				<en>Close this alert with the X, or click the button. The closed alert is shown again after the next login.</en>
+				<de>Diese Box mit dem X schließen oder den Knopf drücken. Nach der nächsten Anmeldung erscheint die geschlossene Box wieder.</de>
+			</message>
+			<generic-command>
+				<label>
+					<en>Show details</en>
+					<de>Details anzeigen</de>
+				</label>
+				<notify expr="x -> #('The command of the alert was executed.'@en, 'Das Kommando der Hinweisbox wurde ausgeführt.'@de)"/>
+			</generic-command>
+		</alert>
+
+		<panel>
+			<title>
+				<en>Computed from an object</en>
+				<de>Aus einem Objekt berechnet</de>
+			</title>
+			<text>
+				<label>
+					<en>Edit the object, change the text or untick "Active", and save. The alert follows the saved object: it shows the text, and hides while the object is not active. Closing it shows a notice; it opens again once another text is saved.</en>
+					<de>Objekt bearbeiten, den Text ändern oder "Aktiv" abwählen und speichern. Die Hinweisbox folgt dem gespeicherten Objekt: Sie zeigt den Text und verschwindet, solange das Objekt nicht aktiv ist. Schließen zeigt einen Hinweis; sie erscheint wieder, sobald ein anderer Text gespeichert wird.</de>
+				</label>
+			</text>
+			<form
+				input="obj"
+				with-inset="true"
+			>
+				<field attribute="string"/>
+				<field attribute="active"/>
+			</form>
+			<alert
+				closable="true"
+				inputs="obj"
+				message-expr="o -> #('Saved text: {0}'@en, 'Gespeicherter Text: {0}'@de).fill($o.get(`demo.react:Demo#string`))"
+				severity="warning"
+				title-expr="o -> $o.get(`demo.react:Demo#name`)"
+				visible-if="o -> $o.get(`demo.react:Demo#active`) == true"
+			>
+				<on-dismiss>
+					<notify expr="o -> #('Alert closed. Save another text to show it again.'@en, 'Hinweisbox geschlossen. Einen anderen Text speichern, um sie wieder anzuzeigen.'@de)"/>
+				</on-dismiss>
+			</alert>
+		</panel>
+	</panel>
+</view>

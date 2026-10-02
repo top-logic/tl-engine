@@ -215,6 +215,7 @@ commands the component sends. The list in the header:
 | `TLDialog` | `DialogState` |
 | `TLMenu` | `MenuState` |
 | `TLSnackbar` | `SnackbarState` |
+| `TLAlert` | `AlertState` |
 
 The shared parts are `ControlState` (`hidden`, `cssClass`), `FieldState` (value, `editable`,
 `disabled`, `mandatory`, error and warning flags, label, placeholder, …), `TypingFieldState` (debounce, send on

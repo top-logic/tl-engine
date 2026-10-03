@@ -46,7 +46,7 @@ public class InstanceEntry extends de.haumacher.msgbuf.data.AbstractDataObject i
 	}
 
 	/**
-	 * The identifier a later call names the object by (`getInstance`, `present`, cite).
+	 * The identifier a later call names the object by (<code>getInstance</code>, <code>present</code>, cite).
 	 */
 	public final String getId() {
 		return _id;

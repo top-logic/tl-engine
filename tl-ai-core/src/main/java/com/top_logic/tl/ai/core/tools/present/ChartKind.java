@@ -9,7 +9,7 @@ package com.top_logic.tl.ai.core.tools.present;
  * The kind of chart a {@link ChartSpec} draws.
  *
  * <p>
- * Each constant is a Chart.js chart type ({@link #chartJsType()}). The set is kept to the kinds that
+ * Each constant is a Chart.js chart type. The set is kept to the kinds that
  * one value per object reads well in; anything that needs several series is out of reach of the
  * one-label, one-value spec anyway.
  * </p>

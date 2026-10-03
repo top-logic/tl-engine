@@ -52,12 +52,12 @@ import com.top_logic.util.model.ModelService;
  */
 public class TLScriptExecutor {
 
-	/**
-	 * The message a read-only tool refuses a script with that changes something.
-	 */
 	/** What the transaction of a change is called. */
 	private static final ResKey CHANGE = ResKey.text("changeData");
 
+	/**
+	 * The message a read-only tool refuses a script with that changes something.
+	 */
 	public static final String NOT_READ_ONLY = "The expression changes data (it creates, sets, deletes or has"
 		+ " another side effect), and this tool only reads. Remove the writing part. To change data, use"
 		+ " updateObject, createObject or deleteObject for one known object, or changeData.";

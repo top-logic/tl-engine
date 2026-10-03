@@ -93,6 +93,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 IMPORT_FROM_DEV_ENV_PARTIAL__PROBLEMS_TOTAL;
 
+	/**
+	 * Error message when a configuration names an agent the application does not have.
+	 *
+	 * @en Unknown agent(s): {0}. Pick the agents from the list.
+	 * @de Unbekannte Agenten: {0}. Wählen Sie die Agenten aus der Liste.
+	 */
+	public static ResKey1 UNKNOWN_AGENTS__NAMES;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

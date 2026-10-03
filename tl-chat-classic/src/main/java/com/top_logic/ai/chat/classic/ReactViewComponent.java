@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -38,11 +39,13 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.layout.structure.ControlRepresentable;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.RenderedView;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -227,34 +230,80 @@ public class ReactViewComponent extends LayoutComponent implements ControlRepres
 		}
 
 		// The classic window's sub-session name, which every React request of the tree carries.
-		String windowName =
-			ChatSessionRegistry.windowId(TLContextManager.getSession(), TLContextManager.getSubSession());
+		TLSubSessionContext subSession = TLContextManager.getSubSession();
+		String windowName = ChatSessionRegistry.windowId(TLContextManager.getSession(), subSession);
 		if (windowName == null) {
 			throw new IllegalStateException("Component '" + getName() + "' is rendered outside a classic window.");
 		}
+		String viewPath = ViewLoader.fullPath(((Config) getConfig()).getView());
+		ViewElement view = loadView(viewPath);
+
 		SSEUpdateQueue queue = registry.getOrCreateQueue(windowName);
 		WindowEntry windowEntry = registry.getOrCreateWindow(windowName);
 		windowEntry.markConnected();
+		releaseReplacedTree(windowEntry);
 
 		ReactControl root = windowRoot(
-			new DefaultReactContext(context.getContextPath(), windowName, queue, registry), this::createContent);
+			new DefaultReactContext(context.getContextPath(), windowName, queue, registry),
+			reactContext -> createContent(reactContext, viewPath, view));
 		queue.setRootControl(root);
 		windowEntry.setRootControl(root);
+		takeOverPage(registry, windowName, subSession, viewPath, view);
 
 		_windowName = windowName;
 		_root = root;
 		return root;
 	}
 
-	private ReactControl createContent(ReactContext reactContext) {
-		String viewPath = ViewLoader.fullPath(((Config) getConfig()).getView());
-		ViewElement view;
+	/**
+	 * Releases the tree the window displayed before this component took it over.
+	 *
+	 * <p>
+	 * Temporary workaround for the classic-UI bridge (E2): the window name is the browser tab's, so a
+	 * tab that showed a React page before it showed the classic UI hands this component the React
+	 * page's window. {@code ViewServlet.displayWindow} releases the tree of a view it no longer shows,
+	 * and so does this: otherwise that tree lives on unseen, keeps observing the model, and a run of
+	 * this window still finds the channels its chat offered to the {@code present} tool (#649). A tree
+	 * this component built itself was released before.
+	 * </p>
+	 */
+	private static void releaseReplacedTree(WindowEntry windowEntry) {
+		ReactControl replaced = windowEntry.getRootControl();
+		if (replaced != null && !replaced.isDisposed()) {
+			replaced.detach();
+			replaced.cleanupTree();
+		}
+	}
+
+	/**
+	 * Records that the window now displays this component's tree.
+	 *
+	 * <p>
+	 * Temporary workaround for the classic-UI bridge (E2), the two other things
+	 * {@code ViewServlet.displayWindow} does for a page it renders. A new page-load token: the React
+	 * page this tab left reports its unload with its own token, and that report may arrive after this
+	 * tree was built - it then names a page the window no longer displays and is ignored, instead of
+	 * detaching this tree. And the view the tab renders: a {@code /view/} request in this tab then
+	 * finds a different view and builds the React page anew, instead of rendering this tree as the
+	 * view it showed before.
+	 * </p>
+	 */
+	private static void takeOverPage(ReactWindowRegistry registry, String windowName, TLSubSessionContext subSession,
+			String viewPath, ViewElement view) {
+		registry.issuePageLoad(windowName);
+		RenderedView.store(subSession, new RenderedView(viewPath, view, Resources.getCurrentLocale()));
+	}
+
+	private ViewElement loadView(String viewPath) {
 		try {
-			view = ViewLoader.getOrLoadView(viewPath);
+			return ViewLoader.getOrLoadView(viewPath);
 		} catch (ConfigurationException ex) {
 			throw new RuntimeException("Failed to load view '" + viewPath + "' for component '" + getName() + "'.",
 				ex);
 		}
+	}
+
+	private static ReactControl createContent(ReactContext reactContext, String viewPath, ViewElement view) {
 		ReactControl content = (ReactControl) view.createControl(new DefaultViewContext(reactContext, viewPath));
 		content.setViewSource(viewPath);
 		return content;

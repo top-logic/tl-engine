@@ -20,7 +20,10 @@
  * 2. Loads every stylesheet of that markup as a constructable sheet wrapped in
  *    "@layer tl-react { @scope (host, portal) { ... } }", so that no React rule reaches a classic
  *    element. Inside the scope ":root" means the scope root and "html"/"body" mean the host, which
- *    is where the React page's document-level rules belong when the document is not theirs.
+ *    is where the React page's document-level rules belong when the document is not theirs. Both are
+ *    written with ":scope", and a rule keyed on a theme attribute ("[data-theme=dark]") gets a
+ *    ":scope" variant: the host carries those attributes, and a selector without ":scope" never
+ *    matches the scope root.
  *    @font-face, @keyframes and the like cannot stand in @scope and are kept beside it.
  * 3. Adds one unlayered reset that reverts, inside the scope, every declaration of the unlayered
  *    (classic) stylesheets back to the React layer - so "button:focus" and similar rules of the
@@ -67,11 +70,53 @@
 			|| (window.CSSFontPaletteValuesRule && rule instanceof CSSFontPaletteValuesRule);
 	}
 
-	/** The selector a document-level React rule has in the scope. */
+	/**
+	 * A selector that starts with one of the theme attributes. A React page sets them on <html>; in a
+	 * classic page they stand on the host, the scoping root - and a selector inside @scope that names
+	 * no :scope matches descendants of the root only, never the root itself. Without a :scope variant
+	 * the dark theme's tokens ("[data-theme=dark] {...}") would never reach the host (#649).
+	 */
+	var THEME_SELECTOR = /^\[data-(theme|tl-mode|tl-density)\b/;
+
+	/** The items of a selector list, split at the commas that are not inside a () or a []. */
+	function selectorItems(selector) {
+		var items = [];
+		var depth = 0;
+		var start = 0;
+		for (var i = 0; i < selector.length; i++) {
+			var c = selector.charAt(i);
+			if (c === '(' || c === '[') {
+				depth++;
+			} else if (c === ')' || c === ']') {
+				depth--;
+			} else if (c === ',' && depth === 0) {
+				items.push(selector.substring(start, i).trim());
+				start = i + 1;
+			}
+		}
+		items.push(selector.substring(start).trim());
+		return items;
+	}
+
+	/**
+	 * The selector a document-level React rule has in the scope.
+	 *
+	 * "html" and "body" become the host as scope root, ":scope.tlReactHost": a selector naming the
+	 * host without ":scope" would again match hosts below the root only, and the page background, text
+	 * colour and font of a React page's body would never reach the host (#649). Portal roots keep
+	 * none of them - a portal is a popup, not a page.
+	 */
 	function scopedSelector(selector) {
-		return selector
+		var scoped = selector
 			.replace(/:root\b/g, ':scope')
-			.replace(/(^|[\s,>+~(])(html|body)(?=$|[\s,.:#\[>+~)])/g, '$1.' + HOST);
+			.replace(/(^|[\s,>+~(])(html|body)(?=$|[\s,.:#\[>+~)])/g, '$1:scope.' + HOST);
+		var items = selectorItems(scoped);
+		if (!items.some(function(item) { return THEME_SELECTOR.test(item); })) {
+			return scoped;
+		}
+		return items.map(function(item) {
+			return THEME_SELECTOR.test(item) ? ':scope' + item + ', ' + item : item;
+		}).join(', ');
 	}
 
 	function rewriteSelectors(rules) {

@@ -660,7 +660,8 @@ by logging in as a persona:
   and applying it cannot silently rewrite a hand-written one.
 - `SecDemoToolDescriptionTest` - that every framework tool carries an administrator-facing description
   in both languages, rather than falling back to the text written for the model.
-- `SecDemoGermanTerminologyTest` - that the German texts of tl-ai say "Tool" and never "Werkzeug".
+- `SecDemoGermanTerminologyTest` - that the German texts of tl-ai say "Tool" and never "Werkzeug",
+  in any compound: the resource bundles of every module and the React chat's `ui/src/i18n.ts`.
 - `SecDemoApplyPolicyGuardTest` - that applying a policy from the editor cannot widen the policy the
   applying account itself is bound by.
 

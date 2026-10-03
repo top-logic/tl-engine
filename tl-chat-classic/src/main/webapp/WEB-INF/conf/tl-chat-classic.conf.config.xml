@@ -10,4 +10,23 @@
 			</instance>
 		</config>
 	</services>
+
+	<configs>
+		<!--
+			Temporary workaround for the classic-UI bridge (E5, see CLAUDE.md): tl-layout-view, a
+			dependency of tl-chat, moves the start, login and logout pages to its ViewServlet. A
+			classic application has no app.view.xml there, so its login would fail. This restores
+			the values of tl-core. An application's own configuration and its deploy aspects (an SSO
+			login page, for example) load after this module and still win. Remove when the engine
+			stops setting the pages for every application that has tl-layout-view, or with this
+			module.
+		-->
+		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
+			<startPage>/servlet/LayoutServlet</startPage>
+			<loginPage>/servlet/LayoutServlet</loginPage>
+			<loginRetrySSO>/servlet/LayoutServlet</loginRetrySSO>
+			<logoutPage>/servlet/LayoutServlet</logoutPage>
+			<unknownAccountPage>/jsp/main/LoginErrorPage_unknownAccount.jsp</unknownAccountPage>
+		</config>
+	</configs>
 </application>

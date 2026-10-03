@@ -113,18 +113,10 @@
 			<instance allowed-domains="quotes.toscrape.com" />
 		</config>
 
-		<!-- Native React-view implementation of the agentic chat. -->
+		<!-- The chat's own bundle is registered by tl-chat. -->
 		<config service-class="com.top_logic.layout.react.resource.ClientResources">
 			<instance class="com.top_logic.layout.react.resource.ClientResources">
 				<resources>
-					<module-script name="tl-react-agent-chat"
-						resource="/script/tl-chat-ui.js"
-						requires="tl-react-bridge"
-					/>
-					<stylesheet name="tl-react-agent-chat-css"
-						resource="/script/tl-chat-ui.css"
-						requires="tl-react-controls-css"
-					/>
 					<!--
 						The demo's own skin on the shell around the chat: an app bar that follows
 						the theme, and one theme button instead of two. See the file's header.
@@ -139,8 +131,17 @@
 	</services>
 
 	<configs>
+		<!--
+			The demo starts and logs in on its React UI. tl-chat-classic sets these pages back to
+			the classic LayoutServlet for a classic host (workaround E5), so the demo states all five
+			itself; the classic UI stays reachable at /servlet/LayoutServlet.
+		-->
 		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
 			<startPage>/view/</startPage>
+			<loginPage>/view/</loginPage>
+			<loginRetrySSO>/view/</loginRetrySSO>
+			<logoutPage>/view/</logoutPage>
+			<unknownAccountPage>/view/unknown-account.view.xml</unknownAccountPage>
 		</config>
 		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
 			<type-systems>

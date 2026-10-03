@@ -5,7 +5,7 @@ depending on this module; depending on `tl-chat` alone gives the chat API and th
 React pages only.
 
 **A temporary bridge.** It gives agents to applications that keep the classic UI until they move to
-the React view layer; everything named `LayoutComponent` is to leave tl-core. The engine lacks four
+the React view layer; everything named `LayoutComponent` is to leave tl-core. The engine lacks five
 pieces for hosting React in a classic page, and this module works around each of them itself (see
 [Temporary workarounds](#temporary-workarounds)). The hand-written `chat-client.js` control that
 lived here from #398 to #618 is gone; there is one chat, the React one.
@@ -73,6 +73,7 @@ workaround when the engine provides the piece, and the whole module when the cla
 | **E2** | A public way to build a React window's root tree: `ViewServlet.displayWindow` builds snackbar, context menu and dialog manager in private methods. | Rebuilt the same way. | `ReactViewComponent.windowRoot` |
 | **E3** | A way to load the React client resources (import map, module scripts, stylesheets, theme tokens) into a classic page: `ClientResources` writes them only into a React page's `<head>`, and `tl-react-bridge` discovers controls only on `window.load`. | The component renders that head markup into a string; `tl-react-host.js` installs the import map, imports the modules as one module graph and calls `TLReact.discoverAndMount()`. | `ReactViewComponent.writeBootScript`, `script/tl-react-host.js` |
 | **E4** | A shared request lock: `ReactServlet` revalidates the classic `MainLayout` for a React command without entering the classic window's `RequestLock`, which `AJAXServlet` holds for every classic request. | `ReactCommandLockFilter` (`META-INF/web-fragment.xml`, `/react-api/command`) enters that lock as a reader. **Gap left:** `/react-api/upload` - its window name is in a multipart body a filter cannot read; per window only, a display glitch at worst. | `ReactCommandLockFilter` |
+| **E5** | Start pages that stay where the application put them: `tl-layout-view`, which `tl-chat` depends on, sets `ApplicationPages` `startPage`, `loginPage`, `loginRetrySSO` and `logoutPage` to `/view/` and `unknownAccountPage` to `/view/unknown-account.view.xml` for every application that has it on the classpath. A classic host has no `app.view.xml`, so its login fails. | `tl-chat-classic.conf.config.xml` sets the five pages back to the values of tl-core (`/servlet/LayoutServlet`, `/jsp/main/LoginErrorPage_unknownAccount.jsp`). The configuration of this module loads after `tl-layout-view`, and before the application's own files and its deploy aspects, so a host's `ApplicationPages` entry (an SSO `loginPage`, its own `logoutPage`, or `/view/` for a React-first host like `tl-ai-demo`) still wins. `TestClassicHostConfig` pins the values. | `WEB-INF/conf/tl-chat-classic.conf.config.xml` |
 
 Known limits of the workarounds:
 
@@ -88,13 +89,17 @@ Known limits of the workarounds:
 ## Resources
 
 - `WEB-INF/conf/tl-chat-classic.conf.config.xml` registers the `tl-chat-classic-messages` bundle,
-  whose key `chat.layout.agent.title` is the `resPrefix` title of `agent.xml`.
+  whose key `chat.layout.agent.title` is the `resPrefix` title of `agent.xml`, and sets the start
+  and login pages back to the classic ones (E5).
+- The chat's client bundle (`/script/tl-chat-ui.js`, `tl-chat-ui.css`) is registered on
+  `ClientResources` by `tl-chat`. A host needs no entry of its own; see `tl-chat/CLAUDE.md`.
 - `WEB-INF/themes/core/theme-settings.xml` declares the `TL_CHAT_AGENT` icon of the tab.
 - `META-INF/web-fragment.xml` registers `ReactCommandLockFilter` (E4).
 
 ## Tests
 
 - `mvn -pl tl-chat-classic test -DskipTests=false` runs the engine's generic suite over this
-  module's files (layout normalization among them) and `TestReactCommandLockFilter`.
+  module's files (layout normalization among them), `TestReactCommandLockFilter` and
+  `TestClassicHostConfig` (what a classic host gets with no configuration of its own: the chat bundle and the classic start pages, E5).
 - The bridge itself is verified end to end in a browser against `tl-ai-demo`'s classic UI; there is
   no automated browser test of it in this repository.

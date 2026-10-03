@@ -70,6 +70,23 @@ public @interface ToolMethod {
 	String check() default "";
 
 	/**
+	 * The name of a method of the same class that says why this tool can do nothing in the current
+	 * run.
+	 *
+	 * <p>
+	 * That method takes exactly one parameter, the {@link ToolExecutionContext} of the run, and returns
+	 * the reason, phrased for the model, or <code>null</code> when the tool can act. A tool that answers
+	 * is not offered to the model, and a call that names it anyway is answered with the reason - see
+	 * {@link Tool#unavailableReason(ToolExecutionContext)}. The method must not change anything.
+	 * </p>
+	 *
+	 * <p>
+	 * Empty, the default, means the tool can act in every run.
+	 * </p>
+	 */
+	String unavailable() default "";
+
+	/**
 	 * Who marks this tool's answer as untrusted content.
 	 *
 	 * <p>

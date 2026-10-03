@@ -7,8 +7,10 @@ package com.top_logic.tl.ai.core.agent;
 
 import java.util.function.Predicate;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.security.DeclaredTypeAccess;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -58,6 +60,40 @@ public class ToolPermissionFilter implements Predicate<Tool> {
 	ToolPermissionFilter(SecurityContext security, DeclaredTypeAccess declaredTypes) {
 		_security = security;
 		_declaredTypes = declaredTypes;
+	}
+
+	/**
+	 * The tools a run is offered: the ones its principal may use that can also act in the run at all.
+	 *
+	 * <p>
+	 * The second half is not a permission - see {@link Tool#unavailableReason(ToolExecutionContext)}:
+	 * the {@code present} tool on a page that has no place to show anything is withheld from nobody,
+	 * it simply has nothing to do there (#649). It is asked here, beside the permission, so that the
+	 * schemas the model is sent and the list a call for an unknown name is answered with stay the same
+	 * set.
+	 * </p>
+	 *
+	 * @param context
+	 *        The run.
+	 * @return The test whether the run is offered a given tool.
+	 */
+	public static Predicate<Tool> offeredIn(ToolContext context) {
+		ToolPermissionFilter permitted = new ToolPermissionFilter(context.security());
+		return tool -> permitted.test(tool) && canAct(tool, context);
+	}
+
+	/**
+	 * Whether the tool can act in the run; a tool that fails to say is not offered rather than failing
+	 * the request it would have been offered in.
+	 */
+	private static boolean canAct(Tool tool, ToolContext context) {
+		try {
+			return tool.unavailableReason(context) == null;
+		} catch (RuntimeException ex) {
+			Logger.warn("Tool '" + tool.name() + "' failed to say whether it can act, so it is not offered.", ex,
+				ToolPermissionFilter.class);
+			return false;
+		}
 	}
 
 	/**

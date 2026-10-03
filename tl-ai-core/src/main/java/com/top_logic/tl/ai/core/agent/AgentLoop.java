@@ -25,6 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -1433,9 +1434,14 @@ public class AgentLoop {
 		ToolMode callMode = tool != null ? ToolCatalog.callMode(tool, toolCall) : null;
 
 		// Step 1b: The tool's own refusal of this call, asked before anybody is asked to approve it:
-		// an approval prompt for a call that cannot succeed asks the user for nothing.
+		// an approval prompt for a call that cannot succeed asks the user for nothing. A tool that
+		// cannot act in this run at all was not offered; a call that names it anyway is answered the
+		// same way, with the tool's reason.
 		if (tool != null) {
-			String refusal = refusalOf(tool, toolCall, context);
+			String refusal = unavailableOf(tool, toolCall, context);
+			if (refusal == null) {
+				refusal = refusalOf(tool, toolCall, context);
+			}
 			if (refusal != null) {
 				emit(listener, new AgentEvent.ToolCallStarted(runId, turn, now(),
 					toolCall.id(), toolCall.name(), toolCall.arguments(), callMode));
@@ -1561,6 +1567,25 @@ public class AgentLoop {
 
 		ToolResultMessage result = _registry.execute(toolCall, execContext);
 		return truncateIfNeeded(result, listener, runId, turn);
+	}
+
+	/**
+	 * Why the called tool cannot act in this run, or <code>null</code> when it can.
+	 *
+	 * <p>
+	 * The same question the schema filter asked before the request, asked again for the call: the
+	 * model can name a tool it was not offered, from an earlier turn or from a text that mentions it.
+	 * A tool whose answer throws is not run - it could not say whether it can act.
+	 * </p>
+	 */
+	private static String unavailableOf(Tool tool, ToolCall toolCall, ToolContext context) {
+		try {
+			return tool.unavailableReason(context);
+		} catch (RuntimeException ex) {
+			Logger.warn("Tool '" + toolCall.name() + "' failed to say whether it can act, so it is not run.", ex,
+				AgentLoop.class);
+			return "Tool '" + toolCall.name() + "' could not say whether it can act in this run: " + ex.getMessage();
+		}
 	}
 
 	/**
@@ -1968,13 +1993,14 @@ public class AgentLoop {
 	 *
 	 * <p>Filters tool schemas dynamically based on the security context: tools the
 	 * user lacks permission for, and STRUCTURAL tools in PRODUCTION mode, are excluded
-	 * from the request so the LLM never sees capabilities it cannot use.</p>
+	 * from the request so the LLM never sees capabilities it cannot use. So are tools that
+	 * cannot act in this run at all - see {@link ToolPermissionFilter#offeredIn(ToolContext)}.</p>
 	 */
 	private AssistantMessage callProviderOnce(Conversation conversation, ToolContext context,
 			AgentEventListener listener, String runId, int turn) throws ProviderException {
 		ensureTurnContext(conversation);
 
-		ToolPermissionFilter toolFilter = new ToolPermissionFilter(context.security());
+		Predicate<Tool> toolFilter = ToolPermissionFilter.offeredIn(context);
 		List<ToolSchema> filteredTools = _registry.toolSchemas(toolFilter);
 		// Where the tool array stops being the same bytes on every request of this conversation: a
 		// loaded skill's tools follow behind it, and a provider that places cache breakpoints puts

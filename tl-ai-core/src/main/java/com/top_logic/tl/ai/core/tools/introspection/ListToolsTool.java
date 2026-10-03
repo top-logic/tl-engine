@@ -151,7 +151,7 @@ public class ListToolsTool implements Tool {
 			+ " tool of that name somewhere else is a separate question that this listing does not"
 			+ " answer.\n");
 
-		appendOwnTools(out, capabilities);
+		appendOwnTools(out, capabilities, context);
 		appendSkills(out, capabilities);
 
 		out.append("\nEach reason above explains only the entry it stands on.\n");
@@ -159,24 +159,37 @@ public class ListToolsTool implements Tool {
 	}
 
 	/**
-	 * The tools that need no {@code loadSkill}, split into the ones the user may call and the ones
-	 * withheld from them.
+	 * The tools that need no {@code loadSkill}, split into the ones the user may call, the ones
+	 * withheld from them and the ones that cannot act in this run.
 	 *
 	 * <p>
 	 * This tool lists itself, so that "a name that appears nowhere below is not in this agent's
 	 * toolset" is true of every name including its own.
 	 * </p>
+	 *
+	 * <p>
+	 * A tool that cannot act in this run - {@code present} on a page with no place to show anything -
+	 * is not offered to the model, so listing it as callable would send the model to a call that is
+	 * only refused. It is not withheld either: nothing an administrator grants changes it, and its
+	 * reason says what would.
+	 * </p>
 	 */
-	private void appendOwnTools(StringBuilder out, AgentCapabilities capabilities) {
+	private void appendOwnTools(StringBuilder out, AgentCapabilities capabilities, ToolExecutionContext context) {
 		List<String> usable = new ArrayList<>();
 		usable.add(name());
 		List<String> withheld = new ArrayList<>();
+		List<String> idle = new ArrayList<>();
 		for (Tool tool : _ownTools) {
 			String reason = capabilities.unusableReason(tool);
-			if (reason == null) {
-				usable.add(tool.name());
-			} else {
+			if (reason != null) {
 				withheld.add("- `" + tool.name() + "` - " + reason + ".");
+				continue;
+			}
+			String unavailable = tool.unavailableReason(context);
+			if (unavailable != null) {
+				idle.add("- `" + tool.name() + "` - " + unavailable);
+			} else {
+				usable.add(tool.name());
 			}
 		}
 
@@ -185,6 +198,12 @@ public class ListToolsTool implements Tool {
 		if (!withheld.isEmpty()) {
 			out.append("\n## Own tools - carried by this agent, withheld from this user\n");
 			for (String line : withheld) {
+				out.append(line).append("\n");
+			}
+		}
+		if (!idle.isEmpty()) {
+			out.append("\n## Own tools - carried by this agent, unable to act in this run\n");
+			for (String line : idle) {
 				out.append(line).append("\n");
 			}
 		}

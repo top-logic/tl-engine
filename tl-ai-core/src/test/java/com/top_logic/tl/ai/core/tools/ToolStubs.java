@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.tools;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -93,6 +94,8 @@ public final class ToolStubs {
 		private BiFunction<Map<String, Object>, ToolExecutionContext, ToolResult> _execute =
 			(args, context) -> ToolResult.of("ok");
 
+		private Function<ToolExecutionContext, String> _unavailable = context -> null;
+
 		Builder(String name) {
 			_name = name;
 			_description = "Stub: " + name;
@@ -145,6 +148,16 @@ public final class ToolStubs {
 			return this;
 		}
 
+		/**
+		 * Why the stub can do nothing in a run, asked per run. Defaults to a stub that can always act.
+		 *
+		 * @see Tool#unavailableReason(ToolExecutionContext)
+		 */
+		public Builder unavailable(Function<ToolExecutionContext, String> unavailable) {
+			_unavailable = unavailable;
+			return this;
+		}
+
 		/** The stub. */
 		public Tool build() {
 			String name = _name;
@@ -154,6 +167,7 @@ public final class ToolStubs {
 			ToolMode mode = _mode;
 			boolean concurrencySafe = _concurrencySafe;
 			BiFunction<Map<String, Object>, ToolExecutionContext, ToolResult> execute = _execute;
+			Function<ToolExecutionContext, String> unavailable = _unavailable;
 			ToolSchema schema =
 				_schema != null ? _schema : new ToolSchema(_name, _description, NO_ARGUMENTS);
 
@@ -196,6 +210,11 @@ public final class ToolStubs {
 				@Override
 				public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 					return execute.apply(args, context);
+				}
+
+				@Override
+				public String unavailableReason(ToolExecutionContext context) {
+					return unavailable.apply(context);
 				}
 			};
 		}

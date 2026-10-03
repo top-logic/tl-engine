@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -1284,6 +1285,76 @@ public class TestAgentLoop extends TestCase {
 			.filter(ToolResultMessage.class::isInstance)
 			.map(ToolResultMessage.class::cast)
 			.anyMatch(tr -> tr.state() instanceof ToolState.Failed f && f.error().equals("Nothing to write.")));
+	}
+
+	/**
+	 * A tool that cannot act in the run is not offered, and is asked again for every request: the
+	 * {@code present} tool of a page that names no channel is withheld from nobody, it has nothing to
+	 * do there (#649). Once its place exists, the next request offers it.
+	 */
+	public void testAToolThatCannotActInTheRunIsNotOffered() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Show me the customers"))));
+		AtomicBoolean place = new AtomicBoolean();
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(ToolStubs.builder("search")
+			.execute((args, context) -> {
+				// What the run is attached to changes between two requests: a pane appears.
+				place.set(true);
+				return ToolResult.of("3 customers");
+			})
+			.build());
+		registry.register(ToolStubs.builder("show")
+			.unavailable(context -> place.get() ? null : "This page has no place to show anything.")
+			.build());
+		registry.freeze();
+		LLMProvider responses = mockProvider(
+			List.of(new ToolCall("tc1", "search", "{}")),
+			List.of(new TextContent("Done")));
+		List<ProviderRequest> requests = new ArrayList<>();
+		LLMProvider capturing = (request, handler) -> {
+			requests.add(request);
+			responses.stream(request, handler);
+		};
+
+		new AgentLoop(config(), capturing, registry).run(conv,
+			new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE), listener());
+
+		assertEquals(2, requests.size());
+		assertEquals(List.of("search"), requests.get(0).tools().stream().map(ToolSchema::name).toList());
+		assertEquals(List.of("search", "show"), requests.get(1).tools().stream().map(ToolSchema::name).toList());
+	}
+
+	/**
+	 * A call that names a tool which cannot act in the run anyway - a model remembering it from an
+	 * earlier turn - is answered with the tool's reason, and the tool does not run.
+	 */
+	public void testACallForAToolThatCannotActIsAnsweredWithItsReason() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Show me the customers"))));
+		AtomicInteger runs = new AtomicInteger();
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(ToolStubs.builder("show")
+			.unavailable(context -> "This page has no place to show anything.")
+			.execute((args, context) -> {
+				runs.incrementAndGet();
+				return ToolResult.of("shown");
+			})
+			.build());
+		registry.freeze();
+		LLMProvider provider = mockProvider(
+			List.of(new ToolCall("tc1", "show", "{}")),
+			List.of(new TextContent("Here they are, in text.")));
+
+		new AgentLoop(config(), provider, registry).run(conv,
+			new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE), listener());
+
+		assertEquals("The tool must not run.", 0, runs.get());
+		assertTrue(conv.messages().stream()
+			.filter(ToolResultMessage.class::isInstance)
+			.map(ToolResultMessage.class::cast)
+			.anyMatch(tr -> tr.state() instanceof ToolState.Failed f
+				&& f.error().equals("This page has no place to show anything.")));
 	}
 
 	private static Tool globalTool(String name, ToolSchema schema) {

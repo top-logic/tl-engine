@@ -181,7 +181,7 @@ public class ToolCatalog implements ToolRegistry {
 	static String unknownToolMessage(ToolCall toolCall, ToolRegistry registry, ToolContext context) {
 		Predicate<Tool> visible = context == null
 			? tool -> true
-			: new ToolPermissionFilter(context.security());
+			: ToolPermissionFilter.offeredIn(context);
 		List<String> available = registry.toolSchemas(visible).stream().map(ToolSchema::name).toList();
 		return absenceReason(toolCall.name(), registry, context) + " Available: " + available;
 	}

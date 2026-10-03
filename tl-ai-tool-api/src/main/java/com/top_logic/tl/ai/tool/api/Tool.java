@@ -94,6 +94,33 @@ public interface Tool {
 	}
 
 	/**
+	 * Why this tool can do nothing in the given run, or <code>null</code> when it can.
+	 *
+	 * <p>
+	 * {@link #refusal(Map, ToolExecutionContext)} answers for one call; this answers for the run, before
+	 * any call is made. A tool that answers is left out of the tool schemas the model is sent, because a
+	 * tool the model can only be refused by is an invitation to a wasted call - and a call that names it
+	 * anyway is answered with this reason, without the tool running. Nothing is withheld from the user
+	 * here, which is the difference to a permission: the run lacks what the tool needs, such as a page
+	 * that has a place to show something on.
+	 * </p>
+	 *
+	 * <p>
+	 * Asked for every request of the run, so it has to be cheap. Its answer is part of the tool array
+	 * every provider caches by prefix, so it should change only with what the run is attached to, not
+	 * from one request to the next.
+	 * </p>
+	 *
+	 * @param context
+	 *        The run the tool would be offered to.
+	 * @return The reason, phrased for the model, or <code>null</code>.
+	 * @see ToolMethod#unavailable()
+	 */
+	default String unavailableReason(ToolExecutionContext context) {
+		return null;
+	}
+
+	/**
 	 * Whether this tool can safely run in parallel with other concurrency-safe tools.
 	 *
 	 * <p>Defaults to {@code true}. With locking in place, most tools are safe to

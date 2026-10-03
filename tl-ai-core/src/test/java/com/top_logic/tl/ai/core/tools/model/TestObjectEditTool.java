@@ -68,6 +68,16 @@ public class TestObjectEditTool extends BasicTestCase {
 
 	private static final String MEMORY_TYPE = "tl.ai.execution:UserMemory";
 
+	private static final String ORDER = "test.objectedit:Order";
+
+	private static final String ORDER_LINE = "test.objectedit:OrderLine";
+
+	private static final String FOLDER = "test.objectedit:Folder";
+
+	private static final String LETTER = "test.objectedit:Letter";
+
+	private static final String MEMO = "test.objectedit:Memo";
+
 	private static Person _owner;
 
 	private ObjectEditTool _tool;
@@ -323,6 +333,154 @@ public class TestObjectEditTool extends BasicTestCase {
 		assertRefused(create("tl.ai.execution:MemoryKind", Map.of()), "not a class");
 	}
 
+	// -- create with parts --
+
+	/**
+	 * An object whose parts are mandatory is created with them, in one call. Before, it could not be
+	 * created at all: its parts were refused in 'values', and the object alone broke its own rule.
+	 */
+	public void testAnOrderIsCreatedWithItsMandatoryLinesInOneCall() {
+		ToolResult result = create(ORDER, values("number", "A-17", "lines", List.of(
+			newPart(null, values("product", "Tea", "quantity", 2)),
+			newPart(null, values("product", "Milk")))));
+
+		assertSucceeded(result);
+		TLObject order = only(ORDER, "number", "A-17");
+		List<?> lines = List.copyOf((Collection<?>) order.tValue(part(order, "lines")));
+		assertEquals(2, lines.size());
+		TLObject tea = (TLObject) lines.get(0);
+		assertEquals("Tea", tea.tValue(part(tea, "product")));
+		assertEquals(2, ((Number) tea.tValue(part(tea, "quantity"))).intValue());
+		assertEquals("Milk", ((TLObject) lines.get(1)).tValue(part(tea, "product")));
+		assertContains("Created 3 objects", result.text());
+		assertContains(idOf(tea), result.text());
+		delete(order);
+	}
+
+	/** Without its mandatory parts the object is not created, and the answer names the part. */
+	public void testAnOrderWithoutLinesIsNotCreated() {
+		int before = instances(ORDER).size();
+
+		ToolResult result = create(ORDER, values("number", "A-18"));
+
+		assertRefused(result, "'lines'");
+		assertEquals(before, instances(ORDER).size());
+	}
+
+	/**
+	 * Optional parts of several kinds and a single part come in the same call: a folder with a
+	 * letter, a memo and a cover is one call and one approval, not four.
+	 */
+	public void testAFolderIsCreatedWithItsDocumentsAndItsCover() {
+		ToolResult result = create(FOLDER, values("name", "Contracts",
+			"documents", List.of(
+				newPart(LETTER, values("title", "Offer")),
+				newPart(MEMO, values("title", "Call notes"))),
+			"cover", newPart(null, values("text", "Blue"))));
+
+		assertSucceeded(result);
+		TLObject folder = only(FOLDER, "name", "Contracts");
+		List<String> kinds = ((Collection<?>) folder.tValue(part(folder, "documents"))).stream()
+			.map(document -> TLModelUtil.qualifiedName(((TLObject) document).tType()))
+			.toList();
+		assertEquals(List.of(LETTER, MEMO), kinds);
+		TLObject cover = (TLObject) folder.tValue(part(folder, "cover"));
+		assertEquals("Blue", cover.tValue(part(cover, "text")));
+		assertContains("Created 4 objects", result.text());
+		delete(folder);
+	}
+
+	/** An object is still created inside one that exists, by naming that one as its container. */
+	public void testAPartIsCreatedInAnExistingObject() {
+		ToolResult folder = create(FOLDER, values("name", "Existing"));
+		TLObject existing = only(FOLDER, "name", "Existing");
+
+		ToolResult letter =
+			call(() -> _tool.createObject(LETTER, values("title", "Late"), idOf(existing), null, ToolContext.EMPTY));
+
+		assertSucceeded(folder);
+		assertSucceeded(letter);
+		Collection<?> documents = (Collection<?>) existing.tValue(part(existing, "documents"));
+		assertEquals(1, documents.size());
+		delete(existing);
+	}
+
+	/** A part of a reference that holds several kinds names its kind; without it, the kinds are listed. */
+	public void testAPartOfSeveralPossibleKindsNeedsItsType() {
+		int before = instances(FOLDER).size();
+
+		ToolResult result = create(FOLDER, values("name", "Untyped",
+			"documents", List.of(newPart(null, values("title", "Offer")))));
+
+		assertRefused(result, "'documents'");
+		assertContains(LETTER, result.text());
+		assertContains(MEMO, result.text());
+		assertEquals(before, instances(FOLDER).size());
+	}
+
+	/** Every wrong value of every part is reported at once, each with the part it belongs to. */
+	public void testWrongValuesInPartsAreNamedWithTheirPlace() {
+		int before = instances(ORDER).size();
+
+		ToolResult result = create(ORDER, values("number", "A-19", "lines", List.of(
+			newPart(null, values("product", "Tea", "quantity", "many")),
+			newPart(null, values("product", "Milk", "colour", "white")))));
+
+		assertRefused(result, "'lines' object 1");
+		assertContains("'quantity'", result.text());
+		assertContains("'lines' object 2", result.text());
+		assertContains("'colour'", result.text());
+		assertEquals(before, instances(ORDER).size());
+	}
+
+	/**
+	 * A part that breaks a rule undoes the whole tree: the order and its first line are gone as well,
+	 * and the answer names the attribute of the line that is missing.
+	 */
+	public void testAPartThatBreaksARuleUndoesTheWholeTree() {
+		int orders = instances(ORDER).size();
+		int lines = instances(ORDER_LINE).size();
+
+		ToolResult result = create(ORDER, values("number", "A-20", "lines", List.of(
+			newPart(null, values("product", "Tea")),
+			newPart(null, values("quantity", 3)))));
+
+		assertRefused(result, "'product'");
+		assertContains("'lines' object 2", result.text());
+		assertEquals(orders, instances(ORDER).size());
+		assertEquals(lines, instances(ORDER_LINE).size());
+	}
+
+	/**
+	 * Every object of the tree is asked for: a part the account may not add, or of a type it may not
+	 * create, refuses the call, and nothing is created.
+	 */
+	public void testEveryPartIsAskedForTheRightToCreateIt() {
+		int before = instances(FOLDER).size();
+
+		ToolResult notIn = create(context(new DenyCreateIn("documents")), FOLDER, values("name", "Guarded",
+			"documents", List.of(newPart(LETTER, values("title", "Offer")))));
+		ToolResult notOfType = create(context(new DenyCreateOf(MEMO)), FOLDER, values("name", "Guarded",
+			"documents", List.of(newPart(MEMO, values("title", "Call notes")))));
+
+		assertRefused(notIn, "'documents'");
+		assertRefused(notOfType, MEMO);
+		assertEquals(before, instances(FOLDER).size());
+	}
+
+	/** Parts nest three levels below the object created, and not deeper. */
+	public void testPartsNestOnlySoDeep() {
+		int before = instances(FOLDER).size();
+
+		ToolResult deepest = create(FOLDER, values("name", "Level 0", "folders", List.of(folder(1, 3))));
+		assertSucceeded(deepest);
+		delete(only(FOLDER, "name", "Level 0"));
+		ToolResult tooDeep = create(FOLDER, values("name", "Level 0", "folders", List.of(folder(1, 4))));
+
+		assertRefused(tooDeep, "3 levels");
+		assertEquals(before, instances(FOLDER).size());
+	}
+
 	// -- delete --
 
 	/** The object is gone after the turn commits. */
@@ -498,6 +656,37 @@ public class TestObjectEditTool extends BasicTestCase {
 		return MetaElementUtil.getAllInstancesOf((TLClass) TLModelUtil.findType(MEMORY_TYPE), TLObject.class);
 	}
 
+	/** A new part, in the form createObject takes it: its type where it has to be named, and its values. */
+	private static Map<String, Object> newPart(String type, Map<String, Object> values) {
+		Map<String, Object> result = new LinkedHashMap<>();
+		if (type != null) {
+			result.put("type", type);
+		}
+		result.put("values", values);
+		return result;
+	}
+
+	/** A folder of the given level, holding the folders down to the last level. */
+	private static Map<String, Object> folder(int level, int last) {
+		Map<String, Object> values = values("name", "Level " + level);
+		if (level < last) {
+			values.put("folders", List.of(folder(level + 1, last)));
+		}
+		return newPart(null, values);
+	}
+
+	private static List<TLObject> instances(String type) {
+		return MetaElementUtil.getAllInstancesOf((TLClass) TLModelUtil.findType(type), TLObject.class);
+	}
+
+	private static TLObject only(String type, String attribute, Object value) {
+		List<TLObject> found = instances(type).stream()
+			.filter(object -> value.equals(object.tValue(part(object, attribute))))
+			.toList();
+		assertEquals(1, found.size());
+		return found.get(0);
+	}
+
 	private static TLObject onlyMemoryWith(String text) {
 		List<TLObject> found = memories().stream()
 			.filter(memory -> text.equals(memory.tValue(part(memory, "text"))))
@@ -595,6 +784,24 @@ public class TestObjectEditTool extends BasicTestCase {
 		@Override
 		public boolean canCreate(TLClass type, TLObject context) {
 			return false;
+		}
+	}
+
+	/** Everything except adding to the composition reference of the given name. */
+	private record DenyCreateIn(String composition) implements GrantAll {
+
+		@Override
+		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute) {
+			return !compositionAttribute.getName().equals(composition);
+		}
+	}
+
+	/** Everything except creating objects of the given type. */
+	private record DenyCreateOf(String type) implements GrantAll {
+
+		@Override
+		public boolean canCreate(TLClass created, TLObject context) {
+			return !TLModelUtil.qualifiedName(created).equals(type);
 		}
 	}
 

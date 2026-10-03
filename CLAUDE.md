@@ -323,7 +323,7 @@ the chat's notice line; `AgentExecution.model` is corrected to what answered. `a
 One front end consumes that API, the React chat (`tl-chat/ui/`): TypeScript + Vite, mounted into the React view layer by the composed view elements `<chat-conversation>`, `<chat-rail>` and `<chat-dock>`. See `tl-chat/CLAUDE.md` for the toolchain and the dev loop. It is shown in two kinds of page:
 
 - **React pages** (`/view/`), where the view elements stand in a `.view.xml`.
-- **Classic LayoutServlet pages**, through `tl-chat-classic` (#618): `ReactViewComponent` writes a React view into a classic tab, with the classic window as the React window. A host gets the "Albert" tab by depending on `tl-chat-classic`. The bridge is temporary - `LayoutComponent` is to leave tl-core - and works around four engine gaps inside tl-ai, each marked in the code; see `tl-chat-classic/CLAUDE.md`. It replaced the hand-written `chat-client.js` control.
+- **Classic LayoutServlet pages**, through `tl-chat-classic` (#618): `ReactViewComponent` writes a React view into a classic tab, with the classic window as the React window. A host gets the "Albert" tab by depending on `tl-chat-classic`. The bridge is temporary - `LayoutComponent` is to leave tl-core - and works around five engine gaps inside tl-ai, each marked in the code; see `tl-chat-classic/CLAUDE.md`. It replaced the hand-written `chat-client.js` control.
 
 `ChatSessionManager` maintains per-session state (Chat + ConversationMemory + ConversationLog) with LRU cache. `ChatHistoryService` persists to KnowledgeBase.
 

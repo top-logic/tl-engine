@@ -18,6 +18,7 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -33,7 +34,6 @@ import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.annotate.LabelPosition;
-import com.top_logic.tl.ai.core.agent.environment.I18NConstants;
 import com.top_logic.tl.ai.core.agent.environment.PromptPlaceholders;
 import com.top_logic.tl.ai.core.agent.environment.RunEnvironment;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
@@ -135,6 +135,7 @@ public class TextPromptContributor extends AbstractConfiguredInstance<TextPrompt
 		@LabelPositioning(LabelPosition.ABOVE)
 		@ControlProvider(MultiLineText.class)
 		@Constraint(KnownPlaceholders.class)
+		@Binding(VerbatimTextBinding.class)
 		ResKey getText();
 
 	}
@@ -182,10 +183,9 @@ public class TextPromptContributor extends AbstractConfiguredInstance<TextPrompt
 	 * without leading and trailing blank space.
 	 *
 	 * <p>
-	 * The service editor writes the configuration with a pretty-printer that indents the content
-	 * of an element to its depth, and the reader keeps that indentation on every line but the
-	 * first. Without this, the text of a contributor saved once in the service editor reaches the
-	 * model with eight tabs in front of every line - which Markdown reads as a code block.
+	 * For a text a host writes into the XML indented to the depth of its element, as XML usually
+	 * is: the reader keeps that indentation on every line but the first, and Markdown reads a line
+	 * indented by four spaces or a tab as code.
 	 * </p>
 	 */
 	static String unindent(String text) {
@@ -216,6 +216,31 @@ public class TextPromptContributor extends AbstractConfiguredInstance<TextPrompt
 			result++;
 		}
 		return result;
+	}
+
+	/**
+	 * Writes the text of a {@link TextPromptContributor} as CDATA, so that it comes back exactly
+	 * as it was entered.
+	 *
+	 * <p>
+	 * The service editor writes the configuration with a pretty-printer that indents every line of
+	 * an element's text to the element's depth and strips the indentation the line had. A text
+	 * saved there would come back with tabs in front of every line - in the editor and in the
+	 * prompt - and a nested Markdown list would lose its nesting. CDATA content is left alone.
+	 * </p>
+	 */
+	public static class VerbatimTextBinding extends ResKey.ValueBinding {
+
+		/** The instance the configuration uses. */
+		public static final VerbatimTextBinding INSTANCE = new VerbatimTextBinding();
+
+		/**
+		 * Creates a {@link VerbatimTextBinding}.
+		 */
+		@CalledByReflection
+		public VerbatimTextBinding() {
+			super(true);
+		}
 	}
 
 	/**
@@ -260,7 +285,7 @@ public class TextPromptContributor extends AbstractConfiguredInstance<TextPrompt
 			List<String> unknown = unknownAgents(agents, AllAgentNames.existingAgentNames());
 			if (!unknown.isEmpty()) {
 				property.setProblemDescription(
-					com.top_logic.tl.ai.core.agent.I18NConstants.UNKNOWN_AGENTS__NAMES.fill(String.join(", ", unknown)));
+					I18NConstants.UNKNOWN_AGENTS__NAMES.fill(String.join(", ", unknown)));
 			}
 		}
 
@@ -300,8 +325,8 @@ public class TextPromptContributor extends AbstractConfiguredInstance<TextPrompt
 				return;
 			}
 			String names = String.join(", ", unknown.stream().map(name -> "{{" + name + "}}").toList());
-			property.setProblemDescription(
-				I18NConstants.UNKNOWN_PLACEHOLDER__NAMES_KNOWN.fill(names, PromptPlaceholders.knownNames()));
+			property.setProblemDescription(com.top_logic.tl.ai.core.agent.environment.I18NConstants
+				.UNKNOWN_PLACEHOLDER__NAMES_KNOWN.fill(names, PromptPlaceholders.knownNames()));
 		}
 
 		/**

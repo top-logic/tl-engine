@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -29,6 +30,7 @@ import com.top_logic.tl.ai.core.agent.environment.PromptPlaceholders;
 import com.top_logic.tl.ai.core.agent.environment.RunEnvironment;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.util.Resources;
+import com.top_logic.util.autoconf.InAppServiceConfigStore;
 
 /**
  * Tests for {@link TextPromptContributor}: a host gives its agents a text without Java code, in the
@@ -210,6 +212,26 @@ public class TestTextPromptContributor extends TestCase {
 
 		assertEquals("## Domain knowledge\nAn order is 'open' until it is invoiced.\n\n- One item\n  - A nested item",
 			contributor.text(Locale.ENGLISH));
+	}
+
+	/**
+	 * Saving in the service editor and reading the file back gives the text exactly as it was
+	 * entered - also a nested list, whose indentation the editor's pretty-printer would strip from
+	 * plain element text.
+	 */
+	public void testServiceEditorRoundTripKeepsTheText() throws ConfigurationException {
+		String entered = "## Domain knowledge\n\n- One item\n  - A nested item\n\nYou work for {{user}}.";
+		TextPromptContributor.Config<?> config =
+			TypedConfiguration.newConfigItem(TextPromptContributor.Config.class);
+		config.update(config.descriptor().getProperty(TextPromptContributor.Config.TEXT),
+			ResKey.builder().add(Locale.ENGLISH, entered).build());
+
+		String written = InAppServiceConfigStore.toXml("contributor", config, Set.of());
+		TextPromptContributor reread =
+			(TextPromptContributor) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(read(written));
+
+		assertTrue(written, written.contains("<![CDATA["));
+		assertEquals(entered, reread.text(Locale.ENGLISH));
 	}
 
 	/**

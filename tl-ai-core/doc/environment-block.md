@@ -233,14 +233,22 @@ An order is 'open' until it is invoiced.</en>
   agent's `display-name`). A run gets the text in the UI language of the account it acts for. When
   there is no text in that language, the engine's usual fallback applies: the fallback chain of the
   resource bundles, then the first supported language that has a text.
+  Write the text flush left, as above. Indentation that all lines but the first have in common is
+  removed from the prompt, but the service editor shows it to the next administrator.
 - **`agents`** is a comma-separated list of technical agent names. Empty means every agent - also
   the infrastructure agents such as the prompt improver, which then pay for the text on every run.
-  Name the agents when the text is about the application's data.
-- **Placeholders**: the text may use every `{{...}}` placeholder of an agent's prompt. An unknown
-  placeholder is a configuration error, refused by a `@Constraint` on the property. The engine asks
-  that constraint at two points: when the application configuration is read at start-up, and when an
-  administrator saves the service in the service editor, before the file is written. Only a literal
-  text is inspected; a `text` that references a resource key by name is not.
+  Name the agents when the text is about the application's data. In the service editor this is a
+  selection of the agents that exist: the configured ones and the ones stored in the knowledge base
+  (`AllAgentNames.existingAgentNames`). A name that no agent has is refused when the service is
+  saved. It is **not** refused at start-up: the engine checks the configuration before the agent
+  definitions and the knowledge base can answer, so a name that matches no agent then gets the text
+  nowhere.
+- **Placeholders**: the text may use every `{{...}}` placeholder of an agent's prompt; the tooltip of
+  the field lists them with their meaning. An unknown placeholder is a configuration error, refused
+  by a `@Constraint` on the property. The engine asks that constraint at two points: when the
+  application configuration is read at start-up, and when an administrator saves the service in the
+  service editor, before the file is written. Only a literal text is inspected; a `text` that
+  references a resource key by name is not.
 
 **Changing the text in the running application.** *Administration → Service Editor → LLM-Dienst*
 shows the contributor under *Prompt contributors*, with the text in a multi-line field per language.
@@ -259,11 +267,27 @@ same prompt on every turn. So the text of an open conversation changes at most o
 boundary, and that message pays for its prompt once without a cache hit. There is never a mix of old
 and new text in one request.
 
+The service editor writes the text as CDATA (`TextPromptContributor.VerbatimTextBinding`), so it
+comes back exactly as it was entered. Plain element text would not: the editor's pretty-printer
+indents every line of it to the element's depth and strips the indentation the line had, so the text
+would come back with tabs on every line and a nested list would lose its nesting.
+
 > ⚠️ **Saving writes the whole `LLMService` configuration.** As for every service, the written file
 > carries `config:override="true"` and replaces the `LLMService` configuration of all other files -
 > providers, models, failover and contributors. From then on, a change to those files (for example in
-> a new release of the application) has no effect until the written file is deleted. That is how the
-> engine's service editor behaves for every service.
+> a new release of the application) has no effect until the written file is deleted. The file also
+> holds the API keys the service runs with, encrypted - not the `%..._API_KEY%` aliases they came
+> from. That is how the engine's service editor behaves for every service.
+
+> ⚠️ **The save fails when the autoconf file it writes already uses a key alias.** Before it writes,
+> the service editor reads the existing
+> `<autoconf>/com.top_logic.tl.ai.core.provider.LLMService.config.xml` without alias resolution. An
+> `api-key="%ANTHROPIC_API_KEY%"` in that file cannot be decoded, and the save ends with *"Service
+> Konfiguration konnte nicht gespeichert werden."* This hits an application that ships its
+> `LLMService` configuration in `WEB-INF/autoconf` and runs without an external `tl_autoconf_dir` -
+> tl-ai-demo in development is one. A deployment with an external `tl_autoconf_dir` is not affected
+> on the first save: the file does not exist there yet. This is an engine gap; until it is fixed,
+> keep the host's `LLMService` configuration in `WEB-INF/conf` or use an external `tl_autoconf_dir`.
 
 **Who may change it.** Everybody who may use the service editor's save and restart commands - in a
 standard TopLogic application, the administrators. The text then reaches the system prompt of every
@@ -497,6 +521,7 @@ conversation: it sits in the system prompt, which nothing else records.
 | `agent/environment/UserMemories` / `UserMemoryBinding` | Reading the account's memories, rendering the section, and the per-conversation snapshot. |
 | `agent/environment/UserMemoryConfig` / `UserMemorySettings` | The `<user-memory>` configuration section and its defaults. |
 | `agent/SystemPromptContributor` / `AgentFactory#appendContributions` | Prose the installation adds to every prompt, and where it lands. |
+| `agent/TextPromptContributor` | The shipped contributor: a translatable text for picked agents, its constraints and its CDATA binding. |
 | `tools/memory/UserMemoryTool` | `remember` and `recall`. |
 | `tools/memory/MemoryConsent` / `MemoryConsentBinding` / `ConsentWords` | What the user agreed to in this turn, and the one rule that decides it. |
 | `execution/AgentExecutionStore#createMemory` / `memoriesOf` / `deleteMemory` | The write path, the owner filter and the delete. |

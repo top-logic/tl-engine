@@ -51,7 +51,7 @@ write one.
 | `WEB-INF/layouts/mainTabbar.layout.overlay.xml` | Prepends the Albert tab to a host's `mainTabbar`. |
 | `WEB-INF/layouts/tl-chat/chat/tabLayout.layout.xml` | The tab. The reusable piece: a host that builds its own tab bar references it. |
 | `WEB-INF/layouts/tl-chat/chat/agent.layout.xml` → `agent.xml` | The `ReactViewComponent`, `view="tl-chat-classic/chat.view.xml"`. |
-| `WEB-INF/views/tl-chat-classic/chat.view.xml` | The default chat: the user's chats, the conversation, a rail with Progress and Sources. Generic on purpose - no application facts. |
+| `WEB-INF/views/tl-chat-classic/chat.view.xml` | The default chat: the user's chats, the conversation, a rail with Progress and Sources, and the rail's pane, in which the agent's `present` shows a table, a chart or a form (#649). Generic on purpose - no application facts. |
 
 The layout paths stay `tl-chat/chat/…`: they are how a host's persisted layouts and its
 `component-access` entries name these components (see `tl-ai-demo/src/main/webapp/WEB-INF/conf/secdemo.config.xml`).
@@ -61,6 +61,14 @@ the `chat-id`, facts about the situation (`<context>`, `<selection>`), the rail 
 `<chat>` offers - is written in a `.view.xml` of the application, and its tab points a
 `ReactViewComponent` at it. `chat.view.xml` here is the example to start from. The default view uses
 `chat-id="classic"`, so the classic tab is a conversation of its own, not the React pages' `chat`.
+
+**A copy keeps the pane's three parts together** (#649): the `paneObject` channel,
+`present="paneObject"` on `<chat-conversation>` and `input="paneObject"` on `<chat-rail>`. Without
+`present` the agent is not offered the `present` tool and answers "show me all X as a table" in text;
+without the rail's `input` it puts the table on a channel nothing displays and tells the user they see
+it. `<selection channel="paneObject">` belongs with them: it tells the agent which object the pane
+shows. A copy is a copy - a view overlay cannot change the `<chat-conversation>` element, because the
+children of a view are an unkeyed list - so an application updates it when this file changes.
 
 ## Temporary workarounds
 

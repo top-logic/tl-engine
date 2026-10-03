@@ -5,9 +5,22 @@
 	com.top_logic.ai.chat.classic.ReactViewComponent.
 
 	Generic on purpose: the user's chats on the left, the conversation in the middle, the agent's plan
-	and its sources in a rail on the right. Nothing here knows the application. An application that
-	wants its own agent, facts about its classic selection or its own rail sections points the
-	component's `view` attribute at a view of its own - this file is the example to start from.
+	and its sources in a rail on the right, and the rail's pane, in which the agent shows what the user
+	asked to see. Nothing here knows the application. An application that wants its own agent, facts
+	about its classic selection or its own rail sections points the component's `view` attribute at a
+	view of its own - this file is the example to start from.
+
+	A copy has to keep three parts together, or "show me all X as a table" breaks (#649):
+
+	- the "paneObject" channel;
+	- present="paneObject" on <chat-conversation>: the one channel the agent's `present` tool may
+	  write. Deny by default - without it the agent is not offered `present` at all and answers in
+	  text;
+	- input="paneObject" on <chat-rail>: the pane that renders what stands on the channel. Without it
+	  the agent shows a table on a channel nothing displays, and tells the user they see it.
+
+	<selection channel="paneObject"> is the fourth part worth keeping: it tells the agent which object
+	the pane shows, so that "change its date" works on the object the user opened from a table.
 
 	`chat-id="classic"` names the conversation of this tab. It is not the `chat` id of a React page, so
 	a user who has both open has two independent conversations rather than one conversation shown in
@@ -16,6 +29,12 @@
 <view>
 	<channels>
 		<channel name="chatSession"/>
+		<!--
+			What the rail's pane shows: what the agent presented - a table, a chart or a form, of any
+			type - and an object the user opens from it. Empty means the rail shows its sections; the
+			pane's close button empties it again.
+		-->
+		<channel name="paneObject"/>
 		<channel name="progressBadge"/>
 		<channel name="sourcesBadge"/>
 	</channels>
@@ -115,7 +134,14 @@
 		</data-list>
 		<!-- The panel bounds the conversation's height, so the transcript scrolls inside it. -->
 		<panel fill="true">
-			<chat-conversation input="chatSession">
+			<!--
+				`present` names the one channel of this view the agent may write: "show me all X as a
+				table" ends as that table in the rail's pane, in one tool call.
+			-->
+			<chat-conversation
+				input="chatSession"
+				present="paneObject"
+			>
 				<actions rate="true"/>
 				<controls
 					attachments="true"
@@ -124,9 +150,20 @@
 					model-picker="true"
 					thinking="true"
 				/>
+				<!-- Which object the user has open in the pane: its label, type and identifier. -->
+				<selection name="Open object"
+					channel="paneObject"
+				/>
 			</chat-conversation>
 		</panel>
-		<chat-rail strip="true">
+		<!--
+			While "paneObject" holds something, the rail shows it in its pane in place of the sections:
+			a table, a chart or a form, for any type. A row clicked in a table opens that object's form,
+			and the pane's "back" returns to the table as it was.
+		-->
+		<chat-rail input="paneObject"
+			strip="true"
+		>
 			<section name="progress"
 				badge="progressBadge"
 				icon="css:bi bi-list-check"

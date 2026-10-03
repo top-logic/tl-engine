@@ -534,9 +534,9 @@
 					chat and is refused it in a background run. That contrast is the whole point of the
 					mechanism.
 
-					Note what "script" on this list does *not* buy: executing TL-Script with
-					withCommit=true additionally costs "data.write", which is off the list, so an
-					unattended run cannot persist through the script tool either - not even as an
+					Note what "script" on this list does *not* buy: changing data with changeData
+					(anything but a dry run) additionally costs "data.write", which is off the list, so
+					an unattended run cannot persist through the script tool either - not even as an
 					administrator, since the allowlist binds them too.
 				-->
 				<background-allowlist>

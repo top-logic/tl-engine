@@ -12,10 +12,12 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Tests what {@code query} and {@code present} accept as a read.
+ * Tests what {@code query} and {@code present} accept as a read: the read-only check, and the help a
+ * query that does not compile is answered with.
  */
 public class TestReadOnlyScripts extends BasicTestCase {
 
@@ -33,6 +35,40 @@ public class TestReadOnlyScripts extends BasicTestCase {
 	public void testWhatChangesNothingStaysARead() {
 		TLScriptExecutor.compileReadOnly("today().toUserCalendar().withDayAdded(30).toDate()");
 		TLScriptExecutor.compileReadOnly("ifElse(1 > 2, throw('never'), 1)");
+	}
+
+	/**
+	 * A query that does not compile, and one that fails while it runs - a date taken for a calendar -
+	 * is answered with the verified reading functions.
+	 */
+	public void testAFailedQueryGetsTheReadingFunctions() {
+		String uncompiled = new QueryTool().query("all(`tl.ai.core:Agent`).frobnicate()", ToolContext.EMPTY);
+		String failed = new QueryTool().query("today().withDayAdded(30)", ToolContext.EMPTY);
+
+		assertTrue(uncompiled, uncompiled.startsWith("Error: "));
+		assertContains(QueryLanguage.READING, uncompiled);
+		assertTrue(failed, failed.startsWith("Error: "));
+		assertContains(QueryLanguage.READING, failed);
+	}
+
+	/** A query refused for changing data is told where changes go, and given no cheat sheet. */
+	public void testARefusedWriteGetsNoCheatSheet() {
+		String answer = new QueryTool().query("all(`tl.ai.core:Agent`).foreach(a -> $a.delete())", ToolContext.EMPTY);
+
+		assertContains("changeData", answer);
+		assertFalse(answer, answer.contains(QueryLanguage.READING));
+	}
+
+	/** The change skill gets the whole verified sheet where its content asks for it. */
+	public void testTheSheetReplacesItsPlaceholder() {
+		String content = "<cheat_sheet>\n" + QueryLanguage.PLACEHOLDER + "\n</cheat_sheet>";
+
+		String expanded = QueryLanguage.expand(content);
+
+		assertContains("all(`m:T`)", expanded);
+		assertContains("Writing (changeData only):", expanded);
+		assertFalse(expanded.contains(QueryLanguage.PLACEHOLDER));
+		assertEquals("no placeholder", QueryLanguage.expand("no placeholder"));
 	}
 
 	private static void assertNotReadOnly(String script) {

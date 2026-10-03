@@ -10,6 +10,7 @@ import java.util.List;
 
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tl.ai.core.tools.script.QueryLanguage;
 import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor;
 
 /**
@@ -118,9 +119,11 @@ public final class Presentation {
 		}
 		try {
 			return TLScriptExecutor.compileReadOnly(source);
+		} catch (TLScriptExecutor.NotReadOnly ex) {
+			throw new IllegalArgumentException("The chart's " + name + " function: " + ex.getMessage(), ex);
 		} catch (IllegalArgumentException ex) {
 			throw new IllegalArgumentException("The chart's " + name + " function does not compile: "
-				+ ex.getMessage(), ex);
+				+ QueryLanguage.withReadingHelp(ex.getMessage()), ex);
 		}
 	}
 

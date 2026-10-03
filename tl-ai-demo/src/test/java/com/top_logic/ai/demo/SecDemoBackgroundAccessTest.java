@@ -120,19 +120,19 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * An unattended run cannot commit through TL-Script, not even as an administrator.
+	 * An unattended run cannot change data with a script, not even as an administrator.
 	 *
 	 * <p>
 	 * The bypass this closes, end to end: {@code script} is on the demo's allowlist because the harness
-	 * needs it, {@code data.write} is deliberately off it, and {@code executeTLScript} used to be gated
-	 * by {@code script} alone. An unattended run - which auto-approves every call because no human is
-	 * there to ask - could therefore read a write tool's implementation, re-run it through
-	 * {@code executeTLScript} with {@code withCommit=true} and persist it, in a policy whose whole
-	 * intent is "no {@code data.write} unattended". Administrators are the sharpest case: the allowlist
-	 * binds them too, so not even the account that bypasses every role grant gets the commit.
+	 * needs it, {@code data.write} is deliberately off it, and the script tool used to be gated by
+	 * {@code script} alone. An unattended run - which auto-approves every call because no human is
+	 * there to ask - could therefore read a write tool's implementation, re-run it as a script and
+	 * persist it, in a policy whose whole intent is "no {@code data.write} unattended".
+	 * Administrators are the sharpest case: the allowlist binds them too, so not even the account that
+	 * bypasses every role grant gets the change.
 	 * </p>
 	 */
-	public void testBackgroundRunCannotCommitThroughTLScript() {
+	public void testBackgroundRunCannotChangeDataWithAScript() {
 		Person administrator = anyAdministrator();
 		assertNotNull("The application must have at least one administrator account.", administrator);
 		assertNull("Precondition: 'script' is on the allowlist, so the tool itself is reachable.",
@@ -141,7 +141,7 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 		List<TLObject> seeded = tickets();
 		try {
 			String refused =
-				executeScript(TopLogicSecurityContext.forRun(administrator, true), CREATE_TICKET, true);
+				changeData(TopLogicSecurityContext.forRun(administrator, true), CREATE_TICKET, false);
 
 			assertTrue("The refusal must name the capability that is missing from the allowlist: "
 				+ refused, refused.contains(ToolGroups.DATA_WRITE));
@@ -154,16 +154,17 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * A read-only script is unaffected: the harness of {@code tl-ai-demo/doc/secdemo/testbed.md} runs
-	 * unattended.
+	 * The dry run of a change is unaffected: it saves nothing, so {@code script} on the allowlist is
+	 * all it needs - and the harness of {@code tl-ai-demo/doc/secdemo/testbed.md} runs unattended.
 	 */
-	public void testBackgroundRunStillReadsThroughTLScript() {
-		String result = executeScript(securityFor(BEN, true), "all(`pm:Ticket`).size()", false);
+	public void testBackgroundRunStillDryRunsAChange() {
+		List<TLObject> seeded = tickets();
+		String result = changeData(securityFor(BEN, true), CREATE_TICKET, true);
 
-		assertFalse("'script' is allowlisted, so a read-only script must go through: " + result,
+		assertFalse("'script' is allowlisted, so a dry run must go through: " + result,
 			result.contains("Permission denied"));
-		assertTrue("The script must actually have run: " + result,
-			result.contains("\"success\":true") || result.contains("\"success\": true"));
+		assertTrue("The dry run must actually have run: " + result, result.contains("Dry run"));
+		assertEquals("A dry run writes nothing.", seeded.size(), tickets().size());
 	}
 
 	/**

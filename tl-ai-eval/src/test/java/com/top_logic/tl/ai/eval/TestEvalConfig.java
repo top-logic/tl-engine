@@ -70,12 +70,12 @@ public class TestEvalConfig extends TestCase {
 		long writing = scenarios.stream()
 			.filter(s -> s.getExpectations().stream()
 				.anyMatch(e -> e instanceof ToolSequence tools
-					&& tools.getRequired().contains("script-exec.executeTLScript")))
+					&& tools.getRequired().contains("script-exec.changeData")))
 			.count();
 		long refusing = scenarios.stream()
 			.filter(s -> s.getExpectations().stream()
 				.anyMatch(e -> e instanceof ToolSequence tools
-					&& tools.getForbidden().contains("script-exec.executeTLScript")))
+					&& tools.getForbidden().contains("script-exec.changeData")))
 			.count();
 		assertTrue("Fewer than two scenarios write anything: " + writing, writing >= 2);
 		assertTrue("No scenario requires the write tool to stay unused: " + refusing, refusing >= 1);

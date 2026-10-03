@@ -74,15 +74,15 @@ public class TestEvalGraders extends TestCase {
 	 * A scenario writes the qualified name; a run records the bare one the model used.
 	 *
 	 * <p>
-	 * The one that would silently be wrong: a scenario saying {@code script-exec.executeTLScript}
-	 * while the transcript says {@code executeTLScript} must not report "never called".
+	 * The one that would silently be wrong: a scenario saying {@code script-exec.changeData}
+	 * while the transcript says {@code changeData} must not report "never called".
 	 * </p>
 	 */
 	public void testQualifiedNameMatchesTheBareCall() {
-		assertTrue(Graders.wasCalled("script-exec.executeTLScript", List.of("executeTLScript")));
-		assertTrue(Graders.wasCalled("script-exec__executeTLScript", List.of("executeTLScript")));
-		assertTrue(Graders.wasCalled("executeTLScript", List.of("executeTLScript")));
-		assertFalse(Graders.wasCalled("script-exec.executeTLScript", List.of("listInstances")));
+		assertTrue(Graders.wasCalled("script-exec.changeData", List.of("changeData")));
+		assertTrue(Graders.wasCalled("script-exec__changeData", List.of("changeData")));
+		assertTrue(Graders.wasCalled("changeData", List.of("changeData")));
+		assertFalse(Graders.wasCalled("script-exec.changeData", List.of("listInstances")));
 	}
 
 	/** An expectation that names nothing fails rather than passing on a technicality. */

@@ -64,7 +64,7 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 	private static final String AUTHORING_SKILL = "TL_agenticAuthoring";
 
 	/** Four tools, all {@code script}. */
-	private static final String SCRIPT_SKILL = "TL_tlScriptWriting";
+	private static final String SCRIPT_SKILL = "TL_writingDataChanges";
 
 	/** Guidance for creating instances, carrying the {@code script} tool it tells you to run. */
 	private static final String INSTANCE_CREATION_SKILL = "TL_tlScriptInstanceCreation";
@@ -179,7 +179,7 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 	 *
 	 * <p>
 	 * It used to declare no tools, so the filter always kept it, and its description sent the reader on
-	 * to {@code TL_tlScriptWriting} "which has {@code executeTLScript}" - a skill a user without
+	 * to the script skill "which has the script tool" - a skill a user without
 	 * {@code script} cannot load either. Declaring the tool it tells the agent to run fixes both
 	 * halves. Both roles of this fixture hold {@code script}, so only the loading half is observable
 	 * here; the withheld half is pinned by {@code TestSkillTool} in {@code tl-ai-core}, against a policy

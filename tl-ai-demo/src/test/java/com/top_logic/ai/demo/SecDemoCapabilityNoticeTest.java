@@ -71,8 +71,8 @@ public class SecDemoCapabilityNoticeTest extends SecDemoPersonaTest {
 	/** Pure instruction text, no tools. */
 	private static final String TOOLLESS_SKILL = "TL_promptModelExplorer";
 
-	/** Four tools, all in the privileged {@code script} group. */
-	private static final String SCRIPT_SKILL = "TL_tlScriptWriting";
+	/** Three tools, all in the privileged {@code script} group. */
+	private static final String SCRIPT_SKILL = "TL_writingDataChanges";
 
 	/** Precondition: the skills this test reasons about have the shape it assumes. */
 	public void testFixtureSkillsHaveTheAssumedShape() {
@@ -80,7 +80,7 @@ public class SecDemoCapabilityNoticeTest extends SecDemoPersonaTest {
 			Set.of(ToolGroups.MODEL_READ, ToolGroups.DATA_READ), groupsOf(MIXED_SKILL));
 		assertEquals("TL_taskManagement is the all-or-nothing case and must sit in one group.",
 			Set.of(ToolGroups.WORKSPACE), groupsOf(WORKSPACE_SKILL));
-		assertEquals("TL_tlScriptWriting must sit in the privileged script group.",
+		assertEquals("TL_writingDataChanges must sit in the privileged script group.",
 			Set.of(ToolGroups.SCRIPT), groupsOf(SCRIPT_SKILL));
 		assertTrue("TL_promptModelExplorer must declare no tools.",
 			skill(TOOLLESS_SKILL).tools().isEmpty());

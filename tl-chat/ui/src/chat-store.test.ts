@@ -1410,7 +1410,7 @@ describe('recovering a run on boot', () => {
       {
         requestId: 'r8',
         type: 'approval',
-        header: 'executeTLScript',
+        header: 'changeData',
         toolMode: 'DATA_WRITE',
         sessionId: 's1',
         remainingMs: 40_000,

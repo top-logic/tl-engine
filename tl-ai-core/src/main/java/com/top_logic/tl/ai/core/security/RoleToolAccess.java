@@ -173,8 +173,8 @@ public class RoleToolAccess {
 	 *       Web fetch and the browser tools send data outward. A default that can exfiltrate is not a
 	 *       read-only default.
 	 *   script
-	 *       TL-Script reaches every type; its enumeration results were the leak #289 closed; and its
-	 *       own withCommit argument is a path to a persisted write. Never a default.
+	 *       TL-Script reaches every type; its enumeration results were the leak #289 closed; and
+	 *       changeData is a path to a persisted write. Never a default.
 	 *
 	 * A word on why data.read is defensible here. The justification is that L1 grants the *ability to
 	 * ask* and L2 decides per object what is actually visible - so an application with no
@@ -535,8 +535,8 @@ public class RoleToolAccess {
 	 * Whether the roles held by a user grant them a capability as such, independently of any tool.
 	 *
 	 * <p>
-	 * For an operation that is not a tool of its own but costs a capability anyway: executing
-	 * TL-Script with {@code withCommit=true} persists arbitrary writes, so it requires
+	 * For an operation that is not a tool of its own but costs a capability anyway: a call of
+	 * {@code changeData} that is no dry run persists arbitrary writes, so it requires
 	 * {@link ToolGroups#DATA_WRITE} in addition to the {@link ToolGroups#SCRIPT} the tool itself is
 	 * classified as. The argument that decides is known only inside the tool, which is why this
 	 * question is asked separately from {@link #check(Collection, ToolIdentity)} and answered by the
@@ -556,7 +556,7 @@ public class RoleToolAccess {
 	 *        The name of the required capability (tool group).
 	 * @param operation
 	 *        What the caller is about to do, for the denial message - e.g.
-	 *        {@code "executing TL-Script with withCommit=true"}.
+	 *        {@code "changing data with changeData"}.
 	 * @return The decision, carrying the granting role or the denial reason.
 	 */
 	public Decision checkCapability(Collection<String> heldRoleNames, String capability, String operation) {

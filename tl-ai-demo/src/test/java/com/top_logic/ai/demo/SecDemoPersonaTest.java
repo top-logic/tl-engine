@@ -104,8 +104,11 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 	/** In {@code agent.authoring}, a privileged group, granted to nobody. */
 	public static final String AGENT_AUTHORING_TOOL = "agent-authoring.createAgent";
 
-	/** In {@code script}, a privileged group, granted to both roles. */
-	public static final String SCRIPT_TOOL = "script-exec.executeTLScript";
+	/** In {@code script}, a privileged group, granted to both roles: changing data with a script. */
+	public static final String SCRIPT_TOOL = "script-exec.changeData";
+
+	/** In {@code data.read}: answering a question with one read-only expression. */
+	public static final String QUERY_TOOL = "model-query.query";
 
 	/** In {@code model.structure}, a privileged group, granted to nobody. */
 	public static final String STRUCTURE_TOOL = "model-modification.createClass";
@@ -232,11 +235,12 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 	}
 
 	/**
-	 * Runs the registered TL-Script tool as the given persona, the way a tool call in a run does.
+	 * Runs the registered tool that changes data with a script as the given persona, the way a tool
+	 * call in a run does.
 	 *
 	 * <p>
 	 * Goes through {@link ToolExecutions} and the tool's own argument dispatch rather than calling the
-	 * Java method, because what is under test on the commit path is a check the tool performs on an
+	 * Java method, because what is under test on the change path is a check the tool performs on an
 	 * <em>argument</em> - and the injected execution context that carries the answer arrives through
 	 * exactly that dispatch.
 	 * </p>
@@ -244,32 +248,51 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 	 * @param login
 	 *        The persona to act as.
 	 * @param script
-	 *        The TL-Script to execute.
-	 * @param withCommit
-	 *        Whether to ask for the changes to be persisted.
-	 * @return The tool result text, a JSON object either way - a refusal is a tool error, not an
-	 *         exception.
+	 *        The script that changes data.
+	 * @param dryRun
+	 *        Whether to run it without saving.
+	 * @return The tool result text - a refusal is a failed result, not an exception.
 	 */
-	protected String executeScriptAs(String login, String script, boolean withCommit) {
-		return executeScript(securityFor(login), script, withCommit);
+	protected String changeDataAs(String login, String script, boolean dryRun) {
+		return changeData(securityFor(login), script, dryRun);
 	}
 
 	/**
-	 * Runs the registered TL-Script tool under the given security context.
+	 * Runs the registered tool that changes data with a script under the given security context.
 	 *
 	 * <p>
 	 * For the runs no persona login describes: an administrator, or a background run.
 	 * </p>
 	 *
-	 * @see #executeScriptAs(String, String, boolean)
+	 * @see #changeDataAs(String, String, boolean)
 	 */
-	protected static String executeScript(SecurityContext security, String script, boolean withCommit) {
+	protected static String changeData(SecurityContext security, String script, boolean dryRun) {
 		Map<String, Object> args = new HashMap<>();
 		args.put("script", script);
-		args.put("withCommit", withCommit);
+		args.put("dryRun", dryRun);
 
 		ToolContext context = new ToolContext(security, ApprovalCallback.AUTO_APPROVE);
 		return ToolExecutions.execute(tool(SCRIPT_TOOL), args, context).text();
+	}
+
+	/**
+	 * Asks the registered query tool as the given persona: one read-only expression, the way a read
+	 * in a run is made.
+	 *
+	 * @return The tool result text.
+	 */
+	protected String queryAs(String login, String expression) {
+		return query(securityFor(login), expression);
+	}
+
+	/**
+	 * Asks the registered query tool under the given security context.
+	 *
+	 * @see #queryAs(String, String)
+	 */
+	protected static String query(SecurityContext security, String expression) {
+		ToolContext context = new ToolContext(security, ApprovalCallback.AUTO_APPROVE);
+		return ToolExecutions.execute(tool(QUERY_TOOL), Map.of("expression", expression), context).text();
 	}
 
 	/**

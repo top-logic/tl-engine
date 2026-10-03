@@ -97,7 +97,7 @@ public class TestTopLogicSecurityContext extends TestCase {
 	public void testEmptyPolicyGrantsNoPrivilegedTool() {
 		TopLogicSecurityContext context =
 			TopLogicSecurityContext.forRun(policy(), null, Set.of(CLERK));
-		Tool privileged = tool("executeTLScript", ToolGroups.SCRIPT);
+		Tool privileged = tool("changeData", ToolGroups.SCRIPT);
 
 		assertFalse("An empty policy is deny-all, not check-nothing.",
 			context.hasToolPermission(privileged));
@@ -105,7 +105,7 @@ public class TestTopLogicSecurityContext extends TestCase {
 			context.toolDenialReason(privileged));
 		assertNotNull("Committing through TL-Script is capped by the same policy.",
 			context.capabilityDenialReason(ToolGroups.DATA_WRITE,
-				"executing TL-Script with withCommit=true"));
+				"changing data with changeData"));
 	}
 
 	/** What a role is granted, it may use; what it is not, it may not. */
@@ -137,12 +137,12 @@ public class TestTopLogicSecurityContext extends TestCase {
 	 * </p>
 	 */
 	public void testTheUnrestrictedContextIsPermissive() {
-		Tool privileged = tool("executeTLScript", ToolGroups.SCRIPT);
+		Tool privileged = tool("changeData", ToolGroups.SCRIPT);
 
 		assertTrue(SecurityContext.UNRESTRICTED.hasToolPermission(privileged));
 		assertSame(ModelSecurity.UNCHECKED, SecurityContext.UNRESTRICTED.modelSecurity());
 		assertNull(SecurityContext.UNRESTRICTED.capabilityDenialReason(ToolGroups.DATA_WRITE,
-			"executing TL-Script with withCommit=true"));
+			"changing data with changeData"));
 	}
 
 	/**

@@ -50,7 +50,7 @@ public class TestRoleToolAccess extends TestCase {
 	private static final DeclaredGroups GROUPS = toolName -> switch (toolName) {
 		case "instance-browser.listInstances", "model-search.searchModel" -> ToolGroups.DATA_READ;
 		case "model-editor.createClass", "model-editor.deleteModelElement" -> ToolGroups.MODEL_STRUCTURE;
-		case "script-tool.executeTLScript" -> ToolGroups.SCRIPT;
+		case "script-tool.changeData" -> ToolGroups.SCRIPT;
 		case "ask-user.askUser" -> ToolGroups.INTERACTION;
 		case "self.listTools" -> ToolGroups.INTROSPECTION;
 		case "web.webFetch" -> ToolGroups.EGRESS;
@@ -405,10 +405,10 @@ public class TestRoleToolAccess extends TestCase {
 		RoleToolAccess access = access(policy(
 			role("Clerk", grants(group(ToolGroups.DATA_READ)), grants())));
 
-		Decision decision = access.check(Set.of("Clerk"), "script-tool.executeTLScript");
+		Decision decision = access.check(Set.of("Clerk"), "script-tool.changeData");
 
 		String reason = ((Decision.Denied) decision).reason();
-		assertTrue(reason, reason.contains("script-tool.executeTLScript"));
+		assertTrue(reason, reason.contains("script-tool.changeData"));
 		assertTrue(reason, reason.contains(ToolGroups.SCRIPT));
 	}
 
@@ -599,14 +599,14 @@ public class TestRoleToolAccess extends TestCase {
 	/** Where a tool's group comes from, which is what explains a de-classification. */
 	public void testGroupSource() {
 		ToolAccessPolicy policy = policy();
-		classify(policy, ToolGroups.EGRESS, "script-tool.executeTLScript");
+		classify(policy, ToolGroups.EGRESS, "script-tool.changeData");
 
 		RoleToolAccess access = access(policy);
 
 		assertEquals("A <tool-groups> entry wins over the declaration and says so.",
 			RoleToolAccess.GroupSource.CONFIGURED,
-			access.groupSourceOf(identity("script-tool.executeTLScript")));
-		assertEquals(ToolGroups.EGRESS, access.groupOf(identity("script-tool.executeTLScript")));
+			access.groupSourceOf(identity("script-tool.changeData")));
+		assertEquals(ToolGroups.EGRESS, access.groupOf(identity("script-tool.changeData")));
 		assertEquals(RoleToolAccess.GroupSource.DECLARED,
 			access.groupSourceOf(identity("instance-browser.listInstances")));
 		assertEquals(RoleToolAccess.GroupSource.NONE,

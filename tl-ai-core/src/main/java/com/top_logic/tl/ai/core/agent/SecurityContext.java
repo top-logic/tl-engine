@@ -116,8 +116,8 @@ public interface SecurityContext {
 	 *
 	 * <p>
 	 * The seam for an operation whose cost depends on an <em>argument</em>, which the invocation gate
-	 * cannot see: {@code executeTLScript} is classified as the {@code script} capability, and calling
-	 * it with {@code withCommit=true} persists arbitrary writes, so that call additionally requires
+	 * cannot see: {@code changeData} is classified as the {@code script} capability, and every call of
+	 * it but a dry run persists arbitrary writes, so such a call additionally requires
 	 * {@code data.write}. The tool asks here, where the argument is known, and gets the answer the
 	 * same policy would have given for a {@code data.write} tool - including the background allowlist
 	 * and the administrator bypass.
@@ -132,7 +132,7 @@ public interface SecurityContext {
 	 *        The name of the required capability (tool group), e.g. {@code data.write}.
 	 * @param operation
 	 *        What the run is about to do, for the denial message - e.g.
-	 *        {@code "executing TL-Script with withCommit=true"}.
+	 *        {@code "changing data with changeData"}.
 	 * @return The reason the capability is refused, safe to feed back to the model, or
 	 *         <code>null</code> if it is permitted.
 	 */

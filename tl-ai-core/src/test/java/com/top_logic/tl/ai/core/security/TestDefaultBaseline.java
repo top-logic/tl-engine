@@ -87,7 +87,7 @@ public class TestDefaultBaseline extends TestCase {
 		assertGranted(access, "model-browser.listModules", ToolGroups.MODEL_READ);
 		assertGranted(access, "instance-browser.listInstances", ToolGroups.DATA_READ);
 		assertDenied(access, "instance-browser.createInstance", ToolGroups.DATA_WRITE);
-		assertDenied(access, "script.executeTLScript", ToolGroups.SCRIPT);
+		assertDenied(access, "script.changeData", ToolGroups.SCRIPT);
 		assertDenied(access, "web.webFetch", ToolGroups.EGRESS);
 		assertDenied(access, "model-editor.createClass", ToolGroups.MODEL_STRUCTURE);
 	}

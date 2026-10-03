@@ -107,7 +107,7 @@ public class Graders {
 			// grader reads, with this thread's rights, exactly what an operator checking the result
 			// by hand would read. A second evaluator would be a second answer to "what does this
 			// expression mean".
-			evaluated = TLScriptExecutor.execute(query.getExpression(), false, List.of());
+			evaluated = TLScriptExecutor.execute(query.getExpression(), List.of());
 		} catch (RuntimeException ex) {
 			return Verdict.fail(label, "The expression did not evaluate: " + ex.getMessage()
 				+ " -- expression: " + query.getExpression());
@@ -222,7 +222,7 @@ public class Graders {
 		List<TLObject> rows = new ArrayList<>();
 		Object query = args.get("query");
 		if (query instanceof String text && !text.isBlank()) {
-			TLScriptExecutor.ExecutionResult result = TLScriptExecutor.execute(text, false, List.of());
+			TLScriptExecutor.ExecutionResult result = TLScriptExecutor.execute(text, List.of());
 			if (!result.isSuccess()) {
 				return Verdict.fail(label, "The presented query did not evaluate: " + result.getErrorMessage()
 					+ " -- query: " + text);
@@ -277,7 +277,7 @@ public class Graders {
 		}
 
 		TLScriptExecutor.ExecutionResult evaluated =
-			TLScriptExecutor.execute(expectation.getExpression(), false, List.of(rows, values));
+			TLScriptExecutor.execute(expectation.getExpression(), List.of(rows, values));
 		if (!evaluated.isSuccess()) {
 			return Verdict.fail(label, "The expression did not evaluate: " + evaluated.getErrorMessage()
 				+ " -- expression: " + expectation.getExpression());
@@ -296,8 +296,8 @@ public class Graders {
 	 *
 	 * <p>
 	 * A scenario may write the qualified name an administrator configures ({@code
-	 * script-exec.executeTLScript}) or the provider-safe form ({@code script-exec__executeTLScript}),
-	 * while a run records the bare name the model actually used ({@code executeTLScript}) - a tool
+	 * script-exec.changeData}) or the provider-safe form ({@code script-exec__changeData}),
+	 * while a run records the bare name the model actually used ({@code changeData}) - a tool
 	 * reaches an agent's catalogue under its own name, not under its factory's. Accepting the
 	 * qualified spelling and comparing on its last segment lets a scenario say which factory it
 	 * means, which is what a reader of the file needs, without the grader silently missing every

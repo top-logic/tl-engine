@@ -6,20 +6,16 @@
 package com.top_logic.tl.ai.core.tools.script;
 
 import java.io.StringReader;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Function;
 
-import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.script.messages.ErrorType;
 import com.top_logic.tl.ai.core.tools.script.messages.ValidationError;
 import com.top_logic.tl.ai.core.tools.script.messages.ValidationResult;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -35,18 +31,18 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Core utility for validating and executing TLScript code.
+ * Core utility for validating, compiling and executing TL-Script, shared by the tools that run it.
  *
  * <p>
- * This class provides the shared logic for TLScript validation and execution used by both
- * AI tools (in tl-ai-core) and MCP tools (in tl-ai-mcp-server). It performs:
+ * It performs:
  * </p>
  * <ul>
  * <li>Syntax validation (parser errors)</li>
  * <li>Model reference validation (undefined classes/properties/types)</li>
  * <li>Type checking (type compatibility)</li>
- * <li>Script execution with configurable transaction control</li>
- * <li>Result serialization, filtered for what the run's principal may read</li>
+ * <li>The split between reading and changing: what a script does besides computing its value
+ * ({@link SideEffects})</li>
+ * <li>Execution, either discarding every modification or within the transaction of the turn</li>
  * </ul>
  * <p>
  * The tool uses the same validation pipeline as the TLScript console editor, leveraging
@@ -59,23 +55,12 @@ public class TLScriptExecutor {
 	/**
 	 * The message a read-only tool refuses a script with that changes something.
 	 */
+	/** What the transaction of a change is called. */
+	private static final ResKey CHANGE = ResKey.text("changeData");
+
 	public static final String NOT_READ_ONLY = "The expression changes data (it creates, sets, deletes or has"
-		+ " another side effect), and this tool only reads. Remove the writing part.";
-
-	/**
-	 * Thrown for a script a read-only caller refuses because it has an effect.
-	 *
-	 * <p>
-	 * An {@link IllegalArgumentException} like a script that does not compile, so a caller that does
-	 * not care tells nobody apart.
-	 * </p>
-	 */
-	public static final class NotReadOnly extends IllegalArgumentException {
-
-		NotReadOnly() {
-			super(NOT_READ_ONLY);
-		}
-	}
+		+ " another side effect), and this tool only reads. Remove the writing part. To change data, use"
+		+ " updateObject, createObject or deleteObject for one known object, or changeData.";
 
 	/**
 	 * Result of TLScript execution.
@@ -87,24 +72,35 @@ public class TLScriptExecutor {
 
 		private final String _errorMessage;
 
-		private ExecutionResult(boolean success, Object result, String errorMessage) {
+		private final boolean _refusal;
+
+		private ExecutionResult(boolean success, Object result, String errorMessage, boolean refusal) {
 			_success = success;
 			_result = result;
 			_errorMessage = errorMessage;
+			_refusal = refusal;
 		}
 
 		/**
 		 * Creates a successful execution result.
 		 */
 		public static ExecutionResult success(Object result) {
-			return new ExecutionResult(true, result, null);
+			return new ExecutionResult(true, result, null, false);
 		}
 
 		/**
 		 * Creates a failed execution result.
 		 */
 		public static ExecutionResult error(String errorMessage) {
-			return new ExecutionResult(false, null, errorMessage);
+			return new ExecutionResult(false, null, errorMessage, false);
+		}
+
+		/**
+		 * Creates the result of a script a read-only caller refused because it changes something:
+		 * nothing is wrong with how it is written.
+		 */
+		public static ExecutionResult refused(String errorMessage) {
+			return new ExecutionResult(false, null, errorMessage, true);
 		}
 
 		/**
@@ -112,6 +108,14 @@ public class TLScriptExecutor {
 		 */
 		public boolean isSuccess() {
 			return _success;
+		}
+
+		/**
+		 * Whether the script was refused for what it would change, rather than failing because of how
+		 * it is written - it does not compile, or it fails while it runs.
+		 */
+		public boolean isRefusal() {
+			return _refusal;
 		}
 
 		/**
@@ -127,144 +131,37 @@ public class TLScriptExecutor {
 		public String getErrorMessage() {
 			return _errorMessage;
 		}
+	}
 
-		/**
-		 * Determines the result type for JSON response.
-		 *
-		 * @param result
-		 *        The result object.
-		 * @return Type name: "null", "string", "number", "boolean", "collection", "map", "object".
-		 */
-		private static String determineResultType(Object result) {
-			if (result == null) {
-				return "null";
-			}
-			if (result instanceof String) {
-				return "string";
-			}
-			if (result instanceof Number) {
-				return "number";
-			}
-			if (result instanceof Boolean) {
-				return "boolean";
-			}
-			if (result instanceof Collection<?> || result.getClass().isArray()) {
-				return "collection";
-			}
-			if (result instanceof Map<?, ?>) {
-				return "map";
-			}
-			return "object";
-		}
+	/**
+	 * A script compiled to change data, with what it does besides computing its value.
+	 *
+	 * @param executor
+	 *        The compiled script.
+	 * @param changes
+	 *        Whether it has any effect at all; a script without one only reads.
+	 * @param outsideKnowledgeBase
+	 *        The name of a function whose effect lies outside the knowledge base, which rolling a
+	 *        transaction back does not take back; <code>null</code> if every effect is a write to the
+	 *        knowledge base.
+	 */
+	public record Change(QueryExecutor executor, boolean changes, String outsideKnowledgeBase) {
+		// Sole record.
+	}
 
-		/**
-		 * Serializes this execution result to a JSON string, disclosing only what the run's principal
-		 * may read and marking it as business data.
-		 *
-		 * <p>
-		 * On success, returns a JSON object - inside the untrusted-content envelope, see
-		 * {@link ReadFilter#marked(String, String)} - with:
-		 * </p>
-		 * <ul>
-		 * <li>success: boolean - true</li>
-		 * <li>executed: boolean - true</li>
-		 * <li>result: any - the execution result</li>
-		 * <li>resultType: string - type of the result</li>
-		 * <li>message: string - success message</li>
-		 * </ul>
-		 *
-		 * <p>
-		 * On failure, returns the same format as {@link com.top_logic.tl.ai.core.tools.model.messages.ErrorResponse}.
-		 * </p>
-		 *
-		 * <p>
-		 * The {@link ReadFilter} is mandatory, and there is no argument-less form. {@code All.all()}'s
-		 * own javadoc says "The result is not filtered for security ... the final result of a script is
-		 * secured by the caller", and every engine channel honours that by calling
-		 * {@link com.top_logic.model.search.expr.SearchExpression#filterSecurity(Object)}. This method
-		 * is where tl-ai holds up its half of that contract, and it used to disclose the identity, the
-		 * type and the display label of every object a script returned.
-		 * </p>
-		 *
-		 * @param readFilter
-		 *        The disclosure filter of the run whose principal executed the script.
-		 * @return The execution result as JSON: on success marked as business data, on failure the
-		 *         plain error document, which is this application's own message rather than a
-		 *         disclosure.
-		 */
-		public String toJson(ReadFilter readFilter) {
-			if (!_success) {
-				// Use ErrorResponse for failures
-				return com.top_logic.tl.ai.core.tools.model.messages.ErrorResponse.create()
-					.setError(_errorMessage)
-					.toString();
-			}
+	/**
+	 * Thrown for a script a read-only caller refuses because it has an effect.
+	 *
+	 * <p>
+	 * An {@link IllegalArgumentException} like a script that does not compile, so a caller that does
+	 * not care tells nobody apart; one that does - {@code present}, which helps with a query that does
+	 * not compile - can.
+	 * </p>
+	 */
+	public static final class NotReadOnly extends IllegalArgumentException {
 
-			try {
-				java.io.StringWriter buffer = new java.io.StringWriter();
-				com.top_logic.common.json.gstream.JsonWriter json =
-					new com.top_logic.common.json.gstream.JsonWriter(buffer);
-				json.setIndent("  ");
-
-				json.beginObject();
-				json.name("success").value(true);
-				json.name("executed").value(true);
-
-				// Everything this run's principal may read of the result, and nothing else.
-				Object visible = readFilter.visible(_result);
-
-				json.name("result");
-				writeJsonValue(json, readFilter.disclose(visible));
-
-				// The type of the *filtered* value, not of the raw one: a script that returned a single
-				// object the principal may not read reports "null", because "object" would say that
-				// there was one.
-				json.name("resultType").value(determineResultType(visible));
-				json.name("message").value("Script executed successfully");
-				json.endObject();
-
-				// Marked, not only filtered: what a script returns is business data other end users
-				// wrote, and the model has to be told that before it reads it. The failure branch above
-				// is deliberately unmarked - that message is this application's own.
-				return ReadFilter.marked("TL-Script result", buffer.toString());
-
-			} catch (Exception ex) {
-				// Fallback to ErrorResponse if serialization fails
-				return com.top_logic.tl.ai.core.tools.model.messages.ErrorResponse.create()
-					.setError("Serialization failed: " + ex.getMessage())
-					.toString();
-			}
-		}
-
-		/**
-		 * Writes a JSON value recursively.
-		 */
-		private static void writeJsonValue(com.top_logic.common.json.gstream.JsonWriter json, Object value)
-				throws java.io.IOException {
-			if (value == null) {
-				json.nullValue();
-			} else if (value instanceof String) {
-				json.value((String) value);
-			} else if (value instanceof Number) {
-				json.value((Number) value);
-			} else if (value instanceof Boolean) {
-				json.value((Boolean) value);
-			} else if (value instanceof List<?>) {
-				json.beginArray();
-				for (Object item : (List<?>) value) {
-					writeJsonValue(json, item);
-				}
-				json.endArray();
-			} else if (value instanceof Map<?, ?>) {
-				json.beginObject();
-				for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
-					json.name(String.valueOf(entry.getKey()));
-					writeJsonValue(json, entry.getValue());
-				}
-				json.endObject();
-			} else {
-				json.value(String.valueOf(value));
-			}
+		NotReadOnly() {
+			super(NOT_READ_ONLY);
 		}
 	}
 
@@ -356,18 +253,21 @@ public class TLScriptExecutor {
 	}
 
 	/**
-	 * Executes TLScript code and returns the result.
+	 * Evaluates TL-Script code, discarding every modification it makes.
+	 *
+	 * <p>
+	 * For a caller whose expressions are its own configuration rather than a model's - the eval's
+	 * graders. A model's script goes through {@link #executeReadOnly(String)}, which refuses one that
+	 * would change something before it runs.
+	 * </p>
 	 *
 	 * @param script
 	 *        The TLScript code to execute.
-	 * @param withCommit
-	 *        If true, execute within transaction and commit changes; if false, discard
-	 *        modifications.
 	 * @param args
 	 *        Optional arguments to pass to the script ($arg1, $arg2, ...).
 	 * @return The execution result.
 	 */
-	public static ExecutionResult execute(String script, boolean withCommit, List<?> args) {
+	public static ExecutionResult execute(String script, List<?> args) {
 		QueryExecutor executor;
 		try {
 			executor = compile(script);
@@ -376,18 +276,12 @@ public class TLScriptExecutor {
 		}
 
 		try {
-			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			Object result = executeWithTransactionControl(executor, prepareArgs(args), withCommit, kb);
+			Object result = PersistencyLayer.getKnowledgeBase().withoutModifications(() -> executor.executeWith(
+				executor.context(true, null, null),
+				prepareArgs(args)));
 			return ExecutionResult.success(result);
-
-		} catch (I18NRuntimeException ex) {
-			// Execution error (runtime)
-			String message = Resources.getInstance().getString(ex.getErrorKey());
-			return ExecutionResult.error(message);
-
-		} catch (Exception ex) {
-			// Unexpected execution error
-			return ExecutionResult.error(ex.getMessage());
+		} catch (RuntimeException ex) {
+			return ExecutionResult.error(messageOf(ex));
 		}
 	}
 
@@ -397,8 +291,7 @@ public class TLScriptExecutor {
 	 * <p>
 	 * For a caller that runs the same expression more than once - a function applied to every row of
 	 * a result - and therefore must not parse it per row. {@link #evaluate(QueryExecutor, Object...)}
-	 * runs what this returns the way {@link #execute(String, boolean, List)} runs a script without a
-	 * commit.
+	 * runs what this returns the way {@link #execute(String, List)} runs a script.
 	 * </p>
 	 *
 	 * @param script
@@ -409,7 +302,7 @@ public class TLScriptExecutor {
 	 *         compile; the message says which, in the words {@link #validate(String)} uses.
 	 */
 	public static QueryExecutor compile(String script) {
-		return compile(script, false);
+		return executor(expression(script));
 	}
 
 	/**
@@ -430,21 +323,47 @@ public class TLScriptExecutor {
 	 *         As {@link #compile(String)}.
 	 */
 	public static QueryExecutor compileReadOnly(String script) {
-		return compile(script, true);
+		SearchExpression expression = expression(script);
+		if (SideEffects.any(expression)) {
+			throw new NotReadOnly();
+		}
+		return executor(expression);
 	}
 
-	private static QueryExecutor compile(String script, boolean readOnly) {
+	/**
+	 * Compiles a script that is to change data, and tells what it does besides computing a value.
+	 *
+	 * <p>
+	 * The caller decides with it: a script without any effect is a read and belongs to {@code query},
+	 * and a script whose effect reaches outside the knowledge base cannot be tried in a transaction
+	 * that is rolled back afterwards.
+	 * </p>
+	 *
+	 * @throws IllegalArgumentException
+	 *         As {@link #compile(String)}.
+	 */
+	public static Change compileChange(String script) {
+		SearchExpression expression = expression(script);
+		return new Change(executor(expression), SideEffects.any(expression),
+			SideEffects.outsideKnowledgeBase(expression));
+	}
+
+	private static SearchExpression expression(String script) {
 		ValidationResult validation = validate(script);
 		if (!validation.isValid()) {
 			throw new IllegalArgumentException(validation.getError().getMessage());
 		}
 		try {
-			TLModel model = ModelService.getApplicationModel();
-			SearchExpression searchExpr = SearchBuilder.toSearchExpression(model, validation.getExpr());
-			if (readOnly && SideEffects.any(searchExpr)) {
-				throw new NotReadOnly();
-			}
-			return QueryExecutor.compile(PersistencyLayer.getKnowledgeBase(), model, searchExpr);
+			return SearchBuilder.toSearchExpression(ModelService.getApplicationModel(), validation.getExpr());
+		} catch (I18NRuntimeException ex) {
+			throw new IllegalArgumentException(Resources.getInstance().getString(ex.getErrorKey()), ex);
+		}
+	}
+
+	private static QueryExecutor executor(SearchExpression expression) {
+		try {
+			return QueryExecutor.compile(PersistencyLayer.getKnowledgeBase(), ModelService.getApplicationModel(),
+				expression);
 		} catch (I18NRuntimeException ex) {
 			throw new IllegalArgumentException(Resources.getInstance().getString(ex.getErrorKey()), ex);
 		}
@@ -454,12 +373,14 @@ public class TLScriptExecutor {
 	 * Evaluates TLScript code that must not change anything, see {@link #compileReadOnly(String)}.
 	 *
 	 * @return The result; an error result for code that does not compile, has a side effect, or
-	 *         fails while it runs.
+	 *         fails while it runs. Only the second is {@link ExecutionResult#isRefusal() a refusal}.
 	 */
 	public static ExecutionResult executeReadOnly(String script) {
 		QueryExecutor executor;
 		try {
 			executor = compileReadOnly(script);
+		} catch (NotReadOnly ex) {
+			return ExecutionResult.refused(ex.getMessage());
 		} catch (RuntimeException ex) {
 			return ExecutionResult.error(messageOf(ex));
 		}
@@ -468,6 +389,57 @@ public class TLScriptExecutor {
 		} catch (RuntimeException ex) {
 			return ExecutionResult.error(messageOf(ex));
 		}
+	}
+
+	/**
+	 * Runs a compiled change within the transaction that is open on this thread - the transaction of
+	 * the agent's turn - and commits it into that one.
+	 *
+	 * <p>
+	 * The engine's transactions do not really nest: a nested one that is rolled back marks the outer
+	 * one as failed, and nothing it wrote can be taken back on its own. A failure is therefore
+	 * rethrown after the rollback has named its reason, and the caller has to give up the whole turn
+	 * for it.
+	 * </p>
+	 *
+	 * @param executor
+	 *        The compiled change, see {@link #compileChange(String)}.
+	 * @param beforeCommit
+	 *        Receives the script's result while the change is not yet committed, and returns what
+	 *        this method returns; it refuses the commit by throwing. Where no transaction is open on
+	 *        this thread the change's own one is committed for real, so this is the last moment to
+	 *        look at what it did.
+	 * @return What {@code beforeCommit} returned.
+	 * @throws RuntimeException
+	 *         Whatever the script or {@code beforeCommit} throws; {@link #messageOf(RuntimeException)}
+	 *         says it.
+	 */
+	public static <R> R executeChange(QueryExecutor executor, Function<Object, R> beforeCommit) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(CHANGE)) {
+			R result;
+			try {
+				result = beforeCommit.apply(run(executor));
+			} catch (RuntimeException ex) {
+				// Name the reason on the rollback. This transaction is nested inside the agent turn's
+				// transaction, and the engine poisons the outer one with
+				// NESTED_TRANSACTION_ROLLED_BACK__COMMIT_REASON, filling in whatever reason the
+				// rollback was given. Rolling back without one - which is what the try-with-resources
+				// close() does - leaves the agent's later commit failing with "rolled back: " and
+				// nothing after the colon.
+				tx.rollback(failureKey(ex), ex);
+				throw ex;
+			}
+			tx.commit();
+			return result;
+		}
+	}
+
+	/**
+	 * Runs a compiled script in the context of this thread, with the modifications it makes: the
+	 * caller owns the transaction.
+	 */
+	static Object run(QueryExecutor executor) {
+		return executor.executeWith(executor.context(true, null, null), Args.none());
 	}
 
 	/**
@@ -484,8 +456,10 @@ public class TLScriptExecutor {
 	 *         own sentence, see {@link #messageOf(RuntimeException)}.
 	 */
 	public static Object evaluate(QueryExecutor executor, Object... args) {
-		return executeWithTransactionControl(executor, prepareArgs(List.of(args)), false,
-			PersistencyLayer.getKnowledgeBase());
+		Args scriptArgs = prepareArgs(List.of(args));
+		return PersistencyLayer.getKnowledgeBase().withoutModifications(() -> executor.executeWith(
+			executor.context(true, null, null),
+			scriptArgs));
 	}
 
 	/**
@@ -525,41 +499,6 @@ public class TLScriptExecutor {
 			return Args.none();
 		}
 		return Args.some(argsList.toArray());
-	}
-
-	/**
-	 * Executes the script with transaction control based on {@code withCommit} flag.
-	 */
-	private static Object executeWithTransactionControl(QueryExecutor executor, Args scriptArgs,
-			boolean withCommit, KnowledgeBase kb) {
-		if (withCommit) {
-			// Execute within transaction - commit changes
-			try (Transaction tx = kb.beginTransaction(ResKey.text("Execute TLScript"))) {
-				Object result;
-				try {
-					result = executor.executeWith(
-						executor.context(true, null, null),
-						scriptArgs);
-				} catch (RuntimeException ex) {
-					// Name the reason on the rollback. This transaction is nested inside the
-					// agent turn's transaction, and the engine poisons the outer one with
-					// NESTED_TRANSACTION_ROLLED_BACK__COMMIT_REASON, filling in whatever reason
-					// the rollback was given. Rolling back without one - which is what the
-					// try-with-resources close() does - leaves the agent's later commit failing
-					// with "rolled back: " and nothing after the colon.
-					tx.rollback(failureKey(ex), ex);
-					throw ex;
-				}
-				tx.commit();
-				return result;
-			}
-		} else {
-			// Execute read-only - discard modifications
-			return kb.withoutModifications(() ->
-				executor.executeWith(
-					executor.context(true, null, null),
-					scriptArgs));
-		}
 	}
 
 }

@@ -39,14 +39,14 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * Including the capability-level check
  * ({@link ToolAuthorization#capabilityDenialReason(String, String)}), which an operation uses when the
  * capability it costs depends on an argument the invocation gate cannot see - the commit path of
- * {@code executeTLScript}. It must be decided by the same rules in the same order as a tool, which is
+ * {@code changeData}. It must be decided by the same rules in the same order as a tool, which is
  * what the {@code testCapability*} methods pin.
  * </p>
  */
 public class TestToolAuthorization extends TestCase {
 
-	/** The operation a capability-level check is asked about, as {@code TLScriptTool} phrases it. */
-	private static final String COMMIT = "executing TL-Script with withCommit=true";
+	/** The operation a capability-level check is asked about, as {@code ChangeDataTool} phrases it. */
+	private static final String COMMIT = "changing data with changeData";
 
 	/** Instantiating a {@link ToolAccessPolicy} resolves nested config types through the TypeIndex. */
 	public static Test suite() {
@@ -61,8 +61,8 @@ public class TestToolAuthorization extends TestCase {
 	public void testUncheckedAllowsEverything() {
 		ToolAuthorization unchecked = ToolAuthorization.UNCHECKED;
 
-		assertTrue(unchecked.allows(tool("executeTLScript", ToolGroups.SCRIPT)));
-		assertNull(unchecked.denialReason(tool("executeTLScript", ToolGroups.SCRIPT)));
+		assertTrue(unchecked.allows(tool("changeData", ToolGroups.SCRIPT)));
+		assertNull(unchecked.denialReason(tool("changeData", ToolGroups.SCRIPT)));
 		assertTrue(unchecked.allows("anything.at.all"));
 		assertNull(unchecked.denialReason("anything.at.all"));
 	}
@@ -77,12 +77,12 @@ public class TestToolAuthorization extends TestCase {
 	/** An ungranted group is refused, with a reason naming it. */
 	public void testUngrantedGroupDenied() {
 		ToolAuthorization auth = auth(clerkPolicy(), Set.of("Clerk"), false);
-		Tool script = tool("executeTLScript", ToolGroups.SCRIPT);
+		Tool script = tool("changeData", ToolGroups.SCRIPT);
 
 		assertFalse(auth.allows(script));
 		String reason = auth.denialReason(script);
 		assertNotNull(reason);
-		assertTrue(reason, reason.contains("executeTLScript"));
+		assertTrue(reason, reason.contains("changeData"));
 		assertTrue(reason, reason.contains(ToolGroups.SCRIPT));
 	}
 
@@ -92,7 +92,7 @@ public class TestToolAuthorization extends TestCase {
 
 		for (Tool tool : List.of(
 			tool("listInstances", ToolGroups.DATA_READ),
-			tool("executeTLScript", ToolGroups.SCRIPT),
+			tool("changeData", ToolGroups.SCRIPT),
 			tool("mysteryTool", ""))) {
 			assertEquals(tool.name(), auth.allows(tool), auth.denialReason(tool) == null);
 		}
@@ -213,7 +213,7 @@ public class TestToolAuthorization extends TestCase {
 	 * A capability the role does not hold is refused even though the tool that asks for it is granted.
 	 *
 	 * <p>
-	 * The rule that closes the commit path of {@code executeTLScript}: the tool is classified
+	 * The rule that closes the commit path of {@code changeData}: the tool is classified
 	 * {@link ToolGroups#SCRIPT}, which the role holds, and committing costs
 	 * {@link ToolGroups#DATA_WRITE}, which it does not.
 	 * </p>
@@ -223,7 +223,7 @@ public class TestToolAuthorization extends TestCase {
 		policy.getToolAccess().get("Clerk").getGrants().add(group(ToolGroups.SCRIPT));
 		ToolAuthorization auth = auth(policy, Set.of("Clerk"), false);
 
-		assertNull("The tool itself is granted.", auth.denialReason(tool("executeTLScript", ToolGroups.SCRIPT)));
+		assertNull("The tool itself is granted.", auth.denialReason(tool("changeData", ToolGroups.SCRIPT)));
 
 		String reason = auth.capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT);
 
@@ -266,16 +266,16 @@ public class TestToolAuthorization extends TestCase {
 	 * A per-tool grant does not reach the capability.
 	 *
 	 * <p>
-	 * Granting {@code executeTLScript} by name says the role may run TL-Script; it says nothing about
+	 * Granting {@code changeData} by name says the role may run TL-Script; it says nothing about
 	 * the second capability that tool can reach through an argument, and reading it as a
 	 * {@code data.write} grant would reopen the bypass this check exists to close.
 	 * </p>
 	 */
 	public void testPerToolGrantDoesNotReachTheCapability() {
-		ToolAccessPolicy policy = policy(role("Clerk", grants(tools("executeTLScript")), grants()));
+		ToolAccessPolicy policy = policy(role("Clerk", grants(tools("changeData")), grants()));
 		ToolAuthorization auth = auth(policy, Set.of("Clerk"), false);
 
-		assertNull("The tool is granted by name.", auth.denialReason(tool("executeTLScript", ToolGroups.SCRIPT)));
+		assertNull("The tool is granted by name.", auth.denialReason(tool("changeData", ToolGroups.SCRIPT)));
 		assertNotNull("...which is not a grant of data.write.",
 			auth.capabilityDenialReason(ToolGroups.DATA_WRITE, COMMIT));
 	}

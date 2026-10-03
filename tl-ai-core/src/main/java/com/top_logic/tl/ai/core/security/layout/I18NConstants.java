@@ -162,18 +162,18 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ALLOWED_ALTHOUGH_POLICY__RULE;
 
 	/**
-	 * The extra price of committing through the TL-Script tool, where the account can pay it.
+	 * The extra price of changing data through the TL-Script tool, where the account can pay it.
 	 *
-	 * @en A commit (withCommit=true) additionally costs data.write, which this account holds
-	 * @de Ein Commit (withCommit=true) kostet zusätzlich data.write, und das hält dieses Konto
+	 * @en A change with changeData (anything but a dry run) additionally costs data.write, which this account holds
+	 * @de Eine Änderung mit changeData (alles außer einem Probelauf) kostet zusätzlich data.write, und das hält dieses Konto
 	 */
 	public static ResKey SCRIPT_COMMIT_ALLOWED;
 
 	/**
-	 * The extra price of committing through the TL-Script tool, where the account cannot pay it.
+	 * The extra price of changing data through the TL-Script tool, where the account cannot pay it.
 	 *
-	 * @en A commit (withCommit=true) additionally costs data.write, which is denied here
-	 * @de Ein Commit (withCommit=true) kostet zusätzlich data.write, und das ist hier verweigert
+	 * @en A change with changeData (anything but a dry run) additionally costs data.write, which is denied here
+	 * @de Eine Änderung mit changeData (alles außer einem Probelauf) kostet zusätzlich data.write, und das ist hier verweigert
 	 */
 	public static ResKey SCRIPT_COMMIT_DENIED;
 

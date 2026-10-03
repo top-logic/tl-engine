@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.security;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -15,6 +16,8 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.element.meta.AssociationStorage;
 import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
 import com.top_logic.knowledge.event.ItemChange;
 import com.top_logic.knowledge.objects.ChangeInspectable;
@@ -49,12 +52,14 @@ import com.top_logic.model.TLStructuredTypePart;
  *        The objects created during the turn, each with the type and the composition it was created
  *        into.
  * @param updated
- *        Objects modified during the turn, mapped to the attributes that were touched. An object
+ *        Objects modified during the turn, mapped to the attributes that were touched - a reference
+ *        whose values are stored as links included, on the object holding it. An object
  *        <em>created</em> in the same transaction never appears here - the engine books its
  *        attribute writes as part of the creation - which is the concrete form the
  *        {@link PreCommitGuard known limit} takes.
  * @param deleted
- *        Objects deleted during the turn.
+ *        Objects deleted during the turn. The link of a reference is no object of its own and is
+ *        never listed here.
  *
  * @see PreCommitGuard#check(com.top_logic.tl.ai.core.agent.SecurityContext, ToolChangeSet)
  */
@@ -131,13 +136,16 @@ public record ToolChangeSet(
 	 * </p>
 	 *
 	 * <p>
-	 * A created item that carries no application type - the link of a reference kept in a link
-	 * table, or one of the engine's own bookkeeping items - is not returned: it has no
-	 * {@link TLClass} to check a right against. A dropped link is returned among the deletions, where
-	 * the engine grants the DELETE the guard asks, because it checks no rights on an item that is no
-	 * bound object. Neither is booked as a change of the object that holds the reference, so a change
-	 * of such a reference - an enumeration value, for one - is not checked by the guard at all
-	 * (Gitea #631). {@link #pendingLinks(KnowledgeBase)} reads those changes for a report.
+	 * <b>A reference whose values are stored as links</b> - in a table of their own rather than in
+	 * the row of the object holding the reference, which is where the engine stores every reference
+	 * a model does not configure into a column, an enumeration value among them - books no change on
+	 * the object holding it: the engine creates, reorders and drops link items instead, which carry
+	 * no application type. Each of them is read here as what it is, a write of the reference it
+	 * stores, and booked in {@link #updated()} on the object holding it (Gitea #631). Left out are
+	 * the links that go with the creation or the deletion of an object, which the guard checks as
+	 * that: the links of an object created or deleted in the transaction, and a link dropped together
+	 * with the object it pointed to - else deleting an object would ask for the right to write every
+	 * object that referred to it.
 	 * </p>
 	 *
 	 * @param kb
@@ -159,9 +167,20 @@ public record ToolChangeSet(
 			return EMPTY;
 		}
 
+		List<LinkWrite> links = linkWrites(kb, context);
 		List<Creation> created = creations(context.getNewObjects());
 		Map<TLObject, Set<TLStructuredTypePart>> updated = updates(context.getChangedObjects());
-		List<TLObject> deleted = deletions(context.getDroppedObjects());
+		for (LinkWrite link : links) {
+			if (link.consequence()) {
+				continue;
+			}
+			Set<TLStructuredTypePart> attributes =
+				updated.computeIfAbsent(link.holder(), key -> new LinkedHashSet<>());
+			if (link.attribute() != null) {
+				attributes.add(link.attribute());
+			}
+		}
+		List<TLObject> deleted = deletions(context.getDroppedObjects(), links);
 		if (created.isEmpty() && updated.isEmpty() && deleted.isEmpty()) {
 			return EMPTY;
 		}
@@ -169,16 +188,13 @@ public record ToolChangeSet(
 	}
 
 	/**
-	 * The attributes the current transaction changed whose values are stored as links - a reference
-	 * kept in a link table rather than in the object's own row - by the object that holds them.
+	 * The references whose values are stored as links that the current transaction changed, by the
+	 * object holding them - those that went with the creation or the deletion of an object included.
 	 *
 	 * <p>
-	 * Such a change is invisible to {@link #pending(KnowledgeBase)}: the link item has no application
-	 * type, and the object holding the reference is not booked as changed when only its link is. A
-	 * report of what a tool did needs them - setting an enumeration value is such a change - so they
-	 * are read here, separately. {@link #pending(KnowledgeBase)} and with it the
-	 * {@link PreCommitGuard} stay as they are: counting the holder of every removed link as changed
-	 * would ask for a WRITE right on every object that merely referred to a deleted one.
+	 * For a report of what a tool did. {@link #pending(KnowledgeBase)} leaves a link that went with a
+	 * creation or a deletion to the guard's check of that, but a report shows its effect: deleting an
+	 * object clears every reference to it, and that is a change of each object that referred to it.
 	 * </p>
 	 *
 	 * @param kb
@@ -190,39 +206,143 @@ public record ToolChangeSet(
 			return Map.of();
 		}
 		Map<TLObject, Set<TLStructuredTypePart>> result = new LinkedHashMap<>();
+		for (LinkWrite link : linkWrites(kb, context)) {
+			if (link.attribute() != null) {
+				result.computeIfAbsent(link.holder(), key -> new LinkedHashSet<>()).add(link.attribute());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * A link of a reference stored as links that the transaction created, changed or dropped: a write
+	 * of {@link #attribute()} of {@link #holder()}.
+	 *
+	 * @param link
+	 *        The link item.
+	 * @param holder
+	 *        The object holding the reference, at the source end of the link.
+	 * @param attribute
+	 *        The reference as the holder's type has it, or <code>null</code> if the link names one
+	 *        that does not resolve; then only the right to write the holder can be asked.
+	 * @param consequence
+	 *        Whether the link went with the creation or the deletion of an object, which the guard
+	 *        checks as that: the holder was created or deleted in the transaction, or the link was
+	 *        dropped together with the object it pointed to or the reference it stored.
+	 */
+	private record LinkWrite(KnowledgeItem link, TLObject holder, TLStructuredTypePart attribute,
+			boolean consequence) {
+		// Intentionally empty.
+	}
+
+	/**
+	 * The links of a reference stored as links that the transaction created, changed or dropped.
+	 */
+	private static List<LinkWrite> linkWrites(KnowledgeBase kb, DefaultDBContext context) {
+		List<LinkWrite> result = new ArrayList<>();
 		for (DBKnowledgeItem item : context.getNewObjects()) {
-			addLink(result, item);
+			addLinkWrite(result, context, item, false);
+		}
+		List<DBKnowledgeItem> before = new ArrayList<>();
+		for (DBKnowledgeItem item : context.getChangedObjects()) {
+			if (item instanceof KnowledgeAssociation) {
+				// Reordering a list changes its links in place. Read after the change and, as dropped,
+				// before it, in case a link was moved from one object to another.
+				addLinkWrite(result, context, item, false);
+				before.add(item);
+			}
 		}
 		for (DBKnowledgeItem item : context.getDroppedObjects()) {
-			// A link deleted in this transaction is read where it still exists.
+			if (item instanceof KnowledgeAssociation) {
+				before.add(item);
+			}
+		}
+		if (!before.isEmpty()) {
+			// Read where the links are as they were: a link deleted in this transaction still exists
+			// there.
 			kb.withoutModifications(() -> {
-				addLink(result, item);
+				for (DBKnowledgeItem item : before) {
+					addLinkWrite(result, context, item, true);
+				}
 				return null;
 			});
 		}
 		return result;
 	}
 
-	private static void addLink(Map<TLObject, Set<TLStructuredTypePart>> result, DBKnowledgeItem item) {
-		if (!(item instanceof KnowledgeAssociation link)
-			|| item.tTable().getAttributeOrNull(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR) == null) {
+	/**
+	 * Adds the write the given item stands for, if it is the link of a reference stored as links.
+	 *
+	 * @param dropped
+	 *        Whether the item is read as it was before the transaction, because it is dropped or
+	 *        changed in it.
+	 */
+	private static void addLinkWrite(List<LinkWrite> result, DefaultDBContext context, DBKnowledgeItem item,
+			boolean dropped) {
+		if (!(item instanceof KnowledgeAssociation link) || applicationObject(item) != null) {
+			// Not a link, or one the application models as an object of its own (a role assignment),
+			// which is checked as that object.
 			return;
 		}
-		TLStructuredTypePart attribute;
 		TLObject holder;
+		TLStructuredTypePart attribute;
 		try {
-			attribute = WrapperMetaAttributeUtil.getMetaAttribute(item);
-			holder = link.getSourceObject().getWrapper();
+			KnowledgeItem source = link.getSourceObject();
+			holder = source == null ? null : source.getWrapper();
+			if (holder == null || !(holder.tType() instanceof TLClass type)) {
+				return;
+			}
+			attribute = storedAttribute(type, item);
 		} catch (RuntimeException ex) {
-			Logger.warn("Cannot resolve the attribute of link '" + item + "'.", ex, ToolChangeSet.class);
+			// By its identifier: the engine's own text of a link reads its ends, which fails for a
+			// deleted one.
+			Logger.warn("Cannot resolve the reference link '" + item.tId()
+				+ "' stores: the pre-commit guard does not check this change.", ex, ToolChangeSet.class);
 			return;
 		}
-		if (attribute == null || holder == null || holder.tType() == null) {
-			return;
+		if (attribute == null) {
+			if (item.tTable().getAttributeOrNull(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR) == null) {
+				// A link of some other kind: it stores no attribute value.
+				return;
+			}
+			Logger.warn("Cannot resolve the attribute link '" + item.tId() + "' stores for '" + holder.tId()
+				+ "': the pre-commit guard checks the object only.", ToolChangeSet.class);
 		}
-		// The link names the attribute where it was first defined; the holder's type may override it.
-		TLStructuredTypePart concrete = holder.tType().getPart(attribute.getName());
-		result.computeIfAbsent(holder, key -> new LinkedHashSet<>()).add(concrete != null ? concrete : attribute);
+		boolean consequence = holder.tHandle().getState() == KnowledgeItem.State.NEW
+			|| context.isRemovedKey(holder.tId())
+			|| (dropped && (context.isRemovedKey(link.getDestinationIdentity()) || isRemoved(context, attribute)));
+		result.add(new LinkWrite(item, holder, attribute, consequence));
+	}
+
+	/**
+	 * The attribute of the given type whose value the given link stores, or <code>null</code> if it
+	 * stores none.
+	 */
+	private static TLStructuredTypePart storedAttribute(TLClass type, KnowledgeItem link) {
+		MOStructure table = link.tTable();
+		if (table.getAttributeOrNull(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR) != null) {
+			// A table holding the links of many references names the one per link - where it was
+			// first defined, while the holder's type may override it.
+			TLStructuredTypePart definition = WrapperMetaAttributeUtil.getMetaAttribute(link);
+			if (definition == null) {
+				return null;
+			}
+			TLStructuredTypePart concrete = type.getPart(definition.getName());
+			return concrete != null && definition.equals(concrete.getDefinition()) ? concrete : definition;
+		}
+		// A table of one reference's own, which is how the engine stores the members of a group.
+		for (TLStructuredTypePart part : type.getAllParts()) {
+			if (part.getStorageImplementation() instanceof AssociationStorage storage && storage.monomophicTable()
+				&& table.isSubtypeOf(storage.getTable())) {
+				return part;
+			}
+		}
+		return null;
+	}
+
+	private static boolean isRemoved(DefaultDBContext context, TLStructuredTypePart attribute) {
+		return attribute != null
+			&& (context.isRemovedKey(attribute.tId()) || context.isRemovedKey(attribute.getDefinition().tId()));
 	}
 
 	private static List<Creation> creations(Collection<DBKnowledgeItem> items) {
@@ -246,14 +366,24 @@ public record ToolChangeSet(
 			if (object == null) {
 				continue;
 			}
-			result.put(object, touchedAttributes(object, item));
+			// A copy that can take the references stored as links as well.
+			result.put(object, new LinkedHashSet<>(touchedAttributes(object, item)));
 		}
 		return result;
 	}
 
-	private static List<TLObject> deletions(Collection<DBKnowledgeItem> items) {
+	private static List<TLObject> deletions(Collection<DBKnowledgeItem> items, List<LinkWrite> links) {
+		Set<KnowledgeItem> linkItems = new HashSet<>();
+		for (LinkWrite link : links) {
+			linkItems.add(link.link());
+		}
 		List<TLObject> result = new ArrayList<>(items.size());
 		for (DBKnowledgeItem item : items) {
+			if (linkItems.contains(item)) {
+				// A write of the object holding the reference, or the consequence of a deletion that
+				// is listed in its own right.
+				continue;
+			}
 			// Deliberately no tType() here: the item is deleted in this context, so reading its
 			// values would fail. The guard resolves the type in the committed view.
 			TLObject object;

@@ -7,8 +7,10 @@ package com.top_logic.ai.demo;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
@@ -187,6 +189,57 @@ public class SecDemoPreCommitGuardTest extends SecDemoPersonaTest {
 		assertTrue("The notice must name the type, but was: " + notice, notice.contains("pm:Ticket"));
 		assertFalse("The notice must not quote the written value, but was: " + notice,
 			notice.contains(WRITTEN_ELSEWHERE));
+	}
+
+	/**
+	 * Handing somebody the partner role is caught, although the engine books it on no row of the
+	 * project.
+	 *
+	 * <p>
+	 * Anna partners on Alpha and may write it, but {@code pm:Project#partners} is withheld from every
+	 * account that is not an administrator: the scope rule derives {@code projectPartner} from it. The
+	 * engine stores a reference of many values as links in a table of their own, so adding Ben books a
+	 * new link and no change of Alpha. Before Gitea #631 the guard saw no write here, and the turn
+	 * committed.
+	 * </p>
+	 */
+	public void testAddingAPartnerIsRolledBack() {
+		TLObject alpha = project(ALPHA);
+		TLStructuredTypePart partners = part("pm:Project#partners");
+		Set<Object> before = partnersOf(alpha);
+		List<Object> more = new ArrayList<>(before);
+		more.add(account(BEN));
+
+		Turn turn = runTurnAs(ANNA, () -> alpha.tUpdate(partners, more));
+
+		assertFalse("The turn must not commit: nobody but an administrator writes who partners on a"
+			+ " project.", turn.committed());
+		assertEquals("Pre-commit security check failed", turn.rollbackReason());
+		assertEquals("Ben must not have become a partner.", before, partnersOf(alpha));
+
+		String notice = turn.notice();
+		assertNotNull(notice);
+		assertTrue("The notice must name the operation, but was: " + notice, notice.contains("Write"));
+		assertTrue("The notice must name the type, but was: " + notice, notice.contains("pm:Project"));
+	}
+
+	/**
+	 * Taking a partner off a project is a write of the same attribute: the dropped link points to an
+	 * account that lives on, so it is a change of the value and not the consequence of a deletion.
+	 */
+	public void testRemovingAPartnerIsRolledBack() {
+		TLObject alpha = project(ALPHA);
+		Set<Object> before = partnersOf(alpha);
+		assertTrue("The fixture makes Anna a partner on Alpha.", before.contains(account(ANNA)));
+
+		Turn turn = runTurnAs(ANNA, () -> alpha.tUpdate(part("pm:Project#partners"), List.of()));
+
+		assertFalse("The turn must not commit.", turn.committed());
+		assertEquals(before, partnersOf(alpha));
+	}
+
+	private static Set<Object> partnersOf(TLObject project) {
+		return Set.copyOf((Collection<?>) project.tValue(part("pm:Project#partners")));
 	}
 
 	/**
@@ -469,7 +522,7 @@ public class SecDemoPreCommitGuardTest extends SecDemoPersonaTest {
 		TLObject ticket = createTicket(title);
 		TLStructuredTypePart tickets = part("pm:Project#tickets");
 		List<TLObject> contained =
-			new ArrayList<>((java.util.Collection<TLObject>) project.tValue(tickets));
+			new ArrayList<>((Collection<TLObject>) project.tValue(tickets));
 		contained.add(ticket);
 		project.tUpdate(tickets, contained);
 		return ticket;

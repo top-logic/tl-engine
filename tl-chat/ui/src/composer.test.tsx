@@ -325,3 +325,77 @@ describe('a host placeholder on the composer', () => {
     expect(shown(field)).toBe(bundle('en').askAnything)
   })
 })
+
+/**
+ * What a row of the "+" menu tells the person reading it (#635).
+ *
+ * A row's hint used to end in an ellipsis wherever it did not fit beside the row's value, and there
+ * was nothing - no tooltip, no description - to read the rest in. The menu's real texts are short
+ * enough today, so these rows carry an agent summary of the length an installation may author: the
+ * whole sentence must be in the row, and it must be the row's accessible description, apart from
+ * its name, which is the label and the value.
+ */
+describe('a row of the "+" menu', () => {
+  const SUMMARY =
+    'Prüft eingehende Rechnungen gegen die Bestellungen des Projekts, markiert Abweichungen bei Menge, ' +
+    'Preis und Lieferdatum und schlägt für jede Abweichung eine Rückfrage an den Lieferanten vor.'
+
+  const agents = [
+    { name: 'assistant', label: 'Albert' },
+    { name: 'invoices', label: 'Rechnungsprüfung', summary: SUMMARY },
+  ]
+
+  function click(element: Element) {
+    element.dispatchEvent(new window.MouseEvent('click', { bubbles: true }))
+  }
+
+  /** The text the ids of an `aria-labelledby` / `aria-describedby` point at, as a screen reader joins it. */
+  function referenced(row: Element, attribute: string): string {
+    return (row.getAttribute(attribute) ?? '')
+      .split(' ')
+      .filter(Boolean)
+      .map((id) => document.getElementById(id)?.textContent ?? '')
+      .join(' ')
+  }
+
+  function rows(): HTMLElement[] {
+    return Array.from(mounted!.container.querySelectorAll<HTMLElement>('.plus-popover .plus-row'))
+  }
+
+  async function openMenu() {
+    click(mounted!.container.querySelector('.plus-trigger')!)
+    await settle()
+  }
+
+  it('describes an agent by its whole summary, however long it is', async () => {
+    await mount({ agents, labels: bundle('de') })
+    await openMenu()
+    click(rows().find((row) => referenced(row, 'aria-labelledby').startsWith('Agent'))!)
+    await settle()
+
+    const row = rows().find((item) => referenced(item, 'aria-labelledby') === 'Rechnungsprüfung')!
+    expect(row).toBeTruthy()
+    expect(referenced(row, 'aria-describedby')).toBe(SUMMARY)
+    expect(row.textContent).toContain(SUMMARY)
+  })
+
+  it('names a setting by its label and value and describes it by its hint', async () => {
+    const de = bundle('de')
+    await mount({ agents, labels: de, traceMode: 'summary' })
+    await openMenu()
+
+    const trace = rows().find((row) => referenced(row, 'aria-labelledby').startsWith(de.traceLevel))!
+    expect(referenced(trace, 'aria-labelledby')).toBe(`${de.traceLevel} ${de.traceSummary}`)
+    expect(referenced(trace, 'aria-describedby')).toBe(de.traceHint)
+  })
+
+  it('gives a row without a hint no description', async () => {
+    await mount({ agents })
+    await openMenu()
+    click(rows().find((row) => referenced(row, 'aria-labelledby').startsWith('Agent'))!)
+    await settle()
+
+    const albert = rows().find((item) => referenced(item, 'aria-labelledby') === 'Albert')!
+    expect(albert.hasAttribute('aria-describedby')).toBe(false)
+  })
+})

@@ -2873,10 +2873,24 @@
   border-top: 1px solid var(--border-subtle);
 }
 
+/*
+ * A row is a grid: icon, label, value and chevron on the first line, the hint on the lines below,
+ * from under the label to the value's end edge (#635).
+ *
+ * The hint is not beside the value, because then the value would decide how much room it has: a
+ * longer model name or "Zusammenfassung" cut the sentence off again, and changing the value would
+ * change the row's height. Under it, its width is the row's alone. And it wraps rather than ending in
+ * an ellipsis: an agent's summary and a host's menu item are authored text of any length, and a
+ * clamp would hide the rest of them exactly as the ellipsis did. The row's accessible description is
+ * the same sentence (`aria-describedby`).
+ *
+ * The tracks have no gap, the items carry their own margins: a row with no value and no chevron
+ * would otherwise keep two gaps at its end, and its text would stop short of the edge.
+ */
 .plus-row {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: baseline;
   width: 100%;
   padding: 0.4375rem 0.5rem;
   border-radius: var(--r-2);
@@ -2892,9 +2906,12 @@
 }
 
 .plus-ico {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
   width: 1.125rem;
   height: 1.125rem;
-  flex: 0 0 1.125rem;
+  margin-inline-end: 0.625rem;
   display: grid;
   place-items: center;
   color: var(--text-secondary);
@@ -2910,50 +2927,48 @@
   stroke-linejoin: round;
 }
 
-.plus-text {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
+.plus-label {
+  grid-column: 2;
+  grid-row: 1;
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
-.plus-text strong {
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.plus-hint {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  line-height: 1.4;
+  /* A model's id is one word with no break in it; it may break anywhere rather than overflow. */
+  overflow-wrap: anywhere;
 }
 
 /*
- * One line, cut off with an ellipsis where it does not fit.
- *
- * Deliberately not wrapped: what a row says about an agent is the text its definition carries, shown
- * as it was written, and a menu whose rows change height with the length of a sentence is harder to
- * scan than one whose long lines end in an ellipsis. A summary that has to fit is shortened where it
- * is authored.
+ * A value is a name or a number and stays on one line. Where a long one is cut, the row's accessible
+ * name still carries all of it, and the pane the row opens shows it in full.
  */
-.plus-text em {
-  font-style: normal;
-  color: var(--text-secondary);
-  font-size: var(--chat-small);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .plus-value {
-  flex: 0 0 auto;
+  grid-column: 3;
+  grid-row: 1;
   max-width: 9rem;
+  margin-inline-start: 0.625rem;
   color: var(--text-secondary);
   font-size: var(--chat-small);
   font-variant-numeric: tabular-nums;
+  /* Its own line box stays inside the label's, so a value does not make its row taller. */
+  line-height: 1.2;
+  text-align: end;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .plus-more {
-  flex: 0 0 auto;
+  grid-column: 4;
+  grid-row: 1;
+  align-self: center;
+  margin-inline-start: 0.625rem;
   display: grid;
   place-items: center;
   color: var(--text-secondary);

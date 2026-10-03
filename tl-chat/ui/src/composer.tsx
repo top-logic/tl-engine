@@ -186,8 +186,17 @@ function MenuRow({
   more?: boolean
   onClick: () => void
 }) {
+  // The row is named by its label and value and described by its hint, rather than named by all
+  // three run together: a screen reader then reads "Model, GPT 5.6 Luna" and the sentence after it.
+  const id = React.useId()
   return (
-    <button type="button" className={`plus-row${selected ? ' is-selected' : ''}`} onClick={onClick}>
+    <button
+      type="button"
+      className={`plus-row${selected ? ' is-selected' : ''}`}
+      aria-labelledby={value ? `${id}-label ${id}-value` : `${id}-label`}
+      aria-describedby={description ? `${id}-hint` : undefined}
+      onClick={onClick}
+    >
       {icon ? (
         <span className="plus-ico" aria-hidden="true">
           {icon}
@@ -195,11 +204,19 @@ function MenuRow({
       ) : (
         <span className="plus-ico" aria-hidden="true" />
       )}
-      <span className="plus-text">
-        <strong>{label}</strong>
-        {description ? <em>{description}</em> : null}
-      </span>
-      {value ? <span className="plus-value">{value}</span> : null}
+      <strong className="plus-label" id={`${id}-label`}>
+        {label}
+      </strong>
+      {value ? (
+        <span className="plus-value" id={`${id}-value`}>
+          {value}
+        </span>
+      ) : null}
+      {description ? (
+        <span className="plus-hint" id={`${id}-hint`}>
+          {description}
+        </span>
+      ) : null}
       {more ? (
         <span className="plus-more" aria-hidden="true">
           {Icon.chevron}

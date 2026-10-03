@@ -22,7 +22,6 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.SearchBuilder;
-import com.top_logic.model.search.expr.compile.transform.HasSideEffects;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
@@ -56,6 +55,27 @@ import com.top_logic.util.model.ModelService;
  * </p>
  */
 public class TLScriptExecutor {
+
+	/**
+	 * The message a read-only tool refuses a script with that changes something.
+	 */
+	public static final String NOT_READ_ONLY = "The expression changes data (it creates, sets, deletes or has"
+		+ " another side effect), and this tool only reads. Remove the writing part.";
+
+	/**
+	 * Thrown for a script a read-only caller refuses because it has an effect.
+	 *
+	 * <p>
+	 * An {@link IllegalArgumentException} like a script that does not compile, so a caller that does
+	 * not care tells nobody apart.
+	 * </p>
+	 */
+	public static final class NotReadOnly extends IllegalArgumentException {
+
+		NotReadOnly() {
+			super(NOT_READ_ONLY);
+		}
+	}
 
 	/**
 	 * Result of TLScript execution.
@@ -400,12 +420,14 @@ public class TLScriptExecutor {
 	 * For the tools that read with TL-Script - {@code query}, {@code present} - and are classified
 	 * {@code READ} for it, so they run without asking anybody. Discarding the modifications after
 	 * the fact ({@link #evaluate(QueryExecutor, Object...)}) is not enough for those: a side effect
-	 * outside the knowledge base - a mail, a message - is not discarded. The decision is the
-	 * engine's own ({@link HasSideEffects}), the one its compiler optimizes by.
+	 * outside the knowledge base - a mail, a message - is not discarded. Every part of the expression
+	 * is looked at, the arguments of a function included ({@link SideEffects}).
 	 * </p>
 	 *
+	 * @throws NotReadOnly
+	 *         For an expression with a side effect.
 	 * @throws IllegalArgumentException
-	 *         As {@link #compile(String)}, and for an expression with a side effect.
+	 *         As {@link #compile(String)}.
 	 */
 	public static QueryExecutor compileReadOnly(String script) {
 		return compile(script, true);
@@ -419,9 +441,8 @@ public class TLScriptExecutor {
 		try {
 			TLModel model = ModelService.getApplicationModel();
 			SearchExpression searchExpr = SearchBuilder.toSearchExpression(model, validation.getExpr());
-			if (readOnly && Boolean.TRUE.equals(searchExpr.visit(HasSideEffects.INSTANCE, null))) {
-				throw new IllegalArgumentException("The expression changes data (it creates, sets, deletes"
-					+ " or has another side effect); this tool only reads. Remove the writing part.");
+			if (readOnly && SideEffects.any(searchExpr)) {
+				throw new NotReadOnly();
 			}
 			return QueryExecutor.compile(PersistencyLayer.getKnowledgeBase(), model, searchExpr);
 		} catch (I18NRuntimeException ex) {

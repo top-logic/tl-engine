@@ -51,7 +51,7 @@ The two central design commitments:
 - **Two independent authorizations per tool call.** A call is permitted only if
   *(a)* the user's roles grant the **tool** (RBAC, section 3.2) **and**
   *(b)* every model object the tool touches passes the **model check** (ABAC, section 3.3).
-  Neither substitutes for the other: `executeTLScript` is one tool but can touch any type, and
+  Neither substitutes for the other: `changeData` is one tool but can touch any type, and
   `listInstances` is READ-classified but can enumerate a payroll table.
 
 **And one commitment this design does *not* make**, stated here rather than discovered in section 3:
@@ -418,9 +418,9 @@ group**; groups are the unit of granting.
 | Group | Contents (verified from the current registry) | Default |
 |---|---|---|
 | `model.read` | `listModules`, `listTypes`, `listTypeParts`, `listClassifiers`, `outlineModel`, `describeAnnotation`, `getCurrentAnnotations`, `listAvailableAnnotations`, `findTypeUsages`, `findPartUsages`, `getConfigSchema`, `listLayoutTemplates`, `getLayout`, `getTopLevelLayoutKey` | grantable |
-| `data.read` | `listInstances`, `getInstance`, `searchModel`, `searchVectorIndex`, `checkLock` | grantable |
-| `data.write` | (currently only `executeTLScript` with `withCommit=true`, checked inside the tool; future typed instance-write tools) | grantable, approval |
-| `script` | `validateTLScript`, `executeTLScript`, `listTLScriptFunctions`, `getTLScriptFunctionDocumentation` | **privileged**, read-only - the commit path additionally costs `data.write` |
+| `data.read` | `listInstances`, `getInstance`, `query`, `searchModel`, `searchVectorIndex`, `checkLock` | grantable |
+| `data.write` | `updateObject`, `createObject`, `deleteObject`, `editText`; and every `changeData` call that is no dry run, checked inside the tool | grantable, approval |
+| `script` | `changeData`, `listTLScriptFunctions`, `getTLScriptFunctionDocumentation` | **privileged**; alone it reaches only the dry run of a change - making the change additionally costs `data.write` |
 | `model.structure` | `createModule`, `updateModule`, `createClass`, `updateClass`, `createProperty`, `updateProperty`, `createReference`, `createBackwardReference`, `createEnumeration`, `updateEnumeration`, `deleteModelElement`, `addAnnotation`, `removeAnnotation`, `createLayout` | **privileged** |
 | `agent.authoring` | `createAgent`, `updateAgent`, `deleteAgent`, `createSkill`, `updateSkill`, `deleteSkill`, `createScriptTool`, `updateScriptTool`, `deleteScriptTool`, `addToolToAgent`, `removeToolFromAgent`, `addSkillToAgent`, `removeSkillFromAgent`, `addDelegationToAgent`, `removeDelegationFromAgent`, `addToolToSkill`, `removeToolFromSkill` | **privileged** |
 | `agent.meta` | `listAgents`, `getAgent`, `listSkills`, `getSkill`, `listScriptTools`, `getScriptTool`, `listAvailableTools`, `listFrameworkAgents`, `getFrameworkAgent`, `listFrameworkSkills`, `getFrameworkSkill`, `listScriptToolFactories` | grantable |
@@ -431,23 +431,35 @@ group**; groups are the unit of granting.
 
 **Privileged** groups are the ones whose holder can escalate their own rights: `script`,
 `model.structure` and `agent.authoring`, because each is a general-purpose escalation primitive -
-`executeTLScript` can express any data operation, `model.structure` can change the shape the security
+`changeData` can express any data operation, `model.structure` can change the shape the security
 policy is written against, and `agent.authoring` can rewire who gets which tools (T8). The
 classification is documentary, not mechanical: no group is reached except by a `<grant>` naming it, so
 there is no implicit path a privileged group would have to be excluded from. What it says is that
 granting one is an audited configuration change worth arguing about first.
 
-Note `executeTLScript` sits in a privileged group *and* is `DATA_WRITE`-classified *and* rides on the
+Note `changeData` sits in a privileged group *and* is `DATA_WRITE`-classified *and* rides on the
 engine's TL-Script enforcement (which #29088 already applies). Three independent reasons for it to be
 safe; each one alone would be insufficient.
 
 A fourth, and the one that makes the `data.write` row above true rather than aspirational: the group
-gates the *tool*, and `withCommit=true` is what makes the call persist, so **the commit path requires
-`data.write` in addition to `script`**. The gate cannot enforce that - it decides per tool, before the
-arguments - so the tool asks the run's own `ToolAuthorization` for the capability, which applies the same
-order (background allowlist, administrator bypass, role grants) it applies to a tool. Without it, every
-holder of `script` held every write TL-Script can express, and an allowlisted `script` handed that to
-unattended runs, which auto-approve.
+gates the *tool*, and every call but a dry run persists, so **making a change requires `data.write` in
+addition to `script`**. The gate cannot enforce that - it decides per tool, before the arguments - so the
+tool asks the run's own `ToolAuthorization` for the capability, which applies the same order (background
+allowlist, administrator bypass, role grants) it applies to a tool. Without it, every holder of `script`
+held every write TL-Script can express, and an allowlisted `script` handed that to unattended runs, which
+auto-approve.
+
+**Reading and changing are two tools (#630).** `changeData` refuses a script that changes nothing and
+points the model to `query` and `present`, so a read never shows an approval prompt. The refusal - and a
+script that does not compile, and a change without `data.write` - is given before the prompt, through the
+tool's own check (`Tool.refusal`, `@ToolMethod(check=...)`); the tool refuses the same calls again when it
+runs, because not every caller asks first. Its dry run (`dryRun=true`) is a read for that call
+(`Tool.mode(Map)`, `@ToolMethod(dryRun=...)`): no prompt and no part in the turn's transaction. It runs the
+script with the user's rights in an interaction of its own, in a transaction that is always rolled back,
+and only when every effect of the script is a write to the knowledge base - a script that also sends a
+mail or calls another system is checked, not run. What is a read is decided on the whole expression
+(`SideEffects`): the engine's `HasSideEffects` looks at the outermost call of a function only, and let
+`query` run `toString(log(...))` and a `delete` inside `firstElement()` as reads before #630.
 
 A tool's group is declared on the tool, not in the policy file, so a new tool cannot be silently
 ungrouped:
@@ -650,11 +662,11 @@ Six code fixes and one piece of prompt text address that:
   between framework skills - added deliberately, because agents used to load the wrong one - becomes a
   dead end as soon as the referenced skill is filtered for the acting user. Where the referring skill
   can simply *carry* the tool its guidance depends on, it does, and the filter then drops the pair
-  together: `TL_tlScriptInstanceCreation` declares `executeTLScript` rather than telling the reader to
-  load `TL_tlScriptWriting` for it. A guidance-only skill declares no tools, always survives the
+  together: `TL_tlScriptInstanceCreation` declares `changeData` rather than telling the reader to
+  load `TL_writingDataChanges` for it. A guidance-only skill declares no tools, always survives the
   filter, and is therefore the one shape that can be offered to a user who cannot act on it. Where the
   referenced skill belongs to a different domain and carrying its tools would drop the referrer for the
-  users who need it (`TL_agenticAuthoring` → `TL_tlScriptWriting`), the description says what to do
+  users who need it (`TL_agenticAuthoring` → `TL_writingDataChanges`), the description says what to do
   when the reference is unreachable instead. `TestFrameworkSkillReferences` fails on a cross-reference
   that does neither.
 - **A call for an absent tool says which absence it is** (`ToolCatalog.absenceReason`). A name no skill
@@ -909,12 +921,14 @@ filterSecurity(all(`pm:Project`)).map(p -> toString($p))   // scoped to what the
 all(`pm:Project`).map(p -> toString($p))                   // every label, by design
 ```
 
-Three places say so, so that an agent meets it wherever it enters: the `TL_tlScriptWriting` skill, the
-`executeTLScript` tool description, and rows **D7** / **D8** of
+Three places say so, so that an agent meets it wherever it enters: the cheat sheet of the query
+language (`QueryLanguage`, which a query that fails is answered with and which the
+`TL_writingDataChanges` skill carries), that skill's security section, and rows **D7** / **D8** of
 [testbed.md](../../tl-ai-demo/doc/secdemo/testbed.md#53-read-filtering---what-a-permitted-tool-then-discloses-issue-289), which
 assert both halves against the running fixture. The blunt control, for an account that must learn
-neither a label nor a count, is to withhold the `script` capability - it is not in the default baseline
-for this reason among others.
+neither a label nor a count, used to be withholding the `script` capability. Since #616 a script reaches
+a reader through `query` and `present` as well, and those are in `data.read`: withholding `script` no
+longer keeps a count or a label from an account; only withholding `data.read` does.
 
 The tools that needed the retrofit, and what each got:
 
@@ -922,7 +936,7 @@ The tools that needed the retrofit, and what each got:
 |---|---|
 | `InstanceBrowserTool.listInstances` | Filters the instance list through `readable(...)` **before** the count is taken and before the page is cut, so `totalCount` is the number of instances the user may see. An unfiltered `totalCount` leaks cardinality; a page cut before the filter leaks it through short pages. |
 | `InstanceBrowserTool.getInstance` | Resolves the TID through the read check, then serializes only the attributes `canRead(obj, attr)` allows. The container is another object's identity and is disclosed only when that object is readable too. |
-| `TLScriptTool.executeTLScript` | The result is disclosed through `ReadFilter`; the reported `resultType` is the type of the *filtered* value, so a script whose whole result is one hidden object reports `null` rather than `object`. |
+| `QueryTool.query`, `ChangeDataTool.changeData` | The result is disclosed through `ReadFilter`: an object the principal may not read is left out, so a script whose whole result is one hidden object reports `null`. `changeData`'s report of what changed names an attribute the principal may not read without its values, and an object it may not read without its label. |
 | `ScriptToolExecutor` (every configured TL-Script tool) | Result rendered through `ReadFilter.text(...)` instead of `SearchExpression.asString(...)`, which labels a model object. Object-typed *arguments* are read-checked where their TID is resolved, so a script body cannot be handed an object the principal may not read. |
 | `ViewDocumentTool.viewDocument` | Its own `canRead` check replaced by the resolver's, so "no such object" and "not yours" are one answer. |
 | `tl-ai-mcp-server`'s `InstanceResource` / `TypeInstancesResource` / `<dynamic-resources>` | The MCP *resource* surface serialized instances the same way the two tools used to, and read in a system interaction for a caller nobody authenticated. It now reads as the authenticated account and discloses through this same filter: `InstanceResource` answers "not found" for an object the account may not read and leaves out an attribute it may not read; `TypeInstancesResource` filters before it counts and paginates; a configured TL-Script resource has its result passed through `visible(...)`. Same aggregate caveat (**#291**). Asserted against real accounts by `SecDemoMcpEndpointTest` (#261) |
@@ -934,7 +948,7 @@ Still outstanding, and out of #289's scope:
 | `ModelBrowserTool.listModules` / `listTypes` / `listTypeParts` / `listClassifiers`, `TypeAnalysisTool.*` | Restrict enumeration to `accessibleTypes(READ)` (section 3.4.2). `outlineModel` - the one that hands over the whole model in a single call, and therefore the one that mattered - is done (#295); these enumerate the same information a type at a time |
 | `tl-ai-mcp-server`'s model-metadata resources (`ModuleTypesResource`, `TypePartsResource`, `EnumerationClassifiersResource`, `TypeUsagesResource`, `ConfigSchemaResource`) and `tools/list` | These disclose model *structure* rather than business data, so the read filter has nothing to filter. Bounding them by `accessibleTypes(READ)` is the same open item as the `ModelBrowserTool` enumeration above (section 3.4.2); `tools/list` additionally cannot be filtered per caller within MCP Java SDK 1.1.4. Both are disclosed only to an *authenticated* caller since #261 |
 | `ModelEditorTool.*`, `ModelAnnotationEditorTool.*` | Structural: gated by the `model.structure` group at L1; L4 backstops the commit |
-| `TLScriptTool.executeTLScript` | Already enforced by the engine inside TL-Script as of `8.0.0-alpha7`; assert user context, never a system interaction. That enforcement was never gated by tl-ai at all, and it denies by default - see section 6 |
+| `ChangeDataTool.changeData` | Already enforced by the engine inside TL-Script as of `8.0.0-alpha7`, and its dry run runs with the same user's rights. A system context is refused (#630), as the object tools refuse it (#625). That enforcement was never gated by tl-ai at all, and it denies by default - see section 6 |
 | `VectorIndexSearchTool` | **Done** (#295): filtered at query time through `VectorReadFilter`, and what it reports is the live object through `ReadFilter` rather than the indexed chunk. Section 3.4.3 |
 | `McpTool` (all remote tools) | Cannot be introspected and declares no group, so it is ungrouped and therefore denied until an administrator classifies it in `<tool-groups>`. Same for `ScriptToolExecutor`, i.e. every TL-Script tool authored in the running application. Classification stays with the administrator on purpose - a self-declared group would let whoever authors a tool choose which capability it costs to call (see 3.2.8) |
 
@@ -1050,7 +1064,7 @@ credit limit". `SalesAssistantUser` is assigned by two rules: a `<singleton-rule
 that derives it on each `Customer` of the clerk's own region.
 
 1. **L1** - the clerk holds `SalesAssistantUser` **on the security root**, through the tier rule, and
-   the policy grants that role `data.read`. `listInstances` passes. `executeTLScript` is in `script`
+   the policy grants that role `data.read`. `listInstances` passes. `changeData` is in `script`
    (privileged, not granted) - denied, and the model is told so.
 2. **L2** - `listInstances` calls `readable(...)`. `ModelAccessRights` finds
    `TypeAccessRule(Customer, Read) = {Viewer, Editor, Manager, SalesAssistantUser}` and evaluates the
@@ -1991,7 +2005,7 @@ The one behaviour change that does arrive with `8.0.0-alpha7` is the **engine's 
 TL-Script now applies model access rights (`CreateObject` checks CREATE, attribute reads are
 filtered), and those rights deny by default. An application without a `<security-config>` therefore
 sees TL-Script creates and reads denied for non-administrators. This
-affects `TLScriptTool.executeTLScript` and every script tool. Engine `UpdateSecurityVisitor
+affects `changeData`, `query`, `present` and every script tool. Engine `UpdateSecurityVisitor
 .disableSecurity(expr)` is the documented opt-out for internal queries.
 
 See the branch's PR description for the build and test commands that were actually run.

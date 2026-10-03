@@ -65,14 +65,14 @@ eleven groups rather than eighty tools.
 | Group | What it lets the agent do |
 |---|---|
 | `model.read` | Inspect the application model, layouts and configuration schema. Read-only. |
-| `data.read` | Read business data: browse instances, search, semantic search. |
-| `data.write` | Change business data. Always needs the user's approval as well. In the framework itself this is what **committing** through `executeTLScript` costs - see the note under `script`. |
+| `data.read` | Read business data: browse instances, search, semantic search, and answer a question with one read-only query (`query`, `present`). |
+| `data.write` | Change business data. Always needs the user's approval as well. In the framework itself: the object tools (`updateObject`, `createObject`, `deleteObject`), `editText`, and **making a change** with `changeData` - see the note under `script`. |
 | `agent.meta` | Inspect which agents, skills and tools exist. Read-only. |
 | `interaction` | Ask the user a question, load a skill, delegate to a sub-agent. |
 | `introspection` | `listTools`: which tools and skills *this agent* carries, and which of them the acting account may use. Not what the application has elsewhere - that is `agent.meta`. |
 | `workspace` | The user's own tasks and published pages. |
 | `egress` | Send data out of the application: web fetch/search, issue trackers, remote MCP servers. |
-| `script` | **Privileged.** Execute TL-Script. Read-only by itself: **persisting** what a script changes (`executeTLScript` with `withCommit=true`) requires `data.write` on top. |
+| `script` | **Privileged.** Change data with one TL-Script (`changeData`). Alone it reaches only the dry run, which saves nothing: **making** the change requires `data.write` on top. |
 | `model.structure` | **Privileged.** Change the model, its annotations and layouts. |
 | `agent.authoring` | **Privileged.** Create and rewire agents, skills and tools. |
 
@@ -83,14 +83,16 @@ about before you write it.
 `egress` is not privileged but deserves the same care: `webFetch` is a read-only tool and the best way
 to get data *out* of the application.
 
-> **One rule depends on an argument, not on a tool.** `executeTLScript` is in `script`, and calling it
-> with `withCommit=true` persists whatever the script changes. That call therefore requires `data.write`
-> **in addition** to `script`; the same call with `withCommit` absent or `false`, and
-> `validateTLScript`, need `script` alone. The decision is the one a `data.write` tool would get -
-> `<deny>` first, then the baseline, then your role grants, capped by the `<background-allowlist>` and
-> bypassed by administrators - and the refusal is a normal tool error naming `data.write`, which the
-> agent can relay. Granting `script` alone is therefore a read-only grant, and a role that needs to
-> *change* data with TL-Script needs both groups.
+> **One rule depends on an argument, not on a tool.** `changeData` is in `script`, and every call of it
+> that is not a dry run persists whatever the script changes. Such a call therefore requires `data.write`
+> **in addition** to `script`; a dry run (`dryRun=true`) saves nothing and needs `script` alone. The
+> decision is the one a `data.write` tool would get - `<deny>` first, then the baseline, then your role
+> grants, capped by the `<background-allowlist>` and bypassed by administrators - and the refusal is a
+> normal tool error naming `data.write`, which the agent can relay; it is given before the user is asked
+> to approve anything. Granting `script` alone therefore lets an account try a change and never make
+> one, and a role that needs to *change* data with TL-Script needs both groups. Reading with the query
+> language is not in `script` at all: `changeData` refuses a script that only reads, and `query` and
+> `present` are in `data.read`.
 
 ### The same table, in the raw editor
 
@@ -289,7 +291,7 @@ see [What this does not decide](#what-this-does-not-decide).
   what happens to a remote MCP tool, or to a tool whose author forgot to classify it.
 - **Nothing is reached by a pattern.** Groups and tools are named one at a time, so a tool that appears
   after you wrote the policy is denied until you name it. Fail-closed, on purpose.
-- **`script` does not include writing.** Committing through `executeTLScript` costs `data.write` as
+- **`script` does not include writing.** Making a change with `changeData` costs `data.write` as
   well - see the note above. A `<grant tools="...">` naming the tool does not substitute for it: the
   capability is granted with `<grant group="data.write"/>` and nothing else.
 - **Roles are matched on the security root, and nowhere else.** A tool call has no object yet when this
@@ -674,10 +676,10 @@ lost, and the subagent's own prompt says which ones and that the reason is the a
 the account's roles. If you want subagents to write, put the capability on this list. A *synchronous*
 delegation is unaffected - it finishes inside the turn you are watching.
 
-**`script` on this list does not admit writes.** Committing through `executeTLScript` needs
+**`script` on this list does not admit writes.** Making a change with `changeData` needs
 `data.write`, and the ceiling is applied to that capability exactly as it is to a tool - so a list
-carrying `script` without `data.write` lets an unattended run *read* with TL-Script and refuses to let
-it persist, administrators included. Allowlisting `script` used to be the whole of it, which made every
+carrying `script` without `data.write` lets an unattended run *try* a change in a dry run and refuses
+to let it persist, administrators included. Allowlisting `script` used to be the whole of it, which made every
 allowlist that carried it silently carry every write TL-Script can express.
 
 **You have to declare it.** As soon as your `<tool-access>` names a role, a policy with no
@@ -727,13 +729,13 @@ The agent gets the same sentence, so it can tell the user what is missing instea
 Neither the log nor the message ever contains data that was withheld - tool names, group names,
 operations and role names only.
 
-A refusal that was decided for a **capability** rather than for a tool - today only the commit path of
-`executeTLScript` - names the capability and the operation instead of a tool:
+A refusal that was decided for a **capability** rather than for a tool - today only a change made with
+`changeData` - names the capability and the operation instead of a tool:
 
 ```
 WARN com.top_logic.tl.ai.core.security.ToolAuthorization - Tool access denied:
 capability='data.write' user=ben roles=[SecurityStructure.user, ticketReader]
-reason=Permission denied: executing TL-Script with withCommit=true requires the
+reason=Permission denied: changing data with changeData requires the
 'data.write' capability, which none of your roles grants.
 ```
 

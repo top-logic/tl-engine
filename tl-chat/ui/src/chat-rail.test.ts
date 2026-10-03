@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { React } from 'tl-react-bridge'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { resetTLBridge, setTLState } from '../test/tl-react-bridge'
+import { TLChatConversation } from './chat-conversation'
 import { TLChatRail } from './chat-rail'
 import {
   collapsedFromSections,
@@ -136,10 +137,27 @@ describe('the rendered rail', () => {
     expect(html).not.toContain('data-module')
   })
 
-  it('shows the sign-in note instead of a rail in a session that is not signed in', () => {
-    const html = render(railState({ authenticated: false, chatId: 'signed-out-rail' }))
-    expect(html).toContain('is-signed-out')
-    expect(html).not.toContain('data-module')
+  /**
+   * A page that is not signed in says so once (#643). The conversation beside the rail carries the
+   * note; a rail that drew it too put the same heading twice side by side, the second in a column
+   * of its own. Rendered as the demo's chat page renders them - one conversation, one rail, one
+   * chat id - because "once" is a statement about the page, not about either element.
+   */
+  it('leaves the sign-in note to the conversation in a session that is not signed in', () => {
+    const chatId = 'signed-out-page'
+    const signedOut = { chatId, windowId: 'w1', authenticated: false, language: 'en' }
+    setTLState(signedOut)
+    const conversation = renderToStaticMarkup(
+      React.createElement(TLChatConversation, { controlId: 'conversation', state: signedOut }),
+    )
+    const rail = render(railState({ authenticated: false, chatId }))
+    const page = conversation + rail
+
+    expect(page.split('Sign in to use the chat').length - 1).toBe(1)
+    expect(conversation).toContain('Sign in to use the chat')
+
+    // The rail stands down: no note, no strip, no section, nothing that takes room in the row.
+    expect(rail).toMatch(/^<div id="signed-out-page" class="tl-chat-rail is-stood-down"><\/div>$/)
   })
 
   /**

@@ -130,12 +130,12 @@ public class ModelSecurityPreCommitGuard implements PreCommitGuard {
 			}
 			String typeName = String.valueOf(type);
 			if (!_model.canCreate(type, creation.container())) {
-				record(creation.object(), typeName, SimpleBoundCommandGroup.CREATE);
+				record(creation.object(), typeName, SimpleBoundCommandGroup.CREATE, null);
 				return;
 			}
 			TLStructuredTypePart composition = creation.containerReference();
 			if (composition != null && !_model.canCreate(creation.container(), composition)) {
-				record(creation.object(), typeName, SimpleBoundCommandGroup.CREATE);
+				record(creation.object(), typeName, SimpleBoundCommandGroup.CREATE, null);
 			}
 		}
 
@@ -152,12 +152,12 @@ public class ModelSecurityPreCommitGuard implements PreCommitGuard {
 		private void checkUpdate(TLObject object, Set<TLStructuredTypePart> attributes) {
 			String typeName = typeName(object);
 			if (!_model.canWrite(object)) {
-				record(object, typeName, SimpleBoundCommandGroup.WRITE);
+				record(object, typeName, SimpleBoundCommandGroup.WRITE, null);
 				return;
 			}
 			for (TLStructuredTypePart attribute : attributes) {
 				if (!_model.canWrite(object, attribute)) {
-					record(object, typeName, SimpleBoundCommandGroup.WRITE);
+					record(object, typeName, SimpleBoundCommandGroup.WRITE, attribute);
 					return;
 				}
 			}
@@ -165,7 +165,7 @@ public class ModelSecurityPreCommitGuard implements PreCommitGuard {
 
 		private void checkDeletion(TLObject object) {
 			if (!_model.canDelete(object)) {
-				record(object, typeName(object), SimpleBoundCommandGroup.DELETE);
+				record(object, typeName(object), SimpleBoundCommandGroup.DELETE, null);
 			}
 		}
 
@@ -186,13 +186,14 @@ public class ModelSecurityPreCommitGuard implements PreCommitGuard {
 		 * 3.8 of the architecture document asks for it at this level.
 		 * </p>
 		 */
-		private void record(TLObject object, String typeName, BoundCommandGroup operation) {
+		private void record(TLObject object, String typeName, BoundCommandGroup operation,
+				TLStructuredTypePart attribute) {
 			String reason = "the account holds no '" + operation.getID() + "' right on this type";
 			Logger.error("Pre-commit check failed: operation='" + operation.getID()
 				+ "' type='" + (typeName == null ? "(none)" : typeName) + "'"
 				+ " user=" + _accountName
 				+ " reason=" + reason, ModelSecurityPreCommitGuard.class);
-			_violations.add(new Violation(object, typeName, operation, reason));
+			_violations.add(new Violation(object, typeName, operation, attribute, reason));
 		}
 
 		private static String typeName(TLObject object) {

@@ -25,6 +25,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.top_logic.base.locking.LockService;
 import com.top_logic.basic.SessionContext;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -179,6 +180,32 @@ public class TestObjectEditTool extends BasicTestCase {
 		assertRefused(result, "'name'");
 		assertEquals("The violating value must be undone.", name, agent.getName());
 		assertEquals("The other value of the same call must be undone too.", "kept", agent.getDescription());
+	}
+
+	/**
+	 * Two writes to one object in one turn: the second writes under the lock the first took. It used
+	 * to wait for its own turn to release that lock, and failed after 20 seconds.
+	 */
+	public void testTwoWritesToOneObjectInOneTurnShareItsLock() {
+		Agent agent = agent("before");
+		TLContext context = TLContext.getContext();
+		Person before = context.getPerson();
+		String beforeId = context.getContextId();
+		context.setPerson(_owner);
+		try (TransactionScope turn = new TransactionScope()) {
+			ToolContext inTurn = new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE, turn);
+			turn.begin();
+			ToolResult first = _tool.updateObject(idOf(agent), values("description", "first"), inTurn);
+			ToolResult second = _tool.updateObject(idOf(agent), values("description", "second"), inTurn);
+			turn.commit();
+
+			assertSucceeded(first);
+			assertSucceeded(second);
+		} finally {
+			restore(context, before, beforeId);
+		}
+		assertEquals("second", agent.getDescription());
+		delete(agent);
 	}
 
 	/** Without the right to write the object, nothing of it is written. */
@@ -871,6 +898,7 @@ public class TestObjectEditTool extends BasicTestCase {
 	/** The knowledge base, the model and real accounts: these tests work on real model objects. */
 	public static Test suite() {
 		return PersonManagerSetup.createPersonManagerSetup(
-			ServiceTestSetup.createSetup(new TestSuite(TestObjectEditTool.class), ModelService.Module.INSTANCE));
+			ServiceTestSetup.createSetup(new TestSuite(TestObjectEditTool.class), ModelService.Module.INSTANCE,
+				LockService.Module.INSTANCE));
 	}
 }

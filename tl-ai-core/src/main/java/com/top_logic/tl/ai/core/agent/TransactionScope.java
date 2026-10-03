@@ -6,8 +6,11 @@
 package com.top_logic.tl.ai.core.agent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -89,6 +92,9 @@ public class TransactionScope implements AutoCloseable {
 
 	private final Set<Lock> _locks = new LinkedHashSet<>();
 
+	/** The locks of {@link #_locks} by the operation and the one object each covers. */
+	private final Map<List<Object>, Lock> _lockByTarget = new HashMap<>();
+
 	private Revision _commitRevision;
 
 	private final CancellationToken _cancellationToken;
@@ -141,17 +147,26 @@ public class TransactionScope implements AutoCloseable {
 	 * bridging agent locks with UI locks. Retries up to {@value #MAX_RETRIES} times
 	 * with a {@value #RETRY_DELAY_MS}ms delay between attempts.</p>
 	 *
+	 * <p>A lock this scope already holds for the operation and every one of the targets is not
+	 * taken again: a second write to the same object in one turn writes under the lock the first
+	 * one took. Taking it again would wait for this very turn to release it, and fail.</p>
+	 *
 	 * @param operation the abstract operation name (e.g. "editValues")
 	 * @param targets   the objects to lock
 	 * @throws LockConflictException if the lock cannot be acquired after all retries
 	 * @throws TransactionException  if lock acquisition is interrupted or cancelled
 	 */
 	public void acquireLock(String operation, TLObject... targets) {
+		List<List<Object>> keys = lockKeys(operation, targets);
+		if (keys.stream().allMatch(this::holds)) {
+			return;
+		}
 		Lock lock = LockService.getInstance().createLock(operation, (Object[]) targets);
 		for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
 			try {
 				lock.lock(LOCK_DURATION_MS);
 				_locks.add(lock);
+				keys.forEach(key -> _lockByTarget.put(key, lock));
 				return;
 			} catch (Exception e) {
 				if (attempt == MAX_RETRIES) {
@@ -163,6 +178,19 @@ public class TransactionScope implements AutoCloseable {
 				waitBeforeRetry();
 			}
 		}
+	}
+
+	private boolean holds(List<Object> key) {
+		Lock lock = _lockByTarget.get(key);
+		return lock != null && lock.isStateAcquired();
+	}
+
+	/** One key per target - a lock without targets is one for the operation as a whole. */
+	private static List<List<Object>> lockKeys(String operation, TLObject... targets) {
+		if (targets.length == 0) {
+			return List.of(List.of(operation));
+		}
+		return Arrays.stream(targets).map(target -> Arrays.<Object> asList(operation, target)).toList();
 	}
 
 	/**
@@ -188,6 +216,7 @@ public class TransactionScope implements AutoCloseable {
 			}
 		}
 		_locks.clear();
+		_lockByTarget.clear();
 	}
 
 	/**

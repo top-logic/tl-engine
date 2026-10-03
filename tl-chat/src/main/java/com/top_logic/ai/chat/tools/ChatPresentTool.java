@@ -17,6 +17,7 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.tools.present.PresentAs;
 import com.top_logic.tl.ai.core.tools.present.PresentTool;
 import com.top_logic.tl.ai.core.tools.present.Presentation;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -34,9 +35,9 @@ import com.top_logic.util.TLContextManager;
  *
  * <ul>
  * <li><b>The channel.</b> Deny by default: only a channel a {@code <chat-conversation present="…">}
- * of this window named can be written. The model need not know its name - a page offering exactly
- * one is written without one - and a name the page does not offer is refused with the list of the
- * ones it does. See
+ * of this window named can be written, and only while that element is displayed. The model need not
+ * know its name - a page offering exactly one is written without one - and a name the page does not
+ * offer is refused with the list of the ones it does. See
  * {@link ChatViewBinding#presentable(com.top_logic.basic.col.TypedAnnotatable, String)}.</li>
  * <li><b>The window.</b> The value is written in the sub-session of the browser window the run
  * belongs to and within that window's interaction, the way {@link AgentViewRefreshService} reaches a
@@ -45,10 +46,27 @@ import com.top_logic.util.TLContextManager;
  * </ul>
  *
  * <p>
+ * A run that lacks either is not offered the tool ({@link #noPlaceToShow(ToolExecutionContext)}): its
+ * model is not told to show anything, and answers a request to see objects in text rather than with
+ * a call that can only be refused (#649). The same answer refuses a call that arrives anyway - the
+ * element can go away between the request and the call.
+ * </p>
+ *
+ * <p>
  * The objects and their rights are the base class's business.
  * </p>
  */
 public class ChatPresentTool extends PresentTool {
+
+	/**
+	 * The answer for a run without a browser window: a fact about the run, and deliberately not the
+	 * sentence a page that allows nothing is answered with.
+	 */
+	private static final String NO_PAGE =
+		"No page is attached to this run, so there is nothing to present on. Answer in text instead.";
+
+	/** The answer for a run whose page shows no element that names a channel to present on. */
+	private static final String NO_PLACE = "This page offers no place to present on. Answer in text instead.";
 
 	/**
 	 * Creates a {@link ChatPresentTool}.
@@ -57,16 +75,33 @@ public class ChatPresentTool extends PresentTool {
 		// Required public no-arg constructor for ReflectiveToolFactory.
 	}
 
+	/**
+	 * Why this run has no place to show anything: no window, or a window none of whose displayed
+	 * chats names a channel.
+	 */
+	@Override
+	protected String noPlaceToShow(ToolExecutionContext context) {
+		TLSubSessionContext window = TLContextManager.getSubSession();
+		if (!AgentViewRefreshService.hasWindow(window)) {
+			return NO_PAGE;
+		}
+		if (ChatViewBinding.presentableNames(window).isEmpty()) {
+			return NO_PLACE;
+		}
+		return null;
+	}
+
 	@Override
 	protected String deliver(Presentation presentation, String channel, ToolContext context) {
 		TLSubSessionContext window = TLContextManager.getSubSession();
 		if (!AgentViewRefreshService.hasWindow(window)) {
-			return "No page is attached to this run, so there is nothing to present on. "
-				+ "Answer in text instead.";
+			return NO_PAGE;
 		}
+		// Read once, and asked again rather than taken from the offer: the elements of a page come and
+		// go while the run works.
 		Set<String> allowed = ChatViewBinding.presentableNames(window);
 		if (allowed.isEmpty()) {
-			return "This page offers no place to present on. Answer in text instead.";
+			return NO_PLACE;
 		}
 		String name = channel;
 		if (name.isEmpty()) {
@@ -93,8 +128,7 @@ public class ChatPresentTool extends PresentTool {
 			case BUSY:
 				return "The page was busy and could not be written. Try once more.";
 			default:
-				return "No page is attached to this run, so there is nothing to present on. "
-					+ "Answer in text instead.";
+				return NO_PAGE;
 		}
 	}
 }

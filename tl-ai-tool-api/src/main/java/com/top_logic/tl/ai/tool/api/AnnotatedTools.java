@@ -95,7 +95,8 @@ public final class AnnotatedTools {
 
 		return new ReflectiveTool(toolName, description, schema, mode, concurrencySafe,
 			truncationHint, annotation.group(), List.of(annotation.types()), annotation.marking(),
-			provider, method, dryRunParameter(method, annotation.dryRun()), check(method, annotation.check()));
+			provider, method, dryRunParameter(method, annotation.dryRun()), check(method, annotation.check()),
+			unavailable(method, annotation.unavailable()));
 	}
 
 	/**
@@ -147,6 +148,39 @@ public final class AnnotatedTools {
 		}
 		throw new IllegalArgumentException("Tool method '" + method.getName() + "' names '" + name
 			+ "' as its check, and its class has no method of that name with the same parameters.");
+	}
+
+	/**
+	 * The method {@link ToolMethod#unavailable()} names, or <code>null</code> for a tool that can act
+	 * in every run.
+	 *
+	 * <p>
+	 * Checked when the tool is created, like the {@link #check(Method, String) check}: a misspelled
+	 * name would otherwise offer the tool in every run, which is the very failure the declaration is
+	 * there to prevent.
+	 * </p>
+	 */
+	private static Method unavailable(Method method, String name) {
+		if (name.isEmpty()) {
+			return null;
+		}
+		for (Class<?> clazz = method.getDeclaringClass(); clazz != null; clazz = clazz.getSuperclass()) {
+			for (Method candidate : clazz.getDeclaredMethods()) {
+				if (!candidate.getName().equals(name) || candidate.getParameterCount() != 1
+					|| !isInjectedParam(candidate.getParameters()[0])) {
+					continue;
+				}
+				if (candidate.getReturnType() != String.class) {
+					throw new IllegalArgumentException("The method '" + name + "' that tool method '"
+						+ method.getName() + "' asks whether it is available must return the reason as a String.");
+				}
+				candidate.setAccessible(true);
+				return candidate;
+			}
+		}
+		throw new IllegalArgumentException("Tool method '" + method.getName() + "' names '" + name
+			+ "' as the method saying whether it is available, and its class has no method of that name"
+			+ " taking the run's context.");
 	}
 
 	private static ToolSchema generateSchema(String toolName, String description, Method method) {
@@ -557,10 +591,12 @@ public final class AnnotatedTools {
 
 		private final Method _check;
 
+		private final Method _unavailable;
+
 		ReflectiveTool(String name, String description, ToolSchema schema,
 				ToolMode mode, boolean concurrencySafe, int truncationHint, String group,
 				List<String> types, AnswerMarking marking, Object provider, Method method, Parameter dryRun,
-				Method check) {
+				Method check, Method unavailable) {
 			_name = name;
 			_description = description;
 			_schema = schema;
@@ -574,6 +610,7 @@ public final class AnnotatedTools {
 			_method = method;
 			_dryRun = dryRun;
 			_check = check;
+			_unavailable = unavailable;
 		}
 
 		@Override
@@ -642,6 +679,25 @@ public final class AnnotatedTools {
 				throw new RuntimeException(cause.getMessage(), cause);
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException("Cannot invoke the check of tool method: " + _method.getName(), e);
+			}
+		}
+
+		@Override
+		public String unavailableReason(ToolExecutionContext context) {
+			if (_unavailable == null) {
+				return null;
+			}
+			try {
+				return (String) _unavailable.invoke(_provider, context);
+			} catch (InvocationTargetException e) {
+				Throwable cause = e.getCause();
+				if (cause instanceof RuntimeException re) {
+					throw re;
+				}
+				throw new RuntimeException(cause.getMessage(), cause);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException("Cannot ask tool method '" + _method.getName() + "' whether it is available.",
+					e);
 			}
 		}
 

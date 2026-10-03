@@ -19,6 +19,7 @@ import com.top_logic.tl.ai.core.tools.script.QueryLanguage;
 import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -33,7 +34,8 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * can be shown at all; <em>where</em> it is shown is a subclass's business ({@link #deliver}). A
  * chat page puts it into its pane, an eval records it. An application gets the tool by registering
  * one of those subclasses as the factory {@code present}; tl-ai-core registers none, because without
- * a page there is nothing to show on.
+ * a page there is nothing to show on. For the same reason a run that has no place to show anything
+ * is not offered the tool at all ({@link #noPlaceToShow}).
  * </p>
  *
  * <h2>Why a query</h2>
@@ -98,7 +100,7 @@ public abstract class PresentTool {
 			+ "a table. The answer lists the objects as label [id:TID]. This changes no data. After "
 			+ "it, answer in one or two sentences what the user now sees, and call no further tool.",
 		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
-		marking = AnswerMarking.TOOL)
+		marking = AnswerMarking.TOOL, unavailable = "noPlaceToShow")
 	public String present(
 			@P(value = "TL-Script expression evaluating to the objects to show, e.g. "
 				+ "all(`crm:Customer`).filter(c -> $c.get(`crm:Customer#active`)). "
@@ -199,6 +201,25 @@ public abstract class PresentTool {
 			return refusal;
 		}
 		return describe(presentation, points);
+	}
+
+	/**
+	 * Why the given run has no place to show anything, or <code>null</code> when it has one.
+	 *
+	 * <p>
+	 * Asked before the model is offered this tool (see {@link ToolMethod#unavailable()}): a run that
+	 * cannot be shown anything is not offered it, and answers a request to see objects in text instead
+	 * of with a call that can only be refused. Every run has a place here; a subclass whose place a run
+	 * can lack - a chat page that names no channel - says so, with the sentence {@link #deliver} would
+	 * refuse with.
+	 * </p>
+	 *
+	 * @param context
+	 *        The run.
+	 * @return The reason, phrased for the model, or <code>null</code>.
+	 */
+	protected String noPlaceToShow(ToolExecutionContext context) {
+		return null;
 	}
 
 	/**

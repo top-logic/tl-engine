@@ -103,6 +103,28 @@ honestly: `READ` tools need no approval and may be dispatched concurrently with 
 everything else runs serially, asks for approval, and (except `EXTERNAL`) enrols in the turn's
 transaction.
 
+### A tool that needs something a run may lack
+
+Some tools can only act where the run has something: `present` needs a page that shows what it puts
+on a channel. Offered anyway, the model calls such a tool and is refused, often after a prompt told it
+to call exactly this tool. Say it instead, once for the whole run:
+
+```java
+@ToolMethod(description = "...", mode = ToolMode.READ, unavailable = "noPlaceToShow")
+public String present(...) { ... }
+
+/** Why this run has no place to show anything, or null when it has one. */
+protected String noPlaceToShow(ToolExecutionContext context) { ... }
+```
+
+`AgentLoop` asks `Tool.unavailableReason(context)` before every request and leaves a tool that answers
+out of the schemas the model is sent; a call that names it anyway is answered with the reason and the
+tool does not run. It is not a permission - nothing is withheld from the user - so it says what the run
+lacks, not which grant is missing. Keep the method cheap and free of side effects, and let it depend on
+what the run is attached to rather than on the turn: its answer changes the tool array, which every
+provider caches by prefix. The tool still refuses the same calls when it runs, because not every
+caller asks first.
+
 ### A tool that changes a long text
 
 If your tool writes a long text value - a document body, a prompt, a stored note - do **not** take

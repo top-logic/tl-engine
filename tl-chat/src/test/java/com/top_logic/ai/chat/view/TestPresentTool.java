@@ -21,9 +21,13 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.tools.ChatPresentTool;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLClass;
@@ -39,6 +43,7 @@ import com.top_logic.tl.ai.core.tools.present.ChartKind;
 import com.top_logic.tl.ai.core.tools.present.ChartSpec;
 import com.top_logic.tl.ai.core.tools.present.PresentAs;
 import com.top_logic.tl.ai.core.tools.present.Presentation;
+import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.util.TLContextManager;
@@ -107,6 +112,63 @@ public class TestPresentTool extends BasicTestCase {
 	protected void tearDown() throws Exception {
 		ChatViewBinding.bind(subSession(), windowName(), "/app", "main").denyPresenting(PANE, _channel);
 		super.tearDown();
+	}
+
+	/**
+	 * The tool is offered to a run only where it can show something (#649): a run without a window
+	 * is not offered it, nor is a run on a page that names no channel - its model answers a request
+	 * to see objects in text, instead of with a call that is refused.
+	 */
+	public void testTheToolIsOfferedOnlyWhereThePageHasAPlace() {
+		Tool tool = toolOf(_tool);
+		ToolContext run = context(ModelSecurity.UNCHECKED);
+
+		assertSays("No page is attached", tool.unavailableReason(run));
+
+		withWindow();
+		assertSays("offers no place", tool.unavailableReason(run));
+
+		allow();
+		assertNull("A page that names a channel is offered the tool.", tool.unavailableReason(run));
+	}
+
+	/**
+	 * A page's channel counts while the conversation that names it is displayed (#649): a page of
+	 * the shell the user left, a classic tab that is not selected, the React page a browser tab
+	 * showed before the classic UI - each is detached, offers nothing, and is not where a run puts a
+	 * table nobody sees.
+	 */
+	public void testAChannelCountsWhileItsConversationIsDisplayed() throws Exception {
+		ReactWindowRegistry registry = new ReactWindowRegistry("test-session");
+		String window = "displayedWindow";
+		DefaultViewContext view = new DefaultViewContext(
+			new DefaultReactContext("/app", window, registry.getOrCreateQueue(window), registry));
+		view.registerChannel(PANE, _channel);
+		ChatConversationControl conversation = new ChatConversationControl(view, (ChatConversationElement.Config)
+			TypedConfiguration.parse(CharacterContents.newContent(
+				"<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+					+ " config:interface='" + ChatConversationElement.Config.class.getName() + "'"
+					+ " present='" + PANE + "'/>")));
+		Tool tool = toolOf(_tool);
+		ToolContext run = context(ModelSecurity.UNCHECKED);
+		try {
+			assertEquals("Built but not displayed yet.", Set.of(), ChatViewBinding.presentableNames(subSession()));
+			assertSays("offers no place", tool.unavailableReason(run));
+
+			conversation.attach();
+			assertEquals(Set.of(PANE), ChatViewBinding.presentableNames(subSession()));
+			assertNull(tool.unavailableReason(run));
+
+			conversation.detach();
+			assertEquals("Left, not gone.", Set.of(), ChatViewBinding.presentableNames(subSession()));
+			assertSays("offers no place", tool.unavailableReason(run));
+
+			conversation.attach();
+			assertEquals("Displayed again.", Set.of(PANE), ChatViewBinding.presentableNames(subSession()));
+		} finally {
+			conversation.cleanupTree();
+		}
+		assertEquals("Gone.", Set.of(), ChatViewBinding.presentableNames(subSession()));
 	}
 
 	/** A run with no browser window has no page, and says so rather than blaming the allow list. */
@@ -340,6 +402,13 @@ public class TestPresentTool extends BasicTestCase {
 
 	private static ToolContext context(ModelSecurity security) {
 		return new ToolContext(new RunAs(security), ApprovalCallback.AUTO_APPROVE);
+	}
+
+	/** The tool as the agent's catalog holds it: what the schema filter asks before every request. */
+	private static Tool toolOf(ChatPresentTool provider) {
+		List<Tool> tools = AnnotatedTools.from(provider);
+		assertEquals(1, tools.size());
+		return tools.get(0);
 	}
 
 	private static TLSubSessionContext subSession() {

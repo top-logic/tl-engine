@@ -520,14 +520,16 @@ loses **both**. As `dora`, the same unchecked write is refused too.
 Adding Ben to the `partners` of Alpha, or taking Anna off them, is rolled back as well, although Anna may
 write Alpha: the `<part>` grant withholds that one attribute. The engine keeps a reference as links in a
 table of its own, so the change books nothing on Alpha's row - before #631 the guard did not see it, and
-an unchecked tool could hand the partner role to anybody.
+an unchecked tool could hand the partner role to anybody. The same holds for the title of a
+documentation page, which the fixture gives Anna no right to write: its translations are rows of a table
+of their own, one per language, and before #638 rewriting it committed. The guard reads every attribute
+the engine keeps outside the holder's row this way, the children of a `tl.doc` page included.
 
 > **What L4 does not cover**, stated so an observation is not mistaken for a finding: attribute writes to
 > an object created in the *same* turn (the engine allows every instance-level check on an uncommitted
 > object, so the creation is what gets checked - see
-> [agent-security-architecture.md](../../../doc/security/agent-security-architecture.md) section 3.5), a translated
-> (`I18NString`) attribute, whose translations the engine keeps outside the object's row as well (#638),
-> and side effects outside the KnowledgeBase, which a KB rollback cannot undo. There is no run in which the
+> [agent-security-architecture.md](../../../doc/security/agent-security-architecture.md) section 3.5), and
+> side effects outside the KnowledgeBase, which a KB rollback cannot undo. There is no run in which the
 > guard is a no-op: it runs for every turn that opened a transaction.
 
 ### 5.6a The object tools (#625)

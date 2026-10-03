@@ -1282,8 +1282,8 @@ public interface PreCommitGuard {
     /** Whether this guard checks anything at all - asked before the change set is built. */
     default boolean enforces() { return true; }
 
-    /** PERMISSIVE unless the run's mode enforces model access. */
-    static PreCommitGuard forRun(SecurityContext security) { ... }
+    /** Always a real guard: every turn that opened a transaction is checked. */
+    static PreCommitGuard forRun() { ... }
 
     record Violation(TLObject object, String typeName, BoundCommandGroup operation,
         TLStructuredTypePart attribute, String reason) {}
@@ -1297,24 +1297,38 @@ its own check ends up bounded by exactly the rights the acting user would have h
 **Where the change set comes from.** `TransactionScope.changes()` reads the engine's own transaction
 bookkeeping - `DefaultDBContext.getNewObjects()` / `getChangedObjects()` / `getDroppedObjects()`, plus
 the per-item `ChangeInspectable.getChange()` record the engine also uses to build its commit event.
-Nothing asks a tool what it wrote: a tool that forgot to check would equally forget to report. Only
-attribute *names* are read from the change record, never values.
+Nothing asks a tool what it wrote: a tool that forgot to check would equally forget to report. The
+values in the change record are only compared - the engine reports the key columns of a table with
+every change of a row, and a key column whose value did not change is no write - and never kept,
+logged or quoted.
 
-**A reference is usually not in the row of the object holding it.** The engine stores every reference a
-model does not configure into a column as links, in a table of their own - an enumeration value, a
-reference of many values, a composition, a group's members. Setting, adding, removing or reordering
-such a value books no change on the holding object; the engine creates, reorders and drops link items
-instead, which carry no application type. `ToolChangeSet.pending` reads each of them as what it is,
-a write of the reference it stores, and books it on the holding object, so the guard asks
-`canWrite(holder, reference)` (#631). Left out are the links that go with the creation or the deletion
-of an object, which is checked as that: the links of an object created or deleted in the turn, and a
-link dropped together with the object it pointed to. Deleting an object therefore needs no right to
-write the objects that referred to it through such a link.
+**An attribute is often not in the row of the object holding it.** Changing it books no change on
+that object; the engine creates, changes and drops the rows that store its values instead:
+
+- the links of a reference - every reference a model does not configure into a column: an enumeration
+  value, a reference of many values, a composition, a group's members (#631);
+- the rows in which it keeps the translations of an `I18NString` or `I18NHtml` attribute, one per
+  language (#638);
+- the rows of the parts of a composition that keeps the container in each part's own row - an inline
+  storage, which is how `tl.doc` keeps the children of a page (#638). Adding, removing, moving or
+  reordering a part changes the part's row, not the container's.
+
+`ToolChangeSet.pending` reads each such row as what it is, a write of the attribute whose value it
+stores, and books it on the object holding that attribute, so the guard asks `canWrite(holder,
+attribute)`. Which object and which attribute a row stores a value of is the engine's own description of
+its storages (`ModelTables.getDescriptorsForTable`, what its change log reads for the same question), so
+every `SeparateTableStorage` is covered at once, an application's own included. The row of a part kept
+in its own row is still checked as a write of the part as well, as before; a change of the part's own
+attributes, such as renaming a page, is no write of its container. Left out are the rows that go with
+the creation or the deletion of an object, which is checked as that: the rows of an object created or
+deleted in the turn, and a row dropped together with an object it refers to or with the part it is.
+Deleting an object therefore needs no right to write the objects that referred to it, and deleting an
+object with a translated attribute needs no right beyond the deletion.
 
 | Change | Check |
 |---|---|
 | created | `canCreate(type, container)`, and `canCreate(parent, compositionAttr)` when created into a composition |
-| updated | `canWrite(obj)` and `canWrite(obj, attr)` for every touched attribute - a reference stored as links included, on the object holding it |
+| updated | `canWrite(obj)` and `canWrite(obj, attr)` for every touched attribute - an attribute kept outside the object's row included, on the object holding it |
 | deleted | `canDelete(obj)` |
 
 **On violation:** the whole turn is rolled back through `AgentLoop.rollbackTurn` - the *same* route a
@@ -1349,24 +1363,26 @@ papered over.
 
 - Attribute writes to an object created in the same turn. Booked by the engine as part of the creation,
   and unvalidatable per the caveat above. The creation itself is checked.
-- Change-set items that carry no application type and are no link of a reference: the engine's own
-  bookkeeping items, and the rows in which it keeps the translations of an `I18NString` attribute. A
-  changed translation books no change on the object holding the attribute either, so a tool that
-  checked nothing writes it unchecked (#638). A storage-level attribute that maps to no model attribute
-  costs attribute granularity, not the check - the object-level right is always asked as well.
+- Change-set items that carry no application type and store no value of an attribute, in the
+  engine's description of its storages: the engine's own bookkeeping items. A storage-level attribute
+  that maps to no model attribute costs attribute granularity, not the check - the object-level right
+  is always asked as well.
 - Side effects outside the KnowledgeBase. A tool that wrote a file, sent a mail or called an HTTP
   endpoint is not rolled back by a KB rollback. That is L1's business (`egress`) and the approval
   prompt's, not this layer's.
 
 **Cost.** One `ModelAccessRights` call per touched object and per touched attribute, once per turn,
-plus one pass over the transaction's own change lists. Turns that write nothing - the overwhelming
-majority - skip the guard entirely, because `scope.isActive()` is false: no transaction was ever begun,
-since `ensureTransaction` only begins one for non-READ tools. A turn that *does* write pays this in
-addition to whatever the tools already paid; the guard is deliberately not the place to economise.
+plus one pass over the transaction's own change lists against the engine's description of its
+storages, which its model cache keeps. Turns that write nothing - the overwhelming majority - skip the
+guard entirely, because `scope.isActive()` is false: no transaction was ever begun, since
+`ensureTransaction` only begins one for non-READ tools. A turn that *does* write pays this in addition
+to whatever the tools already paid; the guard is deliberately not the place to economise.
 
 **Tested by** `TestPreCommitGuard` and the transaction cases of `TestAgentLoop` in `tl-ai-core`, which
-also holds `TestToolChangeSet` (what a real transaction books for a reference stored as links) and
-`TestPreCommitGuardInATurn` (the guard at the end of a real agent turn), and `SecDemoPreCommitGuardTest`
+also holds `TestToolChangeSet` (what a real transaction books for an attribute kept outside the
+object's row: links, translations, a composition kept in its parts' rows) and
+`TestPreCommitGuardInATurn` (the guard at the end of a real agent turn), `TestToolChangeSetOnDocPages`
+in `tl-ai-demo` (the same reading on the pages `tl.doc` ships), and `SecDemoPreCommitGuardTest`
 against a real fixture boot - see
 [testbed.md](../../tl-ai-demo/doc/secdemo/testbed.md#56-the-pre-commit-guard-l4).
 

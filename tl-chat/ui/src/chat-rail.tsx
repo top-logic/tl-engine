@@ -276,15 +276,11 @@ export function TLChatRail({ controlId }: TLCellProps) {
     }
   }
 
+  // A session that is not signed in has nothing for the rail to show: its sections ask the servlet,
+  // which refuses every call. The conversation beside it says why the chat is empty, so the rail
+  // stands down rather than saying it a second time in a column of its own (#643).
   if (!chat.authenticated) {
-    return (
-      <div id={controlId} className={rootClassName(state, 'tl-chat-rail', 'is-signed-out')}>
-        <div className="signed-out">
-          <h2>{labels.signInHeading}</h2>
-          <p>{labels.signInBody}</p>
-        </div>
-      </div>
-    )
+    return <div id={controlId} className={rootClassName(state, 'tl-chat-rail', 'is-stood-down')} />
   }
 
   return (

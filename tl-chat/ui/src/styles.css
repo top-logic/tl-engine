@@ -126,6 +126,8 @@
   line-height: var(--chat-heading-line);
   font-weight: 600;
   letter-spacing: -0.01em;
+  /* Even lines, rather than a single word left alone on the last one. */
+  text-wrap: balance;
 }
 
 .signed-out p {
@@ -972,11 +974,19 @@
   display: none;
 }
 
-.tl-chat-conversation.is-signed-out,
-.tl-chat-rail.is-signed-out {
+.tl-chat-conversation.is-signed-out {
   display: grid;
   place-items: center;
   padding: 2rem;
+}
+
+/*
+ * A rail in a session that is not signed in: nothing, not even the row's gap beside it. The
+ * conversation says why the chat is empty, and a second note in a column of its own read as a
+ * layout error (#643). Signing in reloads the page, so there is no transition to keep a strip for.
+ */
+.tl-chat-rail.is-stood-down {
+  display: none;
 }
 
 .rail-new {

@@ -26,7 +26,9 @@ Both served by `ChatServlet` at `/chat/*`:
 `ChatSessionFilter` (mapped to `/chat/*`) requires a TopLogic session; `ChatServlet.doService`
 additionally refuses anonymous ones with 401, because an application may hand a visitor a session
 without a login. The chat has no anonymous mode: the chat controls pass `authenticated` to the
-browser component, which shows a sign-in note rather than a composer.
+browser component, which shows a sign-in note rather than a composer. The note is the
+conversation's alone - a `<chat-rail>` and a `<chat-dock>` render nothing at all, so a page states
+it once (#643).
 
 ### Processing Flow
 

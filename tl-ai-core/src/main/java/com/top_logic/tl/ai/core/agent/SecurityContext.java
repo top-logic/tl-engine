@@ -10,6 +10,7 @@ import java.util.Set;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.RunAuthorization;
+import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -306,8 +307,10 @@ public interface SecurityContext {
 	 *
 	 * <p>Only called after {@link #hasToolPermission} passes and the system mode gate allows
 	 * the tool. The default implementation requires approval for all state-changing
-	 * tools ({@link ToolMode#USER_SCOPED}, {@link ToolMode#DATA_WRITE}, and {@link ToolMode#STRUCTURAL}),
-	 * and for {@link ToolMode#EXTERNAL} tools, whose state change lands in another system.</p>
+	 * calls ({@link ToolMode#USER_SCOPED}, {@link ToolMode#DATA_WRITE}, and {@link ToolMode#STRUCTURAL}),
+	 * and for {@link ToolMode#EXTERNAL} calls, whose state change lands in another system. It decides
+	 * by the mode of the call rather than of the tool ({@link ToolCatalog#callMode(Tool, ToolCall)}),
+	 * so the dry run of a write tool, which changes nothing, needs no approval.</p>
 	 *
 	 * <p><b>Contract:</b> implementations must be side-effect-free and stable within a turn.
 	 * The agent loop calls this method more than once for the same tool call — first to
@@ -319,7 +322,7 @@ public interface SecurityContext {
 	 * @return the approval decision
 	 */
 	default PermissionDecision checkApproval(Tool tool, ToolCall toolCall) {
-		return switch (tool.mode()) {
+		return switch (ToolCatalog.callMode(tool, toolCall)) {
 			case READ -> new PermissionDecision.Allowed();
 			case USER_SCOPED -> new PermissionDecision.NeedsApproval(
 				"Modifies your personal settings.", toolCall);

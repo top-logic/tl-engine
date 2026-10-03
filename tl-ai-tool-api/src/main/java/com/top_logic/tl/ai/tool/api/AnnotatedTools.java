@@ -95,7 +95,58 @@ public final class AnnotatedTools {
 
 		return new ReflectiveTool(toolName, description, schema, mode, concurrencySafe,
 			truncationHint, annotation.group(), List.of(annotation.types()), annotation.marking(),
-			provider, method);
+			provider, method, dryRunParameter(method, annotation.dryRun()), check(method, annotation.check()));
+	}
+
+	/**
+	 * The parameter {@link ToolMethod#dryRun()} names, or <code>null</code> for a tool without a dry
+	 * run.
+	 *
+	 * <p>
+	 * Checked when the tool is created, not when it is called: a misspelled name would otherwise make
+	 * every dry run a real call - one that changes data after its author promised it would not.
+	 * </p>
+	 */
+	private static Parameter dryRunParameter(Method method, String name) {
+		if (name.isEmpty()) {
+			return null;
+		}
+		for (Parameter param : method.getParameters()) {
+			if (param.getName().equals(name)) {
+				if (param.getType() != boolean.class && param.getType() != Boolean.class) {
+					throw new IllegalArgumentException("The dry-run parameter '" + name + "' of tool method '"
+						+ method.getName() + "' is a " + param.getType().getSimpleName() + ", not a boolean.");
+				}
+				return param;
+			}
+		}
+		throw new IllegalArgumentException("Tool method '" + method.getName() + "' names '" + name
+			+ "' as its dry-run parameter, and has no parameter of that name.");
+	}
+
+	/**
+	 * The method {@link ToolMethod#check()} names, or <code>null</code> for a tool that refuses
+	 * nothing early.
+	 */
+	private static Method check(Method method, String name) {
+		if (name.isEmpty()) {
+			return null;
+		}
+		for (Class<?> clazz = method.getDeclaringClass(); clazz != null; clazz = clazz.getSuperclass()) {
+			try {
+				Method check = clazz.getDeclaredMethod(name, method.getParameterTypes());
+				if (check.getReturnType() != String.class) {
+					throw new IllegalArgumentException("The check '" + name + "' of tool method '"
+						+ method.getName() + "' must return the refusal as a String.");
+				}
+				check.setAccessible(true);
+				return check;
+			} catch (NoSuchMethodException ex) {
+				// Look further up.
+			}
+		}
+		throw new IllegalArgumentException("Tool method '" + method.getName() + "' names '" + name
+			+ "' as its check, and its class has no method of that name with the same parameters.");
 	}
 
 	private static ToolSchema generateSchema(String toolName, String description, Method method) {
@@ -502,9 +553,14 @@ public final class AnnotatedTools {
 
 		private final Method _method;
 
+		private final Parameter _dryRun;
+
+		private final Method _check;
+
 		ReflectiveTool(String name, String description, ToolSchema schema,
 				ToolMode mode, boolean concurrencySafe, int truncationHint, String group,
-				List<String> types, AnswerMarking marking, Object provider, Method method) {
+				List<String> types, AnswerMarking marking, Object provider, Method method, Parameter dryRun,
+				Method check) {
 			_name = name;
 			_description = description;
 			_schema = schema;
@@ -516,6 +572,8 @@ public final class AnnotatedTools {
 			_marking = marking;
 			_provider = provider;
 			_method = method;
+			_dryRun = dryRun;
+			_check = check;
 		}
 
 		@Override
@@ -538,6 +596,55 @@ public final class AnnotatedTools {
 			return _mode;
 		}
 
+		/**
+		 * {@link ToolMode#READ} for a call whose dry-run parameter is {@code true}.
+		 *
+		 * <p>
+		 * The parameter is read with the coercion {@link #execute(Map, ToolExecutionContext)} applies
+		 * to it, so the two cannot disagree about whether a call is a dry run: this answer decides that
+		 * nobody is asked, and the method's own argument decides what it does. A value that does not
+		 * coerce is no dry run - the call then fails on that value before it runs.
+		 * </p>
+		 */
+		@Override
+		public ToolMode mode(Map<String, Object> arguments) {
+			if (_dryRun == null || arguments == null) {
+				return _mode;
+			}
+			try {
+				Object dryRun = coerceArg(arguments.get(_dryRun.getName()), _dryRun.getType(),
+					_dryRun.getParameterizedType(), _dryRun.getName(), null);
+				return Boolean.TRUE.equals(dryRun) ? ToolMode.READ : _mode;
+			} catch (ToolArgumentCoercionException ex) {
+				return _mode;
+			}
+		}
+
+		@Override
+		public String refusal(Map<String, Object> arguments, ToolExecutionContext context) {
+			if (_check == null) {
+				return null;
+			}
+			Object[] invokeArgs;
+			try {
+				invokeArgs = invokeArgs(arguments, context);
+			} catch (ToolArgumentCoercionException ex) {
+				// The call would fail on this argument before it ran; saying so now is the same answer.
+				return ex.getMessage();
+			}
+			try {
+				return (String) _check.invoke(_provider, invokeArgs);
+			} catch (InvocationTargetException e) {
+				Throwable cause = e.getCause();
+				if (cause instanceof RuntimeException re) {
+					throw re;
+				}
+				throw new RuntimeException(cause.getMessage(), cause);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException("Cannot invoke the check of tool method: " + _method.getName(), e);
+			}
+		}
+
 		@Override
 		public boolean isConcurrencySafe() {
 			return _concurrencySafe;
@@ -553,8 +660,11 @@ public final class AnnotatedTools {
 			return _types;
 		}
 
-		@Override
-		public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+		/**
+		 * The method's arguments for the given call: each one coerced to its parameter's type, the
+		 * context where the method takes it.
+		 */
+		private Object[] invokeArgs(Map<String, Object> args, ToolExecutionContext context) {
 			Parameter[] params = _method.getParameters();
 			Object[] invokeArgs = new Object[params.length];
 
@@ -568,6 +678,12 @@ public final class AnnotatedTools {
 						params[i].getParameterizedType(), paramName, context);
 				}
 			}
+			return invokeArgs;
+		}
+
+		@Override
+		public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+			Object[] invokeArgs = invokeArgs(args, context);
 
 			try {
 				Object result = _method.invoke(_provider, invokeArgs);

@@ -5,6 +5,10 @@
  */
 package com.top_logic.tl.ai.tool.api;
 
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.merge.MergeConflictException;
 import com.top_logic.model.TLObject;
 
 /**
@@ -102,5 +106,45 @@ public interface ToolExecutionContext {
 	 */
 	default boolean attended() {
 		return true;
+	}
+
+	/**
+	 * Lets this call read what other threads committed since its turn began - the helpers it started
+	 * and waited for, most of all.
+	 *
+	 * <p>
+	 * The calls of one agent turn read one state of the database: the framework moves the run's view
+	 * to the newest commit before the turn's first call, and not again until the next turn (Gitea
+	 * #647). A tool that starts work on other threads and waits for it - helpers that write and commit
+	 * in transactions of their own - therefore reads, after the wait, what was there before the
+	 * helpers wrote. And a change it then makes to what they wrote is a change of an outdated version,
+	 * which fails when the turn commits. Such a tool calls this once the work it waited for is done. A
+	 * tool that waits for no other thread does not need it, and neither does the next turn, which reads
+	 * the newer state anyway.
+	 * </p>
+	 *
+	 * <p>
+	 * What the turn has changed and not yet committed is kept: the newer commits are merged into it. A
+	 * commit that changed an object the turn has changed as well is a conflict the turn cannot be saved
+	 * with, and it is rolled back: this method throws on it, or - for a commit made in the run's own
+	 * sub-session, which the knowledge base compares only when the turn commits - the turn's commit
+	 * fails.
+	 * </p>
+	 *
+	 * @throws IllegalStateException
+	 *         If a commit of another session changed an object the turn has changed as well.
+	 */
+	default void catchUpWithCommits() {
+		if (ThreadContextManager.getSubSession() == null || !PersistencyLayer.Module.INSTANCE.isActive()) {
+			// No interaction, or no knowledge base: nothing reads at an old revision.
+			return;
+		}
+		try {
+			HistoryUtils.updateSessionRevision();
+		} catch (MergeConflictException ex) {
+			throw new IllegalStateException("Objects this turn has changed were changed and saved by"
+				+ " somebody else in the meantime, so the changes of this turn cannot be saved: "
+				+ ex.getMessage(), ex);
+		}
 	}
 }

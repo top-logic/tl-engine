@@ -40,6 +40,8 @@ import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
+import com.top_logic.tl.ai.core.message.ToolResultMessage;
+import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
@@ -267,6 +269,78 @@ public class TestCommitsOfOtherThreads extends BasicTestCase {
 		assertEquals("saved by a person", text());
 	}
 
+	/**
+	 * A tool that waits for its helpers and goes on to work with what they wrote catches up with
+	 * their commits itself: within its turn the framework does not move the view. What the turn has
+	 * changed before is kept.
+	 */
+	public void testAToolThatCatchesUpReadsWhatItsHelpersCommitted() {
+		TLObject other = cover("untouched");
+		Tool draftAndCheck = writeTool("draftAndCheck", context -> {
+			other.tUpdate(_text, "changed before the drafts");
+			SubSessionContext runSession = ThreadContextManager.getSubSession();
+			inSession(runSession, () -> _section.tUpdate(_text, "drafted"));
+			_seen.add(text());
+
+			context.catchUpWithCommits();
+
+			String text = text();
+			_seen.add(text);
+			_section.tUpdate(_text, text + ", checked");
+			return ToolResult.of("Drafted and checked.");
+		});
+
+		Run run = run(model(call("draftAndCheck"), answer("Done.")), ApprovalCallback.AUTO_APPROVE,
+			draftAndCheck);
+
+		assertEquals("Before catching up the tool reads the state its turn began with, after it what its"
+			+ " helper committed.", List.of("empty", "drafted"), _seen);
+		assertEquals(List.of("turn 1 committed"), run.transactions());
+		assertEquals("drafted, checked", text());
+		assertEquals("changed before the drafts", other.tValue(_text));
+	}
+
+	/**
+	 * Catching up with a commit of somebody else that changed what the turn has changed fails the
+	 * call: the turn could not be saved anyway, and it is rolled back.
+	 */
+	public void testCatchingUpWithAConflictingCommitFailsTheCall() {
+		Tool rewrite = writeTool("rewriteAndWait", context -> {
+			_section.tUpdate(_text, "mine");
+			elsewhere(() -> _section.tUpdate(_text, "theirs"));
+			context.catchUpWithCommits();
+			return ToolResult.of("Rewritten.");
+		});
+
+		Run run = run(model(call("rewriteAndWait"), answer("Done.")), ApprovalCallback.AUTO_APPROVE, rewrite);
+
+		assertEquals(List.of("turn 1 rolled back: Tool execution failed"), run.transactions());
+		assertContains("changed and saved by somebody else in the meantime", run.toolResults().get(0));
+		assertContains("were rolled back", run.notice());
+		assertEquals("theirs", text());
+	}
+
+	/**
+	 * The same conflict with a helper in the run's own sub-session: the knowledge base sees it only
+	 * when the turn commits, and the commit fails on it. The turn is rolled back either way.
+	 */
+	public void testAConflictWithAHelperInTheRunsSessionFailsTheCommit() {
+		Tool rewrite = writeTool("rewriteAndWait", context -> {
+			_section.tUpdate(_text, "mine");
+			SubSessionContext runSession = ThreadContextManager.getSubSession();
+			inSession(runSession, () -> _section.tUpdate(_text, "theirs"));
+			context.catchUpWithCommits();
+			return ToolResult.of("Rewritten.");
+		});
+
+		Run run = run(model(call("rewriteAndWait"), answer("Done.")), ApprovalCallback.AUTO_APPROVE, rewrite);
+
+		assertEquals(1, run.transactions().size());
+		assertContains("preventing lost update", run.transactions().get(0));
+		assertContains("could NOT be saved", run.notice());
+		assertEquals("theirs", text());
+	}
+
 	/** One agent run, and what became of its turns' transactions. */
 	private record Run(List<String> transactions, Conversation conversation) {
 
@@ -282,6 +356,21 @@ public class TestCommitsOfOtherThreads extends BasicTestCase {
 				}
 			}
 			return null;
+		}
+
+		/** What the tools answered, failures included, in the order they answered. */
+		List<String> toolResults() {
+			List<String> result = new ArrayList<>();
+			for (Message message : conversation.messages()) {
+				if (message instanceof ToolResultMessage answer) {
+					if (answer.state() instanceof ToolState.Completed completed) {
+						result.add(completed.result());
+					} else if (answer.state() instanceof ToolState.Failed failed) {
+						result.add(failed.error());
+					}
+				}
+			}
+			return result;
 		}
 	}
 

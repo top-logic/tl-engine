@@ -941,7 +941,9 @@ public class AgentLoop {
 	 * of the turn is checked, and once more after an approval that call waited for, because a person
 	 * may have saved something meanwhile. From the first call that runs on, the calls of the turn read
 	 * one state. A commit made after that point that changed an object the turn writes is a real
-	 * conflict, and the turn's commit fails on it as before.
+	 * conflict, and the turn's commit fails on it as before. What a tool's own helpers commit while it
+	 * waits for them is the tool's to catch up with - see
+	 * {@link com.top_logic.tl.ai.tool.api.ToolExecutionContext#catchUpWithCommits()}.
 	 * </p>
 	 *
 	 * <p>

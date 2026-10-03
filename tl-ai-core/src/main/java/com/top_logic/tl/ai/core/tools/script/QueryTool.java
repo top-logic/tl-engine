@@ -89,7 +89,7 @@ public class QueryTool {
 			+ "all(`crm:Customer`).map(c -> $c.get(`crm:Customer#revenue`)).sum(). "
 			+ "Objects come back as label [type:...] [id:...]; a list is cut at 50 entries. "
 			+ "The expression must not change data. To SHOW objects to the user, call present "
-			+ "with the query instead.",
+			+ "with the query instead where you have it.",
 		mode = ToolMode.READ, group = ToolGroups.DATA_READ,
 		marking = AnswerMarking.TOOL)
 	public String query(

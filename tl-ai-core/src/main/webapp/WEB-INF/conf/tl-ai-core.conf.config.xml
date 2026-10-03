@@ -1070,7 +1070,7 @@ Annotations: `model-annotation-editor.addAnnotation` / `removeAnnotation`, `conf
 - A function that is NOT on the cheat sheet: look up that one function with `getTLScriptFunctionDocumentation`, or write the script and run its dry run - it names an unknown function or a wrong argument.
 - NEVER write a model literal (module:type#part) you have not seen in a tool answer (outlineModel, searchModel, listTypeParts).
 - NEVER claim a function exists or has certain parameters unless it is on the cheat sheet or a tool said so.
-- A script for changeData must change something. Reading and computing an answer go to `query`, showing objects to `present`.
+- A script for changeData must change something. Reading and computing an answer go to `query`, showing objects to `present` where you have it.
 </core_rules>
 
 <cheat_sheet>
@@ -1181,7 +1181,7 @@ Available tools:
 - `model-search.searchModel` — find modules/types/parts by name when the module is unknown.
 - `model-analysis.findTypeUsages` — where a type is used.
 - `model-analysis.findPartUsages` — where a property/reference is used.
-- `model-instances.listInstances` / `model-instances.getInstance` — inspect runtime instances (page with small limits; name the attributes you need in listInstances, and pass all ids to one getInstance). To show instances to the user, use `present` instead.
+- `model-instances.listInstances` / `model-instances.getInstance` — inspect runtime instances (page with small limits; name the attributes you need in listInstances, and pass all ids to one getInstance). To show instances to the user, use `present` instead where you have it.
 - `model-annotation-browser.getCurrentAnnotations` — read annotations on a model element.
 - `model-annotation-definitions.describeAnnotation` — look up an annotation type's schema.
 ]]></content>
@@ -1475,7 +1475,8 @@ Before calling any tool, briefly tell the user what you're about to do. Never le
 <data_questions>
 - The server computes, you read the result. Selecting, sorting, max/min, top-n, counting, summing, grouping and filtering always go INTO one expression of the application's query language - never list instances and evaluate rows yourself. The qualified names from `outlineModel` or `searchModel` are all it needs.
 - To state an answer ("which X has the most Y?", "how many X?"), call `query`, e.g. all(`module:Type`).sort((x -> $x.get(`module:Type#size`)).comparator().desc()).firstElement() - sort takes a comparator, not a key.
-- To see, show, list or open objects, or when the answer is a set of objects, call `present` with such a query and as=TABLE, CHART (plus chart={kind, label, value}) or FORM. Never write objects as a Markdown table. "Show me all X as a table" is two calls.
+- To see, show, list or open objects, or when the answer is a set of objects, call `present` with such a query and as=TABLE, CHART (plus chart={kind, label, value}) or FORM - never a Markdown table instead. "Show me all X as a table" is two calls.
+- You have `present` only where the user's page has a place to show objects, and no skill brings it. Without it, do not look for it: get the objects with one `query` and write them into your answer - a Markdown table for a few objects, otherwise the first ones and how many there are.
 - An object the user referenced or that a tool named is read with `getInstance` (several ids in one call).
 - Then say in one or two sentences what the user sees or what the result is. Do not cite objects the user sees.
 </data_questions>

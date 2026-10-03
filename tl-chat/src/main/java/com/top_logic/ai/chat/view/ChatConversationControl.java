@@ -68,8 +68,8 @@ import com.top_logic.util.TLContext;
  * <p>
  * The {@code present} option goes the other way: the channels it names are registered on the
  * binding, which is what makes them reachable from an agent run in this window
- * ({@link com.top_logic.ai.chat.tools.PresentTool}). Deny by default, and the registration ends
- * with this control.
+ * ({@link com.top_logic.ai.chat.tools.ChatPresentTool}). Deny by default, and registered only while
+ * this control is displayed.
  * </p>
  *
  * <p>
@@ -294,13 +294,16 @@ public class ChatConversationControl extends ReactControl {
 
 	/**
 	 * Opens the configured channels to an agent running in this window - the {@code present} tool's
-	 * allow list.
+	 * allow list - for as long as this control is displayed.
 	 *
 	 * <p>
-	 * Deny by default: what is not named here cannot be reached from a run, and the registration is
-	 * undone when this control is disposed, so a channel of a view that is gone is not writable
-	 * either. The channels are resolved here, in the view context, because that is the only place
-	 * that has one - the agent thread knows a name and nothing else.
+	 * Deny by default: what is not named here cannot be reached from a run. And only while displayed:
+	 * the registration follows this control's attach and detach, so a page the user has left - a page
+	 * of the shell they navigated away from, a classic tab that is not selected, the React page a
+	 * browser tab showed before it showed the classic UI - offers no channel, and a run is neither
+	 * offered the tool for it nor shows a table nobody sees there (#649). The channels are resolved
+	 * here, in the view context, because that is the only place that has one - the agent thread knows a
+	 * name and nothing else.
 	 * </p>
 	 */
 	private void allowPresenting(ViewContext context, List<ChannelRef> refs) {
@@ -313,8 +316,14 @@ public class ChatConversationControl extends ReactControl {
 			}
 			String name = ref.getChannelName();
 			ViewChannel channel = context.resolveChannel(ref);
-			_binding.allowPresenting(name, channel);
-			addCleanupAction(() -> _binding.denyPresenting(name, channel));
+			Runnable open = () -> _binding.allowPresenting(name, channel);
+			Runnable close = () -> _binding.denyPresenting(name, channel);
+			addAttachListener(open);
+			addDetachListener(close);
+			addCleanupAction(close);
+			if (isAttached()) {
+				open.run();
+			}
 		}
 	}
 

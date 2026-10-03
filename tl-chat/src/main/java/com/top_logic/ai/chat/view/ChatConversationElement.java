@@ -71,8 +71,8 @@ import com.top_logic.tl.ai.core.provider.LLMService.AllAgentNameOptions;
  * {@code present} is the other direction and the only one the <em>agent</em> drives: the channels
  * named there are the ones a run may write with the {@code present} tool, and nothing else on the
  * page is reachable from a run. <b>Deny by default</b> - an element that names none lets no agent
- * write any channel. See {@link Config#getPresent()} and
- * {@link com.top_logic.ai.chat.tools.PresentTool}.
+ * write any channel, and a run on a page that names none is not offered the tool at all. See
+ * {@link Config#getPresent()} and {@link com.top_logic.ai.chat.tools.ChatPresentTool}.
  * </p>
  *
  * <p>
@@ -464,6 +464,12 @@ public class ChatConversationElement implements UIElement {
 		 * which names exist. Naming a channel here is a decision about how much of the page the
 		 * agent may drive, so it is stated on the element rather than derived from what happens to
 		 * be wired somewhere on the view.
+		 * </p>
+		 *
+		 * <p>
+		 * The channels count while this element is displayed. A run whose page displays no element
+		 * naming one is not offered the {@code present} tool at all, so the agent answers a request
+		 * to see objects in text instead of with a call that is refused.
 		 * </p>
 		 *
 		 * <p>

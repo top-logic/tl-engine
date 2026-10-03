@@ -361,7 +361,7 @@ public class InstanceBrowserTool {
 		}
 		if (wanted.size() > MAX_IDS) {
 			throw new IllegalArgumentException("At most " + MAX_IDS + " TIDs per call, got " + wanted.size()
-				+ ". To show many objects to the user, call present with a query.");
+				+ ". To show many objects to the user, call present with a query where you have it.");
 		}
 		InstancesResponse result = InstancesResponse.create();
 		for (String tid : wanted) {

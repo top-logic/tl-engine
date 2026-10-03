@@ -207,7 +207,7 @@ public class ChangeDataTool {
 		if (!change.changes()) {
 			return Checked.refused("This script changes nothing - it only reads, and changeData is for changes."
 				+ " To answer a question about the data, call query with the expression; to show objects to"
-				+ " the user, call present with it. Neither needs an approval.");
+				+ " the user, call present with it where you have it. Neither needs an approval.");
 		}
 		if (!dry) {
 			String denial = context.security().capabilityDenialReason(ToolGroups.DATA_WRITE, OPERATION);

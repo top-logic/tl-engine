@@ -167,7 +167,7 @@ describe('the approval card', () => {
       return root.querySelector('.prompt-card-note')!.textContent
     }
     expect(note('de')).toBe(
-      'Gilt in diesem Chat für jeden weiteren Aufruf des Werkzeugs editText - für kein anderes Werkzeug dieses Zuges.',
+      'Gilt in diesem Chat für jeden weiteren Aufruf des Tools editText - für kein anderes Tool dieser Runde.',
     )
     expect(note('en')).toBe(
       'Covers every further call of the tool editText in this chat - no other tool of this turn.',

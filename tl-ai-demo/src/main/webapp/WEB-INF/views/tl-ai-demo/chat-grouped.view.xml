@@ -270,7 +270,7 @@
 				-->
 				<placeholder>
 					<en>Ask about the events, their programme, registrations, sponsors or invoices.</en>
-					<de>Fragen Sie nach den Veranstaltungen, ihrem Programm, Anmeldungen, Sponsoren oder Rechnungen.</de>
+					<de>Frag nach den Veranstaltungen, ihrem Programm, Anmeldungen, Sponsoren oder Rechnungen.</de>
 				</placeholder>
 				<actions rate="true"/>
 				<controls

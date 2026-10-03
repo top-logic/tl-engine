@@ -31,7 +31,11 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
+import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
@@ -191,6 +195,13 @@ public class AgentLoop {
 	 * rolling back would silently discard writes of tools that succeeded in the same turn.
 	 */
 	private final Set<String> _turnBlockedCallIds = ConcurrentHashMap.newKeySet();
+
+	/**
+	 * Whether a call of the current turn has run. Until one has, the turn may still move its view of
+	 * the database to the newest commit - see {@link #catchUpWithOtherCommits()}; from then on the
+	 * calls of the turn read one state.
+	 */
+	private volatile boolean _turnCallRan;
 
 	/**
 	 * Signature ({@code name + "\0" + arguments}) of the most recent tool call, for
@@ -830,6 +841,11 @@ public class AgentLoop {
 
 		_turnDeniedCallIds.clear();
 		_turnBlockedCallIds.clear();
+		_turnCallRan = false;
+
+		// Before anything of the turn reads - the checks of its calls included - so that the turn
+		// sees what others committed since the run last looked.
+		catchUpWithOtherCommits();
 
 		List<List<ToolCall>> batches = partitionBatches(toolCalls, context);
 		int messagesBefore = conversation.size();
@@ -903,6 +919,60 @@ public class AgentLoop {
 			conversation.add(new UserMessage(
 				UUID.randomUUID().toString(), now(),
 				List.of(new TextContent("[Framework notice] " + notice))));
+		}
+	}
+
+	/**
+	 * Moves the run's view of the database to the newest commit, if nothing on this thread depends on
+	 * the view it has (Gitea #647).
+	 *
+	 * <p>
+	 * A run reads the database through the interaction of the thread it runs on, and an interaction
+	 * reads at the revision it read first - for a chat run that is before its first turn, because the
+	 * chat's worker enters the window's sub-session once for the whole run. Left alone, the run does
+	 * not see what anybody else commits while it runs: the helpers a tool started, a person saving in
+	 * the browser, a scheduled job. A write to an object such a commit changed is then a write on an
+	 * outdated version, which the knowledge base refuses when the turn commits, and the turn is rolled
+	 * back for a conflict that never was one.
+	 * </p>
+	 *
+	 * <p>
+	 * So a turn reads the database as it is when its calls run: the view is moved before the first call
+	 * of the turn is checked, and once more after an approval that call waited for, because a person
+	 * may have saved something meanwhile. From the first call that runs on, the calls of the turn read
+	 * one state. A commit made after that point that changed an object the turn writes is a real
+	 * conflict, and the turn's commit fails on it as before.
+	 * </p>
+	 *
+	 * <p>
+	 * Only while the thread holds no knowledge-base context. Between two turns the loop has nothing
+	 * open, which makes this the same kind of point as the begin of a request, where
+	 * {@code ChatServlet} moves the view. A run started inside a transaction of its caller - a script
+	 * in a command that opened one, a delegated run inside a turn that has written - keeps the caller's
+	 * view: moving it would merge other threads' commits into a transaction that is not the run's.
+	 * </p>
+	 *
+	 * <p>
+	 * The sub-session moves with the view, as it does on every commit of the run. A chat run shares it
+	 * with the window's requests; a request that is running at that moment keeps the view it has.
+	 * </p>
+	 */
+	private static void catchUpWithOtherCommits() {
+		if (ThreadContextManager.getSubSession() == null || !PersistencyLayer.Module.INSTANCE.isActive()) {
+			// No interaction, or no knowledge base: nothing reads at an old revision.
+			return;
+		}
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		if (!(kb instanceof DBKnowledgeBase db) || db.getCurrentDBContext() != null) {
+			return;
+		}
+		try {
+			HistoryUtils.updateSessionRevision();
+		} catch (RuntimeException ex) {
+			// Nothing is open, so there is nothing to conflict with. Should moving fail anyway, the
+			// turn reads what the run read so far rather than not running.
+			Logger.warn("Could not move the run's view of the database to the newest commit; the turn"
+				+ " reads the state the run read so far.", ex, AgentLoop.class);
 		}
 	}
 
@@ -1453,6 +1523,12 @@ public class AgentLoop {
 						markDenied(toolCall.id());
 						return errorResult(toolCall, feedback);
 					}
+					if (!_turnCallRan) {
+						// Approved. Whoever approved may have taken a while and saved something
+						// meanwhile, in the very object this call is to change - and no call of the
+						// turn has read anything yet.
+						catchUpWithOtherCommits();
+					}
 				}
 				// PermissionDecision.Allowed: proceed to execution
 			}
@@ -1476,6 +1552,9 @@ public class AgentLoop {
 			// Unknown tool: the registry fails the call without executing anything, so the
 			// failure is synthetic and must not trigger the end-of-turn rollback.
 			_turnBlockedCallIds.add(toolCall.id());
+		} else {
+			// From here on the calls of the turn read one state.
+			_turnCallRan = true;
 		}
 
 		ToolResultMessage result = _registry.execute(toolCall, execContext);

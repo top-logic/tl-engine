@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.tools.script;
 
 import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -18,6 +19,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -60,6 +62,8 @@ public class TestChangeDataTool extends BasicTestCase {
 	private static final String DESCRIPTION = "`tl.ai.core:Agent#description`";
 
 	private static final String KIND = "`tl.ai.execution:UserMemory#kind`";
+
+	private static final String CAPTION = "`test.objectedit:Cover#caption`";
 
 	private ChangeDataTool _tool;
 
@@ -174,6 +178,21 @@ public class TestChangeDataTool extends BasicTestCase {
 
 		assertContains("kind \"FACT\" -> \"PREFERENCE\"", result.text());
 		assertEquals("FACT", kindOf(memory));
+	}
+
+	/**
+	 * A translated attribute, whose translations the engine keeps in rows of a table of their own, is
+	 * reported on the object holding it, with both values: the report reads the transaction as the
+	 * pre-commit guard does (Gitea #638).
+	 */
+	public void testAChangedTranslationIsReportedWithItsValues() {
+		TLObject cover = cover("one");
+
+		ToolResult result = _tool.changeData(resolve(cover) + ".set(" + CAPTION + ", #(\"two\"@en))", true,
+			context());
+
+		assertContains("changed 1 object", result.text());
+		assertContains("caption \"one\" -> \"two\"", result.text());
 	}
 
 	/**
@@ -344,6 +363,16 @@ public class TestChangeDataTool extends BasicTestCase {
 			memory.tUpdate(type.getPart("createdAt"), new Date());
 			tx.commit();
 			return memory;
+		}
+	}
+
+	private static TLObject cover(String caption) {
+		TLClass type = (TLClass) TLModelUtil.findType("test.objectedit:Cover");
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			TLObject cover = ModelService.getInstance().getFactory().createObject(type, null);
+			cover.tUpdate(type.getPart("caption"), ResKey.builder().add(Locale.ENGLISH, caption).build());
+			tx.commit();
+			return cover;
 		}
 	}
 

@@ -147,6 +147,7 @@ public class TestPreCommitGuard extends TestCase {
 		assertEquals(1, violations.size());
 		assertEquals(SimpleBoundCommandGroup.WRITE, violations.get(0).operation());
 		assertSame(SECRET1, violations.get(0).object());
+		assertNull("The object as a whole was refused, not one attribute of it.", violations.get(0).attribute());
 	}
 
 	/**
@@ -161,6 +162,7 @@ public class TestPreCommitGuard extends TestCase {
 
 		assertEquals(1, violations.size());
 		assertEquals(SimpleBoundCommandGroup.WRITE, violations.get(0).operation());
+		assertSame("The violation names the attribute it was refused for.", TITLE, violations.get(0).attribute());
 	}
 
 	/**

@@ -1285,7 +1285,8 @@ public interface PreCommitGuard {
     /** PERMISSIVE unless the run's mode enforces model access. */
     static PreCommitGuard forRun(SecurityContext security) { ... }
 
-    record Violation(TLObject object, String typeName, BoundCommandGroup operation, String reason) {}
+    record Violation(TLObject object, String typeName, BoundCommandGroup operation,
+        TLStructuredTypePart attribute, String reason) {}
 }
 ```
 
@@ -1299,16 +1300,28 @@ the per-item `ChangeInspectable.getChange()` record the engine also uses to buil
 Nothing asks a tool what it wrote: a tool that forgot to check would equally forget to report. Only
 attribute *names* are read from the change record, never values.
 
+**A reference is usually not in the row of the object holding it.** The engine stores every reference a
+model does not configure into a column as links, in a table of their own - an enumeration value, a
+reference of many values, a composition, a group's members. Setting, adding, removing or reordering
+such a value books no change on the holding object; the engine creates, reorders and drops link items
+instead, which carry no application type. `ToolChangeSet.pending` reads each of them as what it is,
+a write of the reference it stores, and books it on the holding object, so the guard asks
+`canWrite(holder, reference)` (#631). Left out are the links that go with the creation or the deletion
+of an object, which is checked as that: the links of an object created or deleted in the turn, and a
+link dropped together with the object it pointed to. Deleting an object therefore needs no right to
+write the objects that referred to it through such a link.
+
 | Change | Check |
 |---|---|
 | created | `canCreate(type, container)`, and `canCreate(parent, compositionAttr)` when created into a composition |
-| updated | `canWrite(obj)` and `canWrite(obj, attr)` for every touched attribute |
+| updated | `canWrite(obj)` and `canWrite(obj, attr)` for every touched attribute - a reference stored as links included, on the object holding it |
 | deleted | `canDelete(obj)` |
 
 **On violation:** the whole turn is rolled back through `AgentLoop.rollbackTurn` - the *same* route a
 failed tool call takes, so all-or-nothing means the same thing in both cases - one audit record per
 violation is written by the guard, and the model is given a framework notice naming the operation and
-the type but **not** the values:
+the type but **not** the values. The `Violation` itself names the attribute an attribute-level refusal
+was for; neither the notice nor the audit line does:
 
 > `[Framework notice] The data changes of this turn were rolled back and NOT persisted, because your
 > account is not permitted to make all of them: you attempted 'Create on objects of type
@@ -1336,11 +1349,11 @@ papered over.
 
 - Attribute writes to an object created in the same turn. Booked by the engine as part of the creation,
   and unvalidatable per the caveat above. The creation itself is checked.
-- Change-set items that carry no application type - the link items of a multi-valued reference, and the
-  engine's own bookkeeping items. Not a silent hole: the object at the writing end of such a link is
-  itself booked as changed, so the write is checked through that object. A storage-level attribute that
-  maps to no model attribute likewise costs attribute granularity, not the check - the object-level
-  right is always asked as well.
+- Change-set items that carry no application type and are no link of a reference: the engine's own
+  bookkeeping items, and the rows in which it keeps the translations of an `I18NString` attribute. A
+  changed translation books no change on the object holding the attribute either, so a tool that
+  checked nothing writes it unchecked (#638). A storage-level attribute that maps to no model attribute
+  costs attribute granularity, not the check - the object-level right is always asked as well.
 - Side effects outside the KnowledgeBase. A tool that wrote a file, sent a mail or called an HTTP
   endpoint is not rolled back by a KB rollback. That is L1's business (`egress`) and the approval
   prompt's, not this layer's.
@@ -1351,8 +1364,10 @@ majority - skip the guard entirely, because `scope.isActive()` is false: no tran
 since `ensureTransaction` only begins one for non-READ tools. A turn that *does* write pays this in
 addition to whatever the tools already paid; the guard is deliberately not the place to economise.
 
-**Tested by** `TestPreCommitGuard` and the transaction cases of `TestAgentLoop` in `tl-ai-core`, and
-`SecDemoPreCommitGuardTest` against a real fixture boot - see
+**Tested by** `TestPreCommitGuard` and the transaction cases of `TestAgentLoop` in `tl-ai-core`, which
+also holds `TestToolChangeSet` (what a real transaction books for a reference stored as links) and
+`TestPreCommitGuardInATurn` (the guard at the end of a real agent turn), and `SecDemoPreCommitGuardTest`
+against a real fixture boot - see
 [testbed.md](../../tl-ai-demo/doc/secdemo/testbed.md#56-the-pre-commit-guard-l4).
 
 ### 3.6 L5 - Output / reference guard

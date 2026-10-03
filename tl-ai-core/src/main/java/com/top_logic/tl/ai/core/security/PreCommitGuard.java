@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 
@@ -158,11 +159,16 @@ public interface PreCommitGuard {
 	 *        afterwards.
 	 * @param operation
 	 *        The operation that is not permitted.
+	 * @param attribute
+	 *        The attribute the operation is not permitted on, or <code>null</code> if it is the
+	 *        object as a whole. Neither {@link #describe(List) what the model is told} nor
+	 *        {@code reason} names it.
 	 * @param reason
 	 *        A message safe for the audit log and for the model: names the operation and type, never
 	 *        the value.
 	 */
-	record Violation(TLObject object, String typeName, BoundCommandGroup operation, String reason) {
+	record Violation(TLObject object, String typeName, BoundCommandGroup operation, TLStructuredTypePart attribute,
+			String reason) {
 		// Intentionally empty.
 	}
 }

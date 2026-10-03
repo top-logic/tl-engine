@@ -328,7 +328,7 @@ public class ChangeDataTool {
 				return "Dry run, nothing was saved: run as it stands, the script would change nothing - no object"
 					+ " matches its condition, or every object already has the new values." + returned;
 			}
-			return "Dry run, nothing was saved. Run for real, the script would " + report.summary() + ":\n"
+			return "Dry run, nothing was saved: the script " + report.summary() + ", and that was rolled back:\n"
 				+ ReadFilter.marked("changeData", String.join("\n", report.lines()) + returned)
 				+ "\nIf that is what the user asked for, call changeData again with the same script and"
 				+ " without dryRun; the user is asked to approve it.";

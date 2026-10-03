@@ -662,8 +662,9 @@ Six code fixes and one piece of prompt text address that:
   between framework skills - added deliberately, because agents used to load the wrong one - becomes a
   dead end as soon as the referenced skill is filtered for the acting user. Where the referring skill
   can simply *carry* the tool its guidance depends on, it does, and the filter then drops the pair
-  together: `TL_tlScriptInstanceCreation` declares `changeData` rather than telling the reader to
-  load `TL_writingDataChanges` for it. A guidance-only skill declares no tools, always survives the
+  together: `TL_writingDataChanges` declares `changeData` itself. (The skill the rule was written for,
+  `TL_tlScriptInstanceCreation`, is gone since #630: `createObject` creates an object with its parts,
+  and what was left of it is on the cheat sheet of `TL_writingDataChanges`.) A guidance-only skill declares no tools, always survives the
   filter, and is therefore the one shape that can be offered to a user who cannot act on it. Where the
   referenced skill belongs to a different domain and carrying its tools would drop the referrer for the
   users who need it (`TL_agenticAuthoring` → `TL_writingDataChanges`), the description says what to do
@@ -1085,7 +1086,7 @@ The clerk sees their customers and a clear denial for the write. Neither layer a
 RBAC alone would return every customer; ABAC alone would let the clerk run arbitrary TL-Script and
 merely fail per object, leaking type structure and cardinality in the process.
 
-#### 3.3.5 Writing one object: the object tools · **implemented** (#625)
+#### 3.3.5 Writing one object: the object tools · **implemented** (#625, parts #630)
 
 `updateObject`, `createObject` and `deleteObject` (`ObjectEditTool`, group `data.write`, mode
 `DATA_WRITE`) are the write path for one object the agent knows by its id. They are core tools of
@@ -1096,9 +1097,9 @@ merely fail per object, leaking type structure and cardinality in the process.
 |---|---|
 | May the account read the object it names? | `TidResolver` - an object it may not read is "not found", like one that does not exist; also every object a reference value names |
 | May it change this object, and **each** attribute in the call? | `canWrite(obj)` and `canWrite(obj, attr)` for every attribute, all before the first write; the refusal names the withheld attributes |
-| May it create this type here? | `canCreate(type, container)`, and `canCreate(container, composition)` when the object is created inside another one |
+| May it create this type here? | `canCreate(type, container)`, and `canCreate(container, composition)` when the object is created inside another one - for **every** object a `createObject` call creates, the parts given in its `values` included (#630) |
 | May it delete this object **and everything it contains**? | `canDelete` for the object and, by type, for every object of its composition subtree; then the engine's own `DeleteChecker` veto |
-| Do the values satisfy the model? | the checks `ModelService` vetoes a commit with (mandatory, `TLSize`, `TLRange`, error-level `TLConstraints`), asked on the changed object; a violation undoes the call's own write |
+| Do the values satisfy the model? | the checks `ModelService` vetoes a commit with (mandatory, `TLSize`, `TLRange`, error-level `TLConstraints`), asked on the changed object - for a new object with its parts once the whole tree exists, so a mandatory composition can be satisfied; a violation anywhere undoes the call's whole write |
 | What does the answer show? | only attributes the account may read; a written attribute it may not read is reported as written, without its value |
 
 **Every refusal happens before anything is written** (or after the call undid its own write), so it is
@@ -1119,6 +1120,12 @@ account's, so it acts - and is recorded - as that account, bounded by the `<back
   object that is not committed yet, attribute grants included, because the roles that decide them are
   derived at commit time. `createObject` checks the creation; the initial values are checked as the
   application's own create forms check them. A `<part>` Write grant restricts *changing* an attribute.
+- **A part created with its container is checked by the container's creation.** For a part whose
+  container is created by the same call, the engine answers the create question with yes: a context
+  being built in the current transaction has no computed roles yet, and its own creation was asked
+  (`SecurityConfigurationService.isAllowedCreate`). That is also what one `createObject` per part got
+  before #630, because the calls of a turn share one transaction - creating the tree in one call
+  changes the number of approvals, not the answer.
 - **Contained objects take their rights from their container** unless the application configures an
   access parent or a role source for them: deleting a session of an event is writing the event. A
   `deleteObject` that also removes contained objects is therefore within the rights of an account that

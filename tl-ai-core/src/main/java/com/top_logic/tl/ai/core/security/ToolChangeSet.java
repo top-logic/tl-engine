@@ -131,11 +131,13 @@ public record ToolChangeSet(
 	 * </p>
 	 *
 	 * <p>
-	 * Items that carry no application type - association links of a multi-valued reference, and the
-	 * engine's own bookkeeping items - are not returned. They are <b>not</b> a hole the guard leaves
-	 * open by accident: the object at the writing end of such a link is itself booked as changed, so
-	 * the write is checked through that object. The link item alone is skipped because it has no
-	 * {@link TLClass} to check a right against.
+	 * A created item that carries no application type - the link of a reference kept in a link
+	 * table, or one of the engine's own bookkeeping items - is not returned: it has no
+	 * {@link TLClass} to check a right against. A dropped link is returned among the deletions, where
+	 * the engine grants the DELETE the guard asks, because it checks no rights on an item that is no
+	 * bound object. Neither is booked as a change of the object that holds the reference, so a change
+	 * of such a reference - an enumeration value, for one - is not checked by the guard at all
+	 * (Gitea #631). {@link #pendingLinks(KnowledgeBase)} reads those changes for a report.
 	 * </p>
 	 *
 	 * @param kb

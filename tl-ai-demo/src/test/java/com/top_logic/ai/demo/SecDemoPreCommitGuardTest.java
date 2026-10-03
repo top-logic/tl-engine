@@ -9,12 +9,17 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
 
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKeyUtil;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -236,6 +241,63 @@ public class SecDemoPreCommitGuardTest extends SecDemoPersonaTest {
 
 		assertFalse("The turn must not commit.", turn.committed());
 		assertEquals(before, partnersOf(alpha));
+	}
+
+	/**
+	 * Rewriting the title of a documentation page is caught, although the engine books it on no row
+	 * of the page.
+	 *
+	 * <p>
+	 * The fixture gives Anna no right on the pages of {@code tl.doc}. The title of a page is an
+	 * internationalized attribute, whose translations the engine keeps in rows of a table of their
+	 * own, one per language, so the change books changed rows there and no change of the page. Before
+	 * Gitea #638 the guard saw no write here, and the turn committed.
+	 * </p>
+	 */
+	public void testRewritingADocumentationPageIsRolledBack() {
+		TLObject page = documentationPage("Before");
+		TLStructuredTypePart title = part("tl.doc:Page#title");
+		try {
+			assertFalse("The fixture gives Anna no right to write a documentation page.",
+				securityFor(ANNA).modelSecurity().canWrite(page));
+
+			Turn turn = runTurnAs(ANNA, () -> page.tUpdate(title, english(WRITTEN_ELSEWHERE)));
+
+			assertFalse("The turn must not commit: Anna may not write the documentation.", turn.committed());
+			assertEquals("Pre-commit security check failed", turn.rollbackReason());
+			assertEquals("Before", ResKeyUtil.getTranslation((ResKey) page.tValue(title), Locale.ENGLISH));
+
+			String notice = turn.notice();
+			assertNotNull(notice);
+			assertTrue("The notice must name the type, but was: " + notice, notice.contains("tl.doc:Page"));
+			assertFalse("The notice must not quote the written value, but was: " + notice,
+				notice.contains(WRITTEN_ELSEWHERE));
+		} finally {
+			inTransaction(page::tDelete);
+		}
+	}
+
+	/** A documentation page with the given English title, outside the documentation's tree. */
+	private static TLObject documentationPage(String title) {
+		TLObject[] page = new TLObject[1];
+		inTransaction(() -> {
+			page[0] = ModelService.getInstance().getFactory()
+				.createObject((TLClass) TLModelUtil.findType("tl.doc:Page"), null);
+			page[0].tUpdate(part("tl.doc:Page#name"), "secdemo-" + System.nanoTime());
+			page[0].tUpdate(part("tl.doc:Page#title"), english(title));
+		});
+		return page[0];
+	}
+
+	private static ResKey english(String text) {
+		return ResKey.builder().add(Locale.ENGLISH, text).build();
+	}
+
+	private static void inTransaction(Runnable change) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			change.run();
+			tx.commit();
+		}
 	}
 
 	private static Set<Object> partnersOf(TLObject project) {

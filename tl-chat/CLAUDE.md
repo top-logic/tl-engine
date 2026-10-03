@@ -504,8 +504,13 @@ installation authors - and both fall back to nothing: an agent with no display n
 technical name, one with no summary by its name alone. The agent's `description` is a delegation
 instruction addressed to a model and never reaches the browser.
 
-The summary is rendered **as authored**, on one line, cut off with an ellipsis where it does not fit.
-A summary that has to fit is shortened where it is written, not here.
+The summary is rendered **as authored** and **whole**: under the row's label, wrapping onto as many
+lines as it needs (#635). The same holds for every hint of the "+" menu and the model picker. A hint
+stands under the label and the value rather than beside the value, so how much room it has never
+depends on the value - a longer model name used to cut the sentence off again. Each row is named by
+its label and value and described by its hint (`aria-labelledby` / `aria-describedby`), so a screen
+reader hears the whole sentence too. A summary is still best kept to one line where it is written,
+because the menu is easier to scan that way; nothing breaks when it is not.
 
 **Where an installation changes them (#403).** For the agents this product ships, both texts are
 configuration, and the place to change them is *Administration → Development → Service Editor →

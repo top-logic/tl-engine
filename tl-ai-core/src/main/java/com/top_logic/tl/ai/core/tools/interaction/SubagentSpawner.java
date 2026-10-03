@@ -126,9 +126,9 @@ public class SubagentSpawner {
 		// appear in the execution history and the parent+children token total stays a KB
 		// query. Recording is best-effort and must never prevent the spawn.
 		final AgentExecution parentExecution = toolContext.executionHandle().get();
-		// The parent execution row is written by the AgentExecutionStore's writer thread, at a
-		// revision newer than this (long-running) agent thread's stable read view, so resolving
-		// parentExecution.getSession() here would fail with "created after access revision N"
+		// The parent execution row is written by the AgentExecutionStore's writer thread, and this
+		// agent thread's view of the database need not include it, so resolving
+		// parentExecution.getSession() here can fail with "created after access revision N"
 		// (Gitea #405). The store resolves it on the thread that can see it; this used to advance
 		// the whole sub-session's revision instead, which moved every other read of this thread
 		// along with it. Best-effort: without a session the child run is simply not recorded.

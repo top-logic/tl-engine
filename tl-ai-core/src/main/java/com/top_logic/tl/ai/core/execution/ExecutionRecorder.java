@@ -165,7 +165,7 @@ public final class ExecutionRecorder implements AgentEventListener {
 			_runId = e.runId();
 			// Publish what identifies the run on the shared handle before any tool runs, so tools
 			// read it as plain data instead of dereferencing the persistent execution wrapper,
-			// which their revision cannot see (Gitea #405). Done unconditionally (even when
+			// which their revision need not include (Gitea #405). Done unconditionally (even when
 			// execution recording is inactive) so the facts are there whether or not the run is
 			// persisted. AgentLoop publishes the same run id and model just before emitting this
 			// event; repeating them here covers an emitter other than the loop, with the same

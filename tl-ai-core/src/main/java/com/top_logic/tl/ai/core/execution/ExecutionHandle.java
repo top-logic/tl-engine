@@ -33,11 +33,11 @@ import com.top_logic.tl.ai.tool.api.RunInfo;
  *
  * <p>
  * {@link #get()} is the <b>persistent wrapper</b>, and it is an opaque token, not something to
- * read. The execution store writes that row on its own writer thread, in a revision newer than the
- * one the tool's interaction reads at, so every attribute access on it from an execution thread
- * throws "was deleted before or created after access revision N" (Gitea #405). Hand it to
- * {@link AgentExecutionStore} - which dereferences it on the writer thread, where it is
- * visible - and read nothing off it here.
+ * read. The execution store writes that row on its own writer thread, and whether the revision a
+ * tool's interaction reads at includes it depends on when it was written and on how the run was
+ * started, so an attribute access on it from an execution thread can throw "was deleted before or
+ * created after access revision N" (Gitea #405). Hand it to {@link AgentExecutionStore} - which
+ * dereferences it on the writer thread, where it is visible - and read nothing off it here.
  * </p>
  *
  * @see RunInfo
@@ -87,8 +87,8 @@ public final class ExecutionHandle {
 	 *
 	 * <p>
 	 * <b>An opaque token; do not read attributes off it.</b> The row is written by
-	 * {@link AgentExecutionStore}'s writer thread at a revision newer than the one a tool's
-	 * interaction reads at, so {@code get().getAgentName()} and every other attribute access throws
+	 * {@link AgentExecutionStore}'s writer thread, and the revision a tool's interaction reads at
+	 * need not include it, so {@code get().getAgentName()} and every other attribute access can throw
 	 * "created after access revision N" (Gitea #405). Pass it to the store, which resolves it where
 	 * it is visible; to <em>read</em> the run's agent, model, run id or session, use
 	 * {@link #runInfo()}.

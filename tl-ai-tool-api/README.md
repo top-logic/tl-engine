@@ -64,10 +64,12 @@ a tool call it answers `RunInfo.NONE`, never the previous task's run.
 A tool in `tl-ai-core` can also reach the run's persistent `AgentExecution` through
 `ToolContext.executionHandle().get()`. **That wrapper is an opaque token, not something to read.**
 
-The framework writes that row on `AgentExecutionStore`'s own writer thread, in its own session, at a
-revision *newer* than the one the tool's interaction reads at - the interaction is opened before the
-run starts, and a TopLogic sub-session's view only advances at sanctioned points. So every attribute
-access on it from a tool fails:
+The framework writes that row on `AgentExecutionStore`'s own writer thread, in its own session, and a
+tool reads at the revision its turn took (see [What a call reads of the
+database](#what-a-call-reads-of-the-database)). Whether that revision has the row depends on when the
+store wrote it and on how the run was started - a run inside somebody else's transaction, a delegated
+one among them, does not move its view at all. Where it does not have it, every attribute access on
+it fails:
 
 ```
 com.top_logic.knowledge.service.db2.DeletedObjectAccess:
@@ -75,9 +77,8 @@ com.top_logic.knowledge.service.db2.DeletedObjectAccess:
   was deleted before or created after access revision 87.
 ```
 
-That was Gitea #405, and it is not a race: it happens on every run, and reading the handle as the
-very first statement of the tool fails identically. Nothing on the tool's side can fix it, because
-nothing on the tool's side can make a row from a newer revision visible to a pinned view.
+That was Gitea #405. Until #647 a run's view never moved, so it failed on every run, even as the very
+first statement of the tool. Now it fails on some runs only, which makes reading it worse, not better.
 
 What a tool may do with the wrapper is **hand it to `AgentExecutionStore`**, which dereferences it on
 its writer thread, where it is visible - that is how `AgentTaskMirror` and the `askUser` recorder
@@ -223,6 +224,42 @@ Three things worth knowing before you choose:
 If you implement `Tool` directly instead of annotating a method, none of this happens for you: you
 write `execute`, so you write the marking too, with `UntrustedEnvelope` (or, in `tl-ai-core`,
 `ReadFilter`, which marks everything it discloses).
+
+## What a call reads of the database
+
+A turn reads one state of the database. Before the first call of a turn is checked, the agent loop
+moves the run's view to the newest commit, and once more after an approval that first call waited
+for, because somebody may have saved something meanwhile. From the first call that runs on, every
+call of the turn reads that state, whatever other threads commit; the next turn reads the newer one
+(Gitea #647).
+
+So a tool reads what other people, scheduled jobs and earlier turns committed without doing anything
+for it. One kind of tool has to:
+
+**A tool that waits for other threads within its call** - it starts helpers that write and commit in
+transactions of their own, and goes on to work with what they wrote - calls `catchUpWithCommits()`
+once they are done:
+
+```java
+for (Future<?> helper : helpers) {
+    helper.get();                   // each one commits in a transaction of its own
+}
+context.catchUpWithCommits();       // from here on this call reads what they committed
+```
+
+Without it the call reads what was there before the helpers wrote, and a change it makes to what they
+wrote is a change of an outdated version: the turn's commit fails with "Object could not be updated,
+as it has changes that are based on an outdated version (preventing lost update)", and the turn is
+rolled back. What the turn has changed itself is kept. A commit of a helper that changed what the
+turn has changed as well is a real conflict, and the turn is rolled back either way.
+
+`catchUpWithCommits()` is `HistoryUtils.updateSessionRevision()` with the conflict turned into an
+exception the tool need not handle. Call it rather than the engine: what it promises is the
+framework's rule, and the engine method is how the framework keeps it today.
+
+A run started inside somebody else's transaction - a script in a command that opened one, a delegated
+run inside a turn that has written - does not move its view between turns: that would merge other
+threads' commits into a transaction that is not the run's. Such a run reads what its caller reads.
 
 ## A tool written as TL-Script
 

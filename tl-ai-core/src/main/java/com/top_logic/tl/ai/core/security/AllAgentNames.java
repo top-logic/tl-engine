@@ -53,7 +53,7 @@ public class AllAgentNames extends Function0<List<String>> {
 	 * the whole form; one that is short is merely a short list.
 	 * </p>
 	 */
-	static Collection<String> existingAgentNames() {
+	public static Collection<String> existingAgentNames() {
 		List<String> names = new ArrayList<>();
 		try {
 			for (AgentDefinition agent : AgentDefinitionQuery.getInstance().getAllAgents()) {

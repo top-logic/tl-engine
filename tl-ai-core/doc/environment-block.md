@@ -205,6 +205,72 @@ That is also the point of putting it here rather than in front of every user mes
 an application without this seam had to do: the text is charged once for the conversation instead of
 once per turn.
 
+### A fixed text, without Java code (#648)
+
+Most applications only want to give their agents a fixed text: what the application is, its domain
+terms, its fixed business rules. For that, tl-ai-core ships `TextPromptContributor`:
+
+```xml
+<config service-class="com.top_logic.tl.ai.core.provider.LLMService">
+  <instance>
+    <prompt-contributors>
+      <contributor class="com.top_logic.tl.ai.core.agent.TextPromptContributor"
+        agents="TL_SingleAgent"
+      >
+        <text>
+          <de>## Fachwissen
+Ein Auftrag ist 'offen', bis er abgerechnet ist.</de>
+          <en>## Domain knowledge
+An order is 'open' until it is invoiced.</en>
+        </text>
+      </contributor>
+    </prompt-contributors>
+  </instance>
+</config>
+```
+
+- **`text`** is a translatable text (a `ResKey`, written as one element per language, like an
+  agent's `display-name`). A run gets the text in the UI language of the account it acts for. When
+  there is no text in that language, the engine's usual fallback applies: the fallback chain of the
+  resource bundles, then the first supported language that has a text.
+- **`agents`** is a comma-separated list of technical agent names. Empty means every agent - also
+  the infrastructure agents such as the prompt improver, which then pay for the text on every run.
+  Name the agents when the text is about the application's data.
+- **Placeholders**: the text may use every `{{...}}` placeholder of an agent's prompt. An unknown
+  placeholder is a configuration error, refused by a `@Constraint` on the property. The engine asks
+  that constraint at two points: when the application configuration is read at start-up, and when an
+  administrator saves the service in the service editor, before the file is written. Only a literal
+  text is inspected; a `text` that references a resource key by name is not.
+
+**Changing the text in the running application.** *Administration → Service Editor → LLM-Dienst*
+shows the contributor under *Prompt contributors*, with the text in a multi-line field per language.
+The sequence is:
+
+1. Change the text and **save**. The service editor checks the constraints, writes
+   `com.top_logic.tl.ai.core.provider.LLMService.config.xml` to the autoconf folder and reloads the
+   application configuration. The running service does not see the change yet.
+2. **Restart** the service (*Neu starten* in the same editor). `LLMService` builds its contributors
+   again from the saved configuration. No application restart is necessary.
+
+From then on, every run that starts gets the new text: a new conversation, and also the **next
+message of a conversation that is already open**. A run that is in progress keeps the text it started
+with, because a run composes its system prompt once, in `AgentFactory.buildConfig`, and sends that
+same prompt on every turn. So the text of an open conversation changes at most once, at a message
+boundary, and that message pays for its prompt once without a cache hit. There is never a mix of old
+and new text in one request.
+
+> ⚠️ **Saving writes the whole `LLMService` configuration.** As for every service, the written file
+> carries `config:override="true"` and replaces the `LLMService` configuration of all other files -
+> providers, models, failover and contributors. From then on, a change to those files (for example in
+> a new release of the application) has no effect until the written file is deleted. That is how the
+> engine's service editor behaves for every service.
+
+**Who may change it.** Everybody who may use the service editor's save and restart commands - in a
+standard TopLogic application, the administrators. The text then reaches the system prompt of every
+named agent, for every account, so it carries the same authority as an agent's own prompt: give the
+service editor right only to accounts you would also let write agent prompts. tl-ai adds no own
+right on top of it.
+
 ## The per-turn block
 
 Some facts change while the user talks to the agent: which object is open, which row was just

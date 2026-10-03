@@ -166,6 +166,15 @@ Key flow: `AgentFactory.runAgent()` → `AgentLoop` → `LLMProvider.stream()` �
 
 Stop conditions: `StopReason` — COMPLETE, MAX_TURNS, ERROR, CONTEXT_OVERFLOW, REJECTED, ABORTED, BUDGET_EXHAUSTED.
 
+**What a turn reads (#647).** A run holds one interaction for all its turns, and an interaction reads
+at the revision it read first, so `AgentLoop` moves the run's view to the newest commit before a
+turn's first call is checked, and again after an approval that first call waited for - only while
+the thread holds no knowledge-base context, so a run inside a caller's transaction keeps the caller's
+view. The calls of one turn read one state; a tool that waits for other threads' commits within its
+call catches up with `ToolExecutionContext.catchUpWithCommits()`. A commit made after the turn's view
+was taken still fails the turn on a conflict (#305). `TestCommitsOfOtherThreads` pins all of it; the
+rule for tool authors is in `tl-ai-tool-api/README.md`.
+
 An installation renames a shipped agent in *Service Editor → TopLogic-Agents and Skills* (`display-name`, `summary`, first in the form); the technical `name` stays, and the change takes effect when that service is restarted - see `tl-chat/CLAUDE.md`.
 
 ### Environment block (tl-ai-core `agent/environment/`)

@@ -83,8 +83,8 @@ public final class InteractionRecorder {
 		try {
 			// The row (and the responder resolved from execution.getSession()) is created on the
 			// store's writer thread, which sees KB HEAD. We deliberately do not return the
-			// persistent wrapper: dereferencing it on this agent thread — whose KB view predates
-			// the just-recorded execution — would fail. The stable requestId string is enough to
+			// persistent wrapper: dereferencing it on this agent thread, whose KB view predates
+			// the row just recorded, would fail. The stable requestId string is enough to
 			// resolve the row later.
 			AgentExecutionStore.getInstance().createInteraction(execution, type, requestId,
 				header, prompt, payload);

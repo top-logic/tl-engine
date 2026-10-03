@@ -86,7 +86,9 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * Callers do <em>not</em> automatically see their own writes: writer commits happen in a
  * separate session, and a subsession's stable view only advances at sanctioned points. The chat
- * servlet advances the session revision at request begin, which covers all HTTP read-back paths.
+ * servlet advances the session revision at request begin, which covers all HTTP read-back paths,
+ * and the agent loop before the calls of each turn (Gitea #647), which covers what the next turn of
+ * a run reads - not the rest of the turn that wrote.
  * </p>
  */
 @ServiceDependencies({
@@ -1036,8 +1038,8 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * This is the sanctioned way for an <em>agent</em> thread to get from the run's
 	 * {@link AgentExecution} to its {@link AgentSession}: the resolution happens on the writer
 	 * thread, in a fresh interaction that reads at the current revision, because the calling
-	 * thread's view is pinned to a revision that predates the row and dereferencing it there throws
-	 * "created after access revision N" (Gitea #405). The returned wrapper is, for the caller,
+	 * thread's view need not include the row and dereferencing it there then throws "created after
+	 * access revision N" (Gitea #405). The returned wrapper is, for the caller,
 	 * another opaque token - hand it back to this service (as {@link #beginExecution}'s
 	 * {@code session}), do not read attributes off it.
 	 * </p>
@@ -1357,7 +1359,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			// chatting user); a session without an owner leaves the request open to any user.
 			// Resolved here on the writer thread, whose fresh system interaction sees KB HEAD and
 			// thus the just-recorded execution/session — unlike the calling agent thread, whose
-			// revision view is intentionally pinned to before the execution was recorded.
+			// view of the database need not include them.
 			AgentSession session = execution.getSession();
 			Person responder = session == null ? null : session.getOwner();
 			if (responder != null) {
@@ -1650,8 +1652,8 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 *        The run it came out of, which is also how it finds its conversation; may be
 	 *        <code>null</code> for a run that is not recorded, and the memory then records no
 	 *        origin. <b>Read on the writer thread</b>, not here: the caller is usually an agent
-	 *        thread whose view of the database predates the execution row the writer created, and
-	 *        dereferencing it there fails with "created after access revision".
+	 *        thread whose view of the database need not include the execution row the writer
+	 *        created, and dereferencing it there then fails with "created after access revision".
 	 * @return The created row.
 	 */
 	public UserMemory createMemory(Person owner, MemoryKind kind, String text,

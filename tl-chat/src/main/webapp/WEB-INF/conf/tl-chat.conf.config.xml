@@ -18,6 +18,26 @@
 			<instance class="com.top_logic.ai.chat.view.AgentViewRefreshService"/>
 		</config>
 		<!--
+			The client bundle of the React chat (built from ui/ into /script/), so that every page
+			that shows a chat element - a React view or the Albert tab of tl-chat-classic - can
+			render it. The list is keyed by name: an application that still declares an entry of
+			the same name overrides this one and does not add a second copy.
+		-->
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<module-script name="tl-react-agent-chat"
+						requires="tl-react-bridge"
+						resource="/script/tl-chat-ui.js"
+					/>
+					<stylesheet name="tl-react-agent-chat-css"
+						requires="tl-react-controls-css"
+						resource="/script/tl-chat-ui.css"
+					/>
+				</resources>
+			</instance>
+		</config>
+		<!--
 			The "present" tool: the agent puts model objects onto a channel of the page it is on.
 			Registered here rather than in tl-ai-core because it needs the view layer - a channel
 			only exists in a rendered window. Every application that depends on tl-chat therefore

@@ -424,13 +424,20 @@ update counts - a run writes its chat's bookkeeping several times per send, and 
 one send cost four list reads instead of one. Opening a chat also takes the title its transcript load answers with,
 so a window that missed the count shows the current title as soon as the chat is opened (#596).
 
-An application makes the bundle loadable by declaring it on `ClientResources` - see
-`tl-ai-demo/src/main/webapp/WEB-INF/conf/tl-ai-demo.conf.config.xml`:
+This module registers the bundle on `ClientResources` itself (`tl-chat.conf.config.xml`, #642), so
+an application that depends on `tl-chat` needs no entry of its own:
 
 ```xml
 <module-script name="tl-react-agent-chat" resource="/script/tl-chat-ui.js" requires="tl-react-bridge"/>
-<module-script name="tl-chat-seams" resource="/script/tl-chat-seams.js" specifier="tl-chat-seams" requires="tl-react-bridge"/>
 <stylesheet name="tl-react-agent-chat-css" resource="/script/tl-chat-ui.css" requires="tl-react-controls-css"/>
+```
+
+The `resources` list is keyed by `name`, so an application that still declares one of these names
+overrides the entry rather than loading the bundle twice; it can delete its copy. Only a host that
+composes `App` itself (see "Extending the chat") adds the seams module:
+
+```xml
+<module-script name="tl-chat-seams" resource="/script/tl-chat-seams.js" specifier="tl-chat-seams" requires="tl-react-bridge"/>
 ```
 
 ### Styling

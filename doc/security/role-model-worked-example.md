@@ -315,7 +315,7 @@ context. Keep that in mind when testing: an admin account proves nothing.
 ```
 
 **`data.write` is a tier and cannot be anything else.** At the moment this gate runs, the model has
-proposed `executeTLScript` and there is no object yet to check. So this table answers exactly one
+proposed `changeData` and there is no object yet to check. So this table answers exactly one
 question: "may the agent wield this kind of power on your behalf at all." Every question of the form
 "on which object" and "of which type" belongs to `<security-config>` and is answered later, per
 object.

@@ -23,6 +23,7 @@ import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolArgumentCoercionException;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.json.JsonTree;
@@ -328,5 +329,40 @@ public class ToolCatalog implements ToolRegistry {
 			return Map.of();
 		}
 		return JsonTree.parseObject(json);
+	}
+
+	/**
+	 * What kind of state change the given call makes: the tool's {@link Tool#mode()}, or
+	 * {@link ToolMode#READ} for a call the tool says changes nothing - a dry run.
+	 *
+	 * <p>
+	 * The one answer the approval policy, the turn's transaction and the conversation log go by, so
+	 * that they cannot disagree about a call. A tool may only narrow its mode to {@code READ}; any
+	 * other answer is read as its declared mode. Arguments that do not parse leave the declared mode
+	 * as well - fail-closed, and the call then fails on them when it runs.
+	 * </p>
+	 *
+	 * @see Tool#mode(Map)
+	 */
+	public static ToolMode callMode(Tool tool, ToolCall call) {
+		Map<String, Object> arguments;
+		try {
+			arguments = parseJson(call.arguments());
+		} catch (IOException | RuntimeException ex) {
+			return tool.mode();
+		}
+		return callMode(tool, arguments);
+	}
+
+	/**
+	 * {@link #callMode(Tool, ToolCall)} for arguments that are already parsed.
+	 */
+	public static ToolMode callMode(Tool tool, Map<String, Object> arguments) {
+		ToolMode declared = tool.mode();
+		try {
+			return tool.mode(arguments) == ToolMode.READ ? ToolMode.READ : declared;
+		} catch (RuntimeException ex) {
+			return declared;
+		}
 	}
 }

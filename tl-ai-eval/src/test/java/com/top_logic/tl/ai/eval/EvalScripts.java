@@ -36,7 +36,7 @@ import com.top_logic.tl.ai.core.provider.ProviderRequest;
 public class EvalScripts {
 
 	/** Names the tool the agents' write path goes through. */
-	public static final String WRITE_TOOL = "executeTLScript";
+	public static final String WRITE_TOOL = "changeData";
 
 	/** Names the tool the agents read with. */
 	public static final String READ_TOOL = "listInstances";
@@ -184,15 +184,13 @@ public class EvalScripts {
 		};
 	}
 
-	/** A call of the write tool running the given TL-Script and committing it. */
+	/** A call of the write tool running the given TL-Script for real, not as a dry run. */
 	public static ToolCall write(String script) {
 		StringW buffer = new StringW();
 		try (JsonWriter json = new JsonWriter(buffer)) {
 			json.beginObject();
 			json.name("script");
 			json.value(script);
-			json.name("withCommit");
-			json.value(true);
 			json.endObject();
 		} catch (IOException ex) {
 			throw new UncheckedIOException(ex);

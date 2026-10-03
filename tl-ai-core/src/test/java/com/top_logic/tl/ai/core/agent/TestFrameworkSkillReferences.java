@@ -36,7 +36,7 @@ import org.xml.sax.SAXException;
  * <p>
  * A skill description is routing instruction: it is in the system prompt of every agent that declares
  * the skill, and it is what the model matches a request against. Several of them deliberately point at
- * another skill - "to run TL-Script, load {@code TL_tlScriptWriting}" - because agents used to load the
+ * another skill - "to change data with a script, load {@code TL_writingDataChanges}" - because agents used to load the
  * wrong one. The pointer becomes a <b>dead end</b> as soon as the acting user cannot load the skill it
  * names: the referring skill is offered, the referenced one is gone, and the model was observed
  * concluding from that that a capability nobody had mentioned was missing.
@@ -48,10 +48,10 @@ import org.xml.sax.SAXException;
  * <ul>
  * <li><b>Carry the tool.</b> A guidance-only skill that depends on a tool declares that tool, and the
  * skill filter then drops the pair together - there is no dead end because there is no surviving
- * referrer. {@code TL_tlScriptInstanceCreation} is that case: it carries {@code executeTLScript}.</li>
+ * referrer. {@code TL_writingDataChanges} is that case: it carries {@code changeData}.</li>
  * <li><b>Qualify the reference.</b> Where the referenced skill belongs to a different domain and
  * carrying its tools would drop the referrer for users who need it - {@code TL_agenticAuthoring}
- * pointing at {@code TL_tlScriptWriting} - the description says what to do when the reference is not
+ * pointing at {@code TL_writingDataChanges} - the description says what to do when the reference is not
  * reachable. That is what {@link #QUALIFICATION} looks for.</li>
  * </ul>
  *
@@ -124,21 +124,21 @@ public class TestFrameworkSkillReferences extends TestCase {
 	}
 
 	/**
-	 * {@code TL_tlScriptInstanceCreation} carries the tool its guidance is about.
+	 * {@code TL_writingDataChanges} carries the tool its guidance is about.
 	 *
 	 * <p>
 	 * The structural half of the rule above, pinned by name because it is the case that produced the
 	 * defect: a skill with no tools always survives the skill filter, so a guidance-only skill whose
 	 * guidance needs {@code script} was offered to users without {@code script} and pointed them at the
-	 * skill that has {@code executeTLScript} - which those users could not load either. With the tool
+	 * skill that has {@code changeData} - which those users could not load either. With the tool
 	 * declared, the filter drops the whole skill for them, and a user who does hold {@code script} gets
-	 * the tool the guidance tells them to run.
+	 * the tool the guidance tells them to run. The skill that produced the defect, the one for creating
+	 * objects by script, is gone (#630): {@code createObject} creates an object with its parts.
 	 * </p>
 	 */
-	public void testInstanceCreationCarriesTheToolItsGuidanceRuns() throws Exception {
-		assertEquals("Its workflow ends in 'Run script-exec.executeTLScript with commit = true'.",
-			List.of("script-exec.executeTLScript"),
-			skillTools(config(), "TL_tlScriptInstanceCreation"));
+	public void testTheScriptSkillCarriesTheToolItsGuidanceRuns() throws Exception {
+		assertTrue("Its workflow ends in running script-exec.changeData.",
+			skillTools(config(), "TL_writingDataChanges").contains("script-exec.changeData"));
 	}
 
 	/** The positive control: the file really was read and really does define the framework skills. */
@@ -146,7 +146,7 @@ public class TestFrameworkSkillReferences extends TestCase {
 		Map<String, String> skills = skillDescriptions(config());
 
 		assertTrue("Expected the shipped framework skills, found: " + skills.keySet(),
-			skills.containsKey("TL_agenticAuthoring") && skills.containsKey("TL_tlScriptWriting"));
+			skills.containsKey("TL_agenticAuthoring") && skills.containsKey("TL_writingDataChanges"));
 		for (Map.Entry<String, String> skill : skills.entrySet()) {
 			assertFalse("Every framework skill needs a description - it is the only thing the model"
 				+ " matches a request against: " + skill.getKey(), skill.getValue().isEmpty());

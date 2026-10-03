@@ -10,6 +10,7 @@ import java.util.Set;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.RunAuthorization;
+import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -115,8 +116,8 @@ public interface SecurityContext {
 	 *
 	 * <p>
 	 * The seam for an operation whose cost depends on an <em>argument</em>, which the invocation gate
-	 * cannot see: {@code executeTLScript} is classified as the {@code script} capability, and calling
-	 * it with {@code withCommit=true} persists arbitrary writes, so that call additionally requires
+	 * cannot see: {@code changeData} is classified as the {@code script} capability, and every call of
+	 * it but a dry run persists arbitrary writes, so such a call additionally requires
 	 * {@code data.write}. The tool asks here, where the argument is known, and gets the answer the
 	 * same policy would have given for a {@code data.write} tool - including the background allowlist
 	 * and the administrator bypass.
@@ -131,7 +132,7 @@ public interface SecurityContext {
 	 *        The name of the required capability (tool group), e.g. {@code data.write}.
 	 * @param operation
 	 *        What the run is about to do, for the denial message - e.g.
-	 *        {@code "executing TL-Script with withCommit=true"}.
+	 *        {@code "changing data with changeData"}.
 	 * @return The reason the capability is refused, safe to feed back to the model, or
 	 *         <code>null</code> if it is permitted.
 	 */
@@ -306,8 +307,10 @@ public interface SecurityContext {
 	 *
 	 * <p>Only called after {@link #hasToolPermission} passes and the system mode gate allows
 	 * the tool. The default implementation requires approval for all state-changing
-	 * tools ({@link ToolMode#USER_SCOPED}, {@link ToolMode#DATA_WRITE}, and {@link ToolMode#STRUCTURAL}),
-	 * and for {@link ToolMode#EXTERNAL} tools, whose state change lands in another system.</p>
+	 * calls ({@link ToolMode#USER_SCOPED}, {@link ToolMode#DATA_WRITE}, and {@link ToolMode#STRUCTURAL}),
+	 * and for {@link ToolMode#EXTERNAL} calls, whose state change lands in another system. It decides
+	 * by the mode of the call rather than of the tool ({@link ToolCatalog#callMode(Tool, ToolCall)}),
+	 * so the dry run of a write tool, which changes nothing, needs no approval.</p>
 	 *
 	 * <p><b>Contract:</b> implementations must be side-effect-free and stable within a turn.
 	 * The agent loop calls this method more than once for the same tool call — first to
@@ -319,7 +322,7 @@ public interface SecurityContext {
 	 * @return the approval decision
 	 */
 	default PermissionDecision checkApproval(Tool tool, ToolCall toolCall) {
-		return switch (tool.mode()) {
+		return switch (ToolCatalog.callMode(tool, toolCall)) {
 			case READ -> new PermissionDecision.Allowed();
 			case USER_SCOPED -> new PermissionDecision.NeedsApproval(
 				"Modifies your personal settings.", toolCall);

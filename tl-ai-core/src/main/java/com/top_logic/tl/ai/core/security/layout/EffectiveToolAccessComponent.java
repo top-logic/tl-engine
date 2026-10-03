@@ -509,8 +509,8 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 	 * The sentence the {@code script} group needs and no other group does.
 	 *
 	 * <p>
-	 * Executing TL-Script with {@code withCommit=true} costs {@link ToolGroups#DATA_WRITE} on top of
-	 * the {@link ToolGroups#SCRIPT} the tool is classified as. That price is paid through a tool
+	 * A change with {@code changeData} - every call but a dry run - costs
+	 * {@link ToolGroups#DATA_WRITE} on top of the {@link ToolGroups#SCRIPT} the tool is classified as. That price is paid through a tool
 	 * <em>argument</em>, so no row of a capability table can carry it and it has to be said in words -
 	 * wherever the script capability appears.
 	 * </p>

@@ -68,8 +68,8 @@ public class SecDemoSpawnFilterTest extends SecDemoPersonaTest {
 	/** Asks questions, which every persona may do. */
 	private static final String EDITOR_AGENT = "TL_ModelEditor";
 
-	/** Runs TL-Script, and keeps tasks - the second of which no role of this fixture may do. */
-	private static final String SCRIPT_AGENT = "TL_TLScriptAgent";
+	/** Writes and runs scripts, and keeps tasks - the second of which no role of this fixture may do. */
+	private static final String SCRIPT_AGENT = "TL_ScriptWriter";
 
 	/**
 	 * The one role the fixture's {@code <agent-access>} section names, and which it grants

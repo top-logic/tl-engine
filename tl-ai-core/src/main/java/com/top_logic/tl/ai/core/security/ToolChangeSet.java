@@ -15,8 +15,10 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
 import com.top_logic.knowledge.event.ItemChange;
 import com.top_logic.knowledge.objects.ChangeInspectable;
+import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
@@ -129,11 +131,13 @@ public record ToolChangeSet(
 	 * </p>
 	 *
 	 * <p>
-	 * Items that carry no application type - association links of a multi-valued reference, and the
-	 * engine's own bookkeeping items - are not returned. They are <b>not</b> a hole the guard leaves
-	 * open by accident: the object at the writing end of such a link is itself booked as changed, so
-	 * the write is checked through that object. The link item alone is skipped because it has no
-	 * {@link TLClass} to check a right against.
+	 * A created item that carries no application type - the link of a reference kept in a link
+	 * table, or one of the engine's own bookkeeping items - is not returned: it has no
+	 * {@link TLClass} to check a right against. A dropped link is returned among the deletions, where
+	 * the engine grants the DELETE the guard asks, because it checks no rights on an item that is no
+	 * bound object. Neither is booked as a change of the object that holds the reference, so a change
+	 * of such a reference - an enumeration value, for one - is not checked by the guard at all
+	 * (Gitea #631). {@link #pendingLinks(KnowledgeBase)} reads those changes for a report.
 	 * </p>
 	 *
 	 * @param kb
@@ -162,6 +166,63 @@ public record ToolChangeSet(
 			return EMPTY;
 		}
 		return new ToolChangeSet(created, updated, deleted);
+	}
+
+	/**
+	 * The attributes the current transaction changed whose values are stored as links - a reference
+	 * kept in a link table rather than in the object's own row - by the object that holds them.
+	 *
+	 * <p>
+	 * Such a change is invisible to {@link #pending(KnowledgeBase)}: the link item has no application
+	 * type, and the object holding the reference is not booked as changed when only its link is. A
+	 * report of what a tool did needs them - setting an enumeration value is such a change - so they
+	 * are read here, separately. {@link #pending(KnowledgeBase)} and with it the
+	 * {@link PreCommitGuard} stay as they are: counting the holder of every removed link as changed
+	 * would ask for a WRITE right on every object that merely referred to a deleted one.
+	 * </p>
+	 *
+	 * @param kb
+	 *        The knowledge base whose current transaction to read.
+	 * @return The changed attributes by the object they belong to; empty without a transaction.
+	 */
+	public static Map<TLObject, Set<TLStructuredTypePart>> pendingLinks(KnowledgeBase kb) {
+		if (!(kb instanceof DBKnowledgeBase db) || !(db.getCurrentDBContext() instanceof DefaultDBContext context)) {
+			return Map.of();
+		}
+		Map<TLObject, Set<TLStructuredTypePart>> result = new LinkedHashMap<>();
+		for (DBKnowledgeItem item : context.getNewObjects()) {
+			addLink(result, item);
+		}
+		for (DBKnowledgeItem item : context.getDroppedObjects()) {
+			// A link deleted in this transaction is read where it still exists.
+			kb.withoutModifications(() -> {
+				addLink(result, item);
+				return null;
+			});
+		}
+		return result;
+	}
+
+	private static void addLink(Map<TLObject, Set<TLStructuredTypePart>> result, DBKnowledgeItem item) {
+		if (!(item instanceof KnowledgeAssociation link)
+			|| item.tTable().getAttributeOrNull(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR) == null) {
+			return;
+		}
+		TLStructuredTypePart attribute;
+		TLObject holder;
+		try {
+			attribute = WrapperMetaAttributeUtil.getMetaAttribute(item);
+			holder = link.getSourceObject().getWrapper();
+		} catch (RuntimeException ex) {
+			Logger.warn("Cannot resolve the attribute of link '" + item + "'.", ex, ToolChangeSet.class);
+			return;
+		}
+		if (attribute == null || holder == null || holder.tType() == null) {
+			return;
+		}
+		// The link names the attribute where it was first defined; the holder's type may override it.
+		TLStructuredTypePart concrete = holder.tType().getPart(attribute.getName());
+		result.computeIfAbsent(holder, key -> new LinkedHashSet<>()).add(concrete != null ? concrete : attribute);
 	}
 
 	private static List<Creation> creations(Collection<DBKnowledgeItem> items) {

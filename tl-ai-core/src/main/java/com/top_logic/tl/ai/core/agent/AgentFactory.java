@@ -51,6 +51,7 @@ import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
 import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
 import com.top_logic.tl.ai.core.tools.introspection.ListToolsTool;
+import com.top_logic.tl.ai.core.tools.script.QueryLanguage;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
@@ -1248,7 +1249,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 					// Logged once per run where the catalog is generated - see skillCatalog.
 					continue;
 				}
-				skillMap.put(sd.name(), new Skill(sd.name(), sd.description(), sd.content(), sd.tools()));
+				skillMap.put(sd.name(),
+					new Skill(sd.name(), sd.description(), QueryLanguage.expand(sd.content()), sd.tools()));
 			} else {
 				Logger.warn("Skill not found: " + skillName, AgentFactory.class);
 			}

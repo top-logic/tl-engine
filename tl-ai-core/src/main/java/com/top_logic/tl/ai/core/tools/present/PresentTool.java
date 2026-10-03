@@ -15,6 +15,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.model.TidResolver;
+import com.top_logic.tl.ai.core.tools.script.QueryLanguage;
 import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
@@ -142,7 +143,9 @@ public abstract class PresentTool {
 		} else {
 			TLScriptExecutor.ExecutionResult result = TLScriptExecutor.executeReadOnly(expression);
 			if (!result.isSuccess()) {
-				return "Nothing was presented: the query failed: " + result.getErrorMessage();
+				return "Nothing was presented: the query failed: " + (result.isRefusal()
+					? result.getErrorMessage()
+					: QueryLanguage.withReadingHelp(result.getErrorMessage()));
 			}
 			String notObjects = notObjects(result.getResult());
 			if (notObjects != null) {

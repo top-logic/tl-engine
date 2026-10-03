@@ -37,6 +37,39 @@ public @interface ToolMethod {
 	ToolMode mode() default ToolMode.STRUCTURAL;
 
 	/**
+	 * The name of a {@code boolean} parameter of this method that makes a call a dry run.
+	 *
+	 * <p>
+	 * A call with that parameter set to {@code true} changes nothing, so it runs as a read whatever
+	 * {@link #mode()} declares: without an approval prompt and outside the transaction of the turn -
+	 * see {@link Tool#mode(java.util.Map)}. The method has to keep that promise, and it is a promise
+	 * about security: whatever a dry run changed would be changed without the user being asked.
+	 * </p>
+	 *
+	 * <p>
+	 * Empty, the default, means the tool has no dry run.
+	 * </p>
+	 */
+	String dryRun() default "";
+
+	/**
+	 * The name of a method of the same class that refuses a call before it runs.
+	 *
+	 * <p>
+	 * That method takes exactly the parameters of the tool method, receives the same arguments and
+	 * returns the refusal, phrased for the model, or <code>null</code>. It is asked before anybody is
+	 * asked to approve the call - see {@link Tool#refusal(java.util.Map, ToolExecutionContext)} - so
+	 * it must not change anything. The tool method has to refuse the same calls itself: not every
+	 * caller asks the check first.
+	 * </p>
+	 *
+	 * <p>
+	 * Empty, the default, means the tool refuses nothing early.
+	 * </p>
+	 */
+	String check() default "";
+
+	/**
 	 * Who marks this tool's answer as untrusted content.
 	 *
 	 * <p>

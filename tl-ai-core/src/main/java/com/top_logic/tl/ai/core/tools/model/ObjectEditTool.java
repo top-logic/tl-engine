@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.tools.model;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -61,8 +62,20 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * 450" (Gitea #625). These tools take the object's identifier and the new values as structured
  * input, convert each value to its attribute's type on the server ({@link AttributeValues}), check
  * the model's constraints ({@link ObjectConstraints}) and answer with the old and the new values, so
- * the change needs no second read to be confirmed. A set of objects chosen by a condition, a value
- * computed from other data, or several dependent steps remain one TL-Script.
+ * the change needs no second read to be confirmed. A set of objects chosen by a condition, or a value
+ * computed from other data, remains one script, run by {@code changeData}.
+ * </p>
+ *
+ * <p>
+ * <b>An object with its parts.</b> {@code createObject} takes the parts of the new object - the
+ * objects of its compositions, nested up to {@value #MAX_DEPTH} levels - in its values, and creates
+ * the whole tree in one call (#630). That is one approval instead of one per object, and it is the
+ * only way an object with a <em>mandatory</em> composition can be created here at all: the model's
+ * constraints are asked once, after the whole tree exists, and a violation anywhere in it undoes all
+ * of it. Every part is asked for the right to be created in its container, the question a
+ * {@code createObject} call naming that container asks. For a container created in the same call
+ * the engine answers that by the container's own creation, which was asked - the same answer one
+ * call per part got, since the turn's calls share one transaction.
  * </p>
  *
  * <p>
@@ -110,6 +123,9 @@ public class ObjectEditTool {
 	/** How every answer that changed something ends. */
 	private static final String SAVED = "The change is saved when this turn ends.";
 
+	/** How many levels of parts one {@code createObject} call creates below the object it names. */
+	private static final int MAX_DEPTH = 3;
+
 	/**
 	 * Creates a new {@link ObjectEditTool}.
 	 */
@@ -149,8 +165,7 @@ public class ObjectEditTool {
 		+ " its value name, a reference by the identifier of the object it points to, a list for an"
 		+ " attribute that holds several values (the list replaces them), null to clear. The answer"
 		+ " shows the old and the new values - that IS the confirmation, do not read the object again."
-		+ " For objects chosen by a condition, or values calculated from other data, write one"
-		+ " TL-Script instead.",
+		+ " For objects chosen by a condition, or values calculated from other data, use changeData.",
 		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL)
 	public ToolResult updateObject(
 			@P("Identifier of the object, as the context or a tool answer gives it: 'TypeName:id'") String id,
@@ -226,12 +241,13 @@ public class ObjectEditTool {
 	// -- create --
 
 	/**
-	 * Creates one object.
+	 * Creates one object, and the parts given with it.
 	 *
 	 * @param typeName
 	 *        The qualified name of a concrete type, {@code "module:Type"}.
 	 * @param values
-	 *        Attribute name to value, in the forms {@link AttributeValues} reads.
+	 *        Attribute name to value, in the forms {@link AttributeValues} reads; for a composition,
+	 *        the new parts, see {@link #planPart(TLReference, Object, String, int, ModelSecurity, List)}.
 	 * @param container
 	 *        The object to create the new one in, or <code>null</code> for a free-standing object.
 	 * @param containerReference
@@ -239,19 +255,24 @@ public class ObjectEditTool {
 	 *        container has several that fit.
 	 * @param context
 	 *        The run's context: its rights and the turn's transaction.
-	 * @return The new object and its values, or a failed result saying why nothing was created.
+	 * @return The new objects and their values, or a failed result saying why nothing was created.
 	 */
-	@ToolMethod(description = "Create ONE object of a type and set its attributes in the same call."
-		+ " Give every mandatory attribute in 'values'; the same names and value forms as updateObject."
-		+ " A refusal names the mandatory attributes the type has. An object"
-		+ " that is part of another one (contained in it) is created by naming that object as"
-		+ " 'container'. The answer gives the new object's identifier and its values - that IS the"
-		+ " confirmation. For several objects that depend on each other, write one TL-Script instead.",
+	@ToolMethod(description = "Create ONE object of a type and set its attributes in the same call -"
+		+ " together with the objects that are part of it. Give every mandatory attribute in 'values';"
+		+ " the same names and value forms as updateObject. An attribute that holds the object's parts"
+		+ " takes the new parts as {\"type\": \"module:Type\", \"values\": {...}}, a list where it holds"
+		+ " several; 'type' only where it holds more than one kind. E.g. {\"name\": \"Summit\","
+		+ " \"sessions\": [{\"values\": {\"name\": \"Keynote\"}}, {\"values\": {\"name\": \"Panel\"}}]}."
+		+ " Parts nest up to " + MAX_DEPTH + " levels; the whole tree is one call and one approval."
+		+ " A refusal names the mandatory attributes the type has. To add a part to an object that"
+		+ " exists, name that object as 'container'. The answer gives the identifiers and values of"
+		+ " everything created - that IS the confirmation. For values calculated from other data, use"
+		+ " changeData.",
 		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL)
 	public ToolResult createObject(
 			@P("Qualified name of the type: 'module:Type'") String type,
 			@P("Attribute name -> value, e.g. {\"name\": \"Example\", \"price\": 12.5, \"status\":"
-				+ " \"ACTIVE\"}") Map<String, Object> values,
+				+ " \"ACTIVE\"}, and the new parts as described") Map<String, Object> values,
 			@P(value = "Identifier of the object the new one is part of, if it is created inside"
 				+ " another object", required = false) String container,
 			@P(value = "Name of the container's reference to put it in; only needed when the container"
@@ -284,52 +305,317 @@ public class ObjectEditTool {
 				+ place.getName() + "' of " + nameOf(container) + ". Nothing was created.");
 		}
 
-		Map<TLStructuredTypePart, Object> converted = convert(given, parts, security);
+		NewObject tree = plan(type, given, parts, security);
 
 		if (container != null) {
 			lock(context, container);
 		}
 		TLObject parent = container;
 		TLReference composition = place;
-		TLObject[] result = new TLObject[1];
-		List<String> violations = writing("createObject", () -> {
-			TLObject created = ModelService.getInstance().getFactory().createObject(type, parent);
-			converted.forEach(created::tUpdate);
-			if (composition != null) {
-				if (composition.isMultiple()) {
-					parent.tAdd(composition, created);
-				} else {
-					parent.tUpdate(composition, created);
-				}
-			}
-			List<String> problems = ObjectConstraints.violations(created);
-			if (problems.isEmpty()) {
-				result[0] = created;
-			} else {
-				created.tDelete();
-			}
-			return problems;
-		});
-		TLObject created = result[0];
-		if (!violations.isEmpty()) {
-			return refusal("The object would break the model's rules, so it was not created:\n- "
-				+ String.join("\n- ", violations) + "\n" + mandatoryHint(type));
+		Created created = new Created();
+		String refused = writing("createObject", () -> created.build(tree, parent, composition, security));
+		if (refused != null) {
+			return refusal(refused);
 		}
 
 		ReadFilter filter = ReadFilter.forSecurity(security);
-		Map<String, Object> shown = new LinkedHashMap<>();
-		for (TLStructuredTypePart part : converted.keySet()) {
-			shown.put(part.getName(), AttributeValues.echo(part, created.tValue(part), filter));
+		String in = container == null ? null : ReadFilter.labelled(container) + " / " + place.getName();
+		TLObject root = created.of(tree);
+		int count = created.count();
+		return ToolResult.of((count == 1 ? "Created 1 object; use its id to change it further. "
+			: "Created " + count + " objects; use their ids to change them further. ") + SAVED + "\n"
+			+ ReadFilter.marked(ReadFilter.idOf(root), json(created.shown(tree, filter, in))));
+	}
+
+	/**
+	 * One object a {@code createObject} call is to create, planned in full before the first write.
+	 *
+	 * @param place
+	 *        Where it stands in the call - {@code 'sessions' object 2} - for a refusal; empty for the
+	 *        object the call names.
+	 * @param type
+	 *        Its concrete type.
+	 * @param values
+	 *        Its attribute values, converted.
+	 * @param parts
+	 *        The parts to create in it, by the composition they go into, in the order given.
+	 */
+	private record NewObject(String place, TLClass type, Map<TLStructuredTypePart, Object> values,
+			Map<TLReference, List<NewObject>> parts) {
+		// Plain record.
+	}
+
+	/**
+	 * The objects one {@code createObject} call made, in the order it made them.
+	 */
+	private static final class Created {
+
+		private final Map<NewObject, TLObject> _objects = new IdentityHashMap<>();
+
+		private final List<NewObject> _order = new ArrayList<>();
+
+		/**
+		 * Creates the planned tree, asks the model's constraints once it is complete, and takes all of
+		 * it back if a part may not be created or a constraint is broken.
+		 *
+		 * @return Why nothing was created, or <code>null</code> if everything was.
+		 */
+		String build(NewObject tree, TLObject container, TLReference place, ModelSecurity security) {
+			try {
+				create(tree, container, place, security);
+			} catch (Denied ex) {
+				undo();
+				return ex.getMessage();
+			}
+			List<String> violations = new ArrayList<>();
+			Set<TLClass> broken = new LinkedHashSet<>();
+			for (NewObject planned : _order) {
+				for (String violation : ObjectConstraints.violations(of(planned))) {
+					violations.add(at(planned.place(), violation));
+					broken.add(planned.type());
+				}
+			}
+			if (violations.isEmpty()) {
+				return null;
+			}
+			undo();
+			String hints = broken.stream().map(ObjectEditTool::mandatoryHint).filter(hint -> !hint.isEmpty())
+				.collect(Collectors.joining("\n"));
+			return (count() == 1 ? "The object would break the model's rules, so it was not created:\n- "
+				: "The objects would break the model's rules, so none of them was created:\n- ")
+				+ String.join("\n- ", violations) + "\n" + hints;
 		}
-		Map<String, Object> answer = new LinkedHashMap<>();
-		answer.put("created", ReadFilter.labelled(created));
-		answer.put("type", qualified(type));
-		if (container != null) {
-			answer.put("in", ReadFilter.labelled(container) + " / " + place.getName());
+
+		private void create(NewObject planned, TLObject container, TLReference place, ModelSecurity security) {
+			TLObject object = ModelService.getInstance().getFactory().createObject(planned.type(), container);
+			_objects.put(planned, object);
+			_order.add(planned);
+			planned.values().forEach(object::tUpdate);
+			if (place != null) {
+				if (place.isMultiple()) {
+					container.tAdd(place, object);
+				} else {
+					container.tUpdate(place, object);
+				}
+			}
+			for (Map.Entry<TLReference, List<NewObject>> parts : planned.parts().entrySet()) {
+				TLReference composition = parts.getKey();
+				for (NewObject part : parts.getValue()) {
+					if (!security.canCreate(part.type(), object)) {
+						throw new Denied("Permission denied: your account may not create objects of type '"
+							+ qualified(part.type()) + "' (" + part.place() + "). Nothing was created. Tell the"
+							+ " user; do not try another way to create it.");
+					}
+					if (!security.canCreate(object, composition)) {
+						throw new Denied("Permission denied: your account may not add to '" + composition.getName()
+							+ "' of the new '" + qualified(planned.type()) + "'. Nothing was created.");
+					}
+					create(part, object, composition, security);
+				}
+			}
 		}
-		answer.put("values", shown);
-		return ToolResult.of("Created 1 object; use its id to change it further. " + SAVED + "\n"
-			+ ReadFilter.marked(ReadFilter.idOf(created), json(answer)));
+
+		/** Deletes what was created, the parts before the object that holds them. */
+		private void undo() {
+			for (int i = _order.size() - 1; i >= 0; i--) {
+				TLObject object = _objects.get(_order.get(i));
+				if (object.tValid()) {
+					object.tDelete();
+				}
+			}
+		}
+
+		TLObject of(NewObject planned) {
+			return _objects.get(planned);
+		}
+
+		int count() {
+			return _order.size();
+		}
+
+		/** What the answer shows of a created object: its id, its type, its values and its parts. */
+		Map<String, Object> shown(NewObject planned, ReadFilter filter, String in) {
+			TLObject object = of(planned);
+			Map<String, Object> values = new LinkedHashMap<>();
+			for (TLStructuredTypePart part : planned.values().keySet()) {
+				values.put(part.getName(), AttributeValues.echo(part, object.tValue(part), filter));
+			}
+			for (Map.Entry<TLReference, List<NewObject>> parts : planned.parts().entrySet()) {
+				List<Map<String, Object>> shownParts = parts.getValue().stream()
+					.map(part -> shown(part, filter, null))
+					.toList();
+				values.put(parts.getKey().getName(), parts.getKey().isMultiple() ? shownParts
+					: shownParts.isEmpty() ? null : shownParts.get(0));
+			}
+			Map<String, Object> answer = new LinkedHashMap<>();
+			answer.put("created", ReadFilter.labelled(object));
+			answer.put("type", qualified(planned.type()));
+			if (in != null) {
+				answer.put("in", in);
+			}
+			answer.put("values", values);
+			return answer;
+		}
+	}
+
+	/**
+	 * The whole tree a call creates, every value converted - or every problem with it at once, so the
+	 * corrected call is one call.
+	 *
+	 * @param parts
+	 *        The attributes the call names for the object itself, already checked by
+	 *        {@link #writableParts(TLStructuredType, Collection, boolean)}.
+	 */
+	private static NewObject plan(TLClass type, Map<String, Object> given, Map<TLStructuredTypePart, Object> parts,
+			ModelSecurity security) {
+		List<String> problems = new ArrayList<>();
+		NewObject tree = plan(type, given, parts, "", 0, security, problems);
+		if (!problems.isEmpty()) {
+			throw new IllegalArgumentException("Nothing was changed:\n- " + String.join("\n- ", problems));
+		}
+		return tree;
+	}
+
+	private static NewObject plan(TLClass type, Map<String, Object> given, Map<TLStructuredTypePart, Object> named,
+			String place, int depth, ModelSecurity security, List<String> problems) {
+		Map<TLStructuredTypePart, Object> plain = new LinkedHashMap<>();
+		Map<TLReference, Object> compositions = new LinkedHashMap<>();
+		for (Map.Entry<TLStructuredTypePart, Object> entry : named.entrySet()) {
+			if (entry.getKey() instanceof TLReference reference && reference.isComposite()) {
+				compositions.put(reference, given.get(entry.getValue()));
+			} else {
+				plain.put(entry.getKey(), entry.getValue());
+			}
+		}
+		Map<TLStructuredTypePart, Object> values = convert(given, plain, security, place, problems);
+		Map<TLReference, List<NewObject>> parts = new LinkedHashMap<>();
+		compositions.forEach((reference, value) -> parts.put(reference,
+			planParts(reference, value, place, depth, security, problems)));
+		return new NewObject(place, type, values, parts);
+	}
+
+	/** The new parts given for one composition of an object at the given depth. */
+	private static List<NewObject> planParts(TLReference reference, Object value, String place, int depth,
+			ModelSecurity security, List<String> problems) {
+		List<Object> given = value == null ? List.of()
+			: value instanceof Collection<?> many ? new ArrayList<>(many) : List.of(value);
+		if (given.isEmpty()) {
+			return List.of();
+		}
+		if (!reference.isMultiple() && given.size() > 1) {
+			problems.add(at(place, "'" + reference.getName() + "' holds one object, and " + given.size()
+				+ " were given."));
+			return List.of();
+		}
+		if (depth == MAX_DEPTH) {
+			problems.add(at(place, "the parts in '" + reference.getName() + "' would be more than " + MAX_DEPTH
+				+ " levels below the object created, and one call creates parts at most " + MAX_DEPTH
+				+ " levels deep. Create them with another createObject call that names their container."));
+			return List.of();
+		}
+		List<NewObject> result = new ArrayList<>();
+		for (int i = 0; i < given.size(); i++) {
+			String here = "'" + reference.getName() + "'" + (reference.isMultiple() ? " object " + (i + 1) : "");
+			NewObject part = planPart(reference, given.get(i), place.isEmpty() ? here : place + ", " + here,
+				depth + 1, security, problems);
+			if (part != null) {
+				result.add(part);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * One new part, as the call gives it: {@code {"type": "module:Type", "values": {...}}}, the type
+	 * only where the composition holds more than one kind. A part given as its values alone - neither
+	 * key present - is read as those values, which is unambiguous and saves a model the call it would
+	 * otherwise spend on being told the form.
+	 */
+	private static NewObject planPart(TLReference reference, Object item, String place, int depth,
+			ModelSecurity security, List<String> problems) {
+		if (!(item instanceof Map<?, ?> spec)) {
+			problems.add(at(place, "a new object goes into '" + reference.getName() + "' as {\"type\":"
+				+ " \"module:Type\", \"values\": {...}}, not as " + (item instanceof String ? "the text '" + item + "'"
+					: String.valueOf(item))
+				+ ". An object that exists cannot be put there; to change one, use updateObject."));
+			return null;
+		}
+		Object typeName = null;
+		Object values = spec;
+		if (spec.containsKey("type") || spec.containsKey("values")) {
+			List<String> other = spec.keySet().stream().map(String::valueOf)
+				.filter(key -> !key.equals("type") && !key.equals("values"))
+				.toList();
+			if (!other.isEmpty()) {
+				problems.add(at(place, "a new object is {\"type\": \"module:Type\", \"values\": {...}}; put "
+					+ quoted(other) + " into 'values'."));
+				return null;
+			}
+			typeName = spec.get("type");
+			values = spec.get("values");
+		}
+		if (values != null && !(values instanceof Map<?, ?>)) {
+			problems.add(at(place, "'values' of a new object maps attribute names to values, not "
+				+ String.valueOf(values) + "."));
+			return null;
+		}
+		TLClass type = partType(reference, typeName, place, problems);
+		if (type == null) {
+			return null;
+		}
+		Map<String, Object> given = new LinkedHashMap<>();
+		if (values != null) {
+			((Map<?, ?>) values).forEach((key, value) -> given.put(String.valueOf(key), value));
+		}
+		Map<TLStructuredTypePart, Object> named;
+		try {
+			named = writableParts(type, given.keySet(), true);
+		} catch (IllegalArgumentException ex) {
+			problems.add(at(place, ex.getMessage()));
+			return null;
+		}
+		return plan(type, given, named, place, depth, security, problems);
+	}
+
+	/** The type of a new part: the one named, or the composition's own where it is concrete. */
+	private static TLClass partType(TLReference reference, Object name, String place, List<String> problems) {
+		TLType target = reference.getType();
+		if (name == null || String.valueOf(name).isBlank()) {
+			if (target instanceof TLClass concrete && !concrete.isAbstract()) {
+				return concrete;
+			}
+			problems.add(at(place, "'" + reference.getName() + "' holds objects of several kinds; name the kind"
+				+ " of each new one as \"type\": " + kinds(target) + "."));
+			return null;
+		}
+		TLClass type;
+		try {
+			type = concreteClass(String.valueOf(name));
+		} catch (IllegalArgumentException ex) {
+			problems.add(at(place, ex.getMessage()));
+			return null;
+		}
+		if (!TLModelUtil.isCompatibleType(target, type)) {
+			problems.add(at(place, "'" + qualified(type) + "' cannot go into '" + reference.getName()
+				+ "', which holds " + kinds(target) + "."));
+			return null;
+		}
+		return type;
+	}
+
+	/** The concrete types a composition of the given type takes, for a model to choose from. */
+	private static String kinds(TLType target) {
+		if (!(target instanceof TLClass type)) {
+			return "'" + qualified(target) + "'";
+		}
+		return TLModelUtil.getConcreteSpecializations(type).stream()
+			.map(ObjectEditTool::qualified).sorted().map(name -> "'" + name + "'")
+			.collect(Collectors.joining(", "));
+	}
+
+	/** A problem with the given place in the call put in front; the object the call names has none. */
+	private static String at(String place, String problem) {
+		return place.isEmpty() ? problem : "In " + place + ": " + problem;
 	}
 
 	private static TLClass concreteClass(String typeName) {
@@ -416,8 +702,8 @@ public class ObjectEditTool {
 	 */
 	@ToolMethod(description = "Delete ONE object you know by its identifier, the way the application"
 		+ " deletes it: the objects it contains are deleted with it, and the application may refuse the"
-		+ " deletion. The answer says what was deleted. For objects chosen by a condition, write one"
-		+ " TL-Script instead.",
+		+ " deletion. The answer says what was deleted. For objects chosen by a condition, use"
+		+ " changeData.",
 		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL)
 	public ToolResult deleteObject(
 			@P("Identifier of the object, as the context or a tool answer gives it: 'TypeName:id'") String id,
@@ -567,7 +853,7 @@ public class ObjectEditTool {
 	 * agent loop rolls the whole turn back for, never as a refusal.
 	 * </p>
 	 */
-	private static List<String> writing(String call, Supplier<List<String>> write) {
+	private static <T> T writing(String call, Supplier<T> write) {
 		try {
 			return write.get();
 		} catch (RuntimeException ex) {
@@ -685,30 +971,36 @@ public class ObjectEditTool {
 						+ opposite.getName() + "'")
 					+ "; set it there, on the objects it points from.");
 			}
-			if (reference.isComposite()) {
+			if (reference.isComposite() && !creating) {
 				throw new IllegalArgumentException("'" + part.getName() + "' holds the objects contained in"
-					+ " this one. " + (creating ? "Create them afterwards" : "Create them")
-					+ " with createObject and this object as 'container', and remove them with"
-					+ " deleteObject.");
+					+ " this one. Create them with createObject and this object as 'container', and remove"
+					+ " them with deleteObject.");
 			}
 		}
 	}
 
 	private static Map<TLStructuredTypePart, Object> convert(Map<String, Object> values,
 			Map<TLStructuredTypePart, Object> parts, ModelSecurity security) {
-		Map<TLStructuredTypePart, Object> result = new LinkedHashMap<>();
 		List<String> problems = new ArrayList<>();
+		Map<TLStructuredTypePart, Object> result = convert(values, parts, security, "", problems);
+		if (!problems.isEmpty()) {
+			// Every wrong value at once, so the corrected call is one call.
+			throw new IllegalArgumentException("Nothing was changed:\n- " + String.join("\n- ", problems));
+		}
+		return result;
+	}
+
+	/** Converts every value it can, and adds a problem for each one it cannot. */
+	private static Map<TLStructuredTypePart, Object> convert(Map<String, Object> values,
+			Map<TLStructuredTypePart, Object> parts, ModelSecurity security, String place, List<String> problems) {
+		Map<TLStructuredTypePart, Object> result = new LinkedHashMap<>();
 		for (Map.Entry<TLStructuredTypePart, Object> entry : parts.entrySet()) {
 			TLStructuredTypePart part = entry.getKey();
 			try {
 				result.put(part, AttributeValues.convert(part, values.get(entry.getValue()), security));
 			} catch (IllegalArgumentException ex) {
-				problems.add(ex.getMessage());
+				problems.add(at(place, ex.getMessage()));
 			}
-		}
-		if (!problems.isEmpty()) {
-			// Every wrong value at once, so the corrected call is one call.
-			throw new IllegalArgumentException("Nothing was changed:\n- " + String.join("\n- ", problems));
 		}
 		return result;
 	}

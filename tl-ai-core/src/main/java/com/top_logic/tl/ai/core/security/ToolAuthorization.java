@@ -271,9 +271,9 @@ public class ToolAuthorization {
 	 * <p>
 	 * The capability-level counterpart of {@link #denialReason(Tool)}, for an operation that costs a
 	 * capability the tool it belongs to is not classified as. The gate at the invocation point decides
-	 * per tool and without arguments; {@code executeTLScript} is classified {@link ToolGroups#SCRIPT}
-	 * and yet persists arbitrary writes when called with {@code withCommit=true}, so that argument
-	 * additionally costs {@link ToolGroups#DATA_WRITE} and only the tool itself can ask.
+	 * per tool and without arguments; {@code changeData} is classified {@link ToolGroups#SCRIPT} and
+	 * yet persists arbitrary writes unless it is called as a dry run, so a real change additionally
+	 * costs {@link ToolGroups#DATA_WRITE} and only the tool itself can ask.
 	 * </p>
 	 *
 	 * <p>
@@ -287,7 +287,7 @@ public class ToolAuthorization {
 	 *        The name of the required capability (tool group).
 	 * @param operation
 	 *        What the run is about to do, for the denial message - e.g.
-	 *        {@code "executing TL-Script with withCommit=true"}.
+	 *        {@code "changing data with changeData"}.
 	 * @return A message naming the missing capability, safe to feed back to the model, or
 	 *         <code>null</code> if the capability is allowed.
 	 */

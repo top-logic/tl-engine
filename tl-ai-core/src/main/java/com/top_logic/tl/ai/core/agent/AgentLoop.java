@@ -79,6 +79,7 @@ import com.top_logic.tl.ai.core.tools.memory.MemoryConsent;
 import com.top_logic.tl.ai.core.tools.memory.MemoryConsentBinding;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolExecutions;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.citation.CitationKinds;
 import com.top_logic.tl.ai.core.citation.CitationValidator;
@@ -919,20 +920,21 @@ public class AgentLoop {
 	 * suggesting in the turn's events that the call could be taken back.
 	 * </p>
 	 *
-	 * @param tool     the resolved tool (may be {@code null} for unknown tools)
+	 * @param callMode what the call changes, see {@link ToolCatalog#callMode(Tool, ToolCall)}; may be
+	 *                 {@code null} for unknown tools
 	 * @param context  the current execution context
 	 * @param listener receives transaction events
 	 * @param runId    the current run ID
 	 * @param turn     the current turn number
 	 */
-	private void ensureTransaction(Tool tool, ToolContext context,
+	private void ensureTransaction(ToolMode callMode, ToolContext context,
 			AgentEventListener listener, String runId, int turn) {
 		TransactionScope scope = context.transaction();
 		if (scope.isNoOp() || scope.isActive()) {
 			return;
 		}
 
-		if (tool == null || !tool.mode().writesApplicationState()) {
+		if (callMode == null || !callMode.writesApplicationState()) {
 			return;
 		}
 
@@ -1354,6 +1356,23 @@ public class AgentLoop {
 		// needs to correct itself. Such a name cannot execute either way - the registry refuses
 		// it below with a message that says so and lists what this user does have.
 
+		// What this call changes: the tool's mode, or READ for its dry run. Approval, the turn's
+		// transaction and the conversation log all go by this one answer.
+		ToolMode callMode = tool != null ? ToolCatalog.callMode(tool, toolCall) : null;
+
+		// Step 1b: The tool's own refusal of this call, asked before anybody is asked to approve it:
+		// an approval prompt for a call that cannot succeed asks the user for nothing.
+		if (tool != null) {
+			String refusal = refusalOf(tool, toolCall, context);
+			if (refusal != null) {
+				emit(listener, new AgentEvent.ToolCallStarted(runId, turn, now(),
+					toolCall.id(), toolCall.name(), toolCall.arguments(), callMode));
+				// The tool never ran: a synthetic failure, which leaves the turn's other writes standing.
+				_turnBlockedCallIds.add(toolCall.id());
+				return errorResult(toolCall, refusal);
+			}
+		}
+
 		// Step 2: Approval (only for registered tools with metadata)
 		if (tool != null) {
 			// Approval check
@@ -1383,12 +1402,12 @@ public class AgentLoop {
 					ApprovalRequest request = new ApprovalRequest(
 						approvalRequestId,
 						tool.name(), toolCall.id(),
-						parsedArgs, tool.mode(),
+						parsedArgs, callMode,
 						needsApproval.displayReason(),
 						InteractionTimeoutService.approvalTimeout());
 					emit(listener, new AgentEvent.ApprovalRequired(runId, turn, now(),
 						toolCall.id(), approvalRequestId, toolCall.name(),
-						toolCall.arguments(), request.displayReason(), tool.mode(), request.timeout()));
+						toolCall.arguments(), request.displayReason(), callMode, request.timeout()));
 					// Durable record of the pending approval, carrying the tool call's actual
 					// argument JSON (not the possibly-empty parsed copy shown above).
 					String interactionId = InteractionRecorder.begin(
@@ -1441,12 +1460,11 @@ public class AgentLoop {
 
 		// All security and approval gates passed — signal that the call is about to run.
 		emit(listener, new AgentEvent.ToolCallStarted(runId, turn, now(),
-			toolCall.id(), toolCall.name(), toolCall.arguments(),
-			tool != null ? tool.mode() : null));
+			toolCall.id(), toolCall.name(), toolCall.arguments(), callMode));
 
 		// Ensure transaction is open before executing a write tool.
 		// Done here (after all security gates) so denied tools never open a transaction.
-		ensureTransaction(tool, context, listener, runId, turn);
+		ensureTransaction(callMode, context, listener, runId, turn);
 
 		ProgressReporter progressReporter = message ->
 			emit(listener, new AgentEvent.ToolProgress(runId, turn, now(),
@@ -1462,6 +1480,33 @@ public class AgentLoop {
 
 		ToolResultMessage result = _registry.execute(toolCall, execContext);
 		return truncateIfNeeded(result, listener, runId, turn);
+	}
+
+	/**
+	 * Why the tool refuses the given call before it runs, or {@code null}.
+	 *
+	 * <p>
+	 * A check that fails refuses the call: nothing has run yet, and a call its own tool could not
+	 * check is not one to put in front of the user for approval.
+	 * </p>
+	 *
+	 * @see Tool#refusal(Map, com.top_logic.tl.ai.tool.api.ToolExecutionContext)
+	 */
+	private static String refusalOf(Tool tool, ToolCall toolCall, ToolContext context) {
+		Map<String, Object> arguments;
+		try {
+			arguments = ToolCatalog.parseJson(toolCall.arguments());
+		} catch (IOException | RuntimeException ex) {
+			// Not the check's to answer: the execution reports arguments that do not parse.
+			return null;
+		}
+		try {
+			return ToolExecutions.refusal(tool, arguments, context.withToolCallId(toolCall.id()));
+		} catch (RuntimeException ex) {
+			Logger.warn("Tool '" + toolCall.name() + "' failed to check a call, which is therefore refused.", ex,
+				AgentLoop.class);
+			return "Tool '" + toolCall.name() + "' could not check this call: " + ex.getMessage();
+		}
 	}
 
 	/**

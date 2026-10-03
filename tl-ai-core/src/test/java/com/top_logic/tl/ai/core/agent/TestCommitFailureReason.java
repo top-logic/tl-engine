@@ -28,7 +28,7 @@ import com.top_logic.util.model.ModelService;
  * What an agent is told when the transaction of its turn cannot commit.
  *
  * <p>
- * The case reproduced here is the one a real session hit: {@code executeTLScript} ran a script that
+ * The case reproduced here is the one a real session hit: a script tool ran a script that
  * the model rights vetoed, its own transaction - nested inside the transaction of the agent turn -
  * rolled back, and the engine poisoned the outer one. The agent's later commit then failed with
  * </p>
@@ -55,8 +55,8 @@ public class TestCommitFailureReason extends BasicTestCase {
 	/** What the model rights say when they veto a create, in the shape a tool would report it. */
 	private static final String VETO = "Creating an instance of 'Note' is not permitted.";
 
-	/** The commit message {@code TLScriptExecutor} opens its transaction with. */
-	private static final ResKey SCRIPT_TRANSACTION = ResKey.text("Execute TLScript");
+	/** The commit message {@code TLScriptExecutor} opens the transaction of a change with. */
+	private static final ResKey SCRIPT_TRANSACTION = ResKey.text("changeData");
 
 	/** A {@code {0}}-style placeholder a resolved message left standing. */
 	private static final Pattern UNFILLED_PLACEHOLDER = Pattern.compile("\\{\\d+\\}");
@@ -174,7 +174,7 @@ public class TestCommitFailureReason extends BasicTestCase {
 	}
 
 	/**
-	 * Does to the running transaction what a vetoed {@code executeTLScript} does: opens a nested
+	 * Does to the running transaction what a vetoed {@code changeData} does: opens a nested
 	 * transaction and rolls it back naming the veto, which marks the outer one as failed.
 	 */
 	private static void poisonWithVetoedNestedTransaction(KnowledgeBase kb) {

@@ -17,6 +17,7 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.security.PreCommitGuard;
+import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
@@ -190,7 +191,8 @@ public class McpToolAdapter {
 		}
 
 		TransactionScope scope = context.transaction();
-		boolean writes = tool.mode().writesApplicationState();
+		// The mode of this call, not of the tool: the dry run of a write tool changes nothing.
+		boolean writes = ToolCatalog.callMode(tool, arguments).writesApplicationState();
 		if (writes) {
 			scope.begin();
 		}

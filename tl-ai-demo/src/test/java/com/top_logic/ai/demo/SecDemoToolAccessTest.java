@@ -64,10 +64,10 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * Precondition: the execution context the commit check needs is injected, not asked of the model.
+	 * Precondition: the execution context the change check needs is injected, not asked of the model.
 	 *
 	 * <p>
-	 * The check on the commit path reads the run's authorization from an injected
+	 * The check on the change path reads the run's authorization from an injected
 	 * {@code ToolExecutionContext} parameter. Were that parameter to reach the JSON schema, the model
 	 * would see a required argument it cannot supply and the tool would become uncallable - a far worse
 	 * failure than the one the check prevents.
@@ -77,7 +77,7 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 		String schema = tool(SCRIPT_TOOL).schema().inputSchemaJson();
 
 		assertTrue("The declared arguments must be there: " + schema, schema.contains("script"));
-		assertTrue(schema, schema.contains("withCommit"));
+		assertTrue(schema, schema.contains("dryRun"));
 		assertFalse("The injected context must not be a schema property: " + schema,
 			schema.contains("context"));
 	}
@@ -220,35 +220,34 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * Committing through TL-Script costs {@code data.write} on top of the {@code script} capability the
+	 * Changing data with a script costs {@code data.write} on top of the {@code script} capability the
 	 * tool is classified as.
 	 *
 	 * <p>
-	 * The gate lets both personas call {@code executeTLScript} - they hold {@code script} - and cannot
-	 * see the argument that decides whether the call persists anything. So the commit path asks
-	 * separately, which is the difference between "may run a script" and "may change the database with
-	 * one". Without this, every holder of {@code script} silently held every write TL-Script can
-	 * express.
+	 * The gate lets both personas call {@code changeData} - they hold {@code script} - and cannot see
+	 * the argument that decides whether the call persists anything. So the change path asks
+	 * separately, which is the difference between "may try a change" and "may change the database".
+	 * Without this, every holder of {@code script} silently held every write TL-Script can express.
 	 * </p>
 	 */
-	public void testTLScriptCommitNeedsDataWriteOnTopOfScript() {
+	public void testAChangeNeedsDataWriteOnTopOfScript() {
 		assertAllowed(ANNA, SCRIPT_TOOL);
 		assertAllowed(BEN, SCRIPT_TOOL);
 
 		List<TLObject> seeded = tickets();
 
-		String refused = executeScriptAs(BEN, CREATE_TICKET, true);
-		assertTrue("Ben holds no data.write, so the commit must be refused: " + refused,
+		String refused = changeDataAs(BEN, CREATE_TICKET, false);
+		assertTrue("Ben holds no data.write, so the change must be refused: " + refused,
 			refused.contains(ToolGroups.DATA_WRITE));
 		assertTrue("The refusal must say which call was refused: " + refused,
-			refused.contains("withCommit=true"));
+			refused.contains("changing data with changeData"));
 		assertTrue("...and that the role is what lacks the capability: " + refused,
 			refused.contains("none of your roles grants"));
 		assertEquals("A refused commit must not have written anything.",
 			seeded.size(), tickets().size());
 
 		try {
-			String committed = executeScriptAs(ANNA, CREATE_TICKET, true);
+			String committed = changeDataAs(ANNA, CREATE_TICKET, false);
 
 			assertFalse("Anna holds data.write, so the tool layer lets her commit: " + committed,
 				committed.contains("Permission denied"));
@@ -261,24 +260,24 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * A read-only script is unchanged for both of them: {@code script} alone still reaches it.
+	 * The dry run of a change is unchanged for both of them: {@code script} alone reaches it.
 	 *
 	 * <p>
-	 * The other half of the rule, and the one that keeps it proportionate - the new requirement is on
-	 * the commit path only, so the model-rights walkthrough of
-	 * {@code doc/security/role-model-worked-example.md} section 4 still runs as {@code ben}, who holds
-	 * {@code script} and not {@code data.write}.
+	 * The other half of the rule, and the one that keeps it proportionate - the requirement is on the
+	 * path that persists only. A dry run saves nothing, so it costs nothing more than the tool; what
+	 * the script may write is still the engine's to decide, inside the dry run.
 	 * </p>
 	 */
-	public void testReadOnlyTLScriptStillNeedsOnlyScript() {
+	public void testADryRunNeedsOnlyScript() {
+		List<TLObject> seeded = tickets();
 		for (String login : SecDemoSetupService.personaLogins()) {
-			String result = executeScriptAs(login, "all(`pm:Ticket`).size()", false);
+			String result = changeDataAs(login, CREATE_TICKET, true);
 
-			assertFalse(login + " must reach a read-only script with 'script' alone: " + result,
+			assertFalse(login + " must reach a dry run with 'script' alone: " + result,
 				result.contains("Permission denied"));
-			assertTrue("The script must actually have run: " + result,
-				result.contains("\"success\":true") || result.contains("\"success\": true"));
+			assertTrue("The dry run must actually have run: " + result, result.contains("Dry run"));
 		}
+		assertEquals("A dry run writes nothing.", seeded.size(), tickets().size());
 	}
 
 	/**

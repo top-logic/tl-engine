@@ -32,7 +32,7 @@ import com.top_logic.basic.config.annotation.TagName;
  * <pre>
  * &lt;tool-sequence label="read-only"
  *     required="model-instances.listInstances"
- *     forbidden="script-exec.executeTLScript"
+ *     forbidden="script-exec.changeData"
  * /&gt;
  * </pre>
  *

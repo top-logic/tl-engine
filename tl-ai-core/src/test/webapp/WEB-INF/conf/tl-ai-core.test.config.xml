@@ -6,6 +6,18 @@
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
 		<!--
+			Objects made of parts, which tl-ai-core's own model does not have: TestObjectEditTool
+			creates them with createObject.
+		-->
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/test.objectedit.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+
+		<!--
 			Install a real AES encryption key for tests via the platform EncryptionService, so
 			CookiePoolService (which encrypts cookie pools at rest via EncryptionService.getEncryption())
 			round-trips in TestCookiePoolService. DummyEncryptionService boots unattended with the

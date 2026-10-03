@@ -72,6 +72,8 @@ import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
+import com.top_logic.tl.ai.tool.api.AnnotatedTools;
+import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
@@ -1198,6 +1200,90 @@ public class TestAgentLoop extends TestCase {
 		ApprovalRequest req = capturedRequests.get(0);
 		assertEquals("Customer", req.arguments().get("name"));
 		assertNotNull(req.timeout());
+	}
+
+	/** A write tool with a dry run and an early check, counting how often it really ran. */
+	public static class CheckedWriter {
+
+		final List<Boolean> _runs = new ArrayList<>();
+
+		@ToolMethod(description = "Writes", mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE,
+			dryRun = "dryRun", check = "refuse", marking = AnswerMarking.NONE)
+		public String write(@P("what") String what, @P(value = "dry run", required = false) Boolean dryRun) {
+			_runs.add(Boolean.TRUE.equals(dryRun));
+			return Boolean.TRUE.equals(dryRun) ? "would write " + what : "wrote " + what;
+		}
+
+		String refuse(String what, Boolean dryRun) {
+			return "nothing".equals(what) ? "Nothing to write." : null;
+		}
+	}
+
+	/**
+	 * The dry run of a write tool changes nothing: nobody is asked to approve it, and it runs as a
+	 * read, which is what keeps it out of the turn's transaction. The real call is asked about.
+	 */
+	public void testADryRunIsNotPutUpForApproval() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Write"))));
+		LLMProvider provider = mockProvider(
+			List.of(new ToolCall("tc1", "write", "{\"what\":\"x\",\"dryRun\":true}")),
+			List.of(new ToolCall("tc2", "write", "{\"what\":\"x\"}")),
+			List.of(new TextContent("Done")));
+		CheckedWriter writer = new CheckedWriter();
+		ToolCatalog registry = new ToolCatalog();
+		AnnotatedTools.from(writer).forEach(registry::register);
+		registry.freeze();
+		List<ApprovalRequest> approvals = new ArrayList<>();
+		List<AgentEvent.ToolCallStarted> started = new ArrayList<>();
+
+		new AgentLoop(config(), provider, registry).run(conv,
+			new ToolContext(developmentSecurity(), request -> {
+				approvals.add(request);
+				return new ApprovalResult.Approved();
+			}),
+			event -> {
+				if (event instanceof AgentEvent.ToolCallStarted call) {
+					started.add(call);
+				}
+			});
+
+		assertEquals(List.of(true, false), writer._runs);
+		assertEquals("Only the real call is put up for approval.", 1, approvals.size());
+		assertEquals("tc2", approvals.get(0).toolCallId());
+		assertEquals(ToolMode.READ, started.get(0).mode());
+		assertEquals(ToolMode.DATA_WRITE, started.get(1).mode());
+	}
+
+	/**
+	 * A call its tool refuses before it runs is answered with the refusal, without an approval
+	 * prompt and without running.
+	 */
+	public void testACallTheToolRefusesIsNotPutUpForApproval() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Write"))));
+		LLMProvider provider = mockProvider(
+			List.of(new ToolCall("tc1", "write", "{\"what\":\"nothing\"}")),
+			List.of(new TextContent("Done")));
+		CheckedWriter writer = new CheckedWriter();
+		ToolCatalog registry = new ToolCatalog();
+		AnnotatedTools.from(writer).forEach(registry::register);
+		registry.freeze();
+		AtomicInteger approvals = new AtomicInteger();
+
+		new AgentLoop(config(), provider, registry).run(conv,
+			new ToolContext(developmentSecurity(), request -> {
+				approvals.incrementAndGet();
+				return new ApprovalResult.Approved();
+			}),
+			listener());
+
+		assertEquals(0, approvals.get());
+		assertTrue("The tool must not run.", writer._runs.isEmpty());
+		assertTrue(conv.messages().stream()
+			.filter(ToolResultMessage.class::isInstance)
+			.map(ToolResultMessage.class::cast)
+			.anyMatch(tr -> tr.state() instanceof ToolState.Failed f && f.error().equals("Nothing to write.")));
 	}
 
 	private static Tool globalTool(String name, ToolSchema schema) {

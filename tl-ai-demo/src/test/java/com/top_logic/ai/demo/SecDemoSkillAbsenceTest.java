@@ -64,10 +64,7 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 	private static final String AUTHORING_SKILL = "TL_agenticAuthoring";
 
 	/** Four tools, all {@code script}. */
-	private static final String SCRIPT_SKILL = "TL_tlScriptWriting";
-
-	/** Guidance for creating instances, carrying the {@code script} tool it tells you to run. */
-	private static final String INSTANCE_CREATION_SKILL = "TL_tlScriptInstanceCreation";
+	private static final String SCRIPT_SKILL = "TL_writingDataChanges";
 
 	/** A framework skill {@code TL_SingleAgent} does not declare - {@code TL_Orchestrator} does. */
 	private static final String FOREIGN_SKILL = "TL_promptModelEditor";
@@ -98,8 +95,7 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 		AgentDefinition agent = agent();
 
 		assertTrue(ENTRY_AGENT + " must declare the skills of the reported session: " + agent.skills(),
-			agent.skills().containsAll(List.of(AUTHORING_SKILL, SCRIPT_SKILL,
-				INSTANCE_CREATION_SKILL)));
+			agent.skills().containsAll(List.of(AUTHORING_SKILL, SCRIPT_SKILL)));
 		assertFalse(ENTRY_AGENT + " must not declare " + FOREIGN_SKILL + ", or the not-carried case"
 			+ " has no example: " + agent.skills(), agent.skills().contains(FOREIGN_SKILL));
 		assertNotNull("The not-carried case needs a skill the application really has.",
@@ -172,30 +168,6 @@ public class SecDemoSkillAbsenceTest extends SecDemoPersonaTest {
 		assertTrue(authoring, authoring.contains("`" + ToolGroups.AGENT_META + "`"));
 		assertFalse("A capability it holds must not be named: " + authoring,
 			authoring.contains("`" + ToolGroups.SCRIPT + "`"));
-	}
-
-	/**
-	 * The instance-creation skill stands or falls with the capability its guidance needs.
-	 *
-	 * <p>
-	 * It used to declare no tools, so the filter always kept it, and its description sent the reader on
-	 * to {@code TL_tlScriptWriting} "which has {@code executeTLScript}" - a skill a user without
-	 * {@code script} cannot load either. Declaring the tool it tells the agent to run fixes both
-	 * halves. Both roles of this fixture hold {@code script}, so only the loading half is observable
-	 * here; the withheld half is pinned by {@code TestSkillTool} in {@code tl-ai-core}, against a policy
-	 * that withholds the capability.
-	 * </p>
-	 */
-	public void testInstanceCreationSkillCarriesTheToolItsGuidanceRuns() {
-		String loaded = loadSkillAs(BEN, INSTANCE_CREATION_SKILL);
-
-		assertTrue("Ben holds script, so it must load: " + loaded,
-			loaded.contains("Skill \"" + INSTANCE_CREATION_SKILL + "\" loaded."));
-		assertTrue("...and carry the tool its workflow runs: " + loaded,
-			loaded.contains("- " + tool(SCRIPT_TOOL).name() + ":"));
-		assertEquals("Precondition of the withheld half, asserted here so the tl-ai-core counterpart is"
-			+ " about the same skill: the tool it declares is the script one.",
-			ToolGroups.SCRIPT, tool(SCRIPT_TOOL).group());
 	}
 
 	/**

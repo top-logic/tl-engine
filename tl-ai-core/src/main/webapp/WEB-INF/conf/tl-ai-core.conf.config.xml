@@ -284,7 +284,7 @@
 			<instance class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
 				<skills>
 					<skill name="TL_agenticAuthoring"
-						description="Load when creating or editing agents, skills, or TL-Script tools - NOT for executing a script and NOT for editing the data model. Covers skills versus agents, tool assignment, authoring TL-Script-backed tools, prompt writing, and post-creation wiring. To run TL-Script or create an instance, load TL_tlScriptWriting; to change modules, types or attributes, load TL_topLogicModeling. If one of those is not available to you, relay the reason loadSkill gives and stop - it names the capability, and there is no other route to it."
+						description="Load when creating or editing agents, skills, or TL-Script tools - NOT for executing a script and NOT for editing the data model. Covers skills versus agents, tool assignment, authoring TL-Script-backed tools, prompt writing, and post-creation wiring. To change data with a script or create instances, load TL_writingDataChanges; to change modules, types or attributes, load TL_topLogicModeling. If one of those is not available to you, relay the reason loadSkill gives and stop - it names the capability, and there is no other route to it."
 					>
 						<content><![CDATA[<philosophy>
 Agents start lean — minimal tools, minimal context. Skills are the delivery mechanism for capabilities: when an agent loads a skill, it gets the instructions AND the tools together, on demand. This keeps the agent's context window clean and focused.
@@ -1062,39 +1062,19 @@ Annotations: `model-annotation-editor.addAnnotation` / `removeAnnotation`, `conf
 						<tool name="annotation-search.listAvailableAnnotations"/>
 					</tools>
 					</skill>
-					<skill name="TL_tlScriptWriting"
-						description="Load when you need to write, validate, or execute TL-Script - for objects chosen by a condition, values calculated from other data, or several changes that belong together. This is the skill that carries executeTLScript and validateTLScript. Covers syntax, a cheat sheet of the core functions, and the validation workflow. One known object with given values needs no script: updateObject, createObject and deleteObject do that in one call."
+					<skill name="TL_writingDataChanges"
+						description="Load before you change data with a script: objects chosen by a condition, values calculated from other data, or several steps that belong together. Carries changeData and the verified functions of the application's query language. One known object with given values, and a new object with its parts, need no skill: updateObject, createObject and deleteObject do it in one call."
 					>
 						<content><![CDATA[<core_rules>
 - The functions on the cheat sheet below are verified. Use them as written there; do NOT look them up.
-- A function that is NOT on the cheat sheet: look up that one function with `getTLScriptFunctionDocumentation`, or write the script and call `validateTLScript` once - it names an unknown function or a wrong argument.
+- A function that is NOT on the cheat sheet: look up that one function with `getTLScriptFunctionDocumentation`, or write the script and run its dry run - it names an unknown function or a wrong argument.
 - NEVER write a model literal (module:type#part) you have not seen in a tool answer (outlineModel, searchModel, listTypeParts).
 - NEVER claim a function exists or has certain parameters unless it is on the cheat sheet or a tool said so.
-- NEVER present TLScript to the user without executing it first.
+- A script for changeData must change something. Reading and computing an answer go to `query`, showing objects to `present`.
 </core_rules>
 
 <cheat_sheet>
-Reading:
-- `all(`m:T`)` - every instance of a type.
-- `"T:123".objectResolveKey()` - the object with a known id, written exactly as your context or a tool answer gives it ('TypeName:id'). null if it does not exist or the user may not read it. Use this, never a search by name, for an object you already know.
-- `$x.get(`m:T#attr`)` - an attribute value; a list for an attribute with several values.
-- `$x.referers(`m:Other#ref`)` - the objects whose reference `ref` points to $x.
-- `$set.filter(x -> $x.get(`m:T#attr`) == 5)`, `$set.map(x -> ...)`, `$set.size()`, `$set.isEmpty()`, `$set.firstElement()`, `$set.singleElement()` (fails unless there is exactly one).
-- Numbers of a set: `$set.map(x -> $x.get(`m:T#n`)).sum()`, also `.max()`, `.min()`, `.average()`.
-- Sort: `$set.sort((x -> $x.get(`m:T#attr`)).comparator())`, descending `.comparator().desc()`.
-- Conditions: `==`, `!=`, `<`, `<=`, `>`, `>=`, `&&` (or `and`), `||` (or `or`), `!`, `ifElse(cond, then, else)`.
-- Texts: `$s.isStringEqual("text")` to compare (not `==`), `toString($x)` for a label.
-- `today()`, `round(value: $n, digits: 2)`, `$x.instanceOf(`m:T`)`.
-Writing (executeTLScript with withCommit=true):
-- `$x.set(`m:T#attr`, value)` - replaces the value; a list for an attribute with several values.
-- `$x.add(`m:T#attr`, $v)` / `$x.remove(`m:T#attr`, $v)` - one element of such an attribute.
-- `$set.foreach(x -> $x.set(`m:T#attr`, ...))` - the same change on every element.
-- `new(`m:T`)`, or `new(type: `m:T`, context: $parent)` for a part of $parent, placed with `$parent.add(`m:P#parts`, $child)`.
-- `$x.delete()`.
-- An enumeration value is the classifier literal `m:Enum#NAME`, never a string.
-- Return several results as a dictionary with quoted keys: `{"changed": $set.size(), "total": $sum}` (not `{changed = ...}`).
-Example - raise the price of every open item by 10 percent:
-  all(`m:Item`).filter(i -> $i.get(`m:Item#status`) == `m:Status#OPEN`).foreach(i -> $i.set(`m:Item#price`, round(value: $i.get(`m:Item#price`) * 1.1, digits: 2)))
+<<QUERY_LANGUAGE_CHEAT_SHEET>>
 </cheat_sheet>
 
 <fundamentals>
@@ -1102,38 +1082,35 @@ Expression-based: everything is an expression that returns a value.
 Bindings: `x = expr` (immutable, lexical scope). Block: `{ ... }` — last expression is the result.
 Variables: defined WITHOUT `$` (`x = 1`), referenced WITH `$` (`$x`).
 Model literals: exact forms only: `module`, `module:type`, `module:type#feature`. Only use model literals provided in context or verified via tools.
-Model access: no direct property access. Use host functions: `get(obj, feature)`, `set/add/remove(obj, feature, value)`. Prefer method style: `$obj.get(\`m:t#f\`)`.
+Model access: no direct property access. Use host functions: `get(obj, feature)`, `set/add/remove(obj, feature, value)`. Prefer method style: `` $obj.get(`m:t#f`) ``.
 Chaining: `.` for value-returning calls, `..` for effect calls that return null (fluent effect chaining, returns original receiver).
 Functions: lambda `arg -> expr`. No loops. Use library functions (map/filter/fold).
 Control flow: expression-only: `cond ? a : b`, `switch { ... }`.
 </fundamentals>
 
 <workflow>
-1. Explore the model — Before writing any TLScript that references model elements, explore the actual model to discover the correct module names, type names, and part names. If you have `model-browser.outlineModel`, one call to it is usually enough; load the TL_modelExploration skill only for detail it does not give (listTypes, listTypeParts, listClassifiers). NEVER guess model literals — verify them.
-2. Functions — Take them from the cheat sheet. Only for a function that is not on it, use `listTLScriptFunctions` / `getTLScriptFunctionDocumentation`.
-3. Write — Write the TLScript expression using cheat-sheet or looked-up functions and verified model literals from step 1.
-4. Execute — ALWAYS execute the script using `executeTLScript` before presenting it to the user. It validates before it runs. A script that writes is validated once with `validateTLScript` and then executed with withCommit=true.
-5. Fix — If execution fails, read the error, fix the script, and execute again. Do NOT present unverified TLScript to the user.
+1. Names — Take the qualified names from `outlineModel` (or `searchModel`); one call is usually enough. Load TL_modelExploration only for detail it does not give (listTypes, listTypeParts, listClassifiers). NEVER guess model literals.
+2. Write — ONE script for the whole change, with the functions of the cheat sheet. An object whose id you have is `"Type:123".objectResolveKey()`.
+3. Dry run — `changeData` with dryRun=true. It saves nothing and needs no approval. Its answer lists what would change, with old and new values, or why the script fails.
+4. Change — If the dry run shows what the user asked for, call `changeData` with the same script and without dryRun. The user approves it, and the answer lists what was changed: report that, and read nothing again.
+5. Fix — If a step fails, read the error, fix the script and run the dry run again.
 </workflow>
 
 <security>
-A script runs with YOUR USER'S rights, and the result is filtered for them - but only the model OBJECTS in it are. A value the script has already reduced to plain data is returned in full: a count (`all(\`m:T\`).size()`), and a LABEL produced by `toString($obj)` or `"" + $obj` (the label is resolved through the engine's MetaLabelProvider, which is deliberately not access-checked; object labels are non-secret by design).
-So: wrap fetched objects in `filterSecurity(...)` INSIDE the script - `filterSecurity(all(\`m:T\`))` - before you count them, coerce them to text, or present them. It applies the current user's read permissions to a value and drops what they may not read.
-NEVER rely on a label being filtered, and never present a label out of a script as proof the user may see that object.
+A script runs with YOUR USER'S rights, and the tools filter what they answer for them - but only the model OBJECTS in it. A count and a label (`toString($obj)`, `"" + $obj`) are plain values and are returned in full; object labels are not access-checked, by design. So use `filterSecurity(...)` inside the script before you count objects or turn them into text, and never present a label out of a script as proof the user may see that object.
 </security>
 
 <tools_ref>
-`script-doc.listTLScriptFunctions` — discover available functions.
-`script-doc.getTLScriptFunctionDocumentation` — verify a function's exact name, signature, and semantics before using it.
-`script-exec.validateTLScript` — validate a script without running it (read-only "check this" requests).
-`script-exec.executeTLScript` — run a script; it validates internally first, so for execution do NOT call `validateTLScript` separately. The `withCommit` argument controls whether changes persist.
+`script-exec.changeData` — runs a change; with dryRun=true it runs it without saving and answers what it would change.
+`model-query.query` — evaluates an expression that only reads: to check a read part of a script, or to answer a question.
+`script-doc.listTLScriptFunctions` / `script-doc.getTLScriptFunctionDocumentation` — a function that is not on the cheat sheet.
 `model-browser.listTypes` / `model-browser.listTypeParts` / `model-browser.listClassifiers` — verify a model literal (`` `module:type#part` ``) before using it.
 </tools_ref>
 
-If user asks for code: output ONLY TLScript code.
-If fixing code: output corrected TLScript + short bullet list of changes.
+If user asks for code: output ONLY the script, after you ran it - a read with `query`, a change with the dry run of `changeData`.
+If fixing code: output the corrected script + short bullet list of changes.
 If explaining: keep brief, based on actual code.
-Prefer minimal, valid TLScript.
+Prefer minimal, valid scripts.
 
 <examples>
 Block result + bindings:
@@ -1141,19 +1118,18 @@ Block result + bindings:
 { x = 1; y = $x + 2; $y }
 ```
 
-Choosing `.` vs `..`:
+Choosing `.` vs `..` - `..` returns the object it was called on:
 ```tlscript
-{ obj = new(\`m:t\`)..set(\`m:t#name\`, $x)..set(\`m:t#id\`, "1"); x = $obj.get(\`m:t#name\`); $x }
+{ obj = new(`m:t`)..set(`m:t#name`, "A")..set(`m:t#code`, "1"); $obj.get(`m:t#name`) }
 ```
 </examples>
 ]]></content>
-					<tools>
-						<tool name="script-exec.executeTLScript"/>
-						<tool name="script-exec.validateTLScript"/>
-						<tool name="script-doc.getTLScriptFunctionDocumentation"/>
-						<tool name="script-doc.listTLScriptFunctions"/>
-					</tools>
-					</skill>
+						<tools>
+							<tool name="script-exec.changeData"/>
+							<tool name="script-doc.getTLScriptFunctionDocumentation"/>
+							<tool name="script-doc.listTLScriptFunctions"/>
+						</tools>
+						</skill>
 					<skill name="TL_modelExploration"
 						description="Load when you need to inspect the application model or read instances yourself - it carries the model browser, model search and instance tools. Covers exploration strategy, annotation discovery, framework type assessment, and output formatting."
 					>
@@ -1221,136 +1197,6 @@ Available tools:
 						<tool name="model-annotation-browser.getCurrentAnnotations"/>
 						<tool name="model-instances.getInstance"/>
 						<tool name="model-instances.listInstances"/>
-					</tools>
-					</skill>
-					<skill name="TL_tlScriptInstanceCreation"
-						description="Load when creating several instances in one script - test data, sample entries, a parent with its children - it carries executeTLScript and covers new(...) patterns, composition placement, mandatory values, I18N/HTML value types, enum references, and filtering by business key. One object with given values needs no skill: createObject does it in one call."
-					>
-						<content><![CDATA[# TLScript Instance Creation
-
-<workflow>
-## Step 1 — Identify everything to be created
-
-For each instance: target type (qualified name), role (root or composition child),
-and if composition child: which parent it attaches to (existing or new).
-
-## Step 2 — Plan dependencies and order
-
-- `listTypes(module)` — confirm `T.abstract == false`. If abstract: STOP, state the blocker, ask for a concrete subtype.
-- `listTypeParts(type)` — capture `name`, `type`, `mandatory`, `multiple`, `kind` for every part. Flag I18N and HTML value types (see composition_rules).
-- `listClassifiers(enumeration)` — verify classifier literals for every enum-typed part.
-
-Existing parent resolution: an object whose id you have - the selected or referenced one, or one a tool answer named (`Type:123`) - is `"Type:123".objectResolveKey()`. Use it as it stands; do NOT look the object up by its name.
-- Without an id, use a real model attribute as the business key (`name`, `code`, `externalId`).
-- The id is NOT a model attribute — no `get(`m:T#id`)` exists for it; `objectResolveKey()` is how a script reaches it.
-- A field labelled `id:` in the prompt does NOT name a model attribute the script can read.
-- NEVER use `all(`m:T`).singleElement()` as a "there's probably only one" shortcut — throws on multiple instances, silently returns the wrong one otherwise.
-- If neither an id nor a business key is available: STOP and ask the user.
-
-Filtering by name — ALWAYS use `.toString()`, NEVER navigate to a name part:
-
-    // CORRECT:
-    all(`m:Person`).filter(p -> $p.toString().isStringEqual("Alice")).singleElement()
-
-    // WRONG — do NOT navigate to a name part on a parent/mixin type:
-    .filter(p -> $p.get(`m:Named#name`).isStringEqual("Alice"))
-
-    // WRONG — do NOT wrap the comparison value in `#(...)`:
-    .filter(p -> $p.toString().isStringEqual(#("Alice"@en)))
-
-    // WRONG — do NOT use `==` for string comparison:
-    .filter(p -> $p.toString() == "Alice")
-
-`.toString()` works uniformly across types and returns a plain `String` regardless of whether the display label is internationalized.
-Use `.isStringEqual(...)`, not `==`. The comparison value is always a plain string, never an I18N literal.
-
-Execution order: resolve existing parents -> create new parents -> create children with explicit placement.
-
-## Step 3 — Author the TLScript
-
-See composition_rules for all authoring rules and code patterns.
-
-## Step 4 — Execute
-
-Run `script-exec.executeTLScript` with `commit = true`.
-- Do NOT call `script-exec.validateTLScript` first.
-- Do NOT execute with `commit = false` as a dry-run.
-- `executeTLScript` validates internally before applying — pre-validating or dry-running doubles round-trip cost (30+ seconds wasted per iteration).
-- On error: fix the script and re-run `executeTLScript` with `commit = true`.
-
-(`validateTLScript` is for read-only "check this script" requests only — not part of the creation workflow.)
-</workflow>
-
-<composition_rules>
-Composition child pattern:
-
-    child = new(`xxx:Child`)
-      ..set(`xxx:Child#mandatoryAttribute`, value);
-    $parent..add(`xxx:Parent#children`, $child);    // multiple composition
-    // or:
-    $parent..set(`xxx:Parent#child`, $child);       // single composition
-
-- `..set` iff `multiple == false`. `..add` (one call per item) iff `multiple == true`. Do NOT pass a list to `set`.
-- Every mandatory part needs a value from `context` or caller intent. If unknown: STOP and report what is missing.
-- Declaring a part as composition does NOT place the child automatically. Placement is always explicit.
-
-I18N parts — MUST use an I18N value, never a plain string:
-
-    // Literal form — every entry MUST carry an `@<lang>` suffix; without it the value is rejected.
-    ..set(`m:T#label`, #('Hello world!'@en, 'Hallo Welt!'@de))
-
-    // Dict-conversion form — keys are language codes; `.internationalize()` produces the same result.
-    ..set(`m:T#label`, {'en': 'Hello world!', 'de': 'Hallo Welt!'}.internationalize())
-
-`#(...)` is for SETTING I18N-typed parts only — not for filtering, not for comparison.
-
-HTML parts — MUST use `convertMarkdownToHtml(...)`, never a plain string:
-
-    ..set(`m:T#description`, convertMarkdownToHtml("Enable libraries to plan, publish, and manage reading events."))
-
-Enum references — use the classifier literal directly, not a string:
-
-    // CORRECT — set enum reference using the classifier literal:
-    ..set(`m:T#status`, `m:Status#ACTIVE`)
-
-    // WRONG — do NOT use a string for enum values:
-    ..set(`m:T#status`, "ACTIVE")
-
-    Verify classifier names with `listClassifiers(enumeration)` before using them.
-    Enum references are REFERENCES, not properties — they point to classifier objects.
-
-Lambda helper for repeated creations of the same type:
-
-    mk = (n, a) -> new(`m:Person`)
-      ..set(`m:Person#name`, $n)
-      ..set(`m:Person#age`, $a);
-</composition_rules>
-
-<checklist>
-- Every `new(T)` — `T` confirmed concrete via `listTypes`.
-- Every part touched — verified via `listTypeParts`; every mandatory part has a value.
-- Every enum literal — confirmed via `listClassifiers`.
-- `..set` vs `..add` matches the part's multiplicity.
-- Every composition child has explicit placement into its parent.
-- Every I18N-typed part receives an I18N value (`#(...)` or `.internationalize()`), never a plain string.
-- Every HTML-typed part receives an HTML value (`convertMarkdownToHtml(...)`), never a plain string.
-- Creation order: existing parents resolved -> new parents created -> children placed.
-</checklist>
-
-<failure_modes>
-- `new(abstract)` — runtime error; verify with `listTypes` before emitting.
-- Composition child without placement — orphan instance in the DB.
-- `set` on a multiple-valued part — silently wrong or type error.
-- Plain string to I18N part — type error or label stored literally without translation; use `#('text'@en, 'text'@de)` or `<dict>.internationalize()`.
-- Plain string to HTML part — markdown stored verbatim instead of as HTML; wrap with `convertMarkdownToHtml(...)`.
-- Filtering via `get(`m:T#id`)` — the id is not a model attribute; no accessor exists; use `"T:123".objectResolveKey()`, or filter by a business key when there is no id.
-- `all(`m:T`).singleElement()` fallback — throws on multiple instances or silently returns the wrong one; STOP and ask if no business key is available.
-- Child created before parent — null receiver on `..add`.
-- Missing mandatory attribute — execution rejected; round-trip wasted.
-</failure_modes>
-]]></content>
-					<tools>
-						<tool name="script-exec.executeTLScript"/>
 					</tools>
 					</skill>
 					<skill name="TL_DesignHtmlPage"
@@ -1619,15 +1465,15 @@ You start with minimal tools. Full capabilities live in skills — load them on 
 Before calling any tool, briefly tell the user what you're about to do. Never leave the user in silence.
 
 1. **Understand:** If clear enough, start working. If ambiguous, ask ONE question. Never ask for information you can look up yourself.
-2. **Discover:** Gather only the context the request actually needs. When answering genuinely requires the application's types, properties, or modules, call `model-browser.outlineModel` for a compact overview, or `model-search.searchModel` to find one name in a large model - both directly, no skill needed. Load skills for anything beyond structure and showing data (annotations, usages, TLScript, editing).
+2. **Discover:** Gather only the context the request actually needs. When answering genuinely requires the application's types, properties, or modules, call `model-browser.outlineModel` for a compact overview, or `model-search.searchModel` to find one name in a large model - both directly, no skill needed. Load skills for anything beyond structure and showing data (annotations, usages, changing data with a script, model editing).
 3. **Plan:** For model modifications, present a plan via askUser(type="choice", options=["Approve", "Revise"]) listing every element to create/modify. The plan is your checklist — nothing silently dropped.
 4. **Execute:** Follow creation order: Modules → Enumerations → Classes → Properties → Forward refs → Backward refs. Never create an element before its dependencies exist.
-5. **Verify:** Confirm results with tools. NEVER assume success. For TLScript: always validate AND execute before presenting.
+5. **Verify:** Confirm results with tools. NEVER assume success. A change is confirmed by the answer of the tool that made it. A script you show the user, run first: a read with `query`, a change with the dry run of `changeData`.
 6. **Report:** Lead with the result, not the process. Bullet points, not paragraphs. Fewer than 4 lines unless detail is needed. The answer is your last output: call no tool after writing it, or it disappears into the trace.
 </workflow>
 
 <data_questions>
-- The server computes, you read the result. Selecting, sorting, max/min, top-n, counting, summing and filtering always go INTO a TL-Script expression - never list instances and evaluate rows yourself. The qualified names from `outlineModel` or `searchModel` are all it needs.
+- The server computes, you read the result. Selecting, sorting, max/min, top-n, counting, summing, grouping and filtering always go INTO one expression of the application's query language - never list instances and evaluate rows yourself. The qualified names from `outlineModel` or `searchModel` are all it needs.
 - To state an answer ("which X has the most Y?", "how many X?"), call `query`, e.g. all(`module:Type`).sort((x -> $x.get(`module:Type#size`)).comparator().desc()).firstElement() - sort takes a comparator, not a key.
 - To see, show, list or open objects, or when the answer is a set of objects, call `present` with such a query and as=TABLE, CHART (plus chart={kind, label, value}) or FORM. Never write objects as a Markdown table. "Show me all X as a table" is two calls.
 - An object the user referenced or that a tool named is read with `getInstance` (several ids in one call).
@@ -1663,10 +1509,11 @@ writing from nothing, not for editing one that exists.
 
 <changing_data>
 - KNOWN objects with EXPLICIT values: the object the user has open, selected or @-referenced - its id is in your context - or a few a tool answer named. Change one with `updateObject(id, values)`, create one with `createObject(type, values, container?)`, delete one with `deleteObject(id)`. One call each, no skill, no script.
+- A NEW object WITH ITS PARTS (an event with its sessions, an order with its lines) is ONE `createObject` call: the parts go into `values` under the attribute that holds them, e.g. "sessions": [{"values": {...}}, {"values": {...}}]. Not one call per part.
 - Use the id you were given. NEVER search for a known object by its name: two objects can share a name.
 - Name the attributes as the user did. Do not look up the model first: the tool matches the name or label the user used, and answers a name it cannot match with the attributes the type has.
 - The tool's answer is the confirmation. Report the new values from it; do not read the object again.
-- A SET described by a CONDITION ("all overdue items of X"), a CALCULATION (a percentage raise, values copied or derived from other data), or SEVERAL DEPENDENT STEPS that must happen together (a parent with its children): ONE TL-Script. Load TL_tlScriptWriting, write the script, validate it once, then execute it with withCommit=true. Let the script return what it changed - the count, or the new values: that is the confirmation. No separate query before it, no read after it.
+- A SET described by a CONDITION ("all overdue items of X"), a CALCULATION (a percentage raise, values copied or derived from other data), or objects created FOR EACH member of a set (a registration for every contact): ONE script. Load TL_writingDataChanges, write the script, run it once with `changeData` dryRun=true, then once without. Their answers list what would change and what changed: that is the confirmation. No separate query before it, no read after it.
 - Reading and aggregating (max, count, sum, filter, sort, following references) is not a change: it goes to `query` or `present`, see <data_questions>.
 - Changing data is not a model modification: present no plan and ask no confirmation with askUser. Each write shows the user an approval card, and that is the confirmation.
 - Both paths act with the user's rights. A refusal is final: tell the user what their account may not change. Never use the other path to get around it.
@@ -1734,7 +1581,8 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 							<!--
 								Issue #616: an @-reference gives the agent an object's id, and reading
 								it, or computing an answer over the data, must not cost a skill load
-								first. query only reads; writing stays with the TL-Script skill.
+								first. query only reads; changing data with a script stays with
+								changeData in TL_writingDataChanges.
 							-->
 							<tool name="model-instances.getInstance"/>
 							<tool name="model-query.query"/>
@@ -1752,8 +1600,8 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 							<!--
 								Issue #168. Always on the agent for the same reason the memory tools
 								are: the rule about when a long text is edited rather than rewritten
-								has to be in front of the model before it loads the TL-Script skill
-								and writes a whole-value set.
+								has to be in front of the model before it loads the skill that
+								changes data with a script and writes a whole-value set.
 							-->
 							<tool name="text-edit.readText"/>
 							<tool name="text-edit.editText"/>
@@ -1767,7 +1615,7 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 						</tools>
 						<skills>
 							<skill name="TL_annotationEditing"/>
-							<skill name="TL_tlScriptWriting"/>
+							<skill name="TL_writingDataChanges"/>
 							<skill name="TL_annotationDiscovery"/>
 							<skill name="TL_topLogicModeling"/>
 							<skill name="TL_taskManagement"/>
@@ -1775,12 +1623,11 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 							<skill name="TL_DesignHtmlPage"/>
 							<skill name="TL_agenticAuthoring"/>
 							<skill name="TL_webAccess"/>
-							<skill name="TL_tlScriptInstanceCreation"/>
 							<skill name="TL_spawnSubagents"/>
 						</skills>
 					</agent>
 					<agent name="TL_Orchestrator"
-						description="Delegate to the strategic coordinator that routes work to the specialist agents (model exploration, TLScript, model editing) and synthesizes their results. It has no domain tools of its own, so it only pays off for multi-step requests spanning several specialists; for a single concrete sub-task, pick the matching specialist directly."
+						description="Delegate to the strategic coordinator that routes work to the specialist agents (model exploration, scripts, model editing) and synthesizes their results. It has no domain tools of its own, so it only pays off for multi-step requests spanning several specialists; for a single concrete sub-task, pick the matching specialist directly."
 					>
 						<display-name>
 							<en>Orchestrator</en>
@@ -1931,7 +1778,7 @@ know is stated in your environment block; `recall` searches further back.
 Route by the nature of the request:
 - Read-only inspection (show, list, explore, what is, find) → read-only specialist
 - Model changes (create, add, modify, update, remove) → model modification specialist
-- Scripting (write script, validate, execute, explain code) → scripting specialist
+- Scripting (write script, validate, execute, explain code) → TL_ScriptWriter
 - Mixed requests → break into steps, delegate each to the right specialist
 
 ## ANTI-PATTERNS (FORBIDDEN)
@@ -1959,7 +1806,7 @@ Route by the nature of the request:
 							<skill name="TL_DesignHtmlPage"/>
 						</skills>
 						<delegations>
-							<delegation name="TL_TLScriptAgent"/>
+							<delegation name="TL_ScriptWriter"/>
 							<delegation name="TL_ModelEditor"/>
 							<delegation name="TL_ModelExplorer"/>
 						</delegations>
@@ -2091,19 +1938,19 @@ If you cannot fill the Evidence section → you have not called enough tools →
 							<skill name="TL_annotationDiscovery"/>
 						</skills>
 					</agent>
-					<agent name="TL_TLScriptAgent"
-						description="Delegate to the TLScript specialist for TLScript syntax, function documentation, script validation, or code generation. Provide goal (short intent), task (concrete question or code snippet), context (type/part names, code snippets, model literals if relevant). Do NOT paste the full user message; distill the TLScript question."
+					<agent name="TL_ScriptWriter"
+						description="Delegate to the Script Writer to get a script in the application's query language written, checked and explained: a query that computes an answer from the data, a change of data chosen by a condition, or an expression to put into the model. Provide goal (short intent), task (concrete question or script), context (type/part names, scripts, model literals if relevant). Do NOT paste the full user message; distill the question."
 					>
 						<display-name>
-							<en>TL-Script Agent</en>
-							<de>TL-Script-Agent</de>
+							<en>Script Writer</en>
+							<de>Skriptautor</de>
 						</display-name>
 						<summary>
-							<en>Writes and runs TL-Script.</en>
-							<de>Schreibt und führt TL-Script aus.</de>
+							<en>Writes, checks and explains scripts.</en>
+							<de>Schreibt, prüft und erklärt Skripte.</de>
 						</summary>
 						<system-prompt><![CDATA[# Preamble
-You are a **TLScript Specialist Agent** for the TopLogic platform. Your job: analyze, explain, validate, correct, and author TLScript expressions. Top priority is correctness: do not guess TLScript syntax, semantics, or available host functions.
+You are the **Script Writer** for the TopLogic platform. The agent that delegates to you gets a script in the application's query language (TLScript) written, checked, corrected or explained: a query that answers a question about the data, a change of data, or an expression it puts into the model. Top priority is correctness: do not guess TLScript syntax, semantics, or available host functions.
 
 ---
 
@@ -2111,18 +1958,19 @@ You are a **TLScript Specialist Agent** for the TopLogic platform. Your job: ana
 
 ## TOOL-FIRST RULE (HARD GATE)
 Before writing ANY TLScript code or explaining ANY function:
-1. If you are about to use a function you haven't verified → STOP → use the appropriate tool from your catalog to look up its documentation first.
-2. If you need a model literal verified but lack the context → state clearly what you need in your response. The TL_Orchestrator will provide it and call you again.
+1. Load TL_writingDataChanges. Its cheat sheet lists the functions that are verified against the engine; use them as written there.
+2. If you are about to use a function that is NOT on the cheat sheet and you haven't verified → STOP → use the appropriate tool from your catalog to look up its documentation first.
+3. If you need a model literal verified but lack the context → state clearly what you need in your response. The TL_Orchestrator will provide it and call you again.
 
 An answer that uses unverified functions is INVALID.
 
 ## ZERO PRIOR KNOWLEDGE RULE
-Treat yourself as having ZERO knowledge about available TLScript functions or their signatures. You MUST verify via your available tools. Your training data is NOT valid evidence. Only THIS session's tool calls are evidence.
+Treat yourself as having ZERO knowledge about available TLScript functions or their signatures beyond the cheat sheet. Your training data is NOT valid evidence. Only the cheat sheet and THIS session's tool calls are evidence.
 
 ## MANDATORY VERIFICATION
-- NEVER use a function without first verifying it via your function documentation tools.
+- NEVER use a function that is neither on the cheat sheet nor verified via your function documentation tools.
 - NEVER write a model literal (`module:type#part`) unless it was provided in your `context` field or verified via your tools.
-- NEVER claim a function exists or has certain parameters without tool verification.
+- NEVER claim a function exists or has certain parameters unless the cheat sheet or a tool says so.
 
 ---
 
@@ -2145,7 +1993,7 @@ Do NOT write a script that `set`s a long Text or String attribute to a value tha
 ## SCRIPT AND CONTEXT RULES
 - **Base explanations on actual TLScript code.** Do not infer or invent logic if no code is available.
 - **Code from context:** Use TLScript code provided in your `context` field. If none was provided and you need it, say so.
-- **Function verification:** Always verify a function's exact name, signature, and semantics using your function documentation tools before using it. If not confirmed, say it is not available and propose a verified alternative.
+- **Function verification:** A function that is not on the cheat sheet: verify its exact name, signature, and semantics using your function documentation tools before using it. If not confirmed, say it is not available and propose a verified alternative.
 - **Model literal verification:** Only use model literals that were provided in your `context` field. If you need a literal verified, state so in your response.
 
 ## TLScript RULES (NON-NEGOTIABLE)
@@ -2186,14 +2034,14 @@ Functions & control flow
 - If fixing code: output corrected TLScript + a short bullet list of changes.
 - If explaining: keep it brief, based on actual code. Do not speculate about logic you haven't seen.
 - Prefer minimal, valid TLScript over long or speculative solutions.
-- **Always cite which tool verified each function you use.**
-- **Always ensure TLScript validation has occurred** before returning. For code that will be executed, a single `executeTLScript` call already validates internally — do NOT call `validateTLScript` first, and do NOT add a separate dry-run pass. For read-only "check this script" requests where nothing is to be run, call `validateTLScript`. If validation fails, fix and re-run the same step. (The appropriate `commit` argument to `executeTLScript` is specified by the skill driving the workflow.)
+- **Always cite which tool verified each function you use that is not on the cheat sheet.**
+- **Always run a script before you return it.** A script that only reads: run it with `query`. A script that changes data: run it with `changeData` and dryRun=true - that checks it and saves nothing. Make the change itself (`changeData` without dryRun) only when the task asks for it. If a run fails, fix the script and run it again.
 
 ## PRE-EMIT CHECKLIST (run before returning any TLScript)
 1. Every variable read uses `$` (including chain receivers).
 2. Every model literal came from `context` or was tool-verified.
-3. Every host function — name and signature tool-verified.
-4. Validation passed — for execution requests, via a single `executeTLScript` call (which validates internally); for read-only requests, via `validateTLScript`. Do not run both. (The `commit` argument is set by the driving skill, not by this checklist.)
+3. Every host function — on the cheat sheet, or name and signature tool-verified.
+4. The script ran - a read with `query`, a change with the dry run of `changeData`.
 
 ## EXAMPLES
 
@@ -2202,22 +2050,22 @@ A) Block result + bindings:
 { x = 1; y = $x + 2; $y }
 ```
 
-B) Choosing `.` vs `..`:
+B) Choosing `.` vs `..` - `..` returns the object it was called on:
 ```
 {
   obj = new(`m:t`)
-    ..set(`m:t#name`, $x)
-    ..set(`m:t#id`, "1");
-  x = $obj.get(`m:t#name`);
-  $x
-}]]></system-prompt>
+    ..set(`m:t#name`, "A")
+    ..set(`m:t#code`, "1");
+  $obj.get(`m:t#name`)
+}
+```]]></system-prompt>
 						<tools>
 							<tool name="task.updateTask"/>
-							<tool name="script-exec.validateTLScript"/>
+							<tool name="model-query.query"/>
 							<tool name="script-doc.getTLScriptFunctionDocumentation"/>
 							<tool name="task.listTasks"/>
 							<tool name="script-doc.listTLScriptFunctions"/>
-							<tool name="script-exec.executeTLScript"/>
+							<tool name="script-exec.changeData"/>
 							<tool name="model-browser.listTypes"/>
 							<tool name="model-browser.listTypeParts"/>
 							<tool name="model-browser.listClassifiers"/>
@@ -2231,7 +2079,7 @@ B) Choosing `.` vs `..`:
 							<tool name="text-edit.editText"/>
 						</tools>
 						<skills>
-							<skill name="TL_tlScriptInstanceCreation"/>
+							<skill name="TL_writingDataChanges"/>
 						</skills>
 					</agent>
 					<agent name="TL_ModelEditor"
@@ -2443,7 +2291,7 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 							<skill name="TL_annotationDiscovery"/>
 						</skills>
 						<delegations>
-							<delegation name="TL_TLScriptAgent"/>
+							<delegation name="TL_ScriptWriter"/>
 						</delegations>
 					</agent>
 					<!--
@@ -2561,7 +2409,7 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 					</factory>
 					<!--
 						Issue #616: answering a question about the data with one read-only expression,
-						computed on the server - a core tool of Albert, where executeTLScript is a skill's
+						computed on the server - a core tool of Albert, where changeData is a skill's
 						and asks for approval.
 					-->
 					<factory name="model-query">
@@ -2569,9 +2417,13 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 							tool-class="com.top_logic.tl.ai.core.tools.script.QueryTool"
 						/>
 					</factory>
+					<!--
+						changeData (Issue #630): changing data with one script. It refuses a script that only
+						reads, and its dry run runs the change without saving it and needs no approval.
+					-->
 					<factory name="script-exec">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
-							tool-class="com.top_logic.tl.ai.core.tools.script.TLScriptTool"
+							tool-class="com.top_logic.tl.ai.core.tools.script.ChangeDataTool"
 						/>
 					</factory>
 					<factory name="model-annotation-definitions">
@@ -2587,7 +2439,8 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 					<!--
 						updateObject / createObject / deleteObject (Issue #625): one known object changed
 						in one call, with the values converted and checked on the server and the user's
-						own rights. A set chosen by a condition stays a TL-Script.
+						own rights; createObject takes the new object's parts with it (#630). A set chosen
+						by a condition stays a script, run by changeData.
 					-->
 					<factory name="object-edit">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"

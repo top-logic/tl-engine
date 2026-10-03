@@ -38,9 +38,10 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  *
  * <ul>
  * <li><b>Read only.</b> An expression that would create, set or delete anything - or have any other
- * side effect - is refused before it runs ({@link TLScriptExecutor#compileReadOnly(String)}), so
- * the tool is {@link ToolMode#READ}, needs no approval, and can be a core tool of an agent. Writing
- * stays with {@code executeTLScript} and its approval.</li>
+ * side effect, anywhere in it - is refused before it runs
+ * ({@link TLScriptExecutor#compileReadOnly(String)}), so the tool is {@link ToolMode#READ}, needs no
+ * approval, and can be a core tool of an agent. Changing data is {@code changeData}'s, with its
+ * approval.</li>
  * <li><b>Rights.</b> TL-Script reads with the model access rights of the acting user, and an object
  * in the result the user may not read is left out ({@link ReadFilter}).</li>
  * <li><b>Size.</b> A list in the result is cut at {@link #MAX_ROWS} entries and says how many there
@@ -50,7 +51,9 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * <p>
  * Named {@code query} because that is what the model does with it, and because {@code present}'s
  * parameter of the same name takes the same expressions: what one of them is told about writing a
- * query holds for the other.
+ * query holds for the other. A query that fails - it does not compile, or fails while it runs - is
+ * answered with the language's reading functions ({@link QueryLanguage#READING}), which the
+ * description leaves out.
  * </p>
  */
 public class QueryTool {
@@ -99,7 +102,11 @@ public class QueryTool {
 		}
 		TLScriptExecutor.ExecutionResult result = TLScriptExecutor.executeReadOnly(source);
 		if (!result.isSuccess()) {
-			return "Error: " + result.getErrorMessage();
+			// Help on demand: the language's functions go with a query that failed for how it is
+			// written, and with nothing else - a sheet in this tool's description would be paid for in
+			// every request. A query refused for changing data is not helped by it.
+			return "Error: " + (result.isRefusal() ? result.getErrorMessage()
+				: QueryLanguage.withReadingHelp(result.getErrorMessage()));
 		}
 		Object visible = ReadFilter.of(context).visible(result.getResult());
 		return ReadFilter.marked("query", render(visible));

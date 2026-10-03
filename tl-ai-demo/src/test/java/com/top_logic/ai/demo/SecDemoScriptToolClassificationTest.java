@@ -129,8 +129,9 @@ public class SecDemoScriptToolClassificationTest extends SecDemoPersonaTest {
 	 *
 	 * <p>
 	 * {@code secdemo-editing.addTicket} is the only <em>annotated-tool-like</em> member of
-	 * {@code data.write} in this fixture; the framework's own consumer of that capability is the commit
-	 * path of {@code executeTLScript}, which is an argument rather than a tool of its own. That makes
+	 * {@code data.write} in this fixture; the framework's own consumers of that capability are the
+	 * object tools and the change path of {@code changeData}, which is an argument rather than a tool
+	 * of its own. That makes
 	 * this a clean statement about the mechanism: the capability reaches exactly the one tool an
 	 * administrator put in it.
 	 * </p>
@@ -140,8 +141,8 @@ public class SecDemoScriptToolClassificationTest extends SecDemoPersonaTest {
 		assertAllowed(ANNA, CLASSIFIED_READ_SCRIPT_TOOL);
 
 		// secreader1 holds data.read and not data.write, so the two groups do not bleed into each other.
-		// secEditor is deliberately not the contrast here: it holds data.write, because committing
-		// through executeTLScript costs that capability and the matrix promises it can create a note.
+		// secEditor is deliberately not the contrast here: it holds data.write, because changing data
+		// through changeData costs that capability and the matrix promises it can create a note.
 		assertDenied(BEN, CLASSIFIED_WRITE_SCRIPT_TOOL, ToolGroups.DATA_WRITE);
 	}
 

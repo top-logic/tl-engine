@@ -61,7 +61,7 @@ How to work here:
   * To READ data, use listInstances and getInstance. Never answer about the data from memory.
   * To SHOW objects to the user - "show me", "as a table", "as a chart" - call present with a
     TL-Script query; do not read them first.
-  * To WRITE data, use executeTLScript with withCommit=true. Use it for nothing else - it is the
+  * To WRITE data, use changeData with one script. Use it for nothing else - it is the
     write tool of this application, and reaching for it says you are about to change something.
   * Make exactly the change you were asked for and no other. If the thing you were asked to change
     does not exist, change nothing and say so.
@@ -72,8 +72,7 @@ Answer in one short sentence when you are done.]]></system-prompt>
 						<tools>
 							<tool name="model-instances.listInstances"/>
 							<tool name="model-instances.getInstance"/>
-							<tool name="script-exec.validateTLScript"/>
-							<tool name="script-exec.executeTLScript"/>
+							<tool name="script-exec.changeData"/>
 							<tool name="present.present"/>
 						</tools>
 					</agent>
@@ -90,7 +89,7 @@ How to work here:
   * To READ data, use listInstances and getInstance. Never answer about the data from memory.
   * To SHOW objects to the user - "show me", "as a table", "as a chart" - call present with a
     TL-Script query; do not read them first.
-  * To WRITE data, use executeTLScript with withCommit=true. Use it for nothing else - it is the
+  * To WRITE data, use changeData with one script. Use it for nothing else - it is the
     write tool of this application, and reaching for it says you are about to change something.
   * Make exactly the change you were asked for and no other. If the thing you were asked to change
     does not exist, change nothing and say so.
@@ -101,8 +100,7 @@ Answer in one short sentence when you are done.]]></system-prompt>
 						<tools>
 							<tool name="model-instances.listInstances"/>
 							<tool name="model-instances.getInstance"/>
-							<tool name="script-exec.validateTLScript"/>
-							<tool name="script-exec.executeTLScript"/>
+							<tool name="script-exec.changeData"/>
 							<tool name="present.present"/>
 						</tools>
 					</agent>
@@ -119,7 +117,7 @@ How to work here:
   * To READ data, use listInstances and getInstance. Never answer about the data from memory.
   * To SHOW objects to the user - "show me", "as a table", "as a chart" - call present with a
     TL-Script query; do not read them first.
-  * To WRITE data, use executeTLScript with withCommit=true. Use it for nothing else - it is the
+  * To WRITE data, use changeData with one script. Use it for nothing else - it is the
     write tool of this application, and reaching for it says you are about to change something.
   * Make exactly the change you were asked for and no other. If the thing you were asked to change
     does not exist, change nothing and say so.
@@ -130,8 +128,7 @@ Answer in one short sentence when you are done.]]></system-prompt>
 						<tools>
 							<tool name="model-instances.listInstances"/>
 							<tool name="model-instances.getInstance"/>
-							<tool name="script-exec.validateTLScript"/>
-							<tool name="script-exec.executeTLScript"/>
+							<tool name="script-exec.changeData"/>
 							<tool name="present.present"/>
 						</tools>
 					</agent>
@@ -148,7 +145,7 @@ How to work here:
   * To READ data, use listInstances and getInstance. Never answer about the data from memory.
   * To SHOW objects to the user - "show me", "as a table", "as a chart" - call present with a
     TL-Script query; do not read them first.
-  * To WRITE data, use executeTLScript with withCommit=true. Use it for nothing else - it is the
+  * To WRITE data, use changeData with one script. Use it for nothing else - it is the
     write tool of this application, and reaching for it says you are about to change something.
   * Make exactly the change you were asked for and no other. If the thing you were asked to change
     does not exist, change nothing and say so.
@@ -159,8 +156,7 @@ Answer in one short sentence when you are done.]]></system-prompt>
 						<tools>
 							<tool name="model-instances.listInstances"/>
 							<tool name="model-instances.getInstance"/>
-							<tool name="script-exec.validateTLScript"/>
-							<tool name="script-exec.executeTLScript"/>
+							<tool name="script-exec.changeData"/>
 							<tool name="present.present"/>
 						</tools>
 					</agent>

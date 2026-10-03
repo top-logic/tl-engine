@@ -268,7 +268,7 @@ describe('a running turn', () => {
             timestamp: 2500,
             approvalData: {
               toolCallId: 'call-1',
-              toolName: 'executeTLScript',
+              toolName: 'changeData',
               argsJson: '{"script":"new()"}',
               displayReason: 'Changes shared data.',
               mode: 'DATA_WRITE',

@@ -71,4 +71,27 @@ public final class ToolExecutions {
 				});
 		}
 	}
+
+	/**
+	 * Asks {@link Tool#refusal(Map, ToolExecutionContext)} in the interaction
+	 * {@link #execute(Tool, Map, ToolExecutionContext)} would run the call in, so that a check reading
+	 * the model or the knowledge base sees what the call itself would see.
+	 *
+	 * @param tool
+	 *        The tool to ask.
+	 * @param args
+	 *        The deserialized tool arguments.
+	 * @param context
+	 *        The tool execution context, or {@code null}.
+	 * @return The refusal, or {@code null} if the call may proceed.
+	 */
+	public static String refusal(Tool tool, Map<String, Object> args, ToolExecutionContext context) {
+		RunInfo run = context != null ? context.runInfo() : RunInfo.NONE;
+		try (RunInfoBinding.Binding bound = RunInfoBinding.bind(run)) {
+			return ThreadContextManager.inSystemInteraction(tool.getClass(),
+				() -> {
+					return tool.refusal(args, context);
+				});
+		}
+	}
 }

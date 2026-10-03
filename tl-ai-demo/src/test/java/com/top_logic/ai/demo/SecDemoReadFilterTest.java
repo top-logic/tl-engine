@@ -139,7 +139,7 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * A TL-Script result discloses the identity and the label of the objects the persona may read, and
+	 * A query result discloses the identity and the label of the objects the persona may read, and
 	 * nothing of the others.
 	 *
 	 * <p>
@@ -150,24 +150,24 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testScriptResultDisclosesOnlyReadableObjects() {
-		String forAnna = executeScriptAs(ANNA, "all(`pm:Project`)", false);
-		assertHas("Anna may read her project, so the script names it.", "_tid", forAnna);
-		assertHas("_display", forAnna);
+		String forAnna = queryAs(ANNA, "all(`pm:Project`)");
+		assertHas("Anna may read her project, so the query names it.", "[id:", forAnna);
+		assertHas(ALPHA, forAnna);
 
-		String forDora = executeScriptAs(DORA, "all(`pm:Project`)", false);
-		assertHasNot("No identifier of an unreadable object may reach the model.", "_tid", forDora);
-		assertHasNot("A label is business data.", "_display", forDora);
-		assertHas("An empty collection is the honest answer.", "\"result\": []", forDora);
+		String forDora = queryAs(DORA, "all(`pm:Project`)");
+		assertHasNot("No identifier of an unreadable object may reach the model.", "[id:", forDora);
+		assertHasNot("A label is business data.", ALPHA, forDora);
+		assertEquals("An empty collection is the honest answer.", "(empty list)", MarkedResults.disclosed(forDora));
 	}
 
 	/**
-	 * A script whose whole result is one unreadable object reports {@code null}, not {@code object}.
+	 * A query whose whole result is one unreadable object reports {@code null}, not the object.
 	 */
 	public void testSingleUnreadableResultIsNull() {
-		String result = executeScriptAs(DORA, "all(`pm:Project`).firstElement()", false);
+		String result = queryAs(DORA, "all(`pm:Project`).firstElement()");
 
-		assertHas("\"resultType\": \"null\"", result);
-		assertHasNot("A hidden object contributes no identifier.", "_tid", result);
+		assertEquals("null", MarkedResults.disclosed(result));
+		assertHasNot("A hidden object contributes no identifier.", "[id:", result);
 	}
 
 	/**
@@ -214,12 +214,13 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testADeniedAttributeReadYieldsNothingInEitherSpelling() {
-		String collectionAccess = executeScriptAs(DORA, "all(`pm:Project`).get(`pm:Project#name`)", false);
-		assertHas("Collection access flattens the empty values away.", "\"result\": []", collectionAccess);
+		String collectionAccess = queryAs(DORA, "all(`pm:Project`).get(`pm:Project#name`)");
+		assertEquals("Collection access flattens the empty values away.", "(empty list)",
+			MarkedResults.disclosed(collectionAccess));
 
-		String mapped = executeScriptAs(DORA, "all(`pm:Project`).map(p -> $p.get(`pm:Project#name`))", false);
+		String mapped = queryAs(DORA, "all(`pm:Project`).map(p -> $p.get(`pm:Project#name`))");
 		assertEquals("An explicit map keeps one null per project, so the length is disclosed (#291).",
-			projects().size(), countOf("null", compact(mapped), "\"result\":["));
+			projects().size(), MarkedResults.disclosed(mapped).split("\n").length);
 
 		for (String result : new String[] { collectionAccess, mapped }) {
 			assertHasNot("No attribute value of an unreadable object is disclosed.", ALPHA, result);
@@ -249,13 +250,13 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testStringCoercionReturnsALabelAndTheFixtureSaysSo() {
-		String coerced = executeScriptAs(DORA, "all(`pm:Project`).map(p -> toString($p))", false);
+		String coerced = queryAs(DORA, "all(`pm:Project`).map(p -> toString($p))");
 		assertHas("A label is not access-checked, so Dora gets both project labels (#296).",
 			ALPHA, coerced);
 		assertHas(BETA, coerced);
 
 		assertHas("Concatenation takes the same route, so naming only toString() would understate it.",
-			BETA, executeScriptAs(DORA, "all(`pm:Project`).map(p -> \"\" + $p)", false));
+			BETA, queryAs(DORA, "all(`pm:Project`).map(p -> \"\" + $p)"));
 	}
 
 	/**
@@ -265,20 +266,19 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 	 * <p>
 	 * ``filterSecurity(...)`` is the engine's own function for exactly this - it applies the current
 	 * user's read permissions to a value, dropping the objects the user may not read. Once the objects
-	 * are gone there is nothing left to label. This is what the TL-Script skill and the
-	 * {@code executeTLScript} description tell an agent to do, and this row is why they can.
+	 * are gone there is nothing left to label. This is what the cheat sheet of the query language and
+	 * the skill that changes data tell an agent to do, and this row is why they can.
 	 * </p>
 	 */
 	public void testFilteringInsideTheScriptIsTheControl() {
-		String filtered =
-			executeScriptAs(DORA, "filterSecurity(all(`pm:Project`)).map(p -> toString($p))", false);
+		String filtered = queryAs(DORA, "filterSecurity(all(`pm:Project`)).map(p -> toString($p))");
 
-		assertHas("Nothing survives the filter, so nothing is labelled.", "\"result\": []", filtered);
+		assertEquals("Nothing survives the filter, so nothing is labelled.", "(empty list)",
+			MarkedResults.disclosed(filtered));
 		assertHasNot(ALPHA, filtered);
 		assertHasNot(BETA, filtered);
 
-		String forAnna =
-			executeScriptAs(ANNA, "filterSecurity(all(`pm:Project`)).map(p -> toString($p))", false);
+		String forAnna = queryAs(ANNA, "filterSecurity(all(`pm:Project`)).map(p -> toString($p))");
 		assertHas("...and it is a filter, not a blanket refusal: Anna keeps the project she partners on.",
 			ALPHA, forAnna);
 		assertHasNot("...and loses the one she does not, which is what D7 hands back unfiltered.",
@@ -337,23 +337,6 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 		}
 		int end = listingJson.indexOf(']', start);
 		return end < 0 ? listingJson.substring(start) : listingJson.substring(start + 1, end);
-	}
-
-	/** The given text with every whitespace character removed, so an assertion cannot depend on layout. */
-	private static String compact(String text) {
-		return text.replaceAll("\\s+", "");
-	}
-
-	/** How often {@code needle} occurs in {@code text} after the first occurrence of {@code from}. */
-	private static int countOf(String needle, String text, String from) {
-		int at = text.indexOf(from);
-		assertTrue("Expected '" + from + "' in: " + text, at >= 0);
-
-		int count = 0;
-		for (int pos = text.indexOf(needle, at); pos >= 0; pos = text.indexOf(needle, pos + needle.length())) {
-			count++;
-		}
-		return count;
 	}
 
 	private static void assertHas(String expected, String actual) {

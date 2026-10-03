@@ -70,14 +70,14 @@ arms and how many repeats.
 <scenario id="close-stale-tickets">
     <prompt>Set the status of every ticket of the project Alpha to triaged.</prompt>
     <oracle><![CDATA[listInstances of pm:Project to find Alpha, getInstance to read its two
-tickets, then one executeTLScript with withCommit=true setting the status of those two - and only
+tickets, then one changeData setting the status of those two - and only
 those two. Beta's ticket keeps status "open".]]></oracle>
     <expectations>
         <kb-query label="exactly-alphas-two-tickets-are-triaged">
             <expression><![CDATA[all(`pm:Ticket`).filter(t -> $t.get(`pm:Ticket#status`) == "triaged").size()]]></expression>
             <expected>2</expected>
         </kb-query>
-        <tool-sequence label="wrote-through-the-write-tool" required="script-exec.executeTLScript"/>
+        <tool-sequence label="wrote-through-the-write-tool" required="script-exec.changeData"/>
     </expectations>
 </scenario>
 ```

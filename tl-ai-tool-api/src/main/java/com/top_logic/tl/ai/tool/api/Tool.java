@@ -48,6 +48,52 @@ public interface Tool {
 	}
 
 	/**
+	 * What kind of state change the given call of this tool makes.
+	 *
+	 * <p>
+	 * {@link #mode()} answers for every call. A tool whose arguments can make a call change nothing -
+	 * the dry run of a write - answers {@link ToolMode#READ} here for that call, so that it runs
+	 * without an approval prompt and outside the turn's transaction. Every other call keeps
+	 * {@link #mode()}: the answer is one of the two and never a third mode, because the access policy,
+	 * the background allowlist and the hints an MCP client is given are decided by {@link #mode()}.
+	 * </p>
+	 *
+	 * @param arguments
+	 *        The call's arguments, as the model sent them.
+	 * @return {@link #mode()}, or {@link ToolMode#READ} for a call that changes nothing.
+	 * @see ToolMethod#dryRun()
+	 */
+	default ToolMode mode(Map<String, Object> arguments) {
+		return mode();
+	}
+
+	/**
+	 * Why the given call is refused before it runs, or <code>null</code> to let it run.
+	 *
+	 * <p>
+	 * Asked after the access policy admitted the call and before anybody is asked to approve it, so
+	 * that a call that cannot succeed - an argument the tool rejects, a capability the account lacks -
+	 * is answered without an approval prompt the user would answer in vain. A refused call never
+	 * runs, so its failure leaves the other changes of the turn standing.
+	 * </p>
+	 *
+	 * <p>
+	 * An early answer and never the only one: {@link #execute(Map, ToolExecutionContext)} refuses the
+	 * same calls itself, because not every caller asks this first.
+	 * </p>
+	 *
+	 * @param arguments
+	 *        The call's arguments, as the model sent them.
+	 * @param context
+	 *        The context the call would run with.
+	 * @return The refusal, phrased for the model, or <code>null</code>.
+	 * @see ToolMethod#check()
+	 */
+	default String refusal(Map<String, Object> arguments, ToolExecutionContext context) {
+		return null;
+	}
+
+	/**
 	 * Whether this tool can safely run in parallel with other concurrency-safe tools.
 	 *
 	 * <p>Defaults to {@code true}. With locking in place, most tools are safe to

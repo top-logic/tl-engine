@@ -48,7 +48,7 @@ import org.xml.sax.SAXException;
  * <ul>
  * <li><b>Carry the tool.</b> A guidance-only skill that depends on a tool declares that tool, and the
  * skill filter then drops the pair together - there is no dead end because there is no surviving
- * referrer. {@code TL_tlScriptInstanceCreation} is that case: it carries {@code changeData}.</li>
+ * referrer. {@code TL_writingDataChanges} is that case: it carries {@code changeData}.</li>
  * <li><b>Qualify the reference.</b> Where the referenced skill belongs to a different domain and
  * carrying its tools would drop the referrer for users who need it - {@code TL_agenticAuthoring}
  * pointing at {@code TL_writingDataChanges} - the description says what to do when the reference is not
@@ -124,7 +124,7 @@ public class TestFrameworkSkillReferences extends TestCase {
 	}
 
 	/**
-	 * {@code TL_tlScriptInstanceCreation} carries the tool its guidance is about.
+	 * {@code TL_writingDataChanges} carries the tool its guidance is about.
 	 *
 	 * <p>
 	 * The structural half of the rule above, pinned by name because it is the case that produced the
@@ -132,13 +132,13 @@ public class TestFrameworkSkillReferences extends TestCase {
 	 * guidance needs {@code script} was offered to users without {@code script} and pointed them at the
 	 * skill that has {@code changeData} - which those users could not load either. With the tool
 	 * declared, the filter drops the whole skill for them, and a user who does hold {@code script} gets
-	 * the tool the guidance tells them to run.
+	 * the tool the guidance tells them to run. The skill that produced the defect, the one for creating
+	 * objects by script, is gone (#630): {@code createObject} creates an object with its parts.
 	 * </p>
 	 */
-	public void testInstanceCreationCarriesTheToolItsGuidanceRuns() throws Exception {
-		assertEquals("Its workflow ends in running script-exec.changeData.",
-			List.of("script-exec.changeData"),
-			skillTools(config(), "TL_tlScriptInstanceCreation"));
+	public void testTheScriptSkillCarriesTheToolItsGuidanceRuns() throws Exception {
+		assertTrue("Its workflow ends in running script-exec.changeData.",
+			skillTools(config(), "TL_writingDataChanges").contains("script-exec.changeData"));
 	}
 
 	/** The positive control: the file really was read and really does define the framework skills. */

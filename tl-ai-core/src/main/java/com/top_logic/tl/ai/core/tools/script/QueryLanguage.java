@@ -72,14 +72,19 @@ public final class QueryLanguage {
 	public static final String WRITING = "Writing (changeData only):\n"
 		+ "- $x.set(`m:T#attr`, value) - replaces the value; a list for an attribute with several values.\n"
 		+ "- $x.add(`m:T#attr`, $v) / $x.remove(`m:T#attr`, $v) - one element of such an attribute.\n"
+		+ "- $x..set(`m:T#a`, 1)..set(`m:T#b`, 2) - '..' returns $x itself, for several changes of one object.\n"
 		+ "- $set.foreach(x -> $x.set(`m:T#attr`, ...)) - the same change on every element.\n"
 		+ "- new(`m:T`), or new(type: `m:T`, context: $parent) for a part of $parent, placed with"
-		+ " $parent.add(`m:P#parts`, $child).\n"
+		+ " $parent.add(`m:P#parts`, $child) - or $parent.set(`m:P#part`, $child) where it holds one.\n"
+		+ "- A text in several languages: #('Summer party'@en, 'Sommerfest'@de).\n"
 		+ "- $x.delete().\n"
 		+ "- Several steps: a block { a = ...; b = ...; $b.set(...) } - bind a name without $, read it with $.\n"
 		+ "Example - raise the price of every open item by 10 percent:\n"
 		+ "  all(`m:Item`).filter(i -> $i.get(`m:Item#status`) == `m:Status#OPEN`).foreach(i ->"
-		+ " $i.set(`m:Item#price`, round(value: $i.get(`m:Item#price`) * 1.1, digits: 2)))\n";
+		+ " $i.set(`m:Item#price`, round(value: $i.get(`m:Item#price`) * 1.1, digits: 2)))\n"
+		+ "Example - give every open item a new part:\n"
+		+ "  all(`m:Item`).filter(i -> $i.get(`m:Item#status`) == `m:Status#OPEN`).foreach(i -> { c ="
+		+ " new(type: `m:Check`, context: $i); $c.set(`m:Check#name`, \"Review\"); $i.add(`m:Item#checks`, $c) })\n";
 
 	/** The whole sheet. */
 	public static final String CHEAT_SHEET = READING + WRITING;

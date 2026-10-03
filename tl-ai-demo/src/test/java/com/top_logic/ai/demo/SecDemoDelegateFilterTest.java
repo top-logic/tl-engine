@@ -55,7 +55,7 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 	 * the delegate that disappears for a persona holding neither and is <em>limited</em> for one holding
 	 * just the first. It is also the single agent {@code secdemo.config.xml} grants
 	 * {@link #RESTRICTED_ROLE}, and therefore the only delegate a persona holding that role keeps.</li>
-	 * <li>{@code TL_TLScriptAgent} carries {@code script}, {@code workspace}, {@code model.read},
+	 * <li>{@code TL_ScriptWriter} carries {@code script}, {@code workspace}, {@code model.read},
 	 * {@code data.read} and - since the text edit was offered to the agents that write instance data
 	 * (#168) - {@code data.write} tools.</li>
 	 * <li>{@code TL_ModelEditor} carries {@code user-interaction.askUser}, and {@code interaction} is
@@ -73,8 +73,8 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	/** Reads the model and its instances, and nothing else. */
 	private static final String EXPLORER = "TL_ModelExplorer";
 
-	/** Runs TL-Script, keeps tasks, and edits a long text in place. */
-	private static final String SCRIPT_AGENT = "TL_TLScriptAgent";
+	/** Writes and runs scripts, keeps tasks, and edits a long text in place. */
+	private static final String SCRIPT_AGENT = "TL_ScriptWriter";
 
 	/** Changes the model - and asks questions, which every persona may do. */
 	private static final String EDITOR_AGENT = "TL_ModelEditor";
@@ -166,7 +166,7 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	 * for a persona holding more, the same delegate is offered without a limit.
 	 *
 	 * <p>
-	 * This is the pair the decision rests on: a persona can usefully ask {@code TL_TLScriptAgent} to run
+	 * This is the pair the decision rests on: a persona can usefully ask {@code TL_ScriptWriter} to run
 	 * a script and not to keep a task, and being told so beats discovering it from a child run that
 	 * comes back refused.
 	 * </p>
@@ -179,7 +179,7 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	 */
 	public void testLimitedDelegateIsOfferedAndSaysWhatItCannotDo() {
 		assertEquals("No role holds workspace, and ben's ticketReader reads but does not write, so the"
-			+ " task tools and the text edit of TL_TLScriptAgent are both out of reach.",
+			+ " task tools and the text edit of TL_ScriptWriter are both out of reach.",
 			Set.of(ToolGroups.DATA_WRITE, ToolGroups.WORKSPACE),
 			capabilitiesOf(BEN).unreachableCapabilities(agent(SCRIPT_AGENT)));
 		assertEquals("anna's projectPartner holds data.write, so the same delegate is limited by the"
@@ -237,7 +237,7 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	public void testListAgentsNamesTheUnreachableCapabilities() {
 		String annaSees = listAgentsAs(ANNA);
 
-		assertTrue("The task tools TL_TLScriptAgent cannot use must be named: " + annaSees,
+		assertTrue("The task tools TL_ScriptWriter cannot use must be named: " + annaSees,
 			annaSees.contains("\"cannotUse\""));
 		assertTrue(annaSees, annaSees.contains("\"" + ToolGroups.WORKSPACE + "\""));
 

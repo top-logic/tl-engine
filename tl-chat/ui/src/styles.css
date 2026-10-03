@@ -3166,9 +3166,9 @@
 
 .context-model {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* A model's name and effort may take a second line; cut off, the effort was the part lost (#635). */
+  text-align: end;
+  overflow-wrap: anywhere;
   font-family: var(--chat-mono);
 }
 
@@ -4315,7 +4315,8 @@
 
 .mention-row {
   display: flex;
-  align-items: center;
+  /* A long name wraps; the icon and the kind stay on its first line. */
+  align-items: baseline;
   gap: 0.5rem;
   width: 100%;
   padding: 0.35rem 0.5rem;
@@ -4332,6 +4333,13 @@
   background: var(--layer-hover, color-mix(in srgb, var(--button-primary) 10%, transparent));
 }
 
+.mention-icon {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  height: 1lh;
+}
+
 .mention-icon svg {
   width: 1rem;
   height: 1rem;
@@ -4345,9 +4353,11 @@
 .mention-label {
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /*
+   * Wrapped, not cut off: two objects whose names differ only at the end were two identical rows
+   * (#635). The popover grows to its 26 rem before a name wraps at all.
+   */
+  overflow-wrap: anywhere;
 }
 
 .mention-hint {
@@ -4374,21 +4384,21 @@
   min-width: 0;
 }
 
+/*
+ * The title and the origin wrap rather than end in an ellipsis (#635): a page's title and its path are
+ * what tells two sources of one site apart, and the popover is where the reader looks that up.
+ */
 .cite-popover-title {
   margin: 0;
   font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .cite-popover-origin {
   margin: 0.1rem 0 0;
   color: var(--text-secondary);
   font-size: var(--chat-small);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 /* Which page of the site, which record of the kind: the origin alone does not say. */
@@ -4424,9 +4434,7 @@
 
 .cite-popover-fields dt {
   color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .cite-popover-fields dd {

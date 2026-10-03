@@ -43,6 +43,17 @@
 		</config>
 	</services>
 	<configs>
+		<!-- The table of test.objectedit:Book, whose shelf is a column of its own row. -->
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/test.objecteditMeta.xml" />
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+
 		<config config:interface="test.com.top_logic.basic.util.AbstractBasicTestAll$GlobalConfig"
 			test-comment="false"
 			test-layouts-normalized="true"

@@ -95,5 +95,81 @@
 				/>
 			</attributes>
 		</class>
+		<!--
+			Parts the engine stores in their own rows: the container is a column of the part's row
+			(an inline storage, test.objecteditMeta.xml), as tl.doc stores the children of a page.
+			A shelf keeps its books in order, a box keeps its pamphlets in no order. Books and
+			pamphlets share a table, but are parts of one composition each: the engine names the
+			composition of a part kept in its own row by the first such composition of the part's
+			type, whether or not the part is in it.
+		-->
+		<class name="Shelf">
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<reference name="books"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Book"
+				>
+					<annotations>
+						<storage-algorithm>
+							<inline-list-storage
+								container-column="shelf"
+								order-column="shelfOrder"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="Box">
+			<attributes>
+				<reference name="pamphlets"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Pamphlet"
+				>
+					<annotations>
+						<storage-algorithm>
+							<inline-set-storage
+								container-column="box"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="Book">
+			<annotations>
+				<table name="TestObjectEditBook"/>
+			</annotations>
+			<attributes>
+				<property name="title"
+					type="tl.core:String"
+				/>
+				<reference name="shelf"
+					inverse-reference="books"
+					kind="backwards"
+					type="Shelf"
+				/>
+			</attributes>
+		</class>
+		<class name="Pamphlet">
+			<annotations>
+				<table name="TestObjectEditBook"/>
+			</annotations>
+			<attributes>
+				<property name="title"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
 	</module>
 </model>

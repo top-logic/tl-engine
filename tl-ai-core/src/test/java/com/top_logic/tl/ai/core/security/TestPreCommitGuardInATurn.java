@@ -7,9 +7,11 @@ package com.top_logic.tl.ai.core.security;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -24,6 +26,8 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.base.locking.LockService;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -75,11 +79,13 @@ import com.top_logic.util.model.ModelService;
  * the turn's transaction of a real knowledge base.
  *
  * <p>
- * The cases are about a reference the engine stores as links, whose change books nothing on the
- * object holding it (Gitea #631). The account's rights are a stand-in that withholds the one question
- * a case is about, because what is under test is that the guard asks it - what the engine answers for
- * a real role model is pinned against real accounts by {@code SecDemoPreCommitGuardTest} in
- * tl-ai-demo. The model is scripted: it calls one tool once and ends the turn. No LLM is involved.
+ * The cases are about attributes whose values the engine keeps outside the row of the object holding
+ * them, so that a change books nothing on that object: a reference stored as links (Gitea #631), the
+ * translations of an internationalized attribute and a composition kept in the rows of its parts
+ * (Gitea #638). The account's rights are a stand-in that withholds the one question a case is about,
+ * because what is under test is that the guard asks it - what the engine answers for a real role
+ * model is pinned against real accounts by {@code SecDemoPreCommitGuardTest} in tl-ai-demo. The model
+ * is scripted: it calls one tool once and ends the turn. No LLM is involved.
  * </p>
  */
 public class TestPreCommitGuardInATurn extends BasicTestCase {
@@ -185,6 +191,108 @@ public class TestPreCommitGuardInATurn extends BasicTestCase {
 		assertNull("Nothing was written, so nothing is rolled back.", turn.rollbackReason());
 		assertNull(turn.notice());
 		assertEquals("FACT", kindOf(memory));
+	}
+
+	/**
+	 * A tool that checks nothing changes a translation of an internationalized attribute, which the
+	 * engine keeps in a row of a table of its own: the guard asks for the right to write that
+	 * attribute of the object holding it, is refused, and rolls the turn back (Gitea #638).
+	 */
+	public void testAnUncheckedChangeOfATranslationIsRolledBack() {
+		assertUncheckedCaptionChangeIsRolledBack(TestToolChangeSet.text("one", "eins"),
+			TestToolChangeSet.text("one", "zwei"));
+	}
+
+	/** The same for a translation the tool adds, for which the engine creates a row. */
+	public void testAnUncheckedNewTranslationIsRolledBack() {
+		assertUncheckedCaptionChangeIsRolledBack(TestToolChangeSet.text("one", null),
+			TestToolChangeSet.text("one", "eins"));
+	}
+
+	/** The same for a translation the tool drops, whose row the engine deletes. */
+	public void testAnUncheckedDroppedTranslationIsRolledBack() {
+		assertUncheckedCaptionChangeIsRolledBack(TestToolChangeSet.text("one", "eins"),
+			TestToolChangeSet.text("one", null));
+	}
+
+	private static void assertUncheckedCaptionChangeIsRolledBack(ResKey before, ResKey after) {
+		TLObject cover = cover(before);
+		TLStructuredTypePart caption = part(cover, "caption");
+		StandIn rights = StandIn.withholding(Question.write(cover, caption));
+
+		Turn turn = runTurn(rights, unchecked(() -> cover.tUpdate(caption, after)), "{}");
+
+		assertFalse("The turn must not commit: the account may not write the caption of this cover.",
+			turn.committed());
+		assertEquals("Pre-commit security check failed", turn.rollbackReason());
+		assertEquals(translations(before), translations((ResKey) cover.tValue(caption)));
+		assertTrue("The guard must ask about the attribute itself, but was asked: " + rights.asked(),
+			rights.asked().contains(Question.write(cover, caption)));
+		assertContains("Write on objects of type 'test.objectedit:Cover'", turn.notice());
+	}
+
+	/**
+	 * The violation the guard finds for a dropped translation names the attribute: the check the
+	 * turn ran, over the same change, read before the turn ends.
+	 */
+	public void testTheViolationNamesTheTranslatedAttribute() {
+		TLObject cover = cover(TestToolChangeSet.text("one", "eins"));
+		TLStructuredTypePart caption = part(cover, "caption");
+		KnowledgeBase kb = kb();
+
+		List<Violation> violations;
+		try (Transaction tx = kb.beginTransaction()) {
+			cover.tUpdate(caption, TestToolChangeSet.text("one", null));
+			violations = new ModelSecurityPreCommitGuard().check(
+				security(StandIn.withholding(Question.write(cover, caption))), ToolChangeSet.pending(kb));
+		}
+
+		assertEquals(1, violations.size());
+		Violation violation = violations.get(0);
+		assertSame(cover, violation.object());
+		assertEquals(SimpleBoundCommandGroup.WRITE, violation.operation());
+		assertEquals(caption, violation.attribute());
+		assertEquals("test.objectedit:Cover", violation.typeName());
+	}
+
+	/**
+	 * Deleting an object with a translated attribute needs no right beyond the deletion: the engine
+	 * drops the rows of the translations with it, and they are no write of the attribute and no
+	 * deletion of their own.
+	 */
+	public void testDeletingAnObjectWithATranslationNeedsOnlyTheDelete() {
+		TLObject cover = cover(TestToolChangeSet.text("one", "eins"));
+		StandIn rights = StandIn.withholding(question -> !question.equals(Question.delete(cover)));
+
+		Turn turn = runTurn(rights, unchecked(cover::tDelete), "{}");
+
+		assertTrue("The turn must commit: the account may delete the cover, and nothing else was written."
+			+ " Asked: " + rights.asked(), turn.committed());
+		assertFalse(cover.tValid());
+		assertEquals(List.of(Question.delete(cover)), rights.asked());
+	}
+
+	/**
+	 * A tool that checks nothing puts a part into a composition that keeps the container in the row
+	 * of each part, as tl.doc keeps the children of a page: the row that changes is the part's, but
+	 * the guard asks for the right to write the composition of the container, is refused, and rolls
+	 * the turn back (Gitea #638).
+	 */
+	public void testAnUncheckedChangeOfACompositionKeptInItsPartsIsRolledBack() {
+		TLObject shelf = newCommitted("test.objectedit:Shelf");
+		TLObject book = newCommitted("test.objectedit:Book");
+		TLStructuredTypePart books = part(shelf, "books");
+		StandIn rights = StandIn.withholding(Question.write(shelf, books));
+
+		Turn turn = runTurn(rights, unchecked(() -> shelf.tUpdate(books, List.of(book))), "{}");
+
+		assertFalse("The turn must not commit: the account may not write the books of this shelf.",
+			turn.committed());
+		assertEquals("Pre-commit security check failed", turn.rollbackReason());
+		assertEquals(List.of(), shelf.tValue(books));
+		assertTrue("The guard must ask about the composition of the container, but was asked: " + rights.asked(),
+			rights.asked().contains(Question.write(shelf, books)));
+		assertContains("Write on objects of type 'test.objectedit:Shelf'", turn.notice());
 	}
 
 	/** One question the guard or a tool asked the account's rights. */
@@ -504,6 +612,31 @@ public class TestPreCommitGuardInATurn extends BasicTestCase {
 			tx.commit();
 			return session;
 		}
+	}
+
+	private static TLObject newCommitted(String typeName) {
+		TLClass type = (TLClass) TLModelUtil.findType(typeName);
+		try (Transaction tx = kb().beginTransaction()) {
+			TLObject result = ModelService.getInstance().getFactory().createObject(type, null);
+			tx.commit();
+			return result;
+		}
+	}
+
+	private static TLObject cover(ResKey caption) {
+		TLClass type = (TLClass) TLModelUtil.findType("test.objectedit:Cover");
+		try (Transaction tx = kb().beginTransaction()) {
+			TLObject cover = ModelService.getInstance().getFactory().createObject(type, null);
+			cover.tUpdate(type.getPart("caption"), caption);
+			tx.commit();
+			return cover;
+		}
+	}
+
+	/** The English and the German text, which a translated attribute of this setup stores. */
+	private static List<String> translations(ResKey text) {
+		return Arrays.asList(ResKeyUtil.getTranslation(text, Locale.ENGLISH),
+			ResKeyUtil.getTranslation(text, Locale.GERMAN));
 	}
 
 	private static Object kind(String name) {

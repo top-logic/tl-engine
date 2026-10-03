@@ -98,7 +98,8 @@ public final class ChangeReport {
 	 */
 	public static Baseline baseline(KnowledgeBase kb) {
 		ToolChangeSet pending = ToolChangeSet.pending(kb);
-		if (pending.isEmpty() && ToolChangeSet.pendingLinks(kb).isEmpty()) {
+		Map<TLObject, Set<TLStructuredTypePart>> separate = ToolChangeSet.pendingSeparateTableChanges(kb);
+		if (pending.isEmpty() && separate.isEmpty()) {
 			return Baseline.NONE;
 		}
 		Set<TLObject> created = new HashSet<>();
@@ -107,7 +108,7 @@ public final class ChangeReport {
 		}
 		Set<TLObject> deleted = new HashSet<>(pending.deleted());
 		Map<TLObject, Map<TLStructuredTypePart, Object>> values = new HashMap<>();
-		touched(pending, ToolChangeSet.pendingLinks(kb), created, deleted).forEach((object, parts) -> {
+		touched(pending, separate, created, deleted).forEach((object, parts) -> {
 			Map<TLStructuredTypePart, Object> snapshot = new HashMap<>();
 			for (TLStructuredTypePart part : parts) {
 				snapshot.put(part, snapshot(object.tValue(part)));
@@ -141,8 +142,8 @@ public final class ChangeReport {
 		}
 		Set<TLObject> deletedNow = new HashSet<>(now.deleted());
 		int changed = 0;
-		for (Map.Entry<TLObject, Set<TLStructuredTypePart>> entry : touched(now, ToolChangeSet.pendingLinks(kb),
-			createdNow, deletedNow).entrySet()) {
+		for (Map.Entry<TLObject, Set<TLStructuredTypePart>> entry : touched(now,
+			ToolChangeSet.pendingSeparateTableChanges(kb), createdNow, deletedNow).entrySet()) {
 			TLObject object = entry.getKey();
 			Map<TLStructuredTypePart, Object> earlier = before._values.getOrDefault(object, Map.of());
 			List<TLStructuredTypePart> differing = new ArrayList<>();
@@ -208,14 +209,15 @@ public final class ChangeReport {
 
 	/**
 	 * The attributes changed on objects that exist before and after: those booked as changed, and
-	 * those whose values are stored as links. An object created or deleted in the transaction is
-	 * reported as that, not with its attributes.
+	 * those whose values the engine keeps outside the object's own row, a change that went with a
+	 * deletion included. An object created or deleted in the transaction is reported as that, not
+	 * with its attributes.
 	 */
 	private static Map<TLObject, Set<TLStructuredTypePart>> touched(ToolChangeSet changes,
-			Map<TLObject, Set<TLStructuredTypePart>> links, Set<TLObject> created, Set<TLObject> deleted) {
+			Map<TLObject, Set<TLStructuredTypePart>> separate, Set<TLObject> created, Set<TLObject> deleted) {
 		Map<TLObject, Set<TLStructuredTypePart>> result = new LinkedHashMap<>();
 		changes.updated().forEach((object, parts) -> result.put(object, new LinkedHashSet<>(parts)));
-		links.forEach((object, parts) -> {
+		separate.forEach((object, parts) -> {
 			if (!created.contains(object) && !deleted.contains(object)) {
 				result.computeIfAbsent(object, key -> new LinkedHashSet<>()).addAll(parts);
 			}

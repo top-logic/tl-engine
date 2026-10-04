@@ -20,6 +20,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.chartjs.ChartElement;
 import com.top_logic.layout.react.chartjs.ClickHandlerConfig;
@@ -41,6 +42,7 @@ import com.top_logic.layout.view.element.TableElement;
 import com.top_logic.layout.view.table.AttributeColumn;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnsConfig;
+import com.top_logic.layout.view.table.ComputedColumn;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -49,6 +51,7 @@ import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tl.ai.core.tools.present.ChartData;
 import com.top_logic.tl.ai.core.tools.present.PresentAs;
 import com.top_logic.tl.ai.core.tools.present.Presentation;
 import com.top_logic.util.Resources;
@@ -62,8 +65,10 @@ import com.top_logic.util.Resources;
  * and a {@link Presentation} - what the agent's {@code present} tool writes - as the table, chart or
  * form it names. Nothing here knows a type: the form shows the attributes of the object's type, the
  * table the main properties of the rows' common type with the rest offered in its column selection
- * (see {@link TableElement}), and the chart the label and value the agent computed. An application
- * no longer wires the pane to its types.
+ * (see {@link TableElement}), and the chart the Chart.js configuration the presentation draws (see
+ * {@link PaneCharts}). Data a query computed - a count per group, several series - is a chart over
+ * the same configuration, or a table with a column for the labels and one per series. An
+ * application no longer wires the pane to its types.
  * </p>
  *
  * <p>
@@ -105,6 +110,24 @@ final class PresentationPane {
 
 	/** The chart handler that opens a clicked point's object. */
 	private static final String OPEN_HANDLER = "open";
+
+	/** The key of a data row its position is kept under, so that two equal rows stay two. */
+	private static final String ROW_INDEX = "row";
+
+	/** The prefix of the keys a data row holds its cells under, and of its table's column names. */
+	private static final String CELL = "c";
+
+	/** The qualified name of the type a column of whole numbers is declared with. */
+	private static final String WHOLE_NUMBERS = "tl.core:Long";
+
+	/** The qualified name of the type a column of numbers with a fraction is declared with. */
+	private static final String NUMBERS = "tl.core:Double";
+
+	/** The width of a number column whose header is short, in pixels: "Anzahl" with its filter. */
+	private static final int MIN_NUMBER_WIDTH = 110;
+
+	/** The widest a number column gets for its header, in pixels; a longer header is elided. */
+	private static final int MAX_NUMBER_WIDTH = 140;
 
 	/**
 	 * One step of the history: what stood on the channel, and the control showing it.
@@ -344,7 +367,9 @@ final class PresentationPane {
 				case CHART:
 					return chart(value, presentation);
 				default:
-					return table(value, presentation.objects(), presentation.title());
+					return presentation.isData()
+						? dataTable(value, presentation)
+						: table(value, presentation.objects(), presentation.title());
 			}
 		}
 		if (value instanceof TLObject object) {
@@ -431,7 +456,7 @@ final class PresentationPane {
 		int id = _nextId++;
 		ViewChannel open = new DefaultViewChannel(OPEN);
 		ViewChannel spec = new DefaultViewChannel(CHART);
-		spec.set(PaneCharts.config(presentation, OPEN_HANDLER));
+		spec.set(PaneCharts.config(presentation.chartData(), OPEN_HANDLER));
 		ViewContext context = stepContext(id).withLocalChannel(CHART, spec).withLocalChannel(OPEN, open);
 
 		WriteChannelAction.Config write = TypedConfiguration.newConfigItem(WriteChannelAction.Config.class);
@@ -449,19 +474,106 @@ final class PresentationPane {
 
 		ReactControl control = control(chart, context);
 		List<TLObject> rows = presentation.objects();
-		Step step = new Step(id, value, PresentAs.CHART,
-			title(presentation.title(), commonType(rows), rows.size()), control, open);
+		String title = presentation.isData()
+			? dataTitle(presentation.title())
+			: title(presentation.title(), commonType(rows), rows.size());
+		Step step = new Step(id, value, PresentAs.CHART, title, control, open);
 		// A chart's values are computed, not bound: a chart the user returns to is computed again, so
 		// it shows what its objects say now rather than what they said when the agent presented it.
+		// Data a query computed is shown as it was computed - there is nothing to compute it from.
 		step._refresh = () -> {
 			try {
-				spec.set(PaneCharts.config(presentation, OPEN_HANDLER));
+				spec.set(PaneCharts.config(presentation.chartData(), OPEN_HANDLER));
 			} catch (RuntimeException ex) {
 				Logger.warn("The chat pane could not recompute a chart: " + ex.getMessage(), ex,
 					PresentationPane.class);
 			}
 		};
 		return step;
+	}
+
+	/**
+	 * A table of data a query computed: a column for the labels, and one per series.
+	 *
+	 * <p>
+	 * The rows are no model objects, so the columns are computed ones reading a row's cells - and a
+	 * row click opens nothing.
+	 * </p>
+	 */
+	private Step dataTable(Object value, Presentation presentation) {
+		int id = _nextId++;
+		ChartData data = presentation.chartData();
+		List<String> labels = data.labels();
+		List<ChartData.Series> series = data.series();
+		List<Object> rows = new ArrayList<>(labels.size());
+		for (int n = 0; n < labels.size(); n++) {
+			Map<String, Object> row = new LinkedHashMap<>();
+			row.put(ROW_INDEX, Integer.valueOf(n));
+			row.put(CELL + 0, labels.get(n));
+			for (int s = 0; s < series.size(); s++) {
+				List<?> values = series.get(s).values();
+				row.put(CELL + (s + 1), n < values.size() ? values.get(n) : null);
+			}
+			rows.add(row);
+		}
+		Resources resources = Resources.getInstance();
+		List<PolymorphicConfiguration<? extends ColumnDeclaration>> columns = new ArrayList<>();
+		columns.add(dataColumn(0, resources.getString(I18NConstants.PANE_COLUMN_LABEL), null));
+		for (int s = 0; s < series.size(); s++) {
+			String name = series.get(s).name();
+			String header = name.isEmpty() ? resources.getString(I18NConstants.PANE_COLUMN_VALUE) : name;
+			columns.add(dataColumn(s + 1, header, numberType(series.get(s).values(), rows, s + 1)));
+		}
+		ColumnsConfig columnsConfig = TypedConfiguration.newConfigItem(ColumnsConfig.class);
+		set(columnsConfig, ColumnsConfig.COLUMNS, columns);
+		// Only now: the column types above made the cells of each number column one Java type.
+		ViewChannel rowChannel = new DefaultViewChannel(ROWS);
+		rowChannel.set(rows);
+		ViewContext context = stepContext(id).withLocalChannel(ROWS, rowChannel);
+
+		TableElement.Config table = TypedConfiguration.newConfigItem(TableElement.Config.class);
+		set(table, Inputs.INPUTS, List.of(new ChannelRef(ROWS)));
+		set(table, TableElement.Config.ROWS, expr(TableElement.Config.ROWS, "rows -> $rows"));
+		set(table, TableElement.Config.COLUMNS, columnsConfig);
+
+		ReactControl control = control(table, context);
+		return new Step(id, value, PresentAs.TABLE, dataTitle(presentation.title()), control, null);
+	}
+
+	/** The column showing a data row's cell of the given index. */
+	private static ComputedColumn.Config dataColumn(int index, String header, TLModelPartRef type) {
+		ComputedColumn.Config column = TypedConfiguration.newConfigItem(ComputedColumn.Config.class);
+		set(column, ComputedColumn.Config.NAME, CELL + index);
+		set(column, ComputedColumn.Config.LABEL, ResKey.text(header));
+		set(column, ComputedColumn.Config.VALUE, expr(ComputedColumn.Config.VALUE, "r -> $r['" + CELL + index + "']"));
+		if (type != null) {
+			set(column, ComputedColumn.Config.TYPE, type);
+			// A number column starts as narrow as its numbers, which cuts even a header such as
+			// "Anzahl" short. It is as wide as its header asks for - up to the width at which a label
+			// column and two series still fit the pane's default 420 pixels.
+			set(column, ComputedColumn.Config.WIDTH,
+				Integer.valueOf(Math.min(MAX_NUMBER_WIDTH, Math.max(MIN_NUMBER_WIDTH, 8 * header.length() + 62))));
+		}
+		return column;
+	}
+
+	/**
+	 * The type a column of the given numbers is declared with, so that it sorts and aligns as
+	 * numbers: whole numbers as such, so that a count does not read "7.00". The row cells are made
+	 * one Java type to match, since a column compares its values with each other.
+	 */
+	private static TLModelPartRef numberType(List<?> values, List<Object> rows, int cell) {
+		boolean whole = values.stream()
+			.allMatch(v -> !(v instanceof Number number) || number.doubleValue() == Math.rint(number.doubleValue()));
+		for (Object row : rows) {
+			@SuppressWarnings("unchecked")
+			Map<String, Object> cells = (Map<String, Object>) row;
+			if (cells.get(CELL + cell) instanceof Number number) {
+				cells.put(CELL + cell, whole ? (Object) Long.valueOf(number.longValue())
+					: (Object) Double.valueOf(number.doubleValue()));
+			}
+		}
+		return TLModelPartRef.ref(whole ? WHOLE_NUMBERS : NUMBERS);
 	}
 
 	private static ColumnsConfig columnsConfig(List<String> attributes) {
@@ -483,6 +595,14 @@ final class PresentationPane {
 	private static ReactControl control(PolymorphicConfiguration<? extends UIElement> config, ViewContext context) {
 		UIElement element = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
 		return ContentControls.toControl(List.of(element), context);
+	}
+
+	/** The title of a table or chart of data: the agent's, otherwise a generic one. */
+	private static String dataTitle(String title) {
+		if (title != null && !title.isBlank()) {
+			return title;
+		}
+		return Resources.getInstance().getString(I18NConstants.PANE_TITLE_DATA);
 	}
 
 	/** The title of a table or chart: the agent's, otherwise the type and the count. */

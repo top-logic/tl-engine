@@ -25,8 +25,8 @@ import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
- * Shows model objects to the user - as a table, a chart or a form - in whatever the user is looking
- * at beside the conversation.
+ * Shows model objects to the user - as a table, a chart or a form - or data computed from them, in
+ * whatever the user is looking at beside the conversation.
  *
  * <p>
  * The agent says <em>what</em> to show: a TL-Script query or the ids of objects it already holds,
@@ -48,6 +48,17 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * model can talk about them without fetching them again.
  * </p>
  *
+ * <h2>Data, not only objects</h2>
+ *
+ * <p>
+ * "How many per status" is the most common chart question, and its answer is no set of objects: it
+ * is a count per group, which the query computes. A query may therefore return data, in the format a
+ * developer's chart script returns - a whole Chart.js configuration, as the {@code data} of a
+ * {@code <chartjs>} component or a {@code <chart>} element computes it - or one of its short forms, a
+ * dictionary from label to number or a list of records. See {@link ChartData}. Such a chart has no
+ * object behind its points, so a click on one opens nothing.
+ * </p>
+ *
  * <h2>What bounds it</h2>
  *
  * <ul>
@@ -60,7 +71,8 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * approval - the approval dialog would sit in the very page this is trying to fill.</li>
  * <li><b>Checked before shown.</b> A chart's functions are tried on every object first, so a function
  * that fails or a value that is not a number is answered as an error the model can correct, rather
- * than as an empty chart.</li>
+ * than as an empty chart. Data is checked the same way, and bounded: what lies beyond
+ * {@link ChartData#MAX_POINTS} points is cut, and the answer says so.</li>
  * </ul>
  */
 public abstract class PresentTool {
@@ -72,47 +84,60 @@ public abstract class PresentTool {
 	 * Shows objects to the user beside the conversation.
 	 *
 	 * @param query
-	 *        TL-Script expression evaluating to the objects to show; alternative to {@code ids}.
+	 *        TL-Script expression evaluating to the objects or the data to show; alternative to
+	 *        {@code ids}.
 	 * @param ids
 	 *        Ids of objects the model already holds; alternative to {@code query}.
 	 * @param as
-	 *        How to show them; {@code null} for a form of one object and a table of several.
+	 *        How to show them; {@code null} for a form of one object, a table of several and a chart
+	 *        of data.
 	 * @param chart
-	 *        What a chart computes from each object; required for {@link PresentAs#CHART}.
+	 *        What a chart computes from each object, required for a {@link PresentAs#CHART chart} of
+	 *        objects; for data only its kind, and nothing for a whole Chart.js configuration.
 	 * @param title
 	 *        What to call the view, or {@code null}.
 	 * @param channel
 	 *        Where on the page, for a page that offers more than one place; {@code null} otherwise.
 	 * @param context
 	 *        The run, supplying the rights the objects are found with.
-	 * @return What the user now sees, with the objects as {@code label [id:TID]}, or why nothing was
-	 *         shown.
+	 * @return What the user now sees, with the objects as {@code label [id:TID]} or the data's labels
+	 *         and values, or why nothing was shown.
 	 */
 	@ToolMethod(
-		description = "Show model objects to the user beside this conversation, as a table, a chart or a "
-			+ "form. Use it whenever the user asks to see, show, list, open or display objects, and "
-			+ "for any answer that is a set of objects - never write such a set as a Markdown table. "
-			+ "Pass a TL-Script 'query' that evaluates to the objects, e.g. all(`module:Type`), "
-			+ "or all(`module:Type`).filter(x -> ...), and the server finds them with the user's "
-			+ "rights: do not list or fetch them yourself first. Pass 'ids' instead only for objects "
-			+ "you already hold. 'as': TABLE (columns come from the objects' type), CHART (needs "
-			+ "'chart') or FORM (exactly one object); omitted, one object is a form and several are "
-			+ "a table. The answer lists the objects as label [id:TID]. This changes no data. After "
-			+ "it, answer in one or two sentences what the user now sees, and call no further tool.",
+		description = "Show model objects, or data computed from them, to the user beside this conversation, "
+			+ "as a table, a chart or a form. Use it whenever the user asks to see, show, list, open, "
+			+ "display or chart something, and for any answer that is a set of objects - never write such "
+			+ "a set as a Markdown table. Pass a TL-Script 'query'; the server evaluates it with the "
+			+ "user's rights, so do not list or fetch anything yourself first. The query returns either "
+			+ "(1) objects, e.g. all(`module:Type`).filter(x -> ...): 'as' TABLE (columns come from the "
+			+ "type), FORM (exactly one object) or CHART with chart={kind, label, value}; or (2) data: "
+			+ "{label: number}, e.g. a count per group all(`module:Type`).groupBy(x -> "
+			+ "$x.get(`module:Type#status`), g -> $g.size()), or {label: {series: number}} or a list of "
+			+ "records [{\"label\": ..., \"a\": 1, \"b\": 2}] for several series - as CHART with "
+			+ "chart={kind} or as TABLE; or (3) for any other chart (stacked, bars with a line, two axes) "
+			+ "a whole Chart.js configuration {'type': 'bar', 'data': {'labels': [...], 'datasets': "
+			+ "[{'label': ..., 'data': [...], 'type': 'line', 'stack': ...}]}, 'options': {...}}, exactly as a "
+			+ "chart component's script returns it - then omit 'chart'. Pass 'ids' instead of a query only "
+			+ "for objects you already hold. Omitted, 'as' is FORM for one object, TABLE for several and "
+			+ "CHART for data. This changes no data. After it, answer in one or two sentences what the user "
+			+ "now sees, and call no further tool.",
 		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
 		marking = AnswerMarking.TOOL, unavailable = "noPlaceToShow")
 	public String present(
-			@P(value = "TL-Script expression evaluating to the objects to show, e.g. "
-				+ "all(`crm:Customer`).filter(c -> $c.get(`crm:Customer#active`)). "
+			@P(value = "TL-Script expression evaluating to the objects or the data to show, e.g. "
+				+ "all(`crm:Customer`).filter(c -> $c.get(`crm:Customer#active`)), or "
+				+ "all(`crm:Customer`).groupBy(c -> $c.get(`crm:Customer#region`), g -> $g.size()). "
 				+ "Use the qualified names outlineModel or searchModel reported.",
 				required = false) String query,
 			@P(value = "Ids of objects you already hold, as tool results wrote them ([id:...]). "
 				+ "Instead of 'query'.", required = false) List<String> ids,
-			@P(value = "TABLE, CHART or FORM. Omit to get a form for one object and a table for several.",
+			@P(value = "TABLE, CHART or FORM. Omit to get a form for one object, a table for several and a "
+				+ "chart of data.",
 				required = false) PresentAs as,
-			@P(value = "For as=CHART: kind (BAR, LINE or PIE), label and value - each a TL-Script "
-				+ "function of one object, e.g. label: c -> $c.get(`crm:Customer#name`), value: "
-				+ "c -> $c.get(`crm:Customer#revenue`).", required = false) ChartSpec chart,
+			@P(value = "For as=CHART: kind (BAR, LINE or PIE); for objects also label and value - each a "
+				+ "TL-Script function of one object, e.g. label: c -> $c.get(`crm:Customer#name`), value: "
+				+ "c -> $c.get(`crm:Customer#revenue`). For data only kind. Omit it for a whole Chart.js "
+				+ "configuration.", required = false) ChartSpec chart,
 			@P(value = "Short title of the view in the user's language, e.g. \"Umsatz pro Kunde\".",
 				required = false) String title,
 			@P(value = "Page channel to write. Omit it: only needed when the page offers several.",
@@ -149,11 +174,14 @@ public abstract class PresentTool {
 					? result.getErrorMessage()
 					: QueryLanguage.withReadingHelp(result.getErrorMessage()));
 			}
+			if (ChartData.isData(result.getResult())) {
+				return presentData(result.getResult(), expression, as, chart, trimmed(title), trimmed(channel),
+					readFilter, context);
+			}
 			String notObjects = notObjects(result.getResult());
 			if (notObjects != null) {
-				return "Nothing was presented: the query must evaluate to model objects, but it returned "
-					+ notObjects + ". Return the objects themselves; a table shows their attributes and "
-					+ "a chart computes its values with 'chart'.";
+				return "Nothing was presented: the query returned " + notObjects + ". Return model objects, "
+					+ "data as {label: number} or a list of records, or a whole Chart.js configuration.";
 			}
 			objects = readFilter.readable(asObjects(result.getResult()));
 		}
@@ -201,6 +229,37 @@ public abstract class PresentTool {
 			return refusal;
 		}
 		return describe(presentation, points);
+	}
+
+	/**
+	 * Shows data a query computed: a chart, or a table of the chart's labels and numbers.
+	 */
+	private String presentData(Object result, String expression, PresentAs as, ChartSpec chart, String title,
+			String channel, ReadFilter readFilter, ToolContext context) {
+		if (chart != null && !(trimmed(chart.label()).isEmpty() && trimmed(chart.value()).isEmpty())) {
+			return "Nothing was presented: 'label' and 'value' are functions of one object, and this query "
+				+ "computed data, whose labels and numbers are already there. Pass chart={kind} only, or "
+				+ "nothing for a whole Chart.js configuration.";
+		}
+		ChartKind kind = chart != null && chart.kind() != null ? chart.kind() : ChartKind.BAR;
+		String heading = title.isEmpty() ? null : title;
+		ChartData data;
+		Presentation presentation;
+		try {
+			data = ChartData.of(result, kind, heading, readFilter);
+			presentation = Presentation.data(as != null ? as : PresentAs.CHART, data, heading, expression);
+		} catch (IllegalArgumentException ex) {
+			return "Nothing was presented: " + ex.getMessage();
+		}
+		if (data.series().stream().allMatch(series -> series.values().isEmpty())) {
+			return "Nothing was presented: the data holds no value the user may see. Tell the user.";
+		}
+
+		String refusal = deliver(presentation, channel, context);
+		if (refusal != null) {
+			return refusal;
+		}
+		return describeData(presentation, data);
 	}
 
 	/**
@@ -252,7 +311,7 @@ public abstract class PresentTool {
 				rows.append(ReadFilter.labelled(objects.get(n)));
 			} else {
 				Presentation.Point point = points.get(n);
-				rows.append(ReadFilter.withId(point.label() + ": " + number(point.value()),
+				rows.append(ReadFilter.withId(point.label() + ": " + ChartData.number(point.value()),
 					ReadFilter.idOf(point.object())));
 			}
 		}
@@ -277,13 +336,54 @@ public abstract class PresentTool {
 			+ "\nDo not repeat these as a table. Say in one or two sentences what the user sees.";
 	}
 
-	/** A number as a person writes it: TL-Script computes in doubles, and 7.0 is 7. */
-	private static String number(Number value) {
-		double asDouble = value.doubleValue();
-		if (asDouble == Math.rint(asDouble) && !Double.isInfinite(asDouble) && Math.abs(asDouble) < 1e15) {
-			return Long.toString((long) asDouble);
+	/**
+	 * The answer to a call that showed data: what is shown, its labels with their values, marked as
+	 * business data, and what was cut.
+	 */
+	private static String describeData(Presentation presentation, ChartData data) {
+		List<String> labels = data.labels();
+		List<ChartData.Series> series = data.series();
+		StringBuilder rows = new StringBuilder();
+		if (data.isTabular()) {
+			int listed = Math.min(labels.size(), MAX_LISTED);
+			for (int n = 0; n < listed; n++) {
+				if (n > 0) {
+					rows.append('\n');
+				}
+				rows.append(labels.get(n)).append(':');
+				for (int s = 0; s < series.size(); s++) {
+					List<?> values = series.get(s).values();
+					Object value = n < values.size() ? values.get(n) : null;
+					rows.append(s == 0 ? " " : ", ");
+					if (series.size() > 1) {
+						rows.append(series.get(s).name()).append(' ');
+					}
+					rows.append(value instanceof Number number ? ChartData.number(number) : "-");
+				}
+			}
+			if (labels.size() > listed) {
+				rows.append("\n... and ").append(labels.size() - listed).append(" more");
+			}
+		} else {
+			for (int s = 0; s < series.size(); s++) {
+				if (s > 0) {
+					rows.append('\n');
+				}
+				rows.append(series.get(s).name()).append(": ").append(series.get(s).values().size()).append(" points");
+			}
 		}
-		return String.valueOf(value);
+		String what;
+		String shape = labels.size() + (labels.size() == 1 ? " label" : " labels")
+			+ (series.size() > 1 ? " in " + series.size() + " series" : "");
+		if (presentation.as() == PresentAs.TABLE) {
+			what = "The user now sees a table of " + shape + ":";
+		} else {
+			what = "The user now sees a " + data.type() + " chart of " + shape + ":";
+		}
+		String cut = data.cut();
+		return what + "\n" + ReadFilter.marked("present", rows.toString())
+			+ (cut == null ? "" : "\n" + cut)
+			+ "\nDo not repeat these as a table. Say in one or two sentences what the user sees.";
 	}
 
 	/** What a query result is instead of model objects, or {@code null} if it is model objects. */

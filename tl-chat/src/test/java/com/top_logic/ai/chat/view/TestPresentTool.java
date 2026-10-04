@@ -8,6 +8,7 @@ package com.top_logic.ai.chat.view;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Test;
@@ -26,10 +27,13 @@ import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -314,7 +318,7 @@ public class TestPresentTool extends BasicTestCase {
 		allow();
 
 		assertSays("the query failed", present("all(`no.such:Type`)"));
-		assertSays("must evaluate to model objects", present(PERSONS + ".size()"));
+		assertSays("the query returned a number", present(PERSONS + ".size()"));
 		assertSays("either 'query' or 'ids'", _tool.present(PERSONS, List.of(tid(first)), null, null, null, "",
 			context(ModelSecurity.UNCHECKED)));
 		assertEquals(List.of(), _written);
@@ -350,6 +354,127 @@ public class TestPresentTool extends BasicTestCase {
 		assertSays("row: 7 [id:" + tid(first) + "]", result);
 		Presentation shown = (Presentation) _channel.get();
 		assertEquals(PresentAs.CHART, shown.as());
+	}
+
+	/** A point of a chart of objects opens its object, which is what its dataset's metadata says. */
+	public void testAChartOfObjectsOpensItsPoints() {
+		withWindow();
+		allow();
+
+		chart(new ChartSpec(ChartKind.BAR, "s -> \"row\"", "s -> 7"));
+
+		Presentation shown = (Presentation) _channel.get();
+		Map<String, Object> config = PaneCharts.config(shown.chartData(), "open");
+		Map<?, ?> dataset = (Map<?, ?>) ((List<?>) ((Map<?, ?>) config.get("data")).get("datasets")).get(0);
+		assertEquals("open", dataset.get("onClick"));
+		assertEquals(List.of(first, second), dataset.get("metadata"));
+		assertEquals(List.of("row", "row"), shown.chartData().labels());
+	}
+
+	/**
+	 * "How many per group" is one call (#655): the query computes the numbers, and they stand on the
+	 * channel as a chart of data - labels and values, no object behind a point.
+	 */
+	public void testACountPerGroupIsOneChart() {
+		withWindow();
+		allow();
+
+		String result = present("{\"Open\": 3, \"Closed\": 5}");
+
+		assertSays("The user now sees a bar chart of 2 labels:", result);
+		assertSays("Open: 3\nClosed: 5", result);
+		Presentation shown = (Presentation) _channel.get();
+		assertTrue(shown.isData());
+		assertEquals(PresentAs.CHART, shown.as());
+		assertEquals(List.of("Open", "Closed"), shown.chartData().labels());
+		assertEquals(List.of(), shown.objects());
+
+		String grouped = present(PERSONS + ".groupBy(p -> \"all\", g -> $g.size())");
+		assertSays("a bar chart of 1 label:", grouped);
+		assertSays("all: ", grouped);
+	}
+
+	/** Several numbers per label are several series, and a table shows them as columns. */
+	public void testSeveralSeriesAsATable() {
+		withWindow();
+		allow();
+
+		String result = _tool.present("list({\"label\": \"Jan\", \"planned\": 5, \"actual\": 3}, "
+			+ "{\"label\": \"Feb\", \"planned\": 4, \"actual\": 6})", null, PresentAs.TABLE, null,
+			"Plan und Ist", "", context(ModelSecurity.UNCHECKED));
+
+		assertSays("The user now sees a table of 2 labels in 2 series:", result);
+		assertSays("Jan: planned 5, actual 3\nFeb: planned 4, actual 6", result);
+		Presentation shown = (Presentation) _channel.get();
+		assertEquals(PresentAs.TABLE, shown.as());
+		assertEquals("Plan und Ist", shown.title());
+	}
+
+	/**
+	 * A query may return a whole Chart.js configuration, as a chart component's script does - which
+	 * is what draws a chart no short form can say, a line over stacked bars.
+	 */
+	public void testAWholeChartConfigurationIsShown() {
+		withWindow();
+		allow();
+
+		String result = present("{'type': 'bar', 'data': {'labels': list('Q1', 'Q2'), 'datasets': list("
+			+ "{'label': 'A', 'data': list(1, 2), 'stack': 's'}, {'label': 'B', 'data': list(3, 4), 'stack': 's'},"
+			+ " {'label': 'Total', 'data': list(4, 6), 'type': 'line'})},"
+			+ " 'options': {'scales': {'x': {'stacked': true}, 'y': {'stacked': true}}}}");
+
+		assertSays("a bar chart of 2 labels in 3 series:", result);
+		assertSays("Q1: A 1, B 3, Total 4", result);
+		Map<String, Object> config = ((Presentation) _channel.get()).chartData().config();
+		assertEquals(Map.of("x", Map.of("stacked", true), "y", Map.of("stacked", true)),
+			((Map<?, ?>) config.get("options")).get("scales"));
+	}
+
+	/** Data that cannot be shown as asked is refused with a sentence the model can act on. */
+	public void testDataIsRefusedWhereItCannotBeShown() {
+		withWindow();
+		allow();
+		ToolContext run = context(ModelSecurity.UNCHECKED);
+
+		assertSays("a FORM shows one object", _tool.present("{\"a\": 1}", null, PresentAs.FORM, null, null, "", run));
+		assertSays("'label' and 'value' are functions of one object", _tool.present("{\"a\": 1}", null,
+			PresentAs.CHART, new ChartSpec(ChartKind.BAR, "x -> $x", "x -> 1"), null, "", run));
+		assertSays("The value for 'a' is the text 'x', not a number", present("{\"a\": \"x\"}"));
+		assertSays("the query returned a list containing a number", present("list(1, {\"a\": 1})"));
+		assertSays("a TABLE shows a label and numbers per row", _tool.present("{'type': 'scatter', 'data':"
+			+ " {'datasets': list({'data': list({'x': 1, 'y': 2})})}}", null, PresentAs.TABLE, null, null, "", run));
+		assertEquals(List.of(), _written);
+	}
+
+	/**
+	 * The pane builds a step for data, chart and table alike. It swallows what it cannot build - a
+	 * page must not break over one presentation - so only a test sees a step that is never built.
+	 */
+	public void testThePaneShowsData() throws Exception {
+		withWindow();
+		allow();
+		ReactWindowRegistry registry = new ReactWindowRegistry("test-session");
+		String window = "paneWindow";
+		DefaultReactContext react = new DefaultReactContext("/app", window, registry.getOrCreateQueue(window), registry);
+		DefaultViewContext view = new DefaultViewContext(react);
+		ViewChannel input = new DefaultViewChannel("paneInput");
+		PresentationPane pane = new PresentationPane(view, input, new ReactControl(react, null, "TLTest"), () -> {
+			// Nothing to tell a browser.
+		});
+		try {
+			present("{\"Open\": 3, \"Closed\": 5}");
+			input.set(_channel.get());
+			_tool.present("{\"Open\": {\"count\": 3, \"sum\": 2.5}}", null, PresentAs.TABLE, null, null, "",
+				context(ModelSecurity.UNCHECKED));
+			input.set(_channel.get());
+
+			List<Map<String, Object>> steps = pane.state();
+			assertEquals(2, steps.size());
+			assertEquals("chart", steps.get(0).get("kind"));
+			assertEquals("table", steps.get(1).get("kind"));
+		} finally {
+			pane.dispose();
+		}
 	}
 
 	/** The same object named twice is one object: the page shows what the model meant. */
@@ -512,6 +637,8 @@ public class TestPresentTool extends BasicTestCase {
 				new TestSuite(TestPresentTool.class),
 				ModelService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
-				AgentViewRefreshService.Module.INSTANCE));
+				AgentViewRefreshService.Module.INSTANCE,
+				ColumnProviderService.Module.INSTANCE,
+				FieldControlService.Module.INSTANCE));
 	}
 }

@@ -14,10 +14,10 @@ package com.top_logic.tl.ai.core.tools.present;
  */
 public enum PresentAs {
 
-	/** One row per object, with the columns of the objects' type. */
+	/** One row per object, with the columns of the objects' type - or one per label of data. */
 	TABLE,
 
-	/** One bar, point or slice per object, its label and value computed from the object. */
+	/** One bar, point or slice per object, its label and value computed from the object - or data. */
 	CHART,
 
 	/** The fields of exactly one object. */

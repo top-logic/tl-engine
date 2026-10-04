@@ -15,12 +15,18 @@ package com.top_logic.tl.ai.core.tools.present;
  * compile, or a value that is not a number, is answered as an error the model can correct.
  * </p>
  *
+ * <p>
+ * For a query that computed data rather than objects, only the {@link #kind() kind} counts: the
+ * labels and numbers are in the data. A whole Chart.js configuration needs no spec at all.
+ * </p>
+ *
  * @param kind
  *        The kind of chart.
  * @param label
- *        TL-Script function from an object to the text that names its bar, point or slice.
+ *        TL-Script function from an object to the text that names its bar, point or slice; empty for
+ *        data.
  * @param value
- *        TL-Script function from an object to its number.
+ *        TL-Script function from an object to its number; empty for data.
  */
 public record ChartSpec(ChartKind kind, String label, String value) {
 	// Sole record.

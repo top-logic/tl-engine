@@ -14,14 +14,20 @@ import com.top_logic.tl.ai.core.tools.script.QueryLanguage;
 import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor;
 
 /**
- * What the agent asked a page to show: a set of objects, and whether as a table, a chart or a form.
+ * What the agent asked a page to show: a set of objects, and whether as a table, a chart or a form -
+ * or data a query computed, as a chart or a table.
  *
  * <p>
  * The value the {@code present} tool hands to a page. It carries the objects themselves, already
- * reduced to the ones the acting user may read, never the expression that found them - a page
- * re-evaluating the query would ask a second time, at another moment and possibly with other rights,
- * and could show something the agent never saw. The {@link #query() query} is kept as text only to
- * say where the objects came from.
+ * reduced to the ones the acting user may read, or the computed data as {@link ChartData}, never the
+ * expression that found them - a page re-evaluating the query would ask a second time, at another
+ * moment and possibly with other rights, and could show something the agent never saw. The
+ * {@link #query() query} is kept as text only to say where the objects or the data came from.
+ * </p>
+ *
+ * <p>
+ * Every chart reaches the page in one format, the Chart.js configuration of {@link #chartData()}:
+ * a chart of objects computes it from its objects, a chart of data carries it.
  * </p>
  *
  * <p>
@@ -59,8 +65,10 @@ public final class Presentation {
 
 	private final QueryExecutor _valueFunction;
 
+	private final ChartData _data;
+
 	private Presentation(PresentAs as, List<TLObject> objects, String title, String query, ChartSpec chart,
-			QueryExecutor labelFunction, QueryExecutor valueFunction) {
+			QueryExecutor labelFunction, QueryExecutor valueFunction, ChartData data) {
 		_as = as;
 		_objects = List.copyOf(objects);
 		_title = title;
@@ -68,6 +76,7 @@ public final class Presentation {
 		_chart = chart;
 		_labelFunction = labelFunction;
 		_valueFunction = valueFunction;
+		_data = data;
 	}
 
 	/**
@@ -89,7 +98,7 @@ public final class Presentation {
 		if (as == PresentAs.FORM && objects.size() != 1) {
 			throw new IllegalArgumentException("A form shows exactly one object, not " + objects.size() + ".");
 		}
-		return new Presentation(as, objects, title, query, null, null, null);
+		return new Presentation(as, objects, title, query, null, null, null, null);
 	}
 
 	/**
@@ -109,7 +118,39 @@ public final class Presentation {
 	public static Presentation chart(List<TLObject> objects, ChartSpec chart, String title, String query) {
 		QueryExecutor label = function("label", chart.label());
 		QueryExecutor value = function("value", chart.value());
-		return new Presentation(PresentAs.CHART, objects, title, query, chart, label, value);
+		return new Presentation(PresentAs.CHART, objects, title, query, chart, label, value, null);
+	}
+
+	/**
+	 * A chart or a table of data a query computed.
+	 *
+	 * @param as
+	 *        {@link PresentAs#CHART} or {@link PresentAs#TABLE}; a table takes data that
+	 *        {@link ChartData#isTabular() reads as one}.
+	 * @param data
+	 *        The data, already reduced to what the user may read.
+	 * @param title
+	 *        What the page calls this view, or {@code null} to let the page decide.
+	 * @param query
+	 *        The expression that computed the data.
+	 * @throws IllegalArgumentException
+	 *         If the data cannot be shown as asked; the message says why, for the model.
+	 */
+	public static Presentation data(PresentAs as, ChartData data, String title, String query) {
+		switch (as) {
+			case FORM:
+				throw new IllegalArgumentException("a FORM shows one object, and the query computed data. Use CHART"
+					+ " or TABLE.");
+			case TABLE:
+				if (!data.isTabular()) {
+					throw new IllegalArgumentException("a TABLE shows a label and numbers per row, and this chart's"
+						+ " points have coordinates of their own. Use CHART.");
+				}
+				break;
+			default:
+				break;
+		}
+		return new Presentation(as, List.of(), title, query, null, null, null, data);
 	}
 
 	private static QueryExecutor function(String name, String source) {
@@ -128,6 +169,13 @@ public final class Presentation {
 	}
 
 	/**
+	 * Whether this shows data a query computed rather than objects.
+	 */
+	public boolean isData() {
+		return _data != null;
+	}
+
+	/**
 	 * How the objects are shown.
 	 */
 	public PresentAs as() {
@@ -135,7 +183,7 @@ public final class Presentation {
 	}
 
 	/**
-	 * The objects, in the order they are shown.
+	 * The objects, in the order they are shown; empty for {@link #isData() data}.
 	 */
 	public List<TLObject> objects() {
 		return _objects;
@@ -156,10 +204,41 @@ public final class Presentation {
 	}
 
 	/**
-	 * What the chart computes, or {@code null} for a table or a form.
+	 * What a chart of objects computes from each of them, or {@code null} for a table, a form, or
+	 * {@link #isData() data}.
 	 */
 	public ChartSpec chart() {
 		return _chart;
+	}
+
+	/**
+	 * The chart as Chart.js draws it, or {@code null} for a table or a form of objects.
+	 *
+	 * <p>
+	 * For a chart of objects computed from the objects as they are now, with each object as the
+	 * {@code metadata} of its point; for data, the data the query computed.
+	 * </p>
+	 *
+	 * @throws IllegalArgumentException
+	 *         If a function of a chart of objects fails; see {@link #points()}.
+	 */
+	public ChartData chartData() {
+		if (_data != null) {
+			return _data;
+		}
+		if (_chart == null) {
+			return null;
+		}
+		List<Point> points = points();
+		List<String> labels = new ArrayList<>(points.size());
+		List<Number> values = new ArrayList<>(points.size());
+		List<TLObject> objects = new ArrayList<>(points.size());
+		for (Point point : points) {
+			labels.add(point.label());
+			values.add(point.value());
+			objects.add(point.object());
+		}
+		return ChartData.ofPoints(_chart.kind(), _title, labels, values, objects);
 	}
 
 	/**
@@ -188,7 +267,9 @@ public final class Presentation {
 				throw new IllegalArgumentException("The chart's value function returned '" + value + "' for object "
 					+ (n + 1) + ", which is not a number.");
 			}
-			result.add(new Point(object, label == null ? "" : String.valueOf(label),
+			// A label function may return an object - a status, a customer: it is named by its
+			// display label, not by its technical name.
+			result.add(new Point(object, ChartData.text(label),
 				value == null ? Integer.valueOf(0) : (Number) value));
 		}
 		return result;
@@ -205,6 +286,9 @@ public final class Presentation {
 
 	@Override
 	public String toString() {
+		if (_data != null) {
+			return _as.name().toLowerCase() + " of data (" + _data.labels().size() + " label(s))";
+		}
 		return _as.name().toLowerCase() + " of " + _objects.size() + " object(s)";
 	}
 }

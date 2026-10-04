@@ -29,7 +29,7 @@ import com.top_logic.tl.ai.core.security.layout.PolicyMatrix.RowState;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
- * The overlay and the inspector of the policy matrix: what one role on its own may use under the
+ * The overlay and the cell tooltips of the policy matrix: what one role on its own may use under the
  * draft (#404).
  */
 public class TestDraftAccess extends TestCase {

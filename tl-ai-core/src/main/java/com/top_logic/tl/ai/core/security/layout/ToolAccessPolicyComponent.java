@@ -87,7 +87,9 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.Resources;
 
 /*
- * Issue #404, variant C of the wireframes: one matrix per sub-tab, the role inspector next to it.
+ * Issue #404, variant C of the wireframes: one matrix per sub-tab. The role inspector that stood next
+ * to it is gone (#660): the matrix takes the full width, and the one fact only the inspector stated -
+ * which agents make a model or server reachable as their own - is in that cell's tooltip.
  *
  * The class comment below is exported to META-INF/messages_*.properties by the build's doclet and shown
  * as this component's tooltip in the layout editor, so it is written for an administrator and stays
@@ -264,8 +266,8 @@ public class ToolAccessPolicyComponent extends FormComponent {
 	/** The columns the form was built with; a change of them needs a new table. */
 	private List<String> _shownColumns = List.of();
 
-	/** The row the inspector describes, or <code>null</code>. Survives a rebuild. */
-	private MatrixRow _inspected;
+	/** The selected rows. Survives a rebuild. */
+	private Set<MatrixRow> _selected = Set.of();
 
 	/** What the search field says. Survives a rebuild. */
 	private String _search = "";
@@ -383,9 +385,7 @@ public class ToolAccessPolicyComponent extends FormComponent {
 		List<HTMLTemplateFragment> content = new ArrayList<>();
 		content.add(htmlTemplate(messages(context)));
 		content.add(htmlTemplate(bar));
-		content.add(div(css("aiPolicyMatrixSplit"),
-			div(css("aiPolicyMatrixTable"), htmlTemplate(_table)),
-			div(css("aiPolicyInspector"), htmlTemplate(dynamic("inspector", this::inspector)))));
+		content.add(div(css("aiPolicyMatrixTable"), htmlTemplate(_table)));
 		if (_dimension == MatrixDimension.CAPABILITIES) {
 			addAssignmentGroup(context, content);
 		}
@@ -463,7 +463,7 @@ public class ToolAccessPolicyComponent extends FormComponent {
 		refreshNotes();
 	}
 
-	/** After a click: the cell repaints itself; the notes, the warnings and the inspector follow. */
+	/** After a click: the cell repaints itself; the notes and the warnings follow. */
 	void afterCellEdit() {
 		_shownRevision = session().revision();
 		refreshNotes();
@@ -665,10 +665,12 @@ public class ToolAccessPolicyComponent extends FormComponent {
 		TableField field = FormFactory.newTableField(FIELD_MATRIX, _tableModel, true);
 		DefaultMultiSelectionModel<Object> selection = new DefaultMultiSelectionModel<>(
 			row -> row instanceof MatrixRow matrixRow && matrixRow.isRole(), field);
-		selection.addSelectionListener((model, event) -> inspectSelection(model));
+		selection.addSelectionListener((model, event) -> _selected = selectedRows(model));
 		field.setSelectionModel(selection);
-		if (_inspected != null && _inspected.isRole() && rows().contains(_inspected)) {
-			selection.setSelection(Set.of(_inspected), _inspected);
+		Set<MatrixRow> kept = new HashSet<>(_selected);
+		kept.retainAll(rows());
+		if (!kept.isEmpty()) {
+			selection.setSelection(kept);
 		}
 		field.setInheritDeactivation(false);
 		field.setTransient(true);
@@ -745,9 +747,6 @@ public class ToolAccessPolicyComponent extends FormComponent {
 			if (matrix().isLocked(matrixRow.roleName())) {
 				classes.add("aiPolicyLockedRow");
 			}
-		}
-		if (matrixRow.equals(_inspected)) {
-			classes.add("aiPolicyInspectedRow");
 		}
 		return classes.isEmpty() ? null : String.join(" ", classes);
 	}
@@ -1016,6 +1015,10 @@ public class ToolAccessPolicyComponent extends FormComponent {
 		}
 		result.append(resources().getString(I18NConstants.CELL_RUN_VERDICT__VERDICT
 			.fill(ToolAccessLabels.sentence(verdict.decision()))));
+		if (verdict.mark() == DraftAccess.Mark.AGENTS_OWN) {
+			result.append(' ').append(resources().getString(I18NConstants.CELL_AGENTS_OWN__AGENTS.fill(
+				String.join(", ", access().agentsUsing(roleName, _dimension.runDimension(), name)))));
+		}
 		return result.toString();
 	}
 
@@ -1184,38 +1187,14 @@ public class ToolAccessPolicyComponent extends FormComponent {
 		return _access;
 	}
 
-	// ------------------------------------------------------------- inspector
-
-	private void inspectSelection(SelectionModel<?> model) {
-		Set<?> selection = model.getSelection();
-		MatrixRow lead = null;
-		for (Object row : selection) {
+	private static Set<MatrixRow> selectedRows(SelectionModel<?> model) {
+		Set<MatrixRow> result = new HashSet<>();
+		for (Object row : model.getSelection()) {
 			if (row instanceof MatrixRow matrixRow) {
-				if (matrixRow.equals(_inspected)) {
-					lead = matrixRow;
-					break;
-				}
-				lead = matrixRow;
+				result.add(matrixRow);
 			}
 		}
-		if (lead != null || selection.isEmpty()) {
-			_inspected = lead;
-		}
-		DynamicFragment inspector = _dynamic.get("inspector");
-		if (inspector != null) {
-			inspector.requestRepaint();
-		}
-		if (_table != null) {
-			_table.requestRepaint();
-		}
-	}
-
-	private HTMLFragment inspector() {
-		if (_inspected == null || !_inspected.isRole()) {
-			return Fragments.div("aiPolicyInspectorEmpty", Fragments.message(I18NConstants.INSPECTOR_EMPTY));
-		}
-		return new RoleInspector(access(), _unattended)
-			.view(_inspected.roleName(), roleLabelText(_inspected.roleName()));
+		return result;
 	}
 
 	/** The roles the current selection holds, in the order of the matrix. */

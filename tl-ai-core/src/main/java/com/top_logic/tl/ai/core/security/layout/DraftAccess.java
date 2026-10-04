@@ -29,7 +29,7 @@ import com.top_logic.tl.ai.core.security.ToolAccessExplanation;
  * What one role on its own may use under the policy being edited, and why.
  *
  * <p>
- * The answer the matrix overlay and the role inspector show. It is computed from the <em>draft</em>,
+ * The answer the matrix overlay and the cell tooltips show. It is computed from the <em>draft</em>,
  * not from the running service: it says what the policy on the screen would do, which is the question
  * of somebody editing it. The effective-permissions tab answers for the running service and for
  * accounts that hold several roles.
@@ -142,11 +142,6 @@ public final class DraftAccess {
 			default:
 				return _agents.fallback();
 		}
-	}
-
-	/** The names of one run dimension the application has. */
-	public Collection<String> knownNames(Dimension dimension) {
-		return _knownNames.apply(dimension);
 	}
 
 	/** The draft this answers for. */

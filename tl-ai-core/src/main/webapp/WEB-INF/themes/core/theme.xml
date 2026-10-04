@@ -3,7 +3,7 @@
 <!--
 	Contributes the stylesheets of the administration views this module adds.
 
-	agentSecurity.css: the cells, column headers and inspector pane of the Richtlinie matrices are
+	agentSecurity.css: the cells and column headers of the Richtlinie matrices are
 	controls of this module that no theme knows, so their look has to come from a stylesheet - and a
 	library module contributes one the same way tl-chat contributes its own.
 

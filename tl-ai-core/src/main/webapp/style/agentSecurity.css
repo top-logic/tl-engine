@@ -3,7 +3,7 @@
  *
  * The Richtlinie tab is a matrix per sub-tab (#404): the table, its fields and the toolbar are the
  * framework's; what is styled here are the pieces it has no control for - the cells, the column
- * headers, the inspector pane - and the messages at the top.
+ * headers - and the messages at the top.
  *
  * Colours are deliberately conservative and stated literally: this file is contributed by a library
  * module and has to look right in the shipped theme without depending on a variable that theme happens
@@ -149,24 +149,12 @@
 	--ai-policy-refused: #b3261e;
 	--ai-policy-own: #1d5fa8;
 	--ai-policy-special-bg: rgba(120, 130, 140, 0.10);
-	--ai-policy-inspected-bg: #fff6d6;
 	--ai-policy-unknown-bg: #fbe3e1;
-	--ai-policy-pane-bg: #f6f7f8;
-	--ai-policy-pane-border: #d7dce0;
 	--ai-policy-muted: #5f6b76;
 	max-width: none;
 }
 
-
-.aiPolicyMatrixSplit {
-	display: flex;
-	align-items: flex-start;
-	gap: 14px;
-}
-
 .aiPolicyMatrixTable {
-	flex: 1 1 auto;
-	min-width: 0;
 	overflow-x: auto;
 }
 
@@ -312,10 +300,6 @@ tr.aiPolicySpecialRow > td {
 	font-weight: 600;
 }
 
-tr.aiPolicyInspectedRow > td {
-	background-color: var(--ai-policy-inspected-bg);
-}
-
 tr.aiPolicyUnknown > td,
 td.aiPolicyUnknown,
 th.aiPolicyUnknown {
@@ -345,74 +329,6 @@ th.aiPolicyUnknown {
 	cursor: pointer;
 	text-decoration: underline;
 	color: var(--ai-policy-own);
-}
-
-/* --- the inspector ------------------------------------------------------- */
-
-.aiPolicyInspector {
-	flex: 0 0 300px;
-	max-width: 300px;
-	border: 1px solid var(--ai-policy-pane-border);
-	border-radius: 4px;
-	background: var(--ai-policy-pane-bg);
-	padding: 8px 10px 10px;
-	position: sticky;
-	top: 0;
-}
-
-.aiPolicyInspectorHead {
-	display: flex;
-	justify-content: space-between;
-	gap: 8px;
-	font-weight: 600;
-}
-
-.aiPolicyInspectorName {
-	font-family: monospace;
-	font-weight: normal;
-	color: var(--ai-policy-muted);
-}
-
-.aiPolicyInspectorBasis,
-.aiPolicyInspectorEmpty {
-	margin: 4px 0 8px;
-	color: var(--ai-policy-muted);
-	font-size: 0.9em;
-}
-
-.aiPolicyInspectorSection {
-	margin: 10px 0 4px;
-	padding-bottom: 2px;
-	border-bottom: 1px solid var(--ai-policy-pane-border);
-	font-weight: 600;
-}
-
-.aiPolicyInspectorLine {
-	margin: 3px 0;
-	line-height: 1.35;
-}
-
-.aiPolicyInspectorIcon {
-	display: inline-block;
-	width: 16px;
-	font-weight: 700;
-}
-
-.aiPolicyInspectorAllowed .aiPolicyInspectorIcon {
-	color: var(--ai-policy-granted);
-}
-
-.aiPolicyInspectorDenied .aiPolicyInspectorIcon,
-.aiPolicyInspectorRefused .aiPolicyInspectorIcon {
-	color: var(--ai-policy-denied);
-}
-
-.aiPolicyInspectorOwn .aiPolicyInspectorIcon {
-	color: var(--ai-policy-own);
-}
-
-.aiPolicyInspectorReason {
-	color: var(--ai-policy-muted);
 }
 
 /* --- the bulk dialog ----------------------------------------------------- */

@@ -205,10 +205,9 @@ restricted first or skipped - whichever the dialog says.
 **Effektiv anzeigen** puts on every cell what a run of that role *on its own* would do, computed from
 the draft: ⊘ where the run refuses what the cell or the default grants (an infrastructure agent, an
 agent whose own model or server the role may not use), and *A* where a model or server is reachable
-only because an agent the role may run uses it. The cell's tooltip gives the reason. The pane on the
-right shows the selected role across all four dimensions, grouped by reason, and says *Grundlage:
-Entwurf*. Accounts that hold several roles, and the running service, are what the **Effektive Rechte**
-tab answers.
+only because an agent the role may run uses it. The cell's tooltip gives the reason, and for an *A*
+the agents that use it. A role across all four dimensions at once, accounts that hold several roles,
+and the running service are what the **Effektive Rechte** tab answers.
 
 The role search and the row filter (*nur eingeschränkte*, *nur nicht genannte*) narrow the rows; a
 page shows 25 of them. The *Rückgängig* history lasts for the editing session and is forgotten by an

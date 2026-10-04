@@ -985,6 +985,15 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 CELL_RUN_VERDICT__VERDICT;
 
 	/**
+	 * Tooltip addition of a run-section cell reachable only because agents the role may run use it
+	 * themselves.
+	 *
+	 * @en Agents that use it themselves: {0}
+	 * @de Agenten, die es selbst verwenden: {0}
+	 */
+	public static ResKey1 CELL_AGENTS_OWN__AGENTS;
+
+	/**
 	 * Tooltip of the single-tools cell of a row.
 	 *
 	 * @en Grants and prohibitions of single tools. Click to edit.
@@ -1140,94 +1149,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @tooltip Asks about a run with nobody to confirm a tool call, which the limit of unattended runs binds.
 	 */
 	public static ResKey FIELD_UNATTENDED;
-
-	/**
-	 * Inspector reason: reachable because an agent the role may run uses it.
-	 *
-	 * @en only as the agent's own of {0}
-	 * @de nur als eigenes von {0}
-	 */
-	public static ResKey1 INSPECTOR_AGENTS_OWN__AGENTS;
-
-	/**
-	 * Inspector subtitle while the draft equals the saved policy.
-	 *
-	 * @en What the role alone may use, and why. Basis: draft
-	 * @de Was die Rolle allein darf, und warum. Grundlage: Entwurf
-	 */
-	public static ResKey INSPECTOR_BASIS_SAVED;
-
-	/**
-	 * Inspector subtitle while the draft differs from the saved policy.
-	 *
-	 * @en What the role alone may use, and why. Basis: draft (not saved)
-	 * @de Was die Rolle allein darf, und warum. Grundlage: Entwurf (nicht gespeichert)
-	 */
-	public static ResKey INSPECTOR_BASIS_UNSAVED;
-
-	/**
-	 * Inspector heading of the capabilities.
-	 *
-	 * @en Capabilities · {0} ✓ · {1} ✕ · basic permissions: {2} · {3}
-	 * @de Fähigkeiten · {0} ✓ · {1} ✕ · Grundberechtigung: {2} · {3}
-	 */
-	public static ResKey4 INSPECTOR_CAPABILITIES__GRANTED_DENIED_BASELINE_MODE;
-
-	/**
-	 * Inspector reason of a forbidden name.
-	 *
-	 * @en cell ✕, beats every role
-	 * @de Zelle ✕, gewinnt gegen jede Rolle
-	 */
-	public static ResKey INSPECTOR_DENIED_BY_CELL;
-
-	/**
-	 * Inspector text while no row is selected.
-	 *
-	 * @en Select a row to see what that role may use, and why.
-	 * @de Eine Zeile auswählen, um zu sehen, was diese Rolle darf und warum.
-	 */
-	public static ResKey INSPECTOR_EMPTY;
-
-	/**
-	 * Inspector state of a role a section does not name.
-	 *
-	 * @en not named · default {0}
-	 * @de nicht genannt · Voreinstellung {0}
-	 */
-	public static ResKey1 INSPECTOR_NOT_NAMED__DEFAULT;
-
-	/**
-	 * Inspector line counting the names that are simply not permitted.
-	 *
-	 * @en {0} more
-	 * @de {0} weitere
-	 */
-	public static ResKey1 INSPECTOR_REST__COUNT;
-
-	/**
-	 * Inspector reason for a role the section does not name.
-	 *
-	 * @en the section default does not admit them
-	 * @de die Voreinstellung lässt sie nicht zu
-	 */
-	public static ResKey INSPECTOR_REST_DEFAULT;
-
-	/**
-	 * Inspector reason for a restricted role.
-	 *
-	 * @en restricted, no cell ✓
-	 * @de eingeschränkt, keine Zelle ✓
-	 */
-	public static ResKey INSPECTOR_REST_RESTRICTED;
-
-	/**
-	 * Inspector heading of a run section.
-	 *
-	 * @en {0} · {1} · {2} of {3}
-	 * @de {0} · {1} · {2} von {3}
-	 */
-	public static ResKey4 INSPECTOR_SECTION__DIMENSION_STATE_ALLOWED_TOTAL;
 
 	/**
 	 * Legend above a run section matrix.

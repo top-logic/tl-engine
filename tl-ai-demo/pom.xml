@@ -18,7 +18,7 @@
 	  </license>
 	</licenses>
 	
-	<version>8.0.0-alpha9</version>
+	<version>2.0.7</version>
   	
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
@@ -30,18 +30,18 @@
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-mcp-server</artifactId>
-			<version>2.0.7-SNAPSHOT</version>
+			<version>2.0.7</version>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-chat</artifactId>
-			<version>2.0.7-SNAPSHOT</version>
+			<version>2.0.7</version>
 		</dependency>
 		<!-- The "Albert" tab of the classic LayoutServlet UI, hosting the React chat (#618). -->
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-chat-classic</artifactId>
-			<version>2.0.7-SNAPSHOT</version>
+			<version>2.0.7</version>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
@@ -50,12 +50,12 @@
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-core</artifactId>
-			<version>2.0.7-SNAPSHOT</version>
+			<version>2.0.7</version>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-vector-index</artifactId>
-			<version>2.0.7-SNAPSHOT</version>
+			<version>2.0.7</version>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
@@ -122,7 +122,7 @@
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-core</artifactId>
-			<version>2.0.7-SNAPSHOT</version>
+			<version>2.0.7</version>
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
@@ -174,4 +174,8 @@
 			</plugin>
 		</plugins>
 	</build>
+
+  <scm>
+    <tag>TL_2.0.7</tag>
+  </scm>
 </project>

@@ -31,6 +31,10 @@
  *   TLFormField       - FormFieldState
  *   TLText            - TextState
  *   TLCard            - CardState
+ *   TLAppBar          - AppBarState
+ *   TLBreadcrumb      - BreadcrumbState
+ *   TLProgress        - ProgressState
+ *   TLSlider          - SliderState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -1379,4 +1383,150 @@ export namespace CardStateJson {
 		 * No space.
 		 */
 		| 'none';
+}
+
+/**
+ * State of the bar at the top of an application, the component `TLAppBar`: a control
+ * opening it, the title, inline content, the commands placed in it and a control closing it, in
+ * this order.
+ *
+ * The component suggests the appearance `ghost` to the buttons of its {@link AppBarStateJson.actions} (see
+	 * {@link ButtonStateJson.appearance}). It sends no commands.
+ */
+export interface AppBarStateJson extends ControlStateJson {
+	/**
+	 * The text naming the application, plain text. Absent: empty.
+	 */
+	title: string;
+
+	/**
+	 * How the bar sets itself off. Absent means `'flat'`, a flat bar.
+	 */
+	variant: AppBarStateJson.Variant;
+
+	/**
+	 * The control opening the bar, ahead of the title (e.g. a button opening the navigation).
+	 * Absent: none.
+	 */
+	leading?: ChildControlJson;
+
+	/**
+	 * Inline content between the title and the {@link AppBarStateJson.actions}, in display order. Absent: none.
+	 */
+	children: ChildControlJson[];
+
+	/**
+	 * The toolbar of the commands placed in the bar. It renders nothing while it holds no command,
+	 * and folds the commands that do not fit into its overflow menu. Absent: none.
+	 */
+	actions?: ChildControlJson;
+
+	/**
+	 * The control closing the bar, after the {@link AppBarStateJson.actions}. Absent: none.
+	 */
+	trailing?: ChildControlJson;
+}
+
+export namespace AppBarStateJson {
+	/**
+	 * How the bar sets itself off from the content below it.
+	 */
+	export type Variant =
+		/**
+		 * A flat bar without a shadow.
+		 */
+		| 'flat'
+		/**
+		 * A bar raised above the content by a drop shadow.
+		 */
+		| 'elevated';
+}
+
+/**
+ * State of a navigation trail showing the current location in a hierarchy, the component
+ * `TLBreadcrumb`.
+ *
+ * Every item before the last one leads back to its place: a click on it sends the command
+ * `navigate` with the {@link BreadcrumbStateJson.Item.id} of the item as argument `itemId`. The last item
+ * is the current location and leads nowhere.
+ */
+export interface BreadcrumbStateJson extends ControlStateJson {
+	/**
+	 * The places from the outermost to the current location, which is the last item. Absent: none.
+	 */
+	items: BreadcrumbStateJson.Item[];
+}
+
+export namespace BreadcrumbStateJson {
+	/**
+	 * A place in the trail.
+	 */
+	export interface Item {
+		/**
+		 * The ID of the item, by which the client names it to the server.
+		 */
+		id: string;
+
+		/**
+		 * The label of the item, plain text.
+		 */
+		label: string;
+	}
+}
+
+/**
+ * State of a bar displaying a fraction, with an optional label beside it, the component
+ * `TLProgress`.
+ *
+ * The component sends no commands.
+ */
+export interface ProgressStateJson extends ControlStateJson {
+	/**
+	 * The filled part of the track, a number between 0 and 1. Absent or `null`: the
+	 * indeterminate bar, which says that something is going on without saying how far it has come.
+	 */
+	fraction: number;
+
+	/**
+	 * The text beside the bar, plain text (e.g. `3 / 4`). Absent: the bar stands alone.
+	 */
+	label: string;
+}
+
+/**
+ * State of a number field set by dragging a handle along a track, the component
+ * `TLSlider`.
+ *
+ * The {@link FieldStateJson.value} is the number itself, or `null` for a field holding no value; the
+ * handle of an empty field stands at the {@link SliderStateJson.min} and no text is shown. A change is sent as
+ * the command `valueChanged` with the number the handle stands on as argument
+ * `value`, once the handle comes to rest.
+ */
+export interface SliderStateJson extends FieldStateJson {
+	/**
+	 * The smallest value the handle can stand on. Absent: 0.
+	 */
+	min: number;
+
+	/**
+	 * The largest value the handle can stand on. Absent: 100.
+	 */
+	max: number;
+
+	/**
+	 * The distance between two values the handle can stand on. Absent: 1.
+	 */
+	step: number;
+
+	/**
+	 * The value written in the format of the field, plain text, shown beside the handle and as the
+	 * whole display of a field that is not editable. Absent: no text.
+	 */
+	valueLabel: string;
+
+	/**
+	 * How long a value is held back after the handle last moved before it is sent, in
+	 * milliseconds; releasing the handle sends it at once. Absent: the default of the component.
+	 */
+	debounceMs: number;
 }

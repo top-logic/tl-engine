@@ -40,6 +40,7 @@ import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.common.ReactAlertControl;
+import com.top_logic.layout.react.control.common.ReactProgressControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.common.TextAppearance;
 import com.top_logic.layout.react.control.common.TextOverflow;
@@ -54,6 +55,7 @@ import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
+import com.top_logic.layout.react.control.form.ReactSliderControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactCardControl;
@@ -61,6 +63,10 @@ import com.top_logic.layout.react.control.layout.ReactCardControl.CardPadding;
 import com.top_logic.layout.react.control.layout.ReactCardControl.CardVariant;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
+import com.top_logic.layout.react.control.nav.ReactAppBarControl;
+import com.top_logic.layout.react.control.nav.ReactAppBarControl.AppBarVariant;
+import com.top_logic.layout.react.control.nav.ReactBreadcrumbControl;
+import com.top_logic.layout.react.control.nav.ReactBreadcrumbControl.BreadcrumbEntry;
 import com.top_logic.layout.react.control.overlay.ReactDialogControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
@@ -74,6 +80,8 @@ import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.react.control.toggle.ReactToggleButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.AlertState;
+import com.top_logic.layout.react.state.AppBarState;
+import com.top_logic.layout.react.state.BreadcrumbState;
 import com.top_logic.layout.react.state.ButtonState;
 import com.top_logic.layout.react.state.CardState;
 import com.top_logic.layout.react.state.CheckboxState;
@@ -85,7 +93,9 @@ import com.top_logic.layout.react.state.FormFieldState;
 import com.top_logic.layout.react.state.MenuState;
 import com.top_logic.layout.react.state.NumberInputState;
 import com.top_logic.layout.react.state.PasswordInputState;
+import com.top_logic.layout.react.state.ProgressState;
 import com.top_logic.layout.react.state.SelectState;
+import com.top_logic.layout.react.state.SliderState;
 import com.top_logic.layout.react.state.SnackbarState;
 import com.top_logic.layout.react.state.TabBarState;
 import com.top_logic.layout.react.state.TextInputState;
@@ -664,6 +674,86 @@ public class TestControlStateSchema extends TestCase {
 	 */
 	public void testCardPadding() {
 		assertSameNames(CardPadding.values(), CardState.Padding.values(), CardState.Padding::valueOf);
+	}
+
+	/**
+	 * Every key of an app bar is declared in {@link AppBarState}, and every property of
+	 * {@link AppBarState} is put by the control.
+	 */
+	public void testAppBarKeys() {
+		ReactContext context = createContext();
+		ReactAppBarControl control = new ReactAppBarControl(context, "Title", AppBarVariant.ELEVATED, toggle(),
+			new ReactToolbarControl(context), List.of(toggle()), toggle());
+		control.setTitle("Other title");
+		control.setHidden(false);
+		control.setCssClass("css");
+
+		Map<?, ?> state = state(control);
+		assertDeclared(state, AppBarState.class);
+		assertEquals(properties(AppBarState.class), state.keySet());
+		assertChild(state.get(AppBarState.LEADING__PROP));
+		assertChild(state.get(AppBarState.ACTIONS__PROP));
+		assertChild(state.get(AppBarState.TRAILING__PROP));
+		for (Object child : (List<?>) state.get(AppBarState.CHILDREN__PROP)) {
+			assertChild(child);
+		}
+	}
+
+	/**
+	 * The variants of an app bar are sent as the schema spells them.
+	 */
+	public void testAppBarVariant() {
+		assertSameNames(AppBarVariant.values(), AppBarState.Variant.values(), AppBarState.Variant::valueOf);
+	}
+
+	/**
+	 * Every key of a breadcrumb and of its items is declared in {@link BreadcrumbState}.
+	 */
+	public void testBreadcrumbKeys() {
+		ReactBreadcrumbControl control = new ReactBreadcrumbControl(createContext(),
+			List.of(new BreadcrumbEntry("a", "A"), new BreadcrumbEntry("b", "B")), id -> {
+				// Not navigated.
+			});
+		control.setHidden(false);
+		control.setCssClass("css");
+
+		Map<?, ?> state = state(control);
+		assertDeclared(state, BreadcrumbState.class);
+		assertEquals(properties(BreadcrumbState.class), state.keySet());
+		assertEachDeclared(state.get(BreadcrumbState.ITEMS__PROP), BreadcrumbState.Item.class);
+	}
+
+	/**
+	 * Every key of a progress bar is declared in {@link ProgressState}, and every property of
+	 * {@link ProgressState} is put by the control.
+	 */
+	public void testProgressKeys() {
+		ReactProgressControl control = new ReactProgressControl(createContext(), null, null);
+		control.setProgress(Double.valueOf(0.5), "1 / 2");
+		control.setHidden(false);
+		control.setCssClass("css");
+
+		Map<?, ?> state = state(control);
+		assertDeclared(state, ProgressState.class);
+		assertEquals(properties(ProgressState.class), state.keySet());
+	}
+
+	/**
+	 * Every key of a slider is declared in {@link SliderState}.
+	 */
+	public void testSliderKeys() {
+		ReactSliderControl control = new ReactSliderControl(createContext(),
+			new AbstractFieldModel(Double.valueOf(5)), NumberFormat.getInstance(Locale.GERMAN), 0, 10, 0.5);
+		putFieldKeys(control);
+		control.setDebounce(Long.valueOf(100));
+
+		Map<?, ?> state = state(control);
+		assertDeclared(state, SliderState.class);
+		assertTrue(state.containsKey(SliderState.MIN__PROP));
+		assertTrue(state.containsKey(SliderState.MAX__PROP));
+		assertTrue(state.containsKey(SliderState.STEP__PROP));
+		assertTrue(state.containsKey(SliderState.VALUE_LABEL__PROP));
+		assertTrue(state.containsKey(SliderState.DEBOUNCE_MS__PROP));
 	}
 
 	private ReactToggleButtonControl toggle() {

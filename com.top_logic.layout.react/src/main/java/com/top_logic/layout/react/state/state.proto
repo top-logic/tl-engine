@@ -27,6 +27,10 @@
  *   TLFormField       - FormFieldState
  *   TLText            - TextState
  *   TLCard            - CardState
+ *   TLAppBar          - AppBarState
+ *   TLBreadcrumb      - BreadcrumbState
+ *   TLProgress        - ProgressState
+ *   TLSlider          - SliderState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -1379,4 +1383,148 @@ message CardState extends ControlState {
 	 * The content of the card.
 	 */
 	ChildControl child;
+}
+
+/**
+ * State of the bar at the top of an application, the component {@code TLAppBar}: a control
+ * opening it, the title, inline content, the commands placed in it and a control closing it, in
+ * this order.
+ *
+ * The component suggests the appearance {@code ghost} to the buttons of its {@link #actions} (see
+ * {@link ButtonState#appearance}). It sends no commands.
+ */
+message AppBarState extends ControlState {
+
+	/**
+	 * How the bar sets itself off from the content below it.
+	 */
+	enum Variant {
+		/** A flat bar without a shadow. */
+		@Name("flat")
+		FLAT;
+
+		/** A bar raised above the content by a drop shadow. */
+		@Name("elevated")
+		ELEVATED;
+	}
+
+	/**
+	 * The text naming the application, plain text. Absent: empty.
+	 */
+	string title;
+
+	/**
+	 * How the bar sets itself off. Absent means {@link Variant#FLAT}, a flat bar.
+	 */
+	Variant variant;
+
+	/**
+	 * The control opening the bar, ahead of the title (e.g. a button opening the navigation).
+	 * Absent: none.
+	 */
+	ChildControl leading;
+
+	/**
+	 * Inline content between the title and the {@link #actions}, in display order. Absent: none.
+	 */
+	repeated ChildControl children;
+
+	/**
+	 * The toolbar of the commands placed in the bar. It renders nothing while it holds no command,
+	 * and folds the commands that do not fit into its overflow menu. Absent: none.
+	 */
+	ChildControl actions;
+
+	/**
+	 * The control closing the bar, after the {@link #actions}. Absent: none.
+	 */
+	ChildControl trailing;
+}
+
+/**
+ * State of a navigation trail showing the current location in a hierarchy, the component
+ * {@code TLBreadcrumb}.
+ *
+ * Every item before the last one leads back to its place: a click on it sends the command
+ * {@code navigate} with the {@link Item#id} of the item as argument {@code itemId}. The last item
+ * is the current location and leads nowhere.
+ */
+message BreadcrumbState extends ControlState {
+
+	/**
+	 * A place in the trail.
+	 */
+	message Item {
+		/**
+		 * The ID of the item, by which the client names it to the server.
+		 */
+		string id;
+
+		/**
+		 * The label of the item, plain text.
+		 */
+		string label;
+	}
+
+	/**
+	 * The places from the outermost to the current location, which is the last item. Absent: none.
+	 */
+	repeated Item items;
+}
+
+/**
+ * State of a bar displaying a fraction, with an optional label beside it, the component
+ * {@code TLProgress}.
+ *
+ * The component sends no commands.
+ */
+message ProgressState extends ControlState {
+	/**
+	 * The filled part of the track, a number between 0 and 1. Absent or {@code null}: the
+	 * indeterminate bar, which says that something is going on without saying how far it has come.
+	 */
+	double fraction;
+
+	/**
+	 * The text beside the bar, plain text (e.g. {@code 3 / 4}). Absent: the bar stands alone.
+	 */
+	string label;
+}
+
+/**
+ * State of a number field set by dragging a handle along a track, the component
+ * {@code TLSlider}.
+ *
+ * The {@link #value} is the number itself, or {@code null} for a field holding no value; the
+ * handle of an empty field stands at the {@link #min} and no text is shown. A change is sent as
+ * the command {@code valueChanged} with the number the handle stands on as argument
+ * {@code value}, once the handle comes to rest.
+ */
+message SliderState extends FieldState {
+	/**
+	 * The smallest value the handle can stand on. Absent: 0.
+	 */
+	double min;
+
+	/**
+	 * The largest value the handle can stand on. Absent: 100.
+	 */
+	double max;
+
+	/**
+	 * The distance between two values the handle can stand on. Absent: 1.
+	 */
+	double step;
+
+	/**
+	 * The value written in the format of the field, plain text, shown beside the handle and as the
+	 * whole display of a field that is not editable. Absent: no text.
+	 */
+	string valueLabel;
+
+	/**
+	 * How long a value is held back after the handle last moved before it is sent, in
+	 * milliseconds; releasing the handle sends it at once. Absent: the default of the component.
+	 */
+	int64 debounceMs;
 }

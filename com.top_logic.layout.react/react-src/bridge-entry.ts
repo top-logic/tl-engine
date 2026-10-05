@@ -77,6 +77,10 @@ export type {
   FormFieldStateJson,
   TextStateJson,
   CardStateJson,
+  AppBarStateJson,
+  BreadcrumbStateJson,
+  ProgressStateJson,
+  SliderStateJson,
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { scrollToAnchor } from './bridge/scroll';

@@ -28,6 +28,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.common.ReactProgressControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.ProgressState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
@@ -213,7 +214,7 @@ public class TestProgressElement extends TestCase {
 		} catch (JSON.ParseException ex) {
 			throw new AssertionError("Not the JSON state of a control: " + control.stateAsJSON(), ex);
 		}
-		Object fraction = ((Map<?, ?>) state).get(ReactProgressControl.FRACTION);
+		Object fraction = ((Map<?, ?>) state).get(ProgressState.FRACTION__PROP);
 		return fraction == null ? null : Double.valueOf(((Number) fraction).doubleValue());
 	}
 

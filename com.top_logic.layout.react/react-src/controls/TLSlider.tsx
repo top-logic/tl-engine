@@ -1,11 +1,13 @@
-import { React, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
+import type { TLCellProps, SliderStateJson } from 'tl-react-bridge';
 import { showsValueOnly } from './form/fieldState';
 
 const { useCallback } = React;
 
 /**
  * A number field rendered as a handle travelling along a track.
+ *
+ * The state is described by SliderStateJson.
  *
  * The value is a number: the server sends the number itself in `state.value` and receives back the
  * number the handle stands on, between `state.min` and `state.max` and on the grid of `state.step`.
@@ -25,11 +27,12 @@ const { useCallback } = React;
  * A read-only field shows the text only; a disabled field renders the track with its handle as an
  * inactive input (native `disabled`, see showsValueOnly).
  */
-const TLSlider: React.FC<TLCellProps> = ({ controlId, state }) => {
+const TLSlider: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState<Partial<SliderStateJson>>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const [value, setValue, flushValue] = useTLFieldValue({
-    debounceMs: (state.debounceMs as number) ?? VALUE_DEBOUNCE_MS,
+    debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
   });
 
   const handleChange = useCallback(
@@ -41,10 +44,10 @@ const TLSlider: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const handleCommit = useCallback(() => { void flushValue(); }, [flushValue]);
 
-  const min = (state.min as number) ?? 0;
-  const max = (state.max as number) ?? 100;
-  const step = (state.step as number) ?? 1;
-  const label = (state.valueLabel as string) ?? '';
+  const min = state.min ?? 0;
+  const max = state.max ?? 100;
+  const step = state.step ?? 1;
+  const label = state.valueLabel ?? '';
   const number = typeof value === 'number' ? value : null;
 
   if (showsValueOnly(state)) {
@@ -57,7 +60,7 @@ const TLSlider: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const hasError = state.hasError === true;
   const hasWarnings = state.hasWarnings === true;
-  const errorMessage = state.errorMessage as string | undefined;
+  const errorMessage = state.errorMessage;
 
   return (
     <span

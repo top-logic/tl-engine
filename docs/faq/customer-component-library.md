@@ -219,6 +219,10 @@ commands the component sends. The list in the header:
 | `TLFormField` | `FormFieldState` |
 | `TLText` | `TextState` |
 | `TLCard` | `CardState` |
+| `TLAppBar` | `AppBarState` |
+| `TLBreadcrumb` | `BreadcrumbState` |
+| `TLProgress` | `ProgressState` |
+| `TLSlider` | `SliderState` |
 
 The shared parts are `ControlState` (`hidden`, `cssClass`), `FieldState` (value, `editable`,
 `disabled`, `mandatory`, error and warning flags, label, placeholder, …), `TypingFieldState` (debounce, send on

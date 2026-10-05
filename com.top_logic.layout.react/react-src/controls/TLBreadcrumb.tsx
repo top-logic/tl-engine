@@ -1,5 +1,5 @@
 import { React, useTLState, useTLCommand, useI18N, rootClassName, ThemeIcon } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, BreadcrumbStateJson } from 'tl-react-bridge';
 import { buttonClassName } from './button/ButtonDefaults';
 
 const { useCallback } = React;
@@ -11,10 +11,11 @@ const I18N_KEYS = {
 /** The glyph between two entries; ThemeIcon renders a font glyph aria-hidden, so it is decoration only. */
 const SEPARATOR_ICON = 'css:fa-solid fa-chevron-right';
 
-interface BreadcrumbItem {
-  id: string;
-  label: string;
-}
+/** The command jumping back to an item, see BreadcrumbStateJson. */
+const NAVIGATE_COMMAND = 'navigate';
+
+/** The argument of {@link NAVIGATE_COMMAND} naming the item. */
+const ITEM_ID_ARG = 'itemId';
 
 /**
  * A navigation trail showing the current location in a hierarchy (tl-breadcrumb).
@@ -22,18 +23,17 @@ interface BreadcrumbItem {
  * Every entry before the current page is a link button that jumps back to it; the current page is
  * plain text marked `aria-current="page"` and no jump target.
  *
- * State:
- * - items: { id, label }[]  (last item = current page)
+ * The state is described by BreadcrumbStateJson.
  */
 const TLBreadcrumb: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
+  const state = useTLState<Partial<BreadcrumbStateJson>>();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
 
-  const items = (state.items as BreadcrumbItem[]) ?? [];
+  const items = state.items ?? [];
 
   const handleNavigate = useCallback((itemId: string) => {
-    sendCommand('navigate', { itemId });
+    sendCommand(NAVIGATE_COMMAND, { [ITEM_ID_ARG]: itemId });
   }, [sendCommand]);
 
   return (

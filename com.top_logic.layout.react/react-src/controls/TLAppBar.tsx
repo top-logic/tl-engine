@@ -1,35 +1,26 @@
 import { React, useTLState, TLChild, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, AppBarStateJson, ChildControlJson } from 'tl-react-bridge';
 import { ButtonDefaults } from './button/ButtonDefaults';
 
 /**
  * A top-level application bar with leading slot, title, inline children, and trailing actions.
  *
- * State:
- * - title: string
- * - leading: ChildDescriptor | null
- * - children: ChildDescriptor[]  (inline content between title and actions, e.g. a <slot>)
- * - actions: ChildDescriptor  (the toolbar of the commands placed in the bar; it renders nothing
- *   while there is no command, and folds the ones that do not fit into its overflow menu; the
- *   bar renders its buttons ghost, the toolbar collapses them to their icons when short of room)
- * - trailing: ChildDescriptor | null  (closes the bar, right of the actions)
- * - variant: "flat" | "elevated"  (default: "flat")
- * - color: "primary" | "surface"  (default: "primary")
+ * The state is described by AppBarStateJson. The bar renders the buttons of its actions ghost; the
+ * toolbar collapses them to their icons when short of room.
  */
 const TLAppBar: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
+  const state = useTLState<Partial<AppBarStateJson>>();
 
-  const title = (state.title as string) ?? '';
+  const title = state.title ?? '';
   const leading = state.leading;
   const trailing = state.trailing;
-  const children = (state.children as unknown[]) ?? [];
+  const children: ChildControlJson[] = state.children ?? [];
   const actions = state.actions;
-  const variant = (state.variant as string) ?? 'flat';
-  const color = (state.color as string) ?? 'primary';
+  const variant = state.variant ?? 'flat';
 
   const className = [
     'tlAppBar',
-    `tlAppBar--${color}`,
+    'tlAppBar--primary',
     variant === 'elevated' ? 'tlAppBar--elevated' : '',
   ].filter(Boolean).join(' ');
 

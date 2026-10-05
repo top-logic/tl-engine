@@ -120,12 +120,17 @@ public class SequenceDefaultProvider extends AbstractConfiguredInstance<Sequence
 		_dynamicSequence = context.getInstance(config.getDynamicSequenceName());
 	}
 
+	/**
+	 * The number is allocated from a continuous sequence and can therefore only be generated in
+	 * the transaction that creates the object.
+	 */
 	@Override
-	public Object createDefault(Object context, TLStructuredTypePart attribute, boolean createForUI) {
-		if (createForUI) {
-			// Number must only be generated during object creation.
-			return null;
-		}
+	public boolean isComputedInTransaction() {
+		return true;
+	}
+
+	@Override
+	public Object createDefault(Object context, TLStructuredTypePart attribute) {
 		try {
 			DynamicSequenceName labelProvider = _dynamicSequence;
 			Object contextName = labelProvider != null ? labelProvider.getSequenceName(context) : null;

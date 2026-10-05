@@ -46,7 +46,7 @@ public class DefaultLocaleDefault extends DefaultValueProvider implements Defaul
 	}
 
 	@Override
-	public Object createDefault(Object context, TLStructuredTypePart attribute, boolean createForUI) {
+	public Object createDefault(Object context, TLStructuredTypePart attribute) {
 		return defaultLocale();
 	}
 

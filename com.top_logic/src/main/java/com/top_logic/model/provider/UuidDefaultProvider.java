@@ -30,7 +30,7 @@ public class UuidDefaultProvider implements DefaultProvider, Supplier<String> {
 	}
 
 	@Override
-	public Object createDefault(Object context, TLStructuredTypePart attribute, boolean createForUI) {
+	public Object createDefault(Object context, TLStructuredTypePart attribute) {
 		return get();
 	}
 

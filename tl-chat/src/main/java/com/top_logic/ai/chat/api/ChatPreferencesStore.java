@@ -97,7 +97,7 @@ public final class ChatPreferencesStore {
 			}
 			layout.put("paneWidth", Integer.valueOf(prefs.getPaneWidth()));
 			layout.put("badgeSeen", Integer.valueOf(prefs.getBadgeSeen()));
-			layout.put("sections", new LinkedHashMap<String, Boolean>(prefs.getSections()));
+			layout.put("sections", new LinkedHashMap<>(prefs.getSections()));
 
 			Map<String, Object> byChat = new LinkedHashMap<>();
 			if (pc.getJSONValue(KEY) instanceof Map<?, ?> existing) {

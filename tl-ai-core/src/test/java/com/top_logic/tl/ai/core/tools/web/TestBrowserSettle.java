@@ -27,8 +27,8 @@ import com.top_logic.tl.ai.core.tools.web.BrowserToolsService.PageView;
  * These launch a real Chromium (gated behind {@link BrowserE2e}, like the other
  * browser E2E tests) but need <b>no network</b>: a fixture whose script appends a
  * {@code <button id="late">} ~800 ms after load is injected straight into the page and taken
- * through the real {@link BrowserSession#settle() settle} path. With the settle on (default) the
- * button is captured; with it disabled ({@code navigation-settle-millis=0}) the same load misses
+ * through the real {@link BrowserSession#settleAfterLoad() settle} path. With the settle on (default)
+ * the button is captured; with it disabled ({@code navigation-settle-millis=0}) the same load misses
  * it - proving the settle is what closes the gap. A separate quiet-page test proves a still page
  * settles at ~the debounce window, far under the cap, so fast pages are not meaningfully slowed.
  * </p>

@@ -228,6 +228,7 @@ public class DynamicToolCatalog implements ToolRegistry {
 	/**
 	 * The skills whose tools this catalog currently advertises, in the order they were loaded.
 	 */
+	@Override
 	public List<String> loadedSkills() {
 		List<String> ids = new ArrayList<>();
 		for (SkillOverlay overlay : _skillSnapshot) {

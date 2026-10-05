@@ -37,12 +37,14 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * {@link #close(String)} rewrites it as a turn that ended:
  * </p>
  * <ul>
- * <li>an approval still waiting for a decision gets {@link Part.ApprovalDecision#INTERRUPTED};</li>
+ * <li>an approval still waiting for a decision gets
+ * {@link com.top_logic.tl.ai.core.session.Part.ApprovalDecision#INTERRUPTED};</li>
  * <li>a tool call still running fails, with a sentence saying the result is unknown;</li>
  * <li>when the turn's KB transaction was still open, every write it reported as done is marked
- * {@link Part.ToolCallStatus#ROLLED_BACK} and the rollback is recorded, exactly as a live rollback
- * is - the transaction never reached its commit;</li>
- * <li>the last turn ends with a {@link Part.SystemEventType#INTERRUPTED} part.</li>
+ * {@link com.top_logic.tl.ai.core.session.Part.ToolCallStatus#ROLLED_BACK} and the rollback is
+ * recorded, exactly as a live rollback is - the transaction never reached its commit;</li>
+ * <li>the last turn ends with a
+ * {@link com.top_logic.tl.ai.core.session.Part.SystemEventType#INTERRUPTED} part.</li>
  * </ul>
  *
  * <p>
@@ -70,8 +72,9 @@ public final class InterruptedTranscript {
 		"The server stopped before the changes of this turn were saved.";
 
 	/**
-	 * The details of the {@link Part.SystemEventType#INTERRUPTED} part, for an operator reading the
-	 * transcript; the chat phrases its own notice in the reader's language.
+	 * The details of the {@link com.top_logic.tl.ai.core.session.Part.SystemEventType#INTERRUPTED}
+	 * part, for an operator reading the transcript; the chat phrases its own notice in the reader's
+	 * language.
 	 */
 	public static final String INTERRUPTED_DETAILS =
 		"The server stopped before this run finished; no agent loop survives a restart.";
@@ -168,10 +171,10 @@ public final class InterruptedTranscript {
 	 *
 	 * <p>
 	 * The window starts right after the transaction that was closed before it, not at its own
-	 * {@link Part.TransactionType#BEGAN} part: the loop opens the transaction while it executes the
-	 * first write tool, so that call is recorded <em>before</em> the part that says the transaction
-	 * began - and every transaction of a turn is one agent-loop iteration, so nothing between the
-	 * previous close and the open one belongs to another.
+	 * {@link com.top_logic.tl.ai.core.session.Part.TransactionType#BEGAN} part: the loop opens the
+	 * transaction while it executes the first write tool, so that call is recorded <em>before</em>
+	 * the part that says the transaction began - and every transaction of a turn is one agent-loop
+	 * iteration, so nothing between the previous close and the open one belongs to another.
 	 * </p>
 	 */
 	private static int openTransactionStart(List<Part> parts) {

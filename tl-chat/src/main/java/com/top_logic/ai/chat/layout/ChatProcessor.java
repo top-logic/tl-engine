@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -19,48 +22,41 @@ import java.util.concurrent.TimeoutException;
 
 import com.top_logic.ai.chat.api.ChatEventHandler;
 import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.CitationDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
+import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentResult;
-import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
+import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.util.Resources;
-import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
-import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
-import com.top_logic.tl.ai.core.agent.environment.RunFactsBinding;
-import com.top_logic.tl.ai.core.agent.environment.UserMemories;
-import com.top_logic.tl.ai.core.agent.environment.UserMemoryBinding;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
+import com.top_logic.tl.ai.core.agent.environment.RunFactsBinding;
+import com.top_logic.tl.ai.core.agent.environment.UserMemories;
+import com.top_logic.tl.ai.core.agent.environment.UserMemoryBinding;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
 import com.top_logic.tl.ai.core.execution.AgentTaskMirror;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.limits.I18NConstants;
 import com.top_logic.tl.ai.core.limits.RunLimitExceededException;
 import com.top_logic.tl.ai.core.limits.RunLimitSettings;
@@ -82,9 +78,12 @@ import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
-import com.top_logic.tl.ai.core.tools.interaction.ToolRegistryReloadFlag;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
+import com.top_logic.tl.ai.core.tools.interaction.ToolRegistryReloadFlag;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
 
 /**
  * Background processing logic for the chat component.
@@ -147,10 +146,11 @@ public class ChatProcessor {
 	 * application rather than of the model's provider.
 	 *
 	 * <p>
-	 * Every other value of that field is a {@link ProviderException.Kind}, and a client is entitled
-	 * to read it as one: {@code RATE_LIMITED} means wait, {@code CONTEXT_WINDOW_EXCEEDED} means
-	 * start a new chat. This value says the opposite - the model did nothing wrong and repeating
-	 * the message will not help - and exists so that the two are distinguishable at all, which
+	 * Every other value of that field is a
+	 * {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind}, and a client is entitled to
+	 * read it as one: {@code RATE_LIMITED} means wait, {@code CONTEXT_WINDOW_EXCEEDED} means start
+	 * a new chat. This value says the opposite - the model did nothing wrong and repeating the
+	 * message will not help - and exists so that the two are distinguishable at all, which
 	 * {@code UNKNOWN} for everything made impossible (issue #410). The chat UI matches on the
 	 * literal, so it is part of the wire contract.
 	 * </p>
@@ -1045,9 +1045,9 @@ public class ChatProcessor {
 	 * The citations the validator kept for the turn, in marker order.
 	 *
 	 * <p>
-	 * Collected over every {@link Part.TextPart} of the turn rather than the last one alone: a turn
-	 * that wrote text, called a tool and wrote more text carries markers in more than one part, and
-	 * the answer the chat renders is all of them.
+	 * Collected over every {@link com.top_logic.tl.ai.core.session.Part.TextPart} of the turn
+	 * rather than the last one alone: a turn that wrote text, called a tool and wrote more text
+	 * carries markers in more than one part, and the answer the chat renders is all of them.
 	 * </p>
 	 */
 	private static List<Citation> lastCitations(ConversationLog log) {

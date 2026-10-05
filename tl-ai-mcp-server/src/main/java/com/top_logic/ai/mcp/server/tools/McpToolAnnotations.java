@@ -113,11 +113,11 @@ public final class McpToolAnnotations {
 	 * The annotations to publish for the given tool.
 	 *
 	 * <p>
-	 * The {@link McpSchema.ToolAnnotations#title() title} is carried here as well as on the tool
-	 * definition itself. A client's display name for a tool is {@code title}, then
-	 * {@code annotations.title}, then {@code name}; the first field arrived with the 2025-06-18
-	 * revision, so a client older than that finds a readable name only in the second one - and
-	 * {@code name} is the qualified, hyphenated wire name, which is not it.
+	 * The {@link io.modelcontextprotocol.spec.McpSchema.ToolAnnotations#title() title} is carried
+	 * here as well as on the tool definition itself. A client's display name for a tool is
+	 * {@code title}, then {@code annotations.title}, then {@code name}; the first field arrived
+	 * with the 2025-06-18 revision, so a client older than that finds a readable name only in the
+	 * second one - and {@code name} is the qualified, hyphenated wire name, which is not it.
 	 * </p>
 	 *
 	 * @param tool

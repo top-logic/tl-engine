@@ -157,9 +157,9 @@ public final class ChartData {
 			List<? extends TLObject> objects) {
 		Map<String, Object> dataset = new LinkedHashMap<>();
 		dataset.put(LABEL, seriesName == null ? "" : seriesName);
-		dataset.put("data", new ArrayList<Object>(values));
-		dataset.put("metadata", new ArrayList<Object>(objects));
-		return new ChartData(config(kind.chartJsType(), new ArrayList<Object>(labels), List.of(dataset)),
+		dataset.put("data", new ArrayList<>(values));
+		dataset.put("metadata", new ArrayList<>(objects));
+		return new ChartData(config(kind.chartJsType(), new ArrayList<>(labels), List.of(dataset)),
 			labels.size(), 1);
 	}
 

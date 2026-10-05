@@ -22,10 +22,12 @@ import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SubagentSpawner;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
 
 /**
- * Tests that {@link AgentCapabilities} applies the declared-type rule of {@link DeclaredTypeAccess},
- * and says so in the language of types rather than of capabilities (follow-up of issue #258).
+ * Tests that {@link AgentCapabilities} applies the declared-type rule of
+ * {@link DeclaredTypeAccess}, and says so in the language of types rather than of capabilities
+ * (follow-up of issue #258).
  *
  * <p>
  * Issue #258 wired {@link ToolMethod#types()} into {@link ToolPermissionFilter}, which is what the
@@ -37,9 +39,10 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * </p>
  *
  * <p>
- * The whole fixture is a hand-written {@link DeclaredTypeAccess.TypeReadAccess}, so nothing here
- * boots an application model: {@code myapp:Customer} is out of reach and {@code myapp:Order} is not.
- * What the real model rights answer is {@code SecDemoDeclaredTypesTest}'s question.
+ * The whole fixture is a hand-written
+ * {@link com.top_logic.tl.ai.core.security.DeclaredTypeAccess.TypeReadAccess}, so nothing here
+ * boots an application model: {@code myapp:Customer} is out of reach and {@code myapp:Order} is
+ * not. What the real model rights answer is {@code SecDemoDeclaredTypesTest}'s question.
  * </p>
  */
 public class TestCapabilityDeclaredTypes extends TestCase {

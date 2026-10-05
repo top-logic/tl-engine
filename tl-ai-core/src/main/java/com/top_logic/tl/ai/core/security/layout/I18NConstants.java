@@ -10,7 +10,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
-import com.top_logic.basic.util.ResKey4;
 
 /**
  * I18N constants of the "Agent-Sicherheit" administration view.

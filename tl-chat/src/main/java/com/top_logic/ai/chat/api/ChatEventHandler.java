@@ -89,7 +89,7 @@ public interface ChatEventHandler extends AgentEventListener {
 
 	/**
 	 * Delivers an error that aborted the run before the agent loop could report it as an
-	 * {@link AgentEvent.ProviderError}.
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ProviderError}.
 	 */
 	void sendProviderError(ProviderErrorEvent event);
 
@@ -118,8 +118,9 @@ public interface ChatEventHandler extends AgentEventListener {
 	 * <p>
 	 * A pending request belongs to the account, so every window of that account may list it and
 	 * answer it. The window whose run is parked on it learns the outcome from the run's own
-	 * {@link AgentEvent.ApprovalResolved}; a window that only listed the request has no run to hear
-	 * that from, and this is what stops it from showing a card nobody is waiting on any more.
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ApprovalResolved}; a window that only
+	 * listed the request has no run to hear that from, and this is what stops it from showing a
+	 * card nobody is waiting on any more.
 	 * </p>
 	 *
 	 * <p>

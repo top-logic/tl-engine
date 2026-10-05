@@ -234,9 +234,10 @@ public class TestConversationLogSerializer extends TestCase {
 	 * A tool call read from a log that predates the mode field restores with an unknown mode.
 	 *
 	 * <p>
-	 * The literal below is the shape a log written before {@link Part.ToolCallPart#mode()} existed
-	 * has on disk: the {@code toolCallData} object simply has no {@code mode} member. Deserializing
-	 * it must not fail and must not invent a mode - {@code null} is what
+	 * The literal below is the shape a log written before
+	 * {@link com.top_logic.tl.ai.core.session.Part.ToolCallPart#mode()} existed has on disk: the
+	 * {@code toolCallData} object simply has no {@code mode} member. Deserializing it must not fail
+	 * and must not invent a mode - {@code null} is what
 	 * {@code ConversationLogListener#retractCompletedWrites} treats as a write.
 	 * </p>
 	 */
@@ -362,10 +363,11 @@ public class TestConversationLogSerializer extends TestCase {
 	 * A compaction read from a log that predates the sidecar restores without one.
 	 *
 	 * <p>
-	 * The literal below is the shape a log written before {@link Part.CompactionPart#sidecar()}
-	 * existed has on disk: {@code compactionData} simply has no {@code sidecar} member.
-	 * Deserializing it must not fail and must not invent a sidecar - {@code null} is what
-	 * makes {@code ConversationLogReplay} rebuild the full history instead.
+	 * The literal below is the shape a log written before
+	 * {@link com.top_logic.tl.ai.core.session.Part.CompactionPart#sidecar()} existed has on disk:
+	 * {@code compactionData} simply has no {@code sidecar} member. Deserializing it must not fail
+	 * and must not invent a sidecar - {@code null} is what makes {@code ConversationLogReplay}
+	 * rebuild the full history instead.
 	 * </p>
 	 */
 	public void testCompactionWithoutSidecarFieldRestoresWithoutOne() {

@@ -21,7 +21,7 @@ import com.top_logic.basic.config.annotation.Nullable;
  * {@link ToolSequence} refuses to pass without at least one required tool name to look for.
  * </p>
  *
- * @see Graders#grade(Expectation, RunRecord)
+ * @see Graders#grade(Expectation, java.util.List, java.util.List)
  */
 @Abstract
 public interface Expectation extends ConfigurationItem {

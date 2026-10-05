@@ -14,8 +14,6 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.ModuleTestSetup;
-import test.com.top_logic.basic.module.ServiceTestSetup;
-
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.ai.mcp.server.authentication.HttpDoubles.Recorded;

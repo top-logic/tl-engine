@@ -266,29 +266,32 @@ public class SubagentSpawner {
 	}
 
 	/**
-	 * The tool error refusing to spawn the named agent, or <code>null</code> if it is worth spawning.
+	 * The tool error refusing to spawn the named agent, or <code>null</code> if it is worth
+	 * spawning.
 	 *
 	 * <p>
 	 * The spawn counterpart of the delegate filter: {@code list_agents} and the prompt's delegate
 	 * catalog already leave out an agent that can reach no tool the run may call
-	 * ({@link AgentCapabilities#unusableReason(com.top_logic.tl.ai.core.agent.AgentDefinition)}), and a
-	 * spawn the model can still make would contradict them. What it saves is a child run, a provider
-	 * round trip and a result that says nothing.
+	 * ({@link AgentCapabilities#unusableReason(com.top_logic.tl.ai.core.agent.AgentDefinition)}),
+	 * and a spawn the model can still make would contradict them. What it saves is a child run, a
+	 * provider round trip and a result that says nothing.
 	 * </p>
 	 *
 	 * <p>
-	 * An <b>ordinary tool error</b> rather than an exception, because the model has to be able to relay
-	 * it: the answer is a grant, and only the user can go and ask for one. It never suggests the agent
-	 * does not exist - it does, and saying otherwise would send the model looking for a different name
-	 * for the same work. An agent that really is unknown is not refused here at all: that is not a
-	 * denial, and the spawn fails where it always did.
+	 * An <b>ordinary tool error</b> rather than an exception, because the model has to be able to
+	 * relay it: the answer is a grant, and only the user can go and ask for one. It never suggests
+	 * the agent does not exist - it does, and saying otherwise would send the model looking for a
+	 * different name for the same work. An agent that really is unknown is not refused here at all:
+	 * that is not a denial, and the spawn fails where it always did.
 	 * </p>
 	 *
 	 * <p>
-	 * <b>Which grant, though, depends on what refused</b> (#517). The capability text below is composed
-	 * only where the capability filter is the cause; an agent {@code <agent-access>} withholds gets the
-	 * policy's own sentence and no capability list, because listing them would name exactly the grants
-	 * that do not help - see {@link AgentCapabilities.Unusable} and {@link #withheldAgentRefusal}.
+	 * <b>Which grant, though, depends on what refused</b> (#517). The capability text below is
+	 * composed only where the capability filter is the cause; an agent {@code <agent-access>}
+	 * withholds gets the policy's own sentence and no capability list, because listing them would
+	 * name exactly the grants that do not help - see
+	 * {@link com.top_logic.tl.ai.core.agent.AgentCapabilities.Unusable} and
+	 * {@link #withheldAgentRefusal}.
 	 * </p>
 	 *
 	 * @param targetAgentName

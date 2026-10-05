@@ -20,7 +20,6 @@ import com.top_logic.tl.ai.core.session.Citation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
-
 import com.top_logic.tl.ai.tool.api.json.JsonTree;
 
 /**
@@ -45,7 +44,7 @@ public final class CitationValidator {
 
 	/**
 	 * Bare name of the cite tool, as the model calls it and as a recorded
-	 * {@link Part.ToolCallPart} carries it.
+	 * {@link com.top_logic.tl.ai.core.session.Part.ToolCallPart} carries it.
 	 */
 	public static final String CITE_TOOL_NAME = "cite";
 
@@ -126,10 +125,13 @@ public final class CitationValidator {
 
 	/**
 	 * Validates every assistant text of {@code log}'s current turn and writes the cleaned texts and
-	 * the surviving citations back onto those {@link Part.TextPart}s.
+	 * the surviving citations back onto those
+	 * {@link com.top_logic.tl.ai.core.session.Part.TextPart}s.
 	 *
-	 * @param log conversation of this run
-	 * @param answer extracted response text
+	 * @param log
+	 *        conversation of this run
+	 * @param answer
+	 *        extracted response text
 	 * @return the same citations that were written onto the log, with {@code answer} cleaned the
 	 *         same way
 	 */

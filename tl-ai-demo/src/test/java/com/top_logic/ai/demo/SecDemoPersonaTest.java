@@ -157,7 +157,7 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 	 * {@code Create} grant on {@code pm:Ticket} and not the {@code Write} grant on the composition.
 	 * </p>
 	 *
-	 * @see #executeScriptAs(String, String, boolean)
+	 * @see #changeDataAs(String, String, boolean)
 	 */
 	public static final String CREATE_TICKET =
 		"new(`pm:Ticket`)..set(`pm:Ticket#title`, \"Commit gate test\")";

@@ -2,7 +2,7 @@ import {
   React, useTLState, TLChild, rootClassName, useI18N, tooltipProps, TOOLTIP_ATTR, FieldLabelContext, fieldLabel,
   focusFieldInput, ThemeIcon,
 } from 'tl-react-bridge';
-import type { TLCellProps, ChildDescriptor } from 'tl-react-bridge';
+import type { TLCellProps, FormFieldStateJson } from 'tl-react-bridge';
 import { buttonClassName } from './button/ButtonDefaults';
 import { FormLayoutContext } from './FormLayoutContext';
 
@@ -31,41 +31,28 @@ const HELP_ICON = 'css:fa-regular fa-circle-question';
  * message, each warning message and the shown help text describe the input (`aria-describedby`,
  * through the same association), in this order.
  *
- * State:
- * - label: string
- * - required: boolean
- * - error: string | null
- * - errorIcon: string (encoded theme icon displayed in front of the error message)
- * - warnings: string[] | null
- * - warningIcon: string (encoded theme icon displayed in front of each warning message)
- * - helpText: string | null
- * - tooltipText: string | null (plain text offered on the label; the rich `hasTooltip` wins)
- * - dirty: boolean
- * - labelPosition: "side" | "top" | "after" | "hidden" | null  (null = inherit from context)
- * - fullLine: boolean
- * - visible: boolean
- * - field: ChildDescriptor
+ * The state is described by FormFieldStateJson.
  */
 const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
+  const state = useTLState<Partial<FormFieldStateJson>>();
   const ctx = useContext(FormLayoutContext);
   const i18n = useI18N(I18N_KEYS);
 
-  const label = (state.label as string) ?? '';
+  const label = state.label ?? '';
   const required = state.required === true;
-  const error = state.error as string | null;
-  const errorIcon = state.errorIcon as string | undefined;
-  const warnings = state.warnings as string[] | null;
-  const warningIcon = state.warningIcon as string | undefined;
-  const helpText = state.helpText as string | null;
+  const error = state.error ?? null;
+  const errorIcon = state.errorIcon;
+  const warnings = state.warnings ?? null;
+  const warningIcon = state.warningIcon;
+  const helpText = state.helpText ?? null;
   const dirty = state.dirty === true;
-  const labelPos = (state.labelPosition as string | null) ?? ctx.resolvedLabelPosition;
+  const labelPos = state.labelPosition ?? ctx.resolvedLabelPosition;
   const fullLine = state.fullLine === true;
   const visible = state.visible !== false;
   const hasTooltip = state.hasTooltip === true;
-  const tooltipText = state.tooltipText as string | null;
+  const tooltipText = state.tooltipText ?? null;
   const field = state.field;
-  const fieldControlId = (field as ChildDescriptor | undefined)?.controlId;
+  const fieldControlId = field?.controlId;
   const readOnly = ctx.readOnly;
 
   const [helpVisible, setHelpVisible] = useState(false);

@@ -28,6 +28,9 @@
  *   TLMenu            - MenuState
  *   TLSnackbar        - SnackbarState
  *   TLAlert           - AlertState
+ *   TLFormField       - FormFieldState
+ *   TLText            - TextState
+ *   TLCard            - CardState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -1040,4 +1043,340 @@ export interface AlertStateJson extends ControlStateJson {
 	 * reporting another number refers to a content that is no longer shown.
 	 */
 	generation: number;
+}
+
+/**
+ * State of the frame around a form field, the component `TLFormField`: the label, the
+ * marks for a required and a modified field, the error and warning messages and the help text,
+ * around the control of the input itself ({@link FormFieldStateJson.field}).
+ *
+ * The frame is not a field of its own: the value, its editability and its validation belong to the
+ * embedded {@link FormFieldStateJson.field}. A label that names its input states this to the input through
+ * `FieldLabelContext` of 'tl-react-bridge'. Messages, help and the mark for a required
+ * field belong to editing: the component omits them inside a read-only form layout. The
+ * component sends no commands.
+ */
+export interface FormFieldStateJson extends ControlStateJson {
+	/**
+	 * The label of the field, plain text. Absent or empty: no label, and the input is not named by
+	 * one.
+	 */
+	label: string;
+
+	/**
+	 * Whether a value is required, marked next to the label.
+	 */
+	required: boolean;
+
+	/**
+	 * The message describing why the value of the {@link FormFieldStateJson.field} is invalid. Absent: no error.
+	 */
+	error: string;
+
+	/**
+	 * The icon shown in front of the {@link FormFieldStateJson.error} message, the encoded form of a theme image.
+	 */
+	errorIcon: string;
+
+	/**
+	 * The messages describing why the value of the {@link FormFieldStateJson.field} is questionable, shown while
+	 * there is no {@link FormFieldStateJson.error}. Absent: no warnings.
+	 */
+	warnings: string[];
+
+	/**
+	 * The icon shown in front of each of the {@link FormFieldStateJson.warnings}, the encoded form of a theme image.
+	 */
+	warningIcon: string;
+
+	/**
+	 * A text explaining the field, plain text, shown on demand below the input. Absent: no help.
+	 */
+	helpText: string;
+
+	/**
+	 * A description of the field, plain text, offered as the tooltip of its label. Absent: none.
+	 * A rich tooltip ({@link FormFieldStateJson.hasTooltip}) takes precedence.
+	 */
+	tooltipText: string;
+
+	/**
+	 * Whether the server offers a rich tooltip for the label, HTML fetched from the control under
+	 * the key `tooltip` (the attribute `data-tooltip` with the value
+	 * `key:tooltip`). Takes precedence over {@link FormFieldStateJson.tooltipText}.
+	 */
+	hasTooltip: boolean;
+
+	/**
+	 * Whether the value of the field has been modified and not yet saved.
+	 */
+	dirty: boolean;
+
+	/**
+	 * Where the label stands relative to the input. Absent: the position the enclosing form layout
+	 * gives its fields.
+	 */
+	labelPosition: FormFieldStateJson.LabelPosition;
+
+	/**
+	 * Whether the field spans the full row of a form layout of several columns.
+	 */
+	fullLine: boolean;
+
+	/**
+	 * Whether the field is shown. Absent: shown. A field not shown keeps its {@link FormFieldStateJson.field}
+	 * mounted, so that the field control keeps receiving its updates.
+	 */
+	visible: boolean;
+
+	/**
+	 * The control of the input.
+	 */
+	field?: ChildControlJson;
+}
+
+export namespace FormFieldStateJson {
+	/**
+	 * Where the label of a field stands relative to its input.
+	 */
+	export type LabelPosition =
+		/**
+		 * The label beside the input.
+		 */
+		| 'side'
+		/**
+		 * The label above the input.
+		 */
+		| 'top'
+		/**
+		 * The label after the input, e.g. trailing a checkbox.
+		 */
+		| 'after'
+		/**
+		 * No visible label; the input spans the full width of the field. The label text still names
+		 * the input for assistive technology.
+		 */
+		| 'hidden'
+		/**
+		 * `'side'` or `'top'`, chosen from the width available. A position of a form
+		 * layout, which resolves it for the fields it contains; a field is not given it.
+		 */
+		| 'auto';
+}
+
+/**
+ * State of a read-only text, the component `TLText`.
+ *
+ * How the text is drawn is stated as roles rather than as font and color values: a typographic
+ * role ({@link TextStateJson.variant}), a color role ({@link TextStateJson.tone}) and the shape it takes
+ * ({@link TextStateJson.appearance}). The component sends no commands.
+ */
+export interface TextStateJson extends ControlStateJson {
+	/**
+	 * The text, plain text. Absent: empty. An empty text is never drawn as a pill.
+	 */
+	text: string;
+
+	/**
+	 * How text longer than the available width is displayed. Absent means `'wrap'`,
+	 * wrapped onto several lines.
+	 */
+	overflow: TextStateJson.Overflow;
+
+	/**
+	 * The typographic role of the text. Absent means `'body'`, running text.
+	 */
+	variant: TextStateJson.Variant;
+
+	/**
+	 * The color role of the text. Absent means `'primary'`, the color text is read in.
+	 */
+	tone: TextStateJson.Tone;
+
+	/**
+	 * The shape the text is drawn in. Absent means `'text'`, plain text.
+	 */
+	appearance: TextStateJson.Appearance;
+
+	/**
+	 * The ARIA role of the element (e.g. `alert` for a message announced when it appears).
+	 * Absent: none.
+	 */
+	role: string;
+
+	/**
+	 * The color role the displayed value carries in the model (the external name of a value color:
+	 * neutral, brand, error, …, category-8). A text with a color role is drawn as a pill of that
+	 * role. Absent: none.
+	 */
+	colorRole: string;
+
+	/**
+	 * Whether the server offers a rich tooltip for the text, HTML fetched from the control under
+	 * the key `tooltip` (the attribute `data-tooltip` with the value
+	 * `key:tooltip`).
+	 */
+	hasTooltip: boolean;
+}
+
+export namespace TextStateJson {
+	/**
+	 * How text longer than the available width is displayed.
+	 */
+	export type Overflow =
+		/**
+		 * Wrapped onto several lines.
+		 */
+		| 'wrap'
+		/**
+		 * Kept on a single line, the overflow truncated with an ellipsis.
+		 */
+		| 'ellipsis';
+
+	/**
+	 * What a text is for, its typographic role.
+	 */
+	export type Variant =
+		/**
+		 * Running text, the size a page is read at.
+		 */
+		| 'body'
+		/**
+		 * The heading of a section within a page.
+		 */
+		| 'title'
+		/**
+		 * The heading a page is introduced with.
+		 */
+		| 'headline'
+		/**
+		 * The largest text on a page, for the one statement a landing page is built around.
+		 */
+		| 'display'
+		/**
+		 * The name of a value, shown above or beside what it names.
+		 */
+		| 'label'
+		/**
+		 * A remark accompanying another text: a hint, a date, an attribution.
+		 */
+		| 'caption';
+
+	/**
+	 * What the color of a text means, its color role.
+	 */
+	export type Tone =
+		/**
+		 * The color text is read in.
+		 */
+		| 'primary'
+		/**
+		 * Text of lesser weight than what stands beside it.
+		 */
+		| 'secondary'
+		/**
+		 * An explanation of the value or the field it accompanies.
+		 */
+		| 'helper'
+		/**
+		 * Text the application draws attention to, in the color interactive elements share.
+		 */
+		| 'accent'
+		/**
+		 * An outcome that went well.
+		 */
+		| 'success'
+		/**
+		 * A condition the reader should act on before it becomes a failure.
+		 */
+		| 'warning'
+		/**
+		 * A failure.
+		 */
+		| 'error'
+		/**
+		 * Text on a filled surface, which brings its own background color.
+		 */
+		| 'on-color';
+
+	/**
+	 * The shape a text is drawn in.
+	 */
+	export type Appearance =
+		/**
+		 * Plain text, drawn as a pill when the text carries a color role of its own.
+		 */
+		| 'text'
+		/**
+		 * A pill, whether or not the text carries a color role: a badge, a status, a tag. Its color
+		 * is the color role of the text, or the color of its tone for a text without one.
+		 */
+		| 'pill';
+}
+
+/**
+ * State of a card: a container grouping its content visually, with an optional header, the
+ * component `TLCard`.
+ *
+ * A card has no behaviour of its own (no minimizing, maximizing or popping out); it sends no
+ * commands.
+ */
+export interface CardStateJson extends ControlStateJson {
+	/**
+	 * The title shown in the header, plain text. Absent: no title. The header is shown while there
+	 * is a title or {@link CardStateJson.headerActions}.
+	 */
+	title: string;
+
+	/**
+	 * How the card sets itself off. Absent means `'outlined'`, a thin border.
+	 */
+	variant: CardStateJson.Variant;
+
+	/**
+	 * The space around the content. Absent means `'default'`, the standard space.
+	 */
+	padding: CardStateJson.Padding;
+
+	/**
+	 * The buttons in the header, in display order. Absent: none.
+	 */
+	headerActions: ChildControlJson[];
+
+	/**
+	 * The content of the card.
+	 */
+	child?: ChildControlJson;
+}
+
+export namespace CardStateJson {
+	/**
+	 * How a card sets itself off from its surroundings.
+	 */
+	export type Variant =
+		/**
+		 * A thin border.
+		 */
+		| 'outlined'
+		/**
+		 * A drop shadow.
+		 */
+		| 'elevated';
+
+	/**
+	 * The space between the edge of a card and its content.
+	 */
+	export type Padding =
+		/**
+		 * The standard space.
+		 */
+		| 'default'
+		/**
+		 * A reduced space.
+		 */
+		| 'compact'
+		/**
+		 * No space.
+		 */
+		| 'none';
 }

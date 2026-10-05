@@ -35,10 +35,12 @@
 				<close-dialog/>
 			</generic-command>
 		</commands>
-		<config-form
-			input="rule"
-			withEditMode="false"
-		/>
+		<inset>
+			<config-form
+				input="rule"
+				withEditMode="false"
+			/>
+		</inset>
 		<actions>
 			<button>
 				<action class="com.top_logic.layout.view.command.CancelDialogCommand"

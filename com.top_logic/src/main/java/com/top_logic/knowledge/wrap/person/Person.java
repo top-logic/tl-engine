@@ -642,6 +642,19 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	}
 
 	/**
+	 * All {@link Person}s that can be chosen in a selection field: all accounts except the
+	 * anonymous one.
+	 * 
+	 * @see PersonManager#isAnonymous(Person)
+	 */
+	public static List<Person> allSelectable() {
+		PersonManager manager = PersonManager.getManager();
+		List<Person> result = all();
+		result.removeIf(manager::isAnonymous);
+		return result;
+	}
+
+	/**
 	 * All {@link Person}s that are known in the given {@link KnowledgeBase}.
 	 */
 	public static List<Person> all(KnowledgeBase kb) {

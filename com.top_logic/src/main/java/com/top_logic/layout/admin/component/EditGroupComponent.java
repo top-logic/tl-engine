@@ -178,7 +178,7 @@ public class EditGroupComponent extends EditComponent {
             theFC.addMember(theField);
         }
         
-		List<Person> possibleMembers = Person.all();
+		List<Person> possibleMembers = Person.allSelectable();
 		SelectField memberField = newSelectField(FORM_FIELD_MEMBERS, possibleMembers, MULTIPLE, members, !IMMUTABLE);
 		memberField.setTableConfigurationProvider(
 			GenericTableConfigurationProvider.getTableConfigurationProvider(Person.PERSON_TYPE));

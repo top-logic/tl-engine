@@ -143,6 +143,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		putState(EDIT_MODE, Boolean.FALSE);
 		putState(DIRTY, Boolean.FALSE);
 		updateNoModelMessage();
+		FormLayoutEditModeBinding.bind(this, readOnly -> putState(ReactFormLayoutControl.READ_ONLY, readOnly), this);
 	}
 
 	/**

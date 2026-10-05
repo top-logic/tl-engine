@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the agent access entry into the development menu defined by tl-layout-view
+	(WEB-INF/views/dev-menu.view.xml). Same-path overlay merged by the ViewLoader in dependency
+	order: the entry is appended to the "automation" group where this module is deployed and absent
+	where it is not - tl-layout-view knows nothing about it.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<menu>
+		<groups>
+			<group id="automation"
+				config:operation="update"
+			>
+				<!--
+					Opens the agent access administration: issue an access token that lets an agent
+					outside the browser drive this session, and withdraw issued ones.
+				-->
+				<generic-command image="css:bi bi-robot">
+					<label>
+						<en>Agent access</en>
+						<de>Agentenzugriff</de>
+					</label>
+					<tooltip>
+						<en>Issue and withdraw the access tokens through which an agent drives this session.</en>
+						<de>Stellt Zugriffstokens aus, mit denen ein Agent diese Sitzung bedient, und zieht sie zurück.</de>
+					</tooltip>
+					<executability>
+						<authenticated-only/>
+					</executability>
+					<open-dialog dialog-view="agent-access.view.xml"/>
+				</generic-command>
+			</group>
+		</groups>
+	</menu>
+</view>

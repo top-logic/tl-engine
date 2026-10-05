@@ -33,13 +33,16 @@ public class FolderDefaultProvider implements DefaultProvider {
 		// Singleton constructor.
 	}
 
+	/**
+	 * The default is a persistent {@link WebFolder} that can only be created in a transaction.
+	 */
 	@Override
-	public Object createDefault(Object context, TLStructuredTypePart attribute, boolean createForUI) {
-		if (createForUI) {
-			// Only during commit.
-			return null;
-		}
+	public boolean isComputedInTransaction() {
+		return true;
+	}
 
+	@Override
+	public Object createDefault(Object context, TLStructuredTypePart attribute) {
 		if (attribute.getModelKind() != ModelKind.REFERENCE) {
 			// Only for references.
 			return null;

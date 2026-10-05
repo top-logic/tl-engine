@@ -97,12 +97,17 @@ public class NumberHandlerDefaultProvider extends AbstractConfiguredInstance<Num
 			new SequenceIdGenerator(sequenceName, idPattern, numberPattern, datePattern, dynamicSequence, 3);
 	}
 
+	/**
+	 * The number is allocated from a continuous sequence and can therefore only be generated in
+	 * the transaction that creates the object.
+	 */
 	@Override
-	public Object createDefault(Object context, TLStructuredTypePart attribute, boolean createForUI) {
-		if (createForUI) {
-			// Number must only be generated during object creation.
-			return null;
-		}
+	public boolean isComputedInTransaction() {
+		return true;
+	}
+
+	@Override
+	public Object createDefault(Object context, TLStructuredTypePart attribute) {
 		try {
 			return _generator.generateId(context);
 		} catch (GenerateNumberException ex) {

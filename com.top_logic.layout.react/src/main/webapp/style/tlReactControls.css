@@ -5247,7 +5247,9 @@ button.tlDrawer__closeBtn:focus-visible {
   font-weight: 400;
   font-size: 12px;
   line-height: 1.5;
-  z-index: var(--tl-layer-popover);
+  /* Directly above the popover layer: the element a tooltip explains can itself lie in a popover
+     (a menu entry, an option of a selection popup). */
+  z-index: calc(var(--tl-layer-popover) + 1);
   cursor: text;
   user-select: text;
   display: flex;

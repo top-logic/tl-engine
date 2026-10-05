@@ -79,7 +79,7 @@
 				</commands>
 
 				<groups>
-					<group>
+					<group id="account">
 						<!-- What describes the account, and what secures it. -->
 						<generic-command image="css:bi bi-sliders">
 							<label>

@@ -9,9 +9,10 @@ import React from 'react';
 import { vi } from 'vitest';
 import { act, render } from '@testing-library/react';
 import {
-  TLControlContext, KeyboardScopeProvider, FieldLabelContext, useKeyboardBinding, useTLState, register,
+  TLControlContext, KeyboardScopeProvider, FieldLabelContext, FormLayoutContext, useKeyboardBinding, useTLState,
+  register,
 } from 'tl-react-bridge';
-import type { TLCellProps, FieldLabel, ChildControlJson } from 'tl-react-bridge';
+import type { TLCellProps, FieldLabel, FormLayout, ChildControlJson } from 'tl-react-bridge';
 import MuiRoot from '../MuiRoot';
 
 /** The macrotask queue of Node, which the tests run in (no Node typings in this module). */
@@ -81,6 +82,9 @@ export interface MountOptions {
 
   /** The label association of a form field around the adapter. */
   fieldLabel?: FieldLabel;
+
+  /** The form layout around the adapter; absent: none. */
+  formLayout?: FormLayout;
 }
 
 /**
@@ -111,15 +115,20 @@ export function mountAdapter(
   }));
   const snapshot = { ...state };
   const outer = options.outer;
+  const adapter = (
+    <FieldLabelContext.Provider value={options.fieldLabel ?? null}>
+      <TLControlContext.Provider value={contextOf(snapshot)}>
+        <Adapter controlId={CONTROL_ID} state={snapshot} />
+      </TLControlContext.Provider>
+    </FieldLabelContext.Provider>
+  );
   render(
     <MuiRoot>
       {outer && <OuterBinding gesture={outer.gesture} onGesture={outer.onGesture} />}
       <KeyboardScopeProvider>
-        <FieldLabelContext.Provider value={options.fieldLabel ?? null}>
-          <TLControlContext.Provider value={contextOf(snapshot)}>
-            <Adapter controlId={CONTROL_ID} state={snapshot} />
-          </TLControlContext.Provider>
-        </FieldLabelContext.Provider>
+        {options.formLayout === undefined
+          ? adapter
+          : <FormLayoutContext.Provider value={options.formLayout}>{adapter}</FormLayoutContext.Provider>}
       </KeyboardScopeProvider>
     </MuiRoot>,
   );

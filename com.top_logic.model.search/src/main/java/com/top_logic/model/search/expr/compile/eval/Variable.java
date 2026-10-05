@@ -140,9 +140,24 @@ public class Variable extends CompiledValue {
 		return _type.isSubtypeOf(type);
 	}
 
+	/**
+	 * Builds a literal with the value of the variable.
+	 *
+	 * <p>
+	 * There is no literal for <code>null</code>. A <code>null</code> boolean is <code>false</code>
+	 * in a condition. In any other position, the comparison with a <code>null</code> variable must
+	 * be resolved with {@link #buildIsNull(EvalContext)}; otherwise it is evaluated in memory.
+	 * </p>
+	 */
 	@Override
 	public Expression buildExpression(EvalContext context) throws CompiledValue.IncompatibleTypes {
 		Object argument = value(context);
+		if (argument == null) {
+			if (compiledType() == MOPrimitive.BOOLEAN) {
+				return ExpressionFactory.literal(Boolean.FALSE);
+			}
+			throw new CompiledValue.IncompatibleTypes();
+		}
 		if (CompiledValue.isUnstored(argument)) {
 			throw new CompiledValue.IncompatibleTypes();
 		}
@@ -151,6 +166,11 @@ public class Variable extends CompiledValue {
 			throw new CompiledValue.IncompatibleTypes();
 		}
 		return ExpressionFactory.literal(argument);
+	}
+
+	@Override
+	public Expression buildIsNull(EvalContext context) {
+		return ExpressionFactory.literal(Boolean.valueOf(value(context) == null));
 	}
 
 	@Override

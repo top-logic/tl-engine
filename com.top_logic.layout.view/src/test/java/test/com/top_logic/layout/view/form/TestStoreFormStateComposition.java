@@ -44,7 +44,8 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests that {@link StoreFormStateAction} stores the rows added to a composition of the form
- * object, within an outer {@link WithTransactionAction} as well as on its own.
+ * object, within an outer {@link WithTransactionAction} as well as on its own, and how an
+ * {@link AbstractCompositionControl} takes part in the edit session of its form.
  */
 public class TestStoreFormStateComposition extends AbstractModelAccessTest {
 
@@ -137,6 +138,79 @@ public class TestStoreFormStateComposition extends AbstractModelAccessTest {
 		assertTrue(row.tTransient());
 		assertEquals(NEW_TASK, row.tValueByName(NAME));
 		assertEquals(List.of(_task), taskInstances());
+	}
+
+	/**
+	 * A composition control created after its form entered edit mode joins the running edit
+	 * session: its new row is stored, and it takes part in the following edit session exactly once.
+	 */
+	public void testControlCreatedInEditMode() throws ConfigurationException {
+		becomeUser(_responsible);
+		FormControl form = new FormControl(reactContext(), _project, "no model", NoTokenHandling.INSTANCE);
+		assertTrue(form.enterEditMode());
+
+		CompositionControl tasks = new CompositionControl(form);
+		tasks.init();
+		assertNotNull(tasks.addRow(row -> row.tUpdateByName(NAME, NEW_TASK)));
+
+		ViewAction action = action("<" + WITH_TRANSACTION + "><" + STORE_FORM_STATE + "/></" + WITH_TRANSACTION + ">");
+		action.execute(viewContext(form), _project);
+		assertNewTaskStored();
+		assertTrue(form.isEditMode());
+
+		String secondTask = "second task";
+		assertNotNull(tasks.addRow(row -> row.tUpdateByName(NAME, secondTask)));
+		action.execute(viewContext(form), _project);
+
+		List<?> rows = (List<?>) _project.tValueByName(TASKS);
+		assertEquals(3, rows.size());
+		assertEquals(NEW_TASK, ((TLObject) rows.get(1)).tValueByName(NAME));
+		assertEquals(secondTask, ((TLObject) rows.get(2)).tValueByName(NAME));
+		assertEquals(3, taskInstances().size());
+	}
+
+	/**
+	 * A composition control initialized outside edit mode offers no row creation until its form
+	 * enters edit mode.
+	 */
+	public void testNoRowOutsideEditMode() {
+		becomeUser(_responsible);
+		FormControl form = new FormControl(reactContext(), _project, "no model", NoTokenHandling.INSTANCE);
+		CompositionControl tasks = new CompositionControl(form);
+		tasks.init();
+
+		assertNull(tasks.addRow());
+
+		assertTrue(form.enterEditMode());
+		assertNotNull(tasks.addRow());
+	}
+
+	/**
+	 * A row added to a persistent form object is contained in the form object.
+	 */
+	public void testRowContainerPersistentOwner() {
+		becomeUser(_responsible);
+		assertRowContainer(_project);
+	}
+
+	/**
+	 * A row added to a transient form object is contained in the form object.
+	 */
+	public void testRowContainerTransientOwner() {
+		becomeUser(_responsible);
+		assertRowContainer(TransientObjectFactory.INSTANCE.createObject(type(PROJECT)));
+	}
+
+	private void assertRowContainer(TLObject owner) {
+		FormControl form = new FormControl(reactContext(), owner, "no model", NoTokenHandling.INSTANCE);
+		CompositionControl tasks = new CompositionControl(form);
+		tasks.init();
+		assertTrue(form.enterEditMode());
+
+		TLObject row = tasks.addRow();
+		assertNotNull(row);
+		assertSame(form.getOverlay().getBase(), row.tContainer());
+		assertSame(owner, row.tContainer());
 	}
 
 	/**

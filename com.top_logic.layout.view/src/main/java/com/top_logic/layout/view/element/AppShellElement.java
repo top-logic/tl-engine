@@ -13,8 +13,10 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
@@ -38,6 +40,16 @@ import com.top_logic.layout.view.command.CommandScope;
  * (e.g. {@code <stack>} inside {@code <content>}). If multiple elements are configured in a slot,
  * they are wrapped in a {@link com.top_logic.layout.react.control.layout.ReactStackControl}.
  * </p>
+ *
+ * <p>
+ * A slot holds at most one element of each kind. A same-path overlay of the view therefore
+ * extends the element of a kind the base view already places in a slot - e.g. adds items to the
+ * sidebar of the content slot or sets the title of the app bar in the header slot - instead of
+ * placing a second one beside it.
+ * </p>
+ *
+ * @implNote The slot lists are keyed by the configuration interface of their entries, which makes
+ *           an entry of an overlay an update of the base's entry of the same kind.
  */
 @InApp
 public class AppShellElement implements UIElement {
@@ -68,6 +80,7 @@ public class AppShellElement implements UIElement {
 		 * Optional header element (e.g. an app bar).
 		 */
 		@Name(HEADER)
+		@Key(ConfigurationItem.CONFIGURATION_INTERFACE_NAME)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getHeader();
@@ -82,6 +95,7 @@ public class AppShellElement implements UIElement {
 		 * </p>
 		 */
 		@Name(NOTICES)
+		@Key(ConfigurationItem.CONFIGURATION_INTERFACE_NAME)
 		@TreeProperty
 		List<PolymorphicConfiguration<? extends UIElement>> getNotices();
 
@@ -89,6 +103,7 @@ public class AppShellElement implements UIElement {
 		 * The main content element.
 		 */
 		@Name(CONTENT)
+		@Key(ConfigurationItem.CONFIGURATION_INTERFACE_NAME)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getContent();
@@ -97,6 +112,7 @@ public class AppShellElement implements UIElement {
 		 * Optional footer element (e.g. a bottom bar).
 		 */
 		@Name(FOOTER)
+		@Key(ConfigurationItem.CONFIGURATION_INTERFACE_NAME)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends UIElement>> getFooter();

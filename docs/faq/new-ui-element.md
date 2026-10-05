@@ -38,7 +38,7 @@ state; the component only renders what the control publishes and sends back gest
 | `src/main/java/com/example/app/view/MyElement.java` | `UIElement` implementation plus its `Config` (the `@TagName` is the element's name in XML) |
 | `src/main/java/com/example/app/view/MyControl.java` | `ReactControl`: names the client component, publishes state, answers commands |
 | `src/main/webapp/WEB-INF/views/my-view.view.xml` | uses the new tag |
-| `src/main/webapp/WEB-INF/views/app.view.xml` (or another view) | makes the view reachable, e.g. as a `nav-item` |
+| `src/main/webapp/WEB-INF/views/app.view.xml` (or another view) | makes the view reachable, e.g. as a `nav-item` in the application's overlay of the shell (see [the application shell](react-view-layer.md#the-application-shell-extending-appviewxml)) |
 | `src/main/java/META-INF/messages_de.properties` | German labels of the new configuration properties (English is generated) |
 | **Client — only for a new component** | |
 | `react-src/controls/MyWidget.tsx` | the component |
@@ -425,7 +425,7 @@ my.app.module/
     ├── java/META-INF/messages_{de,en}.properties              labels of the configuration
     └── webapp/
         ├── WEB-INF/views/my-view.view.xml                     uses <my-element …/>
-        ├── WEB-INF/views/app.view.xml                         navigation entry
+        ├── WEB-INF/views/app.view.xml                         navigation entry (overlay of the shell)
         ├── WEB-INF/conf/myAppConf.config.xml                  ClientResources: bundle + stylesheet
         ├── script/tl-my-app-controls.js                       built bundle (ignored by git)
         └── style/myWidget.css                                 styles of the component

@@ -16,6 +16,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TreeProperty;
@@ -50,9 +51,11 @@ import com.top_logic.util.Resources;
  * and the enclosing frame's {@link ContextMenuOpener} renders and dispatches them.
  * </p>
  *
- * @implNote A subclass contributes the two decisions that separate the concrete menus:
- *           {@link #getTrigger()} names the gesture opening the menu, and
- *           {@link #menuCommands(List)} picks which of the built models become entries.
+ * @implNote A subclass contributes the decisions that separate the concrete menus:
+ *           {@link #getTrigger()} names the gesture opening the menu,
+ *           {@link #menuCommands(List)} picks which of the built models become entries, and
+ *           {@link #hideWhileEmpty()} decides whether the region disappears while the menu has no
+ *           entry to offer.
  *
  * @see ContextMenuElement
  * @see MenuElement
@@ -99,8 +102,14 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		 * currently available is left out together with its separator and heading, so a menu never
 		 * opens on a dividing line with nothing beneath it.
 		 * </p>
+		 *
+		 * <p>
+		 * A group is addressed by its {@link CommandGroup#getId() ID}: a same-path overlay of the
+		 * view names the ID of an existing group to add entries to it, or a new one to add a group.
+		 * </p>
 		 */
 		@Name(GROUPS)
+		@Key(CommandGroup.ID)
 		@EntryTag("group")
 		List<CommandGroup> getGroups();
 
@@ -109,11 +118,28 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		 */
 		interface CommandGroup extends ConfigurationItem {
 
+			/** Configuration name for {@link #getId()}. */
+			String ID = "id";
+
 			/** Configuration name for {@link #getLabel()}. */
 			String LABEL = "label";
 
 			/** Configuration name for {@link #getCommands()}. */
 			String COMMANDS = "commands";
+
+			/**
+			 * The name by which the group is addressed.
+			 *
+			 * <p>
+			 * A module contributing to a menu defined elsewhere writes a same-path overlay of the
+			 * view that names the group by this ID; the entries it lists there are added at the end
+			 * of that group. The groups of one menu need distinct IDs, so at most one of them may go
+			 * without.
+			 * </p>
+			 */
+			@Name(ID)
+			@Nullable
+			String getId();
 
 			/**
 			 * The heading shown above the group's entries; none when unset.
@@ -190,6 +216,24 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 	 */
 	protected abstract List<CommandModel> menuCommands(List<ViewCommandModel> models);
 
+	/**
+	 * Whether the region built from this element's children is hidden while the menu has no entry
+	 * to offer.
+	 *
+	 * <p>
+	 * An entry is offered exactly when the menu would show it: a command hidden by its
+	 * executability rule is not, a visible but disabled one is. The region follows the state of its
+	 * commands and shows again as soon as one of them is offered.
+	 * </p>
+	 *
+	 * <p>
+	 * The answer depends on what the region is: where the children serve only to open the menu,
+	 * they have no purpose without entries; where they are content in their own right that also
+	 * carries a menu, they stay.
+	 * </p>
+	 */
+	protected abstract boolean hideWhileEmpty();
+
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ContextMenuOpener opener = context.getContextMenuOpener();
@@ -230,7 +274,7 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		}
 
 		MenuRegionControl region = new MenuRegionControl(context, content, contributions, targetSupplier,
-			opener, getTrigger());
+			opener, getTrigger(), hideWhileEmpty());
 		region.setCssClass(_config.getCssClass());
 
 		// Lazy attach on render, cleanup on dispose. The grouped entries are commands of this

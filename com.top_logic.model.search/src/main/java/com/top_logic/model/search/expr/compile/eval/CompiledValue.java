@@ -7,6 +7,7 @@
 package com.top_logic.model.search.expr.compile.eval;
 
 import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.ExpressionFactory;
 import com.top_logic.model.TLObject;
@@ -83,6 +84,91 @@ public abstract class CompiledValue extends Value {
 	 *         case {@link #eval(TLObject, EvalContext)} will be called.
 	 */
 	public abstract Expression buildExpression(EvalContext context) throws CompiledValue.IncompatibleTypes;
+
+	/**
+	 * Creates an {@link Expression} that is true exactly when {@link #eval(TLObject, EvalContext)}
+	 * yields a value that is {@link SearchExpression#isTrue(Object) true} in TL-Script, and false
+	 * otherwise.
+	 *
+	 * <p>
+	 * In contrast to {@link #buildExpression(EvalContext)}, the result is never SQL
+	 * <code>UNKNOWN</code>. As top-level filter, an <code>UNKNOWN</code> condition drops the row
+	 * just like <code>false</code>, and <code>and</code> and <code>or</code> preserve this
+	 * equivalence. A negation does not: TL-Script negates a <code>null</code> value to
+	 * <code>true</code>, whereas SQL negates <code>UNKNOWN</code> to <code>UNKNOWN</code>.
+	 * Therefore, a negation must be built from this condition.
+	 * </p>
+	 *
+	 * <p>
+	 * The default implementation supports boolean values only and guards the value with
+	 * {@link #buildIsNull(EvalContext)}.
+	 * </p>
+	 *
+	 * @param context
+	 *        See {@link #buildExpression(EvalContext)}.
+	 * @throws CompiledValue.IncompatibleTypes
+	 *         See {@link #buildExpression(EvalContext)}.
+	 */
+	public Expression buildCondition(EvalContext context) throws CompiledValue.IncompatibleTypes {
+		if (compiledType() != MOPrimitive.BOOLEAN) {
+			throw new CompiledValue.IncompatibleTypes();
+		}
+		Expression isNull = buildIsNull(context);
+		if (ExpressionFactory.isLiteralTrue(isNull)) {
+			return ExpressionFactory.literal(Boolean.FALSE);
+		}
+		return ExpressionFactory.and(notNull(isNull), buildExpression(context));
+	}
+
+	/**
+	 * Creates an {@link Expression} that is true exactly when {@link #eval(TLObject, EvalContext)}
+	 * yields <code>null</code>, and false otherwise (never SQL <code>UNKNOWN</code>).
+	 *
+	 * @param context
+	 *        See {@link #buildExpression(EvalContext)}.
+	 * @throws CompiledValue.IncompatibleTypes
+	 *         See {@link #buildExpression(EvalContext)}.
+	 */
+	public Expression buildIsNull(EvalContext context) throws CompiledValue.IncompatibleTypes {
+		return ExpressionFactory.isNull(buildExpression(context));
+	}
+
+	/**
+	 * Creates an {@link Expression} to be used as operand of a comparison in the database.
+	 *
+	 * <p>
+	 * The resulting expression represents the value of {@link #eval(TLObject, EvalContext)}
+	 * whenever this value is not <code>null</code>. When it is <code>null</code>, the result is
+	 * undefined; a caller must check {@link #buildIsNull(EvalContext)} for this case.
+	 * </p>
+	 *
+	 * @param context
+	 *        See {@link #buildExpression(EvalContext)}.
+	 * @throws CompiledValue.IncompatibleTypes
+	 *         See {@link #buildExpression(EvalContext)}.
+	 */
+	public Expression buildValue(EvalContext context) throws CompiledValue.IncompatibleTypes {
+		return buildExpression(context);
+	}
+
+	/**
+	 * The negation of the given result of {@link #buildIsNull(EvalContext)}.
+	 *
+	 * <p>
+	 * A boolean literal is negated directly, so that the result can be simplified by
+	 * {@link ExpressionFactory#and(Expression, Expression)} and
+	 * {@link ExpressionFactory#or(Expression, Expression)}.
+	 * </p>
+	 */
+	protected static Expression notNull(Expression isNull) {
+		if (ExpressionFactory.isLiteralTrue(isNull)) {
+			return ExpressionFactory.literal(Boolean.FALSE);
+		}
+		if (ExpressionFactory.isLiteralFalse(isNull)) {
+			return ExpressionFactory.literal(Boolean.TRUE);
+		}
+		return ExpressionFactory.not(isNull);
+	}
 
 	/**
 	 * Method to execute when {@link #buildExpression(EvalContext)} fails.

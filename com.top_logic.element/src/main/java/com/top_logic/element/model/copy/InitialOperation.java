@@ -253,6 +253,9 @@ class InitialOperation extends CopyOperationImpl {
 			if (!defines(copy, part)) {
 				continue;
 			}
+			if (!isCopied(copy, part)) {
+				continue;
+			}
 
 			Object value = readValue(orig, part);
 			if (!_filter.accept(part, value, orig)) {

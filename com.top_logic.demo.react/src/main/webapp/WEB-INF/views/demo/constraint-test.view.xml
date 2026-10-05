@@ -37,6 +37,23 @@
 							</open-dialog>
 						</generic-command>
 						<generic-command
+							image="css:bi bi-pencil"
+							input="selectedObject"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Edit in dialog</en>
+								<de>Im Dialog bearbeiten</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="demo/edit-constraint-test.view.xml"
+							/>
+						</generic-command>
+						<generic-command
 							image="css:bi bi-trash"
 							input="selectedObject"
 							placement="TOOLBAR"

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The shell of an application built from views: the app bar with the development menu and the
+	account area, the system notices, and the sidebar whose items lead to the pages. The view
+	servlet displays it unless the ViewConfig of the application names another default-view.
+	
+	An application does not copy this shell but extends it with a same-path overlay - a
+	WEB-INF/views/app.view.xml of its own module, declaring the namespace
+	xmlns:config="http://www.top-logic.com/ns/config/6.0". The ViewLoader merges all copies in
+	dependency order. Each slot of the app-shell holds at most one element of a kind, so the
+	<sidebar> and the <app-bar> of the overlay extend the ones defined here.
+	
+	What an application typically sets in its overlay: the title of the app bar; the active-item of
+	the sidebar; its header, header-collapsed, footer and footer-collapsed, marked with
+	config:override="true" so that they replace the neutral texts below rather than add to them;
+	the channels its items read, in the channels of the view; and its own sidebar items. An item
+	added without a position comes after the administration item. To place it before the system
+	section, it names the separator in front of the administration item:
+	config:position="before" config:reference="system-separator".
+	
+	An application that defines its whole shell itself marks the content of its copy as a
+	replacement: <app-shell config:override="true">. Its copy then takes the place of this shell as a
+	whole.
+-->
+<view>
+	<app-shell>
+		<!--
+			System-wide notices, shown between app bar and content. Each element decides for itself
+			whether it has anything to announce; the area occupies no space while all of them stay
+			silent, so nothing is reserved during normal operation.
+		-->
+		<notices>
+			<maintenance-notice/>
+			<session-timeout-notice/>
+		</notices>
+		<content>
+			<sidebar drawer-open-slot-name="appbar-leading">
+				<!--
+					The chrome of the rail itself: what stands above and below the items, outside
+					the list. The folded rail has room for an abbreviation, not for a name, so it
+					shows the collapsed variants instead. An application names itself here.
+				-->
+				<header>
+					<text>
+						<label>
+							<en>TopLogic</en>
+							<de>TopLogic</de>
+						</label>
+					</text>
+				</header>
+				<header-collapsed>
+					<text>
+						<label>
+							<en>TL</en>
+							<de>TL</de>
+						</label>
+					</text>
+				</header-collapsed>
+				<footer>
+					<text>
+						<label>
+							<en>TopLogic</en>
+							<de>TopLogic</de>
+						</label>
+					</text>
+				</footer>
+				<footer-collapsed>
+					<text>
+						<label>
+							<en>TL</en>
+							<de>TL</de>
+						</label>
+					</text>
+				</footer-collapsed>
+				<items>
+					<!--
+						Opens the system section: the items of the application go before it, the
+						administration follows it.
+					-->
+					<separator id="system-separator"/>
+					<nav-item id="administration"
+						icon="css:bi bi-shield-lock"
+						route="none"
+					>
+						<access-control scope="administration"/>
+						<view-ref view="admin/admin.view.xml"/>
+						<label>
+							<en>Administration</en>
+							<de>Administration</de>
+						</label>
+					</nav-item>
+				</items>
+			</sidebar>
+		</content>
+		<header>
+			<app-bar variant="flat">
+				<title>
+					<en>TopLogic</en>
+					<de>TopLogic</de>
+				</title>
+				<leading>
+					<!--
+						Mobile drawer-toggle target. The sidebar above is configured with
+						drawer-open-slot-name="appbar-leading", which makes it contribute a
+						hamburger button into this slot via the slot-content registry; CSS makes
+						it visible only at small viewports. The two names must match.
+					-->
+					<slot name="appbar-leading"/>
+				</leading>
+				<children>
+					<!--
+						Inline projection slot. Any descendant view in the shell may push content
+						here by declaring <slot-content to="appbar-content">...</slot-content>; the
+						slot routes contributions to the nearest matching <slot> by tree distance,
+						e.g. to raise a drill-down breadcrumb to the app bar.
+					-->
+					<slot name="appbar-content"/>
+				</children>
+				<trailing>
+					<!--
+						The development tools - designer, UI inspector, script recorder and whatever
+						a deployed module contributes - in one menu. Each entry decides on its own
+						whether the session may use it, and the menu shows no trigger while none is
+						available.
+					-->
+					<view-ref view="dev-menu.view.xml"/>
+
+					<!--
+						The account area: who is logged in, plus logout and the theme entries. Its
+						view declares the channel feeding it, so nothing here wires it. It closes the
+						bar, where an application's account area is looked for.
+					-->
+					<view-ref view="user-menu.view.xml"/>
+				</trailing>
+			</app-bar>
+		</header>
+	</app-shell>
+</view>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<accordion exclusive="true"
+		personalize="false"
+	>
+		<section id="first"
+			expanded="true"
+		>
+			<panel/>
+		</section>
+		<section id="second"
+			expanded="true"
+		>
+			<panel/>
+		</section>
+	</accordion>
+</view>

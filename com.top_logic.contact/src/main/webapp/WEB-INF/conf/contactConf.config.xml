@@ -198,6 +198,11 @@
 						</contexts>
 						<executability>
 							<anonymous-account-disabled message="class.com.top_logic.contact.layout.person.I18NConstants.ERROR_ANONYMOUS_ACCOUNT_NOT_EDITABLE">
+								<!--
+									The implementation class is named explicitly, because the configured default
+									implementation of ScriptFunction1 does not apply within the application
+									configuration, see Ticket #29742.
+								-->
 								<account class="com.top_logic.model.search.form.ScriptFunction1Impl"
 									expression="contact -> $contact.get(`Contacts:PersonContact#account`)"
 								/>

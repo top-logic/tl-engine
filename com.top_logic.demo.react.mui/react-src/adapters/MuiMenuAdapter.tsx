@@ -12,7 +12,7 @@ import ListSubheader from '@mui/material/ListSubheader';
 import Divider from '@mui/material/Divider';
 import type { SxProps, Theme } from '@mui/material/styles';
 
-const { useCallback, useMemo, useRef } = React;
+const { useCallback, useEffect, useMemo, useRef } = React;
 
 /** Command a menu sends when an item is chosen. */
 const CMD_SELECT_ITEM = 'selectItem';
@@ -40,6 +40,12 @@ const ACTIVE_LABEL_PROPS = { sx: { fontWeight: 'fontWeightMedium' } } as const;
 
 /** An item whose command destroys or discards what the user has. */
 const DANGER_SX: SxProps<Theme> = { color: 'error.main', '& .MuiListItemIcon-root': { color: 'error.main' } };
+
+/** An item of the menu having the focus. */
+const FOCUSED_ITEM = '[role="menuitem"]:focus';
+
+/** The item the focus moves to when the menu opens: the only one in the tab order. */
+const FIRST_ITEM = '[role="menuitem"][tabindex="0"]';
 
 /**
  * The space a menu keeps free towards the edge of the browser window: the gap to its anchor and the
@@ -86,8 +92,10 @@ function availableHeight(anchor: PopoverAnchor): number {
  * <li>a press outside the menu closes it ({@link useCloseOnOutsidePress}) and reaches the element
  *     below, as with TLMenu. The trigger of the menu learns through `pressClosedSurface` of the
  *     bridge that the press has closed the menu, and does not open it again;</li>
- * <li>the focus moves to the first item when the menu opens and back to where it was when it
- *     closes ({@link useFocusTrap}); Tab keeps it inside the menu;</li>
+ * <li>the focus moves to the first item that can be chosen when the menu opens - the only item in
+ *     the tab order, focused by the focus trap ({@link useFocusTrap}) or, for a menu placed only
+ *     in the following frame, once it is placed - and back to where it was when it closes; Tab
+ *     keeps it inside the menu;</li>
  * <li>Escape closes the menu, as in TLMenu by the key handler of the menu, which keeps the key
  *     from the keyboard scopes around it (a window);</li>
  * <li>the `MenuList` moves the focus with the arrow keys, Home, End and the first letters of a
@@ -143,6 +151,23 @@ const MuiMenuAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   }, [setFloating]);
   useCloseOnOutsidePress(open, [surfaceRef], close);
   useFocusTrap(open, surfaceRef, 'first');
+
+  // The focus trap moves the focus to the first item only if the item is laid out when the menu
+  // opens; a menu at the pointer is placed in a later frame. Once placed, the focus moves to the
+  // first item that can be chosen, unless it already stands on an item.
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+    const frame = requestAnimationFrame(() => {
+      const surface = surfaceRef.current;
+      if (surface === null || surface.querySelector(FOCUSED_ITEM) !== null) {
+        return;
+      }
+      surface.querySelector<HTMLElement>(FIRST_ITEM)?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [open]);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
     if (event.key === KEY_ESCAPE) {

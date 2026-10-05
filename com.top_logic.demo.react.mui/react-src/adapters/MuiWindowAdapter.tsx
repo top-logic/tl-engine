@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, useI18N, TLChild, KeyboardScopeProvider, useKeyboardBinding, useFocusTrap,
-  FillBarrier, rootClassName, tooltipProps,
+  FillBarrier, ButtonDefaults, rootClassName, tooltipProps,
 } from 'tl-react-bridge';
 import type { TLCellProps, WindowStateJson } from 'tl-react-bridge';
 import Paper from '@mui/material/Paper';
@@ -116,7 +116,8 @@ const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
  * <li>child → the `DialogContent`, flush and scrolling, rendered through {@link TLChild} behind a
  *     {@link FillBarrier} (the body is bounded by the window);</li>
  * <li>footer → the `DialogActions`, rendered through {@link TLChild}: the toolbar of the actions
- *     and the button-bar commands. A footer without commands is not shown;</li>
+ *     and the button-bar commands, whose buttons take the appearance `secondary` as in TLWindow
+ *     ({@link ButtonDefaults}). A footer without commands is not shown;</li>
  * <li>width, height, customWidth, customHeight → the size of the window, as in TLWindow: the size
  *     the user gave the window last replaces the configured one while it fits into the browser
  *     window;</li>
@@ -128,9 +129,7 @@ const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
  * <li>hidden → the window is not rendered; the configured CSS class → className of the `Paper`.</li>
  * </ul>
  *
- * <p>Not used: toolbarButtons (TLWindow renders no such buttons either). The buttons of the footer
- * do not get the appearance `secondary` TLWindow gives them: the context carrying it is not exported
- * by 'tl-react-bridge'.</p>
+ * <p>Not used: toolbarButtons (TLWindow renders no such buttons either).</p>
  */
 const MuiWindowAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<WindowStateJson>>();
@@ -201,7 +200,9 @@ const MuiWindowAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         </DialogContent>
         {!!state.footer && (
           <DialogActions sx={FOOTER_SX}>
-            <TLChild control={state.footer} />
+            <ButtonDefaults appearance="secondary">
+              <TLChild control={state.footer} />
+            </ButtonDefaults>
           </DialogActions>
         )}
         {resizable && !maximized && RESIZE_HANDLES.map(dir => (

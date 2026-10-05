@@ -1,11 +1,14 @@
 import {
   React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, ThemeIcon,
-  TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED,
+  TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, useButtonDefaults, menuItemProps,
 } from 'tl-react-bridge';
-import type { TLCellProps, ButtonStateJson } from 'tl-react-bridge';
+import type { TLCellProps, ButtonStateJson, ButtonAppearance } from 'tl-react-bridge';
 import Button from '@mui/material/Button';
 import type { ButtonProps } from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemButton from '@mui/material/ListItemButton';
 import type { SxProps, Theme } from '@mui/material/styles';
 
 const { useCallback } = React;
@@ -22,13 +25,22 @@ const ICON_WITH_LABEL_CLASS = 'tl-icon-sm';
 /** Size class of the design system for an icon standing alone. */
 const ICON_ALONE_CLASS = 'tl-icon-md';
 
-/** The MUI variant of each appearance a button can have; an absent appearance is `default`. */
-const VARIANTS: Record<ButtonStateJson.Appearance, ButtonProps['variant']> = {
-  default: 'outlined',
+/** The appearance of a button neither its state nor its container names. */
+const DEFAULT_APPEARANCE: ButtonAppearance = 'secondary';
+
+/** The MUI variant of each appearance of a button outside a menu. */
+const VARIANTS: Record<Exclude<ButtonAppearance, 'menu-item'>, ButtonProps['variant']> = {
+  secondary: 'outlined',
   primary: 'contained',
   ghost: 'text',
   link: 'text',
 };
+
+/** An entry of a menu spans the menu. */
+const MENU_ITEM_SX: SxProps<Theme> = { width: '100%' };
+
+/** A destructive entry of a menu. */
+const DANGER_MENU_ITEM_SX: SxProps<Theme> = { ...MENU_ITEM_SX, color: 'error.main' };
 
 /** The look of a pressed button: the alternative in force, or a pressed toggle. */
 const ACTIVE_SX: SxProps<Theme> = { bgcolor: 'action.selected' };
@@ -44,20 +56,28 @@ const LINK_SX: SxProps<Theme> = {
 };
 
 /**
- * Renders the state of a TopLogic button (module name `TLButton`) with the MUI `Button`, or with
- * the MUI `IconButton` when it shows its icon alone.
+ * Renders the state of a TopLogic button (module name `TLButton`) with the MUI `Button`, with the
+ * MUI `IconButton` when it shows its icon alone, or with the MUI `ListItemButton` inside a menu.
  *
  * <p>Mapping from the control state to the MUI props:</p>
  * <ul>
  * <li>label → children; disabled → disabled; hidden → nothing is rendered;</li>
- * <li>appearance → variant: absent or `default` → `outlined`, `primary` → `contained`, `ghost` →
- *     `text`, `link` → `text` drawn as an underlined inline link;</li>
+ * <li>appearance → variant: `primary` → `contained`, `ghost` → `text`, `link` → `text` drawn as an
+ *     underlined inline link, otherwise `outlined`. An absent or `default` appearance is the one
+ *     the container suggests ({@link useButtonDefaults}): `ghost` in a toolbar or an app bar,
+ *     `secondary` (`outlined`) in the button bar of a window;</li>
+ * <li>inside a menu (the container's appearance `menu-item`, which wins over the state) → a
+ *     `ListItemButton` showing icon and label (the MUI `MenuItem` works only inside an MUI menu,
+ *     and the menu around the entry is TopLogic's), with the role and the roving tabindex of a menu entry
+ *     ({@link menuItemProps}), so that the menu's keyboard navigation finds it; active →
+ *     `selected` and `aria-current`; tone `danger` → the error color;</li>
  * <li>tone `danger` → color `error` (not for a link, as in TLButton);</li>
  * <li>size `small` → size `small`;</li>
  * <li>image → `startIcon`, rendered by the bridge's {@link ThemeIcon}; displayMode decides what is
  *     shown: `icon-only` the icon alone in an `IconButton` (the label then names the button as
  *     `aria-label` and tooltip; a button without image shows its label instead), `icon-label` icon
- *     and label, `label-only` or no display mode the label alone;</li>
+ *     and label, `label-only` or no display mode the label alone. A compact toolbar (the
+ *     container's `iconOnly`) shows every button that shows its icon by its icon alone;</li>
  * <li>active → `aria-pressed` and the selected background of the MUI theme;</li>
  * <li>the configured CSS class and the command's CSS classes (cssClasses) → className (through
  *     {@link rootClassName});</li>
@@ -68,13 +88,11 @@ const LINK_SX: SxProps<Theme> = {
  * <li>keyGesture → bound through {@link useKeyboardBinding}; declined while hidden or disabled.</li>
  * </ul>
  *
- * <p>Not reproduced: the defaults a container sets for its buttons (a toolbar's appearance, a
- * compact toolbar's icon-only presentation, the menu entry inside a menu with role `menuitem`).
- * TLButton reads them from a context that 'tl-react-bridge' does not export.</p>
  */
 const MuiButtonAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<ButtonStateJson>>();
   const sendCommand = useTLCommand();
+  const defaults = useButtonDefaults();
 
   const label = state.label;
   const image = state.image;
@@ -84,8 +102,19 @@ const MuiButtonAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const tooltip = state.tooltip;
   const navigateUrl = state.navigateUrl;
   const navigateNewWindow = state.navigateNewWindow === true;
-  const displayMode = state.displayMode ?? DEFAULT_DISPLAY_MODE;
-  const appearance = state.appearance ?? 'default';
+  // The default appearance of the server is the one the container suggests; inside a menu the
+  // container wins over the server, as every button there is an entry.
+  const serverAppearance = state.appearance === 'default' ? undefined : state.appearance;
+  const appearance: ButtonAppearance = defaults.appearance === 'menu-item'
+    ? 'menu-item'
+    : serverAppearance ?? defaults.appearance ?? DEFAULT_APPEARANCE;
+  const asMenuItem = appearance === 'menu-item';
+  const stateMode = state.displayMode ?? DEFAULT_DISPLAY_MODE;
+  // Only a button that shows its icon goes compact; inside a menu every entry shows its label.
+  const showsIcon = stateMode !== 'label-only' && !!image;
+  const displayMode: ButtonStateJson.DisplayMode = defaults.iconOnly && showsIcon
+    ? 'icon-only'
+    : asMenuItem && image ? 'icon-label' : stateMode;
   const isLink = appearance === 'link';
   const danger = state.tone === 'danger' && !isLink;
   const size: ButtonProps['size'] = state.size === 'small' ? 'small' : 'medium';
@@ -125,6 +154,31 @@ const MuiButtonAdapter: React.FC<TLCellProps> = ({ controlId }) => {
     if (!tooltip && !iconOnly) {
       tooltipProps[TOOLTIP_WHEN_ATTR] = WHEN_TRUNCATED;
     }
+  }
+
+  if (asMenuItem) {
+    return (
+      <ListItemButton
+        id={controlId}
+        component="button"
+        type="button"
+        disabled={disabled}
+        onClick={handleClick}
+        selected={active}
+        aria-current={active ? 'true' : undefined}
+        className={rootClassName(state, state.cssClasses)}
+        sx={danger ? DANGER_MENU_ITEM_SX : MENU_ITEM_SX}
+        {...tooltipProps}
+        {...menuItemProps(defaults)}
+      >
+        {showIcon && (
+          <ListItemIcon sx={danger ? { color: 'inherit' } : undefined}>
+            <ThemeIcon encoded={image!} className={ICON_WITH_LABEL_CLASS} />
+          </ListItemIcon>
+        )}
+        <ListItemText>{label}</ListItemText>
+      </ListItemButton>
+    );
   }
 
   const common = {

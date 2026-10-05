@@ -4,7 +4,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from 'tl-react-bridge';
-import type { ButtonStateJson } from 'tl-react-bridge';
+import type { ButtonStateJson, ButtonDefaultsValue } from 'tl-react-bridge';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import { CONTROL_ID, mountAdapter, settle } from './wire-test-support';
 
@@ -30,6 +30,90 @@ function pressCtrlS() {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+
+/** The defaults of a menu around a button: every button there is an entry. */
+const IN_MENU: ButtonDefaultsValue = { appearance: 'menu-item' };
+
+function mountInContainer(state: Partial<ButtonStateJson>, buttonDefaults: ButtonDefaultsValue) {
+  return mountAdapter(MuiButtonAdapter, state, { buttonDefaults });
+}
+
+describe('TLButton as MUI Button inside a container', () => {
+  it('takes the ghost look of a toolbar or an app bar as variant text', () => {
+    mountInContainer({ label: 'Neu' }, { appearance: 'ghost' });
+
+    expect(screen.getByRole('button', { name: 'Neu' }).classList).toContain('MuiButton-text');
+  });
+
+  it('takes the secondary look of the button bar of a window as variant outlined', () => {
+    mountInContainer({ label: 'Abbrechen', appearance: 'default' }, { appearance: 'secondary' });
+
+    expect(screen.getByRole('button', { name: 'Abbrechen' }).classList).toContain('MuiButton-outlined');
+  });
+
+  it('keeps the appearance its state names over the one of the container', () => {
+    mountInContainer({ label: 'Speichern', appearance: 'primary' }, { appearance: 'ghost' });
+
+    expect(screen.getByRole('button', { name: 'Speichern' }).classList).toContain('MuiButton-contained');
+  });
+
+  it('shows itself by its icon alone in a compact toolbar', () => {
+    mountInContainer({ label: 'Bearbeiten', image: IMAGE_EDIT, displayMode: 'icon-label' }, { iconOnly: true });
+
+    const button = screen.getByRole('button', { name: 'Bearbeiten' });
+    expect(button.classList).toContain('MuiIconButton-root');
+    expect(button.textContent).toBe('');
+  });
+
+  it('keeps its label in a compact toolbar when it shows no icon', () => {
+    mountInContainer({ label: 'Bearbeiten', image: IMAGE_EDIT }, { iconOnly: true });
+
+    expect(screen.getByRole('button', { name: 'Bearbeiten' }).classList).toContain('MuiButton-root');
+  });
+
+  it('is an entry of a menu: an MUI list item button with the role and the roving tabindex of the menu', () => {
+    mountInContainer({ label: 'Löschen', image: IMAGE_EDIT, appearance: 'primary', tone: 'danger' }, IN_MENU);
+
+    const item = screen.getByRole('menuitem', { name: 'Löschen' });
+    expect(item.id).toBe(CONTROL_ID);
+    expect(item.classList).toContain('MuiListItemButton-root');
+    expect(item.getAttribute('tabindex')).toBe('-1');
+    expect(item.querySelector('.MuiListItemIcon-root i.fa-edit')).not.toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('marks the active entry of a menu as current, not as pressed', () => {
+    mountInContainer({ label: 'Hell', active: true }, IN_MENU);
+
+    const item = screen.getByRole('menuitem', { name: 'Hell' });
+    expect(item.getAttribute('aria-current')).toBe('true');
+    expect(item.hasAttribute('aria-pressed')).toBe(false);
+    expect(item.classList).toContain('Mui-selected');
+  });
+
+  it('sends click when its menu entry is chosen, nothing while disabled', async () => {
+    const sent = mountInContainer({ label: 'Löschen' }, IN_MENU);
+
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Löschen' }));
+    await settle();
+    expect(sent.mock.calls).toEqual([[CMD_CLICK, {}]]);
+    cleanup();
+
+    const sentDisabled = mountInContainer({ label: 'Löschen', disabled: true }, IN_MENU);
+    const item = screen.getByRole('menuitem', { name: 'Löschen' });
+    expect(item.hasAttribute('disabled')).toBe(true);
+    await userEvent.setup({ pointerEventsCheck: 0 }).click(item);
+    await settle();
+    expect(sentDisabled).not.toHaveBeenCalled();
+  });
+
+  it('carries no role of a menu entry outside a menu', () => {
+    mountButton({ label: 'Speichern' });
+
+    expect(screen.queryByRole('menuitem')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Speichern' }).getAttribute('tabindex')).not.toBe('-1');
+  });
 });
 
 describe('TLButton as MUI Button', () => {

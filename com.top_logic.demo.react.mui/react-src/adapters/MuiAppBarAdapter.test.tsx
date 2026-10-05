@@ -2,9 +2,22 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
-import type { AppBarStateJson } from 'tl-react-bridge';
+import React from 'react';
+import { register, useButtonDefaults } from 'tl-react-bridge';
+import type { TLCellProps, ChildControlJson, AppBarStateJson } from 'tl-react-bridge';
 import MuiAppBarAdapter from './MuiAppBarAdapter';
 import { CONTROL_ID, childControl, mountAdapter } from './wire-test-support';
+
+
+/** The component name of a stand-in showing the appearance its container gives its buttons. */
+const DEFAULTS_PROBE = 'MuiButtonDefaultsProbeAppBar';
+
+register(DEFAULTS_PROBE, ({ controlId }: TLCellProps) => <span id={controlId}>{useButtonDefaults().appearance}</span>);
+
+/** A control showing the appearance its container gives its buttons. */
+function defaultsProbe(controlId: string): ChildControlJson {
+  return { controlId, module: DEFAULTS_PROBE, state: {} } as ChildControlJson;
+}
 
 function mountBar(state: Partial<AppBarStateJson>) {
   return mountAdapter(MuiAppBarAdapter, { title: 'Demo', ...state });
@@ -20,6 +33,13 @@ afterEach(() => {
 });
 
 describe('TLAppBar as MUI AppBar', () => {
+  it('gives the buttons of its actions the ghost look, as TLAppBar does', () => {
+    mountBar({ actions: defaultsProbe('toolbar'), trailing: defaultsProbe('user') });
+
+    expect(document.getElementById('toolbar')!.textContent).toBe('ghost');
+    expect(document.getElementById('user')!.textContent).toBe('');
+  });
+
   it('renders a flat static MUI app bar of the neutral color with its title', () => {
     mountBar({ cssClass: 'my-bar' });
 

@@ -9,10 +9,10 @@ import React from 'react';
 import { vi } from 'vitest';
 import { act, render } from '@testing-library/react';
 import {
-  TLControlContext, KeyboardScopeProvider, FieldLabelContext, FormLayoutContext, useKeyboardBinding, useTLState,
-  register,
+  TLControlContext, KeyboardScopeProvider, FieldLabelContext, FormLayoutContext, ButtonDefaults, useKeyboardBinding,
+  useTLState, register,
 } from 'tl-react-bridge';
-import type { TLCellProps, FieldLabel, FormLayout, ChildControlJson } from 'tl-react-bridge';
+import type { TLCellProps, FieldLabel, FormLayout, ButtonDefaultsValue, ChildControlJson } from 'tl-react-bridge';
 import MuiRoot from '../MuiRoot';
 
 /** The macrotask queue of Node, which the tests run in (no Node typings in this module). */
@@ -85,6 +85,9 @@ export interface MountOptions {
 
   /** The form layout around the adapter; absent: none. */
   formLayout?: FormLayout;
+
+  /** The defaults a container around the adapter gives its buttons; absent: none. */
+  buttonDefaults?: ButtonDefaultsValue;
 }
 
 /**
@@ -115,13 +118,16 @@ export function mountAdapter(
   }));
   const snapshot = { ...state };
   const outer = options.outer;
-  const adapter = (
+  const control = (
     <FieldLabelContext.Provider value={options.fieldLabel ?? null}>
       <TLControlContext.Provider value={contextOf(snapshot)}>
         <Adapter controlId={CONTROL_ID} state={snapshot} />
       </TLControlContext.Provider>
     </FieldLabelContext.Provider>
   );
+  const adapter = options.buttonDefaults === undefined
+    ? control
+    : <ButtonDefaults {...options.buttonDefaults}>{control}</ButtonDefaults>;
   render(
     <MuiRoot>
       {outer && <OuterBinding gesture={outer.gesture} onGesture={outer.onGesture} />}

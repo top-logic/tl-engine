@@ -137,6 +137,38 @@ describe('TLMenu as MUI Menu', () => {
     expect(sent.mock.calls).toEqual([chosen('copy')]);
   });
 
+  it('moves the focus to the first item that can be chosen in a context menu at the pointer', async () => {
+    mountAdapter(MuiMenuAdapter, {
+      open: true, anchorX: 40, anchorY: 60,
+      items: [
+        { type: 'item', id: 'paste', label: 'Einfügen', disabled: true },
+        { type: 'item', id: 'copy', label: 'Kopieren' },
+        { type: 'item', id: 'delete', label: 'Löschen' },
+      ] as MenuStateJson.Entry[],
+    });
+
+    const first = screen.getByRole('menuitem', { name: 'Kopieren' });
+    await waitFor(() => expect(document.activeElement).toBe(first));
+    expect(first.getAttribute('tabindex')).toBe('0');
+    expect(screen.getByRole('menuitem', { name: 'Löschen' }).getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('moves the focus to the first item once a menu placed only in a later frame is laid out', async () => {
+    // Nothing is laid out when the menu opens, so the focus trap cannot focus an item yet.
+    const rects = vi.spyOn(Element.prototype, 'getClientRects')
+      .mockReturnValue([] as unknown as DOMRectList);
+    mountAdapter(MuiMenuAdapter, {
+      open: true, anchorX: 40, anchorY: 60,
+      items: [
+        { type: 'item', id: 'paste', label: 'Einfügen', disabled: true },
+        { type: 'item', id: 'copy', label: 'Kopieren' },
+      ] as MenuStateJson.Entry[],
+    });
+    rects.mockReturnValue([new DOMRect()] as unknown as DOMRectList);
+
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Kopieren' })));
+  });
+
   it('gives the focus back to the trigger when it closes', async () => {
     const outer = document.createElement('button');
     document.body.appendChild(outer);

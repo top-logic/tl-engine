@@ -3,7 +3,9 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, cleanup, act, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { WindowStateJson } from 'tl-react-bridge';
+import React from 'react';
+import { register, useButtonDefaults } from 'tl-react-bridge';
+import type { TLCellProps, ChildControlJson, WindowStateJson } from 'tl-react-bridge';
 import MuiWindowAdapter from './MuiWindowAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
 
@@ -23,6 +25,17 @@ const LABEL_RESTORE = 'js.window.restore';
 
 /** The ID of the pointer driving a gesture. */
 const POINTER = 1;
+
+
+/** The component name of a stand-in showing the appearance its container gives its buttons. */
+const DEFAULTS_PROBE = 'MuiButtonDefaultsProbeWindow';
+
+register(DEFAULTS_PROBE, ({ controlId }: TLCellProps) => <span id={controlId}>{useButtonDefaults().appearance}</span>);
+
+/** A control showing the appearance its container gives its buttons. */
+function defaultsProbe(controlId: string): ChildControlJson {
+  return { controlId, module: DEFAULTS_PROBE, state: {} } as ChildControlJson;
+}
 
 function mountWindow(state: Partial<WindowStateJson>, outer?: () => void) {
   return mountAdapter(MuiWindowAdapter, {
@@ -74,6 +87,12 @@ afterEach(() => {
 });
 
 describe('TLWindow as MUI dialog surface', () => {
+  it('gives the buttons of its footer the secondary look, as TLWindow does', () => {
+    mountWindow({ footer: defaultsProbe('footer-probe') });
+
+    expect(document.getElementById('footer-probe')!.textContent).toBe('secondary');
+  });
+
   it('renders a Paper named by its title, with the content in DialogContent and the footer in DialogActions', () => {
     mountWindow({
       cssClass: 'my-window',

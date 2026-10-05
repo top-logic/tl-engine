@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, TLChild, ButtonDefaults, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps, AppBarStateJson, ChildControlJson } from 'tl-react-bridge';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -35,14 +35,12 @@ const TITLE_SX: SxProps<Theme> = { flex: '0 1 auto', minWidth: 0 };
  * <ul>
  * <li>title → a `Typography` (`h6`, as heading `h1`), truncated with an ellipsis;</li>
  * <li>leading, children, actions, trailing → their slots, each control rendered through
- *     {@link TLChild};</li>
+ *     {@link TLChild}; the buttons of the actions take the appearance `ghost` as in TLAppBar
+ *     ({@link ButtonDefaults});</li>
  * <li>variant `flat` (default) → elevation 0; `elevated` → the elevation of an MUI app bar;</li>
  * <li>hidden → nothing is rendered; the configured CSS class → className of the `AppBar`.</li>
  * </ul>
  *
- * <p>Not reproduced: the ghost look TLAppBar gives the buttons of its actions (through the button
- * defaults of TopLogic, which the bridge does not export); they keep the look of a button of
- * their own.</p>
  */
 const MuiAppBarAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<AppBarStateJson>>();
@@ -69,9 +67,11 @@ const MuiAppBarAdapter: React.FC<TLCellProps> = ({ controlId }) => {
           </div>
         )}
         {state.actions != null && (
-          <div className="tlAppBar__actions">
-            <TLChild control={state.actions} />
-          </div>
+          <ButtonDefaults appearance="ghost">
+            <div className="tlAppBar__actions">
+              <TLChild control={state.actions} />
+            </div>
+          </ButtonDefaults>
         )}
         {!!state.trailing && (
           <div className="tlAppBar__trailing">

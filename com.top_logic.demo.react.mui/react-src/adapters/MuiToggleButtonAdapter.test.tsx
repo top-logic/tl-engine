@@ -19,6 +19,29 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe('TLToggleButton as MUI ToggleButton inside a menu', () => {
+  it('is a checkbox entry of the menu with the roving tabindex', () => {
+    mountAdapter(MuiToggleButtonAdapter, { label: 'Fett', active: true }, { buttonDefaults: { appearance: 'menu-item' } });
+
+    const item = screen.getByRole('menuitemcheckbox', { name: 'Fett' });
+    expect(item.id).toBe(CONTROL_ID);
+    expect(item.classList).toContain('MuiListItemButton-root');
+    expect(item.getAttribute('aria-checked')).toBe('true');
+    expect(item.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('sends click when the entry is chosen', async () => {
+    const sent = mountAdapter(MuiToggleButtonAdapter, { label: 'Fett' }, { buttonDefaults: { appearance: 'menu-item' } });
+
+    const item = screen.getByRole('menuitemcheckbox', { name: 'Fett' });
+    expect(item.getAttribute('aria-checked')).toBe('false');
+    await userEvent.click(item);
+    await settle();
+
+    expect(sent.mock.calls).toEqual([[CMD_CLICK, {}]]);
+  });
+});
+
 describe('TLToggleButton as MUI ToggleButton', () => {
   it('renders an MUI toggle button, pressed while active', () => {
     mountToggle({ label: 'Fett', active: true, cssClass: 'my-class' });

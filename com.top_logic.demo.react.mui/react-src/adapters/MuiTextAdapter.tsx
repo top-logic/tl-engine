@@ -3,6 +3,7 @@ import type { TLCellProps, TextStateJson } from 'tl-react-bridge';
 import Chip from '@mui/material/Chip';
 import Typography from '@mui/material/Typography';
 import type { TypographyProps } from '@mui/material/Typography';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { roleColor } from './choice';
 
 /** The value of {@link TOOLTIP_ATTR} fetching the rich tooltip the server holds for the control. */
@@ -24,7 +25,7 @@ const VARIANTS: Record<TextStateJson.Variant, TypographyProps['variant']> = {
 /**
  * The color of the `Typography` for each color role: a palette key of its `color` prop (a dotted
  * palette path such as `error.main` produces no color there). A helper text is drawn like
- * secondary text; text on a filled surface states no color and takes the one of that surface.
+ * secondary text. Text on a filled surface has no palette key, see {@link ON_COLOR_SX}.
  */
 const COLORS: Record<TextStateJson.Tone, TypographyProps['color'] | undefined> = {
   primary: 'textPrimary',
@@ -36,6 +37,12 @@ const COLORS: Record<TextStateJson.Tone, TypographyProps['color'] | undefined> =
   error: 'error',
   'on-color': undefined,
 };
+
+/**
+ * The color of text on a filled surface: the theme color TLText draws it in (`text-on-color`),
+ * else the white of the MUI palette. The surface is the application's, not one the text knows.
+ */
+const ON_COLOR_SX: SxProps<Theme> = { color: 'var(--text-on-color, var(--mui-palette-common-white))' };
 
 /**
  * The color role a text of the given tone is drawn in as a pill without a role of its own, as
@@ -61,7 +68,7 @@ function roleOfTone(tone: TextStateJson.Tone): string {
  *     display → `h4`, label → `subtitle2`, caption → `caption`;</li>
  * <li>tone → the `color` of the `Typography`: primary → `textPrimary`, secondary and helper →
  *     `textSecondary`, accent → `primary`, success, warning and error → the palette color of that
- *     name, on-color → none, the color of the surface the text stands on;</li>
+ *     name, on-color → the theme color for text on a filled surface (`text-on-color`, as in TLText);</li>
  * <li>overflow `ellipsis` → `noWrap`;</li>
  * <li>colorRole, or appearance `pill` → a small `Chip` of the color of the role (for a pill
  *     without a role of its own, the role of its tone); an empty text is never a pill;</li>
@@ -94,7 +101,8 @@ const MuiTextAdapter: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <Typography id={controlId} component="span" variant={VARIANTS[state.variant ?? 'body']}
-      color={COLORS[tone]} noWrap={state.overflow === 'ellipsis'} role={state.role || undefined}
+      color={COLORS[tone]} sx={tone === 'on-color' ? ON_COLOR_SX : undefined}
+      noWrap={state.overflow === 'ellipsis'} role={state.role || undefined}
       className={rootClassName(state)} {...tooltip}>
       {text}
     </Typography>

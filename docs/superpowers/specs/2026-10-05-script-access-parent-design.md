@@ -59,7 +59,14 @@ public interface AccessParentFunction {
   `AccessParentConfig`. Not set means "automatic" (inherit from generalizations, else the default for
   composition parts).
 - `AccessParentConfig` has exactly one property: a `@DefaultContainer` of type
-  `PolymorphicConfiguration<? extends AccessParentFunction>`.
+  `PolymorphicConfiguration<? extends AccessParentDefinition>`.
+- `AccessParentDefinition` is the configured side: `AccessParentFunction resolve(InstantiationContext,
+  TLClass type)` validates the setting against the type it is configured for and answers the runtime
+  function (`null` for `self` and for an unusable setting, which is reported to the context). The
+  split is needed because the fixed relations resolve their reference against the type of the
+  enclosing `<class>` entry, which the configured instance does not know on its own.
+- The runtime functions of the fixed relations are `ContainerRelation` (composition or `null` for
+  any, plus whether it is configured or the default) and `TargetRelation` (the to-one reference).
 - The grants stay the `@DefaultContainer` of `TLClassAccessRights` (inherited from
   `AccessRightsConfig`), which is why the access parent needs the wrapper element.
 - The enum `AccessParentKind` and the property `access-reference` are removed.
@@ -137,9 +144,11 @@ specializations (ended by `self`), the default for composition parts, the `Acces
   The script is a function of one argument, the object whose access parent is determined.
 - Compiled once in the constructor (`QueryExecutor.compile`); compile errors are reported at startup
   through the `InstantiationContext`.
-- `resolve(object)` evaluates the script within `ThreadContext.inSystemContext(ScriptAccessParent.class, ...)`,
-  so that navigation in the script neither recurses into the access check nor sees only what the
-  user may see. Result handling:
+- The compiled script runs with security disabled (`QueryExecutor.disableSecurity()`, as
+  `DeleteConstraintByExpression` does), so that navigation in the script neither recurses into the
+  access check nor sees only what the user may see. `ScriptAccessParent` is both the definition
+  (its `resolve(context, type)` answers itself) and the function. Result handling of
+  `resolve(object)`:
   - a `TLObject`: the access parent;
   - a collection holding exactly one `TLObject`: that object;
   - `null` or an empty collection: no access parent, not logged;

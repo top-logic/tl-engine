@@ -30,6 +30,7 @@ import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel.SelectOptionsListener;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactValueColor;
@@ -777,16 +778,17 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * <p>
 	 * The image is resolved first, so a reference - the icon a theme configures for a type, say -
 	 * reaches the client as the image it stands for rather than as the reference, which the client
-	 * has no theme to look up. An invisible image is left out altogether: an option with no icon is
+	 * has no theme to look up, and an image file as the URL it is served at, see
+	 * {@link ReactImages}. An invisible image is left out altogether: an option with no icon is
 	 * one whose descriptor names none, not one naming an icon that draws nothing but still takes
 	 * the width of one.
 	 * </p>
 	 */
-	private static void putImage(Map<String, Object> descriptor, ThemeImage image) {
+	private void putImage(Map<String, Object> descriptor, ThemeImage image) {
 		if (image == null || image == ThemeImage.none()) {
 			return;
 		}
-		descriptor.put(DropdownSelectState.Option.IMAGE__PROP, image.resolve().toEncodedForm());
+		descriptor.put(DropdownSelectState.Option.IMAGE__PROP, ReactImages.encode(getReactContext(), image));
 	}
 
 	private ResourceProvider toResourceProvider(LabelProvider labelProvider) {

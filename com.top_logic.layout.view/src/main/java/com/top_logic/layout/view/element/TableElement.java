@@ -26,6 +26,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
@@ -37,7 +38,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
-import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -53,7 +53,6 @@ import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
-import com.top_logic.layout.view.command.DisabledIf;
 import com.top_logic.layout.view.command.ExecutabilityConfig;
 import com.top_logic.layout.view.command.LiveExecutability;
 import com.top_logic.layout.view.command.ViewAction;
@@ -93,7 +92,6 @@ import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
@@ -109,6 +107,7 @@ import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.table.impl.PersonalConfigNamedFilterStore;
 import com.top_logic.table.impl.PersonalConfigViewStateStore;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.TLContext;
 
 /**
@@ -623,8 +622,9 @@ public class TableElement implements UIElement {
 		 * The target is the row dropped on, or {@code null} for a drop on the table as a whole; the
 		 * objects are the list of dragged objects. No value or <code>false</code> accepts the drop,
 		 * <code>true</code> refuses it with a generic reason, a resource key or a text refuses it
-		 * with that reason - the same interpretation as the {@link DisabledIf.Config disabled-if}
-		 * rule. Unset (default) refuses nothing.
+		 * with that reason - the same interpretation as the
+		 * {@link com.top_logic.layout.view.command.DisabledIf.Config disabled-if} rule. Unset
+		 * (default) refuses nothing.
 		 * </p>
 		 */
 		@Name(REFUSE_IF)

@@ -83,6 +83,37 @@
 			</instance>
 		</config>
 
+		<config service-class="com.top_logic.tool.execution.service.CommandApprovalService">
+			<instance class="com.top_logic.tool.execution.service.ConfiguredCommandApprovalService">
+				<check type="TestViewModelAccess:Project">
+					<!-- A frozen project cannot be modified. -->
+					<rule>
+						<contexts>
+							<command-with-group command-group="Write"/>
+						</contexts>
+						<executability>
+							<rule-by-expression
+								decision="p -> if($p.get(`TestViewModelAccess:Project#name`) == 'frozen', 'The project is frozen.', true)"
+								show-disabled="true"
+							/>
+						</executability>
+					</rule>
+					<!-- A frozen project cannot be deleted, without a reason to show. -->
+					<rule>
+						<contexts>
+							<command-with-group command-group="Delete"/>
+						</contexts>
+						<executability>
+							<rule-by-expression
+								decision="p -> $p.get(`TestViewModelAccess:Project#name`) != 'frozen'"
+								show-disabled="false"
+							/>
+						</executability>
+					</rule>
+				</check>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance>
 				<role-rules>

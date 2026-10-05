@@ -28,6 +28,22 @@
 				</security-config>
 			</instance>
 		</config>
+		<config service-class="com.top_logic.tool.execution.service.CommandApprovalService">
+			<instance class="com.top_logic.tool.execution.service.ConfiguredCommandApprovalService">
+				<check type="tl.accounts:Person">
+					<!-- The anonymous account must neither be modified nor deleted in any view. -->
+					<rule>
+						<contexts>
+							<command-with-group command-group="Write"/>
+							<command-with-group command-group="Delete"/>
+						</contexts>
+						<executability>
+							<anonymous-account-disabled/>
+						</executability>
+					</rule>
+				</check>
+			</instance>
+		</config>
 	</services>
 	<configs>
 		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">

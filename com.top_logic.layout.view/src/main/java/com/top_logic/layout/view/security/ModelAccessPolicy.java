@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.security;
 
+import java.util.Collections;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.util.ResKey;
@@ -21,11 +22,21 @@ import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.tool.execution.service.CommandApprovalService;
 import com.top_logic.util.TLContext;
 
 /**
  * Maps a decision of the {@link ModelAccessRights} for the current user to the
  * {@link ExecutableState} of the command offering the operation.
+ *
+ * <p>
+ * An operation on a concrete object additionally needs the approval of the
+ * {@link CommandApprovalService}: the global checks configured for the type of the object (e.g. that
+ * the anonymous account is neither edited nor deleted) apply to every view-layer command checking
+ * the operation on the object, in the same way they apply to the commands of the classic UI. The
+ * view layer knows no component and no command ID, so only checks that do not depend on these (e.g.
+ * checks selecting the command group) take effect.
+ * </p>
  *
  * <p>
  * An allowed operation is {@link ExecutableState#EXECUTABLE executable}. A refused operation is
@@ -41,6 +52,9 @@ import com.top_logic.util.TLContext;
  * <li>The command is <em>disabled</em> when the check on a concrete object (the object operated on,
  * or the container to create in) fails. It gives the refusal as its reason, naming the
  * operation.</li>
+ * <li>When the {@link CommandApprovalService} refuses an operation the access rights allow on an
+ * object, the command is disabled or hidden as the approval check decides. A disabled command gives
+ * the reason of the approval check.</li>
  * </ul>
  *
  * @see ModelAccessRule
@@ -54,6 +68,12 @@ public final class ModelAccessPolicy {
 	/**
 	 * The state of a command performing the given operation on the given object, or on an attribute
 	 * of it.
+	 *
+	 * <p>
+	 * When the access rights allow the operation, the {@link CommandApprovalService} decides about
+	 * it on the object, without a component and command ID. A refusal is displayed as the approval
+	 * check decides, unless the caller demands a display.
+	 * </p>
 	 *
 	 * @param operation
 	 *        The operation performed.
@@ -73,11 +93,26 @@ public final class ModelAccessPolicy {
 		boolean allowed = attribute == null
 			? rights.isAllowed(user, object, operation)
 			: rights.isAllowed(user, object, attribute, operation);
-		if (allowed) {
+		if (!allowed) {
+			boolean hide = restricted(user, operation) || grantedToNoRole(rights, classOf(object), operation);
+			return refused(denied, hide, () -> objectReason(operation, attribute));
+		}
+		ExecutableState approval =
+			CommandApprovalService.getInstance().isExecutable(null, operation, null, object, Collections.emptyMap());
+		if (approval.isExecutable()) {
 			return ExecutableState.EXECUTABLE;
 		}
-		boolean hide = restricted(user, operation) || grantedToNoRole(rights, classOf(object), operation);
-		return refused(denied, hide, () -> objectReason(operation, attribute));
+		return refused(denied, approval.isHidden(), () -> approvalReason(approval, operation, attribute));
+	}
+
+	/**
+	 * The reason the {@link CommandApprovalService} gives for refusing an operation, the generic
+	 * refusal of the operation when it gives none (a hidden command has no reason to show).
+	 */
+	private static ResKey approvalReason(ExecutableState approval, BoundCommandGroup operation,
+			TLStructuredTypePart attribute) {
+		ResKey reason = approval.getI18NReasonKey();
+		return approval.isDisabled() && reason != null ? reason : objectReason(operation, attribute);
 	}
 
 	/**

@@ -1204,20 +1204,21 @@ public class AttributeOperations {
 	 * The configured option provider.
 	 * 
 	 * <p>
-	 * A {@link TLOptions} annotation of the attribute itself takes precedence. Without such
-	 * annotation, the {@link TLOptions} annotation inherited by the attribute is used: the one of
-	 * an overridden attribute, the one configured in the attribute settings, or the one of the
-	 * attribute's value type (see {@link TLStructuredTypePart#getAnnotation(Class)}).
+	 * The options of an attribute are defined by the first of:
 	 * </p>
+	 * <ol>
+	 * <li>The {@link TLOptions} annotation of the attribute itself.</li>
+	 * <li>The options of an attribute that the attribute overrides without specializing its value
+	 * type. An override that specializes the value type does not use the options of the overridden
+	 * attribute, since these are not necessarily valid values of the specialized type.</li>
+	 * <li>The {@link TLOptions} annotation configured for the attribute in the attribute
+	 * settings.</li>
+	 * <li>The {@link TLOptions} annotation of the attribute's value type. Only an annotation defined
+	 * at the value type itself applies, not one of a generalization of the value type.</li>
+	 * </ol>
 	 * 
-	 * <p>
-	 * Only an annotation defined at the value type itself applies, not one that the value type
-	 * inherits from a generalization: the options of a generalization are instances of the
-	 * generalization and therefore not necessarily valid values of the attribute.
-	 * </p>
-	 * 
-	 * @return The option provider, or <code>null</code> if neither the attribute nor its value type
-	 *         defines options.
+	 * @return The option provider, or <code>null</code> if no options are defined for the given
+	 *         attribute.
 	 * 
 	 * @see TLOptions
 	 * @see #allOptions(EditContext)
@@ -1227,21 +1228,35 @@ public class AttributeOperations {
 		if (local != null) {
 			return local;
 		}
-		TLOptions inherited = attribute.getAnnotation(TLOptions.class);
-		if (inherited == null || isInheritedByValueType(attribute, inherited)) {
+		Generator overridden = getOptionsOfOverriddenWithSameType(attribute);
+		if (overridden != null) {
+			return overridden;
+		}
+		TLOptions defaultOptions = attribute.getAnnotation(TLOptions.class);
+		if (defaultOptions == null) {
 			return null;
 		}
-		return TLOptionsFactory.getGenerator(inherited);
+		return TLOptionsFactory.getGenerator(defaultOptions);
 	}
 
 	/**
-	 * Whether the given annotation of the given attribute is the annotation that the attribute's
-	 * value type inherits from one of its generalizations.
+	 * The options of the first attribute that the given attribute overrides without specializing
+	 * its value type.
 	 */
-	private static boolean isInheritedByValueType(TLStructuredTypePart attribute, TLOptions annotation) {
-		TLType valueType = attribute.getType();
-		return valueType.getAnnotationLocal(TLOptions.class) == null
-			&& valueType.getAnnotation(TLOptions.class) == annotation;
+	private static Generator getOptionsOfOverriddenWithSameType(TLStructuredTypePart attribute) {
+		if (!attribute.isOverride() || attribute.getOwner().getModelKind() != ModelKind.CLASS) {
+			return null;
+		}
+		for (TLClassPart overridden : TLModelUtil.getOverriddenParts((TLClassPart) attribute)) {
+			if (!overridden.getType().equals(attribute.getType())) {
+				continue;
+			}
+			Generator result = getOptions(overridden);
+			if (result != null) {
+				return result;
+			}
+		}
+		return null;
 	}
 
 	/**

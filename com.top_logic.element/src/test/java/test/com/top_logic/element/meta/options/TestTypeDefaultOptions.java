@@ -25,8 +25,9 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * Test for the resolution of {@link TLOptions} in
  * {@link AttributeOperations#getOptions(TLStructuredTypePart)}: options of the attribute itself,
- * of an overridden attribute, and of the attribute's value type (but not of a generalization of
- * the value type).
+ * of an overridden attribute with the same value type, and of the attribute's value type. Neither
+ * the options of a generalization of the value type nor the options of an overridden attribute
+ * with a more general value type apply.
  */
 @SuppressWarnings("javadoc")
 public class TestTypeDefaultOptions extends TestWithModelExtension {
@@ -84,6 +85,15 @@ public class TestTypeDefaultOptions extends TestWithModelExtension {
 	public void testOverrideInheritsOptions() {
 		Generator generator = AttributeOperations.getOptions(part("Sub", "ref"));
 		assertEquals("base", id(generator));
+	}
+
+	public void testSpecializingOverrideDoesNotInheritOptions() {
+		assertNull(AttributeOperations.getOptions(part("Sub", "specialized")));
+	}
+
+	public void testTypeOptionsNotInheritedByTypeSpecialization() {
+		TLClass subTarget = (TLClass) _module.getType("SubTarget");
+		assertNull(subTarget.getAnnotation(TLOptions.class));
 	}
 
 	private TLStructuredTypePart part(String className, String partName) {

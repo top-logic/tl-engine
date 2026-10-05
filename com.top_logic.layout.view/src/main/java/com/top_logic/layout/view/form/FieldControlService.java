@@ -1007,8 +1007,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * <p>
 	 * An {@link TLOptions options annotation of the attribute itself} (e.g. supported locales) takes
 	 * precedence over the provider's configured option source; otherwise the configured option source
-	 * is used, falling back to the attribute's structural options (including options inherited from
-	 * the attribute's value type). Either way, only options the current user may read are offered.
+	 * is used, falling back to the attribute's structural options (including the options of the
+	 * attribute's value type). Either way, only options the current user may read are offered.
 	 * </p>
 	 */
 	private OptionSource optionSourceFor(TLStructuredTypePart part, SelectControlProvider provider) {

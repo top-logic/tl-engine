@@ -31,6 +31,12 @@
 
 		<class name="Plain"/>
 
+		<class name="SubPlain">
+			<generalizations>
+				<generalization type="Plain"/>
+			</generalizations>
+		</class>
+
 		<class name="Holder">
 			<attributes>
 				<reference name="typeDefault" type="Target"/>
@@ -61,6 +67,15 @@
 						</options>
 					</annotations>
 				</reference>
+				<reference name="specialized" type="Plain">
+					<annotations>
+						<options>
+							<generator class="test.com.top_logic.element.meta.options.TestIdGenerator"
+								id="base"
+							/>
+						</options>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 
@@ -70,6 +85,7 @@
 			</generalizations>
 			<attributes>
 				<reference name="ref" type="Plain" override="true"/>
+				<reference name="specialized" type="SubPlain" override="true"/>
 			</attributes>
 		</class>
 	</module>

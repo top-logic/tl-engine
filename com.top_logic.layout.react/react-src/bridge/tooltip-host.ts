@@ -24,6 +24,11 @@
  * itself cannot show. A condition that is not met yields no tooltip at all: the walk stops at the
  * declaration that declined instead of falling through to an enclosing one. An unknown condition
  * imposes no restriction.</p>
+ *
+ * <p>A pointer press closes the tooltip at once and drops one still waiting to open, since what
+ * the press brings up - a menu, a dialog - must not sit under it. The element the tooltip of the
+ * pressed spot stands at then offers none until the pointer has left it. A press inside an open
+ * tooltip leaves it alone.</p>
  */
 import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
@@ -99,6 +104,9 @@ let _closeTimer: number | null = null;
 let _active: Active | null = null;
 let _activations = 0;
 
+/** The tooltip anchor pressed last, whose tooltip is held back until the pointer leaves it. */
+let _suppressed: Element | null = null;
+
 export function initTooltipHost(): void {
   if (_hostDiv) return;
   _hostDiv = document.createElement('div');
@@ -109,11 +117,26 @@ export function initTooltipHost(): void {
 
   document.addEventListener('pointerover', onPointerOver, true);
   document.addEventListener('pointerout', onPointerOut, true);
+  document.addEventListener('pointerdown', onPointerDown, true);
+}
+
+function onPointerDown(e: PointerEvent): void {
+  const target = e.target as Element | null;
+  if (target && _hostDiv && _hostDiv.contains(target)) return;
+
+  cancelOpen();
+  cancelClose();
+  _active = null;
+  renderActive();
+
+  const spec = target ? findSpec(target) : null;
+  _suppressed = spec && target ? tooltipAnchor(spec, target) : null;
 }
 
 function onPointerOver(e: PointerEvent): void {
   const target = e.target as Element | null;
   if (!target) return;
+  if (_suppressed && _suppressed.contains(target)) return;
   const spec = findSpec(target);
   if (!spec) return;
 
@@ -131,17 +154,25 @@ function onPointerOver(e: PointerEvent): void {
   cancelClose();
   cancelOpen();
 
-  const anchor = spec.kind === 'dynamic' ? target : spec.el;
-  scheduleOpen(anchor, pending);
+  scheduleOpen(tooltipAnchor(spec, target), pending);
 }
 
 function onPointerOut(e: PointerEvent): void {
   const related = e.relatedTarget as Element | null;
+  if (_suppressed && !(related && _suppressed.contains(related))) _suppressed = null;
   if (related && _hostDiv && _hostDiv.contains(related)) return;
   if (related && findSpec(related)) return;
 
   cancelOpen();
   scheduleClose();
+}
+
+/**
+ * The element the tooltip of the given declaration stands at: the declaring element, or for a
+ * {@link MODE_DYNAMIC} host, which answers for each of its parts, the part under the pointer.
+ */
+function tooltipAnchor(spec: Spec, target: Element): Element {
+  return spec.kind === 'dynamic' ? target : spec.el;
 }
 
 /**

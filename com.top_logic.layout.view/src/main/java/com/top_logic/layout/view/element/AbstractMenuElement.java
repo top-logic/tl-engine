@@ -50,9 +50,11 @@ import com.top_logic.util.Resources;
  * and the enclosing frame's {@link ContextMenuOpener} renders and dispatches them.
  * </p>
  *
- * @implNote A subclass contributes the two decisions that separate the concrete menus:
- *           {@link #getTrigger()} names the gesture opening the menu, and
- *           {@link #menuCommands(List)} picks which of the built models become entries.
+ * @implNote A subclass contributes the decisions that separate the concrete menus:
+ *           {@link #getTrigger()} names the gesture opening the menu,
+ *           {@link #menuCommands(List)} picks which of the built models become entries, and
+ *           {@link #hideWhileEmpty()} decides whether the region disappears while the menu has no
+ *           entry to offer.
  *
  * @see ContextMenuElement
  * @see MenuElement
@@ -190,6 +192,24 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 	 */
 	protected abstract List<CommandModel> menuCommands(List<ViewCommandModel> models);
 
+	/**
+	 * Whether the region built from this element's children is hidden while the menu has no entry
+	 * to offer.
+	 *
+	 * <p>
+	 * An entry is offered exactly when the menu would show it: a command hidden by its
+	 * executability rule is not, a visible but disabled one is. The region follows the state of its
+	 * commands and shows again as soon as one of them is offered.
+	 * </p>
+	 *
+	 * <p>
+	 * The answer depends on what the region is: where the children serve only to open the menu,
+	 * they have no purpose without entries; where they are content in their own right that also
+	 * carries a menu, they stay.
+	 * </p>
+	 */
+	protected abstract boolean hideWhileEmpty();
+
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ContextMenuOpener opener = context.getContextMenuOpener();
@@ -230,7 +250,7 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		}
 
 		MenuRegionControl region = new MenuRegionControl(context, content, contributions, targetSupplier,
-			opener, getTrigger());
+			opener, getTrigger(), hideWhileEmpty());
 		region.setCssClass(_config.getCssClass());
 
 		// Lazy attach on render, cleanup on dispose. The grouped entries are commands of this

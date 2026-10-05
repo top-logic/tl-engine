@@ -400,101 +400,6 @@
 		</content>
 		<header>
 			<app-bar variant="flat">
-				<commands>
-					<open-designer
-						image="css:bi bi-easel"
-						placement="TOOLBAR"
-					>
-						<label>
-							<en>Designer</en>
-							<de>Designer</de>
-						</label>
-						<tooltip>
-							<en>Open the view designer to edit the current page.</en>
-							<de>Öffnet den View-Designer zur Bearbeitung der aktuellen Seite.</de>
-						</tooltip>
-					</open-designer>
-
-					<!--
-						Pops out the script-recorder side-window: a generic open-window command configured
-						with the recorder view.
-					-->
-					<open-window
-						height="320"
-						image="css:bi bi-record-circle"
-						placement="TOOLBAR"
-						singleton-key="script-recorder"
-						view="script-recorder.view.xml"
-						width="420"
-					>
-						<title>
-							<en>Script Recorder</en>
-							<de>Skript-Rekorder</de>
-						</title>
-						<label>
-							<en>Record</en>
-							<de>Aufzeichnen</de>
-						</label>
-						<tooltip>
-							<en>Open the script recorder to capture interactions as a replayable script.</en>
-							<de>Öffnet den Skript-Rekorder, um Interaktionen als abspielbares Skript aufzuzeichnen.</de>
-						</tooltip>
-						<executability>
-							<authenticated-only/>
-						</executability>
-					</open-window>
-
-					<!--
-						Pops out the UI-inspector side-window: pick an element of this window and see the
-						control behind it. Developer tooling, shown only where UI inspection is switched on.
-					-->
-					<open-window
-						height="640"
-						image="css:bi bi-search"
-						placement="TOOLBAR"
-						singleton-key="ui-inspector"
-						view="ui-inspector.view.xml"
-						width="720"
-					>
-						<title>
-							<en>UI inspector</en>
-							<de>UI-Inspektor</de>
-						</title>
-						<label>
-							<en>Inspect</en>
-							<de>Untersuchen</de>
-						</label>
-						<tooltip>
-							<en>Open the UI inspector to examine the elements of this window.</en>
-							<de>Öffnet den UI-Inspektor zur Untersuchung der Elemente dieses Fensters.</de>
-						</tooltip>
-						<executability>
-							<inspect-enabled/>
-						</executability>
-					</open-window>
-
-					<!--
-						Opens the agent access administration: issue an access token that lets an
-						agent outside the browser drive this session, and withdraw issued ones.
-					-->
-					<generic-command
-						image="css:bi bi-robot"
-						placement="TOOLBAR"
-					>
-						<label>
-							<en>Agent access</en>
-							<de>Agentenzugriff</de>
-						</label>
-						<tooltip>
-							<en>Issue and withdraw the access tokens through which an agent drives this session.</en>
-							<de>Stellt Zugriffstokens aus, mit denen ein Agent diese Sitzung bedient, und zieht sie zurück.</de>
-						</tooltip>
-						<executability>
-							<authenticated-only/>
-						</executability>
-						<open-dialog dialog-view="agent-access.view.xml"/>
-					</generic-command>
-				</commands>
 				<title>
 					<en>TopLogic React Demo</en>
 					<de>TopLogic React Demo</de>
@@ -519,12 +424,20 @@
 				</children>
 				<trailing>
 					<!--
+						The development tools - designer, UI inspector, script recorder and whatever
+						a deployed module contributes - in one menu, provided by tl-layout-view. Each
+						entry decides on its own whether the session may use it, and the menu shows no
+						trigger while none is available.
+					-->
+					<view-ref view="dev-menu.view.xml"/>
+
+					<!--
 						The account area: who is logged in, plus logout and the theme entries.
 						Provided by tl-layout-view, which also declares the channel feeding it, so
-						nothing here wires it. It closes the bar, right of the command buttons,
-						where an application's account area is looked for. Its login button belongs
-						to an anonymous session, which this application never displays - a visitor
-						sees the login page instead (see the login-view of demoReactConf.config.xml).
+						nothing here wires it. It closes the bar, where an application's account
+						area is looked for. Its login button belongs to an anonymous session, which
+						this application never displays - a visitor sees the login page instead (see
+						the login-view of demoReactConf.config.xml).
 					-->
 					<view-ref view="user-menu.view.xml"/>
 				</trailing>

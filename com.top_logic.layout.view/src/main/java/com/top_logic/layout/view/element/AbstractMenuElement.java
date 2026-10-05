@@ -16,6 +16,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TreeProperty;
@@ -101,8 +102,14 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		 * currently available is left out together with its separator and heading, so a menu never
 		 * opens on a dividing line with nothing beneath it.
 		 * </p>
+		 *
+		 * <p>
+		 * A group is addressed by its {@link CommandGroup#getId() ID}: a same-path overlay of the
+		 * view names the ID of an existing group to add entries to it, or a new one to add a group.
+		 * </p>
 		 */
 		@Name(GROUPS)
+		@Key(CommandGroup.ID)
 		@EntryTag("group")
 		List<CommandGroup> getGroups();
 
@@ -111,11 +118,28 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		 */
 		interface CommandGroup extends ConfigurationItem {
 
+			/** Configuration name for {@link #getId()}. */
+			String ID = "id";
+
 			/** Configuration name for {@link #getLabel()}. */
 			String LABEL = "label";
 
 			/** Configuration name for {@link #getCommands()}. */
 			String COMMANDS = "commands";
+
+			/**
+			 * The name by which the group is addressed.
+			 *
+			 * <p>
+			 * A module contributing to a menu defined elsewhere writes a same-path overlay of the
+			 * view that names the group by this ID; the entries it lists there are added at the end
+			 * of that group. The groups of one menu need distinct IDs, so at most one of them may go
+			 * without.
+			 * </p>
+			 */
+			@Name(ID)
+			@Nullable
+			String getId();
 
 			/**
 			 * The heading shown above the group's entries; none when unset.

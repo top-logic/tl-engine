@@ -44,6 +44,15 @@
 						<property name="name"
 							type="tl.core:String"
 						/>
+						<reference name="createdIn"
+							type="Project"
+						>
+							<annotations>
+								<default-value>
+									<default-by-expression value="context -> $context"/>
+								</default-value>
+							</annotations>
+						</reference>
 					</attributes>
 				</class>
 

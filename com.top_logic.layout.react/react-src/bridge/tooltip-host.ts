@@ -107,6 +107,12 @@ let _activations = 0;
 /** The tooltip anchor pressed last, whose tooltip is held back until the pointer leaves it. */
 let _suppressed: Element | null = null;
 
+/**
+ * Watches the document while a tooltip is shown and closes it as soon as its anchor leaves the
+ * document - an anchor removed under the resting pointer sends no pointerout.
+ */
+let _anchorObserver: MutationObserver | null = null;
+
 export function initTooltipHost(): void {
   if (_hostDiv) return;
   _hostDiv = document.createElement('div');
@@ -352,7 +358,30 @@ function cancelClose(): void {
   if (_closeTimer != null) { window.clearTimeout(_closeTimer); _closeTimer = null; }
 }
 
+function onDocumentMutated(): void {
+  if (!_active || _active.anchor.isConnected) return;
+  // A pending open targets another anchor and checks that one itself when it fires.
+  cancelClose();
+  _active = null;
+  renderActive();
+}
+
+/** Observes the document exactly while a tooltip is shown. */
+function updateAnchorObserver(): void {
+  if (_active) {
+    if (!_anchorObserver) {
+      _anchorObserver = new MutationObserver(onDocumentMutated);
+      _anchorObserver.observe(document.body, { childList: true, subtree: true });
+    }
+  } else if (_anchorObserver) {
+    _anchorObserver.disconnect();
+    _anchorObserver = null;
+  }
+}
+
+/** Shows the tooltip of {@link _active}, or none when there is none. */
 function renderActive(): void {
+  updateAnchorObserver();
   if (!_root || !_hostDiv) return;
   if (!_active) { _root.render(null); return; }
   const { id, anchor, data } = _active;

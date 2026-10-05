@@ -209,7 +209,7 @@ commands the component sends. The list in the header:
 | `TLNumberInput` | `NumberInputState` |
 | `TLDatePicker` | `DatePickerState` |
 | `TLSelect` | `SelectState` |
-| `TLDropdownSelect`, `TLOptionChips`, `TLSegmentedChoice` | `DropdownSelectState` |
+| `TLDropdownSelect`, `TLOptionChips`, `TLSegmentedChoice`, `TLChoiceGroup` | `DropdownSelectState` |
 | `TLTabBar` | `TabBarState` |
 | `TLWindow` | `WindowState` |
 | `TLDialog` | `DialogState` |

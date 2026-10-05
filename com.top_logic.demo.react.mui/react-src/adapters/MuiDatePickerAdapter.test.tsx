@@ -82,6 +82,15 @@ describe('TLDatePicker as MUI X picker', () => {
     expect(document.getElementById(CONTROL_ID)!.querySelector('.my-class')).not.toBeNull();
   });
 
+  it('names its sections and its button in the page language', () => {
+    document.documentElement.lang = 'de';
+    mountDate({ value: '2026-06-01', inputType: 'date' });
+
+    expect(screen.getByRole('spinbutton', { name: 'Tag' })).toBeTruthy();
+    expect(screen.queryByRole('spinbutton', { name: 'Day' })).toBeNull();
+    expect(screen.getByRole('button', { name: /Datum auswählen/ })).toBeTruthy();
+  });
+
   it('sends the ISO form of a changed date', async () => {
     const sent = mountDate({ value: '2026-06-01', inputType: 'date' });
 

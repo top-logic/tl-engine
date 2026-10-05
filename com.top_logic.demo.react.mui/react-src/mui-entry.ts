@@ -17,6 +17,10 @@ import MuiPasswordInputAdapter from './adapters/MuiPasswordInputAdapter';
 import MuiNumberInputAdapter from './adapters/MuiNumberInputAdapter';
 import MuiDatePickerAdapter from './adapters/MuiDatePickerAdapter';
 import MuiSelectAdapter from './adapters/MuiSelectAdapter';
+import MuiDropdownSelectAdapter from './adapters/MuiDropdownSelectAdapter';
+import MuiOptionChipsAdapter from './adapters/MuiOptionChipsAdapter';
+import MuiSegmentedChoiceAdapter from './adapters/MuiSegmentedChoiceAdapter';
+import MuiChoiceGroupAdapter from './adapters/MuiChoiceGroupAdapter';
 
 registerRootWrapper(MuiRoot);
 replace('TLButton', MuiButtonAdapter);
@@ -27,3 +31,7 @@ replace('TLPasswordInput', MuiPasswordInputAdapter);
 replace('TLNumberInput', MuiNumberInputAdapter);
 replace('TLDatePicker', MuiDatePickerAdapter);
 replace('TLSelect', MuiSelectAdapter);
+replace('TLDropdownSelect', MuiDropdownSelectAdapter);
+replace('TLOptionChips', MuiOptionChipsAdapter);
+replace('TLSegmentedChoice', MuiSegmentedChoiceAdapter);
+replace('TLChoiceGroup', MuiChoiceGroupAdapter);

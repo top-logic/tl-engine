@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { TLControlContext, KeyboardScopeProvider, FieldLabelContext, useKeyboardBinding } from 'tl-react-bridge';
 import type { TLCellProps, FieldLabel } from 'tl-react-bridge';
 import MuiRoot from '../MuiRoot';
@@ -31,6 +31,17 @@ type ControlContext = NonNullable<React.ContextType<typeof TLControlContext>>;
  * useTLFieldValue() use: the state, and the local patch a field applies when its value changes
  * (so that a field shows the value it sent, as it does in the bridge).
  */
+/** Applies a patch to the state of the control mounted last, see {@link patchState}. */
+let applyServerPatch: (patch: Record<string, unknown>) => void = () => {};
+
+/**
+ * Sends a state patch to the control mounted last, as the server does after a command (e.g. the
+ * options a field asked for).
+ */
+export function patchState(patch: Record<string, unknown>) {
+  act(() => applyServerPatch(patch));
+}
+
 function contextOf(initial: Record<string, unknown>): ControlContext {
   let snapshot = initial;
   const listeners = new Set<() => void>();
@@ -45,6 +56,7 @@ function contextOf(initial: Record<string, unknown>): ControlContext {
       listeners.forEach(listener => listener());
     },
   };
+  applyServerPatch = store.applyPatch;
   return { controlId: CONTROL_ID, windowName: 'w', store } as unknown as ControlContext;
 }
 

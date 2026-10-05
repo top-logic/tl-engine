@@ -22,6 +22,7 @@
  *   TLDropdownSelect  - DropdownSelectState
  *   TLOptionChips     - DropdownSelectState
  *   TLSegmentedChoice - DropdownSelectState
+ *   TLChoiceGroup     - DropdownSelectState
  *   TLTabBar          - TabBarState
  *   TLWindow          - WindowState
  *   TLDialog          - DialogState

@@ -19,3 +19,8 @@ globalThis.MutationObserver = class extends NativeMutationObserver {
 afterAll(() => {
   observers.forEach(observer => observer.disconnect());
 });
+
+// jsdom has no CSS.escape, which user-event uses to find the radio button an arrow key moves to.
+const globalCss = (globalThis as { CSS?: { escape?: (value: string) => string } });
+globalCss.CSS ??= {};
+globalCss.CSS.escape ??= (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, ch => '\\' + ch);

@@ -44,6 +44,17 @@
 						<property name="name"
 							type="tl.core:String"
 						/>
+						<property name="number"
+							type="tl.core:Long"
+						>
+							<annotations>
+								<default-value>
+									<provider class="com.top_logic.element.structured.util.SequenceDefaultProvider"
+										sequence-name="TestViewModelAccess_Task_number"
+									/>
+								</default-value>
+							</annotations>
+						</property>
 					</attributes>
 				</class>
 

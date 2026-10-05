@@ -22,6 +22,7 @@ import com.top_logic.layout.view.security.ModelAccessRule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.provider.DefaultProvider;
 import com.top_logic.model.search.expr.Update;
 import com.top_logic.model.util.TLModelPartRef;
 
@@ -30,10 +31,13 @@ import com.top_logic.model.util.TLModelPartRef;
  * has edited.
  *
  * <p>
- * The persistent object is created the way the TL-Script {@code $draft.copy(transient: false)}
- * creates it, with the draft's values and the parts of its compositions, in a transaction of its
- * own (a transaction nested in an enclosing {@link WithTransactionAction} commits together with
- * that one). With a {@link Config#getContainer() container}, the object is created in the context
+ * The persistent object is created the way the TL-Script
+ * {@code $draft.copy(transient: false, skipTransactionDefaults: true)} creates it, with the draft's
+ * values and the parts of its compositions, in a transaction of its own (a transaction nested in an
+ * enclosing {@link WithTransactionAction} commits together with that one). An attribute whose
+ * {@link DefaultProvider} computes its default in the creating transaction (e.g. a sequence number)
+ * keeps the default computed for the persistent object; the draft, being transient, never has such
+ * a default. With a {@link Config#getContainer() container}, the object is created in the context
  * of the container and, with a {@link Config#getReference() reference}, added to that reference of
  * the container, the way {@code $container.add(reference, $created)} adds it. The action results in
  * the persistent object.
@@ -66,9 +70,10 @@ import com.top_logic.model.util.TLModelPartRef;
  * &lt;/generic-command&gt;
  * </pre>
  *
- * @implNote The persistent object is created by a {@link CopyOperation} with security; the
- *           reference of the container is checked by {@link Update#checkWritePermission(TLObject,
- *           TLStructuredTypePart)}.
+ * @implNote The persistent object is created by a {@link CopyOperation} with security and
+ *           {@link CopyOperation#skipTransactionDefaults(boolean)}; the reference of the
+ *           container is checked by
+ *           {@link Update#checkWritePermission(TLObject, TLStructuredTypePart)}.
  */
 @InApp
 public class PersistTransientAction implements ViewAction {
@@ -141,6 +146,7 @@ public class PersistTransientAction implements ViewAction {
 			}
 			operation.setTransient(Boolean.FALSE);
 			operation.withSecurity(Boolean.TRUE);
+			operation.skipTransactionDefaults(true);
 			TLObject created = (TLObject) operation.copyReference(draft);
 			operation.finish();
 

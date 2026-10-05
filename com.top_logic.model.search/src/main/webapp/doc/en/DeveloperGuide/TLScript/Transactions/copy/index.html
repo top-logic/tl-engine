@@ -7,7 +7,8 @@ copy(orig: $orig,
 	context: $context, 
 	filter: $filter, 
 	constructor: $constructor, 
-	transient: false)</code>
+	transient: false,
+	skipTransactionDefaults: false)</code>
 </pre>
 
 <h2>Description</h2>
@@ -91,6 +92,13 @@ copy(orig: $orig,
 			<td>no</td>
 			<td><code class="hljs inlineCode">null</code></td>
 		</tr>
+		<tr>
+			<td>skipTransactionDefaults</td>
+			<td>Boolean</td>
+			<td>Whether a persistent copy keeps the default values computed in the transaction creating it (e.g. a sequence number or a default value of an expression evaluated in the transaction) instead of receiving the value of the original. With <code class="hljs inlineCode">true</code>, such attributes are not copied, regardless of the <code class="hljs inlineCode">filter</code>. A transient object never receives such default values, so this option is required to persist a transient draft without losing them. A transient copy receives the value of the original in any case.</td>
+			<td>no</td>
+			<td><code class="hljs inlineCode">false</code></td>
+		</tr>
 	</tbody>
 </table>
 
@@ -143,3 +151,14 @@ copy(orig: $orig,
 </pre>
 
 <p><span style="color:#3498db"><strong>Output:</strong></span> A list of values [5, 5] - one time the original number and one time the copied one.</p>
+
+<h3>Persisting a draft</h3>
+
+<pre><code>{
+   draft = new(`my.module:Ticket`, transient: true);
+   $draft.set(`my.module:Ticket#title`, "Printer broken");
+   $draft.copy(context: $p, transient: false, skipTransactionDefaults: true);
+}</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> A persistent ticket in the context <code class="hljs inlineCode">p</code> with the title of the draft, e.g. as edited in a create dialog. An attribute with a sequence number as default value receives the next number of the sequence, although the transient draft has no number.</p>

@@ -368,3 +368,45 @@ MAVEN_ARGS=-Pcorporate-example   # start the app with the same profile, see demo
 
 Every button and checkbox of the demo — in forms, toolbars and dialogs — then renders as a brand
 component with the pill-shaped accent style. See [demo-apps.md](demo-apps.md) for URL and login.
+
+## The Material UI module
+
+`com.top_logic.demo.react.mui` (artifact `tl-demo-react-mui`) renders every replaceable component
+with [Material UI](https://mui.com/) — a complete adapter module for a real component library. It
+uses only MIT-licensed packages: `@mui/material`, `@mui/x-date-pickers`, `@emotion/*` and `dayjs`.
+
+| Path | Content |
+|---|---|
+| `react-src/MuiRoot.tsx` | the root wrapper: emotion cache, MUI theme and date localization |
+| `react-src/adapters/` | one adapter per component of the state contract, each with a wire test (`*.test.tsx`); the shared parts are `field.tsx` (field state, typing fields), `choice.tsx` (selection fields) and `window-frame.ts` (moving and resizing a window) |
+| `react-src/mui-entry.ts` | root wrapper and replacements |
+| `react-src/react-*-shim.ts` | the shims; `react-shim.ts` and `react-dom-shim.ts` name the complete public API, as prebuilt library code needs |
+
+How it is attached:
+
+- **Root wrapper.** `MuiRoot` nests an emotion `CacheProvider`, a `ThemeProvider` and the
+  `LocalizationProvider` of the date pickers. It renders no element of its own, since it sits above
+  every React root and an element there would break the fill layout. For the same reason there is
+  no `ScopedCssBaseline`, and no global `CssBaseline`, whose reset would collide with the TopLogic
+  stylesheets. The emotion cache appends its styles to the end of `<head>`, after the TopLogic
+  stylesheets, so MUI wins on its own elements. The theme is the MUI default theme (with CSS
+  variables) in the language of the page (`<html lang>`, German or English).
+- **Overlays.** Windows and dialogs keep the TopLogic window manager: MUI supplies the look
+  (`Paper`, `DialogTitle`, `DialogContent`, `DialogActions`), while positioning, moving and
+  resizing, the focus trap, Escape and the stacking stay with TopLogic. MUI's `Modal` is not used,
+  since every one of its mechanisms already has an owner. Menus are positioned with `usePopover`
+  and close through `useCloseOnOutsidePress`, like `TLMenu`. Popups of selects and date pickers
+  carry `anchoredOverlayProps`, so the focus trap of a surrounding window accepts them.
+- **Container context.** Form fields read `useFormLayout()`, buttons read `useButtonDefaults()`
+  and apply `menuItemProps` inside a menu, so they behave like the TopLogic components in forms,
+  toolbars, menus, app bars and windows.
+
+`tl-demo-react` includes it with the Maven profile `mui` (off by default):
+
+```bash
+mvn -B install -pl com.top_logic.demo.react.mui,com.top_logic.demo.react -P mui
+MAVEN_ARGS=-Pmui   # start the app with the same profile, see demo-apps.md
+```
+
+The wire tests run with vitest (`npm test` in the module directory). The components without a
+state contract — tables, trees, panels, layouts, editors — keep the TopLogic look.

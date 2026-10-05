@@ -60,6 +60,9 @@ public final class UITheme {
 		/** Configuration name for {@link #isSystemDefault()}. */
 		String SYSTEM_DEFAULT = "system-default";
 
+		/** Configuration name for {@link #isAbstract()}. */
+		String ABSTRACT = "abstract";
+
 		/**
 		 * Id of the parent theme whose tokens this theme inherits, or empty for a root theme.
 		 */
@@ -106,6 +109,19 @@ public final class UITheme {
 		boolean isSystemDefault();
 
 		/**
+		 * Whether this theme only serves as the base of other themes, i.e. of the themes naming it
+		 * in {@link #getExtends()}.
+		 *
+		 * <p>
+		 * An abstract theme hands its tokens down to the themes extending it, but is never offered
+		 * to the user, never selected and never in effect. It can therefore neither be the default
+		 * theme nor answer the preference of the operating system ({@link #isSystemDefault()}).
+		 * </p>
+		 */
+		@Name(ABSTRACT)
+		boolean isAbstract();
+
+		/**
 		 * This theme's tokens, overriding the inherited ones, keyed by token name.
 		 */
 		@DefaultContainer
@@ -124,6 +140,8 @@ public final class UITheme {
 
 	private final boolean _systemDefault;
 
+	private final boolean _abstract;
+
 	private final Map<String, String> _tokens;
 
 	private final Map<String, DesignTokenKind> _tokenKinds;
@@ -141,6 +159,8 @@ public final class UITheme {
 	 *        The resolved color scheme of the theme's appearance.
 	 * @param systemDefault
 	 *        Whether this theme answers the operating system's preference for its color scheme.
+	 * @param isAbstract
+	 *        Whether this theme only serves as the base of other themes.
 	 * @param tokens
 	 *        The fully resolved token values (name without {@code --} to CSS value).
 	 * @param tokenKinds
@@ -148,12 +168,13 @@ public final class UITheme {
 	 *        could not be resolved is missing here, while its value is present in {@code tokens}.
 	 */
 	public UITheme(String id, ResKey label, ThemeImage icon, ColorScheme colorScheme, boolean systemDefault,
-			Map<String, String> tokens, Map<String, DesignTokenKind> tokenKinds) {
+			boolean isAbstract, Map<String, String> tokens, Map<String, DesignTokenKind> tokenKinds) {
 		_id = id;
 		_label = label;
 		_icon = icon;
 		_colorScheme = colorScheme;
 		_systemDefault = systemDefault;
+		_abstract = isAbstract;
 		_tokens = tokens;
 		_tokenKinds = tokenKinds;
 	}
@@ -197,6 +218,16 @@ public final class UITheme {
 	 */
 	public boolean isSystemDefault() {
 		return _systemDefault;
+	}
+
+	/**
+	 * Whether this theme only serves as the base of other themes, and is never offered or
+	 * selected.
+	 *
+	 * @see Config#isAbstract()
+	 */
+	public boolean isAbstract() {
+		return _abstract;
 	}
 
 	/**

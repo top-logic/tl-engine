@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The demo's increment to the account area of the framework's user menu (same path in
+	tl-layout-view, merged in dependency order): the menu trigger names the account first name
+	first, "Giulia Ferrante". An account with neither first nor last name - such as root - shows its
+	label.
+-->
+<view>
+	<channels>
+		<derived-channel name="accountName">
+			<expr><![CDATA[{
+	account = currentUser();
+	name = [
+		$account.get(`tl.accounts:Person#firstName`),
+		$account.get(`tl.accounts:Person#lastName`)
+	]
+		.filter(part -> !$part.trim().isEmpty())
+		.join(separator: " ");
+	$name.isEmpty() ? $account : $name
+}]]></expr>
+		</derived-channel>
+	</channels>
+</view>

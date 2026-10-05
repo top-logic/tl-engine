@@ -188,6 +188,26 @@
 			</instance>		
 		</config>
 		
+		<config service-class="com.top_logic.tool.execution.service.CommandApprovalService">
+			<instance class="com.top_logic.tool.execution.service.ConfiguredCommandApprovalService">
+				<check type="Contacts:PersonContact">
+					<!-- The contact of the anonymous account must not be modified in any view. -->
+					<rule>
+						<contexts>
+							<command-with-group command-group="Write"/>
+						</contexts>
+						<executability>
+							<anonymous-account-disabled message="class.com.top_logic.contact.layout.person.I18NConstants.ERROR_ANONYMOUS_ACCOUNT_NOT_EDITABLE">
+								<account class="com.top_logic.model.search.form.ScriptFunction1Impl"
+									expression="contact -> $contact.get(`Contacts:PersonContact#account`)"
+								/>
+							</anonymous-account-disabled>
+						</executability>
+					</rule>
+				</check>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.knowledge.wrap.person.PersonManager">
 			<instance class="com.top_logic.contact.layout.person.ContactPersonManager" />
 		</config>

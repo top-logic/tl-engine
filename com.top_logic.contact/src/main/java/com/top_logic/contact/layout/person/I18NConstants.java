@@ -31,6 +31,11 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("tl.import.tab.missing.values")
 	public static ResKey MISSIN_VALUES__SHEET;
 
+	/**
+	 * @en The anonymous account cannot be edited.
+	 */
+	public static ResKey ERROR_ANONYMOUS_ACCOUNT_NOT_EDITABLE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

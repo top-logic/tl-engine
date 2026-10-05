@@ -261,6 +261,15 @@
 								<de>Spalten-Demo</de>
 							</label>
 						</nav-item>
+						<nav-item id="accordion-demo"
+							icon="css:bi bi-chevron-bar-expand"
+						>
+							<view-ref view="demo/accordion-demo.view.xml"/>
+							<label>
+								<en>Accordion</en>
+								<de>Akkordeon</de>
+							</label>
+						</nav-item>
 						<nav-item id="table-card-demo"
 							icon="css:bi bi-layout-text-sidebar"
 						>

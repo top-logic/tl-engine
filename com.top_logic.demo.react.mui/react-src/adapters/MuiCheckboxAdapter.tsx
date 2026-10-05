@@ -2,6 +2,7 @@ import { React, useTLState, useTLFieldValue, useFieldLabelProps, rootClassName }
 import type { TLCellProps, CheckboxStateJson } from 'tl-react-bridge';
 import Checkbox from '@mui/material/Checkbox';
 import Switch from '@mui/material/Switch';
+import { fieldAriaProps, fieldColor, showsValueOnly } from './field';
 
 const { useCallback } = React;
 
@@ -44,7 +45,7 @@ const MuiCheckboxAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const triState = state.triState === true;
   const editable = state.editable !== false;
   const disabled = state.disabled === true;
-  const readOnly = !editable && !disabled;
+  const readOnly = showsValueOnly(state);
   const unset = triState && value !== true && value !== false;
 
   const handleChange = useCallback(
@@ -64,12 +65,11 @@ const MuiCheckboxAdapter: React.FC<TLCellProps> = ({ controlId }) => {
     return null;
   }
 
-  const color = state.hasError === true ? 'error' : state.hasWarnings === true ? 'warning' : 'primary';
+  const color = state.hasError === true ? 'error' : fieldColor(state);
   const inputProps = {
     ...labelProps,
+    ...fieldAriaProps(state),
     'aria-readonly': readOnly || undefined,
-    'aria-invalid': state.hasError === true || undefined,
-    'aria-required': state.mandatory === true || undefined,
   };
   const common = {
     id: controlId,

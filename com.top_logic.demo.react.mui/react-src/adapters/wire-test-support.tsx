@@ -12,8 +12,14 @@ import { TLControlContext, KeyboardScopeProvider, FieldLabelContext, useKeyboard
 import type { TLCellProps, FieldLabel } from 'tl-react-bridge';
 import MuiRoot from '../MuiRoot';
 
+/** The macrotask queue of Node, which the tests run in (no Node typings in this module). */
+declare function setImmediate(callback: () => void): unknown;
+
 /** The ID of the control under test. */
 export const CONTROL_ID = 'c1';
+
+/** A request of the bridge for translated texts, with the requested keys. */
+const I18N_REQUEST = /react-api\/i18n\?keys=([^&]*)/;
 
 /** A command the adapter sent: its name and its arguments. */
 export type SentCommand = [command: string, args: Record<string, unknown>];
@@ -75,7 +81,14 @@ export function mountAdapter(
   options: MountOptions = {},
 ) {
   const sent = vi.fn<(...command: SentCommand) => void>();
-  vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+    const i18n = I18N_REQUEST.exec(url);
+    if (i18n !== null) {
+      // Each key is answered with itself, so a test finds a translated text by its key.
+      const keys = decodeURIComponent(i18n[1]).split(',');
+      const texts = Object.fromEntries(keys.map(key => [key, key]));
+      return new Response(JSON.stringify(texts), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
     const body = JSON.parse(String(init?.body ?? '{}'));
     if (body.controlId === CONTROL_ID) {
       sent(body.command, body.arguments);
@@ -99,10 +112,39 @@ export function mountAdapter(
   return sent;
 }
 
-/** Waits until the command channel has handed all queued commands to fetch. */
+/**
+ * Waits until the command channel has handed all queued commands to fetch.
+ *
+ * <p>Waits for macrotasks through `setImmediate`, which a test faking only `setTimeout` (to drive
+ * a debounce) leaves real.</p>
+ */
 export async function settle() {
-  for (let i = 0; i < 10; i++) {
-    await Promise.resolve();
+  for (let round = 0; round < 5; round++) {
+    for (let i = 0; i < 10; i++) {
+      await Promise.resolve();
+    }
+    await new Promise<void>(resolve => setImmediate(() => resolve()));
   }
-  await new Promise(resolve => setTimeout(resolve, 0));
+}
+
+/** Fakes the timers a field debounces its value with, leaving the ones {@link settle} waits for. */
+export function fakeDebounceTimers() {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+}
+
+/**
+ * Lets the pointer devices of the page match `(pointer: fine)`, so that the MUI X pickers render
+ * their desktop variant (jsdom implements no media queries).
+ */
+export function matchDesktopPointer() {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: true,
+    media: query,
+    onchange: null,
+    addEventListener() {},
+    removeEventListener() {},
+    addListener() {},
+    removeListener() {},
+    dispatchEvent: () => false,
+  }));
 }

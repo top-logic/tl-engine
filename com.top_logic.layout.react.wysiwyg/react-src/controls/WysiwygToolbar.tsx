@@ -1,4 +1,4 @@
-import { React, useI18N, TLChild, tooltipProps } from 'tl-react-bridge';
+import { React, useI18N, TLChild, tooltipProps, anchoredOverlayProps } from 'tl-react-bridge';
 import { useEditorState } from '@tiptap/react';
 import type { Editor, EditorStateSnapshot } from '@tiptap/react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -105,6 +105,17 @@ function t(labels: Record<string, string>, key: string): string {
   return labels['js.wysiwyg.' + key] || ALL_I18N_KEYS['js.wysiwyg.' + key] || key;
 }
 
+/**
+ * Handler for the closing of a toolbar popup that puts the caret back into the text at its
+ * previous selection, instead of onto the button that opened the popup.
+ */
+function useFocusEditorOnClose(editor: Editor): (e: Event) => void {
+  return React.useCallback((e: Event) => {
+    e.preventDefault();
+    editor.commands.focus();
+  }, [editor]);
+}
+
 // ---------------------------------------------------------------------------
 // ToolbarButton -- simple icon button with tooltip
 // ---------------------------------------------------------------------------
@@ -160,6 +171,7 @@ const HeadingDropdown: React.FC<{
     { label: t(labels, 'heading6'), level: 6, icon: 'ri-h-6' },
   ];
 
+  const focusEditor = useFocusEditorOnClose(editor);
   const currentIcon = activeLevel === null ? 'ri-paragraph' : 'ri-h-' + activeLevel;
   const currentLabel = activeLevel === null ? t(labels, 'paragraph') : t(labels, 'heading' + activeLevel);
 
@@ -173,7 +185,13 @@ const HeadingDropdown: React.FC<{
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="tlWysiwygToolbar__dropdown" sideOffset={4} align="start">
+        <DropdownMenu.Content
+          className="tlWysiwygToolbar__dropdown"
+          sideOffset={4}
+          align="start"
+          onCloseAutoFocus={focusEditor}
+          {...anchoredOverlayProps}
+        >
           {levels.map((h) => {
             const isActive = h.level === activeLevel;
             return (
@@ -209,6 +227,7 @@ const ListDropdown: React.FC<{
   isBullet: boolean;
   isOrdered: boolean;
 }> = ({ editor, labels, isBullet, isOrdered }) => {
+  const focusEditor = useFocusEditorOnClose(editor);
   const currentIcon = isOrdered ? 'ri-list-ordered' : 'ri-list-unordered';
   const listsLabel = t(labels, 'lists');
 
@@ -226,7 +245,13 @@ const ListDropdown: React.FC<{
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="tlWysiwygToolbar__dropdown" sideOffset={4} align="start">
+        <DropdownMenu.Content
+          className="tlWysiwygToolbar__dropdown"
+          sideOffset={4}
+          align="start"
+          onCloseAutoFocus={focusEditor}
+          {...anchoredOverlayProps}
+        >
           <DropdownMenu.Item
             className={'tlWysiwygToolbar__dropdownItem' + (isBullet ? ' tlWysiwygToolbar__dropdownItem--active' : '')}
             onSelect={() => editor.chain().focus().toggleBulletList().run()}
@@ -261,6 +286,7 @@ const LinkPopover: React.FC<{
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const linkLabel = t(labels, 'link');
+  const focusEditor = useFocusEditorOnClose(editor);
 
   const handleOpen = React.useCallback((nextOpen: boolean) => {
     if (nextOpen) {
@@ -303,7 +329,13 @@ const LinkPopover: React.FC<{
         </button>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content className="tlWysiwygToolbar__linkPopover" sideOffset={6} align="start">
+        <Popover.Content
+          className="tlWysiwygToolbar__linkPopover"
+          sideOffset={6}
+          align="start"
+          onCloseAutoFocus={focusEditor}
+          {...anchoredOverlayProps}
+        >
           <div className="tlWysiwygToolbar__linkForm">
             <label className="tlWysiwygToolbar__linkLabel">{t(labels, 'linkUrl')}</label>
             <input

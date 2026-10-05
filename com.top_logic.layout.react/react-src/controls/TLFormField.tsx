@@ -1,12 +1,11 @@
 import {
   React, useTLState, TLChild, rootClassName, useI18N, tooltipProps, TOOLTIP_ATTR, FieldLabelContext, fieldLabel,
-  focusFieldInput, ThemeIcon,
+  focusFieldInput, ThemeIcon, useFormLayout,
 } from 'tl-react-bridge';
 import type { TLCellProps, FormFieldStateJson } from 'tl-react-bridge';
 import { buttonClassName } from './button/ButtonDefaults';
-import { FormLayoutContext } from './FormLayoutContext';
 
-const { useContext, useState, useCallback, useMemo } = React;
+const { useState, useCallback, useMemo } = React;
 
 const I18N_KEYS = {
   'js.formField.help': 'Help',
@@ -35,7 +34,7 @@ const HELP_ICON = 'css:fa-regular fa-circle-question';
  */
 const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<FormFieldStateJson>>();
-  const ctx = useContext(FormLayoutContext);
+  const ctx = useFormLayout();
   const i18n = useI18N(I18N_KEYS);
 
   const label = state.label ?? '';

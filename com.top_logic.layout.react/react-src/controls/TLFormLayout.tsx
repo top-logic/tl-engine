@@ -1,6 +1,5 @@
-import { React, useTLState, TLChild, rootClassName, useFillHost, FillProvider } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
-import { FormLayoutContext } from './FormLayoutContext';
+import { React, useTLState, TLChild, rootClassName, useFillHost, FillProvider, FormLayoutContext } from 'tl-react-bridge';
+import type { TLCellProps, FormLayout } from 'tl-react-bridge';
 
 const { useMemo, useRef, useState, useEffect } = React;
 
@@ -61,7 +60,7 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
     return () => observer.disconnect();
   }, [labelPosition, maxColumns]);
 
-  const ctxValue = useMemo(() => ({
+  const ctxValue = useMemo<FormLayout>(() => ({
     readOnly,
     resolvedLabelPosition: resolvedPosition,
   }), [readOnly, resolvedPosition]);

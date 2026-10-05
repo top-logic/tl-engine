@@ -1058,8 +1058,10 @@ export interface AlertStateJson extends ControlStateJson {
  * The frame is not a field of its own: the value, its editability and its validation belong to the
  * embedded {@link FormFieldStateJson.field}. A label that names its input states this to the input through
  * `FieldLabelContext` of 'tl-react-bridge'. Messages, help and the mark for a required
- * field belong to editing: the component omits them inside a read-only form layout. The
- * component sends no commands.
+ * field belong to editing: the component omits them inside a read-only form layout. Whether the
+ * form layout around the field is read-only, and the label position it resolved for fields that
+ * state none ({@link FormFieldStateJson.labelPosition}), are read with `useFormLayout` of 'tl-react-bridge'.
+ * The component sends no commands.
  */
 export interface FormFieldStateJson extends ControlStateJson {
 	/**

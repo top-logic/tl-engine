@@ -8,8 +8,10 @@ package com.top_logic.layout.react.state;
  * The frame is not a field of its own: the value, its editability and its validation belong to the
  * embedded {@link #getField()}. A label that names its input states this to the input through
  * {@code FieldLabelContext} of 'tl-react-bridge'. Messages, help and the mark for a required
- * field belong to editing: the component omits them inside a read-only form layout. The
- * component sends no commands.
+ * field belong to editing: the component omits them inside a read-only form layout. Whether the
+ * form layout around the field is read-only, and the label position it resolved for fields that
+ * state none ({@link #getLabelPosition()}), are read with {@code useFormLayout} of 'tl-react-bridge'.
+ * The component sends no commands.
  */
 public interface FormFieldState extends com.top_logic.layout.react.state.ControlState {
 

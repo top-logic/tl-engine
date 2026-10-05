@@ -122,6 +122,12 @@ replace('TLCheckbox', BrandCheckboxAdapter);
   component instead of the TopLogic one. The replacement receives the same props (`TLCellProps`) and
   runs in the same control context. The compositions of TopLogic obtain their leaf components through
   the registry (`TLChild`), so a replaced button also appears inside toolbars, dialogs and forms.
+- **`useFormLayout()`** (`bridge/form-layout.ts`) returns what the form layout (`TLFormLayout`)
+  around a control tells its fields through `FormLayoutContext`: whether the form is read-only and
+  the label position it resolved for fields that state none. A replacement of `TLFormField` reads
+  it to omit the required mark, the messages and the help in a read-only form and to place the
+  label as `TLFormField` does. With `FieldLabelContext` (`bridge/field-label.ts`) such a frame
+  names its input by the label, as `TLFormField` does.
 - **`<ThemeIcon encoded={…}/>`** (`bridge/ThemeIcon.tsx`) renders a theme image from the encoded
   form a control sends in its state (`ButtonState.image`, the icons of menu entries and tabs, …): an
   icon font class, an image file, or nothing for the invisible image. An adapter passes the element

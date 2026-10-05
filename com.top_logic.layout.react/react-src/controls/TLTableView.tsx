@@ -1228,7 +1228,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // end frees the funnel there, too.
   // Kept as padding rather than width: the cells live in the content box, so the reserve widens the
   // scroll range without offering the last cell space to grow into and without a sticky cell -
-  // confined to the content box - ever reaching underneath the button.
+  // confined to the content box - ever reaching underneath the button. The design system sizes every
+  // box as border-box, so a minimum width given for a row includes its padding: it must add the
+  // reserve to the width of the columns, or a table wider than its viewport loses the reserve.
   const buttonReserve = columnSelect && !cogInHeaderCell ? 32 : 0;
 
   const allSelected = selectedCount === totalRowCount && totalRowCount > 0;
@@ -1372,7 +1374,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             cannot leave its row, so a row ending with the last column would hold the pinned cells
             back from that edge. The reserve is padding, which a sticky cell never enters. */}
         <div className="tlTableView__headerRow"
-          style={{ minWidth: tableWidth, paddingRight: buttonReserve + scrollbarWidth }}>
+          style={{
+            minWidth: tableWidth + buttonReserve + scrollbarWidth,
+            paddingRight: buttonReserve + scrollbarWidth,
+          }}>
           {isMulti && (
             <div className={'tlTableView__headerCell tlTableView__checkboxCell'
                 + (frozenColumnCount > 0 ? ' tlTableView__headerCell--frozen' : '')}
@@ -1546,7 +1551,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             the rows reach the right edge and a cell pinned there lands on it; the reserve is
             padding, so it widens the scroll range without taking any cell along. */}
         <div style={{
-          height: totalHeight, position: 'relative', minWidth: tableWidth, paddingRight: buttonReserve,
+          height: totalHeight, position: 'relative', minWidth: tableWidth + buttonReserve,
+          paddingRight: buttonReserve,
         }}>
           {rows.map((row) => (
             <div

@@ -44,7 +44,7 @@ public class UserTimeZoneDefault extends DefaultValueProvider implements Default
 	}
 
 	@Override
-	public Object createDefault(Object context, TLStructuredTypePart attribute, boolean createForUI) {
+	public Object createDefault(Object context, TLStructuredTypePart attribute) {
 		return defaultUserTimeZone();
 	}
 

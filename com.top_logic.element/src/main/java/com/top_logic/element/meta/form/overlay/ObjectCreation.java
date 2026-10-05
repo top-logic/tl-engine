@@ -161,8 +161,9 @@ public class ObjectCreation extends FormObjectOverlay {
 		}
 		// Otherwise we check if a default value is configured.
 		DefaultProvider defaultProvider = DisplayAnnotations.getDefaultProvider(part);
-		if (defaultProvider != null) {
-			return defaultProvider.createDefault(_container, part, true);
+		if (defaultProvider != null && !defaultProvider.isComputedInTransaction()) {
+			// A default computed in a transaction is only available when the object is created.
+			return defaultProvider.createDefault(_container, part);
 		}
 		return null;
 	}

@@ -47,6 +47,9 @@ public class TestModelAccessActions extends AbstractModelAccessTest {
 	/** Name of the channel holding the container in the tests. */
 	private static final String CHANNEL = "container";
 
+	/** Name of the {@link #TASK} attribute with a sequence number as default. */
+	private static final String NUMBER = "number";
+
 	private ViewContext _context;
 
 	private ViewChannel _channel;
@@ -278,6 +281,25 @@ public class TestModelAccessActions extends AbstractModelAccessTest {
 		assertFalse(created.tTransient());
 		assertEquals("created", created.tValueByName(NAME));
 		assertEquals(List.of(_task, created), _project.tValueByName(TASKS));
+	}
+
+	/**
+	 * The persistent object keeps the default computed in its creating transaction, which the
+	 * transient draft has not received.
+	 */
+	public void testPersistKeepsTransactionDefault() throws Exception {
+		ViewAction persist =
+			action("<persist-transient container='" + CHANNEL + "' reference='" + TASKS + "'/>");
+		_channel.set(_project);
+		TLObject draft = draft(TASK, "created");
+		assertNull(draft.tValueByName(NUMBER));
+
+		becomeUser(_responsible);
+		TLObject created = (TLObject) persist.execute(_context, draft);
+		assertEquals("created", created.tValueByName(NAME));
+		Number number = (Number) created.tValueByName(NUMBER);
+		assertNotNull("The sequence number is lost.", number);
+		assertEquals(((Number) _task.tValueByName(NUMBER)).longValue() + 1, number.longValue());
 	}
 
 	/**

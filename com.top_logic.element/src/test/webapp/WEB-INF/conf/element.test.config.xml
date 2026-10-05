@@ -144,41 +144,49 @@
 							roles="TestSecurityCoverage.Reader"
 						/>
 					</class>
-					<class name="TestSecurityCoverage:ExplicitPart"
-						access-parent="container"
-						access-reference="TestSecurityCoverage:Covered#explicitParts"
-					/>
-					<class name="TestSecurityCoverage:AnyContainerPart"
-						access-parent="container"
-					/>
-					<class name="TestSecurityCoverage:Recursive"
-						access-parent="container"
-						access-reference="TestSecurityCoverage:Recursive#detail"
-					/>
-					<class name="TestSecurityCoverage:Linked"
-						access-parent="target"
-						access-reference="TestSecurityCoverage:Linked#target"
-					/>
-					<class name="TestSecurityCoverage:LinkedSub"
-						access-parent="self"
-					>
+					<class name="TestSecurityCoverage:ExplicitPart">
+						<access-parent>
+							<container reference="TestSecurityCoverage:Covered#explicitParts"/>
+						</access-parent>
+					</class>
+					<class name="TestSecurityCoverage:AnyContainerPart">
+						<access-parent>
+							<container/>
+						</access-parent>
+					</class>
+					<class name="TestSecurityCoverage:Recursive">
+						<access-parent>
+							<container reference="TestSecurityCoverage:Recursive#detail"/>
+						</access-parent>
+					</class>
+					<class name="TestSecurityCoverage:Linked">
+						<access-parent>
+							<target reference="TestSecurityCoverage:Linked#target"/>
+						</access-parent>
+					</class>
+					<class name="TestSecurityCoverage:LinkedSub">
+						<access-parent>
+							<self/>
+						</access-parent>
 						<grant
 							operation="Read"
 							roles="TestSecurityCoverage.Reader"
 						/>
 					</class>
-					<class name="TestSecurityCoverage:SelfDeciding"
-						access-parent="self"
-					>
+					<class name="TestSecurityCoverage:SelfDeciding">
+						<access-parent>
+							<self/>
+						</access-parent>
 						<grant
 							operation="Read"
 							roles="TestSecurityCoverage.Reader"
 						/>
 					</class>
-					<class name="TestSecurityCoverage:Cyclic"
-						access-parent="target"
-						access-reference="TestSecurityCoverage:Cyclic#next"
-					/>
+					<class name="TestSecurityCoverage:Cyclic">
+						<access-parent>
+							<target reference="TestSecurityCoverage:Cyclic#next"/>
+						</access-parent>
+					</class>
 					<class name="TestSecurityCoverage:ChildOfCovered">
 						<grant
 							operation="Read"

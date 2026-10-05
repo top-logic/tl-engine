@@ -89,7 +89,7 @@ public interface ModelAccessRights {
 	 * @implSpec An implementation without a notion of access parents answers <code>null</code> for
 	 *           every type.
 	 */
-	default AccessParent getAccessParent(TLClass type) {
+	default AccessParentFunction getAccessParent(TLClass type) {
 		return null;
 	}
 

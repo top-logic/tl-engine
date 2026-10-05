@@ -23,7 +23,6 @@ import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NotBothTrue;
@@ -39,12 +38,10 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
-import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
-import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLModuleSingleton;
 import com.top_logic.model.TLObject;
@@ -58,7 +55,6 @@ import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.config.SingletonMapping;
 import com.top_logic.model.config.TLModelPartMapping;
-import com.top_logic.model.resources.TLPartInOwnerResourceProvider;
 import com.top_logic.model.util.AllAttributes;
 import com.top_logic.model.util.AllClasses;
 import com.top_logic.model.util.AllSingletons;
@@ -213,73 +209,39 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		/** Configuration name for {@link #getAccessParent()}. */
 		String ACCESS_PARENT = "access-parent";
 
-		/** Configuration name for {@link #getAccessReference()}. */
-		String ACCESS_REFERENCE = "access-reference";
-
 		@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
 		@ControlProvider(SelectionControlProvider.class)
 		@Override
 		String getName();
 
 		/**
-		 * The kind of access parent of the type: the object whose access definition decides access
-		 * to an object of the type.
+		 * The access parent of the type: the object whose access definition decides access to an
+		 * object of the type.
 		 * <p>
-		 * A type with an access parent has no grants, no marks and no roles of its own: whether a
-		 * user may read, write or export one of its objects is whether the user may do the same to
-		 * the access parent, and creating or deleting one of its objects is writing the access
-		 * parent. An object whose relation leads nowhere is not accessible.
+		 * A type with a delegating access parent has no grants, no marks and no roles of its own:
+		 * whether a user may read, write or export one of its objects is whether the user may do
+		 * the same to the access parent, and creating or deleting one of its objects is writing
+		 * the access parent. An object whose relation leads nowhere is not accessible.
 		 * </p>
-		 * <ul>
-		 * <li>{@link AccessParentKind#CONTAINER container}: the container holding the object, through
-		 * whichever composition, or only through the composition named as
-		 * {@link #getAccessReference() access reference}.</li>
-		 * <li>{@link AccessParentKind#TARGET target}: the object the to-one
-		 * {@link #getAccessReference() access reference} of the type points to.</li>
-		 * <li>{@link AccessParentKind#SELF self}: the type decides for itself and does not delegate,
-		 * neither by default nor by a setting of its generalizations.</li>
-		 * <li>{@link AccessParentKind#AUTO auto}: the type inherits the setting of its
-		 * generalizations. Without one, a composition part without a role rule, without a role
-		 * parent rule and without marks delegates to its container by default, whichever
-		 * composition holds it.</li>
-		 * </ul>
 		 * <p>
-		 * The specializations of the type inherit the setting unless they have one of their own.
+		 * Without a setting the type inherits the setting of its generalizations; without one, a
+		 * composition part without a role rule, without a role parent rule and without marks
+		 * delegates to its container by default. The specializations of the type inherit the
+		 * setting unless they have one of their own.
 		 * </p>
+		 *
+		 * @see ContainerAccessParent
+		 * @see TargetAccessParent
+		 * @see SelfAccessParent
 		 */
 		@Name(ACCESS_PARENT)
 		@Constraint(value = AccessParentStandsAlone.class, args = { @Ref(GRANTS), @Ref(WITHOUT_SECURITY), @Ref(INTERNAL) })
-		AccessParentKind getAccessParent();
+		AccessParentConfig getAccessParent();
 
 		/**
 		 * Setter for {@link #getAccessParent()}.
 		 */
-		void setAccessParent(AccessParentKind value);
-
-		/**
-		 * The reference leading from an object of the type to its access parent.
-		 * <p>
-		 * For the {@link AccessParentKind#CONTAINER container}, a composition holding objects of the
-		 * type, navigated backwards: the container is the access parent only when it holds the
-		 * object through this composition. Without a reference, whichever composition holds the
-		 * object leads to the access parent. For the {@link AccessParentKind#TARGET target}, a
-		 * to-one reference of the type, navigated forwards; it is mandatory. The other kinds name no
-		 * reference.
-		 * </p>
-		 */
-		@Name(ACCESS_REFERENCE)
-		@Nullable
-		@Options(fun = AccessReferenceOptions.class, args = { @Ref(NAME_ATTRIBUTE), @Ref(ACCESS_PARENT) },
-			mapping = TLModelPartRef.PartMapping.class)
-		@OptionLabels(TLPartInOwnerResourceProvider.class)
-		@DynamicMode(fun = AccessParentKind.ReferenceMode.class, args = @Ref(ACCESS_PARENT))
-		@Constraint(value = AccessReferenceRequired.class, args = @Ref(ACCESS_PARENT))
-		TLModelPartRef getAccessReference();
-
-		/**
-		 * Setter for {@link #getAccessReference()}.
-		 */
-		void setAccessReference(TLModelPartRef value);
+		void setAccessParent(AccessParentConfig value);
 
 	}
 
@@ -340,11 +302,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	/**
 	 * The explicitly configured access parents, inherited by the specializations of a type.
 	 * <p>
-	 * A type {@link AccessParentKind#SELF deciding for itself} is mapped to <code>null</code>, which
+	 * A type {@link SelfAccessParent deciding for itself} is mapped to <code>null</code>, which
 	 * also switches off the default of a composition part.
 	 * </p>
 	 */
-	private Map<TLClass, AccessParent> _accessParents = new HashMap<>();
+	private Map<TLClass, AccessParentFunction> _accessParents = new HashMap<>();
 
 	/** The types whose objects are held in a composition, indexed to the types of the containers. */
 	private Map<TLClass, Set<TLClass>> _containerTypes = new HashMap<>();
@@ -370,7 +332,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 		Map<TLClass, List<ResolvedRule>> classRules = new HashMap<>();
 		Map<TLModule, List<ResolvedRule>> moduleRules = new HashMap<>();
-		Map<TLClass, AccessParent> explicitParents = new HashMap<>();
+		Map<TLClass, AccessParentFunction> explicitParents = new HashMap<>();
 		for (ModelAccessRights modelConf : config.getSecurityConfig().values()) {
 			TLObject modelPart = TLModelUtil.resolveQualifiedName(_applicationModel, modelConf.getName());
 			if (modelConf instanceof TLClassAccessRights conf) {
@@ -411,7 +373,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * Resolves the access parent of every type: the one configured for it, or else the one its
 	 * generalizations pass on.
 	 */
-	private void inheritAccessParents(Map<TLClass, AccessParent> explicitParents) {
+	private void inheritAccessParents(Map<TLClass, AccessParentFunction> explicitParents) {
 		for (TLClass type : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
 			inheritAccessParent(type, explicitParents);
 		}
@@ -423,7 +385,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * 
 	 * @return Whether the type or one of its generalizations has a setting.
 	 */
-	private boolean inheritAccessParent(TLClass type, Map<TLClass, AccessParent> explicitParents) {
+	private boolean inheritAccessParent(TLClass type, Map<TLClass, AccessParentFunction> explicitParents) {
 		if (_accessParents.containsKey(type)) {
 			return true;
 		}
@@ -476,7 +438,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	private void handleTLClass(InstantiationContext context, TLObject part, TLClassAccessRights config,
-			Map<TLClass, List<ResolvedRule>> classRules, Map<TLClass, AccessParent> explicitParents) {
+			Map<TLClass, List<ResolvedRule>> classRules, Map<TLClass, AccessParentFunction> explicitParents) {
 		if (!(part instanceof TLClass clazz)) {
 			context.error("The configured part " + part + " is not a TLClass.");
 			return;
@@ -487,75 +449,39 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (config.isInternal()) {
 			markInternal(clazz);
 		}
-		AccessParentKind kind = config.getAccessParent();
-		if (kind != AccessParentKind.AUTO) {
-			if (kind.delegates()
+		AccessParentConfig accessParent = config.getAccessParent();
+		if (accessParent != null) {
+			if (AccessParentConfig.delegates(accessParent)
 				&& (!config.getGrants().isEmpty() || config.isWithoutSecurity() || config.isInternal())) {
 				context.error("The type " + config.getName()
 					+ " has an access parent and therefore must have neither grants nor marks of its own.");
 			}
-			resolveAccessParent(context, clazz, kind, config.getAccessReference(), explicitParents);
+			resolveAccessParent(context, clazz, accessParent, explicitParents);
 		}
 		classRules.computeIfAbsent(clazz, unused -> new ArrayList<>()).addAll(resolveRules(context, config));
 	}
 
 	/**
-	 * Resolves the configured access parent of the given type.
+	 * Resolves the configured access parent of the given type and enters it into the given map.
 	 * <p>
-	 * The {@link AccessParentKind#CONTAINER container} navigates a composition holding objects of
-	 * the type backwards, or any composition when no reference is named; the
-	 * {@link AccessParentKind#TARGET target} navigates a to-one reference of the type forwards. A
-	 * reference not fitting the kind is reported as a configuration error.
+	 * A type {@link SelfAccessParent deciding for itself} is entered as <code>null</code>, which also
+	 * switches off the default of a composition part and an access parent inherited from a
+	 * generalization. An unusable setting is reported by its definition and not entered.
 	 * </p>
-	 * 
-	 * @param explicitParents
-	 *        The configured access parents to enter the resolved one into, <code>null</code> for a
-	 *        type {@link AccessParentKind#SELF deciding for itself}. An unusable setting is not
-	 *        entered.
 	 */
-	private void resolveAccessParent(InstantiationContext context, TLClass type, AccessParentKind kind,
-			TLModelPartRef ref, Map<TLClass, AccessParent> explicitParents) {
-		String typeName = TLModelUtil.qualifiedName(type);
-		if (!kind.delegates()) {
-			if (ref != null) {
-				context.error("The type " + typeName + " with access parent '" + kind.getExternalName()
-					+ "' must not name an access reference, but names " + ref + ".");
-			}
+	private void resolveAccessParent(InstantiationContext context, TLClass type, AccessParentConfig config,
+			Map<TLClass, AccessParentFunction> explicitParents) {
+		AccessParentDefinition definition = context.getInstance(config.getDefinition());
+		if (definition == null) {
+			return;
+		}
+		if (definition instanceof SelfAccessParent) {
 			explicitParents.put(type, null);
 			return;
 		}
-		if (ref == null) {
-			if (kind == AccessParentKind.CONTAINER) {
-				explicitParents.put(type, AccessParent.anyContainer());
-			} else {
-				context.error("The type " + typeName + " with access parent '" + kind.getExternalName()
-					+ "' must name the to-one access reference leading to it.");
-			}
-			return;
-		}
-		TLModelPart part;
-		try {
-			part = ref.resolve(_applicationModel);
-		} catch (RuntimeException ex) {
-			context.error("The access reference " + ref + " of " + typeName + " does not exist.", ex);
-			return;
-		}
-		if (!(part instanceof TLReference reference)) {
-			context.error("The access reference " + ref + " of " + typeName + " is not a reference.");
-		} else if (kind == AccessParentKind.CONTAINER) {
-			if (reference.isComposite() && TLModelUtil.isCompatibleType(reference.getType(), type)) {
-				explicitParents.put(type, AccessParent.backward(reference));
-			} else {
-				context.error("The access reference " + ref + " of " + typeName
-					+ " is not a composition holding objects of the type.");
-			}
-		} else {
-			if (!reference.isMultiple() && TLModelUtil.isCompatibleType(reference.getOwner(), type)) {
-				explicitParents.put(type, AccessParent.forward(reference));
-			} else {
-				context.error("The access reference " + ref + " of " + typeName
-					+ " is not a to-one reference of the type.");
-			}
+		AccessParentFunction function = definition.resolve(context, type);
+		if (function != null) {
+			explicitParents.put(type, function);
 		}
 	}
 
@@ -618,13 +544,13 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 *           reloaded independently of it.
 	 */
 	@Override
-	public AccessParent getAccessParent(TLClass type) {
+	public AccessParentFunction getAccessParent(TLClass type) {
 		if (_accessParents.containsKey(type)) {
 			return _accessParents.get(type);
 		}
 		if (_containerTypes.containsKey(type) && !isWithoutSecurity(type) && !isInternal(type)
 			&& !accessManager().hasRoleSource(type)) {
-			return AccessParent.container();
+			return ContainerRelation.DEFAULT;
 		}
 		return null;
 	}
@@ -632,19 +558,19 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	/**
 	 * The types the objects of the given type may delegate their access decision to.
 	 * 
-	 * @return Empty when the type has no access parent.
+	 * @return Empty when the type has no access parent, <code>null</code> when the possible types
+	 *         are not known statically.
 	 * @see #getAccessParent(TLClass)
 	 */
 	public Set<TLClass> getAccessParentTypes(TLClass type) {
-		AccessParent parent = getAccessParent(type);
+		AccessParentFunction parent = getAccessParent(type);
 		if (parent == null) {
 			return Collections.emptySet();
 		}
-		if (parent.isContainer()) {
+		if (parent instanceof ContainerRelation container && container.composition() == null) {
 			return _containerTypes.getOrDefault(type, Collections.emptySet());
 		}
-		TLType parentType = parent.inverse() ? parent.reference().getOwner() : parent.reference().getType();
-		return parentType instanceof TLClass parentClass ? Set.of(parentClass) : Collections.emptySet();
+		return parent.getParentTypes(type);
 	}
 
 	/**
@@ -907,7 +833,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 */
 	private boolean compute(AccessDecisionCache cache, Person person, TLObject instance,
 			BoundCommandGroup commandGroup) {
-		AccessParent parent = accessParentOf(instance);
+		AccessParentFunction parent = accessParentOf(instance);
 		if (parent != null) {
 			TLObject parentObject = parent.resolve(instance);
 			if (parentObject == null) {
@@ -931,7 +857,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * 
 	 * @return <code>null</code> when the object decides for itself.
 	 */
-	private AccessParent accessParentOf(TLObject instance) {
+	private AccessParentFunction accessParentOf(TLObject instance) {
 		return instance.tType() instanceof TLClass type ? getAccessParent(type) : null;
 	}
 
@@ -960,7 +886,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		Set<TLObject> seen = new HashSet<>();
 		TLObject current = instance;
 		while (seen.add(current)) {
-			AccessParent parent = accessParentOf(current);
+			AccessParentFunction parent = accessParentOf(current);
 			if (parent == null) {
 				return current;
 			}
@@ -1155,7 +1081,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		boolean result;
 		if (getAccessParent(type) != null) {
 			BoundCommandGroup parentOperation = operationOnParent(commandGroup);
-			result = getAccessParentTypes(type).stream()
+			Set<TLClass> parentTypes = getAccessParentTypes(type);
+			// Unknown parent types (a computed access parent): the type-level check is a pre-filter
+			// only, the check of each object follows the relation.
+			result = parentTypes == null || parentTypes.stream()
 				.anyMatch(parentType -> isAccessibleType(parentType, person, parentOperation, securityRoot, memo));
 		} else {
 			Set<BoundedRole> roles = getAllowedRoles(type, commandGroup);

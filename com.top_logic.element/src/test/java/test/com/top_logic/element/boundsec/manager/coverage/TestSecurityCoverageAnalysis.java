@@ -23,7 +23,9 @@ import com.top_logic.element.boundsec.manager.coverage.FindingKind;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageAnalysis;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 import com.top_logic.model.TLModelPart;
-import com.top_logic.model.security.AccessParent;
+import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.ContainerRelation;
+import com.top_logic.model.security.TargetRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -191,19 +193,17 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		TypeCoverage coverage = coverage(SINGLE_CONTAINED);
 		assertEquals(coverage.toString(), CoverageStatus.DELEGATED, coverage.status());
 		assertTrue(coverage.toString(), coverage.findings().isEmpty());
-		AccessParent parent = coverage.accessParent();
-		assertNotNull("A composition part without a role source has its container as access parent.", parent);
-		assertTrue("The default relation is the container, whichever composition holds the object.",
-			parent.isContainer());
-		assertFalse("The default relation is not configured.", parent.explicit());
+		AccessParentFunction parent = coverage.accessParent();
+		assertSame("A composition part without a role source has its container as access parent by default.",
+			ContainerRelation.DEFAULT, parent);
 		assertEquals(List.of(SINGLES_REFERENCE), qualifiedNames(coverage.containerReferences()));
 	}
 
 	public void testPartOfSeveralCompositionsDelegatesToContainer() {
 		TypeCoverage coverage = coverage(DOUBLE_CONTAINED);
 		assertEquals(coverage.toString(), CoverageStatus.DELEGATED, coverage.status());
-		assertTrue("Several compositions are no ambiguity: the container holding the object decides.",
-			coverage.accessParent().isContainer());
+		assertSame("Several compositions are no ambiguity: the container holding the object decides.",
+			ContainerRelation.DEFAULT, coverage.accessParent());
 		assertEquals(List.of(DOUBLES_A_REFERENCE, DOUBLES_B_REFERENCE),
 			qualifiedNames(coverage.containerReferences()));
 	}
@@ -215,11 +215,10 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 
 	public void testConfiguredAccessParentBackwards() {
 		TypeCoverage coverage = coverage(EXPLICIT_PART);
-		AccessParent parent = coverage.accessParent();
-		assertNotNull(parent);
-		assertTrue(parent.explicit());
-		assertTrue("A composition is navigated backwards to the container.", parent.inverse());
-		assertEquals(EXPLICIT_PARTS_REFERENCE, TLModelUtil.qualifiedName(parent.reference()));
+		ContainerRelation parent = (ContainerRelation) coverage.accessParent();
+		assertTrue(parent.configured());
+		assertEquals("A composition is navigated backwards to the container.", EXPLICIT_PARTS_REFERENCE,
+			TLModelUtil.qualifiedName(parent.composition()));
 
 		assertEquals("The role rule applying to the type is shadowed by the access parent: " + coverage,
 			CoverageStatus.INCOMPLETE, coverage.status());
@@ -230,31 +229,25 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	public void testConfiguredAccessParentForwards() {
 		TypeCoverage coverage = coverage(LINKED);
 		assertEquals(coverage.toString(), CoverageStatus.DELEGATED, coverage.status());
-		AccessParent parent = coverage.accessParent();
-		assertNotNull(parent);
-		assertTrue(parent.explicit());
-		assertFalse("A to-one reference of the type is navigated forwards.", parent.inverse());
-		assertEquals(TARGET_REFERENCE, TLModelUtil.qualifiedName(parent.reference()));
+		TargetRelation parent = (TargetRelation) coverage.accessParent();
+		assertEquals("A to-one reference of the type is navigated forwards.", TARGET_REFERENCE,
+			TLModelUtil.qualifiedName(parent.reference()));
 		assertTrue("The type is held in no composition.", coverage.containerReferences().isEmpty());
 	}
 
 	public void testConfiguredAnyContainer() {
 		TypeCoverage coverage = coverage(ANY_CONTAINER_PART);
-		AccessParent parent = coverage.accessParent();
-		assertNotNull(parent);
-		assertTrue("Without an access reference, the container holding the object decides.", parent.isContainer());
-		assertTrue("The container relation is configured, not the default.", parent.explicit());
+		assertSame("Without a reference, the container holding the object decides; configured, not the default.",
+			ContainerRelation.ANY, coverage.accessParent());
 
 		CoverageFinding finding = singleFinding(coverage, FindingKind.SHADOWED_RULES);
 		assertEquals(List.of(ANY_CONTAINER_RULE_ID), finding.getRuleIds());
 	}
 
 	public void testConfiguredContainerTellsDirectionOfRecursiveComposition() {
-		AccessParent parent = coverage(RECURSIVE).accessParent();
-		assertNotNull(parent);
-		assertTrue("A composition the type owns is navigated backwards when the container is configured.",
-			parent.inverse());
-		assertEquals(DETAIL_REFERENCE, TLModelUtil.qualifiedName(parent.reference()));
+		ContainerRelation parent = (ContainerRelation) coverage(RECURSIVE).accessParent();
+		assertEquals("A composition the type owns is navigated backwards when the container is configured.",
+			DETAIL_REFERENCE, TLModelUtil.qualifiedName(parent.composition()));
 	}
 
 	public void testSelfSwitchesOffContainerDefault() {

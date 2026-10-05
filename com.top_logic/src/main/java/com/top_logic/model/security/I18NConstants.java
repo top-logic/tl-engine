@@ -22,10 +22,19 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY;
 
 	/**
-	 * @en An access parent that is the target of a reference needs the to-one reference leading to
-	 *     it.
+	 * @en container (default)
 	 */
-	public static ResKey ACCESS_REFERENCE_REQUIRED;
+	public static ResKey ACCESS_PARENT_CONTAINER_DEFAULT;
+
+	/**
+	 * @en container
+	 */
+	public static ResKey ACCESS_PARENT_CONTAINER;
+
+	/**
+	 * @en container via {0}
+	 */
+	public static ResKey1 ACCESS_PARENT_CONTAINER_VIA__COMPOSITION;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -11,7 +11,7 @@ import com.top_logic.element.boundsec.manager.rule.NavigationRule;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLReference;
-import com.top_logic.model.security.AccessParent;
+import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -43,7 +43,7 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public record TypeCoverage(TLClass type, boolean withoutSecurity, boolean internal, AccessParent accessParent,
+public record TypeCoverage(TLClass type, boolean withoutSecurity, boolean internal, AccessParentFunction accessParent,
 		List<TLReference> containerReferences, Set<BoundedRole> readRoles, List<RoleProvider> roleRules,
 		List<NavigationRule> roleParentRules, List<CoverageFinding> findings) {
 

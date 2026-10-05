@@ -23,6 +23,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.character.CharacterContents;
@@ -37,7 +38,9 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.annotate.security.AccessGrant;
 import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.annotate.security.RoleConfig;
-import com.top_logic.model.security.AccessParentKind;
+import com.top_logic.model.security.AccessParentDefinition;
+import com.top_logic.model.security.ContainerAccessParent;
+import com.top_logic.model.security.SelfAccessParent;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
@@ -258,23 +261,20 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		entry.setInternal(true);
 		_editor.putAccessRights(entry);
 
-		_editor.setAccessParent(contained, AccessParentKind.CONTAINER, TLModelPartRef.ref(CONTAINER_REFERENCE));
+		_editor.setAccessParent(contained, container(CONTAINER_REFERENCE));
 		TLClassAccessRights stored = _editor.editableAccessRights(contained);
-		assertEquals(AccessParentKind.CONTAINER, stored.getAccessParent());
-		assertEquals(CONTAINER_REFERENCE, stored.getAccessReference().qualifiedName());
+		assertEquals(CONTAINER_REFERENCE,
+			((ContainerAccessParent.Config) stored.getAccessParent().getDefinition()).getReference().qualifiedName());
 		assertEquals("A type with an access parent has no grants of its own.", 0, stored.getGrants().size());
 		assertFalse("A type with an access parent has no marks of its own.", stored.isInternal());
 
 		_editor.setInternal(contained, true);
 		stored = _editor.editableAccessRights(contained);
-		assertEquals("Marking the type internal drops its access parent.", AccessParentKind.AUTO,
-			stored.getAccessParent());
-		assertNull(stored.getAccessReference());
+		assertNull("Marking the type internal drops its access parent.", stored.getAccessParent());
 
-		_editor.setAccessParent(contained, AccessParentKind.CONTAINER, TLModelPartRef.ref(CONTAINER_REFERENCE));
-		_editor.setAccessParent(contained, AccessParentKind.AUTO, null);
-		assertEquals(AccessParentKind.AUTO, _editor.editableAccessRights(contained).getAccessParent());
-		assertNull(_editor.editableAccessRights(contained).getAccessReference());
+		_editor.setAccessParent(contained, container(CONTAINER_REFERENCE));
+		_editor.setAccessParent(contained, null);
+		assertNull(_editor.editableAccessRights(contained).getAccessParent());
 	}
 
 	public void testSelfKeepsOwnDefinition() throws Exception {
@@ -283,10 +283,9 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.READ_NAME, READER_ROLE));
 		_editor.putAccessRights(entry);
 
-		_editor.setAccessParent(contained, AccessParentKind.SELF, TLModelPartRef.ref(CONTAINER_REFERENCE));
+		_editor.setAccessParent(contained, self());
 		TLClassAccessRights stored = _editor.editableAccessRights(contained);
-		assertEquals(AccessParentKind.SELF, stored.getAccessParent());
-		assertNull("A type deciding for itself names no access reference.", stored.getAccessReference());
+		assertTrue(stored.getAccessParent().getDefinition() instanceof SelfAccessParent.Config);
 		assertEquals("A type deciding for itself keeps its grants.", 1, stored.getGrants().size());
 	}
 
@@ -370,6 +369,16 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		ModuleConfiguration entry = config.getServices().get(AccessManager.class);
 		assertNotNull("The access manager is configured.", entry);
 		return (ElementAccessManager.Config) entry.getInstance();
+	}
+
+	private static PolymorphicConfiguration<? extends AccessParentDefinition> container(String composition) {
+		ContainerAccessParent.Config config = TypedConfiguration.newConfigItem(ContainerAccessParent.Config.class);
+		config.setReference(TLModelPartRef.ref(composition));
+		return config;
+	}
+
+	private static PolymorphicConfiguration<? extends AccessParentDefinition> self() {
+		return TypedConfiguration.newConfigItem(SelfAccessParent.Config.class);
 	}
 
 	/** Return the suite of tests to perform. */

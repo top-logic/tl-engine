@@ -51,7 +51,8 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.model.TLType;
-import com.top_logic.model.security.AccessParent;
+import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.ContainerRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
@@ -617,22 +618,15 @@ public class SecurityCoverageTable implements UIElement {
 	}
 
 	/**
-	 * The access parent the type delegates to: the reference navigated, marked with
-	 * {@link #INVERSE_MARKER} when it is navigated backwards, or the container relation, configured
-	 * or as a composition part gets it by default.
+	 * The access parent the type delegates to, described by its
+	 * {@link AccessParentFunction#getLabel() label}.
 	 */
 	private static String accessParent(Object row) {
-		AccessParent parent = coverage(row).accessParent();
+		AccessParentFunction parent = coverage(row).accessParent();
 		if (parent == null) {
 			return "";
 		}
-		if (parent.isContainer()) {
-			return Resources.getInstance().getString(parent.explicit()
-				? I18NConstants.COVERAGE_ACCESS_PARENT_CONTAINER
-				: I18NConstants.COVERAGE_ACCESS_PARENT_DEFAULT);
-		}
-		String reference = TLModelUtil.qualifiedName(parent.reference());
-		return parent.inverse() ? INVERSE_MARKER + reference : reference;
+		return Resources.getInstance().getString(parent.getLabel());
 	}
 
 	/**
@@ -731,15 +725,15 @@ public class SecurityCoverageTable implements UIElement {
 	 * type deciding for itself.
 	 */
 	private static ResKey delegation(TypeCoverage coverage) {
-		AccessParent parent = coverage.accessParent();
+		AccessParentFunction parent = coverage.accessParent();
 		if (parent == null) {
 			return null;
 		}
-		if (parent.isContainer()) {
+		if (parent instanceof ContainerRelation container && container.composition() == null) {
 			String containers = coverage.containerReferences().stream()
 				.map(TLModelUtil::qualifiedName)
 				.collect(Collectors.joining(VALUE_SEPARATOR));
-			return parent.explicit()
+			return container.configured()
 				? I18NConstants.COVERAGE_DELEGATED_CONTAINER__CONTAINERS.fill(containers)
 				: I18NConstants.COVERAGE_DELEGATED_DEFAULT__CONTAINERS.fill(containers);
 		}

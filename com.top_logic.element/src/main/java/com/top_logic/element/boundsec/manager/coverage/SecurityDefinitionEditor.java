@@ -13,6 +13,7 @@ import java.util.List;
 
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
@@ -23,13 +24,14 @@ import com.top_logic.element.boundsec.manager.rule.config.SecurityParentsConfig;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
-import com.top_logic.model.security.AccessParentKind;
+import com.top_logic.model.security.AccessParentConfig;
+import com.top_logic.model.security.AccessParentDefinition;
+import com.top_logic.model.security.ContainerAccessParent;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLModuleAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TypeBasedAccessRights;
-import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.autoconf.InAppServiceConfigStore;
@@ -445,45 +447,45 @@ public class SecurityDefinitionEditor {
 	/**
 	 * Sets the access parent of the given type, or drops that setting.
 	 * <p>
-	 * A type with an access parent has no grants and no marks of its own, so setting a
-	 * {@link AccessParentKind#delegates() delegating} access parent drops the grants and marks the
-	 * stored configuration holds for the type.
+	 * A type with a delegating access parent has no grants and no marks of its own, so setting one
+	 * drops the grants and marks the stored configuration holds for the type.
 	 * </p>
 	 * 
 	 * @param type
-	 *        The type delegating its access decision.
-	 * @param kind
-	 *        The value of {@link TLClassAccessRights#getAccessParent()} to store,
-	 *        {@link AccessParentKind#AUTO} to drop the setting.
-	 * @param reference
-	 *        The value of {@link TLClassAccessRights#getAccessReference()} to store. Ignored for a
-	 *        kind that does not delegate.
+	 *        The type whose access parent is set.
+	 * @param definition
+	 *        The definition to store, e.g. a {@link ContainerAccessParent.Config}; <code>null</code>
+	 *        to drop the setting.
 	 * @throws IOException
 	 *         When the file cannot be written.
 	 * @throws ConfigurationException
 	 *         When the stored configuration cannot be parsed.
 	 */
-	public void setAccessParent(TLClass type, AccessParentKind kind, TLModelPartRef reference)
+	public void setAccessParent(TLClass type, PolymorphicConfiguration<? extends AccessParentDefinition> definition)
 			throws IOException, ConfigurationException {
 		TLClassAccessRights entry = editableAccessRights(type);
-		entry.setAccessParent(kind);
-		entry.setAccessReference(kind.delegates() ? reference : null);
-		if (kind.delegates()) {
-			entry.getGrants().clear();
-			entry.setInternal(false);
-			entry.setWithoutSecurity(false);
+		if (definition == null) {
+			entry.setAccessParent(null);
+		} else {
+			AccessParentConfig setting = TypedConfiguration.newConfigItem(AccessParentConfig.class);
+			setting.setDefinition(definition);
+			entry.setAccessParent(setting);
+			if (AccessParentConfig.delegates(setting)) {
+				entry.getGrants().clear();
+				entry.setInternal(false);
+				entry.setWithoutSecurity(false);
+			}
 		}
 		putAccessRights(entry);
 	}
 
 	/**
-	 * Drops a {@link AccessParentKind#delegates() delegating} access parent of the given entry,
-	 * which contradicts a definition of its own.
+	 * Drops a delegating access parent of the given entry, which contradicts a definition of its
+	 * own.
 	 */
 	private static void dropDelegation(TLClassAccessRights entry) {
-		if (entry.getAccessParent().delegates()) {
-			entry.setAccessParent(AccessParentKind.AUTO);
-			entry.setAccessReference(null);
+		if (AccessParentConfig.delegates(entry.getAccessParent())) {
+			entry.setAccessParent(null);
 		}
 	}
 

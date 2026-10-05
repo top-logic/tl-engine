@@ -37,7 +37,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
-import com.top_logic.model.security.AccessParent;
+import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -54,7 +54,7 @@ import com.top_logic.util.model.ModelService;
  * For every concrete global type the analysis answers the two questions that decide whether a user
  * can ever see an object of that type: does a rule deliver a role on it, and is a role granted the
  * read operation on it? Each gap is reported as a {@link CoverageFinding}. A type with an
- * {@link AccessParent access parent} delegates every access decision to another object and needs no
+ * {@link AccessParentFunction access parent} delegates every access decision to another object and needs no
  * definition of its own; it is reported as delegated, with a finding only where a rule applying to
  * it is shadowed by the access parent.
  * </p>
@@ -172,7 +172,7 @@ public class SecurityCoverageAnalysis {
 		Set<BoundedRole> readRoles = Set.copyOf(_accessRights.getAllowedRoles(type, SimpleBoundCommandGroup.READ));
 		boolean withoutSecurity = _accessRights.isWithoutSecurity(type);
 		boolean internal = _accessRights.isInternal(type);
-		AccessParent accessParent = _accessRights.getAccessParent(type);
+		AccessParentFunction accessParent = _accessRights.getAccessParent(type);
 		List<TLReference> containers = containerReferences(type);
 
 		List<CoverageFinding> findings = new ArrayList<>();

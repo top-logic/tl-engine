@@ -86,16 +86,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_COLUMN_ACCESS_PARENT;
 
 	/**
-	 * @en container (default)
-	 */
-	public static ResKey COVERAGE_ACCESS_PARENT_DEFAULT;
-
-	/**
-	 * @en container
-	 */
-	public static ResKey COVERAGE_ACCESS_PARENT_CONTAINER;
-
-	/**
 	 * @en Findings
 	 */
 	public static ResKey COVERAGE_COLUMN_FINDINGS;

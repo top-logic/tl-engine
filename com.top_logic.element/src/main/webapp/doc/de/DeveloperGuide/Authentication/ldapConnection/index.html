@@ -122,6 +122,105 @@
 <h1>Anbindung</h1>
 <p>Eine Anwendung ist in der Lage auf ein LDAP zuzugreifen, sodass die im LDAP existierenden Benutzer in die Anwendung importiert werden oder Authentifizierungen durchgeführt werden können. Hierfür müssen die entsprechenden LDAP Konfigurationen eingebunden werden.</p>
 <h2>Aliase</h2>
-<p>Wiederkehrende Konfigurationen, die für mehrere <a class="tlObject" data-custom="true" href="?page=SecurityDevice&amp;uuid=47187a0f-0c55-47b2-afbe-a75b9e77440b">SecurityDevices</a> benötigt werden (z.B. die Provider-URL) , können in der Hauptkonfiguration der Anwendung in <code class="hljs inlineCode">webapp/WEB-INF/conf</code> definiert werden. Der Name dieser Datei (ohne Pfad) muss, wenn das nicht bereits der Fall ist, in der <code class="hljs inlineCode">metaConf.txt</code> in <code class="hljs inlineCode">webapp/WEB-INF/conf</code> der Anwendung eingetragen werden. Dadurch wird automatisch auch die Konfiguration von <code class="hljs inlineCode">[Hauptkonfiguration].config.xml</code> mit eingebunden, in welcher sich die tatsächliche Konfiguration des LDAPs befindet.</p>
+<p>TopLogic liefert die LDAP-Anbindung als Konfigurationspaar <code class="hljs inlineCode">ldapConf.xml</code> und <code class="hljs inlineCode">ldapConf.config.xml</code> in <code class="hljs inlineCode">webapp/WEB-INF/conf</code> aus. <code class="hljs inlineCode">ldapConf.xml</code> definiert die Aliase <code class="hljs inlineCode">%LDAP_...%</code>, <code class="hljs inlineCode">ldapConf.config.xml</code> konfiguriert damit das <a class="tlObject" data-custom="true" href="?page=SecurityDevice&amp;uuid=47187a0f-0c55-47b2-afbe-a75b9e77440b">SecurityDevice</a> <code class="hljs inlineCode">LdapSecurity</code>. Eine Anwendung aktiviert die LDAP-Anbindung, indem sie <code class="hljs inlineCode">ldapConf.xml</code> in eine <code class="hljs inlineCode">metaConf.txt</code> einträgt, z.B. in der eines Deploy-Aspekts. Dadurch wird automatisch auch <code class="hljs inlineCode">ldapConf.config.xml</code> eingebunden.</p>
+<h2>Werte pro Installation</h2>
+<p>Jeder Alias liest seinen Wert aus der in der Tabelle genannten Java-Systemeigenschaft oder Umgebungsvariable (Syntax <code class="hljs inlineCode">${env:name:default}</code>). So werden die Werte pro Installation gesetzt, ohne eine Konfigurationsdatei zu ändern, z.B. beim Start der JVM mit <code class="hljs inlineCode">-Dldap_url=ldaps://ldap.example.com:636</code> oder als Umgebungsvariable <code class="hljs inlineCode">ldap_url</code>. Eine Systemeigenschaft hat Vorrang vor einer gleichnamigen Umgebungsvariable. Ist keines von beiden gesetzt, gilt der angegebene Default.</p>
+<table border="1" cellpadding="10" cellspacing="5">
+ <thead>
+  <tr>
+   <th>Systemeigenschaft/Umgebungsvariable</th>
+   <th>Alias</th>
+   <th>Bedeutung</th>
+   <th>Default</th>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">ldap_url</code></td>
+   <td><code class="hljs inlineCode">%LDAP_URL%</code></td>
+   <td>URL des LDAP-Servers (Provider-URL).</td>
+   <td><code class="hljs inlineCode">ldap://ldap.your.domain:389</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">ldap_principal</code></td>
+   <td><code class="hljs inlineCode">%LDAP_PRINCIPAL%</code></td>
+   <td>Benutzer, mit dem sich die Anwendung am LDAP anmeldet (Master-Principal).</td>
+   <td><code class="hljs inlineCode">you@your.domain</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">ldap_credential</code></td>
+   <td><code class="hljs inlineCode">%LDAP_CREDENTIAL%</code></td>
+   <td>Passwort des Master-Principals, im Klartext oder mit dem Schlüssel der Anwendung verschlüsselt.</td>
+   <td><code class="hljs inlineCode">your-password</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">ldap_base_dn</code></td>
+   <td><code class="hljs inlineCode">%LDAP_BASE_DN%</code></td>
+   <td>DN, unterhalb dessen Benutzer und Gruppen gesucht werden.</td>
+   <td><code class="hljs inlineCode">DC=YourDC</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">ldap_filter</code></td>
+   <td><code class="hljs inlineCode">%LDAP_FILTER%</code></td>
+   <td>Filter für die Gruppenmitglieder. Ist keine Gruppe angegeben, bestimmt allein dieser Filter die Benutzereinträge.</td>
+   <td><code class="hljs inlineCode">(objectClass=Person)</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">ldap_group_1</code></td>
+   <td><code class="hljs inlineCode">%LDAP_GROUP_1%</code></td>
+   <td>DN der ersten Gruppe, deren Mitglieder Zugang erhalten.</td>
+   <td><code class="hljs inlineCode">CN=YourCN,DC=YourDC</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">ldap_group_2</code></td>
+   <td><code class="hljs inlineCode">%LDAP_GROUP_2%</code></td>
+   <td>DN einer zweiten Gruppe (optional).</td>
+   <td><i>leer</i></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">ldap_group_3</code></td>
+   <td><code class="hljs inlineCode">%LDAP_GROUP_3%</code></td>
+   <td>DN einer dritten Gruppe (optional).</td>
+   <td><i>leer</i></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">ldap_allow_pwd_change</code></td>
+   <td><code class="hljs inlineCode">%LDAP_ALLOW_PWD_CHANGE%</code></td>
+   <td>Ob Benutzer ihr Passwort ändern dürfen.</td>
+   <td><code class="hljs inlineCode">false</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">ldap_nested_groups</code></td>
+   <td><code class="hljs inlineCode">%LDAP_NESTED_GROUPS%</code></td>
+   <td>Ob verschachtelte Gruppen aufgelöst werden.</td>
+   <td><code class="hljs inlineCode">false</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">ldap_mapping_all</code></td>
+   <td><code class="hljs inlineCode">%LDAP_MAPPING_ALL%</code></td>
+   <td>Attribut-Mapping für alle LDAP-Objekte.</td>
+   <td><code class="hljs inlineCode">/WEB-INF/database/ldap/all-mapping.properties</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">ldap_mapping_person</code></td>
+   <td><code class="hljs inlineCode">%LDAP_MAPPING_PERSON%</code></td>
+   <td>Attribut-Mapping für Benutzer.</td>
+   <td><code class="hljs inlineCode">/WEB-INF/database/ldap/person-mapping.properties</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">ldap_mapping_group</code></td>
+   <td><code class="hljs inlineCode">%LDAP_MAPPING_GROUP%</code></td>
+   <td>Attribut-Mapping für Gruppen.</td>
+   <td><code class="hljs inlineCode">/WEB-INF/database/ldap/group-mapping.properties</code></td>
+  </tr>
+  <tr>
+   <td><code class="hljs inlineCode">ldap_mfa_requirement</code></td>
+   <td><code class="hljs inlineCode">%LDAP_MFA_REQUIREMENT%</code></td>
+   <td>Ob eine Zwei-Faktor-Authentifizierung <code class="hljs inlineCode">optional</code> oder <code class="hljs inlineCode">required</code> ist.</td>
+   <td><code class="hljs inlineCode">optional</code></td>
+  </tr>
+ </thead>
+ <tbody>
+ </tbody>
+</table>
+<p>Das Passwort in <code class="hljs inlineCode">ldap_credential</code> darf im Klartext oder verschlüsselt angegeben werden. Alternativ zu Systemeigenschaften und Umgebungsvariablen kann eine Anwendung die Aliase auch in einer eigenen Konfigurationsdatei überschreiben, die in der <code class="hljs inlineCode">metaConf.txt</code> nach <code class="hljs inlineCode">ldapConf.xml</code> geladen wird.</p>
 <h2>Konfiguration</h2>
-<p>In <code class="hljs inlineCode">[Hauptkonfiguration].config.xml</code> wird die LDAP Anbindung konfiguriert, wobei auf die Aliase der Hauptkonfiguration zurückgegriffen wird. Wie das funktioniert ist in <a class="tlObject" data-custom="false" href="?page=TLSecurityDeviceManagerConfig&amp;uuid=89a0a924-6e12-4bb7-a40c-e7c917fc2493">TLSecurityDeviceManager</a> beschrieben.</p>
+<p>In <code class="hljs inlineCode">ldapConf.config.xml</code> wird die LDAP Anbindung konfiguriert, wobei auf die Aliase aus <code class="hljs inlineCode">ldapConf.xml</code> zurückgegriffen wird. Werden weitere Einstellungen benötigt, kann eine Anwendung diese Konfiguration in einer eigenen <code class="hljs inlineCode">*.config.xml</code> ergänzen. Wie das funktioniert ist in <a class="tlObject" data-custom="false" href="?page=TLSecurityDeviceManagerConfig&amp;uuid=89a0a924-6e12-4bb7-a40c-e7c917fc2493">TLSecurityDeviceManager</a> beschrieben.</p>

@@ -27,6 +27,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
@@ -40,6 +41,7 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.KeyStroke;
+import com.top_logic.layout.react.control.common.ReactAlertControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.form.InputType;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
@@ -64,6 +66,7 @@ import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.react.control.toggle.ReactToggleButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.AccordionState;
+import com.top_logic.layout.react.state.AlertState;
 import com.top_logic.layout.react.state.ButtonState;
 import com.top_logic.layout.react.state.CheckboxState;
 import com.top_logic.layout.react.state.ChildControl;
@@ -80,6 +83,7 @@ import com.top_logic.layout.react.state.TextInputState;
 import com.top_logic.layout.react.state.ToggleButtonState;
 import com.top_logic.layout.react.state.WindowState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
@@ -252,6 +256,15 @@ public class TestControlStateSchema extends TestCase {
 	}
 
 	/**
+	 * The directions the options of a group of radio buttons are laid out in are sent as the schema
+	 * spells them.
+	 */
+	public void testDropdownSelectOrientation() {
+		assertSameNames(Orientation.values(), DropdownSelectState.Orientation.values(),
+			DropdownSelectState.Orientation::valueOf);
+	}
+
+	/**
 	 * The kinds of a snackbar message are sent as the schema spells them.
 	 */
 	public void testSnackbarVariant() {
@@ -338,6 +351,56 @@ public class TestControlStateSchema extends TestCase {
 		assertEachDeclared(state.get(DropdownSelectState.OPTIONS__PROP), DropdownSelectState.Option.class);
 		assertEachDeclared(state.get(DropdownSelectState.VALUE__PROP), DropdownSelectState.Option.class);
 		assertTrue(state.containsKey(DropdownSelectState.OPTIONS__PROP));
+	}
+
+	/**
+	 * A group of radio buttons is drawn by its own component, and every key it sends - including the
+	 * direction its options are laid out in - is declared in {@link DropdownSelectState}.
+	 */
+	public void testChoiceGroupKeys() {
+		ReactDropdownSelectControl control = new ReactDropdownSelectControl(createContext(),
+			new SimpleSelectFieldModel(List.of("b"), List.of("a", "b"), false), String::valueOf, null, false,
+			SelectDisplay.RADIO, Orientation.HORIZONTAL);
+		putFieldKeys(control);
+
+		Map<?, ?> state = state(control);
+		assertEquals("TLChoiceGroup", control.getReactModule());
+		assertDeclared(state, DropdownSelectState.class);
+		assertEachDeclared(state.get(DropdownSelectState.OPTIONS__PROP), DropdownSelectState.Option.class);
+		assertEquals(DropdownSelectState.Display.RADIO.protocolName(), state.get(DropdownSelectState.DISPLAY__PROP));
+		assertEquals(DropdownSelectState.Orientation.HORIZONTAL.protocolName(),
+			state.get(DropdownSelectState.ORIENTATION__PROP));
+		assertTrue(state.containsKey(DropdownSelectState.EMPTY_OPTION_LABEL__PROP));
+	}
+
+	/**
+	 * The options of a group of radio buttons stand one below the other unless asked otherwise, and
+	 * that default is not sent.
+	 */
+	public void testChoiceGroupVerticalByDefault() {
+		ReactDropdownSelectControl control = new ReactDropdownSelectControl(createContext(),
+			new SimpleSelectFieldModel(List.of("b"), List.of("a", "b"), false), String::valueOf, null, false,
+			SelectDisplay.RADIO);
+
+		assertEquals(Orientation.VERTICAL, control.getOrientation());
+		assertFalse(state(control).containsKey(DropdownSelectState.ORIENTATION__PROP));
+	}
+
+	/**
+	 * A list that opens on demand offers an input to filter it by unless asked otherwise; that
+	 * default is not sent, and the request for no filter is declared in {@link DropdownSelectState}.
+	 */
+	public void testDropdownWithoutFilter() {
+		ReactDropdownSelectControl control = new ReactDropdownSelectControl(createContext(),
+			new SimpleSelectFieldModel(List.of("b"), List.of("a", "b"), false), String::valueOf, null, false);
+		assertTrue(control.hasFilter());
+		assertFalse(state(control).containsKey(DropdownSelectState.NO_FILTER__PROP));
+
+		control.setFilter(false);
+		Map<?, ?> state = state(control);
+		assertFalse(control.hasFilter());
+		assertDeclared(state, DropdownSelectState.class);
+		assertEquals(Boolean.TRUE, state.get(DropdownSelectState.NO_FILTER__PROP));
 	}
 
 	/**
@@ -486,6 +549,24 @@ public class TestControlStateSchema extends TestCase {
 		assertDeclared(state(control), SnackbarState.class);
 	}
 
+	/**
+	 * Every key of an alert and of its actions is declared in {@link AlertState}.
+	 */
+	public void testAlertKeys() {
+		ReactAlertControl control = new ReactAlertControl(createContext());
+		control.show(Variant.WARNING, "Title", "Message");
+		control.setClosable(true);
+		control.setActions(List.of(toggle()));
+		control.setCssClass("css");
+
+		Map<?, ?> state = state(control);
+		assertDeclared(state, AlertState.class);
+		assertEquals(properties(AlertState.class), state.keySet());
+		for (Object action : (List<?>) state.get(AlertState.ACTIONS__PROP)) {
+			assertChild(action);
+		}
+	}
+
 	private ReactToggleButtonControl toggle() {
 		return new ReactToggleButtonControl(createContext(), "Toggle", true, (context, active) -> !active);
 	}
@@ -572,12 +653,14 @@ public class TestControlStateSchema extends TestCase {
 	 * The suite of tests.
 	 *
 	 * <p>
-	 * Several controls ask {@link Resources} for labels, which the services of the setup provide.
+	 * Several controls ask {@link Resources} for labels and {@link ThemeFactory} for icons, which the
+	 * services of the setup provide.
 	 * </p>
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(new TestSuite(TestControlStateSchema.class), ResourcesModule.Module.INSTANCE));
+			ServiceTestSetup.createSetup(new TestSuite(TestControlStateSchema.class), ResourcesModule.Module.INSTANCE,
+				ThemeFactory.Module.INSTANCE));
 	}
 
 }

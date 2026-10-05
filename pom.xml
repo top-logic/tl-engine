@@ -42,7 +42,7 @@
 		<batik.version>1.19</batik.version>
 		<tl.license.version>7.8.2</tl.license.version>
 		<!-- renovate: datasource=node-version depName=node -->
-		<node.version>20.10.0</node.version>
+		<node.version>24.21.0</node.version>
 		
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -70,6 +70,16 @@
 		
 		<!-- Whether to skip indexing the combined JavaDoc tree in tl-parent-engine. -->
 		<tl.javadoc.skipIndex>${maven.javadoc.skip}</tl.javadoc.skipIndex>
+
+		<!--
+			Comma-separated build and test features of this engine version that the CI pipelines of the
+			repository tl-ci use if present (an application inherits them from its engine version):
+
+			scripted-shards: Test selection TestAll.scripted, TestAll.shardModules and TestAll.scratchDir.
+			db-workers: Database test selection TestAll.db and TestAll.dbWorkers.
+			javadoc-local: Module-local JavaDoc build with -Dtl.javadoc.aggregate=false.
+		-->
+		<tl.ci.features>scripted-shards,db-workers,javadoc-local</tl.ci.features>
 	</properties>
 
 	<developers>
@@ -1081,6 +1091,12 @@
 			    <version>${kafka.version}</version>
 			</dependency>
 			<dependency>
+			    <!-- Note: Overrides the vulnerable version requested by kafka-clients. -->
+			    <groupId>com.github.luben</groupId>
+			    <artifactId>zstd-jni</artifactId>
+			    <version>1.5.7-20</version>
+			</dependency>
+			<dependency>
 				<groupId>org.apache.zookeeper</groupId>
 				<artifactId>zookeeper</artifactId>
 				<version>${zookeeper.version}</version>
@@ -1250,6 +1266,12 @@
 			<dependency>
 			    <groupId>org.apache.pdfbox</groupId>
 	    		<artifactId>fontbox</artifactId>
+			    <version>3.0.8</version>
+			</dependency>
+			<dependency>
+			    <!-- Note: Overrides the version requested by docx4j. -->
+			    <groupId>org.apache.pdfbox</groupId>
+	    		<artifactId>pdfbox-io</artifactId>
 			    <version>3.0.8</version>
 			</dependency>
 			<dependency>
@@ -2034,6 +2056,20 @@
 		
 		<pluginManagement>
 			<plugins>
+				<plugin>
+					<groupId>com.github.eirslett</groupId>
+					<artifactId>frontend-maven-plugin</artifactId>
+					<version>1.15.4</version>
+					<configuration>
+						<nodeVersion>v${node.version}</nodeVersion>
+
+						<!--
+							One Node installation per version, shared by all frontend modules of the build. A
+							version change installs into a new directory, never over an existing installation.
+						-->
+						<installDirectory>${maven.multiModuleProjectDirectory}/node/${node.version}</installDirectory>
+					</configuration>
+				</plugin>
 				<plugin>
 					<groupId>com.top-logic</groupId>
 					<artifactId>tl-maven-plugin</artifactId>

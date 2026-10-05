@@ -322,6 +322,8 @@ Available tools include:
 - `get_ticket_actions` / `close_ticket` - Inspect the workflow steps of a ticket, or walk it to `closed`
 - `get_milestones` / `get_milestone` / `create_milestone` / `update_milestone` - Milestones
 
+**Tickets for tl-engine always get the component `tl`.** Do not derive the component from the affected module (there is no component such as `tl-graphic-blocks`), even if an existing ticket carries a different value.
+
 **`update_ticket` silently ignores top-level status/owner fields — nest them under `attributes`.** `{"ticket_id": N, "status": "accepted"}` returns "Updated ticket #N" but changes nothing (the Modified timestamp stays untouched, and a later push is rejected by the ticket-status hook). Use `{"ticket_id": N, "attributes": {"status": "accepted", "owner": "…"}}` and verify with `get_ticket`.
 
 **Releases are not cut from this repository's tooling.** Building a release is the Jenkins job; the Trac bookkeeping around it (closing the release tickets, the milestone, the `relatedmilestones` marking, the migration keywords) is the `tl-release` command and the `tl-release` skill, both provided by the `tl-dev` plugin.

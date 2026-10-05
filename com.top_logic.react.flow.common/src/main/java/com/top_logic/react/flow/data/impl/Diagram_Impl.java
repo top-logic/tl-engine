@@ -26,6 +26,8 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 
 	private boolean _multiSelect = false;
 
+	private boolean _incrementalSelection = false;
+
 	private transient com.top_logic.react.flow.svg.event.Registration _clickHandler = null;
 
 	private transient com.top_logic.react.flow.callback.DiagramContext _context = null;
@@ -139,6 +141,24 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 		_listener.beforeSet(this, MULTI_SELECT__PROP, value);
 		_multiSelect = value;
 		_listener.afterChanged(this, MULTI_SELECT__PROP);
+	}
+
+	@Override
+	public final boolean isIncrementalSelection() {
+		return _incrementalSelection;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.Diagram setIncrementalSelection(boolean value) {
+		internalSetIncrementalSelection(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isIncrementalSelection()} without chain call utility. */
+	protected final void internalSetIncrementalSelection(boolean value) {
+		_listener.beforeSet(this, INCREMENTAL_SELECTION__PROP, value);
+		_incrementalSelection = value;
+		_listener.afterChanged(this, INCREMENTAL_SELECTION__PROP);
 	}
 
 	@Override
@@ -295,6 +315,7 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 			ROOT__PROP, 
 			SELECTION__PROP, 
 			MULTI_SELECT__PROP, 
+			INCREMENTAL_SELECTION__PROP, 
 			CLICK_HANDLER__PROP, 
 			CONTEXT__PROP, 
 			VIEW_BOX_X__PROP, 
@@ -334,6 +355,7 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 			case ROOT__PROP: return getRoot();
 			case SELECTION__PROP: return getSelection();
 			case MULTI_SELECT__PROP: return isMultiSelect();
+			case INCREMENTAL_SELECTION__PROP: return isIncrementalSelection();
 			case CLICK_HANDLER__PROP: return getClickHandler();
 			case CONTEXT__PROP: return getContext();
 			case VIEW_BOX_X__PROP: return getViewBoxX();
@@ -350,6 +372,7 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 			case ROOT__PROP: internalSetRoot((com.top_logic.react.flow.data.Box) value); break;
 			case SELECTION__PROP: internalSetSelection(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.Widget.class, value)); break;
 			case MULTI_SELECT__PROP: internalSetMultiSelect((boolean) value); break;
+			case INCREMENTAL_SELECTION__PROP: internalSetIncrementalSelection((boolean) value); break;
 			case CLICK_HANDLER__PROP: internalSetClickHandler((com.top_logic.react.flow.svg.event.Registration) value); break;
 			case CONTEXT__PROP: internalSetContext((com.top_logic.react.flow.callback.DiagramContext) value); break;
 			case VIEW_BOX_X__PROP: internalSetViewBoxX((double) value); break;
@@ -375,6 +398,8 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 		out.endArray();
 		out.name(MULTI_SELECT__PROP);
 		out.value(isMultiSelect());
+		out.name(INCREMENTAL_SELECTION__PROP);
+		out.value(isIncrementalSelection());
 		out.name(VIEW_BOX_X__PROP);
 		out.value(getViewBoxX());
 		out.name(VIEW_BOX_Y__PROP);
@@ -406,6 +431,10 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 			}
 			case MULTI_SELECT__PROP: {
 				out.value(isMultiSelect());
+				break;
+			}
+			case INCREMENTAL_SELECTION__PROP: {
+				out.value(isIncrementalSelection());
 				break;
 			}
 			case CLICK_HANDLER__PROP: {
@@ -457,6 +486,7 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 			}
 			break;
 			case MULTI_SELECT__PROP: setMultiSelect(in.nextBoolean()); break;
+			case INCREMENTAL_SELECTION__PROP: setIncrementalSelection(in.nextBoolean()); break;
 			case VIEW_BOX_X__PROP: setViewBoxX(in.nextDouble()); break;
 			case VIEW_BOX_Y__PROP: setViewBoxY(in.nextDouble()); break;
 			case VIEW_BOX_WIDTH__PROP: setViewBoxWidth(in.nextDouble()); break;

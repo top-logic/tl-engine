@@ -3175,6 +3175,18 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
     	return lookupDBContext();
     }
     
+	/**
+	 * Whether the current thread has changes in this {@link KnowledgeBase} that are not yet
+	 * committed.
+	 * <p>
+	 * Queries see these changes, a value derived from committed data does not.
+	 * </p>
+	 */
+	public final boolean hasUncommittedChanges() {
+		DBContext context = getCurrentDBContext();
+		return context != null && context.hasChanges();
+	}
+
     /**
      * Workaround for inability of covariant return type overwriting. 
      * 

@@ -13,6 +13,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.logging.LogConfigurator;
 
 /**
  * Testcase for {@link com.top_logic.basic.Logger}.
@@ -135,6 +136,38 @@ public class TestLogger4 extends BasicTestCase {
 		assertTrue("Ticket #26497: Improve the Log4j support after switching to version 2.", Logger.isDebugEnabled(this));
         setDefaultLogging();
     }
+
+	/**
+	 * A logger that was used before the logging system is reconfigured follows the new
+	 * configuration.
+	 */
+	public void testReconfigureUsedLogger() {
+		Logger.configureStdout("ERROR");
+		assertFalse(Logger.isDebugEnabled(TestLogger4.class));
+		Logger.configureStdout("DEBUG");
+		assertTrue(Logger.isDebugEnabled(TestLogger4.class));
+		Logger.configureStdout("ERROR");
+		assertFalse(Logger.isDebugEnabled(TestLogger4.class));
+		setDefaultLogging();
+	}
+
+	/**
+	 * A logger that was used before its level is changed at runtime follows the new level.
+	 */
+	public void testChangeLevelOfUsedLogger() {
+		String name = TestLogger4.class.getName() + ".levelChange";
+		Logger.configureStdout("ERROR");
+		assertFalse(Logger.isDebugEnabled(name));
+		LogConfigurator configurator = LogConfigurator.getInstance();
+		configurator.setLoggerLevel(name, "DEBUG");
+		try {
+			assertTrue(Logger.isDebugEnabled(name));
+		} finally {
+			configurator.removeLoggerLevel(name);
+		}
+		assertFalse(Logger.isDebugEnabled(name));
+		setDefaultLogging();
+	}
 
     /**
      * Test for logging with some Not Existing Properties.

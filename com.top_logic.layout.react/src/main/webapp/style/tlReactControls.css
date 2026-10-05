@@ -2649,6 +2649,38 @@ button.tlDrawer__closeBtn:focus-visible {
 	to   { opacity: 0; }
 }
 
+/* --- TLAlert --------------------------------------------------------------- */
+
+/* The alert component of the design system (style/tl-design-system/components.css) brings the
+   surface, the line and the icon color per variant; these rules lay out what TLAlert puts into its
+   body and the dismiss button standing in a column of its own. */
+
+.tl-alert--closable {
+	grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.tl-alert__body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--tl-space-2xs);
+}
+
+.tl-alert__message {
+	overflow-wrap: anywhere;
+	white-space: pre-line;
+}
+
+.tl-alert__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--tl-space-xs);
+	padding-block-start: var(--tl-space-xs);
+}
+
+.tl-alert__close {
+	align-self: start;
+}
+
 /* --- TLAppShell ------------------------------------------------------------ */
 
 .tlAppShell {
@@ -3189,6 +3221,13 @@ button.tlDrawer__closeBtn:focus-visible {
 	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+/* A group of radio buttons or checkboxes whose options stand one below the other, each as wide as its
+   label, rather than side by side in a row that wraps. */
+.tl-choice-group--vertical {
+	flex-direction: column;
+	align-items: flex-start;
 }
 
 /* A flex row of its own - a value with its icon, a row of values, a group of radios - stays one in

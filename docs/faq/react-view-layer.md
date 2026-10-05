@@ -9,7 +9,7 @@
   - `type` is a `TLModelPartRef` and decides the input; it defaults to `tl.core:String`. The control is resolved by `FieldControlService.createFieldControl(context, type, spec, model)` - the same chain that picks the control for a `<field>` over an attribute of that type, which only adds the lookup of the attribute's own `<input-control>` annotation. So `tl.core:Integer` is a number input, `tl.core:Date` a date picker, `tl.core:Boolean` a checkbox, `tl.core:Text` a text area, and an enumeration or a class a dropdown.
   - A value of an enumeration or a class is chosen from options: without an `options` expression these are the classifiers respectively the instances of the type (`AttributeOptions.optionsFor(type)`). `options` is a TL-Script function whose arguments are the values of the `<inputs><input channel="…"/></inputs>` channels, in declaration order - the same shape as `<execute-script>` - and the options are recomputed whenever one of those channels changes. Every `inputs` property of the view layer - here, a `<table>`'s `<rows>`, a column declaration, an action - reads both notations: the nested `<inputs><input channel="…"/></inputs>` and the comma-separated attribute `inputs="a, b"` (`Inputs`). `multiple="true"` makes the channel carry a collection instead of a single value; a single-valued selection is unwrapped, so the channel holds the value itself and not a list of one.
   - Further properties: `label` (a `ResKey`; without it the input stands alone, without the label chrome), `label-position` and `readonly`.
-  - **An input standing without a visible label** - in an app bar, in a toolbar, above a list - says what it is for in two places. `placeholder` (a `ResKey`) is the text shown inside the input while it is empty: "Search" in a search box, `name@example.com` in a mail address; it disappears with the value entered. It is a property of the field description (`FieldSpec.setPlaceholder(…)`) rather than of one control, so every control `FieldControlService` builds from such a description carries it - the text and number inputs render it, a control that has nothing to show an empty box in ignores it. `label-position="hide-label"` then takes the label out of the display but keeps it as the *name* of the input: `TLFormField` keeps the label text in a visually hidden `label` (`tl-visually-hidden`) that refers to the input by `for` and names it through `aria-labelledby`, so the input keeps its accessible name without a visible label. An input that keeps its `label` and hides it is named for a screen reader; one that drops the `label` altogether is not. A radio group names its options by `id` / `for` instead (`TLBooleanChoice`), since no label may contain another.
+  - **An input standing without a visible label** - in an app bar, in a toolbar, above a list - says what it is for in two places. `placeholder` (a `ResKey`) is the text shown inside the input while it is empty: "Search" in a search box, `name@example.com` in a mail address; it disappears with the value entered. It is a property of the field description (`FieldSpec.setPlaceholder(…)`) rather than of one control, so every control `FieldControlService` builds from such a description carries it - the text and number inputs render it, a control that has nothing to show an empty box in ignores it. `label-position="hide-label"` then takes the label out of the display but keeps it as the *name* of the input: `TLFormField` keeps the label text in a visually hidden `label` (`tl-visually-hidden`) that refers to the input by `for` and names it through `aria-labelledby`, so the input keeps its accessible name without a visible label. An input that keeps its `label` and hides it is named for a screen reader; one that drops the `label` altogether is not. A group of radio buttons or checkboxes (`TLChoiceGroup`) names each option by a `label` of its own wrapping the input and its text, which makes the text part of the hit area; the field's label, which may not contain those labels, names the group as a whole through `aria-labelledby`.
   - **A search field out of the box.** An input that narrows what a view shows is three properties on top of the submit hook, so an application needs no element of its own: `icon` draws a `ThemeImage` inside the input ahead of what is typed, `clearable="true"` adds the button that empties it (shown only while the input holds something, writing the empty value at once), and `debounce` says how long the input waits after the last keystroke before the typed value reaches the channel, written as a duration (`@Format(MillisFormat.class)`). All three ride on the field description (`FieldSpec.setIcon(…)` / `setClearable(…)` / `setDebounce(…)`) and are applied by `ReactFieldControlProvider.createField(…)`, like the `placeholder`. `TLTextInput` renders icon and clear button - a search field is a text - while `TLNumberInput` and `TLPasswordInput` take only the delay; the icon and the button sit in the same `tl-field-group` as the link that opens a `url` / `email` / `tel` value, in the order `[icon] input [clear] [link]`.
     ```xml
     <view>
@@ -265,9 +265,20 @@ default) offers the options in a list that opens on demand and is searched by ty
 every option as a toggle, `segmented` draws them as a bar of segments with a marker sliding to the
 chosen one. One server control (`ReactDropdownSelectControl`) serves all three - it keeps the option
 index and the value protocol and names the client component to draw the shape with
-(`TLDropdownSelect`, `TLOptionChips`, `TLSegmentedChoice`) - so a shape showing every option is
-handed the complete option list right away, having nothing to open at which it could ask for it. The
-shapes showing every option suit a handful of options; a long list belongs in a dropdown.
+(`TLDropdownSelect`, `TLOptionChips`, `TLSegmentedChoice`, `TLChoiceGroup`) - so a shape showing
+every option is handed the complete option list right away, having nothing to open at which it could
+ask for it. The shapes showing every option suit a handful of options; a long list belongs in a
+dropdown. `radio` offers every option as a radio button (a checkbox where several values can be
+chosen), laid out by `orientation` (`vertical`, the default, or `horizontal`). `filter="false"`
+drops the filter input of the dropdown, which then jumps to an option by typing the beginning of its
+label.
+
+Where `display` and `orientation` say nothing, the field decides: `FieldSpec.getSelectDisplay()` and
+`FieldSpec.getSelectOrientation()`, which `FieldControlService` takes from the model annotations
+`<classification-display value="radio|radio-inline|checklist"/>` (an enumeration) and
+`<reference-display value="radio|radio-inline"/>` (a reference) - at the attribute, else at its
+type. `radio` and `checklist` give vertical radio buttons, `radio-inline` horizontal ones, every other
+presentation the dropdown.
 
 ```xml
 <field attribute="priority">
@@ -326,7 +337,8 @@ a switch is asked for: a switch has no third position for "no value".
    attribute is shown. `<boolean-display presentation="switch"/>` is the same decision said in the
    model's own vocabulary: it reaches the field description as
    `FieldSpec.getBooleanPresentation()`, which `BooleanControlProvider` follows where its own
-   `display` says nothing.
+   `display` says nothing; `<classification-display>` and `<reference-display>` reach
+   `SelectControlProvider` the same way.
 3. The type map of `FieldControlService` and, failing that, the `FieldControlRegistry` entry for the
    kind of value the type holds.
 

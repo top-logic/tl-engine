@@ -172,9 +172,11 @@ public interface GraphEdgeOperations extends WidgetOperations, SVGClickHandler {
 
 		if (self().isSelected()) {
 			if (event.isCtrlKey()) {
+				diagram.setIncrementalSelection(true);
 				diagram.getSelection().remove(self());
 				self().setSelected(false);
 			} else if (!event.isShiftKey()) {
+				diagram.setIncrementalSelection(false);
 				for (Widget selected : diagram.getSelection()) {
 					if (selected != self()) {
 						SelectionUtil.setSelected(selected, false);
@@ -184,8 +186,10 @@ public interface GraphEdgeOperations extends WidgetOperations, SVGClickHandler {
 			}
 		} else {
 			if (diagram.isMultiSelect() && (event.isShiftKey() || event.isCtrlKey())) {
+				diagram.setIncrementalSelection(true);
 				diagram.getSelection().add(self());
 			} else {
+				diagram.setIncrementalSelection(false);
 				for (Widget selected : diagram.getSelection()) {
 					SelectionUtil.setSelected(selected, false);
 				}

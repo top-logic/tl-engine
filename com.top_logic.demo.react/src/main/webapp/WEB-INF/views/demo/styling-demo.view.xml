@@ -29,11 +29,13 @@
 	text below reads.
 	
 	The fifth section shows the display variants of an input: a selection as a cloud of toggle
-	chips or as a bar of segments, a number as a handle dragged along a track, a truth value as a
-	switch. Each is a control provider named where the value is displayed - by the input-control of
-	a field, which overrides what the attribute says, and by the input-control of a value-input,
-	which overrides what the type of the value leads to. The four values bound to a channel are
-	echoed beside their input, so what reaches the channel is read as it is written.
+	chips, as a bar of segments, as a group of radio buttons stacked or side by side, as a group of
+	checkboxes where more than one value is chosen, or as a dropdown without a filter input that
+	jumps to an option by its first letters; a number as a handle dragged along a track, a truth
+	value as a switch. Each is a control provider named where the value is displayed - by the
+	input-control of a field, which overrides what the attribute says, and by the input-control of
+	a value-input, which overrides what the type of the value leads to. The values bound to a
+	channel are echoed beside their input, so what reaches the channel is read as it is written.
 -->
 <view>
 	<channels>
@@ -41,6 +43,10 @@
 		<channel name="status"/>
 		<channel name="choice"/>
 		<channel name="chosen"/>
+		<channel name="radioVertical"/>
+		<channel name="radioHorizontal"/>
+		<channel name="checked"/>
+		<channel name="picked"/>
 		<channel name="level"/>
 		<channel name="switched"/>
 		<!-- The object the form of the last section edits, held by the view and stored nowhere. -->
@@ -502,8 +508,8 @@
 		</text>
 		<text>
 			<label>
-				<en>A selection is offered as a cloud of toggles or as a bar of segments instead of a list that opens on demand, a number is dragged along a track instead of typed, and a truth value is flipped on a switch instead of ticked in a box. Each variant is the control the value is entered in, named by the input-control of the field - which overrides what the attribute of the model says.</en>
-				<de>Eine Auswahl wird als Wolke von Umschaltern oder als Leiste von Segmenten angeboten statt als Liste, die sich bei Bedarf öffnet, eine Zahl wird entlang einer Leiste gezogen statt eingegeben, und ein Wahrheitswert wird auf einem Schalter umgelegt statt in einem Kästchen angekreuzt. Jede Variante ist das Steuerelement, in dem der Wert eingegeben wird, benannt durch das input-control des Feldes - das überschreibt, was das Attribut des Modells sagt.</de>
+				<en>A selection is offered as a cloud of toggles, as a bar of segments or as a group of radio buttons instead of a list that opens on demand, a number is dragged along a track instead of typed, and a truth value is flipped on a switch instead of ticked in a box. Each variant is the control the value is entered in, named by the input-control of the field - which overrides what the attribute of the model says.</en>
+				<de>Eine Auswahl wird als Wolke von Umschaltern, als Leiste von Segmenten oder als Gruppe von Radiobuttons angeboten statt als Liste, die sich bei Bedarf öffnet, eine Zahl wird entlang einer Leiste gezogen statt eingegeben, und ein Wahrheitswert wird auf einem Schalter umgelegt statt in einem Kästchen angekreuzt. Jede Variante ist das Steuerelement, in dem der Wert eingegeben wird, benannt durch das input-control des Feldes - das überschreibt, was das Attribut des Modells sagt.</de>
 			</label>
 		</text>
 		<form
@@ -548,8 +554,8 @@
 
 		<text>
 			<label>
-				<en>A value that belongs to the view and to no object names its control the same way: the input-control of a value-input overrides the control the type of the value leads to. The text beside each input reads the channel it writes.</en>
-				<de>Ein Wert, der zur Ansicht und zu keinem Objekt gehört, benennt sein Steuerelement auf dieselbe Weise: Das input-control eines value-input überschreibt das Steuerelement, auf das der Typ des Werts hinweist. Der Text neben jeder Eingabe liest den Kanal, den sie schreibt.</de>
+				<en>A value that belongs to the view and to no object names its control the same way: the input-control of a value-input overrides the control the type of the value leads to. A radio group lists every option at once, stacked or side by side as its orientation says; an optional single value gets a first radio button for no value, and a multi-valued selection shows checkboxes instead. A dropdown without a filter input jumps to the option whose label starts with the letters typed while it has the focus. The text beside each input reads the channel it writes.</en>
+				<de>Ein Wert, der zur Ansicht und zu keinem Objekt gehört, benennt sein Steuerelement auf dieselbe Weise: Das input-control eines value-input überschreibt das Steuerelement, auf das der Typ des Werts hinweist. Eine Radio-Gruppe zeigt alle Optionen auf einmal, untereinander oder nebeneinander, wie ihre Ausrichtung sagt; ein optionaler Einzelwert bekommt einen ersten Radiobutton für keinen Wert, und eine mehrwertige Auswahl zeigt stattdessen Checkboxen. Ein Dropdown ohne Filtereingabe springt zu der Option, deren Beschriftung mit den Buchstaben beginnt, die getippt werden, während es den Fokus hat. Der Text neben jeder Eingabe liest den Kanal, den sie schreibt.</de>
 			</label>
 		</text>
 		<fields with-inset="true">
@@ -576,6 +582,58 @@
 				</label>
 				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
 					display="chips"
+				/>
+			</value-input>
+			<value-input
+				type="demo.react:Priority"
+				value="radioVertical"
+			>
+				<label>
+					<en>Priority (radio buttons, vertical)</en>
+					<de>Priorität (Radiobuttons, untereinander)</de>
+				</label>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="radio"
+					orientation="vertical"
+				/>
+			</value-input>
+			<value-input
+				type="demo.react:Priority"
+				value="radioHorizontal"
+			>
+				<label>
+					<en>Priority (radio buttons, horizontal)</en>
+					<de>Priorität (Radiobuttons, nebeneinander)</de>
+				</label>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="radio"
+					orientation="horizontal"
+				/>
+			</value-input>
+			<value-input
+				multiple="true"
+				type="demo.react:Priority"
+				value="checked"
+			>
+				<label>
+					<en>Priorities (checkboxes)</en>
+					<de>Prioritäten (Checkboxen)</de>
+				</label>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="radio"
+				/>
+			</value-input>
+			<value-input
+				type="demo.react:Priority"
+				value="picked"
+			>
+				<label>
+					<en>Priority (dropdown without filter)</en>
+					<de>Priorität (Dropdown ohne Filter)</de>
+				</label>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="dropdown"
+					filter="false"
 				/>
 			</value-input>
 			<value-input
@@ -623,6 +681,22 @@
 			/>
 			<text
 				input="chosen"
+				tone="helper"
+			/>
+			<text
+				input="radioVertical"
+				tone="helper"
+			/>
+			<text
+				input="radioHorizontal"
+				tone="helper"
+			/>
+			<text
+				input="checked"
+				tone="helper"
+			/>
+			<text
+				input="picked"
 				tone="helper"
 			/>
 			<text

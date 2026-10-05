@@ -877,6 +877,14 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.iconSelect.chooseIcon")
 	public static ResKey JS_ICON_SELECT_CHOOSE_ICON;
 
+	// -- Alert client-side i18n keys --
+
+	/**
+	 * @en Dismiss
+	 */
+	@CustomKey("js.alert.dismiss")
+	public static ResKey JS_ALERT_DISMISS;
+
 	// -- Window client-side i18n keys --
 
 	/**

@@ -8,7 +8,6 @@ package com.top_logic.model.search.expr.compile.eval;
 
 import static com.top_logic.knowledge.search.ExpressionFactory.*;
 
-import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.EvalContext;
@@ -19,7 +18,7 @@ import com.top_logic.model.search.expr.SearchExpression;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class CompiledOr extends CompiledExpression {
+public class CompiledOr extends CompiledPredicate {
 
 	private final CompiledValue _left;
 
@@ -29,7 +28,6 @@ public class CompiledOr extends CompiledExpression {
 	 * Creates a new {@link CompiledOr}.
 	 */
 	public CompiledOr(CompiledValue left, CompiledValue right) {
-		super(MOPrimitive.BOOLEAN);
 		_left = left;
 		_right = right;
 	}
@@ -37,6 +35,11 @@ public class CompiledOr extends CompiledExpression {
 	@Override
 	public Expression buildExpression(EvalContext context) throws CompiledValue.IncompatibleTypes {
 		return or(_left.buildExpression(context), _right.buildExpression(context));
+	}
+
+	@Override
+	public Expression buildCondition(EvalContext context) throws CompiledValue.IncompatibleTypes {
+		return or(_left.buildCondition(context), _right.buildCondition(context));
 	}
 
 	@Override

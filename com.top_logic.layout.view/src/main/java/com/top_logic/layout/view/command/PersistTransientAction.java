@@ -17,7 +17,6 @@ import com.top_logic.element.model.copy.CopyOperation;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.security.ModelAccessRule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
@@ -132,7 +131,7 @@ public class PersistTransientAction implements ViewAction {
 				"A '" + Config.TAG_NAME + "' action expects a transient object, got: " + input);
 		}
 
-		TLObject container = container(context);
+		TLObject container = CreationContainer.resolveContainer(context, _config, Config.TAG_NAME);
 		TLStructuredTypePart reference = reference(container);
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 			CopyOperation operation = CopyOperation.initial();
@@ -155,21 +154,6 @@ public class PersistTransientAction implements ViewAction {
 			tx.commit();
 			return created;
 		}
-	}
-
-	private TLObject container(ReactContext context) {
-		if (_config.getContainer() == null) {
-			return null;
-		}
-		Object value = ((ViewContext) context).resolveChannel(_config.getContainer()).get();
-		if (value == null) {
-			return null;
-		}
-		if (!(value instanceof TLObject container)) {
-			throw new IllegalArgumentException("The '" + CreationContainer.CONTAINER + "' of a '" + Config.TAG_NAME
-				+ "' action holds no object: " + value);
-		}
-		return container;
 	}
 
 	private TLStructuredTypePart reference(TLObject container) {

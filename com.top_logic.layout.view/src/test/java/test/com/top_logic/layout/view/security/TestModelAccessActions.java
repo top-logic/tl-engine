@@ -133,6 +133,39 @@ public class TestModelAccessActions extends AbstractModelAccessTest {
 		TLObject draft = (TLObject) create.execute(_context, _category);
 		assertTrue(draft.tTransient());
 		assertSame(type(PROJECT), draft.tType());
+		assertNull("Without a container, the draft is created at top level.", draft.tContainer());
+	}
+
+	/**
+	 * With a container, the draft is created in the context of the container, as
+	 * {@code new(type, context: $container, transient: true)} creates it.
+	 */
+	public void testCreateTransientInContainer() throws Exception {
+		ViewAction create = action(
+			"<create-transient type='" + qualified(TASK) + "' container='" + CHANNEL + "' reference='" + TASKS + "'/>");
+		_channel.set(_project);
+
+		becomeUser(_responsible);
+		TLObject draft = (TLObject) create.execute(_context, null);
+		assertTrue(draft.tTransient());
+		assertSame(type(TASK), draft.tType());
+		assertSame(_project, draft.tContainer());
+		assertSame("The default value is computed in the context of the container.", _project,
+			draft.tValueByName(CREATED_IN));
+		assertEquals("The draft is not added to the container.", List.of(_task), _project.tValueByName(TASKS));
+	}
+
+	/**
+	 * With an empty container channel, the draft is created at top level.
+	 */
+	public void testCreateTransientInEmptyContainer() throws Exception {
+		ViewAction create = action("<create-transient type='" + qualified(TASK) + "' container='" + CHANNEL + "'/>");
+
+		becomeUser(_root);
+		TLObject draft = (TLObject) create.execute(_context, null);
+		assertTrue(draft.tTransient());
+		assertNull(draft.tContainer());
+		assertNull(draft.tValueByName(CREATED_IN));
 	}
 
 	/**

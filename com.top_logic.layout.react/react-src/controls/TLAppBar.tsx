@@ -1,6 +1,5 @@
-import { React, useTLState, TLChild, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, TLChild, rootClassName, ButtonDefaults } from 'tl-react-bridge';
 import type { TLCellProps, AppBarStateJson, ChildControlJson } from 'tl-react-bridge';
-import { ButtonDefaults } from './button/ButtonDefaults';
 
 /**
  * A top-level application bar with leading slot, title, inline children, and trailing actions.

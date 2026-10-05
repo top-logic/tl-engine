@@ -176,7 +176,9 @@ export interface ButtonStateJson extends ControlStateJson {
 
 	/**
 	 * How the button is drawn. Absent means `'default'`: the standard appearance, or
-	 * the appearance its container suggests.
+	 * the appearance its container suggests, read with `useButtonDefaults` of
+	 * 'tl-react-bridge'. Inside a menu the container wins: the button is an entry of the menu and
+	 * carries the role and the tabindex `menuItemProps` of 'tl-react-bridge' gives it.
 	 */
 	appearance: ButtonStateJson.Appearance;
 
@@ -1393,8 +1395,9 @@ export namespace CardStateJson {
  * opening it, the title, inline content, the commands placed in it and a control closing it, in
  * this order.
  *
- * The component suggests the appearance `ghost` to the buttons of its {@link AppBarStateJson.actions} (see
-	 * {@link ButtonStateJson.appearance}). It sends no commands.
+ * The component suggests the appearance `ghost` to the buttons of its {@link AppBarStateJson.actions}
+ * through `ButtonDefaults` of 'tl-react-bridge' (see {@link ButtonStateJson.appearance}). It sends
+ * no commands.
  */
 export interface AppBarStateJson extends ControlStateJson {
 	/**

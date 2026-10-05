@@ -1,6 +1,6 @@
-import { React, useTLState, TLChild, useCloseOnOutsidePress, useFocusTrap, useI18N, rootClassName, tooltipProps, createPortal, ThemeIcon, usePopover, useMergeRefs, anchoredOverlayProps } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useCloseOnOutsidePress, useFocusTrap, useI18N, rootClassName, tooltipProps, createPortal, ThemeIcon, usePopover, useMergeRefs, anchoredOverlayProps, ButtonDefaults, useButtonDefaults } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { ButtonDefaults, useButtonDefaults, buttonClassName } from './button/ButtonDefaults';
+import { buttonClassName } from './button/buttonClassName';
 import { useRovingMenu } from './menu/Menu';
 
 const { useCallback, useRef, useState, useEffect, useLayoutEffect, useMemo } = React;

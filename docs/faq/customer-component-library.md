@@ -128,6 +128,14 @@ replace('TLCheckbox', BrandCheckboxAdapter);
   it to omit the required mark, the messages and the help in a read-only form and to place the
   label as `TLFormField` does. With `FieldLabelContext` (`bridge/field-label.ts`) such a frame
   names its input by the label, as `TLFormField` does.
+- **`useButtonDefaults()`** and **`menuItemProps(defaults, checked?)`** (`bridge/button-defaults.ts`)
+  tell a replacement of `TLButton` or `TLToggleButton` what the container around it suggests,
+  which `<ButtonDefaults appearance=… iconOnly=…>` provides: the appearance (`ghost` in a toolbar
+  and an app bar, `secondary` in the button bar of a window), the icon-only presentation of a
+  compact toolbar, and `menu-item` inside a menu. A menu entry carries the role and the roving
+  tabindex `menuItemProps` returns, by which the menu's keyboard navigation (arrows, Escape) finds
+  it. A replacement of a container (`TLAppBar`, `TLWindow`) provides the same defaults to its
+  buttons with `ButtonDefaults`.
 - **`<ThemeIcon encoded={…}/>`** (`bridge/ThemeIcon.tsx`) renders a theme image from the encoded
   form a control sends in its state (`ButtonState.image`, the icons of menu entries and tabs, …): an
   icon font class, an image file, or nothing for the invisible image. An adapter passes the element

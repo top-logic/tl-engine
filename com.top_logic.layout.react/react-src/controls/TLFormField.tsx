@@ -3,7 +3,7 @@ import {
   focusFieldInput, ThemeIcon, useFormLayout,
 } from 'tl-react-bridge';
 import type { TLCellProps, FormFieldStateJson } from 'tl-react-bridge';
-import { buttonClassName } from './button/ButtonDefaults';
+import { buttonClassName } from './button/buttonClassName';
 
 const { useState, useCallback, useMemo } = React;
 

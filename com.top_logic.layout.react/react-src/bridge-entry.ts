@@ -30,6 +30,8 @@ export { FieldLabelContext, fieldLabel, fieldInputId, useFieldLabelProps, focusF
 export type { FieldLabel, FieldLabelProps } from './bridge/field-label';
 export { FormLayoutContext, useFormLayout } from './bridge/form-layout';
 export type { FormLayout } from './bridge/form-layout';
+export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
+export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
 export { writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropPosition, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';

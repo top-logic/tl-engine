@@ -5,8 +5,9 @@ package com.top_logic.layout.react.state;
  * opening it, the title, inline content, the commands placed in it and a control closing it, in
  * this order.
  *
- * The component suggests the appearance {@code ghost} to the buttons of its {@link #getActions()} (see
-	 * {@link ButtonState#getAppearance()}). It sends no commands.
+ * The component suggests the appearance {@code ghost} to the buttons of its {@link #getActions()}
+ * through {@code ButtonDefaults} of 'tl-react-bridge' (see {@link ButtonState#getAppearance()}). It sends
+ * no commands.
  */
 public interface AppBarState extends com.top_logic.layout.react.state.ControlState {
 

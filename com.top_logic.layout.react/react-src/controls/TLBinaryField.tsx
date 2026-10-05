@@ -1,6 +1,6 @@
 import { React, useTLState, useTLUpload, useTLDataUrl, useI18N, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, useFieldLabelProps, fieldInputId, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { buttonClassName } from './button/ButtonDefaults';
+import { buttonClassName } from './button/buttonClassName';
 import { showsValueOnly } from './form/fieldState';
 
 const I18N_KEYS = {

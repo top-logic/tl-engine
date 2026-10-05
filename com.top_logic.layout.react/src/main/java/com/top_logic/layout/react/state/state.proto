@@ -249,7 +249,9 @@ message ButtonState extends ControlState {
 
 	/**
 	 * How the button is drawn. Absent means {@link Appearance#DEFAULT}: the standard appearance, or
-	 * the appearance its container suggests.
+	 * the appearance its container suggests, read with {@code useButtonDefaults} of
+	 * 'tl-react-bridge'. Inside a menu the container wins: the button is an entry of the menu and
+	 * carries the role and the tabindex {@code menuItemProps} of 'tl-react-bridge' gives it.
 	 */
 	Appearance appearance;
 
@@ -1393,8 +1395,9 @@ message CardState extends ControlState {
  * opening it, the title, inline content, the commands placed in it and a control closing it, in
  * this order.
  *
- * The component suggests the appearance {@code ghost} to the buttons of its {@link #actions} (see
- * {@link ButtonState#appearance}). It sends no commands.
+ * The component suggests the appearance {@code ghost} to the buttons of its {@link #actions}
+ * through {@code ButtonDefaults} of 'tl-react-bridge' (see {@link ButtonState#appearance}). It sends
+ * no commands.
  */
 message AppBarState extends ControlState {
 

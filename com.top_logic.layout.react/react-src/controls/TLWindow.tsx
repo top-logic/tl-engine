@@ -1,9 +1,8 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding,
-  useFocusTrap, FillBarrier, startPointerDrag, rootClassName, tooltipProps,
+  useFocusTrap, FillBarrier, startPointerDrag, rootClassName, tooltipProps, ButtonDefaults,
 } from 'tl-react-bridge';
 import type { TLCellProps, WindowStateJson } from 'tl-react-bridge';
-import { ButtonDefaults } from './button/ButtonDefaults';
 
 const { useCallback, useEffect, useRef, useState } = React;
 

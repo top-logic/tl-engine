@@ -8,8 +8,10 @@
 import React from 'react';
 import { vi } from 'vitest';
 import { act, render } from '@testing-library/react';
-import { TLControlContext, KeyboardScopeProvider, FieldLabelContext, useKeyboardBinding } from 'tl-react-bridge';
-import type { TLCellProps, FieldLabel } from 'tl-react-bridge';
+import {
+  TLControlContext, KeyboardScopeProvider, FieldLabelContext, useKeyboardBinding, useTLState, register,
+} from 'tl-react-bridge';
+import type { TLCellProps, FieldLabel, ChildControlJson } from 'tl-react-bridge';
 import MuiRoot from '../MuiRoot';
 
 /** The macrotask queue of Node, which the tests run in (no Node typings in this module). */
@@ -159,4 +161,35 @@ export function matchDesktopPointer() {
     removeListener() {},
     dispatchEvent: () => false,
   }));
+}
+
+/** The component name of the stand-in for a control embedded in the state of the adapter. */
+const TEST_CHILD = 'MuiWireTestChild';
+
+/**
+ * The stand-in for an embedded control: an element carrying its control ID and showing the text
+ * of its state, with a text input when its state asks for one (a field a dialog focuses first).
+ */
+function TestChild({ controlId }: TLCellProps) {
+  const state = useTLState() as { text?: string; field?: boolean };
+  return (
+    <div id={controlId}>
+      {state.text}
+      {state.field === true && <input aria-label={state.text} />}
+    </div>
+  );
+}
+
+register(TEST_CHILD, TestChild);
+
+/**
+ * A control embedded in the state of the adapter (a ChildControl), rendered by a stand-in that shows
+ * the given text.
+ *
+ * @param controlId The ID of the embedded control, the ID of the element it renders.
+ * @param text The text the stand-in shows.
+ * @param field Whether the stand-in contains a text input labelled with the text.
+ */
+export function childControl(controlId: string, text: string, field = false): ChildControlJson {
+  return { controlId, module: TEST_CHILD, state: { text, field } } as ChildControlJson;
 }

@@ -18,6 +18,9 @@ const { useCallback, useRef } = React;
  * - child: ChildDescriptor
  * - trigger: "contextmenu" | "click"
  * - menuOpen: boolean, whether the menu this region opened is open
+ * - hidden: boolean, whether the region is hidden, e.g. a drop-down trigger whose menu has no entry
+ *   to offer; the region is styled away rather than not rendered, so that its child stays mounted
+ *   and keeps the state it received
  */
 const TLMenuRegion: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -30,6 +33,7 @@ const TLMenuRegion: React.FC<TLCellProps> = ({ controlId }) => {
   const trigger = (state.trigger as string | undefined) ?? 'contextmenu';
   const isClick = trigger === 'click';
   const menuOpen = state.menuOpen === true;
+  const hiddenStyle = state.hidden === true ? { display: 'none' } : undefined;
 
   // A drop-down hangs off the trigger itself, not off the point that was clicked: the menu stays
   // with the trigger when the page scrolls or reflows, and the keyboard reaches the same menu as
@@ -75,6 +79,7 @@ const TLMenuRegion: React.FC<TLCellProps> = ({ controlId }) => {
         className={rootClassName(state, 'tl-menu-region', buttonClassName({ appearance: defaults.appearance ?? 'ghost' }))}
         aria-haspopup="menu"
         aria-expanded={menuOpen}
+        style={hiddenStyle}
         onClick={handleClick}
       >
         {!!child && <TLChild control={child} />}
@@ -86,6 +91,7 @@ const TLMenuRegion: React.FC<TLCellProps> = ({ controlId }) => {
         ref={regionRef}
         data-tl-trigger="contextmenu"
         className={rootClassName(state, 'tl-menu-region')}
+        style={hiddenStyle}
         onContextMenu={handleContextMenu}
         onKeyDown={handleContextKey}
       >

@@ -1061,6 +1061,41 @@ Such a page is linkable: `/view/tickets?filter=discussed` opens the list filtere
 - **Auto-advance.** A step can carry its own time: `<step id="ready" auto-advance="2s">` (a duration in the usual `MillisFormat` notation) for an interstitial the user only watches, and `<dynamic-steps auto-advance="q -> …">` for one computed per element — an element the function answers nothing for is a step the user leaves. It reaches the runtime as `WizardStep.autoAdvanceMillis()` and the client as the state key `autoAdvance` of the step displayed, where it becomes a timer; the timer is cleared whenever the step changes. When it fires it reports back naming the step it belongs to, and the wizard moves on **only while that step is still the one displayed** — the user may have moved on themselves in the meantime, and a timer that outlived its step must not carry the display past what they chose. The time runs while the flow *leads through* the step: it is started for a step entered going forward, and not for one the user came back to — a Back out of the step behind an interstitial would otherwise be answered by being sent forward again. A re-expansion that carries the displayed step along does not restart it either; it keeps counting.
 - The demo is `demo/wizard-demo.view.xml` in `com.top_logic.demo.react` (sidebar **Wizard** / **Assistent**, `/view/wizard`): an onboarding flow whose written-out Welcome, Profile and Summary steps enclose a `<dynamic-steps>` over a `questions` channel that grows while the flow is walked, with the Back/Next footer raised out of every step into one slot.
 
+## The application shell: extending `app.view.xml`
+
+`tl-layout-view` ships the shell an application is displayed in as `WEB-INF/views/app.view.xml` — the `default-view` of `ViewConfig`: an `<app-shell>` with the system notices (`<maintenance-notice/>`, `<session-timeout-notice/>`), a `<sidebar>` ending in a separator (`id="system-separator"`) and the `administration` item, and an `<app-bar>` with the drawer-toggle slot `appbar-leading`, the projection slot `appbar-content` and the development menu plus the account area (`dev-menu.view.xml`, `user-menu.view.xml`) in its trailing area. An application does not copy it, it extends it with a **same-path overlay**: a `WEB-INF/views/app.view.xml` of its own module, which the `ViewLoader` merges onto the shipped one in dependency order.
+
+- Each slot of `<app-shell>` (`header`, `notices`, `content`, `footer`) holds **at most one element of a kind** — the slot lists are keyed by the configuration interface of their entries. The overlay's `<content><sidebar>` and `<header><app-bar>` therefore extend the shell's sidebar and app bar instead of adding second ones; two elements of the same kind in one slot are rejected.
+- Single-valued properties written in the overlay replace the shell's: the `<title>` of the app bar, the `active-item` of the sidebar.
+- The rail chrome (`<header>`, `<footer>`, … of the sidebar) is a list of arbitrary elements; the overlay marks its list with `config:override="true"` to replace the shell's neutral texts instead of adding to them.
+- Sidebar items are keyed by `id`. An item without a position is appended — after the `administration` item; an item for the application's own section names the separator: `config:position="before" config:reference="system-separator"`.
+- Channels the items read go in the `<channels>` of the overlay's `<view>`; they are added to the (empty) channels of the shell.
+
+```xml
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+    <app-shell>
+        <content>
+            <sidebar active-item="home">
+                <header config:override="true">
+                    <text><label><en>My App</en></label></text>
+                </header>
+                <nav-item id="home" config:position="before" config:reference="system-separator">
+                    <view-ref view="home.view.xml"/>
+                    <label><en>Home</en></label>
+                </nav-item>
+            </sidebar>
+        </content>
+        <header>
+            <app-bar>
+                <title><en>My App</en></title>
+            </app-bar>
+        </header>
+    </app-shell>
+</view>
+```
+
+An application that defines its whole shell itself writes `<app-shell config:override="true">` in its copy; the copy then takes the place of the shipped shell as a whole (channels of its `<view>` are still added to the shell's, which has none). `com.top_logic.demo.react`'s `app.view.xml` is a complete overlay example; `TestAppShellOverlay` pins the merge behavior.
+
 ## The sidebar: item kinds, badges and the rail chrome
 
 `<sidebar>` (`SidebarElement`) is the navigation rail of an application shell. It holds a list of items and the chrome of the rail itself; the items are keyed by their `id`, so a configuration fragment of another module adds, repositions (`config:position`) or overrides a single item.

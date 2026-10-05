@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener.Targeted;
@@ -34,6 +35,14 @@ import com.top_logic.layout.react.control.overlay.ContextMenuOpener.Targeted;
  * The commands arrive as several {@link ContextMenuContribution}s rather than one, because the
  * opener separates the entries of one contribution from those of the next: the groups are what
  * gives a menu of many entries its structure.
+ * </p>
+ *
+ * <p>
+ * A region built to hide while empty is {@link #setHidden(boolean) hidden} for as long as its menu
+ * {@link #offersEntry() offers no entry}, so that a trigger never opens onto nothing. It
+ * follows the commands' state changes, and shows again as soon as one of them becomes visible. A
+ * visible command that is not executable keeps the region shown, since the menu offers it as a
+ * disabled entry.
  * </p>
  *
  * @see com.top_logic.layout.view.element.ContextMenuElement
@@ -77,6 +86,12 @@ public class MenuRegionControl extends ReactControl {
 	private final ContextMenuOpener _opener;
 
 	/**
+	 * Listener updating the visibility of this region when a command's state changes, or
+	 * {@code null} when the region is shown regardless of its commands.
+	 */
+	private final Runnable _commandChangeHandler;
+
+	/**
 	 * Creates a {@link MenuRegionControl}.
 	 *
 	 * @param context
@@ -91,10 +106,13 @@ public class MenuRegionControl extends ReactControl {
 	 *        The frame's context menu opener.
 	 * @param trigger
 	 *        The gesture that opens the menu.
+	 * @param hideWhileEmpty
+	 *        Whether the region is hidden while none of its commands is visible, see
+	 *        {@link #offersEntry()}.
 	 */
 	public MenuRegionControl(ReactContext context, ReactControl child,
 			List<ContextMenuContribution> contributions, Supplier<Object> targetSupplier,
-			ContextMenuOpener opener, MenuTrigger trigger) {
+			ContextMenuOpener opener, MenuTrigger trigger, boolean hideWhileEmpty) {
 		super(context, null, REACT_MODULE);
 		_contributions = List.copyOf(contributions);
 		_targetSupplier = targetSupplier;
@@ -103,6 +121,54 @@ public class MenuRegionControl extends ReactControl {
 		putState(CHILD, child);
 		putState(CHILD_ID, child.getID());
 		putState(TRIGGER, trigger.getExternalName());
+
+		if (hideWhileEmpty) {
+			_commandChangeHandler = this::updateHidden;
+			for (ContextMenuContribution contribution : _contributions) {
+				for (CommandModel command : contribution.commands()) {
+					command.addStateChangeListener(_commandChangeHandler);
+				}
+			}
+			updateHidden();
+		} else {
+			_commandChangeHandler = null;
+		}
+	}
+
+	/**
+	 * Whether the menu of this region currently has an entry to show.
+	 *
+	 * <p>
+	 * Exactly the commands the {@link ContextMenuOpener} shows count: the
+	 * {@link ContextMenuContribution#visibleCommands() visible} ones, whether executable or not.
+	 * </p>
+	 */
+	public boolean offersEntry() {
+		for (ContextMenuContribution contribution : _contributions) {
+			if (!contribution.visibleCommands().isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void updateHidden() {
+		boolean hidden = !offersEntry();
+		if (hidden != isHidden()) {
+			setHidden(hidden);
+		}
+	}
+
+	@Override
+	protected void onCleanup() {
+		if (_commandChangeHandler != null) {
+			for (ContextMenuContribution contribution : _contributions) {
+				for (CommandModel command : contribution.commands()) {
+					command.removeStateChangeListener(_commandChangeHandler);
+				}
+			}
+		}
+		super.onCleanup();
 	}
 
 	/**

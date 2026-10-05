@@ -257,8 +257,13 @@ it generic and parameterized by configuration, not tailored to one view.
   `com.top_logic.demo.react.corporate/vite.config.ts` and `react-src/react-*-shim.ts`, or the same
   setup in `com.top_logic.layout.react.wysiwyg` and `com.top_logic.layout.react.chartjs`. The
   library's React peer version must match the bridge's (`react` in
-  `com.top_logic.layout.react/package.json`). A shim re-exports the hooks the library uses — extend
-  the list in `react-shim.ts` when the library imports one it does not name.
+  `com.top_logic.layout.react/package.json`). The `react/jsx-runtime` shim re-exports the automatic
+  JSX runtime the bridge exports (`export { jsx, jsxs, Fragment } from 'tl-react-bridge'`), which
+  the prebuilt code of a library calls; `React.createElement` is no substitute, since it reads the
+  key argument of `jsx(type, props, key)` as children. The `react` and `react-dom` shims name the
+  complete public API of React and react-dom, since a library reads it from a namespace import,
+  partly under computed names (see `com.top_logic.demo.react.mui/react-src/react-shim.ts` and
+  [new-react-module.md](new-react-module.md)).
 - **Controlled components only.** The state belongs to the server. A component that keeps state of
   its own (an uncontrolled input, a self-managed open or selected flag) is used in its controlled mode
   (`value` + `onChange`, `open` + `onOpenChange`), otherwise it drifts away from the server.

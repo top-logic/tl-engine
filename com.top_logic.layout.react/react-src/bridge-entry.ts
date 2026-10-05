@@ -113,6 +113,17 @@ export { React, ReactDOM };
 export const createPortal = ReactDOM.createPortal;
 export const flushSync = ReactDOM.flushSync;
 
+// Re-export the automatic JSX runtime of the same React instance. A module that bundles a library
+// compiled with the automatic runtime (e.g. Material UI, whose prebuilt code calls
+// `jsx(type, props, key)` from 'react/jsx-runtime') aliases 'react/jsx-runtime' to a shim
+// re-exporting these:
+//
+//   export { jsx, jsxs, Fragment } from 'tl-react-bridge';
+//
+// `React.createElement` is no substitute: it reads its third argument as children, so a keyed
+// `jsx` call would replace the children passed in the props.
+export { jsx, jsxs, Fragment } from 'react/jsx-runtime';
+
 // Expose bridge functions on window so that server-generated inline scripts
 // (e.g. TLReact.mount(...) from ReactControl) and GWT-compiled code
 // (e.g. ReactBridge.subscribe()) can call them.

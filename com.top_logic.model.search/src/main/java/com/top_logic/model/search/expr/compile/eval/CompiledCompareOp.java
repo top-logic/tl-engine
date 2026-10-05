@@ -12,6 +12,7 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.knowledge.search.Expression;
+import com.top_logic.knowledge.search.ExpressionFactory;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.CompareKind;
 import com.top_logic.model.search.expr.CompareOp;
@@ -30,7 +31,7 @@ import com.top_logic.model.search.expr.EvalContext;
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class CompiledCompareOp extends CompiledExpression {
+public class CompiledCompareOp extends CompiledPredicate {
 
 	private final CompiledValue _left;
 
@@ -42,7 +43,6 @@ public class CompiledCompareOp extends CompiledExpression {
 	 * Creates a new {@link CompiledCompareOp}.
 	 */
 	public CompiledCompareOp(CompiledValue left, CompiledValue right, CompareKind compareKind) {
-		super(MOPrimitive.BOOLEAN);
 		_left = left;
 		_right = right;
 		_compareKind = compareKind;
@@ -80,10 +80,62 @@ public class CompiledCompareOp extends CompiledExpression {
 		}
 	}
 
+	/**
+	 * Builds the SQL comparison of the operands.
+	 *
+	 * <p>
+	 * In TL-Script, a comparison with a <code>null</code> operand yields <code>null</code>, which
+	 * is false in a boolean context. In SQL, a comparison with a <code>NULL</code> column is
+	 * <code>UNKNOWN</code>, which drops the row from a filter as well. An operand that is known to
+	 * be <code>null</code> before the query is built (a <code>null</code> variable) results in
+	 * <code>false</code>, since there is no SQL literal for <code>NULL</code>.
+	 * </p>
+	 */
 	@Override
 	public Expression buildExpression(EvalContext context) throws CompiledValue.IncompatibleTypes {
-		Expression left = _left.buildExpression(context);
-		Expression right = _right.buildExpression(context);
+		Expression leftIsNull = _left.buildIsNull(context);
+		Expression rightIsNull = _right.buildIsNull(context);
+		if (isLiteralTrue(leftIsNull) || isLiteralTrue(rightIsNull)) {
+			return ExpressionFactory.literal(Boolean.FALSE);
+		}
+		return buildCompare(context);
+	}
+
+	/**
+	 * Guards the comparison with the non-<code>null</code> checks of its operands, so that a
+	 * <code>null</code> operand results in <code>false</code> instead of SQL <code>UNKNOWN</code>.
+	 */
+	@Override
+	public Expression buildCondition(EvalContext context) throws CompiledValue.IncompatibleTypes {
+		Expression leftIsNull = _left.buildIsNull(context);
+		Expression rightIsNull = _right.buildIsNull(context);
+		if (isLiteralTrue(leftIsNull) || isLiteralTrue(rightIsNull)) {
+			return ExpressionFactory.literal(Boolean.FALSE);
+		}
+		return and(and(notNull(leftIsNull), notNull(rightIsNull)), buildCompare(context));
+	}
+
+	/**
+	 * The comparison is <code>null</code> if one of its operands is <code>null</code>.
+	 */
+	@Override
+	public Expression buildIsNull(EvalContext context) throws CompiledValue.IncompatibleTypes {
+		return or(_left.buildIsNull(context), _right.buildIsNull(context));
+	}
+
+	/**
+	 * A comparison cannot be used as operand of another comparison in the database: its
+	 * TL-Script value may be <code>null</code>, which SQL does not represent for a condition.
+	 * Such an expression is evaluated in memory.
+	 */
+	@Override
+	public Expression buildValue(EvalContext context) throws CompiledValue.IncompatibleTypes {
+		throw new CompiledValue.IncompatibleTypes();
+	}
+
+	private Expression buildCompare(EvalContext context) throws CompiledValue.IncompatibleTypes {
+		Expression left = _left.buildValue(context);
+		Expression right = _right.buildValue(context);
 		switch (_compareKind) {
 			case GE:
 				return ge(left, right);

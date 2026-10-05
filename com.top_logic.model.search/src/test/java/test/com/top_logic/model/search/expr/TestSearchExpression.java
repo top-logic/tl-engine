@@ -396,6 +396,122 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals("In-memory result for '" + attr + " " + op + "'.", expected, inMemoryResult);
 	}
 
+	/**
+	 * Filters over objects of which some have no value in the tested database columns, and with
+	 * script arguments that are <code>null</code>.
+	 *
+	 * <p>
+	 * In TL-Script, an order comparison with a <code>null</code> operand yields <code>null</code>,
+	 * which counts as <code>false</code> in a boolean context, and the negation of
+	 * <code>null</code> is <code>true</code>. The database-delegated filter must produce exactly
+	 * the result of the in-memory evaluation, although SQL treats a comparison with
+	 * <code>NULL</code> as unknown and the negation of unknown as unknown.
+	 * </p>
+	 */
+	public void testKBNullSemantics() {
+		with("TestSearchExpression-testKBNullSemantics.scenario.xml",
+			scenario -> {
+				TLObject c0 = scenario.getObject("c0"); // long = 100
+				TLObject c1 = scenario.getObject("c1"); // long = 200
+				TLObject c2 = scenario.getObject("c2"); // long not set
+				assertNotNull(c0);
+				assertNotNull(c1);
+				assertNotNull(c2);
+				List<TLObject> all = list(c0, c1, c2);
+
+				String l = "$x.get(`TestSearchExpression:WithDatabaseColumns#long`)";
+
+				// Outer variable compared with a column.
+				for (Object v : new Object[] { null, 150 }) {
+					assertFilterConsistent(all, "$v >= " + l, v);
+					assertFilterConsistent(all, "$v <= " + l, v);
+					assertFilterConsistent(all, l + " < $v", v);
+					assertFilterConsistent(all, "$v >= " + l + " && $v <= " + l, v);
+					assertFilterConsistent(all, "!($v >= " + l + ")", v);
+					assertFilterConsistent(all, "!($v >= " + l + ") && " + l + " > 0", v);
+					assertFilterConsistent(all, "!($v >= " + l + " && " + l + " > 0)", v);
+					assertFilterConsistent(all, "$v >= " + l + " || " + l + " > 150", v);
+					assertFilterConsistent(all, "($v >= " + l + ") == false", v);
+					assertFilterConsistent(all, "false == ($v >= " + l + ")", v);
+					assertFilterConsistent(all, "($v >= " + l + ") == null", v);
+					assertFilterConsistent(all, "!(($v >= " + l + ") == false)", v);
+					assertFilterConsistent(all, l + " == $v", v);
+					assertFilterConsistent(all, "!(" + l + " == $v)", v);
+				}
+				assertEquals(set(), assertFilterConsistent(all, "$v >= " + l, null));
+				assertEquals(set(c0, c1, c2), assertFilterConsistent(all, "!($v >= " + l + ")", null));
+				assertEquals(set(c0), assertFilterConsistent(all, "$v >= " + l, 150));
+
+				// Boolean outer variable.
+				for (Object v : new Object[] { null, true, false }) {
+					assertFilterConsistent(all, "$v", v);
+					assertFilterConsistent(all, "!$v", v);
+					assertFilterConsistent(all, "$v && " + l + " > 150", v);
+					assertFilterConsistent(all, "$v || " + l + " > 150", v);
+					assertFilterConsistent(all, "!$v && " + l + " > 150", v);
+					assertFilterConsistent(all, "!($v && " + l + " > 150)", v);
+					assertFilterConsistent(all, "!($v || " + l + " > 150)", v);
+					assertFilterConsistent(all, "(" + l + " > 150) == $v", v);
+					assertFilterConsistent(all, "!((" + l + " > 150) == $v)", v);
+				}
+				assertEquals(set(), assertFilterConsistent(all, "$v && " + l + " > 0", null));
+				assertEquals(set(c0, c1, c2), assertFilterConsistent(all, "!$v", null));
+
+				// Negated comparisons with a column that is not set in some rows.
+				assertEquals(set(c0, c2), assertFilterConsistent(all, "!(" + l + " >= 150)"));
+				assertEquals(set(c1, c2), assertFilterConsistent(all, "!(" + l + " < 150)"));
+				assertEquals(set(c0, c2), assertFilterConsistent(all, l + " < 150 || !(" + l + " >= 150)"));
+				assertEquals(set(c0, c1), assertFilterConsistent(all, "!(!(" + l + " >= 0))"));
+				assertEquals(set(c2), assertFilterConsistent(all, "!(" + l + " >= 0 || " + l + " < 0)"));
+				assertEquals(set(c1, c2), assertFilterConsistent(all, "!(" + l + " == 100)"));
+				assertEquals(set(c0, c1), assertFilterConsistent(all, "!(" + l + " == null)"));
+				assertEquals(set(c0, c1), assertFilterConsistent(all, l + " != null"));
+				assertEquals(set(c0, c2),
+					assertFilterConsistent(all, "!(" + l + " > 150 && $x.get(`TestSearchExpression:WithDatabaseColumns#int`) > 0)"));
+
+				// Comparison results used as values.
+				assertEquals(set(c0), assertFilterConsistent(all, "(" + l + " >= 150) == false"));
+				assertEquals(set(c2), assertFilterConsistent(all, "(" + l + " >= 150) == null"));
+				assertEquals(set(c1, c2), assertFilterConsistent(all, "!((" + l + " >= 150) == false)"));
+				assertEquals(set(c0, c1), assertFilterConsistent(all, "(" + l + " >= 0 && true) == (" + l + " >= 0)"));
+			});
+	}
+
+	/**
+	 * Asserts that the given filter predicate over the variable {@code x} yields the same result
+	 * when delegated to the database (rooted in {@code all(...)}) and when evaluated in memory
+	 * (rooted in the given list).
+	 *
+	 * @return The common result.
+	 */
+	private Set<?> assertFilterConsistent(List<TLObject> all, String predicate) throws ParseException {
+		Set<?> kbResult = asSet(execute(search(
+			"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> " + predicate + ")")));
+		Set<?> inMemoryResult = asSet(execute(search(
+			"all -> $all.filter(x -> " + predicate + ")"), all));
+		assertEquals("Database-delegated vs. in-memory result for '" + predicate + "'.", inMemoryResult, kbResult);
+		return kbResult;
+	}
+
+	/**
+	 * Asserts that the given filter predicate over the variable {@code x} and the outer variable
+	 * {@code v} yields the same result when delegated to the database (rooted in {@code all(...)})
+	 * and when evaluated in memory (rooted in the given list).
+	 *
+	 * @param v
+	 *        The value of the outer variable {@code v}, may be <code>null</code>.
+	 * @return The common result.
+	 */
+	private Set<?> assertFilterConsistent(List<TLObject> all, String predicate, Object v) throws ParseException {
+		Set<?> kbResult = asSet(QueryExecutor.compile(search(
+			"v -> all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> " + predicate + ")")).execute(v));
+		Set<?> inMemoryResult = asSet(execute(search(
+			"all -> v -> $all.filter(x -> " + predicate + ")"), all, v));
+		assertEquals("Database-delegated vs. in-memory result for '" + predicate + "' with v = " + v + ".",
+			inMemoryResult, kbResult);
+		return kbResult;
+	}
+
 	public void testSimpleSearch() {
 		with("TestSearchExpression-testSimpleSearch.scenario.xml",
 			scenario -> {

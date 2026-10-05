@@ -10,6 +10,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
@@ -22,6 +24,7 @@ import com.top_logic.layout.react.control.button.UploadCommandModel;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarOverflow;
 import com.top_logic.layout.view.command.CliqueRegistry.CliqueInfo;
+import com.top_logic.util.Resources;
 
 /**
  * Builds a {@link ReactToolbarControl} from a {@link CommandScope} for a given placement.
@@ -48,7 +51,8 @@ public class ToolbarBuilder {
 	 * @param placement
 	 *        The target placement to filter commands for.
 	 * @param registry
-	 *        The clique registry (with any local cliques applied).
+	 *        The cliques ordering and displaying the command groups, see
+	 *        {@link CommandCliqueService#getRegistry()}.
 	 * @param defaultDisplay
 	 *        The {@link ButtonDisplayMode} for buttons whose command requests none, or
 	 *        {@code null} for the standard presentation (icon and label side by side).
@@ -75,7 +79,8 @@ public class ToolbarBuilder {
 	 * @param placement
 	 *        The target placement to filter commands for.
 	 * @param registry
-	 *        The clique registry (with any local cliques applied).
+	 *        The cliques ordering and displaying the command groups, see
+	 *        {@link CommandCliqueService#getRegistry()}.
 	 * @param defaultDisplay
 	 *        The {@link ButtonDisplayMode} for buttons whose command requests none, or
 	 *        {@code null} for the standard presentation (icon and label side by side).
@@ -116,11 +121,8 @@ public class ToolbarBuilder {
 
 		// Sort groups by clique order.
 		List<Map.Entry<String, List<CommandModel>>> sortedGroups = new ArrayList<>(grouped.entrySet());
-		sortedGroups.sort((a, b) -> {
-			CliqueInfo infoA = registry.getClique(a.getKey());
-			CliqueInfo infoB = registry.getClique(b.getKey());
-			return Integer.compare(infoA.order(), infoB.order());
-		});
+		sortedGroups.sort(
+			(a, b) -> Integer.compare(registry.getPosition(a.getKey()), registry.getPosition(b.getKey())));
 
 		// Build toolbar control.
 		ReactToolbarControl toolbar = new ReactToolbarControl(context);
@@ -137,10 +139,24 @@ public class ToolbarBuilder {
 					defaultDisplay));
 			}
 
-			toolbar.addGroup(cliqueName, info.display(), info.label(), info.icon(), controls);
+			toolbar.addGroup(cliqueName, info.display(), label(info.label()), icon(info.icon()), controls);
 		}
 
 		return toolbar;
+	}
+
+	/**
+	 * The menu trigger label of a clique in the language of the current user.
+	 */
+	private static String label(ResKey label) {
+		return label == null ? null : Resources.getInstance().getString(label);
+	}
+
+	/**
+	 * The encoded form of a clique's menu trigger icon, as a button transmits its image.
+	 */
+	private static String icon(ThemeImage icon) {
+		return icon == null ? null : icon.resolve().toEncodedForm();
 	}
 
 	/**

@@ -20,6 +20,7 @@ import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.CliqueRegistry;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ToolbarBuilder;
 import com.top_logic.layout.view.command.ViewCommandModel;
@@ -103,7 +104,7 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 		// Phase 4: Build clique-grouped toolbars from placed commands. The controls are always
 		// created (even when empty) so implicit commands added later have a target for the
 		// reactive rebuild.
-		CliqueRegistry registry = new CliqueRegistry();
+		CliqueRegistry registry = CommandCliqueService.getInstance().getRegistry();
 		ReactToolbarControl toolbar =
 			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, registry, _commandDisplay);
 		ReactToolbarControl buttonBar =

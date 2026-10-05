@@ -5,145 +5,88 @@
  */
 package com.top_logic.layout.view.command;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
 
 /**
- * Registry of standard and local cliques with ordering and display mode metadata.
+ * The cliques a toolbar groups its commands by, in the order their groups are displayed.
  *
  * <p>
- * Standard cliques are registered at class load time. Local cliques (panel-specific) are added via
- * {@link #withLocalClique(String, String, String, ToolbarGroupDisplay, String)}.
+ * A command whose clique is not registered still gets a group of its own: an inline one without
+ * label, displayed after the groups of all registered cliques.
  * </p>
+ *
+ * @see CommandCliqueService#getRegistry()
  */
 public class CliqueRegistry {
 
-	private static final List<CliqueInfo> STANDARD_CLIQUES;
-
-	static {
-		List<CliqueInfo> list = new ArrayList<>();
-		list.add(new CliqueInfo(CommandCliques.CREATE, 100, ToolbarGroupDisplay.INLINE, null, null));
-		list.add(new CliqueInfo(CommandCliques.EDIT, 200, ToolbarGroupDisplay.INLINE, null, null));
-		list.add(new CliqueInfo(CommandCliques.DELETE, 300, ToolbarGroupDisplay.INLINE, null, null));
-		list.add(new CliqueInfo(CommandCliques.COMMIT, 400, ToolbarGroupDisplay.INLINE, null, null));
-		list.add(new CliqueInfo(CommandCliques.NAVIGATE, 500, ToolbarGroupDisplay.INLINE, null, null));
-		// TODO: the menu-group labels below ("View"/"Export"/"More") are hardcoded English
-		// strings. They surface as the menu trigger's accessible name (and as visible text for
-		// the label-only triggers). Convert CliqueInfo#label to a ResKey for proper I18N.
-		list.add(new CliqueInfo(CommandCliques.VIEW, 600, ToolbarGroupDisplay.MENU, "View", null));
-		list.add(new CliqueInfo(CommandCliques.EXPORT, 700, ToolbarGroupDisplay.MENU, "Export", null));
-		list.add(new CliqueInfo(CommandCliques.MORE, 800, ToolbarGroupDisplay.MENU, "More", "css:bi bi-list"));
-		STANDARD_CLIQUES = Collections.unmodifiableList(list);
-	}
-
-	private final Map<String, CliqueInfo> _cliqueMap;
-
 	private final List<CliqueInfo> _orderedCliques;
 
+	private final Map<String, Integer> _positionByName;
+
 	/**
-	 * Creates a registry with only standard cliques.
+	 * Creates a {@link CliqueRegistry}.
+	 *
+	 * @param cliques
+	 *        The registered cliques in the order their toolbar groups are displayed. Of several
+	 *        definitions of the same name, the first one counts.
 	 */
-	public CliqueRegistry() {
-		_cliqueMap = new LinkedHashMap<>();
-		_orderedCliques = new ArrayList<>(STANDARD_CLIQUES);
-		for (CliqueInfo info : STANDARD_CLIQUES) {
-			_cliqueMap.put(info.name(), info);
+	public CliqueRegistry(List<CliqueInfo> cliques) {
+		_orderedCliques = List.copyOf(cliques);
+		_positionByName = new HashMap<>();
+		for (int n = 0, cnt = _orderedCliques.size(); n < cnt; n++) {
+			_positionByName.putIfAbsent(_orderedCliques.get(n).name(), n);
 		}
 	}
 
 	/**
-	 * Creates a new registry with a local clique inserted relative to an existing clique.
+	 * The {@link CliqueInfo} of the given clique.
 	 *
 	 * @param name
-	 *        The local clique name.
-	 * @param afterClique
-	 *        Insert after this clique (may be {@code null}).
-	 * @param beforeClique
-	 *        Insert before this clique (may be {@code null}). {@code afterClique} takes precedence.
-	 * @param display
-	 *        Display mode (may be {@code null}, defaults to {@link ToolbarGroupDisplay#INLINE}).
-	 * @param label
-	 *        Menu trigger label (only for menu display, may be {@code null}).
-	 * @return A new registry with the local clique inserted.
-	 */
-	public CliqueRegistry withLocalClique(String name, String afterClique, String beforeClique,
-			ToolbarGroupDisplay display, String label) {
-		CliqueRegistry copy = new CliqueRegistry();
-		copy._orderedCliques.clear();
-		copy._orderedCliques.addAll(_orderedCliques);
-		copy._cliqueMap.clear();
-		copy._cliqueMap.putAll(_cliqueMap);
-
-		int insertIndex = copy._orderedCliques.size(); // Default: append
-		if (afterClique != null) {
-			for (int i = 0; i < copy._orderedCliques.size(); i++) {
-				if (copy._orderedCliques.get(i).name().equals(afterClique)) {
-					insertIndex = i + 1;
-					break;
-				}
-			}
-		} else if (beforeClique != null) {
-			for (int i = 0; i < copy._orderedCliques.size(); i++) {
-				if (copy._orderedCliques.get(i).name().equals(beforeClique)) {
-					insertIndex = i;
-					break;
-				}
-			}
-		}
-
-		// Compute order value between neighbors.
-		int order;
-		if (insertIndex > 0 && insertIndex < copy._orderedCliques.size()) {
-			int prev = copy._orderedCliques.get(insertIndex - 1).order();
-			int next = copy._orderedCliques.get(insertIndex).order();
-			order = prev + (next - prev) / 2;
-		} else if (insertIndex == 0) {
-			order = 0;
-		} else {
-			order = copy._orderedCliques.get(copy._orderedCliques.size() - 1).order() + 100;
-		}
-
-		CliqueInfo info = new CliqueInfo(name, order,
-			display != null ? display : ToolbarGroupDisplay.INLINE, label, null);
-		copy._orderedCliques.add(insertIndex, info);
-		copy._cliqueMap.put(name, info);
-		return copy;
-	}
-
-	/**
-	 * Returns the {@link CliqueInfo} for the given clique name, or a default inline clique.
+	 *        The clique name, {@code null} for a command that names no clique, which is grouped
+	 *        into {@link CommandCliques#CREATE}.
+	 * @return The registered definition, or an inline clique without label for a clique that is
+	 *         not registered.
 	 */
 	public CliqueInfo getClique(String name) {
-		if (name == null) {
-			return STANDARD_CLIQUES.get(0); // Default to first (create).
+		String cliqueName = name == null ? CommandCliques.CREATE : name;
+		Integer position = _positionByName.get(cliqueName);
+		if (position != null) {
+			return _orderedCliques.get(position.intValue());
 		}
-		CliqueInfo info = _cliqueMap.get(name);
-		if (info != null) {
-			return info;
-		}
-		// Unknown clique: inline, appended at end.
-		return new CliqueInfo(name, Integer.MAX_VALUE, ToolbarGroupDisplay.INLINE, null, null);
+		return new CliqueInfo(cliqueName, ToolbarGroupDisplay.INLINE, null, null);
 	}
 
 	/**
-	 * Returns all registered cliques in order.
-	 */
-	public List<CliqueInfo> getOrderedCliques() {
-		return Collections.unmodifiableList(_orderedCliques);
-	}
-
-	/**
-	 * Metadata for a single clique.
+	 * The position of the given clique's toolbar group relative to the others (lower is earlier).
 	 *
 	 * @param name
-	 *        The clique name.
-	 * @param order
-	 *        Sort order (lower = earlier).
+	 *        The clique name, see {@link #getClique(String)}.
+	 * @return The index of the clique in {@link #getOrderedCliques()}, {@link Integer#MAX_VALUE}
+	 *         for a clique that is not registered.
+	 */
+	public int getPosition(String name) {
+		Integer position = _positionByName.get(name == null ? CommandCliques.CREATE : name);
+		return position == null ? Integer.MAX_VALUE : position.intValue();
+	}
+
+	/**
+	 * All registered cliques in the order their toolbar groups are displayed.
+	 */
+	public List<CliqueInfo> getOrderedCliques() {
+		return _orderedCliques;
+	}
+
+	/**
+	 * Definition of a single clique.
+	 *
+	 * @param name
+	 *        The clique name, as commands refer to it.
 	 * @param display
 	 *        Display mode of the clique group.
 	 * @param label
@@ -151,7 +94,7 @@ public class CliqueRegistry {
 	 * @param icon
 	 *        Menu trigger icon (only for menu display, may be {@code null}).
 	 */
-	public record CliqueInfo(String name, int order, ToolbarGroupDisplay display, String label, String icon) {
+	public record CliqueInfo(String name, ToolbarGroupDisplay display, ResKey label, ThemeImage icon) {
 		// Record.
 	}
 }

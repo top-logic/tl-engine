@@ -39,7 +39,7 @@ import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.CliqueRegistry;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ToolbarBuilder;
 import com.top_logic.layout.view.command.ViewCommand;
@@ -222,7 +222,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 			List<ViewCommand.Config> commandConfigs) {
 		List<ViewCommandModel> models = ViewCommands.buildCommandModels(context, commands, commandConfigs);
 		ReactToolbarControl toolbar = ToolbarBuilder.build(context, new CommandScope(models),
-			CommandPlacement.TOOLBAR, new CliqueRegistry(), ButtonDisplayMode.ICON_ONLY);
+			CommandPlacement.TOOLBAR, CommandCliqueService.getInstance().getRegistry(), ButtonDisplayMode.ICON_ONLY);
 		if (toolbar == null) {
 			return;
 		}

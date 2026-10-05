@@ -36,7 +36,51 @@
 					<module key="com.top_logic.layout.view.navigation.DisplayTargetService$Module"
 						value="true"
 					/>
+					<module key="com.top_logic.layout.view.command.CommandCliqueService$Module"
+						value="true"
+					/>
 				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.view.command.CommandCliqueService">
+			<instance class="com.top_logic.layout.view.command.CommandCliqueService">
+				<cliques>
+					<!--
+						The order of the entries is the order of the command groups in a toolbar.
+						An application adds a clique or relabels one by an entry of the same name.
+					-->
+					<clique name="create"/>
+					<clique name="edit"/>
+					<clique name="delete"/>
+					<clique name="commit"/>
+					<clique name="navigate"/>
+					<clique name="view"
+						display="menu"
+					>
+						<label>
+							<en>View</en>
+							<de>Ansicht</de>
+						</label>
+					</clique>
+					<clique name="export"
+						display="menu"
+					>
+						<label>
+							<en>Export</en>
+							<de>Export</de>
+						</label>
+					</clique>
+					<clique name="more"
+						display="menu"
+						icon="css:bi bi-list"
+					>
+						<label>
+							<en>More</en>
+							<de>Mehr</de>
+						</label>
+					</clique>
+				</cliques>
 			</instance>
 		</config>
 

@@ -35,6 +35,7 @@ import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.CliqueRegistry;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ToolbarBuilder;
 import com.top_logic.layout.view.command.ViewCommand;
@@ -252,7 +253,7 @@ public class AppBarElement implements UIElement {
 		// Build the bar's actions as one toolbar, so that the commands that do not fit fold into
 		// its overflow menu. The control is created even while there is no command, so that a
 		// command contributed later has a target for the reactive rebuild.
-		CliqueRegistry registry = new CliqueRegistry();
+		CliqueRegistry registry = CommandCliqueService.getInstance().getRegistry();
 		ReactToolbarControl actions = buildActions(derivedContext, scope, registry);
 
 		// Create the app bar control.

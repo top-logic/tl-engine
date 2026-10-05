@@ -44,6 +44,7 @@ import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.ReloadableControl;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.tiles.ReactTileStackControl;
@@ -424,7 +425,8 @@ public class TestTileFrameDisposal extends BasicTestCase {
 		return KBSetup.getSingleKBTest(TestTileFrameDisposal.class,
 			ServiceTestSetup.createStarterFactoryForModules(
 				TypeIndex.Module.INSTANCE, SearchBuilder.Module.INSTANCE, ModelService.Module.INSTANCE,
-				FieldControlService.Module.INSTANCE, SchedulerService.Module.INSTANCE));
+				FieldControlService.Module.INSTANCE, SchedulerService.Module.INSTANCE,
+				CommandCliqueService.Module.INSTANCE));
 	}
 
 }

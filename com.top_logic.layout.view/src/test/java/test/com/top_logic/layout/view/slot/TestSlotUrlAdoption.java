@@ -43,6 +43,7 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.slot.SlotContribution;
 import com.top_logic.layout.view.slot.SlotRegistry;
 
@@ -324,6 +325,6 @@ public class TestSlotUrlAdoption extends TestCase {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestSlotUrlAdoption.class,
 				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE,
-				SchedulerService.Module.INSTANCE));
+				SchedulerService.Module.INSTANCE, CommandCliqueService.Module.INSTANCE));
 	}
 }

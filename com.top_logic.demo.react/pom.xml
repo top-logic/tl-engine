@@ -91,5 +91,16 @@
         </dependency>
       </dependencies>
     </profile>
+
+    <!-- Renders the UI with Material UI (mvn -P mui). -->
+    <profile>
+      <id>mui</id>
+      <dependencies>
+        <dependency>
+          <groupId>com.top-logic</groupId>
+          <artifactId>tl-demo-react-mui</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
   </profiles>
 </project>

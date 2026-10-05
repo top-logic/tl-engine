@@ -160,6 +160,7 @@
 		<module>../com.top_logic.demo</module>
 		<module>../com.top_logic.demo.react</module>
 		<module>../com.top_logic.demo.react.corporate</module>
+		<module>../com.top_logic.demo.react.mui</module>
 		<module>../com.top_logic.kafka.demo</module>
 		<module>../test.com.top_logic.kafka.demo</module>
 	</modules>

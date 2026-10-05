@@ -53,6 +53,7 @@ import com.top_logic.element.meta.kbbased.AttributeUtil;
 import com.top_logic.element.meta.kbbased.ConfiguredAttributeImpl;
 import com.top_logic.element.meta.kbbased.KBBasedMetaAttribute;
 import com.top_logic.element.meta.kbbased.PersistentObjectImpl;
+import com.top_logic.element.meta.kbbased.TLOptionsFactory;
 import com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -1202,10 +1203,29 @@ public class AttributeOperations {
 	/**
 	 * The configured option provider.
 	 * 
+	 * <p>
+	 * A {@link TLOptions} annotation of the attribute itself takes precedence. Without such
+	 * annotation, the {@link TLOptions} annotation inherited by the attribute is used: the one of
+	 * an overridden attribute, the one configured in the attribute settings, or the one of the
+	 * attribute's value type (see {@link TLStructuredTypePart#getAnnotation(Class)}).
+	 * </p>
+	 * 
+	 * @return The option provider, or <code>null</code> if neither the attribute nor its value type
+	 *         defines options.
+	 * 
 	 * @see TLOptions
+	 * @see #allOptions(EditContext)
 	 */
 	public static Generator getOptions(TLStructuredTypePart attribute) {
-		return (Generator) attribute.tGetData(OPTIONS_ATTRIBUTE);
+		Generator local = (Generator) attribute.tGetData(OPTIONS_ATTRIBUTE);
+		if (local != null) {
+			return local;
+		}
+		TLOptions inherited = attribute.getAnnotation(TLOptions.class);
+		if (inherited == null) {
+			return null;
+		}
+		return TLOptionsFactory.getGenerator(inherited);
 	}
 
 	/**

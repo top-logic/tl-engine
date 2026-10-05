@@ -31,7 +31,7 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.type.PrimitiveTypeUtil;
-import com.top_logic.element.meta.AttributeOperations;
+import com.top_logic.element.config.annotation.TLOptions;
 import com.top_logic.element.meta.OptionProvider;
 import com.top_logic.element.meta.SimpleEditContext;
 import com.top_logic.layout.form.model.AbstractFieldModel;
@@ -1005,15 +1005,15 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * The {@link OptionSource} for an attribute edited by the given {@link SelectControlProvider}.
 	 *
 	 * <p>
-	 * An attribute-level options generator (e.g. supported locales) takes precedence over the
-	 * provider's configured option source; otherwise the configured option source is used, falling
-	 * back to the attribute's structural options. Either way, only options the current user may read
-	 * are offered.
+	 * An {@link TLOptions options annotation of the attribute itself} (e.g. supported locales) takes
+	 * precedence over the provider's configured option source; otherwise the configured option source
+	 * is used, falling back to the attribute's structural options (including options inherited from
+	 * the attribute's value type). Either way, only options the current user may read are offered.
 	 * </p>
 	 */
 	private OptionSource optionSourceFor(TLStructuredTypePart part, SelectControlProvider provider) {
 		OptionProvider options = provider.getConfiguredOptions();
-		if (options != null && AttributeOperations.getOptions(part) == null) {
+		if (options != null && part.getAnnotationLocal(TLOptions.class) == null) {
 			OptionProvider configured = options;
 			return (self, overlays, dependencies) -> AttributeOptions.readable(
 				AttributeOptions.toList(configured.getOptions(SimpleEditContext.createContext(self, part))));

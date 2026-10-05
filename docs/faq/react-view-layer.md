@@ -403,6 +403,31 @@ Two actions branch the chain by a TL-Script function over its current value. `<i
 - A command whose chain applies the entered form values is disabled while the form has errors — a branch reports that for the actions of *all* its branches, taken or not, because the button's state cannot depend on the decision.
 - **`<executability>` guards the command with rules over its input**: `<visible-if expr="…"/>` hides the command while its predicate does not return `true`; `<disabled-if expr="…"/>` keeps it visible but disabled and takes the reason from its function — no value or `false` means executable, `true` disables it with a generic reason, a resource key or a text disables it with that reason, which the button shows as its tooltip. A rule that inspects objects beyond the input object needs those types in the command's `observed-types`, otherwise their changes do not re-evaluate it.
 
+## Toolbar groups: command cliques
+
+A command names its clique (`clique="…"` on any view command, default `create`); the commands of one clique form one group of the toolbar (`ToolbarBuilder`). Which cliques exist, in which order their groups are displayed, and whether a group is shown inline or folded into a menu is application configuration of the `CommandCliqueService` — the standard cliques are configured in `tl-layout-view.conf.config.xml`: `create`, `edit`, `delete`, `commit`, `navigate` inline, then `view`, `export` and `more` as menus. A menu clique carries a `label` (a `ResKey`, resolved in the user's language when the toolbar is built) and optionally an `icon` (a `ThemeImage`); a menu with an icon shows the label as the trigger's accessible name, one without shows it as the trigger's text.
+
+An application adds or relabels a clique in its own configuration; entries are keyed by `name`, so an entry with an existing name overrides that clique, and a new name is appended (or placed with `config:position`/`config:reference`):
+
+```xml
+<config service-class="com.top_logic.layout.view.command.CommandCliqueService">
+	<instance>
+		<cliques>
+			<clique name="more" display="menu" icon="css:bi bi-three-dots">
+				<label><en>Actions</en><de>Aktionen</de></label>
+			</clique>
+			<clique name="report" display="menu"
+				config:position="before" config:reference="more"
+			>
+				<label><en>Reports</en><de>Berichte</de></label>
+			</clique>
+		</cliques>
+	</instance>
+</config>
+```
+
+A clique that is not configured is not an error: its commands form an inline group without label after the groups of all configured cliques.
+
 ## Creating and deleting objects: `<create-transient>`, `<persist-transient>`, `<delete-object>`
 
 Three actions perform the model operations of a create dialog and a delete button. Each enforces the model access right of its operation like the TL-Script function it corresponds to, and brings the matching executability rule itself (`ViewAction#getIntrinsicRule()`), so the command offering it is hidden or disabled before the operation would fail — no `<executability>` configuration for the right is needed. The rule decides on the *command's* input, not on the value the chain hands to the action (see `ModelAccessRule` and `ModelAccessPolicy` for hide vs. disable).

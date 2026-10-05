@@ -37,7 +37,7 @@ import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.command.CliqueRegistry;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ToolbarBuilder;
 import com.top_logic.layout.view.command.ViewCommand;
@@ -276,7 +276,8 @@ public class AccordionElement implements UIElement {
 			CommandScope scope = new CommandScope(models);
 			ViewContext contentContext = sectionContext.withScope(CommandScope.class, scope);
 			ReactControl actions =
-				ToolbarBuilder.buildLive(context, scope, HEADER_PLACEMENTS, new CliqueRegistry(), _commandDisplay);
+				ToolbarBuilder.buildLive(context, scope, HEADER_PLACEMENTS, CommandCliqueService.getInstance(),
+					_commandDisplay);
 
 			Boolean storedExpansion = stored.get(id);
 			AccordionSection accordionSection =

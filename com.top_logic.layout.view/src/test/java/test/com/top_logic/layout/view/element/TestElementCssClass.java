@@ -35,6 +35,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.command.CommandCliqueService;
 
 /**
  * Tests that the {@link com.top_logic.layout.view.UIElement.Config#getCssClass() CSS class}
@@ -209,7 +210,8 @@ public class TestElementCssClass extends TestCase {
 	public static Test suite() throws ModuleException {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestElementCssClass.class, TypeIndex.Module.INSTANCE,
-				ThreadContextManager.Module.INSTANCE, ResourcesModule.Module.INSTANCE));
+				ThreadContextManager.Module.INSTANCE, ResourcesModule.Module.INSTANCE,
+				CommandCliqueService.Module.INSTANCE));
 	}
 
 }

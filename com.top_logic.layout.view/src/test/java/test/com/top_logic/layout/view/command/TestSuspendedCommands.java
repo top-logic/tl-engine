@@ -44,6 +44,7 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.command.CancelDialogCommand;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.I18NConstants;
@@ -435,6 +436,7 @@ public class TestSuspendedCommands extends TestCase {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestSuspendedCommands.class,
 				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE,
-				ThemeFactory.Module.INSTANCE, SchedulerService.Module.INSTANCE));
+				ThemeFactory.Module.INSTANCE, SchedulerService.Module.INSTANCE,
+				CommandCliqueService.Module.INSTANCE));
 	}
 }

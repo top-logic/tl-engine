@@ -101,29 +101,19 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 		ReactControl content = createContent(derivedContext);
 
 		// Phase 4: Build clique-grouped toolbars from placed commands. The controls are always
-		// created (even when empty) so implicit commands added later have a target for the
-		// reactive rebuild.
+		// created (even when empty) and follow the scope, so implicit commands added later show up
+		// in them.
 		CommandCliqueService cliques = CommandCliqueService.getInstance();
 		ReactToolbarControl toolbar =
-			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, cliques, _commandDisplay);
+			ToolbarBuilder.buildLive(context, scope, CommandPlacement.TOOLBAR, cliques, _commandDisplay);
 		ReactToolbarControl buttonBar =
-			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.BUTTON_BAR, cliques, _commandDisplay);
+			ToolbarBuilder.buildLive(context, scope, CommandPlacement.BUTTON_BAR, cliques, _commandDisplay);
 
 		// Phase 5: Let subclass create the chrome control.
 		ToolbarControl chrome = createChromeControl(derivedContext, content, toolbar, buttonBar);
 		chrome.setCssClass(_cssClass);
 
-		// Phase 6: Rebuild toolbars when implicit commands change. Groups are replaced in place so
-		// the existing toolbar controls keep their SSE registration.
-		scope.addListener(() -> {
-			toolbar.replaceGroups(
-				ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, cliques, _commandDisplay));
-			buttonBar.replaceGroups(
-				ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.BUTTON_BAR, cliques,
-					_commandDisplay));
-		});
-
-		// Phase 7: Lazy attach on render, cleanup on dispose.
+		// Phase 6: Lazy attach on render, cleanup on dispose.
 		registerLifecycle(context, commandModels, chrome);
 
 		return chrome;

@@ -1034,6 +1034,30 @@ Such a page is linkable: `/view/tickets?filter=discussed` opens the list filtere
 - **The compact fallback is the drill-in either way.** On a narrow viewport a `drawer` element renders exactly like a `split` one — selector, then detail, with the breadcrumb whose home crumb (`<home-label>`) clears the selection. A drawer as wide as a phone is a full-screen panel, which is what the drill-in already is, done with the breadcrumb the nested levels share.
 - Both demos live in `com.top_logic.demo.react`: `demo/responsive-md-demo.view.xml` (the split presentation, nested scopes → milestones) and `demo/detail-drawer-demo.view.xml` (the drawer presentation over a full-width ticket table).
 
+## Collapsible sections: `<accordion>`
+
+`<accordion>` (`AccordionElement`, control `ReactAccordionControl`) stacks sections, each with a header — label, optional icon, optional commands — and a body the user expands or collapses. Like the tabs of a `<tab-bar>`, the sections are keyed by their `id`, so a configuration fragment of another module adds, repositions (`config:position`) or overrides a single section; a section shares `id`, `label`, `icon`, `<access-control>` and the content children with a tab (`ContentSectionConfig`).
+
+```xml
+<accordion exclusive="false">
+	<section id="general" icon="css:bi bi-gear" expanded="true">
+		<label><en>General</en><de>Allgemein</de></label>
+		<commands>
+			<generic-command placement="TOOLBAR" …>…</generic-command>
+		</commands>
+		<form input="item">…</form>
+	</section>
+	<section id="advanced">…</section>
+</accordion>
+```
+
+- **Attributes.** `exclusive` (default `false`): at most one section is expanded at a time, expanding one collapses the other; all may be collapsed. `personalize` (default `true`): the expansion is remembered per user. `command-display` (default `icon-only`): how the header buttons show icon and label. `css-class` as for every element.
+- **Sections.** `expanded` (default `false`) is the expansion the section starts with; in an exclusive accordion only the first section written as expanded is. A section the current user may not see (`<access-control>`) is left out entirely, and its `<access-control>` scope is the security scope of the content's command rules, as for a tab. A section without `<label>` shows its `id`.
+- **Header commands.** Like a `<panel>`, every section is a `CommandScope` for its content, with or without `<commands>` of its own. Its header shows a live toolbar (`ToolbarBuilder.buildLive` over `TOOLBAR` then `BUTTON_BAR` — a section has no footer, so button-bar commands appear in the header after the toolbar ones) built with the accordion, so the header commands are there whether the section is expanded or not. Commands the content contributes (a form's edit and save commands) join the header once the section is first expanded and its content created. A header without commands renders an empty toolbar, which takes no space (`.tl-accordion__actions:empty`).
+- **Lazy content.** The content of a section is created when the section is first expanded and kept while it is collapsed — what the user entered there survives collapsing, and collapsing asks nothing about unsaved changes. A section's content gets the personalization segment `section` and the slot path segment of the section `id`; it shares the channels of the enclosing view.
+- **Personalization key.** The expansion is stored as a JSON map from section `id` to `true`/`false`, under the element's `personalization-key` if one is written, else under the view context's personalization key plus `.accordion`. A remembered entry overrides the written `expanded`. A change writes only the entry of the changed section back, so two accordions sharing one key keep each other's entries as long as their section ids differ — two personalized accordions in the same view context therefore need **distinct section ids or a `personalization-key` each**, otherwise they share their expansion.
+- **Reveal.** The accordion is a container of the reveal protocol, keyed by section `id`: revealing something inside a collapsed section expands it (and, in an exclusive accordion, collapses the others).
+
 ## Drill-down navigation with `<tile-stack>`
 
 `com.top_logic.layout.view.tiles` provides drill-down navigation. A `<tile-stack path="navPath" initial="products/overview.view.xml"/>` displays the last frame of a path of `TileFrame`s, the `initial` view when the path is empty, and keeps the frames the displayed one covers (see below). The path itself lives on a normal channel of the enclosing view (`List<TileFrame>`), which is the single source of truth: every navigation is a write to that channel.
@@ -1309,7 +1333,7 @@ Sidebar items and tabs create their content lazily, so the mount of a view canno
 
 ### The reveal protocol
 
-Every control that shows one of several children implements `com.top_logic.layout.react.reveal.ChildRevealer` — `revealChild(key)` makes the child addressed by `key` the displayed one, creating it if needed, and throws `ChannelVetoException` when unsaved changes stand in the way: `ReactSidebarControl` (item id), `ReactTabBarControl` (tab id), `ReactAdaptiveDetailControl` (selector/detail), `ReactTileStackControl` (`initial`, or `frame<n>` via `frameKey(n)` = pop to that frame), and a `DialogRevealer` around a `DialogHandle` (closes the dialogs above it). Every keyed container appends a `RevealStep` to the **`RevealPath`** scope when it derives a child's `ViewContext` (`context.withScope(RevealPath.class, path.append(this, key))`), and every view instance and every revealing control announces itself in the window's **`RevealRegistry`** (`ViewContext.getRevealRegistry()`, one per root context and inherited like the slot registry) under that path, unregistering when its control is cleaned up (cached hidden content stays registered while alive). Revealing a mounted view walks its `MountPath` from the root: at each step the registered container at the current prefix reveals the next key — which creates lazily built content, whose own containers and views register on the way — and the view instance found at the full path finally receives the bindings. Vetoes are handled as `<write-channel>` handles them: the dirty-confirm dialog, then the step is retried; cancelling aborts the chain.
+Every control that shows one of several children implements `com.top_logic.layout.react.reveal.ChildRevealer` — `revealChild(key)` makes the child addressed by `key` the displayed one, creating it if needed, and throws `ChannelVetoException` when unsaved changes stand in the way: `ReactSidebarControl` (item id), `ReactTabBarControl` (tab id), `ReactAccordionControl` (section id, expands it), `ReactAdaptiveDetailControl` (selector/detail), `ReactTileStackControl` (`initial`, or `frame<n>` via `frameKey(n)` = pop to that frame), and a `DialogRevealer` around a `DialogHandle` (closes the dialogs above it). Every keyed container appends a `RevealStep` to the **`RevealPath`** scope when it derives a child's `ViewContext` (`context.withScope(RevealPath.class, path.append(this, key))`), and every view instance and every revealing control announces itself in the window's **`RevealRegistry`** (`ViewContext.getRevealRegistry()`, one per root context and inherited like the slot registry) under that path, unregistering when its control is cleaned up (cached hidden content stays registered while alive). Revealing a mounted view walks its `MountPath` from the root: at each step the registered container at the current prefix reveals the next key — which creates lazily built content, whose own containers and views register on the way — and the view instance found at the full path finally receives the bindings. Vetoes are handled as `<write-channel>` handles them: the dirty-confirm dialog, then the step is retried; cancelling aborts the chain.
 
 ### Entry points
 

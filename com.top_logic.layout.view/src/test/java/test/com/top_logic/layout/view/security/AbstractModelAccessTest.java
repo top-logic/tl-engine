@@ -55,7 +55,8 @@ import com.top_logic.util.error.TopLogicException;
  * command group {@value #FINISH}. Writing
  * {@value #SECRET} is denied for every role.</li>
  * <li>{@value #TASK}: the type of the composition {@value #TASKS} of a project. A task inherits the
- * role {@value #ROLE_RESPONSIBLE} from its project, with the same grants.</li>
+ * role {@value #ROLE_RESPONSIBLE} from its project, with the same grants. Its reference
+ * {@value #CREATED_IN} defaults to the context the task is created in.</li>
  * <li>{@value #CATEGORY}: the type of the reference {@value #CATEGORY_REF} of a project. The account
  * in {@value #READER} holds the role {@value #ROLE_READER}, which grants read only.</li>
  * </ul>
@@ -77,6 +78,11 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Name of the type of the objects in the composition {@link #TASKS}. */
 	protected static final String TASK = "Task";
+
+	/**
+	 * Name of the {@link #TASK} reference defaulting to the context the task is created in.
+	 */
+	protected static final String CREATED_IN = "createdIn";
 
 	/** Name of the type of the objects referenced by {@link #CATEGORY_REF}. */
 	protected static final String CATEGORY = "Category";

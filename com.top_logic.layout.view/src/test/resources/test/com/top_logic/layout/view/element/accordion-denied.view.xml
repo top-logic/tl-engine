@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<accordion>
+		<section id="guarded"
+			label="Guarded"
+		>
+			<access-control scope="administration"/>
+			<panel/>
+		</section>
+		<section id="open"
+			label="Open"
+		>
+			<panel/>
+		</section>
+	</accordion>
+</view>

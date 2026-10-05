@@ -19,7 +19,6 @@ import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.command.CliqueRegistry;
 import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ToolbarBuilder;
@@ -104,11 +103,11 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 		// Phase 4: Build clique-grouped toolbars from placed commands. The controls are always
 		// created (even when empty) so implicit commands added later have a target for the
 		// reactive rebuild.
-		CliqueRegistry registry = CommandCliqueService.getInstance().getRegistry();
+		CommandCliqueService cliques = CommandCliqueService.getInstance();
 		ReactToolbarControl toolbar =
-			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, registry, _commandDisplay);
+			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, cliques, _commandDisplay);
 		ReactToolbarControl buttonBar =
-			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.BUTTON_BAR, registry, _commandDisplay);
+			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.BUTTON_BAR, cliques, _commandDisplay);
 
 		// Phase 5: Let subclass create the chrome control.
 		ToolbarControl chrome = createChromeControl(derivedContext, content, toolbar, buttonBar);
@@ -118,9 +117,9 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 		// the existing toolbar controls keep their SSE registration.
 		scope.addListener(() -> {
 			toolbar.replaceGroups(
-				ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, registry, _commandDisplay));
+				ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, cliques, _commandDisplay));
 			buttonBar.replaceGroups(
-				ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.BUTTON_BAR, registry,
+				ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.BUTTON_BAR, cliques,
 					_commandDisplay));
 		});
 

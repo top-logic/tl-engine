@@ -23,7 +23,7 @@ import com.top_logic.layout.react.control.button.ReactUploadButtonControl;
 import com.top_logic.layout.react.control.button.UploadCommandModel;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarOverflow;
-import com.top_logic.layout.view.command.CliqueRegistry.CliqueInfo;
+import com.top_logic.layout.view.command.CommandCliqueService.CliqueInfo;
 import com.top_logic.util.Resources;
 
 /**
@@ -31,7 +31,7 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * Commands are filtered by placement, grouped by clique, and ordered according to the
- * {@link CliqueRegistry}. Each group becomes a toolbar group with the clique's display mode.
+ * {@link CommandCliqueService}. Each group becomes a toolbar group with the clique's display mode.
  * </p>
  */
 public class ToolbarBuilder {
@@ -50,17 +50,17 @@ public class ToolbarBuilder {
 	 *        The command scope containing explicit and implicit commands.
 	 * @param placement
 	 *        The target placement to filter commands for.
-	 * @param registry
+	 * @param cliques
 	 *        The cliques ordering and displaying the command groups, see
-	 *        {@link CommandCliqueService#getRegistry()}.
+	 *        {@link CommandCliqueService#getInstance()}.
 	 * @param defaultDisplay
 	 *        The {@link ButtonDisplayMode} for buttons whose command requests none, or
 	 *        {@code null} for the standard presentation (icon and label side by side).
 	 * @return A toolbar control (never {@code null}).
 	 */
 	public static ReactToolbarControl buildOrEmpty(ReactContext context, CommandScope scope,
-			CommandPlacement placement, CliqueRegistry registry, ButtonDisplayMode defaultDisplay) {
-		ReactToolbarControl result = build(context, scope, placement, registry, defaultDisplay);
+			CommandPlacement placement, CommandCliqueService cliques, ButtonDisplayMode defaultDisplay) {
+		ReactToolbarControl result = build(context, scope, placement, cliques, defaultDisplay);
 		if (result != null) {
 			return result;
 		}
@@ -78,16 +78,16 @@ public class ToolbarBuilder {
 	 *        The command scope containing explicit and implicit commands.
 	 * @param placement
 	 *        The target placement to filter commands for.
-	 * @param registry
+	 * @param cliques
 	 *        The cliques ordering and displaying the command groups, see
-	 *        {@link CommandCliqueService#getRegistry()}.
+	 *        {@link CommandCliqueService#getInstance()}.
 	 * @param defaultDisplay
 	 *        The {@link ButtonDisplayMode} for buttons whose command requests none, or
 	 *        {@code null} for the standard presentation (icon and label side by side).
 	 * @return A toolbar control, or {@code null} if no commands match the placement.
 	 */
 	public static ReactToolbarControl build(ReactContext context, CommandScope scope,
-			CommandPlacement placement, CliqueRegistry registry, ButtonDisplayMode defaultDisplay) {
+			CommandPlacement placement, CommandCliqueService cliques, ButtonDisplayMode defaultDisplay) {
 		// Filter by placement.
 		List<CommandModel> filtered = new ArrayList<>();
 		for (CommandModel model : scope.getAllCommands()) {
@@ -122,7 +122,7 @@ public class ToolbarBuilder {
 		// Sort groups by clique order.
 		List<Map.Entry<String, List<CommandModel>>> sortedGroups = new ArrayList<>(grouped.entrySet());
 		sortedGroups.sort(
-			(a, b) -> Integer.compare(registry.getPosition(a.getKey()), registry.getPosition(b.getKey())));
+			(a, b) -> Integer.compare(cliques.getPosition(a.getKey()), cliques.getPosition(b.getKey())));
 
 		// Build toolbar control.
 		ReactToolbarControl toolbar = new ReactToolbarControl(context);
@@ -131,7 +131,7 @@ public class ToolbarBuilder {
 		for (Map.Entry<String, List<CommandModel>> entry : sortedGroups) {
 			String cliqueName = entry.getKey();
 			List<CommandModel> models = entry.getValue();
-			CliqueInfo info = registry.getClique(cliqueName);
+			CliqueInfo info = cliques.getClique(cliqueName);
 
 			List<ReactControl> controls = new ArrayList<>();
 			for (CommandModel model : models) {

@@ -222,7 +222,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 			List<ViewCommand.Config> commandConfigs) {
 		List<ViewCommandModel> models = ViewCommands.buildCommandModels(context, commands, commandConfigs);
 		ReactToolbarControl toolbar = ToolbarBuilder.build(context, new CommandScope(models),
-			CommandPlacement.TOOLBAR, CommandCliqueService.getInstance().getRegistry(), ButtonDisplayMode.ICON_ONLY);
+			CommandPlacement.TOOLBAR, CommandCliqueService.getInstance(), ButtonDisplayMode.ICON_ONLY);
 		if (toolbar == null) {
 			return;
 		}

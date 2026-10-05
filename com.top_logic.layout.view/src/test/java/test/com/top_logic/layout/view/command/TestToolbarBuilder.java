@@ -14,6 +14,9 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -29,8 +32,8 @@ import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
 import com.top_logic.layout.react.control.layout.ToolbarOverflow;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.layout.view.command.CliqueRegistry;
-import com.top_logic.layout.view.command.CliqueRegistry.CliqueInfo;
+import com.top_logic.layout.view.command.CommandCliqueService;
+import com.top_logic.layout.view.command.CommandCliqueService.CliqueConfig;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ToolbarBuilder;
 
@@ -51,10 +54,10 @@ public class TestToolbarBuilder extends TestCase {
 	private static final String MENU_LABEL = "Menu label";
 
 	/** The cliques the toolbars of this test are built with, in display order. */
-	private static final CliqueRegistry REGISTRY = new CliqueRegistry(List.of(
-		new CliqueInfo(FIRST, ToolbarGroupDisplay.INLINE, null, null),
-		new CliqueInfo(SECOND, ToolbarGroupDisplay.INLINE, null, null),
-		new CliqueInfo(MENU, ToolbarGroupDisplay.MENU, ResKey.text(MENU_LABEL), null)));
+	private static final CommandCliqueService CLIQUES = cliques(
+		clique(FIRST, ToolbarGroupDisplay.INLINE, null),
+		clique(SECOND, ToolbarGroupDisplay.INLINE, null),
+		clique(MENU, ToolbarGroupDisplay.MENU, ResKey.text(MENU_LABEL)));
 
 	private ReactContext _context;
 
@@ -91,7 +94,7 @@ public class TestToolbarBuilder extends TestCase {
 		CommandScope scope = new CommandScope(List.of(command("other", CommandPlacement.CONTEXT_MENU)));
 
 		ReactToolbarControl toolbar = ToolbarBuilder.buildOrEmpty(_context, scope,
-			CommandPlacement.BUTTON_BAR, REGISTRY, null);
+			CommandPlacement.BUTTON_BAR, CLIQUES, null);
 
 		assertTrue(toolbar.isEmpty());
 		assertEquals(ToolbarOverflow.LEADING, toolbar.getOverflow());
@@ -155,7 +158,7 @@ public class TestToolbarBuilder extends TestCase {
 
 	private ReactToolbarControl build(CommandModel... commands) {
 		ReactToolbarControl result = ToolbarBuilder.build(_context, new CommandScope(List.of(commands)),
-			CommandPlacement.TOOLBAR, REGISTRY, null);
+			CommandPlacement.TOOLBAR, CLIQUES, null);
 		assertNotNull("Commands of the requested placement yield a toolbar.", result);
 		return result;
 	}
@@ -180,7 +183,7 @@ public class TestToolbarBuilder extends TestCase {
 		CommandScope scope = new CommandScope(List.of(command("first", placement), command("second", placement)));
 
 		ReactToolbarControl result =
-			ToolbarBuilder.build(_context, scope, placement, REGISTRY, null);
+			ToolbarBuilder.build(_context, scope, placement, CLIQUES, null);
 		assertNotNull("Commands of the requested placement yield a toolbar.", result);
 		return result;
 	}
@@ -206,6 +209,24 @@ public class TestToolbarBuilder extends TestCase {
 				return clique;
 			}
 		};
+	}
+
+	private static CommandCliqueService cliques(CliqueConfig... cliques) {
+		CommandCliqueService.Config config = TypedConfiguration.newConfigItem(CommandCliqueService.Config.class);
+		config.getCliques().addAll(List.of(cliques));
+		return new CommandCliqueService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
+	}
+
+	private static CliqueConfig clique(String name, ToolbarGroupDisplay display, ResKey label) {
+		CliqueConfig result = TypedConfiguration.newConfigItem(CliqueConfig.class);
+		set(result, CliqueConfig.NAME, name);
+		set(result, CliqueConfig.DISPLAY, display);
+		set(result, CliqueConfig.LABEL, label);
+		return result;
+	}
+
+	private static void set(ConfigurationItem item, String property, Object value) {
+		item.update(item.descriptor().getProperty(property), value);
 	}
 
 	/**

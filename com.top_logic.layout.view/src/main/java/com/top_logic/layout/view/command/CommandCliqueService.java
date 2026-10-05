@@ -6,7 +6,9 @@
 package com.top_logic.layout.view.command;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -21,7 +23,6 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
-import com.top_logic.layout.view.command.CliqueRegistry.CliqueInfo;
 
 /**
  * The cliques by which the toolbars of the views group their commands.
@@ -37,7 +38,9 @@ import com.top_logic.layout.view.command.CliqueRegistry.CliqueInfo;
  * A clique that is not configured is displayed inline after the configured ones.
  * </p>
  *
- * @implNote A command declares its clique in {@link ViewCommand.Config#getClique()}.
+ * @implNote A command declares its clique in {@link ViewCommand.Config#getClique()}. The
+ *           {@link ToolbarBuilder} asks this service for the definition of a clique and for the
+ *           position of its group.
  */
 @Label("Toolbar cliques")
 public class CommandCliqueService extends ConfiguredManagedClass<CommandCliqueService.Config> {
@@ -114,7 +117,9 @@ public class CommandCliqueService extends ConfiguredManagedClass<CommandCliqueSe
 
 	}
 
-	private final CliqueRegistry _registry;
+	private final List<CliqueInfo> _orderedCliques;
+
+	private final Map<String, Integer> _positionByName;
 
 	/**
 	 * Creates a {@link CommandCliqueService} from configuration.
@@ -127,14 +132,46 @@ public class CommandCliqueService extends ConfiguredManagedClass<CommandCliqueSe
 		for (CliqueConfig clique : config.getCliques()) {
 			cliques.add(new CliqueInfo(clique.getName(), clique.getDisplay(), clique.getLabel(), clique.getIcon()));
 		}
-		_registry = new CliqueRegistry(cliques);
+		_orderedCliques = List.copyOf(cliques);
+		_positionByName = new HashMap<>();
+		for (int n = 0, cnt = _orderedCliques.size(); n < cnt; n++) {
+			_positionByName.putIfAbsent(_orderedCliques.get(n).name(), n);
+		}
 	}
 
 	/**
-	 * The configured cliques.
+	 * The {@link CliqueInfo} of the given clique.
+	 *
+	 * @param name
+	 *        The clique name, {@code null} for a command that names no clique, which is grouped
+	 *        into {@link CommandCliques#CREATE}.
+	 * @return The configured definition, or an inline clique without label for a clique that is
+	 *         not configured.
 	 */
-	public CliqueRegistry getRegistry() {
-		return _registry;
+	public CliqueInfo getClique(String name) {
+		String cliqueName = cliqueName(name);
+		Integer position = _positionByName.get(cliqueName);
+		if (position != null) {
+			return _orderedCliques.get(position.intValue());
+		}
+		return new CliqueInfo(cliqueName, ToolbarGroupDisplay.INLINE, null, null);
+	}
+
+	/**
+	 * The position of the given clique's toolbar group relative to the others (lower is earlier).
+	 *
+	 * @param name
+	 *        The clique name, see {@link #getClique(String)}.
+	 * @return The index of the clique in {@link Config#getCliques()}, {@link Integer#MAX_VALUE}
+	 *         for a clique that is not configured.
+	 */
+	public int getPosition(String name) {
+		Integer position = _positionByName.get(cliqueName(name));
+		return position == null ? Integer.MAX_VALUE : position.intValue();
+	}
+
+	private static String cliqueName(String name) {
+		return name == null ? CommandCliques.CREATE : name;
 	}
 
 	/**
@@ -142,6 +179,22 @@ public class CommandCliqueService extends ConfiguredManagedClass<CommandCliqueSe
 	 */
 	public static CommandCliqueService getInstance() {
 		return Module.INSTANCE.getImplementationInstance();
+	}
+
+	/**
+	 * Definition of a single clique.
+	 *
+	 * @param name
+	 *        The clique name, as commands refer to it.
+	 * @param display
+	 *        Display mode of the clique group.
+	 * @param label
+	 *        Menu trigger label (only for menu display, may be {@code null}).
+	 * @param icon
+	 *        Menu trigger icon (only for menu display, may be {@code null}).
+	 */
+	public record CliqueInfo(String name, ToolbarGroupDisplay display, ResKey label, ThemeImage icon) {
+		// Record.
 	}
 
 	/**

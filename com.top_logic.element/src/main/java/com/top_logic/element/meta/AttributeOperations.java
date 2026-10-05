@@ -1210,6 +1210,12 @@ public class AttributeOperations {
 	 * attribute's value type (see {@link TLStructuredTypePart#getAnnotation(Class)}).
 	 * </p>
 	 * 
+	 * <p>
+	 * Only an annotation defined at the value type itself applies, not one that the value type
+	 * inherits from a generalization: the options of a generalization are instances of the
+	 * generalization and therefore not necessarily valid values of the attribute.
+	 * </p>
+	 * 
 	 * @return The option provider, or <code>null</code> if neither the attribute nor its value type
 	 *         defines options.
 	 * 
@@ -1222,10 +1228,20 @@ public class AttributeOperations {
 			return local;
 		}
 		TLOptions inherited = attribute.getAnnotation(TLOptions.class);
-		if (inherited == null) {
+		if (inherited == null || isInheritedByValueType(attribute, inherited)) {
 			return null;
 		}
 		return TLOptionsFactory.getGenerator(inherited);
+	}
+
+	/**
+	 * Whether the given annotation of the given attribute is the annotation that the attribute's
+	 * value type inherits from one of its generalizations.
+	 */
+	private static boolean isInheritedByValueType(TLStructuredTypePart attribute, TLOptions annotation) {
+		TLType valueType = attribute.getType();
+		return valueType.getAnnotationLocal(TLOptions.class) == null
+			&& valueType.getAnnotation(TLOptions.class) == annotation;
 	}
 
 	/**

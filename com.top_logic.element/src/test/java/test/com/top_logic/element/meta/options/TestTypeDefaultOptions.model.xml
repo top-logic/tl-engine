@@ -10,6 +10,25 @@
 			</annotations>
 		</class>
 
+		<class name="SubTarget">
+			<generalizations>
+				<generalization type="Target"/>
+			</generalizations>
+		</class>
+
+		<class name="OwnSubTarget">
+			<generalizations>
+				<generalization type="Target"/>
+			</generalizations>
+			<annotations>
+				<options>
+					<generator class="test.com.top_logic.element.meta.options.TestIdGenerator"
+						id="own"
+					/>
+				</options>
+			</annotations>
+		</class>
+
 		<class name="Plain"/>
 
 		<class name="Holder">
@@ -26,6 +45,8 @@
 					</annotations>
 				</reference>
 				<reference name="plain" type="Plain"/>
+				<reference name="subTypeDefault" type="SubTarget"/>
+				<reference name="ownSubTypeDefault" type="OwnSubTarget"/>
 			</attributes>
 		</class>
 

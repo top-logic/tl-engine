@@ -25,7 +25,8 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * Test for the resolution of {@link TLOptions} in
  * {@link AttributeOperations#getOptions(TLStructuredTypePart)}: options of the attribute itself,
- * of an overridden attribute, and of the attribute's value type.
+ * of an overridden attribute, and of the attribute's value type (but not of a generalization of
+ * the value type).
  */
 @SuppressWarnings("javadoc")
 public class TestTypeDefaultOptions extends TestWithModelExtension {
@@ -68,6 +69,16 @@ public class TestTypeDefaultOptions extends TestWithModelExtension {
 		OptionModel<?> options =
 			AttributeOperations.allOptions(SimpleEditContext.createContext(part("Holder", "typeDefault")));
 		assertEquals(List.of("type"), ((ListOptionModel<?>) options).getBaseModel());
+	}
+
+	public void testNoOptionsOfValueTypeGeneralization() {
+		TLStructuredTypePart part = part("Holder", "subTypeDefault");
+		assertNull(AttributeOperations.getOptions(part));
+	}
+
+	public void testOwnOptionsOfValueTypeSpecialization() {
+		Generator generator = AttributeOperations.getOptions(part("Holder", "ownSubTypeDefault"));
+		assertEquals("own", id(generator));
 	}
 
 	public void testOverrideInheritsOptions() {

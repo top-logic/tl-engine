@@ -26,8 +26,9 @@ import com.top_logic.model.config.TLTypeAnnotation;
  * 
  * <p>
  * At an attribute, the annotation defines the options of this attribute. At a type, it defines the
- * default options of all attributes whose value type it is. Options defined at the attribute take
- * precedence over the options of its value type.
+ * default options of all attributes whose value type it is, but not of attributes whose value type
+ * is a specialization of it. Options defined at the attribute take precedence over the options of
+ * its value type.
  * </p>
  * 
  * @see #getGenerator()

@@ -1208,6 +1208,11 @@ button.tlPanel__actionButton:focus-visible {
 	padding-right: var(--tl-space-sm);
 }
 
+/* A section whose scope offers no commands renders an empty toolbar: no space for it. */
+.tl-accordion__actions:empty {
+	display: none;
+}
+
 .tl-accordion__panel {
 	padding: var(--tl-space-md);
 	border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);

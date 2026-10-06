@@ -181,9 +181,11 @@ a TL-Script function computes the access parent (`ScriptAccessParent`, module `t
   holding exactly one object.
 - `null` or an empty collection: no access parent, so nobody but the technical admin may access
   the object. Not logged.
-- Several objects, a value that is no object, or a failure of the function: access is denied and
-  an error is logged. The author of the function must make sure it yields at most one object, also
-  when it navigates a multi-valued reference.
+- Several objects, a value that is no object, an object without access control of its own (a
+  transient object, for instance), or a failure of the function: access is denied and an error is
+  logged. Following an object nobody decides access for would open the object to every user. The
+  author of the function must make sure it yields at most one access controlled object, also when
+  it navigates a multi-valued reference.
 - The function is evaluated without access checks: it can navigate through objects the user may
   not read, and it does not recurse into the check it is part of.
 - A check that depends on no concrete object (the commands of a type) counts a type with a

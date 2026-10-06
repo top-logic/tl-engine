@@ -183,6 +183,14 @@ public class TestScriptAccessParent extends BasicTestCase {
 		assertNull(expectError(() -> function("t -> 42").resolve(_task)));
 	}
 
+	public void testObjectWithoutAccessControlDeniesAndLogs() {
+		// A transient object is an object, but nobody decides access for it: following it would open
+		// the task to every user.
+		String transientProject = "new(type: `" + MODULE + ":Project`, transient: true)";
+		assertNull(expectError(() -> function("t -> " + transientProject).resolve(_task)));
+		assertNull(expectError(() -> function("t -> list(" + transientProject + ")").resolve(_task)));
+	}
+
 	public void testExceptionDeniesAndLogs() {
 		ScriptAccessParent failing = function("t -> throw('broken')");
 		assertNull(expectError(() -> failing.resolve(_task)));

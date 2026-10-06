@@ -3361,6 +3361,13 @@ button.tlDrawer__closeBtn:focus-visible {
 	color: var(--tlText-tone);
 }
 
+/* A text without a value - a channel holding nothing yet - takes no room, so the layout around it
+   does not reserve a gap for it. A text with a role stays: a live region must be on the page before
+   its message arrives. */
+.tlText:empty:not([role]) {
+	display: none;
+}
+
 /* --- What the text is for -------------------------------------------------- */
 
 .tlText--display {

@@ -22,7 +22,8 @@ import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
  * <p>
  * An item is thereby edited by a {@link ConfigListEditorControl} like a list of at most one entry:
  * it is created with the add button, which is not offered while the item exists, and removed by
- * the remove action of its entry - unless the property is mandatory.
+ * the remove action of its entry - unless the property is mandatory, or may not be
+ * <code>null</code>.
  * </p>
  */
 public final class ConfigItemValue implements ConfigCollection {
@@ -88,9 +89,13 @@ public final class ConfigItemValue implements ConfigCollection {
 		return item() != null;
 	}
 
+	/**
+	 * Whether the item may be removed: not for a mandatory property, and not for one that may not be
+	 * <code>null</code>, since removing the item sets the property to <code>null</code>.
+	 */
 	@Override
 	public boolean isRemovable() {
-		return !_property.isMandatory();
+		return !_property.isMandatory() && _property.isNullable();
 	}
 
 	@Override

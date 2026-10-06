@@ -36,8 +36,10 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.func.Function2;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -125,6 +127,18 @@ public class TestConfigEditorControl extends TestCase {
 		InnerConfig getInner();
 
 		void setInner(InnerConfig value);
+	}
+
+	/** Test configuration interface with an ITEM property that may not be <code>null</code>. */
+	public interface NonNullableItemConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getInner()}. */
+		String INNER = "inner";
+
+		@Name(INNER)
+		@NonNullable
+		@ItemDefault
+		InnerConfig getInner();
 	}
 
 	/**
@@ -2155,6 +2169,21 @@ public class TestConfigEditorControl extends TestCase {
 		config.setInner(TypedConfiguration.newConfigItem(InnerConfig.class));
 		ConfigItemValue value =
 			new ConfigItemValue(config, config.descriptor().getProperty(MandatoryItemConfig.INNER));
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), value, PolymorphicOptions.Choices.NONE, null, true);
+
+		assertEquals(1, elementGroups(editor).size());
+		assertNull(findHeaderButton(elementGroups(editor).get(0), "\u2715"));
+	}
+
+	/**
+	 * The value of an ITEM property that may not be <code>null</code> can be edited, but not
+	 * removed: removing it would set the property to <code>null</code>.
+	 */
+	public void testNonNullableItemCannotBeRemoved() {
+		NonNullableItemConfig config = TypedConfiguration.newConfigItem(NonNullableItemConfig.class);
+		ConfigItemValue value =
+			new ConfigItemValue(config, config.descriptor().getProperty(NonNullableItemConfig.INNER));
 		TestableConfigListEditorControl editor =
 			new TestableConfigListEditorControl(createTestContext(), value, PolymorphicOptions.Choices.NONE, null, true);
 

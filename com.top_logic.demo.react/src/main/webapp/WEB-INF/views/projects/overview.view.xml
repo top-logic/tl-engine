@@ -63,6 +63,7 @@
 			<columns>
 				<column attribute="name"/>
 				<column attribute="description"/>
+				<column attribute="budget"/>
 			</columns>
 			<rows>all(`tl.demo.projectManagement:ProjectScope`)</rows>
 			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"

@@ -135,6 +135,7 @@
 						>
 							<field attribute="name"/>
 							<field attribute="dueDate"/>
+							<field attribute="approved"/>
 						</form>
 					</detail>
 				</adaptive-detail>

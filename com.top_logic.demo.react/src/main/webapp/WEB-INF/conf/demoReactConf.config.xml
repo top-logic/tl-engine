@@ -117,7 +117,12 @@
 						
 						A project administrator - an account listed in the administrators of a project -
 						reads, writes, creates and deletes everything in that project, deletes the
-						project, and decides who its members and administrators are.
+						project, and decides who its members and administrators are. The budget of a
+						project is a matter of its administrators alone: a project member neither reads
+						nor writes it. Approving a milestone is theirs as well: a project member reads
+						whether a milestone is approved, but neither approves a milestone nor withdraws
+						the approval, also not when creating it. A milestone being created is decided
+						like an existing one, against the project it is created in.
 						
 						A project whose members and administrators do not list the account is not
 						visible to it at all. Creating a project is decided against the security root,
@@ -130,9 +135,15 @@
 						of P2, the project list shows P1 only; "New Project" is not offered at all;
 						"Delete" of P1 is offered but disabled with the reason; "New Milestone", "New
 						Note" and the deletion of a milestone work in P1; a save that changes the
-						members or the administrators of P1 is refused. An administrator of P1
-						deletes P1 and changes its members. The ticket demo shows its tickets, but
-						neither creates nor deletes one.
+						members or the administrators of P1 is refused. In the cockpit of P1, the
+						budget field is missing, and editing the project offers the name and the
+						description but shows the members and the administrators read-only; the budget
+						column of the project list stays empty for P1. An administrator of P1 deletes
+						P1, changes its members, and reads and edits its budget. "Approved" of a
+						milestone of P1 is disabled for a member and editable for an administrator, both
+						in the "New Milestone" dialog and when editing the milestone; a member creates a
+						milestone that is not approved. The ticket demo shows its tickets, but neither
+						creates nor deletes nor edits one.
 					-->
 					<module name="tl.demo.projectManagement">
 						<grant
@@ -175,10 +186,26 @@
 							roles="demo.react.ProjectAdmin"
 						/>
 					</part>
+					<part name="tl.demo.projectManagement:ProjectScope#budget">
+						<grant
+							operation="Read"
+							roles="demo.react.ProjectAdmin"
+						/>
+						<grant
+							operation="Write"
+							roles="demo.react.ProjectAdmin"
+						/>
+					</part>
 					<class name="tl.demo.projectManagement:Milestone"
 						access-parent="container"
 						access-reference="tl.demo.projectManagement:ProjectScope#milestones"
 					/>
+					<part name="tl.demo.projectManagement:Milestone#approved">
+						<grant
+							operation="Write"
+							roles="demo.react.ProjectAdmin"
+						/>
+					</part>
 					<class name="tl.demo.projectManagement:Note"
 						access-parent="container"
 						access-reference="tl.demo.projectManagement:ProjectScope#notes"

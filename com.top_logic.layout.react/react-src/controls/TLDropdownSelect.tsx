@@ -366,6 +366,20 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     [sendCommand]
   );
 
+  // A click anywhere on the field toggles the list. Clicks inside the list bubble up here as well,
+  // since React propagates events through the portal; only clicks on the field itself count.
+  const handleFieldClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) return;
+      if (isOpen) {
+        closeDropdown();
+      } else {
+        openDropdown();
+      }
+    },
+    [isOpen, openDropdown, closeDropdown]
+  );
+
   const clearAll = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -673,7 +687,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
         }
         aria-disabled={disabled || undefined}
         tabIndex={disabled ? -1 : 0}
-        onClick={!isOpen ? openDropdown : undefined}
+        onClick={handleFieldClick}
         onKeyDown={handleKeyDown}
       >
         <span className="tl-select__values">
@@ -728,9 +742,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
               <ThemeIcon encoded="css:fa-solid fa-xmark" className="tl-button__icon tl-icon-sm" />
             </button>
           )}
-          {/* While the list is open, the field ignores clicks; the arrow then closes it. */}
-          <span className="tl-select__arrow" aria-hidden="true"
-            onClick={isOpen ? (e) => { e.stopPropagation(); closeDropdown(); } : undefined}>
+          <span className="tl-select__arrow" aria-hidden="true">
             <ThemeIcon
               encoded={isOpen ? 'css:fa-solid fa-chevron-up' : 'css:fa-solid fa-chevron-down'}
               className="tl-icon-sm"

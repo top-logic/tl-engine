@@ -68,6 +68,11 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public Object exportValue(R row) {
+		return _inner.exportValue(row);
+	}
+
+	@Override
 	public CellRenderer<V> renderer() {
 		return _inner.renderer();
 	}

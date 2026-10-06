@@ -47,7 +47,7 @@ import com.top_logic.util.Resources;
  * The export holds what the user sees: the {@link TableView#columns() displayed columns} in their
  * display order - without the ones that are no {@link Column#exportable() data} - and the
  * {@link TableView#rows(int, int) displayed rows} in their order, that is filtered, searched and
- * sorted as the table is. A cell is written from the typed {@link Column#value(Object) value} of
+ * sorted as the table is. A cell is written from the typed {@link Column#exportValue(Object) value} of
  * its column, rendered by the {@link ExcelCellRenderer} configured for the column, so that a number
  * stays a number and a date a date in the sheet.
  * </p>
@@ -395,7 +395,7 @@ public class TableViewExcelExport {
 		int excelColumn = 0;
 		for (ExportColumn<R> column : columns) {
 			ExcelCellRenderer renderer = column.renderer();
-			Object value = column.column().value(data);
+			Object value = column.column().exportValue(data);
 			ViewRenderContext context =
 				new ViewRenderContext(value, modelRow, excelRow, excelColumn, renderer.newCustomContext(null, null));
 			writer.write(renderer.renderCell(context));

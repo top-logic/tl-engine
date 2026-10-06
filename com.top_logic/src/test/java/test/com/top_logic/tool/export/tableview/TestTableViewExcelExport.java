@@ -167,6 +167,46 @@ public class TestTableViewExcelExport extends BasicTestCase {
 	}
 
 	/**
+	 * Writes the {@link Column#exportValue(Object) export value} of a column whose cell value is a
+	 * carrier of the displayed value - as a column built for a filter that needs the row as well.
+	 */
+	public void testExportValue() throws IOException {
+		record Carrier(int effort, Ticket row) {
+			// The cell value of the column.
+		}
+		List<Column<Ticket, ?>> columns = new ArrayList<>();
+		columns.add(new DelegatingColumn<>(DefaultColumn.<Ticket, Carrier> builder("effort",
+			t -> new Carrier(t.effort(), t)).label(ResKey.text("Effort")).build()) {
+			@Override
+			public Object exportValue(Ticket row) {
+				return value(row).effort();
+			}
+		});
+		DefaultTableView<Ticket> view = DefaultTableView.create(columns, new ListRowSource<>(tickets(), columns));
+
+		Sheet sheet = sheet(export(), view);
+
+		assertEquals(5.0, sheet.getRow(1).getCell(0).getNumericCellValue());
+	}
+
+	/**
+	 * Writes the elements of a collection value as a single value of their kind is written.
+	 */
+	public void testCollectionOfBooleans() throws IOException {
+		List<Column<Ticket, ?>> columns = new ArrayList<>();
+		columns.add(DefaultColumn.<Ticket, List<Boolean>> builder("flags", t -> List.of(true, false))
+			.label(ResKey.text("Flags"))
+			.build());
+		DefaultTableView<Ticket> view = DefaultTableView.create(columns, new ListRowSource<>(tickets(), columns));
+
+		Sheet sheet = sheet(export(), view);
+
+		String text = sheet.getRow(1).getCell(0).getStringCellValue();
+		assertFalse("Booleans of a collection must be labelled: " + text, text.startsWith(";"));
+		assertEquals(2, text.split("; ").length);
+	}
+
+	/**
 	 * Renders the cells of a column by the {@link ExcelCellRenderer} configured for it.
 	 */
 	public void testConfiguredRenderer() throws IOException {

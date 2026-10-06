@@ -987,6 +987,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 
 		@Override
+		public Object exportValue(TLObject row) {
+			return _inner.exportValue(row);
+		}
+
+		@Override
 		public boolean frozenEligible() {
 			return _inner.frozenEligible();
 		}

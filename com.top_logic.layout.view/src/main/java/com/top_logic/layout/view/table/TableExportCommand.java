@@ -144,7 +144,7 @@ public class TableExportCommand implements ViewCommand {
 		ResKey getLabel();
 
 		@Override
-		@FormattedDefault("css:fas fa-file-excel")
+		@FormattedDefault("css:bi bi-file-earmark-excel")
 		ThemeImage getImage();
 
 		@Override
@@ -255,7 +255,7 @@ public class TableExportCommand implements ViewCommand {
 		class DefaultLabel extends DefaultValueProviderShared {
 			@Override
 			public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {
-				return com.top_logic.layout.table.renderer.I18NConstants.EXPORT_EXCEL;
+				return com.top_logic.layout.view.I18NConstants.TABLE_EXPORT_EXCEL;
 			}
 		}
 	}

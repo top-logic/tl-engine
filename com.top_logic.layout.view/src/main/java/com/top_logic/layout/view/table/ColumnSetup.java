@@ -121,6 +121,15 @@ public record ColumnSetup(
 		if (!export.exported()) {
 			result = DelegatingColumn.notExportable(result);
 		}
+		// An export writes the value the column declares, whatever its binding builds the cells from
+		// - a scripted filter, for instance, pairs every value with its row.
+		Function<Object, Object> exported = value;
+		result = new DelegatingColumn<>(result) {
+			@Override
+			public Object exportValue(Object row) {
+				return exported.apply(row);
+			}
+		};
 		return result;
 	}
 

@@ -61,6 +61,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COMPOSITION_TABLE_ADD;
 
 	/**
+	 * @en Export to Excel
+	 * @tooltip Saves the displayed rows and columns of the table as Excel file.
+	 */
+	public static ResKey TABLE_EXPORT_EXCEL;
+
+	/**
 	 * @en {0} / {1}
 	 */
 	public static ResKey2 EMBEDDED_COLUMN_LABEL__PREFIX_COLUMN;

@@ -43,6 +43,19 @@ public interface Column<R, V> {
 	V value(R row);
 
 	/**
+	 * The value an export of the table writes for the given row, e.g. into an Excel cell.
+	 *
+	 * <p>
+	 * The default is the {@link #value(Object) cell value}. A column whose cell value is no value
+	 * of its own - a pair of the value and its row, built for a filter that needs both - answers the
+	 * value it displays.
+	 * </p>
+	 */
+	default Object exportValue(R row) {
+		return value(row);
+	}
+
+	/**
 	 * Describes how to render a cell value into UI-neutral {@link CellContent}.
 	 */
 	CellRenderer<V> renderer();

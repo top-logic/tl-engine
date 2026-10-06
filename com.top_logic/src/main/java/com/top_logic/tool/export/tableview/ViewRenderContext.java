@@ -6,7 +6,8 @@
 package com.top_logic.tool.export.tableview;
 
 import com.top_logic.layout.ResourceProvider;
-import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.layout.provider.LabelResourceProvider;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.model.Column;
 import com.top_logic.tool.export.ExcelCellRenderer;
@@ -78,7 +79,8 @@ final class ViewRenderContext implements RenderContext {
 
 	@Override
 	public ResourceProvider resourceProvider() {
-		return MetaResourceProvider.INSTANCE;
+		// Labels the elements of a collection value as a single value is labelled.
+		return LabelResourceProvider.toResourceProvider(MetaLabelProvider.INSTANCE);
 	}
 
 }

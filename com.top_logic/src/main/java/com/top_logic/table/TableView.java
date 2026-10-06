@@ -101,6 +101,17 @@ public interface TableView<R> {
 	CellContent cell(Row<R> row, String column);
 
 	/**
+	 * The definition of the named column, or {@code null} if this table has no such column.
+	 *
+	 * <p>
+	 * A consumer that needs more of a column than its {@link #cell(Row, String) rendered content} -
+	 * the typed {@link Column#value(Object) value} an export writes, say - asks for the definition
+	 * here.
+	 * </p>
+	 */
+	Column<R, ?> column(String column);
+
+	/**
 	 * The filter of the named column, or {@code null} if the column is not filterable. Used
 	 * by a UI tier (together with {@link #columnMatchCounts} and the current
 	 * {@link #state()}) to build a filter editor.

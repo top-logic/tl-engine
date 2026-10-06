@@ -113,6 +113,11 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public boolean exportable() {
+		return _inner.exportable();
+	}
+
+	@Override
 	public boolean pinnedEnd() {
 		return _inner.pinnedEnd();
 	}
@@ -147,6 +152,23 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 			@Override
 			public int defaultWidth() {
 				return width;
+			}
+		};
+	}
+
+	/**
+	 * The given column, left out of every export of the table.
+	 *
+	 * @param column
+	 *        The column to keep out of exports.
+	 * @return A column identical to the given one, except that it is not
+	 *         {@link Column#exportable() exportable}.
+	 */
+	public static <R, V> Column<R, V> notExportable(Column<R, V> column) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public boolean exportable() {
+				return false;
 			}
 		};
 	}

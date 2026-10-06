@@ -77,6 +77,8 @@ public class ExcelWriter extends AbstractCellStreamWriter implements POITypeSupp
 
 	private POIDrawingManager _drawingMgr;
 
+	private boolean _autoFit = true;
+
 	/**
 	 * Creates a new {@link ExcelWriter}.
 	 * 
@@ -102,9 +104,23 @@ public class ExcelWriter extends AbstractCellStreamWriter implements POITypeSupp
 		sheet.createFreezePane(col, row);
 	}
 
+	/**
+	 * Whether the column widths are fitted to the written values when the writer is
+	 * {@link #close() closed}.
+	 *
+	 * <p>
+	 * By default they are. A caller setting the widths itself switches this off.
+	 * </p>
+	 */
+	public void setAutoFit(boolean autoFit) {
+		_autoFit = autoFit;
+	}
+
 	@Override
 	protected File internalClose() throws IOException {
-		POIUtil.setAutoFitWidths(_workbook, _sheetMap);
+		if (_autoFit) {
+			POIUtil.setAutoFitWidths(_workbook, _sheetMap);
+		}
 
 		String fileSuffix = POIUtil.getFileSuffix(_workbook);
 		File   theResult  = File.createTempFile("ExcelWriter", fileSuffix, Settings.getInstance().getTempDir());

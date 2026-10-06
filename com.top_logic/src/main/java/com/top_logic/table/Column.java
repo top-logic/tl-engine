@@ -142,6 +142,21 @@ public interface Column<R, V> {
 	}
 
 	/**
+	 * Whether this column is part of an export of the table, e.g. to Excel.
+	 *
+	 * <p>
+	 * An export holds the data the table shows, so a column that is part of what the table
+	 * <em>does</em> - a per-row button, an action opening a row - is left out, whatever place it
+	 * has in the display. The default follows {@link #selectable()}, which draws exactly that line
+	 * for the column selection. A data column the application does not want to hand out of the
+	 * application switches this off.
+	 * </p>
+	 */
+	default boolean exportable() {
+		return selectable();
+	}
+
+	/**
 	 * Whether this column keeps its place at the end of the table.
 	 *
 	 * <p>

@@ -6,6 +6,7 @@
 package com.top_logic.tool.export;
 
 import com.top_logic.base.office.excel.ExcelValue;
+import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.model.Column;
@@ -30,13 +31,35 @@ public interface ExcelCellRenderer {
 
 		/**
 		 * The table being exported.
+		 *
+		 * <p>
+		 * {@code null} when the export does not run over a {@link TableModel}, e.g. the export of a
+		 * {@link com.top_logic.table.TableView}. A renderer that only needs the
+		 * {@link #getCellValue() cell value} works for both kinds of tables.
+		 * </p>
 		 */
 		TableModel model();
 
 		/**
 		 * The {@link Column} of the cell to export.
+		 *
+		 * <p>
+		 * {@code null} when the export does not run over a {@link TableModel}, see {@link #model()}.
+		 * </p>
 		 */
 		Column modelColumn();
+
+		/**
+		 * The labels for the objects the cell value consists of, e.g. the elements of a collection
+		 * value that is exported as one text.
+		 *
+		 * <p>
+		 * The default takes the resource provider of the {@link #modelColumn() exported column}.
+		 * </p>
+		 */
+		default ResourceProvider resourceProvider() {
+			return modelColumn().getConfig().getResourceProvider();
+		}
 
 		/**
 		 * The column in the resulting Excel sheet to write to.

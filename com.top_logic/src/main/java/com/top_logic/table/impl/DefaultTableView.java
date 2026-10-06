@@ -539,6 +539,11 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	@Override
+	public Column<R, ?> column(String column) {
+		return _columns.get(column);
+	}
+
+	@Override
 	public ColumnFilter<?> columnFilter(String column) {
 		Column<R, ?> definition = _columns.get(column);
 		return definition == null ? null : definition.filter().orElse(null);

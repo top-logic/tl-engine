@@ -1329,13 +1329,37 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * A selected key whose object is gone from the data is dropped from the selection. A selected
 	 * row the table merely does not display - hidden by a filter, or inside a collapsed group or
 	 * tree node - is still part of the data and stays selected (see
-	 * {@link TableView#containedKeys(Collection)}).
+	 * {@link TableView#containedKeys(Collection)}). A selected group header stays selected as long
+	 * as its group is still displayed.
 	 * </p>
 	 */
 	public void refreshData() {
+		Set<Object> groups = shownGroups(_selectedKeys);
 		_selectedKeys.retainAll(_view.containedKeys(_selectedKeys));
+		_selectedKeys.addAll(groups);
 		commitSelection();
 		rebuildAfterRowChange();
+	}
+
+	/**
+	 * The {@link GroupKey}s among the given keys whose group header the table displays.
+	 *
+	 * <p>
+	 * The data of the table knows the keys of its rows only, not those of the groups formed over
+	 * them, so a group is looked up among the rows displayed.
+	 * </p>
+	 */
+	private Set<Object> shownGroups(Collection<Object> keys) {
+		if (keys.stream().noneMatch(GroupKey.class::isInstance)) {
+			return Set.of();
+		}
+		Set<Object> result = new LinkedHashSet<>();
+		for (Row<R> row : _view.rows(0, _view.rowCount())) {
+			if (row.kind() == RowKind.GROUP_HEADER && keys.contains(row.key())) {
+				result.add(row.key());
+			}
+		}
+		return result;
 	}
 
 	private void rebuildAfterRowChange() {

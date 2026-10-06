@@ -275,14 +275,11 @@ function editableInRow(
 const ColumnsButton: React.FC<{
   label: string;
   inCell?: boolean;
-  /** Whether columns run on underneath the button, scrolled out of view behind it. */
-  covering?: boolean;
   onClick: (event: React.MouseEvent) => void;
-}> = ({ label, inCell, covering, onClick }) => (
+}> = ({ label, inCell, onClick }) => (
   <button
     type="button"
-    className={'tlTableView__columnsButton' + (inCell ? ' tlTableView__columnsButton--inCell' : '')
-      + (covering ? ' tlTableView__columnsButton--covering' : '')}
+    className={'tlTableView__columnsButton' + (inCell ? ' tlTableView__columnsButton--inCell' : '')}
     {...tooltipProps(label)}
     aria-label={label}
     // In a heading, the gestures of the heading itself (sorting, dragging) are none of the
@@ -1250,8 +1247,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const buttonReserve = columnSelect && !cogInHeaderCell ? 32 : 0;
 
   // Whether columns run on underneath the column button: the table is wider than its header and
-  // not scrolled to its right end. The button then marks its edge, so the column cut off there
-  // reads as scrolled out of view rather than as a heading the button covers by mistake.
+  // not scrolled to its right end. The header then fades out in front of the button, so the column
+  // cut off there reads as scrolled out of view rather than as a heading the button covers by
+  // mistake.
   const [columnsCovered, setColumnsCovered] = React.useState(false);
   const measureCovered = React.useCallback(() => {
     const header = headerRef.current;
@@ -1264,16 +1262,21 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     setColumnsCovered((previous) => (previous === covered ? previous : covered));
   }, [tableWidth, buttonReserve]);
   measureCoveredRef.current = measureCovered;
+  // Measured again whenever what it depends on changes - a column resize changes the table width
+  // with every pointer move - while the observer of the header's size stays one for the table's
+  // lifetime, reaching the current measurement through the ref.
   React.useLayoutEffect(() => {
     measureCovered();
+  }, [measureCovered]);
+  React.useLayoutEffect(() => {
     const header = headerRef.current;
     if (!header) {
       return;
     }
-    const observer = new ResizeObserver(measureCovered);
+    const observer = new ResizeObserver(() => measureCoveredRef.current());
     observer.observe(header);
     return () => observer.disconnect();
-  }, [measureCovered]);
+  }, []);
 
   const allSelected = selectAllState === 'all';
   const someSelected = selectAllState === 'some';
@@ -1411,7 +1414,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
       {/* Header, plus the column selection sitting above the body's vertical scrollbar */}
       <div className="tlTableView__headerArea" ref={headerAreaRef}>
-      <div className="tlTableView__header" ref={headerRef}>
+      <div className={'tlTableView__header' + (columnsCovered ? ' tlTableView__header--covered' : '')}
+        ref={headerRef}>
         {/* Fills the header even when the columns are narrower: a cell sticking to the right edge
             cannot leave its row, so a row ending with the last column would hold the pinned cells
             back from that edge. The reserve is padding, which a sticky cell never enters. */}
@@ -1577,8 +1581,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           onPointerDown={handleFrozenSplitStart}
         />
         {columnSelect && !cogInHeaderCell && (
-          <ColumnsButton label={i18n['js.table.columns']} covering={columnsCovered}
-            onClick={handleOpenColumnSelect} />
+          <ColumnsButton label={i18n['js.table.columns']} onClick={handleOpenColumnSelect} />
         )}
       </div>
 

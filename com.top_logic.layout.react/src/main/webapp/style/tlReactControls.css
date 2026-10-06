@@ -2840,10 +2840,6 @@ button.tlDrawer__closeBtn:focus-visible {
 	position: relative;
 	width: 100%;
 	height: 100%;
-	/* The surface the opaque parts of the table paint over the rows - frozen and pinned cells, the
-	   column button, the filter bar, the row count - so that they are of one color with it wherever
-	   the table is placed, not only on a surface of this color. */
-	background: var(--layer-01);
 	font-family: var(--font-family);
 	overflow: hidden;
 }
@@ -3006,36 +3002,52 @@ button.tlDrawer__closeBtn:focus-visible {
    scrollbar wherever no pinned column offers it a heading of its own. The button must not take
    width from the header: a header narrower than the body keeps its last 2rem permanently out of
    view, so the last column's heading stays cut off however far the user scrolls. Overlaying instead
-   keeps every heading complete; only while the table is scrolled fully right does the button cover
-   the tail of the last column - which is why it is opaque. */
+   keeps every heading complete: scrolled fully right, the last column ends in front of the button,
+   whose strip the rows keep clear as padding. */
 .tlTableView__headerArea {
 	position: relative;
 	display: flex;
 	flex-shrink: 0;
 	align-items: stretch;
+	/* The line below the headings belongs to the area, not to the header: the header fades out in
+	   front of the column button (see below), the line runs through. */
+	border-bottom: 2px solid var(--border-subtle);
 }
 
 .tlTableView__header {
 	flex: 1 1 auto;
 	min-width: 0;
 	overflow: hidden;
-	border-bottom: 2px solid var(--border-subtle);
+}
+
+/* While columns run on underneath the column button, the headings fade out in front of it: the
+   heading cut off there - its funnel in particular - reads as scrolled out of view, not as a fragment
+   the button covers by mistake. Transparent beneath the button and a little in front of it, so a
+   funnel cut off at the button's edge is gone rather than faded, then fading in. A mask rather than
+   a color laid over the headings, so whatever surface the table is placed on shows through, the
+   button's hover included. */
+.tlTableView__header--covered {
+	-webkit-mask-image: linear-gradient(to left,
+		transparent calc(2rem + var(--spacing-02)), #000 calc(2rem + var(--spacing-02) + var(--spacing-03)));
+	mask-image: linear-gradient(to left,
+		transparent calc(2rem + var(--spacing-02)), #000 calc(2rem + var(--spacing-02) + var(--spacing-03)));
 }
 
 .tlTableView__columnsButton {
 	position: absolute;
 	top: 0;
 	right: 0;
-	/* Leaves the header's bottom border uncovered, so the line runs through below the button. */
-	bottom: 2px;
+	/* Ends on the line below the headings, which the area draws. */
+	bottom: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	width: 2rem;
 	padding: 0;
 	border: none;
-	/* Opaque: while the table is scrolled, a column label may pass underneath. */
-	background: var(--layer-01);
+	/* Transparent: a column passing underneath is masked out of the header, see
+	   .tlTableView__header--covered. */
+	background: transparent;
 	color: var(--text-secondary);
 	font-size: var(--body-compact-01-font-size);
 	cursor: pointer;
@@ -3045,22 +3057,6 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlTableView__columnsButton:hover {
 	background: var(--layer-hover);
 	color: var(--text-primary);
-}
-
-/* While columns run on underneath the button, the headings fade out in front of it: the heading
-   cut off there - its funnel in particular - reads as scrolled out of view, not as a fragment the
-   button covers by mistake. The fade takes the button's own background, so it follows the theme
-   and the hover state does not show through. */
-.tlTableView__columnsButton--covering::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	right: 100%;
-	width: var(--spacing-05);
-	/* Opaque over its right half: a funnel cut off by the button's edge is gone, not a fragment. */
-	background: linear-gradient(to right, transparent, var(--layer-01) 50%);
-	pointer-events: none;
 }
 
 /* In the heading of the rightmost pinned column the button is part of that cell: it takes the
@@ -3908,7 +3904,8 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlTableView__frozenSplitter {
 	position: absolute;
 	top: 0;
-	bottom: 2px;
+	/* Ends on the line below the headings, which the area draws. */
+	bottom: 0;
 	z-index: 3;
 	width: 7px;
 	cursor: col-resize;
@@ -4010,10 +4007,11 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 
 /* The row count below the rows: how many the table has, how many of them its filter lets pass, and
-   how many are selected. Outside the scroller like the filter bar, and set in its quiet colors, so
+   how many are selected. Outside the scroller like the filter bar, and set in quiet colors, so
    it reads as a remark about the table rather than as one more row. Its text starts where the text
    of the cells starts. The digits keep their width, so the text does not jitter while a filter is
-   typed. */
+   typed. Without a background of its own, so it is of one color with whatever the table is placed
+   on. */
 .tlTableView__footer {
 	display: flex;
 	flex-shrink: 0;
@@ -4021,7 +4019,6 @@ button.tlDrawer__closeBtn:focus-visible {
 	gap: var(--spacing-02);
 	min-height: 2rem;
 	padding: var(--spacing-02) var(--spacing-03);
-	background: var(--layer-01);
 	border-top: 1px solid var(--border-subtle);
 	box-sizing: border-box;
 	font-size: var(--label-01-font-size);

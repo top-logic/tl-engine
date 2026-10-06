@@ -8,6 +8,7 @@ package com.top_logic.service.openapi.common.schema;
 import static com.top_logic.service.openapi.common.schema.OpenAPISchemaConstants.*;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -53,7 +54,9 @@ public class OpenAPISchemaUtils {
 		if (!referencedSchema.isEmpty()) {
 			Schema parsedReferencedSchema = referencedSchemas.apply(referencedSchema);
 			if (parsedReferencedSchema == null) {
-				return TypedConfiguration.newConfigItem(ObjectSchema.class);
+				Schema unresolved = TypedConfiguration.newConfigItem(ObjectSchema.class);
+				addExtensions(unresolved, schemaAsMap);
+				return unresolved;
 			} else {
 				/* Ensure that the schema still knows that it is a referenced schema. */
 				parsedReferencedSchema.setAsString(JsonUtilities.writeJSONContent(out -> {
@@ -62,6 +65,7 @@ public class OpenAPISchemaUtils {
 					out.value(referencedSchema);
 					out.endObject();
 				}));
+				addExtensions(parsedReferencedSchema, schemaAsMap);
 			}
 			return parsedReferencedSchema;
 		}
@@ -184,8 +188,54 @@ public class OpenAPISchemaUtils {
 			if (exampleValue != null) {
 				schema.setDefault(JSON.toString(exampleValue));
 			}
+			addExtensions(schema, schemaAsMap);
 		}
 		return schema;
+	}
+
+	/**
+	 * Transfers the specification extensions given in the JSON representation of a schema to the
+	 * given {@link Schema}.
+	 * 
+	 * @see Schema#getExtensions()
+	 */
+	private static void addExtensions(Schema schema, Map<?, ?> schemaAsMap) {
+		Map<String, String> extensions = new LinkedHashMap<>(schema.getExtensions());
+		for (Entry<?, ?> entry : schemaAsMap.entrySet()) {
+			Object key = entry.getKey();
+			if (key instanceof String && ((String) key).startsWith(SCHEMA_EXTENSION_PREFIX)) {
+				extensions.put((String) key, JSON.toString(entry.getValue()));
+			}
+		}
+		if (!extensions.isEmpty()) {
+			schema.setExtensions(extensions);
+		}
+	}
+
+	/**
+	 * The value of a specification extension of the given {@link Schema} that has a string value.
+	 * 
+	 * @param schema
+	 *        The {@link Schema} to read the extension from.
+	 * @param extension
+	 *        The name of the extension property, starting with
+	 *        {@link OpenAPISchemaConstants#SCHEMA_EXTENSION_PREFIX}.
+	 * @return The string value of the extension, or <code>null</code>, if the extension is not
+	 *         given or its value is no string.
+	 * 
+	 * @see Schema#getExtensions()
+	 */
+	public static String stringExtension(Schema schema, String extension) {
+		String json = schema.getExtensions().get(extension);
+		if (json == null) {
+			return null;
+		}
+		try {
+			Object value = JSON.fromString(json);
+			return value instanceof String ? (String) value : null;
+		} catch (ParseException ex) {
+			return null;
+		}
 	}
 
 	private static Map<?, ?> schemaAsMap(Object schema) throws ParseException {

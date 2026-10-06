@@ -25,6 +25,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey3 CLASHING_PATH_PARAMETERS__PATH1__PATH2__UNIFIED_COMPLETE_PATH;
 
+	/**
+	 * @en Multiple parameters of the operation {1}:{0} are bound to the same script variable: {2}
+	 */
+	public static ResKey3 DUPLICATE_PARAMETER_VARIABLES__PATH__METHOD__NAMES;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

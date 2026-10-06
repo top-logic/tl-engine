@@ -8,6 +8,7 @@ package com.top_logic.service.openapi.common.document;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Final;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -36,6 +37,7 @@ import com.top_logic.basic.config.order.DisplayOrder;
 	ParameterObject.REQUIRED,
 	ParameterObject.SCHEMA,
 	ParameterObject.EXAMPLE,
+	ParameterObject.X_TL_VARIABLE_NAME,
 })
 public interface ParameterObject extends NamedConfigMandatory, Described, IParameterObject {
 
@@ -53,6 +55,9 @@ public interface ParameterObject extends NamedConfigMandatory, Described, IParam
 
 	/** Configuration name for the value of {@link #getExample()}. */
 	String EXAMPLE = "example";
+
+	/** Configuration name for the value of {@link #getVariableName()}. */
+	String X_TL_VARIABLE_NAME = "x-tl-variable-name";
 
 	/**
 	 * The location of the parameter.
@@ -118,6 +123,26 @@ public interface ParameterObject extends NamedConfigMandatory, Described, IParam
 	 * Setter for {@link #getExample()}.
 	 */
 	void setExample(String value);
+
+	/**
+	 * Name of the TL-Script variable that holds the value of this parameter in the implementation
+	 * of the operation.
+	 * 
+	 * <p>
+	 * Only given, if the variable name differs from the parameter name, e.g. because the parameter
+	 * name is not a valid TL-Script variable name. The same extension can be used in the schema of
+	 * a property of a multipart request body to define the variable name of that body part.
+	 * </p>
+	 */
+	@Nullable
+	@Name(X_TL_VARIABLE_NAME)
+	@Label("Variable name")
+	String getVariableName();
+
+	/**
+	 * Setter for {@link #getVariableName()}.
+	 */
+	void setVariableName(String value);
 
 	/**
 	 * Dependency that ensures that a parameter is required, when it is located in

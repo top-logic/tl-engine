@@ -5,7 +5,10 @@
  */
 package com.top_logic.table;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -70,6 +73,45 @@ public interface RowSource<R> {
 	 */
 	default int dataCount() {
 		return UNKNOWN_COUNT;
+	}
+
+	/**
+	 * The {@link Row#key() keys} of the data rows the current filter lets pass, in the order they
+	 * are displayed in.
+	 *
+	 * <p>
+	 * These are the rows {@link #matchCount()} counts: a data row inside a collapsed group or tree
+	 * node belongs to them. A source that cannot tell them without loading what it displays lazily
+	 * answers the data rows it {@link #window(int, int) displays}.
+	 * </p>
+	 */
+	default List<Object> matchingKeys() {
+		List<Object> result = new ArrayList<>();
+		for (Row<R> row : window(0, size())) {
+			if (row.kind() == RowKind.DATA) {
+				result.add(row.key());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The given keys that belong to a row the current filter lets pass.
+	 *
+	 * @param keys
+	 *        The {@link Row#key() row keys} to check.
+	 * @return The keys among the given ones that are {@link #matchingKeys() matching keys}, in the
+	 *         order they are given.
+	 */
+	default Set<Object> matchingKeys(Collection<?> keys) {
+		Set<Object> matching = new HashSet<>(matchingKeys());
+		Set<Object> result = new LinkedHashSet<>();
+		for (Object key : keys) {
+			if (matching.contains(key)) {
+				result.add(key);
+			}
+		}
+		return result;
 	}
 
 	/**

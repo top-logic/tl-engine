@@ -80,8 +80,22 @@ public class ListRowSource<R> implements RowSource<R> {
 
 	private List<Row<R>> _displayed;
 
-	/** The number of {@link #_elements} the {@link #_filter} lets pass, see {@link #matchCount()}. */
-	private int _matchCount;
+	/**
+	 * The keys of the {@link #_elements} the {@link #_filter} lets pass, in display order, see
+	 * {@link #matchingKeys()}.
+	 */
+	private Set<Object> _matching = Set.of();
+
+	/**
+	 * The number of {@link #_elements}, see {@link #dataCount()}.
+	 *
+	 * <p>
+	 * Taken in {@link #recompute()} together with {@link #_matching}, so that the two counts
+	 * describe the same elements even when the backing list - which is not copied - is changed
+	 * without {@link #setElements(List) telling} this source.
+	 * </p>
+	 */
+	private int _dataCount;
 
 	/**
 	 * Creates a {@link ListRowSource} using object identity as the row key.
@@ -140,12 +154,28 @@ public class ListRowSource<R> implements RowSource<R> {
 
 	@Override
 	public int matchCount() {
-		return _matchCount;
+		return _matching.size();
 	}
 
 	@Override
 	public int dataCount() {
-		return _elements.size();
+		return _dataCount;
+	}
+
+	@Override
+	public List<Object> matchingKeys() {
+		return List.copyOf(_matching);
+	}
+
+	@Override
+	public Set<Object> matchingKeys(Collection<?> keys) {
+		Set<Object> result = new LinkedHashSet<>();
+		for (Object key : keys) {
+			if (_matching.contains(key)) {
+				result.add(key);
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -290,7 +320,12 @@ public class ListRowSource<R> implements RowSource<R> {
 		if (order != null) {
 			rows.sort(order);
 		}
-		_matchCount = rows.size();
+		Set<Object> matching = new LinkedHashSet<>();
+		for (R row : rows) {
+			matching.add(_keyOf.apply(row));
+		}
+		_matching = matching;
+		_dataCount = _elements.size();
 		_displayed = _grouping.columns().isEmpty() ? flatRows(rows) : groupedRows(rows);
 	}
 

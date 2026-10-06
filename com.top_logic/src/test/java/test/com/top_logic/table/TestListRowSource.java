@@ -242,6 +242,39 @@ public class TestListRowSource extends TestCase {
 		assertEquals("A collapsed group keeps its header only.", 3, source.size());
 		assertEquals("A row in a collapsed group is still counted.", 2, source.matchCount());
 		assertEquals(4, source.dataCount());
+		assertEquals("A row in a collapsed group is still a matching row.",
+			java.util.Set.of("Charlie", "Bob"), java.util.Set.copyOf(names(source.matchingKeys())));
+	}
+
+	/**
+	 * Tests that the counts describe the same elements when the backing list - which the source
+	 * does not copy - is changed without telling the source: both stay as they were computed, and
+	 * {@link ListRowSource#setElements(List)} brings both up to date.
+	 */
+	public void testCountsAgreeOnAChangedBackingList() {
+		List<Person> people = new java.util.ArrayList<>(people());
+		ListRowSource<Person> source = new ListRowSource<>(people, columns());
+		people.add(new Person("dave", 50));
+		assertEquals(4, source.matchCount());
+		assertEquals("Not counted before the source is told about it.", 4, source.dataCount());
+
+		source.setElements(people);
+		assertEquals(5, source.matchCount());
+		assertEquals(5, source.dataCount());
+	}
+
+	/**
+	 * Tests that the matching keys among given keys are those of rows the filter lets pass.
+	 */
+	public void testMatchingKeysAmongGivenKeys() {
+		ListRowSource<Person> source = new ListRowSource<>(people(), columns(), Person::name);
+		source.withFilter(new FilterSpec(java.util.Map.of("name", new Contains("al"))));
+		assertEquals(java.util.Set.of("alma"), source.matchingKeys(List.of("Bob", "alma", "nobody")));
+	}
+
+	/** The names of the people with the given keys. */
+	private static List<String> names(List<Object> keys) {
+		return keys.stream().map(key -> ((Person) key).name()).toList();
 	}
 
 }

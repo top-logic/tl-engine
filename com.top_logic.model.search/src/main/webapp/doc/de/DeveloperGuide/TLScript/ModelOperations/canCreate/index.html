@@ -3,13 +3,15 @@
 <pre><code>$parent.canCreate($reference)
 
 canCreate($parent, $reference)
+
+canCreate($parent, $reference, $type)
 </code></pre>
 
 <h2>Beschreibung</h2>
 
 <p>Pr&uuml;ft, ob der aktuell angemeldete Nutzer ein neues Element in der angegebenen Kompositionsreferenz des angegebenen &uuml;bergeordneten Objekts anlegen darf, und liefert einen Wahrheitswert.</p>
 
-<p>Dies entspricht dem Schreibzugriff auf den Kompositionskontext (dieselbe Pr&uuml;fung, die das Hinzuf&uuml;gen eines Elements zur Referenz absichert). Die Funktion schl&auml;gt nie fehl und filtert nicht.</p>
+<p>Der Nutzer ben&ouml;tigt das Anlegerecht f&uuml;r den Typ des neuen Elements im Kontext des &uuml;bergeordneten Objekts sowie den Schreibzugriff auf die Kompositionsreferenz (dieselbe Pr&uuml;fung, die das Hinzuf&uuml;gen eines Elements zur Referenz absichert). Standardm&auml;&szlig;ig ist der Typ des neuen Elements der Zieltyp der Referenz. Soll ein Element einer Spezialisierung angelegt werden, wird dessen Typ als drittes Argument angegeben; gepr&uuml;ft wird dann das Anlegerecht f&uuml;r diese Spezialisierung. Die Funktion filtert nicht und schl&auml;gt nur fehl, wenn der angegebene Typ nicht zum Zieltyp der Referenz passt.</p>
 
 <p>Die Pr&uuml;fung erfolgt f&uuml;r den aktuell angemeldeten Nutzer und folgt denselben Regeln wie die implizite Berechtigungspr&uuml;fung: standardm&auml;&szlig;ige Verweigerung, Rollenvererbung entlang der Sicherheitshierarchie sowie Vollzugriff f&uuml;r Administratoren oder Ausf&uuml;hrungen im Systemkontext.</p>
 
@@ -22,6 +24,7 @@ canCreate($parent, $reference)
 	<tbody>
 		<tr><td>parent</td><td>Fachobjekt</td><td>Das &uuml;bergeordnete Objekt, das das neue Element aufnimmt.</td><td>ja</td><td> </td></tr>
 		<tr><td>reference</td><td>Attribut</td><td>Die Kompositionsreferenz (<code class="hljs inlineCode">TLStructuredTypePart</code>), in die das Element angelegt wird.</td><td>ja</td><td> </td></tr>
+		<tr><td>type</td><td>Typ</td><td>Der Typ des anzulegenden Elements. Muss der Zieltyp der Referenz oder eine Spezialisierung davon sein.</td><td>nein</td><td>Der Zieltyp der Referenz.</td></tr>
 	</tbody>
 </table>
 
@@ -38,3 +41,9 @@ canCreate($parent, $reference)
 <pre><code>$project.canCreate(`my.module:Project#milestones`)</code></pre>
 
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Ob der angemeldete Nutzer dem Projekt einen Meilenstein hinzuf&uuml;gen darf.</p>
+
+<h3>Beispiel 2</h3>
+
+<pre><code>$project.canCreate(`my.module:Project#milestones`, `my.module:FinalMilestone`)</code></pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Ob der angemeldete Nutzer dem Projekt einen Abschlussmeilenstein (eine Spezialisierung des Meilensteintyps) hinzuf&uuml;gen darf.</p>

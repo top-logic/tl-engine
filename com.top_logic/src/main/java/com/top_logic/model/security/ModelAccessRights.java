@@ -185,8 +185,40 @@ public interface ModelAccessRights {
 	 * type (the composition attribute's target type) in the parent context, <em>and</em> the
 	 * {@link SimpleBoundCommandGroup#WRITE WRITE} right on the composition attribute of the parent.
 	 * </p>
+	 *
+	 * @implSpec Just calls {@link #isAllowedCreate(Person, TLObject, TLStructuredTypePart, TLClass)}
+	 *           without an explicit type, i.e. with the composition attribute's target type.
 	 */
-	boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute);
+	default boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute) {
+		return isAllowedCreate(person, parent, compositionAttribute, null);
+	}
+
+	/**
+	 * Checks whether the given person can create a new child object of the given type in the given
+	 * composition attribute of the given parent instance.
+	 *
+	 * <p>
+	 * In contrast to {@link #isAllowedCreate(Person, TLObject, TLStructuredTypePart)}, the created
+	 * type may be a specialization of the composition attribute's target type: the person needs the
+	 * {@link SimpleBoundCommandGroup#CREATE CREATE} right on the given type (not on the target type
+	 * of the attribute) in the parent context, <em>and</em> the {@link SimpleBoundCommandGroup#WRITE
+	 * WRITE} right on the composition attribute of the parent.
+	 * </p>
+	 *
+	 * @param person
+	 *        The person to check.
+	 * @param parent
+	 *        The object that will hold the created object.
+	 * @param compositionAttribute
+	 *        The composition attribute of the parent the created object is added to.
+	 * @param type
+	 *        The type of the object to create. Must be compatible with the target type of the given
+	 *        composition attribute. <code>null</code> means the target type of the composition
+	 *        attribute.
+	 * @throws IllegalArgumentException
+	 *         If the given type is not compatible with the target type of the composition attribute.
+	 */
+	boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute, TLClass type);
 
 	/**
 	 * Checks whether the given person can create an instance of the given type in the given context.

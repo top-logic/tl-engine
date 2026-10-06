@@ -10,6 +10,7 @@ import java.util.Set;
 import com.top_logic.element.boundsec.manager.rule.NavigationRule;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.util.TLModelUtil;
@@ -21,11 +22,14 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  * 
  * @param type
  *        The concrete type this result describes.
- * @param withoutSecurity
- *        Whether the type is excluded from access control. Such a type never has a finding.
- * @param internal
- *        Whether the type is used by the application's code only and never accessed on behalf of a
- *        user. Such a type never has a finding.
+ * @param withoutSecurityOrigin
+ *        The part whose definition excludes the type from access control, the type itself when it
+ *        carries the mark of its own, <code>null</code> when the type is access controlled. Such a
+ *        type never has a finding.
+ * @param internalOrigin
+ *        The part whose definition declares the type as used by the application's code only and
+ *        never accessed on behalf of a user, the type itself when it carries the mark of its own,
+ *        <code>null</code> when the type is not internal. Such a type never has a finding.
  * @param accessParent
  *        The relation to the object deciding access for objects of the type, <code>null</code>
  *        when the type decides for itself.
@@ -43,15 +47,34 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public record TypeCoverage(TLClass type, boolean withoutSecurity, boolean internal, AccessParentFunction accessParent,
+public record TypeCoverage(TLClass type, TLModelPart withoutSecurityOrigin, TLModelPart internalOrigin,
+		AccessParentFunction accessParent,
 		List<TLReference> containerReferences, Set<BoundedRole> readRoles, List<RoleProvider> roleRules,
 		List<NavigationRule> roleParentRules, List<CoverageFinding> findings) {
+
+	/**
+	 * Whether the type is excluded from access control.
+	 *
+	 * @see #withoutSecurityOrigin()
+	 */
+	public boolean withoutSecurity() {
+		return withoutSecurityOrigin != null;
+	}
+
+	/**
+	 * Whether the type is used by the application's code only.
+	 *
+	 * @see #internalOrigin()
+	 */
+	public boolean internal() {
+		return internalOrigin != null;
+	}
 
 	/**
 	 * The overall result for {@link #type()}.
 	 */
 	public CoverageStatus status() {
-		if (withoutSecurity || internal) {
+		if (withoutSecurity() || internal()) {
 			return CoverageStatus.EXEMPT;
 		}
 		if (!findings.isEmpty()) {

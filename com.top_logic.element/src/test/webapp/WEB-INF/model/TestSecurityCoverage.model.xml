@@ -187,6 +187,23 @@
 
 				<!-- Used by the application's code only: no finding despite the missing definitions. -->
 				<class name="Internal"/>
+
+				<!-- Internal by the mark of its generalization. -->
+				<class name="InternalSub">
+					<generalizations>
+						<generalization type="Internal"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+
+		<!-- Internal as a whole, by the mark of the module. -->
+		<module name="TestSecurityCoverageInternal">
+			<types>
+				<class name="InModule"/>
+
+				<!-- Internal by the module, and by a mark of its own. -->
+				<class name="MarkedInModule"/>
 			</types>
 		</module>
 

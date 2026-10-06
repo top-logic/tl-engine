@@ -116,6 +116,18 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	/** Type used by the application's code only. */
 	private static final String INTERNAL = MODULE + ":Internal";
 
+	/** Specialization of {@link #INTERNAL}. */
+	private static final String INTERNAL_SUB = MODULE + ":InternalSub";
+
+	/** Module used by the application's code only. */
+	private static final String INTERNAL_MODULE = "TestSecurityCoverageInternal";
+
+	/** Type of {@link #INTERNAL_MODULE}. */
+	private static final String IN_MODULE = INTERNAL_MODULE + ":InModule";
+
+	/** Type of {@link #INTERNAL_MODULE} with an internal mark of its own. */
+	private static final String MARKED_IN_MODULE = INTERNAL_MODULE + ":MarkedInModule";
+
 	/** The only type of {@link #EXCLUDED_MODULE}. */
 	private static final String IGNORED = EXCLUDED_MODULE + ":Ignored";
 
@@ -285,6 +297,26 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		assertFalse("An internal type is access controlled.", coverage.withoutSecurity());
 		assertEquals(coverage.toString(), CoverageStatus.EXEMPT, coverage.status());
 		assertTrue(coverage.toString(), coverage.findings().isEmpty());
+	}
+
+	public void testInternalMarkOfTheTypeItself() {
+		TypeCoverage coverage = coverage(INTERNAL);
+		assertSame(coverage.type(), coverage.internalOrigin());
+	}
+
+	public void testInternalMarkOfAGeneralization() {
+		assertSame("The mark is inherited from the generalization.", coverage(INTERNAL).type(),
+			coverage(INTERNAL_SUB).internalOrigin());
+	}
+
+	public void testInternalMarkOfTheModule() {
+		TypeCoverage coverage = coverage(IN_MODULE);
+		assertSame("The mark is the one of the module.", coverage.type().getModule(), coverage.internalOrigin());
+	}
+
+	public void testOwnInternalMarkWinsOverTheModule() {
+		TypeCoverage coverage = coverage(MARKED_IN_MODULE);
+		assertSame("The mark of the type's own is the one to drop.", coverage.type(), coverage.internalOrigin());
 	}
 
 	public void testExcludedModuleIsNotAnalyzed() {

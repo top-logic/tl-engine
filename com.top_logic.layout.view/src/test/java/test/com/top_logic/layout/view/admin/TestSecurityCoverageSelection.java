@@ -23,7 +23,7 @@ import com.top_logic.table.GroupKey;
 
 /**
  * Test for the selection of the {@link SecurityCoverageTable}: a selected group header stands for
- * its module, a selected row for its type.
+ * its module, a selected row for its type and its marks.
  */
 @SuppressWarnings("javadoc")
 public class TestSecurityCoverageSelection extends TestCase {
@@ -48,7 +48,7 @@ public class TestSecurityCoverageSelection extends TestCase {
 		TLModelImpl model = new TLModelImpl();
 		_module = TLModelUtil.addModule(model, "test.coverage");
 		_type = TLModelUtil.addClass(_module, "Covered");
-		_row = new TypeCoverage(_type, false, false, null, List.of(), Set.of(), List.of(), List.of(), List.of());
+		_row = new TypeCoverage(_type, null, null, null, List.of(), Set.of(), List.of(), List.of(), List.of());
 		_selection = new DefaultViewChannel("selection");
 		_typeChannel = new DefaultViewChannel("type");
 		_moduleChannel = new DefaultViewChannel("module");
@@ -92,6 +92,36 @@ public class TestSecurityCoverageSelection extends TestCase {
 		assertNull(_selection.get());
 		assertNull(_typeChannel.get());
 		assertNull(_moduleChannel.get());
+	}
+
+	public void testMarkOfTheTypeItselfCanBeDropped() {
+		ViewChannel internal = new DefaultViewChannel("internal");
+		Detail detail = new Detail(null, null, internal, null, null, null, null);
+		TypeCoverage row =
+			new TypeCoverage(_type, null, _type, null, List.of(), Set.of(), List.of(), List.of(), List.of());
+
+		detail.show(_type, Map.of(_type, row));
+		assertEquals(Boolean.TRUE, internal.get());
+	}
+
+	public void testInheritedMarkNamesItsOrigin() {
+		ViewChannel internal = new DefaultViewChannel("internal");
+		Detail detail = new Detail(null, null, internal, null, null, null, null);
+		TypeCoverage row =
+			new TypeCoverage(_type, null, _module, null, List.of(), Set.of(), List.of(), List.of(), List.of());
+
+		detail.show(_type, Map.of(_type, row));
+		assertSame("The module declaring the mark, which cannot be dropped for the type.", _module, internal.get());
+	}
+
+	public void testNoMark() {
+		ViewChannel internal = new DefaultViewChannel("internal");
+		Detail detail = new Detail(null, null, internal, null, null, null, null);
+
+		detail.show(_type, rows());
+		assertEquals(Boolean.FALSE, internal.get());
+		detail.show(null, rows());
+		assertNull("Nothing selected.", internal.get());
 	}
 
 	private Map<Object, TypeCoverage> rows() {

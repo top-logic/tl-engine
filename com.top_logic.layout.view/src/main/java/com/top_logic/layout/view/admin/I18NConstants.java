@@ -282,10 +282,24 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_EXEMPT_INTERNAL;
 
 	/**
+	 * @en The type is internal by the mark of "{0}": it is used by the application code alone, so
+	 *     it is exempt from the check and no user gets access to its objects. The mark can be dropped
+	 *     there only, not for this type alone.
+	 */
+	public static ResKey1 COVERAGE_EXEMPT_INTERNAL_INHERITED__ORIGIN;
+
+	/**
 	 * @en The type is excluded from access control: every user may access its objects, so it is
 	 *     exempt from the check.
 	 */
 	public static ResKey COVERAGE_EXEMPT_WITHOUT_SECURITY;
+
+	/**
+	 * @en The type is excluded from access control by the mark of "{0}": every user may access its
+	 *     objects, so it is exempt from the check. The mark can be dropped there only, not for this
+	 *     type alone.
+	 */
+	public static ResKey1 COVERAGE_EXEMPT_WITHOUT_SECURITY_INHERITED__ORIGIN;
 
 	/**
 	 * @en The access definition could not be written to the file "{0}".

@@ -31,6 +31,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
@@ -170,13 +171,13 @@ public class SecurityCoverageAnalysis {
 		List<RoleProvider> roleRules = List.copyOf(_accessManager.getRules(type));
 		List<NavigationRule> parentRules = List.copyOf(_accessManager.getRoleParentRules(type));
 		Set<BoundedRole> readRoles = Set.copyOf(_accessRights.getAllowedRoles(type, SimpleBoundCommandGroup.READ));
-		boolean withoutSecurity = _accessRights.isWithoutSecurity(type);
-		boolean internal = _accessRights.isInternal(type);
+		TLModelPart withoutSecurity = _accessRights.getWithoutSecurityOrigin(type);
+		TLModelPart internal = _accessRights.getInternalOrigin(type);
 		AccessParentFunction accessParent = _accessRights.getAccessParent(type);
 		List<TLReference> containers = containerReferences(type);
 
 		List<CoverageFinding> findings = new ArrayList<>();
-		if (withoutSecurity || internal) {
+		if (withoutSecurity != null || internal != null) {
 			// An exempt type needs no definition.
 		} else if (accessParent != null) {
 			List<String> shadowed = shadowedRules(roleRules, parentRules);

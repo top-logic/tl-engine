@@ -213,6 +213,12 @@
 					<class name="TestSecurityCoverage:Internal"
 						internal="true"
 					/>
+					<module name="TestSecurityCoverageInternal"
+						internal="true"
+					/>
+					<class name="TestSecurityCoverageInternal:MarkedInModule"
+						internal="true"
+					/>
 				</security-config>
 			</instance>
 		</config>

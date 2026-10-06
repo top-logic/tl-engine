@@ -50,6 +50,8 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnType;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
 import com.top_logic.model.security.AccessParentFunction;
@@ -242,6 +244,12 @@ public class SecurityCoverageTable implements UIElement {
 		/**
 		 * Channel receiving whether the selected type is internal to the application code, as the
 		 * analysis reports it; <code>null</code> while nothing is selected.
+		 *
+		 * <p>
+		 * The value is <code>true</code> for a type carrying the mark of its own, which can be
+		 * dropped for the type, <code>false</code> for a type not internal at all, and the
+		 * generalization or module declaring the mark for a type inheriting it.
+		 * </p>
 		 */
 		@Name(SELECTED_INTERNAL)
 		@Nullable
@@ -251,6 +259,12 @@ public class SecurityCoverageTable implements UIElement {
 		/**
 		 * Channel receiving whether the selected type is excluded from access control, as the
 		 * analysis reports it; <code>null</code> while nothing is selected.
+		 *
+		 * <p>
+		 * The value is <code>true</code> for a type carrying the mark of its own, which can be
+		 * dropped for the type, <code>false</code> for a type access controlled, and the
+		 * generalization or module declaring the mark for a type inheriting it.
+		 * </p>
 		 */
 		@Name(SELECTED_WITHOUT_SECURITY)
 		@Nullable
@@ -479,10 +493,10 @@ public class SecurityCoverageTable implements UIElement {
 				_type.set(row == null ? null : row.type());
 			}
 			if (_internal != null) {
-				_internal.set(row == null ? null : row.internal());
+				_internal.set(row == null ? null : mark(row.type(), row.internalOrigin()));
 			}
 			if (_withoutSecurity != null) {
-				_withoutSecurity.set(row == null ? null : row.withoutSecurity());
+				_withoutSecurity.set(row == null ? null : mark(row.type(), row.withoutSecurityOrigin()));
 			}
 			if (_findings != null) {
 				_findings.set(row == null ? null : findingsHtml(row));
@@ -728,16 +742,48 @@ public class SecurityCoverageTable implements UIElement {
 	}
 
 	/**
+	 * The value a channel receives for a mark of the given type.
+	 *
+	 * @param type
+	 *        The marked type.
+	 * @param origin
+	 *        The part declaring the mark, <code>null</code> when the type is not marked.
+	 * @return <code>true</code> for a mark of the type's own, <code>false</code> for no mark, the
+	 *         origin for an inherited mark.
+	 *
+	 * @see Config#getSelectedInternal()
+	 */
+	static Object mark(TLClass type, TLModelPart origin) {
+		if (origin == null) {
+			return Boolean.FALSE;
+		}
+		return origin == type ? Boolean.TRUE : origin;
+	}
+
+	/**
 	 * The mark exempting the given type from the check, <code>null</code> when it is checked.
 	 */
 	private static ResKey exemption(TypeCoverage coverage) {
 		if (coverage.internal()) {
-			return I18NConstants.COVERAGE_EXEMPT_INTERNAL;
+			return inherited(coverage, coverage.internalOrigin())
+				? I18NConstants.COVERAGE_EXEMPT_INTERNAL_INHERITED__ORIGIN.fill(coverage.internalOrigin())
+				: I18NConstants.COVERAGE_EXEMPT_INTERNAL;
 		}
 		if (coverage.withoutSecurity()) {
-			return I18NConstants.COVERAGE_EXEMPT_WITHOUT_SECURITY;
+			return inherited(coverage, coverage.withoutSecurityOrigin())
+				? I18NConstants.COVERAGE_EXEMPT_WITHOUT_SECURITY_INHERITED__ORIGIN
+					.fill(coverage.withoutSecurityOrigin())
+				: I18NConstants.COVERAGE_EXEMPT_WITHOUT_SECURITY;
 		}
 		return null;
+	}
+
+	/**
+	 * Whether the given mark of the type is declared by a generalization or a module, not by the
+	 * type itself.
+	 */
+	private static boolean inherited(TypeCoverage coverage, TLModelPart origin) {
+		return origin != coverage.type();
 	}
 
 	/**

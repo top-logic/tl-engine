@@ -11,6 +11,7 @@ import java.util.Set;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -70,6 +71,46 @@ public interface ModelAccessRights {
 	 */
 	default boolean isInternal(TLClass type) {
 		return false;
+	}
+
+	/**
+	 * The part of the model whose access definition excludes the given type from access control.
+	 *
+	 * <p>
+	 * A type is {@link #isWithoutSecurity(TLClass) without security} if its own definition says so,
+	 * or the definition of one of its generalizations, or of the module of one of them. Only a mark
+	 * of the type's own can be dropped for this type alone.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type to check.
+	 * @return The type itself, a generalization of it or a module declaring the mark, the type
+	 *         itself when it declares the mark of its own; <code>null</code> when the type is not
+	 *         without security.
+	 * @implSpec The default answers the type itself for every type without security.
+	 */
+	default TLModelPart getWithoutSecurityOrigin(TLClass type) {
+		return isWithoutSecurity(type) ? type : null;
+	}
+
+	/**
+	 * The part of the model whose access definition declares the given type internal.
+	 *
+	 * <p>
+	 * A type is {@link #isInternal(TLClass) internal} if its own definition says so, or the
+	 * definition of one of its generalizations, or of the module of one of them. Only a mark of the
+	 * type's own can be dropped for this type alone.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type to check.
+	 * @return The type itself, a generalization of it or a module declaring the mark, the type
+	 *         itself when it declares the mark of its own; <code>null</code> when the type is not
+	 *         internal.
+	 * @implSpec The default answers the type itself for every internal type.
+	 */
+	default TLModelPart getInternalOrigin(TLClass type) {
+		return isInternal(type) ? type : null;
 	}
 
 	/**

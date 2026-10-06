@@ -42,6 +42,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLModuleSingleton;
 import com.top_logic.model.TLObject;
@@ -295,9 +296,19 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	private Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _expandedClassRights = new HashMap<>();
 
-	private Set<TLClass> _typesWithoutSecurity = new HashSet<>();
+	/**
+	 * The types without security, each mapped to the part whose definition declares the mark.
+	 *
+	 * @see #getWithoutSecurityOrigin(TLClass)
+	 */
+	private Map<TLClass, TLModelPart> _typesWithoutSecurity = new HashMap<>();
 
-	private Set<TLClass> _internalTypes = new HashSet<>();
+	/**
+	 * The internal types, each mapped to the part whose definition declares the mark.
+	 *
+	 * @see #getInternalOrigin(TLClass)
+	 */
+	private Map<TLClass, TLModelPart> _internalTypes = new HashMap<>();
 
 	/**
 	 * The explicitly configured access parents, inherited by the specializations of a type.
@@ -409,10 +420,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return;
 		}
 		if (config.isWithoutSecurity()) {
-			module.getClasses().forEach(this::markWithoutSecurity);
+			module.getClasses().forEach(type -> mark(_typesWithoutSecurity, type, module));
 		}
 		if (config.isInternal()) {
-			module.getClasses().forEach(this::markInternal);
+			module.getClasses().forEach(type -> mark(_internalTypes, type, module));
 		}
 		moduleRules.computeIfAbsent(module, unused -> new ArrayList<>()).addAll(resolveRules(context, config));
 	}
@@ -444,10 +455,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return;
 		}
 		if (config.isWithoutSecurity()) {
-			markWithoutSecurity(clazz);
+			mark(_typesWithoutSecurity, clazz, clazz);
 		}
 		if (config.isInternal()) {
-			markInternal(clazz);
+			mark(_internalTypes, clazz, clazz);
 		}
 		AccessParentConfig accessParent = config.getAccessParent();
 		if (accessParent != null) {
@@ -486,34 +497,43 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
-	 * Excludes the given type and all its specializations from access control.
+	 * Marks the given type and all its specializations, recording the part declaring the mark.
+	 *
+	 * <p>
+	 * A type declaring the mark of its own keeps itself as origin, even if a module or a
+	 * generalization declares the mark, too: that mark is the one to drop for the type alone.
+	 * </p>
+	 *
+	 * @param marked
+	 *        The marked types, each mapped to the part declaring the mark.
+	 * @param type
+	 *        The type to mark.
+	 * @param origin
+	 *        The part whose definition declares the mark.
 	 *
 	 * @see TypeBasedAccessRights#isWithoutSecurity()
-	 */
-	private void markWithoutSecurity(TLClass type) {
-		if (_typesWithoutSecurity.add(type)) {
-			for (TLClass specialization : type.getSpecializations()) {
-				markWithoutSecurity(specialization);
-			}
-		}
-	}
-
-	/**
-	 * Marks the given type and all its specializations as used by the application's code only.
-	 *
 	 * @see TypeBasedAccessRights#isInternal()
 	 */
-	private void markInternal(TLClass type) {
-		if (_internalTypes.add(type)) {
-			for (TLClass specialization : type.getSpecializations()) {
-				markInternal(specialization);
-			}
+	private static void mark(Map<TLClass, TLModelPart> marked, TLClass type, TLModelPart origin) {
+		TLModelPart known = marked.get(type);
+		if (known == type || (known != null && origin != type)) {
+			// Marked already, together with the specializations.
+			return;
+		}
+		marked.put(type, origin);
+		for (TLClass specialization : type.getSpecializations()) {
+			mark(marked, specialization, origin);
 		}
 	}
 
 	@Override
 	public boolean isInternal(TLClass type) {
-		return _internalTypes.contains(type);
+		return _internalTypes.containsKey(type);
+	}
+
+	@Override
+	public TLModelPart getInternalOrigin(TLClass type) {
+		return _internalTypes.get(type);
 	}
 
 	/**
@@ -534,7 +554,12 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 */
 	@Override
 	public boolean isWithoutSecurity(TLClass type) {
-		return _typesWithoutSecurity.contains(type);
+		return _typesWithoutSecurity.containsKey(type);
+	}
+
+	@Override
+	public TLModelPart getWithoutSecurityOrigin(TLClass type) {
+		return _typesWithoutSecurity.get(type);
 	}
 
 	/**

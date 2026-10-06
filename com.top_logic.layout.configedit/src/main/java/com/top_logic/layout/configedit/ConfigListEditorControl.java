@@ -667,8 +667,11 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 		ReactSelectFormFieldControl typeSelect =
 			new ReactSelectFormFieldControl(_context, typeModel, labelProvider);
-		return new ReactFormFieldChromeControl(_context, "Type", false, false, null, null,
+		ReactFormFieldChromeControl result = new ReactFormFieldChromeControl(_context,
+			Resources.getInstance().getString(I18NConstants.TYPE_SELECTOR), false, false, null, null,
 			inHeader ? LabelPosition.HIDDEN : null, false, true, typeSelect);
+		result.setAgentName(PolymorphicItemControl.TYPE_SELECTOR_NAME);
+		return result;
 	}
 
 	/**

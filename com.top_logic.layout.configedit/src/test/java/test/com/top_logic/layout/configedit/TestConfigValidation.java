@@ -17,6 +17,8 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -191,6 +193,34 @@ public class TestConfigValidation extends TestCase {
 		void setPart(Entry value);
 	}
 
+	/** Implementation chosen by {@link MandatoryPolymorphicConfig#getImpl()}. */
+	public static class Impl {
+
+		/** Configuration of {@link Impl}. */
+		public interface Config extends PolymorphicConfiguration<Impl> {
+			// No properties.
+		}
+
+		/** Creates an {@link Impl}. */
+		public Impl(InstantiationContext context, Config config) {
+			// No state.
+		}
+	}
+
+	/** Test configuration interface with a mandatory polymorphic item. */
+	public interface MandatoryPolymorphicConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getImpl()}. */
+		String IMPL = "impl";
+
+		@Name(IMPL)
+		@Mandatory
+		PolymorphicConfiguration<? extends Impl> getImpl();
+
+		/** @see #getImpl() */
+		void setImpl(PolymorphicConfiguration<? extends Impl> value);
+	}
+
 	/** Test configuration interface with {@link Constraint} annotated properties. */
 	public interface ConstrainedConfig extends ConfigurationItem {
 
@@ -363,6 +393,26 @@ public class TestConfigValidation extends TestCase {
 	 */
 	public void testAnUnsetMandatoryItemIsNoViolation() {
 		CollectionConfig config = TypedConfiguration.newConfigItem(CollectionConfig.class);
+
+		assertEquals(Collections.emptyList(), ConfigValidation.check(config).violations());
+	}
+
+	/**
+	 * An unset mandatory polymorphic ITEM property is a violation: its type selector is left empty,
+	 * and the item would be written as an empty element that cannot be read back.
+	 */
+	public void testAnUnsetMandatoryPolymorphicItemIsAViolation() {
+		MandatoryPolymorphicConfig config = TypedConfiguration.newConfigItem(MandatoryPolymorphicConfig.class);
+
+		List<ConfigValidation.Violation> violations = ConfigValidation.check(config).violations();
+		assertEquals(1, violations.size());
+		assertEquals(MandatoryPolymorphicConfig.IMPL, violations.get(0).property().getPropertyName());
+	}
+
+	/** And it is none once a type is chosen. */
+	public void testAChosenMandatoryPolymorphicItemIsNoViolation() {
+		MandatoryPolymorphicConfig config = TypedConfiguration.newConfigItem(MandatoryPolymorphicConfig.class);
+		config.setImpl(TypedConfiguration.newConfigItem(Impl.Config.class));
 
 		assertEquals(Collections.emptyList(), ConfigValidation.check(config).violations());
 	}

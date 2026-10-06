@@ -853,20 +853,19 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
-	 * Finds the field model of the "Type" selector rendered inside the given element group -
-	 * reached the same way as {@link #findHeaderButton(ReactControl, String)}, via
-	 * {@link ReactControl#scriptingChildren()} and {@link ReactControl#scriptingScalarState()},
+	 * Finds the field model of the type selector rendered inside the given element group, by its
+	 * {@link ReactControl#scriptingName()}, which does not depend on the language of its label,
 	 * plus the public {@link ReactControl#getModel()} of the field control found that way.
 	 */
 	private FieldModel findTypeFieldModel(ReactControl elementGroup) {
 		for (ReactControl child : elementGroup.scriptingChildren()) {
-			if ("Type".equals(child.scriptingScalarState().get("label"))) {
+			if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
 				for (ReactControl field : child.scriptingChildren()) {
 					return (FieldModel) field.getModel();
 				}
 			}
 		}
-		fail("Should have a \"Type\" selector field in the element group");
+		fail("Should have a type selector field in the element group");
 		return null;
 	}
 
@@ -876,9 +875,9 @@ public class TestConfigEditorControl extends TestCase {
 	 * {@link ReactControl#scriptingChildren()} and {@link ReactControl#scriptingScalarState()}.
 	 *
 	 * <p>
-	 * Unlike the "Type" selector, the key field carries no fixed label (its label is the key
+	 * Unlike the type selector, the key field carries no fixed name (its label is the key
 	 * property's own, which varies by fixture), so it is identified by elimination among the
-	 * group's direct children: not the "Type" selector, and not the nested
+	 * group's direct children: not the type selector, and not the nested
 	 * {@link com.top_logic.layout.configedit.ConfigEditorControl} over the entry, which carries
 	 * no {@code "label"} scripting state of its own. A header action button (move up/down,
 	 * remove) also carries a non-{@code null} {@code "label"} and reaches this far, but is
@@ -894,7 +893,7 @@ public class TestConfigEditorControl extends TestCase {
 	private String keyFieldChromeError(ReactControl elementGroup) {
 		for (ReactControl child : elementGroup.scriptingChildren()) {
 			Object label = child.scriptingScalarState().get("label");
-			if (label == null || "Type".equals(label)) {
+			if (label == null || PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
 				continue;
 			}
 			// A header action button (Confirm, Remove) carries a label too, and now precedes the
@@ -924,7 +923,7 @@ public class TestConfigEditorControl extends TestCase {
 	private FieldModel findKeyFieldModel(ReactControl elementGroup) {
 		for (ReactControl child : elementGroup.scriptingChildren()) {
 			Object label = child.scriptingScalarState().get("label");
-			if (label == null || "Type".equals(label)) {
+			if (label == null || PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
 				continue;
 			}
 			for (ReactControl field : child.scriptingChildren()) {

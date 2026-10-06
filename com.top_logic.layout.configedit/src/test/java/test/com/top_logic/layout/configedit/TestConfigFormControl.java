@@ -511,10 +511,9 @@ public class TestConfigFormControl extends TestCase {
 	 * <p>
 	 * Both {@link PolymorphicItemControl} and {@link ConfigListEditorControl}'s own type selector
 	 * wrap their {@link com.top_logic.layout.form.model.SimpleSelectFieldModel} in a
-	 * {@link com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl} carrying the
-	 * literal, hardcoded label {@code "Type"} - never resolved through {@link Resources}, so
-	 * matching it is locale-independent by construction, the same reason
-	 * {@code TestConfigEditorControl#findTypeFieldModel} matches it too. Walked fully recursively
+	 * {@link com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl} named
+	 * {@link PolymorphicItemControl#TYPE_SELECTOR_NAME}, which unlike its label does not depend on
+	 * the language - the same way {@code TestConfigEditorControl#findTypeFieldModel} finds it. Walked fully recursively
 	 * (unlike that one-level sibling helper), since the selector sits at a different depth in each
 	 * of the two tests this is used for - directly under a {@link PolymorphicItemControl} for a
 	 * single polymorphic property, one level deeper inside a {@link ConfigListEditorControl}
@@ -522,7 +521,7 @@ public class TestConfigFormControl extends TestCase {
 	 * </p>
 	 */
 	private FieldModel findTypeFieldModel(ReactControl control) {
-		if ("Type".equals(control.scriptingScalarState().get("label"))) {
+		if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(control.scriptingName())) {
 			for (ReactControl field : control.scriptingChildren()) {
 				return (FieldModel) field.getModel();
 			}

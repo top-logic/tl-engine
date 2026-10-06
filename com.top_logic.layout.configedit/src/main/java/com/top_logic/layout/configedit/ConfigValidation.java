@@ -16,6 +16,7 @@ import java.util.Set;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyDescriptorImpl;
 import com.top_logic.basic.config.PropertyKind;
@@ -405,9 +406,10 @@ public final class ConfigValidation {
 	 *
 	 * <p>
 	 * Deliberately narrow: only a {@code null} value or an empty {@link String} count as missing,
-	 * and only for a property this editor actually renders as a field. A {@link PropertyKind#LIST},
-	 * {@link PropertyKind#ARRAY}, {@link PropertyKind#MAP}, or {@link PropertyKind#ITEM} property
-	 * is never flagged here, whatever it holds. The first three mirror
+	 * and only for a property this editor actually renders as a field, or as a type selector. A
+	 * {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY}, {@link PropertyKind#MAP}, or monomorphic
+	 * {@link PropertyKind#ITEM} property is never flagged here, whatever it holds. The first three
+	 * mirror
 	 * {@link ConfigFieldModel#isTechnicallyMandatory(PropertyDescriptor)}, which excludes exactly
 	 * those kinds because they are "not nullable, but may be empty" - the same rule the classic
 	 * declarative form applies. Two reasons this method keeps step with that rule rather than
@@ -420,15 +422,17 @@ public final class ConfigValidation {
 	 * </p>
 	 *
 	 * <p>
-	 * {@link PropertyKind#ITEM} is excluded for the second of those two reasons alone: it has no
-	 * {@link ConfigFieldModel} either. A monomorphic ITEM property renders as a list of at most one
-	 * entry, see {@link ConfigItemValue}; a polymorphic one renders a {@link PolymorphicItemControl}
-	 * whose type selector is a {@link com.top_logic.layout.form.model.SimpleSelectFieldModel},
-	 * which the {@link ConfigFieldIndex} does not carry. Flagging a mandatory ITEM would therefore
-	 * refuse Apply pointing at nothing the user can fill in - the very trap this rule exists to
-	 * avoid. The polymorphic case still tells the reader that a value is expected:
-	 * {@link PolymorphicItemControl} passes {@link PropertyDescriptor#isMandatory()} on to its type
-	 * selector, so the mandatory marker is on screen even though nothing enforces it here.
+	 * A monomorphic {@link PropertyKind#ITEM} property is excluded for the second of those two
+	 * reasons alone: it has no {@link ConfigFieldModel} either, but renders as a list of at most one
+	 * entry, see {@link ConfigItemValue}, and an empty list is a value the configuration can hold.
+	 * </p>
+	 *
+	 * <p>
+	 * A polymorphic ITEM property renders a {@link PolymorphicItemControl}, whose type selector is a
+	 * {@link com.top_logic.layout.form.model.SimpleSelectFieldModel} the {@link ConfigFieldIndex}
+	 * does not carry either. Left unset, a mandatory one is nevertheless missing: it would be
+	 * written as an empty element the configuration cannot read back. The refusal lists it, so it
+	 * does not point at nothing, and the type selector carries the mandatory marker.
 	 * </p>
 	 *
 	 * <p>
@@ -458,11 +462,17 @@ public final class ConfigValidation {
 				return false;
 
 			case ITEM:
-				if (!ConfigControlService.hasTextForm(item, property)) {
-					return false;
+				if (ConfigControlService.hasTextForm(item, property)) {
+					// An item written as text is edited in a field of its own, see
+					// ConfigEditorControl.
+					break;
 				}
-				// An item written as text is edited in a field of its own, see ConfigEditorControl.
-				break;
+				if (PolymorphicConfiguration.class.isAssignableFrom(property.getType())) {
+					// The type selector of a PolymorphicItemControl chooses the item: none chosen,
+					// none given.
+					return item.value(property) == null;
+				}
+				return false;
 
 			default:
 				break;

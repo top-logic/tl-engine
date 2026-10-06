@@ -86,6 +86,9 @@ public class TestTableViewExcelExport extends BasicTestCase {
 			.build());
 		columns.add(DefaultColumn.<Ticket, String> builder("status", Ticket::status)
 			.label(ResKey.text("Status"))
+			// Displayed by a control, as an attribute column of a form displays its values.
+			.renderer(status -> new CellContent.Raw(status))
+			.searchText(status -> status)
 			.sort(() -> Comparator.naturalOrder())
 			.build());
 		columns.add(DefaultColumn.<Ticket, Integer> builder("effort", Ticket::effort)

@@ -30,6 +30,7 @@ import com.top_logic.base.office.excel.streaming.ExcelWriter;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnView;
@@ -259,7 +260,12 @@ public class TableViewExcelExport {
 		if (level >= 0 && level < grouping.size()) {
 			Column<R, ?> groupColumn = view.column(grouping.get(level));
 			if (groupColumn != null) {
-				value = text(render(groupColumn, values.get(level)));
+				Object groupValue = values.get(level);
+				value = text(render(groupColumn, groupValue));
+				if (value.isEmpty() && groupValue != null) {
+					// The column displays its values by a control rather than a text.
+					value = MetaLabelProvider.INSTANCE.getLabel(groupValue);
+				}
 			}
 		}
 		return value + " (" + group.size() + ")";

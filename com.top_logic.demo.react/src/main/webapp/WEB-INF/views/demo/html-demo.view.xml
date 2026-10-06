@@ -243,27 +243,29 @@ th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d3e0d7; }
 									min-column-width="8rem"
 								>
 									<item>
-										<card padding="compact">
+										<card padding="none">
 											<html
 												display="thumbnail"
 												input="element"
 											/>
-											<text
-												css-class="tlText--strong"
-												input="element"
-												overflow="ellipsis"
-											/>
-											<button appearance="link">
-												<action class="com.top_logic.layout.view.command.GenericViewCommand"
+											<inset>
+												<text
+													css-class="tlText--strong"
 													input="element"
-												>
-													<label>
-														<en>Show</en>
-														<de>Anzeigen</de>
-													</label>
-													<write-channel name="expose"/>
-												</action>
-											</button>
+													overflow="ellipsis"
+												/>
+												<button appearance="link">
+													<action class="com.top_logic.layout.view.command.GenericViewCommand"
+														input="element"
+													>
+														<label>
+															<en>Show</en>
+															<de>Anzeigen</de>
+														</label>
+														<write-channel name="expose"/>
+													</action>
+												</button>
+											</inset>
 										</card>
 									</item>
 									<empty-text>

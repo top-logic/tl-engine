@@ -2587,6 +2587,7 @@ button.tlDrawer__closeBtn:focus-visible {
 	border-radius: var(--border-radius-02);
 	font-family: var(--font-family);
 	font-size: var(--body-compact-01-font-size);
+	line-height: var(--body-compact-01-line-height);
 	box-shadow: var(--shadow-dialog);
 	animation: tlSnackbarSlideUp 0.2s ease;
 	max-width: min(40rem, calc(100vw - 2 * var(--spacing-04)));
@@ -2645,6 +2646,14 @@ button.tlDrawer__closeBtn:focus-visible {
 /* The close button (a ghost icon button) takes the text color of the variant; on hover it swaps
    surface and text color, which reads on every variant. */
 .tlSnackbar__close {
+	/* Centered on the first line of the message: beside a single line, in the top end corner of a
+	   longer message. The end gap equals the resulting top gap. */
+	align-self: flex-start;
+	flex-shrink: 0;
+	/* Equal negative margins make the button take exactly one line of height in the row. */
+	margin-block: calc((var(--body-compact-01-line-height) - var(--tl-size-control-sm)) / 2);
+	margin-inline-end: calc(var(--spacing-03) - var(--spacing-04)
+		+ (var(--body-compact-01-line-height) - var(--tl-size-control-sm)) / 2);
 	color: inherit;
 }
 

@@ -26,7 +26,6 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.security.ModelAccessRights;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
@@ -460,8 +459,7 @@ public abstract class AbstractCompositionControl extends ReactControl
 			TLClass type = (TLClass) row.tType();
 			boolean allowed = part == null
 				? rights.isAllowedCreate(user, type, (TLObject) null)
-				: rights.isAllowedCreate(user, type, parent)
-					&& rights.isAllowed(user, parent, part, SimpleBoundCommandGroup.WRITE);
+				: rights.isAllowedCreate(user, parent, part, type);
 			if (!allowed) {
 				throw new TopLogicException(
 					com.top_logic.element.model.copy.I18NConstants.ERROR_PERSIST_PERMISSION_DENIED__TYPE.fill(type));

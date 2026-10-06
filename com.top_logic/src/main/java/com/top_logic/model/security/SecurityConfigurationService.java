@@ -1032,11 +1032,22 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	@Override
-	public boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute) {
-		// Condition 1: CREATE right on the created type (the reference's target type) in the parent
-		// context.
+	public boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute,
+			TLClass type) {
 		TLType targetType = compositionAttribute.getType();
-		if (targetType instanceof TLClass && !isAllowedCreate(person, (TLClass) targetType, parent)) {
+		TLType createdType;
+		if (type == null) {
+			createdType = targetType;
+		} else {
+			if (!TLModelUtil.isCompatibleType(targetType, type)) {
+				throw new IllegalArgumentException("Type '" + TLModelUtil.qualifiedName(type)
+					+ "' is not compatible with the type '" + TLModelUtil.qualifiedName(targetType)
+					+ "' of attribute '" + TLModelUtil.qualifiedName(compositionAttribute) + "'.");
+			}
+			createdType = type;
+		}
+		// Condition 1: CREATE right on the created type in the parent context.
+		if (createdType instanceof TLClass && !isAllowedCreate(person, (TLClass) createdType, parent)) {
 			return false;
 		}
 		// Condition 2: WRITE right on the composition reference of the parent.

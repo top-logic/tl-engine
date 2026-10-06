@@ -185,19 +185,21 @@
 				<write-channel name="activated"/>
 			</on-activate>
 		</tree>
-		<text>
-			<label>
-				<en>Selected node</en>
-				<de>Ausgewählter Knoten</de>
-			</label>
-		</text>
-		<text input="selected"/>
-		<text>
-			<label>
-				<en>Activated node</en>
-				<de>Aktivierter Knoten</de>
-			</label>
-		</text>
-		<text input="activated"/>
+		<inset>
+			<text>
+				<label>
+					<en>Selected node</en>
+					<de>Ausgewählter Knoten</de>
+				</label>
+			</text>
+			<text input="selected"/>
+			<text>
+				<label>
+					<en>Activated node</en>
+					<de>Aktivierter Knoten</de>
+				</label>
+			</text>
+			<text input="activated"/>
+		</inset>
 	</panel>
 </view>

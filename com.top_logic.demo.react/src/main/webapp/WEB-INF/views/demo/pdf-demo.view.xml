@@ -77,12 +77,14 @@
 							<write-channel name="document"/>
 						</generic-command>
 					</commands>
-					<text>
-						<label>
-							<en>Upload a picture, a PDF file or an HTML file to add it to the list. The document selected here is shown in the preview beside it.</en>
-							<de>Laden Sie ein Bild, eine PDF-Datei oder eine HTML-Datei hoch, um sie der Liste hinzuzufügen. Das hier gewählte Dokument wird in der Vorschau daneben angezeigt.</de>
-						</label>
-					</text>
+					<inset>
+						<text>
+							<label>
+								<en>Upload a picture, a PDF file or an HTML file to add it to the list. The document selected here is shown in the preview beside it.</en>
+								<de>Laden Sie ein Bild, eine PDF-Datei oder eine HTML-Datei hoch, um sie der Liste hinzuzufügen. Das hier gewählte Dokument wird in der Vorschau daneben angezeigt.</de>
+							</label>
+						</text>
+					</inset>
 					<table
 						observed-types="demo.documents:Document"
 						selection="document"

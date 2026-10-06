@@ -125,6 +125,38 @@ html, body {
 	user-select: none;
 }
 
+/* --- Touch drag --------------------------------------------------------- */
+
+/* A draggable element is picked up by a long press (see the bridge's touch-drag), so on a touch
+   screen the press opens neither the long-press menu nor a text selection. */
+@media (pointer: coarse) {
+	[draggable="true"] {
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		user-select: none;
+	}
+}
+
+/* Picked up by a finger that has not moved yet. */
+[data-touch-drag="armed"] {
+	box-shadow: var(--shadow-raised);
+	transform: scale(1.02);
+	transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+}
+
+/* Dragged by a finger: the place it was taken from. */
+[data-touch-drag="source"] {
+	opacity: 0.4;
+}
+
+/* The copy of the dragged element following the finger. Above the drag shield, below the hint
+   naming why a drop is refused. */
+.tlTouchDragImage {
+	z-index: 12500;
+	opacity: 0.9;
+	box-shadow: var(--shadow-menu);
+}
+
 /* --- TLCounter ---------------------------------------------------------- */
 
 .tlCounter {

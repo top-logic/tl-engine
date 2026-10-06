@@ -17,16 +17,17 @@
 	child and a panel bounds the height of a single one.
 	
 	The commands of the findings panel edit the definition of the selected type: "Access rights…"
-	opens a dialog editing the grants, the marks and the access parent the application sets for it. "Module access rights…" is offered
-	while a module is selected and opens that dialog for the module. The overflow clique holds the
-	two marks that exempt a type from the check ("Mark internal") or from access control
-	("Without access control"), each asking for confirmation with the selected type named - which is
-	what the selectedType channel carries. Each mark is a pair of commands, one setting and one
-	dropping it, of which the one applying to the selected type is visible: the mark channels
-	carry what the analysis reports, so the visible command asks for the state the table does not
-	show yet, and setting one mark drops the other, the two contradicting each other. A mark the
-	type inherits from a generalization or its module offers neither command: it cannot be dropped
-	for the type alone, and the mark channel carries the part declaring it instead of true.
+	opens a dialog editing the grants, the marks and the access parent the application sets for it.
+	"Module access rights…" is offered while a module is selected and opens that dialog for the
+	module. The overflow clique holds the two marks that exempt a type from the check ("Mark
+	internal") or from access control ("Without access control"), each asking for confirmation with
+	the selected type named - which is what the selectedType channel carries. Each mark is a pair of
+	commands, one setting and one dropping it, of which the one applying to the selected type is
+	visible: the mark channels carry what the analysis reports, so the visible command asks for the
+	state the table does not show yet, and setting one mark drops the other, the two contradicting
+	each other. A mark the type inherits from a generalization or its module offers neither command:
+	it cannot be dropped for the type alone, and the mark channel carries the part declaring it
+	instead of true.
 	
 	The rules panel lists one entry per rule in effect and writes the picked one to the
 	selectedRuleEntry channel. It holds every command on rules, so that a rule is created where it

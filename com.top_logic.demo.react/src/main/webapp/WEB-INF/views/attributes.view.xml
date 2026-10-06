@@ -110,6 +110,36 @@
 							<delete-object/>
 							<write-channel name="selected"/>
 						</generic-command>
+						<!--
+							A file computed by a script and handed to the browser: excelFile() builds the
+							workbook, <download/> delivers it. Shares the "Export" menu with the table's own
+							export below.
+						-->
+						<generic-command
+							clique="export"
+							image="css:bi bi-file-earmark-bar-graph"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Summary by priority</en>
+								<de>Übersicht nach Priorität</de>
+							</label>
+							<execute-script>
+								<function><![CDATA[
+									x -> {
+										objects = all(`demo.react:Demo`);
+										rows = list(`demo.react:Priority#low`, `demo.react:Priority#medium`, `demo.react:Priority#high`).map(p -> {
+											group = $objects.filter(o -> $o.get(`demo.react:Demo#priority`) == $p);
+											[label($p), $group.size(), $group.map(o -> $o.get(`demo.react:Demo#amount`)).sum()]
+										});
+										excelFile(
+											name: 'priority-summary',
+											content: [excelSheet(name: 'Summary', content: concat([['Priority', 'Objects', 'Total amount']], $rows))])
+									}
+								]]></function>
+							</execute-script>
+							<download/>
+						</generic-command>
 					</commands>
 					<table
 						filter-bar="true"
@@ -259,7 +289,12 @@
 									]]></match>
 								</filter>
 							</column>
-							<column attribute="amount"/>
+							<column attribute="amount">
+								<!-- Written into the sheet as a number in this format, instead of by the type's own renderer. -->
+								<export-renderer class="com.top_logic.tool.export.FormattedValueExcelRenderer"
+									format="#,##0.00 &quot;EUR&quot;"
+								/>
+							</column>
 							<column attribute="date"/>
 							<column attribute="dateTimeShort"/>
 							<column attribute="aliases"/>
@@ -270,10 +305,29 @@
 							<column attribute="flags"/>
 							<column attribute="owner"/>
 							<column attribute="url"/>
-							<column attribute="email"/>
-							<column attribute="phone"/>
+							<!-- Contact data is displayed, but does not leave the application in an export. -->
+							<column
+								attribute="email"
+								export="false"
+							/>
+							<column
+								attribute="phone"
+								export="false"
+							/>
 						</columns>
 						<rows>all(`demo.react:Demo`)</rows>
+						<!--
+							Offers "Export to Excel" in the panel's "Export" menu: the displayed columns in
+							their order and the displayed rows - filtered, searched, sorted and grouped as
+							the table is. The download name is computed from the table's inputs (here the
+							selection, which the name does not need).
+						-->
+						<export download-name="sel -> #('Demo objects'@en, 'Demo-Objekte'@de)">
+							<sheet-name>
+								<en>Demo objects</en>
+								<de>Demo-Objekte</de>
+							</sheet-name>
+						</export>
 						<on-activate class="com.top_logic.layout.view.command.GenericViewCommand"
 							image="css:bi bi-pencil"
 						>
@@ -472,6 +526,11 @@
 								/>
 							</columns>
 							<rows>all(`demo.react:Demo`)</rows>
+							<!--
+								Exported as displayed - in edit mode with the values as currently edited, saved
+								or not - and without the per-row actions.
+							-->
+							<export download-name="#('Editable table'@en, 'Editierbare Tabelle'@de)"/>
 						</table>
 					</form>
 				</panel>

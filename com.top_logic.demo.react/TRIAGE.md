@@ -36,6 +36,7 @@ implemented in the current deliverable.
 | Page form (`<form>` in the fill contract) | **Migrated** | `demo/form-fill-demo.view.xml` — a selector table beside a page-spanning `<form>` around a nested `<split-panel>`: the form follows the fill contract, so the inner panes are sized by the frame, each area (a `<panel>` per pane) lays its fields out in a `<fields>` grid that follows the form's edit mode, and one Edit/Save/Cancel set in the panel toolbar edits the whole right side. |
 | Styling options | **Migrated** | `demo/styling-demo.view.xml` — the text variants and tones, the pill appearance (from the tone and from the colour a classifier carries in the model), a hero band and a glass card reached through their `css-class` from `style/tl-demo-react.css`, the arrangement options of `<stack>` and `<grid>` (wrapping, justification, bounded width) and a search `<value-input>` with icon, clear button and debounce. The "Glass" theme of this application turns on the `surface-blur` and `shadow-glow` tokens the shipped themes leave without effect. |
 | Tree (`<tree>`) | **Migrated** | `demo/tree-demo.view.xml` - a tree over the `tl.demo.projectManagement` model (scopes, milestones, tickets) exercising selection vs. activation, multi-selection gestures, and following the model: `observed-types` plus a `parents` expression let the toolbar's create (dialog and dialog-less), detach and delete commands change the tree in place - the new object is revealed and selected, a removed one loses its node, and the opened subtrees stay open. |
+| Table Excel export + file download | **Migrated** | **Attributes** → *Table*: `<export>` on the table (with `export="false"` on the contact columns and an `<export-renderer>` on the amount) offers "Export to Excel" in the panel's *Export* menu, beside "Summary by priority", a workbook built by a TL-Script `excelFile(...)` and handed to the browser by `<download/>`. **Attributes** → *Editable table*: the same `<export>` on a `row-edit` table, exporting the edited values. |
 | Green-field table filtering | **Migrated** | Per-column `RegexpOptionsFilter` (facets) and model/script-defined `ScriptedFilter` (over `demo.filter:LongRange`) folded into the **Attributes** table. |
 
 ## Folded out (deliberately not reproduced as standalone demos)
@@ -54,7 +55,7 @@ implemented in the current deliverable.
 |------|---------|-------|
 | Security permission matrix (`SecurityMatrixElement`) | **Defer** | Reusable from `com.top_logic.layout.view/views/admin/permissions.view.xml`. |
 | BPE (business process) | **Defer** | `tl-bpe-app`. |
-| Reporting / office (Word/Excel/PowerPoint export) | **Defer** | `tl-reporting`, `tl-reporting-office`. |
+| Reporting / office (Word/PowerPoint export, report templates) | **Defer** | `tl-reporting`, `tl-reporting-office`. The Excel export of tables is migrated (see above). |
 | Search | **Defer** | `tl-search-*`. |
 | Mail folders | **Defer** | `tl-mail`. |
 | Import / export (CSV / Excel importers) | **Defer** | `tl-importer`. |

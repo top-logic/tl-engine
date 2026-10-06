@@ -8,7 +8,9 @@
 	selectedFindings and selectedRules channels and its two marks to the selectedInternal and
 	selectedWithoutSecurity channels (the module and findings columns start hidden, the table being
 	grouped by module). Those channels are written again whenever the rows are, so the detail
-	describes the analysis the table shows.
+	describes the analysis the table shows. The header of the group of a module can be selected,
+	too: the module is written to the selectedModule channel then, and the channels of a type are
+	empty.
 	
 	The detail side holds two panels, one above the other: the findings of the selected type, and
 	the rules in effect for it. Each is a panel of its own because the rule table is a filling
@@ -16,9 +18,9 @@
 	
 	The commands of the findings panel edit the definition: "Role parent…" and "Role rule…" open a
 	dialog editing a rule of the selected type, and "Access rights…" one editing the grants, the
-	marks and the access parent the application sets for
-	it. The overflow clique holds the access rights dialog for the module of the selected type and
-	the two marks that exempt a type from the check ("Mark internal") or from access control
+	marks and the access parent the application sets for it. "Module access rights…" is offered
+	while a module is selected and opens that dialog for the module. The overflow clique holds the
+	two marks that exempt a type from the check ("Mark internal") or from access control
 	("Without access control"), each asking for confirmation with the selected type named - which is
 	what the selectedType channel carries. Each mark is a pair of commands, one setting and one
 	dropping it, of which the one applying to the selected type is visible: the mark channels
@@ -49,6 +51,7 @@
 		<channel name="selectedFindings"/>
 		<channel name="selectedRules"/>
 		<channel name="selectedRuleEntry"/>
+		<channel name="selectedModule"/>
 		<channel name="pending"/>
 	</channels>
 	<split-panel
@@ -107,6 +110,7 @@
 						input="rows"
 						selected-findings="selectedFindings"
 						selected-internal="selectedInternal"
+						selected-module="selectedModule"
 						selected-rules="selectedRules"
 						selected-type="selectedType"
 						selected-without-security="selectedWithoutSecurity"
@@ -221,9 +225,8 @@
 										</open-dialog>
 									</generic-command>
 									<generic-command
-										clique="more"
 										image="css:bi bi-shield-shaded"
-										input="selection"
+										input="selectedModule"
 										placement="TOOLBAR"
 									>
 										<label>
@@ -231,11 +234,11 @@
 											<de>Zugriffsrechte des Moduls…</de>
 										</label>
 										<tooltip>
-											<en>Edits the rights the application grants roles on all types of the module of the selected type, and the marks of the module. The changes are stored in the application configuration and take effect with "Apply configuration".</en>
-											<de>Bearbeitet die Rechte, die die Anwendung Rollen an allen Typen des Moduls des ausgewählten Typs gewährt, sowie die Kennzeichnungen des Moduls. Die Änderungen werden in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
+											<en>Edits the rights the application grants roles on all types of the selected module, and the marks of the module. The changes are stored in the application configuration and take effect with "Apply configuration".</en>
+											<de>Bearbeitet die Rechte, die die Anwendung Rollen an allen Typen des ausgewählten Moduls gewährt, sowie die Kennzeichnungen des Moduls. Die Änderungen werden in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
 										</tooltip>
 										<executability>
-											<null-input-disabled/>
+											<visible-if expr="module -> $module != null"/>
 										</executability>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="EDIT_MODULE_ACCESS_RIGHTS"

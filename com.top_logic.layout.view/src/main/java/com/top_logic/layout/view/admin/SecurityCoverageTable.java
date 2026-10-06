@@ -50,12 +50,14 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnType;
+import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
 import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.ContainerRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
+import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableViewState;
@@ -88,6 +90,12 @@ import com.top_logic.util.Resources;
  * the {@link Config#getSelectedRules() rules in effect}, all cleared when the selection is empty. The channels are pushed again once the rows
  * were replaced, so the detail of the row that stays selected describes the analysis the table now
  * shows.
+ * </p>
+ *
+ * <p>
+ * The header of the group of a module can be selected as well: it stands for the module, which is
+ * written to the {@link Config#getSelectedModule() module channel} for the commands acting on a
+ * whole module, while the channels describing a type are empty.
  * </p>
  *
  * @implNote The rows come from {@link SecurityCoverageCheck#analyze()}; a row is keyed by the
@@ -197,6 +205,9 @@ public class SecurityCoverageTable implements UIElement {
 		/** Configuration name for {@link #getSelectedRules()}. */
 		String SELECTED_RULES = "selected-rules";
 
+		/** Configuration name for {@link #getSelectedModule()}. */
+		String SELECTED_MODULE = "selected-module";
+
 		@Override
 		@ClassDefault(SecurityCoverageTable.class)
 		Class<? extends UIElement> getImplementationClass();
@@ -271,6 +282,16 @@ public class SecurityCoverageTable implements UIElement {
 		@Nullable
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelectedRules();
+
+		/**
+		 * Channel the selected module is written to, when the user selects the header of the group
+		 * of a module rather than a type; <code>null</code> otherwise. The channels describing a
+		 * selected type are empty while a module is selected.
+		 */
+		@Name(SELECTED_MODULE)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getSelectedModule();
 	}
 
 	private final ChannelRef _inputRef;
@@ -287,6 +308,8 @@ public class SecurityCoverageTable implements UIElement {
 
 	private final ChannelRef _selectedRulesRef;
 
+	private final ChannelRef _selectedModuleRef;
+
 	/**
 	 * Creates a new {@link SecurityCoverageTable} from configuration.
 	 */
@@ -298,6 +321,7 @@ public class SecurityCoverageTable implements UIElement {
 		_selectedInternalRef = config.getSelectedInternal();
 		_selectedWithoutSecurityRef = config.getSelectedWithoutSecurity();
 		_selectedFindingsRef = config.getSelectedFindings();
+		_selectedModuleRef = config.getSelectedModule();
 		_selectedRulesRef = config.getSelectedRules();
 	}
 
@@ -329,6 +353,8 @@ public class SecurityCoverageTable implements UIElement {
 		initialState.setGrouping(new GroupSpec(List.of(COLUMN_MODULE)));
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState);
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
+		// The header of the group of a module stands for the module, for the commands acting on it.
+		control.setGroupsSelectable(true);
 
 		Detail detail = new Detail(
 			_selectionRef == null ? null : context.resolveChannel(_selectionRef),
@@ -336,12 +362,13 @@ public class SecurityCoverageTable implements UIElement {
 			_selectedInternalRef == null ? null : context.resolveChannel(_selectedInternalRef),
 			_selectedWithoutSecurityRef == null ? null : context.resolveChannel(_selectedWithoutSecurityRef),
 			_selectedFindingsRef == null ? null : context.resolveChannel(_selectedFindingsRef),
-			_selectedRulesRef == null ? null : context.resolveChannel(_selectedRulesRef));
+			_selectedRulesRef == null ? null : context.resolveChannel(_selectedRulesRef),
+			_selectedModuleRef == null ? null : context.resolveChannel(_selectedModuleRef));
 		if (detail.isBound()) {
 			control.addSelectionListener(keys -> {
 				Object key = keys.size() == 1 ? keys.iterator().next() : null;
 				detail.setKey(key);
-				detail.show(key == null ? null : rowByKey.get(key));
+				detail.show(key, rowByKey);
 			});
 		}
 
@@ -355,7 +382,7 @@ public class SecurityCoverageTable implements UIElement {
 				if (detail.isBound()) {
 					// The rows are fresh instances, so the display of the row that stays selected
 					// would otherwise keep describing the analysis that was replaced.
-					detail.show(rowByKey.get(detail.getKey()));
+					detail.show(detail.getKey(), rowByKey);
 				}
 			};
 			dataChannel.addListener(listener);
@@ -387,6 +414,8 @@ public class SecurityCoverageTable implements UIElement {
 
 		private final ViewChannel _rules;
 
+		private final ViewChannel _module;
+
 		private Object _key;
 
 		/**
@@ -394,13 +423,14 @@ public class SecurityCoverageTable implements UIElement {
 		 * <code>null</code> where the configuration names none.
 		 */
 		Detail(ViewChannel selection, ViewChannel type, ViewChannel internal, ViewChannel withoutSecurity,
-				ViewChannel findings, ViewChannel rules) {
+				ViewChannel findings, ViewChannel rules, ViewChannel module) {
 			_selection = selection;
 			_type = type;
 			_internal = internal;
 			_withoutSecurity = withoutSecurity;
 			_findings = findings;
 			_rules = rules;
+			_module = module;
 		}
 
 		/**
@@ -408,7 +438,7 @@ public class SecurityCoverageTable implements UIElement {
 		 */
 		boolean isBound() {
 			return _selection != null || _type != null || _internal != null || _withoutSecurity != null
-				|| _findings != null || _rules != null;
+				|| _findings != null || _rules != null || _module != null;
 		}
 
 		/**
@@ -426,10 +456,22 @@ public class SecurityCoverageTable implements UIElement {
 		}
 
 		/**
+		 * Writes what the row with the given key is described by to the bound channels: a type, or
+		 * the module whose group header is selected; clearing them all for <code>null</code>.
+		 */
+		void show(Object key, Map<Object, TypeCoverage> rowByKey) {
+			TLModule module = moduleOf(key);
+			show(module != null || key == null ? null : rowByKey.get(key));
+			if (_module != null) {
+				_module.set(module);
+			}
+		}
+
+		/**
 		 * Writes what the given row is described by to the bound channels, clearing them all for
 		 * <code>null</code>.
 		 */
-		void show(TypeCoverage row) {
+		private void show(TypeCoverage row) {
 			if (_selection != null) {
 				_selection.set(row);
 			}
@@ -449,6 +491,19 @@ public class SecurityCoverageTable implements UIElement {
 				_rules.set(row == null ? List.of() : ruleEntries(row));
 			}
 		}
+	}
+
+	/**
+	 * The module the given selection key stands for: the module of a selected group header, the
+	 * table being grouped by module; <code>null</code> for the key of a type, or of a group of
+	 * another column.
+	 */
+	static TLModule moduleOf(Object key) {
+		if (key instanceof GroupKey group && group.values().size() == 1
+			&& group.values().get(0) instanceof TLModule module) {
+			return module;
+		}
+		return null;
 	}
 
 	/**

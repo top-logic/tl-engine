@@ -112,6 +112,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_TYPE_SELECTED;
 
 	/**
+	 * @en Please select the module to edit the access definition of.
+	 */
+	public static ResKey ERROR_NO_MODULE_SELECTED;
+
+	/**
 	 * @en There is no rule to work on.
 	 */
 	public static ResKey ERROR_NO_RULE_SELECTED;

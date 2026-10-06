@@ -32,6 +32,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModule;
 import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
@@ -117,7 +118,7 @@ public class SecurityDefinitionAction implements ViewAction {
 		/** Fetch the access rights of the selected type for editing. */
 		EDIT_ACCESS_RIGHTS,
 
-		/** Fetch the access rights of the module of the selected type for editing. */
+		/** Fetch the access rights of the selected module for editing. */
 		EDIT_MODULE_ACCESS_RIGHTS,
 
 		/** Store the edited access rights. */
@@ -197,7 +198,7 @@ public class SecurityDefinitionAction implements ViewAction {
 			case REMOVE_ROLE_PARENT_RULE -> removeRoleParentRule(ruleId(input));
 			case REMOVE_ROLE_RULE -> removeRoleRule(ruleId(input));
 			case EDIT_ACCESS_RIGHTS -> editAccessRights(coverage(context, input));
-			case EDIT_MODULE_ACCESS_RIGHTS -> editModuleAccessRights(coverage(context, input));
+			case EDIT_MODULE_ACCESS_RIGHTS -> editModuleAccessRights(module(input));
 			case SAVE_ACCESS_RIGHTS -> saveAccessRights(accessRights(input));
 			case MARK_INTERNAL -> setInternal(coverage(context, input), true);
 			case UNMARK_INTERNAL -> setInternal(coverage(context, input), false);
@@ -353,8 +354,8 @@ public class SecurityDefinitionAction implements ViewAction {
 	 * type do.
 	 * </p>
 	 */
-	private Object editModuleAccessRights(TypeCoverage coverage) {
-		return load(() -> editor().editableAccessRights(coverage.type().getModule()));
+	private Object editModuleAccessRights(TLModule module) {
+		return load(() -> editor().editableAccessRights(module));
 	}
 
 	/**
@@ -430,6 +431,19 @@ public class SecurityDefinitionAction implements ViewAction {
 	 * The analyzed type to work on: the input where it is one, the value of the configured
 	 * selection channel otherwise.
 	 */
+	/**
+	 * The module to edit, given as input: the selected module, or the module of a selected type.
+	 */
+	private static TLModule module(Object input) {
+		if (input instanceof TLModule module) {
+			return module;
+		}
+		if (input instanceof TypeCoverage coverage) {
+			return coverage.type().getModule();
+		}
+		throw new TopLogicException(I18NConstants.ERROR_NO_MODULE_SELECTED);
+	}
+
 	private TypeCoverage coverage(ReactContext context, Object input) {
 		if (input instanceof TypeCoverage coverage) {
 			return coverage;

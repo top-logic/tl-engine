@@ -199,24 +199,48 @@ public class TreeRowSource<N, R> implements RowSource<R> {
 		Comparator<N> nodeOrder = order == null ? null : Comparator.comparing(_structure::businessObject, order);
 		boolean filterActive = predicate != null;
 
-		List<Row<R>> displayed = new ArrayList<>();
-		for (N root : sortedSiblings(_structure.roots(), nodeOrder)) {
-			visit(root, 0, displayed, predicate, nodeOrder, filterActive);
+		_displayed = rows(predicate, nodeOrder, filterActive, false);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The descendants of a collapsed node follow it, as those of an expanded one do. Of a tree that
+	 * is not {@link TreeStructure#isFinite() finite} only the displayed nodes are answered, since
+	 * its complete node set cannot be enumerated.
+	 * </p>
+	 */
+	@Override
+	public List<Row<R>> allRows() {
+		if (!_structure.isFinite()) {
+			return List.copyOf(_displayed);
 		}
-		_displayed = displayed;
+		Predicate<R> predicate = ColumnLogic.predicate(_filter, _byName);
+		Comparator<R> order = ColumnLogic.comparator(_sort, _byName);
+		Comparator<N> nodeOrder = order == null ? null : Comparator.comparing(_structure::businessObject, order);
+		return rows(predicate, nodeOrder, predicate != null, true);
+	}
+
+	private List<Row<R>> rows(Predicate<R> predicate, Comparator<N> nodeOrder, boolean filterActive, boolean all) {
+		List<Row<R>> result = new ArrayList<>();
+		for (N root : sortedSiblings(_structure.roots(), nodeOrder)) {
+			visit(root, 0, result, predicate, nodeOrder, filterActive, all);
+		}
+		return result;
 	}
 
 	private void visit(N node, int depth, List<Row<R>> out, Predicate<R> predicate, Comparator<N> nodeOrder,
-			boolean filterActive) {
+			boolean filterActive, boolean all) {
 		if (predicate != null && !isVisible(node, predicate)) {
 			return;
 		}
 		boolean leaf = _structure.isLeaf(node);
 		boolean expanded = !leaf && (filterActive || _expanded.contains(node));
 		out.add(new TreeRow<>(node, _structure.businessObject(node), depth, !leaf, expanded));
-		if (expanded) {
+		if (expanded || (all && !leaf)) {
 			for (N child : sortedSiblings(_structure.children(node), nodeOrder)) {
-				visit(child, depth + 1, out, predicate, nodeOrder, filterActive);
+				visit(child, depth + 1, out, predicate, nodeOrder, filterActive, all);
 			}
 		}
 	}

@@ -5,6 +5,8 @@
  */
 package test.com.top_logic.tool.export.tableview;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -14,6 +16,7 @@ import java.util.List;
 
 import junit.framework.Test;
 
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -23,6 +26,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.PaneInformation;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
@@ -38,12 +42,14 @@ import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SortSpec;
+import com.top_logic.table.TreeStructure;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.filter.TextFilterState;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.DelegatingColumn;
 import com.top_logic.table.impl.ListRowSource;
+import com.top_logic.table.impl.TreeRowSource;
 import com.top_logic.tool.export.AbstractExcelCellRenderer;
 import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.tool.export.tableview.ExportMonitor;
@@ -178,13 +184,10 @@ public class TestTableViewExcelExport extends BasicTestCase {
 			// The cell value of the column.
 		}
 		List<Column<Ticket, ?>> columns = new ArrayList<>();
-		columns.add(new DelegatingColumn<>(DefaultColumn.<Ticket, Carrier> builder("effort",
-			t -> new Carrier(t.effort(), t)).label(ResKey.text("Effort")).build()) {
-			@Override
-			public Object exportValue(Ticket row) {
-				return value(row).effort();
-			}
-		});
+		columns.add(DefaultColumn.<Ticket, Carrier> builder("effort", t -> new Carrier(t.effort(), t))
+			.label(ResKey.text("Effort"))
+			.exportValue(Carrier::effort)
+			.build());
 		DefaultTableView<Ticket> view = DefaultTableView.create(columns, new ListRowSource<>(tickets(), columns));
 
 		Sheet sheet = sheet(export(), view);
@@ -289,7 +292,7 @@ public class TestTableViewExcelExport extends BasicTestCase {
 	public void testLegacyFormat() throws IOException {
 		DefaultTableView<Ticket> view = view();
 		TableViewExcelExport export = export();
-		BinaryData data = export.write(export.snapshot(view), "tickets.xls", ExportMonitor.NONE);
+		BinaryData data = export.write(export.snapshot(view), "tickets.xls", ExportMonitor.NONE).data();
 
 		assertEquals("tickets.xls", data.getName());
 		try (InputStream in = data.getStream(); Workbook workbook = WorkbookFactory.create(in)) {
@@ -304,10 +307,10 @@ public class TestTableViewExcelExport extends BasicTestCase {
 	public void testSnapshot() throws IOException {
 		DefaultTableView<Ticket> view = view();
 		TableViewExcelExport export = export();
-		Snapshot<Ticket> snapshot = export.snapshot(view);
+		Snapshot snapshot = export.snapshot(view);
 		view.filter("name", TextFilterState.contains("Login"));
 
-		BinaryData data = export.write(snapshot, "tickets", ExportMonitor.NONE);
+		BinaryData data = export.write(snapshot, "tickets", ExportMonitor.NONE).data();
 
 		assertEquals("tickets.xlsx", data.getName());
 		assertEquals(5, snapshot.rowCount());
@@ -347,8 +350,162 @@ public class TestTableViewExcelExport extends BasicTestCase {
 		assertEquals(List.of(1, 2, 3), reported);
 	}
 
-	private static Sheet sheet(TableViewExcelExport export, DefaultTableView<Ticket> view) throws IOException {
-		BinaryData data = export.write(export.snapshot(view), "tickets", ExportMonitor.NONE);
+	/**
+	 * Decides the format by the template when there is one, and makes the name say it: a dot inside
+	 * the name is no extension, and an extension contradicting the template is replaced.
+	 */
+	public void testTemplateDecidesFormat() throws IOException {
+		DefaultTableView<Ticket> view = view();
+
+		ExportFileCheck legacy = write(export().setTemplate(template(new HSSFWorkbook())), view, "Tickets v1.2");
+		assertEquals("Tickets v1.2.xls", legacy.name());
+		assertTrue(legacy.workbook() instanceof HSSFWorkbook);
+
+		ExportFileCheck current = write(export().setTemplate(template(new XSSFWorkbook())), view, "Tickets.xls");
+		assertEquals("Tickets.xlsx", current.name());
+		assertTrue(current.workbook() instanceof XSSFWorkbook);
+	}
+
+	/**
+	 * Recognizes an Excel extension ignoring its case.
+	 */
+	public void testExtensionIgnoresCase() throws IOException {
+		DefaultTableView<Ticket> view = view();
+
+		ExportFileCheck legacy = write(export(), view, "Report.XLS");
+		assertEquals("Report.XLS", legacy.name());
+		assertTrue(legacy.workbook() instanceof HSSFWorkbook);
+
+		assertEquals("Report.XLSX", write(export(), view, "Report.XLSX").name());
+		assertEquals("TL 8.0 Demo.xlsx", write(export(), view, "TL 8.0 Demo").name());
+	}
+
+	/**
+	 * Reads the cell values when the snapshot is taken: what changes in the rows afterwards - while
+	 * a background export writes - does not reach the file.
+	 */
+	public void testValuesReadAtSnapshot() throws IOException {
+		class Counter {
+			int _value = 1;
+		}
+		List<Counter> counters = List.of(new Counter(), new Counter());
+		List<Column<Counter, ?>> columns = List.of(
+			DefaultColumn.<Counter, Integer> builder("value", c -> c._value).label(ResKey.text("Value")).build());
+		DefaultTableView<Counter> view = DefaultTableView.create(columns, new ListRowSource<>(counters, columns));
+		TableViewExcelExport export = export();
+		Snapshot snapshot = export.snapshot(view);
+		counters.forEach(c -> c._value = 99);
+
+		try (InputStream in = export.write(snapshot, "values", ExportMonitor.NONE).data().getStream();
+				Workbook workbook = WorkbookFactory.create(in)) {
+			assertEquals(1.0, workbook.getSheetAt(0).getRow(1).getCell(0).getNumericCellValue());
+			assertEquals(1.0, workbook.getSheetAt(0).getRow(2).getCell(0).getNumericCellValue());
+		}
+	}
+
+	/**
+	 * Asks a renderer for its custom context once per column, not once per cell.
+	 */
+	public void testCustomContextPerColumn() throws IOException {
+		int[] contexts = { 0 };
+		ExcelCellRenderer counting = new AbstractExcelCellRenderer() {
+			@Override
+			public Object newCustomContext(com.top_logic.layout.table.TableModel model,
+					com.top_logic.layout.table.model.Column modelColumn) {
+				return Integer.valueOf(++contexts[0]);
+			}
+
+			@Override
+			protected ExcelValue renderValue(RenderContext context, Object cellValue, int excelRow,
+					int excelColumn) {
+				return new ExcelValue(excelRow, excelColumn, "ctx " + context.getCustomContext());
+			}
+		};
+		TableViewExcelExport export = new TableViewExcelExport(column -> column.equals("name") ? counting : null);
+
+		Sheet sheet = sheet(export, view());
+
+		assertEquals("One context for the one column of five rows.", 1, contexts[0]);
+		assertEquals("ctx 1", text(sheet, 5, 0));
+	}
+
+	/**
+	 * Writes the descendants of a collapsed tree node as rows the outline hides, at their depth -
+	 * nothing is left out for being collapsed.
+	 */
+	public void testCollapsedTreeNodes() throws IOException {
+		record Node(String name, List<Node> children) {
+			// Test fixture.
+		}
+		Node a1 = new Node("A1", List.of(new Node("A1a", List.of())));
+		Node a = new Node("A", List.of(a1, new Node("A2", List.of())));
+		Node b = new Node("B", List.of(new Node("B1", List.of())));
+		TreeStructure<Node, Node> structure = new TreeStructure<>() {
+			@Override
+			public List<Node> roots() {
+				return List.of(a, b);
+			}
+
+			@Override
+			public List<Node> children(Node node) {
+				return node.children();
+			}
+
+			@Override
+			public boolean isLeaf(Node node) {
+				return node.children().isEmpty();
+			}
+
+			@Override
+			public Node businessObject(Node node) {
+				return node;
+			}
+		};
+		List<Column<Node, ?>> columns = List.of(
+			DefaultColumn.<Node, String> builder("name", Node::name).label(ResKey.text("Name")).build());
+		DefaultTableView<Node> view = DefaultTableView.create(columns, new TreeRowSource<>(structure, columns));
+		// Only A is expanded: A1 and B are collapsed, A1a and B1 not displayed.
+		view.setExpanded(a, true);
+		assertEquals(4, view.rowCount());
+
+		for (boolean streaming : new boolean[] { true, false }) {
+			Sheet sheet = sheet(export().setStreaming(streaming), view);
+
+			assertEquals(List.of("A", "A1", "A1a", "A2", "B", "B1"),
+				List.of(text(sheet, 1, 0), text(sheet, 2, 0), text(sheet, 3, 0), text(sheet, 4, 0),
+					text(sheet, 5, 0), text(sheet, 6, 0)));
+			int[] levels = { 0, 1, 2, 1, 0, 1 };
+			boolean[] hidden = { false, false, true, false, false, true };
+			for (int n = 0; n < levels.length; n++) {
+				assertEquals("Level of row " + (n + 1), levels[n], sheet.getRow(n + 1).getOutlineLevel());
+				assertEquals("Hidden row " + (n + 1), hidden[n], sheet.getRow(n + 1).getZeroHeight());
+			}
+		}
+	}
+
+	private record ExportFileCheck(String name, Workbook workbook) {
+		// Test fixture.
+	}
+
+	private static ExportFileCheck write(TableViewExcelExport export, DefaultTableView<Ticket> view, String name)
+			throws IOException {
+		BinaryData data = export.write(export.snapshot(view), name, ExportMonitor.NONE).data();
+		try (InputStream in = data.getStream()) {
+			return new ExportFileCheck(data.getName(), WorkbookFactory.create(in));
+		}
+	}
+
+	private static TableViewExcelExport.Template template(Workbook workbook) throws IOException {
+		workbook.createSheet("Template");
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		workbook.write(buffer);
+		workbook.close();
+		byte[] content = buffer.toByteArray();
+		return () -> new ByteArrayInputStream(content);
+	}
+
+	private static Sheet sheet(TableViewExcelExport export, DefaultTableView<?> view) throws IOException {
+		BinaryData data = export.write(export.snapshot(view), "tickets", ExportMonitor.NONE).data();
 		try (InputStream in = data.getStream()) {
 			return WorkbookFactory.create(in).getSheetAt(0);
 		}

@@ -80,6 +80,9 @@ public class ListRowSource<R> implements RowSource<R> {
 
 	private List<Row<R>> _displayed;
 
+	/** The filtered and sorted business objects the {@link #_displayed} rows are built from. */
+	private List<R> _rows = List.of();
+
 	/**
 	 * Creates a {@link ListRowSource} using object identity as the row key.
 	 *
@@ -153,6 +156,18 @@ public class ListRowSource<R> implements RowSource<R> {
 	 * filter and the collapsed groups display of them.
 	 * </p>
 	 */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The members of a collapsed group follow its header, as those of an expanded one do.
+	 * </p>
+	 */
+	@Override
+	public List<Row<R>> allRows() {
+		return _grouping.columns().isEmpty() ? List.copyOf(_displayed) : groupedRows(_rows, true);
+	}
+
 	@Override
 	public Set<Object> containedKeys(Collection<?> keys) {
 		Set<Object> result = new LinkedHashSet<>();
@@ -277,7 +292,8 @@ public class ListRowSource<R> implements RowSource<R> {
 		if (order != null) {
 			rows.sort(order);
 		}
-		_displayed = _grouping.columns().isEmpty() ? flatRows(rows) : groupedRows(rows);
+		_rows = rows;
+		_displayed = _grouping.columns().isEmpty() ? flatRows(rows) : groupedRows(rows, false);
 	}
 
 	private List<Row<R>> flatRows(List<R> rows) {
@@ -299,7 +315,7 @@ public class ListRowSource<R> implements RowSource<R> {
 	 * in. The rows within a bucket keep the order of the sorted input.
 	 * </p>
 	 */
-	private List<Row<R>> groupedRows(List<R> rows) {
+	private List<Row<R>> groupedRows(List<R> rows, boolean all) {
 		Column<R, ?> groupColumn = _byName.get(_grouping.columns().get(0));
 		Map<Object, List<R>> buckets = new LinkedHashMap<>();
 		for (R row : rows) {
@@ -317,7 +333,7 @@ public class ListRowSource<R> implements RowSource<R> {
 			Group<R> group = new SimpleGroup<>(key, members);
 			boolean expanded = !_collapsed.contains(key);
 			displayed.add(new GroupRow<>(group, 0, expanded));
-			if (expanded) {
+			if (expanded || all) {
 				for (R member : members) {
 					displayed.add(new DataRow<>(_keyOf.apply(member), member, 1));
 				}

@@ -70,6 +70,35 @@ public class POIUtil {
 	 */
 	public static final String XLS_SUFFIX = ".xls";
 
+	/**
+	 * The given file name, ending in the given Excel extension.
+	 *
+	 * <p>
+	 * A name already ending in that extension - compared ignoring case, so {@code Report.XLSX} is
+	 * an Excel workbook as well - is kept. A name ending in the other Excel extension gets it
+	 * replaced, so the name never claims a format the file is not written in; any other name gets
+	 * the extension appended, a dot inside it ({@code Tickets v1.2}) being part of the name.
+	 * </p>
+	 *
+	 * @param name
+	 *        The file name.
+	 * @param suffix
+	 *        {@link #XLSX_SUFFIX} or {@link #XLS_SUFFIX}.
+	 */
+	public static String withExcelExtension(String name, String suffix) {
+		String lower = name.toLowerCase(Locale.ROOT);
+		if (lower.endsWith(suffix)) {
+			return name;
+		}
+		if (lower.endsWith(XLSX_SUFFIX)) {
+			return name.substring(0, name.length() - XLSX_SUFFIX.length()) + suffix;
+		}
+		if (lower.endsWith(XLS_SUFFIX)) {
+			return name.substring(0, name.length() - XLS_SUFFIX.length()) + suffix;
+		}
+		return name + suffix;
+	}
+
 	/* ---------------------------------------------------------------------- * Static Attributes
 	 * ---------------------------------------------------------------------- */
 

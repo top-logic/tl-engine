@@ -46,6 +46,21 @@ public interface RowSource<R> {
 	List<Row<R>> window(int from, int to);
 
 	/**
+	 * All rows of this source in display order, as if every group and every tree node were
+	 * expanded - the rows a collapsed group or node hides included.
+	 *
+	 * <p>
+	 * Sort and filter apply as for the {@link #window(int, int) displayed rows}, and every row keeps
+	 * its own {@link Row#expanded() expansion state}, so a consumer that needs the whole data - an
+	 * export - can tell which rows the display currently hides. The default is the displayed rows;
+	 * a source whose rows cannot all be enumerated (an infinite tree) answers those as well.
+	 * </p>
+	 */
+	default List<Row<R>> allRows() {
+		return window(0, size());
+	}
+
+	/**
 	 * The given row keys that belong to a data row of this source, in the order they are given.
 	 *
 	 * <p>

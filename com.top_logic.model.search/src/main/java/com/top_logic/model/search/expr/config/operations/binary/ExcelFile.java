@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -33,6 +32,7 @@ import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import com.top_logic.base.office.POIUtil;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
@@ -70,9 +70,6 @@ public class ExcelFile extends GenericMethod {
 	 * Sheet content property keys
 	 */
 	private static final String PROP_SHEET_NAME = "name";
-
-	/** The extension of the file format written. */
-	private static final String XLSX_EXTENSION = ".xlsx";
 	private static final String PROP_SHEET_CONTENT = "content";
 	private static final String PROP_COL_WIDTHS = "colWidths";
 	private static final String PROP_ROW_HEIGHTS = "rowHeights";
@@ -1016,18 +1013,7 @@ public class ExcelFile extends GenericMethod {
 			new ByteArrayInputStream(data),
 			data.length,
 			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-			withExtension(fileName));
-	}
-
-	/**
-	 * The given name, ending in the extension of the format written, so that a file saved under it
-	 * is recognized as Excel workbook.
-	 */
-	private static String withExtension(String fileName) {
-		if (fileName.toLowerCase(Locale.ROOT).endsWith(XLSX_EXTENSION)) {
-			return fileName;
-		}
-		return fileName + XLSX_EXTENSION;
+			POIUtil.withExcelExtension(fileName, POIUtil.XLSX_SUFFIX));
 	}
 
 	/**

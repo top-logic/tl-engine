@@ -24,22 +24,32 @@ import com.top_logic.tool.export.ExcelCellRenderer.RenderContext;
  */
 final class ViewRenderContext implements RenderContext {
 
-	private final Object _value;
-
-	private final int _modelRow;
-
-	private final int _excelRow;
-
-	private final int _excelColumn;
-
 	private final Object _customContext;
 
-	ViewRenderContext(Object value, int modelRow, int excelRow, int excelColumn, Object customContext) {
+	private Object _value;
+
+	private int _modelRow;
+
+	private int _excelRow;
+
+	private int _excelColumn;
+
+	/**
+	 * Creates the context of one exported column, {@link #update(Object, int, int, int) moved} to
+	 * every cell of it in turn.
+	 */
+	ViewRenderContext(Object customContext) {
+		_customContext = customContext;
+	}
+
+	/**
+	 * Moves this context to the given cell.
+	 */
+	void update(Object value, int modelRow, int excelRow, int excelColumn) {
 		_value = value;
 		_modelRow = modelRow;
 		_excelRow = excelRow;
 		_excelColumn = excelColumn;
-		_customContext = customContext;
 	}
 
 	@Override

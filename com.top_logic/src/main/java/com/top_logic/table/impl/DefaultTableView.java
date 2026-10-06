@@ -476,6 +476,11 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	@Override
+	public List<Row<R>> allRows() {
+		return _source.allRows();
+	}
+
+	@Override
 	public Set<Object> containedKeys(Collection<?> keys) {
 		return _source.containedKeys(keys);
 	}

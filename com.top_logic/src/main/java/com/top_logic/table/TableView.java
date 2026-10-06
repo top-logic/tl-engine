@@ -83,6 +83,14 @@ public interface TableView<R> {
 	List<Row<R>> rows(int from, int to);
 
 	/**
+	 * All rows of this table in display order, the ones collapsed groups and tree nodes hide
+	 * included.
+	 *
+	 * @see RowSource#allRows()
+	 */
+	List<Row<R>> allRows();
+
+	/**
 	 * The given row keys that belong to a data row of this table, whether that row is displayed or
 	 * hidden by a filter, a collapsed group or a collapsed tree node.
 	 *

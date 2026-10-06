@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Function;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -55,16 +56,16 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * The structure of the table is kept as an outline of the sheet: a group header row is written as a
- * bold row heading its members, which are grouped below it - all of them, the members of a group
- * the user has collapsed as rows the outline hides - and a tree node is grouped below its parent at
- * the depth it is displayed in.
+ * bold row heading its members, which are grouped below it, and a tree node is grouped below its
+ * parent at its depth. Nothing is left out for being collapsed: the rows a collapsed group or tree
+ * node hides are written as rows the outline hides (see {@link TableView#allRows()}).
  * </p>
  *
  * <p>
- * An export is made in two steps: {@link #snapshot(TableView)} takes what is to be exported from
- * the table, in the request that asks for the export, and {@link #write(Snapshot, String,
- * ExportMonitor)} writes it, which may be done on another thread while the user goes on working
- * with the table.
+ * An export is made in two steps: {@link #snapshot(TableView)} reads everything that is exported -
+ * columns, rows and every cell value - from the table, in the request that asks for the export, and
+ * {@link #write(Snapshot, String, ExportMonitor)} writes it into the workbook, which may be done on
+ * another thread while the user goes on working with the table: it touches no row object.
  * </p>
  */
 public class TableViewExcelExport {
@@ -173,17 +174,19 @@ public class TableViewExcelExport {
 	 * Takes what is to be exported from the given table.
 	 *
 	 * <p>
-	 * Called in the request asking for the export: the columns, the rows and the header labels are
-	 * taken as the table displays them at that moment, so a later change of the table does not
-	 * change the export. The cell values are read by {@link #write(Snapshot, String, ExportMonitor)}.
+	 * Called in the request asking for the export: the columns, the rows, the header labels and
+	 * every cell value are read from the table as it displays them at that moment - including the
+	 * values of rows being edited - so that the writing, possibly on another thread, touches no row
+	 * object and a later change of the table does not change the export.
 	 * </p>
 	 *
 	 * @param view
 	 *        The table to export.
 	 * @return Everything {@link #write(Snapshot, String, ExportMonitor)} needs.
 	 */
-	public <R> Snapshot<R> snapshot(TableView<R> view) {
-		List<ExportColumn<R>> columns = new ArrayList<>();
+	public <R> Snapshot snapshot(TableView<R> view) {
+		List<Column<R, ?>> definitions = new ArrayList<>();
+		List<ExportColumn> columns = new ArrayList<>();
 		int frozen = 0;
 		int frozenDisplayed = view.frozenColumnCount();
 		int index = 0;
@@ -194,7 +197,11 @@ public class TableViewExcelExport {
 				if (renderer == null) {
 					renderer = DefaultExcelCellRenderer.INSTANCE;
 				}
-				columns.add(new ExportColumn<>(column, label(columnView.label()), columnView.width(), renderer));
+				definitions.add(column);
+				// The custom context is the renderer's per-column state, created once per column as
+				// the export of a classic table does.
+				columns.add(new ExportColumn(label(columnView.label()), columnView.width(), renderer,
+					renderer.newCustomContext(null, null)));
 				if (index < frozenDisplayed) {
 					frozen++;
 				}
@@ -202,40 +209,50 @@ public class TableViewExcelExport {
 			index++;
 		}
 
-		List<ExportRow<R>> rows = new ArrayList<>();
-		int rowCount = view.rowCount();
-		for (com.top_logic.table.Row<R> row : view.rows(0, rowCount)) {
+		List<ExportRow> rows = new ArrayList<>();
+		// Depth of the collapsed row whose subtree is currently being written hidden, MAX_VALUE
+		// outside of such a subtree.
+		int collapsedDepth = Integer.MAX_VALUE;
+		for (com.top_logic.table.Row<R> row : view.allRows()) {
+			int depth = row.depth();
+			boolean hidden = depth > collapsedDepth;
+			if (!hidden) {
+				collapsedDepth = Integer.MAX_VALUE;
+			}
+			boolean collapsed = row.expandable() && !row.expanded();
+			if (collapsed && !hidden) {
+				collapsedDepth = depth;
+			}
 			switch (row.kind()) {
 				case DATA:
-					rows.add(ExportRow.data(row.data(), row.depth(), false));
+					rows.add(new ExportRow(values(definitions, row.data()), false, depth, hidden, collapsed));
 					break;
 				case GROUP_HEADER:
-					rows.add(ExportRow.group(groupCells(view, row, columns), row.depth(), !row.expanded()));
-					if (!row.expanded()) {
-						// The members of a collapsed group are not displayed, but they belong to the
-						// data: they are exported as rows the outline hides.
-						for (R member : row.group().members()) {
-							rows.add(ExportRow.data(member, row.depth() + 1, true));
-						}
-					}
-					break;
 				case AGGREGATE:
-					rows.add(ExportRow.group(groupCells(view, row, columns), row.depth(), false));
+					rows.add(new ExportRow(groupCells(view, row, definitions), true, depth, hidden, collapsed));
 					break;
 			}
 		}
-		return new Snapshot<>(columns, rows, frozen);
+		return new Snapshot(columns, rows, frozen);
+	}
+
+	private static <R> List<Object> values(List<Column<R, ?>> columns, R data) {
+		List<Object> result = new ArrayList<>(columns.size());
+		for (Column<R, ?> column : columns) {
+			result.add(column.exportValue(data));
+		}
+		return result;
 	}
 
 	/**
 	 * The texts of a group header or aggregation row: what the table displays in its cells, with
 	 * the group's value and size in the first exported column.
 	 */
-	private static <R> List<String> groupCells(TableView<R> view, com.top_logic.table.Row<R> row,
-			List<ExportColumn<R>> columns) {
-		List<String> result = new ArrayList<>(columns.size());
-		for (ExportColumn<R> column : columns) {
-			result.add(text(view.cell(row, column.column().name())));
+	private static <R> List<Object> groupCells(TableView<R> view, com.top_logic.table.Row<R> row,
+			List<Column<R, ?>> columns) {
+		List<Object> result = new ArrayList<>(columns.size());
+		for (Column<R, ?> column : columns) {
+			result.add(text(view.cell(row, column.name())));
 		}
 		if (row.kind() == RowKind.GROUP_HEADER && !result.isEmpty()) {
 			result.set(0, groupLabel(view, row.group()));
@@ -294,45 +311,50 @@ public class TableViewExcelExport {
 	/**
 	 * Writes the given snapshot into a workbook.
 	 *
+	 * <p>
+	 * The format is decided in one place, and the file name is made to say it: with a
+	 * {@link #setTemplate(Template) template}, the format of the template; otherwise the legacy
+	 * format for a name ending in {@value POIUtil#XLS_SUFFIX} and the current one for any other
+	 * name. The name then ends in the extension of that format, compared ignoring case.
+	 * </p>
+	 *
 	 * @param snapshot
 	 *        What {@link #snapshot(TableView)} took from the table.
 	 * @param downloadName
-	 *        The file name of the result. A name ending in {@value POIUtil#XLS_SUFFIX} produces the
-	 *        legacy Excel format, every other name is completed to end in
-	 *        {@value POIUtil#XLSX_SUFFIX}.
+	 *        The file name of the result, see above for its extension.
 	 * @param monitor
 	 *        What the progress is reported to.
-	 * @return The workbook as download.
+	 * @return The workbook, written to a temporary file the caller discards once it is delivered.
 	 */
-	public <R> BinaryData write(Snapshot<R> snapshot, String downloadName, ExportMonitor monitor)
-			throws IOException {
-		String name = downloadName;
-		boolean legacy = name.endsWith(POIUtil.XLS_SUFFIX);
-		if (!legacy && !name.endsWith(POIUtil.XLSX_SUFFIX)) {
-			name += POIUtil.XLSX_SUFFIX;
-		}
+	public ExportFile write(Snapshot snapshot, String downloadName, ExportMonitor monitor) throws IOException {
+		Workbook workbook = createWorkbook(downloadName);
+		String name = POIUtil.withExcelExtension(downloadName,
+			workbook instanceof HSSFWorkbook ? POIUtil.XLS_SUFFIX : POIUtil.XLSX_SUFFIX);
 
-		Workbook workbook = createWorkbook(legacy);
 		ExcelWriter writer = new ExcelWriter(workbook);
 		writer.setAutoFit(_autoFit);
 		String sheetName = sheetName(workbook);
 		writer.newTable(sheetName);
 
-		List<ExportColumn<R>> columns = snapshot.columns();
+		List<ExportColumn> columns = snapshot.columns();
 		writeHeader(writer, columns);
+		List<ViewRenderContext> contexts = new ArrayList<>(columns.size());
+		for (ExportColumn column : columns) {
+			contexts.add(new ViewRenderContext(column.customContext()));
+		}
 
-		List<ExportRow<R>> rows = snapshot.rows();
+		List<ExportRow> rows = snapshot.rows();
 		int total = rows.size();
 		boolean outline = false;
 		int done = 0;
-		for (ExportRow<R> row : rows) {
+		for (ExportRow row : rows) {
 			monitor.checkCancelled();
 			writer.newRow();
 			int excelRow = writer.currentRow();
-			if (row.isData()) {
-				writeData(writer, columns, row.data(), done, excelRow);
+			if (row.header()) {
+				writeGroup(writer, row.cells());
 			} else {
-				writeGroup(writer, row.groupCells());
+				writeData(writer, columns, contexts, row.cells(), done, excelRow);
 			}
 			if (row.level() > 0 || row.collapsed()) {
 				outline = true;
@@ -360,16 +382,20 @@ public class TableViewExcelExport {
 		}
 
 		File file = writer.close();
-		return BinaryDataFactory.createBinaryDataWithName(file, name);
+		return new ExportFile(BinaryDataFactory.createBinaryDataWithName(file, name), file);
 	}
 
-	private Workbook createWorkbook(boolean legacy) throws IOException {
+	/**
+	 * The workbook to write into: a copy of the template, else a new one in the format the name
+	 * asks for.
+	 */
+	private Workbook createWorkbook(String downloadName) throws IOException {
 		if (_template != null) {
 			try (InputStream in = _template.open()) {
 				return WorkbookFactory.create(in);
 			}
 		}
-		if (legacy) {
+		if (downloadName.toLowerCase(Locale.ROOT).endsWith(POIUtil.XLS_SUFFIX)) {
 			return new HSSFWorkbook();
 		}
 		return _streaming ? new SXSSFWorkbook(10) : new XSSFWorkbook();
@@ -387,8 +413,8 @@ public class TableViewExcelExport {
 		return WorkbookUtil.createSafeSheetName(label(I18NConstants.DEFAULT_SHEET_NAME));
 	}
 
-	private static <R> void writeHeader(ExcelWriter writer, List<ExportColumn<R>> columns) throws IOException {
-		for (ExportColumn<R> column : columns) {
+	private static void writeHeader(ExcelWriter writer, List<ExportColumn> columns) throws IOException {
+		for (ExportColumn column : columns) {
 			ExcelValue header = new ExcelValue(0, 0, column.label());
 			header.setBold();
 			header.setFontSize(HEADER_FONT_SIZE);
@@ -396,21 +422,17 @@ public class TableViewExcelExport {
 		}
 	}
 
-	private static <R> void writeData(ExcelWriter writer, List<ExportColumn<R>> columns, R data, int modelRow,
-			int excelRow) throws IOException {
-		int excelColumn = 0;
-		for (ExportColumn<R> column : columns) {
-			ExcelCellRenderer renderer = column.renderer();
-			Object value = column.column().exportValue(data);
-			ViewRenderContext context =
-				new ViewRenderContext(value, modelRow, excelRow, excelColumn, renderer.newCustomContext(null, null));
-			writer.write(renderer.renderCell(context));
-			excelColumn++;
+	private static void writeData(ExcelWriter writer, List<ExportColumn> columns, List<ViewRenderContext> contexts,
+			List<Object> values, int modelRow, int excelRow) throws IOException {
+		for (int n = 0, size = columns.size(); n < size; n++) {
+			ViewRenderContext context = contexts.get(n);
+			context.update(values.get(n), modelRow, excelRow, n);
+			writer.write(columns.get(n).renderer().renderCell(context));
 		}
 	}
 
-	private static void writeGroup(ExcelWriter writer, List<String> cells) throws IOException {
-		for (String text : cells) {
+	private static void writeGroup(ExcelWriter writer, List<Object> cells) throws IOException {
+		for (Object text : cells) {
 			ExcelValue cell = new ExcelValue(0, 0, text);
 			cell.setBold();
 			writer.write(cell);
@@ -418,15 +440,15 @@ public class TableViewExcelExport {
 	}
 
 	/**
-	 * Puts the row into the outline of the sheet: at its level, hidden when it is a member of a
-	 * collapsed group, and marked as collapsed when it is the header of one.
+	 * Puts the row into the outline of the sheet: at its level, hidden when it lies in a collapsed
+	 * group or tree node, and marked as collapsed when it heads one.
 	 *
 	 * <p>
 	 * The row is still in memory when this is done, also for a streaming workbook that keeps only
 	 * the last rows: the outline is set row by row, immediately after a row is written.
 	 * </p>
 	 */
-	private static void applyOutline(Sheet sheet, int excelRow, ExportRow<?> row) {
+	private static void applyOutline(Sheet sheet, int excelRow, ExportRow row) {
 		for (int n = 0, levels = Math.min(row.level(), MAX_OUTLINE_LEVEL); n < levels; n++) {
 			sheet.groupRow(excelRow, excelRow);
 		}
@@ -462,6 +484,25 @@ public class TableViewExcelExport {
 	}
 
 	/**
+	 * A written workbook.
+	 *
+	 * @param data
+	 *        The workbook under its download name.
+	 * @param file
+	 *        The temporary file holding it.
+	 */
+	public record ExportFile(BinaryData data, File file) {
+
+		/**
+		 * Deletes the temporary file, once the workbook is delivered or given up.
+		 */
+		public void discard() {
+			file.delete();
+		}
+
+	}
+
+	/**
 	 * What {@link TableViewExcelExport#snapshot(TableView)} takes from a table.
 	 *
 	 * @param columns
@@ -471,7 +512,7 @@ public class TableViewExcelExport {
 	 * @param frozenColumns
 	 *        How many of the leading exported columns are frozen in the table.
 	 */
-	public record Snapshot<R>(List<ExportColumn<R>> columns, List<ExportRow<R>> rows, int frozenColumns) {
+	public record Snapshot(List<ExportColumn> columns, List<ExportRow> rows, int frozenColumns) {
 
 		/**
 		 * The number of rows the export writes below the header.
@@ -485,50 +526,36 @@ public class TableViewExcelExport {
 	/**
 	 * A column of an export.
 	 *
-	 * @param column
-	 *        The column definition, reading the value of a row.
 	 * @param label
 	 *        The header text.
 	 * @param width
 	 *        The width in pixels the column is displayed with.
 	 * @param renderer
 	 *        How a value of the column is written into a cell.
+	 * @param customContext
+	 *        The renderer's {@link ExcelCellRenderer#newCustomContext(com.top_logic.layout.table.TableModel,
+	 *        com.top_logic.layout.table.model.Column) context} of this column.
 	 */
-	public record ExportColumn<R>(Column<R, ?> column, String label, int width, ExcelCellRenderer renderer) {
+	public record ExportColumn(String label, int width, ExcelCellRenderer renderer, Object customContext) {
 		// Pure value type.
 	}
 
 	/**
-	 * A row of an export: a data row, or a group header written from the texts the table displays.
+	 * A row of an export.
 	 *
-	 * @param data
-	 *        The business object of a data row, {@code null} for a group header.
-	 * @param groupCells
-	 *        The cell texts of a group header, {@code null} for a data row.
+	 * @param cells
+	 *        The cell values of a data row, or the cell texts of a group header, in column order.
+	 * @param header
+	 *        Whether the row is a group header (or aggregation row), written from texts.
 	 * @param level
 	 *        The outline level of the row.
 	 * @param hidden
-	 *        Whether the row is a member of a collapsed group.
+	 *        Whether the row lies in a collapsed group or tree node.
 	 * @param collapsed
-	 *        Whether the row heads a collapsed group.
+	 *        Whether the row heads a collapsed group or tree node.
 	 */
-	public record ExportRow<R>(R data, List<String> groupCells, int level, boolean hidden, boolean collapsed) {
-
-		static <R> ExportRow<R> data(R data, int level, boolean hidden) {
-			return new ExportRow<>(data, null, level, hidden, false);
-		}
-
-		static <R> ExportRow<R> group(List<String> cells, int level, boolean collapsed) {
-			return new ExportRow<>(null, cells, level, false, collapsed);
-		}
-
-		/**
-		 * Whether this is a data row, rather than a group header.
-		 */
-		public boolean isData() {
-			return groupCells == null;
-		}
-
+	public record ExportRow(List<Object> cells, boolean header, int level, boolean hidden, boolean collapsed) {
+		// Pure value type.
 	}
 
 }

@@ -74,7 +74,7 @@ public class DynamicColumns implements ColumnDeclaration {
 	 * Configuration of a {@link DynamicColumns}.
 	 */
 	@TagName(TAG_NAME)
-	public interface Config extends ColumnDeclaration.Config<DynamicColumns>, Inputs {
+	public interface Config extends ColumnDeclaration.Config<DynamicColumns>, Inputs, ColumnExportConfig {
 
 		/** Configuration name for {@link #getName()}. */
 		String NAME = "name";
@@ -290,6 +290,8 @@ public class DynamicColumns implements ColumnDeclaration {
 
 	private final boolean _readonly;
 
+	private final ColumnExport _export;
+
 	private final Function<ColumnResolution, DynamicColumnSet> _columns;
 
 	/**
@@ -302,14 +304,17 @@ public class DynamicColumns implements ColumnDeclaration {
 	 *        type of its values derives.
 	 * @param readonly
 	 *        Whether the columns stay read-only while the rows of the table are edited.
+	 * @param export
+	 *        How every column takes part in an export of the table.
 	 * @param columns
 	 *        The columns to show, computed for what the table resolves its columns against.
 	 */
-	public DynamicColumns(String name, int width, boolean readonly,
+	public DynamicColumns(String name, int width, boolean readonly, ColumnExport export,
 			Function<ColumnResolution, DynamicColumnSet> columns) {
 		_name = name;
 		_width = width;
 		_readonly = readonly;
+		_export = export;
 		_columns = columns;
 	}
 
@@ -318,7 +323,8 @@ public class DynamicColumns implements ColumnDeclaration {
 	 */
 	@CalledByReflection
 	public DynamicColumns(InstantiationContext context, Config config) {
-		this(config.getName(), config.getWidth(), config.getReadonly(), scripted(context, config));
+		this(config.getName(), config.getWidth(), config.getReadonly(), ColumnExport.of(context, config),
+			scripted(context, config));
 	}
 
 	/**
@@ -370,7 +376,7 @@ public class DynamicColumns implements ColumnDeclaration {
 				: ValueCellEditing.forUpdate(type, value, set.update(column), set.canUpdate(column));
 
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
-				scope.context(), ColumnBinding.TYPE_DERIVED, _width, editing, set.aggregate(column), false));
+				scope.context(), ColumnBinding.TYPE_DERIVED, _width, editing, set.aggregate(column), false, _export));
 		}
 		return result;
 	}

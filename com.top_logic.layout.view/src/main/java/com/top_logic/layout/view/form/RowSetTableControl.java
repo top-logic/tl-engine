@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -69,6 +70,7 @@ import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.util.Resources;
 
 /**
@@ -176,6 +178,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private List<ViewChannel> _inputChannels = List.of();
 
 	private TableViewControl<TLObject> _tableControl;
+
+	/**
+	 * The export renderers of the data columns currently displayed, by column name.
+	 *
+	 * @see #getExportRenderers()
+	 */
+	private Map<String, ExcelCellRenderer> _exportRenderers = Map.of();
 
 	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
 	private TableViewControl.ActivationHandler<TLObject> _activationHandler;
@@ -467,6 +476,19 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * The renderers writing the values of the data columns into an Excel export, by column name; a
+	 * column without an entry is written by the default renderer.
+	 *
+	 * <p>
+	 * Follows the columns the table is currently built with, which differ between view and edit
+	 * mode.
+	 * </p>
+	 */
+	public Map<String, ExcelCellRenderer> getExportRenderers() {
+		return _exportRenderers;
+	}
+
+	/**
 	 * The inner {@link TableViewControl}, or {@code null} if not yet initialized.
 	 */
 	public TableViewControl<TLObject> getTableControl() {
@@ -539,6 +561,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		List<ColumnSetup> setups = new ArrayList<>(_columns.size());
 		columns.addAll(createDataColumns(editMode, setups));
 		_hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
+		_exportRenderers = ColumnDeclarations.exportRenderers(setups);
 
 		// Removal action column (edit mode only, when the binding supports removal, last, no header
 		// label - see detail column).
@@ -956,6 +979,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		@Override
 		public int defaultWidth() {
 			return _inner.defaultWidth();
+		}
+
+		@Override
+		public boolean exportable() {
+			return _inner.exportable();
 		}
 
 		@Override

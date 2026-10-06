@@ -17,6 +17,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.table.ColumnBinding;
+import com.top_logic.layout.view.table.ColumnExport;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnType;
@@ -83,6 +84,25 @@ public class TestColumnSetup extends TestCase {
 
 		assertTrue("A column declaring no aggregate leaves its group cell empty.",
 			computed(null).buildColumn().aggregate().isEmpty());
+	}
+
+	/**
+	 * Tests that a column whose declaration says {@code export="false"} is displayed but left out
+	 * of exports, while every other column is exported.
+	 */
+	public void testExport() {
+		ColumnSetup exported = exported(ColumnExport.DEFAULT);
+		ColumnSetup suppressed = exported(new ColumnExport(false, null));
+
+		assertTrue(exported.buildColumn().exportable());
+		assertFalse(suppressed.buildColumn().exportable());
+		assertTrue("A column kept out of exports is still offered for display.",
+			suppressed.buildColumn().selectable());
+	}
+
+	private static ColumnSetup exported(ColumnExport export) {
+		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, null, false, export);
 	}
 
 	/**

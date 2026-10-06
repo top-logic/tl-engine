@@ -318,8 +318,9 @@ public class SSEUpdateQueue {
 	 *
 	 * @param data
 	 *        The file to deliver.
+	 * @return The key the client fetches the file under, see {@link #takeDownload(String)}.
 	 */
-	public void deliverDownload(BinaryData data) {
+	public String deliverDownload(BinaryData data) {
 		String key = UUID.randomUUID().toString();
 		_downloads.put(key, data);
 		String windowName = _windowName == null ? "" : _windowName;
@@ -327,6 +328,7 @@ public class SSEUpdateQueue {
 			.setUrl("react-api/download?windowName=" + URLEncoder.encode(windowName, StandardCharsets.UTF_8)
 				+ "&key=" + key)
 			.setFileName(data.getName()));
+		return key;
 	}
 
 	/**

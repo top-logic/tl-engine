@@ -341,7 +341,8 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			setup.width(),
 			null,
 			aggregate == null ? null : rows -> aggregate.apply(objects(rows, navigation)),
-			setup.hiddenByDefault());
+			setup.hiddenByDefault(),
+			setup.export());
 	}
 
 	/** The name of an embedded column, under the path leading to the object it shows. */

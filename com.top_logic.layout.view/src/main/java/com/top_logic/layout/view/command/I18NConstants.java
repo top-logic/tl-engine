@@ -105,6 +105,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_DIALOG_COMMAND_RUNNING;
 
+	/**
+	 * @en There is no file to download.
+	 */
+	public static ResKey ERROR_NOTHING_TO_DOWNLOAD;
+
+	/**
+	 * @en "{0}" is no file and cannot be downloaded.
+	 */
+	public static ResKey1 ERROR_NOT_A_FILE__VALUE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

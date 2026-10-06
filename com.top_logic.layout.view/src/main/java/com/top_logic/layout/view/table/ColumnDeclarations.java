@@ -7,8 +7,10 @@ package com.top_logic.layout.view.table;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.config.InstantiationContext;
@@ -18,6 +20,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
+import com.top_logic.tool.export.ExcelCellRenderer;
 
 /**
  * What a list of {@link ColumnDeclaration}s amounts to: the columns it contributes, their names,
@@ -129,6 +132,27 @@ public class ColumnDeclarations {
 		for (ColumnSetup setup : setups) {
 			if (setup.hiddenByDefault()) {
 				result.add(setup.name());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The renderers writing the values of the given columns into an Excel export, by column name.
+	 *
+	 * <p>
+	 * A column whose type brings no renderer of its own, and whose declaration configures none, has
+	 * no entry: it is written by the default renderer.
+	 * </p>
+	 *
+	 * @see ColumnSetup#exportRenderer()
+	 */
+	public static Map<String, ExcelCellRenderer> exportRenderers(List<ColumnSetup> setups) {
+		Map<String, ExcelCellRenderer> result = new HashMap<>();
+		for (ColumnSetup setup : setups) {
+			ExcelCellRenderer renderer = setup.exportRenderer();
+			if (renderer != null) {
+				result.put(setup.name(), renderer);
 			}
 		}
 		return result;

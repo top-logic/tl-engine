@@ -41,7 +41,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 * @param <I>
 	 *        The declaration this configuration describes.
 	 */
-	public interface Config<I extends AbstractColumnDeclaration> extends ColumnDeclaration.Config<I> {
+	public interface Config<I extends AbstractColumnDeclaration> extends ColumnDeclaration.Config<I>, ColumnExportConfig {
 
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
@@ -139,6 +139,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final boolean _hiddenByDefault;
 
+	private final ColumnExport _export;
+
 	/**
 	 * Creates an {@link AbstractColumnDeclaration} from configuration.
 	 *
@@ -155,6 +157,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_width = config.getWidth();
 		_aggregate = aggregate(config.getAggregate());
 		_hiddenByDefault = false;
+		_export = ColumnExport.of(context, config);
 	}
 
 	/**
@@ -175,6 +178,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_width = 0;
 		_aggregate = null;
 		_hiddenByDefault = hiddenByDefault;
+		_export = ColumnExport.DEFAULT;
 	}
 
 	/**
@@ -218,7 +222,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	protected final ColumnSetup setup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			CellEditing editing, ColumnResolution scope) {
 		return new ColumnSetup(name, _label != null ? _label : label, type, value, scope.context(), _binding,
-			_width, _readonly ? null : editing, _aggregate, _hiddenByDefault);
+			_width, _readonly ? null : editing, _aggregate, _hiddenByDefault, _export);
 	}
 
 	/**

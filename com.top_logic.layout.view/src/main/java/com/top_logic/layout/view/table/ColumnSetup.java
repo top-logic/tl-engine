@@ -14,6 +14,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.Column;
 import com.top_logic.table.impl.DelegatingColumn;
+import com.top_logic.tool.export.ExcelCellRenderer;
 
 /**
  * The resolved descriptor of one table column, passed to its {@link ColumnBinding} to build the
@@ -48,6 +49,8 @@ import com.top_logic.table.impl.DelegatingColumn;
  *        {@code null} for a column that leaves its group cell empty.
  * @param hiddenByDefault
  *        Whether the column is displayed only once the user selects it in the column selection.
+ * @param export
+ *        How the column takes part in an export of the table.
  */
 public record ColumnSetup(
 		String name,
@@ -59,7 +62,20 @@ public record ColumnSetup(
 		int width,
 		CellEditing editing,
 		Function<List<Object>, Object> aggregate,
-		boolean hiddenByDefault) {
+		boolean hiddenByDefault,
+		ColumnExport export) {
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column that is exported by the renderer of its type.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, boolean hiddenByDefault) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, hiddenByDefault,
+			ColumnExport.DEFAULT);
+	}
 
 	/**
 	 * Creates a {@link ColumnSetup} of a column that is displayed from the start, is not edited and
@@ -74,8 +90,9 @@ public record ColumnSetup(
 
 	/**
 	 * The runtime column for this descriptor: the column its {@link #binding()} builds, displayed
-	 * in the {@link #width() configured width} when there is one, and showing the
-	 * {@link #aggregate()} in the header row of a group when it computes one.
+	 * in the {@link #width() configured width} when there is one, showing the
+	 * {@link #aggregate()} in the header row of a group when it computes one, and left out of
+	 * exports when its {@link #export()} says so.
 	 */
 	public Column<Object, ?> buildColumn() {
 		return decorate(binding().createColumn(this));
@@ -101,7 +118,20 @@ public record ColumnSetup(
 				}
 			};
 		}
+		if (!export.exported()) {
+			result = DelegatingColumn.notExportable(result);
+		}
 		return result;
+	}
+
+	/**
+	 * The renderer writing a value of this column into a cell of an Excel export, {@code null} for
+	 * the default.
+	 *
+	 * @see ColumnExport#rendererFor(ColumnType)
+	 */
+	public ExcelCellRenderer exportRenderer() {
+		return export.rendererFor(type);
 	}
 
 }

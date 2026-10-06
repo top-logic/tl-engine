@@ -421,16 +421,21 @@ public final class ConfigValidation {
 	 *
 	 * <p>
 	 * {@link PropertyKind#ITEM} is excluded for the second of those two reasons alone: it has no
-	 * {@link ConfigFieldModel} either. A monomorphic ITEM property renders as a
-	 * {@link com.top_logic.layout.react.control.layout.ReactFormGroupControl group} - and, while
-	 * its value is {@code null}, as nothing at all, since {@link ConfigEditorControl} builds no
-	 * group for an absent nested item; a polymorphic one renders a {@link PolymorphicItemControl}
+	 * {@link ConfigFieldModel} either. A monomorphic ITEM property renders as a list of at most one
+	 * entry, see {@link ConfigItemValue}; a polymorphic one renders a {@link PolymorphicItemControl}
 	 * whose type selector is a {@link com.top_logic.layout.form.model.SimpleSelectFieldModel},
 	 * which the {@link ConfigFieldIndex} does not carry. Flagging a mandatory ITEM would therefore
 	 * refuse Apply pointing at nothing the user can fill in - the very trap this rule exists to
 	 * avoid. The polymorphic case still tells the reader that a value is expected:
 	 * {@link PolymorphicItemControl} passes {@link PropertyDescriptor#isMandatory()} on to its type
 	 * selector, so the mandatory marker is on screen even though nothing enforces it here.
+	 * </p>
+	 *
+	 * <p>
+	 * An ITEM property written as text, like a TL-Script expression, is the exception:
+	 * {@link ConfigEditorControl} edits an item that
+	 * {@link ConfigControlService#hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form}
+	 * in a field of its own, so an unset mandatory one is checked like any other field.
 	 * </p>
 	 *
 	 * <p>
@@ -450,8 +455,14 @@ public final class ConfigValidation {
 			case LIST:
 			case ARRAY:
 			case MAP:
-			case ITEM:
 				return false;
+
+			case ITEM:
+				if (!ConfigControlService.hasTextForm(item, property)) {
+					return false;
+				}
+				// An item written as text is edited in a field of its own, see ConfigEditorControl.
+				break;
 
 			default:
 				break;

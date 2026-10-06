@@ -15,9 +15,11 @@ import junit.framework.TestCase;
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -41,6 +43,53 @@ import com.top_logic.layout.configedit.ConfigValidation.Warning;
  * Tests for {@link ConfigValidation}.
  */
 public class TestConfigValidation extends TestCase {
+
+	/** A configuration item written as text, like a TL-Script expression. */
+	@Format(WrittenFormat.class)
+	public interface Written extends ConfigurationItem {
+
+		/** Property name for {@link #getSource()}. */
+		String SOURCE = "source";
+
+		@Name(SOURCE)
+		String getSource();
+
+		void setSource(String value);
+	}
+
+	/** The format of {@link Written}. */
+	public static class WrittenFormat extends AbstractConfigurationValueProvider<Written> {
+
+		/** Creates a {@link WrittenFormat}. */
+		public WrittenFormat() {
+			super(Written.class);
+		}
+
+		@Override
+		protected Written getValueNonEmpty(String propertyName, CharSequence propertyValue) {
+			Written result = TypedConfiguration.newConfigItem(Written.class);
+			result.setSource(propertyValue.toString());
+			return result;
+		}
+
+		@Override
+		protected String getSpecificationNonNull(Written configValue) {
+			return configValue.getSource();
+		}
+	}
+
+	/** A configuration with a mandatory ITEM property written as text. */
+	public interface MandatoryWrittenConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getWritten()}. */
+		String WRITTEN = "written";
+
+		@Name(WRITTEN)
+		@Mandatory
+		Written getWritten();
+
+		void setWritten(Written value);
+	}
 
 	/**
 	 * Test configuration interface with a mandatory property.
@@ -314,6 +363,26 @@ public class TestConfigValidation extends TestCase {
 	 */
 	public void testAnUnsetMandatoryItemIsNoViolation() {
 		CollectionConfig config = TypedConfiguration.newConfigItem(CollectionConfig.class);
+
+		assertEquals(Collections.emptyList(), ConfigValidation.check(config).violations());
+	}
+
+	/**
+	 * An ITEM property written as text - a TL-Script expression, say - is edited in a field of its
+	 * own, so an unset mandatory one is a violation like any other mandatory field left empty.
+	 */
+	public void testAnUnsetMandatoryItemWrittenAsTextIsAViolation() {
+		MandatoryWrittenConfig config = TypedConfiguration.newConfigItem(MandatoryWrittenConfig.class);
+
+		List<ConfigValidation.Violation> violations = ConfigValidation.check(config).violations();
+		assertEquals(1, violations.size());
+		assertEquals(MandatoryWrittenConfig.WRITTEN, violations.get(0).property().getPropertyName());
+	}
+
+	/** And it is none once it holds a value. */
+	public void testASetMandatoryItemWrittenAsTextIsNoViolation() throws Exception {
+		MandatoryWrittenConfig config = TypedConfiguration.newConfigItem(MandatoryWrittenConfig.class);
+		config.setWritten(new WrittenFormat().getValue(MandatoryWrittenConfig.WRITTEN, "x"));
 
 		assertEquals(Collections.emptyList(), ConfigValidation.check(config).violations());
 	}

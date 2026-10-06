@@ -96,6 +96,13 @@
 						<!-- Nobody but a super-user may read this attribute. -->
 						<grant operation="Read"/>
 					</part>
+					<part name="TestViewModelAccess:Project#sponsor">
+						<!-- Only the responsible of the project may see its sponsor. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</part>
 					<part name="TestViewModelAccess:Project#rating">
 						<!-- Only the viewer of the project may rate it. -->
 						<grant

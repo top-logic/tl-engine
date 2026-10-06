@@ -40,6 +40,9 @@
 						<reference name="viewer"
 							type="tl.accounts:Person"
 						/>
+						<reference name="sponsor"
+							type="Category"
+						/>
 						<reference name="category"
 							type="Category"
 						/>

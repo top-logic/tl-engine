@@ -107,6 +107,18 @@ final class UncheckedAccessRights implements ModelAccessRights {
 	}
 
 	/**
+	 * Every type is without security here: inside an unchecked scope no object is access
+	 * controlled, so a caller asking whether a type is (e.g. before deciding by its
+	 * {@link #getAllowedRoles(TLClass, BoundCommandGroup) roles}, which are unknown here) learns that
+	 * access is granted independent of roles - consistent with the
+	 * {@link #isAllowed(Person, TLObject, BoundCommandGroup) checks}, which grant everything.
+	 */
+	@Override
+	public boolean isWithoutSecurity(TLClass type) {
+		return true;
+	}
+
+	/**
 	 * @implNote Without the security configuration, no roles are known. In contrast to the
 	 *           {@link #isAllowed(Person, TLObject, BoundCommandGroup) checks}, the empty result must
 	 *           not be mistaken for a granted access - a caller deciding access by roles cannot be

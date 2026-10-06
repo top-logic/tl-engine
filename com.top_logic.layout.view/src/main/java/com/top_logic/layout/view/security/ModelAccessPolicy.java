@@ -151,6 +151,49 @@ public final class ModelAccessPolicy {
 	}
 
 	/**
+	 * Whether the given operation on the given attribute is refused for the current user
+	 * independent of any concrete object of the given type, e.g. to decide whether a table offers a
+	 * column for the attribute at all.
+	 *
+	 * <p>
+	 * The operation is refused independent of an object when the user is restricted (see
+	 * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}), the type grants it to no role
+	 * at all, or the attribute has a grant for it listing no role (see
+	 * {@link ModelAccessRights#hasGrant(TLStructuredTypePart, BoundCommandGroup)}). A refusal is
+	 * {@link ExecutableState#NOT_EXEC_HIDDEN hidden}, like
+	 * {@link #onObject(BoundCommandGroup, TLObject, TLStructuredTypePart, DeniedDisplay)} displays it
+	 * on a concrete object. Everything else depends on the object and is
+	 * {@link ExecutableState#EXECUTABLE executable} here; it is decided per object by
+	 * {@link #onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)}.
+	 * </p>
+	 *
+	 * @param operation
+	 *        The operation on the attribute.
+	 * @param type
+	 *        The type of the objects whose attribute is accessed, {@code null} when unknown: then
+	 *        the type defining the attribute stands for it.
+	 * @param attribute
+	 *        The attribute accessed.
+	 */
+	public static ExecutableState onAttributeOfType(BoundCommandGroup operation, TLStructuredType type,
+			TLStructuredTypePart attribute) {
+		ModelAccessRights rights = ModelAccessRights.getInstance();
+		TLClass clazz = type instanceof TLClass typeClass ? typeClass
+			: attribute.getOwner() instanceof TLClass owner ? owner : null;
+		if (clazz != null && rights.isWithoutSecurity(clazz)) {
+			return ExecutableState.EXECUTABLE;
+		}
+		Boolean bypass = BoundChecker.isAllowedBypass(TLContext.currentUser(), operation);
+		if (bypass != null) {
+			return bypass.booleanValue() ? ExecutableState.EXECUTABLE : ExecutableState.NOT_EXEC_HIDDEN;
+		}
+		if (grantedToNoRole(rights, clazz, operation) || attributeGrantedToNoRole(rights, attribute, operation)) {
+			return ExecutableState.NOT_EXEC_HIDDEN;
+		}
+		return ExecutableState.EXECUTABLE;
+	}
+
+	/**
 	 * The state of editing the given object in a form: the {@link SimpleBoundCommandGroup#WRITE
 	 * write} right on the object, with the display derived from the check (see
 	 * {@link #onObject(BoundCommandGroup, TLObject, TLStructuredTypePart, DeniedDisplay)}).

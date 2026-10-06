@@ -4,6 +4,10 @@
 	A ticket as a card of the board: its name, and its status as a pill in the colour of the
 	status. The derived channels observe the ticket they are computed from, so an edit of the
 	ticket reaches the card.
+	
+	The button beside the name drills down into the ticket: it opens a dialog with the ticket and
+	its conversation. A click on the button is the button's own - it neither selects the card nor
+	starts a drag.
 -->
 <view>
 	<channels>
@@ -17,14 +21,38 @@
 			inputs="ticket"
 		/>
 	</channels>
-	<stack
-		align="start"
-		gap="compact"
-	>
-		<text
-			input="name"
-			variant="label"
-		/>
-		<text input="status"/>
+	<stack gap="compact">
+		<stack
+			align="center"
+			direction="row"
+			justify="space-between"
+		>
+			<text
+				input="name"
+				variant="label"
+			/>
+			<button
+				appearance="ghost"
+				size="small"
+			>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-box-arrow-up-right"
+					input="ticket"
+				>
+					<label>
+						<en>Details</en>
+						<de>Details</de>
+					</label>
+					<open-dialog
+						bind-input-to="ticket"
+						close-on-backdrop="true"
+						dialog-view="board/ticket-detail.view.xml"
+					/>
+				</action>
+			</button>
+		</stack>
+		<stack direction="row">
+			<text input="status"/>
+		</stack>
 	</stack>
 </view>

@@ -128,6 +128,9 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	/** Type of {@link #INTERNAL_MODULE} with an internal mark of its own. */
 	private static final String MARKED_IN_MODULE = INTERNAL_MODULE + ":MarkedInModule";
 
+	/** Type of {@link #INTERNAL_MODULE} specializing {@link #INTERNAL}. */
+	private static final String INTERNAL_SUB_IN_MODULE = INTERNAL_MODULE + ":InternalSubInModule";
+
 	/** The only type of {@link #EXCLUDED_MODULE}. */
 	private static final String IGNORED = EXCLUDED_MODULE + ":Ignored";
 
@@ -317,6 +320,11 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	public void testOwnInternalMarkWinsOverTheModule() {
 		TypeCoverage coverage = coverage(MARKED_IN_MODULE);
 		assertSame("The mark of the type's own is the one to drop.", coverage.type(), coverage.internalOrigin());
+	}
+
+	public void testMarkOfAGeneralizationWinsOverTheModule() {
+		assertSame("The origin does not depend on the order of the configuration.", coverage(INTERNAL).type(),
+			coverage(INTERNAL_SUB_IN_MODULE).internalOrigin());
 	}
 
 	public void testExcludedModuleIsNotAnalyzed() {

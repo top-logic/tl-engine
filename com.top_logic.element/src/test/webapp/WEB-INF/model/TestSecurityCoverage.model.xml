@@ -204,6 +204,13 @@
 
 				<!-- Internal by the module, and by a mark of its own. -->
 				<class name="MarkedInModule"/>
+
+				<!-- Internal by the module, and by the mark of its generalization. -->
+				<class name="InternalSubInModule">
+					<generalizations>
+						<generalization type="TestSecurityCoverage:Internal"/>
+					</generalizations>
+				</class>
 			</types>
 		</module>
 

@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import com.top_logic.base.services.InitialRolesManager;
@@ -311,6 +312,18 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	private Map<TLClass, TLModelPart> _internalTypes = new HashMap<>();
 
 	/**
+	 * The types and modules whose definition excludes them from access control, collected while
+	 * the configuration is read, see {@link #origins(Set)}.
+	 */
+	private final Set<TLModelPart> _declaredWithoutSecurity = new HashSet<>();
+
+	/**
+	 * The types and modules whose definition declares them internal, collected while the
+	 * configuration is read, see {@link #origins(Set)}.
+	 */
+	private final Set<TLModelPart> _declaredInternal = new HashSet<>();
+
+	/**
 	 * The explicitly configured access parents, inherited by the specializations of a type.
 	 * <p>
 	 * A type {@link SelfAccessParent deciding for itself} is mapped to <code>null</code>, which
@@ -357,6 +370,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			}
 		}
 
+		_typesWithoutSecurity = origins(_declaredWithoutSecurity);
+		_internalTypes = origins(_declaredInternal);
 		computeClassRights(classRules, moduleRules);
 		inheritAccessParents(explicitParents);
 	}
@@ -420,10 +435,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return;
 		}
 		if (config.isWithoutSecurity()) {
-			module.getClasses().forEach(type -> mark(_typesWithoutSecurity, type, module));
+			_declaredWithoutSecurity.add(module);
 		}
 		if (config.isInternal()) {
-			module.getClasses().forEach(type -> mark(_internalTypes, type, module));
+			_declaredInternal.add(module);
 		}
 		moduleRules.computeIfAbsent(module, unused -> new ArrayList<>()).addAll(resolveRules(context, config));
 	}
@@ -455,10 +470,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return;
 		}
 		if (config.isWithoutSecurity()) {
-			mark(_typesWithoutSecurity, clazz, clazz);
+			_declaredWithoutSecurity.add(clazz);
 		}
 		if (config.isInternal()) {
-			mark(_internalTypes, clazz, clazz);
+			_declaredInternal.add(clazz);
 		}
 		AccessParentConfig accessParent = config.getAccessParent();
 		if (accessParent != null) {
@@ -497,33 +512,59 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
-	 * Marks the given type and all its specializations, recording the part declaring the mark.
+	 * The types carrying a mark, each mapped to the part whose definition declares it.
 	 *
 	 * <p>
-	 * A type declaring the mark of its own keeps itself as origin, even if a module or a
-	 * generalization declares the mark, too: that mark is the one to drop for the type alone.
+	 * A type is marked when its own definition declares the mark, when one of its generalizations
+	 * is marked, or when the definition of its module declares it. The part reported is decided in
+	 * this order, so that it does not depend on the order of the configuration: the type itself,
+	 * whose mark is the one to drop for the type alone; the part a marked generalization reports,
+	 * the generalizations taken in their declared order; the module of the type.
 	 * </p>
 	 *
-	 * @param marked
-	 *        The marked types, each mapped to the part declaring the mark.
-	 * @param type
-	 *        The type to mark.
-	 * @param origin
-	 *        The part whose definition declares the mark.
+	 * @param declared
+	 *        The types and modules whose definition declares the mark.
 	 *
 	 * @see TypeBasedAccessRights#isWithoutSecurity()
 	 * @see TypeBasedAccessRights#isInternal()
 	 */
-	private static void mark(Map<TLClass, TLModelPart> marked, TLClass type, TLModelPart origin) {
-		TLModelPart known = marked.get(type);
-		if (known == type || (known != null && origin != type)) {
-			// Marked already, together with the specializations.
-			return;
+	private Map<TLClass, TLModelPart> origins(Set<TLModelPart> declared) {
+		Map<TLClass, TLModelPart> result = new HashMap<>();
+		if (declared.isEmpty()) {
+			return result;
 		}
-		marked.put(type, origin);
-		for (TLClass specialization : type.getSpecializations()) {
-			mark(marked, specialization, origin);
+		Map<TLClass, Optional<TLModelPart>> cache = new HashMap<>();
+		for (TLClass type : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
+			origin(type, declared, cache).ifPresent(origin -> result.put(type, origin));
 		}
+		return result;
+	}
+
+	/**
+	 * The part declaring the mark of the given type, see {@link #origins(Set)}.
+	 */
+	private static Optional<TLModelPart> origin(TLClass type, Set<TLModelPart> declared,
+			Map<TLClass, Optional<TLModelPart>> cache) {
+		Optional<TLModelPart> known = cache.get(type);
+		if (known != null) {
+			return known;
+		}
+		Optional<TLModelPart> result = Optional.empty();
+		if (declared.contains(type)) {
+			result = Optional.of(type);
+		} else {
+			for (TLClass generalization : type.getGeneralizations()) {
+				result = origin(generalization, declared, cache);
+				if (result.isPresent()) {
+					break;
+				}
+			}
+			if (result.isEmpty() && declared.contains(type.getModule())) {
+				result = Optional.of(type.getModule());
+			}
+		}
+		cache.put(type, result);
+		return result;
 	}
 
 	@Override

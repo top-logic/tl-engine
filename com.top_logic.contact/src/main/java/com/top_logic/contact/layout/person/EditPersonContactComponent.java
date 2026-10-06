@@ -136,7 +136,7 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
                             @Override
 							protected List initInstance() {
 								// No need to create sorted list, because field gets comparator.
-								return Person.all();
+								return Person.allSelectable();
                             }
                         };
 

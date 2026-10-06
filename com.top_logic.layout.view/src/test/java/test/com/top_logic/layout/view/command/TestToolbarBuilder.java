@@ -53,17 +53,26 @@ public class TestToolbarBuilder extends TestCase {
 
 	private static final String MENU_LABEL = "Menu label";
 
-	/** The cliques the toolbars of this test are built with, in display order. */
-	private static final CommandCliqueService CLIQUES = cliques(
-		clique(FIRST, ToolbarGroupDisplay.INLINE, null),
-		clique(SECOND, ToolbarGroupDisplay.INLINE, null),
-		clique(MENU, ToolbarGroupDisplay.MENU, ResKey.text(MENU_LABEL)));
+	/**
+	 * The cliques the toolbars of this test are built with, in display order.
+	 *
+	 * <p>
+	 * Built per test rather than when the class is loaded: building them needs the services the
+	 * {@link #suite()} starts, which are not running yet when the class is loaded to ask for it.
+	 * </p>
+	 */
+	private CommandCliqueService _cliques;
 
 	private ReactContext _context;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
+
+		_cliques = cliques(
+			clique(FIRST, ToolbarGroupDisplay.INLINE, null),
+			clique(SECOND, ToolbarGroupDisplay.INLINE, null),
+			clique(MENU, ToolbarGroupDisplay.MENU, ResKey.text(MENU_LABEL)));
 
 		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
@@ -94,7 +103,7 @@ public class TestToolbarBuilder extends TestCase {
 		CommandScope scope = new CommandScope(List.of(command("other", CommandPlacement.CONTEXT_MENU)));
 
 		ReactToolbarControl toolbar = ToolbarBuilder.buildOrEmpty(_context, scope,
-			CommandPlacement.BUTTON_BAR, CLIQUES, null);
+			CommandPlacement.BUTTON_BAR, _cliques, null);
 
 		assertTrue(toolbar.isEmpty());
 		assertEquals(ToolbarOverflow.LEADING, toolbar.getOverflow());
@@ -158,7 +167,7 @@ public class TestToolbarBuilder extends TestCase {
 
 	private ReactToolbarControl build(CommandModel... commands) {
 		ReactToolbarControl result = ToolbarBuilder.build(_context, new CommandScope(List.of(commands)),
-			CommandPlacement.TOOLBAR, CLIQUES, null);
+			CommandPlacement.TOOLBAR, _cliques, null);
 		assertNotNull("Commands of the requested placement yield a toolbar.", result);
 		return result;
 	}
@@ -183,7 +192,7 @@ public class TestToolbarBuilder extends TestCase {
 		CommandScope scope = new CommandScope(List.of(command("first", placement), command("second", placement)));
 
 		ReactToolbarControl result =
-			ToolbarBuilder.build(_context, scope, placement, CLIQUES, null);
+			ToolbarBuilder.build(_context, scope, placement, _cliques, null);
 		assertNotNull("Commands of the requested placement yield a toolbar.", result);
 		return result;
 	}

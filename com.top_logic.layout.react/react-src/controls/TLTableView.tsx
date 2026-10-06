@@ -275,11 +275,14 @@ function editableInRow(
 const ColumnsButton: React.FC<{
   label: string;
   inCell?: boolean;
+  /** Whether columns run on underneath the button, scrolled out of view behind it. */
+  covering?: boolean;
   onClick: (event: React.MouseEvent) => void;
-}> = ({ label, inCell, onClick }) => (
+}> = ({ label, inCell, covering, onClick }) => (
   <button
     type="button"
-    className={'tlTableView__columnsButton' + (inCell ? ' tlTableView__columnsButton--inCell' : '')}
+    className={'tlTableView__columnsButton' + (inCell ? ' tlTableView__columnsButton--inCell' : '')
+      + (covering ? ' tlTableView__columnsButton--covering' : '')}
     {...tooltipProps(label)}
     aria-label={label}
     // In a heading, the gestures of the heading itself (sorting, dragging) are none of the
@@ -312,6 +315,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const rowHeight = (state.rowHeight as number) ?? 36;
   const selectionMode = (state.selectionMode as string) ?? 'single';
   const selectedCount = (state.selectedCount as number) ?? 0;
+  /** The data rows the filter lets pass, -1 when they cannot be counted. */
+  const matchCount = (state.matchCount as number) ?? -1;
+  /**
+   * What the selection is compared with to tell whether all rows are selected: the data rows, not
+   * the displayed lines - a group header is no row that could be selected.
+   */
+  const selectableCount = matchCount >= 0 ? matchCount : totalRowCount;
   const cursorIndex = (state.cursorIndex as number) ?? -1;
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
   const treeMode = (state.treeMode as boolean) ?? false;
@@ -412,6 +422,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // therefore ends with a reserve of this width. Measured rather than assumed: it depends on the
   // platform, and it is zero for an overlay scrollbar or a table short enough not to scroll.
   const [scrollbarWidth, setScrollbarWidth] = React.useState(0);
+
+  /** Re-measures whether columns run underneath the column button, see {@link columnsCovered}. */
+  const measureCoveredRef = React.useRef<() => void>(() => {});
 
   React.useEffect(() => {
     const body = scrollContainerRef.current;
@@ -603,6 +616,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (headerRef.current && scrollContainerRef.current) {
       headerRef.current.scrollLeft = scrollContainerRef.current.scrollLeft;
     }
+    measureCoveredRef.current();
     // Debounced vertical scroll command.
     if (scrollTimeoutRef.current !== null) {
       clearTimeout(scrollTimeoutRef.current);
@@ -1028,9 +1042,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
 
   const handleSelectAll = React.useCallback(() => {
-    const allSelected = selectedCount === totalRowCount && totalRowCount > 0;
+    const allSelected = selectedCount === selectableCount && selectableCount > 0;
     sendCommand('selectAll', { selected: !allSelected });
-  }, [sendCommand, selectedCount, totalRowCount]);
+  }, [sendCommand, selectedCount, selectableCount]);
 
   // -- Expand handler --
   const handleExpand = React.useCallback((rowIndex: number, expanded: boolean, event: React.MouseEvent) => {
@@ -1232,11 +1246,40 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // end frees the funnel there, too.
   // Kept as padding rather than width: the cells live in the content box, so the reserve widens the
   // scroll range without offering the last cell space to grow into and without a sticky cell -
-  // confined to the content box - ever reaching underneath the button.
+  // confined to the content box - ever reaching underneath the button. The rows are laid out
+  // border-box, so their minimum width has to name the padding on top of the columns - a minimum
+  // of the columns' width alone holds the padding inside it, and the last column ends underneath
+  // the button again.
   const buttonReserve = columnSelect && !cogInHeaderCell ? 32 : 0;
 
-  const allSelected = selectedCount === totalRowCount && totalRowCount > 0;
-  const someSelected = selectedCount > 0 && selectedCount < totalRowCount;
+  // Whether columns run on underneath the column button: the table is wider than its header and
+  // not scrolled to its right end. The button then marks its edge, so the column cut off there
+  // reads as scrolled out of view rather than as a heading the button covers by mistake.
+  const [columnsCovered, setColumnsCovered] = React.useState(false);
+  const measureCovered = React.useCallback(() => {
+    const header = headerRef.current;
+    if (!header || buttonReserve === 0) {
+      setColumnsCovered(false);
+      return;
+    }
+    const columnsEnd = tableWidth - header.scrollLeft;
+    const covered = columnsEnd > header.clientWidth - buttonReserve + 0.5;
+    setColumnsCovered((previous) => (previous === covered ? previous : covered));
+  }, [tableWidth, buttonReserve]);
+  measureCoveredRef.current = measureCovered;
+  React.useLayoutEffect(() => {
+    measureCovered();
+    const header = headerRef.current;
+    if (!header) {
+      return;
+    }
+    const observer = new ResizeObserver(measureCovered);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, [measureCovered]);
+
+  const allSelected = selectedCount === selectableCount && selectableCount > 0;
+  const someSelected = selectedCount > 0 && !allSelected;
 
   const headerCheckboxRef = React.useCallback((el: HTMLInputElement | null) => {
     if (el) {
@@ -1376,7 +1419,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             cannot leave its row, so a row ending with the last column would hold the pinned cells
             back from that edge. The reserve is padding, which a sticky cell never enters. */}
         <div className="tlTableView__headerRow"
-          style={{ minWidth: tableWidth, paddingRight: buttonReserve + scrollbarWidth }}>
+          style={{
+            minWidth: tableWidth + buttonReserve + scrollbarWidth,
+            paddingRight: buttonReserve + scrollbarWidth,
+          }}>
           {isMulti && (
             <div className={'tlTableView__headerCell tlTableView__checkboxCell'
                 + (frozenColumnCount > 0 ? ' tlTableView__headerCell--frozen' : '')}
@@ -1534,7 +1580,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           onPointerDown={handleFrozenSplitStart}
         />
         {columnSelect && !cogInHeaderCell && (
-          <ColumnsButton label={i18n['js.table.columns']} onClick={handleOpenColumnSelect} />
+          <ColumnsButton label={i18n['js.table.columns']} covering={columnsCovered}
+            onClick={handleOpenColumnSelect} />
         )}
       </div>
 
@@ -1550,7 +1597,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             the rows reach the right edge and a cell pinned there lands on it; the reserve is
             padding, so it widens the scroll range without taking any cell along. */}
         <div style={{
-          height: totalHeight, position: 'relative', minWidth: tableWidth, paddingRight: buttonReserve,
+          height: totalHeight, position: 'relative',
+          minWidth: tableWidth + buttonReserve, paddingRight: buttonReserve,
         }}>
           {rows.map((row) => (
             <div

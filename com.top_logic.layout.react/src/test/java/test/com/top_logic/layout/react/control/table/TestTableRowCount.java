@@ -25,6 +25,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.table.ExpandArguments;
 import com.top_logic.layout.react.control.table.GroupArguments;
 import com.top_logic.layout.react.control.table.SearchArguments;
+import com.top_logic.layout.react.control.table.SelectAllArguments;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -55,6 +56,18 @@ public class TestTableRowCount extends TestCase {
 
 	/** State key of the text telling how many rows are selected. */
 	private static final String ROW_COUNT_SELECTED = "rowCountSelected";
+
+	/** State key of the number of data rows the filter lets pass. */
+	private static final String MATCH_COUNT = "matchCount";
+
+	/** State key of the number of selected rows. */
+	private static final String SELECTED_COUNT = "selectedCount";
+
+	/** State key of the number of displayed lines, group headers included. */
+	private static final String TOTAL_ROW_COUNT = "totalRowCount";
+
+	/** The client's command behind the select-all checkbox of the header. */
+	private static final String CMD_SELECT_ALL = "selectAll";
 
 	private static final Item ALPHA = new Item("alpha", "open");
 
@@ -159,6 +172,26 @@ public class TestTableRowCount extends TestCase {
 
 		_table.selectRows(List.of());
 		assertEquals("", _table.clientState(ROW_COUNT_SELECTED));
+	}
+
+	/**
+	 * Tests that selecting all rows of a grouped table selects as many rows as the client compares
+	 * the selection with: the data rows, not the displayed lines - otherwise the select-all checkbox
+	 * shows a partial selection after all rows were selected.
+	 */
+	public void testSelectAllInGroupedTableSelectsAllDataRows() {
+		_table.executeClientCommand(TableViewControl.CMD_GROUP, Map.of(GroupArguments.COLUMN, COLUMN_STATUS));
+		assertEquals("Two group headers and three rows are displayed.",
+			Integer.valueOf(5), _table.clientState(TOTAL_ROW_COUNT));
+		assertEquals(Integer.valueOf(3), _table.clientState(MATCH_COUNT));
+
+		_table.executeClientCommand(CMD_SELECT_ALL, Map.of(SelectAllArguments.SELECTED, Boolean.TRUE));
+		assertEquals("Every data row is selected, which the checkbox shows as all of them.",
+			_table.clientState(MATCH_COUNT), _table.clientState(SELECTED_COUNT));
+
+		search("mm");
+		assertEquals("The filter narrows what the selection is compared with.",
+			Integer.valueOf(1), _table.clientState(MATCH_COUNT));
 	}
 
 	/**

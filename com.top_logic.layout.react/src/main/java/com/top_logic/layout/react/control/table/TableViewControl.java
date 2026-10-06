@@ -185,6 +185,17 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String SELECTED_COUNT = "selectedCount";
 
 	/**
+	 * State key of the number of data rows the filter lets pass, {@link RowSource#UNKNOWN_COUNT}
+	 * when the rows cannot be counted.
+	 *
+	 * <p>
+	 * Unlike {@link #TOTAL_ROW_COUNT}, which counts the displayed lines, a group header is no row
+	 * here: this is what the selection is compared with to tell whether all rows are selected.
+	 * </p>
+	 */
+	private static final String MATCH_COUNT = "matchCount";
+
+	/**
 	 * State key of the text telling how many rows the table has, and how many of them its filter
 	 * lets pass; empty while the table shows no row count.
 	 */
@@ -1025,6 +1036,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		putState(ROWS, rowStates);
 		putState(SELECTED_COUNT, Integer.valueOf(_selectedKeys.size()));
 		putState(CURSOR_INDEX, Integer.valueOf(_cursorIndex));
+		putChangedState(MATCH_COUNT, Integer.valueOf(_view.matchCount()));
 		refreshRowCount();
 	}
 

@@ -233,12 +233,20 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				} else {
 					ConfigurationAccess configAccess = property.getConfigurationAccess();
 					ConfigurationItem nested = configAccess.getConfig(config.value(property));
-					if (nested != null) {
-						ConfigEditorControl nestedEditor = createNestedEditor(context, nested);
+					// A read-only form has nothing to show for an item without value; an editable
+					// one offers to create it, since the item could not be entered otherwise. The
+					// item is edited as a list of at most one entry, so that creating and removing
+					// it looks the same as for an entry of a list.
+					if (nested != null || _editable) {
+						ConfigListEditorControl itemEditor = new ConfigListEditorControl(context,
+							new ConfigItemValue(config, property), PolymorphicOptions.Choices.NONE, _index,
+							_editable, _formModel);
+						// No heading of its own: the entry of the item is headed by the property
+						// already, see ConfigItemValue#entryTitle(ConfigurationItem). The group only
+						// gives the editor the whole row.
 						ReactFormGroupControl group = new ReactFormGroupControl(
-							context, null, true, false, GroupBorder.SUBTLE, true,
-							List.of(), List.of(nestedEditor));
-						group.setHeader(createGroupHeader(context, property));
+							context, null, false, false, GroupBorder.NONE, true,
+							List.of(), List.of(itemEditor));
 						addChild(group);
 						followMode(config, property, group, null);
 					}

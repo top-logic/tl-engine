@@ -83,6 +83,28 @@ public interface ConfigCollection {
 	 */
 	boolean hasEntryWithKey(Object key);
 
+	/**
+	 * Whether the collection holds as many elements as it can, so that none can be added.
+	 */
+	default boolean isFull() {
+		return false;
+	}
+
+	/**
+	 * Whether an element may be removed from the collection.
+	 */
+	default boolean isRemovable() {
+		return true;
+	}
+
+	/**
+	 * A fixed title of the given entry, heading its group, or {@code null} to title the entry by
+	 * itself - its key, its {@link #titleProperty(ConfigurationItem) title property} or its type.
+	 */
+	default String entryTitle(ConfigurationItem entry) {
+		return null;
+	}
+
 	/** Appends the given element. */
 	void add(ConfigurationItem entry);
 

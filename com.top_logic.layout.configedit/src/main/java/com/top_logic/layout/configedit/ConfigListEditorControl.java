@@ -303,14 +303,17 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			_pending.checkKeys();
 
 			// Add button at the bottom. Not rendered at all while !_editable - the requirement is
-			// that no collection action is offered in view mode, not merely a disabled one.
-			ReactButtonControl addButton =
-				new ReactButtonControl(_context, "+ " + _value.label(),
-					ctx -> {
-						addElement();
-						return HandlerResult.DEFAULT_RESULT;
-					});
-			addChild(addButton);
+			// that no collection action is offered in view mode, not merely a disabled one - nor
+			// while the collection cannot take another element.
+			if (!_value.isFull()) {
+				ReactButtonControl addButton =
+					new ReactButtonControl(_context, "+ " + _value.label(),
+						ctx -> {
+							addElement();
+							return HandlerResult.DEFAULT_RESULT;
+						});
+				addChild(addButton);
+			}
 		}
 
 		putState("children", getChildren());
@@ -347,15 +350,17 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 				headerActions.add(moveDownButton);
 			}
 
-			ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
-				int currentIndex = _value.indexOf(item);
-				if (currentIndex >= 0) {
-					removeElement(currentIndex);
-				}
-				return HandlerResult.DEFAULT_RESULT;
-			});
-			removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
-			headerActions.add(removeButton);
+			if (_value.isRemovable()) {
+				ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
+					int currentIndex = _value.indexOf(item);
+					if (currentIndex >= 0) {
+						removeElement(currentIndex);
+					}
+					return HandlerResult.DEFAULT_RESULT;
+				});
+				removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+				headerActions.add(removeButton);
+			}
 		}
 
 		PropertyDescriptor keyProperty = _value.keyProperty(item);
@@ -788,6 +793,10 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * </p>
 	 */
 	private Label resolveElementLabel(ConfigurationItem item) {
+		String fixedTitle = _value.entryTitle(item);
+		if (fixedTitle != null) {
+			return new Label(fixedTitle, false);
+		}
 		String typeName = ConfigTagName.of(item);
 		if (isTypeKeyed(item)) {
 			// The key is the entry's own type, so the type is what it should be called - and by the

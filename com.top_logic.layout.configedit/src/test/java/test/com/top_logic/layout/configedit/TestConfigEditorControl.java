@@ -53,6 +53,7 @@ import com.top_logic.layout.configedit.FieldCollectionValue;
 import com.top_logic.layout.configedit.I18NConstants;
 import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.provider.label.ClassLabelProvider;
+import com.top_logic.layout.configedit.ConfigItemValue;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldMode;
@@ -87,6 +88,19 @@ public class TestConfigEditorControl extends TestCase {
 		String getTitle();
 
 		void setTitle(String value);
+	}
+
+	/** Configuration with a mandatory, non-polymorphic ITEM property. */
+	public interface MandatoryItemConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getInner()}. */
+		String INNER = "inner";
+
+		@Name(INNER)
+		@Mandatory
+		InnerConfig getInner();
+
+		void setInner(InnerConfig value);
 	}
 
 	/**
@@ -2048,22 +2062,95 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
-	 * Tests that a null ITEM property value is skipped (no group created).
+	 * A read-only form has nothing to show for an ITEM property without value, so it creates no
+	 * group for it.
 	 */
-	public void testNullItemPropertySkipped() {
+	public void testNullItemPropertySkippedWhenReadOnly() {
 		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
 		// inner is null by default
 
-		int childCountWithoutItem = new TestableConfigEditorControl(createTestContext(), config)
-			.getChildCount();
+		int childCountWithoutItem = readOnlyEditor(config).getChildCount();
 
 		InnerConfig inner = TypedConfiguration.newConfigItem(InnerConfig.class);
 		config.setInner(inner);
 
-		int childCountWithItem = new TestableConfigEditorControl(createTestContext(), config)
-			.getChildCount();
+		int childCountWithItem = readOnlyEditor(config).getChildCount();
 
 		assertEquals("Null ITEM should not add a child", childCountWithItem, childCountWithoutItem + 1);
+	}
+
+	/**
+	 * An editable form shows an ITEM property without value, so that its item can be created: the
+	 * group of the property is there whether the item exists or not.
+	 */
+	public void testNullItemPropertyShownWhenEditable() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		int childCountWithoutItem = new TestableConfigEditorControl(createTestContext(), config).getChildCount();
+
+		config.setInner(TypedConfiguration.newConfigItem(InnerConfig.class));
+		int childCountWithItem = new TestableConfigEditorControl(createTestContext(), config).getChildCount();
+
+		assertEquals(childCountWithItem, childCountWithoutItem);
+	}
+
+	/**
+	 * The value of an optional ITEM property is edited as a list of at most one entry: it is created
+	 * with the add button, which is gone while the entry exists, and removed by the remove action
+	 * in the header of the entry.
+	 */
+	public void testOptionalItemIsEditedAsListOfAtMostOneEntry() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		ConfigItemValue value = new ConfigItemValue(config, config.descriptor().getProperty(TestConfig.INNER));
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), value, PolymorphicOptions.Choices.NONE, null, true);
+
+		assertTrue("No entry before the item is created.", elementGroups(editor).isEmpty());
+		clickAddButton(editor);
+
+		assertNotNull("The item is created in the edited configuration.", config.getInner());
+		assertEquals(1, elementGroups(editor).size());
+		assertEquals("The entry is headed by the property, not by the technical name of its type.",
+			value.label(), value.entryTitle(config.getInner()));
+		assertEquals("The entry is headed by the property it is the value of, not by its type.",
+			value.label(), findHeaderText(elementGroups(editor).get(0)));
+		assertFalse("A second item cannot be added.", hasAddButton(editor));
+
+		ReactButtonControl remove = findHeaderButton(elementGroups(editor).get(0), "\u2715");
+		assertNotNull("The entry can be removed from its header.", remove);
+		click(remove);
+
+		assertNull("The item is dropped from the edited configuration.", config.getInner());
+		assertTrue(elementGroups(editor).isEmpty());
+		assertTrue("The item can be created again.", hasAddButton(editor));
+	}
+
+	/**
+	 * The value of a mandatory ITEM property can be edited, but not removed.
+	 */
+	public void testMandatoryItemCannotBeRemoved() {
+		MandatoryItemConfig config = TypedConfiguration.newConfigItem(MandatoryItemConfig.class);
+		config.setInner(TypedConfiguration.newConfigItem(InnerConfig.class));
+		ConfigItemValue value =
+			new ConfigItemValue(config, config.descriptor().getProperty(MandatoryItemConfig.INNER));
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), value, PolymorphicOptions.Choices.NONE, null, true);
+
+		assertEquals(1, elementGroups(editor).size());
+		assertNull(findHeaderButton(elementGroups(editor).get(0), "\u2715"));
+	}
+
+	private static boolean hasAddButton(TestableConfigListEditorControl editor) {
+		for (ReactControl child : editor.getChildrenList()) {
+			if (child instanceof ReactButtonControl) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private TestableConfigEditorControl readOnlyEditor(ConfigurationItem config) {
+		return new TestableConfigEditorControl(createTestContext(), config, Set.of(), false, new ConfigFieldIndex(),
+			false);
 	}
 
 	/**

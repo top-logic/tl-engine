@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.react.control.table;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -25,6 +26,7 @@ import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.table.ExpandArguments;
 import com.top_logic.layout.react.control.table.GroupArguments;
+import com.top_logic.layout.react.control.table.ScrollArguments;
 import com.top_logic.layout.react.control.table.SearchArguments;
 import com.top_logic.layout.react.control.table.SelectAllArguments;
 import com.top_logic.layout.react.control.table.TableViewControl;
@@ -67,6 +69,9 @@ public class TestTableRowCount extends TestCase {
 	/** State key of the number of displayed lines, group headers included. */
 	private static final String TOTAL_ROW_COUNT = "totalRowCount";
 
+	/** The client's command reporting the rows the viewport shows. */
+	private static final String CMD_SCROLL = "scroll";
+
 	/** The client's command behind the select-all checkbox of the header. */
 	private static final String CMD_SELECT_ALL = "selectAll";
 
@@ -97,6 +102,31 @@ public class TestTableRowCount extends TestCase {
 
 		Object clientState(String key) {
 			return getState(key);
+		}
+	}
+
+	/**
+	 * A view counting how often the control asks it for what the counts are computed from, so a
+	 * test can tell whether a gesture made the control compute them.
+	 */
+	private static final class CountingView extends DefaultTableView<Item> {
+
+		int _countQueries;
+
+		CountingView(List<Column<Item, ?>> columns, ListRowSource<Item> source, TableViewState state) {
+			super(columns, source, state);
+		}
+
+		@Override
+		public int matchCount() {
+			_countQueries++;
+			return super.matchCount();
+		}
+
+		@Override
+		public Set<Object> matchingKeys(Collection<?> keys) {
+			_countQueries++;
+			return super.matchingKeys(keys);
 		}
 	}
 
@@ -252,6 +282,37 @@ public class TestTableRowCount extends TestCase {
 		search("");
 		assertEquals(text(I18NConstants.TABLE_ROW_COUNT_SELECTED__COUNT.fill(3)),
 			_table.clientState(ROW_COUNT_SELECTED));
+	}
+
+	/**
+	 * Tests that scrolling computes no count - it changes neither the rows nor the selection, and
+	 * checking a large selection against the filter on every scroll event would cost a lookup per
+	 * selected row each time - while a change of the selection still does.
+	 */
+	public void testScrollingDoesNotRecount() {
+		TableViewState state = DefaultTableView.initialState(columns(), SortSpec.NONE, List.of());
+		state.setSelection(Selection.none(SelectionMode.MULTI));
+		CountingView view = new CountingView(columns(), _rows, state);
+		TestTable table = new TestTable(new DefaultReactContext("", "test", new SSEUpdateQueue(),
+			new ReactWindowRegistry("test")), view);
+		table.selectRows(List.of(ALPHA, GAMMA));
+		Object rowCount = table.clientState(ROW_COUNT);
+		Object selected = table.clientState(ROW_COUNT_SELECTED);
+
+		view._countQueries = 0;
+		for (int start = 0; start < 3; start++) {
+			table.executeClientCommand(CMD_SCROLL,
+				Map.of(ScrollArguments.START, Integer.valueOf(start), ScrollArguments.COUNT, Integer.valueOf(2)));
+		}
+		assertEquals("Scrolling computes no count.", 0, view._countQueries);
+		assertEquals(rowCount, table.clientState(ROW_COUNT));
+		assertEquals(selected, table.clientState(ROW_COUNT_SELECTED));
+
+		table.selectRows(List.of(ALPHA, BETA, GAMMA));
+		assertTrue("A change of the selection is counted.", view._countQueries > 0);
+		assertEquals(text(I18NConstants.TABLE_ROW_COUNT_SELECTED__COUNT.fill(3)),
+			table.clientState(ROW_COUNT_SELECTED));
+		assertEquals("all", table.clientState(SELECT_ALL_STATE));
 	}
 
 	/**

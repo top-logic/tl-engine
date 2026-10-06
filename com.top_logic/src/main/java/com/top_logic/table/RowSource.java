@@ -76,8 +76,8 @@ public interface RowSource<R> {
 	}
 
 	/**
-	 * The {@link Row#key() keys} of the data rows the current filter lets pass, in the order they
-	 * are displayed in.
+	 * The {@link Row#key() keys} of the data rows the current filter lets pass, in the order of the
+	 * current sort.
 	 *
 	 * <p>
 	 * These are the rows {@link #matchCount()} counts: a data row inside a collapsed group or tree

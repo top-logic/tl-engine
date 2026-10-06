@@ -81,10 +81,17 @@ public class ListRowSource<R> implements RowSource<R> {
 	private List<Row<R>> _displayed;
 
 	/**
-	 * The keys of the {@link #_elements} the {@link #_filter} lets pass, in display order, see
+	 * The {@link #_elements} the {@link #_filter} lets pass, in sort order - the list
+	 * {@link #recompute()} builds the displayed rows from anyway, kept for {@link #matchCount()} and
 	 * {@link #matchingKeys()}.
 	 */
-	private Set<Object> _matching = Set.of();
+	private List<R> _matching = List.of();
+
+	/**
+	 * The keys of {@link #_matching}, for {@link #matchingKeys(Collection)}, or {@code null} until
+	 * asked for after a {@link #recompute()}.
+	 */
+	private Set<Object> _matchingKeys;
 
 	/**
 	 * The number of {@link #_elements}, see {@link #dataCount()}.
@@ -164,14 +171,29 @@ public class ListRowSource<R> implements RowSource<R> {
 
 	@Override
 	public List<Object> matchingKeys() {
-		return List.copyOf(_matching);
+		List<Object> result = new ArrayList<>(_matching.size());
+		for (R element : _matching) {
+			result.add(_keyOf.apply(element));
+		}
+		return result;
 	}
 
 	@Override
 	public Set<Object> matchingKeys(Collection<?> keys) {
 		Set<Object> result = new LinkedHashSet<>();
+		if (keys.isEmpty()) {
+			return result;
+		}
+		Set<Object> matching = _matchingKeys;
+		if (matching == null) {
+			matching = new HashSet<>();
+			for (R element : _matching) {
+				matching.add(_keyOf.apply(element));
+			}
+			_matchingKeys = matching;
+		}
 		for (Object key : keys) {
-			if (_matching.contains(key)) {
+			if (matching.contains(key)) {
 				result.add(key);
 			}
 		}
@@ -320,11 +342,8 @@ public class ListRowSource<R> implements RowSource<R> {
 		if (order != null) {
 			rows.sort(order);
 		}
-		Set<Object> matching = new LinkedHashSet<>();
-		for (R row : rows) {
-			matching.add(_keyOf.apply(row));
-		}
-		_matching = matching;
+		_matching = rows;
+		_matchingKeys = null;
 		_dataCount = _elements.size();
 		_displayed = _grouping.columns().isEmpty() ? flatRows(rows) : groupedRows(rows);
 	}

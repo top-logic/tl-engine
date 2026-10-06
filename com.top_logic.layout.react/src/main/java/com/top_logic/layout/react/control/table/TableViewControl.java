@@ -888,6 +888,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		refreshFilterBar();
 		putState(TOTAL_ROW_COUNT, Integer.valueOf(_view.rowCount()));
 		updateViewport(_viewportStart, _viewportCount);
+		refreshSelectionCounts();
 	}
 
 	private void refreshColumns() {
@@ -1047,16 +1048,21 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		putState(ROWS, rowStates);
 		putState(SELECTED_COUNT, Integer.valueOf(_selectedKeys.size()));
 		putState(CURSOR_INDEX, Integer.valueOf(_cursorIndex));
-		refreshSelectionCounts();
 	}
 
 	/**
 	 * Pushes what the select-all checkbox shows and the texts of the row count.
 	 *
 	 * <p>
-	 * Called from {@link #updateViewport(int, int)}, which every change of the rows and of the
-	 * selection ends in. A value is only pushed when it changed, so scrolling sends none.
+	 * Called where what it reports on changes, and nowhere else: from {@link #buildFullState()},
+	 * which every change of the rows ends in - the data, the filter, the search, a named filter,
+	 * the grouping - and from {@link #commitSelection()}, which every accepted change of the
+	 * selection ends in. Scrolling changes neither, so it computes nothing here. A value is only
+	 * pushed when it changed.
 	 * </p>
+	 *
+	 * @implNote Checking the selection against the filter costs a lookup per selected key; an empty
+	 *           selection costs nothing.
 	 */
 	private void refreshSelectionCounts() {
 		int selectedCount = _selectedKeys.size();
@@ -2549,6 +2555,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		_committedKeys = new LinkedHashSet<>(_selectedKeys);
 		_committedCursor = _cursorIndex;
 		_committedAnchor = _selectionAnchor;
+		// A refused change restores exactly this state, so the counts of the committed selection are
+		// the ones the client keeps showing then.
+		refreshSelectionCounts();
 	}
 
 }

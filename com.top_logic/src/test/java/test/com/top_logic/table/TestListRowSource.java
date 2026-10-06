@@ -270,6 +270,11 @@ public class TestListRowSource extends TestCase {
 		ListRowSource<Person> source = new ListRowSource<>(people(), columns(), Person::name);
 		source.withFilter(new FilterSpec(java.util.Map.of("name", new Contains("al"))));
 		assertEquals(java.util.Set.of("alma"), source.matchingKeys(List.of("Bob", "alma", "nobody")));
+
+		source.withFilter(new FilterSpec(java.util.Map.of("name", new Contains("B"))));
+		assertEquals("The answer follows a change of the filter.",
+			java.util.Set.of("Bob"), source.matchingKeys(List.of("Bob", "alma", "nobody")));
+		assertEquals(List.of("Bob"), source.matchingKeys());
 	}
 
 	/** The names of the people with the given keys. */

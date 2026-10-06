@@ -111,7 +111,7 @@ public interface TableView<R> {
 	}
 
 	/**
-	 * The {@link Row#key() keys} of the data rows the table is filtered to, in display order - the
+	 * The {@link Row#key() keys} of the data rows the table is filtered to, in sort order - the
 	 * rows {@link #matchCount()} counts, the members of a collapsed group included.
 	 *
 	 * <p>

@@ -55,7 +55,7 @@
 		<channel name="report"/>
 	</channels>
 
-	<panel>
+	<panel with-inset="true">
 		<title>
 			<en>Long-running job</en>
 			<de>Lang laufender Auftrag</de>

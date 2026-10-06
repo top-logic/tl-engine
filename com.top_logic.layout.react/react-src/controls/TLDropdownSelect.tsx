@@ -366,6 +366,20 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     [sendCommand]
   );
 
+  // A click anywhere on the field toggles the list. Clicks inside the list bubble up here as well,
+  // since React propagates events through the portal; only clicks on the field itself count.
+  const handleFieldClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) return;
+      if (isOpen) {
+        closeDropdown();
+      } else {
+        openDropdown();
+      }
+    },
+    [isOpen, openDropdown, closeDropdown]
+  );
+
   const clearAll = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -673,7 +687,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
         }
         aria-disabled={disabled || undefined}
         tabIndex={disabled ? -1 : 0}
-        onClick={!isOpen ? openDropdown : undefined}
+        onClick={handleFieldClick}
         onKeyDown={handleKeyDown}
       >
         <span className="tl-select__values">

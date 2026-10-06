@@ -25,6 +25,16 @@
  * declaration that declined instead of falling through to an enclosing one. An unknown condition
  * imposes no restriction.</p>
  *
+ * <p>Text cut off by an ellipsis offers its full text without any declaration. The text in
+ * question is the one the pointer rests on: the text of the closest element around the hovered spot
+ * that has text, widened to the largest element around it that adds no text of its own - the box of
+ * a chip, a cell, a button with its icon. When a single element carries all of that text and is cut
+ * off - {@code text-overflow: ellipsis} with content wider than its box, or a {@code line-clamp}
+ * with content taller than its box - the tooltip is that element's text, whitespace collapsed, and
+ * stands at that element. A declaration inside that box or the box itself is closer and wins; one
+ * enclosing the box gives way to the cut-off text. Where an element of the box sets a native
+ * {@code title}, the browser's tooltip speaks and the cut-off text offers none.</p>
+ *
  * <p>A pointer press closes the tooltip at once and drops one still waiting to open, since what
  * the press brings up - a menu, a dialog - must not sit under it. The element the tooltip of the
  * pressed spot stands at then offers none until the pointer has left it. A press inside an open
@@ -69,8 +79,12 @@ export function tooltipProps(text?: string | null): Record<string, string> {
 }
 
 /**
- * Declares an element's own text as its tooltip, offered only while that text is clipped - so the
- * tooltip says what the element cannot show, and nothing where the text is readable as it stands.
+ * Declares an element's own text as its tooltip, offered only while that text is not fully
+ * readable.
+ *
+ * <p>Text cut off by an ellipsis needs no declaration (see above). This one is for an element whose
+ * content is cut at its edge without an ellipsis - a row of several values clipped by the box they
+ * sit in - so that the tooltip says what the element cannot show.</p>
  */
 export const TOOLTIP_WHEN_CLIPPED: Record<string, string> = {
   [TOOLTIP_ATTR]: MODE_CONTENT,
@@ -182,11 +196,13 @@ function tooltipAnchor(spec: Spec, target: Element): Element {
 }
 
 /**
- * The tooltip declared for the given element, looked up along its ancestors.
+ * The tooltip of the given element: the closest declaration along its ancestors, or the text the
+ * element shows cut off by an ellipsis, whichever is closer.
  *
- * <p>The first {@link TOOLTIP_ATTR} met decides. A {@link TOOLTIP_WHEN_ATTR} passed on the way -
- * the closest one, which is the one met first - restricts it: when its condition does not hold,
- * that declaration declines and no enclosing one takes over.</p>
+ * <p>The first {@link TOOLTIP_ATTR} met decides, unless it encloses the box of a cut-off text, see
+ * {@link findCutOffText}. A {@link TOOLTIP_WHEN_ATTR} passed on the way - the closest one, which is
+ * the one met first - restricts the declaration: when its condition does not hold, that declaration
+ * declines and no enclosing one takes over.</p>
  */
 function findSpec(start: Element | null): Spec | null {
   let el: Element | null = start;
@@ -200,13 +216,94 @@ function findSpec(start: Element | null): Spec | null {
     if (raw != null) {
       const parsed = parseAttr(raw, el);
       if (parsed) {
+        const cutOff = start ? findCutOffText(start) : null;
+        if (cutOff && cutOff.box !== el && el.contains(cutOff.box)) return cutOff.spec;
         if (condition && !conditionMet(condition.value, condition.el)) return null;
         return parsed;
       }
     }
     el = el.parentElement;
   }
+  return start ? findCutOffText(start)?.spec ?? null : null;
+}
+
+/**
+ * The text at the given hovered element that an ellipsis cuts off, with the box it is read in.
+ *
+ * <p>The box is the closest element around the hovered one that has text, widened as long as the
+ * enclosing element adds no text of its own. Its text is cut off when one element in it holds all
+ * of it - the box itself or an element on the chain down from the box through the only child with
+ * text - and that element is clipped with an ellipsis. Only that chain is inspected, so the cost
+ * stays with the depth of the box, not its size, and a computed style is read only for an element
+ * that is clipped at all. Text in several elements of the box (a value next to a count) is no
+ * single cut-off text and offers none.</p>
+ */
+function findCutOffText(hovered: Element): { box: Element; spec: Spec } | null {
+  let box: Element | null = hovered;
+  while (box && !hasText(box)) box = box.parentElement;
+  if (!box) return null;
+  for (let parent = box.parentElement; parent && !addsText(parent, box); parent = parent.parentElement) {
+    box = parent;
+  }
+
+  for (let el: Element | null = hovered; el; el = el.parentElement) {
+    if (el.hasAttribute('title')) return null;
+    if (el === box) break;
+  }
+
+  for (let el: Element | null = box; el; el = onlyChildWithText(el)) {
+    if (isCutOff(el)) return { box, spec: { kind: 'content', el } };
+  }
   return null;
+}
+
+/** Whether the given element shows any non-blank text, stopping at the first text found. */
+function hasText(el: Element): boolean {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if ((node.nodeValue ?? '').trim() !== '') return true;
+  }
+  return false;
+}
+
+/** Whether the given parent shows text beside the text of the given child. */
+function addsText(parent: Element, child: Element): boolean {
+  for (let node = parent.firstChild; node; node = node.nextSibling) {
+    if (node === child) continue;
+    if (node.nodeType === Node.TEXT_NODE) {
+      if ((node.nodeValue ?? '').trim() !== '') return true;
+    } else if (node instanceof Element && hasText(node)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * The child holding all text of the given element, or {@code null} when the element shows text
+ * of its own or spreads it over several children.
+ */
+function onlyChildWithText(el: Element): Element | null {
+  if (hasOwnText(el)) return null;
+  let result: Element | null = null;
+  for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
+    if (hasText(child)) {
+      if (result) return null;
+      result = child;
+    }
+  }
+  return result;
+}
+
+/** Whether the given element cuts off its text with an ellipsis, on one line or several. */
+function isCutOff(el: Element): boolean {
+  const wide = el.scrollWidth > el.clientWidth;
+  const tall = el.scrollHeight > el.clientHeight;
+  if (!wide && !tall) return false;
+  const style = getComputedStyle(el);
+  if (wide && style.textOverflow === 'ellipsis') return true;
+  const clamp = style.getPropertyValue('-webkit-line-clamp');
+  return tall && clamp !== '' && clamp !== 'none';
 }
 
 const _unknownConditions = new Set<string>();

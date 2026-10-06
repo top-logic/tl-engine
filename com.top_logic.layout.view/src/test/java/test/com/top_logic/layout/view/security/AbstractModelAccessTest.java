@@ -21,6 +21,7 @@ import test.com.top_logic.model.search.expr.AbstractSearchExpressionTest;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
+import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.util.ResKeyTemplate;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.service.I18NConstants;
@@ -55,7 +56,11 @@ import com.top_logic.util.error.TopLogicException;
  * {@value #ROLE_RESPONSIBLE} on the project, which grants read, write, create, delete and the custom
  * command group {@value #FINISH}. Writing
  * {@value #SECRET} is denied for every role. The {@link CommandApprovalService} refuses writing a
- * project named {@value #FROZEN} (disabled, with a reason) and deleting it (hidden).</li>
+ * project named {@value #FROZEN} (disabled, with a reason) and deleting it (hidden). The account in
+ * {@value #VIEWER} holds the role {@value #ROLE_VIEWER} on the project, which grants read only.
+ * Reading {@value #BUDGET} is granted to {@value #ROLE_RESPONSIBLE} only, reading
+ * {@value #CLASSIFIED} to no role. The attribute {@value #CODE} is read-only by its display
+ * annotation.</li>
  * <li>{@value #TASK}: the type of the composition {@value #TASKS} of a project. A task inherits the
  * role {@value #ROLE_RESPONSIBLE} from its project, with the same grants. Its reference
  * {@value #CREATED_IN} defaults to the context the task is created in. Writing its attribute
@@ -97,6 +102,18 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	/** Name of the {@link #PROJECT} attribute nobody but a super-user may write. */
 	protected static final String SECRET = "secret";
 
+	/** Name of the {@link #PROJECT} attribute only {@link #ROLE_RESPONSIBLE} may read. */
+	protected static final String BUDGET = "budget";
+
+	/** Name of the {@link #PROJECT} attribute nobody but a super-user may read. */
+	protected static final String CLASSIFIED = "classified";
+
+	/** Name of the {@link #PROJECT} attribute that is read-only by its display annotation. */
+	protected static final String CODE = "code";
+
+	/** Name of the {@link #PROJECT} reference to the account holding {@link #ROLE_VIEWER}. */
+	protected static final String VIEWER = "viewer";
+
 	/** Name of the {@link #PROJECT} reference to the account holding {@link #ROLE_RESPONSIBLE}. */
 	protected static final String RESPONSIBLE = "responsible";
 
@@ -117,6 +134,9 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Role granting everything on a project and its tasks. */
 	protected static final String ROLE_RESPONSIBLE = MODULE + ".Responsible";
+
+	/** Role granting read access to a project. */
+	protected static final String ROLE_VIEWER = MODULE + ".Viewer";
 
 	/** Role granting read access to a category. */
 	protected static final String ROLE_READER = MODULE + ".Reader";
@@ -242,14 +262,26 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	 * and starting the services deciding about the model access rights.
 	 */
 	protected static Test suite(Class<? extends AbstractModelAccessTest> testClass) {
+		return suiteWith(testClass);
+	}
+
+	/**
+	 * Creates the suite for the given test class like {@link #suite(Class)} does, additionally
+	 * starting the given services.
+	 */
+	protected static Test suiteWith(Class<? extends AbstractModelAccessTest> testClass,
+			BasicRuntimeModule<?>... additionalModules) {
+		List<BasicRuntimeModule<?>> modules = new ArrayList<>(List.of(
+			AccessManager.Module.INSTANCE,
+			TLSecurityDeviceManager.Module.INSTANCE,
+			PersonManager.Module.INSTANCE,
+			InitialRolesManager.Module.INSTANCE,
+			SecurityConfigurationService.Module.INSTANCE,
+			CommandApprovalService.Module.INSTANCE));
+		modules.addAll(List.of(additionalModules));
 		Test kbTest = KBSetup.getSingleKBTest(testClass,
-			ServiceTestSetup.createStarterFactoryForModules(getModules(
-				AccessManager.Module.INSTANCE,
-				TLSecurityDeviceManager.Module.INSTANCE,
-				PersonManager.Module.INSTANCE,
-				InitialRolesManager.Module.INSTANCE,
-				SecurityConfigurationService.Module.INSTANCE,
-				CommandApprovalService.Module.INSTANCE)));
+			ServiceTestSetup.createStarterFactoryForModules(
+				getModules(modules.toArray(new BasicRuntimeModule<?>[modules.size()]))));
 		String configFile = CustomPropertiesDecorator.createFileName(AbstractModelAccessTest.class, CONFIG_FILE);
 		return TLTestSetup.createTLTestSetup(TestUtils.doNotMerge(new CustomPropertiesSetup(kbTest, configFile, true)));
 	}

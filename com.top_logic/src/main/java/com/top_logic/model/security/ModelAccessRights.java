@@ -143,11 +143,16 @@ public interface ModelAccessRights {
 	 * {@link #isAllowedCreate(Person, TLClass, TLObject)} decides the creation itself:
 	 * </p>
 	 * <ul>
-	 * <li>A person bypassing the model security decides by the bypass, and the attributes of a type
-	 * {@link #isWithoutSecurity(TLClass) without security} are not restricted.</li>
+	 * <li>The attributes of a type {@link #isWithoutSecurity(TLClass) without security} are not
+	 * restricted.</li>
 	 * <li>Without an attribute-level grant for the command group (see
-	 * {@link #hasGrant(TLStructuredTypePart, BoundCommandGroup)}), the right to create the object
-	 * covers filling in its initial values: the command group is allowed.</li>
+	 * {@link #hasGrant(TLStructuredTypePart, BoundCommandGroup)}), the attribute is not restricted
+	 * beyond the object: the command group is allowed for every person, also for a restricted one or
+	 * without a person at all. The right to create the object, checked where it is created, covers
+	 * filling in its initial values, and a transient object that is never persisted (e.g. the input
+	 * of a dialog) is accessible to whoever holds it.</li>
+	 * <li>For an attribute with such a grant, a person bypassing the model security decides by the
+	 * bypass.</li>
 	 * <li>An attribute-level grant listing no role denies the command group, in every context.</li>
 	 * <li>Otherwise, the person must hold one of the granted roles in the context. Without a context
 	 * (<code>null</code>), the roles on the global security root are checked. For a type with an

@@ -18,7 +18,23 @@
 						<property name="secret"
 							type="tl.core:String"
 						/>
+						<property name="budget"
+							type="tl.core:String"
+						/>
+						<property name="classified"
+							type="tl.core:String"
+						/>
+						<property name="code"
+							type="tl.core:String"
+						>
+							<annotations>
+								<visibility value="read-only"/>
+							</annotations>
+						</property>
 						<reference name="responsible"
+							type="tl.accounts:Person"
+						/>
+						<reference name="viewer"
 							type="tl.accounts:Person"
 						/>
 						<reference name="category"

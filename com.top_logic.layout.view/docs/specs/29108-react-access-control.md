@@ -436,7 +436,8 @@ view layer.
    from what the refusal depends on (`ModelAccessPolicy`):
    - **hidden** when the refusal depends on no concrete object — the check runs
      against the security root (a creation without container, a check on a
-     `type`), the type grants the operation to no role at all, or the user is
+     `type`), the type grants the operation to no role at all, the checked
+     attribute has a grant for the operation listing no role, or the user is
      restricted: the operation is never possible for this user;
    - **disabled**, giving the reason that names the operation ("You may not
      delete this object."), when the check on a concrete object — the object

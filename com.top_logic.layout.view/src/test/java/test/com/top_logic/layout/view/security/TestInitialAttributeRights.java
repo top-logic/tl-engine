@@ -51,6 +51,34 @@ public class TestInitialAttributeRights extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * Without a user, an attribute without a grant of its own is not restricted, one with a grant is
+	 * refused.
+	 */
+	public void testWithoutUser() {
+		try {
+			assertTrue(writeInitial(null, part(TASK, NAME), _project));
+			assertTrue(writeInitial(null, part(TASK, NAME), null));
+			assertFalse(writeInitial(null, part(TASK, NOTE), _project));
+		} finally {
+			// Cleaning up the fixture needs a user.
+			becomeUser(_root);
+		}
+	}
+
+	/**
+	 * For a restricted user, an attribute without a grant of its own is not restricted, one with a
+	 * grant is refused, even where the user holds the granted role.
+	 */
+	public void testRestrictedUser() {
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			_responsible.setRestrictedUser(Boolean.TRUE);
+			tx.commit();
+		}
+		assertTrue(writeInitial(_responsible, part(TASK, NAME), _project));
+		assertFalse(writeInitial(_responsible, part(TASK, NOTE), _project));
+	}
+
+	/**
 	 * A grant listing no role refuses the operation in every context.
 	 */
 	public void testGrantedToNoRole() {

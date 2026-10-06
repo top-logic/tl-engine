@@ -15,6 +15,7 @@
 				<roles>
 					<role name="TestViewModelAccess.Responsible"/>
 					<role name="TestViewModelAccess.Reader"/>
+					<role name="TestViewModelAccess.Viewer"/>
 				</roles>
 			</instance>
 		</config>
@@ -44,6 +45,11 @@
 						<grant
 							operation="Finish"
 							roles="TestViewModelAccess.Responsible"
+						/>
+						<!-- The viewer may only read a project. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Viewer"
 						/>
 					</class>
 					<class name="TestViewModelAccess:Task">
@@ -78,6 +84,17 @@
 							role, only a bypassing super-user may write it.
 						-->
 						<grant operation="Write"/>
+					</part>
+					<part name="TestViewModelAccess:Project#budget">
+						<!-- Only the responsible of the project may read its budget. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Project#classified">
+						<!-- Nobody but a super-user may read this attribute. -->
+						<grant operation="Read"/>
 					</part>
 					<part name="TestViewModelAccess:Task#note">
 						<!-- Only the responsible of the task may write its note. -->
@@ -135,6 +152,14 @@
 						>
 							<path>
 								<step attribute="TestViewModelAccess:Project#responsible"/>
+							</path>
+						</rule>
+						<rule id="TestViewModelAccess_Project_Viewer"
+							meta-element="TestViewModelAccess:Project"
+							role="TestViewModelAccess.Viewer"
+						>
+							<path>
+								<step attribute="TestViewModelAccess:Project#viewer"/>
 							</path>
 						</rule>
 						<inheritance-rule id="TestViewModelAccess_Task_Responsible"

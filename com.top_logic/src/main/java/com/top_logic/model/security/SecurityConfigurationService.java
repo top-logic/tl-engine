@@ -849,10 +849,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	@Override
 	public boolean isAllowedInitial(Person person, TLClass type, TLObject context, TLStructuredTypePart attribute,
 			BoundCommandGroup commandGroup) {
-		Boolean allowedBypass = isAllowedBypass(person, commandGroup);
-		if (allowedBypass != null) {
-			return allowedBypass.booleanValue();
-		}
 		if (isWithoutSecurity(type)) {
 			// Objects of a type without security are not access controlled, neither on the object,
 			// nor on its attribute values.
@@ -862,8 +858,14 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			_typePartRights.getOrDefault(attribute.getDefinition(), Collections.emptyMap());
 		Set<BoundedRole> requiredPartRoles = partRights.get(commandGroup);
 		if (requiredPartRoles == null) {
-			// No attribute-level grant: the right to create the object covers its initial values.
+			// No attribute-level grant: the attribute is not restricted beyond the object. The right
+			// to create the object covers its initial values, independent of the person (a transient
+			// input object can be used without a person at all).
 			return true;
+		}
+		Boolean allowedBypass = isAllowedBypass(person, commandGroup);
+		if (allowedBypass != null) {
+			return allowedBypass.booleanValue();
 		}
 		if (requiredPartRoles.isEmpty()) {
 			// A grant without roles denies the operation in every context.

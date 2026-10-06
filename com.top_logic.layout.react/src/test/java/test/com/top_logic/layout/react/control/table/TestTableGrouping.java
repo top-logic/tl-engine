@@ -30,6 +30,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
+import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableViewState;
@@ -260,6 +261,52 @@ public class TestTableGrouping extends TestCase {
 
 		assertEquals(Set.of(A), _table.getSelectedKeys());
 		assertEquals("And expanded again.", 5, clientRows().size());
+	}
+
+	/**
+	 * Tests that a table whose group headers stand for their group value selects a header instead
+	 * of collapsing it: the selection is the key of the group, which names its value.
+	 */
+	public void testSelectableGroupHeaderIsSelected() {
+		_table.setGroupsSelectable(true);
+		group(COLUMN_STATUS);
+
+		select(0);
+
+		Set<Object> selected = _table.getSelectedKeys();
+		assertEquals(1, selected.size());
+		Object key = selected.iterator().next();
+		assertTrue("The selection is the group: " + key, key instanceof GroupKey);
+		assertEquals("The group did not collapse.", 5, clientRows().size());
+		assertEquals(Boolean.TRUE, clientRows().get(0).get(SELECTED));
+	}
+
+	/**
+	 * Tests that selecting a data row after a selectable group header replaces the group in the
+	 * selection.
+	 */
+	public void testDataRowReplacesASelectedGroup() {
+		_table.setGroupsSelectable(true);
+		group(COLUMN_STATUS);
+		select(0);
+
+		select(1);
+
+		assertEquals(Set.of(A), _table.getSelectedKeys());
+	}
+
+	/**
+	 * Tests that a selected group header leaves the selection once the grouping changes: the
+	 * group it stood for is no longer displayed.
+	 */
+	public void testChangingTheGroupingDropsASelectedGroup() {
+		_table.setGroupsSelectable(true);
+		group(COLUMN_STATUS);
+		select(0);
+
+		group("");
+
+		assertEquals(Set.of(), _table.getSelectedKeys());
 	}
 
 	/**

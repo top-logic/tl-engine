@@ -66,6 +66,7 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
@@ -501,6 +502,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** Whether the named filters, the search field and saving a filter are displayed. */
 	private boolean _filterBar;
 
+	/** Whether a group header can be selected, see {@link #setGroupsSelectable(boolean)}. */
+	private boolean _groupsSelectable;
+
 	/** The type tag dragged rows are announced under, or {@code null} while rows are not draggable. */
 	private String _dragType;
 
@@ -599,6 +603,22 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	public void setColumnSelect(boolean columnSelect) {
 		_columnSelect = columnSelect;
 		putState(COLUMN_SELECT, Boolean.valueOf(columnSelect));
+	}
+
+	/**
+	 * Whether a group header stands for its group value and can be selected.
+	 *
+	 * <p>
+	 * By default a group header stands for no object: the gesture selecting a row collapses or
+	 * expands a group instead. A table whose rows are grouped by an object the user acts on - the
+	 * module of a type, say - can let the header be selected instead; its key in the
+	 * {@link #getSelectedKeys() selection} is a {@link GroupKey} naming the group value. The group
+	 * is then collapsed and expanded by its toggle only. A selected group leaves the selection when
+	 * the grouping changes, since the group is no longer displayed.
+	 * </p>
+	 */
+	public void setGroupsSelectable(boolean groupsSelectable) {
+		_groupsSelectable = groupsSelectable;
 	}
 
 	/**
@@ -1394,6 +1414,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			return;
 		}
 		_view.group(grouping);
+		// A selected group is not displayed any more under the new grouping.
+		_selectedKeys.removeIf(GroupKey.class::isInstance);
 		Object update = beginUpdate();
 		try {
 			// A grouping rearranges the rows, it does not replace them: the selected rows are the
@@ -1478,12 +1500,18 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		boolean shiftKey = args.isShiftKey();
 		Row<R> clicked = rowAt(rowIndex);
 		if (clicked != null && clicked.kind() != RowKind.DATA) {
-			// A group header stands for no object: the gesture that would select it collapses or
-			// expands the group instead, and the selection stays what it was.
-			_cursorIndex = rowIndex;
-			commitSelection();
-			toggleExpansion(clicked);
-			return;
+			if (!(_groupsSelectable && clicked.kind() == RowKind.GROUP_HEADER)) {
+				// A group header stands for no object: the gesture that would select it collapses
+				// or expands the group instead, and the selection stays what it was.
+				_cursorIndex = rowIndex;
+				commitSelection();
+				toggleExpansion(clicked);
+				return;
+			}
+			// A selectable group header stands for its group value, which is selected alone: it is
+			// no member of a range, and no object to add to a selection of rows.
+			ctrlKey = false;
+			shiftKey = false;
 		}
 		Object key = keyAt(rowIndex);
 		_cursorIndex = rowIndex;

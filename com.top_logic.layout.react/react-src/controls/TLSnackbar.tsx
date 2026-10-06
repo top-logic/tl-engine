@@ -1,5 +1,6 @@
 import { React, useTLState, useTLCommand, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps, SnackbarStateJson } from 'tl-react-bridge';
+import { buttonClassName } from './button/ButtonDefaults';
 
 const { useCallback, useEffect, useRef, useState } = React;
 
@@ -90,7 +91,7 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
         : <span className="tlSnackbar__message">{message}</span>
       }
       <button type="button"
-        className="tlSnackbar__close"
+        className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tlSnackbar__close' })}
         onClick={handleDismiss}
         aria-label={i18n['js.snackbar.dismiss']}
         {...tooltipProps(i18n['js.snackbar.dismiss'])}>

@@ -2590,16 +2590,19 @@ button.tlDrawer__closeBtn:focus-visible {
 	box-shadow: var(--shadow-dialog);
 	animation: tlSnackbarSlideUp 0.2s ease;
 	max-width: min(40rem, calc(100vw - 2 * var(--spacing-04)));
+	background: var(--tlSnackbar-bg);
+	color: var(--tlSnackbar-fg);
 }
 
 .tlSnackbar--exiting {
 	animation: tlSnackbarFadeOut 0.2s ease forwards;
 }
 
-.tlSnackbar--info    { background: var(--background-inverse); color: var(--text-inverse); }
-.tlSnackbar--success { background: var(--support-success); color: #fff; }
-.tlSnackbar--warning { background: var(--support-warning); color: #000; }
-.tlSnackbar--error   { background: var(--support-error); color: #fff; }
+/* Each variant names its surface and text color once; the message and its close button read them. */
+.tlSnackbar--info    { --tlSnackbar-bg: var(--background-inverse); --tlSnackbar-fg: var(--text-inverse); }
+.tlSnackbar--success { --tlSnackbar-bg: var(--support-success); --tlSnackbar-fg: #fff; }
+.tlSnackbar--warning { --tlSnackbar-bg: var(--support-warning); --tlSnackbar-fg: #000; }
+.tlSnackbar--error   { --tlSnackbar-bg: var(--support-error); --tlSnackbar-fg: #fff; }
 
 .tlSnackbar__message {
 	flex: 1;
@@ -2639,32 +2642,16 @@ button.tlDrawer__closeBtn:focus-visible {
 	outline-offset: 2px;
 }
 
-/* Close button at the end of the message; takes the text color of the variant, so it stays visible
-   on every background. */
+/* The close button (a ghost icon button) takes the text color of the variant; on hover it swaps
+   surface and text color, which reads on every variant. */
 .tlSnackbar__close {
-	flex-shrink: 0;
-	align-self: center;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: var(--spacing-06);
-	height: var(--spacing-06);
-	margin-inline-end: calc(-1 * var(--spacing-02));
-	padding: 0;
-	border: none;
-	border-radius: 50%;
-	background: transparent;
 	color: inherit;
-	cursor: pointer;
 }
 
-.tlSnackbar__close:hover {
-	background: color-mix(in srgb, currentColor 12%, transparent);
-}
-
-.tlSnackbar__close:focus-visible {
-	outline: 2px solid currentColor;
-	outline-offset: 2px;
+.tlSnackbar .tlSnackbar__close:hover,
+.tlSnackbar .tlSnackbar__close:active {
+	background: var(--tlSnackbar-fg);
+	color: var(--tlSnackbar-bg);
 }
 
 @keyframes tlSnackbarSlideUp {

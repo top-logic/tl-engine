@@ -42,6 +42,13 @@ import com.top_logic.util.Resources;
  * section are available to child elements via the command scope and toolbar-placed commands are
  * automatically rendered as clique-grouped toolbar buttons.
  * </p>
+ *
+ * <p>
+ * The panel body is flush: its content reaches up to the panel border. Where the content flows -
+ * texts, stacks, grids, alerts, buttons, a form that does not span the panel - the panel sets
+ * {@link Config#getInset()}. Where the content fills the panel - a table, a diagram, a split - or
+ * brings its own inset, the option stays unset.
+ * </p>
  */
 @InApp
 public class PanelElement extends CommandScopeElement implements TitledElement {
@@ -50,7 +57,7 @@ public class PanelElement extends CommandScopeElement implements TitledElement {
 	 * Configuration for {@link PanelElement}.
 	 */
 	@TagName("panel")
-	public interface Config extends CommandScopeElement.Config {
+	public interface Config extends CommandScopeElement.Config, InsetOptions {
 
 		@Override
 		@ClassDefault(PanelElement.class)
@@ -152,6 +159,18 @@ public class PanelElement extends CommandScopeElement implements TitledElement {
 		@Name(WIDTH)
 		@Nullable
 		String getWidth();
+
+		/**
+		 * Whether the panel body is inset from the panel border.
+		 *
+		 * <p>
+		 * Set it where the body content flows - texts, stacks, grids, alerts, buttons, a form that
+		 * does not span the panel. Leave it unset where the content fills the panel - a table, a
+		 * diagram, a split - or brings its own inset. The title and the toolbar are not affected.
+		 * </p>
+		 */
+		@Override
+		boolean getInset();
 	}
 
 	private final ResKey _title;
@@ -165,6 +184,8 @@ public class PanelElement extends CommandScopeElement implements TitledElement {
 	private final PanelAppearance _appearance;
 
 	private final String _width;
+
+	private final InsetOptions _insetOptions;
 
 	/**
 	 * Creates a new {@link PanelElement} from configuration.
@@ -180,6 +201,7 @@ public class PanelElement extends CommandScopeElement implements TitledElement {
 		_hoverActions = config.getHoverActions();
 		_appearance = config.getAppearance();
 		_width = config.getWidth();
+		_insetOptions = config;
 	}
 
 	@Override
@@ -198,7 +220,8 @@ public class PanelElement extends CommandScopeElement implements TitledElement {
 	protected ToolbarControl createChromeControl(ViewContext context, ReactControl content,
 			ReactToolbarControl toolbar, ReactToolbarControl buttonBar) {
 		String title = _title != null ? Resources.getInstance().getString(_title) : "";
-		ReactPanelControl panel = new ReactPanelControl(context, title, content, toolbar, buttonBar, false, false, false);
+		ReactControl body = InsetOptions.insetIfRequested(context, _insetOptions, content);
+		ReactPanelControl panel = new ReactPanelControl(context, title, body, toolbar, buttonBar, false, false, false);
 		panel.setFill(_fill);
 		panel.setHoverActions(_hoverActions);
 		panel.setAppearance(_appearance);

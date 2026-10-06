@@ -163,6 +163,7 @@
 					<color name="script-editor-text-highlight" value="#2A3A55"/>
 					<color name="text-disabled" value="#6F7378"/>
 					<color name="text-helper" value="#A7ABB2"/>
+					<color name="text-inverse" value="#101113"/>
 					<color name="text-placeholder" value="#6F7378"/>
 					<color name="text-primary" value="#F2F4F8"/>
 					<color name="text-secondary" value="#A7ABB2"/>

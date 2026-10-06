@@ -885,6 +885,14 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.alert.dismiss")
 	public static ResKey JS_ALERT_DISMISS;
 
+	// -- Snackbar client-side i18n keys --
+
+	/**
+	 * @en Dismiss
+	 */
+	@CustomKey("js.snackbar.dismiss")
+	public static ResKey JS_SNACKBAR_DISMISS;
+
 	// -- Window client-side i18n keys --
 
 	/**

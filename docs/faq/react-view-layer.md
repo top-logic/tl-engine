@@ -40,7 +40,7 @@
     </view>
     ```
     The delay is the span a *typed* value is held back; a value that is picked - a dropdown, a date picker, a checkbox - reaches the channel with the choice and waits for nothing. An input whose value the server rewrites as it stores it (a number, an internationalized text) holds the value back until the input is left (`setSendValueOnBlur(true)`) and ignores the delay altogether - what it costs is server-side feedback while typing, which is the trade that behaviour is for. Without a stated delay a typed input uses the one span every typed input shares, `VALUE_DEBOUNCE_MS` (300 ms) exported from the bridge. The three are rendering-only: `ReactFormFieldControl.scriptingPresentationKeys()` keeps `icon`, `clearable` and `debounceMs` out of the headless projection, while the `placeholder` stays in it, being the text a label-less input names itself by. The three hand-rolled search boxes elsewhere in the layer - the table filter bar, the dropdown search, the icon-select popup - are controls of their own and are unaffected.
-  - **Layout: `<fields>`** (`FieldsElement`). A `<value-input>` renders the label-and-input chrome of a field but, standing outside a `<form>`, gets none of the grid a form renders around its fields. `<fields>` is that grid on its own (`ReactFormLayoutControl`, `TLFormLayout`): the auto-fit columns (`max-columns`, 3 by default), and the `FormLayoutContext` a `TLFormField` reads to move a label from beside its input to above it when the column is narrower than 320px (`label-position` `auto` by default, or fixed `side` / `top`; the field-level `after` / `hidden` are rejected). A `<fields>` also stands inside a `<form>`: it lays out the fields of one area of a form whose areas are panels or split panes, and then follows the form's edit mode (the grid is read-only while the form is not being edited, so its fields show the read-only chrome; `FormLayoutEditModeBinding`). A plain `<form>` needs no `<fields>`, being such a grid already; a `<field>` still needs a `<form>`, since `<fields>` carries no object. The grid of a `<form>` or `<fields>` is a plain layout that reaches up to its container border; where the fields would otherwise glue to that border (a dialog, a tab, a pane) it sets `with-inset="true"` (`FormLayoutOptions#getInset()`), which wraps the grid in the same `ReactInsetControl` an `<inset>` element renders. A grid inside a form usually leaves it unset, so the inset is not applied twice.
+  - **Layout: `<fields>`** (`FieldsElement`). A `<value-input>` renders the label-and-input chrome of a field but, standing outside a `<form>`, gets none of the grid a form renders around its fields. `<fields>` is that grid on its own (`ReactFormLayoutControl`, `TLFormLayout`): the auto-fit columns (`max-columns`, 3 by default), and the `FormLayoutContext` a `TLFormField` reads to move a label from beside its input to above it when the column is narrower than 320px (`label-position` `auto` by default, or fixed `side` / `top`; the field-level `after` / `hidden` are rejected). A `<fields>` also stands inside a `<form>`: it lays out the fields of one area of a form whose areas are panels or split panes, and then follows the form's edit mode (the grid is read-only while the form is not being edited, so its fields show the read-only chrome; `FormLayoutEditModeBinding`). A plain `<form>` needs no `<fields>`, being such a grid already; a `<field>` still needs a `<form>`, since `<fields>` carries no object. The grid of a `<form>` or `<fields>` is a plain layout that reaches up to its container border; where it stands and how it keeps its distance is described in "Spacing model" below.
   - **The same grid options on `<form>`** (`FormLayoutOptions`, shared by `FormElement.Config` and `FieldsElement.Config`). A `<form max-columns="1" label-position="side">` states the greatest number of columns its fields are laid out in and where their labels stand, exactly as `<fields>` does — `max-columns` is a ceiling, not a count, so a narrow display still shows fewer columns and a phone a single one. This is what a detail pane narrower than the three columns of the default asks for: left to itself it fills the width it has with two columns whose labels sit above the inputs, while `max-columns="1"` plus `label-position="side"` keeps one column with the labels beside the inputs at every width. A `<field>` stating a `label-position` of its own keeps it.
     ```xml
     <form input="selectedMilestone" label-position="side" max-columns="1">
@@ -78,6 +78,39 @@
 - **Referencing a `UIElement` impl by `class=` in view content.** View content lists resolve entries by `@TagName`, so an app-specific element that should not claim a global tag is placed via the content property's *entry tag* plus `class=`. The `children` content property (`ContainerElement.Config`) is `@EntryTag("child")`, so write `<child class="fq.MyElement"/>` inside a `<panel>` / container. If a cell provider is reusable, make it public rather than justifying a separate element; justify a separate element by genuinely different data / behavior.
 - **Standalone form-field controls bind to a `FieldModel`.** For a standalone field control (e.g. a checkbox cell), use the concrete `com.top_logic.layout.form.model.AbstractFieldModel` + `FieldModelListener` — not `FormContext` / `FormField` / `FormFieldAdapter`, which are legacy-compat shims. `AbstractFieldModel` is editable by default, needs no `FormContext` parent, and triggers no label resource lookup in `ReactFormFieldControl`.
 - Modifying persistent state from a control's value listener needs a transaction; the listener has no ambient one, so open `beginTransaction()` there (or buffer changes and apply them under one transaction on save).
+
+## Spacing model
+
+Containers are flush: a `<panel>`, a `<tab>`, a `<pane>`, a dialog window and the simple layouts `<stack>` / `<grid>` lay their content out up to their border and add no padding. The content owns its breathing room:
+
+- **Content that fills** - a `<table>`, a `<flow-diagram>`, a `<split-panel>`, a `<tab-bar>` of its own panels, an `<adaptive-detail>`, an `<html display="document">` - stays edge to edge. Nothing is set.
+- **Content that flows** - texts, stacks, grids, alerts, buttons, cards, a form that does not span its container - keeps the page inset (`--page-inset`) as distance to the border. Where it stands decides how:
+  - directly in a `<panel>`: `with-inset="true"` on the panel (first choice). It insets the panel body, not the title and the toolbar (`PanelElement.Config` extends `InsetOptions`).
+  - a `<form>` or `<fields>` that is the content of a dialog, a tab or a pane, or the sole content of a panel: `with-inset="true"` on the form / fields (`FormLayoutOptions` extends `InsetOptions`).
+  - any other content not directly in a panel (a tab, a pane, a wizard step, a `<visible-if>` that must not leave an empty padded box behind): wrap it in `<inset>` (`InsetElement`).
+
+All three render the same `ReactInsetControl` (`.tlInset`). Content is inset **once**: a panel with `with-inset` holds no form / fields with `with-inset` and no `<inset>`. A nested `<panel>` is a container of its own and decides for its own body. A card (`appearance="card"`, `<card>`) reduces `--page-inset`, so an inset inside it is compact.
+
+```xml
+<panel with-inset="true">
+  <title>
+    <en>Alerts</en>
+  </title>
+  <text>
+    <label>
+      <en>A highlighted message in the content of a view.</en>
+    </label>
+  </text>
+  <alert severity="info">…</alert>
+  <form input="obj">
+    <field attribute="name"/>
+  </form>
+</panel>
+```
+
+A body mixing both - an explanation above a table - is a judgment call: leave the panel flush to keep the table edge to edge and wrap the text in `<inset>`, or nest the table in a panel of its own.
+
+Checklist: content glued to the border of its container → `with-inset="true"` on the panel, or on the form / fields, or an `<inset>` around it.
 
 ## Styling a single element: `css-class`
 

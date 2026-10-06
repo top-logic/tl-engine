@@ -20,7 +20,7 @@
 			expr="all(`tl.demo.projectManagement:ProjectScope`).firstElement()"
 		/>
 	</channels>
-	<panel>
+	<panel with-inset="true">
 		<title>
 			<en>Accordion</en>
 			<de>Akkordeon</de>
@@ -106,10 +106,7 @@
 							<en>Project</en>
 							<de>Projekt</de>
 						</label>
-						<form
-							input="project"
-							with-inset="true"
-						>
+						<form input="project">
 							<field attribute="name"/>
 							<field attribute="description"/>
 						</form>

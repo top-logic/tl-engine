@@ -5,8 +5,11 @@
  */
 package com.top_logic.service.openapi.common.schema;
 
+import java.util.Map;
+
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Nullable;
 
 /**
@@ -60,6 +63,23 @@ public interface Schema extends ConfigurationItem {
 	 * Setter for {@link #getExample()}.
 	 */
 	void setExample(String value);
+
+	/**
+	 * The specification extensions of this schema.
+	 * 
+	 * <p>
+	 * A specification extension is a property of the schema whose name starts with
+	 * {@link OpenAPISchemaConstants#SCHEMA_EXTENSION_PREFIX}. The map holds the name of each such
+	 * property and its value in JSON serialised form.
+	 * </p>
+	 */
+	@MapBinding
+	Map<String, String> getExtensions();
+
+	/**
+	 * Setter for {@link #getExtensions()}.
+	 */
+	void setExtensions(Map<String, String> value);
 
 	/**
 	 * This schema in serialised form.

@@ -7,6 +7,10 @@
 	hands that configuration to the editor, which stores it in the application configuration, and
 	marks the pending channel: the stored definition differs from the running one until the coverage
 	display applies it.
+	
+	Save first checks the form (check-config-form): a mandatory value missing, a constraint failing
+	or an entry the field rejected - a script that does not parse - is put on its field and keeps
+	the dialog open; while such a problem is on display, Save is disabled (config-form-valid).
 -->
 <view>
 	<channels>
@@ -28,6 +32,10 @@
 					<en>Save</en>
 					<de>Speichern</de>
 				</label>
+				<executability>
+					<config-form-valid/>
+				</executability>
+				<check-config-form/>
 				<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 					mode="SAVE_ROLE_RULE"
 				/>

@@ -4507,26 +4507,27 @@ button.tlDrawer__closeBtn:focus-visible {
 
 /* The halo: while the pointer is over the slider, a ring around the handle, and a stronger one
    while it is pressed, as selection marks show. A shadow without offset and blur draws outside the
-   handle only and moves nothing; its spread fills the handle up to the hit area of a control. A
-   disabled slider shows none. */
+   handle only and moves nothing; its spread fills the handle up to the hit area of a control. The
+   state layers are translucent, so the track stays visible under the halo. A disabled slider shows
+   none. */
 .tlSlider__input:not(:disabled):hover::-webkit-slider-thumb {
 	box-shadow: var(--shadow-raised),
-		0 0 0 calc((var(--tl-size-control) - var(--tlSlider-thumb)) / 2) var(--tl-surface-interactive-hover);
+		0 0 0 calc((var(--tl-size-control) - var(--tlSlider-thumb)) / 2) var(--tl-surface-state-hover);
 }
 
 .tlSlider__input:not(:disabled):hover::-moz-range-thumb {
 	box-shadow: var(--shadow-raised),
-		0 0 0 calc((var(--tl-size-control) - var(--tlSlider-thumb)) / 2) var(--tl-surface-interactive-hover);
+		0 0 0 calc((var(--tl-size-control) - var(--tlSlider-thumb)) / 2) var(--tl-surface-state-hover);
 }
 
 .tlSlider__input:not(:disabled):active::-webkit-slider-thumb {
 	box-shadow: var(--shadow-raised),
-		0 0 0 calc((var(--tl-size-control) - var(--tlSlider-thumb)) / 2) var(--tl-surface-interactive-active);
+		0 0 0 calc((var(--tl-size-control) - var(--tlSlider-thumb)) / 2) var(--tl-surface-state-active);
 }
 
 .tlSlider__input:not(:disabled):active::-moz-range-thumb {
 	box-shadow: var(--shadow-raised),
-		0 0 0 calc((var(--tl-size-control) - var(--tlSlider-thumb)) / 2) var(--tl-surface-interactive-active);
+		0 0 0 calc((var(--tl-size-control) - var(--tlSlider-thumb)) / 2) var(--tl-surface-state-active);
 }
 
 /* The focus is shown on the handle, the part the keyboard moves. The ring lies close around the

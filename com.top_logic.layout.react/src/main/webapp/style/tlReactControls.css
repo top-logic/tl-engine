@@ -3556,8 +3556,6 @@ button.tlDrawer__closeBtn:focus-visible {
 	height: 100%;
 	min-height: 24rem;
 	overflow: hidden;
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--border-radius-02);
 	background: #ffffff;
 }
 

@@ -438,10 +438,6 @@ public class SecurityDefinitionAction implements ViewAction {
 	}
 
 	/**
-	 * The analyzed type to work on: the input where it is one, the value of the configured
-	 * selection channel otherwise.
-	 */
-	/**
 	 * The module to edit, given as input: the selected module, or the module of a selected type.
 	 */
 	private static TLModule module(Object input) {
@@ -454,6 +450,10 @@ public class SecurityDefinitionAction implements ViewAction {
 		throw new TopLogicException(I18NConstants.ERROR_NO_MODULE_SELECTED);
 	}
 
+	/**
+	 * The analyzed type to work on: the input where it is one, the value of the configured
+	 * selection channel otherwise.
+	 */
 	private TypeCoverage coverage(ReactContext context, Object input) {
 		if (input instanceof TypeCoverage coverage) {
 			return coverage;

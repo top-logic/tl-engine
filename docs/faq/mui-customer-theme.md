@@ -274,12 +274,23 @@ When porting:
   into real theme keys (here: the heading variants) or leave them out.
 - **Keep the customer's component overrides** under `components` — they apply to every component
   the adapters render (see [Restyling within the theme](#a-restyling-within-the-theme)).
-- **No `cssVariables` option.** `installMui` creates the theme with `cssVariables: true` itself
+- **`cssVariables`.** `installMui` creates the theme with CSS variables itself
   (`createPageThemes` in `react-src/MuiRoot.tsx`), once per page language (German, English) with
-  the MUI texts and date-picker texts of that language; a `cssVariables` value of the customer's
-  options is overwritten.
-- **Light and dark.** A theme may define `colorSchemes: { light: …, dark: … }`; see the
-  [limits](#limits) below for how the scheme is chosen.
+  the MUI texts and date-picker texts of that language. Options of a `cssVariables` object (e.g.
+  `cssVarPrefix`) are kept; its `colorSchemeSelector` is replaced by the mode of the design system
+  (see the next point).
+- **Light and dark.** A theme may define `colorSchemes: { light: …, dark: … }`. Both component
+  families follow the mode of the UI theme in effect (`data-tl-mode` on `<html>`, written by the
+  `UIThemeService`): the MUI components through the selector `[data-tl-mode="%s"]` of the theme's
+  CSS variables, the TopLogic components through the styling properties derived per scheme. The
+  mode changes with the user's choice of a UI theme and, for the UI theme following the operating
+  system, with the system's preference, without a page reload. A theme with one scheme (a plain
+  `palette`) is applied in every mode of the page.
+  In a theme with both schemes, a color computed from the palette in the options
+  (`typography: palette => ({ h6: { color: palette.text.primary } })`) is computed once, from the
+  light palette, and stays so in the dark mode. Refer to the CSS variable instead
+  (`color: 'var(--mui-palette-text-primary)'`, or `theme.vars.palette.text.primary` in a
+  `styleOverrides` function), which switches with the scheme.
 
 ### 6. Fonts
 
@@ -398,14 +409,6 @@ computation is `com.top_logic.layout.react.mui/react-src/themeProperties.ts`.
   under `components` affect only components MUI renders.
 - **No contrast correction.** The theme's values are used as they are; a palette with poor
   contrast stays so on the TopLogic surfaces as well.
-- **Light and dark scheme.** A theme with one scheme (a plain `palette`) is applied in every mode of
-  the page. A theme with `colorSchemes.light` and `.dark` sets both: the TopLogic components follow
-  the mode of the UI theme in effect (`data-tl-mode` on `<html>`, written by the `UIThemeService`),
-  while the MUI components follow the operating system's preference (`prefers-color-scheme`, the
-  default of MUI's CSS variables for a theme with both schemes, which `installMui` does not
-  change). Both agree while the user's UI theme follows the system; a UI theme chosen explicitly in
-  the other scheme leaves the MUI components in the system's one.
-
 ## Part 2: customer-specific components
 
 Three levels, from cheapest to most work. Prefer the first that does the job.

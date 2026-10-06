@@ -139,9 +139,12 @@ const muiCache = createCache({ key: 'mui', container: document.head, prepend: fa
 
 export function createMuiRoot(themes: PageThemes) {
   return function MuiRoot({ children }: { children?: React.ReactNode }) {
+    const theme = pageTheme(themes);
+    const twoSchemes = hasBothSchemes(theme);
     return (
       <CacheProvider value={muiCache}>
-        <ThemeProvider theme={pageTheme(themes)}>
+        <ThemeProvider theme={theme} colorSchemeNode={null} storageManager={null} defaultMode={pageMode()}>
+          {twoSchemes && <ModeSync />}
           <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={pageLocale(themes)}>
             {children}
           </LocalizationProvider>
@@ -433,8 +436,19 @@ Loading the bundle changes nothing on the page; `installMui` does. How it attach
   no `ScopedCssBaseline`, and no global `CssBaseline`, whose reset would collide with the TopLogic
   stylesheets. The emotion cache appends its styles to the end of `<head>`, after the TopLogic
   stylesheets, so MUI wins on its own elements. The theme is the application's theme passed to
-  `installMui`, unchanged (with CSS variables), in the language of the page (`<html lang>`, German or
+  `installMui` (with CSS variables), in the language of the page (`<html lang>`, German or
   English).
+- **Light and dark.** The mode of the page belongs to the UI theme in effect, which writes it to
+  `<html>` as `data-tl-mode` (`light`, `dark`) and changes it without a page reload when the user
+  selects another UI theme, or when the operating system changes its preference while the UI theme
+  follows it. The MUI theme's color schemes use the selector `[data-tl-mode="%s"]`
+  (`colorSchemeSelector`, replacing the one of the customer's `cssVariables` options; their other
+  options are kept), so MUI's dark variables apply under `[data-tl-mode="dark"]` and its light
+  ones under `:root, [data-tl-mode="light"]`. The `ThemeProvider` writes nothing to `<html>`
+  (`colorSchemeNode={null}`), keeps no mode in the local storage (`storageManager={null}`) and
+  starts in the page's mode; for a theme with both schemes, `ModeSync` sets the mode of MUI's color
+  scheme context (`useColorScheme`) on each change of `data-tl-mode`, from one `MutationObserver`
+  shared by all React roots. A theme with one scheme is in effect in every mode.
 - **Overlays.** Windows and dialogs keep the TopLogic window manager: MUI supplies the look
   (`Paper`, `DialogTitle`, `DialogContent`, `DialogActions`), while positioning, moving and
   resizing, the focus trap, Escape and the stacking stay with TopLogic. MUI's `Modal` is not used,
@@ -569,8 +583,8 @@ sidebar, toolbars, layouts — follow it through their styling properties:
   the page, with the same specificity, so it wins. No build step and no theme of the
   `UIThemeService` is involved.
 - A theme with a light and a dark scheme sets each for its mode of the design system
-  (`[data-tl-mode]`); a theme with one scheme sets it on `:root`, in effect in every mode: the
-  page stays in that scheme, as the MUI components do.
+  (`[data-tl-mode]`), the mode the MUI components follow as well; a theme with one scheme sets it
+  on `:root`, in effect in every mode: the page stays in that scheme, as the MUI components do.
 
 The values of the theme are used as they are — there is no contrast correction. What is mapped:
 

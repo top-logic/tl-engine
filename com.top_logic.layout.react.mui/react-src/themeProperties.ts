@@ -180,8 +180,11 @@ export const THEME = {
 /** Selector of the page root: the properties of a theme with a single color scheme. */
 const ROOT_SELECTOR = ':root';
 
-/** The attribute of `<html>` naming the appearance mode of the design system. */
-const MODE_ATTRIBUTE = 'data-tl-mode';
+/**
+ * The attribute of `<html>` naming the appearance mode of the design system, `light` or `dark`
+ * (written by the UI theme in effect).
+ */
+export const MODE_ATTRIBUTE = 'data-tl-mode';
 
 /** The selector of each mode of the design system; the light one is also the page default. */
 const MODE_SELECTORS: Record<SchemeName, string> = {

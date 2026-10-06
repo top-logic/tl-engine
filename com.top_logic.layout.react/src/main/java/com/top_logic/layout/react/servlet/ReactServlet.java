@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -240,6 +241,8 @@ public class ReactServlet extends TopLogicServlet {
 		String pathInfo = request.getPathInfo();
 		if ("/data".equals(pathInfo)) {
 			handleDataDownload(request, response, session);
+		} else if ("/download".equals(pathInfo)) {
+			handleDownload(request, response, session);
 		} else if ("/tooltip".equals(pathInfo)) {
 			handleTooltipRequest(request, response, session);
 		} else if ("/i18n".equals(pathInfo)) {
@@ -286,6 +289,70 @@ public class ReactServlet extends TopLogicServlet {
 		try (OutputStream out = response.getOutputStream()) {
 			data.deliverTo(out);
 		}
+	}
+
+	/**
+	 * Sends a file a command {@link SSEUpdateQueue#deliverDownload(BinaryData) delivered} to the
+	 * window as an attachment, so that the browser saves it instead of displaying it.
+	 *
+	 * <p>
+	 * A delivered file is sent once: a second request for the same key, like a request for a key
+	 * that was never delivered, is answered as not found.
+	 * </p>
+	 */
+	private void handleDownload(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws IOException {
+		String windowName = request.getParameter("windowName");
+		WindowContext window = resolveWindow(request, session, windowName);
+		if (window.queue() == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+			return;
+		}
+		BinaryData data = window.queue().takeDownload(request.getParameter("key"));
+		if (data == null) {
+			sendError(response, HttpServletResponse.SC_NOT_FOUND, "No such download.");
+			return;
+		}
+
+		response.setContentType(data.getContentType());
+		response.setHeader("Content-Disposition", attachment(data.getName()));
+		response.setHeader("Cache-Control", "no-store");
+		long size = data.getSize();
+		if (size >= 0) {
+			response.setContentLengthLong(size);
+		}
+		try (OutputStream out = response.getOutputStream()) {
+			data.deliverTo(out);
+		}
+	}
+
+	/**
+	 * The {@code Content-Disposition} header value of an attachment of the given name.
+	 *
+	 * <p>
+	 * The name is given in UTF-8 as {@code filename*} (RFC 6266 / RFC 5987), so that a name with
+	 * characters beyond ASCII arrives intact, and as a plain {@code filename} with such characters
+	 * replaced for a client that does not read the former.
+	 * </p>
+	 */
+	static String attachment(String name) {
+		StringBuilder result = new StringBuilder("attachment; filename=\"");
+		for (int n = 0, length = name.length(); n < length; n++) {
+			char ch = name.charAt(n);
+			result.append(ch < 0x20 || ch > 0x7E || ch == '"' || ch == '\\' ? '_' : ch);
+		}
+		result.append("\"; filename*=UTF-8''");
+		for (byte b : name.getBytes(StandardCharsets.UTF_8)) {
+			int ch = b & 0xFF;
+			if (ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '.' || ch == '-'
+				|| ch == '_' || ch == '~') {
+				result.append((char) ch);
+			} else {
+				result.append('%').append(Character.toUpperCase(Character.forDigit(ch >> 4, 16)))
+					.append(Character.toUpperCase(Character.forDigit(ch & 0xF, 16)));
+			}
+		}
+		return result.toString();
 	}
 
 	private void handleTooltipRequest(HttpServletRequest request, HttpServletResponse response,

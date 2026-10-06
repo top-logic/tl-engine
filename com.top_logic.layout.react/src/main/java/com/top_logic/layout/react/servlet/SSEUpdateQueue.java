@@ -7,9 +7,12 @@ package com.top_logic.layout.react.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
@@ -22,12 +25,14 @@ import jakarta.servlet.http.HttpSession;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
+import com.top_logic.layout.react.protocol.DownloadEvent;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
@@ -69,6 +74,14 @@ public class SSEUpdateQueue {
 	private final ConcurrentLinkedQueue<SSEEvent> _pendingEvents = new ConcurrentLinkedQueue<>();
 
 	private final Map<String, ReactCommandTarget> _controls = new ConcurrentHashMap<>();
+
+	/**
+	 * The files handed to the user of this window that the client has not fetched yet, by the key
+	 * it fetches them under.
+	 *
+	 * @see #deliverDownload(BinaryData)
+	 */
+	private final Map<String, BinaryData> _downloads = new ConcurrentHashMap<>();
 
 	private final AtomicInteger _nextId = new AtomicInteger(1);
 
@@ -291,6 +304,37 @@ public class SSEUpdateQueue {
 	 */
 	public ScriptRecorder getRecorder() {
 		return _recorder;
+	}
+
+	/**
+	 * Hands the given file to the user of this window as a download.
+	 *
+	 * <p>
+	 * The file is kept until the client fetches it - once - from the {@code react-api/download}
+	 * endpoint, which a {@link DownloadEvent} tells the client to do. A command that produces a
+	 * file for the user, an export say, delivers it this way; the browser saves it under its
+	 * {@link BinaryData#getName() name}.
+	 * </p>
+	 *
+	 * @param data
+	 *        The file to deliver.
+	 */
+	public void deliverDownload(BinaryData data) {
+		String key = UUID.randomUUID().toString();
+		_downloads.put(key, data);
+		String windowName = _windowName == null ? "" : _windowName;
+		enqueue(DownloadEvent.create()
+			.setUrl("react-api/download?windowName=" + URLEncoder.encode(windowName, StandardCharsets.UTF_8)
+				+ "&key=" + key)
+			.setFileName(data.getName()));
+	}
+
+	/**
+	 * Removes and returns the file {@link #deliverDownload(BinaryData) delivered} under the given
+	 * key, {@code null} if there is none - never delivered, or already fetched.
+	 */
+	public BinaryData takeDownload(String key) {
+		return key == null ? null : _downloads.remove(key);
 	}
 
 	/**
@@ -527,6 +571,7 @@ public class SSEUpdateQueue {
 		}
 		_pendingEvents.clear();
 		_controls.clear();
+		_downloads.clear();
 	}
 
 	/**

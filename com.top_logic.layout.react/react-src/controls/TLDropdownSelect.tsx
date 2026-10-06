@@ -728,7 +728,9 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
               <ThemeIcon encoded="css:fa-solid fa-xmark" className="tl-button__icon tl-icon-sm" />
             </button>
           )}
-          <span className="tl-select__arrow" aria-hidden="true">
+          {/* While the list is open, the field ignores clicks; the arrow then closes it. */}
+          <span className="tl-select__arrow" aria-hidden="true"
+            onClick={isOpen ? (e) => { e.stopPropagation(); closeDropdown(); } : undefined}>
             <ThemeIcon
               encoded={isOpen ? 'css:fa-solid fa-chevron-up' : 'css:fa-solid fa-chevron-down'}
               className="tl-icon-sm"

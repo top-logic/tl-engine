@@ -56,10 +56,12 @@ public interface DropSecurityConfig extends ConfigurationItem {
 	 *
 	 * <p>
 	 * The function receives the same arguments as the function checking whether the drop can be
-	 * performed. If the function is not set, the object referenced by the drop position is the
-	 * target (the referenced row for a table drop, the referenced node for a drop onto a tree
-	 * node, and the parent node into which the elements are dropped for an ordered tree drop).
-	 * If the target is a tree node, the permission is checked on its business object.
+	 * performed, or the same arguments as the drop function, if there is no such function. If the
+	 * function is not set, the object referenced by the drop position is the target (the
+	 * referenced row for a table drop, the referenced node for a drop onto a tree node, the parent
+	 * node into which the elements are dropped for an ordered tree drop, and the business object
+	 * of the diagram element dropped onto for a drop in a diagram). If the target is a tree node,
+	 * the permission is checked on its business object.
 	 * </p>
 	 *
 	 * <p>

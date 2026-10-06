@@ -114,8 +114,8 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 
 	@Override
 	public OptionModel<?> generate(EditContext editContext) {
-		return new ScriptObservingOptionList(editContext.getOverlay(), editContext.getValueType(),
-			editContext.getOverlay().getScope());
+		return new ScriptObservingOptionList(ScriptObservingOptions.contextObject(editContext),
+			editContext.getValueType(), ScriptObservingOptions.updateContainer(editContext));
 	}
 
 	@Override
@@ -206,6 +206,35 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 		 */
 		public ScriptObservingOptions(TLObject object) {
 			_object = object;
+		}
+
+		/**
+		 * The object passed to an option script as context for the given {@link EditContext}.
+		 * 
+		 * <p>
+		 * This is the {@link EditContext#getOverlay() overlay} when the edit context has one,
+		 * otherwise the edited {@link EditContext#getObject() object}, which is {@code null} in a
+		 * create context.
+		 * </p>
+		 */
+		static TLObject contextObject(EditContext editContext) {
+			TLFormObject overlay = editContext.getOverlay();
+			return overlay != null ? overlay : editContext.getObject();
+		}
+
+		/**
+		 * The {@link AttributeUpdateContainer} that resolves overlays during option script
+		 * evaluation for the given {@link EditContext}.
+		 * 
+		 * <p>
+		 * This is the {@link TLFormObject#getScope() scope} of the
+		 * {@link EditContext#getOverlay() overlay}, or {@code null} when the edit context has no
+		 * overlay.
+		 * </p>
+		 */
+		static AttributeUpdateContainer updateContainer(EditContext editContext) {
+			TLFormObject overlay = editContext.getOverlay();
+			return overlay != null ? overlay.getScope() : null;
 		}
 
 		/**

@@ -60,6 +60,15 @@ public class ContextMenuElement extends AbstractMenuElement {
 		return MenuTrigger.CONTEXT_MENU;
 	}
 
+	/**
+	 * The children are content in their own right that merely carries a menu, so they stay
+	 * displayed whether or not the menu currently has an entry.
+	 */
+	@Override
+	protected boolean hideWhileEmpty() {
+		return false;
+	}
+
 	@Override
 	protected List<CommandModel> menuCommands(List<ViewCommandModel> models) {
 		List<CommandModel> result = new ArrayList<>();

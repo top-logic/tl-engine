@@ -8,7 +8,6 @@ package com.top_logic.model.search.expr.compile.eval;
 
 import static com.top_logic.knowledge.search.ExpressionFactory.*;
 
-import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.EvalContext;
@@ -18,7 +17,7 @@ import com.top_logic.model.search.expr.EvalContext;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class CompiledIsNull extends CompiledExpression {
+public class CompiledIsNull extends CompiledPredicate {
 
 	private CompiledValue _base;
 
@@ -26,13 +25,17 @@ public class CompiledIsNull extends CompiledExpression {
 	 * Creates a new {@link CompiledIsNull}.
 	 */
 	public CompiledIsNull(CompiledValue base) {
-		super(MOPrimitive.BOOLEAN);
 		_base = base;
 	}
 
 	@Override
 	public Expression buildExpression(EvalContext context) throws CompiledValue.IncompatibleTypes {
-		return isNull(_base.buildExpression(context));
+		return _base.buildIsNull(context);
+	}
+
+	@Override
+	public Expression buildCondition(EvalContext context) throws CompiledValue.IncompatibleTypes {
+		return buildExpression(context);
 	}
 
 	@Override

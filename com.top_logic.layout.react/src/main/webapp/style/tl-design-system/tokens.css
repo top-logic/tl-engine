@@ -143,6 +143,8 @@
   --tl-shadow-dialog: var(--tl-shadow-2);
   --tl-shadow-drag: var(--tl-shadow-3);
   --tl-surface-scrim: var(--tl-scrim-1);
+  --tl-surface-state-hover: var(--tl-veil-1);
+  --tl-surface-state-active: var(--tl-veil-2);
 
   --tl-size-control: var(--tl-height-3);
   --tl-size-control-sm: var(--tl-height-1);
@@ -234,6 +236,8 @@
   --tl-shadow-dialog: var(--tl-shadow-5);
   --tl-shadow-drag: var(--tl-shadow-6);
   --tl-surface-scrim: var(--tl-scrim-2);
+  --tl-surface-state-hover: var(--tl-veil-3);
+  --tl-surface-state-active: var(--tl-veil-4);
 }
 
 [data-tl-density="compact"] {

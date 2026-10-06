@@ -6,26 +6,58 @@
 package test.com.top_logic.layout.view.command;
 
 import java.util.List;
+import java.util.Map;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.module.ModuleException;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
+import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
 import com.top_logic.layout.react.control.layout.ToolbarOverflow;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.layout.view.command.CliqueRegistry;
+import com.top_logic.layout.view.command.CommandCliqueService;
+import com.top_logic.layout.view.command.CommandCliqueService.CliqueConfig;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ToolbarBuilder;
 
 /**
- * Tests the {@link ToolbarBuilder}, in particular the {@link ToolbarOverflow} it derives from the
- * placement its toolbar is built for.
+ * Tests the {@link ToolbarBuilder}: the {@link ToolbarOverflow} it derives from the placement its
+ * toolbar is built for, and the groups it forms from the cliques of its commands.
  */
 public class TestToolbarBuilder extends TestCase {
+
+	private static final String FIRST = "first";
+
+	private static final String SECOND = "second";
+
+	private static final String MENU = "menu";
+
+	private static final String UNKNOWN = "unknown";
+
+	private static final String MENU_LABEL = "Menu label";
+
+	/** The cliques the toolbars of this test are built with, in display order. */
+	private static final CommandCliqueService CLIQUES = cliques(
+		clique(FIRST, ToolbarGroupDisplay.INLINE, null),
+		clique(SECOND, ToolbarGroupDisplay.INLINE, null),
+		clique(MENU, ToolbarGroupDisplay.MENU, ResKey.text(MENU_LABEL)));
 
 	private ReactContext _context;
 
@@ -62,7 +94,7 @@ public class TestToolbarBuilder extends TestCase {
 		CommandScope scope = new CommandScope(List.of(command("other", CommandPlacement.CONTEXT_MENU)));
 
 		ReactToolbarControl toolbar = ToolbarBuilder.buildOrEmpty(_context, scope,
-			CommandPlacement.BUTTON_BAR, new CliqueRegistry(), null);
+			CommandPlacement.BUTTON_BAR, CLIQUES, null);
 
 		assertTrue(toolbar.isEmpty());
 		assertEquals(ToolbarOverflow.LEADING, toolbar.getOverflow());
@@ -89,11 +121,69 @@ public class TestToolbarBuilder extends TestCase {
 		assertEquals(ToolbarOverflow.NONE, toolbar.getOverflow());
 	}
 
+	/**
+	 * The groups follow the order of the registered cliques, not the order of the commands.
+	 */
+	public void testGroupsFollowTheCliqueOrder() {
+		ReactToolbarControl toolbar = build(command("m", MENU), command("s", SECOND), command("f", FIRST));
+
+		assertEquals(List.of(FIRST, SECOND, MENU), names(groups(toolbar)));
+	}
+
+	/**
+	 * A clique registered as menu yields a menu group labelled in the language of the user.
+	 */
+	public void testMenuCliqueIsLabelled() {
+		ReactToolbarControl toolbar = build(command("m", MENU));
+
+		Map<?, ?> group = groups(toolbar).get(0);
+		assertEquals(ToolbarGroupDisplay.MENU.getExternalName(), group.get(ReactToolbarControl.GROUP_DISPLAY));
+		assertEquals(MENU_LABEL, group.get(ReactToolbarControl.GROUP_LABEL));
+	}
+
+	/**
+	 * A clique that is not registered yields an inline group without label after the registered
+	 * ones.
+	 */
+	public void testUnregisteredCliqueIsAppendedInline() {
+		ReactToolbarControl toolbar = build(command("u", UNKNOWN), command("m", MENU), command("f", FIRST));
+
+		List<Map<?, ?>> groups = groups(toolbar);
+		assertEquals(List.of(FIRST, MENU, UNKNOWN), names(groups));
+		Map<?, ?> unknown = groups.get(2);
+		assertEquals(ToolbarGroupDisplay.INLINE.getExternalName(), unknown.get(ReactToolbarControl.GROUP_DISPLAY));
+		assertNull(unknown.get(ReactToolbarControl.GROUP_LABEL));
+		assertNull(unknown.get(ReactToolbarControl.GROUP_ICON));
+	}
+
+	private ReactToolbarControl build(CommandModel... commands) {
+		ReactToolbarControl result = ToolbarBuilder.build(_context, new CommandScope(List.of(commands)),
+			CommandPlacement.TOOLBAR, CLIQUES, null);
+		assertNotNull("Commands of the requested placement yield a toolbar.", result);
+		return result;
+	}
+
+	/** The clique names of the given groups. */
+	private static List<Object> names(List<Map<?, ?>> groups) {
+		return groups.stream().map(group -> (Object) group.get(ReactToolbarControl.GROUP_NAME)).toList();
+	}
+
+	/** The groups the given toolbar publishes to the client, in display order. */
+	private static List<Map<?, ?>> groups(ReactToolbarControl toolbar) {
+		Map<?, ?> state;
+		try {
+			state = (Map<?, ?>) JSON.fromString(toolbar.stateAsJSON());
+		} catch (JSON.ParseException ex) {
+			throw new AssertionError("Not a state object.", ex);
+		}
+		return ((List<?>) state.get(ReactToolbarControl.GROUPS)).stream().<Map<?, ?>> map(g -> (Map<?, ?>) g).toList();
+	}
+
 	private ReactToolbarControl build(CommandPlacement placement) {
 		CommandScope scope = new CommandScope(List.of(command("first", placement), command("second", placement)));
 
 		ReactToolbarControl result =
-			ToolbarBuilder.build(_context, scope, placement, new CliqueRegistry(), null);
+			ToolbarBuilder.build(_context, scope, placement, CLIQUES, null);
 		assertNotNull("Commands of the requested placement yield a toolbar.", result);
 		return result;
 	}
@@ -105,5 +195,47 @@ public class TestToolbarBuilder extends TestCase {
 				return placement;
 			}
 		};
+	}
+
+	private static CommandModel command(String name, String clique) {
+		return new FakeCommandModelBase(name) {
+			@Override
+			public CommandPlacement getPlacement() {
+				return CommandPlacement.TOOLBAR;
+			}
+
+			@Override
+			public String getClique() {
+				return clique;
+			}
+		};
+	}
+
+	private static CommandCliqueService cliques(CliqueConfig... cliques) {
+		CommandCliqueService.Config config = TypedConfiguration.newConfigItem(CommandCliqueService.Config.class);
+		config.getCliques().addAll(List.of(cliques));
+		return new CommandCliqueService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
+	}
+
+	private static CliqueConfig clique(String name, ToolbarGroupDisplay display, ResKey label) {
+		CliqueConfig result = TypedConfiguration.newConfigItem(CliqueConfig.class);
+		set(result, CliqueConfig.NAME, name);
+		set(result, CliqueConfig.DISPLAY, display);
+		set(result, CliqueConfig.LABEL, label);
+		return result;
+	}
+
+	private static void set(ConfigurationItem item, String property, Object value) {
+		item.update(item.descriptor().getProperty(property), value);
+	}
+
+	/**
+	 * Test suite providing the services that turn the label of a menu clique into the text
+	 * displayed.
+	 */
+	public static Test suite() throws ModuleException {
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestToolbarBuilder.class,
+				ThreadContextManager.Module.INSTANCE, ResourcesModule.Module.INSTANCE));
 	}
 }

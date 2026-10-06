@@ -16,21 +16,34 @@ import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.model.annotate.AnnotationInheritance;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.config.TLTypeAnnotation;
 
 /**
- * {@link TLAttributeAnnotation} specifying an algorithm to generate possible options for an
- * attribute.
+ * Annotation specifying an algorithm to generate possible options for an attribute.
+ * 
+ * <p>
+ * At an attribute, the annotation defines the options of this attribute. At a type, it defines the
+ * default options of all attributes whose value type it is. Options defined at the attribute take
+ * precedence over the options of its value type. The annotation is not inherited: a
+ * specialization of a type does not use the options of its generalization, and an attribute
+ * overriding another attribute with a specialized value type does not use the options of the
+ * overridden attribute. Only an override that keeps the value type of the overridden attribute uses
+ * its options.
+ * </p>
  * 
  * @see #getGenerator()
+ * @see AttributeOperations#getOptions(com.top_logic.model.TLStructuredTypePart)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @TagName("options")
 @InApp
+@AnnotationInheritance(Policy.REDEFINE)
 @TargetType(value = {
 	TLTypeKind.STRING, TLTypeKind.INT, TLTypeKind.FLOAT,
 	TLTypeKind.ENUMERATION, TLTypeKind.REF,
@@ -49,8 +62,8 @@ public interface TLOptions extends TLAttributeAnnotation, TLTypeAnnotation {
 	 * The {@link Generator} computing options for a select field.
 	 * 
 	 * @see AttributeOperations#allOptions(EditContext) The configured generator must not be invoked
-	 *      directly by the application. The Utility method must be used instead to include
-	 *      type-based default options.
+	 *      directly by the application. The utility method must be used instead to include the
+	 *      options of the value type.
 	 */
 	@Name(GENERATOR_PROPERTY)
 	@Mandatory

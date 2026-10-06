@@ -7,7 +7,8 @@ copy(orig: $orig,
 	context: $context, 
 	filter: $filter, 
 	constructor: $constructor, 
-	transient: false)</code>
+	transient: false,
+	skipTransactionDefaults: false)</code>
 </pre>
 
 <h2>Beschreibung</h2>
@@ -91,6 +92,13 @@ copy(orig: $orig,
 			<td>nein</td>
 			<td><code class="hljs inlineCode">null</code></td>
 		</tr>
+		<tr>
+			<td>skipTransactionDefaults</td>
+			<td>Boolean</td>
+			<td>Ob eine persistente Kopie die Standardwerte behält, die in der Transaktion ihrer Erzeugung berechnet werden (z.B. eine laufende Nummer oder der Standardwert eines Ausdrucks, der in der Transaktion ausgewertet wird), statt den Wert des Originals zu übernehmen. Mit <code class="hljs inlineCode">true</code> werden solche Attribute nicht kopiert, unabhängig vom <code class="hljs inlineCode">filter</code>. Ein transientes Objekt erhält solche Standardwerte nie, deshalb ist diese Option nötig, um einen transienten Entwurf zu speichern, ohne sie zu verlieren. Eine transiente Kopie übernimmt in jedem Fall den Wert des Originals.</td>
+			<td>nein</td>
+			<td><code class="hljs inlineCode">false</code></td>
+		</tr>
 	</tbody>
 </table>
 
@@ -143,3 +151,14 @@ copy(orig: $orig,
 </pre>
 
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Eine Liste mit den Werten [5, 5] - ein Mal die originale Zahl und ein Mal die kopierte.</p>
+
+<h3>Entwurf speichern</h3>
+
+<pre><code>{
+   draft = new(`my.module:Ticket`, transient: true);
+   $draft.set(`my.module:Ticket#title`, "Drucker defekt");
+   $draft.copy(context: $p, transient: false, skipTransactionDefaults: true);
+}</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Ein persistentes Ticket im Kontext <code class="hljs inlineCode">p</code> mit dem Titel des Entwurfs, z.B. wie er in einem Anlegedialog bearbeitet wurde. Ein Attribut mit einer laufenden Nummer als Standardwert erhält die nächste Nummer der Sequenz, obwohl der transiente Entwurf keine Nummer hat.</p>

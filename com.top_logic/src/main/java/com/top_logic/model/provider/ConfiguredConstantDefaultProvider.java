@@ -31,8 +31,7 @@ public abstract class ConfiguredConstantDefaultProvider extends ConstantDefaultP
 		/**
 		 * The constant value to use as default.
 		 * 
-		 * @see DefaultProvider#createDefault(Object, com.top_logic.model.TLStructuredTypePart,
-		 *      boolean)
+		 * @see DefaultProvider#createDefault(Object, com.top_logic.model.TLStructuredTypePart)
 		 */
 		@Abstract
 		Object getValue();

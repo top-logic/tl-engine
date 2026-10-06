@@ -47,6 +47,9 @@ public class TestModelAccessActions extends AbstractModelAccessTest {
 	/** Name of the channel holding the container in the tests. */
 	private static final String CHANNEL = "container";
 
+	/** Name of the {@link #TASK} attribute with a sequence number as default. */
+	private static final String NUMBER = "number";
+
 	private ViewContext _context;
 
 	private ViewChannel _channel;
@@ -133,6 +136,39 @@ public class TestModelAccessActions extends AbstractModelAccessTest {
 		TLObject draft = (TLObject) create.execute(_context, _category);
 		assertTrue(draft.tTransient());
 		assertSame(type(PROJECT), draft.tType());
+		assertNull("Without a container, the draft is created at top level.", draft.tContainer());
+	}
+
+	/**
+	 * With a container, the draft is created in the context of the container, as
+	 * {@code new(type, context: $container, transient: true)} creates it.
+	 */
+	public void testCreateTransientInContainer() throws Exception {
+		ViewAction create = action(
+			"<create-transient type='" + qualified(TASK) + "' container='" + CHANNEL + "' reference='" + TASKS + "'/>");
+		_channel.set(_project);
+
+		becomeUser(_responsible);
+		TLObject draft = (TLObject) create.execute(_context, null);
+		assertTrue(draft.tTransient());
+		assertSame(type(TASK), draft.tType());
+		assertSame(_project, draft.tContainer());
+		assertSame("The default value is computed in the context of the container.", _project,
+			draft.tValueByName(CREATED_IN));
+		assertEquals("The draft is not added to the container.", List.of(_task), _project.tValueByName(TASKS));
+	}
+
+	/**
+	 * With an empty container channel, the draft is created at top level.
+	 */
+	public void testCreateTransientInEmptyContainer() throws Exception {
+		ViewAction create = action("<create-transient type='" + qualified(TASK) + "' container='" + CHANNEL + "'/>");
+
+		becomeUser(_root);
+		TLObject draft = (TLObject) create.execute(_context, null);
+		assertTrue(draft.tTransient());
+		assertNull(draft.tContainer());
+		assertNull(draft.tValueByName(CREATED_IN));
 	}
 
 	/**
@@ -245,6 +281,25 @@ public class TestModelAccessActions extends AbstractModelAccessTest {
 		assertFalse(created.tTransient());
 		assertEquals("created", created.tValueByName(NAME));
 		assertEquals(List.of(_task, created), _project.tValueByName(TASKS));
+	}
+
+	/**
+	 * The persistent object keeps the default computed in its creating transaction, which the
+	 * transient draft has not received.
+	 */
+	public void testPersistKeepsTransactionDefault() throws Exception {
+		ViewAction persist =
+			action("<persist-transient container='" + CHANNEL + "' reference='" + TASKS + "'/>");
+		_channel.set(_project);
+		TLObject draft = draft(TASK, "created");
+		assertNull(draft.tValueByName(NUMBER));
+
+		becomeUser(_responsible);
+		TLObject created = (TLObject) persist.execute(_context, draft);
+		assertEquals("created", created.tValueByName(NAME));
+		Number number = (Number) created.tValueByName(NUMBER);
+		assertNotNull("The sequence number is lost.", number);
+		assertEquals(((Number) _task.tValueByName(NUMBER)).longValue() + 1, number.longValue());
 	}
 
 	/**

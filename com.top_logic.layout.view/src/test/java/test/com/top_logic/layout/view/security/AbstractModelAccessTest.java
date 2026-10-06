@@ -33,6 +33,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
+import com.top_logic.tool.execution.service.CommandApprovalService;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
@@ -53,9 +54,11 @@ import com.top_logic.util.error.TopLogicException;
  * <li>{@value #PROJECT}: a top-level type. The account in {@value #RESPONSIBLE} holds the role
  * {@value #ROLE_RESPONSIBLE} on the project, which grants read, write, create, delete and the custom
  * command group {@value #FINISH}. Writing
- * {@value #SECRET} is denied for every role.</li>
+ * {@value #SECRET} is denied for every role. The {@link CommandApprovalService} refuses writing a
+ * project named {@value #FROZEN} (disabled, with a reason) and deleting it (hidden).</li>
  * <li>{@value #TASK}: the type of the composition {@value #TASKS} of a project. A task inherits the
- * role {@value #ROLE_RESPONSIBLE} from its project, with the same grants.</li>
+ * role {@value #ROLE_RESPONSIBLE} from its project, with the same grants. Its reference
+ * {@value #CREATED_IN} defaults to the context the task is created in.</li>
  * <li>{@value #CATEGORY}: the type of the reference {@value #CATEGORY_REF} of a project. The account
  * in {@value #READER} holds the role {@value #ROLE_READER}, which grants read only.</li>
  * </ul>
@@ -78,6 +81,11 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	/** Name of the type of the objects in the composition {@link #TASKS}. */
 	protected static final String TASK = "Task";
 
+	/**
+	 * Name of the {@link #TASK} reference defaulting to the context the task is created in.
+	 */
+	protected static final String CREATED_IN = "createdIn";
+
 	/** Name of the type of the objects referenced by {@link #CATEGORY_REF}. */
 	protected static final String CATEGORY = "Category";
 
@@ -98,6 +106,9 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Name of the {@link #CATEGORY} reference to the account holding {@link #ROLE_READER}. */
 	protected static final String READER = "reader";
+
+	/** Name of a {@link #PROJECT} the {@link CommandApprovalService} refuses to write. */
+	protected static final String FROZEN = "frozen";
 
 	/** Name of the custom command group granted on a {@link #PROJECT}. */
 	protected static final String FINISH = "Finish";
@@ -235,7 +246,8 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 				TLSecurityDeviceManager.Module.INSTANCE,
 				PersonManager.Module.INSTANCE,
 				InitialRolesManager.Module.INSTANCE,
-				SecurityConfigurationService.Module.INSTANCE)));
+				SecurityConfigurationService.Module.INSTANCE,
+				CommandApprovalService.Module.INSTANCE)));
 		String configFile = CustomPropertiesDecorator.createFileName(AbstractModelAccessTest.class, CONFIG_FILE);
 		return TLTestSetup.createTLTestSetup(TestUtils.doNotMerge(new CustomPropertiesSetup(kbTest, configFile, true)));
 	}

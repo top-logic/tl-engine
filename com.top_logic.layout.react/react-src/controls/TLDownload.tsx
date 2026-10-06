@@ -1,4 +1,4 @@
-import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -87,7 +87,7 @@ const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
           <path d="M8 1v9m0 0L4.5 6.5M8 10l3.5-3.5M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </svg>
       </button>
-      <span className="tlDownload__fileName" {...TOOLTIP_WHEN_CLIPPED}>{fileName}</span>
+      <span className="tlDownload__fileName">{fileName}</span>
       {clearable && (
         <button
           type="button"

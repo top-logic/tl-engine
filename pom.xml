@@ -30,7 +30,7 @@
 
 	<properties>
 		<tl.version>8.0.0-SNAPSHOT</tl.version>
-		<jetty.version>12.1.13</jetty.version>
+		<jetty.version>12.1.14</jetty.version>
 		<poi.version>5.5.1</poi.version>
 		<kafka.version>3.9.2</kafka.version>
 		<zookeeper.version>3.9.6</zookeeper.version>
@@ -1094,7 +1094,7 @@
 			    <!-- Note: Overrides the vulnerable version requested by kafka-clients. -->
 			    <groupId>com.github.luben</groupId>
 			    <artifactId>zstd-jni</artifactId>
-			    <version>1.5.7-20</version>
+			    <version>1.5.7-21</version>
 			</dependency>
 			<dependency>
 				<groupId>org.apache.zookeeper</groupId>

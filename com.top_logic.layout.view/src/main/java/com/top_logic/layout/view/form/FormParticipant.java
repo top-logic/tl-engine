@@ -52,8 +52,11 @@ public interface FormParticipant {
 	 * Applies buffered overlay changes to the underlying base objects.
 	 *
 	 * <p>
-	 * Called by {@link FormControl#executeStoreState()} for all participants. Does not require a KB
-	 * transaction. For example, a composition table applies its row overlays here.
+	 * Called by {@link FormControl#executeStoreState()} for all participants after validation, the
+	 * write-rights check and, for a persistent form object, {@link #persist(Transaction)}, and before
+	 * the main overlay is applied. For a persistent form object, this happens within the KB
+	 * transaction opened for {@link #persist(Transaction)}. For example, a composition table applies
+	 * its row overlays here.
 	 * </p>
 	 */
 	default void applyState() {
@@ -64,13 +67,16 @@ public interface FormParticipant {
 	 * Performs KB-specific operations within the given transaction.
 	 *
 	 * <p>
-	 * Called within an open transaction before {@link #applyState()} and the main overlay
-	 * application. Participants persist new transient objects, update overlay reference lists, and
-	 * delete orphaned objects here.
+	 * Called by {@link FormControl#executeStoreState()} for all participants if the form object is
+	 * persistent, after validation and the write-rights check, within an open transaction, and before
+	 * {@link #applyState()} and the main overlay application. Participants persist new transient
+	 * objects, update overlay reference lists, and delete orphaned objects here. For a transient form
+	 * object, this method is not called.
 	 * </p>
 	 *
 	 * @param tx
-	 *        The current transaction.
+	 *        The current transaction. It may be nested into a transaction of the caller, which then
+	 *        decides whether the changes are committed.
 	 */
 	void persist(Transaction tx);
 

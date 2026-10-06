@@ -40,6 +40,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormParticipant;
 import com.top_logic.model.TransientObject;
@@ -295,7 +296,7 @@ public class TestNestedDirtyScopes extends TestCase {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestNestedDirtyScopes.class,
 				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE,
-				SchedulerService.Module.INSTANCE));
+				SchedulerService.Module.INSTANCE, CommandCliqueService.Module.INSTANCE));
 	}
 
 }

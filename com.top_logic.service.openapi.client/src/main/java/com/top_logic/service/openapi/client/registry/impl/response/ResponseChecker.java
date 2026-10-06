@@ -5,22 +5,26 @@
  */
 package com.top_logic.service.openapi.client.registry.impl.response;
 
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.apache.hc.core5.http.ClassicHttpResponse;
 
 import com.top_logic.service.openapi.client.registry.conf.MethodDefinition;
 import com.top_logic.service.openapi.client.registry.impl.call.Call;
 
 /**
- * {@link ResponseHandler} checking the response for status code {@link HttpServletResponse#SC_OK}
- * and delegating to a given implementation.
+ * {@link ResponseHandler} checking the response for a success status code and delegating to a given
+ * implementation.
+ * 
+ * <p>
+ * Every status code in the range {@link HTTPStatusCodes#STATUS_CODE_RANGE_SUCCESS} counts as
+ * success, including responses without a body such as "204 No Content". Any other status code fails
+ * the call with a {@link com.top_logic.util.error.TopLogicException} before the delegate is invoked.
+ * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class ResponseChecker implements ResponseHandler {
 
-	private ResponseHandler _impl;
+	private final ResponseHandler _impl;
 
 	/**
 	 * Creates a new {@link ResponseChecker}.

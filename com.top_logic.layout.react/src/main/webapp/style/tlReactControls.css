@@ -2299,7 +2299,10 @@ button.tlBottomBar__item:hover {
 /* --- TLDialogManager ------------------------------------------------------- */
 
 .tlDialogManager {
-	/* Container for stacked dialogs; no visual styles. */
+	/* Container for stacked dialogs, which are fixed overlays: it takes no part in the layout of the
+	   window root it is a child of, so it claims no room there - not even the gap the root stack
+	   would put in front of it, which cut the page short at the bottom. */
+	display: contents;
 }
 
 /* --- TLWindow -------------------------------------------------------------- */

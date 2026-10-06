@@ -400,7 +400,7 @@ public class SecurityCoverageTable implements UIElement {
 	 * and the channels are pushed again for it without the user having to select it anew.
 	 * </p>
 	 */
-	private static final class Detail {
+	public static final class Detail {
 
 		private final ViewChannel _selection;
 
@@ -422,7 +422,7 @@ public class SecurityCoverageTable implements UIElement {
 		 * Creates a {@link Detail} over the channels the table is configured with, each of them
 		 * <code>null</code> where the configuration names none.
 		 */
-		Detail(ViewChannel selection, ViewChannel type, ViewChannel internal, ViewChannel withoutSecurity,
+		public Detail(ViewChannel selection, ViewChannel type, ViewChannel internal, ViewChannel withoutSecurity,
 				ViewChannel findings, ViewChannel rules, ViewChannel module) {
 			_selection = selection;
 			_type = type;
@@ -459,7 +459,7 @@ public class SecurityCoverageTable implements UIElement {
 		 * Writes what the row with the given key is described by to the bound channels: a type, or
 		 * the module whose group header is selected; clearing them all for <code>null</code>.
 		 */
-		void show(Object key, Map<Object, TypeCoverage> rowByKey) {
+		public void show(Object key, Map<Object, TypeCoverage> rowByKey) {
 			TLModule module = moduleOf(key);
 			show(module != null || key == null ? null : rowByKey.get(key));
 			if (_module != null) {
@@ -498,7 +498,7 @@ public class SecurityCoverageTable implements UIElement {
 	 * table being grouped by module; <code>null</code> for the key of a type, or of a group of
 	 * another column.
 	 */
-	static TLModule moduleOf(Object key) {
+	public static TLModule moduleOf(Object key) {
 		if (key instanceof GroupKey group && group.values().size() == 1
 			&& group.values().get(0) instanceof TLModule module) {
 			return module;

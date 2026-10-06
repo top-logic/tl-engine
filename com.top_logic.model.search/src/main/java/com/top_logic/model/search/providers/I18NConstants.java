@@ -86,6 +86,20 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 INVALID_UPDATE_TYPE__FUN_EX;
 
+	/**
+	 * Default commit message of a drop onto a target object.
+	 * 
+	 * @en Dropped {0} onto {1}.
+	 */
+	public static ResKey2 DROPPED__OBJECTS_TARGET;
+
+	/**
+	 * Default commit message of a drop without target object.
+	 * 
+	 * @en Dropped {0}.
+	 */
+	public static ResKey1 DROPPED__OBJECTS;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

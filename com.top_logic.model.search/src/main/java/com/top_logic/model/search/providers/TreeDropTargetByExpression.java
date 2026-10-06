@@ -13,9 +13,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
-import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.tree.dnd.BusinessObjectTreeDrop;
@@ -48,7 +49,7 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 
 	private final List<PostCreateAction> _postCreateActions;
 
-	private final boolean _inTransaction;
+	private final Config _config;
 
 	LayoutComponent _contextComponent;
 
@@ -67,7 +68,7 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 		_handleDrop = QueryExecutor.compile(kb, model, config.getHandleDrop());
 		_canDrop = QueryExecutor.compile(kb, model, config.getCanDrop());
 		_postCreateActions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
-		_inTransaction = config.getInTransaction();
+		_config = config;
 
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
 			_contextComponent = component;
@@ -89,8 +90,13 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 	public void handleDrop(Collection<?> droppedObjects, Args dropArguments) {
 		Object createdObject;
 
-		if (_inTransaction) {
-			createdObject = KBUtils.inTransaction(() -> _handleDrop.executeWith(Args.cons(droppedObjects, dropArguments)));
+		if (_config.getInTransaction()) {
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			ResKey message = _config.buildCommitMessage(droppedObjects, getDropTarget(dropArguments));
+			try (Transaction tx = kb.beginTransaction(message)) {
+				createdObject = _handleDrop.executeWith(Args.cons(droppedObjects, dropArguments));
+				tx.commit();
+			}
 		} else {
 			createdObject = _handleDrop.executeWith(Args.cons(droppedObjects, dropArguments));
 		}
@@ -112,6 +118,18 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 	/** Whether the business logic allows the drop with the given arguments. */
 	public boolean canDrop(Collection<?> draggedObjects, Args dropArguments) {
 		return SearchExpression.isTrue(_canDrop.executeWith(Args.cons(draggedObjects, dropArguments)));
+	}
+
+	/**
+	 * The object the dropped objects are dropped onto, used for the commit message of the drop.
+	 * 
+	 * @param dropArguments
+	 *        The arguments computed by {@link #getDropArguments(TreeDropEvent)}.
+	 * @return The business object of the target node. By default, this is the first drop
+	 *         argument.
+	 */
+	protected Object getDropTarget(Args dropArguments) {
+		return dropArguments.hasValue() ? dropArguments.value() : null;
 	}
 
 	/**

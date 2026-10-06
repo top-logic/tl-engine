@@ -15,9 +15,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.table.dnd.BusinessObjectTableDrop;
 import com.top_logic.layout.table.dnd.TableDropTarget;
@@ -106,7 +106,7 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 
 	private final List<PostCreateAction> _postCreateActions;
 
-	private final boolean _inTransaction;
+	private final Config _config;
 
 	private LayoutComponent _contextComponent;
 
@@ -127,7 +127,7 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 		_handleDrop = QueryExecutor.compile(kb, model, config.getHandleDrop());
 		_canDrop = QueryExecutor.compile(kb, model, config.getCanDrop());
 		_postCreateActions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
-		_inTransaction = config.getInTransaction();
+		_config = config;
 
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
 			_contextComponent = component;
@@ -150,8 +150,12 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 	public void handleDrop(Collection<?> droppedObjects, Object referenceRow) {
 		Object createdObject;
 
-		if (_inTransaction) {
-			createdObject = KBUtils.inTransaction(() -> _handleDrop.execute(droppedObjects, referenceRow));
+		if (_config.getInTransaction()) {
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			try (Transaction tx = kb.beginTransaction(_config.buildCommitMessage(droppedObjects, referenceRow))) {
+				createdObject = _handleDrop.execute(droppedObjects, referenceRow);
+				tx.commit();
+			}
 		} else {
 			createdObject = _handleDrop.execute(droppedObjects, referenceRow);
 		}

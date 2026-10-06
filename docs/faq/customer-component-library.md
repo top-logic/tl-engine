@@ -412,6 +412,8 @@ with [Material UI](https://mui.com/) — a complete adapter module for a real co
 uses only MIT-licensed packages: `@mui/material`, `@mui/x-date-pickers`, `@emotion/*` and `dayjs`.
 An application that wants the Material UI look depends on it and installs it with its own theme
 (see [An application on Material UI](#an-application-on-material-ui)).
+The step-by-step recipe for an application in a customer's MUI theme, including customer-specific
+components, is [mui-customer-theme.md](mui-customer-theme.md).
 
 | Path | Content |
 |---|---|
@@ -535,8 +537,10 @@ export default defineConfig({
 });
 ```
 
-A module with React code of its own (an MUI-based control) also needs the React shims of
-[new-react-module.md](new-react-module.md).
+A module with React code of its own (an MUI-based control) compiles its JSX with
+`@vitejs/plugin-react` in the classic runtime and needs `@types/react` for the type checker; the
+React shims of [new-react-module.md](new-react-module.md) only when it bundles a third-party library
+that imports `react` itself (see [mui-customer-theme.md](mui-customer-theme.md#building-jsx)).
 
 The re-export makes the bundle contain all of Material UI, not only the components the adapters use:
 about 1.23 MB (gzip about 306 kB) instead of about 0.98 MB (gzip about 251 kB) with the adapters alone. The difference is what

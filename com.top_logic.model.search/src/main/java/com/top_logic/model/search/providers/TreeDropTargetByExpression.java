@@ -50,6 +50,8 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 
 	private final boolean _inTransaction;
 
+	private final DropSecurity _security;
+
 	LayoutComponent _contextComponent;
 
 	/**
@@ -68,6 +70,7 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 		_canDrop = QueryExecutor.compile(kb, model, config.getCanDrop());
 		_postCreateActions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 		_inTransaction = config.getInTransaction();
+		_security = new DropSecurity(config);
 
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
 			_contextComponent = component;
@@ -87,6 +90,9 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 	 * Executes the drop with the given arguments.
 	 */
 	public void handleDrop(Collection<?> droppedObjects, Args dropArguments) {
+		_security.checkAllowed(_contextComponent, Args.cons(droppedObjects, dropArguments),
+			getSecurityTarget(dropArguments));
+
 		Object createdObject;
 
 		if (_inTransaction) {
@@ -111,7 +117,24 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 
 	/** Whether the business logic allows the drop with the given arguments. */
 	public boolean canDrop(Collection<?> draggedObjects, Args dropArguments) {
+		if (!_security.isAllowed(_contextComponent, Args.cons(draggedObjects, dropArguments),
+			getSecurityTarget(dropArguments))) {
+			return false;
+		}
 		return SearchExpression.isTrue(_canDrop.executeWith(Args.cons(draggedObjects, dropArguments)));
+	}
+
+	/**
+	 * The object on which the permission for a drop is checked, if no
+	 * {@link Config#getTarget() target function} is configured.
+	 * 
+	 * @param dropArguments
+	 *        The arguments computed by {@link #getDropArguments(TreeDropEvent)}.
+	 * @return The first drop argument, i.e. the business object of the node in which the dragged
+	 *         elements are dropped.
+	 */
+	protected Object getSecurityTarget(Args dropArguments) {
+		return dropArguments.hasValue() ? dropArguments.value() : null;
 	}
 
 	/**

@@ -680,6 +680,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 TABLE_ROW_COUNT_SELECTED__COUNT;
 
 	/**
+	 * @en {0} selected, {1} of them filtered out
+	 */
+	public static ResKey2 TABLE_ROW_COUNT_SELECTED_FILTERED__COUNT_FILTERED;
+
+	/**
 	 * @en Selection changed.
 	 */
 	public static ResKey REACT_DROPDOWN_SELECT_VALUE_CHANGED;

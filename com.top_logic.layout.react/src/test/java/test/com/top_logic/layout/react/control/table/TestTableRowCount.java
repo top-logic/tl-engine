@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -57,8 +58,8 @@ public class TestTableRowCount extends TestCase {
 	/** State key of the text telling how many rows are selected. */
 	private static final String ROW_COUNT_SELECTED = "rowCountSelected";
 
-	/** State key of the number of data rows the filter lets pass. */
-	private static final String MATCH_COUNT = "matchCount";
+	/** State key of what the select-all checkbox of the header shows. */
+	private static final String SELECT_ALL_STATE = "selectAllState";
 
 	/** State key of the number of selected rows. */
 	private static final String SELECTED_COUNT = "selectedCount";
@@ -175,23 +176,82 @@ public class TestTableRowCount extends TestCase {
 	}
 
 	/**
-	 * Tests that selecting all rows of a grouped table selects as many rows as the client compares
-	 * the selection with: the data rows, not the displayed lines - otherwise the select-all checkbox
-	 * shows a partial selection after all rows were selected.
+	 * Tests that selecting all rows of a grouped table selects every row the filter lets pass, the
+	 * members of a collapsed group included, that the checkbox then shows all of them selected - a
+	 * group header is no row - and that clearing it deselects them all again.
 	 */
-	public void testSelectAllInGroupedTableSelectsAllDataRows() {
+	public void testSelectAllInGroupedTableWithCollapsedGroup() {
 		_table.executeClientCommand(TableViewControl.CMD_GROUP, Map.of(GroupArguments.COLUMN, COLUMN_STATUS));
-		assertEquals("Two group headers and three rows are displayed.",
-			Integer.valueOf(5), _table.clientState(TOTAL_ROW_COUNT));
-		assertEquals(Integer.valueOf(3), _table.clientState(MATCH_COUNT));
+		_table.executeClientCommand(TableViewControl.CMD_EXPAND, Map.of(
+			ExpandArguments.ROW_INDEX, Integer.valueOf(0),
+			ExpandArguments.EXPANDED, Boolean.FALSE));
+		assertEquals("One collapsed header, the other header with its single row.",
+			Integer.valueOf(3), _table.clientState(TOTAL_ROW_COUNT));
 
-		_table.executeClientCommand(CMD_SELECT_ALL, Map.of(SelectAllArguments.SELECTED, Boolean.TRUE));
-		assertEquals("Every data row is selected, which the checkbox shows as all of them.",
-			_table.clientState(MATCH_COUNT), _table.clientState(SELECTED_COUNT));
+		selectAll(true);
+		assertEquals(Set.of(ALPHA, BETA, GAMMA), _table.getSelectedKeys());
+		assertEquals("all", _table.clientState(SELECT_ALL_STATE));
+		assertEquals(Integer.valueOf(3), _table.clientState(SELECTED_COUNT));
 
+		selectAll(false);
+		assertEquals(Set.of(), _table.getSelectedKeys());
+		assertEquals("none", _table.clientState(SELECT_ALL_STATE));
+	}
+
+	/**
+	 * Tests that the checkbox reports on the rows the filter lets pass only: a selection of rows the
+	 * filter hides - as large as the rows displayed - is no selection of them, and selecting all
+	 * adds the displayed rows while the hidden ones stay selected, as does clearing.
+	 */
+	public void testFilteredOutSelectionIsNotTheDisplayedRows() {
+		Item gammb = new Item("gammb", "closed");
+		_rows.setElements(new ArrayList<>(List.of(ALPHA, BETA, GAMMA, gammb)));
+		_table.refreshData();
+		_table.selectRows(List.of(ALPHA, BETA));
 		search("mm");
-		assertEquals("The filter narrows what the selection is compared with.",
-			Integer.valueOf(1), _table.clientState(MATCH_COUNT));
+		assertEquals("Two selected, two displayed - but not the same rows.",
+			"none", _table.clientState(SELECT_ALL_STATE));
+
+		selectAll(true);
+		assertEquals(Set.of(ALPHA, BETA, GAMMA, gammb), _table.getSelectedKeys());
+		assertEquals("all", _table.clientState(SELECT_ALL_STATE));
+
+		selectAll(false);
+		assertEquals("The rows the filter hides are beyond the gesture.",
+			Set.of(ALPHA, BETA), _table.getSelectedKeys());
+		assertEquals("none", _table.clientState(SELECT_ALL_STATE));
+	}
+
+	/**
+	 * Tests that a table whose filter lets no row pass shows nothing selected, whatever the filter
+	 * hides of the selection.
+	 */
+	public void testNothingMatchingIsNothingSelected() {
+		_table.selectRows(List.of(ALPHA));
+		search("zzz");
+		assertEquals("none", _table.clientState(SELECT_ALL_STATE));
+	}
+
+	/**
+	 * Tests that some of the matching rows selected is a partial selection.
+	 */
+	public void testSomeSelected() {
+		_table.selectRows(List.of(ALPHA));
+		assertEquals("some", _table.clientState(SELECT_ALL_STATE));
+	}
+
+	/**
+	 * Tests that the selected count tells how many of the selected rows the filter hides.
+	 */
+	public void testSelectedCountTellsFilteredOutRows() {
+		_table.selectRows(List.of(ALPHA, BETA, GAMMA));
+		search("mm");
+		assertEquals(text(I18NConstants.TABLE_ROW_COUNT_SELECTED_FILTERED__COUNT_FILTERED.fill(3, 2)),
+			_table.clientState(ROW_COUNT_SELECTED));
+
+		search("");
+		assertEquals(text(I18NConstants.TABLE_ROW_COUNT_SELECTED__COUNT.fill(3)),
+			_table.clientState(ROW_COUNT_SELECTED));
 	}
 
 	/**
@@ -239,6 +299,8 @@ public class TestTableRowCount extends TestCase {
 		assertEquals("0 of 1 row", en.getString(I18NConstants.TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL.fill(0, 1)));
 		assertEquals("1 of 2 rows", en.getString(I18NConstants.TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL.fill(1, 2)));
 		assertEquals("2 selected", en.getString(I18NConstants.TABLE_ROW_COUNT_SELECTED__COUNT.fill(2)));
+		assertEquals("3 selected, 2 of them filtered out",
+			en.getString(I18NConstants.TABLE_ROW_COUNT_SELECTED_FILTERED__COUNT_FILTERED.fill(3, 2)));
 
 		Resources de = Resources.getInstance(Locale.GERMAN);
 		assertEquals("Keine Zeilen", de.getString(I18NConstants.TABLE_ROW_COUNT__COUNT.fill(0)));
@@ -248,6 +310,8 @@ public class TestTableRowCount extends TestCase {
 		assertEquals("0 von 1 Zeile", de.getString(I18NConstants.TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL.fill(0, 1)));
 		assertEquals("1 von 2 Zeilen", de.getString(I18NConstants.TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL.fill(1, 2)));
 		assertEquals("2 ausgewählt", de.getString(I18NConstants.TABLE_ROW_COUNT_SELECTED__COUNT.fill(2)));
+		assertEquals("3 ausgewählt, davon 2 herausgefiltert",
+			de.getString(I18NConstants.TABLE_ROW_COUNT_SELECTED_FILTERED__COUNT_FILTERED.fill(3, 2)));
 	}
 
 	private TestTable table(SelectionMode selectionMode) {
@@ -256,6 +320,11 @@ public class TestTableRowCount extends TestCase {
 		TableViewState state = DefaultTableView.initialState(columns(), SortSpec.NONE, List.of());
 		state.setSelection(Selection.none(selectionMode));
 		return new TestTable(context, new DefaultTableView<>(columns(), _rows, state));
+	}
+
+	/** Sends the client's command behind the select-all checkbox. */
+	private void selectAll(boolean selected) {
+		_table.executeClientCommand(CMD_SELECT_ALL, Map.of(SelectAllArguments.SELECTED, Boolean.valueOf(selected)));
 	}
 
 	/** Sends the client's search command. */

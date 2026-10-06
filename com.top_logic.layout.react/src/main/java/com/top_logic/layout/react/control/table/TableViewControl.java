@@ -185,15 +185,26 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String SELECTED_COUNT = "selectedCount";
 
 	/**
-	 * State key of the number of data rows the filter lets pass, {@link RowSource#UNKNOWN_COUNT}
-	 * when the rows cannot be counted.
+	 * State key of what the select-all checkbox of the header shows: {@link #SELECT_ALL_NONE},
+	 * {@link #SELECT_ALL_SOME} or {@link #SELECT_ALL_ALL}.
 	 *
 	 * <p>
-	 * Unlike {@link #TOTAL_ROW_COUNT}, which counts the displayed lines, a group header is no row
-	 * here: this is what the selection is compared with to tell whether all rows are selected.
+	 * Decided by how many of the rows {@link #CMD_SELECT_ALL} acts on are selected - the
+	 * {@link TableView#matchingKeys() matching rows}, the members of a collapsed group included -
+	 * not by the size of the selection: a selected row the filter hides takes no part in it, and a
+	 * group header is no row.
 	 * </p>
 	 */
-	private static final String MATCH_COUNT = "matchCount";
+	private static final String SELECT_ALL_STATE = "selectAllState";
+
+	/** {@link #SELECT_ALL_STATE} while none of the matching rows is selected. */
+	private static final String SELECT_ALL_NONE = "none";
+
+	/** {@link #SELECT_ALL_STATE} while some, but not all of the matching rows are selected. */
+	private static final String SELECT_ALL_SOME = "some";
+
+	/** {@link #SELECT_ALL_STATE} while all of the matching rows, and at least one, are selected. */
+	private static final String SELECT_ALL_ALL = "all";
 
 	/**
 	 * State key of the text telling how many rows the table has, and how many of them its filter
@@ -853,7 +864,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	public void setRowCount(boolean rowCount) {
 		_rowCount = rowCount;
-		refreshRowCount();
+		refreshSelectionCounts();
 	}
 
 	/**
@@ -1036,19 +1047,35 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		putState(ROWS, rowStates);
 		putState(SELECTED_COUNT, Integer.valueOf(_selectedKeys.size()));
 		putState(CURSOR_INDEX, Integer.valueOf(_cursorIndex));
-		putChangedState(MATCH_COUNT, Integer.valueOf(_view.matchCount()));
-		refreshRowCount();
+		refreshSelectionCounts();
 	}
 
 	/**
-	 * Pushes the texts of the row count.
+	 * Pushes what the select-all checkbox shows and the texts of the row count.
 	 *
 	 * <p>
 	 * Called from {@link #updateViewport(int, int)}, which every change of the rows and of the
-	 * selection ends in. A text is only pushed when it changed, so scrolling sends none.
+	 * selection ends in. A value is only pushed when it changed, so scrolling sends none.
 	 * </p>
 	 */
-	private void refreshRowCount() {
+	private void refreshSelectionCounts() {
+		int selectedCount = _selectedKeys.size();
+		// Only the selection needs checking against the filter, so an empty selection - the common
+		// case while scrolling - costs nothing.
+		int selectedMatching = selectedCount == 0 ? 0 : _view.matchingKeys(_selectedKeys).size();
+
+		String selectAll;
+		if (selectedMatching == 0) {
+			selectAll = SELECT_ALL_NONE;
+		} else {
+			int matching = _view.matchCount();
+			if (matching == RowSource.UNKNOWN_COUNT) {
+				matching = _view.matchingKeys().size();
+			}
+			selectAll = selectedMatching == matching ? SELECT_ALL_ALL : SELECT_ALL_SOME;
+		}
+		putChangedState(SELECT_ALL_STATE, selectAll);
+
 		String rows = NOTHING;
 		String selected = NOTHING;
 		int matching = _view.matchCount();
@@ -1058,9 +1085,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			rows = resources.getString(isFiltered()
 				? I18NConstants.TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL.fill(matching, total)
 				: I18NConstants.TABLE_ROW_COUNT__COUNT.fill(total));
-			int selectedCount = _selectedKeys.size();
 			if (_selectionMode == SelectionMode.MULTI && selectedCount > 0) {
-				selected = resources.getString(I18NConstants.TABLE_ROW_COUNT_SELECTED__COUNT.fill(selectedCount));
+				int filteredOut = selectedCount - selectedMatching;
+				selected = resources.getString(filteredOut == 0
+					? I18NConstants.TABLE_ROW_COUNT_SELECTED__COUNT.fill(selectedCount)
+					: I18NConstants.TABLE_ROW_COUNT_SELECTED_FILTERED__COUNT_FILTERED.fill(selectedCount,
+						filteredOut));
 			}
 		}
 		putChangedState(ROW_COUNT, rows);
@@ -1881,18 +1911,21 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Handles the header select-all / deselect-all checkbox.
+	 * Handles the header select-all / deselect-all checkbox and {@code Ctrl+A}.
+	 *
+	 * <p>
+	 * Acts on the rows the filter lets pass, the members of a collapsed group included - the rows
+	 * {@link #SELECT_ALL_STATE} reports on. A selected row the filter hides is beyond the gesture:
+	 * it stays selected either way, exactly as it stays selected while the filter hides it.
+	 * </p>
 	 */
 	@ReactCommandHandler(CMD_SELECT_ALL)
 	void handleSelectAll(SelectAllArguments args) {
-		boolean selected = args.isSelected();
-		_selectedKeys.clear();
-		if (selected) {
-			for (Row<R> row : _view.rows(0, _view.rowCount())) {
-				if (row.kind() == RowKind.DATA) {
-					_selectedKeys.add(row.key());
-				}
-			}
+		List<Object> matching = _view.matchingKeys();
+		if (args.isSelected()) {
+			_selectedKeys.addAll(matching);
+		} else {
+			matching.forEach(_selectedKeys::remove);
 		}
 		pushSelection();
 		updateViewport(_viewportStart, _viewportCount);

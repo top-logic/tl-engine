@@ -314,14 +314,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const rows = (state.rows as RowState[]) ?? [];
   const rowHeight = (state.rowHeight as number) ?? 36;
   const selectionMode = (state.selectionMode as string) ?? 'single';
-  const selectedCount = (state.selectedCount as number) ?? 0;
-  /** The data rows the filter lets pass, -1 when they cannot be counted. */
-  const matchCount = (state.matchCount as number) ?? -1;
   /**
-   * What the selection is compared with to tell whether all rows are selected: the data rows, not
-   * the displayed lines - a group header is no row that could be selected.
+   * What the select-all checkbox shows, decided by the server from how many of the rows the
+   * select-all acts on - the rows the filter lets pass, collapsed group members included - are
+   * selected: `none`, `some` or `all`.
    */
-  const selectableCount = matchCount >= 0 ? matchCount : totalRowCount;
+  const selectAllState = (state.selectAllState as string) ?? 'none';
   const cursorIndex = (state.cursorIndex as number) ?? -1;
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
   const treeMode = (state.treeMode as boolean) ?? false;
@@ -1042,9 +1040,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
 
   const handleSelectAll = React.useCallback(() => {
-    const allSelected = selectedCount === selectableCount && selectableCount > 0;
-    sendCommand('selectAll', { selected: !allSelected });
-  }, [sendCommand, selectedCount, selectableCount]);
+    sendCommand('selectAll', { selected: selectAllState !== 'all' });
+  }, [sendCommand, selectAllState]);
 
   // -- Expand handler --
   const handleExpand = React.useCallback((rowIndex: number, expanded: boolean, event: React.MouseEvent) => {
@@ -1278,8 +1275,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     return () => observer.disconnect();
   }, [measureCovered]);
 
-  const allSelected = selectedCount === selectableCount && selectableCount > 0;
-  const someSelected = selectedCount > 0 && !allSelected;
+  const allSelected = selectAllState === 'all';
+  const someSelected = selectAllState === 'some';
 
   const headerCheckboxRef = React.useCallback((el: HTMLInputElement | null) => {
     if (el) {

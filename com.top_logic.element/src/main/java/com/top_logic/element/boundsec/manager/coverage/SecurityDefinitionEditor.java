@@ -13,6 +13,7 @@ import java.util.List;
 
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
@@ -338,7 +339,8 @@ public class SecurityDefinitionEditor {
 	 * {@link #putAccessRights(ModelAccessRights)}, which stores it under the name of the type.
 	 * Since the grants of all configuration layers are appended to one sequence, the copy holds the
 	 * stored grants only: the grants of the underlying layers stay in effect without being repeated
-	 * here.
+	 * here. The marks and the access parent however are those in effect, also when an underlying
+	 * layer sets them.
 	 * </p>
 	 *
 	 * @param type
@@ -359,7 +361,8 @@ public class SecurityDefinitionEditor {
 	 * {@link #putAccessRights(ModelAccessRights)}, which stores it under the name of the module.
 	 * Since the grants of all configuration layers are appended to one sequence, the copy holds the
 	 * stored grants only: the grants of the underlying layers stay in effect without being repeated
-	 * here.
+	 * here. The marks and the access parent however are those in effect, also when an underlying
+	 * layer sets them.
 	 * </p>
 	 *
 	 * @param module
@@ -627,18 +630,75 @@ public class SecurityDefinitionEditor {
 
 	/**
 	 * A copy of the stored entry for the given model element, or a fresh entry carrying only its
-	 * name.
+	 * name, completed by the marks and the access parent currently in effect.
+	 *
+	 * <p>
+	 * A mark or an access parent an underlying configuration layer sets is in effect without being
+	 * stored. The copy shows it nevertheless, so that the user sees what is in effect and can drop
+	 * it: a value handed back to {@link #putAccessRights(ModelAccessRights)} is stored explicitly
+	 * and overrides the one of the underlying layers. A value the stored entry sets takes
+	 * precedence, even before it is {@link #apply() applied}.
+	 * </p>
 	 */
 	private <R extends TypeBasedAccessRights> R editableTypeBasedRights(String name, Class<R> entryType)
 			throws ConfigurationException {
 		SecurityConfigurationService.Config config = storedGrantsConfig(readGrantsFile());
 		ModelAccessRights stored = config == null ? null : config.getSecurityConfig().get(name);
+		R result;
 		if (entryType.isInstance(stored)) {
-			return TypedConfiguration.copy(entryType.cast(stored));
+			result = TypedConfiguration.copy(entryType.cast(stored));
+		} else {
+			result = TypedConfiguration.newConfigItem(entryType);
+			result.setName(name);
 		}
-		R result = TypedConfiguration.newConfigItem(entryType);
-		result.setName(name);
+		ModelAccessRights effective = effectiveAccessRights(name);
+		if (entryType.isInstance(effective)) {
+			addEffectiveSettings(result, entryType.cast(effective));
+		}
 		return result;
+	}
+
+	/**
+	 * The access rights entry for the given model element that is currently in effect, base
+	 * configuration and stored configuration merged; <code>null</code> when there is none.
+	 */
+	private static ModelAccessRights effectiveAccessRights(String name) {
+		if (!SecurityConfigurationService.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		return SecurityConfigurationService.Module.INSTANCE.getImplementationInstance().getConfig()
+			.getSecurityConfig().get(name);
+	}
+
+	/**
+	 * Sets the marks and the access parent of the given effective entry that the given copy does
+	 * not set of its own.
+	 *
+	 * <p>
+	 * Only a value differing from the default is taken over, so that a copy handed back unchanged
+	 * does not store a value that merely repeats the default.
+	 * </p>
+	 */
+	private static void addEffectiveSettings(TypeBasedAccessRights copy, TypeBasedAccessRights effective) {
+		if (!isSet(copy, TypeBasedAccessRights.INTERNAL) && effective.isInternal()) {
+			copy.setInternal(true);
+		}
+		if (!isSet(copy, TypeBasedAccessRights.WITHOUT_SECURITY) && effective.isWithoutSecurity()) {
+			copy.setWithoutSecurity(true);
+		}
+		if (copy instanceof TLClassAccessRights classCopy
+			&& effective instanceof TLClassAccessRights classEffective
+			&& !isSet(copy, TLClassAccessRights.ACCESS_PARENT)
+			&& classEffective.getAccessParent() != null) {
+			classCopy.setAccessParent(TypedConfiguration.copy(classEffective.getAccessParent()));
+		}
+	}
+
+	/**
+	 * Whether the given entry sets the property with the given name of its own.
+	 */
+	private static boolean isSet(ConfigurationItem entry, String property) {
+		return entry.valueSet(entry.descriptor().getProperty(property));
 	}
 
 	/**

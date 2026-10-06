@@ -493,7 +493,7 @@ public class TableElement implements UIElement {
 
 		/**
 		 * The export of this table to Excel, offered as a command in the toolbar of the element the
-		 * table is displayed in.
+		 * table is displayed in, as the first command of its group.
 		 *
 		 * <p>
 		 * The export holds what the user sees: the displayed columns in their order and the
@@ -1588,7 +1588,9 @@ public class TableElement implements UIElement {
 		ViewCommandModel model = ViewCommandModel.forCommand(context, bound, _export.getConfig());
 		control.addAttachListener(() -> {
 			model.attach(context.getModelScope());
-			scope.addCommand(model);
+			// The export of the table itself is the primary command of the export group, ahead of
+			// further exports the enclosing element offers.
+			scope.addCommandFirst(model);
 		});
 		control.addDetachListener(() -> {
 			scope.removeCommand(model);

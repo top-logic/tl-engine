@@ -111,9 +111,9 @@
 							<write-channel name="selected"/>
 						</generic-command>
 						<!--
-							A file computed by a script and handed to the browser: excelFile() builds the
-							workbook, <download/> delivers it. Shares the "Export" menu with the table's own
-							export below.
+							A report of its own, not an export of the table: a file computed by a script and
+							handed to the browser - excelFile() builds the workbook, <download/> delivers it.
+							Shares the "Export" menu with the table's own export, which comes first.
 						-->
 						<generic-command
 							clique="export"
@@ -121,9 +121,13 @@
 							placement="TOOLBAR"
 						>
 							<label>
-								<en>Summary by priority</en>
-								<de>Übersicht nach Priorität</de>
+								<en>Priority summary (Excel)</en>
+								<de>Auswertung nach Priorität (Excel)</de>
 							</label>
+							<tooltip>
+								<en>Creates an Excel file with the number of objects and the total amount per priority (example for the &lt;download&gt; action with a TL-Script excelFile()).</en>
+								<de>Erzeugt eine Excel-Datei mit der Anzahl der Objekte und dem Gesamtbetrag je Priorität (Beispiel für die &lt;download&gt;-Aktion mit einem TL-Script excelFile()).</de>
+							</tooltip>
 							<execute-script>
 								<function><![CDATA[
 									x -> {

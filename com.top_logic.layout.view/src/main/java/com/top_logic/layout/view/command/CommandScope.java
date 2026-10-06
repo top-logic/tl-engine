@@ -49,6 +49,23 @@ public class CommandScope {
 	}
 
 	/**
+	 * Adds a command to this scope ahead of all commands it already holds.
+	 *
+	 * <p>
+	 * Within its clique, the toolbar shows the commands in the order of the scope, so a command
+	 * added this way comes first in its group - for a command that is the primary one of its group,
+	 * contributed by a child element after the scope's own commands are in place.
+	 * </p>
+	 *
+	 * @param command
+	 *        The command model to add.
+	 */
+	public void addCommandFirst(CommandModel command) {
+		_commands.add(0, command);
+		fireChanged();
+	}
+
+	/**
 	 * Removes a command from this scope.
 	 *
 	 * @param command

@@ -1010,7 +1010,7 @@ Such a page is linkable: `/view/tickets?filter=discussed` opens the list filtere
 
 ## Exporting a table to Excel: `<export>`
 
-`<table><export/></table>` offers "Export to Excel" in the toolbar of the element the table is displayed in - the panel around it - as a command of the `export` clique, so it sits in the *Export* menu beside whatever else the panel exports. A table without `<export>` offers no export; a table outside an element with a toolbar has nowhere to offer it (logged at info level).
+`<table><export/></table>` offers "Export to Excel" in the toolbar of the element the table is displayed in - the panel around it - as a command of the `export` clique, so it sits in the *Export* menu - first, ahead of whatever else the panel exports (`CommandScope.addCommandFirst`). A table without `<export>` offers no export; a table outside an element with a toolbar has nowhere to offer it (logged at info level).
 
 ```xml
 <panel>
@@ -1043,13 +1043,13 @@ Such a page is linkable: `/view/tickets?filter=discussed` opens the list filtere
 
 ```xml
 <generic-command clique="export" placement="TOOLBAR">
-  <label><en>Summary by priority</en></label>
+  <label><en>Priority summary (Excel)</en></label>
   <execute-script function="x -> excelFile(name: 'summary', content: [excelSheet(content: [['Priority', 'Objects']])])"/>
   <download/>
 </generic-command>
 ```
 
-Demo: *Attributes* → *Table* (export with an export renderer and two suppressed columns, beside a script-built summary) and *Attributes* → *Editable table* (`com.top_logic.demo.react`, `views/attributes.view.xml`).
+Demo: *Attributes* → *Table* (export with an export renderer and two suppressed columns, followed by a script-built "Priority summary (Excel)" report) and *Attributes* → *Editable table* (`com.top_logic.demo.react`, `views/attributes.view.xml`).
 
 ## Master-detail that adapts to the viewport: `<adaptive-detail>`
 

@@ -7,7 +7,6 @@ package com.top_logic.model.search.providers;
 
 import java.util.List;
 
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Label;
@@ -29,7 +28,7 @@ import com.top_logic.tool.boundsec.CommandHandler.ConfirmConfig.VisibleIf;
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
 @Abstract
-public interface DropTargetByExpressionConfig extends ConfigurationItem {
+public interface DropTargetByExpressionConfig extends DropSecurityConfig {
 
 	/**
 	 * Name of {@link #getHandleDrop()}.
@@ -86,6 +85,11 @@ public interface DropTargetByExpressionConfig extends ConfigurationItem {
 
 	/**
 	 * Function checking whether a drop in the context of a referenced element can be performed.
+	 * 
+	 * <p>
+	 * The function is only called, if the current user has the permission for the drop, see
+	 * {@link #getGroup()} and {@link #getTarget()}.
+	 * </p>
 	 */
 	@Name(CAN_DROP)
 	@ItemDefault(Expr.True.class)

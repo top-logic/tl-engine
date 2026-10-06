@@ -25,8 +25,8 @@ import com.top_logic.layout.table.dnd.TableDropTarget;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.util.model.ModelService;
 
@@ -134,6 +134,7 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 	private final boolean _inTransaction;
 
 	private final DropCommitMessage _commitMessage;
+	private final DropSecurity _security;
 
 	private LayoutComponent _contextComponent;
 
@@ -156,6 +157,7 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 		_postCreateActions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 		_inTransaction = config.getInTransaction();
 		_commitMessage = new DropCommitMessage(config);
+		_security = new DropSecurity(config);
 
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
 			_contextComponent = component;
@@ -176,6 +178,8 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 
 	@Override
 	public void handleDrop(Collection<?> droppedObjects, Object referenceRow) {
+		_security.checkAllowed(_contextComponent, Args.some(droppedObjects, referenceRow), referenceRow);
+
 		Object createdObject;
 
 		if (_inTransaction) {
@@ -198,6 +202,9 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 
 	@Override
 	public boolean canDrop(Collection<?> draggedObjects, Object referenceRow) {
+		if (!_security.isAllowed(_contextComponent, Args.some(draggedObjects, referenceRow), referenceRow)) {
+			return false;
+		}
 		return SearchExpression.isTrue(_canDrop.execute(draggedObjects, referenceRow));
 	}
 

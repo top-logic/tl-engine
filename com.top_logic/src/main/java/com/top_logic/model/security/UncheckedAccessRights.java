@@ -83,6 +83,20 @@ final class UncheckedAccessRights implements ModelAccessRights {
 	}
 
 	@Override
+	public boolean isAllowedInitial(Person person, TLClass type, TLObject context, TLStructuredTypePart attribute,
+			BoundCommandGroup commandGroup) {
+		return true;
+	}
+
+	/**
+	 * @implNote Without the security configuration, no grants are known.
+	 */
+	@Override
+	public boolean hasGrant(TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
+		return false;
+	}
+
+	@Override
 	public boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute) {
 		return true;
 	}

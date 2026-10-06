@@ -20,6 +20,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyTemplate;
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
@@ -49,6 +50,12 @@ public class TestModelAccessActions extends AbstractModelAccessTest {
 
 	/** Name of the {@link #TASK} attribute with a sequence number as default. */
 	private static final String NUMBER = "number";
+
+	/** Name of the {@link #TASK} attribute only {@link #ROLE_RESPONSIBLE} may write. */
+	private static final String NOTE = "note";
+
+	/** The default value of the {@link #SECRET} of a {@link #TASK}. */
+	private static final String HIDDEN = "hidden";
 
 	private ViewContext _context;
 
@@ -303,6 +310,64 @@ public class TestModelAccessActions extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * A draft carrying a value the user may not set on the object to be created is refused with a
+	 * message naming the attribute, and nothing is created.
+	 */
+	public void testPersistRefusesProtectedValue() throws Exception {
+		ViewAction persist =
+			action("<persist-transient container='" + CHANNEL + "' reference='" + TASKS + "'/>");
+		_channel.set(_project);
+		becomeUser(_responsible);
+		TLObject draft = draftIn(_project, "refused");
+		draft.tUpdateByName(SECRET, "revealed");
+		int tasksBefore = allTasks().size();
+
+		assertRefused(
+			com.top_logic.element.model.copy.I18NConstants.ERROR_INITIAL_VALUE_PERMISSION_DENIED__ATTRIBUTE_TYPE,
+			() -> persist.execute(_context, draft));
+		assertEquals(List.of(_task), _project.tValueByName(TASKS));
+		assertEquals("Nothing is created.", tasksBefore, allTasks().size());
+	}
+
+	/**
+	 * A draft keeping the initial values of the attributes the user may not set is persisted with
+	 * these values.
+	 */
+	public void testPersistKeepsProtectedDefault() throws Exception {
+		ViewAction persist =
+			action("<persist-transient container='" + CHANNEL + "' reference='" + TASKS + "'/>");
+		_channel.set(_project);
+		becomeUser(_responsible);
+		TLObject draft = draftIn(_project, "created");
+		draft.tUpdateByName(NOTE, "noted");
+		assertEquals(HIDDEN, draft.tValueByName(SECRET));
+		assertSame(_project, draft.tValueByName(CREATED_IN));
+
+		TLObject created = (TLObject) persist.execute(_context, draft);
+		assertEquals("created", created.tValueByName(NAME));
+		assertEquals("The responsible may set the note in the project.", "noted", created.tValueByName(NOTE));
+		assertEquals(HIDDEN, created.tValueByName(SECRET));
+		assertSame(_project, created.tValueByName(CREATED_IN));
+		assertEquals(List.of(_task, created), _project.tValueByName(TASKS));
+	}
+
+	/**
+	 * A user bypassing the model security persists a draft with any value.
+	 */
+	public void testPersistProtectedValueAsRoot() throws Exception {
+		ViewAction persist =
+			action("<persist-transient container='" + CHANNEL + "' reference='" + TASKS + "'/>");
+		_channel.set(_project);
+		becomeUser(_root);
+		TLObject draft = draftIn(_project, "created");
+		draft.tUpdateByName(SECRET, "revealed");
+
+		TLObject created = (TLObject) persist.execute(_context, draft);
+		assertEquals("revealed", created.tValueByName(SECRET));
+		assertEquals(List.of(_task, created), _project.tValueByName(TASKS));
+	}
+
+	/**
 	 * The Create button of a dialog creating in a container is disabled where the user may not
 	 * create in the container.
 	 */
@@ -320,6 +385,16 @@ public class TestModelAccessActions extends AbstractModelAccessTest {
 		becomeUser(_roleless);
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, byReference.isExecutable(draft));
 		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, byDraft.isExecutable(draft));
+	}
+
+	private TLObject draftIn(TLObject container, String name) {
+		TLObject result = TransientObjectFactory.INSTANCE.createObject(type(TASK), container);
+		result.tUpdateByName(NAME, name);
+		return result;
+	}
+
+	private static List<TLObject> allTasks() {
+		return MetaElementUtil.getAllDirectInstancesOf(type(TASK), TLObject.class);
 	}
 
 	private TLObject draft(String typeName, String name) {

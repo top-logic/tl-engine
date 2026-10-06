@@ -106,11 +106,76 @@ public interface ModelAccessRights {
 	 * </p>
 	 *
 	 * <p>
-	 * An empty set means there is no additional attribute-level restriction: the user may perform
-	 * the command group on the attribute whenever he has the corresponding rights on the object.
+	 * An empty set has two meanings, which {@link #hasGrant(TLStructuredTypePart, BoundCommandGroup)}
+	 * tells apart: without an attribute-level grant for the command group, there is no additional
+	 * restriction, the user may perform the command group on the attribute whenever he has the
+	 * corresponding rights on the object. With an attribute-level grant, an empty set means that no
+	 * role may perform the command group on the attribute.
 	 * </p>
 	 */
 	Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
+
+	/**
+	 * Whether the given attribute has an attribute-level grant for the given command group.
+	 *
+	 * <p>
+	 * Only an attribute with such a grant restricts the command group beyond the rights on the
+	 * object, to the roles {@link #getAllowedRoles(TLStructuredTypePart, BoundCommandGroup)} lists.
+	 * A grant listing no role at all denies the command group on the attribute to every user except
+	 * one bypassing the model security, independent of the object the attribute is accessed on.
+	 * </p>
+	 *
+	 * @param attribute
+	 *        The attribute to check, any override of it decides like its
+	 *        {@link TLStructuredTypePart#getDefinition() definition}.
+	 * @param commandGroup
+	 *        The operation on the attribute.
+	 */
+	boolean hasGrant(TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
+
+	/**
+	 * Checks whether the given person can perform the given command group on the given attribute
+	 * of an object of the given type that is to be created in the given context.
+	 *
+	 * <p>
+	 * The object to be created (e.g. a transient draft that is persisted later on) holds no roles
+	 * yet. Its attribute rights are therefore decided in its creation context, the same way
+	 * {@link #isAllowedCreate(Person, TLClass, TLObject)} decides the creation itself:
+	 * </p>
+	 * <ul>
+	 * <li>A person bypassing the model security decides by the bypass, and the attributes of a type
+	 * {@link #isWithoutSecurity(TLClass) without security} are not restricted.</li>
+	 * <li>Without an attribute-level grant for the command group (see
+	 * {@link #hasGrant(TLStructuredTypePart, BoundCommandGroup)}), the right to create the object
+	 * covers filling in its initial values: the command group is allowed.</li>
+	 * <li>An attribute-level grant listing no role denies the command group, in every context.</li>
+	 * <li>Otherwise, the person must hold one of the granted roles in the context. Without a context
+	 * (<code>null</code>), the roles on the global security root are checked. For a type with an
+	 * {@link #getAccessParent(TLClass) access parent}, the roles are checked on the object deciding
+	 * for the context. A context that is being built in the current transaction has no roles yet,
+	 * its own creation is authorized already, so the command group is allowed.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * The right to create the object itself is not part of this check, see
+	 * {@link #isAllowedCreate(Person, TLClass, TLObject)}.
+	 * </p>
+	 *
+	 * @param person
+	 *        The person to check.
+	 * @param type
+	 *        The type of the object to be created.
+	 * @param context
+	 *        The object the new object is created in, <code>null</code> for an object created at
+	 *        top level.
+	 * @param attribute
+	 *        The attribute of the given type to access.
+	 * @param commandGroup
+	 *        The operation on the attribute, e.g. {@link SimpleBoundCommandGroup#WRITE} for setting
+	 *        its initial value.
+	 */
+	boolean isAllowedInitial(Person person, TLClass type, TLObject context, TLStructuredTypePart attribute,
+			BoundCommandGroup commandGroup);
 
 	/**
 	 * Checks whether the current person can perform the given command group on the given instance.

@@ -840,6 +840,55 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	@Override
+	public boolean hasGrant(TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
+		return _typePartRights
+			.getOrDefault(attribute.getDefinition(), Collections.emptyMap())
+			.containsKey(commandGroup);
+	}
+
+	@Override
+	public boolean isAllowedInitial(Person person, TLClass type, TLObject context, TLStructuredTypePart attribute,
+			BoundCommandGroup commandGroup) {
+		Boolean allowedBypass = isAllowedBypass(person, commandGroup);
+		if (allowedBypass != null) {
+			return allowedBypass.booleanValue();
+		}
+		if (isWithoutSecurity(type)) {
+			// Objects of a type without security are not access controlled, neither on the object,
+			// nor on its attribute values.
+			return true;
+		}
+		Map<BoundCommandGroup, Set<BoundedRole>> partRights =
+			_typePartRights.getOrDefault(attribute.getDefinition(), Collections.emptyMap());
+		Set<BoundedRole> requiredPartRoles = partRights.get(commandGroup);
+		if (requiredPartRoles == null) {
+			// No attribute-level grant: the right to create the object covers its initial values.
+			return true;
+		}
+		if (requiredPartRoles.isEmpty()) {
+			// A grant without roles denies the operation in every context.
+			return false;
+		}
+		if (context != null && !isCommitted(context)) {
+			// The context is being built in the current transaction (no computed roles yet), see
+			// isAllowedCreate(Person, TLClass, TLObject).
+			return true;
+		}
+		BoundObject holder;
+		if (getAccessParent(type) != null && context instanceof BoundObject) {
+			// The object created in the context delegates its access decision to the context, which
+			// in turn may delegate further.
+			if (!(roleHolder(context) instanceof BoundObject contextHolder)) {
+				return false;
+			}
+			holder = contextHolder;
+		} else {
+			holder = createContext(context);
+		}
+		return accessManager().hasRole(person, holder, requiredPartRoles);
+	}
+
+	@Override
 	public boolean isAllowed(Person person, TLObject instance, BoundCommandGroup commandGroup) {
 		if (!(instance instanceof BoundObject)) {
 			return true;

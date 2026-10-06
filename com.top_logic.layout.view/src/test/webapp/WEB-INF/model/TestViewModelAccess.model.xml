@@ -55,6 +55,18 @@
 								</default-value>
 							</annotations>
 						</property>
+						<property name="note"
+							type="tl.core:String"
+						/>
+						<property name="secret"
+							type="tl.core:String"
+						>
+							<annotations>
+								<default-value>
+									<default-by-expression value="context -> 'hidden'"/>
+								</default-value>
+							</annotations>
+						</property>
 						<reference name="createdIn"
 							type="Project"
 						>

@@ -58,7 +58,9 @@ import com.top_logic.util.error.TopLogicException;
  * project named {@value #FROZEN} (disabled, with a reason) and deleting it (hidden).</li>
  * <li>{@value #TASK}: the type of the composition {@value #TASKS} of a project. A task inherits the
  * role {@value #ROLE_RESPONSIBLE} from its project, with the same grants. Its reference
- * {@value #CREATED_IN} defaults to the context the task is created in.</li>
+ * {@value #CREATED_IN} defaults to the context the task is created in. Writing its attribute
+ * <code>note</code> is granted to {@value #ROLE_RESPONSIBLE} only, writing its {@value #SECRET}
+ * (with a constant default) to no role.</li>
  * <li>{@value #CATEGORY}: the type of the reference {@value #CATEGORY_REF} of a project. The account
  * in {@value #READER} holds the role {@value #ROLE_READER}, which grants read only.</li>
  * </ul>

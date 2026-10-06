@@ -79,6 +79,17 @@
 						-->
 						<grant operation="Write"/>
 					</part>
+					<part name="TestViewModelAccess:Task#note">
+						<!-- Only the responsible of the task may write its note. -->
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Task#secret">
+						<!-- Nobody but a super-user may write the secret of a task. -->
+						<grant operation="Write"/>
+					</part>
 				</security-config>
 			</instance>
 		</config>

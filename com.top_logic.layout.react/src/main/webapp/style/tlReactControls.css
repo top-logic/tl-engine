@@ -2639,6 +2639,34 @@ button.tlDrawer__closeBtn:focus-visible {
 	outline-offset: 2px;
 }
 
+/* Close button at the end of the message; takes the text color of the variant, so it stays visible
+   on every background. */
+.tlSnackbar__close {
+	flex-shrink: 0;
+	align-self: center;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--spacing-06);
+	height: var(--spacing-06);
+	margin-inline-end: calc(-1 * var(--spacing-02));
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+}
+
+.tlSnackbar__close:hover {
+	background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.tlSnackbar__close:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+
 @keyframes tlSnackbarSlideUp {
 	from { transform: translateX(-50%) translateY(1rem); opacity: 0; }
 	to   { transform: translateX(-50%) translateY(0);    opacity: 1; }

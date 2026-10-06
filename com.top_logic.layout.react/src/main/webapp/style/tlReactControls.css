@@ -4382,20 +4382,31 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 
 /* The track, drawn by the pseudo elements below; the input itself only carries the room they need
-   and the focus the whole control takes. */
+   and the focus the whole control takes. The pseudo elements read their measures and colors from
+   the properties declared here: the handle's diameter, the colors of the value part (from the lower
+   bound to the handle) and of the open rest, and the share of the range the value covers - a number
+   from 0 to 1 the control writes on the input as the value changes. */
 .tlSlider__input {
+	--tlSlider-thumb: 1rem;
+	--tlSlider-fill: 0;
+	--tlSlider-fill-color: var(--interactive);
+	--tlSlider-rest-color: var(--border-subtle);
 	appearance: none;
 	-webkit-appearance: none;
 	flex: 1 1 auto;
 	min-width: 0;
-	height: 1rem;
+	height: var(--tlSlider-thumb);
 	margin: 0;
 	padding: 0;
 	background-color: transparent;
 	cursor: pointer;
 }
 
+/* A disabled slider draws its value part in the color of its disabled handle, as an enabled one
+   draws it in the handle's color, on the lighter rest of a disabled field. */
 .tlSlider__input:disabled {
+	--tlSlider-fill-color: var(--button-disabled);
+	--tlSlider-rest-color: var(--field-disabled);
 	cursor: default;
 }
 
@@ -4418,18 +4429,32 @@ button.tlDrawer__closeBtn:focus-visible {
 	line-height: var(--body-compact-01-line-height);
 }
 
-/* The track. A capsule keeps its shape in a theme that squares every corner off, which is why the
-   radius is written literally rather than taken from a radius token. */
+/* The track: the value part as thick as the box, the open rest a thinner strip on its middle. A
+   capsule keeps its shape in a theme that squares every corner off, which is why the radius is
+   written literally rather than taken from a radius token. The value part ends under the middle of
+   the handle, whose middle travels from half a handle after the start to half a handle before the
+   end of the track. */
 .tlSlider__input::-webkit-slider-runnable-track {
-	height: 0.25rem;
+	height: 0.375rem;
 	border-radius: 999px;
-	background-color: var(--border-subtle);
+	background:
+		linear-gradient(var(--tlSlider-fill-color), var(--tlSlider-fill-color)) left center
+			/ calc(var(--tlSlider-thumb) / 2 + var(--tlSlider-fill) * (100% - var(--tlSlider-thumb))) 100%
+			no-repeat,
+		linear-gradient(var(--tlSlider-rest-color), var(--tlSlider-rest-color)) center
+			/ 100% 0.25rem no-repeat;
 }
 
 .tlSlider__input::-moz-range-track {
 	height: 0.25rem;
 	border-radius: 999px;
-	background-color: var(--border-subtle);
+	background-color: var(--tlSlider-rest-color);
+}
+
+.tlSlider__input::-moz-range-progress {
+	height: 0.375rem;
+	border-radius: 999px;
+	background-color: var(--tlSlider-fill-color);
 }
 
 /* The handle, a circle standing on the middle of the track: the offset is half the handle less
@@ -4437,9 +4462,9 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlSlider__input::-webkit-slider-thumb {
 	appearance: none;
 	-webkit-appearance: none;
-	width: 1rem;
-	height: 1rem;
-	margin-top: -0.375rem;
+	width: var(--tlSlider-thumb);
+	height: var(--tlSlider-thumb);
+	margin-top: calc((0.375rem - var(--tlSlider-thumb)) / 2);
 	border: none;
 	border-radius: 50%;
 	background-color: var(--interactive);
@@ -4448,8 +4473,8 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 
 .tlSlider__input::-moz-range-thumb {
-	width: 1rem;
-	height: 1rem;
+	width: var(--tlSlider-thumb);
+	height: var(--tlSlider-thumb);
 	border: none;
 	border-radius: 50%;
 	background-color: var(--interactive);
@@ -4457,7 +4482,32 @@ button.tlDrawer__closeBtn:focus-visible {
 	transition: box-shadow 120ms ease-in-out;
 }
 
-/* The focus is shown on the handle, the part the keyboard moves. */
+/* The halo: while the pointer is over the slider, a ring around the handle, and a stronger one
+   while it is pressed, as selection marks show. A shadow without offset and blur draws outside the
+   handle only and moves nothing; its spread fills the handle up to the hit area of a control. A
+   disabled slider shows none. */
+.tlSlider__input:not(:disabled):hover::-webkit-slider-thumb {
+	box-shadow: var(--shadow-raised),
+		0 0 0 calc((var(--tl-size-control) - var(--tlSlider-thumb)) / 2) var(--tl-surface-interactive-hover);
+}
+
+.tlSlider__input:not(:disabled):hover::-moz-range-thumb {
+	box-shadow: var(--shadow-raised),
+		0 0 0 calc((var(--tl-size-control) - var(--tlSlider-thumb)) / 2) var(--tl-surface-interactive-hover);
+}
+
+.tlSlider__input:not(:disabled):active::-webkit-slider-thumb {
+	box-shadow: var(--shadow-raised),
+		0 0 0 calc((var(--tl-size-control) - var(--tlSlider-thumb)) / 2) var(--tl-surface-interactive-active);
+}
+
+.tlSlider__input:not(:disabled):active::-moz-range-thumb {
+	box-shadow: var(--shadow-raised),
+		0 0 0 calc((var(--tl-size-control) - var(--tlSlider-thumb)) / 2) var(--tl-surface-interactive-active);
+}
+
+/* The focus is shown on the handle, the part the keyboard moves. The ring lies close around the
+   handle, inside the halo, and is drawn over it. */
 .tlSlider__input:focus-visible {
 	outline: none;
 }
@@ -4470,14 +4520,6 @@ button.tlDrawer__closeBtn:focus-visible {
 .tlSlider__input:focus-visible::-moz-range-thumb {
 	outline: 2px solid var(--focus);
 	outline-offset: 1px;
-}
-
-.tlSlider__input:disabled::-webkit-slider-runnable-track {
-	background-color: var(--field-disabled);
-}
-
-.tlSlider__input:disabled::-moz-range-track {
-	background-color: var(--field-disabled);
 }
 
 .tlSlider__input:disabled::-webkit-slider-thumb {

@@ -44,9 +44,9 @@ public class TestDownloadAction extends TestCase {
 		final List<BinaryData> _delivered = new ArrayList<>();
 
 		@Override
-		public String deliverDownload(BinaryData data) {
+		public String deliverDownload(BinaryData data, Runnable discard) {
 			_delivered.add(data);
-			return super.deliverDownload(data);
+			return super.deliverDownload(data, discard);
 		}
 	}
 
@@ -158,8 +158,54 @@ public class TestDownloadAction extends TestCase {
 		String key = queue.deliverDownload(file);
 
 		assertNull(queue.takeDownload("unknown"));
-		assertSame(file, queue.takeDownload(key));
+		assertSame(file, queue.takeDownload(key).data());
 		assertNull("A file is fetched once.", queue.takeDownload(key));
+	}
+
+	/**
+	 * Tests that a file the client does not fetch is given up after the timeout, and released.
+	 */
+	public void testUnfetchedDownloadExpires() {
+		SSEUpdateQueue queue = new SSEUpdateQueue();
+		List<String> released = new ArrayList<>();
+		String key = queue.deliverDownload(file("report.txt"), () -> released.add("report"));
+
+		queue.expireDownloads(System.currentTimeMillis() + SSEUpdateQueue.DOWNLOAD_TIMEOUT / 2);
+		assertTrue("Not yet expired.", released.isEmpty());
+
+		queue.expireDownloads(System.currentTimeMillis() + SSEUpdateQueue.DOWNLOAD_TIMEOUT + 1000);
+		assertEquals(List.of("report"), released);
+		assertNull("An expired file is no longer fetched.", queue.takeDownload(key));
+	}
+
+	/**
+	 * Tests that a window keeps a bounded number of unfetched files, giving up the oldest.
+	 */
+	public void testPendingDownloadsAreCapped() {
+		SSEUpdateQueue queue = new SSEUpdateQueue();
+		List<Integer> released = new ArrayList<>();
+		List<String> keys = new ArrayList<>();
+		for (int n = 0; n <= SSEUpdateQueue.MAX_PENDING_DOWNLOADS; n++) {
+			int number = n;
+			keys.add(queue.deliverDownload(file("report" + n + ".txt"), () -> released.add(number)));
+		}
+
+		assertEquals("The oldest is given up.", List.of(0), released);
+		assertNull(queue.takeDownload(keys.get(0)));
+		assertNotNull(queue.takeDownload(keys.get(SSEUpdateQueue.MAX_PENDING_DOWNLOADS)));
+	}
+
+	/**
+	 * Tests that the files of a window are released when the window goes.
+	 */
+	public void testShutdownReleases() {
+		SSEUpdateQueue queue = new SSEUpdateQueue();
+		List<String> released = new ArrayList<>();
+		queue.deliverDownload(file("report.txt"), () -> released.add("report"));
+
+		queue.shutdown();
+
+		assertEquals(List.of("report"), released);
 	}
 
 	/**

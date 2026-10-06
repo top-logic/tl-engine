@@ -10,6 +10,8 @@ import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -76,12 +78,28 @@ public class SSEUpdateQueue {
 	private final Map<String, ReactCommandTarget> _controls = new ConcurrentHashMap<>();
 
 	/**
-	 * The files handed to the user of this window that the client has not fetched yet, by the key
-	 * it fetches them under.
+	 * How long a delivered file waits for the client to fetch it, in milliseconds.
 	 *
-	 * @see #deliverDownload(BinaryData)
+	 * <p>
+	 * A client that does not fetch it - the browser refused a further download, the event was lost
+	 * with the connection, the page was reloaded - never will, so its file is given up afterwards.
+	 * </p>
 	 */
-	private final Map<String, BinaryData> _downloads = new ConcurrentHashMap<>();
+	public static final long DOWNLOAD_TIMEOUT = 5 * 60 * 1000;
+
+	/**
+	 * The number of delivered files a window keeps waiting for the client at most; delivering one
+	 * more gives up the oldest.
+	 */
+	public static final int MAX_PENDING_DOWNLOADS = 10;
+
+	/**
+	 * The files handed to the user of this window that the client has not fetched yet, by the key
+	 * it fetches them under, oldest first.
+	 *
+	 * @see #deliverDownload(BinaryData, Runnable)
+	 */
+	private final Map<String, PendingDownload> _downloads = new LinkedHashMap<>();
 
 	private final AtomicInteger _nextId = new AtomicInteger(1);
 
@@ -309,20 +327,44 @@ public class SSEUpdateQueue {
 	/**
 	 * Hands the given file to the user of this window as a download.
 	 *
+	 * @see #deliverDownload(BinaryData, Runnable)
+	 */
+	public String deliverDownload(BinaryData data) {
+		return deliverDownload(data, null);
+	}
+
+	/**
+	 * Hands the given file to the user of this window as a download.
+	 *
 	 * <p>
 	 * The file is kept until the client fetches it - once - from the {@code react-api/download}
 	 * endpoint, which a {@link DownloadEvent} tells the client to do. A command that produces a
 	 * file for the user, an export say, delivers it this way; the browser saves it under its
-	 * {@link BinaryData#getName() name}.
+	 * {@link BinaryData#getName() name}. A file the client does not fetch within
+	 * {@link #DOWNLOAD_TIMEOUT} is given up, and so is the oldest one when more than
+	 * {@link #MAX_PENDING_DOWNLOADS} are waiting.
 	 * </p>
 	 *
 	 * @param data
 	 *        The file to deliver.
+	 * @param discard
+	 *        What releases the file - the deletion of a temporary file, say - once it is sent or
+	 *        given up; {@code null} for a file nothing has to be released for.
 	 * @return The key the client fetches the file under, see {@link #takeDownload(String)}.
 	 */
-	public String deliverDownload(BinaryData data) {
+	public String deliverDownload(BinaryData data, Runnable discard) {
 		String key = UUID.randomUUID().toString();
-		_downloads.put(key, data);
+		List<PendingDownload> givenUp = new ArrayList<>();
+		synchronized (_downloads) {
+			collectExpired(System.currentTimeMillis(), givenUp);
+			_downloads.put(key, new PendingDownload(data, discard, System.currentTimeMillis()));
+			while (_downloads.size() > MAX_PENDING_DOWNLOADS) {
+				Iterator<PendingDownload> oldest = _downloads.values().iterator();
+				givenUp.add(oldest.next());
+				oldest.remove();
+			}
+		}
+		discardAll(givenUp);
 		String windowName = _windowName == null ? "" : _windowName;
 		enqueue(DownloadEvent.create()
 			.setUrl("react-api/download?windowName=" + URLEncoder.encode(windowName, StandardCharsets.UTF_8)
@@ -332,11 +374,89 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * Removes and returns the file {@link #deliverDownload(BinaryData) delivered} under the given
-	 * key, {@code null} if there is none - never delivered, or already fetched.
+	 * Removes and returns the file {@link #deliverDownload(BinaryData, Runnable) delivered} under
+	 * the given key, {@code null} if there is none - never delivered, already fetched, or given up.
+	 *
+	 * <p>
+	 * The caller sends the file and then {@link PendingDownload#discard() discards} it.
+	 * </p>
 	 */
-	public BinaryData takeDownload(String key) {
-		return key == null ? null : _downloads.remove(key);
+	public PendingDownload takeDownload(String key) {
+		if (key == null) {
+			return null;
+		}
+		List<PendingDownload> givenUp = new ArrayList<>();
+		PendingDownload result;
+		synchronized (_downloads) {
+			collectExpired(System.currentTimeMillis(), givenUp);
+			result = _downloads.remove(key);
+		}
+		discardAll(givenUp);
+		return result;
+	}
+
+	/**
+	 * Gives up every delivered file that has waited for the client longer than
+	 * {@link #DOWNLOAD_TIMEOUT} at the given time.
+	 *
+	 * <p>
+	 * Done whenever a file is delivered or fetched, and with every heartbeat of the window.
+	 * </p>
+	 *
+	 * @param now
+	 *        The current time in milliseconds.
+	 */
+	public void expireDownloads(long now) {
+		List<PendingDownload> givenUp = new ArrayList<>();
+		synchronized (_downloads) {
+			collectExpired(now, givenUp);
+		}
+		discardAll(givenUp);
+	}
+
+	/** Called while holding the {@link #_downloads} lock. */
+	private void collectExpired(long now, List<PendingDownload> out) {
+		for (Iterator<PendingDownload> it = _downloads.values().iterator(); it.hasNext();) {
+			PendingDownload download = it.next();
+			if (now - download.deliveredAt() > DOWNLOAD_TIMEOUT) {
+				out.add(download);
+				it.remove();
+			}
+		}
+	}
+
+	private static void discardAll(List<PendingDownload> downloads) {
+		for (PendingDownload download : downloads) {
+			download.discard();
+		}
+	}
+
+	/**
+	 * A file {@link SSEUpdateQueue#deliverDownload(BinaryData, Runnable) delivered} to the window,
+	 * waiting for the client to fetch it.
+	 *
+	 * @param data
+	 *        The file.
+	 * @param release
+	 *        What releases the file once it is sent or given up, {@code null} for nothing.
+	 * @param deliveredAt
+	 *        When the file was delivered, in milliseconds.
+	 */
+	public record PendingDownload(BinaryData data, Runnable release, long deliveredAt) {
+
+		/**
+		 * Releases the file: it has been sent, or will never be.
+		 */
+		public void discard() {
+			if (release != null) {
+				try {
+					release.run();
+				} catch (RuntimeException ex) {
+					Logger.error("Releasing the download '" + data.getName() + "' failed.", ex, SSEUpdateQueue.class);
+				}
+			}
+		}
+
 	}
 
 	/**
@@ -573,7 +693,12 @@ public class SSEUpdateQueue {
 		}
 		_pendingEvents.clear();
 		_controls.clear();
-		_downloads.clear();
+		List<PendingDownload> givenUp;
+		synchronized (_downloads) {
+			givenUp = new ArrayList<>(_downloads.values());
+			_downloads.clear();
+		}
+		discardAll(givenUp);
 	}
 
 	/**
@@ -608,6 +733,7 @@ public class SSEUpdateQueue {
 	}
 
 	private void sendHeartbeat() {
+		expireDownloads(System.currentTimeMillis());
 		SSEConnection conn = _connection;
 		if (conn != null) {
 			synthesizeModelEventsIfPossible();

@@ -144,6 +144,10 @@ public class TableExportCommand implements ViewCommand {
 		ResKey getLabel();
 
 		@Override
+		@ComplexDefault(DefaultTooltip.class)
+		ResKey getTooltip();
+
+		@Override
 		@FormattedDefault("css:bi bi-file-earmark-excel")
 		ThemeImage getImage();
 
@@ -248,6 +252,17 @@ public class TableExportCommand implements ViewCommand {
 		 * @see #getProgressThreshold()
 		 */
 		void setProgressThreshold(int value);
+
+		/**
+		 * Default of {@link Config#getTooltip()}: what the export holds, rather than the label once
+		 * more.
+		 */
+		class DefaultTooltip extends DefaultValueProviderShared {
+			@Override
+			public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {
+				return com.top_logic.layout.view.I18NConstants.TABLE_EXPORT_EXCEL.tooltip();
+			}
+		}
 
 		/**
 		 * Default of {@link Config#getLabel()}.

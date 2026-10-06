@@ -15,7 +15,7 @@
 	demo needs no model objects.
 -->
 <view>
-	<panel>
+	<panel with-inset="true">
 		<title>
 			<en>Columns Demo</en>
 			<de>Spalten-Demo</de>

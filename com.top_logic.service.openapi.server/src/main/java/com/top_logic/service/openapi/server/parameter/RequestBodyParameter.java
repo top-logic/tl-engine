@@ -45,6 +45,7 @@ public class RequestBodyParameter extends ConcreteRequestParameter<RequestBodyPa
 	 */
 	@DisplayOrder({
 		Config.NAME_ATTRIBUTE,
+		Config.VARIABLE_NAME,
 		Config.DESCRIPTION,
 		Config.FORMAT,
 		Config.REQUIRED,

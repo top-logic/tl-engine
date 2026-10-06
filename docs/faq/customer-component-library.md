@@ -174,7 +174,10 @@ Theme images reach an adapter in their encoded form (`state.image`); `ThemeIcon`
 `tl-react-bridge` turns them into an element the library shows as its icon. An icon-only button is
 named by its label: the full adapter sets it as `aria-label` and declares it as tooltip through
 `TOOLTIP_ATTR` — always for an icon-only button, and with `TOOLTIP_WHEN_ATTR` = `WHEN_TRUNCATED`
-(shown only while the label is clipped) otherwise, as `TLButton` does.
+(shown only while the label is clipped or hidden) otherwise, as `TLButton` does. Text that the
+library cuts off with `text-overflow: ellipsis` (or a `line-clamp`) needs no declaration: the
+tooltip host offers the full text of a cut-off element by itself; `WHEN_TRUNCATED` is for a label
+that is hidden or clipped without an ellipsis.
 
 A field adapter reads and writes its value through `useTLFieldValue()`, which sends `valueChanged`
 and so makes the library component part of the form's edit and save cycle

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload, useTLDataUrl, useI18N, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, useFieldLabelProps, fieldInputId, ThemeIcon } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useTLDataUrl, useI18N, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { buttonClassName } from './button/ButtonDefaults';
 import { showsValueOnly } from './form/fieldState';
@@ -142,7 +142,7 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
           <path d="M8 1v9m0 0L4.5 6.5M8 10l3.5-3.5M2 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </svg>
       </button>
-      <span className="tlDownload__fileName" {...TOOLTIP_WHEN_CLIPPED}>{fileName}</span>
+      <span className="tlDownload__fileName">{fileName}</span>
     </span>
   );
 

@@ -85,6 +85,7 @@ import com.top_logic.service.openapi.server.parameter.ParameterReference;
 import com.top_logic.service.openapi.server.parameter.ReferencedParameter;
 import com.top_logic.service.openapi.server.parameter.RequestParameter;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Service providing a configurable REST service.
@@ -393,6 +394,13 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 
 				List<ConcreteRequestParameter<?>> allParameters = new ArrayList<>(pathItemParams);
 				allParameters.addAll(resolveParameters(operation.getParameters(), globalParameters));
+				String path = pathItem.getCompletePath();
+				Set<String> clashingVariables = ConcreteRequestParameter.clashingVariableNames(
+					allParameters.stream().map(ConcreteRequestParameter::getConfig).collect(Collectors.toList()));
+				if (!clashingVariables.isEmpty()) {
+					throw new TopLogicException(I18NConstants.DUPLICATE_PARAMETER_VARIABLES__PATH__METHOD__NAMES
+						.fill(path, method, clashingVariables));
+				}
 				ServiceMethodBuilder implBuilder = TypedConfigUtil.createInstance(operation.getImplementation());
 
 				List<String> parameterNames = allParameters.stream()
@@ -400,7 +408,6 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 					.flatMap(List::stream)
 					.collect(Collectors.toList());
 
-				String path = pathItem.getCompletePath();
 				Authenticator authenticator = authenticator(operation);
 				PathHandler pathHandler = new PathHandler(path, allParameters,
 					implBuilder.build(path, parameterNames), authenticator);

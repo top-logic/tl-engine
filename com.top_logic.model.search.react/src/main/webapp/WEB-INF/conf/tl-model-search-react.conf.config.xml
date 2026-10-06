@@ -11,6 +11,16 @@
 				</value-type-providers>
 			</instance>
 		</config>
+		<config service-class="com.top_logic.layout.configedit.ConfigControlService">
+			<instance class="com.top_logic.layout.configedit.ConfigControlService">
+				<providers>
+					<!-- A TL-Script valued configuration property is edited in the TL-Script editor. -->
+					<provider type="com.top_logic.model.search.expr.config.dom.Expr">
+						<impl class="com.top_logic.model.search.react.TLScriptConfigControlProvider"/>
+					</provider>
+				</providers>
+			</instance>
+		</config>
 		<config service-class="com.top_logic.layout.react.resource.ClientResources">
 			<instance class="com.top_logic.layout.react.resource.ClientResources">
 				<resources>

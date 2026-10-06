@@ -119,6 +119,11 @@ export interface CodeEditorProps {
   onChange?: (text: string) => void;
   /** Debounce delay for {@link onChange} in milliseconds (default 300). */
   debounceMs?: number;
+  /**
+   * Called when the editor loses the focus, after a change still waiting for its debounce delay
+   * has been reported through {@link onChange}.
+   */
+  onBlur?: () => void;
   /** CSS class of the editor container. */
   className?: string;
   /**
@@ -160,6 +165,10 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
   const onChangeRef = useRef(props.onChange);
   onChangeRef.current = props.onChange;
 
+  // Latest onBlur, read through a ref for the same reason.
+  const onBlurRef = useRef(props.onBlur);
+  onBlurRef.current = props.onBlur;
+
   // --- Create editor on mount ---
   useEffect(() => {
     if (!editorRef.current) return;
@@ -179,9 +188,23 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
         if (update.docChanged) {
           if (timerRef.current) clearTimeout(timerRef.current);
           timerRef.current = setTimeout(() => {
+            timerRef.current = null;
             onChangeRef.current?.(update.state.doc.toString());
           }, debounceMs);
         }
+      }),
+      EditorView.domEventHandlers({
+        blur: (_event, view) => {
+          // The last edit is reported before the blur, so that whoever reacts to leaving the
+          // editor sees the text as it was left.
+          if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+            onChangeRef.current?.(view.state.doc.toString());
+          }
+          onBlurRef.current?.();
+          return false;
+        },
       }),
     ];
     if (languageSupport) {

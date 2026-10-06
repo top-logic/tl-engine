@@ -224,6 +224,11 @@ button.tlCounter__button:focus {
    =========================================================================== */
 :root {
 	--page-inset: var(--spacing-04);
+	/* The color of the surface the content at hand is placed on: the page's background, overridden by
+	   every control painting a surface of its own (card, window, drawer, ...). An element that must be
+	   opaque without standing out - a sticky table cell over the cells scrolling underneath - paints
+	   this color, so it is of one color with whatever it is placed on. */
+	--tl-current-surface: var(--background);
 }
 
 /* An inset passes the space it is given on to its content: a bounded flex column, so that content
@@ -1110,6 +1115,7 @@ button.tlPanel__actionButton:focus-visible {
 }
 
 .tlPanel--maximized {
+	--tl-current-surface: var(--background);
 	background: var(--background);
 }
 
@@ -1119,6 +1125,7 @@ button.tlPanel__actionButton:focus-visible {
    button (chevron, icon, label) and the section's actions beside it. The focus ring is the one of
    the design system, drawn inside the trigger since the header spans the whole frame. */
 .tl-accordion {
+	--tl-current-surface: var(--tl-surface-layer);
 	border: var(--tl-border-width-sm) solid var(--tl-border-separator);
 	border-radius: var(--tl-radius-md);
 	background: var(--tl-surface-layer);
@@ -1283,6 +1290,7 @@ button.tlPanel__actionButton:focus-visible {
 }
 
 .tlSidebar__nav {
+	--tl-current-surface: var(--layer-01);
 	display: flex;
 	flex-direction: column;
 	width: 16rem;
@@ -1533,6 +1541,7 @@ button.tlSidebar__collapseBtn:focus-visible {
 }
 
 .tlSidebar__flyout {
+	--tl-current-surface: var(--layer-02);
 	position: fixed;
 	z-index: 1000;
 	min-width: 12rem;
@@ -2034,6 +2043,7 @@ button.tlDrawerToggle:focus-visible {
    height explicitly: a card sharing a column with a filling control keeps its full content instead
    of giving up height to it. */
 .tlCard {
+	--tl-current-surface: var(--layer-01);
 	border-radius: var(--border-radius-02);
 	font-family: var(--font-family);
 	background: var(--layer-01);
@@ -2185,6 +2195,7 @@ button.tlDrawerToggle:focus-visible {
 /* --- TLBottomBar ----------------------------------------------------------- */
 
 .tlBottomBar {
+	--tl-current-surface: var(--layer-01);
 	display: flex;
 	align-items: stretch;
 	height: 3.5rem;
@@ -2294,6 +2305,7 @@ button.tlBottomBar__item:hover {
 /* --- TLWindow -------------------------------------------------------------- */
 
 .tlWindow {
+	--tl-current-surface: var(--layer-01);
 	position: relative;
 	background: var(--layer-01);
 	border-radius: var(--border-radius-02);
@@ -2477,6 +2489,7 @@ button.tlWindow__maximizeBtn:focus-visible {
 /* --- TLDrawer -------------------------------------------------------------- */
 
 .tlDrawer {
+	--tl-current-surface: var(--layer-01);
 	position: fixed;
 	z-index: var(--tl-layer-overlay);
 	background: var(--layer-01);
@@ -2802,6 +2815,7 @@ button.tlDrawer__closeBtn:focus-visible {
 
 /* Placeholder rendered in place of a view that could not be loaded. */
 .tlViewError {
+	--tl-current-surface: var(--layer-01);
 	margin: var(--spacing-05);
 	padding: var(--spacing-05);
 	border: 1px solid var(--support-error);
@@ -3147,23 +3161,28 @@ button.tlDrawer__closeBtn:focus-visible {
 /* Must not clip: an ancestor with a clipping overflow between a sticky cell and the scroll container
    turns the row into the cell's scroll context, and a frozen cell would scroll away with the row
    instead of sticking to the left edge. Each cell clips its own content anyway. */
+/* A row paints the color of its state, which a state rule sets as --tl-row-background: the sticky
+   cells paint that very color over the surface, so they look like the rest of their row in every
+   state the row can be in. */
 .tlTableView__row {
+	--tl-row-background: transparent;
 	display: flex;
 	border-bottom: 1px solid var(--border-subtle);
 	box-sizing: border-box;
 	cursor: pointer;
+	background: var(--tl-row-background);
 }
 
 .tlTableView__row:hover {
-	background: var(--layer-hover);
+	--tl-row-background: var(--layer-hover);
 }
 
 .tlTableView__row--selected {
-	background: var(--layer-selected);
+	--tl-row-background: var(--layer-selected);
 }
 
 .tlTableView__row--selected:hover {
-	background: var(--layer-selected-hover);
+	--tl-row-background: var(--layer-selected-hover);
 }
 
 /* The row the keyboard cursor is on. The ring is drawn on the cells rather than on the row itself:
@@ -3793,7 +3812,7 @@ button.tlDrawer__closeBtn:focus-visible {
 }
 
 .tlTableView__row--dragOver-onto {
-	background: var(--layer-selected-hover);
+	--tl-row-background: var(--layer-selected-hover);
 	outline: 2px solid var(--interactive);
 	outline-offset: -2px;
 }
@@ -3834,23 +3853,17 @@ button.tlDrawer__closeBtn:focus-visible {
 	pointer-events: none;
 }
 
-/* -- Frozen columns -- */
+/* -- Frozen columns --
+   They stick to the left edge while the other columns scroll past underneath, so they are opaque:
+   the surface the table is placed on, with the color of the row's state over it - exactly what the
+   rest of the row shows, in every state and on every surface. */
 
-.tlTableView__headerCell--frozen,
+.tlTableView__headerCell--frozen {
+	background: var(--tl-current-surface);
+}
+
 .tlTableView__cell--frozen {
-	background: var(--layer-01);
-}
-
-.tlTableView__row:hover .tlTableView__cell--frozen {
-	background: var(--layer-hover);
-}
-
-.tlTableView__row--selected .tlTableView__cell--frozen {
-	background: var(--layer-selected);
-}
-
-.tlTableView__row--selected:hover .tlTableView__cell--frozen {
-	background: var(--layer-selected-hover);
+	background: linear-gradient(var(--tl-row-background), var(--tl-row-background)), var(--tl-current-surface);
 }
 
 .tlTableView__headerCell--frozenLast,
@@ -3863,21 +3876,12 @@ button.tlDrawer__closeBtn:focus-visible {
    They stick to the right edge while the columns in front of them scroll past underneath, so their
    background is opaque, exactly like a frozen column's. */
 
-.tlTableView__headerCell--pinnedEnd,
+.tlTableView__headerCell--pinnedEnd {
+	background: var(--tl-current-surface);
+}
+
 .tlTableView__cell--pinnedEnd {
-	background: var(--layer-01);
-}
-
-.tlTableView__row:hover .tlTableView__cell--pinnedEnd {
-	background: var(--layer-hover);
-}
-
-.tlTableView__row--selected .tlTableView__cell--pinnedEnd {
-	background: var(--layer-selected);
-}
-
-.tlTableView__row--selected:hover .tlTableView__cell--pinnedEnd {
-	background: var(--layer-selected-hover);
+	background: linear-gradient(var(--tl-row-background), var(--tl-row-background)), var(--tl-current-surface);
 }
 
 /* The leftmost of the pinned cells carries the shadow marking the edge the columns pass under. */
@@ -3989,7 +3993,7 @@ button.tlDrawer__closeBtn:focus-visible {
 
 /* A group header row: the group value, its size, and the columns' aggregates. */
 .tlTableView__row--group {
-	background-color: var(--layer);
+	--tl-row-background: var(--layer);
 	font-weight: 600;
 }
 

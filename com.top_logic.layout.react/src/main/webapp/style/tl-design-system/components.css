@@ -356,6 +356,7 @@
   border: var(--tl-border-width-sm) solid var(--tl-border-control);
   background: var(--tl-surface-field);
   cursor: pointer;
+  transition: box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
 }
 .tl-checkbox[hidden] { display: none; }
 .tl-radio[hidden] { display: none; }
@@ -373,6 +374,27 @@
 .tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])):hover,
 .tl-radio:where(:not(:disabled):not([aria-readonly="true"])):hover {
   border-color: var(--tl-border-emphasis);
+}
+
+/* Der Hof: beim Zeigen ein Ring um die Marke, beim Drücken ein kräftigerer — docs/skalen.md „Auswahlmarken
+   zeigen einen Hof“. Ein Schatten ohne Versatz und Unschärfe zeichnet nur außerhalb der Marke, verschiebt
+   nichts und folgt ihrer Form: Kreis am Radio, gerundetes Quadrat am Kästchen, Pille am Schalter. Die
+   Ausdehnung füllt die Marke auf die Trefferfläche size-control auf. Auslöser ist die Marke selbst und ihr
+   Label tl-choice — die Trefferfläche ist das Label. Die Wächter wie beim Rand. Der Label-Auslöser
+   steht in :where und bleibt bei (0,1,0), unter dem Drücken an der Marke (0,2,0); das Drücken steht später
+   und gewinnt über das Zeigen. Fokus allein zeigt keinen Hof — der Fokus ist der Ring aus base.css. */
+.tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])):hover,
+.tl-radio:where(:not(:disabled):not([aria-readonly="true"])):hover,
+:where(.tl-choice:hover) .tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])),
+:where(.tl-choice:hover) .tl-radio:where(:not(:disabled):not([aria-readonly="true"])) {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-interactive-hover);
+}
+
+.tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])):active,
+.tl-radio:where(:not(:disabled):not([aria-readonly="true"])):active,
+:where(.tl-choice:active) .tl-checkbox:where(:not(:disabled):not([aria-readonly="true"])),
+:where(.tl-choice:active) .tl-radio:where(:not(:disabled):not([aria-readonly="true"])) {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-interactive-active);
 }
 
 .tl-checkbox:checked,

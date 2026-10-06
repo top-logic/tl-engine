@@ -166,7 +166,7 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	public void testWriteAllowed() {
 		becomeUser(_responsible);
 		createField(_project, NAME);
-		_form.enterEditMode();
+		assertTrue(_form.enterEditMode());
 
 		assertEditable();
 	}
@@ -177,26 +177,27 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	public void testWriteGrantedToNoRole() {
 		becomeUser(_responsible);
 		createField(_project, SECRET);
-		_form.enterEditMode();
+		assertTrue(_form.enterEditMode());
 
 		assertReadOnly(part(PROJECT, SECRET));
 	}
 
 	/**
-	 * Writing is refused on the edited object only: the field is disabled while the form is edited
-	 * and gives the refusal as tooltip; outside edit mode it shows its value.
+	 * Writing is refused on the edited object only (the user may write the project, but does not
+	 * hold the role the attribute grants writing to on it): the field is disabled while the form is
+	 * edited and gives the refusal as tooltip; outside edit mode it shows its value.
 	 */
 	public void testWriteRefusedOnObject() {
-		becomeUser(_roleless);
-		createField(_project, NAME);
-		_form.enterEditMode();
+		becomeUser(_responsible);
+		createField(_project, RATING);
+		assertTrue(_form.enterEditMode());
 
-		assertDisabled(part(PROJECT, NAME));
+		assertDisabled(part(PROJECT, RATING));
 
 		_form.executeCancel();
 		assertFalse(fieldModel().isEditable());
 		assertFalse(fieldModel().isDisabled());
-		assertTooltipWithoutReason(part(PROJECT, NAME));
+		assertTooltipWithoutReason(part(PROJECT, RATING));
 	}
 
 	/**
@@ -205,7 +206,7 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	public void testWriteAsRoot() {
 		becomeUser(_root);
 		createField(_project, SECRET);
-		_form.enterEditMode();
+		assertTrue(_form.enterEditMode());
 
 		assertEditable();
 	}
@@ -217,7 +218,7 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	public void testModelModeStricter() {
 		becomeUser(_responsible);
 		createField(_project, CODE);
-		_form.enterEditMode();
+		assertTrue(_form.enterEditMode());
 		assertReadOnly(part(PROJECT, CODE));
 	}
 
@@ -225,9 +226,9 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	 * A mode of the model stricter than the disabling refusal on the object wins.
 	 */
 	public void testModelModeStricterThanDisabled() {
-		becomeUser(_roleless);
+		becomeUser(_responsible);
 		createField(_project, CODE);
-		_form.enterEditMode();
+		assertTrue(_form.enterEditMode());
 		assertReadOnly(part(PROJECT, CODE));
 	}
 
@@ -238,7 +239,7 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	public void testDraftWriteGrantedInContext() {
 		becomeUser(_responsible);
 		createField(draftIn(_project), NOTE);
-		_form.enterEditMode();
+		assertTrue(_form.enterEditMode());
 
 		assertEditable();
 	}
@@ -250,7 +251,7 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	public void testDraftWriteRefusedInContext() {
 		becomeUser(_roleless);
 		createField(draftIn(_project), NOTE);
-		_form.enterEditMode();
+		assertTrue(_form.enterEditMode());
 
 		assertDisabled(part(TASK, NOTE));
 	}
@@ -262,14 +263,14 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	public void testDraftUngrantedAttribute() {
 		becomeUser(_roleless);
 		createField(draftIn(_project), NAME);
-		_form.enterEditMode();
+		assertTrue(_form.enterEditMode());
 		assertEditable();
 
 		becomeUser(null);
 		try {
 			createField(draftIn(null), NAME);
 			assertTrue(chrome().isVisible());
-			_form.enterEditMode();
+			assertTrue(_form.enterEditMode());
 			assertEditable();
 		} finally {
 			// Cleaning up the fixture needs a user.
@@ -283,7 +284,7 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	public void testDraftWriteGrantedToNoRole() {
 		becomeUser(_responsible);
 		createField(draftIn(_project), SECRET);
-		_form.enterEditMode();
+		assertTrue(_form.enterEditMode());
 
 		assertReadOnly(part(TASK, SECRET));
 	}
@@ -294,7 +295,7 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	public void testDraftWriteAsRoot() {
 		becomeUser(_root);
 		createField(draftIn(_project), SECRET);
-		_form.enterEditMode();
+		assertTrue(_form.enterEditMode());
 
 		assertEditable();
 	}

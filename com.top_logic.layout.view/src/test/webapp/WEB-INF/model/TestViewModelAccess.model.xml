@@ -24,6 +24,9 @@
 						<property name="classified"
 							type="tl.core:String"
 						/>
+						<property name="rating"
+							type="tl.core:String"
+						/>
 						<property name="code"
 							type="tl.core:String"
 						>

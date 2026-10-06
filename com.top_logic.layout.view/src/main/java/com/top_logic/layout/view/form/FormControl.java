@@ -22,6 +22,7 @@ import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.layout.view.channel.ViewChannel.VetoListener;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
@@ -211,9 +212,24 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * decision governs the button, a command a client sends directly, the initial edit mode, an object
 	 * switch of an auto-edit form, and the edit-mode channel.
 	 * </p>
+	 *
+	 * <p>
+	 * The permission combines the {@link #setEditRule(ViewExecutabilityRule) configured rule} with
+	 * the model right to write the displayed object, see
+	 * {@link ModelAccessPolicy#onEdit(TLObject)}: editing is offered only where both allow it. Of two
+	 * refusals, the stronger one wins (a hidden command beats a disabled one, see
+	 * {@link ExecutableState#combine(ExecutableState)}); of two equally strong refusals, the one of
+	 * the model right gives the reason. A transient draft (e.g. of a create dialog) is not refused
+	 * by the model right: its creation was checked when it was created.
+	 * </p>
 	 */
 	public ExecutableState editPermission() {
-		return _editRule.isExecutable(getCurrentObject());
+		if (_currentObject == null || !_currentObject.tValid()) {
+			// Nothing to edit, and a deleted object has no rights to ask for.
+			return _editRule.isExecutable(getCurrentObject());
+		}
+		ExecutableState right = ModelAccessPolicy.onEdit(_currentObject);
+		return right.combine(_editRule.isExecutable(getCurrentObject()));
 	}
 
 	@Override

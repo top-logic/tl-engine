@@ -151,6 +151,31 @@ public final class ModelAccessPolicy {
 	}
 
 	/**
+	 * The state of editing the given object in a form: the {@link SimpleBoundCommandGroup#WRITE
+	 * write} right on the object, with the display derived from the check (see
+	 * {@link #onObject(BoundCommandGroup, TLObject, TLStructuredTypePart, DeniedDisplay)}).
+	 *
+	 * <p>
+	 * A {@link TLFormObjectBase form object} editing an object is decided by the
+	 * {@link TLFormObjectBase#getEditedObject() edited object}. A transient object (e.g. the draft
+	 * of a create dialog) is always editable: creating it was checked where it was created (see
+	 * {@link #createIn(TLObject, TLStructuredTypePart, TLClass, DeniedDisplay)}), and the right to
+	 * set each of its values is decided per attribute, see
+	 * {@link #onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)}.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object displayed in the form.
+	 */
+	public static ExecutableState onEdit(TLObject object) {
+		TLObject target = editedObject(object);
+		if (target.tTransient()) {
+			return ExecutableState.EXECUTABLE;
+		}
+		return onObject(SimpleBoundCommandGroup.WRITE, target, null, null);
+	}
+
+	/**
 	 * The object whose rights decide about the given object: the edited object of a form object
 	 * editing an object, the given object otherwise.
 	 */

@@ -59,8 +59,9 @@ import com.top_logic.util.error.TopLogicException;
  * project named {@value #FROZEN} (disabled, with a reason) and deleting it (hidden). The account in
  * {@value #VIEWER} holds the role {@value #ROLE_VIEWER} on the project, which grants read only.
  * Reading {@value #BUDGET} is granted to {@value #ROLE_RESPONSIBLE} only, reading
- * {@value #CLASSIFIED} to no role. The attribute {@value #CODE} is read-only by its display
- * annotation.</li>
+ * {@value #CLASSIFIED} to no role. Writing {@value #RATING} is granted to {@value #ROLE_VIEWER} only.
+ * The attribute {@value #CODE} is read-only by its display annotation, and writing it is granted to
+ * {@value #ROLE_VIEWER} only.</li>
  * <li>{@value #TASK}: the type of the composition {@value #TASKS} of a project. A task inherits the
  * role {@value #ROLE_RESPONSIBLE} from its project, with the same grants. Its reference
  * {@value #CREATED_IN} defaults to the context the task is created in. Writing its attribute
@@ -107,6 +108,9 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Name of the {@link #PROJECT} attribute nobody but a super-user may read. */
 	protected static final String CLASSIFIED = "classified";
+
+	/** Name of the {@link #PROJECT} attribute only {@link #ROLE_VIEWER} may write. */
+	protected static final String RATING = "rating";
 
 	/** Name of the {@link #PROJECT} attribute that is read-only by its display annotation. */
 	protected static final String CODE = "code";

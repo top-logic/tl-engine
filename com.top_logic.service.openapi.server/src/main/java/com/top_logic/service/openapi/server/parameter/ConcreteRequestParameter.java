@@ -8,9 +8,14 @@ package com.top_logic.service.openapi.server.parameter;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -23,6 +28,9 @@ import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.constraint.algorithm.GenericValueDependency;
+import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
@@ -53,6 +61,7 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 	 */
 	@DisplayOrder({
 		ParameterConfiguration.NAME_ATTRIBUTE,
+		ParameterConfiguration.VARIABLE_NAME,
 		ParameterConfiguration.DESCRIPTION,
 		ParameterConfiguration.FORMAT,
 		ParameterConfiguration.REQUIRED,
@@ -61,6 +70,19 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 		ParameterConfiguration.MULTIPLE,
 	})
 	public interface ParameterConfiguration extends Described, NamedConfigMandatory {
+
+		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
+		Lookup LOOKUP = MethodHandles.lookup();
+
+		/**
+		 * Regular expression that a TL-Script variable name must match.
+		 */
+		String SCRIPT_IDENTIFIER_PATTERN = "[A-Za-z_][A-Za-z0-9_]*";
+
+		/**
+		 * @see #getVariableName()
+		 */
+		String VARIABLE_NAME = "variable-name";
 
 		/**
 		 * @see #getRequired()
@@ -93,6 +115,42 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 		 */
 		@Override
 		String getDescription();
+
+		/**
+		 * The name of the TL-Script variable that holds the value of this parameter in the
+		 * operation script.
+		 * 
+		 * <p>
+		 * The {@link #getName()} is the name of the parameter in the HTTP request (e.g. the name of
+		 * a header or a query parameter). If no variable name is given, the value is accessible in
+		 * the operation script under the parameter name. A variable name must be given if the
+		 * parameter name is not a valid TL-Script variable name, e.g. for a header
+		 * <code>X-Gitea-Event</code>. A TL-Script variable name starts with a letter or an
+		 * underscore and contains only letters, digits, and underscores.
+		 * </p>
+		 */
+		@Name(VARIABLE_NAME)
+		@Nullable
+		@Constraint(value = ValidVariableName.class, args = @Ref(NAME_ATTRIBUTE))
+		String getVariableName();
+
+		/**
+		 * Setter for {@link #getVariableName()}.
+		 */
+		void setVariableName(String value);
+
+		/**
+		 * The name of the TL-Script variable that holds the value of this parameter.
+		 * 
+		 * @return The {@link #getVariableName()}, if given, the {@link #getName()} otherwise.
+		 */
+		default String effectiveVariableName() {
+			String variableName = getVariableName();
+			if (variableName == null || variableName.isEmpty()) {
+				return getName();
+			}
+			return variableName;
+		}
 
 		/**
 		 * Determines whether this parameter is mandatory.
@@ -178,6 +236,64 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 
 		}
 
+		/**
+		 * {@link GenericValueDependency} checking that a {@link ParameterConfiguration} is
+		 * accessible as TL-Script variable.
+		 * 
+		 * <p>
+		 * An explicitly given {@link ParameterConfiguration#getVariableName() variable name} must be
+		 * a valid TL-Script variable name. Without an explicit variable name, the
+		 * {@link ParameterConfiguration#getName() parameter name} must be one.
+		 * </p>
+		 * 
+		 * @see ParameterConfiguration#SCRIPT_IDENTIFIER_PATTERN
+		 */
+		class ValidVariableName extends GenericValueDependency<String, String> {
+
+			private static final Pattern SCRIPT_IDENTIFIER = Pattern.compile(SCRIPT_IDENTIFIER_PATTERN);
+
+			/**
+			 * Creates a {@link ValidVariableName}.
+			 */
+			public ValidVariableName() {
+				super(String.class, String.class);
+			}
+
+			@Override
+			protected void checkValue(PropertyModel<String> variableName, PropertyModel<String> name) {
+				String explicitName = variableName.getValue();
+				if (explicitName != null && !explicitName.isEmpty()) {
+					if (!isScriptIdentifier(explicitName)) {
+						variableName.setProblemDescription(
+							I18NConstants.ERROR_INVALID_VARIABLE_NAME__NAME.fill(explicitName));
+					}
+					return;
+				}
+
+				String parameterName = name.getValue();
+				if (parameterName != null && !parameterName.isEmpty() && !isScriptIdentifier(parameterName)) {
+					variableName.setProblemDescription(
+						I18NConstants.ERROR_VARIABLE_NAME_REQUIRED__NAME.fill(parameterName));
+				}
+			}
+
+			/**
+			 * The parameter name is valid on its own, only the variable name is at fault.
+			 */
+			@Override
+			public boolean isChecked(int index) {
+				return index == 0;
+			}
+
+			/**
+			 * Whether the given name is a valid TL-Script variable name.
+			 */
+			public static boolean isScriptIdentifier(String name) {
+				return SCRIPT_IDENTIFIER.matcher(name).matches();
+			}
+
+		}
+
 	}
 
 	/**
@@ -203,6 +319,14 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 			return annotation.value();
 		}
 
+		/**
+		 * The names of the TL-Script variables that this parameter binds around the operation
+		 * script.
+		 */
+		default List<String> scriptVariableNames() {
+			return Collections.singletonList(effectiveVariableName());
+		}
+
 		@Override
 		default ConcreteRequestParameter.Config<? extends ConcreteRequestParameter<?>> resolveParameter(
 				Map<String, ReferencedParameter> globalParams) {
@@ -226,9 +350,42 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 
 	/**
 	 * The names of parameters that will be filled in {@link #parse(Map, HttpServletRequest, Map)}.
+	 * 
+	 * @see Config#scriptVariableNames()
 	 */
 	public List<String> getScriptParameterNames() {
-		return Collections.singletonList(getName());
+		return getConfig().scriptVariableNames();
+	}
+
+	/**
+	 * The name of the TL-Script variable holding the value of this parameter.
+	 * 
+	 * @see ParameterConfiguration#effectiveVariableName()
+	 */
+	public String getVariableName() {
+		return getConfig().effectiveVariableName();
+	}
+
+	/**
+	 * The script variable names that are bound by more than one of the given parameters.
+	 * 
+	 * @param parameters
+	 *        The parameters that are bound together around one operation script.
+	 * @return The clashing variable names in the order of their first occurrence, empty if all
+	 *         variable names are unique.
+	 */
+	public static Set<String> clashingVariableNames(
+			Collection<? extends Config<?>> parameters) {
+		Set<String> seen = new HashSet<>();
+		Set<String> clashes = new LinkedHashSet<>();
+		for (Config<?> parameter : parameters) {
+			for (String variableName : parameter.scriptVariableNames()) {
+				if (!seen.add(variableName)) {
+					clashes.add(variableName);
+				}
+			}
+		}
+		return clashes;
 	}
 
 	/**
@@ -251,7 +408,7 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 
 			return;
 		}
-		parameters.put(getName(), value);
+		parameters.put(getVariableName(), value);
 	}
 
 	/**

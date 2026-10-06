@@ -11,15 +11,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import org.apache.commons.io.FilenameUtils;
-
-import com.top_logic.base.office.POIUtil;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultValueProviderShared;
@@ -34,7 +31,6 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.layout.DisplayDimension;
@@ -65,6 +61,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.tool.export.tableview.ExportMonitor;
 import com.top_logic.tool.export.tableview.TableViewExcelExport;
+import com.top_logic.tool.export.tableview.TableViewExcelExport.ExportFile;
 import com.top_logic.tool.export.tableview.TableViewExcelExport.Snapshot;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -90,7 +87,6 @@ import com.top_logic.util.error.TopLogicException;
  * saves the file.
  * </p>
  */
-@InApp
 public class TableExportCommand implements ViewCommand {
 
 	/**
@@ -286,10 +282,28 @@ public class TableExportCommand implements ViewCommand {
 	private final QueryExecutor _downloadName;
 
 	/**
-	 * Creates a {@link TableExportCommand} from configuration.
+	 * Reports a configuration that uses the export as a command of its own.
+	 *
+	 * <p>
+	 * The export exports the table it belongs to, so it is configured as the
+	 * {@link com.top_logic.layout.view.element.TableElement.Config#getExport() export} of a
+	 * &lt;table&gt;, which creates it through {@link #TableExportCommand(Config)}. Configured
+	 * anywhere else - among the commands of a panel, say - it has no table to export, which is
+	 * reported when the configuration is read rather than when the button is pressed.
+	 * </p>
 	 */
 	@CalledByReflection
 	public TableExportCommand(InstantiationContext context, Config config) {
+		this(config);
+		context.error("The table export can only be configured as <"
+			+ com.top_logic.layout.view.element.TableElement.Config.EXPORT
+			+ "> of a <table>, not as a command of its own.");
+	}
+
+	/**
+	 * Creates the export of a table from its configuration.
+	 */
+	public TableExportCommand(Config config) {
 		_config = config;
 		Expr downloadName = config.getDownloadName();
 		_downloadName = downloadName == null ? null : QueryExecutor.compile(downloadName);
@@ -304,11 +318,12 @@ public class TableExportCommand implements ViewCommand {
 
 	/**
 	 * Not executable on its own: the command exports the table it is {@link #bind(Supplier, Supplier,
-	 * Supplier) bound} to.
+	 * Supplier) bound} to. A configuration placing it elsewhere is refused when it is read, see
+	 * {@link #TableExportCommand(InstantiationContext, Config)}.
 	 */
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
-		throw new UnsupportedOperationException("The export command runs bound to a table.");
+		throw new IllegalStateException("The table export runs bound to its table.");
 	}
 
 	/**
@@ -334,7 +349,7 @@ public class TableExportCommand implements ViewCommand {
 	HandlerResult export(ReactContext context, TableView<?> view, Map<String, ExcelCellRenderer> renderers,
 			Object[] inputs) {
 		TableViewExcelExport export = createExport(renderers);
-		Snapshot<?> snapshot = export.snapshot(view);
+		Snapshot snapshot = export.snapshot(view);
 		String downloadName = downloadName(inputs);
 
 		DialogManager dialogs = context.getDialogManager();
@@ -371,8 +386,7 @@ public class TableExportCommand implements ViewCommand {
 
 	/**
 	 * The name the file is saved under: what the configured function computes, or the date, the
-	 * default title and the application name - the name the export of a classic table gets - and
-	 * the extension of the format written.
+	 * default title and the application name - the name the export of a classic table gets.
 	 */
 	private String downloadName(Object[] inputs) {
 		String name = null;
@@ -393,18 +407,11 @@ public class TableExportCommand implements ViewCommand {
 					com.top_logic.layout.table.export.I18NConstants.DEFAULT_EXPORT_NAME,
 					com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
 		}
-		String template = _config.getTemplate();
-		if (!StringServices.isEmpty(template) && FilenameUtils.indexOfExtension(name) < 0) {
-			// A template decides the format; the name has to say which one it is.
-			String extension = template.substring(Math.max(0, FilenameUtils.indexOfExtension(template)));
-			if (extension.equalsIgnoreCase(POIUtil.XLS_SUFFIX)) {
-				name += POIUtil.XLS_SUFFIX;
-			}
-		}
+		// The extension is the one of the format written, see TableViewExcelExport#write().
 		return name;
 	}
 
-	private static <R> BinaryData write(TableViewExcelExport export, Snapshot<R> snapshot, String name,
+	private static ExportFile write(TableViewExcelExport export, Snapshot snapshot, String name,
 			ExportMonitor monitor) {
 		try {
 			return export.write(snapshot, name, monitor);
@@ -413,13 +420,19 @@ public class TableExportCommand implements ViewCommand {
 		}
 	}
 
-	private static void deliver(ReactContext context, BinaryData data) {
+	/**
+	 * Hands the written file to the browser; its temporary file is deleted once it is sent or given
+	 * up.
+	 */
+	private static void deliver(ReactContext context, ExportFile file) {
 		SSEUpdateQueue queue = context.getSSEQueue();
 		if (queue == null) {
-			Logger.info("No window to deliver the export '" + data.getName() + "' to.", TableExportCommand.class);
+			Logger.info("No window to deliver the export '" + file.data().getName() + "' to.",
+				TableExportCommand.class);
+			file.discard();
 			return;
 		}
-		queue.deliverDownload(data);
+		queue.deliverDownload(file.data(), file::discard);
 	}
 
 	/**
@@ -427,7 +440,7 @@ public class TableExportCommand implements ViewCommand {
 	 * the dialog closes and the browser saves the file once it is written.
 	 */
 	private static void exportInBackground(ReactContext context, DialogManager dialogs, TableViewExcelExport export,
-			Snapshot<?> snapshot, String downloadName) {
+			Snapshot snapshot, String downloadName) {
 		ViewChannel progress = new DefaultViewChannel("export");
 		ReactJobStatusControl status = new ReactJobStatusControl(context, null);
 		ChannelListener listener = (sender, oldValue, newValue) -> status.setJob(JobStatusElement.display(newValue));
@@ -435,11 +448,20 @@ public class TableExportCommand implements ViewCommand {
 		status.addCleanupAction(() -> progress.removeListener(listener));
 
 		DialogHandle[] dialog = new DialogHandle[1];
+		// The file the job wrote, also when the job ends as cancelled after writing it, so that its
+		// temporary file is deleted in any case.
+		AtomicReference<ExportFile> written = new AtomicReference<>();
 		JobRunner runner = new JobRunner(context, progress, List.of(), true, PROGRESS_INTERVAL, state -> {
 			if (state.status() == JobStatus.COMPLETED) {
 				dialog[0].close(DialogResult.ok(null));
-				deliver(context, (BinaryData) state.result());
-			} else if (state.status() == JobStatus.CANCELLED) {
+				deliver(context, written.get());
+				return;
+			}
+			ExportFile abandoned = written.getAndSet(null);
+			if (abandoned != null) {
+				abandoned.discard();
+			}
+			if (state.status() == JobStatus.CANCELLED) {
 				dialog[0].close(DialogResult.cancelled());
 			}
 			// A failed export keeps the dialog open: it shows what went wrong.
@@ -447,19 +469,19 @@ public class TableExportCommand implements ViewCommand {
 
 		String title = Resources.getInstance().getString(
 			com.top_logic.layout.table.export.I18NConstants.PERFORMING_EXPORT);
-		ReactWindowControl window = new ReactWindowControl(context, title, DIALOG_WIDTH, () -> {
-			// Leaving the dialog gives up the export.
-			runner.cancel();
-			dialog[0].close(DialogResult.cancelled());
-		});
+		// Closing the window only closes the dialog; giving up the export is the business of the
+		// dialog's result handler, which every way of leaving the dialog passes through.
+		ReactWindowControl window = new ReactWindowControl(context, title, DIALOG_WIDTH,
+			() -> dialog[0].close(DialogResult.cancelled()));
 		window.setResizable(false);
 		window.setChild(new ReactInsetControl(context, status));
-		dialog[0] = dialogs.openDialog(false, window, result -> {
-			// Whichever way the dialog was left, a running export is given up.
-			runner.cancel();
-		});
+		dialog[0] = dialogs.openDialog(false, window, result -> runner.cancel());
 
-		runner.start((job, arguments) -> write(export, snapshot, downloadName, monitor(job)), List.of());
+		runner.start((job, arguments) -> {
+			ExportFile file = write(export, snapshot, downloadName, monitor(job));
+			written.set(file);
+			return file.data();
+		}, List.of());
 	}
 
 	/**

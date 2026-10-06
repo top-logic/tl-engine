@@ -1077,7 +1077,7 @@ public class TableElement implements UIElement {
 		_onActivate = context.getInstance(onActivate);
 
 		TableExportCommand.Config export = config.getExport();
-		_export = export == null ? null : (TableExportCommand) context.getInstance(export);
+		_export = export == null ? null : new TableExportCommand(export);
 	}
 
 	/**

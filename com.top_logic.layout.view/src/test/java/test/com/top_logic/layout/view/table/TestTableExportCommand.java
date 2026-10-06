@@ -26,7 +26,8 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.base.office.excel.handler.POITypeProvider;
-import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.BufferingProtocol;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.sched.SchedulerService;
@@ -71,10 +72,10 @@ public class TestTableExportCommand extends BasicTestCase {
 		final CountDownLatch _deliveredOne = new CountDownLatch(1);
 
 		@Override
-		public String deliverDownload(BinaryData data) {
+		public String deliverDownload(BinaryData data, Runnable discard) {
 			_delivered.add(data);
 			_deliveredOne.countDown();
-			return super.deliverDownload(data);
+			return super.deliverDownload(data, discard);
 		}
 	}
 
@@ -154,7 +155,23 @@ public class TestTableExportCommand extends BasicTestCase {
 	private static TableExportCommand command(int progressThreshold) {
 		TableExportCommand.Config config = TypedConfiguration.newConfigItem(TableExportCommand.Config.class);
 		config.setProgressThreshold(progressThreshold);
-		return new TableExportCommand(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
+		return new TableExportCommand(config);
+	}
+
+	/**
+	 * Tests that the export configured as a command of its own - among the commands of a panel,
+	 * say, where it has no table to export - is refused when the configuration is read.
+	 */
+	public void testFreeStandingCommandIsConfigurationError() {
+		TableExportCommand.Config config = TypedConfiguration.newConfigItem(TableExportCommand.Config.class);
+		BufferingProtocol log = new BufferingProtocol();
+		DefaultInstantiationContext context = new DefaultInstantiationContext(log);
+
+		context.getInstance(config);
+
+		assertEquals("Configured as a command of its own, the export is a configuration error.", 1,
+			log.getErrors().size());
+		assertTrue(log.getErrors().get(0), log.getErrors().get(0).contains("<export> of a <table>"));
 	}
 
 	/**

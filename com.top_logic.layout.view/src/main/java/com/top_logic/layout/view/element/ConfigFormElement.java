@@ -30,6 +30,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ConfigFormScope;
 import com.top_logic.util.Resources;
 
 /**
@@ -205,7 +206,21 @@ public class ConfigFormElement implements UIElement {
 				: ConfigFormControl.Commands.NONE;
 			_form = new ConfigFormControl(_context, item, commands);
 			contribute(_form);
+			register(_form);
 			_holder.setChildren(List.of(_form));
+		}
+
+		/**
+		 * Makes the form known to the commands of the enclosing element that save what it edits,
+		 * see {@link ConfigFormScope}, for as long as it exists.
+		 */
+		private void register(ConfigFormControl form) {
+			ConfigFormScope forms = _context.getScope(ConfigFormScope.class);
+			if (forms == null) {
+				return;
+			}
+			forms.register(form);
+			form.addCleanupAction(() -> forms.unregister(form));
 		}
 
 		/**

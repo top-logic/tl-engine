@@ -736,6 +736,65 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	/**
+	 * A form without edit mode is saved by its caller, which asks the form first: an untouched
+	 * mandatory property refuses, and the check puts the violation on the field.
+	 */
+	public void testCheckForSaveRefusesAnUntouchedMandatoryValue() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		assertNotNull("A missing mandatory value refuses the save.", form.checkForSave());
+		assertNotNull("The check makes the violation visible at the field.",
+			fieldOf(form, MandatoryConfig.NAME).getError());
+		assertTrue(form.hasVisibleErrors());
+	}
+
+	/** Input a field rejected never reached the configuration, but refuses the save all the same. */
+	public void testCheckForSaveRefusesARejectedInput() {
+		FormatConfig config = TypedConfiguration.newConfigItem(FormatConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+		fieldOf(form, FormatConfig.TIMEOUT).setValue("5 potatoes");
+
+		assertNotNull("A rejected input refuses the save.", form.checkForSave());
+	}
+
+	/** A form without findings may be saved. */
+	public void testCheckForSavePassesAValidForm() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		assertNull(form.checkForSave());
+		assertFalse(form.hasVisibleErrors());
+	}
+
+	/**
+	 * Whoever disables a command while the form shows errors is told when errors appear and when
+	 * they are gone again.
+	 */
+	public void testVisibleErrorsAreObserved() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		config.setName("given");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+		int[] notified = { 0 };
+		Runnable stop = form.observeValidity(() -> notified[0]++);
+
+		fieldOf(form, MandatoryConfig.NAME).setValue(null);
+		assertTrue(form.hasVisibleErrors());
+		assertTrue("A new error is reported.", notified[0] > 0);
+
+		int before = notified[0];
+		fieldOf(form, MandatoryConfig.NAME).setValue("again");
+		assertFalse(form.hasVisibleErrors());
+		assertTrue("The error going away is reported.", notified[0] > before);
+
+		stop.run();
+		int stopped = notified[0];
+		fieldOf(form, MandatoryConfig.NAME).setValue(null);
+		assertEquals("No report after the observation ended.", stopped, notified[0]);
+	}
+
+	/**
 	 * Opening such a form flags nothing yet, like entering edit mode: a verdict is on what the user
 	 * did.
 	 */

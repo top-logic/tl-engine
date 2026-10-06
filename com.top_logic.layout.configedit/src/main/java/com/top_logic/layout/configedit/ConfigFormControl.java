@@ -5,11 +5,14 @@
  */
 package com.top_logic.layout.configedit;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
@@ -134,6 +137,33 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	private final Runnable _onModeChange = this::rebuild;
 
 	/**
+	 * The observers {@link #observeValidity(Runnable) waiting} for errors to appear or go away.
+	 */
+	private final List<Runnable> _validityObservers = new ArrayList<>();
+
+	/**
+	 * Tells the {@link #_validityObservers} about a field whose errors changed. Attached to every
+	 * field the editor builds.
+	 */
+	private final FieldModelListener _onValidityChange = new FieldModelListener() {
+		@Override
+		public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+			// Reported by the validation change it causes, if any.
+		}
+
+		@Override
+		public void onEditabilityChanged(FieldModel source, boolean editable) {
+			// An error is shown only while the field is editable.
+			fireValidityChanged();
+		}
+
+		@Override
+		public void onValidationChanged(FieldModel source) {
+			fireValidityChanged();
+		}
+	};
+
+	/**
 	 * Creates a {@link ConfigFormControl} with a full edit mode.
 	 *
 	 * @param context
@@ -180,7 +210,48 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		_toolbarCommands = commands == Commands.TOOLBAR ? createCommands() : Collections.emptyList();
 		_model.addListener(_onModeChange);
 		_index.observeFields(_onFieldChange::watch);
+		_index.observeFields(field -> field.addListener(_onValidityChange));
 		rebuild();
+	}
+
+	/**
+	 * Checks the configuration before whoever writes the form straight through saves it.
+	 *
+	 * <p>
+	 * What Apply checks in edit mode, for a form without one: a violation of the configuration is
+	 * put on the field that caused it, and an input a field rejected - which never reached the
+	 * configuration - refuses as well.
+	 * </p>
+	 *
+	 * @return Why the configuration must not be saved, <code>null</code> if it may.
+	 */
+	public ConfigValidation.Refusal checkForSave() {
+		return ConfigValidation.refusalFor(_model.edited(), _index);
+	}
+
+	/**
+	 * Whether some field of the form shows an error, so that saving would be refused.
+	 */
+	public boolean hasVisibleErrors() {
+		return _index.hasVisibleError();
+	}
+
+	/**
+	 * Calls the given observer whenever an error appears at a field of the form or goes away.
+	 *
+	 * @param observer
+	 *        The observer to call.
+	 * @return What ends the observation.
+	 */
+	public Runnable observeValidity(Runnable observer) {
+		_validityObservers.add(observer);
+		return () -> _validityObservers.remove(observer);
+	}
+
+	private void fireValidityChanged() {
+		for (Runnable observer : List.copyOf(_validityObservers)) {
+			observer.run();
+		}
 	}
 
 	/**

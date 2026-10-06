@@ -151,6 +151,25 @@ public final class ConfigFieldIndex {
 	}
 
 	/**
+	 * Whether some field shows an error: an input it rejected, or a violation a check placed on it.
+	 *
+	 * <p>
+	 * What a command saving the configuration is disabled over: the problems are on screen, so the
+	 * save would be refused anyway.
+	 * </p>
+	 */
+	public boolean hasVisibleError() {
+		for (Map<PropertyDescriptor, ConfigFieldModel> byProperty : _fields.values()) {
+			for (ConfigFieldModel field : byProperty.values()) {
+				if (field.hasError()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Whether any registered field currently rejects the raw input it was given.
 	 *
 	 * <p>

@@ -23,6 +23,9 @@ export default defineConfig({
     lib: {
       entry: 'react-src/mui-entry.ts',
       fileName: () => 'tl-demo-react-mui.js',
+      // The stylesheet of the bundle: the fonts of the customer theme, embedded (library mode
+      // inlines the assets the stylesheet references).
+      cssFileName: 'tl-demo-react-mui',
       formats: ['es'],
     },
     outDir: 'src/main/webapp/script',

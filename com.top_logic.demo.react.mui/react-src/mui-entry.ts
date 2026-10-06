@@ -1,14 +1,17 @@
 // Renders the TopLogic React UI with Material UI.
 //
-// Both registrations run when this bundle loads, before the controls of the page are mounted:
+// All of it runs when this bundle loads, before the controls of the page are mounted:
 //
+// - The styling properties of the TopLogic components are derived from the MUI theme of the page
+//   (themeProperties.ts), so the components TopLogic keeps follow the customer's theme too.
 // - The root wrapper (MuiRoot) puts the providers Material UI needs above every React root of the
 //   bridge.
 // - The replacements render the state of TopLogic controls with adapters around MUI components.
 //   All other controls keep their TopLogic components.
 
 import { registerRootWrapper, replace } from 'tl-react-bridge';
-import MuiRoot from './MuiRoot';
+import MuiRoot, { pageTheme } from './MuiRoot';
+import { installThemeProperties } from './themeProperties';
 import MuiButtonAdapter from './adapters/MuiButtonAdapter';
 import MuiToggleButtonAdapter from './adapters/MuiToggleButtonAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
@@ -35,6 +38,7 @@ import MuiBreadcrumbAdapter from './adapters/MuiBreadcrumbAdapter';
 import MuiProgressAdapter from './adapters/MuiProgressAdapter';
 import MuiSliderAdapter from './adapters/MuiSliderAdapter';
 
+installThemeProperties(pageTheme());
 registerRootWrapper(MuiRoot);
 replace('TLButton', MuiButtonAdapter);
 replace('TLToggleButton', MuiToggleButtonAdapter);

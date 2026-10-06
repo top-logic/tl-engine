@@ -9,6 +9,9 @@
 						requires="tl-react-bridge"
 						resource="/script/tl-demo-react-mui.js"
 					/>
+					<stylesheet name="tl-demo-react-mui-css"
+						resource="/script/tl-demo-react-mui.css"
+					/>
 				</resources>
 			</instance>
 		</config>

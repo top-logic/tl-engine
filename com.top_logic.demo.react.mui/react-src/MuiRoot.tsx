@@ -9,6 +9,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { deDE as pickersDeDE, enUS as pickersEnUS } from '@mui/x-date-pickers/locales';
 import 'dayjs/locale/de';
 import 'dayjs/locale/en';
+import customerTheme from './customerTheme';
 
 /** The key emotion prefixes the class names and style elements of Material UI with. */
 const CACHE_KEY = 'mui';
@@ -27,14 +28,14 @@ const DEFAULT_LOCALE = 'en';
 const muiCache = createCache({ key: CACHE_KEY, container: document.head, prepend: false });
 
 /**
- * The theme of Material UI per page language: its default theme, published as CSS custom
- * properties (`--mui-…`), with the texts of the core components (e.g. of an autocomplete) and of
- * the date pickers (the names of a picker's sections, its buttons) in that language. Each key is
- * also a dayjs locale this bundle loads. Created once per language.
+ * The theme of Material UI per page language: the customer's theme (customerTheme.ts) unchanged,
+ * published as CSS custom properties (`--mui-…`), with the texts of the core components (e.g. of
+ * an autocomplete) and of the date pickers (the names of a picker's sections, its buttons) in that
+ * language. Each key is also a dayjs locale this bundle loads. Created once per language.
  */
 const THEMES: Record<string, Theme> = {
-  de: createTheme({ cssVariables: true }, pickersDeDE, coreDeDE),
-  en: createTheme({ cssVariables: true }, pickersEnUS, coreEnUS),
+  de: createTheme({ ...customerTheme, cssVariables: true }, pickersDeDE, coreDeDE),
+  en: createTheme({ ...customerTheme, cssVariables: true }, pickersEnUS, coreEnUS),
 };
 
 /**
@@ -44,6 +45,13 @@ const THEMES: Record<string, Theme> = {
 function pageLocale(): string {
   const lang = document.documentElement.lang;
   return lang in THEMES ? lang : DEFAULT_LOCALE;
+}
+
+/**
+ * The MUI theme of the page: the theme of its language, see {@link THEMES}.
+ */
+export function pageTheme(): Theme {
+  return THEMES[pageLocale()];
 }
 
 /**
@@ -60,7 +68,7 @@ export default function MuiRoot({ children }: { children?: React.ReactNode }) {
   const locale = pageLocale();
   return (
     <CacheProvider value={muiCache}>
-      <ThemeProvider theme={THEMES[locale]}>
+      <ThemeProvider theme={pageTheme()}>
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={locale}>
           {children}
         </LocalizationProvider>

@@ -61,6 +61,11 @@ the TopLogic tokens refer to the same source.
 This level alone covers a large part of the appearance, in particular of the complex components that
 are not replaced (tables, trees, flow diagrams, layout panels).
 
+When the customer's design is itself a theme of the component library — a Material UI theme, for
+instance — that theme is the source, and the TopLogic properties can be derived from it at run time
+instead of being copied into a theme of the `UIThemeService`; the Material UI module does so (see
+[Following the MUI theme](#following-the-mui-theme)).
+
 ## Level 2: adapter components for leaf widgets
 
 For every TopLogic component the library has a counterpart for, an adapter module contains a small
@@ -377,6 +382,8 @@ uses only MIT-licensed packages: `@mui/material`, `@mui/x-date-pickers`, `@emoti
 
 | Path | Content |
 |---|---|
+| `react-src/customerTheme.ts` | the customer's MUI theme (`createTheme` options) and its fonts; in the demo the theme of MUI's "Onepirate" template |
+| `react-src/themeProperties.ts` | derives the styling properties of the TopLogic components from the MUI theme and writes them into the page |
 | `react-src/MuiRoot.tsx` | the root wrapper: emotion cache, MUI theme and date localization |
 | `react-src/adapters/` | one adapter per component of the state contract, each with a wire test (`*.test.tsx`); the shared parts are `field.tsx` (field state, typing fields), `choice.tsx` (selection fields) and `window-frame.ts` (moving and resizing a window) |
 | `react-src/mui-entry.ts` | root wrapper and replacements |
@@ -389,8 +396,9 @@ How it is attached:
   every React root and an element there would break the fill layout. For the same reason there is
   no `ScopedCssBaseline`, and no global `CssBaseline`, whose reset would collide with the TopLogic
   stylesheets. The emotion cache appends its styles to the end of `<head>`, after the TopLogic
-  stylesheets, so MUI wins on its own elements. The theme is the MUI default theme (with CSS
-  variables) in the language of the page (`<html lang>`, German or English).
+  stylesheets, so MUI wins on its own elements. The theme is the customer's theme of
+  `customerTheme.ts`, unchanged (with CSS variables), in the language of the page (`<html lang>`,
+  German or English).
 - **Overlays.** Windows and dialogs keep the TopLogic window manager: MUI supplies the look
   (`Paper`, `DialogTitle`, `DialogContent`, `DialogActions`), while positioning, moving and
   resizing, the focus trap, Escape and the stacking stay with TopLogic. MUI's `Modal` is not used,
@@ -408,5 +416,55 @@ mvn -B install -pl com.top_logic.demo.react.mui,com.top_logic.demo.react -P mui
 MAVEN_ARGS=-Pmui   # start the app with the same profile, see demo-apps.md
 ```
 
-The wire tests run with vitest (`npm test` in the module directory). The components without a
-state contract — tables, trees, panels, layouts, editors — keep the TopLogic look.
+The wire tests run with vitest (`npm test` in the module directory).
+
+### Following the MUI theme
+
+The customer's MUI theme is the single source of the look. The MUI components render with it
+unchanged; the TopLogic components the module does not replace — tables, trees, panels, the
+sidebar, toolbars, layouts — follow it through their styling properties:
+
+- `themeProperties(theme)` computes, for each color scheme of the theme, values for the roles of
+  the design system (`--tl-…`, `tokens.css`) and for the tokens of the UI themes (`--text-primary`,
+  …, `tl-react-theme.config.xml`), the way MUI computes the corresponding values of its own
+  components. Only properties that exist are set; aliases (`<ref>` tokens) follow the token they
+  name.
+- `installThemeProperties(theme)` writes them as one `<style id="tl-mui-theme-properties">` to the
+  end of `<head>` when the bundle loads, after the TopLogic stylesheets and the theme styles of
+  the page, with the same specificity, so it wins. No build step and no theme of the
+  `UIThemeService` is involved.
+- A theme with a light and a dark scheme sets each for its mode of the design system
+  (`[data-tl-mode]`); a theme with one scheme sets it on `:root`, in effect in every mode: the
+  page stays in that scheme, as the MUI components do.
+
+The values of the theme are used as they are — there is no contrast correction. What is mapped:
+
+| MUI value | Properties |
+|---|---|
+| `primary.main` | brand surface, interactive border, focus ring, link (`--tl-surface-brand`, `--tl-border-interactive`, `--tl-focus-ring`, `--tl-text-link`, `--button-primary`, `--button-secondary`, `--interactive`, `--focus`, `--link-primary`, …) |
+| `primary.dark` | brand hover/active, link hover (MUI's hover of a contained button) |
+| `primary.contrastText` | text and icons on the brand (`--tl-text-on-brand…`, `--text-on-color`, `--icon-on-color`) |
+| `primary.main` at `action.selectedOpacity` (+ `hoverOpacity`) on the paper | brand-subtle surfaces, selected table rows and sidebar items (`--layer-selected`, `--layer-selected-hover`) |
+| `error`/`warning`/`success`/`info` | text ← `main`, border ← `light`, surface ← `main` (dark scheme: `dark`), subtle ← `light` lightened by 0.9 (dark scheme: darkened) as the background of a standard alert, text on it ← `contrastText`; `--support-*`, `--text-error`, `--button-danger(-hover)` |
+| `text.primary`/`secondary`/`disabled` | text roles, helper text; placeholder ← `text.primary` at 0.42 (dark: 0.5) as in an MUI input; border emphasis ← `text.primary` |
+| `background.default` | page surface (`--tl-surface-base`, `--background`); `--layer` ← `action.hover` on it |
+| `background.paper` | layer, nested layer, overlay, field surfaces (`--layer-01`, `--layer-02`, `--field`, `--color-surface`, `--focus-inset`) |
+| `background.default` emphasized by 0.8 | inverse surface (`--background-inverse`, as a snackbar), its text ← contrast text |
+| `divider` | separator (`--tl-border-separator`, `--border-subtle`) |
+| `common.black`/`white` at 0.23 | control border (`--tl-border-control`, `--border-strong`), as an outlined input |
+| `action.hover`/`selected`/`focus` on the paper | interactive hover/selected/active surfaces (`--layer-hover`, `--background-selected`, `--layer-active`), opaque so that a frozen table cell hides what scrolls beneath it |
+| `action.active`/`disabled`/`disabledBackground` | icons, disabled icons and borders, disabled surfaces |
+| `typography.fontFamily`; `h6.fontFamily` | `--tl-font-family-sans`, `--font-family`; `--font-family-display` |
+| `body2`, `caption`, `subtitle2`, `subtitle1`, `h6`, `h5`, `h4`, `h3` | body, label, panel title (`heading-compact-02`), headings and display sizes and line heights |
+| `shape.borderRadius` | `--tl-radius-sm`, `--tl-radius-md`, `--corner-radius`, `--border-radius-02` |
+| `shadows[1]`, `[8]`, `[16]`, `[24]` | raised, popover/menu, drag, dialog shadow |
+| heights of the MUI controls | `--tl-size-control` ← a small outlined input: `body1` size × 1.4375 + 2 × 8.5px; `--tl-size-control-sm` ← a small button: `pxToRem(13)` × `button.lineHeight` + 2 × 4px; `--tl-size-row` ← a small table cell: `body2` size × line height + 2 × 6px + 1px border |
+| `palette.mode` | `color-scheme` |
+
+Some values of the TopLogic stylesheets are literal and reach no property, so they stay as they
+are: the row height of the table (the state `rowHeight` of the server, 36px, which its scrolling
+computes with) and its header and bar heights (`2.5rem`, `2rem`), the row height and font size of
+the tree (`32px`, `14px`). The spacing scale (`--spacing-0…`, `--tl-space-…`) is not mapped: it
+stays the TopLogic one. A customer project replaces
+`customerTheme.ts` with its own theme and picks the replaced components with the `replace` calls of
+`mui-entry.ts`; everything not replaced follows the theme through the derived properties.

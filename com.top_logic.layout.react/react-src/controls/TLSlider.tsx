@@ -30,6 +30,10 @@ function fillFraction(value: number, min: number, max: number): number {
  * the field asks for, so the slider shows the digits and separators of the user's locale without
  * formatting anything itself.
  *
+ * The text takes the width of the wider of the bounds, `state.minLabel` and `state.maxLabel`
+ * written in the same format: both stand invisibly in the same grid cell as the value, so the box
+ * is as wide as the widest of the three and the track keeps its length while the value changes.
+ *
  * Dragging moves the handle at once - the local value is updated on every move - while the server
  * hears the value only once the drag settles: the send is debounced by `state.debounceMs`
  * (defaulting to VALUE_DEBOUNCE_MS) and flushed when the pointer or the key is released, so a drag
@@ -65,6 +69,8 @@ const TLSlider: React.FC<TLCellProps> = ({ controlId, state }) => {
   const max = (state.max as number) ?? 100;
   const step = (state.step as number) ?? 1;
   const label = (state.valueLabel as string) ?? '';
+  const minLabel = (state.minLabel as string) ?? '';
+  const maxLabel = (state.maxLabel as string) ?? '';
   const number = typeof value === 'number' ? value : null;
   const fillStyle = { [FILL_PROPERTY]: String(fillFraction(number ?? min, min, max)) } as React.CSSProperties;
 
@@ -109,7 +115,11 @@ const TLSlider: React.FC<TLCellProps> = ({ controlId, state }) => {
         id={inputId}
         {...labelProps}
       />
-      <output className="tlSlider__value">{label}</output>
+      <output className="tlSlider__value">
+        <span className="tlSlider__valueText">{label}</span>
+        <span className="tlSlider__valueSizer" aria-hidden="true">{minLabel}</span>
+        <span className="tlSlider__valueSizer" aria-hidden="true">{maxLabel}</span>
+      </output>
     </span>
   );
 };

@@ -27,6 +27,12 @@ import com.top_logic.layout.react.state.FieldState;
  * </p>
  *
  * <p>
+ * The bounds are written in the same format as well ({@link #MIN_LABEL}, {@link #MAX_LABEL}): the
+ * client reserves the width of the wider of the two for the text, so the track keeps its length
+ * while the text changes.
+ * </p>
+ *
+ * <p>
  * A number typed as text is {@link ReactNumberInputControl} instead. That control exchanges the
  * value as the text the format writes, which a handle position cannot be: the numbers a slider
  * produces are the grid it was given, and reading them back through a locale format would make
@@ -49,6 +55,18 @@ public class ReactSliderControl extends ReactFormFieldControl {
 	 * shown beside the handle.
 	 */
 	private static final String VALUE_LABEL = "valueLabel";
+
+	/**
+	 * State key for the {@link #MIN smallest value} written in the {@link #getFormat() format of the
+	 * field}.
+	 */
+	private static final String MIN_LABEL = "minLabel";
+
+	/**
+	 * State key for the {@link #MAX largest value} written in the {@link #getFormat() format of the
+	 * field}.
+	 */
+	private static final String MAX_LABEL = "maxLabel";
 
 	private final Format _format;
 
@@ -81,6 +99,8 @@ public class ReactSliderControl extends ReactFormFieldControl {
 		putState(MIN, Double.valueOf(min));
 		putState(MAX, Double.valueOf(max));
 		putState(STEP, Double.valueOf(step));
+		putState(MIN_LABEL, format(Double.valueOf(min)));
+		putState(MAX_LABEL, format(Double.valueOf(max)));
 		putState(VALUE_LABEL, format(model.getValue()));
 	}
 
@@ -138,12 +158,13 @@ public class ReactSliderControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * The range the handle travels and the text beside it are how the value is shown, not what it
-	 * is: the value itself is the number the field holds.
+	 * The range the handle travels, the text beside it and the bounds written as text are how the
+	 * value is shown, not what it is: the value itself is the number the field holds.
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), MIN, MAX, STEP, VALUE_LABEL);
+		return presentationKeys(super.scriptingPresentationKeys(), MIN, MAX, STEP, VALUE_LABEL, MIN_LABEL,
+			MAX_LABEL);
 	}
 
 	private String format(Object value) {

@@ -4421,16 +4421,28 @@ button.tlDrawer__closeBtn:focus-visible {
 	cursor: default;
 }
 
-/* The value as text. Figures of the same width, so that the text does not jump while the handle
-   travels. */
+/* The value as text. The value and the two bounds stand in one grid cell, so the box is as wide as
+   the widest of them and the track keeps its length while the value changes; figures of the same
+   width keep the text itself from jumping. */
 .tlSlider__value {
 	flex: none;
+	display: inline-grid;
 	color: var(--text-primary);
 	font-size: var(--body-compact-01-font-size);
 	line-height: var(--body-compact-01-line-height);
 	font-variant-numeric: tabular-nums;
-	text-align: right;
-	min-width: 3ch;
+	white-space: nowrap;
+}
+
+.tlSlider__valueText,
+.tlSlider__valueSizer {
+	grid-area: 1 / 1;
+	justify-self: end;
+}
+
+/* A bound written only to give the box its width. */
+.tlSlider__valueSizer {
+	visibility: hidden;
 }
 
 /* A field that is only read shows the value alone: there is nothing to drag. */

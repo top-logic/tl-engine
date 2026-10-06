@@ -48,6 +48,12 @@
 							roles="TestTLScriptSecurity.ProjectResponsible"
 						/>
 					</class>
+					<class name="TestTLScriptSecurity:ProjectTask">
+						<!-- A task follows the project its assignee is responsible for. -->
+						<access-parent>
+							<script expr="t -> $t.get(`TestTLScriptSecurity:ProjectTask#assignee`).referers(`TestTLScriptSecurity:Project#responsible`)"/>
+						</access-parent>
+					</class>
 					<class name="TestTLScriptSecurity:UnsecuredData"
 						without-security="true"
 					>

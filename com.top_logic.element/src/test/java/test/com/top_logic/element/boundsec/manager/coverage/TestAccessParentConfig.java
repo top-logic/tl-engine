@@ -27,6 +27,7 @@ import com.top_logic.model.security.ContainerRelation;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.model.security.TargetRelation;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.Resources;
 
 /**
  * Test for reading and resolving the <code>&lt;access-parent&gt;</code> setting of a
@@ -106,6 +107,13 @@ public class TestAccessParentConfig extends BasicTestCase {
 		ConstraintChecker checker = new ConstraintChecker();
 		checker.check(entry);
 		assertFalse("An access parent together with grants must be rejected.", checker.getFailures().isEmpty());
+
+		Resources resources = Resources.getInstance();
+		String message = resources.getString(checker.getFailures().get(0).getConstraintName());
+		String grantsLabel =
+			resources.getString(entry.descriptor().getProperty(TLClassAccessRights.GRANTS).labelKey(null));
+		assertTrue("The message names the grants by the label the user knows them by: " + message,
+			message.contains(grantsLabel));
 	}
 
 	public void testSelfWithGrantsIsAccepted() throws Exception {

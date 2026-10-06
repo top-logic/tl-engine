@@ -169,7 +169,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en The access rights cannot be stored: {0}
 	 */
-	public static ResKey1 ERROR_ACCESS_RIGHTS_INVALID__ERRORS;
+	public static ResKey1 ERROR_ACCESS_RIGHTS_INVALID__PROBLEM;
 
 	/**
 	 * @en No role source: neither a role rule nor a role parent rule applies to the type, and no

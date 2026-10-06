@@ -8,6 +8,7 @@ import java.util.Collection;
 
 import com.top_logic.basic.config.constraint.algorithm.GenericPropertyConstraint;
 import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Constraint rejecting an access parent on a type that has a definition of its own.
@@ -46,9 +47,21 @@ public class AccessParentStandsAlone extends GenericPropertyConstraint {
 			PropertyModel<?> other = models[n];
 			if (isSet(other.getValue())) {
 				self.setProblemDescription(
-					I18NConstants.ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY.fill(other.getLabel()));
+					I18NConstants.ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY.fill(label(other)));
 			}
 		}
+	}
+
+	/**
+	 * The label the user knows the given property by, its technical name if it has none.
+	 *
+	 * <p>
+	 * The label of the model is the name of the property, which the user editing the access rights
+	 * never sees.
+	 * </p>
+	 */
+	private static ResKey label(PropertyModel<?> model) {
+		return ResKey.fallback(model.getProperty().labelKey(null), model.getLabel());
 	}
 
 	/**

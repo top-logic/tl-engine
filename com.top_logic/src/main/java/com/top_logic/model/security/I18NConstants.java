@@ -16,8 +16,8 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en A type with an access parent has no access definition of its own: "{0}" must stay
-	 *     empty.
+	 * @en A type with an access parent takes over the access definition of that parent and has none
+	 *     of its own: either remove the access parent, or clear "{0}".
 	 */
 	public static ResKey1 ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY;
 

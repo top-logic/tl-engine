@@ -76,7 +76,9 @@ public class TestCheckConfigForm extends TestCase {
 			check();
 			fail("A missing mandatory value must refuse the save.");
 		} catch (TopLogicException ex) {
-			// Expected.
+			assertTrue("The violation is listed below the message, as cause of the refusal.",
+				ex.getCause() instanceof TopLogicException);
+			assertNotSame(ex.getErrorKey(), ((TopLogicException) ex.getCause()).getErrorKey());
 		}
 		assertTrue("The refusal puts the problem on display.", _form.hasVisibleErrors());
 	}

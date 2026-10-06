@@ -4,12 +4,15 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.util.List;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigFormControl;
 import com.top_logic.layout.configedit.ConfigValidation;
 import com.top_logic.layout.react.ReactContext;
@@ -84,9 +87,30 @@ public class CheckConfigFormAction implements ViewAction {
 			}
 		}
 		if (first != null) {
-			throw new TopLogicException(first.message());
+			throw refusal(first);
 		}
 		return input;
+	}
+
+	/**
+	 * The exception reporting the given refusal, its individual violations chained as causes.
+	 *
+	 * <p>
+	 * The message of a refusal only says that the form has errors. A violation of a property shown
+	 * without a field of its own - a nested item, a list - is on display nowhere else, so the
+	 * violations are listed below the message, where the error display shows the messages of the
+	 * causes.
+	 * </p>
+	 */
+	private static TopLogicException refusal(ConfigValidation.Refusal refusal) {
+		List<ResKey> details = refusal.details();
+		TopLogicException cause = null;
+		for (int n = details.size() - 1; n >= 0; n--) {
+			cause = cause == null ? new TopLogicException(details.get(n))
+				: new TopLogicException(details.get(n), cause);
+		}
+		return cause == null ? new TopLogicException(refusal.message())
+			: new TopLogicException(refusal.message(), cause);
 	}
 
 }

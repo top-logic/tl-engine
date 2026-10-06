@@ -19,8 +19,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.constraint.check.ConstraintChecker;
-import com.top_logic.basic.i18n.log.BufferingI18NLog;
-import com.top_logic.basic.logging.Level;
+import com.top_logic.basic.config.constraint.check.ConstraintFailure;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck;
 import com.top_logic.element.boundsec.manager.coverage.SecurityDefinitionEditor;
@@ -380,16 +379,27 @@ public class SecurityDefinitionAction implements ViewAction {
 	/**
 	 * Rejects access rights violating a constraint of their configuration, such as the two marks
 	 * of a type set together.
+	 *
+	 * <p>
+	 * The message is what the constraint says went wrong, as the form shows it at the field, not
+	 * the wording of the server log naming the configuration interface, the raw value and the
+	 * source location.
+	 * </p>
 	 */
 	private static void checkConstraints(ModelAccessRights entry) {
-		BufferingI18NLog log = new BufferingI18NLog();
-		new ConstraintChecker().check(log, entry);
-		ResKey[] errors = log.getEntries().stream()
-			.filter(event -> event.getLevel() == Level.ERROR)
-			.map(BufferingI18NLog.Entry::getMessage)
-			.toArray(ResKey[]::new);
-		if (errors.length > 0) {
-			throw new TopLogicException(I18NConstants.ERROR_ACCESS_RIGHTS_INVALID__ERRORS.fill(errors));
+		ConstraintChecker checker = new ConstraintChecker();
+		try {
+			checker.check(entry);
+		} catch (ConfigurationException ex) {
+			throw new RuntimeException("Cannot check the constraints of the access rights.", ex);
+		}
+		ConstraintFailure error = checker.getFailures().stream()
+			.filter(failure -> !failure.isWarning())
+			.findFirst()
+			.orElse(null);
+		if (error != null) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_ACCESS_RIGHTS_INVALID__PROBLEM.fill(error.getConstraintName()));
 		}
 	}
 

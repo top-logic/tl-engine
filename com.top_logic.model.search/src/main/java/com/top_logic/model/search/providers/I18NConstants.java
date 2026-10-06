@@ -43,6 +43,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 TASK_MESSAGE__VALUE;
 
 	/**
+	 * @en The drop is not allowed: {0}
+	 */
+	public static ResKey1 ERROR_DROP_NOT_ALLOWED__REASON;
+
+	/**
 	 * @en New row
 	 */
 	@CalledByReflection

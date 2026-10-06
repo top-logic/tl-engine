@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application>
+	<services>
+		<config service-class="com.top_logic.tool.execution.service.CommandApprovalService">
+			<instance class="com.top_logic.tool.execution.service.ConfiguredCommandApprovalService">
+				<check type="TestTLScriptSecurity:UnsecuredData">
+					<!-- Writing the vetoed object is refused in every view. -->
+					<rule>
+						<contexts>
+							<command-with-group command-group="Write"/>
+						</contexts>
+						<executability>
+							<rule-by-expression
+								decision="d -> $d.get(`TestTLScriptSecurity:UnsecuredData#data`) != 'vetoed'"
+								show-disabled="true"
+							/>
+						</executability>
+					</rule>
+				</check>
+			</instance>
+		</config>
+	</services>
+</application>

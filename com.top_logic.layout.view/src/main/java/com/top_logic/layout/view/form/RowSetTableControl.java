@@ -180,11 +180,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private TableViewControl<TLObject> _tableControl;
 
 	/**
-	 * The export renderers of the data columns currently displayed, by column name.
+	 * The setups of the data columns currently displayed.
 	 *
 	 * @see #getExportRenderers()
 	 */
-	private Map<String, ExcelCellRenderer> _exportRenderers = Map.of();
+	private List<ColumnSetup> _dataSetups = List.of();
 
 	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
 	private TableViewControl.ActivationHandler<TLObject> _activationHandler;
@@ -485,7 +485,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * </p>
 	 */
 	public Map<String, ExcelCellRenderer> getExportRenderers() {
-		return _exportRenderers;
+		return ColumnDeclarations.exportRenderers(_dataSetups);
 	}
 
 	/**
@@ -561,7 +561,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		List<ColumnSetup> setups = new ArrayList<>(_columns.size());
 		columns.addAll(createDataColumns(editMode, setups));
 		_hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
-		_exportRenderers = ColumnDeclarations.exportRenderers(setups);
+		_dataSetups = setups;
 
 		// Removal action column (edit mode only, when the binding supports removal, last, no header
 		// label - see detail column).

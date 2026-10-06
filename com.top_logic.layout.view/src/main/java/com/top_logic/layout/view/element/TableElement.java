@@ -1400,7 +1400,7 @@ public class TableElement implements UIElement {
 
 		control.setActivationHandler(activationHandler(context, activation));
 
-		contributeExportCommand(context, control, () -> view, ColumnDeclarations.exportRenderers(setups),
+		contributeExportCommand(context, control, () -> view, () -> ColumnDeclarations.exportRenderers(setups),
 			inputChannels);
 
 		// Refresh the rows when observed objects change or an input channel changes.
@@ -1567,21 +1567,10 @@ public class TableElement implements UIElement {
 	 * @param view
 	 *        The table as it is displayed when the export runs.
 	 * @param renderers
-	 *        The export renderers of the displayed columns.
+	 *        The export renderers of the columns displayed when the export runs; asked for only
+	 *        then, since the columns of a row-edit table change with the edit mode.
 	 * @param inputChannels
 	 *        The table's input channels, whose values the download name is computed from.
-	 */
-	private void contributeExportCommand(ViewContext context, ReactControl control,
-			Supplier<? extends TableView<?>> view, Map<String, ExcelCellRenderer> renderers,
-			List<ViewChannel> inputChannels) {
-		contributeExportCommand(context, control, view, () -> renderers, inputChannels);
-	}
-
-	/**
-	 * Contributes the {@link Config#getExport() export} command for a table whose columns - and
-	 * thereby their export renderers - change while it is displayed.
-	 *
-	 * @see #contributeExportCommand(ViewContext, ReactControl, Supplier, Map, List)
 	 */
 	private void contributeExportCommand(ViewContext context, ReactControl control,
 			Supplier<? extends TableView<?>> view, Supplier<Map<String, ExcelCellRenderer>> renderers,

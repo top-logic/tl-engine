@@ -80,6 +80,9 @@ public class ListRowSource<R> implements RowSource<R> {
 
 	private List<Row<R>> _displayed;
 
+	/** The number of {@link #_elements} the {@link #_filter} lets pass, see {@link #matchCount()}. */
+	private int _matchCount;
+
 	/**
 	 * Creates a {@link ListRowSource} using object identity as the row key.
 	 *
@@ -133,6 +136,16 @@ public class ListRowSource<R> implements RowSource<R> {
 	@Override
 	public int size() {
 		return _displayed.size();
+	}
+
+	@Override
+	public int matchCount() {
+		return _matchCount;
+	}
+
+	@Override
+	public int dataCount() {
+		return _elements.size();
 	}
 
 	@Override
@@ -277,6 +290,7 @@ public class ListRowSource<R> implements RowSource<R> {
 		if (order != null) {
 			rows.sort(order);
 		}
+		_matchCount = rows.size();
 		_displayed = _grouping.columns().isEmpty() ? flatRows(rows) : groupedRows(rows);
 	}
 

@@ -328,6 +328,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const dropAccepts = (state.dropAccepts as string[]) ?? [];
   const dropOnRows = (state.dropOnRows as boolean) ?? false;
   const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
+  /** How many rows the table has (of how many, while filtered); empty while it shows no count. */
+  const rowCount = (state.rowCount as string) ?? '';
+  /** How many rows are selected; empty while nothing is or the table selects a single row only. */
+  const rowCountSelected = (state.rowCountSelected as string) ?? '';
 
   const sortedColumnCount = React.useMemo(
     () => columns.filter((c) => c.sortPriority && c.sortPriority > 0).length,
@@ -1684,6 +1688,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           ))}
         </div>
       </div>
+
+      {/* The row count below the rows, outside the scroller, so it stays in view wherever the rows
+          are scrolled to. A live region, so a screen reader hears the count a filter leaves. */}
+      {rowCount !== '' && (
+        <div className="tlTableView__footer" role="status" aria-live="polite">
+          <span className="tlTableView__rowCount">{rowCount}</span>
+          {rowCountSelected !== '' && (
+            <span className="tlTableView__rowCountSelected">{rowCountSelected}</span>
+          )}
+        </div>
+      )}
 
       {/* Where the frozen area would end if the splitter were dropped now. Drawn over the whole
           table, so the boundary can be judged against the rows, not only against the headings. */}

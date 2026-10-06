@@ -3989,6 +3989,39 @@ button.tlDrawer__closeBtn:focus-visible {
 	flex-shrink: 0;
 }
 
+/* The row count below the rows: how many the table has, how many of them its filter lets pass, and
+   how many are selected. Outside the scroller like the filter bar, and set in its quiet colors, so
+   it reads as a remark about the table rather than as one more row. Its text starts where the text
+   of the cells starts. The digits keep their width, so the text does not jitter while a filter is
+   typed. */
+.tlTableView__footer {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: var(--spacing-02);
+	min-height: 2rem;
+	padding: var(--spacing-02) var(--spacing-03);
+	background: var(--layer-01);
+	border-top: 1px solid var(--border-subtle);
+	box-sizing: border-box;
+	font-size: var(--label-01-font-size);
+	color: var(--text-secondary);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.tlTableView__rowCount,
+.tlTableView__rowCountSelected {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tlTableView__rowCountSelected::before {
+	content: "\00B7";
+	margin-right: var(--spacing-02);
+}
+
 /* --- TLColumnSelect ---------------------------------------------------- */
 
 .tlColumnSelect {

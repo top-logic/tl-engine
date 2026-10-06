@@ -40,6 +40,39 @@ public interface RowSource<R> {
 	int size();
 
 	/**
+	 * Value of {@link #matchCount()} and {@link #dataCount()} for a source that cannot tell its
+	 * count.
+	 */
+	int UNKNOWN_COUNT = -1;
+
+	/**
+	 * The number of data rows the current filter lets pass.
+	 *
+	 * <p>
+	 * Counts the business objects, not the {@link #size() displayed rows}: a group header or an
+	 * aggregate row is not counted, a data row inside a collapsed group or tree node is.
+	 * </p>
+	 *
+	 * @return The count, or {@link #UNKNOWN_COUNT} for a source that would have to load what it
+	 *         displays lazily to tell it.
+	 */
+	default int matchCount() {
+		return UNKNOWN_COUNT;
+	}
+
+	/**
+	 * The number of data rows regardless of the current filter.
+	 *
+	 * @return The count, or {@link #UNKNOWN_COUNT} for a source that would have to load what it
+	 *         displays lazily to tell it.
+	 *
+	 * @see #matchCount()
+	 */
+	default int dataCount() {
+		return UNKNOWN_COUNT;
+	}
+
+	/**
 	 * The displayed rows in the half-open index range {@code [from, to)}, clamped to
 	 * {@code [0, size())}.
 	 */

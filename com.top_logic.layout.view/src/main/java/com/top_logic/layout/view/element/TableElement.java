@@ -194,6 +194,9 @@ public class TableElement implements UIElement {
 		/** Configuration name for {@link #getFilterBar()}. */
 		String FILTER_BAR = "filter-bar";
 
+		/** Configuration name for {@link #getRowCount()}. */
+		String ROW_COUNT = "row-count";
+
 		/** Configuration name for {@link #getPresets()}. */
 		String PRESETS = "presets";
 
@@ -396,6 +399,19 @@ public class TableElement implements UIElement {
 		 */
 		@Name(FILTER_BAR)
 		boolean getFilterBar();
+
+		/**
+		 * Whether the table tells below its rows how many rows it has.
+		 *
+		 * <p>
+		 * While a column filter, the search or a filter of the filter bar narrows the rows, the
+		 * count tells how many of all rows are displayed. In a table selecting several rows, it
+		 * tells how many are selected as well. A grouped table counts its rows, not its groups.
+		 * </p>
+		 */
+		@Name(ROW_COUNT)
+		@BooleanDefault(true)
+		boolean getRowCount();
 
 		/**
 		 * Filter criteria this table offers under a name, displayed as chips in the filter bar.
@@ -1348,6 +1364,7 @@ public class TableElement implements UIElement {
 		control.setCssClass(_config.getCssClass());
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setFilterBar(filterBar());
+		control.setRowCount(_config.getRowCount());
 		if (_dragType != null) {
 			installDragSource(context, control);
 		}
@@ -1511,6 +1528,7 @@ public class TableElement implements UIElement {
 		control.setFilterChannels(channel(context, _config.getActivePreset()),
 			channel(context, _config.getSearchTerm()));
 		control.setFilterBar(filterBar());
+		control.setRowCount(_config.getRowCount());
 		control.setDefaultSort(defaultSort());
 		control.setGrouping(initialGrouping());
 		control.setFixedColumns(_config.getFixedColumns());

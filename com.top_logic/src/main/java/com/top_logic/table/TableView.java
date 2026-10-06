@@ -78,6 +78,32 @@ public interface TableView<R> {
 	int rowCount();
 
 	/**
+	 * The number of data rows the table is filtered to - by its column filters, its search and the
+	 * named filter applied.
+	 *
+	 * <p>
+	 * Unlike the {@link #rowCount() displayed rows}, this counts business objects: a group header
+	 * is not counted, a row inside a collapsed group is.
+	 * </p>
+	 *
+	 * @return The count, or {@link RowSource#UNKNOWN_COUNT} when the rows cannot be counted
+	 *         without loading them.
+	 *
+	 * @see RowSource#matchCount()
+	 */
+	int matchCount();
+
+	/**
+	 * The number of data rows of the table, regardless of what it is filtered by.
+	 *
+	 * @return The count, or {@link RowSource#UNKNOWN_COUNT} when the rows cannot be counted
+	 *         without loading them.
+	 *
+	 * @see RowSource#dataCount()
+	 */
+	int dataCount();
+
+	/**
 	 * The displayed rows in the half-open index range {@code [from, to)}.
 	 */
 	List<Row<R>> rows(int from, int to);

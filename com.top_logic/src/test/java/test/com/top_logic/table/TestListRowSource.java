@@ -17,6 +17,7 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterSpec;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowSource;
 import com.top_logic.table.SortSpec;
@@ -206,6 +207,41 @@ public class TestListRowSource extends TestCase {
 
 		assertEquals(java.util.Set.of("Charlie", "Bob"),
 			source.containedKeys(List.of("Charlie", "Bob", "nobody")));
+	}
+
+	/**
+	 * Tests that {@link RowSource#matchCount()} counts the elements the filter lets pass and
+	 * {@link RowSource#dataCount()} all elements, and that both follow a change of the elements.
+	 */
+	public void testCountsFollowFilterAndElements() {
+		ListRowSource<Person> source = new ListRowSource<>(people(), columns());
+		assertEquals(4, source.matchCount());
+		assertEquals(4, source.dataCount());
+
+		source.withFilter(new FilterSpec(java.util.Map.of("name", new Contains("al"))));
+		assertEquals("alice and alma contain 'al'.", 2, source.matchCount());
+		assertEquals("The filter does not change the data.", 4, source.dataCount());
+
+		source.setElements(List.of(new Person("alex", 50), new Person("Bob", 40)));
+		assertEquals("The filter applies to the new elements.", 1, source.matchCount());
+		assertEquals(2, source.dataCount());
+	}
+
+	/**
+	 * Tests that a grouped source counts its elements, not the displayed lines: neither a group
+	 * header nor collapsing a group changes the count.
+	 */
+	public void testCountsIgnoreGroupRows() {
+		ListRowSource<Person> source = new ListRowSource<>(people(), columns());
+		source.withFilter(new FilterSpec(java.util.Map.of("age", new AtLeast(30))));
+		source.withGrouping(new GroupSpec(List.of("age")));
+		assertEquals("Charlie (30) and Bob (40), each below a header of their own.", 4, source.size());
+		assertEquals(2, source.matchCount());
+
+		source.setExpanded(source.window(0, 1).get(0).key(), false);
+		assertEquals("A collapsed group keeps its header only.", 3, source.size());
+		assertEquals("A row in a collapsed group is still counted.", 2, source.matchCount());
+		assertEquals(4, source.dataCount());
 	}
 
 }

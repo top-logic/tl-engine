@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -69,6 +70,7 @@ import com.top_logic.table.FilterState;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
+import com.top_logic.table.RowSource;
 import com.top_logic.table.MatchCounts;
 import com.top_logic.table.NamedFilter;
 import com.top_logic.table.Selection;
@@ -77,6 +79,7 @@ import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableView;
+import com.top_logic.table.TableViewState;
 import com.top_logic.table.filter.FilterEditor;
 import com.top_logic.table.filter.FilterEditors;
 import com.top_logic.table.filter.FilterField;
@@ -180,6 +183,18 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String SELECTION_MODE = "selectionMode";
 
 	private static final String SELECTED_COUNT = "selectedCount";
+
+	/**
+	 * State key of the text telling how many rows the table has, and how many of them its filter
+	 * lets pass; empty while the table shows no row count.
+	 */
+	private static final String ROW_COUNT = "rowCount";
+
+	/**
+	 * State key of the text telling how many rows are selected; empty while the table shows no row
+	 * count, selects a single row only, or has nothing selected.
+	 */
+	private static final String ROW_COUNT_SELECTED = "rowCountSelected";
 
 	/** State key for the keyboard focus/lead row index ({@code -1} when none). */
 	private static final String CURSOR_INDEX = "cursorIndex";
@@ -501,6 +516,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** Whether the named filters, the search field and saving a filter are displayed. */
 	private boolean _filterBar;
 
+	/** Whether the table tells below its rows how many it has. */
+	private boolean _rowCount = true;
+
 	/** The type tag dragged rows are announced under, or {@code null} while rows are not draggable. */
 	private String _dragType;
 
@@ -812,6 +830,22 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
+	 * Whether the table tells below its rows how many rows it has: how many the filter lets pass
+	 * of how many there are while it is filtered, and how many are selected in a table selecting
+	 * several rows.
+	 *
+	 * <p>
+	 * The rows counted are the business objects, not the displayed lines: the header of a group is
+	 * not counted, a row of a collapsed group is. A table whose rows cannot be counted without
+	 * loading them shows no count.
+	 * </p>
+	 */
+	public void setRowCount(boolean rowCount) {
+		_rowCount = rowCount;
+		refreshRowCount();
+	}
+
+	/**
 	 * The table this control displays.
 	 *
 	 * <p>
@@ -991,6 +1025,58 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		putState(ROWS, rowStates);
 		putState(SELECTED_COUNT, Integer.valueOf(_selectedKeys.size()));
 		putState(CURSOR_INDEX, Integer.valueOf(_cursorIndex));
+		refreshRowCount();
+	}
+
+	/**
+	 * Pushes the texts of the row count.
+	 *
+	 * <p>
+	 * Called from {@link #updateViewport(int, int)}, which every change of the rows and of the
+	 * selection ends in. A text is only pushed when it changed, so scrolling sends none.
+	 * </p>
+	 */
+	private void refreshRowCount() {
+		String rows = NOTHING;
+		String selected = NOTHING;
+		int matching = _view.matchCount();
+		int total = _view.dataCount();
+		if (_rowCount && matching != RowSource.UNKNOWN_COUNT && total != RowSource.UNKNOWN_COUNT) {
+			Resources resources = Resources.getInstance();
+			rows = resources.getString(isFiltered()
+				? I18NConstants.TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL.fill(matching, total)
+				: I18NConstants.TABLE_ROW_COUNT__COUNT.fill(total));
+			int selectedCount = _selectedKeys.size();
+			if (_selectionMode == SelectionMode.MULTI && selectedCount > 0) {
+				selected = resources.getString(I18NConstants.TABLE_ROW_COUNT_SELECTED__COUNT.fill(selectedCount));
+			}
+		}
+		putChangedState(ROW_COUNT, rows);
+		putChangedState(ROW_COUNT_SELECTED, selected);
+	}
+
+	/**
+	 * Whether the table's rows are narrowed by a column filter or a search - which is what a named
+	 * filter applies as well.
+	 */
+	private boolean isFiltered() {
+		TableViewState state = _view.state();
+		if (state.getSearch() != null) {
+			return true;
+		}
+		for (FilterState filter : state.getFilters().values()) {
+			if (filter != null && !filter.isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Pushes the given state value unless the client already has it. */
+	private void putChangedState(String key, Object value) {
+		if (!Objects.equals(getState(key), value)) {
+			putState(key, value);
+		}
 	}
 
 	/**

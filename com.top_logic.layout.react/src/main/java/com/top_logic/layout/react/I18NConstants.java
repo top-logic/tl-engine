@@ -665,6 +665,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey TABLE_COLUMNS_RESET;
 
 	/**
+	 * @en {0,choice,0#No rows|1#1 row|2#{0} rows}
+	 */
+	public static ResKey1 TABLE_ROW_COUNT__COUNT;
+
+	/**
+	 * @en {0} of {1,choice,0#0 rows|1#1 row|2#{1} rows}
+	 */
+	public static ResKey2 TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL;
+
+	/**
+	 * @en {0} selected
+	 */
+	public static ResKey1 TABLE_ROW_COUNT_SELECTED__COUNT;
+
+	/**
 	 * @en Selection changed.
 	 */
 	public static ResKey REACT_DROPDOWN_SELECT_VALUE_CHANGED;

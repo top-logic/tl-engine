@@ -120,14 +120,22 @@ public final class ModelAccessPolicy {
 	 * <li>A form object editing an object is decided by the {@link TLFormObjectBase#getEditedObject()
 	 * edited object}: the buffer itself is transient and holds no roles.</li>
 	 * <li>A persistent object is decided like {@link #onObject(BoundCommandGroup, TLObject,
-	 * TLStructuredTypePart, DeniedDisplay)} does, with the display derived from the check.</li>
+	 * TLStructuredTypePart, DeniedDisplay)} does, with the display derived from the check. Reading
+	 * is decided by the access rights alone, the {@link CommandApprovalService} is not asked.</li>
 	 * <li>A transient object (a draft created for a create dialog, or a form object creating an
-	 * object) holds no roles yet. Its attribute rights are decided in its
-	 * {@link TLObject#tContainer() creation context}, see
-	 * {@link ModelAccessRights#isAllowedInitial(Person, TLClass, TLObject, TLStructuredTypePart, BoundCommandGroup)}.
+	 * object) holds no roles yet. Its attribute rights are decided through its access parent, see
+	 * {@link ModelAccessRights#isAllowedInitial(Person, TLObject, TLStructuredTypePart, BoundCommandGroup)}.
 	 * A refusal is hidden when the attribute grants the operation to no role at all or the user is
-	 * restricted, and disabled otherwise: it depends on the context.</li>
+	 * restricted, and disabled otherwise: it depends on the access parent.</li>
 	 * </ul>
+	 *
+	 * <p>
+	 * Reading an attribute without a {@link ModelAccessRights#hasGrant(TLStructuredTypePart,
+	 * BoundCommandGroup) read grant of its own} is executable without any check on the object: the
+	 * object displayed is expected to be obtained through read-filtered access (a table row, a form
+	 * input), so reading it is allowed, and the attribute adds no restriction. This keeps the check
+	 * of every cell of a table at a lookup of the attribute's grants.
+	 * </p>
 	 *
 	 * <p>
 	 * A disabled state gives the refusal naming the operation on the attribute as its reason.
@@ -143,11 +151,41 @@ public final class ModelAccessPolicy {
 	 */
 	public static ExecutableState onAttribute(BoundCommandGroup operation, TLObject object,
 			TLStructuredTypePart attribute) {
+		boolean read = isRead(operation);
+		if (read && !ModelAccessRights.getInstance().hasGrant(attribute, operation)) {
+			// The displayed object was obtained through read-filtered access, so reading an attribute
+			// without a read grant of its own needs no check per object.
+			return ExecutableState.EXECUTABLE;
+		}
 		TLObject target = editedObject(object);
 		if (target.tTransient()) {
 			return onDraftAttribute(operation, target, attribute);
 		}
+		if (read) {
+			return onReadAttribute(operation, target, attribute);
+		}
 		return onObject(operation, target, attribute, null);
+	}
+
+	/**
+	 * The state of displaying the given attribute of the given persistent object, which has a read
+	 * grant of its own: decided by the access rights alone, with the display derived from the
+	 * check.
+	 */
+	private static ExecutableState onReadAttribute(BoundCommandGroup operation, TLObject object,
+			TLStructuredTypePart attribute) {
+		ModelAccessRights rights = ModelAccessRights.getInstance();
+		Person user = TLContext.currentUser();
+		if (rights.isAllowed(user, object, attribute, operation)) {
+			return ExecutableState.EXECUTABLE;
+		}
+		boolean hide = restricted(user, operation) || grantedToNoRole(rights, classOf(object), operation)
+			|| attributeGrantedToNoRole(rights, attribute, operation);
+		return refused(null, hide, () -> objectReason(operation, attribute));
+	}
+
+	private static boolean isRead(BoundCommandGroup operation) {
+		return SimpleBoundCommandGroup.READ.getID().equals(operation.getID());
 	}
 
 	/**
@@ -241,14 +279,9 @@ public final class ModelAccessPolicy {
 	 */
 	private static ExecutableState onDraftAttribute(BoundCommandGroup operation, TLObject draft,
 			TLStructuredTypePart attribute) {
-		TLClass type = classOf(draft);
-		if (type == null) {
-			// Not an object of a class, nothing to check.
-			return ExecutableState.EXECUTABLE;
-		}
 		ModelAccessRights rights = ModelAccessRights.getInstance();
 		Person user = TLContext.currentUser();
-		if (rights.isAllowedInitial(user, type, draft.tContainer(), attribute, operation)) {
+		if (rights.isAllowedInitial(user, draft, attribute, operation)) {
 			return ExecutableState.EXECUTABLE;
 		}
 		boolean hide = restricted(user, operation) || attributeGrantedToNoRole(rights, attribute, operation);

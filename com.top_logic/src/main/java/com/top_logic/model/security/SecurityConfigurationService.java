@@ -43,6 +43,7 @@ import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
@@ -847,9 +848,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	@Override
-	public boolean isAllowedInitial(Person person, TLClass type, TLObject context, TLStructuredTypePart attribute,
+	public boolean isAllowedInitial(Person person, TLObject draft, TLStructuredTypePart attribute,
 			BoundCommandGroup commandGroup) {
-		if (isWithoutSecurity(type)) {
+		if (!(draft.tType() instanceof TLClass type) || isWithoutSecurity(type)) {
 			// Objects of a type without security are not access controlled, neither on the object,
 			// nor on its attribute values.
 			return true;
@@ -871,23 +872,62 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// A grant without roles denies the operation in every context.
 			return false;
 		}
-		if (context != null && !isCommitted(context)) {
-			// The context is being built in the current transaction (no computed roles yet), see
-			// isAllowedCreate(Person, TLClass, TLObject).
-			return true;
-		}
-		BoundObject holder;
-		if (getAccessParent(type) != null && context instanceof BoundObject) {
-			// The object created in the context delegates its access decision to the context, which
-			// in turn may delegate further.
-			if (!(roleHolder(context) instanceof BoundObject contextHolder)) {
+		Set<TLObject> seen = new HashSet<>();
+		TLObject current = draft;
+		while (!isCommitted(current)) {
+			if (!seen.add(current)) {
+				Logger.error("The access parents of " + draft + " form a cycle, access is denied.",
+					SecurityConfigurationService.class);
 				return false;
 			}
-			holder = contextHolder;
-		} else {
-			holder = createContext(context);
+			AccessParent parent = accessParentOf(current);
+			if (parent == null) {
+				// An object deciding by its own roles: the roles it will hold are computed only once
+				// it exists.
+				return true;
+			}
+			TLObject next = current.tTransient() ? draftParent(parent, current) : parent.resolve(current);
+			if (next == null) {
+				// A free-standing object is not accessible until it is put into a container, which is
+				// a write of the container checked in its own right.
+				return true;
+			}
+			current = editedObject(next);
+		}
+		// The roles the person holds on the object deciding for the committed access parent are
+		// checked, as for an attribute of a persistent object delegating its access decision.
+		if (!(roleHolder(current) instanceof BoundObject holder)) {
+			return false;
 		}
 		return accessManager().hasRole(person, holder, requiredPartRoles);
+	}
+
+	/**
+	 * The access parent of the given transient object.
+	 *
+	 * <p>
+	 * A transient object knows the {@link TLObject#tContainer() container} it is created in, but
+	 * not necessarily the composition that will hold it. A relation navigating a composition
+	 * backwards therefore leads to the container whenever the composition is unknown.
+	 * </p>
+	 */
+	private static TLObject draftParent(AccessParent parent, TLObject draft) {
+		if (parent.inverse() && draft.tContainerReference() == null) {
+			return draft.tContainer();
+		}
+		return parent.resolve(draft);
+	}
+
+	/**
+	 * The object a {@link TLFormObjectBase form object} editing an object stands for, the given
+	 * object otherwise.
+	 */
+	private static TLObject editedObject(TLObject object) {
+		TLObject result = object;
+		while (result instanceof TLFormObjectBase form && !form.isCreate() && form.getEditedObject() != null) {
+			result = form.getEditedObject();
+		}
+		return result;
 	}
 
 	@Override

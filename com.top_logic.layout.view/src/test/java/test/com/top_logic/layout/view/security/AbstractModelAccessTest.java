@@ -68,6 +68,10 @@ import com.top_logic.util.error.TopLogicException;
  * {@value #CREATED_IN} defaults to the context the task is created in. Writing its attribute
  * <code>note</code> is granted to {@value #ROLE_RESPONSIBLE} only, writing its {@value #SECRET}
  * (with a constant default) to no role.</li>
+ * <li>{@value #STEP}: the type of the compositions {@value #STEPS} of a project and
+ * {@value #SUBSTEPS} of a step. A step has its container as access parent. Writing its attribute
+ * <code>note</code> is granted to {@value #ROLE_RESPONSIBLE} only, writing its {@value #SECRET} to no
+ * role.</li>
  * <li>{@value #CATEGORY}: the type of the reference {@value #CATEGORY_REF} of a project. The account
  * in {@value #READER} holds the role {@value #ROLE_READER}, which grants read only.</li>
  * </ul>
@@ -121,6 +125,18 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Name of the {@link #PROJECT} reference to the account holding {@link #ROLE_VIEWER}. */
 	protected static final String VIEWER = "viewer";
+
+	/**
+	 * Name of the type of the composition {@link #STEPS} of a {@link #PROJECT}, deciding by its
+	 * container (its access parent).
+	 */
+	protected static final String STEP = "Step";
+
+	/** Name of the {@link #PROJECT} composition of {@link #STEP}s. */
+	protected static final String STEPS = "steps";
+
+	/** Name of the {@link #STEP} composition of {@link #STEP}s. */
+	protected static final String SUBSTEPS = "substeps";
 
 	/** Name of the {@link #PROJECT} reference to the account holding {@link #ROLE_RESPONSIBLE}. */
 	protected static final String RESPONSIBLE = "responsible";

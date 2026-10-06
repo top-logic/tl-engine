@@ -8,14 +8,12 @@ package com.top_logic.element.model.copy;
 import java.util.Map;
 
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.provider.DefaultProvider;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * Operation for performing a (configurable) deep copy of a model object graph.
@@ -88,21 +86,18 @@ public abstract class CopyOperation {
 	 * <p>
 	 * On the write side, allocating a copy requires the {@code CREATE} permission on the copied
 	 * type (like {@code new(type)}): a user who must not create instances of a type cannot obtain
-	 * them via a copy. Copying a persistent object applies no per-attribute write check (as
-	 * {@code set} would) -- the copy populates the user's own, newly created object with values that
-	 * were already read-access-checked.
+	 * them via a copy. The per-attribute write check (mirroring {@code set}) is not applied -- the
+	 * copy populates the user's own, newly created object with values that were already
+	 * read-access-checked.
 	 * </p>
 	 *
 	 * <p>
-	 * Persisting a transient object (a persistent copy of a transient original) is the creation of
-	 * that object with the values of the transient object as initial values. Before the persistent
-	 * object is created, every stored attribute value it receives that differs from the initial
-	 * value the attribute gets on creation (the value of its {@link DefaultProvider}, or the empty
-	 * value) requires the right to write that attribute of an object created in the copy's context,
-	 * see {@link ModelAccessRights#isAllowedInitial(Person, TLClass, TLObject, TLStructuredTypePart, BoundCommandGroup)}.
-	 * A refused value aborts the copy with a {@link TopLogicException}. Attributes kept at their
-	 * initial value are not checked, and neither is an attribute that keeps the default computed in
-	 * the creating transaction, see {@link #skipTransactionDefaults(boolean)}.
+	 * This holds for persisting a transient object (a persistent copy of a transient original), too:
+	 * the creation of the persistent object is checked as above, reading the values of the original
+	 * is read-access-checked, and no attribute is write-checked. The values of a transient original
+	 * are set by the application and by the user through form fields that follow the write rights of
+	 * the attribute, see
+	 * {@link ModelAccessRights#isAllowedInitial(Person, TLObject, TLStructuredTypePart, BoundCommandGroup)}.
 	 * </p>
 	 */
 	public abstract CopyOperation withSecurity(Boolean useSecurity);

@@ -7,18 +7,14 @@ package com.top_logic.element.model.copy;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -31,8 +27,6 @@ import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.provider.DefaultProvider;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
@@ -99,21 +93,10 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 	 *        The part of the original's type.
 	 */
 	final boolean isCopied(TLObject copy, TLStructuredTypePart part) {
-		return isCopied(copy.tTransient(), resolve(copy, part));
-	}
-
-	/**
-	 * Whether a value is copied to the given part of a copy.
-	 *
-	 * @param transientCopy
-	 *        Whether the copy is transient.
-	 * @param targetPart
-	 *        The part of the copy's type.
-	 */
-	private boolean isCopied(boolean transientCopy, TLStructuredTypePart targetPart) {
-		if (!_skipTransactionDefaults || transientCopy) {
+		if (!_skipTransactionDefaults || copy.tTransient()) {
 			return true;
 		}
+		TLStructuredTypePart targetPart = resolve(copy, part);
 		return !_computedInTransaction.computeIfAbsent(targetPart, CopyOperationImpl::isComputedInTransaction);
 	}
 
@@ -232,115 +215,8 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 					: I18NConstants.ERROR_CREATE_PERMISSION_DENIED__TYPE;
 				throw new TopLogicException(message.fill(classType));
 			}
-			if (useSecurity() && orig.tTransient()) {
-				checkInitialValues(orig, classType, context);
-			}
 			return _factory.createObject(classType, context);
 		}
-	}
-
-	/**
-	 * Checks that the current user may set every value the given transient original passes to the
-	 * persistent object of the given type created in the given context.
-	 *
-	 * <p>
-	 * Persisting a transient object is the creation of that object with the values of the transient
-	 * object as initial values. A value that differs from the initial value the attribute gets on
-	 * creation (see {@link #isInitialValue(TLStructuredTypePart, TLObject, Object)}) requires the
-	 * right to write the attribute of the object to be created, see
-	 * {@link ModelAccessRights#isAllowedInitial(Person, TLClass, TLObject, TLStructuredTypePart, BoundCommandGroup)}.
-	 * The check runs before the persistent object is created.
-	 * </p>
-	 *
-	 * @throws TopLogicException
-	 *         If a value must not be set.
-	 */
-	private void checkInitialValues(TLObject orig, TLClass type, TLObject context) {
-		ModelAccessRights rights = ModelAccessRights.getInstance();
-		Person user = TLContext.currentUser();
-		for (TLStructuredTypePart part : orig.tType().getAllParts()) {
-			TLStructuredTypePart targetPart = type.getPart(part.getName());
-			if (targetPart == null || targetPart.isDerived()
-				|| targetPart.getDefinition() != part.getDefinition()) {
-				// Not copied, see copyValues() and copyComposite().
-				continue;
-			}
-			if (!isCopied(false, targetPart)) {
-				continue;
-			}
-			if (rights.isAllowedInitial(user, type, context, targetPart, SimpleBoundCommandGroup.WRITE)) {
-				continue;
-			}
-			Object value = readValue(orig, part);
-			if (!_filter.accept(part, value, orig)) {
-				continue;
-			}
-			if (isInitialValue(targetPart, context, value)) {
-				continue;
-			}
-			throw new TopLogicException(
-				I18NConstants.ERROR_INITIAL_VALUE_PERMISSION_DENIED__ATTRIBUTE_TYPE.fill(targetPart, type));
-		}
-	}
-
-	/**
-	 * Whether the given value is the initial value the given attribute gets when an object is
-	 * created in the given context.
-	 *
-	 * <p>
-	 * The initial value is the value of the attribute's {@link DefaultProvider} for the context, the
-	 * value {@link TLFactory#setupDefaultValues(Object, TLObject, com.top_logic.model.TLStructuredType)}
-	 * sets. Without a {@link DefaultProvider}, and for a {@link DefaultProvider} that is
-	 * {@link DefaultProvider#isComputedInTransaction() computed in the creating transaction}, which a
-	 * transient object never receives, it is the empty value: <code>null</code> or an empty
-	 * collection. Values are compared by equality; an empty string equals <code>null</code>, the
-	 * values of a multiple attribute are compared as list if the attribute is ordered, otherwise as
-	 * set.
-	 * </p>
-	 */
-	private static boolean isInitialValue(TLStructuredTypePart part, TLObject context, Object value) {
-		DefaultProvider defaultProvider = DisplayAnnotations.getDefaultProvider(part);
-		Object initial;
-		if (defaultProvider == null || defaultProvider.isComputedInTransaction()) {
-			initial = TLModelUtil.getEmptyValue(part);
-		} else {
-			initial = defaultProvider.createDefault(context, part);
-		}
-		return sameValue(part, value, initial);
-	}
-
-	private static boolean sameValue(TLStructuredTypePart part, Object value, Object other) {
-		if (part.isMultiple()) {
-			Collection<?> values = asCollection(value);
-			Collection<?> others = asCollection(other);
-			if (part.isOrdered() || part.isBag()) {
-				return new ArrayList<>(values).equals(new ArrayList<>(others));
-			}
-			return values.size() == others.size() && new HashSet<>(values).equals(new HashSet<>(others));
-		}
-		Object normalized = normalize(value);
-		Object normalizedOther = normalize(other);
-		if (normalized instanceof Number number && normalizedOther instanceof Number otherNumber) {
-			return number.doubleValue() == otherNumber.doubleValue();
-		}
-		return Objects.equals(normalized, normalizedOther);
-	}
-
-	private static Collection<?> asCollection(Object value) {
-		if (value == null) {
-			return Collections.emptyList();
-		}
-		if (value instanceof Collection<?> collection) {
-			return collection;
-		}
-		return Collections.singletonList(value);
-	}
-
-	private static Object normalize(Object value) {
-		if (value instanceof CharSequence text && text.length() == 0) {
-			return null;
-		}
-		return value;
 	}
 
 	final void copyComposite(TLObject orig, TLReference reference, TLObject copy) {

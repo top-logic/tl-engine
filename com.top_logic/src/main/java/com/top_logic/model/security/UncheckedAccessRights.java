@@ -83,7 +83,7 @@ final class UncheckedAccessRights implements ModelAccessRights {
 	}
 
 	@Override
-	public boolean isAllowedInitial(Person person, TLClass type, TLObject context, TLStructuredTypePart attribute,
+	public boolean isAllowedInitial(Person person, TLObject draft, TLStructuredTypePart attribute,
 			BoundCommandGroup commandGroup) {
 		return true;
 	}

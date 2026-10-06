@@ -48,7 +48,10 @@ import com.top_logic.util.Resources;
 @SuppressWarnings("javadoc")
 public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 
-	/** Name of the {@link #TASK} attribute only {@link #ROLE_RESPONSIBLE} may write. */
+	/**
+	 * Name of the {@link #STEP} (and {@link #TASK}) attribute only {@link #ROLE_RESPONSIBLE} may
+	 * write.
+	 */
 	private static final String NOTE = "note";
 
 	/** The {@link #BUDGET} of {@link #_project}. */
@@ -233,8 +236,8 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * A draft is decided in its creation context: a user holding the role the attribute grants
-	 * writing to in the container may set the value.
+	 * A draft is decided by its access parent: a user holding the role the attribute grants writing
+	 * to on the container may set the value.
 	 */
 	public void testDraftWriteGrantedInContext() {
 		becomeUser(_responsible);
@@ -245,15 +248,28 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * A draft is decided in its creation context: a user not holding the role the attribute grants
-	 * writing to in the container gets the field disabled, with the refusal as tooltip.
+	 * A draft is decided by its access parent: a user not holding the role the attribute grants
+	 * writing to on the container gets the field disabled, with the refusal as tooltip.
 	 */
 	public void testDraftWriteRefusedInContext() {
 		becomeUser(_roleless);
 		createField(draftIn(_project), NOTE);
 		assertTrue(_form.enterEditMode());
 
-		assertDisabled(part(TASK, NOTE));
+		assertDisabled(part(STEP, NOTE));
+	}
+
+	/**
+	 * The attribute grants of a type deciding by its own roles do not restrict a draft: the roles the
+	 * object will hold are unknown before it exists.
+	 */
+	public void testSelfDecidingDraft() {
+		becomeUser(_roleless);
+		TLObject draft = TransientObjectFactory.INSTANCE.createObject(type(TASK), _project);
+		createField(draft, NOTE);
+		assertTrue(_form.enterEditMode());
+
+		assertEditable();
 	}
 
 	/**
@@ -286,7 +302,7 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 		createField(draftIn(_project), SECRET);
 		assertTrue(_form.enterEditMode());
 
-		assertReadOnly(part(TASK, SECRET));
+		assertReadOnly(part(STEP, SECRET));
 	}
 
 	/**
@@ -313,7 +329,7 @@ public class TestAttributeFieldAccessRights extends AbstractModelAccessTest {
 	}
 
 	private static TLObject draftIn(TLObject container) {
-		TLObject result = TransientObjectFactory.INSTANCE.createObject(type(TASK), container);
+		TLObject result = TransientObjectFactory.INSTANCE.createObject(type(STEP), container);
 		result.tUpdateByName(NAME, "draft");
 		return result;
 	}

@@ -6,7 +6,6 @@
 package com.top_logic.element.model.copy;
 
 import com.top_logic.basic.util.ResKey1;
-import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -24,11 +23,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Creation not allowed: You may not create objects of type "{0}".
 	 */
 	public static ResKey1 ERROR_PERSIST_PERMISSION_DENIED__TYPE;
-
-	/**
-	 * @en Creation not allowed: You may not set the attribute "{0}" of an object of type "{1}".
-	 */
-	public static ResKey2 ERROR_INITIAL_VALUE_PERMISSION_DENIED__ATTRIBUTE_TYPE;
 
 	static {
 		initConstants(I18NConstants.class);

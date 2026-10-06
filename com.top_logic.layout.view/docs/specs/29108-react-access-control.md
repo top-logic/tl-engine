@@ -415,7 +415,17 @@ view layer.
    or table column hides a value the user may not read and is read-only for an
    attribute the user may not write; a form offers editing only with Write on its
    object (Edit command, `initial-edit-mode` and edit channel alike). No
-   configuration in the view.
+   configuration in the view. The attributes of a draft (an object to be created)
+   are decided by `ModelAccessRights#isAllowedInitial`: for a type with an access
+   parent, the part grants are checked on the roles at the end of the draft's
+   access-parent chain (through drafts up to the first committed object); attribute
+   grants of a self-deciding type do not restrict a draft, since the roles the
+   object will hold are computed only once it exists. For a draft, the
+   locked field is the enforcement — it rejects client values server-side —, and
+   persisting the draft writes its values without a per-attribute check, so values
+   the application prefills are kept. Reading an attribute without a Read grant of
+   its own needs no check per row or form object (both come from read-filtered
+   access); the `CommandApprovalService` is consulted for writes only.
 4. **Commands say what they do, not which right they need.** An action that knows
    the model operation it performs brings the matching executability rule itself
    (`ViewAction#getIntrinsicRule()`, combined by `generic-command` with its

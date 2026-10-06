@@ -5,49 +5,62 @@
  */
 package test.com.top_logic.layout.view.security;
 
+import java.util.List;
+
 import junit.framework.Test;
 
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.model.TLClass;
+import com.top_logic.layout.view.form.TLObjectOverlay;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
- * Tests the attribute rights of an object to be created, decided in its creation context by
- * {@link ModelAccessRights#isAllowedInitial(Person, TLClass, TLObject, TLStructuredTypePart, BoundCommandGroup)},
+ * Tests the attribute rights of an object to be created, decided by
+ * {@link ModelAccessRights#isAllowedInitial(Person, TLObject, TLStructuredTypePart, BoundCommandGroup)},
  * and {@link ModelAccessRights#hasGrant(TLStructuredTypePart, BoundCommandGroup)}.
  */
 public class TestInitialAttributeRights extends AbstractModelAccessTest {
 
-	/** Name of the {@link #TASK} attribute only {@link #ROLE_RESPONSIBLE} may write. */
+	/** Name of the {@link #STEP} and {@link #TASK} attribute only {@link #ROLE_RESPONSIBLE} may write. */
 	private static final String NOTE = "note";
 
 	/**
-	 * A role granted on the attribute and held in the context allows the operation.
+	 * A step decides by its container, a task by its own roles.
 	 */
-	public void testGrantedRoleInContext() {
-		assertTrue(writeInitial(_responsible, part(TASK, NOTE), _project));
+	public void testFixture() {
+		ModelAccessRights rights = ModelAccessRights.getInstance();
+		assertNotNull(rights.getAccessParent(type(STEP)));
+		assertNull(rights.getAccessParent(type(TASK)));
 	}
 
 	/**
-	 * A role granted on the attribute but not held in the context refuses the operation.
+	 * A role granted on the attribute and held on the access parent allows the operation.
+	 */
+	public void testGrantedRoleOnAccessParent() {
+		assertTrue(writeInitial(_responsible, NOTE, step(_project)));
+	}
+
+	/**
+	 * A role granted on the attribute but not held on the access parent refuses the operation.
 	 */
 	public void testGrantedRoleNotHeld() {
-		assertFalse(writeInitial(_roleless, part(TASK, NOTE), _project));
+		assertFalse(writeInitial(_roleless, NOTE, step(_project)));
 	}
 
 	/**
 	 * Without an attribute-level grant, the right to create the object covers the initial value.
 	 */
 	public void testNoAttributeGrant() {
-		assertTrue(writeInitial(_roleless, part(TASK, NAME), _project));
-		assertTrue(writeInitial(_roleless, part(TASK, NAME), null));
+		assertTrue(writeInitial(_roleless, NAME, step(_project)));
+		assertTrue(writeInitial(_roleless, NAME, step(null)));
+		assertTrue(writeInitial(_roleless, NAME, task(_project)));
 	}
 
 	/**
@@ -56,9 +69,9 @@ public class TestInitialAttributeRights extends AbstractModelAccessTest {
 	 */
 	public void testWithoutUser() {
 		try {
-			assertTrue(writeInitial(null, part(TASK, NAME), _project));
-			assertTrue(writeInitial(null, part(TASK, NAME), null));
-			assertFalse(writeInitial(null, part(TASK, NOTE), _project));
+			assertTrue(writeInitial(null, NAME, step(_project)));
+			assertTrue(writeInitial(null, NAME, step(null)));
+			assertFalse(writeInitial(null, NOTE, step(_project)));
 		} finally {
 			// Cleaning up the fixture needs a user.
 			becomeUser(_root);
@@ -74,48 +87,84 @@ public class TestInitialAttributeRights extends AbstractModelAccessTest {
 			_responsible.setRestrictedUser(Boolean.TRUE);
 			tx.commit();
 		}
-		assertTrue(writeInitial(_responsible, part(TASK, NAME), _project));
-		assertFalse(writeInitial(_responsible, part(TASK, NOTE), _project));
+		assertTrue(writeInitial(_responsible, NAME, step(_project)));
+		assertFalse(writeInitial(_responsible, NOTE, step(_project)));
 	}
 
 	/**
-	 * A grant listing no role refuses the operation in every context.
+	 * A grant listing no role refuses the operation, wherever the object is created.
 	 */
 	public void testGrantedToNoRole() {
-		TLStructuredTypePart secret = part(TASK, SECRET);
-		assertFalse(writeInitial(_responsible, secret, _project));
-		assertFalse(writeInitial(_responsible, secret, null));
-		assertFalse(writeInitial(_responsible, part(PROJECT, SECRET), null));
+		assertFalse(writeInitial(_responsible, SECRET, step(_project)));
+		assertFalse(writeInitial(_responsible, SECRET, step(null)));
+		assertFalse(writeInitial(_responsible, SECRET, task(_project)));
+		assertFalse(writeInitial(_responsible, SECRET, project()));
 	}
 
 	/**
 	 * A user bypassing the model security may set every attribute.
 	 */
 	public void testRootBypass() {
-		assertTrue(writeInitial(_root, part(TASK, SECRET), _project));
-		assertTrue(writeInitial(_root, part(TASK, NOTE), null));
-		assertTrue(writeInitial(_root, part(PROJECT, SECRET), null));
+		assertTrue(writeInitial(_root, SECRET, step(_project)));
+		assertTrue(writeInitial(_root, NOTE, step(null)));
+		assertTrue(writeInitial(_root, SECRET, project()));
 	}
 
 	/**
-	 * Without a context, the roles on the security root decide.
+	 * An object without access parent is not accessible until it is put into a container, so its
+	 * attributes are not restricted.
 	 */
-	public void testNullContext() {
-		assertFalse("The responsible holds the role on the project only.",
-			writeInitial(_responsible, part(TASK, NOTE), null));
+	public void testFreeStanding() {
+		assertTrue(writeInitial(_roleless, NOTE, step(null)));
 	}
 
 	/**
-	 * A context being built in the current transaction has no roles yet; only a grant listing no
-	 * role refuses.
+	 * A draft in a draft in a committed object is decided by the roles on the committed object.
 	 */
-	public void testUncommittedContext() {
+	public void testNestedDrafts() {
+		TLObject inner = step(step(_project));
+		assertTrue(writeInitial(_responsible, NOTE, inner));
+		assertFalse(writeInitial(_roleless, NOTE, inner));
+	}
+
+	/**
+	 * The attribute grants of a type deciding by its own roles do not restrict an object to be
+	 * created, since the roles it will hold are computed only once it exists.
+	 */
+	public void testSelfDeciding() {
+		assertTrue(writeInitial(_roleless, NOTE, task(_project)));
+	}
+
+	/**
+	 * A draft whose chain of access parents reaches an object to be created that decides by its own
+	 * roles is not restricted: the roles deciding are unknown.
+	 */
+	public void testInSelfDecidingDraft() {
+		assertTrue(writeInitial(_roleless, NOTE, step(project())));
+	}
+
+	/**
+	 * A container being built in the current transaction holds no roles yet, the chain continues to
+	 * its own container.
+	 */
+	public void testUncommittedContainer() {
 		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
-			TLObject project = DynamicModelService.getFactoryFor(MODULE).createObject(type(PROJECT));
-			assertTrue(writeInitial(_roleless, part(TASK, NOTE), project));
-			assertFalse(writeInitial(_roleless, part(TASK, SECRET), project));
+			TLObject step = DynamicModelService.getFactoryFor(MODULE).createObject(type(STEP));
+			_project.tUpdateByName(STEPS, List.of(step));
+			assertTrue(writeInitial(_responsible, NOTE, step(step)));
+			assertFalse(writeInitial(_roleless, NOTE, step(step)));
+			assertFalse(writeInitial(_roleless, NOTE, step));
 			tx.rollback();
 		}
+	}
+
+	/**
+	 * A form object editing a container stands for the edited container.
+	 */
+	public void testEditedContainer() {
+		TLObject draft = step(new TLObjectOverlay(_project));
+		assertTrue(writeInitial(_responsible, NOTE, draft));
+		assertFalse(writeInitial(_roleless, NOTE, draft));
 	}
 
 	/**
@@ -132,11 +181,23 @@ public class TestInitialAttributeRights extends AbstractModelAccessTest {
 		assertTrue(rights.getAllowedRoles(part(TASK, NAME), SimpleBoundCommandGroup.WRITE).isEmpty());
 	}
 
-	private static boolean writeInitial(Person person, TLStructuredTypePart attribute, TLObject context) {
+	private static TLObject step(TLObject container) {
+		return TransientObjectFactory.INSTANCE.createObject(type(STEP), container);
+	}
+
+	private static TLObject task(TLObject container) {
+		return TransientObjectFactory.INSTANCE.createObject(type(TASK), container);
+	}
+
+	private static TLObject project() {
+		return TransientObjectFactory.INSTANCE.createObject(type(PROJECT));
+	}
+
+	private static boolean writeInitial(Person person, String attribute, TLObject draft) {
 		// The bypass of a super-user is decided for the user of the current interaction.
 		becomeUser(person);
-		return ModelAccessRights.getInstance().isAllowedInitial(person, (TLClass) attribute.getOwner(), context,
-			attribute, SimpleBoundCommandGroup.WRITE);
+		TLStructuredTypePart part = draft.tType().getPartOrFail(attribute);
+		return ModelAccessRights.getInstance().isAllowedInitial(person, draft, part, SimpleBoundCommandGroup.WRITE);
 	}
 
 	/**

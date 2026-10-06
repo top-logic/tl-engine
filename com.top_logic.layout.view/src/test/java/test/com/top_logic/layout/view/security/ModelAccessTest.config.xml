@@ -71,6 +71,10 @@
 							roles="TestViewModelAccess.Responsible"
 						/>
 					</class>
+					<!-- A step of a project is decided by the project. -->
+					<class name="TestViewModelAccess:Step"
+						access-parent="container"
+					/>
 					<class name="TestViewModelAccess:Category">
 						<!-- A category may only be read, by its reader. -->
 						<grant
@@ -123,6 +127,17 @@
 							operation="Write"
 							roles="TestViewModelAccess.Responsible"
 						/>
+					</part>
+					<part name="TestViewModelAccess:Step#note">
+						<!-- Only the responsible of the project may write the note of its steps. -->
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Step#secret">
+						<!-- Nobody but a super-user may write the secret of a step. -->
+						<grant operation="Write"/>
 					</part>
 					<part name="TestViewModelAccess:Task#secret">
 						<!-- Nobody but a super-user may write the secret of a task. -->

@@ -54,7 +54,7 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 @SuppressWarnings("javadoc")
 public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 
-	/** Name of the {@link #TASK} attribute only {@link #ROLE_RESPONSIBLE} may write. */
+	/** Name of the {@link #STEP} attribute only {@link #ROLE_RESPONSIBLE} may write. */
 	private static final String NOTE = "note";
 
 	/** Name of the computed column reading {@link #BUDGET} through TL-Script. */
@@ -129,6 +129,17 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 			String.valueOf(column.searchText(_project)).contains(BUDGET_VALUE));
 		assertEquals(OWN_BUDGET_VALUE, column.value(_own));
 		assertTrue(String.valueOf(column.searchText(_own)).contains(OWN_BUDGET_VALUE));
+	}
+
+	/**
+	 * A cell of an attribute without a read grant of its own shows the value without a check on the
+	 * row: the rows of a table are read-filtered already.
+	 */
+	public void testCellWithoutAttributeGrant() throws ConfigurationException {
+		becomeUser(_roleless);
+		ColumnSetup name = column(NAME);
+
+		assertEquals("project", name.value().apply(_project));
 	}
 
 	/**
@@ -243,8 +254,8 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * The cells of a row added to a composition table (a draft) are decided in the creation
-	 * context, the container of the draft.
+	 * The cells of a row added to a composition table (a draft) are decided by the access parent of
+	 * the draft, its container.
 	 */
 	public void testDraftRow() {
 		AttributeCellEditing note = new AttributeCellEditing(NOTE);
@@ -252,13 +263,13 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 		AttributeCellEditing name = new AttributeCellEditing(NAME);
 
 		becomeUser(_responsible);
-		TLObject draft = TransientObjectFactory.INSTANCE.createObject(type(TASK), _project);
+		TLObject draft = TransientObjectFactory.INSTANCE.createObject(type(STEP), _project);
 		assertTrue(note.canEdit(draft));
 		assertTrue(name.canEdit(draft));
 		assertFalse(secret.canEdit(draft));
 
 		becomeUser(_roleless);
-		assertFalse("The user holds no role in the creation context.", note.canEdit(draft));
+		assertFalse("The user holds no role on the container.", note.canEdit(draft));
 		assertTrue(name.canEdit(draft));
 	}
 

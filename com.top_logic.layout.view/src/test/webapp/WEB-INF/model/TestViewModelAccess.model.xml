@@ -52,6 +52,12 @@
 							ordered="true"
 							type="Task"
 						/>
+						<reference name="steps"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Step"
+						/>
 					</attributes>
 				</class>
 
@@ -98,6 +104,32 @@
 								</default-value>
 							</annotations>
 						</reference>
+					</attributes>
+				</class>
+
+				<class name="Step">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<property name="note"
+							type="tl.core:String"
+						/>
+						<property name="secret"
+							type="tl.core:String"
+						/>
+						<reference name="substeps"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Step"
+						/>
 					</attributes>
 				</class>
 

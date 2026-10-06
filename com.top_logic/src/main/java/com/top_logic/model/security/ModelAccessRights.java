@@ -11,6 +11,7 @@ import java.util.Set;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -135,12 +136,11 @@ public interface ModelAccessRights {
 
 	/**
 	 * Checks whether the given person can perform the given command group on the given attribute
-	 * of an object of the given type that is to be created in the given context.
+	 * of the given object to be created.
 	 *
 	 * <p>
 	 * The object to be created (e.g. a transient draft that is persisted later on) holds no roles
-	 * yet. Its attribute rights are therefore decided in its creation context, the same way
-	 * {@link #isAllowedCreate(Person, TLClass, TLObject)} decides the creation itself:
+	 * yet. Its attribute rights are decided as follows:
 	 * </p>
 	 * <ul>
 	 * <li>The attributes of a type {@link #isWithoutSecurity(TLClass) without security} are not
@@ -153,12 +153,21 @@ public interface ModelAccessRights {
 	 * of a dialog) is accessible to whoever holds it.</li>
 	 * <li>For an attribute with such a grant, a person bypassing the model security decides by the
 	 * bypass.</li>
-	 * <li>An attribute-level grant listing no role denies the command group, in every context.</li>
-	 * <li>Otherwise, the person must hold one of the granted roles in the context. Without a context
-	 * (<code>null</code>), the roles on the global security root are checked. For a type with an
-	 * {@link #getAccessParent(TLClass) access parent}, the roles are checked on the object deciding
-	 * for the context. A context that is being built in the current transaction has no roles yet,
-	 * its own creation is authorized already, so the command group is allowed.</li>
+	 * <li>An attribute-level grant listing no role denies the command group.</li>
+	 * <li>For a type with an {@link #getAccessParent(TLClass) access parent}, the person must hold
+	 * one of the granted roles on the object deciding for the access parent, as for an attribute of
+	 * a persistent object. The access parent of the object to be created is resolved on the object:
+	 * its {@link TLObject#tContainer() container}, also for a relation navigating a composition the
+	 * object is not yet held by, or the value of its reference. An access parent that is itself to
+	 * be created continues the chain through its own access parent, up to the first committed
+	 * object. The edited object stands for a {@link TLFormObjectBase form object} editing it. An
+	 * object to be created without access parent (in no container, or with an empty reference) is
+	 * not restricted, it is not accessible until it is put into a container, which is a write of
+	 * the container checked in its own right.</li>
+	 * <li>Attribute grants of a type deciding by its own roles (without access parent) do not
+	 * restrict an object to be created, since the roles it will hold are computed only once it
+	 * exists. This also holds for an object reaching such an object to be created on its chain of
+	 * access parents.</li>
 	 * </ul>
 	 *
 	 * <p>
@@ -168,18 +177,16 @@ public interface ModelAccessRights {
 	 *
 	 * @param person
 	 *        The person to check.
-	 * @param type
-	 *        The type of the object to be created.
-	 * @param context
-	 *        The object the new object is created in, <code>null</code> for an object created at
-	 *        top level.
+	 * @param draft
+	 *        The object to be created, e.g. a transient object or an object created in the current
+	 *        transaction.
 	 * @param attribute
-	 *        The attribute of the given type to access.
+	 *        The attribute of the given object to access.
 	 * @param commandGroup
 	 *        The operation on the attribute, e.g. {@link SimpleBoundCommandGroup#WRITE} for setting
 	 *        its initial value.
 	 */
-	boolean isAllowedInitial(Person person, TLClass type, TLObject context, TLStructuredTypePart attribute,
+	boolean isAllowedInitial(Person person, TLObject draft, TLStructuredTypePart attribute,
 			BoundCommandGroup commandGroup);
 
 	/**

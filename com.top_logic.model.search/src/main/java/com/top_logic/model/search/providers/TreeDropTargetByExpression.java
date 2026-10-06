@@ -49,7 +49,9 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 
 	private final List<PostCreateAction> _postCreateActions;
 
-	private final Config _config;
+	private final boolean _inTransaction;
+
+	private final DropCommitMessage _commitMessage;
 
 	LayoutComponent _contextComponent;
 
@@ -68,7 +70,8 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 		_handleDrop = QueryExecutor.compile(kb, model, config.getHandleDrop());
 		_canDrop = QueryExecutor.compile(kb, model, config.getCanDrop());
 		_postCreateActions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
-		_config = config;
+		_inTransaction = config.getInTransaction();
+		_commitMessage = new DropCommitMessage(config);
 
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
 			_contextComponent = component;
@@ -90,9 +93,9 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 	public void handleDrop(Collection<?> droppedObjects, Args dropArguments) {
 		Object createdObject;
 
-		if (_config.getInTransaction()) {
+		if (_inTransaction) {
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			ResKey message = _config.buildCommitMessage(droppedObjects, getDropTarget(dropArguments));
+			ResKey message = _commitMessage.create(droppedObjects, dropArguments, _contextComponent);
 			try (Transaction tx = kb.beginTransaction(message)) {
 				createdObject = _handleDrop.executeWith(Args.cons(droppedObjects, dropArguments));
 				tx.commit();
@@ -118,18 +121,6 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 	/** Whether the business logic allows the drop with the given arguments. */
 	public boolean canDrop(Collection<?> draggedObjects, Args dropArguments) {
 		return SearchExpression.isTrue(_canDrop.executeWith(Args.cons(draggedObjects, dropArguments)));
-	}
-
-	/**
-	 * The object the dropped objects are dropped onto, used for the commit message of the drop.
-	 * 
-	 * @param dropArguments
-	 *        The arguments computed by {@link #getDropArguments(TreeDropEvent)}.
-	 * @return The business object of the target node. By default, this is the first drop
-	 *         argument.
-	 */
-	protected Object getDropTarget(Args dropArguments) {
-		return dropArguments.hasValue() ? dropArguments.value() : null;
 	}
 
 	/**

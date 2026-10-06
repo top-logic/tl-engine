@@ -5,11 +5,7 @@
  */
 package com.top_logic.model.search.providers;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -19,14 +15,11 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.util.ResKey2;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.tool.boundsec.CommandHandler.ConfirmConfig.VisibleIf;
 
@@ -62,9 +55,6 @@ public interface DropTargetByExpressionConfig extends ConfigurationItem {
 	 * Name of {@link #getCommitMessage()}.
 	 */
 	public static final String COMMIT_MESSAGE = "commit-message";
-
-	/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
-	Lookup LOOKUP = MethodHandles.lookup();
 
 	/**
 	 * Operation executing a drop in the context of a referenced element.
@@ -109,49 +99,21 @@ public interface DropTargetByExpressionConfig extends ConfigurationItem {
 	boolean getInTransaction();
 
 	/**
-	 * The message to annotate to the change performed by the drop.
+	 * Function computing the message to annotate to the change performed by the drop.
 	 * 
 	 * <p>
-	 * The message may contain the placeholder '{0}' that is replaced with the labels of the dropped
-	 * objects, and the placeholder '{1}' that is replaced with the label of the object the objects
-	 * are dropped onto.
+	 * The function receives the arguments of the {@link #getHandleDrop() drop operation} followed
+	 * by the model of the component the drop happens in. The result is either a string or an
+	 * internationalized text.
 	 * </p>
 	 * 
 	 * <p>
-	 * If not set, a default message is derived from the dropped objects and the drop target.
+	 * If not set, or if the function returns nothing, a default message is used that names the
+	 * dropped objects and the component the objects are dropped into.
 	 * </p>
 	 */
 	@Name(COMMIT_MESSAGE)
 	@DynamicMode(fun = VisibleIf.class, args = @Ref(IN_TRANSACTION))
-	ResKey2 getCommitMessage();
-
-	/**
-	 * Builds the commit message for a drop.
-	 * 
-	 * @param droppedObjects
-	 *        The objects being dropped.
-	 * @param target
-	 *        The object the objects are dropped onto, <code>null</code> if the drop has no target
-	 *        object.
-	 * @return The message to annotate to the change performed by the drop.
-	 * 
-	 * @implNote Without a configured {@link #getCommitMessage()}, the message is
-	 *           {@link I18NConstants#DROPPED__OBJECTS_TARGET}, or
-	 *           {@link I18NConstants#DROPPED__OBJECTS} if there is no target.
-	 */
-	default ResKey buildCommitMessage(Collection<?> droppedObjects, Object target) {
-		String droppedLabels = droppedObjects.stream()
-			.map(MetaLabelProvider.INSTANCE::getLabel)
-			.collect(Collectors.joining(", "));
-
-		ResKey2 customMessage = getCommitMessage();
-		if (customMessage != null) {
-			return customMessage.fill(droppedLabels, MetaLabelProvider.INSTANCE.getLabel(target));
-		}
-		if (target == null) {
-			return I18NConstants.DROPPED__OBJECTS.fill(droppedLabels);
-		}
-		return I18NConstants.DROPPED__OBJECTS_TARGET.fill(droppedLabels, MetaLabelProvider.INSTANCE.getLabel(target));
-	}
+	Expr getCommitMessage();
 
 }

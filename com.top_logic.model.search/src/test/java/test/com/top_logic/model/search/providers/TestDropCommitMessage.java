@@ -10,68 +10,82 @@ import java.util.List;
 
 import junit.framework.Test;
 
-import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.model.search.expr.AbstractSearchExpressionTest;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.util.ResKey2;
-import com.top_logic.layout.provider.LabelProviderService;
+import com.top_logic.model.search.expr.query.Args;
+import com.top_logic.model.search.providers.DropCommitMessage;
 import com.top_logic.model.search.providers.DropTargetByExpressionConfig;
 import com.top_logic.model.search.providers.I18NConstants;
 import com.top_logic.model.search.providers.TableDropTargetByExpression;
 
 /**
- * Test for the commit message of a drop built by
- * {@link DropTargetByExpressionConfig#buildCommitMessage(java.util.Collection, Object)}.
+ * Test for {@link DropCommitMessage}.
  */
 @SuppressWarnings("javadoc")
-public class TestDropCommitMessage extends BasicTestCase {
+public class TestDropCommitMessage extends AbstractSearchExpressionTest {
 
-	public void testDefaultMessageWithTarget() {
-		ResKey message = config().buildCommitMessage(List.of("A"), "T");
+	private static final ResKey TITLE = ResKey.forTest("test.drop.component.title");
 
-		assertMessage(I18NConstants.DROPPED__OBJECTS_TARGET.fill(null, null), message, "A", "T");
+	public void testDefaultMessage() throws Exception {
+		ResKey message = noScript().create(List.of("A"), Args.some("T"), "M", TITLE);
+
+		assertEquals(I18NConstants.DROPPED__OBJECTS_COMPONENT.fill(null, null).plain(), message.plain());
+		assertEquals(Arrays.asList("A", TITLE), Arrays.asList(message.arguments()));
 	}
 
-	public void testDefaultMessageWithoutTarget() {
-		ResKey message = config().buildCommitMessage(List.of("A"), null);
+	public void testDefaultMessageJoinsDroppedObjects() throws Exception {
+		ResKey message = noScript().create(Arrays.asList("A", "B", "C"), Args.some((Object) null), "M", TITLE);
 
-		assertMessage(I18NConstants.DROPPED__OBJECTS.fill(null), message, "A");
+		assertEquals(I18NConstants.DROPPED__OBJECTS_COMPONENT.fill(null, null).plain(), message.plain());
+		assertEquals(Arrays.asList("A, B, C", TITLE), Arrays.asList(message.arguments()));
 	}
 
-	public void testMultipleDroppedObjectsJoined() {
-		ResKey message = config().buildCommitMessage(Arrays.asList("A", "B", "C"), "T");
+	public void testScriptReceivesDropArgumentsAndModel() throws Exception {
+		DropCommitMessage commitMessage = script("d -> r -> m -> toString($d.size(), '/', $r, '/', $m)");
 
-		assertMessage(I18NConstants.DROPPED__OBJECTS_TARGET.fill(null, null), message, "A, B, C", "T");
+		ResKey message = commitMessage.create(Arrays.asList("A", "B"), Args.some("T"), "M", TITLE);
+
+		assertEquals(ResKey.text("2/T/M"), message);
 	}
 
-	public void testCustomMessage() {
-		ResKey custom = ResKey.forTest("test.drop.custom");
+	public void testScriptReceivesAllTreeDropArguments() throws Exception {
+		DropCommitMessage commitMessage = script("d -> p -> r -> m -> toString($d.size(), '/', $p, '/', $r, '/', $m)");
+
+		ResKey message = commitMessage.create(List.of("A"), Args.some("P", "R"), "M", TITLE);
+
+		assertEquals(ResKey.text("1/P/R/M"), message);
+	}
+
+	public void testScriptResultResKeyUsedAsIs() throws Exception {
+		DropCommitMessage commitMessage = script("d -> r -> m -> $m");
+
+		ResKey message = commitMessage.create(List.of("A"), Args.some("T"), TITLE, null);
+
+		assertSame(TITLE, message);
+	}
+
+	public void testScriptWithoutResultUsesDefault() throws Exception {
+		DropCommitMessage commitMessage = script("d -> r -> m -> null");
+
+		ResKey message = commitMessage.create(List.of("A"), Args.some("T"), "M", TITLE);
+
+		assertEquals(I18NConstants.DROPPED__OBJECTS_COMPONENT.fill(null, null).plain(), message.plain());
+		assertEquals(Arrays.asList("A", TITLE), Arrays.asList(message.arguments()));
+	}
+
+	private static DropCommitMessage noScript() {
+		return new DropCommitMessage(config());
+	}
+
+	private static DropCommitMessage script(String expr) throws Exception {
 		DropTargetByExpressionConfig config = config();
-		TypedConfigUtil.setProperty(config, DropTargetByExpressionConfig.COMMIT_MESSAGE, (ResKey2) custom);
-
-		ResKey message = config.buildCommitMessage(Arrays.asList("A", "B"), "T");
-
-		assertMessage(custom, message, "A, B", "T");
-	}
-
-	public void testCustomMessageWithoutTarget() {
-		ResKey custom = ResKey.forTest("test.drop.custom");
-		DropTargetByExpressionConfig config = config();
-		TypedConfigUtil.setProperty(config, DropTargetByExpressionConfig.COMMIT_MESSAGE, (ResKey2) custom);
-
-		ResKey message = config.buildCommitMessage(List.of("A"), null);
-
-		assertEquals(custom.plain(), message.plain());
-		assertEquals("A", message.arguments()[0]);
-	}
-
-	private static void assertMessage(ResKey expectedKey, ResKey message, Object... expectedArguments) {
-		assertEquals(expectedKey.plain(), message.plain());
-		assertEquals(Arrays.asList(expectedArguments), Arrays.asList(message.arguments()));
+		TypedConfigUtil.setProperty(config, DropTargetByExpressionConfig.COMMIT_MESSAGE, parse(expr));
+		return new DropCommitMessage(config);
 	}
 
 	private static DropTargetByExpressionConfig config() {
@@ -79,8 +93,7 @@ public class TestDropCommitMessage extends BasicTestCase {
 	}
 
 	public static Test suite() {
-		return KBSetup.getSingleKBTest(
-			ServiceTestSetup.createSetup(TestDropCommitMessage.class, LabelProviderService.Module.INSTANCE));
+		return KBSetup.getSingleKBTest(ServiceTestSetup.createSetup(TestDropCommitMessage.class, getModules()));
 	}
 
 }

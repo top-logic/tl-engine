@@ -1423,10 +1423,19 @@ a.tl-field-value:hover {
   min-width: 0;
 }
 
-/* Der Entfernen-Knopf ist ein tl-button--icon --sm --ghost; er liegt in der Pille, ohne sie zu heben. */
+/* Der Entfernen-Knopf ist ein tl-button--icon --sm --ghost, liegt aber ganz innerhalb des Pillenrandes: ein
+   Kreis, konzentrisch zum runden Ende der Pille, mit einer Lücke von space-2xs / 2 zum Rand oben, unten und am
+   Ende. Durchmesser = Pillenhöhe size-control-sm − 2 × Rand − 2 × Lücke; das Ende der Pille trägt nur die
+   Lücke als Innenabstand. Ein Quadrat über dem Rand verdeckte beim Zeigen Rand und rundes Ende. */
+.tl-select__chip:has(> .tl-button) {
+  padding-inline-end: calc(var(--tl-space-2xs) / 2);
+}
+
 .tl-select__chip > .tl-button {
-  margin-block: calc(-1 * var(--tl-border-width-sm));
-  margin-inline-end: calc(-1 * var(--tl-space-2xs));
+  width: calc(var(--tl-size-control-sm) - 2 * var(--tl-border-width-sm) - var(--tl-space-2xs));
+  height: calc(var(--tl-size-control-sm) - 2 * var(--tl-border-width-sm) - var(--tl-space-2xs));
+  min-height: 0;
+  border-radius: var(--tl-radius-round);
 }
 
 /* Der Entfernen-Knopf liegt auf der Pille, nicht auf dem Feld: die neutrale Pille ist selbst

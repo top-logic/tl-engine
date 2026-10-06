@@ -5,14 +5,21 @@
 	
 	The columns are the classifiers of the status enumeration, in their declaration order; the
 	tickets are sorted by name, which is their order within a column. Each card shows the name of
-	its ticket and its status. Clicking a card selects its ticket, and the form beside the board
-	edits the selected one: saving another status moves the card into the column of that status,
-	since the board follows the tickets it displays. The selection travels both ways - the card of
-	the ticket the form shows is the highlighted one.
+	its ticket and its status, and a button opening the ticket with its conversation in a dialog.
+	Clicking a card selects its ticket, and the form beside the board edits the selected one: saving
+	another status moves the card into the column of that status, since the board follows the
+	tickets it displays. The selection travels both ways - the card of the ticket the form shows is
+	the highlighted one.
 	
-	Cards are dragged between the columns: dropping a ticket on a column sets its status to that
-	column's status, which is what the <drop> does with the column value it receives on the
-	dropColumn channel. A closed ticket is not reopened directly: dropping it on "Open" is refused,
+	Several tickets are selected at once: a click with Ctrl adds a ticket or takes it out again, a
+	click with Shift adds the tickets up to the clicked one, and on a touch screen a long press
+	toggles a ticket. The selected channel holds the set of them, and the form shows a ticket only
+	while exactly one is selected.
+	
+	Cards are dragged between the columns - with the mouse, or on a touch screen by a long press and
+	a move -, and dragging a selected card takes all selected ones along. Dropping a ticket on a
+	column sets its status to that column's status, which is what the <drop> does with the column
+	value it receives on the dropColumn channel. A closed ticket is not reopened directly: dropping it on "Open" is refused,
 	and the reason is shown while it hovers there - it goes through "In progress" first.
 	
 	Within a column, the cards are reordered by dragging them before or after another card: the
@@ -24,7 +31,11 @@
 -->
 <view>
 	<channels>
-		<channel name="ticket"/>
+		<channel name="selected"/>
+		<derived-channel name="ticket"
+			expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"
+			inputs="selected"
+		/>
 		<channel name="dropColumn"/>
 	</channels>
 	<split-panel
@@ -48,7 +59,8 @@
 						items="all(`demo.tickets:Ticket`).sort(x -> y -> { ox = $x.get(`demo.tickets:Ticket#order`); oy = $y.get(`demo.tickets:Ticket#order`); c = compare(if($ox == null, 1000000, $ox), if($oy == null, 1000000, $oy)); if($c != 0, $c, compare($x.get(`demo.tickets:Ticket#name`), $y.get(`demo.tickets:Ticket#name`))); })"
 						observed-types="demo.tickets:Ticket"
 						on-reorder="column -> tickets -> count($tickets.size()).foreach(i -> $tickets[$i].set(`demo.tickets:Ticket#order`, $i))"
-						selection="ticket"
+						selection="selected"
+						selection-mode="multi"
 					>
 						<card>
 							<view-ref view="board/ticket-card.view.xml">

@@ -24,6 +24,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -49,6 +50,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.table.SelectionMode;
 
 /**
  * Declarative {@link UIElement} displaying objects as cards in columns (the
@@ -86,7 +88,9 @@ import com.top_logic.model.util.TLModelPartRef;
  *
  * <p>
  * Clicking a card writes its object to the {@link Config#getSelection() selection channel}; the card
- * of the object that channel holds is highlighted, whoever wrote it.
+ * of the object that channel holds is highlighted, whoever wrote it. In the
+ * {@link Config#getSelectionMode() selection mode} {@link SelectionMode#MULTI}, several cards are
+ * selected at once.
  * </p>
  *
  * <p>
@@ -145,6 +149,9 @@ public class KanbanBoardElement implements UIElement {
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
+
+		/** Configuration name for {@link #getSelectionMode()}. */
+		String SELECTION_MODE = "selection-mode";
 
 		/** Configuration name for {@link #getItemChannel()}. */
 		String ITEM_CHANNEL = "item-channel";
@@ -238,6 +245,31 @@ public class KanbanBoardElement implements UIElement {
 		@Name(SELECTION)
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelection();
+
+		/**
+		 * Whether the user may select one card at a time, or any number of them.
+		 *
+		 * <p>
+		 * {@link SelectionMode#SINGLE} (the default) replaces the selection with every click, and a
+		 * click on the selected card with {@code Ctrl} gives it up again.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link SelectionMode#MULTI} adds a card to the selection, or takes it out again, by a click
+		 * with {@code Ctrl} or a long press on a touch screen; a click with {@code Shift} adds the
+		 * cards from the one clicked last up to the clicked one, the columns read from left to
+		 * right. Dragging a selected card drags all selected cards.
+		 * </p>
+		 *
+		 * <p>
+		 * The {@link #getSelection() selection channel} holds the object of the selected card while
+		 * exactly one is selected, the set of the selected objects while there are several, and
+		 * nothing while there is none.
+		 * </p>
+		 */
+		@Name(SELECTION_MODE)
+		@ComplexDefault(SelectionMode.SingleDefault.class)
+		SelectionMode getSelectionMode();
 
 		/**
 		 * Name of the channel publishing a card's object to the card content.
@@ -393,6 +425,7 @@ public class KanbanBoardElement implements UIElement {
 		List<Object> initialItems = toList(_itemsExecutor, ChannelInputs.arguments(inputs));
 		cards.show(toList(_columnsExecutor, ChannelInputs.arguments(inputs)), initialItems);
 
+		cards.board().setSelectionMode(_config.getSelectionMode());
 		ChannelRef selection = _config.getSelection();
 		if (selection != null) {
 			cards.bindSelection(context.resolveChannel(selection));

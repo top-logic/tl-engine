@@ -7,6 +7,7 @@ package com.top_logic.layout.react.control.kanban;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -36,6 +37,7 @@ import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.runtime.ActionContext;
+import com.top_logic.table.SelectionMode;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -53,9 +55,14 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * Clicking a card makes its object the {@link #getSelection() selection} and reports it to the
- * {@link #setSelectionListener(Consumer) selection listener}; the selected card is highlighted.
- * {@link #setSelection(Object)} highlights an object's card without a report, so a selection that
- * arrives from elsewhere is displayed as well.
+ * {@link #setSelectionListener(Consumer) selection listener}; the selected cards are highlighted.
+ * {@link #setSelection(Collection)} highlights the cards of objects without a report, so a selection
+ * that arrives from elsewhere is displayed as well. In the {@link #setSelectionMode(SelectionMode)
+ * selection mode} {@link SelectionMode#MULTI}, a click that {@link SelectCardArguments#isToggle()
+ * toggles} adds a card to the selection or takes it out again, and one that
+ * {@link SelectCardArguments#isRange() extends} the selection adds the cards from the card clicked
+ * last up to the clicked one, in display order: the columns from first to last, the cards of each
+ * from top to bottom.
  * </p>
  *
  * <p>
@@ -65,8 +72,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <li>{@link #COLUMNS}: the columns, each a map of {@link #COLUMN_KEY}, {@link #COLUMN_LABEL},
  * {@link #COLUMN_COUNT} and {@link #COLUMN_CARDS}, the latter a list of maps of {@link #CARD_KEY}
  * and {@link #CARD_CONTENT} (the card's child control).</li>
- * <li>{@link #SELECTED}: the key of the selected card, {@code null} when no displayed card is
- * selected.</li>
+ * <li>{@link #SELECTED}: the keys of the displayed selected cards.</li>
+ * <li>{@link #MULTI_SELECT}: whether several cards may be selected.</li>
  * <li>{@link #DRAG_ENABLED}, {@link #DRAG_TYPE}: whether and under which type tag cards are
  * dragged; while they are, each card descriptor tells by {@link #CARD_DRAGGABLE} whether that
  * card may be dragged.</li>
@@ -94,8 +101,11 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	/** State key of the list of column descriptors. */
 	public static final String COLUMNS = "columns";
 
-	/** State key of the key of the selected card. */
+	/** State key of the list of the keys of the selected cards. */
 	public static final String SELECTED = "selected";
+
+	/** State key telling the client whether several cards may be selected. */
+	public static final String MULTI_SELECT = "multiSelect";
 
 	/** Key of a column descriptor holding the column's stable key. */
 	public static final String COLUMN_KEY = "key";
@@ -255,9 +265,19 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	/** The drop protocol shared with every control accepting drops. */
 	private final DropSupport _dropSupport = new DropSupport(this);
 
-	private Object _selection;
+	/** Whether one card or several may be selected. */
+	private SelectionMode _selectionMode = SelectionMode.SINGLE;
 
-	private Consumer<Object> _selectionListener;
+	/** The selected objects, also those whose card is not displayed. */
+	private final Set<Object> _selection = new LinkedHashSet<>();
+
+	/**
+	 * The object clicked last without extending the selection, also when the click took it out of
+	 * the selection: where a range starts.
+	 */
+	private Object _anchor;
+
+	private Consumer<Set<Object>> _selectionListener;
 
 	/**
 	 * Creates an empty {@link ReactKanbanBoardControl}.
@@ -268,7 +288,8 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	public ReactKanbanBoardControl(ReactContext context) {
 		super(context, null, REACT_MODULE);
 		putState(COLUMNS, List.of());
-		putState(SELECTED, null);
+		putState(SELECTED, List.of());
+		putState(MULTI_SELECT, Boolean.FALSE);
 		putState(DRAG_ENABLED, Boolean.FALSE);
 		putState(DROP_ACCEPTS, List.of());
 		putState(REORDER, Boolean.FALSE);
@@ -379,41 +400,69 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	}
 
 	/**
-	 * The selected object, {@code null} if there is none.
-	 *
-	 * <p>
-	 * The selection is kept while the object's card is not displayed, and highlighted again once it
-	 * is.
-	 * </p>
+	 * Whether one card or several may be selected.
 	 */
-	public Object getSelection() {
-		return _selection;
+	public SelectionMode getSelectionMode() {
+		return _selectionMode;
 	}
 
 	/**
-	 * Highlights the card of the given object, without reporting it to the
+	 * Sets whether one card or several may be selected.
+	 */
+	public void setSelectionMode(SelectionMode mode) {
+		_selectionMode = mode;
+		putState(MULTI_SELECT, Boolean.valueOf(multiSelection()));
+	}
+
+	private boolean multiSelection() {
+		return _selectionMode == SelectionMode.MULTI;
+	}
+
+	/**
+	 * The selected objects, empty if there are none.
+	 *
+	 * <p>
+	 * The selection is kept while an object's card is not displayed, and highlighted again once it
+	 * is.
+	 * </p>
+	 */
+	public Set<Object> getSelection() {
+		return Collections.unmodifiableSet(_selection);
+	}
+
+	/**
+	 * Highlights the cards of the given objects, without reporting them to the
 	 * {@link #setSelectionListener(Consumer) selection listener}.
 	 *
-	 * @param item
-	 *        The selected object, or {@code null} for no selection.
+	 * @param items
+	 *        The selected objects, empty for no selection. In the selection mode
+	 *        {@link SelectionMode#SINGLE}, the caller passes at most one.
 	 */
-	public void setSelection(Object item) {
-		_selection = item;
+	public void setSelection(Collection<?> items) {
+		_selection.clear();
+		_selection.addAll(items);
 		pushSelection();
 	}
 
 	/**
-	 * Sets the listener informed when the user selects a card.
+	 * Sets the listener informed when the user changes the selection.
 	 *
 	 * @param listener
-	 *        Receives the object of the selected card; {@code null} for no listener.
+	 *        Receives the selected objects; {@code null} for no listener.
 	 */
-	public void setSelectionListener(Consumer<Object> listener) {
+	public void setSelectionListener(Consumer<Set<Object>> listener) {
 		_selectionListener = listener;
 	}
 
 	private void pushSelection() {
-		putState(SELECTED, _selection == null ? null : _cardKeys.get(_selection));
+		List<String> keys = new ArrayList<>(_selection.size());
+		for (Object item : _selection) {
+			String key = _cardKeys.get(item);
+			if (key != null) {
+				keys.add(key);
+			}
+		}
+		putState(SELECTED, keys);
 	}
 
 	/**
@@ -428,7 +477,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	HandlerResult handleSelectCard(SelectCardArguments args) {
 		Object item = _itemsByKey.get(args.getCard());
 		if (item != null) {
-			selectByUser(item);
+			selectByUser(item, args.isToggle(), args.isRange());
 		}
 		return HandlerResult.DEFAULT_RESULT;
 	}
@@ -446,29 +495,86 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 			// silent no-op.
 			return HandlerResult.error(I18NConstants.ERROR_CARD_KEY_UNRESOLVED__KEY.fill(name));
 		}
-		selectByUser(item);
+		selectByUser(item, args.isToggle(), args.isRange());
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
-	 * Selects the given object as the user does, and reports it.
+	 * Selects the given object as the user does, and reports the new selection.
 	 *
 	 * <p>
 	 * A report the listener refuses - unsaved changes the selection would replace - restores the
 	 * selection displayed before and propagates.
 	 * </p>
+	 *
+	 * @param toggle
+	 *        Whether the object is added to the selection, or taken out of it when it is selected,
+	 *        instead of replacing the selection. In the selection mode {@link SelectionMode#SINGLE},
+	 *        a toggle of the selected object gives the selection up.
+	 * @param range
+	 *        Whether the objects from the one clicked last up to the given one are added to the
+	 *        selection; only in the selection mode {@link SelectionMode#MULTI}.
 	 */
-	private void selectByUser(Object item) {
-		Object before = _selection;
-		setSelection(item);
+	private void selectByUser(Object item, boolean toggle, boolean range) {
+		Set<Object> next = new LinkedHashSet<>();
+		Object anchor = _anchor;
+		if (multiSelection()) {
+			if (range && anchor != null && displays(anchor)) {
+				next.addAll(_selection);
+				next.addAll(itemsBetween(anchor, item));
+			} else if (toggle) {
+				next.addAll(_selection);
+				if (!next.remove(item)) {
+					next.add(item);
+				}
+				anchor = item;
+			} else {
+				next.add(item);
+				anchor = item;
+			}
+		} else {
+			if (!(toggle && _selection.contains(item))) {
+				next.add(item);
+			}
+			anchor = item;
+		}
+
+		List<Object> before = new ArrayList<>(_selection);
+		setSelection(next);
 		if (_selectionListener != null) {
 			try {
-				_selectionListener.accept(item);
+				_selectionListener.accept(getSelection());
 			} catch (RuntimeException ex) {
 				setSelection(before);
 				throw ex;
 			}
 		}
+		_anchor = anchor;
+	}
+
+	/**
+	 * The displayed objects from one of the given ones up to the other, both included, in display
+	 * order.
+	 */
+	private List<Object> itemsBetween(Object first, Object last) {
+		List<Object> result = new ArrayList<>();
+		boolean inRange = false;
+		for (Column column : _columns) {
+			for (Card card : column.cards()) {
+				Object item = card.item();
+				boolean bound = item.equals(first) || item.equals(last);
+				if (bound || inRange) {
+					result.add(item);
+				}
+				if (bound) {
+					if (inRange || first.equals(last)) {
+						return result;
+					}
+					inRange = true;
+				}
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -486,6 +592,8 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 				SelectCardByKeyArguments recorded = TypedConfiguration.newConfigItem(SelectCardByKeyArguments.class);
 				recorded.setName(CMD_SELECT_CARD_BY_KEY);
 				recorded.setKey(name);
+				recorded.setToggle(Boolean.TRUE.equals(arguments.get(SelectCardArguments.TOGGLE)));
+				recorded.setRange(Boolean.TRUE.equals(arguments.get(SelectCardArguments.RANGE)));
 				return new RecordedCommand(recorded);
 			}
 		}
@@ -610,7 +718,15 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 
 	@Override
 	public List<?> dragSelection() {
-		return _selection != null && displays(_selection) ? List.of(_selection) : List.of();
+		List<Object> result = new ArrayList<>();
+		for (Column column : _columns) {
+			for (Card card : column.cards()) {
+				if (_selection.contains(card.item())) {
+					result.add(card.item());
+				}
+			}
+		}
+		return result;
 	}
 
 	/**

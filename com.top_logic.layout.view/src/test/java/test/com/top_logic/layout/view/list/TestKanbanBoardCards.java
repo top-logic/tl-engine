@@ -8,6 +8,7 @@ package test.com.top_logic.layout.view.list;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -33,10 +34,11 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.list.KanbanBoardCards;
+import com.top_logic.table.SelectionMode;
 
 /**
  * Tests how {@link KanbanBoardCards} distributes objects into the columns of a board, keeps their
- * cards, and binds the selected card to a channel.
+ * cards, and binds the selected cards to a channel.
  */
 public class TestKanbanBoardCards extends TestCase {
 
@@ -139,18 +141,78 @@ public class TestKanbanBoardCards extends TestCase {
 		DefaultViewChannel selection = new DefaultViewChannel("selection");
 		_cards.bindSelection(selection);
 
-		assertNull("Nothing is selected initially.", state().get(ReactKanbanBoardControl.SELECTED));
+		assertEquals("Nothing is selected initially.", List.of(), state().get(ReactKanbanBoardControl.SELECTED));
 
 		String keyOfA = cardKey(a);
 		board().executeCommand(ReactKanbanBoardControl.CMD_SELECT_CARD, Map.of(SelectCardArguments.CARD, keyOfA));
 
 		assertSame("Selecting a card writes its object to the channel.", a, selection.get());
-		assertEquals("The selected card is highlighted.", keyOfA, state().get(ReactKanbanBoardControl.SELECTED));
+		assertEquals("The selected card is highlighted.", List.of(keyOfA), state().get(ReactKanbanBoardControl.SELECTED));
 
 		selection.set(b);
 
-		assertEquals("A selection written from elsewhere is highlighted.", cardKey(b),
+		assertEquals("A selection written from elsewhere is highlighted.", List.of(cardKey(b)),
 			state().get(ReactKanbanBoardControl.SELECTED));
+
+		select(b, true, false);
+
+		assertNull("A toggle of the selected card gives the single selection up.", selection.get());
+
+		selection.set(Set.of(a, b));
+
+		assertEquals("A single selection displays no set.", List.of(), state().get(ReactKanbanBoardControl.SELECTED));
+	}
+
+	/**
+	 * In the selection mode {@link SelectionMode#MULTI}, a toggle adds a card or takes it out again,
+	 * a range adds the cards from the one clicked last in display order, and the selected cards are
+	 * dragged together.
+	 */
+	public void testMultiSelection() {
+		Ticket a = new Ticket(OPEN);
+		Ticket b = new Ticket(OPEN);
+		Ticket c = new Ticket(DOING);
+		Ticket d = new Ticket(DONE);
+		_cards.show(COLUMNS, List.of(a, b, c, d));
+		board().setSelectionMode(SelectionMode.MULTI);
+		DefaultViewChannel selection = new DefaultViewChannel("selection");
+		_cards.bindSelection(selection);
+		assertEquals(Boolean.TRUE, state().get(ReactKanbanBoardControl.MULTI_SELECT));
+
+		select(b, false, false);
+		assertSame("One selected card is written as its object.", b, selection.get());
+
+		select(d, true, false);
+		assertEquals("A toggle adds the card.", Set.of(b, d), selection.get());
+		assertEquals(Set.of(cardKey(b), cardKey(d)), Set.copyOf(selectedKeys()));
+		assertEquals("The selection is dragged in display order.", List.of(b, d), board().dragSelection());
+
+		select(b, true, false);
+		assertSame("A toggle of a selected card takes it out.", d, selection.get());
+
+		select(a, false, false);
+		select(c, false, true);
+		assertEquals("A range adds the cards from the one clicked last, across columns.", Set.of(a, b, c),
+			selection.get());
+
+		select(d, false, false);
+		assertSame("A plain selection replaces the selection.", d, selection.get());
+
+		selection.set(Set.of(a, c));
+		assertEquals("A set written from elsewhere is highlighted.", Set.of(cardKey(a), cardKey(c)),
+			Set.copyOf(selectedKeys()));
+	}
+
+	private void select(Ticket ticket, boolean toggle, boolean range) {
+		board().executeCommand(ReactKanbanBoardControl.CMD_SELECT_CARD, Map.of(
+			SelectCardArguments.CARD, cardKey(ticket),
+			SelectCardArguments.TOGGLE, Boolean.valueOf(toggle),
+			SelectCardArguments.RANGE, Boolean.valueOf(range)));
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<Object> selectedKeys() {
+		return (List<Object>) state().get(ReactKanbanBoardControl.SELECTED);
 	}
 
 	/**
@@ -162,13 +224,13 @@ public class TestKanbanBoardCards extends TestCase {
 		DefaultViewChannel selection = new DefaultViewChannel("selection");
 		selection.set(a);
 		_cards.bindSelection(selection);
-		assertEquals(cardKey(a), state().get(ReactKanbanBoardControl.SELECTED));
+		assertEquals(List.of(cardKey(a)), state().get(ReactKanbanBoardControl.SELECTED));
 
 		a._status = "rejected";
 		_cards.show(COLUMNS, List.of(a));
 
 		assertNull("The selection names nothing displayed any more.", selection.get());
-		assertNull(state().get(ReactKanbanBoardControl.SELECTED));
+		assertEquals(List.of(), state().get(ReactKanbanBoardControl.SELECTED));
 	}
 
 	private ReactKanbanBoardControl board() {

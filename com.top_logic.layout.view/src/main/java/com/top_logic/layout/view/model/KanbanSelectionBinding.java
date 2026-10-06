@@ -5,17 +5,20 @@
  */
 package com.top_logic.layout.view.model;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.top_logic.layout.react.control.kanban.ReactKanbanBoardControl;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.table.SelectionMode;
 
 /**
- * {@link SelectionChannelBinding} for the selected card of a {@link ReactKanbanBoardControl}.
+ * {@link SelectionChannelBinding} for the selected cards of a {@link ReactKanbanBoardControl}.
  *
  * <p>
- * The keys of the binding are the objects the cards display. A board displays one selected card at
- * a time; an object the board displays no card for is no selection there.
+ * The keys of the binding are the objects the cards display. A board in the selection mode
+ * {@link SelectionMode#MULTI} displays several selected cards, otherwise one at a time; an object
+ * the board displays no card for is no selection there.
  * </p>
  *
  * <p>
@@ -45,23 +48,32 @@ public class KanbanSelectionBinding extends SelectionChannelBinding {
 		attach();
 	}
 
-	private void cardSelected(Object item) {
-		selectionChanged(item == null ? Set.of() : Set.of(item));
+	private void cardSelected(Set<Object> items) {
+		selectionChanged(items);
 	}
 
 	@Override
 	protected Set<Object> getSelectedKeys() {
-		Object selection = _board.getSelection();
-		if (selection == null || !_board.displays(selection)) {
-			return Set.of();
+		Set<Object> result = new LinkedHashSet<>();
+		for (Object item : _board.getSelection()) {
+			if (_board.displays(item)) {
+				result.add(item);
+			}
 		}
-		return Set.of(selection);
+		return result;
 	}
 
 	@Override
 	protected void displaySelection(Set<?> keys) {
-		Object item = keys.size() == 1 ? keys.iterator().next() : null;
-		_board.setSelection(item != null && _board.displays(item) ? item : null);
+		Set<Object> items = new LinkedHashSet<>();
+		if (canDisplaySeveral() || keys.size() == 1) {
+			for (Object key : keys) {
+				if (_board.displays(key)) {
+					items.add(key);
+				}
+			}
+		}
+		_board.setSelection(items);
 
 		// The board reports no programmatic selection; reported here as the echo the base class
 		// expects, so that it knows what the board displays.
@@ -70,7 +82,7 @@ public class KanbanSelectionBinding extends SelectionChannelBinding {
 
 	@Override
 	protected boolean canDisplaySeveral() {
-		return false;
+		return _board.getSelectionMode() == SelectionMode.MULTI;
 	}
 
 	@Override

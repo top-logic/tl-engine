@@ -8,7 +8,6 @@ package com.top_logic.layout.react.control.kanban;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link ReactKanbanBoardControl#CMD_SELECT_CARD} command: the card the user
@@ -16,13 +15,13 @@ import com.top_logic.layout.react.control.ReactCommand;
  *
  * <p>
  * The {@link Label} doubles as the {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider}
- * template that renders a recorded step for humans. A plain card selection is recorded as a
+ * template that renders a recorded step for humans. A card selection is recorded as a
  * {@link SelectCardByKeyArguments} naming the card's business object, because the card key is
  * allocated per session.
  * </p>
  */
 @Label("Select card {card}")
-public interface SelectCardArguments extends ReactCommand {
+public interface SelectCardArguments extends SelectCardModifiers {
 
 	/** @see #getCard() */
 	String CARD = "card";

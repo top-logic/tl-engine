@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, FillBarrier, useFill, rootClassName, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, createPortal } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, FillBarrier, useFill, rootClassName, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, createPortal, ATTR_LONG_PRESS, LONG_PRESS_EVENT } from 'tl-react-bridge';
 import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
@@ -9,6 +9,12 @@ const CMD_SELECT_CARD = 'selectCard';
 
 /** The argument of {@link CMD_SELECT_CARD} naming the card (SelectCardArguments.CARD). */
 const ARG_CARD = 'card';
+
+/** The argument of {@link CMD_SELECT_CARD} toggling the card (SelectCardModifiers.TOGGLE). */
+const ARG_TOGGLE = 'toggle';
+
+/** The argument of {@link CMD_SELECT_CARD} extending the selection (SelectCardModifiers.RANGE). */
+const ARG_RANGE = 'range';
 
 /** The command applying a drop (DropSupport.CMD_DROP). */
 const CMD_DROP = 'drop';
@@ -63,7 +69,8 @@ interface DropState {
  *
  * State:
  * - columns: ColumnDescriptor[] - the columns, in display order
- * - selected: string | null - the key of the selected card
+ * - selected: string[] - the keys of the selected cards
+ * - multiSelect: boolean - whether several cards may be selected
  * - dragEnabled: boolean, dragType: string - whether and under which type tag cards are dragged
  * - dropAccepts: string[] - the type tags a drop on a column is accepted of
  * - reorder: boolean - whether a drop within a column reorders it
@@ -71,10 +78,13 @@ interface DropState {
  *
  * The columns are placed side by side and scroll horizontally where they do not fit; each column
  * scrolls its cards vertically. A card is selected by a click or by Enter / Space while it has the
- * focus; a click on an interactive element inside the card is left to that element.
+ * focus; a click on an interactive element inside the card is left to that element. With `Ctrl`
+ * (or `Cmd`) the card is toggled instead, with `Shift` the selection is extended up to it; a long
+ * press on a touch screen toggles as well, where several cards may be selected.
  *
  * Cards are dragged with the drag payload every drag source of the bridge writes, so they can be
  * dropped on any control accepting their type, and a column accepts what such a control drags.
+ * Dragging a selected card drags all selected cards, in display order.
  * While the board reorders its columns, a drop is made at the card boundary nearest to the pointer
  * - on a card or in the gap between two - and an insertion line shows where; otherwise a drop is made on the column as a whole, and the
  * column a dragged card already is in accepts no drop. A column the server refuses a drop on shows
@@ -88,7 +98,8 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
   const fillClass = useFill(true);
 
   const columns = (state.columns as ColumnDescriptor[]) ?? [];
-  const selected = (state.selected as string | null) ?? null;
+  const selected = React.useMemo(() => new Set((state.selected as string[] | null) ?? []), [state.selected]);
+  const multiSelect = state.multiSelect === true;
   const dragEnabled = state.dragEnabled === true;
   const dragType = (state.dragType as string | null) ?? '';
   const dropAccepts = (state.dropAccepts as string[]) ?? [];
@@ -96,9 +107,28 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
   const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
 
   const select = React.useCallback(
-    (card: string) => sendCommand(CMD_SELECT_CARD, { [ARG_CARD]: card }),
+    (card: string, toggle: boolean, range: boolean) =>
+      sendCommand(CMD_SELECT_CARD, { [ARG_CARD]: card, [ARG_TOGGLE]: toggle, [ARG_RANGE]: range }),
     [sendCommand],
   );
+
+  // -- A long press on a card toggles it. The event comes from the bridge's touch gesture. --
+  const rootRef = React.useRef<HTMLDivElement | null>(null);
+  React.useEffect(() => {
+    const root = rootRef.current;
+    if (!root || !multiSelect) {
+      return undefined;
+    }
+    const handleLongPress = (event: Event) => {
+      const card = (event.target as Element | null)?.closest<HTMLElement>('[data-card]');
+      const key = card?.dataset.card;
+      if (key && root.contains(card)) {
+        void select(key, true, false);
+      }
+    };
+    root.addEventListener(LONG_PRESS_EVENT, handleLongPress);
+    return () => root.removeEventListener(LONG_PRESS_EVENT, handleLongPress);
+  }, [multiSelect, select]);
 
   // -- Where an accepted drag currently hovers, or null while none does. --
   const [dropState, setDropState] = React.useState<DropState | null>(null);
@@ -136,8 +166,12 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
       event.preventDefault();
       return;
     }
-    writeDragPayload(event, { source: controlId, keys: [card.key], selection: false, type: dragType });
-  }, [controlId, dragType]);
+    // A selected card takes the other selected cards along, in display order.
+    const keys = selected.has(card.key)
+      ? columns.flatMap((column) => column.cards.map((c) => c.key).filter((key) => selected.has(key)))
+      : [card.key];
+    writeDragPayload(event, { source: controlId, keys, selection: false, type: dragType });
+  }, [controlId, dragType, columns, selected]);
 
   /**
    * The target a drag event over the given column points at, or `null` where the column accepts
@@ -262,7 +296,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
   }, []);
 
   return (
-    <div id={controlId} className={rootClassName(state, 'tlKanbanBoard', fillClass)}
+    <div id={controlId} ref={rootRef} className={rootClassName(state, 'tlKanbanBoard', fillClass)}
       onDragLeave={handleRootDragLeave}>
       {dropRefused && dropVerdict?.reason && createPortal(
         <div ref={attachDropHint} className="tlKanbanBoard__dropHint" role="status">
@@ -289,7 +323,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
               <ul className={'tlKanbanBoard__cards' + (appendLine ? ' tlKanbanBoard__cards--dropEnd' : '')}
                 role="list" aria-labelledby={headerId}>
                 {column.cards.map(card => {
-                  const isSelected = card.key === selected;
+                  const isSelected = selected.has(card.key);
                   const draggable = dragEnabled && card.draggable !== false;
                   const line = hovered !== null && !dropRefused && hovered.target === card.key
                     ? (hovered.position === 'before' ? ' tlKanbanBoard__card--dropBefore' : ' tlKanbanBoard__card--dropAfter')
@@ -302,18 +336,25 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
                       data-card={card.key}
                       draggable={draggable}
                       aria-current={isSelected ? 'true' : undefined}
+                      {...(multiSelect ? { [ATTR_LONG_PRESS]: '' } : {})}
                       className={'tlKanbanBoard__card' + (isSelected ? ' tlKanbanBoard__card--selected' : '') + line}
                       onDragStart={draggable ? (event) => handleCardDragStart(card, event) : undefined}
                       onDragEnd={draggable ? () => setDropState(null) : undefined}
+                      onMouseDown={event => {
+                        if (event.shiftKey && !isInteractiveTarget(event)) {
+                          // A Shift-click extends the selection, not a text selection.
+                          event.preventDefault();
+                        }
+                      }}
                       onClick={event => {
                         if (!isInteractiveTarget(event)) {
-                          select(card.key);
+                          select(card.key, event.ctrlKey || event.metaKey, event.shiftKey);
                         }
                       }}
                       onKeyDown={event => {
                         if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
                           event.preventDefault();
-                          select(card.key);
+                          select(card.key, event.ctrlKey || event.metaKey, event.shiftKey);
                         }
                       }}
                     >

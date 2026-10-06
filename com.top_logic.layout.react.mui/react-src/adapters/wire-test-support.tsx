@@ -13,10 +13,13 @@ import {
   useTLState, register,
 } from 'tl-react-bridge';
 import type { TLCellProps, FieldLabel, FormLayout, ButtonDefaultsValue, ChildControlJson } from 'tl-react-bridge';
-import MuiRoot from '../MuiRoot';
+import { createMuiRoot, createPageThemes } from '../MuiRoot';
 
 /** The macrotask queue of Node, which the tests run in (no Node typings in this module). */
 declare function setImmediate(callback: () => void): unknown;
+
+/** The root wrapper the adapters are mounted below: the one of the MUI default theme. */
+const MuiRoot = createMuiRoot(createPageThemes({}));
 
 /** The ID of the control under test. */
 export const CONTROL_ID = 'c1';

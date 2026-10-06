@@ -1,6 +1,6 @@
-// The MUI theme of the customer: the single source of the look of the UI. The MUI components render
-// with it unchanged (MuiRoot), and the TopLogic components follow it through the styling properties
-// derived from it (themeProperties.ts). A customer project replaces this module with its own theme.
+// The MUI theme of the application: the single source of the look of the UI. installMui() of
+// tl-react-mui renders the MUI components with it unchanged, and the TopLogic components follow it
+// through the styling properties derived from it.
 //
 // The theme of this demo is the theme of the "Onepirate" template of Material UI, ported to
 // MUI 9 `createTheme` options:
@@ -13,9 +13,11 @@
 // `typography.fontHeader`, `typography.fontFamilySecondary`); its header style is part of the
 // heading variants `h1` … `h6` here. Its fonts (Work Sans, Roboto Condensed) are bundled with the
 // module (Fontsource, SIL Open Font License 1.1) and published as its stylesheet.
+//
+// Material UI is imported from tl-react-mui, the Material UI of the page.
 
-import { green, red } from '@mui/material/colors';
-import type { ThemeOptions } from '@mui/material/styles';
+import { colors } from 'tl-react-mui';
+import type { ThemeOptions } from 'tl-react-mui';
 import '@fontsource/work-sans/latin-300.css';
 import '@fontsource/work-sans/latin-400.css';
 import '@fontsource/work-sans/latin-700.css';
@@ -69,12 +71,12 @@ const customerTheme: ThemeOptions = {
       dark: '#ffb25e',
     },
     error: {
-      main: red[500],
-      dark: red[700],
+      main: colors.red[500],
+      dark: colors.red[700],
     },
     success: {
-      main: green[500],
-      dark: green[700],
+      main: colors.green[500],
+      dark: colors.green[700],
     },
     background: {
       default: '#fff',

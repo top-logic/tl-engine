@@ -6,7 +6,7 @@
 			<instance class="com.top_logic.layout.react.resource.ClientResources">
 				<resources>
 					<module-script name="tl-demo-react-mui"
-						requires="tl-react-bridge"
+						requires="tl-react-mui"
 						resource="/script/tl-demo-react-mui.js"
 					/>
 					<stylesheet name="tl-demo-react-mui-css"

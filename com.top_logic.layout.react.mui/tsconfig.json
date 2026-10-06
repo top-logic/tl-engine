@@ -13,8 +13,7 @@
     "isolatedModules": true,
     "outDir": "dist",
     "paths": {
-      "tl-react-bridge": ["../com.top_logic.layout.react/react-src/bridge-entry.ts"],
-      "tl-react-mui": ["../com.top_logic.layout.react.mui/react-src/mui-entry.ts"]
+      "tl-react-bridge": ["../com.top_logic.layout.react/react-src/bridge-entry.ts"]
     }
   },
   "include": ["react-src"]

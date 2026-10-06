@@ -134,7 +134,7 @@ The three shim files:
 Libraries import React as a namespace (`import * as React from 'react'`) and read its API from it,
 some of it under a computed name (emotion looks up `useInsertionEffect` that way). Name the
 complete public API of React, not only the hooks the library is seen to use (see
-`com.top_logic.demo.react.mui/react-src/react-shim.ts`):
+`com.top_logic.layout.react.mui/react-src/react-shim.ts`):
 
 ```typescript
 import { React } from 'tl-react-bridge';

@@ -2,14 +2,35 @@
 
 import { describe, it, expect, afterEach } from 'vitest';
 import { createTheme } from '@mui/material/styles';
-import customerTheme from './customerTheme';
+import type { ThemeOptions } from '@mui/material/styles';
+import { red } from '@mui/material/colors';
 import {
   COLOR_SCHEME, DS, STYLE_ELEMENT_ID, THEME, installThemeProperties, statusRole, themeProperties, themeStylesheet,
 } from './themeProperties';
 
 const DEFAULT_THEME = createTheme({ cssVariables: true });
 
-const CUSTOMER_THEME = createTheme({ ...customerTheme, cssVariables: true });
+/**
+ * The options of an application theme: a palette and fonts of its own, the typography computed from
+ * the palette.
+ */
+const CUSTOMER_THEME_OPTIONS: ThemeOptions = {
+  palette: {
+    primary: { light: '#69696a', main: '#28282a', dark: '#1e1e1f' },
+    warning: { main: '#ffc071', dark: '#ffb25e' },
+    error: { main: red[500], dark: red[700] },
+    background: { default: '#fff' },
+  },
+  typography: palette => ({
+    fontFamily: "'Work Sans', sans-serif",
+    fontSize: 14,
+    h6: { fontFamily: "'Roboto Condensed', sans-serif", color: palette.text.primary, fontSize: 18 },
+    body1: { fontSize: 16, lineHeight: 1.43 },
+    body2: { fontSize: 14, lineHeight: 1.5 },
+  }),
+};
+
+const CUSTOMER_THEME = createTheme({ ...CUSTOMER_THEME_OPTIONS, cssVariables: true });
 
 const TWO_SCHEME_THEME = createTheme({ cssVariables: true, colorSchemes: { light: true, dark: true } });
 

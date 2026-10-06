@@ -6,9 +6,10 @@ no data. This article describes how to attach it so that the applications built 
 (`.view.xml`) appear in the customer's design — and which extension points of `tl-react-bridge` serve
 that purpose.
 
-A runnable reference is the Material UI module `com.top_logic.demo.react.mui`, which renders
-every replaceable component with Material UI (see [The Material UI module](#the-material-ui-module)).
-The excerpts below are taken from it.
+A runnable reference is the Material UI module `com.top_logic.layout.react.mui`, which renders
+every replaceable component with Material UI, and the demo project `com.top_logic.demo.react.mui`,
+which installs it with a theme of its own the way an application does (see
+[The Material UI module](#the-material-ui-module)). The excerpts below are taken from them.
 
 ## Principle
 
@@ -77,50 +78,57 @@ callbacks to TopLogic commands.
 
 The adapter module is a React module as described in [new-react-module.md](new-react-module.md)
 (`package.json`, `tsconfig.json`, `vite.config.ts`, `pom.xml` with the `frontend-maven-plugin`). Its
-bundle and its stylesheet are announced as client resources in a configuration file listed in
-`WEB-INF/conf/metaConf.txt` (`src/main/webapp/WEB-INF/conf/tl-demo-react-mui.conf.config.xml`):
+bundle is announced as a client resource in a configuration file listed in
+`WEB-INF/conf/metaConf.txt` (`com.top_logic.layout.react.mui/src/main/webapp/WEB-INF/conf/tl-layout-react-mui.conf.config.xml`):
 
 ```xml
 <config service-class="com.top_logic.layout.react.resource.ClientResources">
 	<instance class="com.top_logic.layout.react.resource.ClientResources">
 		<resources>
-			<module-script name="tl-demo-react-mui"
+			<module-script name="tl-react-mui"
 				requires="tl-react-bridge"
-				resource="/script/tl-demo-react-mui.js"
-			/>
-			<stylesheet name="tl-demo-react-mui-css"
-				resource="/script/tl-demo-react-mui.css"
+				resource="/script/tl-react-mui.js"
+				specifier="tl-react-mui"
 			/>
 		</resources>
 	</instance>
 </config>
 ```
 
-Both files are written by the vite build (`build.lib` with `fileName` and `cssFileName`, `outDir`
-`src/main/webapp/script`); the stylesheet carries what the bundle imports as CSS — for Material UI,
-whose styles are CSS-in-JS, the fonts of the customer theme.
+The `specifier` puts the bundle into the import map of the page, so that the module of the
+application imports it by name (`import { installMui } from 'tl-react-mui'`); the page loads it once,
+under the URL of the script tag. The file is written by the vite build (`build.lib` with `fileName`,
+`outDir` `src/main/webapp/script`). A bundle that imports CSS gets a stylesheet as well
+(`cssFileName`), announced as a `<stylesheet>` — for Material UI, whose styles are CSS-in-JS, only the
+application's fonts, which its own module brings.
 
 The module needs no Java code; a `web-fragment.xml` in `src/main/java/META-INF/` makes its webapp
 resources part of the application.
 
-### The entry file: root wrappers and replacements
+### Installation: root wrappers and replacements
 
-The bundle's entry file registers everything when it loads
-(`com.top_logic.demo.react.mui/react-src/mui-entry.ts`, shortened):
+The adapter module registers its root wrapper and its replacements in one call, which the
+application makes with its theme before the controls of the page are mounted
+(`com.top_logic.layout.react.mui/react-src/install.ts`, shortened):
 
 ```ts
 import { registerRootWrapper, replace } from 'tl-react-bridge';
-import MuiRoot, { pageTheme } from './MuiRoot';
-import { installThemeProperties } from './themeProperties';
-import MuiButtonAdapter from './adapters/MuiButtonAdapter';
-import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
-// ... one import per adapter
 
-installThemeProperties(pageTheme());
-registerRootWrapper(MuiRoot);
-replace('TLButton', MuiButtonAdapter);
-replace('TLCheckbox', MuiCheckboxAdapter);
-// ... one replace per component of the state contract
+const ADAPTERS = {
+  TLButton: MuiButtonAdapter,
+  TLCheckbox: MuiCheckboxAdapter,
+  // ... one adapter per component of the state contract
+} as const satisfies Record<string, React.ComponentType<TLCellProps>>;
+
+export function installMui(options: MuiOptions): void {
+  // ... checks: installed once, known component names
+  const themes = createPageThemes(options.theme);
+  installThemeProperties(pageTheme(themes));
+  registerRootWrapper(createMuiRoot(themes));
+  for (const name of names) {         // the selection of options.replace
+    replace(name, ADAPTERS[name]);
+  }
+}
 ```
 
 The root wrapper puts the library's providers above every React root and renders no element of its
@@ -129,17 +137,18 @@ own (`react-src/MuiRoot.tsx`, shortened):
 ```tsx
 const muiCache = createCache({ key: 'mui', container: document.head, prepend: false });
 
-export default function MuiRoot({ children }: { children?: React.ReactNode }) {
-  const locale = pageLocale();
-  return (
-    <CacheProvider value={muiCache}>
-      <ThemeProvider theme={pageTheme()}>
-        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={locale}>
-          {children}
-        </LocalizationProvider>
-      </ThemeProvider>
-    </CacheProvider>
-  );
+export function createMuiRoot(themes: PageThemes) {
+  return function MuiRoot({ children }: { children?: React.ReactNode }) {
+    return (
+      <CacheProvider value={muiCache}>
+        <ThemeProvider theme={pageTheme(themes)}>
+          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={pageLocale(themes)}>
+            {children}
+          </LocalizationProvider>
+        </ThemeProvider>
+      </CacheProvider>
+    );
+  };
 }
 ```
 
@@ -318,7 +327,7 @@ it generic and parameterized by configuration, not tailored to one view.
 - **One React instance.** The library is bundled against the React of `tl-react-bridge`:
   `vite.config.ts` aliases `react`, `react-dom` and `react/jsx-runtime` to shims that re-export from
   `tl-react-bridge` (matching the bare specifiers exactly), and `tl-react-bridge` is `external`. See
-  `com.top_logic.demo.react.mui/vite.config.ts` and `react-src/react-*-shim.ts`, or the same
+  `com.top_logic.layout.react.mui/vite.config.ts` and `react-src/react-*-shim.ts`, or the same
   setup in `com.top_logic.layout.react.wysiwyg` and `com.top_logic.layout.react.chartjs`. The
   library's React peer version must match the bridge's (`react` in
   `com.top_logic.layout.react/package.json`). The `react/jsx-runtime` shim re-exports the automatic
@@ -326,7 +335,7 @@ it generic and parameterized by configuration, not tailored to one view.
   the prebuilt code of a library calls; `React.createElement` is no substitute, since it reads the
   key argument of `jsx(type, props, key)` as children. The `react` and `react-dom` shims name the
   complete public API of React and react-dom, since a library reads it from a namespace import,
-  partly under computed names (see `com.top_logic.demo.react.mui/react-src/react-shim.ts` and
+  partly under computed names (see `com.top_logic.layout.react.mui/react-src/react-shim.ts` and
   [new-react-module.md](new-react-module.md)).
 - **Controlled components only.** The state belongs to the server. A component that keeps state of
   its own (an uncontrolled input, a self-managed open or selected flag) is used in its controlled mode
@@ -398,30 +407,32 @@ as a map and sends patches of it.
 
 ## The Material UI module
 
-`com.top_logic.demo.react.mui` (artifact `tl-demo-react-mui`) renders every replaceable component
+`com.top_logic.layout.react.mui` (artifact `tl-layout-react-mui`) renders every replaceable component
 with [Material UI](https://mui.com/) — a complete adapter module for a real component library. It
 uses only MIT-licensed packages: `@mui/material`, `@mui/x-date-pickers`, `@emotion/*` and `dayjs`.
+An application that wants the Material UI look depends on it and installs it with its own theme
+(see [An application on Material UI](#an-application-on-material-ui)).
 
 | Path | Content |
 |---|---|
-| `react-src/customerTheme.ts` | the customer's MUI theme (`createTheme` options) and its fonts; in the demo the theme of MUI's "Onepirate" template |
+| `react-src/mui-entry.ts` | the entry of the bundle `tl-react-mui`: `installMui` and the re-exports of Material UI |
+| `react-src/install.ts` | `installMui`: theme, derived properties, root wrapper, the selected replacements |
 | `react-src/themeProperties.ts` | derives the styling properties of the TopLogic components from the MUI theme and writes them into the page |
 | `react-src/MuiRoot.tsx` | the root wrapper: emotion cache, MUI theme and date localization |
 | `react-src/adapters/` | one adapter per component of the state contract, each with a wire test (`*.test.tsx`); the shared parts are `field.tsx` (field state, typing fields), `choice.tsx` (selection fields) and `window-frame.ts` (moving and resizing a window) |
-| `react-src/mui-entry.ts` | root wrapper and replacements |
 | `react-src/react-*-shim.ts` | the shims the aliases of `vite.config.ts` point to; `react-shim.ts` and `react-dom-shim.ts` name the complete public API, as prebuilt library code needs |
-| `src/main/webapp/WEB-INF/conf/tl-demo-react-mui.conf.config.xml` | `ClientResources` registration of the bundle and its stylesheet |
+| `src/main/webapp/WEB-INF/conf/tl-layout-react-mui.conf.config.xml` | `ClientResources` registration of the bundle under the import specifier `tl-react-mui` |
 
-How it is attached:
+Loading the bundle changes nothing on the page; `installMui` does. How it attaches Material UI:
 
 - **Root wrapper.** `MuiRoot` nests an emotion `CacheProvider`, a `ThemeProvider` and the
   `LocalizationProvider` of the date pickers. It renders no element of its own, since it sits above
   every React root and an element there would break the fill layout. For the same reason there is
   no `ScopedCssBaseline`, and no global `CssBaseline`, whose reset would collide with the TopLogic
   stylesheets. The emotion cache appends its styles to the end of `<head>`, after the TopLogic
-  stylesheets, so MUI wins on its own elements. The theme is the customer's theme of
-  `customerTheme.ts`, unchanged (with CSS variables), in the language of the page (`<html lang>`,
-  German or English).
+  stylesheets, so MUI wins on its own elements. The theme is the application's theme passed to
+  `installMui`, unchanged (with CSS variables), in the language of the page (`<html lang>`, German or
+  English).
 - **Overlays.** Windows and dialogs keep the TopLogic window manager: MUI supplies the look
   (`Paper`, `DialogTitle`, `DialogContent`, `DialogActions`), while positioning, moving and
   resizing, the focus trap, Escape and the stacking stay with TopLogic. MUI's `Modal` is not used,
@@ -432,19 +443,116 @@ How it is attached:
   and apply `menuItemProps` inside a menu, so they behave like the TopLogic components in forms,
   toolbars, menus, app bars and windows.
 
-`tl-demo-react` includes it with the Maven profile `mui` (off by default):
+The wire tests and the tests of `installMui` run with vitest (`npm test` in the module directory).
+
+### An application on Material UI
+
+An application brings its MUI theme in a React module of its own that depends on
+`tl-layout-react-mui`. `com.top_logic.demo.react.mui` (artifact `tl-demo-react-mui`) is such a
+module, in exactly the shape of a customer project:
+
+| Path | Content |
+|---|---|
+| `react-src/customerTheme.ts` | the application's MUI theme (`createTheme` options; here the theme of MUI's "Onepirate" template) and its fonts (Fontsource packages) |
+| `react-src/demo-mui-entry.ts` | `installMui({ theme: customerTheme, replace: 'all' })` |
+| `vite.config.ts` | library build; `tl-react-bridge` and `tl-react-mui` external, Material UI resolved to `tl-react-mui` |
+| `tsconfig.json` | `paths` for the types of `tl-react-bridge` and `tl-react-mui` |
+| `src/main/webapp/WEB-INF/conf/tl-demo-react-mui.conf.config.xml` | the bundle (`requires="tl-react-mui"`) and its stylesheet (the fonts) |
+
+The module needs neither React shims nor Material UI packages of its own: its bundle holds the theme
+and the fonts only (the JavaScript is under 2 kB).
+
+The entry calls `installMui` once, when the bundle loads:
+
+```ts
+import { installMui } from 'tl-react-mui';
+import customerTheme from './customerTheme';
+
+installMui({ theme: customerTheme, replace: 'all' });
+```
+
+`installMui(options: MuiOptions): void` takes
+
+- `theme: ThemeOptions` — the options of the application's theme, as `createTheme` takes them,
+  functions included (e.g. a `typography` computed from the palette);
+- `replace?: 'all' | readonly ComponentName[]` — the TopLogic components rendered with Material UI,
+  `'all'` (the default, `ALL_COMPONENTS`) or a selection of `COMPONENT_NAMES` (the 25 names of the
+  table [The replaceable components](#the-replaceable-components), typed as the union
+  `ComponentName`), e.g. `replace: ['TLButton', 'TLCheckbox']`. The components not selected keep
+  their TopLogic rendering and follow the theme through the derived properties.
+
+A second call fails, as does a name without adapter: the installation is made once, before the
+controls of the page are mounted, and cannot be changed afterwards.
+
+**One Material UI for the page.** The bundle `tl-react-mui` re-exports Material UI:
+`export * from '@mui/material'` (which contains `@mui/material/styles` and the `colors` namespace)
+and `export * from '@mui/x-date-pickers'`. The theme and the MUI-based controls of the application
+import Material UI from there, not from npm packages of their own:
+
+```ts
+import { colors } from 'tl-react-mui';
+import type { ThemeOptions } from 'tl-react-mui';
+```
+
+So they share one instance of Material UI with the adapters — and with it the theme, the emotion
+style cache and the date localization of the root wrapper. A control of the application written
+with MUI components (`import { Button, Stack, styled } from 'tl-react-mui'`) renders inside the root
+wrapper like the adapters do and is styled by the same theme. Emotion is not re-exported: styles
+are written with MUI's `styled`, `sx` or `css`.
+
+The vite configuration of the application's module keeps `tl-react-mui` external and resolves the
+imports of a library that uses Material UI to it — the entry points `@mui/material`,
+`@mui/material/styles` and `@mui/x-date-pickers`, whose exports `tl-react-mui` has. Every other
+import of `@mui/…` or `@emotion/…` (e.g. `@mui/material/Button`) fails the build, since it would
+bundle a second copy of Material UI with a theme and a style cache of its own
+(`com.top_logic.demo.react.mui/vite.config.ts`, shortened):
+
+```ts
+const TL_REACT_MUI = 'tl-react-mui';
+const MUI_ENTRY_POINTS = ['@mui/material', '@mui/material/styles', '@mui/x-date-pickers'];
+
+function sharedMaterialUi(): Plugin {
+  return {
+    name: 'shared-material-ui',
+    enforce: 'pre',
+    resolveId(source) {
+      if (MUI_ENTRY_POINTS.includes(source)) return { id: TL_REACT_MUI, external: true };
+      if (/^@(mui|emotion)\//.test(source)) this.error(`'${source}' would bundle a second copy of Material UI`);
+      return null;
+    },
+  };
+}
+
+export default defineConfig({
+  plugins: [sharedMaterialUi()],
+  build: {
+    lib: { entry: 'react-src/demo-mui-entry.ts', fileName: () => 'tl-demo-react-mui.js',
+      cssFileName: 'tl-demo-react-mui', formats: ['es'] },
+    outDir: 'src/main/webapp/script',
+    emptyOutDir: false,
+    rollupOptions: { external: ['tl-react-bridge', TL_REACT_MUI] },
+  },
+});
+```
+
+A module with React code of its own (an MUI-based control) also needs the React shims of
+[new-react-module.md](new-react-module.md).
+
+The re-export makes the bundle contain all of Material UI, not only the components the adapters use:
+about 1.23 MB (gzip about 306 kB) instead of about 0.98 MB (gzip about 251 kB) with the adapters alone. The difference is what
+lets an application use any MUI component without a second copy.
+
+`tl-demo-react` includes the demo module with the Maven profile `mui` (off by default):
 
 ```bash
-mvn -B install -pl com.top_logic.demo.react.mui,com.top_logic.demo.react -P mui
+mvn -B install -pl com.top_logic.layout.react.mui,com.top_logic.demo.react.mui,com.top_logic.demo.react -P mui
 MAVEN_ARGS=-Pmui   # start the app with the same profile, see demo-apps.md
 ```
 
-The wire tests run with vitest (`npm test` in the module directory).
-
 ### Following the MUI theme
 
-The customer's MUI theme is the single source of the look. The MUI components render with it
-unchanged; the TopLogic components the module does not replace — tables, trees, panels, the
+The application's MUI theme is the single source of the look. The MUI components render with it
+unchanged; the TopLogic components that are not replaced — tables, trees, panels, the
 sidebar, toolbars, layouts — follow it through their styling properties:
 
 - `themeProperties(theme)` computes, for each color scheme of the theme, values for the roles of
@@ -453,7 +561,7 @@ sidebar, toolbars, layouts — follow it through their styling properties:
   components. Only properties that exist are set; aliases (`<ref>` tokens) follow the token they
   name.
 - `installThemeProperties(theme)` writes them as one `<style id="tl-mui-theme-properties">` to the
-  end of `<head>` when the bundle loads, after the TopLogic stylesheets and the theme styles of
+  end of `<head>` when `installMui` runs, after the TopLogic stylesheets and the theme styles of
   the page, with the same specificity, so it wins. No build step and no theme of the
   `UIThemeService` is involved.
 - A theme with a light and a dark scheme sets each for its mode of the design system
@@ -488,6 +596,6 @@ Some values of the TopLogic stylesheets are literal and reach no property, so th
 are: the row height of the table (the state `rowHeight` of the server, 36px, which its scrolling
 computes with) and its header and bar heights (`2.5rem`, `2rem`), the row height and font size of
 the tree (`32px`, `14px`). The spacing scale (`--spacing-0…`, `--tl-space-…`) is not mapped: it
-stays the TopLogic one. A customer project replaces
-`customerTheme.ts` with its own theme and picks the replaced components with the `replace` calls of
-`mui-entry.ts`; everything not replaced follows the theme through the derived properties.
+stays the TopLogic one. An application passes its own theme to `installMui` and picks the
+replaced components with its `replace` option; everything not replaced follows the theme through
+the derived properties.

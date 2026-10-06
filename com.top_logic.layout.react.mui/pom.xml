@@ -9,15 +9,15 @@
     <version>8.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>tl-demo-react-mui</artifactId>
+  <artifactId>tl-layout-react-mui</artifactId>
   <name>${project.artifactId}</name>
-  <description>Material UI look of the React demo, built like a customer project: the MUI theme of the application with its fonts, installed with tl-layout-react-mui.</description>
+  <description>Renders the TopLogic React UI with Material UI: adapters around MUI components for the replaceable TopLogic components, the providers Material UI needs above every React root, and the styling properties of the TopLogic components derived from the MUI theme. Publishes Material UI under the import specifier tl-react-mui, for the theme and the controls of an application.</description>
   <url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-react-mui</artifactId>
+      <artifactId>tl-layout-react</artifactId>
     </dependency>
   </dependencies>
 

@@ -1,37 +1,54 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
+import type { Plugin } from 'vite';
+
+/** The import specifier of Material UI on the page: the bundle of tl-layout-react-mui. */
+const TL_REACT_MUI = 'tl-react-mui';
+
+/** The entry points of Material UI whose exports tl-react-mui re-exports. */
+const MUI_ENTRY_POINTS = ['@mui/material', '@mui/material/styles', '@mui/x-date-pickers'];
+
+/** The packages of Material UI and its style engine, which must not be bundled a second time. */
+const MUI_PACKAGES = /^@(mui|emotion)\//;
+
+/**
+ * Resolves the imports of Material UI to tl-react-mui, the Material UI of the page.
+ *
+ * <p>The code of the module imports Material UI from tl-react-mui. A library that imports one of
+ * {@link MUI_ENTRY_POINTS} gets tl-react-mui as well. Every other import of Material UI or emotion
+ * fails the build: it would bundle a second copy of Material UI, with a theme and a style cache of
+ * its own.</p>
+ */
+function sharedMaterialUi(): Plugin {
+  return {
+    name: 'shared-material-ui',
+    enforce: 'pre',
+    resolveId(source) {
+      if (MUI_ENTRY_POINTS.includes(source)) {
+        return { id: TL_REACT_MUI, external: true };
+      }
+      if (MUI_PACKAGES.test(source)) {
+        this.error(`'${source}' would bundle a second copy of Material UI; import it from '${TL_REACT_MUI}'.`);
+      }
+      return null;
+    },
+  };
+}
 
 export default defineConfig({
-  plugins: [react({ jsxRuntime: 'classic' })],
-  define: {
-    'process.env.NODE_ENV': JSON.stringify('production'),
-  },
-  resolve: {
-    alias: [
-      // Material UI and emotion import React from 'react' like any third-party library. These shims
-      // redirect those imports to tl-react-bridge, so the libraries render with the shared React
-      // instance instead of a bundled copy of their own. The patterns match the bare specifiers
-      // exactly; any other React entry point would resolve to a bundled copy, which the build
-      // check against React's internals in the bundle reveals.
-      { find: /^react\/jsx-runtime$/, replacement: path.resolve(__dirname, 'react-src/react-jsx-runtime-shim.ts') },
-      { find: /^react-dom$/, replacement: path.resolve(__dirname, 'react-src/react-dom-shim.ts') },
-      { find: /^react$/, replacement: path.resolve(__dirname, 'react-src/react-shim.ts') },
-    ],
-  },
+  plugins: [sharedMaterialUi()],
   build: {
     lib: {
-      entry: 'react-src/mui-entry.ts',
+      entry: 'react-src/demo-mui-entry.ts',
       fileName: () => 'tl-demo-react-mui.js',
-      // The stylesheet of the bundle: the fonts of the customer theme, embedded (library mode
-      // inlines the assets the stylesheet references).
+      // The stylesheet of the bundle: the fonts of the theme, embedded (library mode inlines the
+      // assets the stylesheet references).
       cssFileName: 'tl-demo-react-mui',
       formats: ['es'],
     },
     outDir: 'src/main/webapp/script',
     emptyOutDir: false,
     rollupOptions: {
-      external: ['tl-react-bridge'],
+      external: ['tl-react-bridge', TL_REACT_MUI],
     },
   },
 });

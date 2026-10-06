@@ -54,6 +54,8 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
+import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.model.search.rules.PathByExpression;
 import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.ContainerRelation;
 import com.top_logic.model.util.TLModelUtil;
@@ -709,12 +711,17 @@ public class SecurityCoverageTable implements UIElement {
 
 	/**
 	 * The given navigation step: the qualified name of the reference it navigates, marked with
-	 * {@link #INVERSE_MARKER} when it is navigated backwards.
+	 * {@link #INVERSE_MARKER} when it is navigated backwards, or the script computing it, as it is
+	 * written in the configuration and shown for a script access parent.
 	 */
 	private static String step(PathElement element) {
 		if (element instanceof PathNavigation navigation) {
 			String reference = TLModelUtil.qualifiedName(navigation.getReference());
 			return navigation.isInverse() ? INVERSE_MARKER + reference : reference;
+		}
+		if (element instanceof PathByExpression script) {
+			// The tooltip text is HTML and shows the compiled expression, not what was written.
+			return ExprFormat.INSTANCE.getSpecification(script.getConfig().getExpression());
 		}
 		StringBuilder buffer = new StringBuilder();
 		try {

@@ -192,16 +192,19 @@ button.tlCounter__button:focus {
      - The explicit <inset> element (.tlInset) is dropped into a view
        wherever content would otherwise glue to the border (e.g. a form in a
        tab or dialog, a stack/grid of cards, or explanatory text in a dialog).
+     - A <panel> whose body flows sets with-inset="true", which wraps the body
+       in the same .tlInset.
      - A form grid (.tl-form-layout) is a plain layout and does not pad itself.
        A form that needs room sets with-inset="true", which wraps it in the same
-       .tlInset, or sits in an <inset>.
+       .tlInset, or sits in an inset panel or an <inset>.
      - The dashboard layout pads itself (its outer inset == its tile gap).
-     - A card sets a reduced --page-inset, which every inset inside it picks up.
+     - A card sets a reduced --page-inset, which every inset inside it picks up;
+       a panel sets it to the horizontal padding of its header.
 
    Simple layouts (<stack>, <grid>) and chrome containers (sidebar content, tab
    content, split panes, panel body, dialog body) do NOT pad. A <panel> (dark
-   toolbar) flushes; a <card> (rounded border) must live inside a dashboard or a
-   <padding> so its border has room. No enforcement - build views per the
+   toolbar) flushes unless it sets with-inset; a <card> (rounded border) must live
+   inside a dashboard or an inset so its border has room. No enforcement - build views per the
    documented convention.
    =========================================================================== */
 
@@ -963,8 +966,11 @@ div.tlValueList {
 
 /* --- TLPanel ----------------------------------------------------------- */
 
+/* An inset inside a panel keeps the distance the header keeps from the panel edge, so the content
+   starts where the title starts. */
 .tlPanel {
 	font-family: var(--font-family);
+	--page-inset: var(--spacing-03);
 }
 
 .tlPanel__header {

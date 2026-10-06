@@ -44,7 +44,7 @@ import com.top_logic.layout.view.form.FormModel;
  *
  * <p>
  * Like a form, the grid reaches up to the border of its container unless it sets
- * {@link FormLayoutOptions#getInset()}. A grid inside a form usually does not: the form or the
+ * {@link InsetOptions#getInset()}. A grid inside a form usually does not: the form or the
  * panel around it keeps the distance.
  * </p>
  *
@@ -105,6 +105,6 @@ public class FieldsElement extends ContainerElement {
 			FormLayoutEditModeBinding.bind(result, form);
 		}
 		result.setCssClass(_cssClass);
-		return FormLayoutOptions.insetIfRequested(context, _config, result);
+		return InsetOptions.insetIfRequested(context, _config, result);
 	}
 }

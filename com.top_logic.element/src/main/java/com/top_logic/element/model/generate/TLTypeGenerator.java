@@ -84,7 +84,8 @@ public abstract class TLTypeGenerator extends TLModelGenerator {
 	 * type.
 	 */
 	protected boolean isReadOnly(TLStructuredTypePart part) {
-		return TLModelUtil.isDerived(part);
+		// No setter for an abstract attribute: It has no values of its own.
+		return part.isAbstract() || TLModelUtil.isDerived(part);
 	}
 
 }

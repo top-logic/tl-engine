@@ -80,9 +80,9 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 	 * <p>
 	 * A role rule navigating a part must be invalidated when the value of the part changes. This is
 	 * not possible for a derived (computed) part, because it does not fire change notifications.
-	 * An abstract part is derived, too (see {@link TLStructuredTypePart#isDerived()}), but has no
-	 * values of its own: Its values are those of its concrete overrides. Therefore, the part is
-	 * navigable, if neither the part itself nor any of its overrides is a concrete derived part.
+	 * An abstract part has no values of its own: Its values are those of its concrete overrides.
+	 * Therefore, the part is navigable, if neither the part itself nor any of its overrides is a
+	 * concrete derived part.
 	 * </p>
 	 *
 	 * @see #untrackableParts(TLStructuredTypePart)

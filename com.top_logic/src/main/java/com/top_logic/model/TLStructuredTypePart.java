@@ -118,6 +118,15 @@ public interface TLStructuredTypePart extends DerivedTLTypePart, TLStructuredTyp
 	 */
 	StorageDetail getStorageImplementation();
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Must not be called for an {@link #isAbstract() abstract} part: An abstract part has no values
+	 * of its own, whether its values are derived is decided by its concrete overrides. Use
+	 * {@link #isComputed()} where the part may be abstract.
+	 * </p>
+	 */
 	@Override
 	default boolean isDerived() {
 		StorageDetail storage = getStorageImplementation();
@@ -126,6 +135,18 @@ public interface TLStructuredTypePart extends DerivedTLTypePart, TLStructuredTyp
 			return false;
 		}
 		return storage.isReadOnly();
+	}
+
+	/**
+	 * Whether this part computes its values.
+	 *
+	 * <p>
+	 * In contrast to {@link #isDerived()}, this method can be called for an {@link #isAbstract()
+	 * abstract} part. An abstract part is not computed, since it has no values of its own.
+	 * </p>
+	 */
+	default boolean isComputed() {
+		return !isAbstract() && isDerived();
 	}
 
 	@Override

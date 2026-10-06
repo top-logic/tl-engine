@@ -581,7 +581,7 @@ public class MetaElementUtil {
 			includeSuperMetaElements,
 			includeSubMetaElements)) {
 			// some special handling for calculated meta attribute here necessary
-			if (LegacyTypeCodes.TYPE_CALCULATED == aMetaAttributeType && AttributeOperations.isReadOnly(theAttCheck)) {
+			if (LegacyTypeCodes.TYPE_CALCULATED == aMetaAttributeType && TLModelUtil.isDerived(theAttCheck)) {
 				theAttList.add(theAttCheck);
 			} else if (AttributeOperations.getMetaAttributeType(theAttCheck) == aMetaAttributeType) {
 				theAttList.add(theAttCheck);

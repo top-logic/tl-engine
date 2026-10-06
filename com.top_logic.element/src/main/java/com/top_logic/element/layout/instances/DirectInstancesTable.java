@@ -15,6 +15,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.knowledge.wrap.WrapperAccessor;
 import com.top_logic.layout.ReadOnlyAccessor;
 import com.top_logic.layout.table.control.TableControl;
@@ -29,7 +30,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
-import com.top_logic.model.util.TLModelUtil;
 
 /**
  * {@link TableConfigurationProvider} that configures a table with it's surrounding component's
@@ -141,7 +141,7 @@ public class DirectInstancesTable<C extends DirectInstancesTable.Config<?>> exte
 	 * instance.
 	 */
 	private static boolean isMandatoryInCreate(TLStructuredTypePart attribute) {
-		return DisplayAnnotations.isMandatoryInCreate(attribute) && !TLModelUtil.isDerived(attribute);
+		return DisplayAnnotations.isMandatoryInCreate(attribute) && !AttributeOperations.isReadOnly(attribute);
 	}
 
 	/**

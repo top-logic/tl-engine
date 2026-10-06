@@ -556,7 +556,7 @@
 								<storage-algorithm>
 									<derived-storage>
 										<expression-evaluation>
-											<method-call method="com.top_logic.model.DerivedTLTypePart#isDerived()"/>
+											<method-call method="com.top_logic.model.TLStructuredTypePart#isComputed()"/>
 										</expression-evaluation>
 									</derived-storage>
 								</storage-algorithm>

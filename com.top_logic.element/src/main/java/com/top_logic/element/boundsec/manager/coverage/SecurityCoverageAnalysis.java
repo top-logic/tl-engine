@@ -377,6 +377,10 @@ public class SecurityCoverageAnalysis {
 				if (!(part instanceof TLReference reference) || !reference.isComposite()) {
 					continue;
 				}
+				if (reference.isAbstract()) {
+					// An abstract reference holds no values, its concrete overrides do.
+					continue;
+				}
 				TLStructuredTypePart definition = reference.getDefinition();
 				TLReference clash = byDefinition.get(definition);
 				if (clash == null || (clash.isDerived() && !reference.isDerived())) {

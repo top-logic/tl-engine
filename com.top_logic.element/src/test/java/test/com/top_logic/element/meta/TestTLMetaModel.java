@@ -216,7 +216,7 @@ public class TestTLMetaModel extends TestWithModelExtension {
 	}
 
 	private void testDerivedTypePart(DerivedTLTypePart derivedPart) {
-		assertEquals("Derived info mismatch: " + TLModelUtil.qualifiedName(derivedPart), derivedPart.isDerived(),
+		assertEquals("Derived info mismatch: " + TLModelUtil.qualifiedName(derivedPart), TLModelUtil.isDerived(derivedPart),
 			toBoolean(derivedPart.tValueByName(DerivedTLTypePart.DERIVED_ATTR)));
 	}
 

@@ -61,7 +61,7 @@ public class RemoveDerivedParts extends ModelTransformation {
 			}
 
 			private void handleDerivedTLTypePart(DerivedTLTypePart model, Collection<TLTypePart> arg) {
-				if (model.isDerived() && (! excludes.contains(model))) {
+				if (TLModelUtil.isDerived(model) && (! excludes.contains(model))) {
 					arg.add(model);
 				}
 			}

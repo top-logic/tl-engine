@@ -36,7 +36,7 @@ public interface TLAssociationEnd extends TLAssociationEndBase, TLAssociationPar
 	@Override
 	default boolean isDerived() {
 		TLReference ref = getReference();
-		return ref == null ? false : ref.isDerived();
+		return ref == null ? false : ref.isComputed();
 	}
 
 	/**

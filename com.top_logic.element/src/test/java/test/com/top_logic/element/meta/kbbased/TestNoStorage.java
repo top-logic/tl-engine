@@ -17,10 +17,11 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.model.impl.TransientTLObjectImpl;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Tests for {@link com.top_logic.element.meta.kbbased.NoStorage}.
+ * Tests for the storage of abstract attributes.
  *
  * <p>
  * Tests that abstract attributes are inaccessible on transient objects.
@@ -52,6 +53,20 @@ public class TestNoStorage extends TLModelTest {
 	}
 
 	/**
+	 * Tests that a concrete class with an abstract attribute that is not overridden cannot be
+	 * instantiated.
+	 */
+	public void testCreateObjectWithUnimplementedAbstractAttribute() {
+		TLClass baseClass = type("testNoStorage:Base");
+		try {
+			getFactory().createObject(baseClass, null, null);
+			fail("A concrete class must override all abstract attributes.");
+		} catch (TopLogicException ex) {
+			assertContains("testNoStorage:Base#abstractAttr", ex.getMessage());
+		}
+	}
+
+	/**
 	 * Tests that accessing an abstract attribute on a transient object throws a
 	 * {@link TopLogicException}.
 	 */
@@ -61,9 +76,12 @@ public class TestNoStorage extends TLModelTest {
 		assertNotNull("Abstract attribute should exist", abstractAttr);
 		assertTrue("Attribute should be abstract", abstractAttr.isAbstract());
 
-		// Create a transient object of type Base (which has the abstract attribute)
-		TLObject transientObject = getFactory().createObject(baseClass, null, null);
-		assertNotNull("Transient object should be created", transientObject);
+		// The factory refuses to create an object of a class with an unimplemented abstract
+		// attribute, see testCreateObjectWithUnimplementedAbstractAttribute(). Create the object
+		// directly to check the access to such an attribute.
+		TLObject transientObject = new TransientTLObjectImpl(baseClass, null) {
+			// Access to the protected constructor.
+		};
 
 		// Try to read the abstract attribute - should throw TopLogicException
 		try {
@@ -82,6 +100,25 @@ public class TestNoStorage extends TLModelTest {
 			// Expected - abstract attributes are inaccessible
 			assertContains("testNoStorage:Base#abstractAttr", ex.getMessage());
 		}
+	}
+
+	/**
+	 * Tests that an abstract attribute is not computed, and that asking whether it is derived
+	 * fails.
+	 */
+	public void testAbstractAttributeIsNotDerived() {
+		TLStructuredTypePart abstractAttr = type("testNoStorage:Base").getPart("abstractAttr");
+		assertFalse("An abstract attribute is not computed.", abstractAttr.isComputed());
+		try {
+			abstractAttr.isDerived();
+			fail("Whether an abstract attribute is derived is decided by its concrete overrides.");
+		} catch (UnsupportedOperationException ex) {
+			assertContains("testNoStorage:Base#abstractAttr", ex.getMessage());
+		}
+
+		TLStructuredTypePart concreteAttr = type("testNoStorage:Ext").getPart("abstractAttr");
+		assertFalse(concreteAttr.isDerived());
+		assertFalse(concreteAttr.isComputed());
 	}
 
 	/**

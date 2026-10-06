@@ -126,6 +126,10 @@ public class ModelTables {
 	}
 
 	private void analyzeTypePart(TLStructuredTypePart part) {
+		if (part.isAbstract()) {
+			// An abstract attribute has no values of its own.
+			return;
+		}
 		StorageDetail storage = part.getStorageImplementation();
 		if (storage.isReadOnly()) {
 			return;

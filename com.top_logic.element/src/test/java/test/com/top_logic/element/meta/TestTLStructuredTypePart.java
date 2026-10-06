@@ -31,7 +31,7 @@ public class TestTLStructuredTypePart extends TestWithModelExtension {
 					for (TLStructuredTypePart attribute : structuredType.getAllParts()) {
 						// Calling any of these methods on any existing instance must not throw an exception:
 						attribute.isBag();
-						attribute.isDerived();
+						attribute.isComputed();
 						attribute.isMandatory();
 						attribute.isMultiple();
 						attribute.isOrdered();

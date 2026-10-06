@@ -30,6 +30,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_CANNOT_MODIFY_DERIVED_ATTRIBUTE__ATTR;
 
 	/**
+	 * @en Cannot modify attribute ''{0}'': It is declared abstract and has no values of its own.
+	 */
+	public static ResKey1 ERROR_CANNOT_MODIFY_ABSTRACT_ATTRIBUTE__ATTR;
+
+	/**
 	 * @en The type ''{0}'' has no attribute ''{1}''.
 	 */
 	public static ResKey2 ERROR_HAS_NO_PART__TYPE_PART;

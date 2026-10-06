@@ -30,7 +30,8 @@ public enum Visibility implements ExternallyNamed {
 	DEFAULT("default") {
 		@Override
 		public boolean isEditable(TLStructuredTypePart attribute) {
-			return !attribute.isDerived();
+			// An abstract attribute has no values of its own that could be edited.
+			return !attribute.isAbstract() && !attribute.isDerived();
 		}
 
 		@Override

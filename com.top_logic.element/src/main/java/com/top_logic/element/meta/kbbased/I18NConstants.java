@@ -51,6 +51,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_ABSTRACT_ATTRIBUTE_ACCESS__ATTR;
 
+	/**
+	 * @en Attribute ''{0}'' is declared abstract and has no values of its own. Only the attributes
+	 *     overriding it in concrete types hold values.
+	 */
+	public static ResKey1 ERROR_ACCESS_TO_ABSTRACT_ATTRIBUTE__ATTR;
+
     static {
         initConstants(I18NConstants.class);
     }

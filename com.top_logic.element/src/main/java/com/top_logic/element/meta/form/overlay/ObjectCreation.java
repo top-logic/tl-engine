@@ -145,6 +145,10 @@ public class ObjectCreation extends FormObjectOverlay {
 		// be a calculated value or a default-value.
 		// In case of derived attributes consider the storage-implementation to calculate the value:
 		// See com.top_logic.model.impl.TransientTLObjectImpl.directValue(TLStructuredTypePart)
+		if (part.isAbstract()) {
+			// Fails: An abstract attribute has no values of its own.
+			return part.getStorageImplementation().getAttributeValue(this, part);
+		}
 		if (part.isDerived()) {
 			if (part.getModelKind() == ModelKind.REFERENCE && ((TLReference) part).isBackwards()) {
 				// Find forwards reference.

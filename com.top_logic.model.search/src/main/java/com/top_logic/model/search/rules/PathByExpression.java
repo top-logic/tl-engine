@@ -779,7 +779,8 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 		SearchExpression search = resolve(config.getExpression());
 		_relevantParts = extractPartsAddOverrides(search);
 		for (TLStructuredTypePart part : _relevantParts) {
-			if (part.isDerived()) {
+			// An abstract attribute has no values of its own, its concrete overrides are checked.
+			if (part.isComputed()) {
 				context.error("Script-step expression navigates through derived (computed) attribute '"
 					+ TLModelUtil.qualifiedName(part)
 					+ "'. Derived attributes do not fire change notifications and cannot be tracked"
@@ -1193,8 +1194,11 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 		return TLModelCacheService.getOperations();
 	}
 
+	/**
+	 * The parts that hold stored values, i.e. that are neither abstract nor derived.
+	 */
 	private static Predicate<TLStructuredTypePart> notDerived() {
-		return Predicate.not(TLStructuredTypePart::isDerived);
+		return part -> !part.isAbstract() && !part.isDerived();
 	}
 
 	/**

@@ -184,7 +184,7 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 							+ ". Storage implementations are set on the concrete implementation.",
 					StorageImplementationFactory.class);
 			}
-			return NoStorage.INSTANCE;
+			return new AbstractAttributeStorage(part);
 		} else if (storageAnnotation == null) {
 			TLStructuredTypePart definition = part.getDefinition();
 			if (definition != part) {

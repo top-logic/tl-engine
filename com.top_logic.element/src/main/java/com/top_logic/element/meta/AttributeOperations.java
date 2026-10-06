@@ -1352,10 +1352,13 @@ public class AttributeOperations {
 	 * <li>There is no storage location for its value, because the value is computed on demand.</li>
 	 * 
 	 * <li>The value is fetched from another system, where no write-back is possible</li>.
+	 * 
+	 * <li>The attribute is {@link TLStructuredTypePart#isAbstract() abstract} and has no values of
+	 * its own.</li>
 	 * </ul>
 	 */
-	public static boolean isReadOnly(TLStructuredTypePart metaAttribute) {
-		return metaAttribute.isDerived();
+	public static boolean isReadOnly(TLStructuredTypePart part) {
+		return part.isAbstract() || part.isDerived();
 	}
 
 	/**

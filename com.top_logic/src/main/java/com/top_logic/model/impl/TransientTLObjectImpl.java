@@ -108,6 +108,10 @@ public class TransientTLObjectImpl extends TransientObject {
 		if (storageImplementation instanceof StorageWithFallback) {
 			return storageImplementation.getAttributeValue(this, resolvedPart);
 		}
+		if (resolvedPart.isAbstract()) {
+			// Fails: An abstract attribute has no values of its own.
+			return storageImplementation.getAttributeValue(this, resolvedPart);
+		}
 		if (resolvedPart.isDerived()) {
 			if (resolvedPart.getModelKind() == ModelKind.REFERENCE && ((TLReference) resolvedPart).isBackwards()) {
 				// Find forwards reference.
@@ -351,6 +355,10 @@ public class TransientTLObjectImpl extends TransientObject {
 	}
 	
 	private static void checkDerived(TLStructuredTypePart part) {
+		if (part.isAbstract()) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_CANNOT_MODIFY_ABSTRACT_ATTRIBUTE__ATTR.fill(TLModelUtil.qualifiedName(part)));
+		}
 		if (part.isDerived()) {
 			throw new TopLogicException(
 				I18NConstants.ERROR_CANNOT_MODIFY_DERIVED_ATTRIBUTE__ATTR.fill(TLModelUtil.qualifiedName(part)));

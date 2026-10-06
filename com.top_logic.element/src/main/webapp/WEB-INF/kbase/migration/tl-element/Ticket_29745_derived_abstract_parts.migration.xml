@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29745_derived_abstract_parts"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_29617_color_role"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<!-- An abstract part is not derived: Its derived flag is computed by a method that can be called for an abstract part. -->
+		<update-annotations name="tl.model:DerivedTLTypePart#derived">
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.model.TLStructuredTypePart#isComputed()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</update-annotations>
+	</processors>
+	<post-processors/>
+</migration>

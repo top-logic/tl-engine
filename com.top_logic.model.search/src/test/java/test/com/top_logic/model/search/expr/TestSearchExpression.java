@@ -1789,7 +1789,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	private void checkCopyFlat(TLObject orig, TLObject copy) {
 		for (TLStructuredTypePart part : orig.tType().getAllParts()) {
 			TLStructuredTypePart copyPart = copy.tType().getPart(part.getName());
-			if (copyPart == null || copyPart.isDerived()) {
+			if (copyPart == null || copyPart.isAbstract() || copyPart.isDerived()) {
 				continue;
 			}
 

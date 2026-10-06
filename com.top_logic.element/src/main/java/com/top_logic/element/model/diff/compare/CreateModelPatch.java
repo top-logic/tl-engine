@@ -28,6 +28,7 @@ import com.top_logic.element.config.ModuleConfig;
 import com.top_logic.element.config.PartConfig;
 import com.top_logic.element.config.SingletonConfig;
 import com.top_logic.element.config.annotation.TLSingletons;
+import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.model.diff.config.AddAnnotations;
 import com.top_logic.element.model.diff.config.AddGeneralization;
 import com.top_logic.element.model.diff.config.CreateClassifier;
@@ -670,7 +671,8 @@ public class CreateModelPatch {
 	 * </p>
 	 */
 	private boolean isCompatiblePart(TLStructuredTypePart left, TLStructuredTypePart right) {
-		return left.isDerived() == right.isDerived() && isCompatibleType(left.getType(), right.getType());
+		return AttributeOperations.isReadOnly(left) == AttributeOperations.isReadOnly(right)
+			&& isCompatibleType(left.getType(), right.getType());
 	}
 
 	/**

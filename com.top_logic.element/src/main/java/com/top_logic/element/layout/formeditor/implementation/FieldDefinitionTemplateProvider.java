@@ -334,7 +334,7 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	private static FormVisibility defaultFormVisibility(TLStructuredTypePart part) {
-		if (part.isDerived()) {
+		if (AttributeOperations.isReadOnly(part)) {
 			return FormVisibility.READ_ONLY;
 		} else if (part.isMandatory()) {
 			return FormVisibility.MANDATORY;

@@ -2688,11 +2688,16 @@ public class TLModelUtil {
 	}
 
 	/**
-	 * Checks whether the given part is a {@link DerivedTLTypePart} which is
-	 * {@link DerivedTLTypePart#isDerived() derived}.
+	 * Checks whether the given part is a {@link TLStructuredTypePart} which is
+	 * {@link TLStructuredTypePart#isComputed() computed}.
+	 * 
+	 * <p>
+	 * In contrast to {@link DerivedTLTypePart#isDerived()}, this method can be called for an
+	 * abstract part. An abstract part is not derived.
+	 * </p>
 	 */
 	public static boolean isDerived(TLModelPart part) {
-		return part instanceof DerivedTLTypePart && ((DerivedTLTypePart) part).isDerived();
+		return part instanceof TLStructuredTypePart structuredPart && structuredPart.isComputed();
 	}
 
 	/**

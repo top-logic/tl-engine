@@ -258,6 +258,7 @@
 					<declaration file="/WEB-INF/model/ticket28519.model.xml"/>
 					<declaration file="/WEB-INF/model/TestXMLInstanceImporter.model.xml"/>
 					<declaration file="/WEB-INF/model/TestSecurityCoverage.model.xml"/>
+					<declaration file="/WEB-INF/model/TestPathNavigation.model.xml"/>
 				</declarations>
 				<settings>
 					<module name="TestXMLInstanceImporter"

@@ -33,6 +33,12 @@
 					</attributes>
 				</class>
 
+				<class name="ExternalEmployee">
+					<generalizations>
+						<generalization type="Employee"/>
+					</generalizations>
+				</class>
+
 				<class name="UnsecuredData">
 					<annotations>
 						<table name="TLSecUnsecuredData"/>

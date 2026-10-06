@@ -54,6 +54,14 @@
 							<script expr="t -> $t.get(`TestTLScriptSecurity:ProjectTask#assignee`).referers(`TestTLScriptSecurity:Project#responsible`)"/>
 						</access-parent>
 					</class>
+					<class name="TestTLScriptSecurity:ExternalEmployee">
+						<!-- The create right inherited from Employee is withdrawn: nobody may create an
+							external employee, even where creating an employee is allowed. -->
+						<revoke
+							operation="Create"
+							roles="TestTLScriptSecurity.ProjectResponsible"
+						/>
+					</class>
 					<class name="TestTLScriptSecurity:UnsecuredData"
 						without-security="true"
 					>

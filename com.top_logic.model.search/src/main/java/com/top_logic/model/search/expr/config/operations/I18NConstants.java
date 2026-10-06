@@ -55,6 +55,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_EXPECTING_A_TARGET__EXPR;
 
 	/**
+	 * @en The type "{0}" is not compatible with the type "{1}" of the reference "{2}" in: {3}
+	 */
+	public static ResKey4 ERROR_INCOMPATIBLE_CREATE_TYPE__TYPE_TARGET_REF_EXPR;
+
+	/**
 	 * @en Positional arguments may occur only at the beginning of the arguments list in call to
 	 *     function "{0}".
 	 */

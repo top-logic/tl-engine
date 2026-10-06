@@ -292,6 +292,44 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 				return SCRIPT_IDENTIFIER.matcher(name).matches();
 			}
 
+			/**
+			 * A valid TL-Script variable name derived from the given parameter name.
+			 *
+			 * <p>
+			 * Each character that is not allowed in a TL-Script variable name is replaced by an
+			 * underscore, e.g. <code>X-Gitea-Event</code> results in <code>X_Gitea_Event</code>. If
+			 * the result starts with a digit, an underscore is prepended. A name that is already a
+			 * valid TL-Script variable name is returned unchanged.
+			 * </p>
+			 *
+			 * @param name
+			 *        The parameter name.
+			 * @return A valid TL-Script variable name.
+			 */
+			public static String toScriptIdentifier(String name) {
+				StringBuilder result = new StringBuilder(name.length() + 1);
+				for (int n = 0, cnt = name.length(); n < cnt; n++) {
+					char ch = name.charAt(n);
+					if (isIdentifierChar(ch)) {
+						result.append(ch);
+					} else {
+						result.append('_');
+					}
+				}
+				if (result.length() == 0 || isDigit(result.charAt(0))) {
+					result.insert(0, '_');
+				}
+				return result.toString();
+			}
+
+			private static boolean isIdentifierChar(char ch) {
+				return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || isDigit(ch) || ch == '_';
+			}
+
+			private static boolean isDigit(char ch) {
+				return ch >= '0' && ch <= '9';
+			}
+
 		}
 
 	}

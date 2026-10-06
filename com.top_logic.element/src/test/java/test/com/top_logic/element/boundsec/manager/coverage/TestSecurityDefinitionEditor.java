@@ -39,14 +39,15 @@ import com.top_logic.model.TLModule;
 import com.top_logic.model.annotate.security.AccessGrant;
 import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.annotate.security.RoleConfig;
+import com.top_logic.model.security.AccessParentConfig;
 import com.top_logic.model.security.AccessParentDefinition;
 import com.top_logic.model.security.ContainerAccessParent;
-import com.top_logic.model.security.SelfAccessParent;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLModuleAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TypeBasedAccessRights;
+import com.top_logic.model.security.SelfAccessParent;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.CommandGroupReference;
@@ -82,6 +83,12 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 
 	/** Type of {@link #INTERNAL_MODULE}. */
 	private static final String IN_INTERNAL_MODULE = INTERNAL_MODULE + ":InModule";
+
+	/** Type whose access parent the test application configures. */
+	private static final String EXPLICIT_PART = MODULE + ":ExplicitPart";
+
+	/** The composition {@link #EXPLICIT_PART} delegates to. */
+	private static final String EXPLICIT_PART_REFERENCE = MODULE + ":Covered#explicitParts";
 
 	/** Type without a role source and without a container. */
 	private static final String ORPHAN = MODULE + ":Orphan";
@@ -150,6 +157,28 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 								<module name="%s"
 									internal="true"
 								/>
+							</security-config>
+						</instance>
+					</config>
+				</services>
+			</application>
+			""";
+
+	/**
+	 * The access rights of the underlying configuration layers, a type with an access parent, in
+	 * the same shape as {@code element.test.config.xml} defines them.
+	 */
+	private static final String BASE_ACCESS_PARENT = """
+			<application>
+				<services>
+					<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+						<instance class="com.top_logic.model.security.SecurityConfigurationService">
+							<security-config>
+								<class name="%s">
+									<access-parent>
+										<container reference="%s"/>
+									</access-parent>
+								</class>
 							</security-config>
 						</instance>
 					</config>
@@ -339,6 +368,46 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		_editor.setAccessParent(contained, container(CONTAINER_REFERENCE));
 		_editor.setAccessParent(contained, null);
 		assertNull(_editor.editableAccessRights(contained).getAccessParent());
+	}
+
+	public void testMarkDropsAnInheritedAccessParent() throws Exception {
+		TLClass part = type(EXPLICIT_PART);
+		assertNotNull("The access parent of the underlying configuration is shown.",
+			_editor.editableAccessRights(part).getAccessParent());
+
+		_editor.setInternal(part, true);
+
+		TLClassAccessRights stored = _editor.editableAccessRights(part);
+		assertTrue(stored.isInternal());
+		assertTrue("Not writing the access parent would leave the one of the underlying layers in effect.",
+			stored.getAccessParent().getDefinition() instanceof SelfAccessParent.Config);
+
+		String base = BASE_ACCESS_PARENT.formatted(EXPLICIT_PART, EXPLICIT_PART_REFERENCE);
+		TLClassAccessRights merged = (TLClassAccessRights) grantsConfig(overlay(base, _editor.getGrantsFile()))
+			.getSecurityConfig().get(EXPLICIT_PART);
+		assertTrue(merged.isInternal());
+		assertFalse("The stored entry overrides the access parent of the underlying layers.",
+			AccessParentConfig.delegates(merged.getAccessParent()));
+	}
+
+	public void testRemovingAnInheritedAccessParentStoresSelf() throws Exception {
+		TLClass part = type(EXPLICIT_PART);
+		TLClassAccessRights entry = _editor.editableAccessRights(part);
+		entry.setAccessParent(null);
+		_editor.putAccessRights(entry);
+
+		assertTrue(_editor.editableAccessRights(part).getAccessParent().getDefinition() instanceof SelfAccessParent.Config);
+	}
+
+	public void testRemovingAStoredAccessParentStoresNothing() throws Exception {
+		TLClass contained = type(SINGLE_CONTAINED);
+		_editor.setAccessParent(contained, container(CONTAINER_REFERENCE));
+		TLClassAccessRights entry = _editor.editableAccessRights(contained);
+		entry.setAccessParent(null);
+		_editor.putAccessRights(entry);
+
+		assertNull("The underlying layers set none, so dropping the stored one suffices.",
+			_editor.editableAccessRights(contained).getAccessParent());
 	}
 
 	public void testSelfKeepsOwnDefinition() throws Exception {

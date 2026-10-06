@@ -323,7 +323,9 @@ when it has an access parent (whether the parent is accessible is reported with 
   of a type ("Access rights…"), the grants and marks of its module, mark a type internal or exclude
   it from access control. Every edit is written to the
   `autoconf` files; "Apply configuration" reads the files again and restarts the access services,
-  and only then does the table show the change.
+  and only then does the table show the change. An access parent the underlying configuration
+  sets is dropped - by a mark, or by removing it in the dialog - by storing `<self/>`, written with
+  `config:override="true"`, since an access parent left out would leave that one in effect.
 - An application makes the check part of its test suite with `test-security-coverage="true"` in
   the `ElementTestCollector` global test configuration; `TestSecurityCoverage` then fails on every
   incomplete type.

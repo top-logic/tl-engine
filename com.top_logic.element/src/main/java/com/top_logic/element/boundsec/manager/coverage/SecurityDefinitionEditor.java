@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
@@ -33,6 +35,7 @@ import com.top_logic.model.security.SecurityConfigurationService.ModelAccessRigh
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TLModuleAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService.TypeBasedAccessRights;
+import com.top_logic.model.security.SelfAccessParent;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.autoconf.InAppServiceConfigStore;
@@ -378,6 +381,12 @@ public class SecurityDefinitionEditor {
 	/**
 	 * Stores the given access rights entry, replacing a stored entry of the same name.
 	 *
+	 * <p>
+	 * An entry of a type without an access parent drops one an underlying configuration layer
+	 * sets: an unset access parent is not written at all and would leave that one in effect, so
+	 * the stored entry says that the type {@link SelfAccessParent decides for itself} instead.
+	 * </p>
+	 *
 	 * @param entry
 	 *        The entry to store. A copy is taken, the given configuration is left untouched.
 	 * @throws IOException
@@ -387,8 +396,40 @@ public class SecurityDefinitionEditor {
 	 */
 	public void putAccessRights(ModelAccessRights entry) throws IOException, ConfigurationException {
 		ApplicationConfig.Config appConfig = readGrantsFile();
-		grantsConfig(appConfig).getSecurityConfig().put(entry.getName(), TypedConfiguration.copy(entry));
+		Map<String, ModelAccessRights> stored = grantsConfig(appConfig).getSecurityConfig();
+		ModelAccessRights copy = TypedConfiguration.copy(entry);
+		if (copy instanceof TLClassAccessRights classCopy && classCopy.getAccessParent() == null
+			&& inheritsDelegation(stored.get(entry.getName()), effectiveAccessRights(entry.getName()))) {
+			classCopy.setAccessParent(selfAccessParent());
+		}
+		stored.put(entry.getName(), copy);
 		writeGrantsFile(appConfig);
+	}
+
+	/**
+	 * Whether the access parent in effect delegates and comes from an underlying configuration
+	 * layer, not from the stored entry.
+	 *
+	 * <p>
+	 * An access parent the stored entry sets is dropped by storing the entry without it: the
+	 * underlying layers then decide again.
+	 * </p>
+	 */
+	private static boolean inheritsDelegation(ModelAccessRights stored, ModelAccessRights effective) {
+		if (stored instanceof TLClassAccessRights storedClass && storedClass.getAccessParent() != null) {
+			return false;
+		}
+		return effective instanceof TLClassAccessRights effectiveClass
+			&& AccessParentConfig.delegates(effectiveClass.getAccessParent());
+	}
+
+	/**
+	 * A new access parent setting saying that the type decides for itself.
+	 */
+	private static AccessParentConfig selfAccessParent() {
+		AccessParentConfig result = TypedConfiguration.newConfigItem(AccessParentConfig.class);
+		result.setDefinition(TypedConfiguration.newConfigItem(SelfAccessParent.Config.class));
+		return result;
 	}
 
 	/**
@@ -536,8 +577,18 @@ public class SecurityDefinitionEditor {
 		return InAppServiceConfigStore.read(_grantsFile);
 	}
 
+	/**
+	 * Writes the given configuration to {@link #getGrantsFile()}, layered onto the underlying
+	 * configuration.
+	 *
+	 * <p>
+	 * The definition of an access parent replaces the one of the underlying layers instead of being
+	 * merged into it: a definition of another kind - <code>&lt;self/&gt;</code> over
+	 * <code>&lt;container/&gt;</code> - would otherwise be dropped silently.
+	 * </p>
+	 */
 	private void writeGrantsFile(ApplicationConfig.Config appConfig) throws IOException {
-		InAppServiceConfigStore.write(_grantsFile, appConfig, InAppServiceConfigStore.LAYER_ONTO_BASE);
+		InAppServiceConfigStore.write(_grantsFile, appConfig, Set.of(AccessParentConfig.class));
 	}
 
 	/**

@@ -81,17 +81,6 @@
   </dependencies>
 
   <profiles>
-    <!-- Renders the UI with the example customer component library (mvn -P corporate-example). -->
-    <profile>
-      <id>corporate-example</id>
-      <dependencies>
-        <dependency>
-          <groupId>com.top-logic</groupId>
-          <artifactId>tl-demo-react-corporate</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-
     <!-- Renders the UI with Material UI (mvn -P mui). -->
     <profile>
       <id>mui</id>

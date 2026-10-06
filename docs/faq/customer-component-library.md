@@ -6,8 +6,9 @@ no data. This article describes how to attach it so that the applications built 
 (`.view.xml`) appear in the customer's design — and which extension points of `tl-react-bridge` serve
 that purpose.
 
-A runnable reference is the module `com.top_logic.demo.react.corporate` (see
-[The example module](#the-example-module)).
+A runnable reference is the Material UI module `com.top_logic.demo.react.mui`, which renders
+every replaceable component with Material UI (see [The Material UI module](#the-material-ui-module)).
+The excerpts below are taken from it.
 
 ## Principle
 
@@ -76,24 +77,28 @@ callbacks to TopLogic commands.
 
 The adapter module is a React module as described in [new-react-module.md](new-react-module.md)
 (`package.json`, `tsconfig.json`, `vite.config.ts`, `pom.xml` with the `frontend-maven-plugin`). Its
-bundle and the library's stylesheet are announced as client resources in a configuration file
-listed in `WEB-INF/conf/metaConf.txt`:
+bundle and its stylesheet are announced as client resources in a configuration file listed in
+`WEB-INF/conf/metaConf.txt` (`src/main/webapp/WEB-INF/conf/tl-demo-react-mui.conf.config.xml`):
 
 ```xml
 <config service-class="com.top_logic.layout.react.resource.ClientResources">
 	<instance class="com.top_logic.layout.react.resource.ClientResources">
 		<resources>
-			<module-script name="tl-demo-react-corporate"
+			<module-script name="tl-demo-react-mui"
 				requires="tl-react-bridge"
-				resource="/script/tl-demo-react-corporate.js"
+				resource="/script/tl-demo-react-mui.js"
 			/>
-			<stylesheet name="tl-demo-react-corporate-css"
-				resource="/style/tl-demo-react-corporate.css"
+			<stylesheet name="tl-demo-react-mui-css"
+				resource="/script/tl-demo-react-mui.css"
 			/>
 		</resources>
 	</instance>
 </config>
 ```
+
+Both files are written by the vite build (`build.lib` with `fileName` and `cssFileName`, `outDir`
+`src/main/webapp/script`); the stylesheet carries what the bundle imports as CSS — for Material UI,
+whose styles are CSS-in-JS, the fonts of the customer theme.
 
 The module needs no Java code; a `web-fragment.xml` in `src/main/java/META-INF/` makes its webapp
 resources part of the application.
@@ -101,21 +106,41 @@ resources part of the application.
 ### The entry file: root wrappers and replacements
 
 The bundle's entry file registers everything when it loads
-(`com.top_logic.demo.react.corporate/react-src/corporate-entry.ts`):
+(`com.top_logic.demo.react.mui/react-src/mui-entry.ts`, shortened):
 
 ```ts
-import { React, registerRootWrapper, replace } from 'tl-react-bridge';
-import { BrandProvider } from './example-lib';
-import BrandButtonAdapter from './adapters/BrandButtonAdapter';
-import BrandCheckboxAdapter from './adapters/BrandCheckboxAdapter';
+import { registerRootWrapper, replace } from 'tl-react-bridge';
+import MuiRoot, { pageTheme } from './MuiRoot';
+import { installThemeProperties } from './themeProperties';
+import MuiButtonAdapter from './adapters/MuiButtonAdapter';
+import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
+// ... one import per adapter
 
-function AcmeBrand({ children }: { children?: React.ReactNode }) {
-  return React.createElement(BrandProvider, { name: 'acme', accent: '#0e7c66', corners: 'pill', children });
+installThemeProperties(pageTheme());
+registerRootWrapper(MuiRoot);
+replace('TLButton', MuiButtonAdapter);
+replace('TLCheckbox', MuiCheckboxAdapter);
+// ... one replace per component of the state contract
+```
+
+The root wrapper puts the library's providers above every React root and renders no element of its
+own (`react-src/MuiRoot.tsx`, shortened):
+
+```tsx
+const muiCache = createCache({ key: 'mui', container: document.head, prepend: false });
+
+export default function MuiRoot({ children }: { children?: React.ReactNode }) {
+  const locale = pageLocale();
+  return (
+    <CacheProvider value={muiCache}>
+      <ThemeProvider theme={pageTheme()}>
+        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={locale}>
+          {children}
+        </LocalizationProvider>
+      </ThemeProvider>
+    </CacheProvider>
+  );
 }
-
-registerRootWrapper(AcmeBrand);
-replace('TLButton', BrandButtonAdapter);
-replace('TLCheckbox', BrandCheckboxAdapter);
 ```
 
 - **`registerRootWrapper(wrapper, { order? })`** (`bridge/root-wrapper.ts`) puts a component — the
@@ -150,41 +175,49 @@ replace('TLCheckbox', BrandCheckboxAdapter);
 
 An adapter reads the typed state with `useTLState<Partial<XStateJson>>()` — the state types are exported by
 `tl-react-bridge` — and sends commands with `useTLCommand()` (shortened from
-`react-src/adapters/BrandButtonAdapter.tsx`):
+`react-src/adapters/MuiButtonAdapter.tsx`, which in addition renders a menu entry, an icon-only
+button and a link):
 
 ```tsx
-import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, ThemeIcon } from 'tl-react-bridge';
-import type { TLCellProps, ButtonStateJson } from 'tl-react-bridge';
-import { BrandButton } from '../example-lib';
+import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, ThemeIcon,
+  useButtonDefaults } from 'tl-react-bridge';
+import type { TLCellProps, ButtonStateJson, ButtonAppearance } from 'tl-react-bridge';
+import Button from '@mui/material/Button';
 
 const CMD_CLICK = 'click';
 
-const BrandButtonAdapter: React.FC<TLCellProps> = ({ controlId }) => {
+const VARIANTS = { secondary: 'outlined', primary: 'contained', ghost: 'text', link: 'text' } as const;
+
+const MuiButtonAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<ButtonStateJson>>();
   const sendCommand = useTLCommand();
+  const defaults = useButtonDefaults();
   const disabled = state.disabled === true;
-  const click = () => sendCommand(CMD_CLICK);   // the full adapter also honours navigateUrl
+  const hidden = state.hidden === true;
+  // The default appearance of the server is the one the container suggests.
+  const serverAppearance = state.appearance === 'default' ? undefined : state.appearance;
+  const appearance: ButtonAppearance = serverAppearance ?? defaults.appearance ?? 'secondary';
+  const handleClick = () => sendCommand(CMD_CLICK);   // the full adapter also honours navigateUrl
 
+  // A hidden or disabled button declines the gesture, so it falls through to an outer binding.
   useKeyboardBinding(state.keyGesture, () => {
-    if (disabled || state.hidden) return false;  // declined: falls through to an outer binding
-    click();
+    if (disabled || hidden) return false;
+    handleClick();
     return true;
   });
 
-  if (state.hidden === true) return null;
-  const mode = state.displayMode ?? 'label-only';
-  const showIcon = !!state.image && mode !== 'label-only';
-  const iconOnly = showIcon && mode === 'icon-only';
+  if (hidden) return null;
+  const showIcon = !!state.image && (state.displayMode ?? 'label-only') !== 'label-only';
   return (
-    <BrandButton id={controlId}
-      variant={state.tone === 'danger' ? 'danger' : state.appearance === 'primary' ? 'primary' : 'secondary'}
-      disabled={disabled} pressed={state.active === true}
-      icon={showIcon ? <ThemeIcon encoded={state.image!} /> : undefined}
+    <Button id={controlId} disabled={disabled} onClick={handleClick}
+      variant={VARIANTS[appearance]}
+      color={state.tone === 'danger' ? 'error' : 'primary'}
+      startIcon={showIcon ? <ThemeIcon encoded={state.image!} className="tl-icon-sm" /> : undefined}
       aria-label={showIcon ? state.label : undefined}   // the full adapter also sets the tooltip
-      className={rootClassName(state, state.cssClasses)}
-      onClick={click}>
-      {iconOnly ? undefined : state.label}
-    </BrandButton>
+      aria-pressed={state.active === true ? true : undefined}
+      className={rootClassName(state, state.cssClasses)}>
+      {state.label}
+    </Button>
   );
 };
 ```
@@ -196,17 +229,29 @@ named by its label: the full adapter sets it as `aria-label` and declares it as 
 (shown only while the label is clipped) otherwise, as `TLButton` does.
 
 A field adapter reads and writes its value through `useTLFieldValue()`, which sends `valueChanged`
-and so makes the library component part of the form's edit and save cycle
-(`react-src/adapters/BrandCheckboxAdapter.tsx`):
+and so makes the library component part of the form's edit and save cycle (shortened from
+`react-src/adapters/MuiCheckboxAdapter.tsx`, which in addition handles the tri-state and the switch
+presentation):
 
 ```tsx
 const state = useTLState<Partial<CheckboxStateJson>>();
+const labelProps = useFieldLabelProps(controlId, controlId);
 const [value, setValue] = useTLFieldValue();
-return <BrandCheckbox id={controlId} checked={value === true} onChange={setValue}
-  readOnly={state.editable === false} disabled={state.disabled === true}
-  invalid={state.hasError === true}
-  className={rootClassName(state)} />;
+const editable = state.editable !== false;
+const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  if (editable) setValue(event.target.checked);
+};
+if (state.hidden === true) return null;
+return <Checkbox id={controlId} checked={value === true} onChange={handleChange}
+  readOnly={!editable} disabled={state.disabled === true}
+  color={state.hasError === true ? 'error' : fieldColor(state)}
+  className={rootClassName(state)}
+  slotProps={{ input: { ...labelProps, ...fieldAriaProps(state) } }} />;
 ```
+
+MUI puts the `id` of a checkbox on its `input`; the label of the surrounding form field refers to it
+through `useFieldLabelProps`. `fieldColor` and `fieldAriaProps` are shared helpers of the module
+(`react-src/adapters/field.tsx`) mapping the error, warning and mandatory flags of a field.
 
 `rootClassName(state, …classes)` appends the CSS class configured for the control (`cssClass`) to
 the component's own classes — use it on the root element of every adapter.
@@ -272,8 +317,8 @@ it generic and parameterized by configuration, not tailored to one view.
 
 - **One React instance.** The library is bundled against the React of `tl-react-bridge`:
   `vite.config.ts` aliases `react`, `react-dom` and `react/jsx-runtime` to shims that re-export from
-  `tl-react-bridge` (more specific paths first), and `tl-react-bridge` is `external`. See
-  `com.top_logic.demo.react.corporate/vite.config.ts` and `react-src/react-*-shim.ts`, or the same
+  `tl-react-bridge` (matching the bare specifiers exactly), and `tl-react-bridge` is `external`. See
+  `com.top_logic.demo.react.mui/vite.config.ts` and `react-src/react-*-shim.ts`, or the same
   setup in `com.top_logic.layout.react.wysiwyg` and `com.top_logic.layout.react.chartjs`. The
   library's React peer version must match the bridge's (`react` in
   `com.top_logic.layout.react/package.json`). The `react/jsx-runtime` shim re-exports the automatic
@@ -323,8 +368,9 @@ it generic and parameterized by configuration, not tailored to one view.
   input (an attribute whose dynamic visibility computes "disabled" in edit mode) — map that to the
   library's disabled prop. A field is never both editable and disabled.
 - **A partial adapter is legitimate.** An adapter maps what the library can express and documents
-  what it drops (the example button ignores the appearance defaults of its container; the example
-  checkbox has no tri-state and no switch presentation). The server state stays complete regardless.
+  what it drops (the MUI date picker has no warning color; the MUI segmented choice does not
+  reproduce the radio keyboard pattern of `TLSegmentedChoice`, since the MUI button group has no
+  such mode). The server state stays complete regardless.
 
 ## Extending the contract (engine developers)
 
@@ -350,30 +396,6 @@ To make another component replaceable:
 The Java state classes are used for their property constants only: `ReactControl` keeps its state
 as a map and sends patches of it.
 
-## The example module
-
-`com.top_logic.demo.react.corporate` (artifact `tl-demo-react-corporate`) attaches a stand-in library
-to the UI:
-
-| Path | Content |
-|---|---|
-| `react-src/example-lib/` | the stand-in library: `BrandProvider`, `BrandButton`, `BrandCheckbox`; imports React from `'react'` and knows nothing about TopLogic; renders an error marker without its provider |
-| `react-src/adapters/` | `BrandButtonAdapter`, `BrandCheckboxAdapter` |
-| `react-src/corporate-entry.ts` | root wrapper and replacements |
-| `react-src/react-shim.ts`, `react-dom-shim.ts`, `react-jsx-runtime-shim.ts` | the shims the aliases of `vite.config.ts` point to |
-| `src/main/webapp/WEB-INF/conf/tl-demo-react-corporate.conf.config.xml` | `ClientResources` registration |
-| `src/main/webapp/style/tl-demo-react-corporate.css` | the library's stylesheet |
-
-`tl-demo-react` includes it with the Maven profile `corporate-example` (off by default):
-
-```bash
-mvn -B install -pl com.top_logic.demo.react.corporate,com.top_logic.demo.react -P corporate-example
-MAVEN_ARGS=-Pcorporate-example   # start the app with the same profile, see demo-apps.md
-```
-
-Every button and checkbox of the demo — in forms, toolbars and dialogs — then renders as a brand
-component with the pill-shaped accent style. See [demo-apps.md](demo-apps.md) for URL and login.
-
 ## The Material UI module
 
 `com.top_logic.demo.react.mui` (artifact `tl-demo-react-mui`) renders every replaceable component
@@ -387,7 +409,8 @@ uses only MIT-licensed packages: `@mui/material`, `@mui/x-date-pickers`, `@emoti
 | `react-src/MuiRoot.tsx` | the root wrapper: emotion cache, MUI theme and date localization |
 | `react-src/adapters/` | one adapter per component of the state contract, each with a wire test (`*.test.tsx`); the shared parts are `field.tsx` (field state, typing fields), `choice.tsx` (selection fields) and `window-frame.ts` (moving and resizing a window) |
 | `react-src/mui-entry.ts` | root wrapper and replacements |
-| `react-src/react-*-shim.ts` | the shims; `react-shim.ts` and `react-dom-shim.ts` name the complete public API, as prebuilt library code needs |
+| `react-src/react-*-shim.ts` | the shims the aliases of `vite.config.ts` point to; `react-shim.ts` and `react-dom-shim.ts` name the complete public API, as prebuilt library code needs |
+| `src/main/webapp/WEB-INF/conf/tl-demo-react-mui.conf.config.xml` | `ClientResources` registration of the bundle and its stylesheet |
 
 How it is attached:
 

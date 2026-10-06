@@ -1496,11 +1496,6 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
-				<artifactId>tl-demo-react-corporate</artifactId>
-				<version>${tl.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.top-logic</groupId>
 				<artifactId>tl-demo-react-mui</artifactId>
 				<version>${tl.version}</version>
 			</dependency>

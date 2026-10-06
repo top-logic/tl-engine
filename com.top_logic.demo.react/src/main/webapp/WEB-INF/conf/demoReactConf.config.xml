@@ -30,9 +30,10 @@
 			area, granted in security.xml; the account reader and user roles that the role rules below
 			give to the members of the "users" group; the project member and project administrator
 			roles that the role rules below give to the members and the administrators of a project,
-			on that project only; and the chart reader role
-			that makes the sales and purchases of the chart demo visible to a visitor without an
-			account, granted by a role rule below as well.
+			on that project only; the project manager role that a role rule below gives to the members
+			of the "DemoProjectManagers" group on the security root; and the chart reader role that
+			makes the sales and purchases of the chart demo visible to a visitor without an account,
+			granted by a role rule below as well.
 		-->
 		<config service-class="com.top_logic.base.services.InitialRolesManager">
 			<instance>
@@ -42,6 +43,7 @@
 					<role name="demo.react.User"/>
 					<role name="demo.react.ProjectMember"/>
 					<role name="demo.react.ProjectAdmin"/>
+					<role name="demo.react.ProjectManager"/>
 					<role name="demo.react.ChartReader"/>
 				</roles>
 			</instance>
@@ -63,12 +65,14 @@
 		</config>
 		<!--
 			Every newly created account joins the "users" group. The administration hub shows the
-			default-group flag on that group.
+			default-group flag on that group. The members of the "DemoProjectManagers" group create
+			projects; an administrator adds an account to it in the administration hub.
 		-->
 		<config service-class="com.top_logic.base.services.InitialGroupManager">
 			<instance default-group="users">
 				<groups>
 					<group name="users"/>
+					<group name="DemoProjectManagers"/>
 				</groups>
 			</instance>
 		</config>
@@ -126,13 +130,20 @@
 						
 						A project whose members and administrators do not list the account is not
 						visible to it at all. Creating a project is decided against the security root,
-						where these roles are held by no one, so only a super user creates projects.
+						where a project manager - every member of the "DemoProjectManagers" group, by
+						the role rule below - holds the role granted the creation. The "New Project"
+						dialog presets its creator as the administrator of the project, so the creator
+						sees and administers the project once it is created. Whoever creates a project
+						decides on all of its attributes, including the budget and the administrators:
+						the rights of a project are given by its members and administrators, which a
+						project being created does not have yet.
 						
 						A user - every member of the "users" group - reads the contributors, which
 						belong to no project, and the tickets of the ticket demo.
 						
 						The views follow these rights: for an account that is a member of P1 but not
-						of P2, the project list shows P1 only; "New Project" is not offered at all;
+						of P2 and no project manager, the project list shows P1 only; "New Project" is
+						not offered at all;
 						"Delete" of P1 is offered but disabled with the reason; "New Milestone", "New
 						Note" and the deletion of a milestone work in P1; a save that changes the
 						members or the administrators of P1 is refused. In the cockpit of P1, the
@@ -172,6 +183,11 @@
 							inherit="true"
 							operation="Write"
 							roles="demo.react.ProjectMember"
+						/>
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="demo.react.ProjectManager"
 						/>
 					</class>
 					<part name="tl.demo.projectManagement:ProjectScope#members">
@@ -258,6 +274,16 @@
 							project and, by inheritance, on its tickets. The milestones and notes of the
 							project need no role of their own, since the project decides their access.
 						-->
+						<!--
+							A member of the "DemoProjectManagers" group is a project manager on the
+							security root, the context in which a project is created.
+						-->
+						<singleton-rule id="ProjectManagersOfGroup"
+							role="demo.react.ProjectManager"
+							target="SecurityStructure#ROOT"
+						>
+							<group-with-name name="DemoProjectManagers"/>
+						</singleton-rule>
 						<rule id="MembersOfProject"
 							inherit="true"
 							meta-element="tl.demo.projectManagement:ProjectScope"

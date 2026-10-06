@@ -3547,7 +3547,8 @@ button.tlDrawer__closeBtn:focus-visible {
 
 /* A document is read on a page of its own: it fills the space the element is given, keeps the
    styles it brings along, and stands on the white surface those styles assume. The minimum height
-   keeps it readable where the space is not measured out but flows with the page. */
+   keeps it readable where the space is not measured out but flows with the page. It draws no frame:
+   the container it stands in - a panel, a card - is its frame. */
 .tlHtml--document {
 	position: relative;
 	display: flex;
@@ -3581,14 +3582,13 @@ button.tlDrawer__closeBtn:focus-visible {
 /* A thumbnail is a picture of a document: a box in the proportions the page is laid out in, with
    the page scaled down into it. The ratio arrives as an inline style from the configured page size,
    and the overflow keeps a page taller than the box inside it, cut off at the bottom as paper is.
-   The surface is the white a document's own styles assume, like the one a document is read on. */
+   The surface is the white a document's own styles assume, like the one a document is read on. Like
+   the document, the thumbnail draws no frame of its own. */
 .tlHtml--thumbnail {
 	position: relative;
 	display: block;
 	width: 100%;
 	overflow: hidden;
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--border-radius-02);
 	background: #ffffff;
 }
 

@@ -361,11 +361,8 @@ public final class ModelAccessPolicy {
 		boolean allowed;
 		if (reference == null) {
 			allowed = rights.isAllowedCreate(user, createdType, container);
-		} else if (type == null) {
-			allowed = rights.isAllowedCreate(user, container, reference);
 		} else {
-			allowed = rights.isAllowedCreate(user, type, container)
-				&& rights.isAllowed(user, container, reference, SimpleBoundCommandGroup.WRITE);
+			allowed = rights.isAllowedCreate(user, container, reference, type);
 		}
 		if (allowed) {
 			return ExecutableState.EXECUTABLE;

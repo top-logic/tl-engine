@@ -183,7 +183,37 @@
     		
     		<properties>
 				<skipNormalizeLayouts>false</skipNormalizeLayouts>
-    		</properties>			
+    		</properties>
+		</profile>
+
+		<profile>
+			<!--
+				The property maven.multiModuleProjectDirectory is set by the mvn launcher script, but not by
+				every embedded Maven (e.g. Eclipse m2e without a .mvn directory). Unresolved, the expression
+				ends up literally in the Node install path and creates a directory named
+				"${maven.multiModuleProjectDirectory}" in each frontend module. Install Node into the
+				module's build directory instead.
+			-->
+			<id>no-multi-module-directory</id>
+			<activation>
+				<property>
+					<name>!maven.multiModuleProjectDirectory</name>
+				</property>
+			</activation>
+
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<groupId>com.github.eirslett</groupId>
+							<artifactId>frontend-maven-plugin</artifactId>
+							<configuration>
+								<installDirectory>${project.build.directory}/node/${node.version}</installDirectory>
+							</configuration>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
 		</profile>
 	</profiles>
 

@@ -97,7 +97,8 @@ final class UncheckedAccessRights implements ModelAccessRights {
 	}
 
 	@Override
-	public boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute) {
+	public boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute,
+			TLClass type) {
 		return true;
 	}
 

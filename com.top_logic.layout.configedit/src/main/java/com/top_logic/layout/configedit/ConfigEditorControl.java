@@ -11,7 +11,6 @@ import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationAccess;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.util.Resources;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
@@ -19,19 +18,23 @@ import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.form.model.FieldMode;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.ListenerBinding;
 import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
-import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl.GroupBorder;
+import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
+import com.top_logic.util.Resources;
 
 /**
  * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, LIST, ARRAY, and MAP
@@ -292,9 +295,43 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			if (tooltip != null && !tooltip.isEmpty()) {
 				chrome.setTooltip(tooltip, label, true);
 			}
+			if (!(input instanceof ReactFormFieldControl)) {
+				// A form field displays the error of its model itself; any other control - an editor
+				// of its own, such as the TL-Script editor - leaves that to the chrome around it.
+				showErrorInChrome(model, chrome);
+			}
 			addChild(chrome);
 			followMode(config, property, chrome, model);
 		}
+	}
+
+	/**
+	 * Displays the error of the given field in the given chrome, for a field whose control does not
+	 * display it itself.
+	 */
+	private void showErrorInChrome(ConfigFieldModel model, ReactFormFieldChromeControl chrome) {
+		Runnable update = () -> chrome.setError(
+			model.hasError() ? Resources.getInstance().getString(model.getError()) : null);
+		update.run();
+		FieldModelListener listener = new FieldModelListener() {
+			@Override
+			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+				// The error is reported separately.
+			}
+
+			@Override
+			public void onEditabilityChanged(FieldModel source, boolean editable) {
+				// An error is only shown while the field is editable, see the model.
+				update.run();
+			}
+
+			@Override
+			public void onValidationChanged(FieldModel source) {
+				update.run();
+			}
+		};
+		model.addListener(listener);
+		addCleanupAction(() -> model.removeListener(listener));
 	}
 
 	/**

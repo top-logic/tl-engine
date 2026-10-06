@@ -42,19 +42,20 @@ import com.top_logic.basic.func.Function2;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.configedit.ConfigCollection;
+import com.top_logic.layout.configedit.ConfigCollectionValue;
+import com.top_logic.layout.configedit.ConfigControl;
+import com.top_logic.layout.configedit.ConfigControlProvider;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldIndex;
-import com.top_logic.layout.configedit.ConfigCollection;
-import com.top_logic.layout.configedit.ConfigCollectionValue;
 import com.top_logic.layout.configedit.ConfigFieldModel;
+import com.top_logic.layout.configedit.ConfigItemValue;
 import com.top_logic.layout.configedit.ConfigListEditorControl;
 import com.top_logic.layout.configedit.FieldCollectionValue;
 import com.top_logic.layout.configedit.I18NConstants;
-import com.top_logic.layout.configedit.PolymorphicOptions;
-import com.top_logic.layout.provider.label.ClassLabelProvider;
-import com.top_logic.layout.configedit.ConfigItemValue;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
+import com.top_logic.layout.configedit.PolymorphicOptions;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.model.FieldModel;
@@ -62,11 +63,12 @@ import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
+import com.top_logic.layout.provider.label.ClassLabelProvider;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -88,6 +90,28 @@ public class TestConfigEditorControl extends TestCase {
 		String getTitle();
 
 		void setTitle(String value);
+	}
+
+	/**
+	 * {@link ConfigControlProvider} creating a control that, unlike a form field, does not display
+	 * the error of its field model itself.
+	 */
+	public static class PlainControlProvider implements ConfigControlProvider {
+		@Override
+		public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
+			return new ReactTextControl(context, "plain");
+		}
+	}
+
+	/** Configuration with a property edited by a {@link PlainControlProvider} control. */
+	public interface PlainControlConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getText()}. */
+		String TEXT = "text";
+
+		@Name(TEXT)
+		@ConfigControl(PlainControlProvider.class)
+		String getText();
 	}
 
 	/** Configuration with a mandatory, non-polymorphic ITEM property. */
@@ -2146,6 +2170,35 @@ public class TestConfigEditorControl extends TestCase {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * A control that does not display the error of its field itself gets it displayed by the chrome
+	 * around it, so that a rejected value is reported however the field is edited.
+	 */
+	public void testErrorOfAControlWithoutOwnDisplayIsShownByItsChrome() {
+		PlainControlConfig config = TypedConfiguration.newConfigItem(PlainControlConfig.class);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		TestableConfigEditorControl editor =
+			new TestableConfigEditorControl(createTestContext(), config, Set.of(), false, index, true);
+		ConfigFieldModel field = index.lookup(config, config.descriptor().getProperty(PlainControlConfig.TEXT));
+		ReactFormFieldChromeControl chrome = chromeOf(editor);
+
+		field.setError(ResKey.text("broken"));
+		assertEquals("broken", chrome.scriptingScalarState().get("error"));
+
+		field.setError(null);
+		assertNull(chrome.scriptingScalarState().get("error"));
+	}
+
+	private static ReactFormFieldChromeControl chromeOf(TestableConfigEditorControl editor) {
+		for (ReactControl child : editor.getChildrenList()) {
+			if (child instanceof ReactFormFieldChromeControl chrome) {
+				return chrome;
+			}
+		}
+		fail("No field rendered.");
+		return null;
 	}
 
 	private TestableConfigEditorControl readOnlyEditor(ConfigurationItem config) {

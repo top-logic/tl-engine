@@ -13,9 +13,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
-import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.tree.dnd.BusinessObjectTreeDrop;
@@ -50,6 +51,7 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 
 	private final boolean _inTransaction;
 
+	private final DropCommitMessage _commitMessage;
 	private final DropSecurity _security;
 
 	LayoutComponent _contextComponent;
@@ -70,6 +72,7 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 		_canDrop = QueryExecutor.compile(kb, model, config.getCanDrop());
 		_postCreateActions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 		_inTransaction = config.getInTransaction();
+		_commitMessage = new DropCommitMessage(config);
 		_security = new DropSecurity(config);
 
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
@@ -96,7 +99,12 @@ public abstract class TreeDropTargetByExpression extends BusinessObjectTreeDrop 
 		Object createdObject;
 
 		if (_inTransaction) {
-			createdObject = KBUtils.inTransaction(() -> _handleDrop.executeWith(Args.cons(droppedObjects, dropArguments)));
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			ResKey message = _commitMessage.create(droppedObjects, dropArguments, _contextComponent);
+			try (Transaction tx = kb.beginTransaction(message)) {
+				createdObject = _handleDrop.executeWith(Args.cons(droppedObjects, dropArguments));
+				tx.commit();
+			}
 		} else {
 			createdObject = _handleDrop.executeWith(Args.cons(droppedObjects, dropArguments));
 		}

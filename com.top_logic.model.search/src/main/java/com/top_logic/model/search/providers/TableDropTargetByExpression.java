@@ -15,9 +15,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.table.dnd.BusinessObjectTableDrop;
 import com.top_logic.layout.table.dnd.TableDropTarget;
@@ -97,6 +98,29 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 		@Override
 		Expr getCanDrop();
 
+		/**
+		 * Function computing the message to annotate to the change performed by the drop.
+		 * 
+		 * <p>
+		 * The function receives the dragged elements as first argument, the referenced row as
+		 * second argument and the model of the table as third argument.
+		 * </p>
+		 * 
+		 * <p>
+		 * Depending on the {@link #getDropType()} setting, the drop operation happens either just
+		 * before the referenced row (or at the end of all rows in case of a <code>null</code>
+		 * referenced row) in case of an ordered drop, or on the referenced row, otherwise.
+		 * </p>
+		 * 
+		 * <p>
+		 * The function returns either a string or an internationalized text. If not set, or if the
+		 * function returns nothing, a default message is used that names the dropped objects and
+		 * the table they are dropped into.
+		 * </p>
+		 */
+		@Override
+		Expr getCommitMessage();
+
 	}
 
 	private final DropType _dropType;
@@ -109,6 +133,7 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 
 	private final boolean _inTransaction;
 
+	private final DropCommitMessage _commitMessage;
 	private final DropSecurity _security;
 
 	private LayoutComponent _contextComponent;
@@ -131,6 +156,7 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 		_canDrop = QueryExecutor.compile(kb, model, config.getCanDrop());
 		_postCreateActions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 		_inTransaction = config.getInTransaction();
+		_commitMessage = new DropCommitMessage(config);
 		_security = new DropSecurity(config);
 
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
@@ -157,7 +183,12 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 		Object createdObject;
 
 		if (_inTransaction) {
-			createdObject = KBUtils.inTransaction(() -> _handleDrop.execute(droppedObjects, referenceRow));
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			ResKey message = _commitMessage.create(droppedObjects, Args.some(referenceRow), _contextComponent);
+			try (Transaction tx = kb.beginTransaction(message)) {
+				createdObject = _handleDrop.execute(droppedObjects, referenceRow);
+				tx.commit();
+			}
 		} else {
 			createdObject = _handleDrop.execute(droppedObjects, referenceRow);
 		}

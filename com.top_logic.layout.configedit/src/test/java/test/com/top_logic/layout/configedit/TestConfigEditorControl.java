@@ -722,8 +722,8 @@ public class TestConfigEditorControl extends TestCase {
 	 * that hides exactly this property (the {@code hiddenProperties} constructor parameter
 	 * {@link ConfigEditorControl} already offers): a property that was actually rendered
 	 * contributes exactly one child, so hiding it removes exactly one. This is the same
-	 * before/after comparison {@link #testNullItemPropertySkipped()} already relies on to prove
-	 * that a skipped property adds nothing.
+	 * before/after comparison {@link #testNullItemPropertySkippedWhenReadOnly()} already relies on
+	 * to prove that a skipped property adds nothing.
 	 * </p>
 	 */
 	private boolean rendersProperty(ConfigurationItem config, String propertyName) {

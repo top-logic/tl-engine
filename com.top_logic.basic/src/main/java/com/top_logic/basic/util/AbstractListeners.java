@@ -5,6 +5,11 @@
  */
 package com.top_logic.basic.util;
 
+import java.util.List;
+
+import com.top_logic.basic.listener.ListenerRegistration;
+import com.top_logic.basic.listener.Registration;
+
 /**
  * List of listeners that can be notified.
  * 
@@ -23,6 +28,18 @@ public abstract class AbstractListeners<L, E> extends AbstractObservable<L, E> {
 	}
 
 	@Override
+	public final ListenerRegistration<L> register(L listener) {
+		return super.register(listener);
+	}
+
+	/**
+	 * Removes all registrations of the given listener.
+	 * 
+	 * @deprecated Use {@link #register(Object)} and {@link Registration#dispose()} the resulting
+	 *             handle.
+	 */
+	@Deprecated
+	@Override
 	public final boolean removeListener(L listener) {
 		return super.removeListener(listener);
 	}
@@ -30,6 +47,15 @@ public abstract class AbstractListeners<L, E> extends AbstractObservable<L, E> {
 	@Override
 	public final void notifyListeners(E event) {
 		super.notifyListeners(event);
+	}
+
+	/**
+	 * Snapshot of all currently active registrations.
+	 * 
+	 * @see AbstractObservable#registrations()
+	 */
+	public final List<ListenerRegistration<L>> getRegistrations() {
+		return registrations();
 	}
 
 	/**

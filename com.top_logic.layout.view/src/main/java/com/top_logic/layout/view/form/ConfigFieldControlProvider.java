@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldIndex;
@@ -52,8 +53,17 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
  * afresh. That is the same answer the legacy declarative editor gives, where the form fields are
  * likewise what says something changed - not the configuration, which is only written from them.
  * </p>
+ *
+ * <p>
+ * The editor is a form of its own, nested in the form the field is displayed in, and so
+ * {@link #isLarge(FieldSpec) large}: where it has no room, the kinds of the configurations the
+ * field holds stand for it.
+ * </p>
  */
 public class ConfigFieldControlProvider implements ReactFieldControlProvider {
+
+	/** Separates the kinds of the configurations a multi-valued field holds in its preview. */
+	private static final String PREVIEW_SEPARATOR = ", ";
 
 	/**
 	 * A property holding several configurations is edited by the list editor, which adds, removes
@@ -62,6 +72,44 @@ public class ConfigFieldControlProvider implements ReactFieldControlProvider {
 	@Override
 	public boolean editsCollections() {
 		return true;
+	}
+
+	@Override
+	public boolean isLarge(FieldSpec field) {
+		return true;
+	}
+
+	/**
+	 * The kind of each configuration the field holds, separated by commas.
+	 */
+	@Override
+	public String previewText(FieldSpec field, Object value) {
+		if (value instanceof Collection<?> collection) {
+			StringBuilder result = new StringBuilder();
+			for (Object each : collection) {
+				if (result.length() > 0) {
+					result.append(PREVIEW_SEPARATOR);
+				}
+				result.append(kindLabel(each));
+			}
+			return result.toString();
+		}
+		return kindLabel(value);
+	}
+
+	/**
+	 * The name of the kind of the given configuration: the implementation it configures, or else
+	 * its configuration interface.
+	 */
+	private static String kindLabel(Object value) {
+		if (value instanceof PolymorphicConfiguration<?> polymorphic
+			&& polymorphic.getImplementationClass() != null) {
+			return PolymorphicOptions.labelFor(polymorphic);
+		}
+		if (value instanceof ConfigurationItem item) {
+			return PolymorphicOptions.labelFor(item.descriptor().getConfigurationInterface());
+		}
+		return PolymorphicOptions.labelFor(value);
 	}
 
 	@Override

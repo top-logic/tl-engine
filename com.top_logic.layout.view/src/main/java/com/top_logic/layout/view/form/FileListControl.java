@@ -146,7 +146,7 @@ public class FileListControl extends AbstractCompositionControl implements Uploa
 		if (part != null) {
 			ModeSelector selector = DynamicVisibility.modeSelector(part);
 			if (selector != null) {
-				TLObject self = formControl().getCurrentObject();
+				TLObject self = ownerObject();
 				visible = selector.getMode(self, part, editMode) != FormVisibility.HIDDEN;
 			}
 		}
@@ -296,9 +296,6 @@ public class FileListControl extends AbstractCompositionControl implements Uploa
 		if (row == null) {
 			return;
 		}
-		int index = fieldModel().getCurrentList().indexOf(row);
-		if (index >= 0) {
-			deleteRow(row, index);
-		}
+		removeRow(row);
 	}
 }

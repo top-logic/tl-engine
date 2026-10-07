@@ -15,8 +15,8 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,39 +35,61 @@ import org.commonmark.node.Text;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
+import com.top_logic.layout.react.control.html.ReactHtmlControl;
+
 /**
- * The developer articles shipped with the modules of the application.
+ * The developer documentation shipped with the modules of the application.
  *
  * <p>
- * An article is a Markdown file {@value #DOCS_DIR}{@code /<name>.md} in the jar (or class output
- * directory) of a module; in the module sources it lives in {@code src/main/java/META-INF/tl-docs/}.
- * The file name without {@code .md} is the article name. The file starts with a front matter block
- * whose {@code description} says when to read the article:
+ * An article is a Markdown file below {@value #DOCS_DIR} in the jar (or class output directory) of
+ * a module; in the module sources it lives below {@code src/main/java/META-INF/tl-docs/}. Its path
+ * relative to that folder without {@code .md} is the article name, e.g. {@code view-layer/tables}
+ * for {@code META-INF/tl-docs/view-layer/tables.md}. A folder is a chapter grouping the articles in
+ * it; the folders of the same path in several modules form one chapter, so a module adds articles to
+ * a chapter of another one. A chapter takes its title, description and introduction from an
+ * {@value #CHAPTER_FILE} in its folder.
+ * </p>
+ *
+ * <p>
+ * A file starts with a front matter block whose {@code description} says when to read the article
+ * and whose optional {@code order} places it among the other entries of its chapter (entries
+ * without an order follow those with one, all others are sorted by title):
  * </p>
  *
  * <pre>
  * ---
  * description: Read before writing or changing a .view.xml ...
+ * order: 10
  * ---
  *
- * # FAQ: React view layer
+ * # React view layer
  * </pre>
  *
  * <p>
- * The first top-level heading is the title of the article. When several modules ship an article of
- * the same name, the first one on the class path wins.
+ * The first top-level heading is the title. A link to another article names it with the
+ * {@value #LINK_SCHEME} scheme, followed by the article name and optionally a section anchor:
+ * {@code [spacing](doc:view-layer/basics#spacing-model)}. When several modules ship a file of the
+ * same path, the first one on the class path wins.
  * </p>
  */
 public final class DevDocs {
 
-	/** Class path directory holding the articles. */
+	/** Class path directory holding the documentation. */
 	public static final String DOCS_DIR = "META-INF/tl-docs";
+
+	/** Scheme of a link to an article, followed by the article name. */
+	public static final String LINK_SCHEME = "doc:";
+
+	/** File of a chapter folder describing the chapter. */
+	public static final String CHAPTER_FILE = "index.md";
 
 	private static final String DOC_SUFFIX = ".md";
 
 	private static final String FRONT_MATTER_DELIMITER = "---";
 
 	private static final String DESCRIPTION_KEY = "description";
+
+	private static final String ORDER_KEY = "order";
 
 	private static final String TITLE_PREFIX = "# ";
 
@@ -78,94 +100,119 @@ public final class DevDocs {
 
 	private static final Parser PARSER = Parser.builder().extensions(EXTENSIONS).build();
 
-	private static final HtmlRenderer RENDERER = HtmlRenderer.builder()
-		.extensions(EXTENSIONS)
-		.escapeHtml(true)
-		.attributeProviderFactory(context -> (node, tagName, attributes) -> {
-			if (node instanceof Link && !isResolvable(attributes.get(HREF))) {
-				// A link to a file of the source tree leads nowhere in the application.
-				attributes.remove(HREF);
-			}
-		})
-		.build();
-
-	/**
-	 * A developer article.
-	 *
-	 * @param name
-	 *        The article name (file name without {@code .md}).
-	 * @param title
-	 *        The text of the first top-level heading without its Markdown syntax, the name if there
-	 *        is none.
-	 * @param description
-	 *        When to read the article, from its front matter.
-	 * @param text
-	 *        The Markdown body without front matter.
-	 */
-	public record Doc(String name, String title, String description, String text) {
-		// record
-	}
-
 	private DevDocs() {
 		// utility
 	}
 
 	/**
-	 * All articles found by the class loader of the application, in class path order.
+	 * The documentation found by the class loader of the application.
+	 *
+	 * @return The root chapter, whose name is empty.
 	 */
-	public static List<Doc> load() {
+	public static DevDoc load() {
 		return load(DevDocs.class.getClassLoader());
 	}
 
 	/**
-	 * All articles found by the given class loader, in class path order.
+	 * The documentation found by the given class loader.
+	 *
+	 * @return The root chapter, whose name is empty.
 	 */
-	public static List<Doc> load(ClassLoader loader) {
-		Map<String, Doc> docs = new LinkedHashMap<>();
+	public static DevDoc load(ClassLoader loader) {
+		Map<String, String> files = new LinkedHashMap<>();
 		try {
 			Enumeration<URL> dirs = loader.getResources(DOCS_DIR);
 			while (dirs.hasMoreElements()) {
-				URL dir = dirs.nextElement();
-				for (Map.Entry<String, String> file : files(dir).entrySet()) {
-					String name = file.getKey().substring(0, file.getKey().length() - DOC_SUFFIX.length());
-					docs.putIfAbsent(name, parse(name, file.getValue()));
+				for (Map.Entry<String, String> file : files(dirs.nextElement()).entrySet()) {
+					files.putIfAbsent(file.getKey(), file.getValue());
 				}
 			}
 		} catch (IOException ex) {
 			throw new UncheckedIOException(ex);
 		}
-		return new ArrayList<>(docs.values());
+
+		DevDoc root = new DevDoc("", true);
+		Map<String, DevDoc> chapters = new HashMap<>();
+		chapters.put("", root);
+		for (Map.Entry<String, String> file : files.entrySet()) {
+			String path = file.getKey();
+			int separator = path.lastIndexOf('/');
+			String folder = separator < 0 ? "" : path.substring(0, separator);
+			String fileName = path.substring(separator + 1);
+			DevDoc chapter = chapter(chapters, folder);
+			if (fileName.equals(CHAPTER_FILE)) {
+				parse(chapter, file.getValue());
+			} else {
+				DevDoc article = new DevDoc(path.substring(0, path.length() - DOC_SUFFIX.length()), false);
+				parse(article, file.getValue());
+				chapter.addChild(article);
+			}
+		}
+		root.sortChildren();
+		return root;
+	}
+
+	private static DevDoc chapter(Map<String, DevDoc> chapters, String folder) {
+		DevDoc chapter = chapters.get(folder);
+		if (chapter == null) {
+			int separator = folder.lastIndexOf('/');
+			DevDoc parent = chapter(chapters, separator < 0 ? "" : folder.substring(0, separator));
+			chapter = new DevDoc(folder, true);
+			parent.addChild(chapter);
+			chapters.put(folder, chapter);
+		}
+		return chapter;
 	}
 
 	/**
-	 * The article with the given name, or {@code null}.
+	 * The node of the given name below the given root.
+	 *
+	 * @param name
+	 *        An article or chapter name, optionally with the {@value #LINK_SCHEME} scheme in front
+	 *        and a section anchor behind ({@code doc:view-layer/basics#spacing-model}).
+	 * @return The node, {@code null} if there is none of that name.
 	 */
-	public static Doc get(String name) {
-		for (Doc doc : load()) {
-			if (doc.name().equals(name)) {
-				return doc;
+	public static DevDoc find(DevDoc root, String name) {
+		String path = name;
+		if (path.startsWith(LINK_SCHEME)) {
+			path = path.substring(LINK_SCHEME.length());
+		}
+		int anchor = path.indexOf('#');
+		if (anchor >= 0) {
+			path = path.substring(0, anchor);
+		}
+		return findPath(root, path);
+	}
+
+	private static DevDoc findPath(DevDoc node, String path) {
+		if (node.getName().equals(path)) {
+			return node;
+		}
+		for (DevDoc child : node.getChildren()) {
+			if (path.equals(child.getName()) || (child.isChapter() && path.startsWith(child.getName() + "/"))) {
+				return findPath(child, path);
 			}
 		}
 		return null;
 	}
 
 	/**
-	 * The article files in the given directory, by file name, sorted by name.
+	 * The article files below the given directory, by path relative to it.
 	 */
 	private static Map<String, String> files(URL dir) throws IOException {
 		Map<String, String> result = new TreeMap<>();
 		if ("file".equals(dir.getProtocol())) {
-			Path path;
+			Path base;
 			try {
-				path = Path.of(dir.toURI());
+				base = Path.of(dir.toURI());
 			} catch (URISyntaxException ex) {
 				throw new IOException("Invalid directory URL: " + dir, ex);
 			}
-			try (Stream<Path> files = Files.list(path)) {
+			try (Stream<Path> files = Files.walk(base)) {
 				for (Path file : (Iterable<Path>) files::iterator) {
-					String fileName = file.getFileName().toString();
-					if (fileName.endsWith(DOC_SUFFIX) && Files.isRegularFile(file)) {
-						result.put(fileName, Files.readString(file, StandardCharsets.UTF_8));
+					if (file.getFileName().toString().endsWith(DOC_SUFFIX) && Files.isRegularFile(file)) {
+						String path = base.relativize(file).toString().replace(file.getFileSystem().getSeparator(), "/");
+						result.put(path, Files.readString(file, StandardCharsets.UTF_8));
 					}
 				}
 			}
@@ -178,8 +225,7 @@ public final class DevDocs {
 					for (Enumeration<JarEntry> it = jar.entries(); it.hasMoreElements();) {
 						JarEntry entry = it.nextElement();
 						String entryName = entry.getName();
-						if (!entry.isDirectory() && entryName.startsWith(prefix) && entryName.endsWith(DOC_SUFFIX)
-							&& entryName.indexOf('/', prefix.length()) < 0) {
+						if (!entry.isDirectory() && entryName.startsWith(prefix) && entryName.endsWith(DOC_SUFFIX)) {
 							try (InputStream in = jar.getInputStream(entry)) {
 								result.put(entryName.substring(prefix.length()),
 									new String(in.readAllBytes(), StandardCharsets.UTF_8));
@@ -193,10 +239,11 @@ public final class DevDocs {
 	}
 
 	/**
-	 * Parses the content of an article file.
+	 * Fills the given node from the content of its file.
 	 */
-	public static Doc parse(String name, String content) {
+	private static void parse(DevDoc node, String content) {
 		String description = "";
+		Integer order = null;
 		String body = content;
 		List<String> lines = content.lines().toList();
 		if (!lines.isEmpty() && lines.get(0).strip().equals(FRONT_MATTER_DELIMITER)) {
@@ -207,20 +254,29 @@ public final class DevDocs {
 					break;
 				}
 				int colon = line.indexOf(':');
-				if (colon > 0 && line.substring(0, colon).strip().equals(DESCRIPTION_KEY)) {
-					description = line.substring(colon + 1).strip();
+				if (colon > 0) {
+					String key = line.substring(0, colon).strip();
+					String value = line.substring(colon + 1).strip();
+					if (key.equals(DESCRIPTION_KEY)) {
+						description = value;
+					} else if (key.equals(ORDER_KEY)) {
+						try {
+							order = Integer.valueOf(value);
+						} catch (NumberFormatException ex) {
+							// Not a number: the entry is ordered by its title.
+						}
+					}
 				}
 			}
 		}
-		String title = name;
+		String title = null;
 		for (String line : body.lines().toList()) {
 			if (line.startsWith(TITLE_PREFIX)) {
-				// The heading text without its Markdown syntax, e.g. without the backticks of code.
 				title = plainText(line.substring(TITLE_PREFIX.length()));
 				break;
 			}
 		}
-		return new Doc(name, title, description, body);
+		node.setContent(title, description, order, body);
 	}
 
 	/**
@@ -247,13 +303,40 @@ public final class DevDocs {
 	 *
 	 * <p>
 	 * Tables are rendered as tables. HTML written in the source is displayed as text. Each heading
-	 * carries an anchor, so a link to a section of the article ({@code #section}) works; a relative
-	 * link to a file of the source tree is displayed as text, since it leads nowhere in the
-	 * application.
+	 * carries an anchor, so a link to a section of the article ({@code #section}) works. A link to
+	 * an article of the given documentation ({@code doc:view-layer/basics#spacing-model}) carries
+	 * the article name and section in its {@link ReactHtmlControl#LINK_ATTRIBUTE} and the section in its
+	 * target. A link to an article the documentation does not contain and a relative link to a file
+	 * of the source tree are displayed as text, since they lead nowhere in the application.
 	 * </p>
+	 *
+	 * @param markdown
+	 *        The Markdown source.
+	 * @param root
+	 *        The documentation links to articles are resolved against.
 	 */
-	public static String toHtml(String markdown) {
-		return RENDERER.render(PARSER.parse(markdown));
+	public static String toHtml(String markdown, DevDoc root) {
+		HtmlRenderer renderer = HtmlRenderer.builder()
+			.extensions(EXTENSIONS)
+			.escapeHtml(true)
+			.attributeProviderFactory(context -> (node, tagName, attributes) -> {
+				if (node instanceof Link) {
+					String href = attributes.get(HREF);
+					if (href != null && href.startsWith(LINK_SCHEME)) {
+						attributes.remove(HREF);
+						if (find(root, href) != null) {
+							String target = href.substring(LINK_SCHEME.length());
+							int anchor = target.indexOf('#');
+							attributes.put(HREF, anchor < 0 ? "#" : target.substring(anchor));
+							attributes.put(ReactHtmlControl.LINK_ATTRIBUTE, target);
+						}
+					} else if (!isResolvable(href)) {
+						attributes.remove(HREF);
+					}
+				}
+			})
+			.build();
+		return renderer.render(PARSER.parse(markdown));
 	}
 
 	private static boolean isResolvable(String href) {

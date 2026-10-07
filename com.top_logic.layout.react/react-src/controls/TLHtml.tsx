@@ -1,5 +1,39 @@
-import { React, useTLState, useTLDataUrl, useI18N, useFill, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, useFill, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+
+/** Command following a link that names its target for the server (ReactHtmlControl.FOLLOW_LINK_COMMAND). */
+const CMD_FOLLOW_LINK = 'followLink';
+
+/** Argument of {@link CMD_FOLLOW_LINK} holding the link target (FollowLinkArguments.LINK). */
+const ARG_LINK = 'link';
+
+/** Attribute of a link naming its target for the server (ReactHtmlControl.LINK_ATTRIBUTE). */
+const LINK_ATTRIBUTE = 'data-tl-link';
+
+/**
+ * Scrolls the element of the given id inside the container into view.
+ *
+ * @return Whether the container holds such an element.
+ */
+function scrollToSection(container: HTMLElement, section: string): boolean {
+  const target = container.querySelector('#' + CSS.escape(section));
+  if (!target) {
+    return false;
+  }
+  target.scrollIntoView({ block: 'start' });
+  return true;
+}
+
+/** The nearest ancestor of the element that scrolls its content vertically, if any. */
+function scrollParent(element: HTMLElement): HTMLElement | null {
+  for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+    const overflow = getComputedStyle(parent).overflowY;
+    if ((overflow === 'auto' || overflow === 'scroll') && parent.scrollHeight > parent.clientHeight) {
+      return parent;
+    }
+  }
+  return null;
+}
 
 const I18N_KEYS = {
   'js.html.document': 'HTML document',
@@ -21,6 +55,14 @@ const I18N_KEYS = {
  * - print: boolean - whether a document is shown with a button that prints it
  * - thumbnailWidth, thumbnailHeight: number - the size in CSS pixels a thumbnail lays its page out
  *   at before scaling it down; their ratio is the ratio of the preview box
+ * - followsLinks: boolean - whether a click on a link carrying a data-tl-link attribute is sent to
+ *   the server as the followLink command rather than followed by the browser
+ *
+ * An inline fragment is inserted as it stands. A link to a section of it (href "#section") scrolls
+ * to that section rather than changing the address of the page. A link the server follows names its
+ * target in a data-tl-link attribute and the section of the content it leads to in its href; once
+ * that content arrives, it is scrolled to the section. Content replacing other content is shown from
+ * its start, unless a followed link names a section.
  *
  * An inline fragment is inserted as it stands. What may be inserted is decided on the server: the
  * html state carries only fragments that passed its check, a rejected one arrives as error instead.
@@ -40,6 +82,7 @@ const I18N_KEYS = {
 const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const dataUrl = useTLDataUrl();
+  const sendCommand = useTLCommand();
   const t = useI18N(I18N_KEYS);
 
   const display = (state.display as string) || 'inline';
@@ -49,9 +92,61 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
   const print = state.print === true;
   const thumbnailWidth: number = (state.thumbnailWidth as number) || 800;
   const thumbnailHeight: number = (state.thumbnailHeight as number) || 1130;
+  const followsLinks = state.followsLinks === true;
 
   const frameRef = React.useRef<HTMLIFrameElement>(null);
   const boxRef = React.useRef<HTMLDivElement>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  // The section a followed link leads to, scrolled to once the content it leads to arrives; the
+  // empty string for a link naming no section, null while no link is being followed.
+  const pendingSectionRef = React.useRef<string | null>(null);
+  const shownHtmlRef = React.useRef<string | null>(null);
+
+  const handleContentClick = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey
+        || event.altKey) {
+      return;
+    }
+    const container = contentRef.current;
+    const anchor = (event.target as Element).closest('a');
+    if (!container || !anchor || !container.contains(anchor)) {
+      return;
+    }
+    const href = anchor.getAttribute('href') ?? '';
+    const section = href.startsWith('#') ? decodeURIComponent(href.substring(1)) : '';
+    const link = anchor.getAttribute(LINK_ATTRIBUTE);
+    if (link != null && followsLinks) {
+      event.preventDefault();
+      pendingSectionRef.current = section;
+      sendCommand(CMD_FOLLOW_LINK, { [ARG_LINK]: link });
+      return;
+    }
+    if (section) {
+      event.preventDefault();
+      scrollToSection(container, section);
+    }
+  }, [followsLinks, sendCommand]);
+
+  // Content replacing other content is shown from its start, or from the section a followed link
+  // leads to.
+  React.useLayoutEffect(() => {
+    const previous = shownHtmlRef.current;
+    shownHtmlRef.current = html;
+    const container = contentRef.current;
+    if (!container || previous === null || previous === html) {
+      return;
+    }
+    const section = pendingSectionRef.current;
+    pendingSectionRef.current = null;
+    if (section && scrollToSection(container, section)) {
+      return;
+    }
+    const scroller = scrollParent(container);
+    if (scroller && container.getBoundingClientRect().top < scroller.getBoundingClientRect().top) {
+      container.scrollIntoView({ block: 'start' });
+    }
+  }, [html]);
 
   // The scale a thumbnail shows its page at: the width the box measures over the width the page is
   // laid out at. Measured before the first paint, so the page is never seen at its full size.
@@ -158,7 +253,9 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
+      ref={contentRef}
       className={rootClassName(state, className)}
+      onClick={handleContentClick}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

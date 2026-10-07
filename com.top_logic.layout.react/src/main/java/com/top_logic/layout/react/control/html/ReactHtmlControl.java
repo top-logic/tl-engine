@@ -11,7 +11,9 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A read-only control that displays an HTML fragment.
@@ -49,6 +51,15 @@ import com.top_logic.layout.react.control.ReactControl;
  * {@link #THUMBNAIL_WIDTH} by {@link #THUMBNAIL_HEIGHT} CSS pixels and scaled down to the space the
  * preview is given, which keeps the aspect ratio of the two.
  * </p>
+ *
+ * <p>
+ * A link of inline content that carries a {@link #LINK_ATTRIBUTE} is followed by the
+ * {@link LinkHandler} given to {@link #setLinkHandler(LinkHandler)} rather than by the browser: a
+ * click on it sends the value of the attribute to the server, which hands it to the handler. The
+ * link's own target is a section of the content ({@code #section}) or none; the client scrolls to
+ * that section once the content the handler leads to is displayed. A link to a section of the
+ * displayed content scrolls to that section without changing the address of the page.
+ * </p>
  */
 public class ReactHtmlControl extends ReactControl implements DataProvider {
 
@@ -76,6 +87,21 @@ public class ReactHtmlControl extends ReactControl implements DataProvider {
 	/** State key holding the height in CSS pixels a thumbnail lays its content out at. */
 	public static final String THUMBNAIL_HEIGHT = "thumbnailHeight";
 
+	/**
+	 * State key telling whether links carrying a {@link #LINK_ATTRIBUTE} are followed by a
+	 * {@link LinkHandler}.
+	 */
+	public static final String FOLLOWS_LINKS = "followsLinks";
+
+	/**
+	 * Attribute of a link in the content whose value names the target a {@link LinkHandler}
+	 * follows, rather than the browser.
+	 */
+	public static final String LINK_ATTRIBUTE = "data-tl-link";
+
+	/** Command following a link of the content, see {@link FollowLinkArguments}. */
+	public static final String FOLLOW_LINK_COMMAND = "followLink";
+
 	/** {@link #DISPLAY} mode inserting the fragment into the page around it. */
 	public static final String DISPLAY_INLINE = "inline";
 
@@ -96,6 +122,25 @@ public class ReactHtmlControl extends ReactControl implements DataProvider {
 	private String _html = "";
 
 	private int _dataRevision;
+
+	private LinkHandler _linkHandler;
+
+	/**
+	 * Callback following a link of the displayed content, see
+	 * {@link ReactHtmlControl#setLinkHandler(LinkHandler)}.
+	 */
+	@FunctionalInterface
+	public interface LinkHandler {
+
+		/**
+		 * Called when the user clicked a link carrying a {@link ReactHtmlControl#LINK_ATTRIBUTE}.
+		 *
+		 * @param link
+		 *        The value of the attribute.
+		 * @return The outcome reported to the client (and to a scripted replay).
+		 */
+		HandlerResult linkFollowed(String link);
+	}
 
 	/**
 	 * Creates a {@link ReactHtmlControl} showing nothing.
@@ -122,7 +167,31 @@ public class ReactHtmlControl extends ReactControl implements DataProvider {
 		putState(PRINT, print);
 		putState(THUMBNAIL_WIDTH, thumbnailWidth);
 		putState(THUMBNAIL_HEIGHT, thumbnailHeight);
+		putState(FOLLOWS_LINKS, false);
 		setCssClass(cssClass);
+	}
+
+	/**
+	 * Sets the handler following the links of the content that carry a {@link #LINK_ATTRIBUTE}.
+	 *
+	 * @param handler
+	 *        The handler, {@code null} to let the browser follow such links.
+	 */
+	public void setLinkHandler(LinkHandler handler) {
+		_linkHandler = handler;
+		putState(FOLLOWS_LINKS, handler != null);
+	}
+
+	/**
+	 * Follows a link of the content the user clicked.
+	 */
+	@ReactCommandHandler(FOLLOW_LINK_COMMAND)
+	HandlerResult handleFollowLink(FollowLinkArguments args) {
+		LinkHandler handler = _linkHandler;
+		if (handler == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return handler.linkFollowed(args.getLink());
 	}
 
 	/**

@@ -1,32 +1,27 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Documentation side-window: the developer articles the modules of the application ship
-	(META-INF/tl-docs/*.md in their jars). A search input narrows the list of articles to those
-	containing every word typed; the selected article is displayed beside the list.
+	Documentation side-window: the developer documentation the modules of the application ship
+	(META-INF/tl-docs/**/*.md in their jars), as a tree of chapters and articles. A search input
+	narrows the tree to the articles containing every word typed; the selected entry is displayed
+	beside the tree. A link of an article to another one selects that one.
 -->
 <view>
 	<channels>
 		<channel name="search"/>
 		<channel name="doc"/>
-		<derived-channel name="docTitle"
-			expr="doc -> $doc['title']"
-			inputs="doc"
-		/>
 		<derived-channel name="docHtml"
-			expr="doc -> if($doc == null, null, devDocsHtml($doc['name']))"
+			expr="doc -> devDocsHtml($doc)"
 			inputs="doc"
 		/>
 	</channels>
 	<adaptive-detail selection="doc">
 		<selector>
 			<panel>
-				<title>
-					<en>Articles</en>
-					<de>Artikel</de>
-				</title>
-				<inset>
+				<title-content>
 					<value-input
+						clearable="true"
+						icon="css:bi bi-search"
 						label-position="hide-label"
 						value="search"
 					>
@@ -39,33 +34,28 @@
 							<de>Suche</de>
 						</placeholder>
 					</value-input>
-				</inset>
-				<table selection="doc">
-					<columns>
-						<computed-column name="title"
-							type="tl.core:String"
-							width="360"
-						>
-							<label>
-								<en>Article</en>
-								<de>Artikel</de>
-							</label>
-							<value><![CDATA[row -> $row['title']]]></value>
-						</computed-column>
-					</columns>
+				</title-content>
+				<tree selection="doc">
 					<inputs>
 						<input channel="search"/>
 					</inputs>
-					<rows><![CDATA[search -> devDocsList($search)]]></rows>
-				</table>
+					<root>search -&gt; devDocsRoot()</root>
+					<children>search -&gt; node -&gt; devDocsChildren($node, $search)</children>
+					<parents>search -&gt; node -&gt; devDocsParent($node)</parents>
+				</tree>
 			</panel>
 		</selector>
 		<detail>
 			<panel with-inset="true">
 				<title-content>
-					<text input="docTitle"/>
+					<text input="doc"/>
 				</title-content>
-				<html input="docHtml"/>
+				<html input="docHtml">
+					<on-link class="com.top_logic.layout.view.command.GenericViewCommand">
+						<execute-script function="link -> devDocsGet($link)"/>
+						<write-channel name="doc"/>
+					</on-link>
+				</html>
 			</panel>
 		</detail>
 	</adaptive-detail>

@@ -17,11 +17,13 @@ import java.util.zip.ZipOutputStream;
 
 import junit.framework.TestCase;
 
+import com.top_logic.layout.view.docs.DevDoc;
 import com.top_logic.layout.view.docs.DevDocs;
+import com.top_logic.layout.view.docs.DevDocsFunctions;
 
 /**
- * Tests for {@link DevDocs}: finding the articles on the class path, their front matter, and their
- * rendering as HTML.
+ * Tests for {@link DevDocs}: finding the documentation on the class path, its chapters, the front
+ * matter, and the rendering as HTML.
  */
 public class TestDevDocs extends TestCase {
 
@@ -42,58 +44,85 @@ public class TestDevDocs extends TestCase {
 	}
 
 	/**
-	 * Articles are found in a class output directory and in a jar; the first of a name wins.
+	 * Chapters are formed from the folders of a class output directory and of a jar together; the
+	 * first file of a path wins; entries are ordered by their order, then by title.
 	 */
 	public void testLoad() throws IOException {
 		Path classes = _dir.resolve("classes");
-		write(classes.resolve(DevDocs.DOCS_DIR + "/views.md"),
-			"---\ndescription: Read before writing a view.\n---\n\n# Views\n\nText.\n");
+		write(classes, "views/index.md",
+			"---\ndescription: Read before writing a view.\norder: 10\n---\n\n# Views\n\nIntro.\n");
+		write(classes, "views/tables.md", "---\norder: 20\n---\n# Tables\n");
+		write(classes, "views/basics.md", "---\norder: 10\n---\n# Basics\n");
+		write(classes, "access.md", "# Access\n");
 
 		Path jar = _dir.resolve("dep.jar");
 		try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(jar))) {
 			entry(zip, "META-INF/", "");
 			entry(zip, DevDocs.DOCS_DIR + "/", "");
-			entry(zip, DevDocs.DOCS_DIR + "/views.md", "# Shadowed\n");
-			entry(zip, DevDocs.DOCS_DIR + "/access.md", "# Access\n");
-			entry(zip, DevDocs.DOCS_DIR + "/nested/ignored.md", "# Ignored\n");
+			entry(zip, DevDocs.DOCS_DIR + "/views/tables.md", "# Shadowed\n");
+			entry(zip, DevDocs.DOCS_DIR + "/views/extra.md", "# Extra\n");
+			entry(zip, DevDocs.DOCS_DIR + "/views/deep/nested.md", "# Nested\n");
 		}
 
 		try (URLClassLoader loader = new URLClassLoader(
 			new URL[] { classes.toUri().toURL(), jar.toUri().toURL() }, null)) {
-			List<DevDocs.Doc> docs = DevDocs.load(loader);
-			assertEquals(List.of("views", "access"), docs.stream().map(DevDocs.Doc::name).toList());
+			DevDoc root = DevDocs.load(loader);
+			assertEquals("", root.getName());
+			assertEquals(List.of("views", "access"), names(root.getChildren()));
 
-			DevDocs.Doc views = docs.get(0);
-			assertEquals("Views", views.title());
-			assertEquals("Read before writing a view.", views.description());
-			assertEquals("# Views\n\nText.", views.text());
+			DevDoc views = root.getChildren().get(0);
+			assertTrue(views.isChapter());
+			assertEquals("Views", views.getTitle());
+			assertEquals("Read before writing a view.", views.getDescription());
+			assertEquals("# Views\n\nIntro.", views.getText());
+			assertEquals(List.of("views/basics", "views/tables", "views/deep", "views/extra"),
+				names(views.getChildren()));
+			assertEquals("Tables", views.getChildren().get(1).getTitle());
 
-			DevDocs.Doc access = docs.get(1);
-			assertEquals("Access", access.title());
-			assertEquals("", access.description());
+			DevDoc deep = views.getChildren().get(2);
+			assertTrue(deep.isChapter());
+			assertEquals("deep", deep.getTitle());
+			assertNull("A chapter without index has no text.", deep.getText());
+			assertEquals(List.of("views/deep/nested"), names(deep.getChildren()));
+
+			assertSame(deep.getChildren().get(0), DevDocs.find(root, "doc:views/deep/nested#section"));
+			assertSame(views, DevDocs.find(root, "views"));
+			assertSame(views, DevDocsFunctions.parent(views.getChildren().get(0)));
+			assertNull(DevDocs.find(root, "views/missing"));
+
+			assertEquals(List.of("views"), names(DevDocsFunctions.children(root, "nested")));
+			assertEquals(List.of("views/deep"), names(DevDocsFunctions.children(views, "nested")));
+			assertEquals(List.of(), names(DevDocsFunctions.children(root, "nothing-matches")));
 		}
-	}
-
-	/**
-	 * An article without a heading is titled by its name.
-	 */
-	public void testTitleFallback() {
-		assertEquals("plain", DevDocs.parse("plain", "Just text.\n").title());
 	}
 
 	/**
 	 * The title is the text of the heading, without its Markdown syntax.
 	 */
-	public void testTitleText() {
-		assertEquals("FAQ: React view layer (com.top_logic.layout.view and the table)",
-			DevDocs.parse("views", "# FAQ: React view layer (`com.top_logic.layout.view` and the *table*)\n").title());
+	public void testTitleText() throws IOException {
+		Path classes = _dir.resolve("classes");
+		write(classes, "views.md", "# React view layer (`com.top_logic.layout.view` and the *table*)\n");
+		write(classes, "plain.md", "Just text.\n");
+		try (URLClassLoader loader = new URLClassLoader(new URL[] { classes.toUri().toURL() }, null)) {
+			DevDoc root = DevDocs.load(loader);
+			assertEquals("React view layer (com.top_logic.layout.view and the table)",
+				DevDocs.find(root, "views").getTitle());
+			assertEquals("An article without a heading is titled by its name.", "plain",
+				DevDocs.find(root, "plain").getTitle());
+		}
 	}
 
 	/**
-	 * Tables are rendered, headings carry anchors, source HTML is escaped, and links into the source
-	 * tree lose their target.
+	 * Tables are rendered, headings carry anchors, source HTML is escaped, a link to an article
+	 * carries its target, and links leading nowhere lose their target.
 	 */
-	public void testToHtml() {
+	public void testToHtml() throws IOException {
+		Path classes = _dir.resolve("classes");
+		write(classes, "views/basics.md", "# Basics\n");
+		DevDoc root;
+		try (URLClassLoader loader = new URLClassLoader(new URL[] { classes.toUri().toURL() }, null)) {
+			root = DevDocs.load(loader);
+		}
 		String html = DevDocs.toHtml("""
 			## Spacing model
 
@@ -101,19 +130,28 @@ public class TestDevDocs extends TestCase {
 			|---|---|
 			| 1 | 2 |
 
-			A <panel> element, see [spacing](#spacing-model), [the guide](https://top-logic.com/) and
-			[the other article](../../docs/faq/other.md).
-			""");
+			A <panel> element, see [spacing](#spacing-model), [the guide](https://top-logic.com/),
+			[basics](doc:views/basics#fill), [all basics](doc:views/basics), [missing](doc:views/missing)
+			and [the other article](../../docs/faq/other.md).
+			""", root);
 		assertTrue(html, html.contains("<h2 id=\"spacing-model\">Spacing model</h2>"));
 		assertTrue(html, html.contains("<table>"));
 		assertTrue(html, html.contains("<td>2</td>"));
 		assertTrue(html, html.contains("&lt;panel&gt;"));
 		assertTrue(html, html.contains("<a href=\"#spacing-model\">spacing</a>"));
 		assertTrue(html, html.contains("<a href=\"https://top-logic.com/\">the guide</a>"));
+		assertTrue(html, html.contains("<a href=\"#fill\" data-tl-link=\"views/basics#fill\">basics</a>"));
+		assertTrue(html, html.contains("<a href=\"#\" data-tl-link=\"views/basics\">all basics</a>"));
+		assertTrue(html, html.contains("<a>missing</a>"));
 		assertTrue(html, html.contains("<a>the other article</a>"));
 	}
 
-	private static void write(Path file, String content) throws IOException {
+	private static List<String> names(List<DevDoc> docs) {
+		return docs.stream().map(DevDoc::getName).toList();
+	}
+
+	private static void write(Path classes, String path, String content) throws IOException {
+		Path file = classes.resolve(DevDocs.DOCS_DIR).resolve(path);
 		Files.createDirectories(file.getParent());
 		Files.writeString(file, content, StandardCharsets.UTF_8);
 	}

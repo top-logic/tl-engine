@@ -84,16 +84,6 @@ public class RowSetEditSession implements FormParticipant {
 		 */
 		void onRowSetValidationChanged(RowSetEditSession session);
 
-		/**
-		 * Called after the session {@link RowSetEditSession#end() ended}.
-		 *
-		 * @param session
-		 *        The session that ended.
-		 */
-		default void onEnded(RowSetEditSession session) {
-			// Nothing to do by default.
-		}
-
 	}
 
 	private final RowSetOwner _owner;
@@ -112,9 +102,6 @@ public class RowSetEditSession implements FormParticipant {
 	private final List<Listener> _listeners = new CopyOnWriteArrayList<>();
 
 	private boolean _editable = true;
-
-	/** Whether the session was {@link #start() started} and has not {@link #end() ended} yet. */
-	private boolean _started;
 
 	private CompositionFieldModel _fieldModel;
 
@@ -255,20 +242,6 @@ public class RowSetEditSession implements FormParticipant {
 	}
 
 	/**
-	 * The per-row models tracking overlays and cell field models.
-	 */
-	public List<CompositionRowModel> rowModels() {
-		return _rowModels;
-	}
-
-	/**
-	 * The validation model in effect for this session, or {@code null}.
-	 */
-	public FormValidationModel validationModel() {
-		return _validationModel;
-	}
-
-	/**
 	 * Starts editing the rows the owner holds.
 	 *
 	 * <p>
@@ -306,7 +279,7 @@ public class RowSetEditSession implements FormParticipant {
 
 		if (!isNested()) {
 			// Publish the overlay list to the owner through the binding.
-			_binding.updateMembership(_owner, overlayList);
+			_binding.updateMembership(_owner.object(), overlayList);
 		}
 
 		// Create the row-list field model.
@@ -334,7 +307,6 @@ public class RowSetEditSession implements FormParticipant {
 		if (!isNested()) {
 			form.registerParticipant(this);
 		}
-		_started = true;
 
 		// Reflect constraints of the bound attribute itself in the field model and display.
 		wireRowSetValidation();
@@ -395,8 +367,9 @@ public class RowSetEditSession implements FormParticipant {
 	 * model - and withdraws its participation in the form.
 	 *
 	 * <p>
-	 * The {@link Listener}s are notified when a started session ends, also after the form
-	 * {@link #cancel() cancelled} it.
+	 * The field models of the cells are {@link BoundFieldModel#dispose() disposed}, also after the
+	 * form {@link #cancel() cancelled} the session: a cell editing a composition of a row closes its
+	 * open dialog.
 	 * </p>
 	 */
 	public void end() {
@@ -413,8 +386,6 @@ public class RowSetEditSession implements FormParticipant {
 		}
 		_validationListeners.clear();
 
-		boolean wasStarted = _started;
-		_started = false;
 		if (_fieldModel != null) {
 			_owner.form().unregisterParticipant(this);
 			_fieldModel = null;
@@ -428,12 +399,6 @@ public class RowSetEditSession implements FormParticipant {
 
 		// Clear any displayed row-set error (the field model is now gone).
 		fireValidationChanged();
-
-		if (wasStarted) {
-			for (Listener listener : _listeners) {
-				listener.onEnded(this);
-			}
-		}
 	}
 
 	/**
@@ -570,7 +535,7 @@ public class RowSetEditSession implements FormParticipant {
 				bases.add(row);
 			}
 		}
-		_binding.updateMembership(_owner, bases);
+		_binding.updateMembership(_owner.object(), bases);
 	}
 
 	@Override
@@ -591,7 +556,7 @@ public class RowSetEditSession implements FormParticipant {
 			boundPart instanceof TLReference reference ? reference : null);
 
 		// Write the row set back and apply the binding's remove semantics to orphaned objects.
-		_binding.commit(tx, _owner, persistedList, _originalPersistentObjects);
+		_binding.commit(_owner.object(), persistedList, _originalPersistentObjects);
 	}
 
 	@Override
@@ -732,9 +697,9 @@ public class RowSetEditSession implements FormParticipant {
 	 * @param rowObject
 	 *        The row to remove from the current list.
 	 * @param rowIndex
-	 *        The row's index in {@link #rowModels()}.
+	 *        The row's index in the row models, which are in the order of the rows.
 	 */
-	public void deleteRow(TLObject rowObject, int rowIndex) {
+	private void deleteRow(TLObject rowObject, int rowIndex) {
 		if (_fieldModel == null || !_editable) {
 			return;
 		}
@@ -772,7 +737,7 @@ public class RowSetEditSession implements FormParticipant {
 	 */
 	private void membershipChanged(List<TLObject> currentList) {
 		if (!isNested()) {
-			_binding.updateMembership(_owner, currentList);
+			_binding.updateMembership(_owner.object(), currentList);
 		}
 
 		// Notify the validation model that the bound attribute changed, so that constraints on the

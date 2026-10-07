@@ -13,16 +13,17 @@ import com.top_logic.model.TLObject;
  *
  * <p>
  * The owner is either the object of the form itself ({@link #ofForm(FormControl)}) - a composition
- * table within a form - or a row of a row set the form edits ({@link #ofRow(FormControl, TLObject)})
- * - the parts of a composition of a table row. Either way, the row set is saved and discarded with
- * the form.
+ * table within a form, whose rows are saved with the form - or a row of a row set the form edits
+ * ({@link #ofRow(FormControl, TLObject)}) - the parts of a composition of a table row, edited in a
+ * dialog on a level of its own, see {@link RowSetEditSession#isNested()}.
  * </p>
  */
 public interface RowSetOwner {
 
 	/**
-	 * The form whose edit session the row set takes part in: the form validates, saves, and
-	 * cancels the row set together with everything else it edits.
+	 * The form the row set is edited in: the form validates, saves, and cancels the row set of its
+	 * own object together with everything else it edits, and provides the validation of the rows
+	 * of a nested edit.
 	 */
 	FormControl form();
 
@@ -81,10 +82,10 @@ public interface RowSetOwner {
 	 * for instance.
 	 *
 	 * @param form
-	 *        The form whose edit session the row takes part in.
+	 *        The form the row is edited in.
 	 * @param row
 	 *        The editing buffer of the row: its {@link TLObjectOverlay}, or the row itself if it is
-	 *        a transient object created in the edit session.
+	 *        a new object.
 	 */
 	static RowSetOwner ofRow(FormControl form, TLObject row) {
 		return new RowSetOwner() {

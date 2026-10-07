@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
@@ -111,15 +110,15 @@ public class AttributeRowSetBinding implements RowSetBinding {
 	}
 
 	@Override
-	public void updateMembership(RowSetOwner owner, List<TLObject> currentRows) {
-		owner.object().tUpdate(_part, currentRows);
+	public void updateMembership(TLObject owner, List<TLObject> currentRows) {
+		owner.tUpdate(_part, currentRows);
 	}
 
 	@Override
-	public void commit(Transaction tx, RowSetOwner owner, List<TLObject> persistedRows, List<TLObject> originalRows) {
+	public void commit(TLObject owner, List<TLObject> persistedRows, List<TLObject> originalRows) {
 		// Update the reference in the editing buffer of the owner, so that applying the buffer
 		// writes the persisted row list to the owner.
-		owner.object().tUpdate(_part, persistedRows);
+		owner.tUpdate(_part, persistedRows);
 
 		if (getRemoveMode() == RemoveMode.DELETE) {
 			// Delete objects taken out of a composition (present originally, absent now).

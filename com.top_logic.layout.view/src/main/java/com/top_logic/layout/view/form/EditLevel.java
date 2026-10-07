@@ -68,13 +68,6 @@ public class EditLevel {
 	}
 
 	/**
-	 * The level this level edits on top of, {@code null} for a root level.
-	 */
-	public EditLevel getParent() {
-		return _parent;
-	}
-
-	/**
 	 * Whether the given object is a buffer of this level.
 	 */
 	public boolean owns(Object object) {

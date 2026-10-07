@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -96,12 +95,12 @@ public class QueryRowSetBinding implements RowSetBinding {
 	}
 
 	@Override
-	public void updateMembership(RowSetOwner owner, List<TLObject> currentRows) {
+	public void updateMembership(TLObject owner, List<TLObject> currentRows) {
 		// No bound attribute: membership changes are buffered in the edit session only.
 	}
 
 	@Override
-	public void commit(Transaction tx, RowSetOwner owner, List<TLObject> persistedRows, List<TLObject> originalRows) {
+	public void commit(TLObject owner, List<TLObject> persistedRows, List<TLObject> originalRows) {
 		if (_removeMode == RemoveMode.DELETE) {
 			Set<TLObject> current = new HashSet<>(persistedRows);
 			for (TLObject original : originalRows) {

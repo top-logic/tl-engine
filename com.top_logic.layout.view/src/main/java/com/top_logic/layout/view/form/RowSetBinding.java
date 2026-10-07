@@ -7,7 +7,6 @@ package com.top_logic.layout.view.form;
 
 import java.util.List;
 
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -25,7 +24,7 @@ import com.top_logic.model.TLStructuredTypePart;
  *
  * <p>
  * Implementations: {@link AttributeRowSetBinding} derives everything from a reference attribute of
- * the {@link RowSetOwner owner} (composition references delete removed rows, plain references only unlink them);
+ * the object holding the rows (composition references delete removed rows, plain references only unlink them);
  * {@link QueryRowSetBinding} computes rows from an arbitrary query and takes its membership
  * semantics from explicit configuration.
  * </p>
@@ -108,33 +107,29 @@ public interface RowSetBinding {
 	 * </p>
 	 *
 	 * @param owner
-	 *        The owner of the row set, whose {@link RowSetOwner#object() editing buffer} buffers
-	 *        the edit session.
+	 *        The editing buffer of the object holding the rows.
 	 * @param currentRows
 	 *        The current row objects (row overlays and transient new objects).
 	 */
-	void updateMembership(RowSetOwner owner, List<TLObject> currentRows);
+	void updateMembership(TLObject owner, List<TLObject> currentRows);
 
 	/**
-	 * Commits the row set within the given transaction.
+	 * Commits the row set, within the transaction storing the edit session.
 	 *
 	 * <p>
 	 * Attribute bindings write the persisted row list back to the bound attribute of the editing
-	 * buffer of the owner. All bindings apply their remove semantics to the objects taken out of the row set
-	 * during the edit session.
+	 * buffer of the owner. All bindings apply their remove semantics to the objects taken out of
+	 * the row set during the edit session.
 	 * </p>
 	 *
-	 * @param tx
-	 *        The open transaction the commit takes part in.
 	 * @param owner
-	 *        The owner of the row set, whose {@link RowSetOwner#object() editing buffer} buffers
-	 *        the edit session.
+	 *        The editing buffer of the object holding the rows.
 	 * @param persistedRows
 	 *        The current rows with overlays and transient creations replaced by their persistent
 	 *        objects.
 	 * @param originalRows
 	 *        The persistent rows at edit-session start.
 	 */
-	void commit(Transaction tx, RowSetOwner owner, List<TLObject> persistedRows, List<TLObject> originalRows);
+	void commit(TLObject owner, List<TLObject> persistedRows, List<TLObject> originalRows);
 
 }

@@ -115,22 +115,6 @@ public class FileListControl extends AbstractCompositionControl implements Uploa
 	}
 
 	/**
-	 * Creates a {@link FileListControl} displaying the given running session.
-	 *
-	 * @param context
-	 *        The React context for ID allocation and SSE registration.
-	 * @param session
-	 *        The session editing the composition, which outlives this control.
-	 * @param dataAttributeName
-	 *        The name of the binary attribute on the composed type, or {@code null} to use the
-	 *        single binary-typed property of the composition target type.
-	 */
-	public FileListControl(ReactContext context, RowSetEditSession session, String dataAttributeName) {
-		super(context, session, REACT_MODULE);
-		_dataAttributeName = dataAttributeName;
-	}
-
-	/**
 	 * Sets the chrome wrapping this control. Its label is kept in sync with the composition
 	 * attribute's display label.
 	 */
@@ -312,9 +296,6 @@ public class FileListControl extends AbstractCompositionControl implements Uploa
 		if (row == null) {
 			return;
 		}
-		int index = fieldModel().getCurrentList().indexOf(row);
-		if (index >= 0) {
-			deleteRow(row, index);
-		}
+		removeRow(row);
 	}
 }

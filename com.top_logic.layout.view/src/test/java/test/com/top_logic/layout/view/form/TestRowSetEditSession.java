@@ -28,8 +28,9 @@ import com.top_logic.layout.view.form.TLObjectOverlay;
 import com.top_logic.model.TLObject;
 
 /**
- * Tests a {@link RowSetEditSession} anchored at a row of a row set edited in a form, and the
- * persisting of new rows together with the parts of their compositions.
+ * Tests {@link RowSetEditSession}s editing the rows of a form object and, nested on top of it, the
+ * parts of a row: new rows are saved together with their new parts, a nested session reaches the
+ * row only when committed, and a display can come and go while a session runs.
  */
 public class TestRowSetEditSession extends AbstractModelAccessTest {
 
@@ -53,8 +54,9 @@ public class TestRowSetEditSession extends AbstractModelAccessTest {
 
 		TLObject step = steps.addRow(row -> row.tUpdateByName(NAME, NEW_STEP));
 		assertNotNull(step);
-		RowSetEditSession substeps = rowSession(form, step);
+		RowSetEditSession substeps = nestedSession(form, steps, step);
 		assertNotNull(substeps.addRow(row -> row.tUpdateByName(NAME, NEW_SUBSTEP)));
+		substeps.commit();
 
 		form.executeSave();
 
@@ -70,10 +72,11 @@ public class TestRowSetEditSession extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * A session anchored at an existing row collects the parts of the row's composition and saves
-	 * the changes of its parts and its new parts with the form.
+	 * A nested session on an existing row edits the parts of the row on a level of its own: ended
+	 * without commit it leaves the row as it was, committed its changes reach the row and are saved
+	 * with the form.
 	 */
-	public void testSessionOfExistingRow() {
+	public void testNestedSessionOfExistingRow() {
 		TLObject step = createStepWithSubstep();
 		TLObject oldSubstep = single(step.tValueByName(SUBSTEPS));
 
@@ -82,17 +85,22 @@ public class TestRowSetEditSession extends AbstractModelAccessTest {
 		CompositionControl steps = new CompositionControl(form, STEPS);
 		steps.init();
 		assertTrue(form.enterEditMode());
+		TLObject stepRow = single(steps.session().currentRows());
 
-		TLObject stepOverlay = single(steps.session().currentRows());
-		assertTrue(stepOverlay instanceof TLObjectOverlay);
-		RowSetEditSession substeps = rowSession(form, stepOverlay);
-
-		TLObject substepOverlay = single(substeps.currentRows());
-		assertSame(oldSubstep, ((TLObjectOverlay) substepOverlay).getBase());
+		RowSetEditSession cancelled = nestedSession(form, steps, stepRow);
+		single(cancelled.currentRows()).tUpdateByName(NAME, RENAMED_SUBSTEP);
+		assertNotNull(cancelled.addRow(row -> row.tUpdateByName(NAME, NEW_SUBSTEP)));
+		cancelled.end();
+		assertEquals(List.of(oldSubstep), stepRow.tValueByName(SUBSTEPS));
 		assertFalse(form.isDirty());
 
-		substepOverlay.tUpdateByName(NAME, RENAMED_SUBSTEP);
+		RowSetEditSession substeps = nestedSession(form, steps, stepRow);
+		TLObject substepBuffer = single(substeps.currentRows());
+		assertSame(oldSubstep, ((TLObjectOverlay) substepBuffer).getBase());
+		substepBuffer.tUpdateByName(NAME, RENAMED_SUBSTEP);
 		assertNotNull(substeps.addRow(row -> row.tUpdateByName(NAME, NEW_SUBSTEP)));
+		substeps.commit();
+
 		assertTrue(form.isDirty());
 		// Nothing is stored before the form is saved.
 		assertEquals(List.of(oldSubstep), step.tValueByName(SUBSTEPS));
@@ -111,7 +119,7 @@ public class TestRowSetEditSession extends AbstractModelAccessTest {
 
 	/**
 	 * A control displaying a session follows the changes of its rows, and disposing it keeps the
-	 * session and its changes, which are saved with the form.
+	 * session and its changes.
 	 */
 	public void testSessionOutlivesDisplay() {
 		TLObject step = createStepWithSubstep();
@@ -121,7 +129,7 @@ public class TestRowSetEditSession extends AbstractModelAccessTest {
 		CompositionControl steps = new CompositionControl(form, STEPS);
 		steps.init();
 		assertTrue(form.enterEditMode());
-		RowSetEditSession substeps = rowSession(form, single(steps.session().currentRows()));
+		RowSetEditSession substeps = nestedSession(form, steps, single(steps.session().currentRows()));
 
 		CompositionControl display = new CompositionControl(substeps);
 		display.init();
@@ -134,6 +142,7 @@ public class TestRowSetEditSession extends AbstractModelAccessTest {
 		assertTrue(substeps.isRunning());
 		assertEquals(2, substeps.currentRows().size());
 
+		substeps.commit();
 		form.executeSave();
 		assertEquals(2, ((List<?>) step.tValueByName(SUBSTEPS)).size());
 	}
@@ -152,13 +161,16 @@ public class TestRowSetEditSession extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * Starts a session editing the substeps of the given step row of the given form.
+	 * Starts a session editing the substeps of the given step row of the given steps, on top of the
+	 * level the steps are edited in.
 	 */
-	private static RowSetEditSession rowSession(FormControl form, TLObject step) {
+	private static RowSetEditSession nestedSession(FormControl form, CompositionControl steps, TLObject step) {
 		AttributeRowSetBinding binding = new AttributeRowSetBinding(SUBSTEPS);
 		assertTrue(binding.resolve(step));
-		RowSetEditSession session = new RowSetEditSession(RowSetOwner.ofRow(form, step), binding);
+		RowSetEditSession session =
+			new RowSetEditSession(RowSetOwner.ofRow(form, step), binding, steps.session().level());
 		session.start();
+		assertTrue(session.isNested());
 		assertTrue(session.isRunning());
 		return session;
 	}

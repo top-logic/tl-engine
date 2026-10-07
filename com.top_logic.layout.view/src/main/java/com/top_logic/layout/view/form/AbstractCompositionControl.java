@@ -8,7 +8,6 @@ package com.top_logic.layout.view.form;
 import java.util.List;
 import java.util.function.Consumer;
 
-import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.table.CellEditing;
@@ -46,7 +45,7 @@ import com.top_logic.model.TLStructuredTypePart;
  * <p>
  * Subclasses render the row objects: {@link #buildContent(List, boolean)} builds the presentation
  * for a row list, {@link #refreshRows()} updates it after {@link #addRow()} or
- * {@link #deleteRow(TLObject, int)} changed the list.
+ * {@link #removeRow(TLObject)} changed the list.
  * </p>
  */
 public abstract class AbstractCompositionControl extends ReactControl implements FormModelListener {
@@ -189,7 +188,7 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 
 	/**
 	 * Updates the presentation after the row list changed through {@link #addRow()} or
-	 * {@link #deleteRow(TLObject, int)}. The current list is available from the
+	 * {@link #removeRow(TLObject)}. The current list is available from the
 	 * {@link #fieldModel()}.
 	 */
 	protected abstract void refreshRows();
@@ -254,13 +253,6 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	 */
 	protected final boolean isEditing() {
 		return fieldModel() != null;
-	}
-
-	/**
-	 * The validation model in effect for the current edit session, or {@code null}.
-	 */
-	protected final FormValidationModel registeredValidationModel() {
-		return _session == null ? null : _session.validationModel();
 	}
 
 	// -- FormModelListener --
@@ -370,20 +362,6 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	public void removeRow(TLObject rowObject) {
 		if (_session != null) {
 			_session.removeRow(rowObject);
-		}
-	}
-
-	/**
-	 * Deletes a row from the row set.
-	 *
-	 * @param rowObject
-	 *        The row to remove from the current list.
-	 * @param rowIndex
-	 *        The row's index in the session's {@link RowSetEditSession#rowModels() row models}.
-	 */
-	public void deleteRow(TLObject rowObject, int rowIndex) {
-		if (_session != null) {
-			_session.deleteRow(rowObject, rowIndex);
 		}
 	}
 

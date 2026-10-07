@@ -242,19 +242,31 @@ const FONT_FAMILY = "'Work Sans', sans-serif";
 const FONT_FAMILY_SECONDARY = "'Roboto Condensed', sans-serif";
 
 const customerTheme: ThemeOptions = {
-  palette: {
-    primary: { light: '#69696a', main: '#28282a', dark: '#1e1e1f' },
-    secondary: { light: '#fff5f8', main: '#ff3366', dark: '#e62958' },
-    error: { main: colors.red[500], dark: colors.red[700] },
-    // ...
+  colorSchemes: {
+    light: {
+      palette: {
+        primary: { light: '#69696a', main: '#28282a', dark: '#1e1e1f' },
+        secondary: { light: '#fff5f8', main: '#ff3366', dark: '#e62958' },
+        error: { main: colors.red[500], dark: colors.red[700] },
+        // ...
+      },
+    },
+    dark: {
+      palette: {
+        primary: { light: '#f5f5f5', main: '#e6e6e6', dark: '#bdbdbe', contrastText: '#28282a' },
+        secondary: { light: '#ff6690', main: '#ff3366', dark: '#e62958' },
+        background: { default: '#1e1e1f', paper: '#28282a' },
+        // ...
+      },
+    },
   },
-  typography: palette => ({
+  typography: {
     fontFamily: FONT_FAMILY,
     fontSize: 14,
-    h6: { fontWeight: 700, fontFamily: FONT_FAMILY_SECONDARY, color: palette.text.primary, fontSize: 18 },
+    h6: { fontWeight: 700, fontFamily: FONT_FAMILY_SECONDARY, color: 'var(--mui-palette-text-primary)', fontSize: 18 },
     body2: { fontSize: 14, lineHeight: 1.5, letterSpacing: '0.00938em' },
     // ...
-  }),
+  },
   components: {
     MuiButton: {
       defaultProps: { disableElevation: true },

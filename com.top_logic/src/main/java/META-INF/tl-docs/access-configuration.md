@@ -1,4 +1,9 @@
-# FAQ: Model based access configuration
+---
+description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), the internal / without-security marks, access parents, role rules of the AccessManager, the autoconf files and the SecurityCoverageCheck.
+order: 20
+---
+
+# Model based access configuration
 
 How TopLogic decides whether a user may read, write, create or delete an object of a model type,
 where that is configured, and how to check that the configuration is complete.

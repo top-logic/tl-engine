@@ -102,6 +102,16 @@
       <artifactId>commonmark</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark-ext-gfm-tables</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark-ext-heading-anchor</artifactId>
+    </dependency>
+
 	<!-- Testing -->    
 	<dependency>
 		<groupId>com.networknt</groupId>

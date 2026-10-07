@@ -1,4 +1,9 @@
-# FAQ: msgbuf Library
+---
+description: Read when generating or using msgbuf message classes from .proto files - the JsonWriter / de.haumacher.msgbuf.io.Writer pitfall and running the msgbuf-generator plugin.
+order: 60
+---
+
+# msgbuf Library
 
 The project uses the [msgbuf](https://github.com/msgbuf/msgbuf) library for type-safe protocol message generation from `.proto` files.
 

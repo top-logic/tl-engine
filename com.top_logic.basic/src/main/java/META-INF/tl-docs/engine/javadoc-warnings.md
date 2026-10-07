@@ -1,4 +1,9 @@
-# FAQ: Fixing TLDoclet JavaDoc build warnings
+---
+description: Read when fixing TLDoclet JavaDoc build warnings - invalid camel case word, invalid configuration reference, undeclared XML entities, missing record component comments - and why a {@link} is never downgraded to {@code}.
+order: 30
+---
+
+# Fixing TLDoclet JavaDoc build warnings
 
 The `TLDoclet` runs in the `maven-javadoc-plugin` lifecycle and turns JavaDoc problems into build warnings that make the Jenkins build UNSTABLE. House rules for the common ones:
 

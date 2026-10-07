@@ -1,4 +1,9 @@
-# FAQ: Demo apps — URLs and login
+---
+description: Read before starting or testing in a demo application - URLs and login of tl-demo (classic UI) and tl-demo-react (/view/), the corporate-example profile, and notes for scripted tests of the classic UI.
+order: 50
+---
+
+# Demo apps — URLs and login
 
 Two demo applications exist (see the "Repository Structure" section of the root `CLAUDE.md`):
 

@@ -96,6 +96,32 @@ public class TestDeclaredFilters extends TestCase {
 		assertEquals("A filter with an inapplicable criterion is not offered.", 0, filters.size());
 	}
 
+	/**
+	 * A criterion on a column withheld from the current user by the access rights is no declaration
+	 * error: the filter is silently not offered, while an unknown column next to it is still
+	 * reported.
+	 */
+	public void testWithheldColumnNotReported() {
+		BufferingProtocol log = new BufferingProtocol();
+		List<NamedFilter> filters = DeclaredFilters.resolve(log, "test", List.of(
+			new Declaration("withheld", ResKey.text("Withheld"), List.of(
+				Criterion.value("secret", "Alice"))),
+			new Declaration("mine", ResKey.text("My rows"), List.of(
+				Criterion.value(NAME, "Alice")))),
+			columns(), Set.of("secret"));
+
+		assertFalse(log.getErrors().toString(), log.hasErrors());
+		assertEquals("Only the filter over offered columns is offered.", List.of("mine"),
+			filters.stream().map(NamedFilter::id).toList());
+
+		BufferingProtocol unknownLog = new BufferingProtocol();
+		DeclaredFilters.resolve(unknownLog, "test", List.of(
+			new Declaration("broken", ResKey.text("Broken"), List.of(
+				Criterion.value("nonexistent", "Alice")))),
+			columns(), Set.of("secret"));
+		assertTrue("An unknown column is still reported.", unknownLog.hasErrors());
+	}
+
 	public void testUnfilterableColumnReported() {
 		BufferingProtocol log = new BufferingProtocol();
 		List<NamedFilter> filters = DeclaredFilters.resolve(log, "test", List.of(

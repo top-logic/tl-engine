@@ -44,6 +44,7 @@
 								<de>Neuer Projekt-Scope</de>
 							</label>
 							<create-transient type="tl.demo.projectManagement:ProjectScope"/>
+							<execute-script function="p -> { $p.set(`tl.demo.projectManagement:ProjectScope#admins`, [currentUser()]); $p; }"/>
 							<open-dialog
 								bind-input-to="model"
 								dialog-view="demo/create-project-scope.view.xml"
@@ -135,6 +136,7 @@
 						>
 							<field attribute="name"/>
 							<field attribute="dueDate"/>
+							<field attribute="approved"/>
 						</form>
 					</detail>
 				</adaptive-detail>

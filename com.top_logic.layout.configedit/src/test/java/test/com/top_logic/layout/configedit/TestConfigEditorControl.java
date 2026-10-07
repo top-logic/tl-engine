@@ -770,13 +770,37 @@ public class TestConfigEditorControl extends TestCase {
 	 * group header, not as direct children).
 	 */
 	private ReactButtonControl findAddButton(TestableConfigListEditorControl editor) {
+		ReactButtonControl result = addButtonOf(editor);
+		assertNotNull("Should have an add button", result);
+		return result;
+	}
+
+	/**
+	 * The add button of the given editor, or {@code null} if it offers none: a button among its
+	 * children, or the button in the header that stands for an item not set yet.
+	 */
+	private static ReactButtonControl addButtonOf(TestableConfigListEditorControl editor) {
 		for (ReactControl child : editor.getChildrenList()) {
 			if (child instanceof ReactButtonControl button) {
 				return button;
 			}
+			if (child instanceof ReactFormGroupControl group && !isEntry(group)) {
+				for (ReactControl headerChild : group.scriptingChildren()) {
+					if (headerChild instanceof ReactButtonControl button) {
+						return button;
+					}
+				}
+			}
 		}
-		fail("Should have an add button");
 		return null;
+	}
+
+	/**
+	 * Whether the given group is an entry of the collection - which the user can fold away - rather
+	 * than the header standing for an item not set yet.
+	 */
+	private static boolean isEntry(ReactControl group) {
+		return Boolean.TRUE.equals(group.scriptingScalarState().get(ReactFormGroupControl.COLLAPSIBLE));
 	}
 
 	/**
@@ -862,7 +886,7 @@ public class TestConfigEditorControl extends TestCase {
 	private List<ReactControl> elementGroups(TestableConfigListEditorControl editor) {
 		List<ReactControl> groups = new ArrayList<>();
 		for (ReactControl child : editor.getChildrenList()) {
-			if (child instanceof ReactFormGroupControl) {
+			if (child instanceof ReactFormGroupControl && isEntry(child)) {
 				groups.add(child);
 			}
 		}
@@ -1799,6 +1823,31 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
+	 * An item that is not set is shown as the header its entry would have, with the button creating
+	 * it, the same as a collection - not as a button of its own below the fields.
+	 */
+	public void testAnUnsetItemIsAHeaderWithTheButtonCreatingIt() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		TestableConfigListEditorControl itemEditor = new TestableConfigListEditorControl(createTestContext(),
+			new ConfigItemValue(config, config.descriptor().getProperty(TestConfig.INNER)),
+			PolymorphicOptions.Choices.NONE, null, true);
+
+		List<ReactControl> children = itemEditor.getChildrenList();
+		assertEquals(1, children.size());
+		ReactFormGroupControl header = (ReactFormGroupControl) children.get(0);
+		ReactButtonControl addButton = null;
+		for (ReactControl child : header.scriptingChildren()) {
+			if (child instanceof ReactButtonControl button) {
+				addButton = button;
+			}
+		}
+		assertNotNull("No button in the header.", addButton);
+
+		click(addButton);
+		assertNotNull(config.getInner());
+	}
+
+	/**
 	 * The fields follow the {@link DisplayOrder} of the configuration, as in any other
 	 * configuration form, and a property it does not list is not displayed.
 	 */
@@ -2289,12 +2338,7 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	private static boolean hasAddButton(TestableConfigListEditorControl editor) {
-		for (ReactControl child : editor.getChildrenList()) {
-			if (child instanceof ReactButtonControl) {
-				return true;
-			}
-		}
-		return false;
+		return addButtonOf(editor) != null;
 	}
 
 	/**

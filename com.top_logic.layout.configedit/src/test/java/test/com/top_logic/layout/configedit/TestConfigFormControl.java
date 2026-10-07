@@ -465,17 +465,28 @@ public class TestConfigFormControl extends TestCase {
 	 *
 	 * <p>
 	 * Identified by the literal {@code "+ "} prefix {@code ConfigListEditorControl#rebuild}
-	 * hardcodes ahead of the property's own (locale-dependent) label, or by the bare {@code "+"} of
-	 * the button {@link ConfigListEditorControl#headerAddButton()} puts in the header of the
-	 * collection's group, rather than by the full label text - the same reason {@link #label(ResKey)} exists for the mode buttons: matching the
+	 * hardcodes ahead of the property's own (locale-dependent) label, or for the button in the
+	 * header of the collection's group - see {@link ConfigListEditorControl#headerAddButton()} - by
+	 * the text around the collection's label in {@link I18NConstants#ADD_ENTRY__COLLECTION}, rather
+	 * than by the full label text - the same reason {@link #label(ResKey)} exists for the mode buttons: matching the
 	 * translated property label here would tie this test to whatever the JVM's default locale
 	 * happens to resolve it to.
 	 * </p>
 	 */
+	/**
+	 * Whether the given text is the label {@link I18NConstants#ADD_ENTRY__COLLECTION} gives, for
+	 * whatever collection.
+	 */
+	private boolean isAddEntryLabel(String text) {
+		String marker = "\u0000";
+		String[] around = label(I18NConstants.ADD_ENTRY__COLLECTION.fill(marker)).split(marker, -1);
+		return around.length == 2 && text.startsWith(around[0]) && text.endsWith(around[1]);
+	}
+
 	private ReactButtonControl findAddButton(ReactControl control) {
 		if (control instanceof ReactButtonControl button) {
 			Object label = button.scriptingScalarState().get("label");
-			if (label instanceof String text && (text.equals("+") || text.startsWith("+ "))) {
+			if (label instanceof String text && (text.startsWith("+ ") || isAddEntryLabel(text))) {
 				return button;
 			}
 		}

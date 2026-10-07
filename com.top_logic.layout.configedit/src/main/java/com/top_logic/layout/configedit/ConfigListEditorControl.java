@@ -28,6 +28,8 @@ import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ButtonSize;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
@@ -315,13 +317,20 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			if (_headerAddButton != null) {
 				_headerAddButton.setDisabled(_value.isFull());
 			} else if (!_value.isFull()) {
-				ReactButtonControl addButton =
-					new ReactButtonControl(_context, "+ " + _value.label(),
-						ctx -> {
-							addElement();
-							return HandlerResult.DEFAULT_RESULT;
-						});
-				addChild(addButton);
+				if (_value instanceof ConfigItemValue) {
+					// An item that is not set is shown as the header its entry would have, with the
+					// button creating it - the same as a collection carries its button in its header.
+					addChild(new ReactFormGroupControl(_context, _value.label(), false, false,
+						GroupBorder.SUBTLE, true, List.of(createHeaderAddButton()), List.of()));
+				} else {
+					ReactButtonControl addButton =
+						new ReactButtonControl(_context, "+ " + _value.label(),
+							ctx -> {
+								addElement();
+								return HandlerResult.DEFAULT_RESULT;
+							});
+					addChild(addButton);
+				}
 			}
 		}
 
@@ -348,15 +357,31 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			return null;
 		}
 		if (_headerAddButton == null) {
-			_headerAddButton = new ReactButtonControl(_context, "+", ctx -> {
-				addElement();
-				return HandlerResult.DEFAULT_RESULT;
-			});
-			_headerAddButton.setTooltip(
-				Resources.getInstance().getString(I18NConstants.ADD_ENTRY__COLLECTION.fill(_value.label())));
+			_headerAddButton = createHeaderAddButton();
 			rebuild(null);
 		}
 		return _headerAddButton;
+	}
+
+	/**
+	 * A button for the header of a group that adds an entry to the edited collection.
+	 *
+	 * <p>
+	 * It shows an icon only. Its label names what it does, which the user reads as its tooltip and
+	 * a screen reader announces as its name.
+	 * </p>
+	 */
+	private ReactButtonControl createHeaderAddButton() {
+		ReactButtonControl result = new ReactButtonControl(_context,
+			Resources.getInstance().getString(I18NConstants.ADD_ENTRY__COLLECTION.fill(_value.label())),
+			ctx -> {
+				addElement();
+				return HandlerResult.DEFAULT_RESULT;
+			});
+		result.setImage(Icons.CONFIG_LIST_ADD);
+		result.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		result.setSize(ButtonSize.SMALL);
+		return result;
 	}
 
 	/**

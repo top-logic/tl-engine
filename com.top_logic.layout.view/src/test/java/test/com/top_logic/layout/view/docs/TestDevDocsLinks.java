@@ -20,7 +20,8 @@ import com.top_logic.layout.view.docs.DevDocs;
 
 /**
  * Checks the links of the developer documentation on the class path: every link to another
- * article names an existing article, and every section a link names is a heading of its target.
+ * article names an existing article, every section a link names is a heading of its target, and no
+ * link points to a file outside the documentation, which the application does not have.
  */
 public class TestDevDocsLinks extends TestCase {
 
@@ -30,6 +31,12 @@ public class TestDevDocsLinks extends TestCase {
 		Pattern.compile("<a href=\"#([^\"]*)\"(?: " + Pattern.quote(ReactHtmlControl.LINK_ATTRIBUTE) + "=\"([^\"#]*)[^\"]*\")?");
 
 	private static final Pattern ID = Pattern.compile(" id=\"([^\"]*)\"");
+
+	/** The target of a Markdown link (outside code). */
+	private static final Pattern LINK_TARGET = Pattern.compile("\\]\\(([^)\\s]*)\\)");
+
+	/** The link targets that are not files: an article, a section, a page outside the application. */
+	private static final Pattern ABSOLUTE_TARGET = Pattern.compile("(doc:|#|https?://|mailto:).*");
 
 	/**
 	 * Resolves all links of all articles.
@@ -46,6 +53,13 @@ public class TestDevDocsLinks extends TestCase {
 
 		List<String> problems = new ArrayList<>();
 		for (DevDoc doc : docs) {
+			Matcher fileLink = LINK_TARGET.matcher(withoutCode(doc.getText()));
+			while (fileLink.find()) {
+				if (!ABSOLUTE_TARGET.matcher(fileLink.group(1)).matches()) {
+					problems.add(doc.getName() + ": link to a file outside the documentation " + fileLink.group(1));
+				}
+			}
+
 			Matcher source = DOC_LINK.matcher(doc.getText());
 			while (source.find()) {
 				if (DevDocs.find(root, source.group(1)) == null) {
@@ -78,6 +92,11 @@ public class TestDevDocsLinks extends TestCase {
 		for (DevDoc child : node.getChildren()) {
 			collect(child, result);
 		}
+	}
+
+	/** The given Markdown source without code blocks and code spans, which show links as text. */
+	private static String withoutCode(String markdown) {
+		return markdown.replaceAll("(?s)```.*?```", "").replaceAll("`[^`\\n]*`", "");
 	}
 
 	private static List<String> ids(String html) {

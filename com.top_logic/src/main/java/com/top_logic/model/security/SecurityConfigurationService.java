@@ -247,12 +247,41 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		 */
 		@Name(ACCESS_PARENT)
 		@Constraint(value = AccessParentStandsAlone.class, args = { @Ref(GRANTS), @Ref(WITHOUT_SECURITY), @Ref(INTERNAL) })
+		@DynamicMode(fun = HideBesideOtherDefinition.class,
+			args = { @Ref(ACCESS_PARENT), @Ref(GRANTS), @Ref(WITHOUT_SECURITY), @Ref(INTERNAL) })
 		AccessParentConfig getAccessParent();
 
 		/**
 		 * Setter for {@link #getAccessParent()}.
 		 */
 		void setAccessParent(AccessParentConfig value);
+
+		/**
+		 * @see HideBesideOtherDefinition The grants are not offered while the type delegates to an
+		 *      access parent.
+		 */
+		@Override
+		@DynamicMode(fun = HideBesideOtherDefinition.ForGrants.class,
+			args = { @Ref(WITHOUT_SECURITY), @Ref(GRANTS), @Ref({ ACCESS_PARENT, AccessParentConfig.DEFINITION }) })
+		List<AccessRule> getGrants();
+
+		/**
+		 * @see HideBesideOtherDefinition The mark is not offered while the type delegates to an
+		 *      access parent.
+		 */
+		@Override
+		@DynamicMode(fun = HideBesideOtherDefinition.class,
+			args = { @Ref(WITHOUT_SECURITY), @Ref({ ACCESS_PARENT, AccessParentConfig.DEFINITION }) })
+		boolean isWithoutSecurity();
+
+		/**
+		 * @see HideBesideOtherDefinition The mark is not offered while the type delegates to an
+		 *      access parent.
+		 */
+		@Override
+		@DynamicMode(fun = HideBesideOtherDefinition.class,
+			args = { @Ref(INTERNAL), @Ref({ ACCESS_PARENT, AccessParentConfig.DEFINITION }) })
+		boolean isInternal();
 
 	}
 

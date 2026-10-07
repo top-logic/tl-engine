@@ -90,10 +90,11 @@ const TLAvatar: React.FC<TLCellProps> = ({ controlId }) => {
       id={controlId}
       className={rootClassName(
         state,
-        ['tl-avatar', sizeClass, `tl-avatar--category-${categoryOf(name)}`, TYPE_CLASS[size] ?? TYPE_CLASS.medium]
+        ['tl-avatar', sizeClass, TYPE_CLASS[size] ?? TYPE_CLASS.medium]
           .filter(Boolean)
           .join(' ')
       )}
+      data-tl-role={`category-${categoryOf(name)}`}
       role="img"
       aria-label={name}
       {...tooltipProps(name)}

@@ -1,6 +1,6 @@
 import { React, ThemeIcon } from 'tl-react-bridge';
 import type { DropdownSelectStateJson } from 'tl-react-bridge';
-import { TLPill } from './pill/TLPill';
+import { TLPill, roleAttr } from './pill/TLPill';
 
 const { useCallback } = React;
 
@@ -45,13 +45,9 @@ export function OptionImage({ image }: { image?: string }) {
 }
 
 /**
- * Renders an option as its image followed by its label, as a pill where the option has a color
- * role.
- *
- * @param option the option to render
- * @param label what stands for the label, e.g. the label with the search match set off; the
- *        option's label where omitted
- * @param labelClassName the class of the element holding the label, if any
+ * Renders an option as its image followed by its label, for an element that carries the option's
+ * color role itself (data-tl-role, see {@link optionRoleAttr}): a chip, a segment. Image and label
+ * are siblings; nothing is nested in a pill.
  */
 export function OptionContent({
   option,
@@ -62,12 +58,41 @@ export function OptionContent({
   label?: React.ReactNode;
   labelClassName?: string;
 }) {
-  return withPill(option.colorRole, (
+  return (
     <>
       <OptionImage image={option.image} />
       <span className={labelClassName}>{label ?? option.label}</span>
     </>
-  ));
+  );
+}
+
+/**
+ * Renders an option where the element showing it carries no role of its own - a row of the open list,
+ * the single chosen value: a `tl-pill` of the option's color role (image and label side by side in
+ * it), or image and label as they are for a value without a role.
+ */
+export function OptionLabel({
+  option,
+  label,
+  labelClassName,
+}: {
+  option: OptionDescriptor;
+  label?: React.ReactNode;
+  labelClassName?: string;
+}) {
+  if (!option.colorRole) {
+    return <OptionContent option={option} label={label} labelClassName={labelClassName} />;
+  }
+  return (
+    <TLPill role={option.colorRole} className="tl-type-label" icon={<OptionImage image={option.image} />}>
+      {label ?? option.label}
+    </TLPill>
+  );
+}
+
+/** The data-tl-role an element showing the option carries: its color role, none for a neutral one. */
+export function optionRoleAttr(option: OptionDescriptor): string | undefined {
+  return roleAttr(option.colorRole);
 }
 
 /**
@@ -92,7 +117,7 @@ export function ReadonlyValue({
     [onGoto, option.value]
   );
 
-  const content = <OptionContent option={option} labelClassName="tl-field-value__text" />;
+  const content = <OptionLabel option={option} labelClassName="tl-field-value__text" />;
 
   if (option.link) {
     return (

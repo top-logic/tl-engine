@@ -42,8 +42,8 @@ The roles are the closed list of `ValueColor`: `neutral`, `brand`, the four mean
 `warning`, `success`, `info`, and eight categories `category-1` … `category-8` that carry no meaning
 and only tell values apart. A literal color value or a token name is not a valid specification.
 
-The pill a value of that classifier is drawn as carries the role as a class, `tl-pill tl-pill--warning`,
-and nothing else: the stylesheet of the design system (`style/tl-design-system/components.css`) reads the
+The pill a value of that classifier is drawn as carries the role as the attribute `data-tl-role`,
+`<span class="tl-pill" data-tl-role="warning">`, and nothing else: the stylesheet of the design system (`style/tl-design-system/components.css`) reads the
 two tokens of the role, its tinted surface and its line (`--tl-status-warning-subtle`,
 `--tl-status-warning-border`), so the pill follows a theme switch without the server sending a color.
 Which tokens a role reads, and why the text on it is `text-primary`, is decided in `docs/skalen.md` of

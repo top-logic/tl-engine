@@ -3,12 +3,12 @@ import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import {
   ARG_OPTION,
   CMD_GOTO,
-  OptionContent,
   OptionImage,
+  OptionLabel,
   ReadonlyValues,
+  optionRoleAttr,
 } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
-import { pillClassName } from './pill/TLPill';
 import { buttonClassName } from './button/ButtonDefaults';
 import { ProgressBar } from './TLProgress';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
@@ -58,7 +58,8 @@ function Chip({
 
   return (
     <span
-      className={pillClassName(option.colorRole, 'tl-type-label tl-select__chip')}
+      className="tl-pill tl-type-label tl-select__chip"
+      data-tl-role={optionRoleAttr(option)}
       data-tl-state={dragState}
       draggable={draggable || undefined}
       onDragStart={onDragStart}
@@ -137,7 +138,7 @@ function OptionRow({
       onClick={handleClick}
       onMouseEnter={onMouseEnter}
     >
-      <OptionContent option={option} label={labelContent} />
+      <OptionLabel option={option} label={labelContent} />
     </div>
   );
 }
@@ -630,19 +631,19 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
 
       {/* Loading, error and empty states - a line of the popup, not an option of the list */}
       {!optionsLoaded && !loadError && (
-        <div className="tl-select__status tl-type-body">
+        <div className="tl-status tl-type-body">
           <ProgressBar fraction={null} label={i18n['js.dropdownSelect.loading']} />
         </div>
       )}
       {loadError && (
-        <div className="tl-select__status tl-type-body" role="alert">
+        <div className="tl-status tl-type-body" role="alert">
           <button type="button" className="tl-button tl-button--link tl-type-body" onClick={handleRetry}>
             {i18n['js.dropdownSelect.error']}
           </button>
         </div>
       )}
       {optionsLoaded && filteredOptions.length === 0 && (
-        <div className="tl-select__status tl-type-body">
+        <div className="tl-status tl-type-body">
           {nothingFoundLabel}
         </div>
       )}
@@ -699,7 +700,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
             // set it off from, and removing it is what the clear button beside the arrow does. A
             // value with a color role is a pill of that role, as it is in the list.
             <span className="tl-select__value">
-              <OptionContent option={value[0]} labelClassName="tl-field-value__text" />
+              <OptionLabel option={value[0]} labelClassName="tl-field-value__text" />
             </span>
           ) : (
             value.map((v, idx) => {

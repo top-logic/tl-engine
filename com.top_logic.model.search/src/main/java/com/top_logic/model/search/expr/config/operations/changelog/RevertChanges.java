@@ -57,6 +57,22 @@ public class RevertChanges extends GenericMethod {
 		return null;
 	}
 
+	/**
+	 * Reverting changes modifies the model.
+	 */
+	@Override
+	public boolean isSideEffectFree() {
+		return false;
+	}
+
+	/**
+	 * Reverting changes modifies the model, which must not happen when the expression is compiled.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
+	}
+
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Object input = arguments[0];

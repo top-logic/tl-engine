@@ -828,7 +828,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        The attribute value to display, may be {@code null}.
 	 */
 	public ReactControl createDisplayControl(ReactContext context, TLStructuredTypePart part, Object value) {
-		return createDisplayControl(context, part, part.isMultiple(), value);
+		return createDisplayControl(context, part, part, part.isMultiple(), value);
 	}
 
 	/**
@@ -836,21 +836,27 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * holding as many values as stated.
 	 *
 	 * <p>
-	 * The attribute decides everything but how many values there are: its annotations, its options
-	 * and its own control annotation shape the display, while the multiplicity is the one of the
-	 * field, which a column reaching the attribute over a multi-valued step answers for itself, see
-	 * {@link ColumnType#collected()}.
+	 * The attribute decides everything but how many values there are and which display annotations
+	 * apply: its options and its own control annotation shape the display, while the multiplicity
+	 * is the one of the field, which a column reaching the attribute over a multi-valued step
+	 * answers for itself, see {@link ColumnType#collected()}, and the display annotations are the
+	 * given ones.
 	 * </p>
 	 *
+	 * @param annotations
+	 *        Where the display annotations are read from: the attribute itself, or a column's
+	 *        annotations layered over it, see {@link ColumnType#annotatedBy(AnnotationLookup)}.
 	 * @param multiple
 	 *        Whether the displayed value is a collection of the attribute's values rather than a
 	 *        single one.
 	 */
-	private ReactControl createDisplayControl(ReactContext context, TLStructuredTypePart part, boolean multiple,
-			Object value) {
+	private ReactControl createDisplayControl(ReactContext context, TLStructuredTypePart part,
+			AnnotationLookup annotations, boolean multiple, Object value) {
 		AbstractFieldModel model = displayModel(part, multiple, value);
 		model.setEditable(false);
-		return createFieldControl(context, part, fieldSpec(part, multiple, model), model, null);
+		FieldSpec field = fieldSpec(part.getType(), annotations, MetaLabelProvider.INSTANCE.getLabel(part), multiple,
+			model).setOrdered(multiple && part.isOrdered());
+		return createFieldControl(context, part, field, model, null);
 	}
 
 	/**
@@ -862,9 +868,11 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * ({@link ColumnType#type()}, {@link ColumnType#multiple()}) and where its display annotations
 	 * come from ({@link ColumnType#annotations()}) is all the display needs. Where an attribute
 	 * <em>does</em> hold the value ({@link ColumnType#part()}), that attribute decides the display,
-	 * so its options and its own annotations keep shaping the cell - all but how many values the
-	 * cell holds, which is the column's answer ({@link ColumnType#multiple()}): a column reaching a
-	 * single-valued attribute over a multi-valued step shows all the values it collected.
+	 * so its options and its own control annotation keep shaping the cell - all but how many values
+	 * the cell holds, which is the column's answer ({@link ColumnType#multiple()}): a column
+	 * reaching a single-valued attribute over a multi-valued step shows all the values it
+	 * collected. The display annotations are read from {@link ColumnType#annotations()} in either
+	 * case, which are the attribute's own unless the column declares some over them.
 	 * </p>
 	 *
 	 * <p>
@@ -881,7 +889,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	public ReactControl createDisplayControl(ReactContext context, ColumnType columnType, Object value) {
 		TLStructuredTypePart part = columnType.part();
 		if (part != null) {
-			return createDisplayControl(context, part, columnType.multiple(), value);
+			return createDisplayControl(context, part, columnType.annotations(), columnType.multiple(), value);
 		}
 		TLType type = columnType.type();
 		if (type == null) {

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Details of one commit, opened from the revision monitor with the tl.changelog:ChangeSet on the
+	changeSet channel. The header shows the commit number, date, author and message read-only; the
+	commit number is written as plain digits.
+	
+	The table lists what the commit changed, one row per creation and per deletion and one row per
+	modified attribute of an updated object. Its rows are dictionaries built from the changes of the
+	ChangeSet: the kind of change as a tl.changelog:ChangeType classifier, the object (for a deleted
+	object its last version before the deletion), and for a modification the attribute with its old
+	and new values.
+-->
+<view>
+	<channels>
+		<channel name="changeSet"/>
+		<derived-channel name="revision"
+			expr="cs -> toString($cs.get(`tl.changelog:ChangeSet#revision`).get(`tl.core:Revision#revision`))"
+			inputs="changeSet"
+		/>
+	</channels>
+	<window width="960px">
+		<title>
+			<en>Changes of the commit</en>
+			<de>Änderungen des Commits</de>
+		</title>
+		<form
+			input="changeSet"
+			max-columns="2"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<value-input
+				readonly="true"
+				type="tl.core:String"
+				value="revision"
+			>
+				<label>
+					<en>Revision</en>
+					<de>Revision</de>
+				</label>
+			</value-input>
+			<field attribute="date"/>
+			<field attribute="author"/>
+			<field attribute="message"/>
+		</form>
+		<table>
+			<inputs>
+				<input channel="changeSet"/>
+			</inputs>
+			<columns>
+				<computed-column name="kind"
+					type="tl.changelog:ChangeType"
+					width="140"
+				>
+					<label>
+						<en>Kind</en>
+						<de>Art</de>
+					</label>
+					<value><![CDATA[row -> $row["kind"]]]></value>
+				</computed-column>
+				<computed-column name="object"
+					type="tl.model:TLObject"
+					width="220"
+				>
+					<label>
+						<en>Object</en>
+						<de>Objekt</de>
+					</label>
+					<value><![CDATA[row -> $row["object"]]]></value>
+				</computed-column>
+				<computed-column name="attribute"
+					type="tl.model:TLStructuredTypePart"
+					width="160"
+				>
+					<label>
+						<en>Attribute</en>
+						<de>Attribut</de>
+					</label>
+					<value><![CDATA[row -> $row["attribute"]]]></value>
+				</computed-column>
+				<computed-column name="oldValue"
+					width="200"
+				>
+					<label>
+						<en>Old value</en>
+						<de>Alter Wert</de>
+					</label>
+					<value><![CDATA[row -> $row["oldValue"]]]></value>
+				</computed-column>
+				<computed-column name="newValue"
+					width="200"
+				>
+					<label>
+						<en>New value</en>
+						<de>Neuer Wert</de>
+					</label>
+					<value><![CDATA[row -> $row["newValue"]]]></value>
+				</computed-column>
+			</columns>
+			<rows><![CDATA[cs -> $cs.get(`tl.changelog:ChangeSet#changes`).flatMap(c -> switch {
+	$c.instanceOf(`tl.changelog:Update`):
+		$c.get(`tl.changelog:Update#modifications`).map(m -> {
+			"kind": `tl.changelog:ChangeType#UPDATE`,
+			"object": $c.get(`tl.changelog:Change#object`),
+			"attribute": $m.get(`tl.changelog:Modification#part`),
+			"oldValue": $m.get(`tl.changelog:Modification#oldValue`),
+			"newValue": $m.get(`tl.changelog:Modification#newValue`)
+		});
+	$c.instanceOf(`tl.changelog:Creation`):
+		[{"kind": `tl.changelog:ChangeType#CREATE`, "object": $c.get(`tl.changelog:Change#object`)}];
+	default:
+		[{"kind": `tl.changelog:ChangeType#DELETE`, "object": $c.get(`tl.changelog:Change#object`)}];
+})]]></rows>
+		</table>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Close</en>
+						<de>Schließen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

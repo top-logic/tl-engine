@@ -95,6 +95,16 @@ public class ChangeLog extends GenericMethod {
 		return TlChangelogFactory.getChangeSetType();
 	}
 
+	/**
+	 * The change log grows with every commit, so the result depends on when the function is
+	 * evaluated, not only on its arguments: a call with literal arguments must not be replaced by
+	 * its value when the expression is compiled.
+	 */
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
+	}
+
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		TLObject obj = arguments[0] == null ? null : asTLObject(arguments[0]);

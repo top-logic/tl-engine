@@ -139,9 +139,23 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		_noModelMessage = noModelMessage;
 		_lockHandler = lockHandler;
 		_editMode = false;
-		putState(EDIT_MODE, Boolean.FALSE);
+		showEditMode(false);
 		putState(DIRTY, Boolean.FALSE);
 		updateNoModelMessage();
+	}
+
+	/**
+	 * Tells the client whether the form is being edited.
+	 *
+	 * <p>
+	 * Outside edit mode the form's grid is {@link ReactFormLayoutControl#READ_ONLY read-only}: its
+	 * fields show their values only, without the required marker, help and messages that belong to
+	 * editing.
+	 * </p>
+	 */
+	private void showEditMode(boolean editMode) {
+		putState(EDIT_MODE, Boolean.valueOf(editMode));
+		putState(ReactFormLayoutControl.READ_ONLY, Boolean.valueOf(!editMode));
 	}
 
 	/**
@@ -617,7 +631,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		_lockHandler.acquireLock(_currentObject);
 
 		_editMode = true;
-		putState(EDIT_MODE, Boolean.TRUE);
+		showEditMode(true);
 		updateEditModeChannel();
 
 		if (_inputChannel != null && _inputVeto == null) {
@@ -983,7 +997,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		releaseLock();
 
-		putState(EDIT_MODE, Boolean.FALSE);
+		showEditMode(false);
 		updateEditModeChannel();
 		updateDirtyState();
 

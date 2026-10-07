@@ -924,22 +924,38 @@ public class TestConfigEditorControl extends TestCase {
 	 * plus the public {@link ReactControl#getModel()} of the field control found that way.
 	 *
 	 * <p>
-	 * The selector shares a form with the fields of the entry, so it is looked for in the form the
-	 * body of the group holds, too.
+	 * The selector heads the entry, or, for an entry with a title of its own, is the first field of
+	 * the form over the entry's properties - so it is looked for among the fields of that form, too.
 	 * </p>
 	 */
 	private FieldModel findTypeFieldModel(ReactControl elementGroup) {
 		for (ReactControl child : elementGroup.scriptingChildren()) {
-			if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
-				for (ReactControl field : child.scriptingChildren()) {
-					return (FieldModel) field.getModel();
-				}
+			FieldModel found = typeFieldModel(child);
+			if (found != null) {
+				return found;
 			}
-			if (child instanceof ReactFormLayoutControl && !(child instanceof ConfigEditorControl)) {
-				return findTypeFieldModel(child);
+			if (child instanceof ReactFormLayoutControl) {
+				for (ReactControl field : child.scriptingChildren()) {
+					found = typeFieldModel(field);
+					if (found != null) {
+						return found;
+					}
+				}
 			}
 		}
 		fail("Should have a type selector field in the element group");
+		return null;
+	}
+
+	/**
+	 * The field model of the given control if it is a type selector, else {@code null}.
+	 */
+	private static FieldModel typeFieldModel(ReactControl control) {
+		if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(control.scriptingName())) {
+			for (ReactControl field : control.scriptingChildren()) {
+				return (FieldModel) field.getModel();
+			}
+		}
 		return null;
 	}
 
@@ -1845,6 +1861,31 @@ public class TestConfigEditorControl extends TestCase {
 
 		click(addButton);
 		assertNotNull(config.getInner());
+	}
+
+	/**
+	 * An entry without a title of its own is headed by its type selector instead of by the name of
+	 * its type, and the selector stays changeable - the type is no key here - while the fields of
+	 * the entry are left to themselves.
+	 */
+	public void testTheTypeSelectorHeadsAnUntitledEntry() {
+		PolymorphicTestConfig config = TypedConfiguration.newConfigItem(PolymorphicTestConfig.class);
+		config.setHandlerArray(new HandlerConfig[] { TypedConfiguration.newConfigItem(HandlerAConfig.class) });
+		PropertyDescriptor property = config.descriptor().getProperty(PolymorphicTestConfig.HANDLER_ARRAY);
+
+		TestableConfigListEditorControl editor =
+			new TestableConfigListEditorControl(createTestContext(), config, property);
+
+		ReactControl group = elementGroups(editor).get(0);
+		assertNull("The type selector takes the place of the title.", findHeaderText(group));
+		FieldModel type = null;
+		for (ReactControl child : group.scriptingChildren()) {
+			if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
+				type = (FieldModel) child.scriptingChildren().get(0).getModel();
+			}
+		}
+		assertNotNull("The type selector heads the entry.", type);
+		assertTrue("The type of an entry it is no key of can be changed.", type.isEditable());
 	}
 
 	/**

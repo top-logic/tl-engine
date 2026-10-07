@@ -529,7 +529,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	/**
 	 * The body children shared by {@link #createElementGroup(ConfigurationItem, int, int, boolean)}
 	 * and {@link #createPendingElementGroup(PendingEntry)}: the type selector (for a polymorphic
-	 * collection with more than one choice), the key field (for a keyed collection), and the
+	 * collection with more than one choice, unless it is in the header), the key field (for a keyed collection), and the
 	 * nested {@link ConfigEditorControl} over the entry's own properties (with the key property
 	 * hidden from it, since this class already renders it). {@code pending} is passed straight
 	 * through to {@link #createKeyField(ConfigurationItem, PropertyDescriptor, PendingEntry)} -
@@ -540,21 +540,22 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			PendingEntry pending) {
 		List<ReactControl> bodyChildren = new ArrayList<>();
 		boolean polymorphic = _choices.hasOptions();
-		// Only where the type is not the key. Where it is, it is the entry's key control and
-		// belongs in the header with every other key - see #createEntryHeader.
-		if (polymorphic && _choices.options().size() > 1 && !isTypeKeyed(item)) {
-			bodyChildren.add(createTypeSelector(item, pending, false));
-		}
+		// Only where the type neither is the key nor heads the entry. Where it does, it is in the
+		// header - see #createEntryHeader. Otherwise it is the first field of the entry, laid out
+		// with the others.
+		ReactControl typeSelector = offersType(item) && !isTypeKeyed(item) && !typeHeadsEntry(item)
+			? createTypeSelector(item, pending, false, false)
+			: null;
 		if (!polymorphic || isTypeSelected(item)) {
-			bodyChildren.add(new ConfigEditorControl(_context, item,
+			ConfigEditorControl editor = new ConfigEditorControl(_context, item,
 				keyProperty == null ? Collections.emptySet() : Collections.singleton(keyProperty), false, _index,
-				_editable, formModelOr(item)));
-		}
-		if (bodyChildren.size() > 1) {
-			// The type selector and the fields of the entry are laid out by one form, so that the
-			// selector gets a column as wide as the ones of the fields. Directly in the body of the
-			// group, it would take a column of the grid around the entry, narrowed by the frame.
-			return List.of(new ReactFormLayoutControl(_context, bodyChildren));
+				_editable, formModelOr(item));
+			if (typeSelector != null) {
+				editor.addLeadingField(typeSelector);
+			}
+			bodyChildren.add(editor);
+		} else if (typeSelector != null) {
+			bodyChildren.add(typeSelector);
 		}
 		return bodyChildren;
 	}
@@ -682,11 +683,15 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 				// A key that is the entry's type is picked, not typed: offering it as text would
 				// invite writing a class name by hand.
 				if (_choices.hasOptions() && _choices.options().size() > 1) {
-					return createTypeSelector(item, pending, true);
+					return createTypeSelector(item, pending, true, true);
 				}
 			} else {
 				return createKeyField(item, keyProperty, pending);
 			}
+		}
+		if (typeHeadsEntry(item)) {
+			// The header would show the name of the type: show it where it is chosen.
+			return createTypeSelector(item, pending, false, true);
 		}
 		return createHeaderControl(label);
 	}
@@ -702,7 +707,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * currently chosen type must stay legible to the reader even where it may not be changed.
 	 */
 	private ReactFormFieldChromeControl createTypeSelector(ConfigurationItem item, PendingEntry pending,
-			boolean inHeader) {
+			boolean key, boolean inHeader) {
 		List<Object> options = _choices.options();
 		List<String> keys = new ArrayList<>(options.size());
 		for (Object option : options) {
@@ -716,10 +721,10 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		SimpleSelectFieldModel typeModel = new SimpleSelectFieldModel(currentKey, keys, false);
 		typeModel.setMandatory(true);
 		typeModel.setNullable(false);
-		// In the header the type is the entry's key, so it follows the key's rule: settled before
-		// the entry joins the collection, fixed afterwards. Elsewhere it is an ordinary property of
-		// the entry and may be changed for as long as the form is editable.
-		typeModel.setEditable(inHeader ? _editable && pending != null : _editable);
+		// Where the type is the entry's key, it follows the key's rule: settled before the entry
+		// joins the collection, fixed afterwards. Otherwise it is an ordinary property of the entry
+		// and may be changed for as long as the form is editable.
+		typeModel.setEditable(key ? _editable && pending != null : _editable);
 
 		LabelProvider labelProvider = PolymorphicOptions.keyLabelProvider(options);
 
@@ -895,6 +900,30 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		String label = Resources.getInstance()
 			.getString(I18NConstants.LIST_ELEMENT_EMPTY_TITLE__TYPE.fill(typeName));
 		return new Label(label, true);
+	}
+
+	/**
+	 * Whether the type of the given entry can be chosen among several.
+	 */
+	private boolean offersType(ConfigurationItem item) {
+		return _choices.hasOptions() && _choices.options().size() > 1;
+	}
+
+	/**
+	 * Whether the type selector of the given entry stands in its header.
+	 *
+	 * <p>
+	 * Where the entry has no title of its own, its header would show the name of its type - see
+	 * {@link #resolveElementLabel(ConfigurationItem)}. The selector shows that name as well and is
+	 * where it is changed, so it takes the place of the title. An entry with a title keeps it, and
+	 * has its type selector as the first of its fields.
+	 * </p>
+	 */
+	private boolean typeHeadsEntry(ConfigurationItem item) {
+		return offersType(item)
+			&& !isTypeKeyed(item)
+			&& _value.entryTitle(item) == null
+			&& resolveTitleProperty(item) == null;
 	}
 
 	/**

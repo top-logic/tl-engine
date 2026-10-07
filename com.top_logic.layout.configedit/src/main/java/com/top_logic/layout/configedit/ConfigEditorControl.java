@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.configedit;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -650,6 +651,20 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				field.setDisabled(true);
 			}
 		}
+	}
+
+	/**
+	 * Puts the given field before the fields of the properties, so that it is laid out with them.
+	 *
+	 * <p>
+	 * For a field this editor does not create itself: the type selector of an entry, which chooses
+	 * the configuration interface of the item rather than a value of one of its properties.
+	 * </p>
+	 */
+	public void addLeadingField(ReactControl field) {
+		List<ReactControl> children = new ArrayList<>(getChildren());
+		children.add(0, field);
+		replaceChildren(children);
 	}
 
 	/**

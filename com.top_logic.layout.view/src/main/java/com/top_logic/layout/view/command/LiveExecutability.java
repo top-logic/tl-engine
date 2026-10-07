@@ -8,6 +8,7 @@ package com.top_logic.layout.view.command;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -209,6 +210,31 @@ public class LiveExecutability {
 			_ruleObservation = null;
 		}
 		_inputObserver.detach();
+	}
+
+	/**
+	 * Follows the rule while the given control is displayed.
+	 *
+	 * <p>
+	 * The rule is attached when the control is attached - the update then runs, since the rule may
+	 * answer differently than when the control was last displayed - and detached when it is
+	 * detached or cleaned up, so that no listener outlives the display.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context whose model scope the object observation registers on.
+	 * @param control
+	 *        The control displaying what the rule decides.
+	 * @param update
+	 *        Brings the control in line with what the rule answers now.
+	 */
+	public void followWhileDisplayed(ViewContext context, ReactControl control, Runnable update) {
+		control.addAttachListener(() -> {
+			attach(context.getModelScope());
+			update.run();
+		});
+		control.addDetachListener(this::detach);
+		control.addCleanupAction(this::detach);
 	}
 
 }

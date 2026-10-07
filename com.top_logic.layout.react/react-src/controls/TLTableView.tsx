@@ -1,6 +1,8 @@
 import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragTypeAccepted, dropPositionAt, startPointerDrag, useFill, rootClassName, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal } from 'tl-react-bridge';
-import type { TLCellProps, TLDropPosition, TLRunningDrag } from 'tl-react-bridge';
+import type { TLCellProps, TLDropPosition } from 'tl-react-bridge';
 import { isInteractiveTarget, isOperableTarget } from './interactive';
+import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
+import type { DropVerdict } from './drop-hint';
 import { Menu, MenuItem } from './menu/Menu';
 
 /**
@@ -121,13 +123,6 @@ interface RowState {
   draggable?: boolean;
 }
 
-/** The server's answer to a drop probe: whether a drop there would be accepted, and if not, why. */
-interface DropVerdict {
-  accepted: boolean;
-  /** Why the drop is refused, in the user's language. */
-  reason?: string;
-}
-
 /** Command asking the server whether a drop at the hovered target would be accepted. */
 const CMD_DROP_PROBE = 'dropProbe';
 
@@ -139,34 +134,6 @@ interface DropState {
   /** Identifier of the probe asking about this target, `null` for a drag not started here. */
   probe: string | null;
 }
-
-/** Distance in pixels between the hint on a refused drop target and the pointer or drag image. */
-const DROP_HINT_GAP = 8;
-
-/**
- * Places the hint on a refused drop target right of the pointer at viewport position (`x`, `y`)
- * and below the drag image, or on the other side where the viewport has no room for it there.
- *
- * @param image Vertical extent of the drag image relative to the pointer, see
- *        {@link TLRunningDrag.image}.
- */
-function placeDropHint(hint: HTMLElement, x: number, y: number, image: TLRunningDrag['image']): void {
-  const width = hint.offsetWidth;
-  const height = hint.offsetHeight;
-  let left = x + DROP_HINT_GAP;
-  if (left + width > window.innerWidth) {
-    left = x - DROP_HINT_GAP - width;
-  }
-  let top = y + image.bottom + DROP_HINT_GAP;
-  if (top + height > window.innerHeight) {
-    top = y + image.top - DROP_HINT_GAP - height;
-  }
-  hint.style.left = Math.max(0, left) + 'px';
-  hint.style.top = Math.max(0, top) + 'px';
-}
-
-/** Drag image extent for a drag of unknown origin: none. */
-const NO_DRAG_IMAGE: TLRunningDrag['image'] = { top: 0, bottom: 0 };
 
 const MIN_COL_WIDTH = 50;
 

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The drill-down of a card of the board: a dialog with the ticket and its conversation, opened by
+	the button on the card. The ticket is edited in the form and commented in the conversation
+	below it, the same comment views the object list page uses. The board follows the changes
+	while the dialog is open.
+-->
+<view>
+	<channels>
+		<channel name="ticket"/>
+	</channels>
+	<window width="640px">
+		<title>
+			<en>Ticket</en>
+			<de>Ticket</de>
+		</title>
+		<form
+			input="ticket"
+			with-inset="true"
+		>
+			<field attribute="name"/>
+			<field attribute="status"/>
+		</form>
+		<inset>
+			<object-list
+				element-channel="comment"
+				element-type="demo.tickets:Comment"
+				inputs="ticket"
+				items="ticket -> $ticket.get(`demo.tickets:Ticket#comments`)"
+				link="ticket -> comment -> { persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); }"
+				new-element-channel="newComment"
+				remove="ticket -> comment -> $comment.delete()"
+			>
+				<item>
+					<view-ref view="tickets/comment.view.xml">
+						<bind
+							channel="comment"
+							to="comment"
+						/>
+						<bind
+							channel="draft"
+							to="newComment"
+						/>
+					</view-ref>
+				</item>
+				<new-element>
+					<view-ref view="tickets/comment-composer.view.xml">
+						<bind
+							channel="comment"
+							to="newComment"
+						/>
+						<bind
+							channel="ticket"
+							to="ticket"
+						/>
+					</view-ref>
+				</new-element>
+				<empty-text>
+					<en>No comments yet.</en>
+					<de>Noch keine Kommentare.</de>
+				</empty-text>
+			</object-list>
+		</inset>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Close</en>
+						<de>Schließen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

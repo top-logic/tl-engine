@@ -19,15 +19,13 @@ import java.util.Set;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.FieldModel;
-import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel.SelectOptionsListener;
+import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
@@ -39,13 +37,11 @@ import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
-import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.react.scripting.ReactOptionScope;
 import com.top_logic.layout.react.state.DropdownSelectState;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
-import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.model.TLObject;
@@ -609,18 +605,13 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 */
 	private List<Object> resolveByKeys(List<ModelName> keys, List<ModelName> unresolvedOut) {
 		ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_selectModel.getOptions()), _labelProvider);
-		ActionContext actionContext = newActionContext();
+		ActionContext actionContext = ScriptingModelKey.newActionContext();
 		List<Object> resolved = new ArrayList<>(keys.size());
 		for (ModelName name : keys) {
-			Object option = null;
 			// Context-relative names (ContextDependent) resolve within this control's option scope;
 			// globally-named options (e.g. a person) resolve without a value context.
 			Object valueContext = name instanceof ContextDependent ? scope : null;
-			try {
-				option = ModelResolver.locateModel(actionContext, valueContext, name);
-			} catch (RuntimeException ex) {
-				Logger.warn("Cannot resolve option for key: " + name, ex, this);
-			}
+			Object option = ScriptingModelKey.locate(actionContext, valueContext, name);
 			if (option != null) {
 				resolved.add(option);
 			} else {
@@ -630,10 +621,6 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		return resolved;
 	}
 
-	private static ActionContext newActionContext() {
-		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
-		return new ReactActionContext(displayContext, displayContext.asRequest().getSession());
-	}
 
 	/**
 	 * Builds option descriptors and populates the given index and reverse maps. Each option

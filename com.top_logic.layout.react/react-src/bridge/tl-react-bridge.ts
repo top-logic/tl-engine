@@ -4,6 +4,7 @@ import { flushSync } from 'react-dom';
 import type { TLCellProps } from './types';
 import { getComponent } from './registry';
 import { wrapRoot } from './root-wrapper';
+import { installTouchDrag } from './touch-drag';
 import { connect, subscribe, unsubscribe } from './sse-client';
 import { setI18NApiBase, setI18NWindowName } from './i18n';
 import { createScope, registerScope, addBinding, pageScope, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
@@ -821,6 +822,9 @@ function setupDOMObserver(): void {
 
   observer.observe(document.body, { childList: true, subtree: true });
 }
+
+// Drag sources and drop targets work by touch as well.
+installTouchDrag();
 
 // Start the DOM observer as soon as the DOM is ready.
 if (document.readyState === 'loading') {

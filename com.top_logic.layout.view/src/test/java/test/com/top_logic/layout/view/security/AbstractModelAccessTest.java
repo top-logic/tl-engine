@@ -71,7 +71,9 @@ import com.top_logic.util.error.TopLogicException;
  * <li>{@value #STEP}: the type of the compositions {@value #STEPS} of a project and
  * {@value #SUBSTEPS} of a step. A step has its container as access parent. Writing its attribute
  * <code>note</code> is granted to {@value #ROLE_RESPONSIBLE} only, writing its {@value #SECRET} to no
- * role.</li>
+ * role. Writing its composition {@value #LOCKED_ITEMS} is granted to no role either.</li>
+ * <li>{@value #ITEM}: the type of the compositions {@value #ITEMS} and {@value #LOCKED_ITEMS} of a
+ * step, with a mandatory {@value #NAME}. An item has its container as access parent.</li>
  * <li>{@value #CATEGORY}: the type of the reference {@value #CATEGORY_REF} of a project. The account
  * in {@value #READER} holds the role {@value #ROLE_READER}, which grants read only.</li>
  * </ul>
@@ -137,6 +139,21 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Name of the {@link #STEP} composition of {@link #STEP}s. */
 	protected static final String SUBSTEPS = "substeps";
+
+	/** Name of the {@link #STEP} reference to another {@link #STEP}, which is no composition. */
+	protected static final String PREDECESSOR = "predecessor";
+
+	/**
+	 * Name of the type of the compositions {@link #ITEMS} and {@link #LOCKED_ITEMS} of a
+	 * {@link #STEP}, with a mandatory {@link #NAME}.
+	 */
+	protected static final String ITEM = "Item";
+
+	/** Name of the {@link #STEP} composition of {@link #ITEM}s. */
+	protected static final String ITEMS = "items";
+
+	/** Name of the {@link #STEP} composition of {@link #ITEM}s nobody may write. */
+	protected static final String LOCKED_ITEMS = "lockedItems";
 
 	/** Name of the {@link #PROJECT} reference to the account holding {@link #ROLE_RESPONSIBLE}. */
 	protected static final String RESPONSIBLE = "responsible";

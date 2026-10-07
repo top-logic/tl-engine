@@ -76,7 +76,7 @@ public class TestValueCellEditing extends TestCase {
 	public void testTheFieldShowsTheComputedValue() {
 		Map<String, Object> row = row(Boolean.TRUE, 3);
 
-		assertEquals(Integer.valueOf(3), editing().createModel(row, null).getValue());
+		assertEquals(Integer.valueOf(3), editing().createModel(row, null, null).getValue());
 	}
 
 	/**
@@ -85,7 +85,7 @@ public class TestValueCellEditing extends TestCase {
 	 */
 	public void testEditingRunsTheUpdate() {
 		Map<String, Object> row = row(Boolean.TRUE, 3);
-		BoundFieldModel field = editing().createModel(row, null);
+		BoundFieldModel field = editing().createModel(row, null, null);
 
 		List<Object> changes = new ArrayList<>();
 		field.addListener(new FieldModelListener() {
@@ -121,7 +121,7 @@ public class TestValueCellEditing extends TestCase {
 	 */
 	public void testUnchangedValueWritesNothing() {
 		Map<String, Object> row = row(Boolean.TRUE, 3);
-		BoundFieldModel field = editing().createModel(row, null);
+		BoundFieldModel field = editing().createModel(row, null, null);
 
 		field.setValue(Integer.valueOf(3));
 
@@ -134,7 +134,7 @@ public class TestValueCellEditing extends TestCase {
 	 */
 	public void testRefreshShowsWhatTheRowHolds() {
 		Map<String, Object> row = row(Boolean.TRUE, 3);
-		BoundFieldModel field = editing().createModel(row, null);
+		BoundFieldModel field = editing().createModel(row, null, null);
 
 		row.put(COLUMN, Integer.valueOf(5));
 		field.refreshFromObject();

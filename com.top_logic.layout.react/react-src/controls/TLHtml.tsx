@@ -1,4 +1,4 @@
-import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, useFill, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, useFill, rootClassName, tooltipProps, pushLocalStep } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /** Command following a link that names its target for the server (ReactHtmlControl.FOLLOW_LINK_COMMAND). */
@@ -59,7 +59,8 @@ const I18N_KEYS = {
  *   the server as the followLink command rather than followed by the browser
  *
  * An inline fragment is inserted as it stands. A link to a section of it (href "#section") scrolls
- * to that section rather than changing the address of the page. A link the server follows names its
+ * to that section rather than changing the address of the page; the jump is a step in the history
+ * of the window, so going back returns to where the reader was. A link the server follows names its
  * target in a data-tl-link attribute and the section of the content it leads to in its href; once
  * that content arrives, it is scrolled to the section. Content replacing other content is shown from
  * its start, unless a followed link names a section.
@@ -124,7 +125,21 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
     }
     if (section) {
       event.preventDefault();
-      scrollToSection(container, section);
+      const scroller = scrollParent(container);
+      const before = scroller ? scroller.scrollTop : 0;
+      pushLocalStep(
+        () => {
+          if (scroller && scroller.isConnected) {
+            scroller.scrollTop = before;
+          }
+        },
+        () => {
+          // Reached again after the content was displayed anew, the section is scrolled to once the
+          // content has arrived.
+          if (!container.isConnected || !scrollToSection(container, section)) {
+            pendingSectionRef.current = section;
+          }
+        });
     }
   }, [followsLinks, sendCommand]);
 

@@ -172,7 +172,7 @@ public class TestMenuGroupOverlay extends TestCase {
 				""");
 
 		List<CommandGroup> groups = menu.getGroups();
-		assertEquals(List.of("page", "automation"), ids(groups));
+		assertEquals(List.of("page", "automation", "reference"), ids(groups));
 		assertEquals("Designer and UI inspector.", 2, groups.get(0).getCommands().size());
 
 		List<PolymorphicConfiguration<? extends ViewCommand>> automation = groups.get(1).getCommands();
@@ -189,8 +189,9 @@ public class TestMenuGroupOverlay extends TestCase {
 	public void testDevMenuAlone() throws ConfigurationException, IOException {
 		String base = Files.readString(new File(DEV_MENU).toPath(), StandardCharsets.UTF_8);
 		List<CommandGroup> groups = menu(base).getGroups();
-		assertEquals(List.of("page", "automation"), ids(groups));
+		assertEquals(List.of("page", "automation", "reference"), ids(groups));
 		assertEquals("The script recorder.", 1, groups.get(1).getCommands().size());
+		assertEquals("The documentation.", 1, groups.get(2).getCommands().size());
 	}
 
 	private static MenuElement.Config menu(String... sources) throws ConfigurationException {

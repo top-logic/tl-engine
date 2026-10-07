@@ -35,6 +35,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.ExpressionTemplate;
 import com.top_logic.html.template.HTMLTemplateFragment;
@@ -345,6 +346,8 @@ public class HTMLTemplateFormProvider
 
 		private final TLObject _model;
 
+		private Registration _modelObservation = Registration.NONE;
+
 		private Map<String, Object> _args;
 
 		private List<CommandHandler> _contextMenuCommands;
@@ -448,12 +451,13 @@ public class HTMLTemplateFormProvider
 		protected void attachRevalidated() {
 			super.attachRevalidated();
 
-			getScope().getFrameScope().getModelScope().addModelListener(_model, this);
+			_modelObservation = getScope().getFrameScope().getModelScope().addModelListener(_model, this);
 		}
 
 		@Override
 		protected void detachInvalidated() {
-			getScope().getFrameScope().getModelScope().removeModelListener(_model, this);
+			_modelObservation.dispose();
+			_modelObservation = Registration.NONE;
 
 			super.detachInvalidated();
 		}

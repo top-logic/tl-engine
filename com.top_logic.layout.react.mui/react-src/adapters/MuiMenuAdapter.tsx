@@ -60,6 +60,14 @@ const VIEWPORT_MARGIN = 16;
 const PAPER_SX: SxProps<Theme> = { zIndex: 'var(--tl-layer-popover)', overflow: 'auto', outline: 'none' };
 
 /**
+ * The background of a header of the menu: the one of the menu surface. A header stays on top of
+ * the items scrolling beneath it and therefore paints the paper color; in a dark color scheme the
+ * surface also lightens it with the overlay of its elevation (`--Paper-overlay`, inherited from the
+ * surface), which the header takes over, so that it does not stand out darker than the menu.
+ */
+const HEADER_SX: SxProps<Theme> = { backgroundImage: 'var(--Paper-overlay)' };
+
+/**
  * The height a menu at the given anchor can take: the space on the side of the anchor that has
  * more of it. The placement of the bridge opens the menu below its anchor and flips it above where
  * only that side has room for it.
@@ -111,8 +119,8 @@ function availableHeight(anchor: PopoverAnchor): number {
  * <li>items → an entry per item: an item → `MenuItem` with the label, the icon in a
  *     `ListItemIcon` rendered by the bridge's {@link ThemeIcon}, disabled → `disabled`, active →
  *     `selected`, `aria-current` and a strong label, tone `danger` → the error color, cssClasses →
- *     className; a separator → `Divider`; a header → `ListSubheader`, which can neither be chosen
- *     nor focused;</li>
+ *     className; a separator → `Divider`; a header → `ListSubheader` on the background of the menu
+ *     surface, which can neither be chosen nor focused;</li>
  * <li>choosing an item → the command `selectItem` with the argument `itemId`; the server closes
  *     the menu;</li>
  * <li>closing without a choice (Escape, a press outside) → the command `close`;</li>
@@ -201,7 +209,7 @@ const MuiMenuAdapter: React.FC<TLCellProps> = ({ controlId }) => {
             return <Divider key={index} />;
           }
           if (item.type === 'header') {
-            return <ListSubheader key={index}>{item.label}</ListSubheader>;
+            return <ListSubheader key={index} sx={HEADER_SX}>{item.label}</ListSubheader>;
           }
           const active = item.active === true;
           return (

@@ -24,6 +24,9 @@ const ANCHOR_ID = 'trigger';
 /** An icon font image in its encoded form. */
 const IMAGE_COPY = 'css:fas fa-copy';
 
+/** The overlay MUI's surface puts over the paper color in a dark scheme, inherited by its content. */
+const PAPER_OVERLAY = 'var(--Paper-overlay)';
+
 type Entry = Partial<MenuStateJson.Entry>;
 
 const ITEMS: Entry[] = [
@@ -91,6 +94,13 @@ describe('TLMenu as MUI Menu', () => {
 
     expect(screen.getByText('Bearbeiten').classList).toContain('MuiListSubheader-root');
     expect(menu.querySelector('.MuiDivider-root')).not.toBeNull();
+  });
+
+  it('paints a header with the background of the menu surface, including its elevation overlay', () => {
+    mountMenu({});
+
+    const header = screen.getByText('Bearbeiten');
+    expect(getComputedStyle(header).backgroundImage).toBe(PAPER_OVERLAY);
   });
 
   it('opens at a point of the viewport for a context menu', () => {

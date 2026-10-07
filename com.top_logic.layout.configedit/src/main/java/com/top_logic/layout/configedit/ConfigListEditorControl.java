@@ -751,12 +751,12 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * Creates a new element of this property's element type, honouring a polymorphic collection's
-	 * first option just as the pre-pending-entry {@link #addElement()} always did.
+	 * Creates a new element of this property's element type, of a polymorphic collection's
+	 * {@link PolymorphicOptions.Choices#newOption() default option}.
 	 */
 	private ConfigurationItem newEntry() {
 		if (_choices.hasOptions()) {
-			return (ConfigurationItem) _choices.mapping().toSelection(_choices.options().get(0));
+			return (ConfigurationItem) _choices.mapping().toSelection(_choices.newOption());
 		}
 		return _value.newElement();
 	}

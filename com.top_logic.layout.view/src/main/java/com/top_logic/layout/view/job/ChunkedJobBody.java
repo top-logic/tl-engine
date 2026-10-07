@@ -266,7 +266,7 @@ public abstract class ChunkedJobBody implements JobBody {
 
 		job.beginPhase(PHASE_INIT);
 		job.indeterminate();
-		try (Transaction tx = kb.beginTransaction(I18NConstants.COMMIT_JOB)) {
+		try (Transaction tx = kb.beginTransaction(I18NConstants.COMMIT_JOB_STEP__STEP.fill(initLabel()))) {
 			Object state = init(job, arguments);
 			tx.commit();
 			return state;
@@ -279,7 +279,7 @@ public abstract class ChunkedJobBody implements JobBody {
 	private Object complete(JobMonitor job, KnowledgeBase kb, Object state) {
 		job.beginPhase(PHASE_FINISH);
 		job.indeterminate();
-		try (Transaction tx = kb.beginTransaction(I18NConstants.COMMIT_JOB)) {
+		try (Transaction tx = kb.beginTransaction(I18NConstants.COMMIT_JOB_STEP__STEP.fill(finishLabel()))) {
 			Object result = finish(job, state);
 			tx.commit();
 			return result;
@@ -305,7 +305,9 @@ public abstract class ChunkedJobBody implements JobBody {
 			job.progress(done, chunks);
 
 			List<?> chunk = new ArrayList<>(items.subList(start, Math.min(start + _chunkSize, total)));
-			try (Transaction tx = kb.beginTransaction(I18NConstants.COMMIT_JOB)) {
+			ResKey message = I18NConstants.COMMIT_JOB_CHUNK__STEP_FIRST_LAST.fill(stepLabel(index),
+				Integer.valueOf(start + 1), Integer.valueOf(start + chunk.size()));
+			try (Transaction tx = kb.beginTransaction(message)) {
 				step(job, index, chunk, state);
 				tx.commit();
 			} catch (RuntimeException ex) {
@@ -317,7 +319,7 @@ public abstract class ChunkedJobBody implements JobBody {
 				job.checkCancelled();
 				Logger.warn("Chunk [" + (start + 1) + ".." + (start + chunk.size())
 					+ "] failed; retrying its items one by one.", ex, ChunkedJobBody.class);
-				skipped += retry(job, kb, index, chunk, state);
+				skipped += retry(job, kb, index, start, chunk, state);
 			}
 			done++;
 		}
@@ -328,11 +330,18 @@ public abstract class ChunkedJobBody implements JobBody {
 	/**
 	 * Applies the given pass to every item of a failed chunk on its own and answers how many of them
 	 * were skipped.
+	 *
+	 * @param start
+	 *        The position of the first item of the chunk among all work items, counted from zero.
 	 */
-	private int retry(JobMonitor job, KnowledgeBase kb, int index, List<?> chunk, Object state) {
+	private int retry(JobMonitor job, KnowledgeBase kb, int index, int start, List<?> chunk, Object state) {
 		int skipped = 0;
+		int position = start;
 		for (Object item : chunk) {
-			try (Transaction tx = kb.beginTransaction(I18NConstants.COMMIT_JOB)) {
+			position++;
+			ResKey message =
+				I18NConstants.COMMIT_JOB_ITEM__STEP_POSITION.fill(stepLabel(index), Integer.valueOf(position));
+			try (Transaction tx = kb.beginTransaction(message)) {
 				step(job, index, Collections.singletonList(item), state);
 				tx.commit();
 			} catch (RuntimeException ex) {

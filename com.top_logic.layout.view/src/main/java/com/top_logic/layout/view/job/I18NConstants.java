@@ -8,6 +8,7 @@ package com.top_logic.layout.view.job;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -56,9 +57,19 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 SKIPPED_ELEMENT__ELEMENT_CAUSE;
 
 	/**
-	 * @en Background job
+	 * @en Background job, step "{0}"
 	 */
-	public static ResKey COMMIT_JOB;
+	public static ResKey1 COMMIT_JOB_STEP__STEP;
+
+	/**
+	 * @en Background job, step "{0}", items {1} to {2}
+	 */
+	public static ResKey3 COMMIT_JOB_CHUNK__STEP_FIRST_LAST;
+
+	/**
+	 * @en Background job, step "{0}", item {1}
+	 */
+	public static ResKey2 COMMIT_JOB_ITEM__STEP_POSITION;
 
 	static {
 		initConstants(I18NConstants.class);

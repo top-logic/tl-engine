@@ -40,6 +40,11 @@ public class CompiledContext extends CompiledExpression {
 	}
 
 	@Override
+	public Expression buildIsNull(EvalContext context) {
+		return ExpressionFactory.literal(Boolean.FALSE);
+	}
+
+	@Override
 	public Object eval(TLObject item, EvalContext context) {
 		return item;
 	}

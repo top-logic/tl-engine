@@ -15,6 +15,7 @@
 				<roles>
 					<role name="TestViewModelAccess.Responsible"/>
 					<role name="TestViewModelAccess.Reader"/>
+					<role name="TestViewModelAccess.Viewer"/>
 				</roles>
 			</instance>
 		</config>
@@ -45,6 +46,11 @@
 							operation="Finish"
 							roles="TestViewModelAccess.Responsible"
 						/>
+						<!-- The viewer may only read a project. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Viewer"
+						/>
 					</class>
 					<class name="TestViewModelAccess:Task">
 						<!-- The responsible of a project may do everything with its tasks. -->
@@ -65,6 +71,10 @@
 							roles="TestViewModelAccess.Responsible"
 						/>
 					</class>
+					<!-- A step of a project is decided by the project. -->
+					<class name="TestViewModelAccess:Step"
+						access-parent="container"
+					/>
 					<class name="TestViewModelAccess:Category">
 						<!-- A category may only be read, by its reader. -->
 						<grant
@@ -79,7 +89,92 @@
 						-->
 						<grant operation="Write"/>
 					</part>
+					<part name="TestViewModelAccess:Project#budget">
+						<!-- Only the responsible of the project may read its budget. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Project#classified">
+						<!-- Nobody but a super-user may read this attribute. -->
+						<grant operation="Read"/>
+					</part>
+					<part name="TestViewModelAccess:Project#sponsor">
+						<!-- Only the responsible of the project may see its sponsor. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Project#rating">
+						<!-- Only the viewer of the project may rate it. -->
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Viewer"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Project#code">
+						<!-- Only the viewer of the project may write its code, which its display makes read-only anyway. -->
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Viewer"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Task#note">
+						<!-- Only the responsible of the task may write its note. -->
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Step#note">
+						<!-- Only the responsible of the project may write the note of its steps. -->
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</part>
+					<part name="TestViewModelAccess:Step#secret">
+						<!-- Nobody but a super-user may write the secret of a step. -->
+						<grant operation="Write"/>
+					</part>
+					<part name="TestViewModelAccess:Task#secret">
+						<!-- Nobody but a super-user may write the secret of a task. -->
+						<grant operation="Write"/>
+					</part>
 				</security-config>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.execution.service.CommandApprovalService">
+			<instance class="com.top_logic.tool.execution.service.ConfiguredCommandApprovalService">
+				<check type="TestViewModelAccess:Project">
+					<!-- A frozen project cannot be modified. -->
+					<rule>
+						<contexts>
+							<command-with-group command-group="Write"/>
+						</contexts>
+						<executability>
+							<rule-by-expression
+								decision="p -> if($p.get(`TestViewModelAccess:Project#name`) == 'frozen', 'The project is frozen.', true)"
+								show-disabled="true"
+							/>
+						</executability>
+					</rule>
+					<!-- A frozen project cannot be deleted, without a reason to show. -->
+					<rule>
+						<contexts>
+							<command-with-group command-group="Delete"/>
+						</contexts>
+						<executability>
+							<rule-by-expression
+								decision="p -> $p.get(`TestViewModelAccess:Project#name`) != 'frozen'"
+								show-disabled="false"
+							/>
+						</executability>
+					</rule>
+				</check>
 			</instance>
 		</config>
 
@@ -93,6 +188,14 @@
 						>
 							<path>
 								<step attribute="TestViewModelAccess:Project#responsible"/>
+							</path>
+						</rule>
+						<rule id="TestViewModelAccess_Project_Viewer"
+							meta-element="TestViewModelAccess:Project"
+							role="TestViewModelAccess.Viewer"
+						>
+							<path>
+								<step attribute="TestViewModelAccess:Project#viewer"/>
 							</path>
 						</rule>
 						<inheritance-rule id="TestViewModelAccess_Task_Responsible"

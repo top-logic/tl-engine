@@ -6,10 +6,13 @@
 package com.top_logic.layout.react.theme;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,6 +39,11 @@ import com.top_logic.mig.html.HTMLConstants;
  * A theme is a named set of {@link ThemeToken design tokens} (CSS custom properties) with optional
  * inheritance. This service resolves the inheritance, emits every theme as a CSS block scoped by
  * the {@link #THEME_ATTRIBUTE} of the {@code html} element, and keeps the theme a user selected.
+ * </p>
+ *
+ * <p>
+ * An {@link UITheme.Config#isAbstract() abstract} theme only hands its tokens down to the themes
+ * extending it: it is neither offered for selection nor emitted as a block of its own.
  * </p>
  *
  * <p>
@@ -126,6 +134,8 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 
 	private final Map<String, UITheme> _themes;
 
+	private final List<UITheme> _selectableThemes;
+
 	private final String _defaultTheme;
 
 	private final Map<ColorScheme, UITheme> _systemThemes;
@@ -143,9 +153,13 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		super(context, config);
 		_themes = resolve(context, config.getThemes());
 		_defaultTheme = config.getDefaultTheme();
-		if (!_themes.containsKey(_defaultTheme)) {
+		UITheme defaultTheme = _themes.get(_defaultTheme);
+		if (defaultTheme == null) {
 			context.error("Default theme '" + _defaultTheme + "' is not defined.");
+		} else if (defaultTheme.isAbstract()) {
+			context.error("Default theme '" + _defaultTheme + "' is abstract.");
 		}
+		_selectableThemes = selectableThemes(_themes.values());
 		_systemThemes = systemThemes(context, _themes.values());
 	}
 
@@ -153,6 +167,11 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		Map<ColorScheme, UITheme> result = new EnumMap<>(ColorScheme.class);
 		for (UITheme theme : themes) {
 			if (!theme.isSystemDefault()) {
+				continue;
+			}
+			if (theme.isAbstract()) {
+				context.error("Theme '" + theme.getId()
+					+ "' is abstract and cannot answer the preference of the operating system.");
 				continue;
 			}
 			ColorScheme scheme = theme.getColorScheme();
@@ -165,11 +184,44 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		return result;
 	}
 
+	private static List<UITheme> selectableThemes(Collection<UITheme> themes) {
+		List<UITheme> result = new ArrayList<>();
+		for (UITheme theme : themes) {
+			if (!theme.isAbstract()) {
+				result.add(theme);
+			}
+		}
+		return Collections.unmodifiableList(result);
+	}
+
 	/**
-	 * The registered themes.
+	 * The registered themes, including the {@link UITheme#isAbstract() abstract} ones.
+	 *
+	 * @see #getSelectableThemes()
 	 */
 	public Collection<UITheme> getThemes() {
 		return _themes.values();
+	}
+
+	/**
+	 * The registered themes a user can select, i.e. all but the {@link UITheme#isAbstract()
+	 * abstract} ones.
+	 */
+	public List<UITheme> getSelectableThemes() {
+		return _selectableThemes;
+	}
+
+	/**
+	 * Whether the given id names a theme a user can select.
+	 *
+	 * @param themeId
+	 *        The theme id to check.
+	 * @return Whether a theme with the given id is registered and is not
+	 *         {@link UITheme#isAbstract() abstract}.
+	 */
+	public boolean isSelectable(String themeId) {
+		UITheme theme = _themes.get(themeId);
+		return theme != null && !theme.isAbstract();
 	}
 
 	/**
@@ -183,15 +235,16 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 * The id of the theme the current user has selected, or {@code null} if none is stored.
 	 *
 	 * <p>
-	 * A stored id naming no configured theme counts as none, so a theme dropped from the
-	 * configuration leaves the user following the operating system again.
+	 * A stored id naming no {@link #isSelectable(String) selectable} theme counts as none, so a
+	 * theme dropped from the configuration or made abstract leaves the user following the operating
+	 * system again.
 	 * </p>
 	 */
 	public String getSelectedThemeId() {
 		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
 		if (pc != null) {
 			Object stored = pc.getJSONValue(PERSONAL_THEME_KEY);
-			if (stored instanceof String && _themes.containsKey(stored)) {
+			if (stored instanceof String && isSelectable((String) stored)) {
 				return (String) stored;
 			}
 		}
@@ -203,10 +256,11 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 *
 	 * @param themeId
 	 *        The selected theme id, or {@code null} to drop the selection and follow the operating
-	 *        system again. An id naming no configured theme is ignored.
+	 *        system again. An id naming no {@link #isSelectable(String) selectable} theme is
+	 *        ignored.
 	 */
 	public void setSelectedThemeId(String themeId) {
-		if (themeId != null && !_themes.containsKey(themeId)) {
+		if (themeId != null && !isSelectable(themeId)) {
 			return;
 		}
 		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
@@ -261,10 +315,15 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	}
 
 	/**
-	 * Writes a {@code <style>} element defining every theme as a block of CSS custom properties
-	 * scoped by the {@link #THEME_ATTRIBUTE}, each declaring the {@code color-scheme} of its
-	 * appearance. The default theme is additionally bound to {@code :root}, which is the appearance
-	 * of a page whose script did not run.
+	 * Writes a {@code <style>} element defining every {@link #getSelectableThemes() selectable}
+	 * theme as a block of CSS custom properties scoped by the {@link #THEME_ATTRIBUTE}, each
+	 * declaring the {@code color-scheme} of its appearance. The default theme is additionally bound
+	 * to {@code :root}, which is the appearance of a page whose script did not run.
+	 *
+	 * <p>
+	 * An abstract theme gets no block: no page is ever put into it, and its tokens are part of the
+	 * blocks of the themes extending it.
+	 * </p>
 	 *
 	 * @param out
 	 *        The writer of the HTML {@code <head>}.
@@ -275,7 +334,7 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		out.beginBeginTag(HTMLConstants.STYLE_ELEMENT);
 		out.writeAttribute(HTMLConstants.TYPE_ATTR, CSS_TYPE);
 		out.endBeginTag();
-		for (UITheme theme : _themes.values()) {
+		for (UITheme theme : _selectableThemes) {
 			out.writeContent(selector(theme.getId()));
 			out.writeContent("{");
 			out.writeContent("color-scheme:");
@@ -342,7 +401,7 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		// The color scheme of each theme, so that selecting a theme also names the design system's mode.
 		out.writeScript("var modes = {");
 		boolean first = true;
-		for (UITheme theme : _themes.values()) {
+		for (UITheme theme : _selectableThemes) {
 			out.writeScript((first ? "" : ",") + jsString(theme.getId()) + ": "
 				+ jsString(theme.getColorScheme().cssKeyword()));
 			first = false;
@@ -435,7 +494,7 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 			scheme = inheritedScheme != null ? inheritedScheme : ColorScheme.LIGHT;
 		}
 		UITheme theme = new UITheme(id, config.getLabel(), config.getIcon(), scheme, config.isSystemDefault(),
-			tokens, kinds);
+			config.isAbstract(), tokens, kinds);
 		result.put(id, theme);
 		return theme;
 	}

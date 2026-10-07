@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="model"/>
+	</channels>
+	<window width="700px">
+		<title>
+			<en>Edit Constraint Test Object</en>
+			<de>Constraint-Test-Objekt bearbeiten</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<tab-bar active-tab="general">
+				<tabs>
+					<tab id="general">
+						<label>
+							<en>General</en>
+							<de>Allgemein</de>
+						</label>
+						<field attribute="name"/>
+						<field attribute="sizedString"/>
+						<field attribute="rangedInt"/>
+					</tab>
+					<tab id="items">
+						<label>
+							<en>Items</en>
+							<de>Positionen</de>
+						</label>
+						<composition-table attribute="items">
+							<columns>
+								<column attribute="name"/>
+								<column attribute="quantity"/>
+								<column attribute="unitPrice"/>
+							</columns>
+						</composition-table>
+					</tab>
+				</tabs>
+			</tab-bar>
+			<commands>
+				<generic-command placement="BUTTON_BAR">
+					<label>
+						<en>Save</en>
+						<de>Speichern</de>
+					</label>
+					<with-transaction>
+						<store-form-state/>
+					</with-transaction>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

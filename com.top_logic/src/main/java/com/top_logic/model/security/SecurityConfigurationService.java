@@ -43,6 +43,7 @@ import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
@@ -840,6 +841,96 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	@Override
+	public boolean hasGrant(TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
+		return _typePartRights
+			.getOrDefault(attribute.getDefinition(), Collections.emptyMap())
+			.containsKey(commandGroup);
+	}
+
+	@Override
+	public boolean isAllowedInitial(Person person, TLObject draft, TLStructuredTypePart attribute,
+			BoundCommandGroup commandGroup) {
+		if (!(draft.tType() instanceof TLClass type) || isWithoutSecurity(type)) {
+			// Objects of a type without security are not access controlled, neither on the object,
+			// nor on its attribute values.
+			return true;
+		}
+		Map<BoundCommandGroup, Set<BoundedRole>> partRights =
+			_typePartRights.getOrDefault(attribute.getDefinition(), Collections.emptyMap());
+		Set<BoundedRole> requiredPartRoles = partRights.get(commandGroup);
+		if (requiredPartRoles == null) {
+			// No attribute-level grant: the attribute is not restricted beyond the object. The right
+			// to create the object covers its initial values, independent of the person (a transient
+			// input object can be used without a person at all).
+			return true;
+		}
+		Boolean allowedBypass = isAllowedBypass(person, commandGroup);
+		if (allowedBypass != null) {
+			return allowedBypass.booleanValue();
+		}
+		if (requiredPartRoles.isEmpty()) {
+			// A grant without roles denies the operation in every context.
+			return false;
+		}
+		Set<TLObject> seen = new HashSet<>();
+		TLObject current = draft;
+		while (!isCommitted(current)) {
+			if (!seen.add(current)) {
+				Logger.error("The access parents of " + draft + " form a cycle, access is denied.",
+					SecurityConfigurationService.class);
+				return false;
+			}
+			AccessParent parent = accessParentOf(current);
+			if (parent == null) {
+				// An object deciding by its own roles: the roles it will hold are computed only once
+				// it exists.
+				return true;
+			}
+			TLObject next = current.tTransient() ? draftParent(parent, current) : parent.resolve(current);
+			if (next == null) {
+				// A free-standing object is not accessible until it is put into a container, which is
+				// a write of the container checked in its own right.
+				return true;
+			}
+			current = editedObject(next);
+		}
+		// The roles the person holds on the object deciding for the committed access parent are
+		// checked, as for an attribute of a persistent object delegating its access decision.
+		if (!(roleHolder(current) instanceof BoundObject holder)) {
+			return false;
+		}
+		return accessManager().hasRole(person, holder, requiredPartRoles);
+	}
+
+	/**
+	 * The access parent of the given transient object.
+	 *
+	 * <p>
+	 * A transient object knows the {@link TLObject#tContainer() container} it is created in, but
+	 * not necessarily the composition that will hold it. A relation navigating a composition
+	 * backwards therefore leads to the container whenever the composition is unknown.
+	 * </p>
+	 */
+	private static TLObject draftParent(AccessParent parent, TLObject draft) {
+		if (parent.inverse() && draft.tContainerReference() == null) {
+			return draft.tContainer();
+		}
+		return parent.resolve(draft);
+	}
+
+	/**
+	 * The object a {@link TLFormObjectBase form object} editing an object stands for, the given
+	 * object otherwise.
+	 */
+	private static TLObject editedObject(TLObject object) {
+		TLObject result = object;
+		while (result instanceof TLFormObjectBase form && !form.isCreate() && form.getEditedObject() != null) {
+			result = form.getEditedObject();
+		}
+		return result;
+	}
+
+	@Override
 	public boolean isAllowed(Person person, TLObject instance, BoundCommandGroup commandGroup) {
 		if (!(instance instanceof BoundObject)) {
 			return true;
@@ -1032,11 +1123,22 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	@Override
-	public boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute) {
-		// Condition 1: CREATE right on the created type (the reference's target type) in the parent
-		// context.
+	public boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute,
+			TLClass type) {
 		TLType targetType = compositionAttribute.getType();
-		if (targetType instanceof TLClass && !isAllowedCreate(person, (TLClass) targetType, parent)) {
+		TLType createdType;
+		if (type == null) {
+			createdType = targetType;
+		} else {
+			if (!TLModelUtil.isCompatibleType(targetType, type)) {
+				throw new IllegalArgumentException("Type '" + TLModelUtil.qualifiedName(type)
+					+ "' is not compatible with the type '" + TLModelUtil.qualifiedName(targetType)
+					+ "' of attribute '" + TLModelUtil.qualifiedName(compositionAttribute) + "'.");
+			}
+			createdType = type;
+		}
+		// Condition 1: CREATE right on the created type in the parent context.
+		if (createdType instanceof TLClass && !isAllowedCreate(person, (TLClass) createdType, parent)) {
 			return false;
 		}
 		// Condition 2: WRITE right on the composition reference of the parent.

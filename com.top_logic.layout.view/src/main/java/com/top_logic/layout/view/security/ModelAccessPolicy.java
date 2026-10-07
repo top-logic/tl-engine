@@ -5,11 +5,13 @@
  */
 package com.top_logic.layout.view.security;
 
+import java.util.Collections;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -21,11 +23,21 @@ import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.tool.execution.service.CommandApprovalService;
 import com.top_logic.util.TLContext;
 
 /**
  * Maps a decision of the {@link ModelAccessRights} for the current user to the
  * {@link ExecutableState} of the command offering the operation.
+ *
+ * <p>
+ * An operation on a concrete object additionally needs the approval of the
+ * {@link CommandApprovalService}: the global checks configured for the type of the object (e.g. that
+ * the anonymous account is neither edited nor deleted) apply to every view-layer command checking
+ * the operation on the object, in the same way they apply to the commands of the classic UI. The
+ * view layer knows no component and no command ID, so only checks that do not depend on these (e.g.
+ * checks selecting the command group) take effect.
+ * </p>
  *
  * <p>
  * An allowed operation is {@link ExecutableState#EXECUTABLE executable}. A refused operation is
@@ -35,12 +47,17 @@ import com.top_logic.util.TLContext;
  * <ul>
  * <li>The command is <em>hidden</em> when the refusal does not depend on a concrete object: the
  * check runs against the security root (a creation without a container, a check on a type), the type
- * grants the operation to no role at all, or the user is restricted (see
+ * grants the operation to no role at all, the checked attribute has a grant for the operation listing
+ * no role (see {@link ModelAccessRights#hasGrant(TLStructuredTypePart, BoundCommandGroup)}), or the
+ * user is restricted (see
  * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}). The operation is then never
  * possible for this user.</li>
  * <li>The command is <em>disabled</em> when the check on a concrete object (the object operated on,
  * or the container to create in) fails. It gives the refusal as its reason, naming the
  * operation.</li>
+ * <li>When the {@link CommandApprovalService} refuses an operation the access rights allow on an
+ * object, the command is disabled or hidden as the approval check decides. A disabled command gives
+ * the reason of the approval check.</li>
  * </ul>
  *
  * @see ModelAccessRule
@@ -54,6 +71,12 @@ public final class ModelAccessPolicy {
 	/**
 	 * The state of a command performing the given operation on the given object, or on an attribute
 	 * of it.
+	 *
+	 * <p>
+	 * When the access rights allow the operation, the {@link CommandApprovalService} decides about
+	 * it on the object, without a component and command ID. A refusal is displayed as the approval
+	 * check decides, unless the caller demands a display.
+	 * </p>
 	 *
 	 * @param operation
 	 *        The operation performed.
@@ -73,11 +96,206 @@ public final class ModelAccessPolicy {
 		boolean allowed = attribute == null
 			? rights.isAllowed(user, object, operation)
 			: rights.isAllowed(user, object, attribute, operation);
-		if (allowed) {
+		if (!allowed) {
+			boolean hide = restricted(user, operation) || grantedToNoRole(rights, classOf(object), operation)
+				|| (attribute != null && attributeGrantedToNoRole(rights, attribute, operation));
+			return refused(denied, hide, () -> objectReason(operation, attribute));
+		}
+		ExecutableState approval =
+			CommandApprovalService.getInstance().isExecutable(null, operation, null, object, Collections.emptyMap());
+		if (approval.isExecutable()) {
 			return ExecutableState.EXECUTABLE;
 		}
-		boolean hide = restricted(user, operation) || grantedToNoRole(rights, classOf(object), operation);
-		return refused(denied, hide, () -> objectReason(operation, attribute));
+		return refused(denied, approval.isHidden(), () -> approvalReason(approval, operation, attribute));
+	}
+
+	/**
+	 * The state of the given operation on an attribute of an object displayed in a form or table.
+	 *
+	 * <p>
+	 * The object may be the persistent object itself, a {@link TLFormObjectBase form object}
+	 * buffering the edit of an object, or a transient draft of an object to be created:
+	 * </p>
+	 * <ul>
+	 * <li>A form object editing an object is decided by the {@link TLFormObjectBase#getEditedObject()
+	 * edited object}: the buffer itself is transient and holds no roles.</li>
+	 * <li>A persistent object is decided like {@link #onObject(BoundCommandGroup, TLObject,
+	 * TLStructuredTypePart, DeniedDisplay)} does, with the display derived from the check. Reading
+	 * is decided by the access rights alone, the {@link CommandApprovalService} is not asked.</li>
+	 * <li>A transient object (a draft created for a create dialog, or a form object creating an
+	 * object) holds no roles yet. Its attribute rights are decided through its access parent, see
+	 * {@link ModelAccessRights#isAllowedInitial(Person, TLObject, TLStructuredTypePart, BoundCommandGroup)}.
+	 * A refusal is hidden when the attribute grants the operation to no role at all or the user is
+	 * restricted, and disabled otherwise: it depends on the access parent.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * Reading an attribute without a {@link ModelAccessRights#hasGrant(TLStructuredTypePart,
+	 * BoundCommandGroup) read grant of its own} is executable without any check on the object: the
+	 * object displayed is expected to be obtained through read-filtered access (a table row, a form
+	 * input), so reading it is allowed, and the attribute adds no restriction. This keeps the check
+	 * of every cell of a table at a lookup of the attribute's grants.
+	 * </p>
+	 *
+	 * <p>
+	 * A disabled state gives the refusal naming the operation on the attribute as its reason.
+	 * </p>
+	 *
+	 * @param operation
+	 *        The operation on the attribute, e.g. {@link SimpleBoundCommandGroup#READ} for displaying
+	 *        its value or {@link SimpleBoundCommandGroup#WRITE} for editing it.
+	 * @param object
+	 *        The object displayed.
+	 * @param attribute
+	 *        The attribute of the object accessed.
+	 */
+	public static ExecutableState onAttribute(BoundCommandGroup operation, TLObject object,
+			TLStructuredTypePart attribute) {
+		boolean read = isRead(operation);
+		if (read && !ModelAccessRights.getInstance().hasGrant(attribute, operation)) {
+			// The displayed object was obtained through read-filtered access, so reading an attribute
+			// without a read grant of its own needs no check per object.
+			return ExecutableState.EXECUTABLE;
+		}
+		TLObject target = editedObject(object);
+		if (target.tTransient()) {
+			return onDraftAttribute(operation, target, attribute);
+		}
+		if (read) {
+			return onReadAttribute(operation, target, attribute);
+		}
+		return onObject(operation, target, attribute, null);
+	}
+
+	/**
+	 * The state of displaying the given attribute of the given persistent object, which has a read
+	 * grant of its own: decided by the access rights alone, with the display derived from the
+	 * check.
+	 */
+	private static ExecutableState onReadAttribute(BoundCommandGroup operation, TLObject object,
+			TLStructuredTypePart attribute) {
+		ModelAccessRights rights = ModelAccessRights.getInstance();
+		Person user = TLContext.currentUser();
+		if (rights.isAllowed(user, object, attribute, operation)) {
+			return ExecutableState.EXECUTABLE;
+		}
+		boolean hide = restricted(user, operation) || grantedToNoRole(rights, classOf(object), operation)
+			|| attributeGrantedToNoRole(rights, attribute, operation);
+		return refused(null, hide, () -> objectReason(operation, attribute));
+	}
+
+	private static boolean isRead(BoundCommandGroup operation) {
+		return SimpleBoundCommandGroup.READ.getID().equals(operation.getID());
+	}
+
+	/**
+	 * Whether the given operation on the given attribute is refused for the current user
+	 * independent of any concrete object of the given type, e.g. to decide whether a table offers a
+	 * column for the attribute at all.
+	 *
+	 * <p>
+	 * The operation is refused independent of an object when the user is restricted (see
+	 * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}), the type grants it to no role
+	 * at all, or the attribute has a grant for it listing no role (see
+	 * {@link ModelAccessRights#hasGrant(TLStructuredTypePart, BoundCommandGroup)}). A refusal is
+	 * {@link ExecutableState#NOT_EXEC_HIDDEN hidden}, like
+	 * {@link #onObject(BoundCommandGroup, TLObject, TLStructuredTypePart, DeniedDisplay)} displays it
+	 * on a concrete object. Everything else depends on the object and is
+	 * {@link ExecutableState#EXECUTABLE executable} here; it is decided per object by
+	 * {@link #onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)}.
+	 * </p>
+	 *
+	 * @param operation
+	 *        The operation on the attribute.
+	 * @param type
+	 *        The type of the objects whose attribute is accessed, {@code null} when unknown: then
+	 *        the type defining the attribute stands for it.
+	 * @param attribute
+	 *        The attribute accessed.
+	 */
+	public static ExecutableState onAttributeOfType(BoundCommandGroup operation, TLStructuredType type,
+			TLStructuredTypePart attribute) {
+		ModelAccessRights rights = ModelAccessRights.getInstance();
+		TLClass clazz = type instanceof TLClass typeClass ? typeClass
+			: attribute.getOwner() instanceof TLClass owner ? owner : null;
+		if (clazz != null && rights.isWithoutSecurity(clazz)) {
+			return ExecutableState.EXECUTABLE;
+		}
+		Boolean bypass = BoundChecker.isAllowedBypass(TLContext.currentUser(), operation);
+		if (bypass != null) {
+			return bypass.booleanValue() ? ExecutableState.EXECUTABLE : ExecutableState.NOT_EXEC_HIDDEN;
+		}
+		if (grantedToNoRole(rights, clazz, operation) || attributeGrantedToNoRole(rights, attribute, operation)) {
+			return ExecutableState.NOT_EXEC_HIDDEN;
+		}
+		return ExecutableState.EXECUTABLE;
+	}
+
+	/**
+	 * The state of editing the given object in a form: the {@link SimpleBoundCommandGroup#WRITE
+	 * write} right on the object, with the display derived from the check (see
+	 * {@link #onObject(BoundCommandGroup, TLObject, TLStructuredTypePart, DeniedDisplay)}).
+	 *
+	 * <p>
+	 * A {@link TLFormObjectBase form object} editing an object is decided by the
+	 * {@link TLFormObjectBase#getEditedObject() edited object}. A transient object (e.g. the draft
+	 * of a create dialog) is always editable: creating it was checked where it was created (see
+	 * {@link #createIn(TLObject, TLStructuredTypePart, TLClass, DeniedDisplay)}), and the right to
+	 * set each of its values is decided per attribute, see
+	 * {@link #onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)}.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object displayed in the form.
+	 */
+	public static ExecutableState onEdit(TLObject object) {
+		TLObject target = editedObject(object);
+		if (target.tTransient()) {
+			return ExecutableState.EXECUTABLE;
+		}
+		return onObject(SimpleBoundCommandGroup.WRITE, target, null, null);
+	}
+
+	/**
+	 * The object whose rights decide about the given object: the edited object of a form object
+	 * editing an object, the given object otherwise.
+	 */
+	private static TLObject editedObject(TLObject object) {
+		TLObject result = object;
+		while (result instanceof TLFormObjectBase formObject && !formObject.isCreate()) {
+			TLObject edited = formObject.getEditedObject();
+			if (edited == null) {
+				break;
+			}
+			result = edited;
+		}
+		return result;
+	}
+
+	/**
+	 * The state of the given operation on an attribute of the given object to be created.
+	 *
+	 * @see #onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)
+	 */
+	private static ExecutableState onDraftAttribute(BoundCommandGroup operation, TLObject draft,
+			TLStructuredTypePart attribute) {
+		ModelAccessRights rights = ModelAccessRights.getInstance();
+		Person user = TLContext.currentUser();
+		if (rights.isAllowedInitial(user, draft, attribute, operation)) {
+			return ExecutableState.EXECUTABLE;
+		}
+		boolean hide = restricted(user, operation) || attributeGrantedToNoRole(rights, attribute, operation);
+		return refused(null, hide, () -> objectReason(operation, attribute));
+	}
+
+	/**
+	 * The reason the {@link CommandApprovalService} gives for refusing an operation, the generic
+	 * refusal of the operation when it gives none (a hidden command has no reason to show).
+	 */
+	private static ResKey approvalReason(ExecutableState approval, BoundCommandGroup operation,
+			TLStructuredTypePart attribute) {
+		ResKey reason = approval.getI18NReasonKey();
+		return approval.isDisabled() && reason != null ? reason : objectReason(operation, attribute);
 	}
 
 	/**
@@ -143,11 +361,8 @@ public final class ModelAccessPolicy {
 		boolean allowed;
 		if (reference == null) {
 			allowed = rights.isAllowedCreate(user, createdType, container);
-		} else if (type == null) {
-			allowed = rights.isAllowedCreate(user, container, reference);
 		} else {
-			allowed = rights.isAllowedCreate(user, type, container)
-				&& rights.isAllowed(user, container, reference, SimpleBoundCommandGroup.WRITE);
+			allowed = rights.isAllowedCreate(user, container, reference, type);
 		}
 		if (allowed) {
 			return ExecutableState.EXECUTABLE;
@@ -191,6 +406,14 @@ public final class ModelAccessPolicy {
 	 */
 	private static boolean grantedToNoRole(ModelAccessRights rights, TLClass type, BoundCommandGroup operation) {
 		return type != null && !rights.isWithoutSecurity(type) && rights.getAllowedRoles(type, operation).isEmpty();
+	}
+
+	/**
+	 * Whether the given attribute has a grant of its own for the operation that lists no role.
+	 */
+	private static boolean attributeGrantedToNoRole(ModelAccessRights rights, TLStructuredTypePart attribute,
+			BoundCommandGroup operation) {
+		return rights.hasGrant(attribute, operation) && rights.getAllowedRoles(attribute, operation).isEmpty();
 	}
 
 	private static TLClass classOf(TLObject object) {

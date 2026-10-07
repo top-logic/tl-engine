@@ -10,6 +10,7 @@ import java.util.List;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.meta.TypeSpec;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
@@ -20,6 +21,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link GenericMethod} reporting whether the current user may create a new child object in the
@@ -27,8 +29,9 @@ import com.top_logic.util.TLContext;
  *
  * <p>
  * Explicit, non-failing counterpart to the implicit create check: returns the outcome of
- * {@link ModelAccessRights#isAllowedCreate(com.top_logic.knowledge.wrap.person.Person, TLObject, TLStructuredTypePart)}
- * as a boolean.
+ * {@link ModelAccessRights#isAllowedCreate(com.top_logic.knowledge.wrap.person.Person, TLObject, TLStructuredTypePart, TLClass)}
+ * as a boolean. The optional third argument is the type of the object to create, which may be a
+ * specialization of the target type of the composition attribute.
  * </p>
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -57,8 +60,16 @@ public class CanCreate extends GenericMethod {
 		// Note: The parent may be null for a top-level creation.
 		TLObject parent = asTLObject(arguments[0]);
 		TLStructuredTypePart compositionAttribute = asTypePart(this, arguments[1]);
+		// Note: The type is optional, null means the target type of the composition attribute.
+		TLType type = asType(arguments[2]);
+		if (type != null && !(type instanceof TLClass
+			&& TLModelUtil.isCompatibleType(compositionAttribute.getType(), type))) {
+			throw new TopLogicException(I18NConstants.ERROR_INCOMPATIBLE_CREATE_TYPE__TYPE_TARGET_REF_EXPR.fill(
+				type, compositionAttribute.getType(), compositionAttribute, this));
+		}
 		return Boolean.valueOf(
-			ModelAccessRights.getInstance().isAllowedCreate(TLContext.currentUser(), parent, compositionAttribute));
+			ModelAccessRights.getInstance().isAllowedCreate(TLContext.currentUser(), parent, compositionAttribute,
+				(TLClass) type));
 	}
 
 	/**
@@ -78,6 +89,7 @@ public class CanCreate extends GenericMethod {
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("parent")
 			.mandatory("reference")
+			.optional("type")
 			.build();
 
 		/**

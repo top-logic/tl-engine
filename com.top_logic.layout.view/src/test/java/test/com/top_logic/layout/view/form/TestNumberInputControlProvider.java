@@ -67,6 +67,12 @@ public class TestNumberInputControlProvider extends TestCase {
 	/** The state key carrying the value as written text. */
 	private static final String VALUE_LABEL = "valueLabel";
 
+	/** The state key carrying the smallest value as written text. */
+	private static final String MIN_LABEL = "minLabel";
+
+	/** The state key carrying the largest value as written text. */
+	private static final String MAX_LABEL = "maxLabel";
+
 	/** The digits and separators the formats of this test write in. */
 	private static final DecimalFormatSymbols SYMBOLS = new DecimalFormatSymbols(Locale.GERMAN);
 
@@ -125,6 +131,20 @@ public class TestNumberInputControlProvider extends TestCase {
 		assertEquals("The value travels as the number it is.", 12.5, number(state, VALUE));
 		assertEquals("The German format of the field writes the fraction with a comma.",
 			"12,50", state.get(VALUE_LABEL));
+	}
+
+	/**
+	 * The bounds are written in the format of the value, so the client can make room for the widest
+	 * text the value can take.
+	 */
+	public void testTheBoundsAreWrittenInTheFormatOfTheField() {
+		Map<String, Object> fractions = state(control(slider(-5.0, 100.0, 0.5), fractions()));
+		assertEquals("-5,00", fractions.get(MIN_LABEL));
+		assertEquals("100,00", fractions.get(MAX_LABEL));
+
+		Map<String, Object> wholeNumbers = state(control(slider(-5.0, 100.0, null), wholeNumbers()));
+		assertEquals("-5", wholeNumbers.get(MIN_LABEL));
+		assertEquals("100", wholeNumbers.get(MAX_LABEL));
 	}
 
 	/** A field holding no value has no text to show: it is not the smallest value of the range. */

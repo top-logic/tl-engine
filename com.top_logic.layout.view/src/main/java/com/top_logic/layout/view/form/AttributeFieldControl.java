@@ -24,6 +24,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -36,6 +37,9 @@ import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.util.Pointer;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
@@ -49,12 +53,25 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
+ * The field follows the model access rights of the current user on the displayed object (see
+ * {@link ModelAccessPolicy#onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)}): a
+ * value the user may not read is hidden and never sent to the client, a value the user may not
+ * write cannot be edited.
+ * </p>
+ *
+ * <p>
  * The field lives exactly as long as its {@link #createChromeControl() chrome}: disposing the chrome
  * deregisters the field from the {@link FormModel} and releases its model, so a form that outlives
  * the field (e.g. a field inside a switch or a visible-if within the form) no longer reaches it.
  * </p>
  */
 public class AttributeFieldControl implements FormModelListener, FormParticipant {
+
+	/**
+	 * Separates the description of the attribute from the reason the field cannot be edited in the
+	 * tooltip of the field.
+	 */
+	private static final String TOOLTIP_SEPARATOR = "\n\n";
 
 	private final ReactContext _context;
 
@@ -91,6 +108,12 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	private final FormControl.FieldChangeListener _modeListener = this::onModeDependencyChanged;
 
 	private boolean _modeListenerRegistered;
+
+	/**
+	 * The description of the attribute offered as tooltip of the field, {@code null} when it has
+	 * none.
+	 */
+	private String _description;
 
 	/**
 	 * Whether the {@link #getChromeControl() chrome} has been disposed, which ends the life of this
@@ -173,10 +196,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	public ReactFormFieldChromeControl createChromeControl() {
 		TLObject current = _formModel.getCurrentObject();
 		if (current == null) {
-			_innerControl = new ReactTextInputControl(
-				_context, new AbstractFieldModel(null) {
-					// Placeholder model with default state.
-				});
+			_innerControl = newPlaceholder();
 			// The view's own decision already applies to the placeholder: a field that will take a
 			// whole row should take it before an object is loaded too, or the form re-flows under
 			// the reader as soon as one is.
@@ -188,12 +208,10 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		}
 
 		TLStructuredTypePart part = resolvePart(current);
-		if (part == null || DisplayAnnotations.isHidden(part)) {
-			// Attribute not supported by this object's type - hide the field.
-			_innerControl = new ReactTextInputControl(
-				_context, new AbstractFieldModel(null) {
-					// Placeholder model with default state.
-				});
+		if (part == null || DisplayAnnotations.isHidden(part) || !isReadable(current, part)) {
+			// Attribute not supported by this object's type, or its value must not be shown to the
+			// user - hide the field.
+			_innerControl = newPlaceholder();
 			_chrome = new ReactFormFieldChromeControl(_context, _attributeName,
 				false, false, null, null, wirePosition(_labelPositionOverride, false), false, false,
 				_innerControl);
@@ -217,6 +235,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		_chrome = new ReactFormFieldChromeControl(_context, label, part.isMandatory(),
 			dirty, null, description, null, fullLine, true, _innerControl);
 		initChrome();
+		_description = description;
 		_chrome.setTooltipText(description);
 
 		setupMode(part);
@@ -259,8 +278,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			// The form displays nothing, or an object that is deleted - hide the field. A deleted
 			// object must not be dereferenced: an input channel can deliver one, e.g. when the
 			// selection it carries is deleted elsewhere.
-			_chrome.setVisible(false);
-			clearModel();
+			hideField();
 			return;
 		}
 
@@ -268,8 +286,14 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		if (part == null || DisplayAnnotations.isHidden(part)) {
 			// Attribute not supported by this object's type - hide field.
-			_chrome.setVisible(false);
-			clearModel();
+			hideField();
+			return;
+		}
+
+		if (!isReadable(current, part)) {
+			// The user may not read the value on this object - hide the field together with its
+			// value.
+			hideField();
 			return;
 		}
 
@@ -287,6 +311,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			FieldControlService.getInstance().createFieldControl(_context, part, _model, _inputControl);
 
 			String description = resolveDescription(part);
+			_description = description;
 			_chrome.setLabel(resolveLabel());
 			_chrome.setHelpText(description);
 			_chrome.setTooltipText(description);
@@ -311,6 +336,44 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		// previous overlay by identity) won't match anymore. Remove it and re-create.
 		unwireValidation();
 		wireValidation();
+	}
+
+	/**
+	 * Hides the field and drops what it displayed.
+	 *
+	 * <p>
+	 * A hidden chrome still sends the state of its input to the client. The input displaying the
+	 * value of the last object is therefore replaced with an empty placeholder, so that no value
+	 * reaches the client that the user may not read. An object displayed later on installs an
+	 * input of its own.
+	 * </p>
+	 */
+	private void hideField() {
+		_chrome.setVisible(false);
+		boolean hadModel = _model != null;
+		clearModel();
+		if (hadModel) {
+			_innerControl = newPlaceholder();
+			_chrome.setField(_innerControl);
+			_chrome.setDirty(false);
+			showDenied(null);
+		}
+	}
+
+	/**
+	 * An empty input standing in for the field while no value is displayed.
+	 */
+	private ReactControl newPlaceholder() {
+		return new ReactTextInputControl(_context, new AbstractFieldModel(null) {
+			// Placeholder model with default state.
+		});
+	}
+
+	/**
+	 * Whether the current user may see the value of the given attribute of the given object.
+	 */
+	private static boolean isReadable(TLObject object, TLStructuredTypePart part) {
+		return ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, object, part).isExecutable();
 	}
 
 	/**
@@ -419,6 +482,14 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	 * edited, {@link AttributeFieldModel#isDisabled() disabled}, so that it is presented as an
 	 * inactive input.
 	 * </p>
+	 *
+	 * <p>
+	 * While the form is edited, the right to write the attribute caps the mode, see
+	 * {@link ModelAccessPolicy#onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)}: a
+	 * refusal independent of the object makes an editable field read-only, a refusal on the object
+	 * only disables it and gives the refusal as tooltip. A mode of the model that does not let the
+	 * field be edited anyway stays as it is.
+	 * </p>
 	 */
 	private void applyMode(boolean editMode) {
 		if (_model == null || _chrome == null) {
@@ -471,6 +542,22 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				break;
 		}
 		boolean editing = editMode && !_forceReadonly;
+		ResKey denied = null;
+		if (editing && editable) {
+			// The access rights cap the mode of the model: a value the user may not write on this
+			// object is read-only, or disabled while the refusal depends on the object only.
+			ExecutableState write = ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.WRITE,
+				_formModel.getCurrentObject(), part);
+			if (!write.isExecutable()) {
+				editable = false;
+				mandatory = false;
+				if (write.isDisabled()) {
+					disabled = true;
+					denied = write.getI18NReasonKey();
+				}
+			}
+		}
+		showDenied(denied);
 		// A disabled field is presented as an inactive input only while the form is edited; in
 		// view mode it shows its value like any other field.
 		boolean effectiveDisabled = editing && disabled;
@@ -481,6 +568,24 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			wirePosition(legacyLabelPosition(part), effectiveEditable || effectiveDisabled));
 		_model.setDisabled(effectiveDisabled);
 		_model.setEditable(effectiveEditable);
+	}
+
+	/**
+	 * Offers the reason why the field cannot be edited in the tooltip of the field, next to the
+	 * description of the attribute.
+	 *
+	 * @param denied
+	 *        The refusal of the access rights, {@code null} when there is none.
+	 */
+	private void showDenied(ResKey denied) {
+		if (denied == null) {
+			_chrome.setTooltipText(_description);
+			return;
+		}
+		String reason = Resources.getInstance().getString(denied);
+		_chrome.setTooltipText(_description == null || _description.isEmpty()
+			? reason
+			: _description + TOOLTIP_SEPARATOR + reason);
 	}
 
 	/**

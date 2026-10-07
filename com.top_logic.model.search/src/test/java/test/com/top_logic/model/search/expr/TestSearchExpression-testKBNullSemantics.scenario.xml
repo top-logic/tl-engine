@@ -1,0 +1,16 @@
+<objects>
+	<object id="c0" type="TestSearchExpression:WithDatabaseColumns">
+		<attribute name="name" value="C0"/>
+		<attribute name="int" value="10"/>
+		<attribute name="long" value="100"/>
+	</object>
+	<object id="c1" type="TestSearchExpression:WithDatabaseColumns">
+		<attribute name="name" value="C1"/>
+		<attribute name="int" value="20"/>
+		<attribute name="long" value="200"/>
+	</object>
+	<!-- c2 has neither int nor long set: its columns are NULL. -->
+	<object id="c2" type="TestSearchExpression:WithDatabaseColumns">
+		<attribute name="name" value="C2"/>
+	</object>
+</objects>

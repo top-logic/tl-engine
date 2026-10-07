@@ -39,6 +39,7 @@ import com.top_logic.layout.view.element.FieldElement;
 import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewCommand;
 
@@ -284,7 +285,7 @@ public class TestEditorCommands extends TestCase {
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestEditorCommands.class, ThreadContextManager.Module.INSTANCE,
-				TypeIndex.Module.INSTANCE));
+				TypeIndex.Module.INSTANCE, CommandCliqueService.Module.INSTANCE));
 	}
 
 }

@@ -33,7 +33,7 @@
 		<channel name="search"/>
 	</channels>
 
-	<panel>
+	<panel with-inset="true">
 		<title>
 			<en>Repeater</en>
 			<de>Repeater</de>
@@ -46,7 +46,7 @@
 			</label>
 		</text>
 
-		<fields with-inset="true">
+		<fields>
 			<value-input
 				type="tl.core:String"
 				value="search"

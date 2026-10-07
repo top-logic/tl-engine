@@ -6,10 +6,14 @@
 package com.top_logic.layout.view.command;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
@@ -21,17 +25,21 @@ import com.top_logic.layout.react.control.button.ReactUploadButtonControl;
 import com.top_logic.layout.react.control.button.UploadCommandModel;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarOverflow;
-import com.top_logic.layout.view.command.CliqueRegistry.CliqueInfo;
+import com.top_logic.layout.view.command.CommandCliqueService.CliqueInfo;
+import com.top_logic.util.Resources;
 
 /**
  * Builds a {@link ReactToolbarControl} from a {@link CommandScope} for a given placement.
  *
  * <p>
  * Commands are filtered by placement, grouped by clique, and ordered according to the
- * {@link CliqueRegistry}. Each group becomes a toolbar group with the clique's display mode.
+ * {@link CommandCliqueService}. Each group becomes a toolbar group with the clique's display mode.
  * </p>
  */
 public class ToolbarBuilder {
+
+	/** Separates a clique name from the placement qualifying it in a toolbar of several placements. */
+	private static final String GROUP_NAME_SEPARATOR = "@";
 
 	/**
 	 * Builds a toolbar for the given placement, returning an empty toolbar if no commands match.
@@ -47,22 +55,75 @@ public class ToolbarBuilder {
 	 *        The command scope containing explicit and implicit commands.
 	 * @param placement
 	 *        The target placement to filter commands for.
-	 * @param registry
-	 *        The clique registry (with any local cliques applied).
+	 * @param cliques
+	 *        The cliques ordering and displaying the command groups, see
+	 *        {@link CommandCliqueService#getInstance()}.
 	 * @param defaultDisplay
 	 *        The {@link ButtonDisplayMode} for buttons whose command requests none, or
 	 *        {@code null} for the standard presentation (icon and label side by side).
 	 * @return A toolbar control (never {@code null}).
 	 */
 	public static ReactToolbarControl buildOrEmpty(ReactContext context, CommandScope scope,
-			CommandPlacement placement, CliqueRegistry registry, ButtonDisplayMode defaultDisplay) {
-		ReactToolbarControl result = build(context, scope, placement, registry, defaultDisplay);
+			CommandPlacement placement, CommandCliqueService cliques, ButtonDisplayMode defaultDisplay) {
+		return buildOrEmpty(context, scope, List.of(placement), cliques, defaultDisplay);
+	}
+
+	/**
+	 * Builds a toolbar for the given placements, returning an empty toolbar if no commands match.
+	 *
+	 * @see #build(ReactContext, CommandScope, List, CommandCliqueService, ButtonDisplayMode)
+	 */
+	public static ReactToolbarControl buildOrEmpty(ReactContext context, CommandScope scope,
+			List<CommandPlacement> placements, CommandCliqueService cliques, ButtonDisplayMode defaultDisplay) {
+		ReactToolbarControl result = build(context, scope, placements, cliques, defaultDisplay);
 		if (result != null) {
 			return result;
 		}
 		ReactToolbarControl empty = new ReactToolbarControl(context);
-		empty.setOverflow(overflowOf(placement));
+		empty.setOverflow(overflowOf(placements.get(0)));
 		return empty;
+	}
+
+	/**
+	 * Builds a toolbar for the given placement that follows the commands of the scope.
+	 *
+	 * <p>
+	 * Whenever commands are added to or removed from the scope (e.g. implicit commands contributed
+	 * by content created later), the groups of the toolbar are replaced in place, so that the
+	 * returned control keeps its identity and SSE registration.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param scope
+	 *        The command scope containing explicit and implicit commands.
+	 * @param placement
+	 *        The target placement to filter commands for.
+	 * @param cliques
+	 *        The cliques ordering and displaying the command groups, see
+	 *        {@link CommandCliqueService#getInstance()}.
+	 * @param defaultDisplay
+	 *        The {@link ButtonDisplayMode} for buttons whose command requests none, or
+	 *        {@code null} for the standard presentation (icon and label side by side).
+	 * @return A toolbar control (never {@code null}), empty while no commands match.
+	 */
+	public static ReactToolbarControl buildLive(ReactContext context, CommandScope scope,
+			CommandPlacement placement, CommandCliqueService cliques, ButtonDisplayMode defaultDisplay) {
+		return buildLive(context, scope, List.of(placement), cliques, defaultDisplay);
+	}
+
+	/**
+	 * Builds a toolbar for the given placements that follows the commands of the scope.
+	 *
+	 * @see #buildLive(ReactContext, CommandScope, CommandPlacement, CommandCliqueService, ButtonDisplayMode)
+	 * @see #build(ReactContext, CommandScope, List, CommandCliqueService, ButtonDisplayMode)
+	 */
+	public static ReactToolbarControl buildLive(ReactContext context, CommandScope scope,
+			List<CommandPlacement> placements, CommandCliqueService cliques, ButtonDisplayMode defaultDisplay) {
+		ReactToolbarControl toolbar = buildOrEmpty(context, scope, placements, cliques, defaultDisplay);
+		scope.addListener(
+			() -> toolbar.replaceGroups(buildOrEmpty(context, scope, placements, cliques, defaultDisplay)));
+		return toolbar;
 	}
 
 	/**
@@ -74,73 +135,126 @@ public class ToolbarBuilder {
 	 *        The command scope containing explicit and implicit commands.
 	 * @param placement
 	 *        The target placement to filter commands for.
-	 * @param registry
-	 *        The clique registry (with any local cliques applied).
+	 * @param cliques
+	 *        The cliques ordering and displaying the command groups, see
+	 *        {@link CommandCliqueService#getInstance()}.
 	 * @param defaultDisplay
 	 *        The {@link ButtonDisplayMode} for buttons whose command requests none, or
 	 *        {@code null} for the standard presentation (icon and label side by side).
 	 * @return A toolbar control, or {@code null} if no commands match the placement.
 	 */
 	public static ReactToolbarControl build(ReactContext context, CommandScope scope,
-			CommandPlacement placement, CliqueRegistry registry, ButtonDisplayMode defaultDisplay) {
-		// Filter by placement.
-		List<CommandModel> filtered = new ArrayList<>();
-		for (CommandModel model : scope.getAllCommands()) {
-			if (placement == model.getPlacement()) {
-				filtered.add(model);
-			}
-		}
+			CommandPlacement placement, CommandCliqueService cliques, ButtonDisplayMode defaultDisplay) {
+		return build(context, scope, List.of(placement), cliques, defaultDisplay);
+	}
 
-		if (filtered.isEmpty()) {
-			return null;
-		}
-
-		// Convention default: the sole button-bar command (with no explicit gesture) is the
-		// dialog's Enter default. Ambiguous multi-button bars get no Enter default - authors
-		// disambiguate with an explicit key="ENTER".
-		CommandModel enterDefault = null;
-		if (placement == CommandPlacement.BUTTON_BAR && filtered.size() == 1
-				&& filtered.get(0).getKeyGesture() == null) {
-			enterDefault = filtered.get(0);
-		}
-
-		// Group by clique, preserving declaration order within each group.
-		Map<String, List<CommandModel>> grouped = new LinkedHashMap<>();
-		for (CommandModel model : filtered) {
-			String clique = model.getClique();
-			if (clique == null) {
-				clique = CommandCliques.CREATE; // Default clique.
-			}
-			grouped.computeIfAbsent(clique, k -> new ArrayList<>()).add(model);
-		}
-
-		// Sort groups by clique order.
-		List<Map.Entry<String, List<CommandModel>>> sortedGroups = new ArrayList<>(grouped.entrySet());
-		sortedGroups.sort((a, b) -> {
-			CliqueInfo infoA = registry.getClique(a.getKey());
-			CliqueInfo infoB = registry.getClique(b.getKey());
-			return Integer.compare(infoA.order(), infoB.order());
-		});
-
-		// Build toolbar control.
-		ReactToolbarControl toolbar = new ReactToolbarControl(context);
-		toolbar.setOverflow(overflowOf(placement));
-
-		for (Map.Entry<String, List<CommandModel>> entry : sortedGroups) {
-			String cliqueName = entry.getKey();
-			List<CommandModel> models = entry.getValue();
-			CliqueInfo info = registry.getClique(cliqueName);
-
-			List<ReactControl> controls = new ArrayList<>();
-			for (CommandModel model : models) {
-				controls.add(createButton(context, model, model == enterDefault ? KeyStroke.ENTER : null,
-					defaultDisplay));
+	/**
+	 * Builds one toolbar showing the commands of several placements, the groups of each placement
+	 * after those of the placements before it.
+	 *
+	 * <p>
+	 * Serves a place that displays commands of several placements together, such as a header that
+	 * has no button bar of its own. The toolbar collapses as one of the first placement does. The
+	 * conventional Enter default of a sole button-bar command applies only to a toolbar built for
+	 * {@link CommandPlacement#BUTTON_BAR} alone: a button bar combined into another toolbar is not
+	 * the dialog's commit bar.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param scope
+	 *        The command scope containing explicit and implicit commands.
+	 * @param placements
+	 *        The placements to show, in display order; not empty.
+	 * @param cliques
+	 *        The cliques ordering and displaying the command groups, see
+	 *        {@link CommandCliqueService#getInstance()}.
+	 * @param defaultDisplay
+	 *        The {@link ButtonDisplayMode} for buttons whose command requests none, or
+	 *        {@code null} for the standard presentation (icon and label side by side).
+	 * @return A toolbar control, or {@code null} if no commands match any of the placements.
+	 */
+	public static ReactToolbarControl build(ReactContext context, CommandScope scope,
+			List<CommandPlacement> placements, CommandCliqueService cliques, ButtonDisplayMode defaultDisplay) {
+		ReactToolbarControl toolbar = null;
+		Set<String> groupNames = new HashSet<>();
+		for (CommandPlacement placement : placements) {
+			// Filter by placement.
+			List<CommandModel> filtered = new ArrayList<>();
+			for (CommandModel model : scope.getAllCommands()) {
+				if (placement == model.getPlacement()) {
+					filtered.add(model);
+				}
 			}
 
-			toolbar.addGroup(cliqueName, info.display(), info.label(), info.icon(), controls);
+			if (filtered.isEmpty()) {
+				continue;
+			}
+
+			// Convention default: the sole button-bar command (with no explicit gesture) is the
+			// dialog's Enter default. Ambiguous multi-button bars get no Enter default - authors
+			// disambiguate with an explicit key="ENTER".
+			CommandModel enterDefault = null;
+			if (placements.size() == 1 && placement == CommandPlacement.BUTTON_BAR && filtered.size() == 1
+					&& filtered.get(0).getKeyGesture() == null) {
+				enterDefault = filtered.get(0);
+			}
+
+			// Group by clique, preserving declaration order within each group.
+			Map<String, List<CommandModel>> grouped = new LinkedHashMap<>();
+			for (CommandModel model : filtered) {
+				String clique = model.getClique();
+				if (clique == null) {
+					clique = CommandCliques.CREATE; // Default clique.
+				}
+				grouped.computeIfAbsent(clique, k -> new ArrayList<>()).add(model);
+			}
+
+			// Sort groups by clique order.
+			List<Map.Entry<String, List<CommandModel>>> sortedGroups = new ArrayList<>(grouped.entrySet());
+			sortedGroups.sort(
+				(a, b) -> Integer.compare(cliques.getPosition(a.getKey()), cliques.getPosition(b.getKey())));
+
+			if (toolbar == null) {
+				toolbar = new ReactToolbarControl(context);
+				toolbar.setOverflow(overflowOf(placements.get(0)));
+			}
+
+			for (Map.Entry<String, List<CommandModel>> entry : sortedGroups) {
+				String cliqueName = entry.getKey();
+				List<CommandModel> models = entry.getValue();
+				CliqueInfo info = cliques.getClique(cliqueName);
+
+				List<ReactControl> controls = new ArrayList<>();
+				for (CommandModel model : models) {
+					controls.add(createButton(context, model, model == enterDefault ? KeyStroke.ENTER : null,
+						defaultDisplay));
+				}
+
+				// The groups of one toolbar are told apart by name, also when two placements use the
+				// same clique.
+				String groupName = groupNames.add(cliqueName) ? cliqueName : cliqueName + GROUP_NAME_SEPARATOR
+					+ placement.name();
+				groupNames.add(groupName);
+				toolbar.addGroup(groupName, info.display(), label(info.label()), icon(info.icon()), controls);
+			}
 		}
 
 		return toolbar;
+	}
+
+	/**
+	 * The menu trigger label of a clique in the language of the current user.
+	 */
+	private static String label(ResKey label) {
+		return label == null ? null : Resources.getInstance().getString(label);
+	}
+
+	/**
+	 * The encoded form of a clique's menu trigger icon, as a button transmits its image.
+	 */
+	private static String icon(ThemeImage icon) {
+		return icon == null ? null : icon.resolve().toEncodedForm();
 	}
 
 	/**

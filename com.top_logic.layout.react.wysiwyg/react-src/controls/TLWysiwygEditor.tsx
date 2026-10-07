@@ -5,15 +5,9 @@ import type { TLCellProps } from 'tl-react-bridge';
 import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
-import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
-import Table from '@tiptap/extension-table';
-import TableRow from '@tiptap/extension-table-row';
-import TableCell from '@tiptap/extension-table-cell';
-import TableHeader from '@tiptap/extension-table-header';
-import Color from '@tiptap/extension-color';
-import TextStyle from '@tiptap/extension-text-style';
+import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
+import { TextStyle, Color } from '@tiptap/extension-text-style';
 import WysiwygToolbar from './WysiwygToolbar';
 import './TLWysiwygEditor.css';
 
@@ -92,11 +86,14 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
-      Underline,
-      // The link extension carries the CSS class of an anchor, which is what tells an object
-      // link from an ordinary one, through parsing and rendering alike.
-      Link.configure({ openOnClick: false }),
+      StarterKit.configure({
+        // The link extension carries the CSS class of an anchor, which is what tells an object
+        // link from an ordinary one, through parsing and rendering alike.
+        link: { openOnClick: false },
+        // Opening existing content must not change its stored markup, so no empty paragraph is
+        // appended after a trailing table or code block.
+        trailingNode: false,
+      }),
       Image.configure({ allowBase64: true, inline: true }),
       Table.configure({ resizable: true }),
       TableRow,
@@ -135,7 +132,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     if (editor && !editor.isFocused) {
       const currentHtml = editor.getHTML();
       if (currentHtml !== value) {
-        editor.commands.setContent(value, false);
+        editor.commands.setContent(value, { emitUpdate: false });
       }
     }
   }, [value, editor]);

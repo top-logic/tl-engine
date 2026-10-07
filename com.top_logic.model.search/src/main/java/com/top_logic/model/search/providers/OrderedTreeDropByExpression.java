@@ -71,6 +71,30 @@ public class OrderedTreeDropByExpression extends TreeDropTargetByExpression {
 		@Override
 		Expr getCanDrop();
 
+		/**
+		 * Function computing the message to annotate to the change performed by the drop.
+		 * 
+		 * <p>
+		 * The function receives the dragged elements as first argument, the parent of the
+		 * referenced node as second argument, the referenced node itself as third argument and the
+		 * model of the tree as fourth argument.
+		 * </p>
+		 * 
+		 * <p>
+		 * The referenced node is the node before the dragged elements are dropped. If the
+		 * referenced node is <code>null</code>, then the dragged elements are dropped at the end of
+		 * the referenced parent's child nodes.
+		 * </p>
+		 * 
+		 * <p>
+		 * The function returns either a string or an internationalized text. If not set, or if the
+		 * function returns nothing, a default message is used that names the dropped objects and
+		 * the tree they are dropped into.
+		 * </p>
+		 */
+		@Override
+		Expr getCommitMessage();
+
 	}
 
 	/**

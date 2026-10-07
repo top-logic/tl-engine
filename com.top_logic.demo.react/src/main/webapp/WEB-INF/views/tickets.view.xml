@@ -308,36 +308,38 @@
 								</switch>
 							</generic-command>
 						</commands>
-						<text input="ticket"/>
-						<text
-							css-class="ticketState"
-							input="ticketState"
-						/>
-						<progress
-							done="x -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size()"
-							observed-types="demo.tickets:Ticket"
-							total="x -> all(`demo.tickets:Ticket`).size()"
-						/>
-						<fields with-inset="true">
-							<value-input
-								type="tl.core:String"
-								value="searchTerm"
-							>
-								<label>
-									<en>Search</en>
-									<de>Suche</de>
-								</label>
-							</value-input>
-							<value-input
-								type="demo.tickets:TicketStatus"
-								value="status"
-							>
-								<label>
-									<en>Status</en>
-									<de>Status</de>
-								</label>
-							</value-input>
-						</fields>
+						<inset>
+							<text input="ticket"/>
+							<text
+								css-class="ticketState"
+								input="ticketState"
+							/>
+							<progress
+								done="x -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size()"
+								observed-types="demo.tickets:Ticket"
+								total="x -> all(`demo.tickets:Ticket`).size()"
+							/>
+							<fields>
+								<value-input
+									type="tl.core:String"
+									value="searchTerm"
+								>
+									<label>
+										<en>Search</en>
+										<de>Suche</de>
+									</label>
+								</value-input>
+								<value-input
+									type="demo.tickets:TicketStatus"
+									value="status"
+								>
+									<label>
+										<en>Status</en>
+										<de>Status</de>
+									</label>
+								</value-input>
+							</fields>
+						</inset>
 						<panel>
 							<title>
 								<en>Open</en>
@@ -506,58 +508,53 @@
 					size="70"
 					unit="%"
 				>
-					<panel>
+					<panel with-inset="true">
 						<title>
 							<en>Conversation</en>
 							<de>Verlauf</de>
 						</title>
-						<form
-							input="ticket"
-							with-inset="true"
-						>
+						<form input="ticket">
 							<field attribute="name"/>
 							<field attribute="status"/>
 						</form>
-						<inset>
-							<object-list
-								element-channel="comment"
-								element-type="demo.tickets:Comment"
-								inputs="ticket"
-								items="ticket -> $ticket.get(`demo.tickets:Ticket#comments`)"
-								link="ticket -> comment -> { persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); }"
-								new-element-channel="newComment"
-								remove="ticket -> comment -> $comment.delete()"
-							>
-								<item>
-									<view-ref view="tickets/comment.view.xml">
-										<bind
-											channel="comment"
-											to="comment"
-										/>
-										<bind
-											channel="draft"
-											to="newComment"
-										/>
-									</view-ref>
-								</item>
-								<new-element>
-									<view-ref view="tickets/comment-composer.view.xml">
-										<bind
-											channel="comment"
-											to="newComment"
-										/>
-										<bind
-											channel="ticket"
-											to="ticket"
-										/>
-									</view-ref>
-								</new-element>
-								<empty-text>
-									<en>No comments yet.</en>
-									<de>Noch keine Kommentare.</de>
-								</empty-text>
-							</object-list>
-						</inset>
+						<object-list
+							element-channel="comment"
+							element-type="demo.tickets:Comment"
+							inputs="ticket"
+							items="ticket -> $ticket.get(`demo.tickets:Ticket#comments`)"
+							link="ticket -> comment -> { persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); }"
+							new-element-channel="newComment"
+							remove="ticket -> comment -> $comment.delete()"
+						>
+							<item>
+								<view-ref view="tickets/comment.view.xml">
+									<bind
+										channel="comment"
+										to="comment"
+									/>
+									<bind
+										channel="draft"
+										to="newComment"
+									/>
+								</view-ref>
+							</item>
+							<new-element>
+								<view-ref view="tickets/comment-composer.view.xml">
+									<bind
+										channel="comment"
+										to="newComment"
+									/>
+									<bind
+										channel="ticket"
+										to="ticket"
+									/>
+								</view-ref>
+							</new-element>
+							<empty-text>
+								<en>No comments yet.</en>
+								<de>Noch keine Kommentare.</de>
+							</empty-text>
+						</object-list>
 					</panel>
 				</pane>
 			</panes>

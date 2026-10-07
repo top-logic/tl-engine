@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<stack>
+		<!-- A panel whose flowing body keeps a distance from the panel border. -->
+		<panel
+			title="Inset"
+			with-inset="true"
+		>
+			<text label="First"/>
+			<text label="Second"/>
+		</panel>
+
+		<!-- A panel saying nothing about its body: the body is flush. -->
+		<panel title="Flush">
+			<text label="First"/>
+			<text label="Second"/>
+		</panel>
+	</stack>
+</view>

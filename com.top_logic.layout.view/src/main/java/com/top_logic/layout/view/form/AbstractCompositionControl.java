@@ -26,7 +26,6 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.security.ModelAccessRights;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
@@ -123,6 +122,12 @@ public abstract class AbstractCompositionControl extends ReactControl
 	 * content; when the binding is not available (e.g. the current object's type does not declare
 	 * the bound attribute), builds empty view-mode content.
 	 * </p>
+	 *
+	 * <p>
+	 * When the form is already in edit mode (e.g. the control is created lazily within a tab of a
+	 * form that is opened in edit mode), the edit session of this control starts right away, as it
+	 * does for a control that observes the form entering edit mode.
+	 * </p>
 	 */
 	public void init() {
 		TLObject currentObject = _formControl.getCurrentObject();
@@ -130,7 +135,11 @@ public abstract class AbstractCompositionControl extends ReactControl
 			buildContent(List.of(), false);
 			return;
 		}
-		buildContent(_binding.readRows(currentObject), _formControl.isEditMode());
+		if (_formControl.isEditMode()) {
+			enterEditMode(currentObject);
+		} else {
+			buildContent(_binding.readRows(currentObject), false);
+		}
 	}
 
 	/**
@@ -450,8 +459,7 @@ public abstract class AbstractCompositionControl extends ReactControl
 			TLClass type = (TLClass) row.tType();
 			boolean allowed = part == null
 				? rights.isAllowedCreate(user, type, (TLObject) null)
-				: rights.isAllowedCreate(user, type, parent)
-					&& rights.isAllowed(user, parent, part, SimpleBoundCommandGroup.WRITE);
+				: rights.isAllowedCreate(user, parent, part, type);
 			if (!allowed) {
 				throw new TopLogicException(
 					com.top_logic.element.model.copy.I18NConstants.ERROR_PERSIST_PERMISSION_DENIED__TYPE.fill(type));
@@ -583,8 +591,10 @@ public abstract class AbstractCompositionControl extends ReactControl
 		}
 		TLClass targetType = createTypes.get(0);
 
-		// Create transient object.
-		TLObject transientObject = TransientObjectFactory.INSTANCE.createObject(targetType);
+		// Create the transient object within the form object, so that it navigates to its owner
+		// (e.g. in an options expression) before it is stored.
+		TLObject owner = _formControl.getOverlay().getBase();
+		TLObject transientObject = TransientObjectFactory.INSTANCE.createObject(targetType, owner);
 		if (initializer != null) {
 			initializer.accept(transientObject);
 		}

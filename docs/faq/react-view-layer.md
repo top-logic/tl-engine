@@ -40,7 +40,7 @@
     </view>
     ```
     The delay is the span a *typed* value is held back; a value that is picked - a dropdown, a date picker, a checkbox - reaches the channel with the choice and waits for nothing. An input whose value the server rewrites as it stores it (a number, an internationalized text) holds the value back until the input is left (`setSendValueOnBlur(true)`) and ignores the delay altogether - what it costs is server-side feedback while typing, which is the trade that behaviour is for. Without a stated delay a typed input uses the one span every typed input shares, `VALUE_DEBOUNCE_MS` (300 ms) exported from the bridge. The three are rendering-only: `ReactFormFieldControl.scriptingPresentationKeys()` keeps `icon`, `clearable` and `debounceMs` out of the headless projection, while the `placeholder` stays in it, being the text a label-less input names itself by. The three hand-rolled search boxes elsewhere in the layer - the table filter bar, the dropdown search, the icon-select popup - are controls of their own and are unaffected.
-  - **Layout: `<fields>`** (`FieldsElement`). A `<value-input>` renders the label-and-input chrome of a field but, standing outside a `<form>`, gets none of the grid a form renders around its fields. `<fields>` is that grid on its own (`ReactFormLayoutControl`, `TLFormLayout`): the auto-fit columns (`max-columns`, 3 by default), and the `FormLayoutContext` a `TLFormField` reads to move a label from beside its input to above it when the column is narrower than 320px (`label-position` `auto` by default, or fixed `side` / `top`; the field-level `after` / `hidden` are rejected). A `<fields>` also stands inside a `<form>`: it lays out the fields of one area of a form whose areas are panels or split panes, and then follows the form's edit mode (the grid is read-only while the form is not being edited, so its fields show the read-only chrome; `FormLayoutEditModeBinding`). A plain `<form>` needs no `<fields>`, being such a grid already; a `<field>` still needs a `<form>`, since `<fields>` carries no object. The grid of a `<form>` or `<fields>` is a plain layout that reaches up to its container border; where the fields would otherwise glue to that border (a dialog, a tab, a pane) it sets `with-inset="true"` (`FormLayoutOptions#getInset()`), which wraps the grid in the same `ReactInsetControl` an `<inset>` element renders. A grid inside a form usually leaves it unset, so the inset is not applied twice.
+  - **Layout: `<fields>`** (`FieldsElement`). A `<value-input>` renders the label-and-input chrome of a field but, standing outside a `<form>`, gets none of the grid a form renders around its fields. `<fields>` is that grid on its own (`ReactFormLayoutControl`, `TLFormLayout`): the auto-fit columns (`max-columns`, 3 by default), and the `FormLayoutContext` a `TLFormField` reads to move a label from beside its input to above it when the column is narrower than 320px (`label-position` `auto` by default, or fixed `side` / `top`; the field-level `after` / `hidden` are rejected). A `<fields>` also stands inside a `<form>`: it lays out the fields of one area of a form whose areas are panels or split panes, and then follows the form's edit mode (the grid is read-only while the form is not being edited, so its fields show the read-only chrome; `FormLayoutEditModeBinding`). A plain `<form>` needs no `<fields>`, being such a grid already; a `<field>` still needs a `<form>`, since `<fields>` carries no object. The grid of a `<form>` or `<fields>` is a plain layout that reaches up to its container border; where it stands and how it keeps its distance is described in "Spacing model" below.
   - **The same grid options on `<form>`** (`FormLayoutOptions`, shared by `FormElement.Config` and `FieldsElement.Config`). A `<form max-columns="1" label-position="side">` states the greatest number of columns its fields are laid out in and where their labels stand, exactly as `<fields>` does — `max-columns` is a ceiling, not a count, so a narrow display still shows fewer columns and a phone a single one. This is what a detail pane narrower than the three columns of the default asks for: left to itself it fills the width it has with two columns whose labels sit above the inputs, while `max-columns="1"` plus `label-position="side"` keeps one column with the labels beside the inputs at every width. A `<field>` stating a `label-position` of its own keeps it.
     ```xml
     <form input="selectedMilestone" label-position="side" max-columns="1">
@@ -78,6 +78,39 @@
 - **Referencing a `UIElement` impl by `class=` in view content.** View content lists resolve entries by `@TagName`, so an app-specific element that should not claim a global tag is placed via the content property's *entry tag* plus `class=`. The `children` content property (`ContainerElement.Config`) is `@EntryTag("child")`, so write `<child class="fq.MyElement"/>` inside a `<panel>` / container. If a cell provider is reusable, make it public rather than justifying a separate element; justify a separate element by genuinely different data / behavior.
 - **Standalone form-field controls bind to a `FieldModel`.** For a standalone field control (e.g. a checkbox cell), use the concrete `com.top_logic.layout.form.model.AbstractFieldModel` + `FieldModelListener` — not `FormContext` / `FormField` / `FormFieldAdapter`, which are legacy-compat shims. `AbstractFieldModel` is editable by default, needs no `FormContext` parent, and triggers no label resource lookup in `ReactFormFieldControl`.
 - Modifying persistent state from a control's value listener needs a transaction; the listener has no ambient one, so open `beginTransaction()` there (or buffer changes and apply them under one transaction on save).
+
+## Spacing model
+
+Containers are flush: a `<panel>`, a `<tab>`, a `<pane>`, a dialog window and the simple layouts `<stack>` / `<grid>` lay their content out up to their border and add no padding. The content owns its breathing room:
+
+- **Content that fills** - a `<table>`, a `<flow-diagram>`, a `<split-panel>`, a `<tab-bar>` of its own panels, an `<adaptive-detail>`, an `<html display="document">` - stays edge to edge. Nothing is set.
+- **Content that flows** - texts, stacks, grids, alerts, buttons, cards, a form that does not span its container - keeps the page inset (`--page-inset`) as distance to the border. Where it stands decides how:
+  - directly in a `<panel>`: `with-inset="true"` on the panel (first choice). It insets the panel body, not the title and the toolbar (`PanelElement.Config` extends `InsetOptions`).
+  - a `<form>` or `<fields>` that is the content of a dialog, a tab or a pane, or the sole content of a panel: `with-inset="true"` on the form / fields (`FormLayoutOptions` extends `InsetOptions`).
+  - any other content not directly in a panel (a tab, a pane, a wizard step, a `<visible-if>` that must not leave an empty padded box behind): wrap it in `<inset>` (`InsetElement`).
+
+All three render the same `ReactInsetControl` (`.tlInset`). Content is inset **once**: a panel with `with-inset` holds no form / fields with `with-inset` and no `<inset>`. A nested `<panel>` is a container of its own and decides for its own body. A card (`appearance="card"`, `<card>`) reduces `--page-inset`, so an inset inside it is compact.
+
+```xml
+<panel with-inset="true">
+  <title>
+    <en>Alerts</en>
+  </title>
+  <text>
+    <label>
+      <en>A highlighted message in the content of a view.</en>
+    </label>
+  </text>
+  <alert severity="info">…</alert>
+  <form input="obj">
+    <field attribute="name"/>
+  </form>
+</panel>
+```
+
+A body mixing both - an explanation above a table - is a judgment call: leave the panel flush to keep the table edge to edge and wrap the text in `<inset>`, or nest the table in a panel of its own.
+
+Checklist: content glued to the border of its container → `with-inset="true"` on the panel, or on the form / fields, or an `<inset>` around it.
 
 ## Styling a single element: `css-class`
 
@@ -403,15 +436,42 @@ Two actions branch the chain by a TL-Script function over its current value. `<i
 - A command whose chain applies the entered form values is disabled while the form has errors — a branch reports that for the actions of *all* its branches, taken or not, because the button's state cannot depend on the decision.
 - **`<executability>` guards the command with rules over its input**: `<visible-if expr="…"/>` hides the command while its predicate does not return `true`; `<disabled-if expr="…"/>` keeps it visible but disabled and takes the reason from its function — no value or `false` means executable, `true` disables it with a generic reason, a resource key or a text disables it with that reason, which the button shows as its tooltip. A rule that inspects objects beyond the input object needs those types in the command's `observed-types`, otherwise their changes do not re-evaluate it.
 
+## Toolbar groups: command cliques
+
+A command names its clique (`clique="…"` on any view command, default `create`); the commands of one clique form one group of the toolbar (`ToolbarBuilder`). Which cliques exist, in which order their groups are displayed, and whether a group is shown inline or folded into a menu is application configuration of the `CommandCliqueService` — the standard cliques are configured in `tl-layout-view.conf.config.xml`: `create`, `edit`, `delete`, `commit`, `navigate` inline, then `view`, `export` and `more` as menus. A menu clique carries a `label` (a `ResKey`, resolved in the user's language when the toolbar is built) and optionally an `icon` (a `ThemeImage`); a menu with an icon shows the label as the trigger's accessible name, one without shows it as the trigger's text.
+
+An application adds or relabels a clique in its own configuration; entries are keyed by `name`, so an entry with an existing name overrides that clique, and a new name is appended (or placed with `config:position`/`config:reference`):
+
+```xml
+<config service-class="com.top_logic.layout.view.command.CommandCliqueService">
+	<instance>
+		<cliques>
+			<clique name="more" display="menu" icon="css:bi bi-three-dots">
+				<label><en>Actions</en><de>Aktionen</de></label>
+			</clique>
+			<clique name="report" display="menu"
+				config:position="before" config:reference="more"
+			>
+				<label><en>Reports</en><de>Berichte</de></label>
+			</clique>
+		</cliques>
+	</instance>
+</config>
+```
+
+A clique that is not configured is not an error: its commands form an inline group without label after the groups of all configured cliques.
+
 ## Creating and deleting objects: `<create-transient>`, `<persist-transient>`, `<delete-object>`
 
 Three actions perform the model operations of a create dialog and a delete button. Each enforces the model access right of its operation like the TL-Script function it corresponds to, and brings the matching executability rule itself (`ViewAction#getIntrinsicRule()`), so the command offering it is hidden or disabled before the operation would fail — no `<executability>` configuration for the right is needed. The rule decides on the *command's* input, not on the value the chain hands to the action (see `ModelAccessRule` and `ModelAccessPolicy` for hide vs. disable).
 
 - **`<create-transient type="…" [container="ch" reference="attr"]/>`** (`CreateTransientAction`) results in a transient object of the type — the draft the dialog edits, as `new(type, transient: true)` creates it; its input is ignored. Its rule is the right to create an object of the type: without `container` against the security root (refused → hidden), with `container` in the context of the channel's object and, with `reference`, together with Write on that reference (refused → disabled). `container`/`reference` serve the check only; the dialog gets the container through the `<open-dialog>` bindings.
 - **`<persist-transient [type="…"] [container="ch" reference="attr"]/>`** (`PersistTransientAction`) makes the transient object it receives persistent the way `$draft.copy(transient: false)` does (values and composition parts; a refusal reports a refused *creation*), in the context of the container if one is given, and with `reference` adds the created object to that reference of the container, the way `$container.add(reference, $created)` does including its Write check. It runs in a transaction of its own and results in the persistent object. Its rule is the same creation check; the created type is `type` if given, else the reference's type, else the type of the command input — so the dialog's Create button binds its input to the draft: `input="model"`.
-- **`<delete-object/>`** (`DeleteObjectAction`) deletes the object (or the objects of a collection) it receives the way `delete()` does, compositions included, in a transaction of its own, and results in `null`. Its rule is Delete on the command input (refused → disabled with "You may not delete this object.", hidden when no role may ever delete the type).
+- **`<delete-object/>`** (`DeleteObjectAction`) deletes the object (or the objects of a collection) it receives the way `delete()` does, compositions included, in a transaction of its own, and results in `null`. Its rule is Delete on the command input (refused → disabled with "You may not delete this object.", hidden when no role may ever delete the type), combined with `<delete-veto-disabled/>` (`DeleteVetoDisabled`): an input whose `TLObject#tDeleteVeto()` refuses the deletion disables the command with the veto as reason. A command deleting by script configures `<delete-veto-disabled/>` explicitly.
 
 A transaction nested in a `<with-transaction>` commits with it, so the actions compose with further script steps in one transaction. A command whose effect is a free script uses the general rule instead: `<model-access operation="…"/>` in `<executability>`; `<model-access operation="Create"/>` without a `type` checks the creation of an object of the command input's type.
+
+A `<model-access>` check on a concrete object (explicit, or the rule an action brings) also asks the global `CommandApprovalService` (without component and command ID) once the access rights allow the operation: the approval checks configured for the object's type — e.g. that the anonymous account is neither edited nor deleted — disable the command with the approval's reason, as in the classic UI.
 
 The opener and the dialog of a creation in a container:
 
@@ -1028,6 +1088,30 @@ Such a page is linkable: `/view/tickets?filter=discussed` opens the list filtere
 - **The compact fallback is the drill-in either way.** On a narrow viewport a `drawer` element renders exactly like a `split` one — selector, then detail, with the breadcrumb whose home crumb (`<home-label>`) clears the selection. A drawer as wide as a phone is a full-screen panel, which is what the drill-in already is, done with the breadcrumb the nested levels share.
 - Both demos live in `com.top_logic.demo.react`: `demo/responsive-md-demo.view.xml` (the split presentation, nested scopes → milestones) and `demo/detail-drawer-demo.view.xml` (the drawer presentation over a full-width ticket table).
 
+## Collapsible sections: `<accordion>`
+
+`<accordion>` (`AccordionElement`, control `ReactAccordionControl`) stacks sections, each with a header — label, optional icon, optional commands — and a body the user expands or collapses. Like the tabs of a `<tab-bar>`, the sections are keyed by their `id`, so a configuration fragment of another module adds, repositions (`config:position`) or overrides a single section; a section shares `id`, `label`, `icon`, `<access-control>` and the content children with a tab (`ContentSectionConfig`).
+
+```xml
+<accordion exclusive="false">
+	<section id="general" icon="css:bi bi-gear" expanded="true">
+		<label><en>General</en><de>Allgemein</de></label>
+		<commands>
+			<generic-command placement="TOOLBAR" …>…</generic-command>
+		</commands>
+		<form input="item">…</form>
+	</section>
+	<section id="advanced">…</section>
+</accordion>
+```
+
+- **Attributes.** `exclusive` (default `false`): at most one section is expanded at a time, expanding one collapses the other; all may be collapsed. `personalize` (default `true`): the expansion is remembered per user. `command-display` (default `icon-only`): how the header buttons show icon and label. `css-class` as for every element.
+- **Sections.** `expanded` (default `false`) is the expansion the section starts with; in an exclusive accordion only the first section written as expanded is. A section the current user may not see (`<access-control>`) is left out entirely, and its `<access-control>` scope is the security scope of the content's command rules, as for a tab. A section without `<label>` shows its `id`.
+- **Header commands.** Like a `<panel>`, every section is a `CommandScope` for its content, with or without `<commands>` of its own. Its header shows a live toolbar (`ToolbarBuilder.buildLive` over `TOOLBAR` then `BUTTON_BAR` — a section has no footer, so button-bar commands appear in the header after the toolbar ones) built with the accordion, so the header commands are there whether the section is expanded or not. Commands the content contributes (a form's edit and save commands) join the header once the section is first expanded and its content created. A header without commands renders an empty toolbar, which takes no space (`.tl-accordion__actions:empty`).
+- **Lazy content.** The content of a section is created when the section is first expanded and kept while it is collapsed — what the user entered there survives collapsing, and collapsing asks nothing about unsaved changes. A section's content gets the personalization segment `section` and the slot path segment of the section `id`; it shares the channels of the enclosing view.
+- **Personalization key.** The expansion is stored as a JSON map from section `id` to `true`/`false`, under the element's `personalization-key` if one is written, else under the view context's personalization key plus `.accordion`. A remembered entry overrides the written `expanded`. A change writes only the entry of the changed section back, so two accordions sharing one key keep each other's entries as long as their section ids differ — two personalized accordions in the same view context therefore need **distinct section ids or a `personalization-key` each**, otherwise they share their expansion.
+- **Reveal.** The accordion is a container of the reveal protocol, keyed by section `id`: revealing something inside a collapsed section expands it (and, in an exclusive accordion, collapses the others).
+
 ## Drill-down navigation with `<tile-stack>`
 
 `com.top_logic.layout.view.tiles` provides drill-down navigation. A `<tile-stack path="navPath" initial="products/overview.view.xml"/>` displays the last frame of a path of `TileFrame`s, the `initial` view when the path is empty, and keeps the frames the displayed one covers (see below). The path itself lives on a normal channel of the enclosing view (`List<TileFrame>`), which is the single source of truth: every navigation is a write to that channel.
@@ -1055,6 +1139,41 @@ Such a page is linkable: `/view/tickets?filter=discussed` opens the list filtere
 - **Transitions.** A step change is drawn by the stylesheet; the component only says what is happening. `ReactWizardControl` publishes the way the display moved (state key `direction`), which the root carries as `tlWizard--forward` / `tlWizard--backward`; the step arriving carries `tlWizard__step--entering`, and over it lies an inert copy of the step left behind, `tlWizard__step--exiting`, positioned absolutely inside `.tlWizard__body` so that the step arriving already sits where it will stay. The wizard is the one display the engine ships a default animation for — fade plus a 12px slide in the direction moved, 200ms — which an application restyles by redefining those two classes and their `.tlWizard--backward` variants. The contract behind all this is the same for the dialog and the tile stack; see **Transitions: the state classes an application animates**.
 - **Auto-advance.** A step can carry its own time: `<step id="ready" auto-advance="2s">` (a duration in the usual `MillisFormat` notation) for an interstitial the user only watches, and `<dynamic-steps auto-advance="q -> …">` for one computed per element — an element the function answers nothing for is a step the user leaves. It reaches the runtime as `WizardStep.autoAdvanceMillis()` and the client as the state key `autoAdvance` of the step displayed, where it becomes a timer; the timer is cleared whenever the step changes. When it fires it reports back naming the step it belongs to, and the wizard moves on **only while that step is still the one displayed** — the user may have moved on themselves in the meantime, and a timer that outlived its step must not carry the display past what they chose. The time runs while the flow *leads through* the step: it is started for a step entered going forward, and not for one the user came back to — a Back out of the step behind an interstitial would otherwise be answered by being sent forward again. A re-expansion that carries the displayed step along does not restart it either; it keeps counting.
 - The demo is `demo/wizard-demo.view.xml` in `com.top_logic.demo.react` (sidebar **Wizard** / **Assistent**, `/view/wizard`): an onboarding flow whose written-out Welcome, Profile and Summary steps enclose a `<dynamic-steps>` over a `questions` channel that grows while the flow is walked, with the Back/Next footer raised out of every step into one slot.
+
+## The application shell: extending `app.view.xml`
+
+`tl-layout-view` ships the shell an application is displayed in as `WEB-INF/views/app.view.xml` — the `default-view` of `ViewConfig`: an `<app-shell>` with the system notices (`<maintenance-notice/>`, `<session-timeout-notice/>`), a `<sidebar>` ending in a separator (`id="system-separator"`) and the `administration` item, and an `<app-bar>` with the drawer-toggle slot `appbar-leading`, the projection slot `appbar-content` and the development menu plus the account area (`dev-menu.view.xml`, `user-menu.view.xml`) in its trailing area. An application does not copy it, it extends it with a **same-path overlay**: a `WEB-INF/views/app.view.xml` of its own module, which the `ViewLoader` merges onto the shipped one in dependency order.
+
+- Each slot of `<app-shell>` (`header`, `notices`, `content`, `footer`) holds **at most one element of a kind** — the slot lists are keyed by the configuration interface of their entries. The overlay's `<content><sidebar>` and `<header><app-bar>` therefore extend the shell's sidebar and app bar instead of adding second ones; two elements of the same kind in one slot are rejected.
+- Single-valued properties written in the overlay replace the shell's: the `<title>` of the app bar, the `active-item` of the sidebar.
+- The rail chrome (`<header>`, `<footer>`, … of the sidebar) is a list of arbitrary elements; the overlay marks its list with `config:override="true"` to replace the shell's neutral texts instead of adding to them.
+- Sidebar items are keyed by `id`. An item without a position is appended — after the `administration` item; an item for the application's own section names the separator: `config:position="before" config:reference="system-separator"`.
+- Channels the items read go in the `<channels>` of the overlay's `<view>`; they are added to the (empty) channels of the shell.
+
+```xml
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+    <app-shell>
+        <content>
+            <sidebar active-item="home">
+                <header config:override="true">
+                    <text><label><en>My App</en></label></text>
+                </header>
+                <nav-item id="home" config:position="before" config:reference="system-separator">
+                    <view-ref view="home.view.xml"/>
+                    <label><en>Home</en></label>
+                </nav-item>
+            </sidebar>
+        </content>
+        <header>
+            <app-bar>
+                <title><en>My App</en></title>
+            </app-bar>
+        </header>
+    </app-shell>
+</view>
+```
+
+An application that defines its whole shell itself writes `<app-shell config:override="true">` in its copy; the copy then takes the place of the shipped shell as a whole (channels of its `<view>` are still added to the shell's, which has none). `com.top_logic.demo.react`'s `app.view.xml` is a complete overlay example; `TestAppShellOverlay` pins the merge behavior.
 
 ## The sidebar: item kinds, badges and the rail chrome
 
@@ -1303,7 +1422,7 @@ Sidebar items and tabs create their content lazily, so the mount of a view canno
 
 ### The reveal protocol
 
-Every control that shows one of several children implements `com.top_logic.layout.react.reveal.ChildRevealer` — `revealChild(key)` makes the child addressed by `key` the displayed one, creating it if needed, and throws `ChannelVetoException` when unsaved changes stand in the way: `ReactSidebarControl` (item id), `ReactTabBarControl` (tab id), `ReactAdaptiveDetailControl` (selector/detail), `ReactTileStackControl` (`initial`, or `frame<n>` via `frameKey(n)` = pop to that frame), and a `DialogRevealer` around a `DialogHandle` (closes the dialogs above it). Every keyed container appends a `RevealStep` to the **`RevealPath`** scope when it derives a child's `ViewContext` (`context.withScope(RevealPath.class, path.append(this, key))`), and every view instance and every revealing control announces itself in the window's **`RevealRegistry`** (`ViewContext.getRevealRegistry()`, one per root context and inherited like the slot registry) under that path, unregistering when its control is cleaned up (cached hidden content stays registered while alive). Revealing a mounted view walks its `MountPath` from the root: at each step the registered container at the current prefix reveals the next key — which creates lazily built content, whose own containers and views register on the way — and the view instance found at the full path finally receives the bindings. Vetoes are handled as `<write-channel>` handles them: the dirty-confirm dialog, then the step is retried; cancelling aborts the chain.
+Every control that shows one of several children implements `com.top_logic.layout.react.reveal.ChildRevealer` — `revealChild(key)` makes the child addressed by `key` the displayed one, creating it if needed, and throws `ChannelVetoException` when unsaved changes stand in the way: `ReactSidebarControl` (item id), `ReactTabBarControl` (tab id), `ReactAccordionControl` (section id, expands it), `ReactAdaptiveDetailControl` (selector/detail), `ReactTileStackControl` (`initial`, or `frame<n>` via `frameKey(n)` = pop to that frame), and a `DialogRevealer` around a `DialogHandle` (closes the dialogs above it). Every keyed container appends a `RevealStep` to the **`RevealPath`** scope when it derives a child's `ViewContext` (`context.withScope(RevealPath.class, path.append(this, key))`), and every view instance and every revealing control announces itself in the window's **`RevealRegistry`** (`ViewContext.getRevealRegistry()`, one per root context and inherited like the slot registry) under that path, unregistering when its control is cleaned up (cached hidden content stays registered while alive). Revealing a mounted view walks its `MountPath` from the root: at each step the registered container at the current prefix reveals the next key — which creates lazily built content, whose own containers and views register on the way — and the view instance found at the full path finally receives the bindings. Vetoes are handled as `<write-channel>` handles them: the dirty-confirm dialog, then the step is retried; cancelling aborts the chain.
 
 ### Entry points
 

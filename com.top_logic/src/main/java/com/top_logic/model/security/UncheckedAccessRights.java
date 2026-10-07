@@ -83,12 +83,39 @@ final class UncheckedAccessRights implements ModelAccessRights {
 	}
 
 	@Override
-	public boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute) {
+	public boolean isAllowedInitial(Person person, TLObject draft, TLStructuredTypePart attribute,
+			BoundCommandGroup commandGroup) {
+		return true;
+	}
+
+	/**
+	 * @implNote Without the security configuration, no grants are known.
+	 */
+	@Override
+	public boolean hasGrant(TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
+		return false;
+	}
+
+	@Override
+	public boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute,
+			TLClass type) {
 		return true;
 	}
 
 	@Override
 	public boolean isAllowedCreate(Person person, TLClass type, TLObject context) {
+		return true;
+	}
+
+	/**
+	 * Every type is without security here: inside an unchecked scope no object is access
+	 * controlled, so a caller asking whether a type is (e.g. before deciding by its
+	 * {@link #getAllowedRoles(TLClass, BoundCommandGroup) roles}, which are unknown here) learns that
+	 * access is granted independent of roles - consistent with the
+	 * {@link #isAllowed(Person, TLObject, BoundCommandGroup) checks}, which grant everything.
+	 */
+	@Override
+	public boolean isWithoutSecurity(TLClass type) {
 		return true;
 	}
 

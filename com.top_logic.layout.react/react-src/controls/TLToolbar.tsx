@@ -251,7 +251,10 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
  *
  * The buttons drop their labels themselves: the toolbar tells them through ButtonDefaults
  * (`iconOnly`). The widths of both presentations are therefore read in two passes, one render
- * each: first with labels, then compact.
+ * each: first with labels, then compact. The toolbar measures again when the groups change, or when
+ * a unit changes its width for another reason than the toolbar's own switch between the
+ * presentations - a button that shows or hides itself or changes its label, or a toolbar that was
+ * measured in a hidden host and is shown.
  */
 const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -272,6 +275,12 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
   const [measurePhase, setMeasurePhase] = useState<MeasurePhase>(null);
   const [layout, setLayout] = useState<ToolbarLayout>(INITIAL_LAYOUT);
   const [, setResizeTick] = useState(0);
+
+  // The unit widths the settled toolbar shows (those of its current presentation); absent while it
+  // measures or has nothing measured. Read by the unit observer, which outlives the renders.
+  const shownWidthsRef = useRef<number[] | null>(null);
+  const unitObserverRef = useRef<ResizeObserver | null>(null);
+  const observedUnitsRef = useRef<Set<Element>>(new Set());
 
   // Groups with at least one item, and the unit sequence they decompose into.
   const { visibleGroups, units } = useMemo(() => {
@@ -334,6 +343,9 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
 
   useLayoutEffect(() => {
     const root = rootRef.current;
+    shownWidthsRef.current = settled
+      ? (compact ? metricsRef.current!.compact : metricsRef.current!.full)
+      : null;
     if (!root || !collapsible) {
       // Nothing to measure: a pass begun before must not leave the buttons compact.
       if (measurePhase !== null) setMeasurePhase(null);
@@ -404,6 +416,62 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
     observer.observe(root);
     return () => observer.disconnect();
   }, [collapsible]);
+
+  // A unit that changes its width on its own (a button showing or hiding itself, a changed label)
+  // invalidates the measurement. The root is observed as well, so that a toolbar shown again checks
+  // its units even if none of them changes its width on the way.
+  useEffect(() => {
+    if (!collapsible || typeof ResizeObserver === 'undefined') return;
+    const observed = observedUnitsRef.current;
+    const observer = new ResizeObserver(() => {
+      const shown = shownWidthsRef.current;
+      const root = rootRef.current;
+      // During a measuring pass the widths change by design.
+      if (!shown || !root) return;
+      // A toolbar of a hidden host measures zero - nothing to compare.
+      if (root.getBoundingClientRect().width <= 0) return;
+      for (const element of observed) {
+        if (element === root) continue;
+        const index = Number((element as HTMLElement).dataset.tlunit);
+        const width = element.getBoundingClientRect().width;
+        // The toolbar's own switch between the presentations keeps the widths of the presentation
+        // shown; units moved to the overflow menu are not rendered inline and thus not observed.
+        if (Math.abs(width - (shown[index] ?? 0)) > EPSILON) {
+          measuredRef.current = null;
+          shownWidthsRef.current = null;
+          setResizeTick(tick => tick + 1);
+          return;
+        }
+      }
+    });
+    unitObserverRef.current = observer;
+    return () => {
+      observer.disconnect();
+      observed.clear();
+      unitObserverRef.current = null;
+    };
+  }, [collapsible]);
+
+  // Observes the root and the units rendered inline, whatever render added or removed them.
+  useEffect(() => {
+    const observer = unitObserverRef.current;
+    if (!observer) return;
+    const root = rootRef.current;
+    const observed = observedUnitsRef.current;
+    const current = new Set<Element>(root ? [root, ...root.querySelectorAll('[data-tlunit]')] : []);
+    for (const element of observed) {
+      if (!current.has(element)) {
+        observer.unobserve(element);
+        observed.delete(element);
+      }
+    }
+    for (const element of current) {
+      if (!observed.has(element)) {
+        observer.observe(element);
+        observed.add(element);
+      }
+    }
+  });
 
   if (visibleGroups.length === 0) return null;
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<accordion personalization-key="test.accordion.explicit">
+		<section id="first">
+			<panel/>
+		</section>
+		<section id="second"
+			expanded="true"
+		>
+			<panel/>
+		</section>
+	</accordion>
+</view>

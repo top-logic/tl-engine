@@ -1421,7 +1421,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 onDragEnd={handleDragEnd}
               >
                 <span className="tlTableView__headerLabel"
-                  {...(col.tooltip ? tooltipProps(col.tooltip) : TOOLTIP_WHEN_CLIPPED)}>{col.label}</span>
+                  {...tooltipProps(col.tooltip)}>{col.label}</span>
                 {col.name === grouping && (
                   <i className="tlTableView__groupMark bi bi-collection"
                     {...tooltipProps(i18n['js.table.grouped'])} aria-hidden="true" />

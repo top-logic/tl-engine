@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.common.ClientImage;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -206,7 +206,7 @@ public class ContextMenuOpener {
 	 * Publishes the targets and composes the menu, or returns {@code null} if no contribution
 	 * offers a visible command.
 	 */
-	private static Assembly assemble(List<Targeted> contributions) {
+	private Assembly assemble(List<Targeted> contributions) {
 		for (Targeted t : contributions) {
 			t.contribution().setTarget().accept(t.target());
 		}
@@ -230,7 +230,7 @@ public class ContextMenuOpener {
 				if (label != null && !label.isEmpty()) {
 					items.add(MenuEntry.header(label));
 				}
-				appendCliqued(items, i, sorted);
+				appendCliqued(items, i, sorted, currentReactContext());
 				anything = true;
 			}
 			perContributionCommands.add(sorted);
@@ -267,7 +267,8 @@ public class ContextMenuOpener {
 		}
 	}
 
-	private static void appendCliqued(List<MenuEntry> out, int contributionIndex, List<CommandModel> sorted) {
+	private static void appendCliqued(List<MenuEntry> out, int contributionIndex, List<CommandModel> sorted,
+			ReactContext context) {
 		String currentClique = null;
 		boolean first = true;
 		for (int j = 0; j < sorted.size(); j++) {
@@ -279,7 +280,7 @@ public class ContextMenuOpener {
 			out.add(MenuEntry.item(
 				contributionIndex + ":" + j,
 				cmd.getLabel(),
-				encodeIcon(cmd.getImage()),
+				ClientImage.encode(context, cmd.getImage()),
 				cmd.getExecutableState(),
 				cmd.getCssClasses(),
 				cmd.isActive(),
@@ -287,13 +288,6 @@ public class ContextMenuOpener {
 			currentClique = clique;
 			first = false;
 		}
-	}
-
-	private static String encodeIcon(ThemeImage image) {
-		if (image == null) {
-			return null;
-		}
-		return image.resolve().toEncodedForm();
 	}
 
 	private static String nullSafe(String s) {

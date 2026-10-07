@@ -31,6 +31,7 @@ import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.react.control.ScriptingModelKey;
+import com.top_logic.layout.react.control.common.ClientImage;
 import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.react.scripting.ReactOptionScope;
@@ -781,11 +782,11 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * the width of one.
 	 * </p>
 	 */
-	private static void putImage(Map<String, Object> descriptor, ThemeImage image) {
+	private void putImage(Map<String, Object> descriptor, ThemeImage image) {
 		if (image == null || image == ThemeImage.none()) {
 			return;
 		}
-		descriptor.put(DropdownSelectState.Option.IMAGE__PROP, image.resolve().toEncodedForm());
+		descriptor.put(DropdownSelectState.Option.IMAGE__PROP, ClientImage.encode(getReactContext(), image));
 	}
 
 	private ResourceProvider toResourceProvider(LabelProvider labelProvider) {

@@ -325,7 +325,7 @@ public class ReactAlertControl extends ReactControl {
 		}
 	}
 
-	private static String encoded(ThemeImage image) {
-		return image.resolve().toEncodedForm();
+	private String encoded(ThemeImage image) {
+		return ClientImage.encode(getReactContext(), image);
 	}
 }

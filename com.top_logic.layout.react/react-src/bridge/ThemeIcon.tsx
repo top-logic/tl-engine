@@ -5,7 +5,7 @@ import type { ButtonStateJson } from '../state/control-state';
  * Renders a theme image from its encoded form as an {@code <i>} or {@code <img>} element.
  *
  * <p>The encoded form is what a control sends for an image in its state, e.g.
- * {@link ButtonStateJson.image}. A component that renders a control's state with a component library
+ * {@link ButtonStateJson.image}; the server writes it with {@code ClientImage.encode()}. A component that renders a control's state with a component library
  * passes the element this renders to the library, e.g. as the icon of a library button.</p>
  *
  * <p>The glyph is decorative and hidden from assistive technology; whoever needs a name puts it on
@@ -16,7 +16,8 @@ import type { ButtonStateJson } from '../state/control-state';
  * <ul>
  *   <li>{@code css:fa-solid fa-home} — icon font (monochrome)</li>
  *   <li>{@code colored:fa-solid fa-star} — icon font (colored variant)</li>
- *   <li>{@code /icons/edit.png} or {@code theme:Icons.EDIT} — image reference</li>
+ *   <li>{@code /my-app/themes/core/icons/edit.png} — image resource: the URL the browser loads it
+ *       from, context path included</li>
  *   <li>{@code none} — the invisible image, which renders nothing at all</li>
  * </ul>
  */
@@ -34,7 +35,7 @@ export function ThemeIcon({ encoded, className }: { encoded?: string; className?
     const cssClass = encoded.substring(8);
     return <i className={cssClass + (className ? ' ' + className : '')} aria-hidden="true" />;
   }
-  if (encoded.startsWith('/') || encoded.startsWith('theme:')) {
+  if (encoded.startsWith('/')) {
     return <img src={encoded} alt="" className={className} />;
   }
   // Fallback: try as CSS class

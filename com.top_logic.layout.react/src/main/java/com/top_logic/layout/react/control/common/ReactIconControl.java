@@ -65,7 +65,7 @@ public class ReactIconControl extends ReactControl {
 	}
 
 	private void putImageState(ThemeImage image) {
-		putState(IMAGE, image == null ? null : image.resolve().toEncodedForm());
+		putState(IMAGE, ClientImage.encode(getReactContext(), image));
 	}
 
 	/**

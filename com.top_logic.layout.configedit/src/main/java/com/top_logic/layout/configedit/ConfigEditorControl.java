@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationAccess;
+import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -33,6 +34,7 @@ import com.top_logic.layout.form.values.ListenerBinding;
 import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -348,7 +350,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 
 			ReactFormFieldChromeControl chrome = new ReactFormFieldChromeControl(
 				context, label, model.isMandatory(), false, null, null, labelPosition,
-				false, true, input);
+				rendersWholeLine(property), true, input);
 			if (tooltip != null && !tooltip.isEmpty()) {
 				chrome.setTooltip(tooltip, label, true);
 			}
@@ -612,6 +614,26 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			_index.register(item, property, model);
 			addCleanupAction(() -> _index.unregister(item, property));
 		}
+	}
+
+	/**
+	 * Whether the field of the given property takes the whole row of the form instead of a column.
+	 *
+	 * <p>
+	 * As in a form the legacy editor builds: the property, or else the type of its value, is
+	 * annotated with {@link RenderWholeLine} - a TL-Script expression, for instance, whose type
+	 * declares that its text needs the width.
+	 * </p>
+	 */
+	private static boolean rendersWholeLine(PropertyDescriptor property) {
+		RenderWholeLine annotation = annotation(property, RenderWholeLine.class);
+		if (annotation == null) {
+			ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
+			if (valueDescriptor != null) {
+				annotation = valueDescriptor.getConfigurationInterface().getAnnotation(RenderWholeLine.class);
+			}
+		}
+		return annotation != null && annotation.value();
 	}
 
 	private static boolean isHidden(PropertyDescriptor property) {

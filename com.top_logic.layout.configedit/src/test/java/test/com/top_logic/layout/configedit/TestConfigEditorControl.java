@@ -65,6 +65,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
 import com.top_logic.layout.provider.label.ClassLabelProvider;
 import com.top_logic.layout.react.DefaultReactContext;
@@ -572,6 +573,28 @@ public class TestConfigEditorControl extends TestCase {
 	 * Test subclass that bypasses {@link com.top_logic.layout.form.values.edit.Labels} to avoid
 	 * requiring Resources/ThreadContextManager in unit tests.
 	 */
+	/**
+	 * A configuration with a field that needs the whole row.
+	 */
+	public interface WholeLineConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getScript()}. */
+		String SCRIPT = "script";
+
+		/** Property name for {@link #getShort()}. */
+		String SHORT = "short";
+
+		/** Rendered over the whole row. */
+		@Name(SCRIPT)
+		@RenderWholeLine
+		String getScript();
+
+		/** Rendered in a column. */
+		@Name(SHORT)
+		String getShort();
+
+	}
+
 	/**
 	 * A configuration that displays its properties in an order of its own, not the order of their
 	 * names.
@@ -1886,6 +1909,25 @@ public class TestConfigEditorControl extends TestCase {
 		}
 		assertNotNull("The type selector heads the entry.", type);
 		assertTrue("The type of an entry it is no key of can be changed.", type.isEditable());
+	}
+
+	/**
+	 * A field annotated with {@link RenderWholeLine} takes the whole row, as in a form the legacy
+	 * editor builds; another one takes a column.
+	 */
+	public void testRenderWholeLineTakesTheWholeRow() {
+		WholeLineConfig config = TypedConfiguration.newConfigItem(WholeLineConfig.class);
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		Map<Object, Object> fullLine = new java.util.HashMap<>();
+		for (ReactControl child : editor.scriptingChildren()) {
+			if (child instanceof ReactFormFieldChromeControl) {
+				fullLine.put(child.scriptingScalarState().get("label"),
+					child.scriptingScalarState().get("fullLine"));
+			}
+		}
+		assertEquals(Boolean.TRUE, fullLine.get(WholeLineConfig.SCRIPT));
+		assertEquals(Boolean.FALSE, fullLine.get(WholeLineConfig.SHORT));
 	}
 
 	/**

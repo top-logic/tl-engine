@@ -2,7 +2,7 @@ import { React, useTLState, TLChild, rootClassName, useFillHost, FillProvider } 
 import type { TLCellProps } from 'tl-react-bridge';
 import { FormLayoutContext } from './FormLayoutContext';
 
-const { useMemo, useRef, useState, useEffect } = React;
+const { useContext, useMemo, useRef, useState, useEffect } = React;
 
 /** Column width threshold (px) below which labels switch from side to top. */
 const LABEL_SIDE_MIN_WIDTH = 320;
@@ -23,10 +23,15 @@ const LABEL_SIDE_MIN_WIDTH = 320;
  * panel that fills - fills its own container in turn, so that the child's height resolves against
  * the height the form is offered instead of against its content. A form around content of its own
  * size stays as high as that content.
+ *
+ * A form inside another form - the body of a group, an entry of an edited list - is a section of the
+ * outer one and takes its whole row. In a single column of the outer grid it would lay out its own
+ * columns in that column alone, and leave the rest of the row empty for everything nested in it.
  */
 const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const [fillClass, fillHost] = useFillHost();
+  const insideForm = useContext(FormLayoutContext).insideForm;
 
   const maxColumns = (state.maxColumns as number) ?? 3;
   const labelPosition = (state.labelPosition as string) ?? 'auto';
@@ -64,6 +69,7 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   const ctxValue = useMemo(() => ({
     readOnly,
     resolvedLabelPosition: resolvedPosition,
+    insideForm: true,
   }), [readOnly, resolvedPosition]);
 
   // Compute min column width for auto-fit.
@@ -77,6 +83,7 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   // width, so the column always fits while still wrapping multi-column layouts at minColWidth.
   const style: React.CSSProperties = {
     gridTemplateColumns: `repeat(auto-fit, minmax(min(${minColWidth}, 100%), 1fr))`,
+    gridColumn: insideForm ? '1 / -1' : undefined,
   };
 
   const className = [

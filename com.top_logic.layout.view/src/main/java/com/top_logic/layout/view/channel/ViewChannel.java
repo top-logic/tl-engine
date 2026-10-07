@@ -8,6 +8,7 @@ package com.top_logic.layout.view.channel;
 import java.util.Collections;
 import java.util.List;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.form.StateHandler;
 
 /**
@@ -35,12 +36,13 @@ public interface ViewChannel {
 	 * Updates the value of this channel, notifying all listeners if the value changed.
 	 *
 	 * <p>
-	 * Listeners are notified synchronously on the writing thread, iterating a <em>snapshot</em> of
-	 * the listener list: adding or removing listeners during the notification does not affect which
-	 * listeners the running notification still calls. A listener that replaces and disposes a
-	 * control subtree in reaction to the change must therefore defer the disposal via
-	 * {@link ChannelNotificationScope#afterNotification(Runnable)} — controls of the old subtree
-	 * may still be pending in the snapshot.
+	 * Listeners are notified synchronously on the writing thread. The notification calls the
+	 * listeners registered when it starts: a listener registered during the notification is first
+	 * called by the next one, and a listener whose {@link Registration} is
+	 * {@link Registration#dispose() disposed} before the notification reaches it is not called
+	 * anymore. A listener that replaces and disposes a control subtree in reaction to the change
+	 * defers the disposal via {@link ChannelNotificationScope#afterNotification(Runnable)}, so that
+	 * the old subtree is torn down once the notification is complete.
 	 * </p>
 	 *
 	 * @param newValue
@@ -55,33 +57,41 @@ public interface ViewChannel {
 	 * <p>
 	 * A channel typically outlives the controls observing it (it belongs to the enclosing view,
 	 * while presentations are rebuilt e.g. on selection changes). A control registering a listener
-	 * must therefore {@link #removeListener(ChannelListener) remove} it again when the control is
+	 * must therefore {@link Registration#dispose() dispose} the registration when the control is
 	 * disposed, typically via a cleanup action:
 	 * </p>
 	 *
 	 * <pre>
-	 * channel.addListener(listener);
-	 * control.addCleanupAction(() -&gt; channel.removeListener(listener));
+	 * Registration registration = channel.addListener(listener);
+	 * control.addCleanupAction(registration::dispose);
 	 * </pre>
 	 *
 	 * <p>
-	 * Even with proper removal, the snapshot semantics of {@link #set(Object)} mean the listener
-	 * can fire once more within the very notification that disposed its control; listener
-	 * implementations touching more than the control's React state must guard against running on a
-	 * disposed control (state updates on a disposed control are dropped by the control itself).
+	 * A disposed registration is skipped also by a notification that is running when it is
+	 * disposed, so the listener is not called on a control that was disposed by an earlier listener
+	 * of the same notification.
+	 * </p>
+	 *
+	 * <p>
+	 * Each call creates a registration of its own: a listener added twice is notified twice.
 	 * </p>
 	 *
 	 * @param listener
 	 *        The listener to add.
+	 * @return The handle that ends the registration when {@link Registration#dispose() disposed}.
 	 */
-	void addListener(ChannelListener listener);
+	Registration addListener(ChannelListener listener);
 
 	/**
-	 * Removes a previously added listener.
+	 * Removes all registrations of the given listener.
 	 *
 	 * @param listener
 	 *        The listener to remove.
+	 *
+	 * @deprecated Use {@link Registration#dispose()} on the result of
+	 *             {@link #addListener(ChannelListener)}.
 	 */
+	@Deprecated
 	void removeListener(ChannelListener listener);
 
 	/**

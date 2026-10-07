@@ -15,13 +15,14 @@ import com.top_logic.basic.Logger;
  * controls defer work until the outermost notification has unwound.
  *
  * <p>
- * A channel notifies a <em>snapshot</em> of its listeners. A control that rebuilds its presentation
- * from inside such a notification (e.g. a responsive master-detail switching between selector and
- * detail on a selection change) must not dispose the replaced control subtree synchronously: the
- * old subtree's controls may themselves be listeners of the notifying channel, still pending in the
- * snapshot, and would then run on a torn-down control. Such disposal is
- * {@link #afterNotification(Runnable) deferred} and runs once the outermost notification has
- * completed — safely outside any listener iteration.
+ * A control that rebuilds its presentation from inside a channel notification (e.g. a responsive
+ * master-detail switching between selector and detail on a selection change) does not dispose the
+ * replaced control subtree synchronously: the old subtree's controls may themselves be listeners of
+ * the notifying channel that are still pending in the notification. A notification skips the
+ * listeners whose registrations are disposed, but a control may hold more than a channel
+ * registration (a listener on a field, a model listener of a delegate) that a pending listener
+ * reaches. Such disposal is {@link #afterNotification(Runnable) deferred} and runs once the
+ * outermost notification has completed — safely outside any listener iteration.
  * </p>
  *
  * <p>
@@ -70,7 +71,7 @@ public final class ChannelNotificationScope {
 
 	/**
 	 * Enters a listener notification; called by channel implementations before iterating their
-	 * listener snapshot.
+	 * listeners.
 	 */
 	void enter() {
 		_depth++;
@@ -78,7 +79,7 @@ public final class ChannelNotificationScope {
 
 	/**
 	 * Exits a listener notification; called by channel implementations after iterating their
-	 * listener snapshot. When the outermost notification exits, all
+	 * listeners. When the outermost notification exits, all
 	 * {@link #afterNotification(Runnable) deferred} actions run.
 	 *
 	 * <p>

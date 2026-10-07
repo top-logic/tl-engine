@@ -7,12 +7,14 @@ package com.top_logic.layout.view.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -48,7 +50,15 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 
 	private final Consumer<List<R>> _sink;
 
-	private final Set<ObjectKey> _observedKeys = new HashSet<>();
+	/**
+	 * The registrations observing the persistent objects among {@link #_elements}, one per object.
+	 */
+	private final Map<ObjectKey, Registration> _objectRegistrations = new HashMap<>();
+
+	/**
+	 * The registrations on the {@link #_observedTypes} and the {@link #_inputChannels}.
+	 */
+	private final List<Registration> _registrations = new ArrayList<>();
 
 	/** The currently displayed elements, whose updates / deletes are observed. */
 	private List<R> _elements;
@@ -149,10 +159,11 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 		_attached = false;
 		_suspended = true;
 		deregisterObjectListeners();
-		deregisterTypeListeners();
-		deregisterChannelListeners();
+		for (Registration registration : _registrations) {
+			registration.dispose();
+		}
+		_registrations.clear();
 		_scope = null;
-		_observedKeys.clear();
 	}
 
 	@Override
@@ -217,25 +228,22 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 	}
 
 	private void registerObjectListeners() {
-		_observedKeys.clear();
 		for (Object row : _elements) {
 			if (isObservable(row)) {
 				TLObject object = (TLObject) row;
 				ObjectKey key = key(object);
-				if (key != null && _observedKeys.add(key)) {
-					_scope.addModelListener(object, this);
+				if (key != null && !_objectRegistrations.containsKey(key)) {
+					_objectRegistrations.put(key, _scope.addModelListener(object, this));
 				}
 			}
 		}
 	}
 
 	private void deregisterObjectListeners() {
-		for (Object row : _elements) {
-			if (isObservable(row)) {
-				_scope.removeModelListener((TLObject) row, this);
-			}
+		for (Registration registration : _objectRegistrations.values()) {
+			registration.dispose();
 		}
-		_observedKeys.clear();
+		_objectRegistrations.clear();
 	}
 
 	/**
@@ -252,25 +260,13 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 
 	private void registerTypeListeners() {
 		for (TLStructuredType type : _observedTypes) {
-			_scope.addModelListener(type, this);
-		}
-	}
-
-	private void deregisterTypeListeners() {
-		for (TLStructuredType type : _observedTypes) {
-			_scope.removeModelListener(type, this);
+			_registrations.add(_scope.addModelListener(type, this));
 		}
 	}
 
 	private void registerChannelListeners() {
 		for (ViewChannel channel : _inputChannels) {
-			channel.addListener(this);
-		}
-	}
-
-	private void deregisterChannelListeners() {
-		for (ViewChannel channel : _inputChannels) {
-			channel.removeListener(this);
+			_registrations.add(channel.addListener(this));
 		}
 	}
 

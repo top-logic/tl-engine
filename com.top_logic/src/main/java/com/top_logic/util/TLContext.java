@@ -356,7 +356,13 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 	}
 
 	/**
-	 * The user currently logged in.
+	 * The user the current interaction acts for.
+	 *
+	 * <p>
+	 * The user is the one of the sub-session the interaction runs in, i.e. of the browser window a
+	 * request addresses. It is <code>null</code> when no sub-session is installed, e.g. in a
+	 * request that addresses no window, see {@link TopLogicServlet}, or in a background thread.
+	 * </p>
 	 */
 	public static Person currentUser() {
 		TLContext context = getContext();

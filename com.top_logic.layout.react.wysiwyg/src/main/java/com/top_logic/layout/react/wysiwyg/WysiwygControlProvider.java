@@ -11,6 +11,10 @@ import java.util.Set;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
+import org.jsoup.select.NodeFilter;
+import org.jsoup.select.NodeTraversor;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
@@ -29,8 +33,8 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.command.ViewCommand;
-import com.top_logic.layout.wysiwyg.ui.HTMLTextExtractor;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
+import com.top_logic.mig.html.HTMLConstants;
 
 /**
  * {@link ReactFieldControlProvider} for {@code tl.model.wysiwyg:Html} attributes.
@@ -43,7 +47,7 @@ import com.top_logic.layout.wysiwyg.ui.StructuredText;
  * </p>
  *
  * @implNote The editor is {@link #isLarge(FieldSpec) large}: where it has no room, the
- *           {@link #htmlPreview(StructuredText) plain text} of the formatted text stands for it.
+ *           {@link #htmlPreview(StructuredText) first line} of the formatted text stands for it.
  */
 public class WysiwygControlProvider implements ReactFieldControlProvider {
 
@@ -174,7 +178,7 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 			return true;
 		}
 		Element body = Jsoup.parseBodyFragment(source).body();
-		if (!RegExpUtil.normalizeWhitespace(body.text()).isBlank()) {
+		if (!firstLine(body).isEmpty()) {
 			return false;
 		}
 		for (Element element : body.getAllElements()) {
@@ -186,20 +190,105 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 	}
 
 	/**
-	 * The text of the given formatted text on a single line: without its markup, with its
-	 * character references resolved, and with each run of white space - line breaks included -
-	 * reduced to a single space.
+	 * The first line of the given formatted text: the text of its first block - a paragraph, a
+	 * heading, a list item, a table cell - that holds more than white space, a line break ending a
+	 * line as well. The markup is dropped, character references are resolved, and each run of white
+	 * space is reduced to a single space.
+	 *
+	 * <p>
+	 * The way the first line of a multi-line text stands for it. A block holding only an image has
+	 * no text and is passed over. The text after the first line is not looked at.
+	 * </p>
 	 *
 	 * @param text
 	 *        The formatted text, or {@code null}.
-	 * @return The plain text, the empty string for {@code null}.
+	 * @return The text of the first line, the empty string where there is none.
 	 */
 	public static String htmlPreview(StructuredText text) {
 		if (text == null) {
 			return "";
 		}
-		String plain = HTMLTextExtractor.INSTANCE.getLabel(text);
-		return StringServices.normalizeWhiteSpace(RegExpUtil.normalizeWhitespace(plain));
+		String source = text.getSourceCode();
+		if (source == null || source.isBlank()) {
+			return "";
+		}
+		return firstLine(Jsoup.parseBodyFragment(source).body());
+	}
+
+	/**
+	 * The text of the first line of the given HTML, see {@link #htmlPreview(StructuredText)}.
+	 */
+	private static String firstLine(Element body) {
+		FirstLine firstLine = new FirstLine();
+		NodeTraversor.filter(firstLine, body);
+		return firstLine.result();
+	}
+
+	/**
+	 * Collects the text of the HTML nodes it visits up to the end of the first line holding more
+	 * than white space, and stops the visit there.
+	 */
+	private static final class FirstLine implements NodeFilter {
+
+		private final StringBuilder _line = new StringBuilder();
+
+		private String _result;
+
+		@Override
+		public FilterResult head(Node node, int depth) {
+			if (node instanceof TextNode textNode) {
+				_line.append(textNode.text());
+				return FilterResult.CONTINUE;
+			}
+			return endsLine(node) && endLine() ? FilterResult.STOP : FilterResult.CONTINUE;
+		}
+
+		@Override
+		public FilterResult tail(Node node, int depth) {
+			return endsLine(node) && endLine() ? FilterResult.STOP : FilterResult.CONTINUE;
+		}
+
+		/**
+		 * Whether the given node begins or ends a line: a block, or a line break.
+		 */
+		private static boolean endsLine(Node node) {
+			return node instanceof Element element
+				&& (element.isBlock() || HTMLConstants.BR.equals(element.normalName()));
+		}
+
+		/**
+		 * Ends the current line.
+		 *
+		 * @return Whether the line holds text, which is then the result.
+		 */
+		private boolean endLine() {
+			String line = singleLine(_line.toString());
+			_line.setLength(0);
+			if (line.isEmpty()) {
+				return false;
+			}
+			_result = line;
+			return true;
+		}
+
+		/**
+		 * The first line holding text, the empty string if there is none.
+		 */
+		String result() {
+			if (_result == null) {
+				// The text after the last block, if any.
+				endLine();
+			}
+			return _result == null ? "" : _result;
+		}
+	}
+
+	/**
+	 * The given text with each run of white space, also of non-breaking space, reduced to a single
+	 * space, and without white space at its ends.
+	 */
+	private static String singleLine(String text) {
+		return StringServices.normalizeWhiteSpace(RegExpUtil.normalizeWhitespace(text));
 	}
 
 }

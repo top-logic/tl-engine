@@ -511,7 +511,12 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en Show the full value
 	 */
-	public static ResKey COMPACT_FIELD_OPEN_BUTTON;
+	public static ResKey COMPACT_FIELD_VIEW_BUTTON;
+
+	/**
+	 * @en Edit the value
+	 */
+	public static ResKey COMPACT_FIELD_EDIT_BUTTON;
 
 	/**
 	 * @en Value

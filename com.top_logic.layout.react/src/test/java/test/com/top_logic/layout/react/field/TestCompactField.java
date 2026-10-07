@@ -395,6 +395,80 @@ public class TestCompactField extends TestCase {
 	}
 
 	/**
+	 * A field that may be edited is displayed like an input field with a button editing the value,
+	 * one that may not as text with a button showing it; the display follows the editability.
+	 */
+	public void testDisplayFollowsEditability() {
+		AbstractFieldModel model = new AbstractFieldModel("A");
+		ReactCompactFieldControl compact = compactText(model, FieldControlRegistry.TEXT);
+		ReactButtonControl opener = descendants(compact, ReactButtonControl.class).get(0);
+
+		assertTrue(compact.getCssClass().contains("tlCompactField--edit"));
+		assertTrue(opener.stateAsJSON().contains("fa-pen-to-square"));
+
+		model.setEditable(false);
+		assertTrue(compact.getCssClass().contains("tlCompactField--view"));
+		assertFalse(compact.getCssClass().contains("tlCompactField--edit"));
+		assertTrue(opener.stateAsJSON().contains("fa-eye"));
+
+		model.setEditable(true);
+		assertTrue(compact.getCssClass().contains("tlCompactField--edit"));
+		assertTrue(opener.stateAsJSON().contains("fa-pen-to-square"));
+	}
+
+	/**
+	 * An empty field that may be edited is an input field whose preview, empty as it is, comes
+	 * first and takes the free width, the button after it at the end of the field.
+	 */
+	public void testEmptyEditableFieldLayout() {
+		AbstractFieldModel model = new AbstractFieldModel(null);
+		ReactCompactFieldControl compact = compactText(model, FieldControlRegistry.TEXT);
+
+		assertTrue(compact.getCssClass().contains("tl-field"));
+		assertTrue(compact.isOpenerShown());
+		assertEquals("", compact.getPreviewText());
+		List<ReactControl> children = compact.displayedChildren();
+		assertEquals(2, children.size());
+		assertEquals("tlCompactField__preview", children.get(0).getCssClass());
+		assertEquals("tlCompactField__opener", children.get(1).getCssClass());
+	}
+
+	/**
+	 * Values that each fit a line are all listed in the preview: a field that may not be edited
+	 * offers no dialog for them, one that may be edited offers it for editing them.
+	 */
+	public void testReadOnlySimpleValuesNeedNoOpener() {
+		FieldSpec field = FieldSpec.of(String.class, "Aliases").setMultiple(true).setCompact(true);
+		AbstractFieldModel model = new AbstractFieldModel(List.of("A", "B"));
+		model.setEditable(false);
+		ReactCompactFieldControl compact = assertInstanceof(ReactCompactFieldControl.class,
+			createControl(field, model, FieldControlRegistry.TEXT));
+
+		assertTrue(compact.isPreviewShowsAll());
+		assertEquals("A, B", compact.getPreviewText());
+		assertFalse(compact.isOpenerShown());
+
+		model.setEditable(true);
+		assertTrue("The values are edited in the dialog", compact.isOpenerShown());
+	}
+
+	/**
+	 * Values whose editor is larger than a line show more in the dialog than in the preview: the
+	 * dialog is offered also where they may not be edited.
+	 */
+	public void testReadOnlyLargeValuesKeepOpener() {
+		FieldSpec field =
+			FieldSpec.of(String.class, "Notes").setMultiple(true).setMultilineRows(5).setCompact(true);
+		AbstractFieldModel model = new AbstractFieldModel(List.of("A\nmore", "B"));
+		model.setEditable(false);
+		ReactCompactFieldControl compact = assertInstanceof(ReactCompactFieldControl.class,
+			createControl(field, model, FieldControlRegistry.TEXT));
+
+		assertFalse(compact.isPreviewShowsAll());
+		assertTrue(compact.isOpenerShown());
+	}
+
+	/**
 	 * What counts as no value is decided by the provider: a value without content, though not
 	 * {@code null}, offers no dialog in a read-only field either.
 	 */

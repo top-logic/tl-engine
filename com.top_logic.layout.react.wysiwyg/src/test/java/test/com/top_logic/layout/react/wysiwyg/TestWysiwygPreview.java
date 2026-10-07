@@ -31,7 +31,8 @@ public class TestWysiwygPreview extends TestCase {
 	private static final String HTML =
 		"<h1>Title &amp; more</h1>\n<p>First   paragraph,<br/>next&nbsp;line.</p><ul><li>One</li><li>Two</li></ul>";
 
-	private static final String PLAIN = "Title & more First paragraph, next line. One Two";
+	/** The first line of {@link #HTML}: its heading. */
+	private static final String PLAIN = "Title & more";
 
 	/**
 	 * A formatted text editor always needs more room than a single line.
@@ -42,14 +43,52 @@ public class TestWysiwygPreview extends TestCase {
 	}
 
 	/**
-	 * The plain text on a single line stands for a formatted text.
+	 * The first line of a formatted text stands for it: a heading before a paragraph.
 	 */
 	public void testPreview() {
 		WysiwygControlProvider provider = wysiwyg();
 		FieldSpec field = FieldSpec.of(StructuredText.class, "Text");
 
 		assertEquals("", provider.previewText(field, null));
+		assertEquals("", provider.previewText(field, new StructuredText("")));
 		assertEquals(PLAIN, provider.previewText(field, new StructuredText(HTML)));
+	}
+
+	/**
+	 * Of several paragraphs, the first one stands for the text, its white space and character
+	 * references normalized.
+	 */
+	public void testFirstParagraph() {
+		assertEquals("First paragraph, with bold text.", preview(
+			"<p>First   paragraph,\n with <b>bold</b>&nbsp;text.</p><p>Second paragraph.</p>"));
+	}
+
+	/**
+	 * A line break ends a line, too.
+	 */
+	public void testLineBreak() {
+		assertEquals("First line", preview("<p>First line<br>Second line</p>"));
+		assertEquals("Top text", preview("Top text<br/>More"));
+	}
+
+	/**
+	 * Blocks without text - empty paragraphs, an image - are passed over.
+	 */
+	public void testLeadingEmptyBlocksSkipped() {
+		assertEquals("Text", preview("<p></p><p>&nbsp;</p><p><br></p>"
+			+ "<p><img src=\"https://example.com/a.png\"/></p><ul><li>Text</li><li>More</li></ul>"));
+	}
+
+	/**
+	 * A text not in any block is a line of its own, ended by the block following it.
+	 */
+	public void testTextBeforeBlock() {
+		assertEquals("Loose text", preview("Loose <i>text</i><p>Paragraph</p>"));
+		assertEquals("Only text", preview("Only <i>text</i>"));
+	}
+
+	private static String preview(String html) {
+		return WysiwygControlProvider.htmlPreview(new StructuredText(html));
 	}
 
 	/**

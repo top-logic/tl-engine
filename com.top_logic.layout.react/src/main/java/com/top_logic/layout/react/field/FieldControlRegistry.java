@@ -216,11 +216,13 @@ public class FieldControlRegistry {
 		if (field.isCompact() && isLarge(field, provider)) {
 			// The full control is displayed in the dialog, where it has the room it needs.
 			FieldSpec fullField = field.copy().setCompact(false);
-			return new ReactCompactFieldControl(context, model, field.getLabel(),
+			ReactCompactFieldControl compact = new ReactCompactFieldControl(context, model, field.getLabel(),
 				value -> previewText(field, provider, value),
 				value -> isEmpty(field, provider, value),
 				(ReactContext dialogContext, FieldModel buffer) -> createControl(dialogContext, fullField, buffer,
 					provider));
+			compact.setPreviewShowsAll(previewShowsAll(field, provider));
+			return compact;
 		}
 		if (field.isMultiple() && !provider.editsCollections()) {
 			return new ReactValueListControl(context, model, field, provider);
@@ -245,6 +247,27 @@ public class FieldControlRegistry {
 	 */
 	public static boolean isLarge(FieldSpec field, ReactFieldControlProvider provider) {
 		return provider.isLarge(field) || (field.isMultiple() && !provider.editsCollections());
+	}
+
+	/**
+	 * Whether the {@link #previewText(FieldSpec, ReactFieldControlProvider, Object) preview} of a
+	 * value of the given field shows all of it, so that a dialog displaying the value read-only
+	 * would show nothing more.
+	 *
+	 * <p>
+	 * So for a field holding {@link FieldSpec#isMultiple() several values} the provider edits one at
+	 * a time, where the control of a single value is not {@link ReactFieldControlProvider#isLarge(FieldSpec)
+	 * large}: each value fits a line of text, and the preview lists them all. A value whose control
+	 * is large, a multi-line text for instance, shows more in the dialog than in its preview.
+	 * </p>
+	 *
+	 * @param field
+	 *        What is being edited.
+	 * @param provider
+	 *        Creates the control editing a value of this field's type.
+	 */
+	public static boolean previewShowsAll(FieldSpec field, ReactFieldControlProvider provider) {
+		return field.isMultiple() && !provider.editsCollections() && !provider.isLarge(field.elementSpec());
 	}
 
 	/**

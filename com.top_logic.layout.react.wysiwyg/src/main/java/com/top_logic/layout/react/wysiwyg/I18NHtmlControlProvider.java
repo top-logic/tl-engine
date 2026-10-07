@@ -26,8 +26,8 @@ import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
  *
  * <p>
  * The editor is {@link #isLarge(FieldSpec) large}: where it has no room, the
- * {@link WysiwygControlProvider#htmlPreview(com.top_logic.layout.wysiwyg.ui.StructuredText) plain
- * text} of the value in the user's language stands for it - or in the best available other
+ * {@link WysiwygControlProvider#htmlPreview(com.top_logic.layout.wysiwyg.ui.StructuredText) first
+ * line} of the value in the user's language stands for it - or in the best available other
  * language, as long as there is none in the user's.
  * </p>
  */

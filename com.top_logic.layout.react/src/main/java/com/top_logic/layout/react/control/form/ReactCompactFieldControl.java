@@ -20,7 +20,9 @@ import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ButtonAppearance;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
@@ -55,9 +57,14 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * A field that may not be edited and holds no value - what counts as none is decided per kind of
- * value, an HTML text without text and images for instance - has nothing to show in a dialog: its
- * opener is hidden until the field holds a value or becomes editable.
+ * A field that may be edited is displayed like an input field, its opener inside the frame offering
+ * to edit the value. A field that may not be edited is displayed as plain text with an opener
+ * offering to show the value, which stays unobtrusive until the user points at the field or moves
+ * the keyboard focus to it. A field that may not be edited offers no opener where the dialog would
+ * show nothing more than the preview: while the field holds no value - what counts as none is
+ * decided per kind of value, an HTML text without text and images for instance - and where the
+ * {@link #setPreviewShowsAll(boolean) preview shows the whole value}. The opener appears as soon as
+ * the field becomes editable.
  * </p>
  *
  * <p>
@@ -150,6 +157,24 @@ public class ReactCompactFieldControl extends ReactStackControl {
 
 	}
 
+	/** CSS class of the control: a compact field. */
+	private static final String CSS_FIELD = "tlCompactField";
+
+	/**
+	 * CSS classes of a field that may be edited, displayed like an input field: the frame of an
+	 * input, which in a table cell is the cell-filling input of the other cell editors.
+	 */
+	private static final String CSS_FIELD_EDIT = "tlCompactField--edit tl-field";
+
+	/** CSS class of a field that may not be edited, displayed as plain text. */
+	private static final String CSS_FIELD_VIEW = "tlCompactField--view";
+
+	/** CSS class of the preview of the value. */
+	private static final String CSS_PREVIEW = "tlCompactField__preview";
+
+	/** CSS class of the button opening the dialog. */
+	private static final String CSS_OPENER = "tlCompactField__opener";
+
 	/** The width the dialog opens with. */
 	private static final DisplayDimension DIALOG_WIDTH = DisplayDimension.px(640);
 
@@ -168,6 +193,8 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	private final ReactButtonControl _opener;
 
 	private FieldModelListener _modelListener;
+
+	private boolean _previewShowsAll;
 
 	/**
 	 * Creates a {@link ReactCompactFieldControl}.
@@ -218,10 +245,11 @@ public class ReactCompactFieldControl extends ReactStackControl {
 		_editing = editing;
 
 		_preview = new ReactTextControl(context, previewText.apply(model.getValue()));
+		// A preview cut off by the ellipsis offers its full text as tooltip.
 		_preview.setOverflow(TextOverflow.ELLIPSIS);
+		_preview.setCssClass(CSS_PREVIEW);
 
-		Resources resources = Resources.getInstance();
-		_opener = new ReactButtonControl(context, resources.getString(I18NConstants.COMPACT_FIELD_OPEN_BUTTON),
+		_opener = new ReactButtonControl(context, null,
 			ctx -> {
 				if (!isOpenerShown()) {
 					// A click from a client whose display lags behind: there is nothing to open.
@@ -230,9 +258,11 @@ public class ReactCompactFieldControl extends ReactStackControl {
 				openEditor(ctx);
 				return HandlerResult.DEFAULT_RESULT;
 			});
-		_opener.setImage(Icons.COMPACT_FIELD_OPEN);
 		_opener.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
-		updateOpener();
+		_opener.setAppearance(ButtonAppearance.GHOST);
+		_opener.setSize(ButtonSize.SMALL);
+		_opener.setCssClass(CSS_OPENER);
+		updateDisplay();
 
 		setChildren(List.of(_preview, _opener));
 		setGrowFirst(true);
@@ -241,12 +271,12 @@ public class ReactCompactFieldControl extends ReactStackControl {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
 				_preview.setText(_previewText.apply(newValue));
-				updateOpener();
+				updateDisplay();
 			}
 
 			@Override
 			public void onEditabilityChanged(FieldModel source, boolean editable) {
-				updateOpener();
+				updateDisplay();
 			}
 
 			@Override
@@ -268,7 +298,9 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	 * Whether the button opening the dialog is offered.
 	 *
 	 * <p>
-	 * It is, unless the field may not be edited and holds no value.
+	 * It is while the field may be edited. Otherwise only where the dialog shows more than the
+	 * preview: the field holds a value, and the preview does not {@link #setPreviewShowsAll(boolean)
+	 * show all} of it.
 	 * </p>
 	 */
 	public boolean isOpenerShown() {
@@ -276,11 +308,44 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	}
 
 	/**
-	 * Offers the opener where the dialog has something to show: a value to look at, or the editor
-	 * entering one.
+	 * Whether the preview shows the whole value.
+	 *
+	 * @see #setPreviewShowsAll(boolean)
 	 */
-	private void updateOpener() {
-		_opener.setHidden(!_model.isEditable() && _isEmpty.test(_model.getValue()));
+	public boolean isPreviewShowsAll() {
+		return _previewShowsAll;
+	}
+
+	/**
+	 * Sets whether the preview shows the whole value, so that a field that may not be edited needs
+	 * no dialog to show it.
+	 *
+	 * <p>
+	 * So for the values of a multi-valued field that each fit a line of text, numbers or dates for
+	 * instance: the preview lists them all, and where it is cut off, the full text is offered as its
+	 * tooltip. While the field may be edited, the dialog is still offered, since it is where the
+	 * values are edited.
+	 * </p>
+	 */
+	public void setPreviewShowsAll(boolean previewShowsAll) {
+		_previewShowsAll = previewShowsAll;
+		updateDisplay();
+	}
+
+	/**
+	 * Displays the field the way its editability asks for, and offers the opener where the dialog
+	 * has something to show: the editor entering a value, or more of the value than the preview
+	 * shows.
+	 */
+	private void updateDisplay() {
+		boolean editable = _model.isEditable();
+		setCssClass(CSS_FIELD + ' ' + (editable ? CSS_FIELD_EDIT : CSS_FIELD_VIEW));
+
+		Resources resources = Resources.getInstance();
+		_opener.setImage(editable ? Icons.COMPACT_FIELD_EDIT : Icons.COMPACT_FIELD_VIEW);
+		_opener.setLabel(resources.getString(
+			editable ? I18NConstants.COMPACT_FIELD_EDIT_BUTTON : I18NConstants.COMPACT_FIELD_VIEW_BUTTON));
+		_opener.setHidden(!editable && (_previewShowsAll || _isEmpty.test(_model.getValue())));
 	}
 
 	/**
@@ -369,7 +434,7 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	 */
 	private void updatePreview() {
 		_preview.setText(_previewText.apply(_model.getValue()));
-		updateOpener();
+		updateDisplay();
 	}
 
 	/**

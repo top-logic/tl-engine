@@ -16,8 +16,18 @@ import com.top_logic.layout.basic.ThemeImage;
  */
 public class Icons extends IconsBase {
 
-	/** Icon of the button of a {@link ReactCompactFieldControl} opening the full field editor. */
-	@DefaultValue("css:fa-solid fa-up-right-and-down-left-from-center")
-	public static ThemeImage COMPACT_FIELD_OPEN;
+	/**
+	 * Icon of the button of a {@link ReactCompactFieldControl} that may be edited, opening the
+	 * editor of the value.
+	 */
+	@DefaultValue("css:fa-regular fa-pen-to-square")
+	public static ThemeImage COMPACT_FIELD_EDIT;
+
+	/**
+	 * Icon of the button of a {@link ReactCompactFieldControl} that may not be edited, showing the
+	 * full value.
+	 */
+	@DefaultValue("css:fa-regular fa-eye")
+	public static ThemeImage COMPACT_FIELD_VIEW;
 
 }

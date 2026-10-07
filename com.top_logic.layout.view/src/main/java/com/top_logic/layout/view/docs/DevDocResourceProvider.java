@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.docs;
 
+import com.top_logic.basic.docs.DevDoc;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.mig.html.DefaultResourceProvider;

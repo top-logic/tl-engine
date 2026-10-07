@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Locale;
 
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.docs.DevDoc;
+import com.top_logic.basic.docs.DevDocs;
+import com.top_logic.layout.react.control.html.ReactHtmlControl;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
@@ -139,25 +142,26 @@ public class DevDocsFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * The text of a chapter or an article of the developer documentation as HTML.
+	 * A chapter or an article of the developer documentation as HTML.
 	 *
 	 * @param node
 	 *        A chapter or an article.
-	 * @return The HTML source, {@code null} for a chapter without an introduction.
+	 * @return The HTML source: the text and, for a chapter, the list of its entries; {@code null}
+	 *         for no entry.
 	 *
-	 * @see DevDocs#toHtml(String, DevDoc)
+	 * @see DevDocs#toHtml(DevDoc, DevDoc, String)
 	 */
 	@Label("Developer documentation as HTML")
 	@SideEffectFree
 	public static String html(Object node) {
-		if (!(node instanceof DevDoc doc) || doc.getText() == null) {
+		if (!(node instanceof DevDoc doc)) {
 			return null;
 		}
 		DevDoc root = doc;
 		while (root.getParent() != null) {
 			root = root.getParent();
 		}
-		return DevDocs.toHtml(doc.getText(), root);
+		return DevDocs.toHtml(doc, root, ReactHtmlControl.LINK_ATTRIBUTE);
 	}
 
 	private static List<String> words(String search) {

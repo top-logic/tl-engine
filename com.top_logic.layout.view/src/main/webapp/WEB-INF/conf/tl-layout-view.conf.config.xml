@@ -28,7 +28,7 @@
 					<provider
 						implementation="com.top_logic.layout.view.docs.DevDocResourceProvider"
 						kind="CODE"
-						type="com.top_logic.layout.view.docs.DevDoc"
+						type="com.top_logic.basic.docs.DevDoc"
 					/>
 				</label-providers>
 			</instance>

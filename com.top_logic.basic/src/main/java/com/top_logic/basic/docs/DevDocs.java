@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.view.docs;
+package com.top_logic.basic.docs;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,11 +15,15 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -37,7 +41,8 @@ import org.commonmark.node.Text;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
-import com.top_logic.layout.react.control.html.ReactHtmlControl;
+import com.top_logic.basic.xml.TagUtil;
+
 
 /**
  * The developer documentation shipped with the modules of the application.
@@ -108,6 +113,9 @@ public final class DevDocs {
 	/** The name of a module jar: the artifact, then the version, which starts with a digit. */
 	private static final Pattern JAR_NAME = Pattern.compile("(.+?)-\\d.*\\.jar");
 
+	/** The anchor of a rendered heading. */
+	private static final Pattern ANCHOR = Pattern.compile("<h[1-6] id=\"([^\"]*)\"");
+
 	/** A rendered section or subsection heading: level, anchor and content. */
 	private static final Pattern SECTION_HEADING = Pattern.compile("<h([23]) id=\"([^\"]*)\">(.*?)</h\\1>");
 
@@ -170,7 +178,7 @@ public final class DevDocs {
 			}
 			parse(node, file.getValue());
 			String module = modules.get(path);
-			node.setSource((module == null ? "" : module + ": ") + DOCS_DIR + "/" + path);
+			node.setSource(module, DOCS_DIR + "/" + path);
 		}
 		root.arrange("");
 		return root;
@@ -350,14 +358,50 @@ public final class DevDocs {
 	}
 
 	/**
+	 * Renders a chapter or an article as HTML: its text as {@link #toHtml(String, DevDoc, String)}
+	 * renders it, followed for a chapter by the list of its entries, each with its section number,
+	 * its title linking to it and its description. A chapter without text is introduced by its
+	 * title.
+	 *
+	 * @param node
+	 *        The chapter or article to render.
+	 * @param root
+	 *        The documentation links to articles are resolved against.
+	 * @param linkAttribute
+	 *        The attribute a link to an article carries the article name and section in, for the
+	 *        display that follows such links.
+	 */
+	public static String toHtml(DevDoc node, DevDoc root, String linkAttribute) {
+		StringBuilder html = new StringBuilder();
+		if (node.getText() != null) {
+			html.append(toHtml(node.getText(), root, linkAttribute));
+		} else {
+			html.append("<h1>").append(TagUtil.encodeXML(node.getTitle())).append("</h1>\n");
+		}
+		if (node.isChapter() && !node.getChildren().isEmpty()) {
+			html.append("<ul>");
+			for (DevDoc entry : node.getChildren()) {
+				html.append("<li><a href=\"#\" ").append(linkAttribute).append("=\"")
+					.append(TagUtil.encodeXML(entry.getName())).append("\">")
+					.append(TagUtil.encodeXML(entry.getNumber() + " " + entry.getTitle())).append("</a>");
+				if (!entry.getDescription().isEmpty()) {
+					html.append(" - ").append(TagUtil.encodeXML(entry.getDescription()));
+				}
+				html.append("</li>");
+			}
+			html.append("</ul>\n");
+		}
+		return html.toString();
+	}
+
+	/**
 	 * Renders the Markdown source of an article as HTML.
 	 *
 	 * <p>
 	 * Tables are rendered as tables. HTML written in the source is displayed as text. Each heading
 	 * carries an anchor, so a link to a section of the article ({@code #section}) works. A link to
 	 * an article of the given documentation ({@code doc:view-layer/basics#spacing-model}) carries
-	 * the article name and section in its {@link ReactHtmlControl#LINK_ATTRIBUTE} and the section in its
-	 * target. A link to an article the documentation does not contain and a relative link to a file
+	 * the article name and section in the given link attribute and the section in its target. A link to an article the documentation does not contain and a relative link to a file
 	 * of the source tree are displayed as text, since they lead nowhere in the application. A link
 	 * to a page outside the documentation opens in a window of its own. An
 	 * article with several sections gets a table of contents between its introduction and its first
@@ -368,8 +412,11 @@ public final class DevDocs {
 	 *        The Markdown source.
 	 * @param root
 	 *        The documentation links to articles are resolved against.
+	 * @param linkAttribute
+	 *        The attribute a link to an article carries the article name and section in, for the
+	 *        display that follows such links.
 	 */
-	public static String toHtml(String markdown, DevDoc root) {
+	public static String toHtml(String markdown, DevDoc root, String linkAttribute) {
 		HtmlRenderer renderer = HtmlRenderer.builder()
 			.extensions(EXTENSIONS)
 			.escapeHtml(true)
@@ -382,7 +429,7 @@ public final class DevDocs {
 							String target = href.substring(LINK_SCHEME.length());
 							int anchor = target.indexOf('#');
 							attributes.put(HREF, anchor < 0 ? "#" : target.substring(anchor));
-							attributes.put(ReactHtmlControl.LINK_ATTRIBUTE, target);
+							attributes.put(linkAttribute, target);
 						}
 					} else if (!isResolvable(href)) {
 						attributes.remove(HREF);
@@ -444,6 +491,94 @@ public final class DevDocs {
 		return html.substring(0, firstSection)
 			+ "<ul>" + contents + "</ul>\n"
 			+ html.substring(firstSection);
+	}
+
+	/**
+	 * The chapters and articles below the given root that have a text, in the order of the
+	 * documentation.
+	 */
+	public static List<DevDoc> entries(DevDoc root) {
+		List<DevDoc> result = new ArrayList<>();
+		collect(root, result);
+		return result;
+	}
+
+	private static void collect(DevDoc node, List<DevDoc> result) {
+		if (node.getText() != null) {
+			result.add(node);
+		}
+		for (DevDoc child : node.getChildren()) {
+			collect(child, result);
+		}
+	}
+
+	/**
+	 * Checks the given entries of a documentation.
+	 *
+	 * <p>
+	 * An entry needs a description, and each of its links must lead somewhere: a link to another
+	 * article ({@value #LINK_SCHEME}) to an article of the documentation and, if it names a section,
+	 * to a heading of that article; a link to a section ({@code #section}) to a heading of the
+	 * entry itself. A link to a file outside the documentation leads nowhere in the application. A
+	 * link in code is text and not checked.
+	 * </p>
+	 *
+	 * @param checked
+	 *        The entries to check, e.g. those of one module.
+	 * @param root
+	 *        The documentation the links are resolved against.
+	 * @return A description of each problem found, empty if there is none.
+	 */
+	public static List<String> check(Collection<DevDoc> checked, DevDoc root) {
+		Map<DevDoc, Set<String>> anchors = new HashMap<>();
+		List<String> problems = new ArrayList<>();
+		for (DevDoc doc : checked) {
+			String where = doc.getSource() == null ? doc.getName() : doc.getSource();
+			if (doc.getDescription().isEmpty()) {
+				problems.add(where + ": no description in the front matter.");
+			}
+			PARSER.parse(doc.getText()).accept(new AbstractVisitor() {
+				@Override
+				public void visit(Link link) {
+					String href = link.getDestination();
+					if (href.startsWith(LINK_SCHEME)) {
+						DevDoc target = find(root, href);
+						String section = section(href);
+						if (target == null || target.getText() == null) {
+							problems.add(where + ": link to a missing article: " + href);
+						} else if (section != null && !anchors(anchors, target).contains(section)) {
+							problems.add(where + ": link to a missing section: " + href);
+						}
+					} else if (href.startsWith("#")) {
+						if (href.length() > 1 && !anchors(anchors, doc).contains(href.substring(1))) {
+							problems.add(where + ": link to a missing section: " + href);
+						}
+					} else if (!isResolvable(href)) {
+						problems.add(where + ": link to a file outside the documentation: " + href);
+					}
+					visitChildren(link);
+				}
+			});
+		}
+		return problems;
+	}
+
+	private static String section(String link) {
+		int anchor = link.indexOf('#');
+		return anchor < 0 || anchor == link.length() - 1 ? null : link.substring(anchor + 1);
+	}
+
+	/** The anchors of the headings of the given entry, as its rendering gives them. */
+	private static Set<String> anchors(Map<DevDoc, Set<String>> cache, DevDoc doc) {
+		return cache.computeIfAbsent(doc, x -> {
+			Set<String> result = new HashSet<>();
+			Matcher id = ANCHOR.matcher(HtmlRenderer.builder().extensions(EXTENSIONS).build()
+				.render(PARSER.parse(doc.getText())));
+			while (id.find()) {
+				result.add(id.group(1));
+			}
+			return result;
+		});
 	}
 
 	private static boolean isResolvable(String href) {

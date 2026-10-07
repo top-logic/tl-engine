@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.layout.view.docs;
+package test.com.top_logic.basic.docs;
 
 import java.io.IOException;
 import java.net.URL;
@@ -17,15 +17,16 @@ import java.util.zip.ZipOutputStream;
 
 import junit.framework.TestCase;
 
-import com.top_logic.layout.view.docs.DevDoc;
-import com.top_logic.layout.view.docs.DevDocs;
-import com.top_logic.layout.view.docs.DevDocsFunctions;
+import com.top_logic.basic.docs.DevDoc;
+import com.top_logic.basic.docs.DevDocs;
 
 /**
  * Tests for {@link DevDocs}: finding the documentation on the class path, its chapters, the front
  * matter, and the rendering as HTML.
  */
 public class TestDevDocs extends TestCase {
+
+	private static final String LINK_ATTRIBUTE = "data-tl-link";
 
 	private Path _dir;
 
@@ -97,12 +98,9 @@ public class TestDevDocs extends TestCase {
 			assertEquals("tl-dep: META-INF/tl-docs/views/extra.md", views.getChildren().get(3).getSource());
 			assertNull("A chapter without index has no file.", deep.getSource());
 			assertSame(views, DevDocs.find(root, "views"));
-			assertSame(views, DevDocsFunctions.parent(views.getChildren().get(0)));
+			assertSame(views, views.getChildren().get(0).getParent());
 			assertNull(DevDocs.find(root, "views/missing"));
 
-			assertEquals(List.of("views"), names(DevDocsFunctions.children(root, "nested")));
-			assertEquals(List.of("views/deep"), names(DevDocsFunctions.children(views, "nested")));
-			assertEquals(List.of(), names(DevDocsFunctions.children(root, "nothing-matches")));
 		}
 	}
 
@@ -143,7 +141,7 @@ public class TestDevDocs extends TestCase {
 			A <panel> element, see [spacing](#spacing-model), [the guide](https://top-logic.com/),
 			[basics](doc:views/basics#fill), [all basics](doc:views/basics), [missing](doc:views/missing)
 			and [the other article](../../docs/faq/other.md).
-			""", root);
+			""", root, LINK_ATTRIBUTE);
 		assertTrue(html, html.contains("<h2 id=\"spacing-model\">Spacing model</h2>"));
 		assertTrue(html, html.contains("<table>"));
 		assertTrue(html, html.contains("<td>2</td>"));
@@ -172,25 +170,38 @@ public class TestDevDocs extends TestCase {
 			### Detail
 
 			## Second
-			""", emptyRoot());
+			""", emptyRoot(), LINK_ATTRIBUTE);
 		assertTrue(html, html.contains("<p>Intro.</p>\n<ul><li><a href=\"#first-one\">First <code>one</code></a>"
 			+ "<ul><li><a href=\"#detail\">Detail</a></li></ul></li>"
 			+ "<li><a href=\"#second\">Second</a></li></ul>\n<h2 id=\"first-one\">"));
 
-		String single = DevDocs.toHtml("# Title\n\n## Only\n", emptyRoot());
+		String single = DevDocs.toHtml("# Title\n\n## Only\n", emptyRoot(), LINK_ATTRIBUTE);
 		assertFalse("A single section needs no contents.", single.contains("<ul>"));
 	}
 
+
 	/**
-	 * The URL key of an entry is a single path segment that leads back to the entry.
+	 * A chapter lists its entries below its text; a chapter without text is introduced by its title.
 	 */
-	public void testRouteKey() throws IOException {
+	public void testChapterEntries() throws IOException {
 		Path classes = _dir.resolve("classes");
-		write(classes, "views/basics.md", "# Basics\n");
+		write(classes, "views/index.md", "---\ndescription: The views.\n---\n# Views\n\nIntro.\n");
+		write(classes, "views/basics.md", "---\ndescription: Read <first>.\norder: 10\n---\n# Basics\n");
+		write(classes, "views/tables.md", "---\norder: 20\n---\n# Tables\n");
+		write(classes, "loose/one.md", "# One\n");
 		try (URLClassLoader loader = new URLClassLoader(new URL[] { classes.toUri().toURL() }, null)) {
-			DevDoc basics = DevDocs.find(DevDocs.load(loader), "views/basics");
-			assertEquals("views~basics", DevDocsFunctions.routeKey(basics));
-			assertNull(DevDocsFunctions.routeKey(null));
+			DevDoc root = DevDocs.load(loader);
+			String views = DevDocs.toHtml(DevDocs.find(root, "views"), root, LINK_ATTRIBUTE);
+			assertTrue(views, views.startsWith("<h1 id=\"views\">Views</h1>\n<p>Intro.</p>\n<ul>"));
+			assertTrue(views, views.contains(
+				"<li><a href=\"#\" data-tl-link=\"views/basics\">2.1 Basics</a> - Read &lt;first&gt;.</li>"
+					+ "<li><a href=\"#\" data-tl-link=\"views/tables\">2.2 Tables</a></li></ul>"));
+
+			String loose = DevDocs.toHtml(DevDocs.find(root, "loose"), root, LINK_ATTRIBUTE);
+			assertTrue(loose, loose.startsWith("<h1>loose</h1>\n<ul><li>"));
+
+			String article = DevDocs.toHtml(DevDocs.find(root, "views/tables"), root, LINK_ATTRIBUTE);
+			assertFalse("An article lists no entries.", article.contains("<ul>"));
 		}
 	}
 

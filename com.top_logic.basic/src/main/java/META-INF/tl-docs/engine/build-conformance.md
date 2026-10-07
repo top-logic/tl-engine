@@ -25,6 +25,20 @@ mvn -B exec:java -pl com.top_logic.basic \
 
 It prints `Updating: <file>` when it actually rewrites. The named `exec:java@normalize-layouts` execution ignores a `-Dtl.layoutDir` override (the argument is bound from the POM), so it silently no-ops on an arbitrary path — use it only for the whole-tree normalize (`mvn exec:java@normalize-layouts`).
 
+## Developer documentation: `TestDocumentation`
+
+`test.com.top_logic.basic.TestDocumentation` runs in every module's `TestAll` (like `TestComment`) and checks the
+articles the module ships below `src/main/java/META-INF/tl-docs/` against the module's class path:
+
+- every chapter and article has a `description` in its front matter;
+- every `doc:` link names an article on the class path, so an article links only to articles of its own module and of
+  the modules it depends on, and a section it names is a heading of that article;
+- every `#section` link names a heading of the article itself;
+- no link points to a file outside the documentation (a relative `.md` path), which the application does not have;
+- no Markdown file is left in the workspace folder `docs/faq/`.
+
+A link in code (a code span or block) is text and is not checked.
+
 ## `-DskipTests=true` also skips test *compilation*
 
 Skipping tests in this reactor also skips compiling the test sources, so a green `mvn install -DskipTests=true` can hide broken test code — an API change (e.g. changing a config-getter's type, deleting a class) can leave test files that no longer compile while the build still reports BUILD SUCCESS.

@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.view.docs;
+package com.top_logic.basic.docs;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,7 +32,9 @@ public final class DevDoc {
 
 	private String _text;
 
-	private String _source;
+	private String _module;
+
+	private String _path;
 
 	private String _number = "";
 
@@ -90,7 +92,19 @@ public final class DevDoc {
 	 * {@code null} for a chapter without {@value DevDocs#CHAPTER_FILE}.
 	 */
 	public String getSource() {
-		return _source;
+		if (_path == null) {
+			return null;
+		}
+		return _module == null ? _path : _module + ": " + _path;
+	}
+
+	/**
+	 * The module the file of this node comes from: the artifact of its jar, or the folder of the
+	 * module whose class output directory holds it. {@code null} if it cannot be told, and for a
+	 * chapter without {@value DevDocs#CHAPTER_FILE}.
+	 */
+	public String getModule() {
+		return _module;
 	}
 
 	/**
@@ -132,8 +146,9 @@ public final class DevDoc {
 		_text = text;
 	}
 
-	void setSource(String source) {
-		_source = source;
+	void setSource(String module, String path) {
+		_module = module;
+		_path = path;
 	}
 
 	void addChild(DevDoc child) {

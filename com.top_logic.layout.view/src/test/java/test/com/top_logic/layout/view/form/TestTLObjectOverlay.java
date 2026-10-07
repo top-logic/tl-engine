@@ -8,8 +8,10 @@ package test.com.top_logic.layout.view.form;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -110,6 +112,43 @@ public class TestTLObjectOverlay extends TestCase {
 		overlay.reset();
 		assertFalse(overlay.isDirty());
 		assertEquals("Alice", overlay.tValue(namePart));
+	}
+
+	/**
+	 * Tests that {@link TLObjectOverlay#restore(TLObjectOverlay.Snapshot)} brings back exactly the
+	 * changes buffered when the {@link TLObjectOverlay#snapshot() snapshot} was taken, any number of
+	 * times, unaffected by in-place changes of a buffered collection.
+	 */
+	public void testSnapshotRestore() {
+		TLStructuredTypePart namePart = mockPart("name");
+		TLStructuredTypePart tagsPart = mockPart("tags");
+		TLStructuredTypePart notePart = mockPart("note");
+		MockTLObject base = new MockTLObject();
+		base.set(namePart, "Alice");
+		base.set(notePart, "base note");
+
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+		overlay.tUpdate(namePart, "Bob");
+		List<String> tags = new ArrayList<>(List.of("a"));
+		overlay.tUpdate(tagsPart, tags);
+
+		TLObjectOverlay.Snapshot snapshot = overlay.snapshot();
+
+		overlay.tUpdate(namePart, "Carol");
+		tags.add("b");
+		overlay.tUpdate(notePart, "changed note");
+
+		overlay.restore(snapshot);
+		assertEquals("Bob", overlay.tValue(namePart));
+		assertEquals(List.of("a"), overlay.tValue(tagsPart));
+		assertEquals("base note", overlay.tValue(notePart));
+		assertFalse(overlay.isChanged(notePart));
+
+		overlay.reset();
+		assertFalse(overlay.isDirty());
+		overlay.restore(snapshot);
+		assertEquals("Bob", overlay.tValue(namePart));
+		assertTrue(overlay.isDirty());
 	}
 
 	/**

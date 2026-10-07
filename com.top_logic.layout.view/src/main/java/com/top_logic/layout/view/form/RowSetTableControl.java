@@ -44,6 +44,7 @@ import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -83,8 +84,10 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * Data columns come from the declarations the table is built with (sortable, filterable, cells
- * displayed through the view-mode field display of the column's values). While the form is in edit
+ * Data columns come from the declarations the table is built with, and from the
+ * {@link ColumnDeclarations#mainColumns(TLStructuredType) main columns} of the row type for a table
+ * declaring none (sortable, filterable, cells displayed through the view-mode field display of the
+ * column's values). While the form is in edit
  * mode, the cells of rows covered by the {@link RowEditPolicy} render the input the column's
  * {@link CellEditing} builds, where it offers one.
  * An action column for row removal is appended in edit mode when the binding supports removal; a
@@ -674,8 +677,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	private List<Column<TLObject, ?>> createDataColumns(boolean editMode, List<ColumnSetup> setups) {
 		List<Column<TLObject, ?>> columns = new ArrayList<>(_columns.size());
-		ColumnResolution scope = new ColumnResolution(binding().getRowType(), _context);
-		for (ColumnSetup setup : ColumnDeclarations.resolve(_columns, scope)) {
+		TLClass rowType = binding().getRowType();
+		ColumnResolution scope = new ColumnResolution(rowType, _context);
+		List<ColumnDeclaration> declarations =
+			_columns.isEmpty() ? ColumnDeclarations.mainColumns(rowType) : _columns;
+		for (ColumnSetup setup : ColumnDeclarations.resolve(declarations, scope)) {
 			setups.add(setup);
 			columns.add(adapt(setup.buildColumn(), setup, editMode));
 		}

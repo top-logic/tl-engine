@@ -130,6 +130,33 @@
 							ordered="true"
 							type="Step"
 						/>
+						<reference name="items"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Item"
+						/>
+						<reference name="lockedItems"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Item"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Item">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							mandatory="true"
+							type="tl.core:String"
+						/>
 					</attributes>
 				</class>
 

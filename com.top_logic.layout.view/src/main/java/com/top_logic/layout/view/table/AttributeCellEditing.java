@@ -5,9 +5,13 @@
  */
 package com.top_logic.layout.view.table;
 
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.BoundFieldModel;
+import com.top_logic.layout.view.form.CompositionCellModel;
+import com.top_logic.layout.view.form.CompositionEditing;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
@@ -34,6 +38,13 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * <p>
  * Only a cell the current user may write on its row is edited, as a form field is.
  * </p>
+ *
+ * <p>
+ * A {@link AttributeOptions#isComposition(TLStructuredTypePart) composition} is edited in a dialog:
+ * the cell shows the labels of the parts and a button opening the table of the parts, see
+ * {@link CompositionEditing}. Its parts are displayed in that dialog wherever the user may read
+ * the composition, and changed only where the user may write it.
+ * </p>
  */
 public class AttributeCellEditing implements CellEditing {
 
@@ -50,7 +61,8 @@ public class AttributeCellEditing implements CellEditing {
 	}
 
 	/**
-	 * Whether the row holds the attribute and the current user may read and write it on the row.
+	 * Whether the row holds the attribute and the current user may read and write it on the row - or
+	 * only read it, for a composition.
 	 *
 	 * <p>
 	 * A cell the user may not write is displayed read-only, whether the refusal depends on the row
@@ -64,18 +76,34 @@ public class AttributeCellEditing implements CellEditing {
 			return false;
 		}
 		TLObject object = (TLObject) row;
-		return ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, object, part).isExecutable()
-			&& ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.WRITE, object, part).isExecutable();
+		if (!ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, object, part).isExecutable()) {
+			return false;
+		}
+		// The parts of a composition the user may only read are displayed in the dialog.
+		return AttributeOptions.isComposition(part) || canWrite(object, part);
 	}
 
 	@Override
 	public BoundFieldModel createModel(Object row, FormControl form) {
-		return FieldControlService.getInstance().createModel((TLObject) row, part(row), form);
+		TLObject object = (TLObject) row;
+		TLStructuredTypePart part = part(row);
+		if (AttributeOptions.isComposition(part)) {
+			return new CompositionCellModel(object, part, form, canWrite(object, part));
+		}
+		return FieldControlService.getInstance().createModel(object, part, form);
 	}
 
 	@Override
 	public ReactControl createControl(ReactContext context, Object row, BoundFieldModel model) {
-		return FieldControlService.getInstance().createCellControl(context, part(row), model);
+		TLStructuredTypePart part = part(row);
+		if (model instanceof CompositionCellModel composition) {
+			return CompositionEditing.createControl(context, composition, MetaLabelProvider.INSTANCE.getLabel(part));
+		}
+		return FieldControlService.getInstance().createCellControl(context, part, model);
+	}
+
+	private static boolean canWrite(TLObject object, TLStructuredTypePart part) {
+		return ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.WRITE, object, part).isExecutable();
 	}
 
 	/**

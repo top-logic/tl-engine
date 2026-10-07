@@ -145,7 +145,8 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	 *
 	 * <p>
 	 * Must be called after construction. A control displaying a given session builds the content
-	 * of that session. A control owning its sessions resolves the row-set binding against the form's
+	 * of that session, editable when the session {@link RowSetEditSession#isEditable() may change}
+	 * its rows. A control owning its sessions resolves the row-set binding against the form's
 	 * current object and builds the initial content; when the binding is not available (e.g. the
 	 * current object's type does not declare the bound attribute), builds empty view-mode content.
 	 * </p>
@@ -159,7 +160,7 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	public void init() {
 		if (!_ownsSession) {
 			_session.addListener(_sessionListener);
-			buildContent(_session.currentRows(), _session.isRunning());
+			buildContent(_session.currentRows(), _session.isRunning() && _session.isEditable());
 			updateCompositionErrorDisplay();
 			return;
 		}

@@ -45,10 +45,20 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * The dialog edits a copy of the value. OK writes the copy to the field, Cancel discards it, so the
- * field changes once, when the user confirms. OK keeps the dialog open as long as the copy is not
- * valid: while the editor reports an error, or while a mandatory field is empty. A field that may not be edited is shown read-only in
- * the dialog, which then only offers to close it.
+ * What the dialog edits and what its buttons do is an {@link EditorSession}, opened by an
+ * {@link Editing} each time the dialog opens: OK {@link EditorSession#apply() applies} the edit and
+ * keeps the dialog open as long as the edit is not valid, Cancel and the close button of the
+ * window {@link EditorSession#revert() revert} it. A field that may not be edited is shown
+ * read-only in the dialog, which then only offers to close it. The preview is updated when the
+ * dialog closes.
+ * </p>
+ *
+ * <p>
+ * The {@link #ReactCompactFieldControl(ReactContext, FieldModel, String, Function, EditorFactory)
+ * editing of a value} works on a copy of the value. OK writes the copy to the field, Cancel
+ * discards it, so the field changes once, when the user confirms. OK keeps the dialog open as long
+ * as the copy is not valid: while the editor reports an error, or while a mandatory field is
+ * empty.
  * </p>
  *
  * <p>
@@ -77,6 +87,62 @@ public class ReactCompactFieldControl extends ReactStackControl {
 
 	}
 
+	/**
+	 * The edit taking place in the dialog of a {@link ReactCompactFieldControl}, from opening the
+	 * dialog until it is closed.
+	 */
+	public interface EditorSession {
+
+		/**
+		 * Creates the editor displayed in the dialog.
+		 *
+		 * @param context
+		 *        The context to create the editor in.
+		 * @param closeDialog
+		 *        Closes the dialog without applying or reverting anything, for an edit that ends
+		 *        while the dialog is open.
+		 * @return The editor control.
+		 */
+		ReactControl createEditor(ReactContext context, Runnable closeDialog);
+
+		/**
+		 * Applies the edit, when the user confirms the dialog.
+		 *
+		 * <p>
+		 * An edit that is not valid is not applied: the editor displays what is wrong, and the
+		 * dialog stays open for the user to correct it.
+		 * </p>
+		 *
+		 * @return Whether the edit was valid and is applied, so the dialog closes.
+		 */
+		boolean apply();
+
+		/**
+		 * Discards the edit, when the user cancels or closes the dialog.
+		 */
+		void revert();
+
+	}
+
+	/**
+	 * Opens the {@link EditorSession} of a dialog of a {@link ReactCompactFieldControl}.
+	 */
+	@FunctionalInterface
+	public interface Editing {
+
+		/**
+		 * Opens the edit taking place in a dialog that is about to open.
+		 *
+		 * @param model
+		 *        The field model holding the displayed value.
+		 * @param editable
+		 *        Whether the value may be edited; otherwise the editor displays the value only.
+		 * @return The session of the dialog.
+		 */
+		EditorSession open(FieldModel model, boolean editable);
+
+	}
+
 	/** The width the dialog opens with. */
 	private static final DisplayDimension DIALOG_WIDTH = DisplayDimension.px(640);
 
@@ -86,7 +152,7 @@ public class ReactCompactFieldControl extends ReactStackControl {
 
 	private final Function<Object, String> _previewText;
 
-	private final EditorFactory _editorFactory;
+	private final Editing _editing;
 
 	private final ReactTextControl _preview;
 
@@ -106,15 +172,35 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	 * @param previewText
 	 *        Produces the single line of text standing for a value of the field.
 	 * @param editorFactory
-	 *        Creates the editor displayed in the dialog.
+	 *        Creates the editor of a copy of the value displayed in the dialog.
 	 */
 	public ReactCompactFieldControl(ReactContext context, FieldModel model, String label,
 			Function<Object, String> previewText, EditorFactory editorFactory) {
+		this(context, model, label, previewText, bufferedEditing(editorFactory));
+	}
+
+	/**
+	 * Creates a {@link ReactCompactFieldControl} whose dialog edits what the given
+	 * {@link Editing} opens.
+	 *
+	 * @param context
+	 *        The context to create the control in.
+	 * @param model
+	 *        Holds the displayed value.
+	 * @param label
+	 *        The label of the field, naming the dialog, or {@code null} for a generic title.
+	 * @param previewText
+	 *        Produces the single line of text standing for a value of the field.
+	 * @param editing
+	 *        Opens the edit taking place in the dialog.
+	 */
+	public ReactCompactFieldControl(ReactContext context, FieldModel model, String label,
+			Function<Object, String> previewText, Editing editing) {
 		super(context, StackDirection.ROW, StackGap.COMPACT, StackAlign.CENTER, false, List.of());
 		_model = model;
 		_label = label;
 		_previewText = previewText;
-		_editorFactory = editorFactory;
+		_editing = editing;
 
 		_preview = new ReactTextControl(context, previewText.apply(model.getValue()));
 		_preview.setOverflow(TextOverflow.ELLIPSIS);
@@ -189,35 +275,19 @@ public class ReactCompactFieldControl extends ReactStackControl {
 			return;
 		}
 		boolean editable = _model.isEditable();
+		EditorSession session = _editing.open(_model, editable);
 
-		AbstractFieldModel buffer = new AbstractFieldModel(copyValue(_model.getValue()));
-		buffer.setMandatory(_model.isMandatory());
-		buffer.setNullable(_model.isNullable());
-		buffer.setEditable(editable);
-		buffer.addListener(new FieldModelListener() {
-			@Override
-			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
-				if (buffer.isRevealed()) {
-					// Once reported, the missing value is reported as long as it is missing.
-					validateMandatory(buffer);
-				}
-			}
+		Runnable close = () -> {
+			dialogManager.closeTopDialog(DialogResult.cancelled());
+			updatePreview();
+		};
+		Runnable cancel = () -> {
+			session.revert();
+			close.run();
+		};
+		ReactControl editor = session.createEditor(context, close);
 
-			@Override
-			public void onEditabilityChanged(FieldModel source, boolean isEditable) {
-				// Ignored.
-			}
-
-			@Override
-			public void onValidationChanged(FieldModel source) {
-				// Ignored.
-			}
-		});
-
-		ReactControl editor = _editorFactory.createEditor(context, buffer);
-
-		ReactWindowControl window = new ReactWindowControl(context, dialogTitle(), DIALOG_WIDTH,
-			() -> dialogManager.closeTopDialog(DialogResult.cancelled()));
+		ReactWindowControl window = new ReactWindowControl(context, dialogTitle(), DIALOG_WIDTH, cancel);
 		window.setResizable(true);
 		// The window body is flush; the editor keeps the page inset from its border.
 		window.setChild(new ReactInsetControl(context, editor));
@@ -225,47 +295,120 @@ public class ReactCompactFieldControl extends ReactStackControl {
 		List<ReactControl> actions = new ArrayList<>();
 		if (editable) {
 			actions.add(MessageButtons.cancel(context, ctx -> {
-				dialogManager.closeTopDialog(DialogResult.cancelled());
+				cancel.run();
 				return HandlerResult.DEFAULT_RESULT;
 			}));
 			// Not the Enter-default: the editors displayed here are multi-line, where Enter
 			// inserts a line break.
 			actions.add(MessageButtons.ok(context, ctx -> {
-				if (!isValid(buffer)) {
-					// The editor displays the error at its field; the dialog stays open for the
-					// user to correct it.
+				if (!session.apply()) {
+					// The editor displays the error; the dialog stays open for the user to correct
+					// it.
 					return HandlerResult.DEFAULT_RESULT;
 				}
-				apply(buffer);
 				dialogManager.closeTopDialog(DialogResult.ok(null));
+				updatePreview();
 				return HandlerResult.DEFAULT_RESULT;
 			}));
 		} else {
 			actions.add(MessageButtons.close(context, ctx -> {
-				dialogManager.closeTopDialog(DialogResult.cancelled());
+				cancel.run();
 				return HandlerResult.DEFAULT_RESULT;
 			}));
 		}
 		window.setActions(actions);
 
 		dialogManager.openDialog(false, window, result -> {
-			// Nothing to do on close: OK already applied the value, Cancel discards it.
+			// Nothing to do on close: the buttons applied or reverted the edit.
 		});
 	}
 
 	/**
-	 * Writes the edited copy to the field.
-	 *
-	 * <p>
-	 * Refused for a field that may not be edited (any more), however the request to confirm the
-	 * dialog arrived.
-	 * </p>
+	 * Shows the preview of the current value, which an edit in the dialog may have changed without
+	 * a change of the field's value being announced.
 	 */
-	private void apply(FieldModel buffer) {
-		if (!_model.isEditable()) {
-			return;
+	private void updatePreview() {
+		_preview.setText(_previewText.apply(_model.getValue()));
+	}
+
+	/**
+	 * The {@link Editing} of a copy of the field's value, which OK writes to the field.
+	 *
+	 * @param editorFactory
+	 *        Creates the editor of the copy.
+	 */
+	public static Editing bufferedEditing(EditorFactory editorFactory) {
+		return (model, editable) -> new BufferedEditorSession(model, editable, editorFactory);
+	}
+
+	/**
+	 * {@link EditorSession} editing a copy of the value of a field.
+	 */
+	private static final class BufferedEditorSession implements EditorSession {
+
+		private final FieldModel _model;
+
+		private final AbstractFieldModel _buffer;
+
+		private final EditorFactory _editorFactory;
+
+		BufferedEditorSession(FieldModel model, boolean editable, EditorFactory editorFactory) {
+			_model = model;
+			_editorFactory = editorFactory;
+			_buffer = new AbstractFieldModel(copyValue(model.getValue()));
+			_buffer.setMandatory(model.isMandatory());
+			_buffer.setNullable(model.isNullable());
+			_buffer.setEditable(editable);
+			_buffer.addListener(new FieldModelListener() {
+				@Override
+				public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+					if (_buffer.isRevealed()) {
+						// Once reported, the missing value is reported as long as it is missing.
+						validateMandatory(_buffer);
+					}
+				}
+
+				@Override
+				public void onEditabilityChanged(FieldModel source, boolean isEditable) {
+					// Ignored.
+				}
+
+				@Override
+				public void onValidationChanged(FieldModel source) {
+					// Ignored.
+				}
+			});
 		}
-		_model.setValue(buffer.getValue());
+
+		@Override
+		public ReactControl createEditor(ReactContext context, Runnable closeDialog) {
+			return _editorFactory.createEditor(context, _buffer);
+		}
+
+		/**
+		 * Writes the edited copy to the field, when it is valid.
+		 *
+		 * <p>
+		 * Nothing is written to a field that may not be edited (any more), however the request to
+		 * confirm the dialog arrived.
+		 * </p>
+		 */
+		@Override
+		public boolean apply() {
+			if (!isValid(_buffer)) {
+				return false;
+			}
+			if (_model.isEditable()) {
+				_model.setValue(_buffer.getValue());
+			}
+			return true;
+		}
+
+		@Override
+		public void revert() {
+			// The copy is dropped with the session.
+		}
+
 	}
 
 	/**

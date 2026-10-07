@@ -6,7 +6,13 @@
 package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
@@ -77,6 +83,16 @@ public class RowSetEditSession implements FormParticipant {
 		 */
 		void onRowSetValidationChanged(RowSetEditSession session);
 
+		/**
+		 * Called after the session {@link RowSetEditSession#end() ended}.
+		 *
+		 * @param session
+		 *        The session that ended.
+		 */
+		default void onEnded(RowSetEditSession session) {
+			// Nothing to do by default.
+		}
+
 	}
 
 	private final RowSetOwner _owner;
@@ -84,6 +100,11 @@ public class RowSetEditSession implements FormParticipant {
 	private final RowSetBinding _binding;
 
 	private final List<Listener> _listeners = new CopyOnWriteArrayList<>();
+
+	private boolean _editable = true;
+
+	/** Whether the session was {@link #start() started} and has not {@link #end() ended} yet. */
+	private boolean _started;
 
 	private CompositionFieldModel _fieldModel;
 
@@ -138,6 +159,24 @@ public class RowSetEditSession implements FormParticipant {
 	 */
 	public void removeListener(Listener listener) {
 		_listeners.remove(listener);
+	}
+
+	/**
+	 * Whether the rows may be changed: rows added and removed, and their cells edited.
+	 *
+	 * <p>
+	 * A session that may not change its rows still collects them for display.
+	 * </p>
+	 */
+	public boolean isEditable() {
+		return _editable;
+	}
+
+	/**
+	 * Sets whether the rows may be {@link #isEditable() changed}.
+	 */
+	public void setEditable(boolean editable) {
+		_editable = editable;
 	}
 
 	/**
@@ -227,6 +266,7 @@ public class RowSetEditSession implements FormParticipant {
 		}
 
 		form.registerParticipant(this);
+		_started = true;
 
 		// Reflect constraints of the bound attribute itself in the field model and display.
 		wireRowSetValidation();
@@ -287,7 +327,8 @@ public class RowSetEditSession implements FormParticipant {
 	 * model - and withdraws its participation in the form.
 	 *
 	 * <p>
-	 * Does nothing for a session that is not running.
+	 * The {@link Listener}s are notified when a started session ends, also after the form
+	 * {@link #cancel() cancelled} it.
 	 * </p>
 	 */
 	public void end() {
@@ -307,15 +348,36 @@ public class RowSetEditSession implements FormParticipant {
 		}
 		_validationListeners.clear();
 
+		boolean wasStarted = _started;
+		_started = false;
 		if (_fieldModel != null) {
 			_owner.form().unregisterParticipant(this);
 			_fieldModel = null;
+		}
+		for (CompositionRowModel row : _rowModels) {
+			disposeCells(row);
 		}
 		_rowModels.clear();
 		_originalPersistentObjects = null;
 
 		// Clear any displayed row-set error (the field model is now gone).
 		fireValidationChanged();
+
+		if (wasStarted) {
+			for (Listener listener : _listeners) {
+				listener.onEnded(this);
+			}
+		}
+	}
+
+	/**
+	 * Releases the field models of the cells of the given row; cells displayed again get new ones.
+	 */
+	private static void disposeCells(CompositionRowModel row) {
+		for (BoundFieldModel cell : row.getColumnModels().values()) {
+			cell.dispose();
+		}
+		row.getColumnModels().clear();
 	}
 
 	// -- FormParticipant --
@@ -447,7 +509,7 @@ public class RowSetEditSession implements FormParticipant {
 
 	@Override
 	public void cancel() {
-		_rowModels.clear();
+		// The rows are kept until the session ends, which releases what their cells hold.
 		_fieldModel = null;
 	}
 
@@ -468,6 +530,213 @@ public class RowSetEditSession implements FormParticipant {
 		return _fieldModel != null && _fieldModel.isDirty();
 	}
 
+	// -- Snapshot --
+
+	/**
+	 * The current state of the rows, to be {@link #restore(Snapshot) restored} later: which rows
+	 * there are, the changes buffered for the existing rows, and the values of the new rows.
+	 *
+	 * @return The snapshot, or {@code null} if the session is not running.
+	 */
+	public Snapshot snapshot() {
+		if (_fieldModel == null) {
+			return null;
+		}
+		Map<TLObjectOverlay, TLObjectOverlay.Snapshot> overlays = new IdentityHashMap<>();
+		Map<TLObject, Map<TLStructuredTypePart, Object>> values = new IdentityHashMap<>();
+		for (CompositionRowModel row : _rowModels) {
+			TLObjectOverlay overlay = row.getRowOverlay();
+			if (overlay != null) {
+				overlays.put(overlay, overlay.snapshot());
+			} else {
+				values.put(row.getRowObject(), storedValues(row.getRowObject()));
+			}
+		}
+		return new Snapshot(new ArrayList<>(_fieldModel.getCurrentList()), new ArrayList<>(_rowModels), overlays,
+			values);
+	}
+
+	/**
+	 * Returns the rows to the state of the given snapshot, discarding all changes made since: rows
+	 * added since are dropped, rows removed since are back, and the existing and new rows hold the
+	 * values they held when the snapshot was taken.
+	 *
+	 * <p>
+	 * The cells of the rows show the restored values, and the listeners are notified of the
+	 * changed rows. Does nothing for a session that is not running.
+	 * </p>
+	 *
+	 * @param snapshot
+	 *        A snapshot taken from this session by {@link #snapshot()} while it runs.
+	 */
+	public void restore(Snapshot snapshot) {
+		if (_fieldModel == null || snapshot == null) {
+			return;
+		}
+		Set<CompositionRowModel> restoredRows = Collections.newSetFromMap(new IdentityHashMap<>());
+		restoredRows.addAll(snapshot._rowModels);
+		Set<CompositionRowModel> currentRows = Collections.newSetFromMap(new IdentityHashMap<>());
+		currentRows.addAll(_rowModels);
+
+		// Rows added since the snapshot leave the edit.
+		for (CompositionRowModel row : _rowModels) {
+			if (!restoredRows.contains(row)) {
+				disposeCells(row);
+				unregisterRow(row);
+			}
+		}
+		// Rows removed since the snapshot return to the edit.
+		for (CompositionRowModel row : snapshot._rowModels) {
+			if (!currentRows.contains(row)) {
+				registerRow(row);
+			}
+		}
+		_rowModels.clear();
+		_rowModels.addAll(snapshot._rowModels);
+
+		for (Map.Entry<TLObjectOverlay, TLObjectOverlay.Snapshot> entry : snapshot._overlays.entrySet()) {
+			entry.getKey().restore(entry.getValue());
+		}
+		for (Map.Entry<TLObject, Map<TLStructuredTypePart, Object>> entry : snapshot._values.entrySet()) {
+			restoreValues(entry.getKey(), entry.getValue());
+		}
+
+		List<TLObject> rows = new ArrayList<>(snapshot._rows);
+		_fieldModel.setValue(rows);
+		for (CompositionRowModel row : _rowModels) {
+			row.refreshColumnModels();
+		}
+		if (_validationModel != null) {
+			for (TLObject row : rows) {
+				revalidate(row);
+			}
+		}
+		membershipChanged(rows);
+	}
+
+	private void unregisterRow(CompositionRowModel row) {
+		TLObjectOverlay overlay = row.getRowOverlay();
+		if (overlay != null) {
+			_fieldModel.removeRowOverlay(overlay);
+		}
+		if (_validationModel != null) {
+			_validationModel.removeOverlay(row.getRowObject());
+		}
+	}
+
+	private void registerRow(CompositionRowModel row) {
+		TLObjectOverlay overlay = row.getRowOverlay();
+		if (overlay != null) {
+			_fieldModel.addRowOverlay(overlay);
+		}
+		if (_validationModel != null) {
+			_validationModel.addOverlay(row.getRowObject(), overlay != null ? overlay.getBase() : null);
+		}
+	}
+
+	/**
+	 * The values a new row holds in its attributes that are not computed.
+	 */
+	private static Map<TLStructuredTypePart, Object> storedValues(TLObject row) {
+		Map<TLStructuredTypePart, Object> result = new HashMap<>();
+		for (TLStructuredTypePart part : storedParts(row)) {
+			result.put(part, TLObjectOverlay.copyValue(row.tValue(part)));
+		}
+		return result;
+	}
+
+	private static void restoreValues(TLObject row, Map<TLStructuredTypePart, Object> values) {
+		for (TLStructuredTypePart part : storedParts(row)) {
+			Object value = values.get(part);
+			if (!Objects.equals(row.tValue(part), value)) {
+				row.tUpdate(part, TLObjectOverlay.copyValue(value));
+			}
+		}
+	}
+
+	/**
+	 * The attributes of the given row that hold a value of their own: neither derived, nor
+	 * abstract, nor the backwards direction of a reference.
+	 */
+	private static List<TLStructuredTypePart> storedParts(TLObject row) {
+		List<TLStructuredTypePart> result = new ArrayList<>();
+		for (TLStructuredTypePart part : row.tType().getAllParts()) {
+			if (part.isDerived() || part.isAbstract()) {
+				continue;
+			}
+			if (part instanceof TLReference reference && reference.isBackwards()) {
+				continue;
+			}
+			result.add(part);
+		}
+		return result;
+	}
+
+	/**
+	 * Re-runs the checks of all attributes of the given row.
+	 */
+	private void revalidate(TLObject row) {
+		for (TLStructuredTypePart part : row.tType().getAllParts()) {
+			_validationModel.onValueChanged(row, part);
+		}
+	}
+
+	/**
+	 * Checks the rows and reveals what is wrong with them.
+	 *
+	 * <p>
+	 * The rows are valid when no attribute of a row and no cell reports an error, and the row set
+	 * as a whole satisfies the constraints of the bound attribute.
+	 * </p>
+	 *
+	 * @return Whether the rows are valid.
+	 */
+	public boolean checkValid() {
+		if (_fieldModel == null) {
+			return true;
+		}
+		boolean valid = true;
+		if (_validationModel != null) {
+			for (TLObject row : _fieldModel.getCurrentList()) {
+				revalidate(row);
+				for (TLStructuredTypePart part : row.tType().getAllParts()) {
+					if (!_validationModel.getValidation(row, part).isValid()) {
+						valid = false;
+					}
+				}
+			}
+		}
+		revealAll();
+		return validate() && valid;
+	}
+
+	/**
+	 * The state of the rows of a {@link RowSetEditSession} at some point in time.
+	 *
+	 * @see RowSetEditSession#snapshot()
+	 * @see RowSetEditSession#restore(Snapshot)
+	 */
+	public static final class Snapshot {
+
+		final List<TLObject> _rows;
+
+		final List<CompositionRowModel> _rowModels;
+
+		final Map<TLObjectOverlay, TLObjectOverlay.Snapshot> _overlays;
+
+		final Map<TLObject, Map<TLStructuredTypePart, Object>> _values;
+
+		Snapshot(List<TLObject> rows, List<CompositionRowModel> rowModels,
+				Map<TLObjectOverlay, TLObjectOverlay.Snapshot> overlays,
+				Map<TLObject, Map<TLStructuredTypePart, Object>> values) {
+			_rows = rows;
+			_rowModels = rowModels;
+			_overlays = overlays;
+			_values = values;
+		}
+
+	}
+
 	// -- Row Manipulation --
 
 	/**
@@ -481,11 +750,11 @@ public class RowSetEditSession implements FormParticipant {
 	 * @param initializer
 	 *        Initializes attribute values of the created transient object before it is added to the
 	 *        list, or {@code null} for an empty row.
-	 * @return The created transient row object, or {@code null} if the session is not running or
-	 *         the binding offers no row creation.
+	 * @return The created transient row object, or {@code null} if the session is not running, its
+	 *         rows may not be changed, or the binding offers no row creation.
 	 */
 	public TLObject addRow(Consumer<TLObject> initializer) {
-		if (_fieldModel == null) {
+		if (_fieldModel == null || !_editable) {
 			return null;
 		}
 
@@ -545,7 +814,7 @@ public class RowSetEditSession implements FormParticipant {
 	 *        The row's index in {@link #rowModels()}.
 	 */
 	public void deleteRow(TLObject rowObject, int rowIndex) {
-		if (_fieldModel == null) {
+		if (_fieldModel == null || !_editable) {
 			return;
 		}
 
@@ -558,6 +827,8 @@ public class RowSetEditSession implements FormParticipant {
 		// Remove row model and unregister from validation model.
 		if (rowIndex >= 0 && rowIndex < _rowModels.size()) {
 			CompositionRowModel removedRow = _rowModels.remove(rowIndex);
+			// A removed row takes no part in the save, nor do edits within its cells.
+			disposeCells(removedRow);
 			TLObjectOverlay removedOverlay = removedRow.getRowOverlay();
 			if (removedOverlay != null) {
 				_fieldModel.removeRowOverlay(removedOverlay);
@@ -612,12 +883,13 @@ public class RowSetEditSession implements FormParticipant {
 	 *        The row object (overlay or transient).
 	 * @param column
 	 *        The column whose cell is edited.
-	 * @return The field model of the cell, or {@code null} if the cell cannot be edited (the column
-	 *         offers no edit on this row, or the row is not part of the session).
+	 * @return The field model of the cell, or {@code null} if the cell cannot be edited (the rows
+	 *         may not be changed, the column offers no edit on this row, or the row is not part of
+	 *         the session).
 	 */
 	public BoundFieldModel cellModel(TLObject row, ColumnSetup column) {
 		CellEditing editing = column.editing();
-		if (editing == null || !editing.canEdit(row)) {
+		if (!_editable || editing == null || !editing.canEdit(row)) {
 			return null;
 		}
 		CompositionRowModel rowModel = findRowModel(row);

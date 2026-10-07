@@ -15,9 +15,11 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.util.TLModelNamingConvention;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
  * The {@code <column>} of a table: one column showing a model attribute of its rows.
@@ -27,6 +29,12 @@ import com.top_logic.model.util.TLModelNamingConvention;
  * sorted, filtered and searched, how wide the column is and what its header says - so declaring the
  * attribute is all such a column needs. Where the rows of the table are edited, an edited cell
  * writes its value to that attribute.
+ * </p>
+ *
+ * <p>
+ * The column follows the model access rights of the user: a cell whose value the user may not read
+ * on its row is empty, and a column whose attribute the user may read on no row at all is not
+ * offered. Where the rows are edited, only a cell the user may write is edited.
  * </p>
  */
 @InApp
@@ -109,6 +117,11 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 	public List<ColumnSetup> resolve(ColumnResolution scope) {
 		String attribute = _attribute;
 		TLStructuredTypePart part = scope.part(attribute);
+		if (part != null && !ModelAccessPolicy
+			.onAttributeOfType(SimpleBoundCommandGroup.READ, scope.rowType(), part).isExecutable()) {
+			// The user may read the attribute on no row at all - the column is not offered.
+			return List.of();
+		}
 		return List.of(setup(attribute, derivedLabel(part), ColumnType.of(part),
 			row -> ColumnProviderService.attributeValue(row, attribute), new AttributeCellEditing(attribute),
 			scope));

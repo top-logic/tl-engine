@@ -51,6 +51,7 @@
 					>
 						<field attribute="name"/>
 						<field attribute="description"/>
+						<field attribute="budget"/>
 						<field attribute="members"/>
 						<field attribute="admins"/>
 					</form>

@@ -45,6 +45,18 @@ public class I18NHtmlControlProvider implements ReactFieldControlProvider {
 		return true;
 	}
 
+	/**
+	 * Whether no language of the given value has content, see
+	 * {@link WysiwygControlProvider#isEmptyHtml(com.top_logic.layout.wysiwyg.ui.StructuredText)}.
+	 */
+	@Override
+	public boolean isEmpty(FieldSpec field, Object value) {
+		if (value instanceof I18NStructuredText text) {
+			return text.getEntries().values().stream().allMatch(WysiwygControlProvider::isEmptyHtml);
+		}
+		return ReactFieldControlProvider.super.isEmpty(field, value);
+	}
+
 	@Override
 	public String previewText(FieldSpec field, Object value) {
 		if (value instanceof I18NStructuredText text) {

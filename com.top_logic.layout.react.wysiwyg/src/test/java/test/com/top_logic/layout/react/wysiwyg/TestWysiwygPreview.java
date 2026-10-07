@@ -64,6 +64,38 @@ public class TestWysiwygPreview extends TestCase {
 		assertEquals(PLAIN, provider.previewText(field, value));
 	}
 
+	/**
+	 * A formatted text without text and images displays nothing; one holding only an image does.
+	 */
+	public void testEmptiness() {
+		WysiwygControlProvider provider = wysiwyg();
+		FieldSpec field = FieldSpec.of(StructuredText.class, "Text");
+
+		assertTrue(provider.isEmpty(field, null));
+		assertTrue(provider.isEmpty(field, new StructuredText("")));
+		assertTrue(provider.isEmpty(field, new StructuredText("<p>&nbsp;</p>\n<p><br/></p>")));
+		assertFalse(provider.isEmpty(field, new StructuredText(HTML)));
+		assertFalse("An image is content",
+			provider.isEmpty(field, new StructuredText("<p><img src=\"https://example.com/a.png\"/></p>")));
+		assertEquals("An image has no text to preview", "",
+			provider.previewText(field, new StructuredText("<p><img src=\"https://example.com/a.png\"/></p>")));
+	}
+
+	/**
+	 * An internationalized formatted text is empty when it is empty in every language.
+	 */
+	public void testI18NEmptiness() {
+		I18NHtmlControlProvider provider = new I18NHtmlControlProvider();
+		FieldSpec field = FieldSpec.of(I18NStructuredText.class, "Text");
+
+		assertTrue(provider.isEmpty(field, null));
+		assertTrue(provider.isEmpty(field, I18NStructuredText.EMPTY));
+		assertTrue(provider.isEmpty(field, new I18NStructuredText(
+			Map.of(Locale.ENGLISH, new StructuredText("<p></p>"), Locale.GERMAN, new StructuredText("")))));
+		assertFalse(provider.isEmpty(field, new I18NStructuredText(
+			Map.of(Locale.ENGLISH, new StructuredText("<p></p>"), Locale.GERMAN, new StructuredText(HTML)))));
+	}
+
 	private static WysiwygControlProvider wysiwyg() {
 		return new WysiwygControlProvider(null, TypedConfiguration.newConfigItem(WysiwygControlProvider.Config.class));
 	}

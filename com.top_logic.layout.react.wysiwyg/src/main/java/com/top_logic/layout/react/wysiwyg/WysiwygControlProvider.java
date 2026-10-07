@@ -7,6 +7,10 @@ package com.top_logic.layout.react.wysiwyg;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
@@ -92,6 +96,12 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 
 	}
 
+	/**
+	 * The HTML elements that display content without containing any text.
+	 */
+	private static final Set<String> CONTENT_ELEMENTS =
+		Set.of("img", "picture", "video", "audio", "iframe", "object", "embed", "svg", "canvas", "hr", "input");
+
 	private final List<ViewCommand> _commands = new ArrayList<>();
 
 	private final List<ViewCommand.Config> _commandConfigs = new ArrayList<>();
@@ -129,6 +139,50 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 			return htmlPreview(text);
 		}
 		return ReactFieldControlProvider.super.previewText(field, value);
+	}
+
+	@Override
+	public boolean isEmpty(FieldSpec field, Object value) {
+		if (value instanceof StructuredText text) {
+			return isEmptyHtml(text);
+		}
+		return ReactFieldControlProvider.super.isEmpty(field, value);
+	}
+
+	/**
+	 * Whether the given formatted text displays nothing: it has no embedded images, and its source
+	 * holds neither text other than white space nor an element showing content of its own, such as
+	 * an image referenced by its address.
+	 *
+	 * <p>
+	 * What an editor leaves behind when its content is deleted - an empty paragraph, a line break -
+	 * is thereby empty, too.
+	 * </p>
+	 *
+	 * @param text
+	 *        The formatted text, or {@code null}.
+	 */
+	public static boolean isEmptyHtml(StructuredText text) {
+		if (text == null) {
+			return true;
+		}
+		if (!StructuredText.getImagesNullSafe(text).isEmpty()) {
+			return false;
+		}
+		String source = text.getSourceCode();
+		if (source == null || source.isBlank()) {
+			return true;
+		}
+		Element body = Jsoup.parseBodyFragment(source).body();
+		if (!RegExpUtil.normalizeWhitespace(body.text()).isBlank()) {
+			return false;
+		}
+		for (Element element : body.getAllElements()) {
+			if (CONTENT_ELEMENTS.contains(element.normalName())) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

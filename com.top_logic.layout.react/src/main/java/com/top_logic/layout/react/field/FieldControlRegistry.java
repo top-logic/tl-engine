@@ -218,7 +218,9 @@ public class FieldControlRegistry {
 			FieldSpec fullField = field.copy().setCompact(false);
 			return new ReactCompactFieldControl(context, model, field.getLabel(),
 				value -> previewText(field, provider, value),
-				(dialogContext, buffer) -> createControl(dialogContext, fullField, buffer, provider));
+				value -> isEmpty(field, provider, value),
+				(ReactContext dialogContext, FieldModel buffer) -> createControl(dialogContext, fullField, buffer,
+					provider));
 		}
 		if (field.isMultiple() && !provider.editsCollections()) {
 			return new ReactValueListControl(context, model, field, provider);
@@ -276,6 +278,35 @@ public class FieldControlRegistry {
 			return result.toString();
 		}
 		return provider.previewText(field, value);
+	}
+
+	/**
+	 * Whether the given value of the given field has no content to display.
+	 *
+	 * <p>
+	 * For a field holding {@link FieldSpec#isMultiple() several values} the provider edits one at a
+	 * time, whether each of its values is {@link ReactFieldControlProvider#isEmpty(FieldSpec, Object)
+	 * empty} for the provider. Otherwise whether the provider finds the value as a whole empty.
+	 * </p>
+	 *
+	 * @param field
+	 *        What is being edited.
+	 * @param provider
+	 *        Creates the control editing a value of this field's type.
+	 * @param value
+	 *        The value to check; the whole collection for a multi-valued field.
+	 */
+	public static boolean isEmpty(FieldSpec field, ReactFieldControlProvider provider, Object value) {
+		if (field.isMultiple() && !provider.editsCollections()) {
+			FieldSpec elementSpec = field.elementSpec();
+			for (Object element : ListElementFieldModel.elementsOfValue(value)) {
+				if (!provider.isEmpty(elementSpec, element)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return provider.isEmpty(field, value);
 	}
 
 	/**

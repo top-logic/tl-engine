@@ -8,6 +8,7 @@ package com.top_logic.layout.view.form;
 import java.util.Collection;
 import java.util.List;
 
+import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
@@ -59,7 +60,7 @@ public class CompositionEditing implements ReactCompactFieldControl.Editing {
 	 */
 	public static ReactControl createControl(ReactContext context, CompositionCellModel model, String label) {
 		return new ReactCompactFieldControl(context, model, label, CompositionEditing::previewText,
-			new CompositionEditing(model));
+			Utils::isEmpty, new CompositionEditing(model));
 	}
 
 	/**

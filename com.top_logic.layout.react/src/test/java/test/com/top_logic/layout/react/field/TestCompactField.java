@@ -43,6 +43,9 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
  */
 public class TestCompactField extends TestCase {
 
+	/** A value the provider of {@link #testProviderDecidesEmptiness()} finds empty. */
+	private static final String EMPTY_CONTENT = "<p></p>";
+
 	/** The command a button is pressed with. */
 	private static final String CLICK = "click";
 
@@ -292,6 +295,32 @@ public class TestCompactField extends TestCase {
 	}
 
 	/**
+	 * A mandatory field is refused a value the provider finds without content, though it is no
+	 * empty text: the same emptiness decides whether the opener is offered.
+	 */
+	public void testOkRefusedOnMandatoryValueWithoutContent() {
+		AbstractFieldModel model = new AbstractFieldModel("A");
+		model.setMandatory(true);
+		RecordingProvider provider = new RecordingProvider() {
+			@Override
+			public boolean isEmpty(FieldSpec field, Object value) {
+				return EMPTY_CONTENT.equals(value) || super.isEmpty(field, value);
+			}
+		};
+		ReactCompactFieldControl compact = compactText(model, provider);
+
+		open(compact);
+		ReactControl dialog = _dialogs._open;
+		FieldModel buffer = provider._lastModel;
+		buffer.setValue(EMPTY_CONTENT);
+		dialogButtons().get(1).executeCommand(CLICK, Map.of());
+
+		assertEquals("A", model.getValue());
+		assertSame("The dialog stays open", dialog, _dialogs._open);
+		assertTrue("The editor shows the missing value", buffer.hasError());
+	}
+
+	/**
 	 * OK is refused while a mandatory field is empty, and the editor shows why.
 	 */
 	public void testOkRefusedOnMissingMandatoryValue() {
@@ -363,6 +392,47 @@ public class TestCompactField extends TestCase {
 
 		model.setValue(null);
 		assertFalse(compact.isOpenerShown());
+	}
+
+	/**
+	 * What counts as no value is decided by the provider: a value without content, though not
+	 * {@code null}, offers no dialog in a read-only field either.
+	 */
+	public void testProviderDecidesEmptiness() {
+		ReactFieldControlProvider provider = new ReactFieldControlProvider() {
+			@Override
+			public ReactControl createControl(ReactContext context, FieldSpec spec, FieldModel model) {
+				return new ReactTextInputControl(context, model);
+			}
+
+			@Override
+			public boolean isLarge(FieldSpec spec) {
+				return true;
+			}
+
+			@Override
+			public boolean isEmpty(FieldSpec spec, Object value) {
+				return EMPTY_CONTENT.equals(value) || ReactFieldControlProvider.super.isEmpty(spec, value);
+			}
+		};
+		AbstractFieldModel model = new AbstractFieldModel(EMPTY_CONTENT);
+		model.setEditable(false);
+		ReactCompactFieldControl compact = compactText(model, provider);
+		assertFalse(compact.isOpenerShown());
+
+		model.setValue("content");
+		assertTrue(compact.isOpenerShown());
+	}
+
+	/**
+	 * A field of several values edited one at a time has no value while each of them has none.
+	 */
+	public void testMultipleValuesAreEmptyWhenAllAre() {
+		FieldSpec field = FieldSpec.of(String.class, "Names").setMultiple(true);
+
+		assertTrue(FieldControlRegistry.isEmpty(field, FieldControlRegistry.TEXT, List.of()));
+		assertTrue(FieldControlRegistry.isEmpty(field, FieldControlRegistry.TEXT, List.of("", "")));
+		assertFalse(FieldControlRegistry.isEmpty(field, FieldControlRegistry.TEXT, List.of("", "A")));
 	}
 
 	/**
@@ -444,7 +514,7 @@ public class TestCompactField extends TestCase {
 	/**
 	 * A text provider recording the field and model of the last control it created.
 	 */
-	private static final class RecordingProvider implements ReactFieldControlProvider {
+	private static class RecordingProvider implements ReactFieldControlProvider {
 
 		FieldSpec _lastField;
 

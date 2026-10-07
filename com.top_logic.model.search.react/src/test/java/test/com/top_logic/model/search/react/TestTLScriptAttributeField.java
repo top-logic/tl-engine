@@ -40,6 +40,9 @@ public class TestTLScriptAttributeField extends AbstractSearchExpressionTest {
 	/** The command the editor reports an edit of the user with. */
 	private static final String CMD_VALUE_CHANGED = "valueChanged";
 
+	/** The state key of whether the editor takes no input. */
+	private static final String READ_ONLY = "readOnly";
+
 	/** The argument and state key of the edited text. */
 	private static final String VALUE = "value";
 
@@ -120,14 +123,57 @@ public class TestTLScriptAttributeField extends AbstractSearchExpressionTest {
 	public void testInvalidScriptIsReported() {
 		SearchExpression original = ExprStorageMapping.INSTANCE.getBusinessObject("1 + 2");
 		AbstractFieldModel model = new AbstractFieldModel(original);
-		// The error is displayed as soon as the field has been edited.
-		model.setRevealed(true);
+		ReactControl control = new TLScriptFieldControlProvider().createControl(_context, scriptField(), model);
+
+		control.executeCommand(CMD_VALUE_CHANGED, Map.of(VALUE, "x -> ("));
+
+		assertTrue("The input error keeps a form from saving and a dialog from confirming", model.hasError());
+		assertNotNull(model.getError());
+		assertSame(original, model.getValue());
+
+		control.executeCommand(CMD_VALUE_CHANGED, Map.of(VALUE, "x -> $x"));
+
+		assertFalse("A corrected script clears the error", model.hasError());
+		assertEquals("x -> $x", ExprStorageMapping.INSTANCE.getStorageObject(model.getValue()));
+	}
+
+	/**
+	 * A value replacing the one the user could not enter clears the input error: the editor shows
+	 * that value now.
+	 */
+	public void testNewValueClearsInputError() {
+		AbstractFieldModel model = new AbstractFieldModel(null);
 		ReactControl control = new TLScriptFieldControlProvider().createControl(_context, scriptField(), model);
 
 		control.executeCommand(CMD_VALUE_CHANGED, Map.of(VALUE, "1 +"));
-
 		assertTrue(model.hasError());
-		assertSame(original, model.getValue());
+
+		model.setValue(ExprStorageMapping.INSTANCE.getBusinessObject("2"));
+		assertFalse(model.hasError());
+		assertEquals("2", control.scriptingScalarState().get(VALUE));
+	}
+
+	/**
+	 * The editor accepts input only while the field is editable, and follows changes of its
+	 * editability.
+	 */
+	public void testEditorFollowsEditability() {
+		SearchExpression original = ExprStorageMapping.INSTANCE.getBusinessObject("1");
+		AbstractFieldModel model = new AbstractFieldModel(original);
+		model.setEditable(false);
+		ReactControl control = new TLScriptFieldControlProvider().createControl(_context, scriptField(), model);
+		assertEquals(Boolean.TRUE, control.scriptingScalarState().get(READ_ONLY));
+
+		control.executeCommand(CMD_VALUE_CHANGED, Map.of(VALUE, "2"));
+		assertSame("A read-only editor takes no input", original, model.getValue());
+
+		model.setEditable(true);
+		assertEquals(Boolean.FALSE, control.scriptingScalarState().get(READ_ONLY));
+		control.executeCommand(CMD_VALUE_CHANGED, Map.of(VALUE, "2"));
+		assertEquals("2", ExprStorageMapping.INSTANCE.getStorageObject(model.getValue()));
+
+		model.setEditable(false);
+		assertEquals(Boolean.TRUE, control.scriptingScalarState().get(READ_ONLY));
 	}
 
 	private static FieldSpec scriptField() {

@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.form.model.AbstractFieldModel;
@@ -54,12 +55,13 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * A field that may not be edited and holds no value has nothing to show in a dialog: its opener is
- * hidden until the field holds a value or becomes editable.
+ * A field that may not be edited and holds no value - what counts as none is decided per kind of
+ * value, an HTML text without text and images for instance - has nothing to show in a dialog: its
+ * opener is hidden until the field holds a value or becomes editable.
  * </p>
  *
  * <p>
- * The {@link #ReactCompactFieldControl(ReactContext, FieldModel, String, Function, EditorFactory)
+ * The {@link #ReactCompactFieldControl(ReactContext, FieldModel, String, Function, Predicate, EditorFactory)
  * editing of a value} works on a copy of the value. OK writes the copy to the field, Cancel
  * discards it, so the field changes once, when the user confirms. OK keeps the dialog open as long
  * as the copy is not valid: while the editor reports an error, or while a mandatory field is
@@ -157,6 +159,8 @@ public class ReactCompactFieldControl extends ReactStackControl {
 
 	private final Function<Object, String> _previewText;
 
+	private final Predicate<Object> _isEmpty;
+
 	private final Editing _editing;
 
 	private final ReactTextControl _preview;
@@ -176,12 +180,14 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	 *        The label of the field, naming the dialog, or {@code null} for a generic title.
 	 * @param previewText
 	 *        Produces the single line of text standing for a value of the field.
+	 * @param isEmpty
+	 *        Whether a value of the field has no content to display.
 	 * @param editorFactory
 	 *        Creates the editor of a copy of the value displayed in the dialog.
 	 */
 	public ReactCompactFieldControl(ReactContext context, FieldModel model, String label,
-			Function<Object, String> previewText, EditorFactory editorFactory) {
-		this(context, model, label, previewText, bufferedEditing(editorFactory));
+			Function<Object, String> previewText, Predicate<Object> isEmpty, EditorFactory editorFactory) {
+		this(context, model, label, previewText, isEmpty, bufferedEditing(editorFactory, isEmpty));
 	}
 
 	/**
@@ -196,15 +202,19 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	 *        The label of the field, naming the dialog, or {@code null} for a generic title.
 	 * @param previewText
 	 *        Produces the single line of text standing for a value of the field.
+	 * @param isEmpty
+	 *        Whether a value of the field has no content to display. A field that may not be
+	 *        edited offers no dialog for such a value.
 	 * @param editing
 	 *        Opens the edit taking place in the dialog.
 	 */
 	public ReactCompactFieldControl(ReactContext context, FieldModel model, String label,
-			Function<Object, String> previewText, Editing editing) {
+			Function<Object, String> previewText, Predicate<Object> isEmpty, Editing editing) {
 		super(context, StackDirection.ROW, StackGap.COMPACT, StackAlign.CENTER, false, List.of());
 		_model = model;
 		_label = label;
 		_previewText = previewText;
+		_isEmpty = isEmpty;
 		_editing = editing;
 
 		_preview = new ReactTextControl(context, previewText.apply(model.getValue()));
@@ -270,7 +280,7 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	 * entering one.
 	 */
 	private void updateOpener() {
-		_opener.setHidden(!_model.isEditable() && isEmpty(_model.getValue()));
+		_opener.setHidden(!_model.isEditable() && _isEmpty.test(_model.getValue()));
 	}
 
 	/**
@@ -367,9 +377,12 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	 *
 	 * @param editorFactory
 	 *        Creates the editor of the copy.
+	 * @param isEmpty
+	 *        Whether a value of the field has no content, which a
+	 *        {@link FieldModel#isMandatory() mandatory} field must not be confirmed with.
 	 */
-	public static Editing bufferedEditing(EditorFactory editorFactory) {
-		return (model, editable) -> new BufferedEditorSession(model, editable, editorFactory);
+	public static Editing bufferedEditing(EditorFactory editorFactory, Predicate<Object> isEmpty) {
+		return (model, editable) -> new BufferedEditorSession(model, editable, editorFactory, isEmpty);
 	}
 
 	/**
@@ -383,9 +396,13 @@ public class ReactCompactFieldControl extends ReactStackControl {
 
 		private final EditorFactory _editorFactory;
 
-		BufferedEditorSession(FieldModel model, boolean editable, EditorFactory editorFactory) {
+		private final Predicate<Object> _isEmpty;
+
+		BufferedEditorSession(FieldModel model, boolean editable, EditorFactory editorFactory,
+				Predicate<Object> isEmpty) {
 			_model = model;
 			_editorFactory = editorFactory;
+			_isEmpty = isEmpty;
 			_buffer = new AbstractFieldModel(copyValue(model.getValue()));
 			_buffer.setMandatory(model.isMandatory());
 			_buffer.setNullable(model.isNullable());
@@ -395,7 +412,7 @@ public class ReactCompactFieldControl extends ReactStackControl {
 				public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
 					if (_buffer.isRevealed()) {
 						// Once reported, the missing value is reported as long as it is missing.
-						validateMandatory(_buffer);
+						validateMandatory(_buffer, _isEmpty);
 					}
 				}
 
@@ -426,7 +443,7 @@ public class ReactCompactFieldControl extends ReactStackControl {
 		 */
 		@Override
 		public boolean apply() {
-			if (!isValid(_buffer)) {
+			if (!isValid(_buffer, _isEmpty)) {
 				return false;
 			}
 			if (_model.isEditable()) {
@@ -451,8 +468,8 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	 * makes the editor display them.
 	 * </p>
 	 */
-	private static boolean isValid(AbstractFieldModel buffer) {
-		validateMandatory(buffer);
+	private static boolean isValid(AbstractFieldModel buffer, Predicate<Object> isEmpty) {
+		validateMandatory(buffer, isEmpty);
 		buffer.setRevealed(true);
 		return !buffer.hasError();
 	}
@@ -460,26 +477,13 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	/**
 	 * Reports a missing value of a {@link FieldModel#isMandatory() mandatory} field as an error of
 	 * the given copy, and withdraws the report once a value is given.
+	 *
+	 * @param isEmpty
+	 *        Whether a value of the field has no content.
 	 */
-	private static void validateMandatory(AbstractFieldModel buffer) {
-		boolean missing = buffer.isMandatory() && isEmpty(buffer.getValue());
+	private static void validateMandatory(AbstractFieldModel buffer, Predicate<Object> isEmpty) {
+		boolean missing = buffer.isMandatory() && isEmpty.test(buffer.getValue());
 		buffer.setModelValidationError(missing ? I18NConstants.COMPACT_FIELD_ERROR_VALUE_REQUIRED : null);
-	}
-
-	/**
-	 * Whether the given value is no value: {@code null}, an empty text, or an empty collection.
-	 */
-	private static boolean isEmpty(Object value) {
-		if (value == null) {
-			return true;
-		}
-		if (value instanceof CharSequence text) {
-			return text.length() == 0;
-		}
-		if (value instanceof Collection<?> collection) {
-			return collection.isEmpty();
-		}
-		return false;
 	}
 
 	/** The dialog title, naming the field when its label is known. */

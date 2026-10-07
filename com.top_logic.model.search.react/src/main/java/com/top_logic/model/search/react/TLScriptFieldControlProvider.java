@@ -10,6 +10,8 @@ import java.util.List;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.ReactContext;
@@ -37,7 +39,9 @@ import com.top_logic.model.search.persistency.attribute.expr.ExprStorageMapping;
  * </ul>
  * <p>
  * Which form the field holds is told by its {@link FieldSpec#getValueType() value type}. A script
- * that cannot be read is reported on the field and leaves the stored value untouched.
+ * that cannot be read is reported on the field as an input error and leaves the stored value
+ * untouched; while the error is reported, the value is not confirmed. The editor accepts input while
+ * the field is editable and follows changes of its editability.
  * </p>
  *
  * <p>
@@ -51,22 +55,23 @@ public class TLScriptFieldControlProvider implements ReactFieldControlProvider {
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		ConfigurationValueProvider<Object> format = format(field);
 		TLScriptEditorReactControl control =
-			new TLScriptEditorReactControl(context, source(format, model.getValue()), !field.isEditable(),
-				List.of());
+			new TLScriptEditorReactControl(context, source(format, model.getValue()),
+				!isEditable(field, model.isEditable()), List.of());
 
-		if (field.isEditable()) {
-			control.setValueCallback(text -> store(format, model, text));
-		}
+		// The editor itself drops edits while it is read-only.
+		control.setValueCallback(text -> store(format, model, text));
 
 		FieldModelListener listener = new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+				// The editor now shows the new value, so no input of the user is pending any more.
+				setInputError(source, null);
 				control.setValue(source(format, newValue));
 			}
 
 			@Override
 			public void onEditabilityChanged(FieldModel source, boolean editable) {
-				// The editor is created for the state the field has; a later change is not reflected.
+				control.setReadOnly(!isEditable(field, editable));
 			}
 
 			@Override
@@ -88,6 +93,13 @@ public class TLScriptFieldControlProvider implements ReactFieldControlProvider {
 	@Override
 	public String previewText(FieldSpec field, Object value) {
 		return ReactFieldControlProvider.firstNonBlankLine(source(format(field), value));
+	}
+
+	/**
+	 * Whether the editor of the given field accepts input while its model has the given editability.
+	 */
+	private static boolean isEditable(FieldSpec field, boolean modelEditable) {
+		return field.isEditable() && modelEditable;
 	}
 
 	/**
@@ -123,19 +135,42 @@ public class TLScriptFieldControlProvider implements ReactFieldControlProvider {
 	 */
 	private static void store(ConfigurationValueProvider<Object> format, FieldModel model, String text) {
 		if (text == null || text.isBlank()) {
+			setInputError(model, null);
 			model.setValue(null);
-			model.setModelValidationError(null);
 			return;
 		}
+		Object value;
 		try {
-			Object value = format.getValue(TLScriptFieldControlProvider.class.getName(), text);
-			model.setValue(value);
-			model.setModelValidationError(null);
+			value = format.getValue(TLScriptFieldControlProvider.class.getName(), text);
 		} catch (ConfigurationException ex) {
-			model.setModelValidationError(ex.getErrorKey());
+			setInputError(model, ex.getErrorKey());
+			return;
 		} catch (I18NRuntimeException ex) {
 			// A script that parses may still refer to something the model does not have.
-			model.setModelValidationError(ex.getErrorKey());
+			setInputError(model, ex.getErrorKey());
+			return;
+		}
+		setInputError(model, null);
+		model.setValue(value);
+	}
+
+	/**
+	 * Reports that the text in the editor cannot be read, or that it can again.
+	 *
+	 * <p>
+	 * An input error, as a text field reports a number it cannot read: the field is in error as
+	 * long as the text is not corrected, so that neither a form nor a dialog confirms the value the
+	 * field still holds as if it were the entered one.
+	 * </p>
+	 *
+	 * @param error
+	 *        The error, or {@code null} to clear it.
+	 */
+	private static void setInputError(FieldModel model, ResKey error) {
+		if (model instanceof AbstractFieldModel abstractModel) {
+			abstractModel.setError(error);
+		} else {
+			model.setModelValidationError(error);
 		}
 	}
 

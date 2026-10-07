@@ -7,6 +7,8 @@ package com.top_logic.layout.react.field;
 
 import java.util.Collection;
 
+import com.top_logic.basic.util.Utils;
+import com.top_logic.basic.util.WithEmptiness;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.provider.CollectionLabelProvider;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -111,6 +113,30 @@ public interface ReactFieldControlProvider {
 	 */
 	default boolean isLarge(FieldSpec field) {
 		return false;
+	}
+
+	/**
+	 * Whether the given value has no content to display.
+	 *
+	 * <p>
+	 * Where a field that may not be edited is displayed {@link FieldSpec#isCompact() compactly}, an
+	 * empty value offers no dialog: there is nothing to show in it. By default {@code null}, the
+	 * empty text, an empty collection, and a value that {@link WithEmptiness says} it is empty, see
+	 * {@link Utils#isEmpty(Object)}.
+	 * </p>
+	 *
+	 * <p>
+	 * Not the same as an empty {@link #previewText(FieldSpec, Object) preview}: a value may have
+	 * content that a line of text cannot show, an image for instance.
+	 * </p>
+	 *
+	 * @param field
+	 *        What is being edited.
+	 * @param value
+	 *        The value to check, or {@code null}.
+	 */
+	default boolean isEmpty(FieldSpec field, Object value) {
+		return Utils.isEmpty(value);
 	}
 
 	/**

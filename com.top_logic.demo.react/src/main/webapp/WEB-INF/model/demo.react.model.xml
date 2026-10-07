@@ -488,6 +488,13 @@
 					<property name="amount"
 						type="tl.core:Double"
 					/>
+					<reference name="parts"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						ordered="true"
+						type="DemoPart"
+					/>
 				</attributes>
 			</class>
 		</module>

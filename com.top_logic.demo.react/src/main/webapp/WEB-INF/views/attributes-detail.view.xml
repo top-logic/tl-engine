@@ -154,6 +154,7 @@
 					<columns>
 						<column attribute="name"/>
 						<column attribute="amount"/>
+						<column attribute="parts"/>
 					</columns>
 				</composition-table>
 			</group>

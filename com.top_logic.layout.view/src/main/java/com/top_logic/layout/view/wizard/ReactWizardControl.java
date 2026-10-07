@@ -15,6 +15,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -137,8 +138,6 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 
 	private final WizardScope _scope;
 
-	private final ChannelListener _stepListener;
-
 	private final List<WizardStep> _steps;
 
 	/** The identifier each step key is published under. */
@@ -180,14 +179,13 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 		expandSteps();
 		_scope = new WizardScope(stepChannel, this::steps);
 
-		_stepListener = (sender, oldValue, newValue) -> displayCurrentStep();
-		_stepChannel.addListener(_stepListener);
-		addCleanupAction(() -> _stepChannel.removeListener(_stepListener));
+		Registration stepRegistration = _stepChannel.addListener((sender, oldValue, newValue) -> displayCurrentStep());
+		addCleanupAction(stepRegistration::dispose);
 
 		ChannelListener sequenceListener = (sender, oldValue, newValue) -> refreshSteps();
 		for (ViewChannel channel : sequenceChannels()) {
-			channel.addListener(sequenceListener);
-			addCleanupAction(() -> channel.removeListener(sequenceListener));
+			Registration sequenceRegistration = channel.addListener(sequenceListener);
+			addCleanupAction(sequenceRegistration::dispose);
 		}
 
 		RevealRegistry registry = context.getRevealRegistry();

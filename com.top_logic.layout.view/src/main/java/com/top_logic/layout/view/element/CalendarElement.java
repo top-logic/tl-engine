@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.calendar.CalendarViewControl;
 import com.top_logic.layout.react.control.calendar.CalendarViewControl.Granularity;
@@ -370,8 +371,8 @@ public class CalendarElement implements UIElement {
 				}
 			};
 			ViewChannel.ChannelListener channelListener = (sender, oldValue, newValue) -> reapplySelection[0].run();
-			selectionChannel.addListener(channelListener);
-			control.addCleanupAction(() -> selectionChannel.removeListener(channelListener));
+			Registration channelRegistration = selectionChannel.addListener(channelListener);
+			control.addCleanupAction(channelRegistration::dispose);
 			reapplySelection[0].run();
 		}
 

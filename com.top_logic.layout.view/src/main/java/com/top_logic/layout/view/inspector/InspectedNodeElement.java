@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.react.control.IReactControl;
@@ -181,8 +182,8 @@ public class InspectedNodeElement implements UIElement {
 			actionSource.setElements(actions(current));
 			actionTable.refreshData();
 		};
-		nodeChannel.addListener(listener);
-		result.addCleanupAction(() -> nodeChannel.removeListener(listener));
+		Registration registration = nodeChannel.addListener(listener);
+		result.addCleanupAction(registration::dispose);
 
 		return result;
 	}

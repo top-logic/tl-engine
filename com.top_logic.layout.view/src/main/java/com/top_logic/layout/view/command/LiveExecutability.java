@@ -8,6 +8,7 @@ package com.top_logic.layout.view.command;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -54,9 +55,10 @@ public class LiveExecutability {
 	private final Runnable _onChange;
 
 	/**
-	 * Reports a new value of the {@link #_inputChannel input channel} to the change callback.
+	 * The registration reporting a new value of the {@link #_inputChannel input channel} to the
+	 * change callback, while attached.
 	 */
-	private final ViewChannel.ChannelListener _inputListener;
+	private Registration _inputRegistration = Registration.NONE;
 
 	private final ChannelObjectObserver _inputObserver;
 
@@ -87,7 +89,6 @@ public class LiveExecutability {
 		_rule = rule;
 		_inputChannel = inputChannel;
 		_onChange = onChange;
-		_inputListener = (sender, oldValue, newValue) -> onChange.run();
 
 		List<ViewChannel> observedChannels = inputChannel == null ? List.of() : List.of(inputChannel);
 		_inputObserver = new ChannelObjectObserver(observedChannels, observedTypes, onChange);
@@ -181,7 +182,7 @@ public class LiveExecutability {
 		}
 		_attached = true;
 		if (_inputChannel != null) {
-			_inputChannel.addListener(_inputListener);
+			_inputRegistration = _inputChannel.addListener((sender, oldValue, newValue) -> _onChange.run());
 		}
 		if (_rule instanceof ObservableRule observable) {
 			_ruleObservation = observable.observe(_onChange);
@@ -201,9 +202,8 @@ public class LiveExecutability {
 			return;
 		}
 		_attached = false;
-		if (_inputChannel != null) {
-			_inputChannel.removeListener(_inputListener);
-		}
+		_inputRegistration.dispose();
+		_inputRegistration = Registration.NONE;
 		if (_ruleObservation != null) {
 			_ruleObservation.run();
 			_ruleObservation = null;

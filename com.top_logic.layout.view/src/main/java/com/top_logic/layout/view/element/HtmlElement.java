@@ -20,6 +20,7 @@ import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.html.ReactHtmlControl;
 import com.top_logic.layout.view.HtmlValues;
@@ -171,8 +172,8 @@ public class HtmlElement implements UIElement {
 		display(control, channel.get());
 
 		ChannelListener listener = (sender, oldValue, newValue) -> display(control, newValue);
-		channel.addListener(listener);
-		control.addCleanupAction(() -> channel.removeListener(listener));
+		Registration registration = channel.addListener(listener);
+		control.addCleanupAction(registration::dispose);
 
 		return control;
 	}

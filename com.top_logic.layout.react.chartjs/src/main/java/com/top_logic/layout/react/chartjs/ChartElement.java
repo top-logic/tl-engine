@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
@@ -167,8 +168,8 @@ public class ChartElement implements UIElement {
 				Object[] values = ChannelInputs.arguments(channels);
 				control.updateChartData(values);
 			};
-			channel.addListener(listener);
-			control.addCleanupAction(() -> channel.removeListener(listener));
+			Registration registration = channel.addListener(listener);
+			control.addCleanupAction(registration::dispose);
 		}
 
 		return control;

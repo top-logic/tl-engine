@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactControl;
@@ -110,8 +111,8 @@ public class ScriptResultControl extends ReactControl {
 
 		if (dataChannel != null) {
 			ChannelListener listener = (sender, oldValue, newValue) -> rebuild(newValue);
-			dataChannel.addListener(listener);
-			addCleanupAction(() -> dataChannel.removeListener(listener));
+			Registration registration = dataChannel.addListener(listener);
+			addCleanupAction(registration::dispose);
 		}
 	}
 

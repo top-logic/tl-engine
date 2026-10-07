@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.sql.LoggingDataSourceProxy.Statistics;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
@@ -109,8 +110,8 @@ public class SqlStatisticsTable implements UIElement {
 			source.setElements(rows(newValue));
 			control.refreshData();
 		};
-		channel.addListener(listener);
-		control.addCleanupAction(() -> channel.removeListener(listener));
+		Registration registration = channel.addListener(listener);
+		control.addCleanupAction(registration::dispose);
 
 		control.setCssClass(_cssClass);
 		return control;

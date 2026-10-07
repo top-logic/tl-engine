@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -140,8 +141,8 @@ public class TLScriptEditorElement implements UIElement {
 			control.setValueCallback(channel::set);
 			ChannelListener listener =
 				(sender, oldValue, newValue) -> control.setValue(newValue == null ? "" : newValue.toString());
-			channel.addListener(listener);
-			control.addCleanupAction(() -> channel.removeListener(listener));
+			Registration registration = channel.addListener(listener);
+			control.addCleanupAction(registration::dispose);
 		}
 
 		control.setCssClass(_cssClass);

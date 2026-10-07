@@ -1,4 +1,9 @@
-# FAQ: Upgrading an application from TopLogic 7.11 to 8.0
+---
+description: Read when upgrading an existing application from TopLogic 7.11 to 8.0 - the phase-by-phase runbook for the POM and encoding, the security rewrite (InitialRolesManager, role rules, <security-config>), login, configuration and layouts, removed Java API, model, database migrations and tests.
+order: 80
+---
+
+# Upgrading an application from TopLogic 7.11 to 8.0
 
 This is the runbook for a **purely technical upgrade** of an existing application from
 TL 7.11.0 to TL 8.0.0: the application keeps its classic layout UI and must build and run on the
@@ -282,7 +287,7 @@ concept: `specs/model-based-access-rights.md`.
 class of the module) from access control, so every user may read, modify, create and delete its
 objects, whatever roles they hold. It can keep an application usable while its grants are not yet
 written, but it must be removed again once they are. A type that only the application code touches
-is marked `internal="true"` instead (see [access-configuration.md](access-configuration.md)).
+is marked `internal="true"` instead (see [Model based access configuration](doc:access-configuration)).
 
 Not checked: derived attributes, constraints, system context, administrators. `all()` and
 `kbQuery()` return unfiltered results (`filterSecurity()` if needed). **A script executed without a
@@ -523,7 +528,7 @@ The ~2000 other removed lines in the diff are the UTF-8 re-encoding of `_de` bun
 
 Deprecations are almost absent in the range (only `Environment.DEVELOPER_MODE` and `isJarFile()`):
 breaking changes were made by removal, so compile the app (including tests, see
-[build-conformance.md](build-conformance.md): `-DskipTests=true` skips test compilation).
+[Build conformance](doc:engine/build-conformance#-dskipteststrue-also-skips-test-compilation): `-DskipTests=true` skips test compilation).
 
 ### 6.2 Silent runtime changes (no compile error)
 
@@ -676,7 +681,7 @@ case-insensitive.
   `StructuredTextNamingScheme$Name` values (#28694); date assertions may shift with the `dateFormat()`
   time zone (6.3). Person fixtures with invalid or case-colliding names now throw.
 - `TestComment` now accepts `record` (relaxation); layout normalization and the other CI gates are
-  unchanged, see [build-conformance.md](build-conformance.md).
+  unchanged, see [Build conformance & CI gates](doc:engine/build-conformance).
 - The test container overlays test fragments in memory over `autoconf` (#29414): app test setups that
   swapped `metaConf.txt` should re-check their configuration.
 

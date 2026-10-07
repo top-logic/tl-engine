@@ -723,9 +723,9 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	}
 
 	/**
-	 * The cell content displaying a value: its view-mode form display (see
-	 * {@link FieldControlService#createDisplayControl(ReactContext, ColumnType, Object)}), or the
-	 * value's display label as plain text when nothing is known about its type.
+	 * The cell content displaying a value: its view-mode form display described for a table cell
+	 * (see {@link FieldControlService#createDisplayControl(ReactContext, ColumnType, Object)}), or
+	 * the value's display label as plain text when nothing is known about its type.
 	 *
 	 * @param type
 	 *        What the column's values are, see {@link ColumnType}.

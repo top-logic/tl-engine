@@ -130,6 +130,9 @@
 							ordered="true"
 							type="Step"
 						/>
+						<reference name="predecessor"
+							type="Step"
+						/>
 						<reference name="items"
 							composite="true"
 							multiple="true"

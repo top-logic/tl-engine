@@ -233,6 +233,52 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	}
 
 	/**
+	 * The attributes this overlay holds a value for, in the order they were first written.
+	 *
+	 * @see #isChanged(TLStructuredTypePart)
+	 */
+	public List<TLStructuredTypePart> getChangedParts() {
+		return new ArrayList<>(_changes.keySet());
+	}
+
+	/**
+	 * Whether the value this overlay holds for the given attribute differs from the value of the
+	 * base object, comparing overlays by the objects they stand for.
+	 *
+	 * <p>
+	 * A reference value that only replaces objects by their overlays is no modification: what
+	 * changed is within the referenced objects, which their own overlays hold.
+	 * </p>
+	 *
+	 * @see #isDirty()
+	 */
+	public boolean isModified(TLStructuredTypePart part) {
+		return _changes.containsKey(part) && isChange(_changes.get(part), _base.tValue(part));
+	}
+
+	/**
+	 * Transfers all accumulated changes to a base object that is itself an editing buffer - another
+	 * overlay or a transient object - and discards them here.
+	 *
+	 * <p>
+	 * No rights are checked: nothing is stored, the base object only buffers the changes as well.
+	 * The rights are checked when the changes are stored.
+	 * </p>
+	 *
+	 * @throws IllegalStateException
+	 *         If the base object is a persistent object, see {@link #apply()}.
+	 */
+	public void applyToBuffer() {
+		if (!(_base instanceof TLObjectOverlay) && !_base.tTransient()) {
+			throw new IllegalStateException("The base of an overlay is no editing buffer: " + _base);
+		}
+		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
+			_base.tUpdate(entry.getKey(), entry.getValue());
+		}
+		_changes.clear();
+	}
+
+	/**
 	 * Ensures that the current user may write all changes {@link #apply()} would transfer.
 	 *
 	 * <p>

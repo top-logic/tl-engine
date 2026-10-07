@@ -140,6 +140,9 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 	/** Name of the {@link #STEP} composition of {@link #STEP}s. */
 	protected static final String SUBSTEPS = "substeps";
 
+	/** Name of the {@link #STEP} reference to another {@link #STEP}, which is no composition. */
+	protected static final String PREDECESSOR = "predecessor";
+
 	/**
 	 * Name of the type of the compositions {@link #ITEMS} and {@link #LOCKED_ITEMS} of a
 	 * {@link #STEP}, with a mandatory {@link #NAME}.

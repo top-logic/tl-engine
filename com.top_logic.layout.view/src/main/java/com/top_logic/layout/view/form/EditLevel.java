@@ -209,6 +209,85 @@ public class EditLevel {
 	}
 
 	/**
+	 * Whether the given value holds a change: a new object, or an overlay that modifies an
+	 * attribute of its object or holds such a change in a composition.
+	 *
+	 * <p>
+	 * Only the buffers in the value and in their compositions are visited.
+	 * </p>
+	 */
+	public static boolean isModified(Object value) {
+		if (value instanceof Collection<?> collection) {
+			for (Object element : collection) {
+				if (isModified(element)) {
+					return true;
+				}
+			}
+			return false;
+		}
+		if (value instanceof TLObjectOverlay overlay) {
+			for (TLStructuredTypePart part : overlay.getChangedParts()) {
+				if (overlay.isModified(part)) {
+					return true;
+				}
+				if (isComposition(part) && isModified(overlay.tValue(part))) {
+					return true;
+				}
+			}
+			return false;
+		}
+		return value instanceof TLObject object && object.tTransient();
+	}
+
+	/**
+	 * Transfers the changes of all overlays in the given value into their bases, where the bases
+	 * are new (transient) objects: the value then holds the new objects themselves, with all their
+	 * changes, as a new object that is made persistent as a whole expects.
+	 *
+	 * <p>
+	 * Only the buffers in the value and in their values are visited. An overlay of a persistent
+	 * object stays as it is.
+	 * </p>
+	 *
+	 * @return The value with the overlays of new objects replaced by the new objects.
+	 */
+	public static Object applyToNewObjects(Object value) {
+		if (value instanceof Collection<?> collection) {
+			List<Object> elements = new ArrayList<>(collection.size());
+			boolean changed = false;
+			for (Object element : collection) {
+				Object applied = applyToNewObjects(element);
+				changed |= applied != element;
+				elements.add(applied);
+			}
+			if (!changed) {
+				return collection;
+			}
+			return collection instanceof Set<?> ? new LinkedHashSet<>(elements) : elements;
+		}
+		if (!(value instanceof TLObject object) || !object.tTransient()) {
+			// No buffer, or an overlay of a persistent object.
+			return value;
+		}
+		for (TLStructuredTypePart part : bufferedParts(object)) {
+			Object partValue = object.tValue(part);
+			Object applied = applyToNewObjects(partValue);
+			if (applied != partValue) {
+				object.tUpdate(part, applied);
+			}
+		}
+		if (object instanceof TLObjectOverlay overlay) {
+			overlay.applyToBuffer();
+			return applyToNewObjects(overlay.getBase());
+		}
+		return object;
+	}
+
+	private static boolean isComposition(TLStructuredTypePart part) {
+		return part instanceof TLReference reference && reference.isComposite();
+	}
+
+	/**
 	 * The attributes holding the values of the given buffer: the ones an overlay holds a value for,
 	 * the stored attributes of a new object.
 	 */

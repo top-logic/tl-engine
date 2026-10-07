@@ -16,18 +16,22 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl.EditorSession;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.model.TLObject;
 
 /**
  * The edit of the parts of a composition of a table row in a dialog: a
  * {@link ReactCompactFieldControl} shows the labels of the parts and opens a
- * {@link RowSetTableControl} over the {@link CompositionCellModel#session() edit session} of the
- * parts.
+ * {@link RowSetTableControl} of the parts.
  *
  * <p>
- * The dialog edits the parts within the edit session of the form: OK keeps the changes in the
- * session - the form saves them with the row - as long as the parts are valid, Cancel returns the
- * parts to the state they had when the dialog opened. When the edit session of the parts ends
- * while the dialog is open, because the form leaves edit mode, the dialog closes.
+ * The dialog edits the parts on a level of its own on top of the level the row is edited in, by a
+ * {@link RowSetEditSession#isNested() nested} {@link RowSetEditSession}: each part shown is edited
+ * through a buffer of the dialog, nothing below the parts is copied. OK writes the parts into the
+ * buffer of the row, as long as they are valid; Cancel drops the dialog's buffers, so the row is
+ * left as it was. A composition of a part is edited the same way, in a dialog opened from the
+ * dialog's table, so the edit nests as deep as the compositions do. When the edit of the row ends
+ * while the dialog is open, because the form leaves edit mode or a dialog below is closed, the
+ * dialog closes.
  * </p>
  */
 public class CompositionEditing implements ReactCompactFieldControl.Editing {
@@ -82,7 +86,14 @@ public class CompositionEditing implements ReactCompactFieldControl.Editing {
 
 	@Override
 	public EditorSession open(FieldModel model, boolean editable) {
-		return new Session(_model.session());
+		TLObject row = (TLObject) _model.getObject();
+		AttributeRowSetBinding binding = new AttributeRowSetBinding(_model.getPart().getName());
+		binding.resolve(row);
+		RowSetEditSession session =
+			new RowSetEditSession(RowSetOwner.ofRow(_model.getForm(), row), binding, _model.getLevel());
+		session.setEditable(editable);
+		session.start();
+		return new Session(_model, session);
 	}
 
 	/**
@@ -90,37 +101,24 @@ public class CompositionEditing implements ReactCompactFieldControl.Editing {
 	 */
 	private static final class Session implements EditorSession {
 
+		private final CompositionCellModel _model;
+
 		private final RowSetEditSession _session;
 
-		private final RowSetEditSession.Snapshot _snapshot;
+		private Runnable _onDispose;
 
-		private RowSetEditSession.Listener _endListener;
-
-		Session(RowSetEditSession session) {
+		Session(CompositionCellModel model, RowSetEditSession session) {
+			_model = model;
 			_session = session;
-			_snapshot = session.snapshot();
 		}
 
 		@Override
 		public ReactControl createEditor(ReactContext context, Runnable closeDialog) {
-			_endListener = new RowSetEditSession.Listener() {
-				@Override
-				public void onRowsChanged(RowSetEditSession source) {
-					// Displayed by the table.
-				}
-
-				@Override
-				public void onRowSetValidationChanged(RowSetEditSession source) {
-					// Displayed by the table.
-				}
-
-				@Override
-				public void onEnded(RowSetEditSession source) {
-					detach();
-					closeDialog.run();
-				}
+			_onDispose = () -> {
+				_session.end();
+				closeDialog.run();
 			};
-			_session.addListener(_endListener);
+			_model.addDisposeAction(_onDispose);
 
 			RowSetTableControl table =
 				new RowSetTableControl(new DefaultViewContext(context), _session, List.of(), RowEditPolicy.ALL);
@@ -130,23 +128,35 @@ public class CompositionEditing implements ReactCompactFieldControl.Editing {
 
 		@Override
 		public boolean apply() {
+			if (!_session.isEditable()) {
+				close();
+				return true;
+			}
 			if (!_session.checkValid()) {
 				return false;
 			}
+			_session.commit();
 			detach();
+			// The parts reached the row: the row's field and the form show the change.
+			_model.refreshFromObject();
+			_model.getForm().updateDirtyState();
 			return true;
 		}
 
 		@Override
 		public void revert() {
-			_session.restore(_snapshot);
+			close();
+		}
+
+		private void close() {
+			_session.end();
 			detach();
 		}
 
 		private void detach() {
-			if (_endListener != null) {
-				_session.removeListener(_endListener);
-				_endListener = null;
+			if (_onDispose != null) {
+				_model.removeDisposeAction(_onDispose);
+				_onDispose = null;
 			}
 		}
 

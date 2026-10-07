@@ -86,9 +86,27 @@ public class BufferSave {
 	 * @return The persistent objects the buffers stand for, in the same order.
 	 */
 	public static List<TLObject> save(List<? extends TLObject> buffers) {
+		return save(buffers, null, null);
+	}
+
+	/**
+	 * Stores the given buffers, which a container holds in a reference, and the buffers reachable
+	 * from them through compositions.
+	 *
+	 * @param buffers
+	 *        Buffers of a root level, or originals, which are stored as they are.
+	 * @param container
+	 *        The persistent object holding the buffers, the context new objects among them are
+	 *        created in; {@code null} for none.
+	 * @param reference
+	 *        The reference of the container holding the buffers, {@code null} for none. The value
+	 *        of the reference itself is not written.
+	 * @return The persistent objects the buffers stand for, in the same order.
+	 */
+	public static List<TLObject> save(List<? extends TLObject> buffers, TLObject container, TLReference reference) {
 		BufferSave save = new BufferSave();
 		for (TLObject buffer : buffers) {
-			save.visit(buffer, null, null);
+			save.visit(buffer, container, reference);
 		}
 		save.checkWrite();
 		save.write();
@@ -150,8 +168,8 @@ public class BufferSave {
 		TLObject context = container == null ? null : (TLObject) resolve(container);
 		ModelAccessRights rights = ModelAccessRights.getInstance();
 		Person user = TLContext.currentUser();
-		boolean allowed = context == null
-			? rights.isAllowedCreate(user, type, (TLObject) null)
+		boolean allowed = reference == null
+			? rights.isAllowedCreate(user, type, context)
 			: rights.isAllowedCreate(user, context, reference, type);
 		if (!allowed) {
 			throw new TopLogicException(I18NConstants.ERROR_PERSIST_PERMISSION_DENIED__TYPE.fill(type));

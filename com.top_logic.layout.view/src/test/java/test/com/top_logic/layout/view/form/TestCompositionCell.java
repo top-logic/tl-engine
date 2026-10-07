@@ -5,7 +5,9 @@
  */
 package test.com.top_logic.layout.view.form;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 
@@ -44,8 +46,8 @@ import com.top_logic.model.TLObject;
 
 /**
  * Tests the cell of a composition of a row edited in a table: a one-line preview of the parts with
- * a button opening the table of the parts in a dialog, which edits the parts within the edit
- * session of the form.
+ * a button opening the table of the parts in a dialog, which edits the parts on a level of its own
+ * - nested as deep as the compositions are.
  */
 public class TestCompositionCell extends AbstractModelAccessTest {
 
@@ -58,6 +60,10 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 
 	private static final String RENAMED = "renamed";
 
+	private static final String SUBSTEP = "substep";
+
+	private static final String NEW_SUBSTEP = "new substep";
+
 	private RecordingDialogManager _dialogs;
 
 	private ReactContext _context;
@@ -65,6 +71,8 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 	private TLObject _step;
 
 	private TLObject _oldItem;
+
+	private TLObject _substep;
 
 	private FormControl _form;
 
@@ -81,11 +89,12 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 		_context = new DefaultReactContext("", "test", queue, new ReactWindowRegistry("test"));
 
 		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
-			_step = DynamicModelService.getFactoryFor(MODULE).createObject(type(STEP));
-			_step.tUpdateByName(NAME, "step");
-			_oldItem = item(OLD_ITEM);
+			_step = named(STEP, "step");
+			_oldItem = named(ITEM, OLD_ITEM);
 			_step.tUpdateByName(ITEMS, List.of(_oldItem));
-			_step.tUpdateByName(LOCKED_ITEMS, List.of(item(OLD_ITEM)));
+			_step.tUpdateByName(LOCKED_ITEMS, List.of(named(ITEM, OLD_ITEM)));
+			_substep = named(STEP, SUBSTEP);
+			_step.tUpdateByName(SUBSTEPS, List.of(_substep));
 			_project.tUpdateByName(STEPS, List.of(_step));
 			tx.commit();
 		}
@@ -98,15 +107,15 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 		_stepRow = single(_steps.session().currentRows());
 	}
 
-	private static TLObject item(String name) {
-		TLObject result = DynamicModelService.getFactoryFor(MODULE).createObject(type(ITEM));
+	private static TLObject named(String type, String name) {
+		TLObject result = DynamicModelService.getFactoryFor(MODULE).createObject(type(type));
 		result.tUpdateByName(NAME, name);
 		return result;
 	}
 
 	/**
 	 * The composition cell of an edited row shows the labels of the parts and a button opening
-	 * their editor.
+	 * their table in a dialog.
 	 */
 	public void testEditableCompositionCell() {
 		ReactCompactFieldControl cell = cell(ITEMS);
@@ -116,72 +125,48 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 		assertEquals(OLD_ITEM, cell.getPreviewText());
 
 		open(cell);
-		assertNotNull(_dialogs._open);
-		assertEquals(1, descendants(_dialogs._open, RowSetTableControl.class).size());
+		assertEquals(1, _dialogs._open.size());
+		assertEquals(OLD_ITEM, single(rowsOfTopDialog().currentRows()).tValueByName(NAME));
 		assertEquals(2, dialogActions().size());
 	}
 
 	/**
-	 * Cancel returns the parts to the state they had when the dialog opened: an added part is
-	 * dropped, a changed part holds its value again.
+	 * Cancel drops the dialog's changes: an added part and a changed part leave the row as it was.
 	 */
-	public void testCancelRestores() {
+	public void testCancelDropsChanges() {
 		ReactCompactFieldControl cell = cell(ITEMS);
-		RowSetEditSession parts = session(cell);
-		TLObject oldItem = single(parts.currentRows());
 
 		open(cell);
+		RowSetEditSession parts = rowsOfTopDialog();
 		assertNotNull(parts.addRow(row -> row.tUpdateByName(NAME, NEW_ITEM)));
-		oldItem.tUpdateByName(NAME, RENAMED);
-		assertTrue(_form.isDirty());
+		parts.currentRows().get(0).tUpdateByName(NAME, RENAMED);
 
 		press(dialogActions().get(0));
 
-		assertNull(_dialogs._open);
-		assertSame(oldItem, single(parts.currentRows()));
-		assertEquals(OLD_ITEM, oldItem.tValueByName(NAME));
-		assertEquals(List.of(oldItem), _stepRow.tValueByName(ITEMS));
+		assertTrue(_dialogs._open.isEmpty());
+		assertEquals(List.of(_oldItem), _stepRow.tValueByName(ITEMS));
+		assertEquals(OLD_ITEM, _oldItem.tValueByName(NAME));
 		assertEquals(OLD_ITEM, cell.getPreviewText());
 		assertFalse(_form.isDirty());
 	}
 
 	/**
-	 * Cancel restores the values a part added in an earlier dialog had when the dialog opened.
+	 * OK writes the parts into the row; the form stores them with the row.
 	 */
-	public void testCancelRestoresNewPartValues() {
+	public void testOkKeepsPartsUntilSave() {
 		ReactCompactFieldControl cell = cell(ITEMS);
-		RowSetEditSession parts = session(cell);
 
 		open(cell);
-		TLObject added = parts.addRow(row -> row.tUpdateByName(NAME, NEW_ITEM));
-		press(dialogActions().get(1));
-		assertNull(_dialogs._open);
-
-		open(cell);
-		added.tUpdateByName(NAME, RENAMED);
-		parts.removeRow(parts.currentRows().get(0));
-		press(dialogActions().get(0));
-
-		assertEquals(2, parts.currentRows().size());
-		assertEquals(NEW_ITEM, added.tValueByName(NAME));
-		assertEquals(OLD_ITEM + ", " + NEW_ITEM, cell.getPreviewText());
-	}
-
-	/**
-	 * OK keeps an added part in the edit session, and the form saves it with the row.
-	 */
-	public void testOkKeepsPartUntilSave() {
-		ReactCompactFieldControl cell = cell(ITEMS);
-		RowSetEditSession parts = session(cell);
-
-		open(cell);
+		RowSetEditSession parts = rowsOfTopDialog();
 		assertNotNull(parts.addRow(row -> row.tUpdateByName(NAME, NEW_ITEM)));
+		parts.currentRows().get(0).tUpdateByName(NAME, RENAMED);
 		press(dialogActions().get(1));
 
-		assertNull(_dialogs._open);
+		assertTrue(_dialogs._open.isEmpty());
 		assertEquals(2, ((List<?>) _stepRow.tValueByName(ITEMS)).size());
-		assertEquals(OLD_ITEM + ", " + NEW_ITEM, cell.getPreviewText());
-		assertEquals(List.of(_oldItem), _step.tValueByName(ITEMS));
+		assertEquals(RENAMED + ", " + NEW_ITEM, cell.getPreviewText());
+		assertEquals("Nothing is stored before the form is saved.", List.of(_oldItem), _step.tValueByName(ITEMS));
+		assertEquals(OLD_ITEM, _oldItem.tValueByName(NAME));
 		assertTrue(_form.isDirty());
 
 		_form.executeSave();
@@ -189,9 +174,25 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 		List<?> saved = (List<?>) _step.tValueByName(ITEMS);
 		assertEquals(2, saved.size());
 		assertSame(_oldItem, saved.get(0));
+		assertEquals(RENAMED, _oldItem.tValueByName(NAME));
 		TLObject created = (TLObject) saved.get(1);
 		assertFalse(created.tTransient());
 		assertEquals(NEW_ITEM, created.tValueByName(NAME));
+	}
+
+	/**
+	 * A change made only within a part makes the form dirty and is stored with it.
+	 */
+	public void testChangeWithinPartIsSaved() {
+		ReactCompactFieldControl cell = cell(ITEMS);
+
+		open(cell);
+		rowsOfTopDialog().currentRows().get(0).tUpdateByName(NAME, RENAMED);
+		press(dialogActions().get(1));
+		assertTrue(_form.isDirty());
+
+		_form.executeSave();
+		assertEquals(RENAMED, _oldItem.tValueByName(NAME));
 	}
 
 	/**
@@ -199,17 +200,16 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 	 */
 	public void testOkRefusedForInvalidPart() {
 		ReactCompactFieldControl cell = cell(ITEMS);
-		RowSetEditSession parts = session(cell);
 
 		open(cell);
-		TLObject added = parts.addRow(null);
+		TLObject added = rowsOfTopDialog().addRow(null);
 		assertNotNull(added);
 		press(dialogActions().get(1));
-		assertNotNull("A part without its mandatory name keeps the dialog open.", _dialogs._open);
+		assertEquals("A part without its mandatory name keeps the dialog open.", 1, _dialogs._open.size());
 
 		added.tUpdateByName(NAME, NEW_ITEM);
 		press(dialogActions().get(1));
-		assertNull(_dialogs._open);
+		assertTrue(_dialogs._open.isEmpty());
 	}
 
 	/**
@@ -219,31 +219,117 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 	public void testReadOnlyComposition() {
 		ReactCompactFieldControl cell = cell(LOCKED_ITEMS);
 		assertFalse(cell.getFieldModel().isEditable());
-		RowSetEditSession parts = session(cell);
 
 		open(cell);
 		assertEquals(1, dialogActions().size());
-		assertNull(parts.addRow(null));
+		assertNull(rowsOfTopDialog().addRow(null));
 
 		press(dialogActions().get(0));
-		assertNull(_dialogs._open);
-		assertEquals(1, parts.currentRows().size());
+		assertTrue(_dialogs._open.isEmpty());
+		assertFalse(_form.isDirty());
 	}
 
 	/**
-	 * The dialog closes when the form leaves edit mode, which ends the edit of the parts.
+	 * The dialogs close when the form leaves edit mode.
 	 */
-	public void testLeavingEditModeClosesDialog() {
-		ReactCompactFieldControl cell = cell(ITEMS);
-		RowSetEditSession parts = session(cell);
-
-		open(cell);
-		assertNotNull(_dialogs._open);
+	public void testLeavingEditModeClosesDialogs() {
+		open(cell(SUBSTEPS));
+		open(nestedCell());
+		assertEquals(2, _dialogs._open.size());
 
 		_form.executeCancel();
 
-		assertNull(_dialogs._open);
-		assertFalse(parts.isRunning());
+		assertTrue(_dialogs._open.isEmpty());
+	}
+
+	/**
+	 * A composition of a part is edited in a nested dialog: its changes reach the outer dialog on
+	 * OK, the row only when the outer dialog is confirmed as well, and the database only on save.
+	 */
+	public void testNestedDialogsConfirmed() {
+		open(cell(SUBSTEPS));
+		RowSetEditSession substeps = rowsOfTopDialog();
+		TLObject substepBuffer = single(substeps.currentRows());
+
+		open(nestedCell());
+		assertNotNull(rowsOfTopDialog().addRow(row -> row.tUpdateByName(NAME, NEW_SUBSTEP)));
+		press(dialogActions().get(1));
+
+		assertEquals(1, _dialogs._open.size());
+		assertEquals(1, ((List<?>) substepBuffer.tValueByName(SUBSTEPS)).size());
+		assertEquals(List.of(), _substep.tValueByName(SUBSTEPS));
+
+		press(dialogActions().get(1));
+		assertTrue(_dialogs._open.isEmpty());
+		assertTrue(_form.isDirty());
+		assertEquals(List.of(), _substep.tValueByName(SUBSTEPS));
+
+		_form.executeSave();
+
+		assertEquals(List.of(_substep), _step.tValueByName(SUBSTEPS));
+		TLObject created = singleObject(_substep.tValueByName(SUBSTEPS));
+		assertFalse(created.tTransient());
+		assertEquals(NEW_SUBSTEP, created.tValueByName(NAME));
+	}
+
+	/**
+	 * Cancelling the outer dialog drops what a nested dialog confirmed.
+	 */
+	public void testOuterCancelDropsNestedOk() {
+		open(cell(SUBSTEPS));
+		open(nestedCell());
+		assertNotNull(rowsOfTopDialog().addRow(row -> row.tUpdateByName(NAME, NEW_SUBSTEP)));
+		press(dialogActions().get(1));
+
+		press(dialogActions().get(0));
+
+		assertTrue(_dialogs._open.isEmpty());
+		assertEquals(List.of(_substep), _stepRow.tValueByName(SUBSTEPS));
+		assertFalse(_form.isDirty());
+		_form.executeSave();
+		assertEquals(List.of(), _substep.tValueByName(SUBSTEPS));
+	}
+
+	/**
+	 * Cancelling a nested dialog leaves the outer dialog's part as it was; confirming the outer
+	 * dialog then changes nothing.
+	 */
+	public void testNestedCancelThenOuterOk() {
+		ReactCompactFieldControl cell = cell(SUBSTEPS);
+		open(cell);
+		open(nestedCell());
+		assertNotNull(rowsOfTopDialog().addRow(row -> row.tUpdateByName(NAME, NEW_SUBSTEP)));
+		press(dialogActions().get(0));
+
+		press(dialogActions().get(1));
+
+		assertTrue(_dialogs._open.isEmpty());
+		assertEquals("An unchanged part stands for itself.", List.of(_substep), _stepRow.tValueByName(SUBSTEPS));
+		assertFalse(_form.isDirty());
+	}
+
+	/**
+	 * A part confirmed in a first dialog and removed in a second, cancelled one is still there.
+	 */
+	public void testRemoveThenCancelKeepsPart() {
+		ReactCompactFieldControl cell = cell(ITEMS);
+
+		open(cell);
+		rowsOfTopDialog().currentRows().get(0).tUpdateByName(NAME, RENAMED);
+		press(dialogActions().get(1));
+
+		open(cell);
+		RowSetEditSession parts = rowsOfTopDialog();
+		parts.removeRow(parts.currentRows().get(0));
+		assertTrue(parts.currentRows().isEmpty());
+		press(dialogActions().get(0));
+
+		TLObject item = singleObject(_stepRow.tValueByName(ITEMS));
+		assertEquals(RENAMED, item.tValueByName(NAME));
+
+		_form.executeSave();
+		assertTrue(_oldItem.tValid());
+		assertEquals(RENAMED, _oldItem.tValueByName(NAME));
 	}
 
 	/**
@@ -251,20 +337,36 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 	 * creates it.
 	 */
 	private ReactCompactFieldControl cell(String composition) {
+		return cell(_steps.session(), _stepRow, composition);
+	}
+
+	/**
+	 * Creates the cell of the substeps of the substep shown in the top dialog.
+	 */
+	private ReactCompactFieldControl nestedCell() {
+		RowSetEditSession substeps = rowsOfTopDialog();
+		return cell(substeps, single(substeps.currentRows()), SUBSTEPS);
+	}
+
+	private ReactCompactFieldControl cell(RowSetEditSession session, TLObject row, String composition) {
 		// Whether the column is offered at all is decided for the type, which is not under test.
 		becomeUser(_root);
 		ColumnSetup column = single(AttributeColumn.derived(type(STEP).getPartOrFail(composition))
 			.resolve(new ColumnResolution(type(STEP), null)));
 		becomeUser(_responsible);
-		BoundFieldModel model = _steps.session().cellModel(_stepRow, column);
+		BoundFieldModel model = session.cellModel(row, column);
 		assertNotNull(model);
-		ReactControl control = column.editing().createControl(_context, _stepRow, model);
+		ReactControl control = column.editing().createControl(_context, row, model);
 		assertTrue(control instanceof ReactCompactFieldControl);
 		return (ReactCompactFieldControl) control;
 	}
 
-	private static RowSetEditSession session(ReactCompactFieldControl cell) {
-		return ((CompositionCellModel) cell.getFieldModel()).session();
+	/**
+	 * The session of the parts displayed in the top dialog.
+	 */
+	private RowSetEditSession rowsOfTopDialog() {
+		assertFalse("A dialog is open", _dialogs._open.isEmpty());
+		return single(descendants(_dialogs._open.peek(), RowSetTableControl.class)).session();
 	}
 
 	private void open(ReactCompactFieldControl cell) {
@@ -276,12 +378,12 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * The buttons of the open dialog itself, without the ones of the table it displays.
+	 * The buttons of the top dialog itself, without the ones of the table it displays.
 	 */
 	private List<ReactButtonControl> dialogActions() {
-		assertNotNull("A dialog is open", _dialogs._open);
+		assertFalse("A dialog is open", _dialogs._open.isEmpty());
 		List<ReactButtonControl> result = new ArrayList<>();
-		collectActions(_dialogs._open, result);
+		collectActions(_dialogs._open.peek(), result);
 		return result;
 	}
 
@@ -314,6 +416,10 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 		}
 	}
 
+	private static TLObject singleObject(Object value) {
+		return (TLObject) single((List<?>) value);
+	}
+
 	private static <T> T single(List<T> list) {
 		assertEquals(1, list.size());
 		return list.get(0);
@@ -340,27 +446,27 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * A {@link DialogManager} holding a single open dialog.
+	 * A {@link DialogManager} holding a stack of open dialogs.
 	 */
 	private static final class RecordingDialogManager implements DialogManager {
 
-		ReactControl _open;
+		final Deque<ReactControl> _open = new ArrayDeque<>();
 
 		@Override
 		public DialogHandle openDialog(boolean closeOnBackdrop, ReactControl child,
 				DialogResultHandler<Void> handler) {
-			_open = child;
+			_open.push(child);
 			return null;
 		}
 
 		@Override
 		public void closeTopDialog(DialogResult<Void> result) {
-			_open = null;
+			_open.pop();
 		}
 
 		@Override
 		public void closeDialogsAbove(DialogHandle dialog) {
-			// Only one dialog.
+			// Not used.
 		}
 	}
 

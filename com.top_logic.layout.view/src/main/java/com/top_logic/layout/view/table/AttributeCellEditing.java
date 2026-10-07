@@ -12,6 +12,7 @@ import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.BoundFieldModel;
 import com.top_logic.layout.view.form.CompositionCellModel;
 import com.top_logic.layout.view.form.CompositionEditing;
+import com.top_logic.layout.view.form.EditLevel;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
@@ -84,11 +85,11 @@ public class AttributeCellEditing implements CellEditing {
 	}
 
 	@Override
-	public BoundFieldModel createModel(Object row, FormControl form) {
+	public BoundFieldModel createModel(Object row, FormControl form, EditLevel level) {
 		TLObject object = (TLObject) row;
 		TLStructuredTypePart part = part(row);
 		if (AttributeOptions.isComposition(part)) {
-			return new CompositionCellModel(object, part, form, canWrite(object, part));
+			return new CompositionCellModel(object, part, form, level, canWrite(object, part));
 		}
 		return FieldControlService.getInstance().createModel(object, part, form);
 	}

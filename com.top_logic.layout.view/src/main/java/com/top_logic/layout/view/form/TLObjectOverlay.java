@@ -8,7 +8,6 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -341,72 +340,6 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 */
 	public void reset() {
 		_changes.clear();
-	}
-
-	/**
-	 * The changes this overlay currently buffers, to be {@link #restore(Snapshot) restored} later.
-	 *
-	 * <p>
-	 * The snapshot is independent of this overlay: neither later changes of the overlay nor in-place
-	 * changes of a buffered collection value reach it.
-	 * </p>
-	 */
-	public Snapshot snapshot() {
-		return new Snapshot(copyChanges(_changes));
-	}
-
-	/**
-	 * Makes this overlay buffer exactly the changes it buffered when the given snapshot was taken,
-	 * discarding all changes made since.
-	 *
-	 * <p>
-	 * A snapshot can be restored any number of times.
-	 * </p>
-	 *
-	 * @param snapshot
-	 *        A snapshot taken from this overlay by {@link #snapshot()}.
-	 */
-	public void restore(Snapshot snapshot) {
-		_changes.clear();
-		_changes.putAll(copyChanges(snapshot._changes));
-	}
-
-	private static Map<TLStructuredTypePart, Object> copyChanges(Map<TLStructuredTypePart, Object> changes) {
-		Map<TLStructuredTypePart, Object> result = new LinkedHashMap<>();
-		for (Map.Entry<TLStructuredTypePart, Object> entry : changes.entrySet()) {
-			result.put(entry.getKey(), copyValue(entry.getValue()));
-		}
-		return result;
-	}
-
-	/**
-	 * A copy of the given value that is not affected by in-place changes of the value: a collection
-	 * is copied, any other value is immutable or replaced as a whole.
-	 */
-	public static Object copyValue(Object value) {
-		if (value instanceof Set<?> set) {
-			return new LinkedHashSet<>(set);
-		}
-		if (value instanceof Collection<?> collection) {
-			return new ArrayList<>(collection);
-		}
-		return value;
-	}
-
-	/**
-	 * The changes a {@link TLObjectOverlay} buffered at some point in time.
-	 *
-	 * @see TLObjectOverlay#snapshot()
-	 * @see TLObjectOverlay#restore(Snapshot)
-	 */
-	public static final class Snapshot {
-
-		final Map<TLStructuredTypePart, Object> _changes;
-
-		Snapshot(Map<TLStructuredTypePart, Object> changes) {
-			_changes = changes;
-		}
-
 	}
 
 	/**

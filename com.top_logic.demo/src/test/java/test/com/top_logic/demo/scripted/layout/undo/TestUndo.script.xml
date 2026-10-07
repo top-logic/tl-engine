@@ -552,7 +552,7 @@
 							user-id="root"
 						>
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
-								column-label="Beschreibung"
+								column-label="Nachricht"
 							>
 								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
@@ -636,7 +636,7 @@
 							user-id="root"
 						>
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
-								column-label="Beschreibung"
+								column-label="Nachricht"
 							>
 								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
@@ -666,7 +666,7 @@
 							user-id="root"
 						>
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
-								column-label="Beschreibung"
+								column-label="Nachricht"
 							>
 								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
@@ -780,7 +780,7 @@
 							user-id="root"
 						>
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
-								column-label="Beschreibung"
+								column-label="Nachricht"
 							>
 								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
@@ -927,7 +927,7 @@
 							user-id="root"
 						>
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
-								column-label="Beschreibung"
+								column-label="Nachricht"
 							>
 								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
@@ -963,7 +963,7 @@
 							user-id="root"
 						>
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
-								column-label="Beschreibung"
+								column-label="Nachricht"
 							>
 								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
@@ -1383,7 +1383,7 @@
 							user-id="root"
 						>
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
-								column-label="Beschreibung"
+								column-label="Nachricht"
 							>
 								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
@@ -1556,7 +1556,7 @@
 							user-id="root"
 						>
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
-								column-label="Beschreibung"
+								column-label="Nachricht"
 							>
 								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
@@ -1913,7 +1913,7 @@
 							user-id="root"
 						>
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
-								column-label="Beschreibung"
+								column-label="Nachricht"
 							>
 								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
@@ -2243,7 +2243,7 @@
 							user-id="root"
 						>
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
-								column-label="Beschreibung"
+								column-label="Nachricht"
 							>
 								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"

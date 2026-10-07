@@ -280,8 +280,13 @@ public class FieldControlRegistry {
 
 	/**
 	 * Whether the given field displays its text on more than one row.
+	 *
+	 * <p>
+	 * A text control of such a field is {@link ReactFieldControlProvider#isLarge(FieldSpec)
+	 * large}.
+	 * </p>
 	 */
-	private static boolean isMultiline(FieldSpec field) {
+	public static boolean isMultiline(FieldSpec field) {
 		return field.getMultilineRows() > 1;
 	}
 

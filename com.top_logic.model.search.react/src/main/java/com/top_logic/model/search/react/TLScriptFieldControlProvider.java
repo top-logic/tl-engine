@@ -26,6 +26,11 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * scripts a configuration accepts can be entered. A script that does not parse is reported on the
  * field and leaves the stored expression untouched.
  * </p>
+ *
+ * <p>
+ * The editor is {@link #isLarge(FieldSpec) large}: where it has no room, the first line of the
+ * script's source that holds more than white space stands for it.
+ * </p>
  */
 public class TLScriptFieldControlProvider implements ReactFieldControlProvider {
 
@@ -58,6 +63,16 @@ public class TLScriptFieldControlProvider implements ReactFieldControlProvider {
 		control.addCleanupAction(() -> model.removeListener(listener));
 
 		return control;
+	}
+
+	@Override
+	public boolean isLarge(FieldSpec field) {
+		return true;
+	}
+
+	@Override
+	public String previewText(FieldSpec field, Object value) {
+		return ReactFieldControlProvider.firstNonBlankLine(source(value));
 	}
 
 	/**

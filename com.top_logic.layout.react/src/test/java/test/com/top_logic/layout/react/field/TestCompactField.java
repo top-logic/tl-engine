@@ -332,6 +332,16 @@ public class TestCompactField extends TestCase {
 		assertEquals("", provider.previewText(field, List.of()));
 	}
 
+	/**
+	 * The first line of a source text that holds more than white space.
+	 */
+	public void testFirstNonBlankLine() {
+		assertEquals("", ReactFieldControlProvider.firstNonBlankLine(null));
+		assertEquals("", ReactFieldControlProvider.firstNonBlankLine(" \n\t\n"));
+		assertEquals("x + 1", ReactFieldControlProvider.firstNonBlankLine("\n  \r\n\tx + 1\ny"));
+		assertEquals("x", ReactFieldControlProvider.firstNonBlankLine("x"));
+	}
+
 	private ReactCompactFieldControl compactText(AbstractFieldModel model, ReactFieldControlProvider provider) {
 		FieldSpec field = FieldSpec.of(String.class, "Notes").setMultilineRows(5).setCompact(true);
 		return assertInstanceof(ReactCompactFieldControl.class, createControl(field, model, provider));

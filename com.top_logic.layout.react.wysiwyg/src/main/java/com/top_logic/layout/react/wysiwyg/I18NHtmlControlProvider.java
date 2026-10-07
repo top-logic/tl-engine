@@ -11,6 +11,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.I18NEditorDialog;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
+import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
 
 /**
  * {@link ReactFieldControlProvider} for {@code tl.model.i18n:I18NHtml} attributes.
@@ -22,6 +23,13 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
  * {@link I18NLocalizedHtmlFieldModel}. A languages button next to the inline editor opens the
  * {@link I18NEditorDialog} for viewing, editing, and translating the other languages.
  * </p>
+ *
+ * <p>
+ * The editor is {@link #isLarge(FieldSpec) large}: where it has no room, the
+ * {@link WysiwygControlProvider#htmlPreview(com.top_logic.layout.wysiwyg.ui.StructuredText) plain
+ * text} of the value in the user's language stands for it - or in the best available other
+ * language, as long as there is none in the user's.
+ * </p>
  */
 public class I18NHtmlControlProvider implements ReactFieldControlProvider {
 
@@ -30,6 +38,19 @@ public class I18NHtmlControlProvider implements ReactFieldControlProvider {
 		I18NWysiwygControl inline = new I18NWysiwygControl(context, model);
 		return I18NEditorDialog.createEditor(context, model, inline, new I18NHtmlValueEditor(),
 			field.getLabel());
+	}
+
+	@Override
+	public boolean isLarge(FieldSpec field) {
+		return true;
+	}
+
+	@Override
+	public String previewText(FieldSpec field, Object value) {
+		if (value instanceof I18NStructuredText text) {
+			return WysiwygControlProvider.htmlPreview(text.localize(I18NLocalizedHtmlFieldModel.editLocale()));
+		}
+		return ReactFieldControlProvider.super.previewText(field, value);
 	}
 
 }

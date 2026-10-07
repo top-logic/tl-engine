@@ -161,4 +161,24 @@ public interface ReactFieldControlProvider {
 		return text;
 	}
 
+	/**
+	 * The first line of the given text that holds more than white space, without leading and
+	 * trailing white space.
+	 *
+	 * <p>
+	 * Stands for a source text - a script, a program - whose first lines may well be empty or
+	 * indented.
+	 * </p>
+	 *
+	 * @param text
+	 *        The text, or {@code null}.
+	 * @return The first non-blank line, the empty string if there is none.
+	 */
+	static String firstNonBlankLine(String text) {
+		if (text == null) {
+			return "";
+		}
+		return text.lines().map(String::strip).filter(line -> !line.isEmpty()).findFirst().orElse("");
+	}
+
 }

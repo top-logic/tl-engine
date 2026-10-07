@@ -9,12 +9,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.RegExpUtil;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -23,6 +25,8 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.wysiwyg.ui.HTMLTextExtractor;
+import com.top_logic.layout.wysiwyg.ui.StructuredText;
 
 /**
  * {@link ReactFieldControlProvider} for {@code tl.model.wysiwyg:Html} attributes.
@@ -33,6 +37,9 @@ import com.top_logic.layout.view.command.ViewCommand;
  * does - open a dialog, run a script, write a channel - and reaches the text through the
  * insertion channel: what it writes there is inserted at the cursor.
  * </p>
+ *
+ * @implNote The editor is {@link #isLarge(FieldSpec) large}: where it has no room, the
+ *           {@link #htmlPreview(StructuredText) plain text} of the formatted text stands for it.
  */
 public class WysiwygControlProvider implements ReactFieldControlProvider {
 
@@ -109,6 +116,36 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		return new ReactWysiwygControl(context, model, _commands, _commandConfigs, _insertChannel);
+	}
+
+	@Override
+	public boolean isLarge(FieldSpec field) {
+		return true;
+	}
+
+	@Override
+	public String previewText(FieldSpec field, Object value) {
+		if (value instanceof StructuredText text) {
+			return htmlPreview(text);
+		}
+		return ReactFieldControlProvider.super.previewText(field, value);
+	}
+
+	/**
+	 * The text of the given formatted text on a single line: without its markup, with its
+	 * character references resolved, and with each run of white space - line breaks included -
+	 * reduced to a single space.
+	 *
+	 * @param text
+	 *        The formatted text, or {@code null}.
+	 * @return The plain text, the empty string for {@code null}.
+	 */
+	public static String htmlPreview(StructuredText text) {
+		if (text == null) {
+			return "";
+		}
+		String plain = HTMLTextExtractor.INSTANCE.getLabel(text);
+		return StringServices.normalizeWhiteSpace(RegExpUtil.normalizeWhitespace(plain));
 	}
 
 }

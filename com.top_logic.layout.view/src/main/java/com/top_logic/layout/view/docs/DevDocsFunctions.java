@@ -21,6 +21,9 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 @ScriptPrefix("devDocs")
 public class DevDocsFunctions extends TLScriptFunctions {
 
+	/** Character standing for the {@code /} of an entry name in its {@link #routeKey(Object) URL key}. */
+	public static final char ROUTE_SEPARATOR = '~';
+
 	/**
 	 * The root of the developer documentation.
 	 *
@@ -84,6 +87,39 @@ public class DevDocsFunctions extends TLScriptFunctions {
 	@SideEffectFree
 	public static DevDoc get(String link) {
 		return link == null ? null : DevDocs.find(DevDocs.load(), link);
+	}
+
+	/**
+	 * The key of a chapter or an article of the developer documentation in a URL.
+	 *
+	 * <p>
+	 * The key is the name with {@value #ROUTE_SEPARATOR} in place of each {@code /}, so that it is a
+	 * single segment of a URL path; an encoded slash is refused by many servlet containers.
+	 * </p>
+	 *
+	 * @param node
+	 *        A chapter or an article.
+	 * @return The key, {@code null} for no entry.
+	 *
+	 * @see #byRouteKey(String)
+	 */
+	@Label("URL key of an entry of the developer documentation")
+	@SideEffectFree
+	public static String routeKey(Object node) {
+		return node instanceof DevDoc doc ? doc.getName().replace('/', ROUTE_SEPARATOR) : null;
+	}
+
+	/**
+	 * The chapter or article of the developer documentation a URL key names.
+	 *
+	 * @param key
+	 *        A key as computed by {@link #routeKey(Object)}.
+	 * @return The chapter or article, {@code null} if the documentation has none of that key.
+	 */
+	@Label("Entry of the developer documentation by its URL key")
+	@SideEffectFree
+	public static DevDoc byRouteKey(String key) {
+		return key == null || key.isEmpty() ? null : DevDocs.find(DevDocs.load(), key.replace(ROUTE_SEPARATOR, '/'));
 	}
 
 	/**

@@ -10,7 +10,7 @@ order: 30
 A `<text>` says what it is *for* rather than which font and colour it is drawn in. Three properties
 carry that, each one a role filled from the design tokens of the active theme, so a theme restyles
 every text of a role at once — see
-[react-theme-tokens.md](doc:view-layer/theme-tokens#typography-tokens) for the token per variant.
+[Typography tokens](doc:view-layer/theme-tokens#typography-tokens) for the token per variant.
 
 ```xml
 <stack>

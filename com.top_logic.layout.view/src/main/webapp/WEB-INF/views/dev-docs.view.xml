@@ -5,6 +5,10 @@
 	(META-INF/tl-docs/**/*.md in their jars), as a tree of chapters and articles. A search input
 	narrows the tree to the articles containing every word typed; the selected entry is displayed
 	beside the tree. A link of an article to another one selects that one.
+	
+	The selected entry is part of the address of the window, so each change of it is a step in the
+	history of the window: the Back command (or the back button of a browser window) returns to the
+	entry shown before, and a reload shows the same entry again.
 -->
 <view>
 	<channels>
@@ -14,7 +18,19 @@
 			expr="doc -> devDocsHtml($doc)"
 			inputs="doc"
 		/>
+		<derived-channel name="docKey"
+			expr="doc -> devDocsRouteKey($doc)"
+			inputs="doc"
+			reverse="key -> devDocsByRouteKey($key)"
+		/>
 	</channels>
+	<param-bindings>
+		<bind
+			channel="docKey"
+			prefix="doc"
+			route-param="doc"
+		/>
+	</param-bindings>
 	<adaptive-detail selection="doc">
 		<selector>
 			<panel>
@@ -50,6 +66,22 @@
 				<title-content>
 					<text input="doc"/>
 				</title-content>
+				<commands>
+					<generic-command
+						image="css:bi bi-arrow-left"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Back</en>
+							<de>Zurück</de>
+						</label>
+						<tooltip>
+							<en>Show the entry shown before.</en>
+							<de>Zeigt den zuvor angezeigten Eintrag.</de>
+						</tooltip>
+						<history-back/>
+					</generic-command>
+				</commands>
 				<html input="docHtml">
 					<on-link class="com.top_logic.layout.view.command.GenericViewCommand">
 						<execute-script function="link -> devDocsGet($link)"/>

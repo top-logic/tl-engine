@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.commonmark.Extension;
@@ -94,6 +96,9 @@ public final class DevDocs {
 	private static final String TITLE_PREFIX = "# ";
 
 	private static final String HREF = "href";
+
+	/** A rendered section or subsection heading: level, anchor and content. */
+	private static final Pattern SECTION_HEADING = Pattern.compile("<h([23]) id=\"([^\"]*)\">(.*?)</h\\1>");
 
 	private static final List<Extension> EXTENSIONS =
 		List.of(TablesExtension.create(), HeadingAnchorExtension.create());
@@ -307,7 +312,9 @@ public final class DevDocs {
 	 * an article of the given documentation ({@code doc:view-layer/basics#spacing-model}) carries
 	 * the article name and section in its {@link ReactHtmlControl#LINK_ATTRIBUTE} and the section in its
 	 * target. A link to an article the documentation does not contain and a relative link to a file
-	 * of the source tree are displayed as text, since they lead nowhere in the application.
+	 * of the source tree are displayed as text, since they lead nowhere in the application. An
+	 * article with several sections gets a table of contents between its introduction and its first
+	 * section.
 	 * </p>
 	 *
 	 * @param markdown
@@ -336,7 +343,56 @@ public final class DevDocs {
 				}
 			})
 			.build();
-		return renderer.render(PARSER.parse(markdown));
+		return withContents(renderer.render(PARSER.parse(markdown)));
+	}
+
+	/**
+	 * Inserts a table of contents into the given rendered article, between its introduction and
+	 * its first section: the sections, the subsections of each nested below it, each linking to its
+	 * heading. An article with fewer than two sections gets none.
+	 */
+	private static String withContents(String html) {
+		Matcher headings = SECTION_HEADING.matcher(html);
+		StringBuilder contents = new StringBuilder();
+		int firstSection = -1;
+		int sections = 0;
+		boolean inSubsections = false;
+		while (headings.find()) {
+			boolean section = headings.group(1).equals("2");
+			if (section) {
+				if (inSubsections) {
+					contents.append("</ul>");
+					inSubsections = false;
+				}
+				if (sections > 0) {
+					contents.append("</li>");
+				} else {
+					firstSection = headings.start();
+				}
+				sections++;
+			} else if (sections == 0) {
+				// A subsection before the first section belongs to no entry.
+				continue;
+			} else if (!inSubsections) {
+				contents.append("<ul>");
+				inSubsections = true;
+			}
+			contents.append("<li><a href=\"#").append(headings.group(2)).append("\">")
+				.append(headings.group(3)).append("</a>");
+			if (!section) {
+				contents.append("</li>");
+			}
+		}
+		if (sections < 2) {
+			return html;
+		}
+		if (inSubsections) {
+			contents.append("</ul>");
+		}
+		contents.append("</li>");
+		return html.substring(0, firstSection)
+			+ "<ul>" + contents + "</ul>\n"
+			+ html.substring(firstSection);
 	}
 
 	private static boolean isResolvable(String href) {

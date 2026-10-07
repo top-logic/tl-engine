@@ -146,6 +146,49 @@ public class TestDevDocs extends TestCase {
 		assertTrue(html, html.contains("<a>the other article</a>"));
 	}
 
+	/**
+	 * An article with several sections gets a table of contents between its introduction and its
+	 * first section, its subsections nested below their section.
+	 */
+	public void testContents() throws IOException {
+		String html = DevDocs.toHtml("""
+			# Title
+
+			Intro.
+
+			## First `one`
+
+			### Detail
+
+			## Second
+			""", emptyRoot());
+		assertTrue(html, html.contains("<p>Intro.</p>\n<ul><li><a href=\"#first-one\">First <code>one</code></a>"
+			+ "<ul><li><a href=\"#detail\">Detail</a></li></ul></li>"
+			+ "<li><a href=\"#second\">Second</a></li></ul>\n<h2 id=\"first-one\">"));
+
+		String single = DevDocs.toHtml("# Title\n\n## Only\n", emptyRoot());
+		assertFalse("A single section needs no contents.", single.contains("<ul>"));
+	}
+
+	/**
+	 * The URL key of an entry is a single path segment that leads back to the entry.
+	 */
+	public void testRouteKey() throws IOException {
+		Path classes = _dir.resolve("classes");
+		write(classes, "views/basics.md", "# Basics\n");
+		try (URLClassLoader loader = new URLClassLoader(new URL[] { classes.toUri().toURL() }, null)) {
+			DevDoc basics = DevDocs.find(DevDocs.load(loader), "views/basics");
+			assertEquals("views~basics", DevDocsFunctions.routeKey(basics));
+			assertNull(DevDocsFunctions.routeKey(null));
+		}
+	}
+
+	private static DevDoc emptyRoot() throws IOException {
+		try (URLClassLoader loader = new URLClassLoader(new URL[0], null)) {
+			return DevDocs.load(loader);
+		}
+	}
+
 	private static List<String> names(List<DevDoc> docs) {
 		return docs.stream().map(DevDoc::getName).toList();
 	}

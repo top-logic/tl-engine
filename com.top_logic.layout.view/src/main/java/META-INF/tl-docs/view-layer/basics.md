@@ -198,4 +198,4 @@ class of the application's own naming.
 
 On the server, the class travels as one state key of `ReactControl` (`setCssClass(String)`); on the
 client, the component composes its root `className` from it with `rootClassName(state, …)`. Both are
-described in [new-ui-element.md](doc:view-layer/new-ui-element), which an element of an application follows.
+described in [A new `UIElement`](doc:view-layer/new-ui-element), which an element of an application follows.

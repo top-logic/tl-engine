@@ -12,7 +12,7 @@ The names below are placeholders: the module is `my.app.module`, its Java packag
 `com.example.app.view`, the element `MyElement` (tag `my-element`), its control `MyControl` and the
 client component `MyWidget`. Replace them by your own.
 
-Before writing a new client component, check [view-layer/basics.md](doc:view-layer/basics): the
+Before writing a new client component, check [Basics](doc:view-layer/basics): the
 `.view.xml` layer is a *composition* layer. A new component is justified for a genuinely new generic
 widget, not for assembling panels, forms and buttons that already exist. An element that only
 composes existing controls needs steps 1, 2, 4 and 5 — the whole client part falls away.
@@ -107,7 +107,7 @@ public class MyElement implements UIElement {
 - Keep the element stateless: it is parsed once and shared by every session. Anything the user
   changes belongs in the control.
 - An element that should not claim a global tag can be placed by `class=` instead — see
-  [view-layer/basics.md](doc:view-layer/basics#the-viewxml-layer-is-a-composition-layer-not-a-place-for-new-react-components).
+  [the composition principle](doc:view-layer/basics#the-viewxml-layer-is-a-composition-layer-not-a-place-for-new-react-components).
 - **Every element inherits `css-class`** from `UIElement.Config`, so the configuration declares
   nothing for it. The element passes the configured class to the control it returns —
   `result.setCssClass(_config.getCssClass())` — and the control writes it on the root element of its
@@ -438,7 +438,7 @@ my.app.module/
 
 ## See also
 
-- [view-layer/basics.md](doc:view-layer/basics) — when a new component is justified at all, and how to
+- [Basics](doc:view-layer/basics) — when a new component is justified at all, and how to
   compose existing ones
 - [new-react-module.md](../../../../../../../docs/faq/new-react-module.md) — a module whose purpose *is* React controls, including
   third-party libraries and their React shims

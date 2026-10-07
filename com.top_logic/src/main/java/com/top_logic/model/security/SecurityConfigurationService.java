@@ -872,7 +872,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 					SecurityConfigurationService.class);
 				return false;
 			}
-			AccessParent parent = accessParentOf(current);
+			AccessParentFunction parent = accessParentOf(current);
 			if (parent == null) {
 				// An object deciding by its own roles: the roles it will hold are computed only once
 				// it exists.
@@ -903,8 +903,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * backwards therefore leads to the container whenever the composition is unknown.
 	 * </p>
 	 */
-	private static TLObject draftParent(AccessParent parent, TLObject draft) {
-		if (parent.inverse() && draft.tContainerReference() == null) {
+	private static TLObject draftParent(AccessParentFunction parent, TLObject draft) {
+		if (parent instanceof ContainerRelation && draft.tContainerReference() == null) {
 			return draft.tContainer();
 		}
 		return parent.resolve(draft);

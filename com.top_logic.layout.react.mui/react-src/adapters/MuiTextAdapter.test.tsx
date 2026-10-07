@@ -5,7 +5,7 @@ import { cleanup } from '@testing-library/react';
 import { TOOLTIP_ATTR } from 'tl-react-bridge';
 import type { TextStateJson } from 'tl-react-bridge';
 import MuiTextAdapter from './MuiTextAdapter';
-import { CONTROL_ID, mountAdapter } from './wire-test-support';
+import { CONTROL_ID, mountAdapter, styleRules } from './wire-test-support';
 
 function mountText(state: Partial<TextStateJson>) {
   return mountAdapter(MuiTextAdapter, { text: 'Hallo', ...state });
@@ -14,11 +14,9 @@ function mountText(state: Partial<TextStateJson>) {
 /** The text color the MUI styles declare for the given element, without resolving variables. */
 function declaredColor(element: Element): string {
   let declared = '';
-  for (const sheet of Array.from(document.styleSheets)) {
-    for (const rule of Array.from(sheet.cssRules)) {
-      if (rule instanceof CSSStyleRule && element.matches(rule.selectorText)) {
-        declared = rule.style.getPropertyValue('color') || declared;
-      }
+  for (const rule of styleRules()) {
+    if (element.matches(rule.selectorText)) {
+      declared = rule.style.getPropertyValue('color') || declared;
     }
   }
   return declared;

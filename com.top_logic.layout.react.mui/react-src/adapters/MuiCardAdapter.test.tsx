@@ -4,7 +4,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import type { CardStateJson } from 'tl-react-bridge';
 import MuiCardAdapter from './MuiCardAdapter';
-import { CONTROL_ID, childControl, mountAdapter } from './wire-test-support';
+import { CONTROL_ID, childControl, mountAdapter, styleRules } from './wire-test-support';
 
 function mountCard(state: Partial<CardStateJson>) {
   return mountAdapter(MuiCardAdapter, { child: childControl('content', 'Inhalt'), ...state });
@@ -16,11 +16,9 @@ const SPACING = 'var(--mui-spacing)';
 /** The top padding the MUI styles declare for the given element, without resolving variables. */
 function paddingTop(element: Element): string {
   let declared = '';
-  for (const sheet of Array.from(document.styleSheets)) {
-    for (const rule of Array.from(sheet.cssRules)) {
-      if (rule instanceof CSSStyleRule && element.matches(rule.selectorText)) {
-        declared = rule.style.getPropertyValue('padding-top') || rule.style.getPropertyValue('padding') || declared;
-      }
+  for (const rule of styleRules()) {
+    if (element.matches(rule.selectorText)) {
+      declared = rule.style.getPropertyValue('padding-top') || rule.style.getPropertyValue('padding') || declared;
     }
   }
   return declared;

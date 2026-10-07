@@ -211,3 +211,22 @@ register(TEST_CHILD, TestChild);
 export function childControl(controlId: string, text: string, field = false): ChildControlJson {
   return { controlId, module: TEST_CHILD, state: { text, field } } as ChildControlJson;
 }
+
+/**
+ * The style rules of the page in their order, including the rules inside a grouping rule: the rules
+ * of Material UI are inside the block of its CSS cascade layer.
+ */
+export function styleRules(): CSSStyleRule[] {
+  const result: CSSStyleRule[] = [];
+  function collect(rules: CSSRuleList) {
+    for (const rule of Array.from(rules)) {
+      if (rule instanceof CSSStyleRule) {
+        result.push(rule);
+      } else if ('cssRules' in rule) {
+        collect((rule as CSSGroupingRule).cssRules);
+      }
+    }
+  }
+  Array.from(document.styleSheets).forEach(sheet => collect(sheet.cssRules));
+  return result;
+}

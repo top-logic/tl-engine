@@ -5,11 +5,18 @@
 // (`--tl-…`, tokens.css) and the tokens of the UI themes (`--text-primary`, …, written by the
 // UIThemeService). This module computes values for these properties from the MUI theme the MUI
 // components render with, the way MUI computes the corresponding values of its own components, and
-// writes them into the page as one style element after the TopLogic stylesheets. The values of the
-// theme are taken as they are: there is no contrast correction.
+// writes them into the page as one style element in the CSS cascade layer of Material UI. The
+// values of the theme are taken as they are: there is no contrast correction.
 
 import { alpha, darken, decomposeColor, emphasize, hslToRgb, lighten, recomposeColor } from '@mui/material/styles';
 import type { Palette, Theme } from '@mui/material/styles';
+
+/**
+ * The CSS cascade layer of the rules of Material UI: the layer the emotion cache of the root wrapper
+ * puts its rules into (MuiRoot), named after the layer `tl` of the TopLogic stylesheets in the layer
+ * order of the page (ClientResources).
+ */
+export const CSS_LAYER = 'mui';
 
 /** The id of the style element holding the derived properties. */
 export const STYLE_ELEMENT_ID = 'tl-mui-theme-properties';
@@ -440,22 +447,23 @@ function rule(selector: string, properties: Properties): string {
  * {@link singleScheme}), so that the properties this module does not set are in that mode as
  * well.</p>
  *
- * <p>The rules have the specificity of the rules of the theme tokens and the design system
- * (`:root`, an attribute of `<html>`) and come after them in the page, so they win.</p>
+ * <p>The rules are in the layer {@link CSS_LAYER}, which comes after the layer `tl` of the theme
+ * tokens and the design system, so they win against these. A rule of the application setting one
+ * of the properties is unlayered and wins against them in turn.</p>
  */
 export function themeStylesheet(theme: Theme): string {
   const schemes = themeProperties(theme);
   const names = Object.keys(schemes) as SchemeName[];
-  if (names.length === 1) {
-    return rule(ROOT_SELECTOR, schemes[names[0]]!);
-  }
-  return names.map(scheme => rule(MODE_SELECTORS[scheme], schemes[scheme]!)).join('');
+  const rules = names.length === 1
+    ? rule(ROOT_SELECTOR, schemes[names[0]]!)
+    : names.map(scheme => rule(MODE_SELECTORS[scheme], schemes[scheme]!)).join('');
+  return `@layer ${CSS_LAYER} {\n${rules}}\n`;
 }
 
 /**
  * Writes the styling properties derived from the MUI theme into the page: one style element with
- * the id {@link STYLE_ELEMENT_ID}, appended to the end of `<head>`, so that it comes after the
- * TopLogic stylesheets. An element written before is replaced.
+ * the id {@link STYLE_ELEMENT_ID}, appended to the end of `<head>`. Its rules are in the layer
+ * {@link CSS_LAYER} (see {@link themeStylesheet}). An element written before is replaced.
  */
 export function installThemeProperties(theme: Theme): void {
   document.getElementById(STYLE_ELEMENT_ID)?.remove();

@@ -9,7 +9,13 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
- * A client resource that is a CSS stylesheet, emitted as a {@code <link rel="stylesheet">}.
+ * A client resource that is a CSS stylesheet.
+ *
+ * <p>
+ * A stylesheet without {@link #getLayer() layer} is emitted as a {@code <link rel="stylesheet">}
+ * and its rules are unlayered. A stylesheet with a layer is emitted as a {@code <style>} element
+ * importing it into that CSS cascade layer.
+ * </p>
  */
 public interface StyleSheetConfig extends ResourceConfig {
 
@@ -26,5 +32,25 @@ public interface StyleSheetConfig extends ResourceConfig {
 	@Name(RESOURCE)
 	@Mandatory
 	String getResource();
+
+	/** Configuration name for {@link #getLayer()}. */
+	String LAYER = "layer";
+
+	/**
+	 * The CSS cascade layer the rules of this stylesheet belong to.
+	 *
+	 * <p>
+	 * The layer must be one of the {@link ClientResources.Config#getLayers()}.
+	 * </p>
+	 *
+	 * <p>
+	 * The stylesheets of the engine and of the libraries it bundles belong to the layer
+	 * {@value ClientResources#ENGINE_LAYER}. Without a layer, the rules of the stylesheet are
+	 * unlayered and win against the rules of every layer, whatever their specificity; this is the
+	 * place of the stylesheets of an application.
+	 * </p>
+	 */
+	@Name(LAYER)
+	String getLayer();
 
 }

@@ -23,6 +23,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.react.resource.ClientResources;
 import com.top_logic.layout.react.theme.ColorScheme;
 import com.top_logic.layout.react.theme.UITheme;
 import com.top_logic.layout.react.theme.UIThemeService;
@@ -114,6 +115,22 @@ public class TestUIThemeService extends TestCase {
 		assertTrue(css, css.contains(":root, " + selector("light") + "{"));
 		assertTrue(css, block(css, "light").startsWith("color-scheme:light;"));
 		assertTrue(css, block(css, "dark").startsWith("color-scheme:dark;"));
+	}
+
+	/**
+	 * The token blocks are in the cascade layer of the engine's styles, so that a component library
+	 * and the application override a token by a rule of their own.
+	 */
+	public void testTokensInEngineLayer() throws ConfigurationException {
+		String css = css(service(LIGHT_AND_DARK));
+
+		String layerStart = "@layer " + ClientResources.ENGINE_LAYER + "{";
+		int start = css.indexOf(layerStart);
+		assertTrue(css, start > 0);
+		assertTrue(css, css.indexOf(selector("light")) > start);
+		assertTrue(css, css.indexOf(selector("dark")) > start);
+		assertTrue(css, css.endsWith("}}</style>"));
+		assertEquals(css, start, css.lastIndexOf("@layer"));
 	}
 
 	/**

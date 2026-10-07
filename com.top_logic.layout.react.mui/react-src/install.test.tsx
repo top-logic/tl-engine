@@ -4,7 +4,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, cleanup, render, screen } from '@testing-library/react';
-import { STYLE_ELEMENT_ID, DS, MODE_ATTRIBUTE } from './themeProperties';
+import { CSS_LAYER, STYLE_ELEMENT_ID, DS, MODE_ATTRIBUTE } from './themeProperties';
 
 vi.mock('tl-react-bridge', async importOriginal => ({
   ...await importOriginal<typeof import('tl-react-bridge')>(),
@@ -146,6 +146,40 @@ describe('installMui', () => {
     render(<Root><Probe /></Root>);
 
     expect(screen.getByText(`${PRIMARY} ${PRIMARY}`)).toBeTruthy();
+  });
+
+  it('puts the rules of Material UI into its cascade layer', async () => {
+    const { installMui, registerRootWrapper } = await load();
+    installMui({ theme: TWO_SCHEMES, replace: [] });
+    const Root = registerRootWrapper.mock.calls[0][0];
+    const { default: Button } = await import('@mui/material/Button');
+
+    render(<Root><Button>Probe</Button></Root>);
+
+    // Emotion writes an empty rule for the class of a component besides the block of its rules.
+    const rules = Array.from(document.head.querySelectorAll('style[data-emotion]'))
+      .map(style => style.textContent ?? '')
+      .filter(text => !/^[^{]*\{\}$/.test(text.trim()));
+    expect(rules.some(rule => rule.includes('MuiButton-root{font-family'))).toBe(true);
+    expect(muiVariables()).toContain('--app-palette-primary-main');
+    rules.forEach(rule => expect(rule.slice(0, 40)).toMatch(new RegExp(`^@layer ${CSS_LAYER}\\{`)));
+  });
+
+  it('writes the styles of Material UI after the layer order of the page', async () => {
+    const layerOrder = document.createElement('style');
+    layerOrder.textContent = '@layer tl, mui;';
+    document.head.prepend(layerOrder);
+    const { installMui, registerRootWrapper } = await load();
+    installMui({ theme: TWO_SCHEMES, replace: [] });
+    const Root = registerRootWrapper.mock.calls[0][0];
+    const { default: Button } = await import('@mui/material/Button');
+
+    render(<Root><Button>Probe</Button></Root>);
+
+    const styles = Array.from(document.head.querySelectorAll('style'));
+    expect(styles[0]).toBe(layerOrder);
+    expect(document.head.querySelectorAll('style[data-emotion="mui-global"]').length).toBeGreaterThan(0);
+    layerOrder.remove();
   });
 
   it('writes the styling properties derived from the theme into the page', async () => {

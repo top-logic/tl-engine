@@ -245,6 +245,7 @@ repository does it. `requires` orders the bundle after the bridge that owns the 
             specifier="tl-my-module"
           />
           <stylesheet name="tl-my-module-css"
+            layer="tl"
             resource="/style/tlMyModule.css"
           />
         </resources>
@@ -253,6 +254,14 @@ repository does it. `requires` orders the bundle after the bridge that owns the 
   </services>
 </application>
 ```
+
+A stylesheet of an engine module names the cascade layer `tl` of the engine's styles (`layer="tl"`),
+so that a component library (layer `mui`) and the stylesheets of an application (unlayered) override
+it, whatever the specificity of their rules — see
+[react-theme-tokens.md](react-theme-tokens.md#cascade-layers). The page imports it into that layer
+with a `<style>@import url("…") layer(tl);</style>` instead of a `<link>`. Without `layer` stay an
+application's own stylesheet and a stylesheet that overrides unlayered styles a library writes into
+the page at runtime (e.g. `tlCodeEditor.css` against the base theme of CodeMirror).
 
 ### 7. Control component pattern
 

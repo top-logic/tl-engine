@@ -1,5 +1,6 @@
 import { React } from 'tl-react-bridge';
 import createCache from '@emotion/cache';
+import type { EmotionCache } from '@emotion/cache';
 import { CacheProvider } from '@emotion/react';
 import { ThemeProvider, createTheme, useColorScheme } from '@mui/material/styles';
 import type { Theme, ThemeOptions, ThemeProviderProps } from '@mui/material/styles';
@@ -9,24 +10,46 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { deDE as pickersDeDE, enUS as pickersEnUS } from '@mui/x-date-pickers/locales';
 import 'dayjs/locale/de';
 import 'dayjs/locale/en';
-import { MODE_ATTRIBUTE } from './themeProperties';
+import { CSS_LAYER, MODE_ATTRIBUTE } from './themeProperties';
 import type { SchemeName } from './themeProperties';
-
-/** The key emotion prefixes the class names and style elements of Material UI with. */
-const CACHE_KEY = 'mui';
 
 /** The language of the MUI texts and the date format while the page names none this bundle has. */
 const DEFAULT_LOCALE = 'en';
 
+/** The key emotion prefixes the class names and style elements of Material UI with. */
+const CACHE_KEY = 'mui';
+
+/** Styles that are a layer statement only (`@layer a, b;`), which are not put into a layer. */
+const LAYER_STATEMENT = /^@layer\s+[^{]*$/;
+
 /**
- * The style cache of Material UI, shared by all React roots of the page.
+ * Creates the style cache of Material UI: it appends its style elements to the end of `<head>` and
+ * puts every rule into the CSS cascade layer {@link CSS_LAYER} (`@layer mui { … }`).
  *
- * <p>The TopLogic stylesheets are `<link>` elements the server writes into the page `<head>`
- * (ClientResources), and this bundle is an ES module script, which runs once the page is parsed. A
- * cache that appends to the end of the `<head>` (`prepend: false`) therefore puts every MUI style
- * after the TopLogic stylesheets: on its own elements Material UI wins a tie in specificity.</p>
+ * <p>The page names the order of the layers in its `<head>` before any of its styles
+ * (ClientResources): the layer `tl` of the TopLogic stylesheets comes before `mui`, so that a MUI
+ * rule wins against a TopLogic rule on the same element, whatever their specificity and their
+ * position in the page. The stylesheets of the application are unlayered and win against both.</p>
+ *
+ * <p>The cache wraps the rules as the `StyledEngineProvider` of MUI does with `enableCssLayer`.
+ * That provider itself is not used: it writes the global styles (the CSS variables of the theme)
+ * to the start of `<head>`, before the layer order of the page, and the first mention of a layer
+ * fixes its position in the order, so `mui` would come before `tl`.</p>
  */
-const muiCache = createCache({ key: CACHE_KEY, container: document.head, prepend: false });
+function createLayeredCache(): EmotionCache {
+  const cache = createCache({ key: CACHE_KEY, container: document.head, prepend: false });
+  const insert = cache.insert;
+  cache.insert = (selector, serialized, sheet, shouldCache) => {
+    const layered = LAYER_STATEMENT.test(serialized.styles)
+      ? serialized
+      : { ...serialized, styles: `@layer ${CSS_LAYER}{${serialized.styles}}` };
+    return insert(selector, layered, sheet, shouldCache);
+  };
+  return cache;
+}
+
+/** The style cache of Material UI, shared by all React roots of the page. */
+const muiCache = createLayeredCache();
 
 /**
  * The selector of a color scheme of the MUI theme: the mode of the design system the scheme is in
@@ -155,6 +178,9 @@ export function pageTheme(themes: PageThemes): Theme {
 /**
  * Creates the root wrapper of every React root of the bridge: the emotion cache, the MUI theme of
  * the page language and the localization of the date pickers (the dayjs locale of that language).
+ *
+ * <p>The cache puts every rule of Material UI into the CSS cascade layer {@link CSS_LAYER} (see
+ * {@link createLayeredCache}).</p>
  *
  * <p>The wrapper renders providers only, no element of its own: it sits above the content of every
  * React root, and an element there would break the fill layout of the TopLogic components (see

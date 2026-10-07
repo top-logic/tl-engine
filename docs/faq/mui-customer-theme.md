@@ -338,8 +338,8 @@ installMui({ theme: customerTheme, replace: 'all' });
 1. creates the MUI themes from `options.theme`,
 2. writes the styling properties derived from the theme into the page
    (`<style id="tl-mui-theme-properties">` at the end of `<head>`),
-3. registers the root wrapper (emotion cache, `ThemeProvider`, the date pickers'
-   `LocalizationProvider`) above every React root of the bridge,
+3. registers the root wrapper (emotion cache writing into the cascade layer `mui`, `ThemeProvider`,
+   the date pickers' `LocalizationProvider`) above every React root of the bridge,
 4. replaces the selected TopLogic components by their MUI adapters (`replace` of the bridge).
 
 The bundle is loaded before the page's controls are mounted, so all of this is in place for the
@@ -365,6 +365,10 @@ its font stylesheet (`com.top_logic.demo.react.mui/src/main/webapp/WEB-INF/conf/
 	</instance>
 </config>
 ```
+
+The font stylesheet names no `layer`: it holds `@font-face` rules only, which cascade layers do
+not affect. A stylesheet of the theme module with rules of its own names its layer, see
+[Where customer CSS goes](#where-customer-css-goes).
 
 `requires="tl-react-mui"` orders the bundle after the Material UI bundle (which itself requires
 `tl-react-bridge`); `tl-react-mui` is registered with `specifier="tl-react-mui"`, so the import
@@ -429,6 +433,21 @@ computation is `com.top_logic.layout.react.mui/react-src/themeProperties.ts`.
   under `components` affect only components MUI renders.
 - **No contrast correction.** The theme's values are used as they are; a palette with poor
   contrast stays so on the TopLogic surfaces as well.
+### Where customer CSS goes
+
+The page orders its styles by CSS cascade layers, `tl` (the engine) before `mui` (Material UI),
+with unlayered rules on top ([react-theme-tokens.md](react-theme-tokens.md#cascade-layers)). Each
+kind of customer CSS has its place there:
+
+| Customer CSS | Place | Effect |
+|---|---|---|
+| the theme: `palette`, `typography`, `components.MuiX.styleOverrides`, `variants`; `styled`, `sx` and `css` of customer components | layer `mui`, automatically: the emotion cache of `tl-react-mui` writes every rule there | wins against the engine's stylesheets on the same element, whatever the specificity |
+| rules of the application's `css-class` names (`<card css-class="acmeGlass">`) | unlayered: a `<stylesheet>` without `layer` | wins against the engine and against MUI, e.g. the background of the MUI `Card` the card is rendered with |
+| a global base stylesheet: resets, element selectors (`a`, `h1`, `body`) | a layer of its own between `tl` and `mui`: `layers="tl, acme-base, mui"` on the `ClientResources` instance and `layer="acme-base"` on the `<stylesheet>` | overrides the engine's element styles but not the MUI components, and not the `css-class` rules |
+
+A global base stylesheet left unlayered would override the MUI components as well: an element
+selector of an unlayered rule wins against every class rule of MUI.
+
 ## Part 2: customer-specific components
 
 Three levels, from cheapest to most work. Prefer the first that does the job.
@@ -674,6 +693,9 @@ needs no component at all.
   `css`.
 - **One `installMui` per page**, in the entry of the application's theme module, with a name list
   that only contains `COMPONENT_NAMES`.
+- **Unlayered CSS wins against MUI.** A stylesheet of the application without `layer` overrides
+  the MUI components whatever its specificity; put resets and element selectors into a layer before
+  `mui` ([Where customer CSS goes](#where-customer-css-goes)).
 - **After adding the module** to the reactor (module list, dependency management), run
   `.claude/scripts/rebuild-stale.sh` in the engine checkout: it reinstalls the changed parent POMs
   and builds the module without a jar.

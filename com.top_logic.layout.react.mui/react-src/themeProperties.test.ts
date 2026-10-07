@@ -5,7 +5,7 @@ import { createTheme } from '@mui/material/styles';
 import type { ThemeOptions } from '@mui/material/styles';
 import { red } from '@mui/material/colors';
 import {
-  COLOR_SCHEME, DS, STYLE_ELEMENT_ID, THEME, installThemeProperties, statusRole, themeProperties, themeStylesheet,
+  COLOR_SCHEME, CSS_LAYER, DS, STYLE_ELEMENT_ID, THEME, installThemeProperties, statusRole, themeProperties, themeStylesheet,
 } from './themeProperties';
 
 const DEFAULT_THEME = createTheme({ cssVariables: true });
@@ -119,16 +119,32 @@ describe('themeProperties', () => {
   });
 });
 
+/** The rules of a stylesheet written by {@link themeStylesheet}, without the enclosing layer block. */
+function layerRules(css: string): string {
+  const prefix = `@layer ${CSS_LAYER} {\n`;
+  expect(css.startsWith(prefix)).toBe(true);
+  expect(css.endsWith('}\n')).toBe(true);
+  return css.slice(prefix.length, -'}\n'.length);
+}
+
 describe('themeStylesheet', () => {
-  it('sets each scheme for its mode of the design system', () => {
+  it('puts the rules into the cascade layer of Material UI', () => {
     const css = themeStylesheet(TWO_SCHEME_THEME);
+
+    expect(CSS_LAYER).toBe('mui');
+    expect(css).toMatch(/^@layer mui \{\n:root, \[data-tl-mode="light"\] \{/);
+    expect(css.match(/@layer/g)).toHaveLength(1);
+  });
+
+  it('sets each scheme for its mode of the design system', () => {
+    const css = layerRules(themeStylesheet(TWO_SCHEME_THEME));
 
     expect(css).toMatch(/^:root, \[data-tl-mode="light"\] \{[^}]*--tl-surface-brand: #1976d2;/);
     expect(css).toMatch(/\[data-tl-mode="dark"\] \{[^}]*--tl-surface-brand: #90caf9;/);
   });
 
   it('sets the single scheme of a theme for every mode', () => {
-    const css = themeStylesheet(CUSTOMER_THEME);
+    const css = layerRules(themeStylesheet(CUSTOMER_THEME));
 
     expect(css).toMatch(/^:root \{/);
     expect(css).not.toContain('data-tl-mode');
@@ -137,7 +153,7 @@ describe('themeStylesheet', () => {
   });
 
   it('sets the single dark scheme of a theme without CSS variables for every mode', () => {
-    const css = themeStylesheet(DARK_ONLY_THEME);
+    const css = layerRules(themeStylesheet(DARK_ONLY_THEME));
 
     expect(css).toMatch(/^:root \{/);
     expect(css).toContain('color-scheme: dark;');

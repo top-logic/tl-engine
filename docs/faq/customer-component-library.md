@@ -349,7 +349,17 @@ it generic and parameterized by configuration, not tailored to one view.
   (`value` + `onChange`, `open` + `onOpenChange`), otherwise it drifts away from the server.
 - **Global CSS.** Resets and generic class names of the library can collide with the TopLogic
   stylesheets. Load the library's stylesheet through `ClientResources` and check it for side effects
-  early.
+  early. Its rules belong to the cascade layer of the component library (`layer="mui"` on the
+  `<stylesheet>`, or a layer of its own in the layer order, see
+  [react-theme-tokens.md](react-theme-tokens.md#cascade-layers)), not unlayered: unlayered rules win
+  against every layered rule, so an unlayered reset would override the engine and the library
+  everywhere.
+- **CSS-in-JS.** Styles a library writes into the page at runtime are unlayered unless the library
+  puts them into a layer. Unlayered, they win against every stylesheet of the engine, whatever the
+  specificity. Configure the library to write into the layer of the component library, as the
+  Material UI module does with its emotion cache (`MuiRoot.tsx`), and let it append its style
+  elements to the end of `<head>`: a layer mentioned before the layer order statement of the page
+  takes its position from that first mention.
 - **Portals, focus, outside press.** Dialogs and popovers that portal into `document.body` must
   cooperate with the focus trap (`useFocusTrap`; a portaled popup anchored inside a modal surface
   carries `anchoredOverlayProps`), with closing on an outside press (`useCloseOnOutsidePress`) and
@@ -438,8 +448,13 @@ Loading the bundle changes nothing on the page; `installMui` does. How it attach
   `LocalizationProvider` of the date pickers. It renders no element of its own, since it sits above
   every React root and an element there would break the fill layout. For the same reason there is
   no `ScopedCssBaseline`, and no global `CssBaseline`, whose reset would collide with the TopLogic
-  stylesheets. The emotion cache appends its styles to the end of `<head>`, after the TopLogic
-  stylesheets, so MUI wins on its own elements. The theme is the application's theme passed to
+  stylesheets. The emotion cache appends its styles to the end of `<head>` and wraps every rule of
+  Material UI in the cascade layer `mui` (as MUI's `StyledEngineProvider` with `enableCssLayer`
+  does; that provider is not used, since it writes the theme's CSS variables to the start of
+  `<head>`, before the layer order of the page), which the page orders after the layer `tl` of the TopLogic stylesheets
+  ([react-theme-tokens.md](react-theme-tokens.md#cascade-layers)): MUI wins on its own elements,
+  whatever the specificity, and an application's `css-class` rule, which is unlayered, wins against
+  MUI. The theme is the application's theme passed to
   `installMui` (with CSS variables), in the language of the page (`<html lang>`, German or
   English).
 - **Light and dark.** The mode of the page belongs to the UI theme in effect, which writes it to
@@ -595,9 +610,10 @@ sidebar, toolbars, layouts — follow it through their styling properties:
   components. Only properties that exist are set; aliases (`<ref>` tokens) follow the token they
   name.
 - `installThemeProperties(theme)` writes them as one `<style id="tl-mui-theme-properties">` to the
-  end of `<head>` when `installMui` runs, after the TopLogic stylesheets and the theme styles of
-  the page, with the same specificity, so it wins. No build step and no theme of the
-  `UIThemeService` is involved.
+  end of `<head>` when `installMui` runs, inside `@layer mui { … }`. The layer `mui` comes after the
+  layer `tl` of the theme styles and the TopLogic stylesheets, so its values win; an application
+  stylesheet setting one of the properties is unlayered and wins in turn. No build step and no theme
+  of the `UIThemeService` is involved.
 - A theme with a light and a dark scheme sets each for its mode of the design system
   (`[data-tl-mode]`), the mode the MUI components follow as well; a theme with one scheme sets it
   on `:root`, in effect in every mode, and holds the page in the mode of that scheme

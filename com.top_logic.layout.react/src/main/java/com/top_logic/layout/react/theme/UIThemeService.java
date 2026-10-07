@@ -30,6 +30,7 @@ import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.DesignTokenKind;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
+import com.top_logic.layout.react.resource.ClientResources;
 import com.top_logic.mig.html.HTMLConstants;
 
 /**
@@ -360,6 +361,12 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 * to {@code :root}, which is the appearance of a page whose script did not run.
 	 *
 	 * <p>
+	 * The blocks belong to the CSS cascade layer {@value ClientResources#ENGINE_LAYER} of the
+	 * engine's styles, so that a component library and the application override a token by a rule
+	 * of their own, whatever its position in the page.
+	 * </p>
+	 *
+	 * <p>
 	 * An abstract theme gets no block: no page is ever put into it, and its tokens are part of the
 	 * blocks of the themes extending it.
 	 * </p>
@@ -373,6 +380,9 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		out.beginBeginTag(HTMLConstants.STYLE_ELEMENT);
 		out.writeAttribute(HTMLConstants.TYPE_ATTR, CSS_TYPE);
 		out.endBeginTag();
+		out.writeContent("@layer ");
+		out.writeContent(ClientResources.ENGINE_LAYER);
+		out.writeContent("{");
 		for (UITheme theme : _selectableThemes) {
 			out.writeContent(selector(theme.getId()));
 			out.writeContent("{");
@@ -388,6 +398,7 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 			}
 			out.writeContent("}");
 		}
+		out.writeContent("}");
 		out.endTag(HTMLConstants.STYLE_ELEMENT);
 	}
 

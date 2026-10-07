@@ -70,7 +70,7 @@ function Chip({
           <ThemeIcon encoded={HANDLE_ICON} className="tl-button__icon tl-icon-sm" />
         </button>
       )}
-      <OptionImage image={option.image} />
+      <OptionImage image={option.image} inPill />
       <span className="tl-pill__label">{option.label}</span>
       {removable && (
         <button

@@ -19,6 +19,7 @@ import test.com.top_logic.basic.LoggingTestSetup;
 import test.com.top_logic.basic.ScratchDirectory;
 import test.com.top_logic.basic.SimpleTestFactory;
 import test.com.top_logic.basic.TestComment;
+import test.com.top_logic.basic.TestDocumentation;
 import test.com.top_logic.basic.TestLayoutsNormalized;
 import test.com.top_logic.basic.TestUtils;
 import test.com.top_logic.basic.jsp.TestJSPContent;
@@ -90,6 +91,13 @@ public abstract class AbstractBasicTestAll {
 		@Name("test-layouts-normalized")
 		@BooleanDefault(true)
 		boolean getTestLayoutsNormalized();
+
+		/**
+		 * Whether to activate {@link TestDocumentation}.
+		 */
+		@Name("test-documentation")
+		@BooleanDefault(true)
+		boolean getTestDocumentation();
 
 		/**
 		 * Whether to activate {@link TestJSPContent}.

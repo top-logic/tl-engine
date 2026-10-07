@@ -69,9 +69,18 @@ public final class ConfigValidation {
 	 *        The property of {@link #item()} the violation belongs to.
 	 * @param message
 	 *        The message describing the violation.
+	 * @param missing
+	 *        Whether the violation is a mandatory value not given, rather than a value given that
+	 *        a constraint rejects.
 	 */
-	public record Violation(ConfigurationItem item, PropertyDescriptor property, ResKey message) {
-		// Nothing beyond the components.
+	public record Violation(ConfigurationItem item, PropertyDescriptor property, ResKey message, boolean missing) {
+
+		/**
+		 * Creates a {@link Violation} of a value given that a constraint rejects.
+		 */
+		public Violation(ConfigurationItem item, PropertyDescriptor property, ResKey message) {
+			this(item, property, message, false);
+		}
 	}
 
 	/**
@@ -171,6 +180,22 @@ public final class ConfigValidation {
 	 *         nothing - one that found no field is simply not shown.
 	 */
 	public static boolean report(Findings findings, ConfigFieldIndex index) {
+		return report(findings, index, true);
+	}
+
+	/**
+	 * Puts the given findings on the fields that caused them, revealing a missing value or not.
+	 *
+	 * @param revealMissing
+	 *        Whether to {@link com.top_logic.layout.form.model.AbstractFieldModel#setRevealed(boolean)
+	 *        reveal} the field of a {@link Violation#missing() missing} value. Without, such a
+	 *        finding is on display only at a field already revealed - one the user has changed, or
+	 *        one a refusal has revealed. A value given that a constraint rejects is revealed either
+	 *        way: it is a verdict on what is there.
+	 *
+	 * @see #report(Findings, ConfigFieldIndex)
+	 */
+	public static boolean report(Findings findings, ConfigFieldIndex index, boolean revealMissing) {
 		boolean complete = true;
 		for (Violation violation : findings.violations()) {
 			ConfigFieldModel field = index.lookup(violation.item(), violation.property());
@@ -178,7 +203,9 @@ public final class ConfigValidation {
 				complete = false;
 			} else {
 				field.setModelValidationError(violation.message());
-				field.setRevealed(true);
+				if (revealMissing || !violation.missing()) {
+					field.setRevealed(true);
+				}
 			}
 		}
 		Map<ConfigFieldModel, List<ResKey>> warningsByField = warningsByField(findings.warnings(), index);
@@ -267,6 +294,23 @@ public final class ConfigValidation {
 	}
 
 	/**
+	 * The same while the user is still editing: a mandatory value not given is put on its field
+	 * without revealing it.
+	 *
+	 * <p>
+	 * A field the user has not touched yet - one of an entry just added, say - must not turn red
+	 * before the user had a chance to fill it: its finding becomes visible once the user changes
+	 * the field, or once a refusal reveals it. A value a constraint rejects is shown at once, at
+	 * either end of the constraint, since it is a verdict on a value that is there.
+	 * </p>
+	 *
+	 * @see #recheck(ConfigurationItem, ConfigFieldIndex)
+	 */
+	public static List<Violation> recheckWhileEditing(ConfigurationItem edited, ConfigFieldIndex index) {
+		return recheck(Collections.singletonList(edited), index, false);
+	}
+
+	/**
 	 * The same for several configurations checked as one, where what is edited is a collection
 	 * rather than a single item.
 	 *
@@ -274,6 +318,11 @@ public final class ConfigValidation {
 	 * @see #refusalFor(Iterable, ConfigFieldIndex)
 	 */
 	public static List<Violation> recheck(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index) {
+		return recheck(edited, index, true);
+	}
+
+	private static List<Violation> recheck(Iterable<? extends ConfigurationItem> edited, ConfigFieldIndex index,
+			boolean revealMissing) {
 		index.clearFindings();
 
 		List<Violation> violations = new ArrayList<>();
@@ -286,7 +335,7 @@ public final class ConfigValidation {
 		// Reported whatever comes of it: a warning is shown at its field and refuses nothing, so a
 		// configuration whose only finding is a warning is handed over with the warning on display
 		// until the form is rebuilt over the applied value.
-		report(new Findings(violations, warnings), index);
+		report(new Findings(violations, warnings), index, revealMissing);
 		return violations;
 	}
 
@@ -383,7 +432,7 @@ public final class ConfigValidation {
 		for (PropertyDescriptor property : item.descriptor().getProperties()) {
 			if (property.isMandatory() && isMissing(item, property)) {
 				violations.add(new Violation(item, property,
-					I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(property, false))));
+					I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(property, false)), true));
 			}
 			descendMissingMandatory(item, property, violations, visited);
 		}

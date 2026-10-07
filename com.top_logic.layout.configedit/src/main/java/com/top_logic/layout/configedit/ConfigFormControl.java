@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.ReactContext;
@@ -164,6 +165,31 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	};
 
 	/**
+	 * Reveals a field whose value the user changed, so that the check following the change shows
+	 * what it found at that field, while fields not touched yet stay unmarked.
+	 *
+	 * @see #recheck()
+	 */
+	private static final FieldModelListener REVEAL_ON_CHANGE = new FieldModelListener() {
+		@Override
+		public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+			if (source instanceof AbstractFieldModel field) {
+				field.setRevealed(true);
+			}
+		}
+
+		@Override
+		public void onEditabilityChanged(FieldModel source, boolean editable) {
+			// Not a change by the user.
+		}
+
+		@Override
+		public void onValidationChanged(FieldModel source) {
+			// Not a change by the user.
+		}
+	};
+
+	/**
 	 * Creates a {@link ConfigFormControl} with a full edit mode.
 	 *
 	 * @param context
@@ -211,6 +237,7 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		_model.addListener(_onModeChange);
 		_index.observeFields(_onFieldChange::watch);
 		_index.observeFields(field -> field.addListener(_onValidityChange));
+		_index.observeFields(field -> field.addListener(REVEAL_ON_CHANGE));
 		rebuild();
 	}
 
@@ -367,8 +394,9 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * </p>
 	 *
 	 * <p>
-	 * {@link ConfigValidation#recheck(ConfigurationItem, ConfigFieldIndex)}, not
-	 * {@link ConfigValidation#refusalFor(ConfigurationItem, ConfigFieldIndex)}: an entry the user
+	 * {@link ConfigValidation#recheckWhileEditing(ConfigurationItem, ConfigFieldIndex)}, not
+	 * {@link ConfigValidation#refusalFor(ConfigurationItem, ConfigFieldIndex)}: a finding is shown at
+	 * a field the user has changed, see {@link #REVEAL_ON_CHANGE}, not at one not touched yet; an entry the user
 	 * has just started is not yet something to be told to confirm or discard, and an input a field
 	 * rejected is nothing this is about to discard - both are Apply's to refuse over, when the user
 	 * asks for the configuration to be handed over.
@@ -384,7 +412,7 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		if (_commands != Commands.NONE && !_model.isEditMode()) {
 			return;
 		}
-		ConfigValidation.recheck(_model.edited(), _index);
+		ConfigValidation.recheckWhileEditing(_model.edited(), _index);
 	}
 
 	/**

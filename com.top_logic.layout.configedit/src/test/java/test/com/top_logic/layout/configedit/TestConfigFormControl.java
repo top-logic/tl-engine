@@ -735,6 +735,25 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	/**
+	 * Changing one field does not flag another mandatory field the user has not touched yet - one
+	 * of an entry just added, say: the user had no chance to fill it. The save reveals it.
+	 */
+	public void testChangingAFieldDoesNotFlagAnUntouchedMandatoryValue() {
+		WarningConfig config = TypedConfiguration.newConfigItem(WarningConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		fieldOf(form, WarningConfig.AMOUNT).setValue(Integer.valueOf(5));
+
+		assertNull("The mandatory value nobody touched yet is not complained about.",
+			fieldOf(form, WarningConfig.NAME).getError());
+		assertNull("Nor by the chrome around the field.", chromeErrorOf(form, WarningConfig.NAME));
+		assertFalse(form.hasVisibleErrors());
+
+		assertNotNull("The save refuses.", form.checkForSave());
+		assertNotNull("And reveals the missing value at its field.", fieldOf(form, WarningConfig.NAME).getError());
+	}
+
+	/**
 	 * A form without edit mode is saved by its caller, which asks the form first: an untouched
 	 * mandatory property refuses, and the check puts the violation on the field.
 	 */

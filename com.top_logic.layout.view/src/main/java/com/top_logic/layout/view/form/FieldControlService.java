@@ -223,15 +223,34 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * A control that edits a selection is not published: it requires the value to be held by a
 	 * {@link SelectFieldModel}, which only the model side builds.
 	 * </p>
+	 *
+	 * <p>
+	 * Nor is a control published for a kind of value that further datatypes of the model hold as
+	 * well: a plain text, or a compiled TL-Script that is a script in one datatype and a template in
+	 * another. The control is configured for what the values of one datatype mean, and the kind of
+	 * value alone does not tell which datatype a value belongs to.
+	 * </p>
 	 */
 	private void publish(TLType type, ReactFieldControlProvider provider) {
 		if (provider instanceof SelectControlProvider) {
 			return;
 		}
 		Class<?> valueType = valueType(type);
-		if (valueType != String.class) {
+		if (valueType != String.class && !isShared(type, valueType)) {
 			FieldControlRegistry.getInstance().register(valueType, provider);
 		}
+	}
+
+	/**
+	 * Whether a datatype of the model other than the given one holds values of the given kind, too.
+	 */
+	private static boolean isShared(TLType type, Class<?> valueType) {
+		for (TLPrimitive other : TLModelUtil.getDataTypes(type.getModel())) {
+			if (other != type && valueType(other) == valueType) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -288,7 +307,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * <p>
 	 * The control is resolved as for a form field, described by {@link #cellSpec(FieldSpec)}: a
 	 * value chosen from options is offered in a list that opens on demand, whatever display the
-	 * model annotations ask for.
+	 * model annotations ask for, and a value whose control needs more room than a row offers is
+	 * shown by a one-line preview with a button opening its editor in a dialog.
 	 * </p>
 	 *
 	 * @param context
@@ -313,13 +333,21 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * explicitly for the control still wins, as for every other field.
 	 * </p>
 	 *
+	 * <p>
+	 * A cell is {@link FieldSpec#isCompact() compact}: a value whose control needs more room than
+	 * a row offers - a text of several lines, a code editor, several values each in a control of
+	 * its own - is displayed by a one-line preview and a button opening the full control in a
+	 * dialog.
+	 * </p>
+	 *
 	 * @param field
 	 *        The description of the edited value, see
 	 *        {@link #fieldSpec(TLType, AnnotationLookup, String, boolean, FieldModel)}.
 	 * @return The given description, adapted.
 	 */
 	public static FieldSpec cellSpec(FieldSpec field) {
-		return field.setSelectDisplay(SelectDisplay.DROPDOWN).setSelectOrientation(Orientation.VERTICAL);
+		return field.setSelectDisplay(SelectDisplay.DROPDOWN).setSelectOrientation(Orientation.VERTICAL)
+			.setCompact(true);
 	}
 
 	/**
@@ -469,7 +497,29 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        a single one, see {@link ColumnType#collected()}.
 	 */
 	private static FieldSpec fieldSpec(TLStructuredTypePart part, boolean multiple, FieldModel model) {
-		return fieldSpec(part.getType(), part, MetaLabelProvider.INSTANCE.getLabel(part), multiple, model)
+		return fieldSpec(part, part, multiple, model);
+	}
+
+	/**
+	 * Describes a value of the given attribute for the control that edits it, holding as many
+	 * values as stated and reading its display annotations from the given lookup.
+	 *
+	 * <p>
+	 * The attribute decides everything but how many values there are and which display annotations
+	 * apply: its type and its order shape the field, while the multiplicity is the one of the
+	 * field, see {@link ColumnType#collected()}, and the display annotations are the given ones.
+	 * </p>
+	 *
+	 * @param annotations
+	 *        Where the display annotations are read from: the attribute itself, or a column's
+	 *        annotations layered over it, see {@link ColumnType#annotatedBy(AnnotationLookup)}.
+	 * @param multiple
+	 *        Whether the described field holds a collection of the attribute's values rather than
+	 *        a single one.
+	 */
+	private static FieldSpec fieldSpec(TLStructuredTypePart part, AnnotationLookup annotations, boolean multiple,
+			FieldModel model) {
+		return fieldSpec(part.getType(), annotations, MetaLabelProvider.INSTANCE.getLabel(part), multiple, model)
 			.setOrdered(multiple && part.isOrdered());
 	}
 
@@ -828,40 +878,18 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        The attribute value to display, may be {@code null}.
 	 */
 	public ReactControl createDisplayControl(ReactContext context, TLStructuredTypePart part, Object value) {
-		return createDisplayControl(context, part, part, part.isMultiple(), value);
+		AbstractFieldModel model = displayModel(part, part.isMultiple(), value);
+		return createFieldControl(context, part, fieldSpec(part, part.isMultiple(), model), model, null);
 	}
 
 	/**
-	 * Creates a read-only control displaying the given value of the given attribute, the field
-	 * holding as many values as stated.
+	 * Creates a read-only control displaying the given value in a table cell.
 	 *
 	 * <p>
-	 * The attribute decides everything but how many values there are and which display annotations
-	 * apply: its options and its own control annotation shape the display, while the multiplicity
-	 * is the one of the field, which a column reaching the attribute over a multi-valued step
-	 * answers for itself, see {@link ColumnType#collected()}, and the display annotations are the
-	 * given ones.
+	 * The value is shown as a view-mode form field shows it, described for a table cell by
+	 * {@link #cellSpec(FieldSpec)}: a value whose display needs more room than a row offers is
+	 * shown by a one-line preview with a button opening the full display in a dialog.
 	 * </p>
-	 *
-	 * @param annotations
-	 *        Where the display annotations are read from: the attribute itself, or a column's
-	 *        annotations layered over it, see {@link ColumnType#annotatedBy(AnnotationLookup)}.
-	 * @param multiple
-	 *        Whether the displayed value is a collection of the attribute's values rather than a
-	 *        single one.
-	 */
-	private ReactControl createDisplayControl(ReactContext context, TLStructuredTypePart part,
-			AnnotationLookup annotations, boolean multiple, Object value) {
-		AbstractFieldModel model = displayModel(part, multiple, value);
-		model.setEditable(false);
-		FieldSpec field = fieldSpec(part.getType(), annotations, MetaLabelProvider.INSTANCE.getLabel(part), multiple,
-			model).setOrdered(multiple && part.isOrdered());
-		return createFieldControl(context, part, field, model, null);
-	}
-
-	/**
-	 * Creates a read-only control displaying the given value exactly as a view-mode form field
-	 * shows it.
 	 *
 	 * <p>
 	 * The entry point for a value that no attribute holds: what the value is
@@ -873,6 +901,12 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * reaching a single-valued attribute over a multi-valued step shows all the values it
 	 * collected. The display annotations are read from {@link ColumnType#annotations()} in either
 	 * case, which are the attribute's own unless the column declares some over them.
+	 * </p>
+	 *
+	 * <p>
+	 * The parts of a composition are shown by their labels with a button opening a read-only table
+	 * of the parts, see {@link CompositionEditing#createDisplayControl(ReactContext,
+	 * TLStructuredTypePart, Object)}.
 	 * </p>
 	 *
 	 * <p>
@@ -888,52 +922,91 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 */
 	public ReactControl createDisplayControl(ReactContext context, ColumnType columnType, Object value) {
 		TLStructuredTypePart part = columnType.part();
+		boolean multiple = columnType.multiple();
 		if (part != null) {
-			return createDisplayControl(context, part, columnType.annotations(), columnType.multiple(), value);
+			if (displaysPartsAsSelection(part)) {
+				// The parts of a composition are viewed in a dialog, with their own attributes.
+				return CompositionEditing.createDisplayControl(context, part, value);
+			}
+			AbstractFieldModel model = displayModel(part, multiple, value);
+			FieldSpec field = cellSpec(fieldSpec(part, columnType.annotations(), multiple, model));
+			return createFieldControl(context, part, field, model, null);
 		}
 		TLType type = columnType.type();
 		if (type == null) {
 			return new ReactTextControl(context, MetaLabelProvider.INSTANCE.getLabel(value));
 		}
-		AbstractFieldModel model = displayModel(type, columnType.multiple(), value);
-		model.setEditable(false);
-		FieldSpec field = fieldSpec(type, columnType.annotations(), null, columnType.multiple(), model);
+		AbstractFieldModel model = displayModel(type, multiple, value);
+		FieldSpec field = cellSpec(fieldSpec(type, columnType.annotations(), null, multiple, model));
 		return createFieldControl(context, type, field, model);
 	}
 
 	/**
-	 * The field holding a displayed value of the given type that no attribute declares: an
-	 * option-less select model where values of the type are chosen from options, so that objects
-	 * and classifiers render with the select control's read-only representation (label and icon),
-	 * and a plain field otherwise.
+	 * The read-only field holding a displayed value of the given type that no attribute declares:
+	 * an option-less select model where values of the type are chosen from options, so that
+	 * objects and classifiers render with the select control's read-only representation (label and
+	 * icon), and a plain field otherwise.
 	 *
 	 * @param multiple
 	 *        Whether the field holds a collection of values rather than a single one.
 	 */
 	private AbstractFieldModel displayModel(TLType type, boolean multiple, Object value) {
-		ReactFieldControlProvider mapped = byType(type);
-		boolean select =
-			mapped != null ? mapped instanceof SelectControlProvider : AttributeOptions.isStructuralSelect(type);
-		if (!select) {
-			return new AbstractFieldModel(value);
-		}
-		return new SimpleSelectFieldModel(selection(multiple, value), Collections.emptyList(), multiple);
+		return displayModel(isSelectType(type), multiple, value);
 	}
 
 	/**
-	 * The field holding the displayed value of an attribute: an option-less select model where the
-	 * attribute is edited by selecting from options, so that its values render with the select
-	 * control's read-only representation, and a plain field otherwise.
+	 * The read-only field holding the displayed value of an attribute: an option-less select model
+	 * where the attribute is edited by selecting from options, so that its values render with the
+	 * select control's read-only representation, and a plain field otherwise.
+	 *
+	 * <p>
+	 * The parts of a composition are displayed like the objects of any other reference, by their
+	 * labels and icons, although a composition is not edited by selecting from options. A control
+	 * annotated at the composition itself still decides its display.
+	 * </p>
 	 *
 	 * @param multiple
 	 *        Whether the field holds a collection of the attribute's values rather than a single
 	 *        one.
 	 */
 	private AbstractFieldModel displayModel(TLStructuredTypePart part, boolean multiple, Object value) {
-		if (selectOptionSource(part) == null) {
-			return new AbstractFieldModel(value);
-		}
-		return new SimpleSelectFieldModel(selection(multiple, value), Collections.emptyList(), multiple);
+		boolean select = selectOptionSource(part) != null || displaysPartsAsSelection(part);
+		return displayModel(select, multiple, value);
+	}
+
+	/**
+	 * Whether the given attribute is a composition whose parts are displayed as objects, by their
+	 * labels and icons, rather than by a control annotated at the composition itself.
+	 */
+	private boolean displaysPartsAsSelection(TLStructuredTypePart part) {
+		return AttributeOptions.isComposition(part)
+			&& part.getAnnotation(TLInputControl.class) == null
+			&& isSelectType(part.getType());
+	}
+
+	/**
+	 * Whether values of the given type are chosen from options: the control configured for the type
+	 * is a select, or, where none is configured, the type's structure says so.
+	 */
+	private boolean isSelectType(TLType type) {
+		ReactFieldControlProvider mapped = byType(type);
+		return mapped != null ? mapped instanceof SelectControlProvider : AttributeOptions.isStructuralSelect(type);
+	}
+
+	/**
+	 * The read-only field holding a displayed value.
+	 *
+	 * @param select
+	 *        Whether the value is displayed as a selection of options.
+	 * @param multiple
+	 *        Whether the field holds a collection of values rather than a single one.
+	 */
+	private static AbstractFieldModel displayModel(boolean select, boolean multiple, Object value) {
+		AbstractFieldModel model = select
+			? new SimpleSelectFieldModel(selection(multiple, value), Collections.emptyList(), multiple)
+			: new AbstractFieldModel(value);
+		model.setEditable(false);
+		return model;
 	}
 
 	/**

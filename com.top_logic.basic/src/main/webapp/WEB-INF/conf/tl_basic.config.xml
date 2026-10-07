@@ -69,6 +69,7 @@
 					<attribute name="data-object" />
 					<attribute name="data-section" />
 					<attribute name="data-tooltip" />
+					<attribute name="data-tl-link" /> <!-- The target of a link followed by the application, see ReactHtmlControl.LINK_ATTRIBUTE. -->
 					<attribute name="dir" />
 					<attribute name="download" />
 					<attribute name="href" />

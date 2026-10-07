@@ -22,11 +22,13 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping;
 import com.top_logic.element.meta.kbbased.storage.mappings.LongMapping;
+import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
@@ -177,16 +179,18 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 	/**
 	 * A column reaching a single-valued attribute over a multi-valued step shows all the values it
 	 * collected: the attribute decides which control writes a value, the column how many values
-	 * there are.
+	 * there are. A list of texts does not fit into the row of a table, so the cell shows the texts
+	 * in one line and opens the list in a dialog.
 	 */
 	public void testACollectedAttributeIsDisplayedAsAList() {
 		TLStructuredTypePart part = TLModelUtil.addProperty(_rowType, "title", _textType);
 
 		assertEquals("The title of one object is one text.",
 			ReactTextInputControl.class, display(ColumnType.of(part), "T1").getClass());
-		assertEquals("The titles collected over several objects are a list of texts.",
-			ReactValueListControl.class,
-			display(ColumnType.of(part).collected(), List.of("T1", "T2")).getClass());
+		ReactControl collected = display(ColumnType.of(part).collected(), List.of("T1", "T2"));
+		assertEquals("The titles collected over several objects are a list of texts, opened from the cell.",
+			ReactCompactFieldControl.class, collected.getClass());
+		assertEquals("T1, T2", ((ReactCompactFieldControl) collected).getPreviewText());
 	}
 
 	/**
@@ -355,14 +359,16 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the {@link ColumnProviderService} building the columns under test and the
-	 * {@link AttributeSettings} their display of an attribute value consults.
+	 * Test suite requiring the {@link ColumnProviderService} building the columns under test, the
+	 * {@link AttributeSettings} their display of an attribute value consults, and the
+	 * {@link ThemeFactory} providing the icon of the button opening a cell's values.
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestFieldControlServiceMultiplicity.class,
 				ColumnProviderService.Module.INSTANCE,
-				AttributeSettings.Module.INSTANCE));
+				AttributeSettings.Module.INSTANCE,
+				ThemeFactory.Module.INSTANCE));
 	}
 
 }

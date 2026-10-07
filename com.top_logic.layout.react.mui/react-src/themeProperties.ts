@@ -415,6 +415,16 @@ export function themeProperties(theme: Theme): SchemeProperties {
   return result;
 }
 
+/**
+ * The color scheme of a theme with a single one, or `null` for a theme with a light and a dark
+ * scheme. The MUI components render in that scheme in every mode of the design system, so the
+ * whole page is held in its mode.
+ */
+export function singleScheme(theme: Theme): SchemeName | null {
+  const names = Object.keys(themeProperties(theme)) as SchemeName[];
+  return names.length === 1 ? names[0] : null;
+}
+
 /** A CSS rule setting the given properties. */
 function rule(selector: string, properties: Properties): string {
   const declarations = Object.entries(properties).map(([name, value]) => `  ${name}: ${value};`);
@@ -426,7 +436,9 @@ function rule(selector: string, properties: Properties): string {
  *
  * <p>A theme with a light and a dark scheme sets each scheme for the mode of the design system
  * (`data-tl-mode` of `<html>`). A theme with a single scheme sets it for the page root, so that it
- * is in effect in every mode: the page stays in that scheme, as the MUI components do.</p>
+ * is in effect in every mode; the page is held in the mode of that scheme (see
+ * {@link singleScheme}), so that the properties this module does not set are in that mode as
+ * well.</p>
  *
  * <p>The rules have the specificity of the rules of the theme tokens and the design system
  * (`:root`, an attribute of `<html>`) and come after them in the page, so they win.</p>

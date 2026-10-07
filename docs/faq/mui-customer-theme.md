@@ -284,8 +284,16 @@ When porting:
   `UIThemeService`): the MUI components through the selector `[data-tl-mode="%s"]` of the theme's
   CSS variables, the TopLogic components through the styling properties derived per scheme. The
   mode changes with the user's choice of a UI theme and, for the UI theme following the operating
-  system, with the system's preference, without a page reload. A theme with one scheme (a plain
-  `palette`) is applied in every mode of the page.
+  system, with the system's preference, without a page reload.
+  A theme with one scheme (a plain `palette`) holds the whole page in the mode of that scheme:
+  `installMui` calls `lockMode(<scheme>)` of `tl-react-bridge`, and the page's theme script keeps
+  `data-tl-mode` at that mode whatever UI theme is selected. A selected UI theme of the other mode
+  is represented meanwhile by the UI theme of the held mode (the one answering the operating
+  system's preference for it), so every styling property — the derived ones, the roles of the
+  design system the theme does not set (e.g. the category colors of an avatar) and the tokens of
+  the UI themes — is in the theme's scheme, and nothing on the page turns half dark. The user's
+  selection is kept: the user menu still shows it, and it takes effect again on a page without
+  that lock.
   In a theme with both schemes, a color computed from the palette in the options
   (`typography: palette => ({ h6: { color: palette.text.primary } })`) is computed once, from the
   light palette, and stays so in the dark mode. Refer to the CSS variable instead

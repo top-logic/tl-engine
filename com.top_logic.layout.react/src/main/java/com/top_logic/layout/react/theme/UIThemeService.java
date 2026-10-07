@@ -96,6 +96,21 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 */
 	public static final String SELECT_FUNCTION = "select";
 
+	/**
+	 * Name of the {@link #CLIENT_API} function that holds the page in one appearance mode,
+	 * {@code light} or {@code dark}, whatever theme is selected, or releases the page again when
+	 * called with {@code null}.
+	 *
+	 * <p>
+	 * A page whose components render in a single color scheme of their own (e.g. a component
+	 * library styled with a light theme only) calls it, so that no part of the page switches to the
+	 * other mode. While the page is held in a mode, a selected theme of the other color scheme is
+	 * represented by the {@link #getModeTheme(ColorScheme) theme of the held mode}; the selection
+	 * itself is kept, and comes back into effect when the page is released.
+	 * </p>
+	 */
+	public static final String LOCK_MODE_FUNCTION = "lockMode";
+
 	private static final String CSS_TYPE = "text/css";
 
 	/**
@@ -253,6 +268,29 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	}
 
 	/**
+	 * The theme representing the given color scheme while the page is held in that appearance mode
+	 * (see {@link #LOCK_MODE_FUNCTION}).
+	 *
+	 * @param scheme
+	 *        The color scheme the page is held in.
+	 * @return The {@link #getSystemTheme(ColorScheme) theme answering} that appearance preference of
+	 *         the operating system if it has the given scheme, else the first configured theme with
+	 *         that scheme, or {@code null} if no theme has it.
+	 */
+	public UITheme getModeTheme(ColorScheme scheme) {
+		UITheme system = getSystemTheme(scheme);
+		if (system != null && system.getColorScheme() == scheme) {
+			return system;
+		}
+		for (UITheme theme : _themes.values()) {
+			if (theme.getColorScheme() == scheme) {
+				return theme;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Whether following the operating system makes a difference, i.e. whether the light and the
 	 * dark appearance preference are answered by different themes.
 	 */
@@ -304,12 +342,19 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 *
 	 * <p>
 	 * The script names the theme in effect in the {@link #THEME_ATTRIBUTE} of the {@code html}
-	 * element. Its {@link #FOLLOW_SYSTEM_FUNCTION} evaluates the operating system's appearance
-	 * preference, marks the page with the {@link #THEME_MODE_ATTRIBUTE} and re-evaluates the
-	 * preference whenever the operating system changes it; its {@link #SELECT_FUNCTION} drops that
-	 * marker and puts the theme with the given id into effect. An element carrying no
-	 * {@link #THEME_ATTRIBUTE} yet - a page rendered for a user who has selected no theme -
-	 * follows the operating system.
+	 * element and its appearance mode in the {@link #DS_MODE_ATTRIBUTE}. Its
+	 * {@link #FOLLOW_SYSTEM_FUNCTION} evaluates the operating system's appearance preference, marks
+	 * the page with the {@link #THEME_MODE_ATTRIBUTE} and re-evaluates the preference whenever the
+	 * operating system changes it; its {@link #SELECT_FUNCTION} drops that marker and puts the theme
+	 * with the given id into effect. An element carrying no {@link #THEME_ATTRIBUTE} yet - a page
+	 * rendered for a user who has selected no theme - follows the operating system.
+	 * </p>
+	 *
+	 * <p>
+	 * Its {@link #LOCK_MODE_FUNCTION} holds the page in one appearance mode: the
+	 * {@link #DS_MODE_ATTRIBUTE} names that mode, and a requested theme of the other color scheme is
+	 * represented by the {@link #getModeTheme(ColorScheme) theme of the held mode}. The requested
+	 * theme is remembered, so that releasing the page puts it back into effect.
 	 * </p>
 	 *
 	 * <p>
@@ -333,7 +378,6 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		String dsDensityAttr = jsString(DS_DENSITY_ATTRIBUTE);
 		String dsDensityNormal = jsString(DS_DENSITY_NORMAL);
 		String lightMode = jsString(ColorScheme.LIGHT.cssKeyword());
-		String darkMode = jsString(ColorScheme.DARK.cssKeyword());
 
 		out.beginScript();
 		out.writeScript("(function() {");
@@ -348,17 +392,43 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 			first = false;
 		}
 		out.writeScript("};");
+		// The theme representing each color scheme while the page is held in that mode.
+		out.writeScript("var modeThemes = {");
+		first = true;
+		for (ColorScheme scheme : ColorScheme.values()) {
+			UITheme modeTheme = getModeTheme(scheme);
+			if (modeTheme == null) {
+				continue;
+			}
+			out.writeScript((first ? "" : ",") + jsString(scheme.cssKeyword()) + ": " + jsString(modeTheme.getId()));
+			first = false;
+		}
+		out.writeScript("};");
+		// The theme requested by the selection or the operating system, and the mode the page is held in.
+		out.writeScript("var requested = html.getAttribute(" + themeAttr + ");");
+		out.writeScript("var locked = null;");
+		out.writeScript("function apply() {");
+		out.writeScript("var id = requested;");
+		out.writeScript("if (locked && modes[id] !== locked && modeThemes[locked]) {");
+		out.writeScript("id = modeThemes[locked];");
+		out.writeScript("}");
+		out.writeScript("html.setAttribute(" + themeAttr + ", id);");
+		out.writeScript("html.setAttribute(" + dsModeAttr + ", locked || modes[id] || " + lightMode + ");");
+		out.writeScript("}");
 		out.writeScript("var api = {");
 		out.writeScript(FOLLOW_SYSTEM_FUNCTION + ": function() {");
 		out.writeScript("html.setAttribute(" + modeAttr + ", " + systemMode + ");");
-		out.writeScript("html.setAttribute(" + themeAttr + ", dark.matches ? " + darkTheme + " : " + lightTheme
-			+ ");");
-		out.writeScript("html.setAttribute(" + dsModeAttr + ", dark.matches ? " + darkMode + " : " + lightMode + ");");
+		out.writeScript("requested = dark.matches ? " + darkTheme + " : " + lightTheme + ";");
+		out.writeScript("apply();");
 		out.writeScript("},");
 		out.writeScript(SELECT_FUNCTION + ": function(id) {");
 		out.writeScript("html.removeAttribute(" + modeAttr + ");");
-		out.writeScript("html.setAttribute(" + themeAttr + ", id);");
-		out.writeScript("html.setAttribute(" + dsModeAttr + ", modes[id] || " + lightMode + ");");
+		out.writeScript("requested = id;");
+		out.writeScript("apply();");
+		out.writeScript("},");
+		out.writeScript(LOCK_MODE_FUNCTION + ": function(mode) {");
+		out.writeScript("locked = mode || null;");
+		out.writeScript("apply();");
 		out.writeScript("}");
 		out.writeScript("};");
 		out.writeScript("dark.addEventListener('change', function() {");
@@ -370,7 +440,7 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		out.writeScript("if (!html.hasAttribute(" + dsDensityAttr + ")) {");
 		out.writeScript("html.setAttribute(" + dsDensityAttr + ", " + dsDensityNormal + ");");
 		out.writeScript("}");
-		out.writeScript("if (!html.hasAttribute(" + themeAttr + ")) {");
+		out.writeScript("if (requested === null) {");
 		out.writeScript("api." + FOLLOW_SYSTEM_FUNCTION + "();");
 		out.writeScript("}");
 		out.writeScript("})();");

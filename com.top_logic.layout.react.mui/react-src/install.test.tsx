@@ -221,3 +221,49 @@ describe('the color schemes of the MUI theme', () => {
     expect(localStorage.length).toBe(0);
   });
 });
+
+describe('the mode of the page', () => {
+  /** The client API of the page's theme script, with the function holding the page in a mode. */
+  function themeScript() {
+    const api = { lockMode: vi.fn() };
+    (window as unknown as Record<string, unknown>).tlTheme = api;
+    return api.lockMode;
+  }
+
+  afterEach(() => {
+    delete (window as unknown as Record<string, unknown>).tlTheme;
+  });
+
+  it('is held in the scheme of a theme with a single light scheme', async () => {
+    const lock = themeScript();
+    const { installMui } = await load();
+
+    installMui({ theme: { palette: { primary: { main: PRIMARY } } }, replace: [] });
+
+    expect(lock.mock.calls).toEqual([['light']]);
+  });
+
+  it('is held in the scheme of a theme with a single dark scheme', async () => {
+    const lock = themeScript();
+    const { installMui } = await load();
+
+    installMui({ theme: { palette: { mode: 'dark' } }, replace: [] });
+
+    expect(lock.mock.calls).toEqual([['dark']]);
+  });
+
+  it('follows the selected UI theme for a theme with a light and a dark scheme', async () => {
+    const lock = themeScript();
+    const { installMui } = await load();
+
+    installMui({ theme: TWO_SCHEMES, replace: [] });
+
+    expect(lock).not.toHaveBeenCalled();
+  });
+
+  it('is left alone on a page without the theme script', async () => {
+    const { installMui } = await load();
+
+    expect(() => installMui({ theme: {}, replace: [] })).not.toThrow();
+  });
+});

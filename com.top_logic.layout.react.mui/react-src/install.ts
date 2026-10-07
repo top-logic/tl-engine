@@ -2,11 +2,11 @@
 // root, the styling properties of the TopLogic components and the adapters of the selected
 // components.
 
-import { React, registerRootWrapper, replace } from 'tl-react-bridge';
+import { React, lockMode, registerRootWrapper, replace } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import type { ThemeOptions } from '@mui/material/styles';
 import { createMuiRoot, createPageThemes, pageTheme } from './MuiRoot';
-import { installThemeProperties } from './themeProperties';
+import { installThemeProperties, singleScheme } from './themeProperties';
 import MuiButtonAdapter from './adapters/MuiButtonAdapter';
 import MuiToggleButtonAdapter from './adapters/MuiToggleButtonAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
@@ -99,6 +99,12 @@ let installed = false;
  * providers Material UI needs above every React root of the bridge and replaces the selected
  * TopLogic components by their adapters.</p>
  *
+ * <p>A theme with a single color scheme holds the page in the mode of that scheme (`lockMode` of
+ * 'tl-react-bridge'): the MUI components render in that scheme whatever UI theme the user has
+ * selected, and so do the TopLogic components, with every styling property of the design system
+ * and of the UI themes. A theme with a light and a dark scheme follows the mode of the selected UI
+ * theme.</p>
+ *
  * <p>The application calls it once, when its module loads, before the controls of the page are
  * mounted. The installation cannot be changed afterwards: a second call fails.</p>
  *
@@ -118,7 +124,12 @@ export function installMui(options: MuiOptions): void {
   installed = true;
 
   const themes = createPageThemes(options.theme);
-  installThemeProperties(pageTheme(themes));
+  const theme = pageTheme(themes);
+  installThemeProperties(theme);
+  const scheme = singleScheme(theme);
+  if (scheme !== null) {
+    lockMode(scheme);
+  }
   registerRootWrapper(createMuiRoot(themes));
   for (const name of names) {
     replace(name, ADAPTERS[name]);

@@ -448,7 +448,19 @@ Loading the bundle changes nothing on the page; `installMui` does. How it attach
   (`colorSchemeNode={null}`), keeps no mode in the local storage (`storageManager={null}`) and
   starts in the page's mode; for a theme with both schemes, `ModeSync` sets the mode of MUI's color
   scheme context (`useColorScheme`) on each change of `data-tl-mode`, from one `MutationObserver`
-  shared by all React roots. A theme with one scheme is in effect in every mode.
+  shared by all React roots. A theme with one scheme is in effect in every mode, and `installMui`
+  holds the page in its mode (`lockMode` of `tl-react-bridge`, see below).
+- **Holding the page in one mode.** `lockMode(mode)` of `tl-react-bridge` (`'light'`, `'dark'`,
+  `null` to release) calls the `lockMode` function of the page's theme script (`window.tlTheme`,
+  `UIThemeService.LOCK_MODE_FUNCTION`). While the page is held, `data-tl-mode` names the held mode,
+  and a requested UI theme of the other color scheme — selected by the user or answering the
+  operating system — is represented by the UI theme of the held mode
+  (`UIThemeService.getModeTheme`: the theme answering the system's preference for that mode, else
+  the first theme of that mode). So the roles of the design system and the tokens of the UI themes
+  all resolve in the held mode, and a library rendering in one color scheme of its own leaves no
+  part of the page in the other one. The selection is not changed on the server; selecting a theme
+  or following the operating system keeps working within the held mode, and releasing the page
+  puts the requested theme back into effect.
 - **Overlays.** Windows and dialogs keep the TopLogic window manager: MUI supplies the look
   (`Paper`, `DialogTitle`, `DialogContent`, `DialogActions`), while positioning, moving and
   resizing, the focus trap, Escape and the stacking stay with TopLogic. MUI's `Modal` is not used,
@@ -584,7 +596,10 @@ sidebar, toolbars, layouts — follow it through their styling properties:
   `UIThemeService` is involved.
 - A theme with a light and a dark scheme sets each for its mode of the design system
   (`[data-tl-mode]`), the mode the MUI components follow as well; a theme with one scheme sets it
-  on `:root`, in effect in every mode: the page stays in that scheme, as the MUI components do.
+  on `:root`, in effect in every mode, and holds the page in the mode of that scheme
+  (`lockMode`), so that the properties it does not set — design-system roles such as the category
+  colors, the tokens of the UI themes — are in that mode too: the page stays in that scheme, as the
+  MUI components do.
 
 The values of the theme are used as they are — there is no contrast correction. What is mapped:
 

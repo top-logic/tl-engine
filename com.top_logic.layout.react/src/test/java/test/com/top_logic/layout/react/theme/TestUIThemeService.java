@@ -172,6 +172,46 @@ public class TestUIThemeService extends TestCase {
 	}
 
 	/**
+	 * The theme representing a color scheme while the page is held in that mode is the theme
+	 * answering the operating system's preference for it, if it has that scheme.
+	 */
+	public void testModeThemes() throws ConfigurationException {
+		UIThemeService service = service(LIGHT_AND_DARK);
+
+		assertEquals("light", service.getModeTheme(ColorScheme.LIGHT).getId());
+		assertEquals("dark", service.getModeTheme(ColorScheme.DARK).getId());
+	}
+
+	/**
+	 * A scheme the system theme does not have is represented by the first theme of that scheme, a
+	 * scheme no theme has by none.
+	 */
+	public void testModeThemeOfUnansweredScheme() throws ConfigurationException {
+		UIThemeService service = service(DARK_AND_CHILD);
+
+		// The default theme answers the light preference, but is dark.
+		assertEquals("night", service.getSystemTheme(ColorScheme.LIGHT).getId());
+		assertNull(service.getModeTheme(ColorScheme.LIGHT));
+		assertEquals("night", service.getModeTheme(ColorScheme.DARK).getId());
+	}
+
+	/**
+	 * The script offers holding the page in one appearance mode, with the theme representing each
+	 * scheme meanwhile, and leaves out a scheme no theme has.
+	 */
+	public void testThemeScriptLockMode() throws ConfigurationException {
+		String script = script(service(LIGHT_AND_DARK));
+
+		assertTrue(script, script.contains(UIThemeService.LOCK_MODE_FUNCTION + ": function(mode)"));
+		assertTrue(script, script.contains("var modeThemes = {"));
+		assertTrue(script, script.contains("'light': 'light','dark': 'dark'"));
+		assertTrue(script, script.contains("locked || modes[id] || 'light'"));
+
+		String darkOnly = script(service(DARK_AND_CHILD));
+		assertTrue(darkOnly, darkOnly.contains("var modeThemes = {'dark': 'night'};"));
+	}
+
+	/**
 	 * Nothing is selected without a personal configuration to select it in.
 	 */
 	public void testNoSelectionWithoutPersonalConfiguration() throws ConfigurationException {
